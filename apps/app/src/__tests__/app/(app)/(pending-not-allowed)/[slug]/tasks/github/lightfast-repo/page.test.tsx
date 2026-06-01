@@ -10,16 +10,31 @@ const fetchQueryMock = vi.fn();
 const getBySlugQueryOptionsMock = vi.fn((input: { slug: string }) => ({
   queryKey: [["viewer", "organization", "getBySlug"], input],
 }));
-const sourceControlListRepositoriesQueryOptionsMock = vi.fn(() => ({
-  queryKey: [["org", "settings", "sourceControl", "listRepositories"]],
+const sourceControlGetQueryOptionsMock = vi.fn(() => ({
+  queryKey: [["org", "settings", "sourceControl", "get"]],
 }));
 const repoClientMock = vi.fn(
-  ({ accountLogin, orgSlug }: { accountLogin: string; orgSlug: string }) => (
+  ({
+    accountLogin,
+    newRepositoryUrl,
+    orgSlug,
+  }: {
+    accountLogin: string;
+    newRepositoryUrl: string;
+    orgSlug: string;
+  }) => (
     <div data-account-login={accountLogin} data-testid="repo-client">
+      <span data-testid="new-repository-url">{newRepositoryUrl}</span>
       {orgSlug}
     </div>
   )
 );
+
+vi.mock("@api/app/services/github", () => ({
+  getGitHubAppConfig: () => ({
+    endpoints: { webBaseUrl: "https://github.lightfast.localhost" },
+  }),
+}));
 
 vi.mock("~/trpc/server", () => ({
   getQueryClient: () => ({ fetchQuery: fetchQueryMock }),
@@ -27,9 +42,7 @@ vi.mock("~/trpc/server", () => ({
     org: {
       settings: {
         sourceControl: {
-          listRepositories: {
-            queryOptions: sourceControlListRepositoriesQueryOptionsMock,
-          },
+          get: { queryOptions: sourceControlGetQueryOptionsMock },
         },
       },
     },
@@ -60,7 +73,7 @@ beforeEach(() => {
   redirectMock.mockClear();
   fetchQueryMock.mockReset();
   getBySlugQueryOptionsMock.mockClear();
-  sourceControlListRepositoriesQueryOptionsMock.mockClear();
+  sourceControlGetQueryOptionsMock.mockClear();
   repoClientMock.mockClear();
 });
 
@@ -94,16 +107,9 @@ describe("tasks/github/lightfast-repo/page", () => {
         nextSetupRequirement: "github_lightfast_repo",
       })
       .mockResolvedValueOnce({
-        binding: null,
-        lightfastRepository: null,
-        organization: {
-          id: "987654",
-          installationManageUrl:
-            "https://github.com/apps/lightfast/installations/1001",
-          login: "acme-live",
+        binding: {
+          accountLogin: "lightfast-emulated",
         },
-        repositories: [],
-        repositoriesError: null,
         status: "bound",
       });
 
@@ -113,51 +119,19 @@ describe("tasks/github/lightfast-repo/page", () => {
     expect(screen.getByTestId("repo-client")).toHaveTextContent("acme");
     expect(screen.getByTestId("repo-client")).toHaveAttribute(
       "data-account-login",
-      "acme-live"
+      "lightfast-emulated"
+    );
+    expect(screen.getByTestId("new-repository-url")).toHaveTextContent(
+      "https://github.lightfast.localhost/organizations/lightfast-emulated/repositories/new?name=.lightfast"
     );
     expect(repoClientMock).toHaveBeenCalledWith(
-      { accountLogin: "acme-live", orgSlug: "acme" },
+      {
+        accountLogin: "lightfast-emulated",
+        newRepositoryUrl:
+          "https://github.lightfast.localhost/organizations/lightfast-emulated/repositories/new?name=.lightfast",
+        orgSlug: "acme",
+      },
       undefined
     );
-  });
-
-  it("renders a non-bouncing fallback when live GitHub organization data is unavailable", async () => {
-    fetchQueryMock
-      .mockResolvedValueOnce({
-        bindingStatus: "unbound",
-        nextSetupRequirement: "github_lightfast_repo",
-      })
-      .mockResolvedValueOnce({
-        binding: null,
-        lightfastRepository: null,
-        organization: null,
-        repositories: [],
-        repositoriesError: null,
-        status: "bound",
-      });
-
-    const element = await invoke("acme");
-    render(element);
-
-    expect(
-      screen.getByRole("heading", {
-        name: "GitHub organization details could not be refreshed",
-      })
-    ).toBeVisible();
-    expect(
-      screen.getByText(
-        "Refresh this page to try again, or return to settings while GitHub details are unavailable."
-      )
-    ).toBeVisible();
-    expect(screen.getByRole("link", { name: "Retry" })).toHaveAttribute(
-      "href",
-      "/acme/tasks/github/lightfast-repo"
-    );
-    expect(screen.getByRole("link", { name: "Open settings" })).toHaveAttribute(
-      "href",
-      "/acme/settings"
-    );
-    expect(redirectMock).not.toHaveBeenCalledWith("/acme/tasks/bind");
-    expect(repoClientMock).not.toHaveBeenCalled();
   });
 });

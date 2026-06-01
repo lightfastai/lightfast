@@ -5,6 +5,7 @@ import {
   listWatchedSourceControlRepositories,
   type OrgSourceControlBinding,
 } from "@db/app";
+import { LIGHTFAST_REPOSITORY_NAME } from "@repo/app-setup-contract";
 import {
   createGitHubAppJwt,
   createGitHubInstallationToken,
@@ -14,11 +15,12 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { getMatchingGitHubLightfastRepository } from "../../auth/org-setup-gate";
 import { getGitHubAppConfig } from "../../services/github/config";
 import {
   buildSourceControlRepositoryResponse,
   countNormalImportedRepositories,
-  lightfastRepositoryFromBinding,
+  lightfastRepositoryIdFromBinding,
   listAllGitHubInstallationRepositories,
 } from "../../services/github/source-control/repositories";
 import { orgAdminProcedure, orgProcedure } from "../../trpc";
@@ -65,8 +67,10 @@ function bindingResponse(input: {
   importedRepositoryCount: number;
 }) {
   return {
+    accountLogin: input.binding.providerAccountLogin,
     connectedAt: input.binding.connectedAt,
     importedRepositoryCount: input.importedRepositoryCount,
+    lightfastRepository: getMatchingGitHubLightfastRepository(input.binding),
     provider: input.binding.provider,
     providerLabel: providerLabel(input.binding.provider),
   };
@@ -156,7 +160,7 @@ export const orgSourceControlRouter = {
         watchedRepositories,
       }),
     });
-    const lightfastRepository = lightfastRepositoryFromBinding(binding);
+    const lightfastRepository = bindingSummary.lightfastRepository;
     const appJwt = await createGitHubAppJwt({
       appId: config.appId,
       privateKey: config.privateKey,
@@ -247,8 +251,7 @@ export const orgSourceControlRouter = {
         });
       }
 
-      const lightfastRepository = lightfastRepositoryFromBinding(binding);
-      const lightfastRepositoryId = lightfastRepository?.id ?? null;
+      const lightfastRepositoryId = lightfastRepositoryIdFromBinding(binding);
       if (input.repositoryId === lightfastRepositoryId) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
@@ -297,7 +300,7 @@ export const orgSourceControlRouter = {
         });
       }
 
-      if (selectedRepository.name === ".lightfast") {
+      if (selectedRepository.name === LIGHTFAST_REPOSITORY_NAME) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
           message: GITHUB_LIGHTFAST_IMPORT_MESSAGE,
@@ -332,16 +335,17 @@ export const orgSourceControlRouter = {
           orgSourceControlBindingId: binding.id,
         }
       );
+      const bindingSummary = bindingResponse({
+        binding,
+        importedRepositoryCount: countNormalImportedRepositories({
+          binding,
+          watchedRepositories,
+        }),
+      });
 
       return {
-        binding: bindingResponse({
-          binding,
-          importedRepositoryCount: countNormalImportedRepositories({
-            binding,
-            watchedRepositories,
-          }),
-        }),
-        lightfastRepository,
+        binding: bindingSummary,
+        lightfastRepository: bindingSummary.lightfastRepository,
         organization: organizationResponse(installation),
         repositories: buildSourceControlRepositoryResponse({
           binding,

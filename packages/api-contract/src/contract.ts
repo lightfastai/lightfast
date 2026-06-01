@@ -28,7 +28,7 @@ const signals = {
       successStatus: 202,
       summary: "Create signal",
       description:
-        "Creates an org-scoped signal from raw text and queues asynchronous classification.",
+        "Creates a creator-visible signal from raw text and queues asynchronous classification.",
     })
     .input(createSignalInput)
     .output(createSignalOutput),
@@ -39,7 +39,7 @@ const signals = {
       path: "/signals/{id}",
       summary: "Get signal",
       description:
-        "Returns a single org-scoped signal and its current classification state.",
+        "Returns a visible signal and its current classification state.",
     })
     .input(getSignalInput)
     .output(getSignalOutput),

@@ -1,4 +1,4 @@
-import { and, desc, eq, lt, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, lt, or, sql } from "drizzle-orm";
 
 import type { Database } from "../client";
 import {
@@ -39,7 +39,9 @@ export interface ListPeopleParams {
   clerkOrgId: string;
   cursor?: ListCursor | null;
   limit?: number;
+  providers?: PersonIdentityProvider[];
   search?: string;
+  types?: PersonIdentityType[];
 }
 
 export async function listPeople(
@@ -59,6 +61,10 @@ export async function listPeople(
           sql`${people.normalizedIdentityValue} like ${searchPattern} escape '\\\\'`
         )
       : undefined,
+    input.providers?.length
+      ? inArray(people.identityProvider, input.providers)
+      : undefined,
+    input.types?.length ? inArray(people.identityType, input.types) : undefined,
     input.cursor
       ? or(
           lt(people.createdAt, input.cursor.createdAt),
@@ -153,9 +159,14 @@ export async function upsertPeopleFromCandidates(
       .onDuplicateKeyUpdate({
         set: {
           displayName: sql`COALESCE(${displayName}, ${people.displayName})`,
-          lastSeenSignalId: input.sourceSignalId,
           metadata,
+          // seenCount MUST be assigned before lastSeenSignalId. MySQL evaluates
+          // ON DUPLICATE KEY UPDATE assignments left-to-right, so this CASE has
+          // to read the *previous* lastSeenSignalId before the assignment below
+          // overwrites it — otherwise the condition is always true and the
+          // count never increments past 1.
           seenCount: sql`CASE WHEN ${people.lastSeenSignalId} = ${input.sourceSignalId} THEN ${people.seenCount} ELSE ${people.seenCount} + 1 END`,
+          lastSeenSignalId: input.sourceSignalId,
         },
       });
 
@@ -182,6 +193,23 @@ export async function getPersonByIdentityKey(
       and(
         eq(people.clerkOrgId, input.clerkOrgId),
         eq(people.identityKey, input.identityKey)
+      )
+    )
+    .limit(1);
+  return row;
+}
+
+export async function getPersonByPublicId(
+  db: Database,
+  input: { clerkOrgId: string; publicId: string }
+): Promise<Person | undefined> {
+  const [row] = await db
+    .select()
+    .from(people)
+    .where(
+      and(
+        eq(people.clerkOrgId, input.clerkOrgId),
+        eq(people.publicId, input.publicId)
       )
     )
     .limit(1);

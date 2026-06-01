@@ -5,11 +5,25 @@ import {
   classifyPeopleFromSignal,
   getPeopleClassificationFailure,
 } from "@repo/ai/people-classifier";
+import type { SignalClassification } from "@repo/api-contract";
 import { log } from "@vendor/observability/log/next";
 
 import { env } from "../../env";
 import { inngest } from "../client";
 import { appEvents } from "../schemas/app";
+
+function shouldProcessPeopleSignal(signal: {
+  visibilityScope: string;
+  classification: SignalClassification | null;
+}): boolean {
+  return (
+    signal.visibilityScope === "team" &&
+    signal.classification?.schemaVersion === "signal.classification.v2" &&
+    signal.classification.disposition === "actionable" &&
+    signal.classification.routing?.visibility?.scope === "team" &&
+    signal.classification.routing?.routes?.people?.shouldRun === true
+  );
+}
 
 export const classifyPeople = inngest.createFunction(
   {
@@ -50,6 +64,10 @@ export const classifyPeople = inngest.createFunction(
     }
 
     if (signal.status !== "classified" || !signal.classification) {
+      return { status: "skipped" };
+    }
+
+    if (!shouldProcessPeopleSignal(signal)) {
       return { status: "skipped" };
     }
 

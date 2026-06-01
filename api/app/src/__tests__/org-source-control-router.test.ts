@@ -97,7 +97,7 @@ function activeBinding(overrides: Record<string, unknown> = {}) {
     },
     provider: "github",
     providerAccountId: "987654",
-    providerAccountLogin: "stale-login",
+    providerAccountLogin: "acme",
     providerInstallationId: "1001",
     revokedAt: null,
     status: "active",
@@ -229,7 +229,7 @@ describe("org.settings.sourceControl.get", () => {
     );
   });
 
-  it("returns the active source-control binding without stale provider labels", async () => {
+  it("returns the active source-control binding with matching .lightfast proof", async () => {
     const binding = activeBinding();
     getActiveOrgBindingMock.mockResolvedValue(binding);
     listWatchedSourceControlRepositoriesMock.mockResolvedValue([
@@ -243,8 +243,14 @@ describe("org.settings.sourceControl.get", () => {
 
     await expect(caller().org.settings.sourceControl.get()).resolves.toEqual({
       binding: {
+        accountLogin: "acme",
         connectedAt: binding.connectedAt,
         importedRepositoryCount: 1,
+        lightfastRepository: {
+          fullName: "acme/.lightfast",
+          id: "repo_lightfast",
+          verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
+        },
         provider: "github",
         providerLabel: "GitHub",
       },
@@ -310,8 +316,14 @@ describe("org.settings.sourceControl.listRepositories", () => {
 
     expect(result).toEqual({
       binding: {
+        accountLogin: "acme",
         connectedAt: activeBinding().connectedAt,
         importedRepositoryCount: 2,
+        lightfastRepository: {
+          fullName: "acme/.lightfast",
+          id: "repo_lightfast",
+          verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
+        },
         provider: "github",
         providerLabel: "GitHub",
       },
@@ -324,8 +336,7 @@ describe("org.settings.sourceControl.listRepositories", () => {
       lightfastRepository: {
         fullName: "acme/.lightfast",
         id: "repo_lightfast",
-        name: ".lightfast",
-        verifiedAt: "2026-05-29T01:02:03.000Z",
+        verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
       },
       repositories: [
         {
@@ -382,8 +393,14 @@ describe("org.settings.sourceControl.listRepositories", () => {
       caller().org.settings.sourceControl.listRepositories()
     ).resolves.toEqual({
       binding: {
+        accountLogin: "acme",
         connectedAt: activeBinding().connectedAt,
         importedRepositoryCount: 1,
+        lightfastRepository: {
+          fullName: "acme/.lightfast",
+          id: "repo_lightfast",
+          verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
+        },
         provider: "github",
         providerLabel: "GitHub",
       },
@@ -396,8 +413,7 @@ describe("org.settings.sourceControl.listRepositories", () => {
       lightfastRepository: {
         fullName: "acme/.lightfast",
         id: "repo_lightfast",
-        name: ".lightfast",
-        verifiedAt: "2026-05-29T01:02:03.000Z",
+        verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
       },
       repositories: [],
       repositoriesError: {
@@ -428,8 +444,14 @@ describe("org.settings.sourceControl.listRepositories", () => {
       caller().org.settings.sourceControl.listRepositories()
     ).resolves.toEqual({
       binding: {
+        accountLogin: "acme",
         connectedAt: activeBinding().connectedAt,
         importedRepositoryCount: 1,
+        lightfastRepository: {
+          fullName: "acme/.lightfast",
+          id: "repo_lightfast",
+          verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
+        },
         provider: "github",
         providerLabel: "GitHub",
       },
@@ -442,8 +464,7 @@ describe("org.settings.sourceControl.listRepositories", () => {
       lightfastRepository: {
         fullName: "acme/.lightfast",
         id: "repo_lightfast",
-        name: ".lightfast",
-        verifiedAt: "2026-05-29T01:02:03.000Z",
+        verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
       },
       repositories: [],
       repositoriesError: {
@@ -469,8 +490,14 @@ describe("org.settings.sourceControl.listRepositories", () => {
       caller().org.settings.sourceControl.listRepositories()
     ).resolves.toEqual({
       binding: {
+        accountLogin: "acme",
         connectedAt: activeBinding().connectedAt,
         importedRepositoryCount: 1,
+        lightfastRepository: {
+          fullName: "acme/.lightfast",
+          id: "repo_lightfast",
+          verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
+        },
         provider: "github",
         providerLabel: "GitHub",
       },
@@ -478,8 +505,7 @@ describe("org.settings.sourceControl.listRepositories", () => {
       lightfastRepository: {
         fullName: "acme/.lightfast",
         id: "repo_lightfast",
-        name: ".lightfast",
-        verifiedAt: "2026-05-29T01:02:03.000Z",
+        verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
       },
       repositories: [],
       repositoriesError: {
@@ -508,8 +534,14 @@ describe("org.settings.sourceControl.listRepositories", () => {
       caller().org.settings.sourceControl.listRepositories()
     ).resolves.toEqual({
       binding: {
+        accountLogin: "acme",
         connectedAt: activeBinding().connectedAt,
         importedRepositoryCount: 0,
+        lightfastRepository: {
+          fullName: "acme/.lightfast",
+          id: "repo_lightfast",
+          verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
+        },
         provider: "github",
         providerLabel: "GitHub",
       },
@@ -517,8 +549,7 @@ describe("org.settings.sourceControl.listRepositories", () => {
       lightfastRepository: {
         fullName: "acme/.lightfast",
         id: "repo_lightfast",
-        name: ".lightfast",
-        verifiedAt: "2026-05-29T01:02:03.000Z",
+        verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
       },
       repositories: [],
       repositoriesError: {
@@ -584,8 +615,14 @@ describe("org.settings.sourceControl.importRepository", () => {
       })
     ).resolves.toEqual({
       binding: {
+        accountLogin: "acme",
         connectedAt: binding.connectedAt,
         importedRepositoryCount: 1,
+        lightfastRepository: {
+          fullName: "acme/.lightfast",
+          id: "repo_lightfast",
+          verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
+        },
         provider: "github",
         providerLabel: "GitHub",
       },
@@ -598,8 +635,7 @@ describe("org.settings.sourceControl.importRepository", () => {
       lightfastRepository: {
         fullName: "acme/.lightfast",
         id: "repo_lightfast",
-        name: ".lightfast",
-        verifiedAt: "2026-05-29T01:02:03.000Z",
+        verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
       },
       repositories: [
         {
@@ -837,5 +873,77 @@ describe("org.settings.sourceControl.importRepository", () => {
     });
 
     expect(insertWatchedSourceControlRepositoryMock).not.toHaveBeenCalled();
+  });
+
+  it("does not expose stale .lightfast proof for another installation", async () => {
+    const connectedAt = new Date("2026-05-29T01:02:03.000Z");
+    getActiveOrgBindingMock.mockResolvedValue({
+      clerkOrgId: "org_acme",
+      connectedAt,
+      connectedByUserId: "user_admin",
+      createdAt: connectedAt,
+      id: 3,
+      metadata: {
+        lightfastRepository: {
+          fullName: "lightfast-emulated/.lightfast",
+          id: "987",
+          installationId: "old_installation",
+          name: ".lightfast",
+          verifiedAt: "2026-05-30T10:00:00.000Z",
+        },
+      },
+      provider: "github",
+      providerAccountId: "987654",
+      providerAccountLogin: "lightfast-emulated",
+      providerInstallationId: "1001",
+      revokedAt: null,
+      status: "active",
+      updatedAt: connectedAt,
+    });
+    listWatchedSourceControlRepositoriesMock.mockResolvedValue([]);
+
+    await expect(caller().org.settings.sourceControl.get()).resolves.toEqual({
+      binding: expect.objectContaining({
+        accountLogin: "lightfast-emulated",
+        lightfastRepository: null,
+      }),
+      status: "bound",
+    });
+  });
+
+  it("does not expose stale .lightfast proof for another account", async () => {
+    const connectedAt = new Date("2026-05-29T01:02:03.000Z");
+    getActiveOrgBindingMock.mockResolvedValue({
+      clerkOrgId: "org_acme",
+      connectedAt,
+      connectedByUserId: "user_admin",
+      createdAt: connectedAt,
+      id: 3,
+      metadata: {
+        lightfastRepository: {
+          fullName: "other-owner/.lightfast",
+          id: "987",
+          installationId: "1001",
+          name: ".lightfast",
+          verifiedAt: "2026-05-30T10:00:00.000Z",
+        },
+      },
+      provider: "github",
+      providerAccountId: "987654",
+      providerAccountLogin: "lightfast-emulated",
+      providerInstallationId: "1001",
+      revokedAt: null,
+      status: "active",
+      updatedAt: connectedAt,
+    });
+    listWatchedSourceControlRepositoriesMock.mockResolvedValue([]);
+
+    await expect(caller().org.settings.sourceControl.get()).resolves.toEqual({
+      binding: expect.objectContaining({
+        accountLogin: "lightfast-emulated",
+        lightfastRepository: null,
+      }),
+      status: "bound",
+    });
   });
 });

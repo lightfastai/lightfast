@@ -345,6 +345,26 @@ async function readBody(request: Request) {
   return Object.fromEntries(new URLSearchParams(text));
 }
 
+function htmlEscape(value: string) {
+  return value.replace(
+    /[&<>"']/g,
+    (char) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      })[char] ?? char
+  );
+}
+
+function html(body: string, init?: ResponseInit) {
+  const headers = new Headers(init?.headers);
+  headers.set("content-type", "text/html; charset=utf-8");
+  return new Response(body, { ...init, headers });
+}
+
 export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
   return async function gitHubCompatibleFetch(request: Request) {
     const url = new URL(request.url);
@@ -364,6 +384,73 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
     }
 
     const gh = getGitHubStore(input.store);
+
+    const newRepositoryMatch =
+      /^\/organizations\/([^/]+)\/repositories\/new$/.exec(url.pathname);
+    if (request.method === "GET" && newRepositoryMatch) {
+      const owner = decodeURIComponent(newRepositoryMatch[1] ?? "");
+      const name = url.searchParams.get("name") ?? "";
+      const escapedOwner = htmlEscape(owner);
+      const escapedName = htmlEscape(name);
+      return html(`<!doctype html>
+<html>
+  <head>
+    <title>Create ${escapedName}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <main>
+      <h1>Create ${escapedName}</h1>
+      <p>Create <code>${escapedOwner}/${escapedName}</code> in the local GitHub emulator.</p>
+      <form method="post">
+        <input type="hidden" name="name" value="${escapedName}" />
+        <input type="hidden" name="private" value="true" />
+        <input type="hidden" name="auto_init" value="true" />
+        <button type="submit">Create ${escapedName}</button>
+      </form>
+    </main>
+  </body>
+</html>`);
+    }
+
+    if (request.method === "POST" && newRepositoryMatch) {
+      const owner = decodeURIComponent(newRepositoryMatch[1] ?? "");
+      const body = await readBody(request);
+      const name = typeof body.name === "string" ? body.name : "";
+      const createRes = await input.fallbackFetch(
+        new Request(
+          new URL(
+            `/orgs/${encodeURIComponent(owner)}/repos`,
+            input.publicOrigin
+          ),
+          {
+            method: "POST",
+            headers: {
+              authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({
+              auto_init: body.auto_init === "true" || body.auto_init === true,
+              name,
+              private: body.private === "true" || body.private === true,
+            }),
+          }
+        )
+      );
+
+      if (createRes.status === 201 || createRes.status === 422) {
+        return new Response(null, {
+          status: 303,
+          headers: {
+            location: `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(
+              name
+            )}`,
+          },
+        });
+      }
+
+      return createRes;
+    }
 
     const installMatch = /^\/apps\/([^/]+)\/installations\/new$/.exec(
       url.pathname

@@ -1,1 +1,0 @@
-ALTER TABLE `lightfast_source_control_repositories` MODIFY COLUMN `watched_path_globs` json;

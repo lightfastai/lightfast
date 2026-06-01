@@ -51,6 +51,7 @@ describe("LightfastRepoSetupClient", () => {
     render(
       <LightfastRepoSetupClient
         accountLogin="lightfast-emulated"
+        newRepositoryUrl="https://github.lightfast.localhost/organizations/lightfast-emulated/repositories/new?name=.lightfast"
         orgSlug="acme"
       />
     );
@@ -65,7 +66,7 @@ describe("LightfastRepoSetupClient", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open GitHub" })).toHaveAttribute(
       "href",
-      "https://github.com/organizations/lightfast-emulated/repositories/new?name=.lightfast"
+      "https://github.lightfast.localhost/organizations/lightfast-emulated/repositories/new?name=.lightfast"
     );
   });
 
@@ -79,6 +80,7 @@ describe("LightfastRepoSetupClient", () => {
     render(
       <LightfastRepoSetupClient
         accountLogin="lightfast-emulated"
+        newRepositoryUrl="https://github.lightfast.localhost/organizations/lightfast-emulated/repositories/new?name=.lightfast"
         orgSlug="acme"
       />
     );

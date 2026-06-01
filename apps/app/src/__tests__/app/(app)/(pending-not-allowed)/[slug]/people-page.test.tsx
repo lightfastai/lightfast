@@ -2,8 +2,8 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const listQueryOptionsMock = vi.fn(() => ({
-  queryKey: ["org", "workspace", "people", "list", { limit: 50 }],
+const infiniteQueryOptionsMock = vi.fn(() => ({
+  queryKey: ["org", "workspace", "people", "list"],
 }));
 const prefetchMock = vi.fn();
 
@@ -17,7 +17,7 @@ vi.mock("~/trpc/server", () => ({
       workspace: {
         people: {
           list: {
-            queryOptions: listQueryOptionsMock,
+            infiniteQueryOptions: infiniteQueryOptionsMock,
           },
         },
       },
@@ -44,19 +44,19 @@ const { default: PeoplePage } = await import(
 );
 
 beforeEach(() => {
-  listQueryOptionsMock.mockClear();
+  infiniteQueryOptionsMock.mockClear();
   prefetchMock.mockClear();
 });
 
 describe("people page", () => {
-  it("prefetches the people list before rendering the client island", async () => {
-    const element = await PeoplePage();
-    render(element);
+  it("prefetches the infinite people list before rendering the client island", () => {
+    render(PeoplePage());
 
-    expect(listQueryOptionsMock).toHaveBeenCalledWith({ limit: 50 });
-    expect(prefetchMock).toHaveBeenCalledWith({
-      queryKey: ["org", "workspace", "people", "list", { limit: 50 }],
-    });
+    expect(infiniteQueryOptionsMock).toHaveBeenCalledWith(
+      { limit: 50 },
+      expect.objectContaining({ staleTime: 60_000 })
+    );
+    expect(prefetchMock).toHaveBeenCalled();
     expect(screen.getByTestId("hydrated-people")).toHaveTextContent(
       "People client"
     );

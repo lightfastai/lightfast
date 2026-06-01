@@ -1,3 +1,4 @@
+import { render, screen } from "@testing-library/react";
 import React from "react";
 import { describe, expect, it } from "vitest";
 import AccountSettingsLayout from "~/app/(app)/(pending-allowed)/account/settings/layout";
@@ -77,5 +78,17 @@ describe("account settings layout", () => {
     expect(findHeadingWrapperClassName(element, "Your Account")).toBe(
       "pt-2 pb-8"
     );
+  });
+
+  it("keeps GitHub setup out of the settings sidebar for the setup-only pass", () => {
+    const element = AccountSettingsLayout({
+      children: <div>Account settings page</div>,
+    });
+
+    render(element);
+
+    expect(screen.getByText("General")).toBeVisible();
+    expect(screen.queryByText("Connections")).not.toBeInTheDocument();
+    expect(screen.queryByText("GitHub")).not.toBeInTheDocument();
   });
 });

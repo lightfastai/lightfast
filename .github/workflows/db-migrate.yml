@@ -92,10 +92,16 @@ jobs:
 
           if [ "$show_exit" -eq 0 ]; then
             deploy_request_number=$(echo "$existing" | jq -r '.number')
-            echo "DEPLOY_REQUEST_NUMBER=$deploy_request_number" >> "$GITHUB_ENV"
-            echo "HAS_SCHEMA_CHANGES=true" >> "$GITHUB_ENV"
-            echo "Using existing deploy request $deploy_request_number."
-            exit 0
+            deploy_request_state=$(echo "$existing" | jq -r '.state // ""')
+
+            if [ "$deploy_request_state" != "closed" ]; then
+              echo "DEPLOY_REQUEST_NUMBER=$deploy_request_number" >> "$GITHUB_ENV"
+              echo "HAS_SCHEMA_CHANGES=true" >> "$GITHUB_ENV"
+              echo "Using existing deploy request $deploy_request_number."
+              exit 0
+            fi
+
+            echo "Ignoring closed deploy request $deploy_request_number."
           fi
 
           set +e
@@ -146,7 +152,29 @@ jobs:
       - name: deploy-schema-changes
         if: env.HAS_SCHEMA_CHANGES == 'true'
         run: |
-          pscale deploy-request deploy "$PLANETSCALE_DATABASE_NAME" "$DEPLOY_REQUEST_NUMBER" --org "$PLANETSCALE_ORG_NAME" --wait
+          for attempt in {1..18}; do
+            set +e
+            output=$(pscale deploy-request deploy "$PLANETSCALE_DATABASE_NAME" "$DEPLOY_REQUEST_NUMBER" --org "$PLANETSCALE_ORG_NAME" --wait 2>&1)
+            deploy_exit=$?
+            set -e
+
+            if [ "$deploy_exit" -eq 0 ]; then
+              echo "$output"
+              exit 0
+            fi
+
+            if echo "$output" | grep -Eiq "currently validating|try again in a few moments"; then
+              echo "PlanetScale is still validating deploy request ${DEPLOY_REQUEST_NUMBER}; retrying (${attempt}/18)."
+              sleep 20
+              continue
+            fi
+
+            echo "$output" >&2
+            exit "$deploy_exit"
+          done
+
+          echo "Timed out waiting for PlanetScale deploy request ${DEPLOY_REQUEST_NUMBER} to become deployable." >&2
+          exit 1
 
       - name: delete-branch-password
         if: always() && env.PSCALE_PASSWORD_ID != ''

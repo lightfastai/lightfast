@@ -1,1 +1,0 @@
-ALTER TABLE `lightfast_source_control_repositories` ADD `sync_status` varchar(64) DEFAULT 'enabled' NOT NULL;

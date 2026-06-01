@@ -112,10 +112,7 @@ export function TeamSwitcher() {
           return (
             <DropdownMenuItem
               asChild
-              className={cn(
-                "cursor-pointer rounded-xl px-2",
-                isSelected && "bg-muted/50"
-              )}
+              className={cn("cursor-pointer px-2", isSelected && "bg-muted/50")}
               key={org.id}
             >
               <Link
@@ -145,7 +142,7 @@ export function TeamSwitcher() {
         })}
         <DropdownMenuItem
           asChild
-          className="cursor-pointer rounded-xl px-2 text-muted-foreground"
+          className="cursor-pointer px-2 text-muted-foreground"
         >
           <Link href={{ pathname: CREATE_TEAM_HREF }} prefetch={true}>
             <div className="flex h-5 w-5 items-center justify-center rounded-full border border-border/50 border-dashed">

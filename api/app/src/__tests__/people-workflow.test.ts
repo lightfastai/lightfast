@@ -82,7 +82,7 @@ vi.mock("../inngest/client", () => ({
 
 const signalId = "signal_123e4567-e89b-12d3-a456-426614174000";
 const signalClassification = {
-  schemaVersion: "signal.classification.v1",
+  schemaVersion: "signal.classification.v2",
   disposition: "actionable",
   title: "Engage profile",
   summary: "The signal includes an X profile.",
@@ -92,9 +92,21 @@ const signalClassification = {
   rationale: "The signal has a social identity.",
   confidence: 0.9,
   routing: {
-    classifyPeople: {
-      shouldRun: true,
-      rationale: "The input includes https://x.com/jeevanp.",
+    visibility: {
+      scope: "team",
+      rationale: "The profile is relevant to the team's shared workflow.",
+    },
+    review: {
+      required: false,
+      reason: null,
+      rationale: null,
+    },
+    routes: {
+      people: {
+        shouldRun: true,
+        confidence: 0.9,
+        rationale: "The input includes https://x.com/jeevanp.",
+      },
     },
   },
 };
@@ -105,6 +117,28 @@ const signal = {
   input: "Interesting post by https://x.com/jeevanp",
   status: "classified",
   classification: signalClassification,
+  visibilityScope: "team",
+};
+const userVisibleClassification = {
+  ...signalClassification,
+  routing: {
+    visibility: {
+      scope: "user",
+      rationale: "The signal should stay creator-visible.",
+    },
+    review: {
+      required: false,
+      reason: null,
+      rationale: null,
+    },
+    routes: {
+      people: {
+        shouldRun: false,
+        confidence: 0.1,
+        rationale: "User-visible signals do not enter people routing.",
+      },
+    },
+  },
 };
 const peopleClassification = {
   schemaVersion: "people.classification.v1",
@@ -260,6 +294,22 @@ describe("classifyPeople", () => {
     await expect(runWorkflow(step)).resolves.toEqual({ status: "skipped" });
 
     expect(step.ai.wrap).not.toHaveBeenCalled();
+    expect(upsertPeopleFromCandidatesMock).not.toHaveBeenCalled();
+  });
+
+  it("skips stale people events for non-team-visible signals", async () => {
+    const step = createStep();
+    getSignalByPublicIdMock.mockResolvedValueOnce({
+      ...signal,
+      classification: userVisibleClassification,
+      visibilityScope: "user",
+    });
+
+    await expect(runWorkflow(step)).resolves.toEqual({ status: "skipped" });
+
+    expect(step.ai.wrap).not.toHaveBeenCalled();
+    expect(buildPeopleClassificationRequestMock).not.toHaveBeenCalled();
+    expect(classifyPeopleFromSignalMock).not.toHaveBeenCalled();
     expect(upsertPeopleFromCandidatesMock).not.toHaveBeenCalled();
   });
 

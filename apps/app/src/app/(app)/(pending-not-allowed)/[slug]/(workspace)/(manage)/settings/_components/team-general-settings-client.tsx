@@ -22,7 +22,10 @@ import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useTRPC } from "~/trpc/react";
-import { SourceControlConnectionSection } from "./source-control-connection-section";
+import {
+  LightfastRepositorySection,
+  SourceControlConnectionSection,
+} from "./source-control-connection-section";
 import {
   normalizeTeamSlugInput,
   useTeamNameUpdate,
@@ -201,6 +204,10 @@ export function TeamGeneralSettingsClient({
         connection={sourceControlConnection.binding}
         orgSlug={slug}
         repositories={sourceControlRepositories}
+      />
+      <LightfastRepositorySection
+        connection={sourceControlConnection.binding}
+        orgSlug={slug}
       />
     </div>
   );

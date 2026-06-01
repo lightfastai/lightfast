@@ -6,6 +6,8 @@ import { Input } from "@repo/ui/components/ui/input";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "~/trpc/react";
 
+import { GithubAccountConnectionSection } from "./github-account-connection-section";
+
 export function ProfileDataDisplay() {
   const trpc = useTRPC();
 
@@ -79,6 +81,8 @@ export function ProfileDataDisplay() {
           value={profile.primaryEmailAddress ?? ""}
         />
       </div>
+
+      <GithubAccountConnectionSection />
     </div>
   );
 }

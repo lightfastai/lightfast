@@ -1,4 +1,7 @@
-import type { SignalClassification } from "@repo/api-contract";
+import type {
+  SignalClassification,
+  SignalClassificationModelOutput,
+} from "@repo/api-contract";
 import { MockLanguageModelV3 } from "@vendor/ai/test";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -27,22 +30,30 @@ const signalId = "sig_123e4567-e89b-12d3-a456-426614174000";
 const modelOwnedClassification = {
   disposition: "actionable",
   title: "Review X profile",
-  summary: "The user found an X profile worth engaging.",
+  summary: "The signal mentions an X profile worth engaging.",
   kind: "engage",
   nextAction: "Review the profile and decide whether to reply.",
   priority: "normal",
   rationale: "The input contains a durable social identity.",
   confidence: 0.95,
   routing: {
-    classifyPeople: {
-      shouldRun: true,
-      rationale: "The input includes https://x.com/jeevanp.",
+    visibility: {
+      scope: "team",
+      rationale: "The profile was submitted as shared org context.",
+    },
+    review: { required: false, reason: null, rationale: null },
+    routes: {
+      people: {
+        shouldRun: true,
+        confidence: 0.9,
+        rationale: "The input includes https://x.com/jeevanp.",
+      },
     },
   },
-} satisfies Omit<SignalClassification, "schemaVersion">;
+} satisfies SignalClassificationModelOutput;
 
 const classification = {
-  schemaVersion: "signal.classification.v1",
+  schemaVersion: "signal.classification.v2",
   ...modelOwnedClassification,
 } satisfies SignalClassification;
 
@@ -221,23 +232,29 @@ describe("classifySignalInput", () => {
     expect(SIGNAL_CLASSIFIER_SYSTEM_PROMPT).toContain("Preserve uncertainty");
   });
 
-  it("instructs the model to route people classification without extracting people", () => {
-    expect(SIGNAL_CLASSIFIER_SYSTEM_PROMPT).toContain(
-      "Always include routing.classifyPeople"
-    );
-    expect(SIGNAL_CLASSIFIER_SYSTEM_PROMPT).toContain("routing.classifyPeople");
-    expect(SIGNAL_CLASSIFIER_SYSTEM_PROMPT).toContain("shouldRun");
+  it("instructs the model to emit v2 routing without extracting people", () => {
+    expect(SIGNAL_CLASSIFIER_SYSTEM_PROMPT).toContain("routing.visibility");
+    expect(SIGNAL_CLASSIFIER_SYSTEM_PROMPT).toContain("needs_review");
+    expect(SIGNAL_CLASSIFIER_SYSTEM_PROMPT).toContain("routing.review");
+    expect(SIGNAL_CLASSIFIER_SYSTEM_PROMPT).toContain("routing.routes.people");
+    expect(SIGNAL_CLASSIFIER_SYSTEM_PROMPT).toContain("team-actionable");
     expect(SIGNAL_CLASSIFIER_SYSTEM_PROMPT).toContain("Do not extract people");
   });
 
-  it("requires model-owned routing for strict structured output", () => {
+  it("requires valid v2 model-owned routing for strict structured output", () => {
     expect(
       signalClassificationModelSchema.parse(modelOwnedClassification)
     ).toEqual(modelOwnedClassification);
     expect(() =>
       signalClassificationModelSchema.parse({
         ...modelOwnedClassification,
-        routing: undefined,
+        routing: {
+          ...modelOwnedClassification.routing,
+          visibility: {
+            ...modelOwnedClassification.routing.visibility,
+            scope: "user",
+          },
+        },
       })
     ).toThrow();
   });
@@ -254,7 +271,7 @@ describe("classifySignalInput", () => {
 
       await expect(classifySignalInput(request, { logger })).resolves.toEqual(
         expect.objectContaining({
-          schemaVersion: "signal.classification.v1",
+          schemaVersion: "signal.classification.v2",
           disposition: expect.any(String),
           title: expect.any(String),
           confidence: expect.any(Number),

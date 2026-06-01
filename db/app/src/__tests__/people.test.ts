@@ -8,6 +8,7 @@ import {
 } from "../schema";
 import {
   escapeLikePattern,
+  getPersonByPublicId,
   listPeople,
   upsertPeopleFromCandidates,
 } from "../utils/people";
@@ -398,5 +399,80 @@ describe("listPeople", () => {
 
     expect(query.sql).toContain("like ? escape '\\\\'");
     expect(query.params).toContain(String.raw`%50\%\_done\\soon%`);
+  });
+});
+
+function makeGetDb(rows: Person[]) {
+  const spies = {
+    where: vi.fn(),
+    limit: vi.fn(() => Promise.resolve(rows)),
+  };
+  const db = {
+    select: () => ({
+      from: () => ({
+        where: (condition: unknown) => {
+          spies.where(condition);
+          return { limit: spies.limit };
+        },
+      }),
+    }),
+  };
+  return { db: db as unknown as Database, spies };
+}
+
+describe("getPersonByPublicId", () => {
+  it("returns the org-scoped person when present", async () => {
+    const person = makePerson();
+    const { db } = makeGetDb([person]);
+
+    await expect(
+      getPersonByPublicId(db, {
+        clerkOrgId: "org_test",
+        publicId: person.publicId,
+      })
+    ).resolves.toEqual(person);
+  });
+
+  it("returns undefined when no row matches", async () => {
+    const { db } = makeGetDb([]);
+
+    await expect(
+      getPersonByPublicId(db, {
+        clerkOrgId: "org_test",
+        publicId: "person_missing",
+      })
+    ).resolves.toBeUndefined();
+  });
+});
+
+describe("listPeople filters", () => {
+  it("passes provider and type filters through without throwing and returns rows", async () => {
+    const person = makePerson();
+    const { db, spies } = makePeopleListDb([person]);
+
+    await expect(
+      listPeople(db, {
+        clerkOrgId: "org_test",
+        providers: ["x", "email"],
+        types: ["handle"],
+        limit: 10,
+      })
+    ).resolves.toEqual({ items: [person], nextCursor: null });
+
+    expect(spies.where).toHaveBeenCalledOnce();
+    expect(spies.limit).toHaveBeenCalledWith(11);
+  });
+
+  it("ignores empty provider/type arrays", async () => {
+    const { db, spies } = makePeopleListDb([]);
+
+    await listPeople(db, {
+      clerkOrgId: "org_test",
+      providers: [],
+      types: [],
+      limit: 10,
+    });
+
+    expect(spies.where).toHaveBeenCalledOnce();
   });
 });

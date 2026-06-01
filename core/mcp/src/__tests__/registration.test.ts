@@ -8,6 +8,7 @@ const signalId = "signal_123e4567-e89b-12d3-a456-426614174000";
 const queuedSignal = {
   id: signalId,
   status: "queued",
+  visibilityScope: "user",
 };
 const systemHealth = {
   status: "ok",
@@ -77,7 +78,7 @@ describe("MCP tool registration", () => {
         tools.find((tool) => tool.name === "lightfast_signals_create")
       ).toMatchObject({
         description:
-          "Creates an org-scoped signal from raw text and queues asynchronous classification.",
+          "Creates a creator-visible signal from raw text and queues asynchronous classification.",
         inputSchema: {
           properties: {
             input: expect.objectContaining({ type: "string" }),
@@ -89,8 +90,9 @@ describe("MCP tool registration", () => {
           properties: {
             id: expect.objectContaining({ type: "string" }),
             status: expect.objectContaining({ const: "queued" }),
+            visibilityScope: expect.objectContaining({ const: "user" }),
           },
-          required: ["id", "status"],
+          required: ["id", "status", "visibilityScope"],
           type: "object",
         },
       });

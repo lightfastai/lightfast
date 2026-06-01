@@ -114,30 +114,32 @@ vi.mock("@repo/ui/components/ui/dialog", async () => {
   };
 });
 
-const { SourceControlConnectionSection } = await import(
-  "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/(manage)/settings/_components/source-control-connection-section"
-);
+const { LightfastRepositorySection, SourceControlConnectionSection } =
+  await import(
+    "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/(manage)/settings/_components/source-control-connection-section"
+  );
 
 const connectedBinding = {
+  accountLogin: "acme-live",
   connectedAt: new Date("2026-05-29T01:02:03.000Z"),
   importedRepositoryCount: 1,
+  lightfastRepository: {
+    fullName: "acme-live/.lightfast",
+    id: "301",
+    verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
+  },
   provider: "github" as const,
   providerLabel: "GitHub",
 };
 
 const repositories = {
   binding: connectedBinding,
+  lightfastRepository: connectedBinding.lightfastRepository,
   organization: {
     id: "987654",
     installationManageUrl:
       "https://github.com/apps/lightfast/installations/1001",
     login: "acme-live",
-  },
-  lightfastRepository: {
-    fullName: "acme-live/.lightfast",
-    id: "301",
-    name: ".lightfast" as const,
-    verifiedAt: "2026-05-29T01:02:03.000Z",
   },
   repositories: [
     {
@@ -189,13 +191,19 @@ beforeEach(() => {
 });
 
 describe("SourceControlConnectionSection", () => {
-  it("renders the GitHub integration without personal account state", () => {
+  it("renders the GitHub connection and repository controls", () => {
     renderSection();
 
-    expect(screen.getByRole("heading", { name: "GitHub" })).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "GitHub connection" })
+    ).toBeVisible();
     expect(screen.getByText("Connected")).toBeVisible();
     expect(screen.getByText("acme-live")).toBeVisible();
+    expect(screen.getByText("GitHub organization")).toBeVisible();
     expect(screen.queryByText("Personal GitHub account connected")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Add repository" })
+    ).toBeVisible();
   });
 
   it("shows imported and unimported repositories with visibility badges", () => {
@@ -223,7 +231,7 @@ describe("SourceControlConnectionSection", () => {
     expect(screen.queryByText("1 imported")).toBeNull();
   });
 
-  it("shows the verified .lightfast setup repository outside the import list", () => {
+  it("keeps .lightfast out of the import list", () => {
     renderSection({
       repositories: {
         ...repositories,
@@ -241,13 +249,6 @@ describe("SourceControlConnectionSection", () => {
         ],
       },
     });
-
-    expect(
-      screen.getByRole("heading", { name: "Lightfast repository" })
-    ).toBeVisible();
-    expect(screen.getByText("acme-live/.lightfast")).toBeVisible();
-    expect(screen.getByText(".lightfast repository")).toBeVisible();
-    expect(screen.getByText("Verified")).toBeVisible();
 
     fireEvent.click(screen.getByRole("button", { name: "Add repository" }));
     expect(
@@ -359,7 +360,9 @@ describe("SourceControlConnectionSection", () => {
       },
     });
 
-    expect(screen.getByRole("heading", { name: "GitHub" })).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "GitHub connection" })
+    ).toBeVisible();
     expect(screen.getByText("acme-live")).toBeVisible();
     expect(
       screen.getByText("GitHub repositories could not be refreshed.")
@@ -384,10 +387,11 @@ describe("SourceControlConnectionSection", () => {
       },
     });
 
-    expect(screen.getByRole("heading", { name: "GitHub" })).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "GitHub connection" })
+    ).toBeVisible();
     expect(screen.queryByText("Connected")).toBeNull();
-    expect(screen.queryByText("GitHub organization")).toBeNull();
-    expect(screen.getByText("GitHub access needs attention")).toBeVisible();
+    expect(screen.getByText("Needs attention")).toBeVisible();
     expect(
       screen.getByText(
         "The connected GitHub installation no longer matches this Lightfast organization."
@@ -424,6 +428,71 @@ describe("SourceControlConnectionSection", () => {
     });
 
     expect(screen.getByText("No GitHub organization connected")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Open setup" })).toHaveAttribute(
+      "href",
+      "/acme/tasks/bind"
+    );
+  });
+});
+
+describe("LightfastRepositorySection", () => {
+  it("renders verified .lightfast repository details separately", () => {
+    render(
+      <LightfastRepositorySection
+        connection={connectedBinding}
+        orgSlug="acme"
+      />
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Lightfast repository" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Verified")).toBeInTheDocument();
+    expect(screen.getByText("acme-live/.lightfast")).toBeVisible();
+    expect(screen.getByText("Verified at")).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Open setup" })).toBeNull();
+  });
+
+  it("falls back when the repository verification timestamp is invalid", () => {
+    render(
+      <LightfastRepositorySection
+        connection={{
+          ...connectedBinding,
+          lightfastRepository: {
+            fullName: "acme-live/.lightfast",
+            id: "301",
+            verifiedAt: new Date(Number.NaN),
+          },
+        }}
+        orgSlug="acme"
+      />
+    );
+
+    expect(screen.getByText("Not available")).toBeVisible();
+  });
+
+  it("links to .lightfast setup when GitHub is connected but the repository is not verified", () => {
+    render(
+      <LightfastRepositorySection
+        connection={{
+          ...connectedBinding,
+          lightfastRepository: null,
+        }}
+        orgSlug="acme"
+      />
+    );
+
+    expect(screen.getByText(".lightfast is not verified")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Open setup" })).toHaveAttribute(
+      "href",
+      "/acme/tasks/github/lightfast-repo"
+    );
+  });
+
+  it("links to GitHub setup when no source-control org is connected", () => {
+    render(<LightfastRepositorySection connection={null} orgSlug="acme" />);
+
+    expect(screen.getByText("Connect GitHub first")).toBeVisible();
     expect(screen.getByRole("link", { name: "Open setup" })).toHaveAttribute(
       "href",
       "/acme/tasks/bind"

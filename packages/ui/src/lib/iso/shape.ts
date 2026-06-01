@@ -53,7 +53,8 @@ function rightFace(b: Box3D): Face {
 
 // ── Silhouette (hexagonal outline of isometric box) ──────
 
-function silhouette(b: Box3D): Polygon {
+/** The outer hexagonal outline of an isometric box (no internal edges) */
+export function silhouette(b: Box3D): Polygon {
   return ensureCW([
     project(b.x, b.y, b.z + b.d),
     project(b.x + b.w, b.y, b.z + b.d),
@@ -153,8 +154,8 @@ export function createBox(b: Box3D): Shape {
   return { faces: [rightFace(b), frontFace(b), topFace(b)] };
 }
 
-/** A minus B — carves B out of A */
-function _subtract(a: Box3D, b: Box3D): Shape {
+/** A minus B — carves B out of A, revealing the cavity's inner faces */
+export function subtract(a: Box3D, b: Box3D): Shape {
   if (!aabbHit(a, b)) {
     return createBox(a);
   }

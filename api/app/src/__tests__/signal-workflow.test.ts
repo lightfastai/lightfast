@@ -102,8 +102,8 @@ const signal = {
   input: "Run the PR test plan",
   status: "queued",
 };
-const classification = {
-  schemaVersion: "signal.classification.v1",
+const teamPeopleClassification = {
+  schemaVersion: "signal.classification.v2",
   disposition: "actionable",
   title: "Run the test plan",
   summary: "The user needs to finish a validation task.",
@@ -113,9 +113,71 @@ const classification = {
   rationale: "The input describes unfinished validation work.",
   confidence: 0.95,
   routing: {
-    classifyPeople: {
-      shouldRun: true,
-      rationale: "The signal contains a durable social identity.",
+    visibility: {
+      scope: "team",
+      rationale: "The signal is safe for team visibility.",
+    },
+    review: {
+      required: false,
+      reason: null,
+      rationale: null,
+    },
+    routes: {
+      people: {
+        shouldRun: true,
+        confidence: 0.9,
+        rationale: "The signal contains a durable social identity.",
+      },
+    },
+  },
+};
+const userClassification = {
+  ...teamPeopleClassification,
+  routing: {
+    visibility: {
+      scope: "user",
+      rationale: "The signal should remain visible only to the creator.",
+    },
+    review: {
+      required: false,
+      reason: null,
+      rationale: null,
+    },
+    routes: {
+      people: {
+        shouldRun: false,
+        confidence: 0.1,
+        rationale: "User-visible signals do not enter people routing.",
+      },
+    },
+  },
+};
+const reviewRequiredClassification = {
+  ...teamPeopleClassification,
+  disposition: "needs_context",
+  title: "Review sensitive person",
+  summary: "The signal needs human review before shared routing.",
+  kind: "other",
+  nextAction: "Review the signal visibility.",
+  priority: "normal",
+  rationale: "The signal may contain sensitive person information.",
+  confidence: 0.72,
+  routing: {
+    visibility: {
+      scope: "needs_review",
+      rationale: "The signal needs human review before visibility is decided.",
+    },
+    review: {
+      required: true,
+      reason: "sensitive_person",
+      rationale: "The signal may expose sensitive person details.",
+    },
+    routes: {
+      people: {
+        shouldRun: false,
+        confidence: 0,
+        rationale: "People routing stops until review completes.",
+      },
     },
   },
 };
@@ -200,7 +262,7 @@ beforeEach(() => {
     signalId,
     system: "You are the Lightfast signal classifier.",
   });
-  classifySignalInputMock.mockResolvedValue(classification);
+  classifySignalInputMock.mockResolvedValue(teamPeopleClassification);
   getSignalClassificationFailureMock.mockImplementation((error: unknown) => ({
     errorCode:
       error instanceof Error && error.name === "AI_APICallError"
@@ -231,6 +293,8 @@ describe("classifySignal", () => {
 
     await expect(runWorkflow(step)).resolves.toEqual({
       status: "classified",
+      visibilityScope: "team",
+      reviewRequired: false,
       routedPeople: true,
     });
 
@@ -268,7 +332,7 @@ describe("classifySignal", () => {
       })
     );
     expect(markSignalClassifiedMock).toHaveBeenCalledWith(db, {
-      classification,
+      classification: teamPeopleClassification,
       clerkOrgId: "org_test",
       publicId: signalId,
     });
@@ -282,18 +346,36 @@ describe("classifySignal", () => {
     expect(markSignalFailedMock).not.toHaveBeenCalled();
   });
 
-  it("does not queue people classification when routing is absent", async () => {
+  it("does not queue people classification for user-visible signals", async () => {
     const step = createStep();
-    classifySignalInputMock.mockResolvedValueOnce({
-      ...classification,
-      routing: undefined,
-    });
+    classifySignalInputMock.mockResolvedValueOnce(userClassification);
 
     await expect(runWorkflow(step)).resolves.toEqual({
       status: "classified",
+      visibilityScope: "user",
+      reviewRequired: false,
       routedPeople: false,
     });
 
+    expect(sendMock).not.toHaveBeenCalled();
+  });
+
+  it("does not queue people classification when v2 routing requires review", async () => {
+    const step = createStep();
+    classifySignalInputMock.mockResolvedValueOnce(reviewRequiredClassification);
+
+    await expect(runWorkflow(step)).resolves.toEqual({
+      status: "classified",
+      visibilityScope: "needs_review",
+      reviewRequired: true,
+      routedPeople: false,
+    });
+
+    expect(markSignalClassifiedMock).toHaveBeenCalledWith(db, {
+      classification: reviewRequiredClassification,
+      clerkOrgId: "org_test",
+      publicId: signalId,
+    });
     expect(sendMock).not.toHaveBeenCalled();
   });
 
@@ -302,11 +384,13 @@ describe("classifySignal", () => {
     getSignalByPublicIdMock.mockResolvedValueOnce({
       ...signal,
       status: "classified",
-      classification,
+      classification: teamPeopleClassification,
     });
 
     await expect(runWorkflow(step)).resolves.toEqual({
       status: "classified",
+      visibilityScope: "team",
+      reviewRequired: false,
       routedPeople: true,
     });
 
@@ -318,6 +402,25 @@ describe("classifySignal", () => {
         signalId,
       },
     });
+  });
+
+  it("does not claim or send when a retry sees an already classified review-required signal", async () => {
+    const step = createStep();
+    getSignalByPublicIdMock.mockResolvedValueOnce({
+      ...signal,
+      status: "classified",
+      classification: reviewRequiredClassification,
+    });
+
+    await expect(runWorkflow(step)).resolves.toEqual({
+      status: "classified",
+      visibilityScope: "needs_review",
+      reviewRequired: true,
+      routedPeople: false,
+    });
+
+    expect(claimSignalForClassificationMock).not.toHaveBeenCalled();
+    expect(sendMock).not.toHaveBeenCalled();
   });
 
   it("returns missing when the event references a signal that no longer exists", async () => {

@@ -34,6 +34,7 @@ export const GITHUB_EMULATOR_FIXTURES = {
   githubUserLogin: "lightfast-dev",
   githubUserEmail: "lightfast-dev@example.test",
   githubOrgLogin: "lightfast-emulated",
+  githubLightfastRepoName: ".lightfast",
   githubRepoName: "workspace",
   oauthClientId: "Iv1.lightfastlocal",
   oauthClientSecret: "lightfast-local-secret",
@@ -78,6 +79,13 @@ export function createGitHubEmulatorSeed(
       },
     },
     repos: [
+      {
+        owner: GITHUB_EMULATOR_FIXTURES.githubOrgLogin,
+        name: GITHUB_EMULATOR_FIXTURES.githubLightfastRepoName,
+        private: true,
+        language: "Markdown",
+        auto_init: true,
+      },
       {
         owner: GITHUB_EMULATOR_FIXTURES.githubOrgLogin,
         name: GITHUB_EMULATOR_FIXTURES.githubRepoName,
