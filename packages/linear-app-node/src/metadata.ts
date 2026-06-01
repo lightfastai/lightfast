@@ -1,7 +1,12 @@
 import { z } from "zod";
 
-import { DEFAULT_LINEAR_ENDPOINTS } from "./config";
+import {
+  assertLinearEndpointAllowed,
+  DEFAULT_LINEAR_ENDPOINTS,
+} from "./config";
 import { LinearAppNodeError } from "./errors";
+
+const DEFAULT_LINEAR_METADATA_TIMEOUT_MS = 10_000;
 
 const linearViewerResponseSchema = z.object({
   data: z.object({
@@ -26,17 +31,33 @@ export interface LinearConnectorMetadata {
 export async function getLinearViewerMetadata(input: {
   accessToken: string;
   fetch?: typeof fetch;
+  nodeEnv?: string;
   signal?: AbortSignal;
+  timeoutMs?: number;
   viewerUrl?: string;
 }): Promise<LinearConnectorMetadata> {
   const requestFetch = input.fetch ?? fetch;
+  const abortController = input.signal ? undefined : new AbortController();
+  const signal = input.signal ?? abortController?.signal;
+  const timeout =
+    abortController === undefined
+      ? undefined
+      : setTimeout(
+          () => abortController.abort(),
+          input.timeoutMs ?? DEFAULT_LINEAR_METADATA_TIMEOUT_MS
+        );
 
   try {
-    const response = await requestFetch(
-      input.viewerUrl ?? DEFAULT_LINEAR_ENDPOINTS.viewerUrl,
-      {
-        body: JSON.stringify({
-          query: `query LightfastLinearViewerMetadata {
+    const viewerUrl = input.viewerUrl ?? DEFAULT_LINEAR_ENDPOINTS.viewerUrl;
+    assertLinearEndpointAllowed({
+      defaultValue: DEFAULT_LINEAR_ENDPOINTS.viewerUrl,
+      nodeEnv: input.nodeEnv,
+      value: viewerUrl,
+    });
+
+    const response = await requestFetch(viewerUrl, {
+      body: JSON.stringify({
+        query: `query LightfastLinearViewerMetadata {
             viewer {
               id
               name
@@ -46,16 +67,15 @@ export async function getLinearViewerMetadata(input: {
               }
             }
           }`,
-        }),
-        headers: {
-          accept: "application/json",
-          authorization: `Bearer ${input.accessToken}`,
-          "content-type": "application/json",
-        },
-        method: "POST",
-        signal: input.signal,
-      }
-    );
+      }),
+      headers: {
+        accept: "application/json",
+        authorization: `Bearer ${input.accessToken}`,
+        "content-type": "application/json",
+      },
+      method: "POST",
+      signal,
+    });
     const json = await response.json().catch(() => null);
     const parsed = linearViewerResponseSchema.safeParse(json);
 
@@ -81,5 +101,9 @@ export async function getLinearViewerMetadata(input: {
       "Linear metadata request failed.",
       error
     );
+  } finally {
+    if (timeout !== undefined) {
+      clearTimeout(timeout);
+    }
   }
 }

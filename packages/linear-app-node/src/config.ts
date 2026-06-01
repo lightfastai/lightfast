@@ -22,6 +22,26 @@ export const DEFAULT_LINEAR_ENDPOINTS: LinearEndpoints = {
 
 export type LinearEndpointOverrides = Partial<LinearEndpoints>;
 
+export function assertLinearEndpointAllowed(input: {
+  defaultValue: string;
+  nodeEnv?: string;
+  value: string;
+}): void {
+  if (input.value === input.defaultValue) {
+    return;
+  }
+
+  const nodeEnv = input.nodeEnv ?? process.env.NODE_ENV;
+  if (nodeEnv === "development" || nodeEnv === "test") {
+    return;
+  }
+
+  throw new LinearAppNodeError(
+    "LINEAR_CUSTOM_ENDPOINT_FORBIDDEN",
+    "Linear custom endpoints are only allowed in development and test."
+  );
+}
+
 export function resolveLinearEndpoints(input: {
   endpointOverrides?: LinearEndpointOverrides;
   nodeEnv?: string;
@@ -35,10 +55,11 @@ export function resolveLinearEndpoints(input: {
   const nodeEnv = input.nodeEnv ?? process.env.NODE_ENV;
 
   if (hasCustomEndpoint && nodeEnv !== "development" && nodeEnv !== "test") {
-    throw new LinearAppNodeError(
-      "LINEAR_CUSTOM_ENDPOINT_FORBIDDEN",
-      "Linear custom endpoints are only allowed in development and test."
-    );
+    assertLinearEndpointAllowed({
+      defaultValue: "",
+      nodeEnv,
+      value: "__linear_custom_endpoint__",
+    });
   }
 
   const apiOrigin = trimTrailingSlash(

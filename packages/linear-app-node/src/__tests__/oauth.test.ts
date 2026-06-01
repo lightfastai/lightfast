@@ -4,6 +4,7 @@ import {
   buildLinearOAuthAuthorizeUrl,
   exchangeLinearOAuthCode,
   refreshLinearOAuthToken,
+  revokeLinearOAuthToken,
 } from "../oauth";
 
 describe("buildLinearOAuthAuthorizeUrl", () => {
@@ -29,6 +30,22 @@ describe("buildLinearOAuthAuthorizeUrl", () => {
     expect(url.searchParams.get("code_challenge_method")).toBe("S256");
     expect(url.searchParams.get("redirect_uri")).toBe(
       "https://app.lightfast.localhost/api/connectors/linear/callback"
+    );
+  });
+
+  it("rejects direct custom authorize endpoints outside development and test", () => {
+    expect(() =>
+      buildLinearOAuthAuthorizeUrl({
+        callbackUrl:
+          "https://app.lightfast.localhost/api/connectors/linear/callback",
+        clientId: "lin_client_123",
+        codeChallenge: "challenge_123",
+        nodeEnv: "production",
+        oauthAuthorizeUrl: "https://linear.test/oauth/authorize",
+        state: "state_123",
+      })
+    ).toThrow(
+      expect.objectContaining({ code: "LINEAR_CUSTOM_ENDPOINT_FORBIDDEN" })
     );
   });
 });
@@ -89,6 +106,58 @@ describe("exchangeLinearOAuthCode", () => {
       "https://app.lightfast.localhost/api/connectors/linear/callback"
     );
   });
+
+  it("sanitizes transport failures without exposing OAuth secrets", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async () => {
+      throw new Error("network failed with secret lin_secret_123");
+    });
+
+    await expect(
+      exchangeLinearOAuthCode({
+        callbackUrl:
+          "https://app.lightfast.localhost/api/connectors/linear/callback",
+        clientId: "lin_client_123",
+        clientSecret: "lin_secret_123",
+        code: "code_123",
+        codeVerifier: "verifier_123",
+        fetch: fetchMock,
+      })
+    ).rejects.toMatchObject({
+      cause: { name: "Error" },
+      code: "LINEAR_OAUTH_EXCHANGE_FAILED",
+      message: "Linear OAuth code exchange failed.",
+    });
+
+    try {
+      await exchangeLinearOAuthCode({
+        callbackUrl:
+          "https://app.lightfast.localhost/api/connectors/linear/callback",
+        clientId: "lin_client_123",
+        clientSecret: "lin_secret_123",
+        code: "code_123",
+        codeVerifier: "verifier_123",
+        fetch: fetchMock,
+      });
+    } catch (error) {
+      expect(JSON.stringify(error)).not.toContain("lin_secret_123");
+      expect(String(error)).not.toContain("lin_secret_123");
+    }
+  });
+
+  it("rejects direct custom token endpoints outside development and test", async () => {
+    await expect(
+      exchangeLinearOAuthCode({
+        callbackUrl:
+          "https://app.lightfast.localhost/api/connectors/linear/callback",
+        clientId: "lin_client_123",
+        clientSecret: "secret",
+        code: "code_123",
+        codeVerifier: "verifier_123",
+        nodeEnv: "production",
+        tokenUrl: "https://api.linear.test/oauth/token",
+      })
+    ).rejects.toMatchObject({ code: "LINEAR_CUSTOM_ENDPOINT_FORBIDDEN" });
+  });
 });
 
 describe("refreshLinearOAuthToken", () => {
@@ -108,12 +177,14 @@ describe("refreshLinearOAuthToken", () => {
         clientSecret: "secret",
         fetch: fetchMock,
         refreshToken: "existing_refresh",
+        refreshTokenExpiresIn: 2_592_000,
         tokenUrl: "https://api.linear.test/oauth/token",
       })
     ).resolves.toEqual({
       accessToken: "lin_access_refreshed",
       accessTokenExpiresIn: 3600,
       refreshToken: "existing_refresh",
+      refreshTokenExpiresIn: 2_592_000,
       scope: "read,write",
       scopes: ["read", "write"],
       tokenType: "Bearer",
@@ -124,5 +195,19 @@ describe("refreshLinearOAuthToken", () => {
     );
     expect(body.get("grant_type")).toBe("refresh_token");
     expect(body.get("refresh_token")).toBe("existing_refresh");
+  });
+});
+
+describe("revokeLinearOAuthToken", () => {
+  it("rejects direct custom revoke endpoints outside development and test", async () => {
+    await expect(
+      revokeLinearOAuthToken({
+        clientId: "lin_client_123",
+        clientSecret: "secret",
+        nodeEnv: "production",
+        revokeUrl: "https://api.linear.test/oauth/revoke",
+        token: "lin_access",
+      })
+    ).rejects.toMatchObject({ code: "LINEAR_CUSTOM_ENDPOINT_FORBIDDEN" });
   });
 });

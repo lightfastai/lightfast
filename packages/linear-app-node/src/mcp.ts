@@ -8,12 +8,23 @@ import {
   type Tool,
 } from "@vendor/mcp";
 
+import {
+  assertLinearEndpointAllowed,
+  DEFAULT_LINEAR_ENDPOINTS,
+} from "./config";
 import { LinearAppNodeError } from "./errors";
 
 export async function listLinearMcpTools(input: {
   accessToken: string;
   endpoint: string;
+  nodeEnv?: string;
 }): Promise<FullConnectorToolManifest> {
+  assertLinearEndpointAllowed({
+    defaultValue: DEFAULT_LINEAR_ENDPOINTS.mcpEndpoint,
+    nodeEnv: input.nodeEnv,
+    value: input.endpoint,
+  });
+
   const client = new McpClient({
     name: "lightfast-linear-app-node",
     version: "0.1.0",

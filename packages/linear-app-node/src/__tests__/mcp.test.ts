@@ -77,4 +77,14 @@ describe("listLinearMcpTools", () => {
     expect(mcpState.connect).toHaveBeenCalledOnce();
     expect(mcpState.close).toHaveBeenCalledOnce();
   });
+
+  it("rejects direct custom MCP endpoints outside development and test", async () => {
+    await expect(
+      listLinearMcpTools({
+        accessToken: "lin_access",
+        endpoint: "https://mcp.linear.test/mcp",
+        nodeEnv: "production",
+      })
+    ).rejects.toMatchObject({ code: "LINEAR_CUSTOM_ENDPOINT_FORBIDDEN" });
+  });
 });

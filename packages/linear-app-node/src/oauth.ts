@@ -2,7 +2,10 @@ import { createHash, randomBytes } from "node:crypto";
 
 import { z } from "zod";
 
-import { DEFAULT_LINEAR_ENDPOINTS } from "./config";
+import {
+  assertLinearEndpointAllowed,
+  DEFAULT_LINEAR_ENDPOINTS,
+} from "./config";
 import { LinearAppNodeError } from "./errors";
 
 const DEFAULT_LINEAR_OAUTH_TIMEOUT_MS = 10_000;
@@ -37,7 +40,9 @@ interface RequestLinearOAuthTokenInput {
   failureCode: "LINEAR_OAUTH_EXCHANGE_FAILED" | "LINEAR_TOKEN_REFRESH_FAILED";
   failureMessage: string;
   fetch?: typeof fetch;
+  nodeEnv?: string;
   previousRefreshToken?: string;
+  previousRefreshTokenExpiresIn?: number;
   signal?: AbortSignal;
   timeoutMs?: number;
   tokenUrl?: string;
@@ -55,12 +60,19 @@ export function buildLinearOAuthAuthorizeUrl(input: {
   callbackUrl: string;
   clientId: string;
   codeChallenge: string;
+  nodeEnv?: string;
   oauthAuthorizeUrl?: string;
   state: string;
 }): string {
-  const url = new URL(
-    input.oauthAuthorizeUrl ?? DEFAULT_LINEAR_ENDPOINTS.oauthAuthorizeUrl
-  );
+  const oauthAuthorizeUrl =
+    input.oauthAuthorizeUrl ?? DEFAULT_LINEAR_ENDPOINTS.oauthAuthorizeUrl;
+  assertLinearEndpointAllowed({
+    defaultValue: DEFAULT_LINEAR_ENDPOINTS.oauthAuthorizeUrl,
+    nodeEnv: input.nodeEnv,
+    value: oauthAuthorizeUrl,
+  });
+
+  const url = new URL(oauthAuthorizeUrl);
   url.searchParams.set("actor", "app");
   url.searchParams.set("client_id", input.clientId);
   url.searchParams.set("redirect_uri", input.callbackUrl);
@@ -78,6 +90,7 @@ export async function exchangeLinearOAuthCode(input: {
   code: string;
   codeVerifier: string;
   fetch?: typeof fetch;
+  nodeEnv?: string;
   signal?: AbortSignal;
   timeoutMs?: number;
   tokenUrl?: string;
@@ -94,6 +107,7 @@ export async function exchangeLinearOAuthCode(input: {
     failureCode: "LINEAR_OAUTH_EXCHANGE_FAILED",
     failureMessage: "Linear OAuth code exchange failed.",
     fetch: input.fetch,
+    nodeEnv: input.nodeEnv,
     signal: input.signal,
     timeoutMs: input.timeoutMs,
     tokenUrl: input.tokenUrl,
@@ -104,7 +118,9 @@ export async function refreshLinearOAuthToken(input: {
   clientId: string;
   clientSecret: string;
   fetch?: typeof fetch;
+  nodeEnv?: string;
   refreshToken: string;
+  refreshTokenExpiresIn?: number;
   signal?: AbortSignal;
   timeoutMs?: number;
   tokenUrl?: string;
@@ -119,7 +135,9 @@ export async function refreshLinearOAuthToken(input: {
     failureCode: "LINEAR_TOKEN_REFRESH_FAILED",
     failureMessage: "Linear OAuth token refresh failed.",
     fetch: input.fetch,
+    nodeEnv: input.nodeEnv,
     previousRefreshToken: input.refreshToken,
+    previousRefreshTokenExpiresIn: input.refreshTokenExpiresIn,
     signal: input.signal,
     timeoutMs: input.timeoutMs,
     tokenUrl: input.tokenUrl,
@@ -130,6 +148,7 @@ export async function revokeLinearOAuthToken(input: {
   clientId: string;
   clientSecret: string;
   fetch?: typeof fetch;
+  nodeEnv?: string;
   revokeUrl?: string;
   signal?: AbortSignal;
   timeoutMs?: number;
@@ -147,22 +166,26 @@ export async function revokeLinearOAuthToken(input: {
         );
 
   try {
-    const response = await requestFetch(
-      input.revokeUrl ?? DEFAULT_LINEAR_ENDPOINTS.oauthRevokeUrl,
-      {
-        body: new URLSearchParams({
-          client_id: input.clientId,
-          client_secret: input.clientSecret,
-          token: input.token,
-        }),
-        headers: {
-          accept: "application/json",
-          "content-type": "application/x-www-form-urlencoded",
-        },
-        method: "POST",
-        signal,
-      }
-    );
+    const revokeUrl = input.revokeUrl ?? DEFAULT_LINEAR_ENDPOINTS.oauthRevokeUrl;
+    assertLinearEndpointAllowed({
+      defaultValue: DEFAULT_LINEAR_ENDPOINTS.oauthRevokeUrl,
+      nodeEnv: input.nodeEnv,
+      value: revokeUrl,
+    });
+
+    const response = await requestFetch(revokeUrl, {
+      body: new URLSearchParams({
+        client_id: input.clientId,
+        client_secret: input.clientSecret,
+        token: input.token,
+      }),
+      headers: {
+        accept: "application/json",
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      method: "POST",
+      signal,
+    });
 
     if (!response.ok) {
       throw new LinearAppNodeError(
@@ -201,18 +224,22 @@ async function requestLinearOAuthToken(
         );
 
   try {
-    const response = await requestFetch(
-      input.tokenUrl ?? DEFAULT_LINEAR_ENDPOINTS.oauthTokenUrl,
-      {
-        body: input.body,
-        headers: {
-          accept: "application/json",
-          "content-type": "application/x-www-form-urlencoded",
-        },
-        method: "POST",
-        signal,
-      }
-    );
+    const tokenUrl = input.tokenUrl ?? DEFAULT_LINEAR_ENDPOINTS.oauthTokenUrl;
+    assertLinearEndpointAllowed({
+      defaultValue: DEFAULT_LINEAR_ENDPOINTS.oauthTokenUrl,
+      nodeEnv: input.nodeEnv,
+      value: tokenUrl,
+    });
+
+    const response = await requestFetch(tokenUrl, {
+      body: input.body,
+      headers: {
+        accept: "application/json",
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      method: "POST",
+      signal,
+    });
 
     const json = await response.json().catch(() => null);
     const parsed = linearOAuthTokenResponseSchema.safeParse(json);
@@ -224,7 +251,9 @@ async function requestLinearOAuthToken(
       accessToken: parsed.data.access_token,
       accessTokenExpiresIn: parsed.data.expires_in,
       refreshToken: parsed.data.refresh_token ?? input.previousRefreshToken,
-      refreshTokenExpiresIn: parsed.data.refresh_token_expires_in,
+      refreshTokenExpiresIn:
+        parsed.data.refresh_token_expires_in ??
+        input.previousRefreshTokenExpiresIn,
       scope: parsed.data.scope,
       scopes: parseLinearScopes(parsed.data.scope),
       tokenType: parsed.data.token_type,
