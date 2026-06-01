@@ -1517,7 +1517,7 @@ git commit -m "feat: scaffold hosted mcp app"
 - Test: `apps/mcp/src/__tests__/tools.test.ts`
 - Test: `apps/mcp/src/__tests__/audit.test.ts`
 
-- [ ] **Step 1: Add failing hosted tool tests**
+- [x] **Step 1: Add failing hosted tool tests**
 
 Tests assert:
 
@@ -1529,7 +1529,7 @@ it("rejects signals.create without mcp:signals:write", async () => {});
 it("records a redacted audit event for success and failure", async () => {});
 ```
 
-- [ ] **Step 2: Run failing tests**
+- [x] **Step 2: Run failing tests**
 
 Run:
 
@@ -1539,7 +1539,7 @@ pnpm --filter @lightfast/mcp test -- src/__tests__/tools.test.ts src/__tests__/a
 
 Expected: FAIL because execution code is not implemented.
 
-- [ ] **Step 3: Implement request context**
+- [x] **Step 3: Implement request context**
 
 `apps/mcp/src/context.ts` should return:
 
@@ -1557,7 +1557,7 @@ export interface HostedMcpContext {
 
 Validate current membership and org gate for bound-org tools by calling exported `@api/app` auth/org helpers.
 
-- [ ] **Step 4: Implement tool executor**
+- [x] **Step 4: Implement tool executor**
 
 `apps/mcp/src/tools/execute.ts` maps contract paths:
 
@@ -1585,7 +1585,7 @@ switch (contractPath) {
 
 Use API contract schemas for parsing. Do not trust raw MCP inputs.
 
-- [ ] **Step 5: Implement audit wrapper**
+- [x] **Step 5: Implement audit wrapper**
 
 Record audit around every tool execution with:
 
@@ -1603,7 +1603,7 @@ Record audit around every tool execution with:
 
 Do not store raw input/output.
 
-- [ ] **Step 6: Run tests**
+- [x] **Step 6: Run tests**
 
 Run:
 
@@ -1614,7 +1614,7 @@ pnpm --filter @lightfast/mcp typecheck
 
 Expected: all PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/mcp api/app db/app

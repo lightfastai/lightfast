@@ -1,28 +1,33 @@
-import { mcpUnauthorizedResponse } from "../../auth/verify-token";
-import { createMcpContext } from "../../context";
+import { createMcpHandler, withMcpAuth } from "mcp-handler";
+
+import { env } from "../../env";
+import { registerHostedMcpTools } from "../../tools/execute";
+import { verifyMcpAuthInfo } from "../../auth/verify-token";
 
 export const runtime = "nodejs";
 
-export async function GET(request: Request): Promise<Response> {
-  return handleMcpRequest(request);
-}
+const resourceOrigin = new URL(env.MCP_RESOURCE_URL).origin;
 
-export async function POST(request: Request): Promise<Response> {
-  return handleMcpRequest(request);
-}
-
-async function handleMcpRequest(request: Request): Promise<Response> {
-  try {
-    await createMcpContext(request);
-  } catch (error) {
-    return mcpUnauthorizedResponse(error);
-  }
-
-  return Response.json(
-    {
-      error: "not_implemented",
-      message: "Hosted MCP tool execution is not implemented yet.",
+const handler = createMcpHandler(
+  (server) => {
+    registerHostedMcpTools(server);
+  },
+  {
+    serverInfo: {
+      name: "lightfast",
+      version: process.env.npm_package_version ?? "0.1.0",
     },
-    { status: 501 }
-  );
-}
+  },
+  {
+    basePath: "",
+    disableSse: true,
+    maxDuration: 60,
+  }
+);
+
+const authenticatedHandler = withMcpAuth(handler, verifyMcpAuthInfo, {
+  required: true,
+  resourceUrl: resourceOrigin,
+});
+
+export { authenticatedHandler as GET, authenticatedHandler as POST };

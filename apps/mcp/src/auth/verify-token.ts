@@ -63,7 +63,12 @@ export async function verifyMcpBearerToken(
   request: Request
 ): Promise<VerifiedMcpBearerToken> {
   const token = readBearerToken(request);
+  return await verifyMcpAccessTokenValue(token);
+}
 
+export async function verifyMcpAccessTokenValue(
+  token: string
+): Promise<VerifiedMcpBearerToken> {
   try {
     const { payload } = await jwtVerify(
       token,
@@ -91,6 +96,40 @@ export async function verifyMcpBearerToken(
       { cause: error }
     );
   }
+}
+
+export async function verifyMcpAuthInfo(
+  _request: Request,
+  bearerToken?: string
+): Promise<
+  | {
+      clientId: string;
+      expiresAt?: number;
+      extra: Record<string, unknown>;
+      resource: URL;
+      scopes: string[];
+      token: string;
+    }
+  | undefined
+> {
+  if (!bearerToken) {
+    return;
+  }
+
+  const verified = await verifyMcpAccessTokenValue(bearerToken);
+  return {
+    clientId: verified.payload.client_id,
+    expiresAt: verified.payload.exp,
+    extra: {
+      clientVerificationStatus: "verified",
+      grantId: verified.payload.grant_id,
+      orgId: verified.payload.org_id,
+      userId: verified.payload.user_id,
+    },
+    resource: new URL(env.MCP_RESOURCE_URL),
+    scopes: [...verified.scopes],
+    token: verified.token,
+  };
 }
 
 export function mcpUnauthorizedResponse(error: unknown): Response {
