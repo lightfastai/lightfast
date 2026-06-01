@@ -18,6 +18,8 @@ export type EmulatorServer = ReturnType<typeof createServer>;
 export interface StartEmulatorContext {
   appOrigin?: string;
   publicOrigin?: string;
+  /** Re-run seeding (store.reset() + seed). Wired to the emulator's reset(). */
+  reset(): void;
 }
 
 export interface StartEmulatorOptions extends ServerOptions {
@@ -107,11 +109,6 @@ export async function startEmulator(
     tokens: options.tokens,
   });
 
-  const ctx: StartEmulatorContext = {
-    appOrigin: options.appOrigin,
-    publicOrigin: options.publicOrigin,
-  };
-
   const runSeed = () => {
     if (options.seed) {
       options.seed(server, ctx);
@@ -119,6 +116,12 @@ export async function startEmulator(
     }
     server.store.reset();
     plugin.seed?.(server.store, options.publicOrigin ?? "");
+  };
+
+  const ctx: StartEmulatorContext = {
+    appOrigin: options.appOrigin,
+    publicOrigin: options.publicOrigin,
+    reset: runSeed,
   };
 
   runSeed();

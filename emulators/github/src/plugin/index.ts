@@ -1,15 +1,13 @@
-import type { Server } from "node:http";
 import type { Store } from "@emulators/core";
-import { createServer, serve } from "@emulators/core";
 import {
   getGitHubStore,
   githubPlugin,
   seedFromConfig,
 } from "@emulators/github";
 import {
-  closeServer,
   formatListenUrl,
-  waitForListening,
+  type StartedEmulator,
+  startEmulator,
 } from "@repo/emulator-kit";
 
 import {
@@ -26,14 +24,7 @@ export interface StartGitHubEmulatorInput {
   publicOrigin?: string;
 }
 
-export interface StartedGitHubEmulator {
-  close(): Promise<void>;
-  listenUrl: string;
-  publicOrigin: string;
-  reset(): void;
-  store: Store;
-  url: string;
-}
+export type StartedGitHubEmulator = StartedEmulator;
 
 export function addOrgMembership(store: Parameters<typeof getGitHubStore>[0]) {
   const gh = getGitHubStore(store);
@@ -85,16 +76,18 @@ export function addOrgMembership(store: Parameters<typeof getGitHubStore>[0]) {
   }
 }
 
-export async function startGitHubEmulator(
+export function startGitHubEmulator(
   input: StartGitHubEmulatorInput = {}
 ): Promise<StartedGitHubEmulator> {
   const appOrigin = input.appOrigin ?? "https://lightfast.localhost";
   const host = input.host ?? "127.0.0.1";
   const port = input.port ?? 4567;
-  const listenUrl = formatListenUrl(host, port);
-  const publicOrigin = input.publicOrigin ?? listenUrl;
-  let storeRef: ReturnType<typeof createServer>["store"] | undefined;
+  // The emulator seeds and serves URL-bearing data (installation/avatar/html
+  // URLs) built from the public origin, so it must be known before binding —
+  // hence a concrete port rather than an OS-assigned ephemeral one.
+  const publicOrigin = input.publicOrigin ?? formatListenUrl(host, port);
 
+  let storeRef: Store | undefined;
   const appKeyResolver = (appId: number) => {
     const store = storeRef;
     if (!store) {
@@ -114,10 +107,12 @@ export async function startGitHubEmulator(
     };
   };
 
-  const server = createServer(githubPlugin, {
+  return startEmulator(githubPlugin, {
     appKeyResolver,
-    baseUrl: publicOrigin,
+    appOrigin,
+    host,
     port,
+    publicOrigin,
     tokens: {
       [GITHUB_EMULATOR_FIXTURES.userToken]: {
         login: GITHUB_EMULATOR_FIXTURES.githubUserLogin,
@@ -125,69 +120,41 @@ export async function startGitHubEmulator(
         scopes: ["repo", "user", "read:org", "admin:org"],
       },
     },
-  });
-  storeRef = server.store;
-
-  const dispatch = server.webhooks.dispatch.bind(server.webhooks);
-  server.webhooks.dispatch = (async (event, action, payload, owner, repo) =>
-    dispatch(
-      event,
-      action,
-      event === "push"
-        ? enrichPushPayloadWithChangedPaths({
-            payload,
-            store: server.store,
-          })
-        : payload,
-      owner,
-      repo
-    )) as typeof server.webhooks.dispatch;
-
-  function seed() {
-    server.store.reset();
-    githubPlugin.seed?.(server.store, publicOrigin);
-    seedFromConfig(
-      server.store,
-      publicOrigin,
-      createGitHubEmulatorSeed(appOrigin)
-    );
-    addOrgMembership(server.store);
-  }
-
-  seed();
-
-  const httpServer: Server = serve({
-    fetch: createGitHubCompatibleFetch({
-      appOrigin,
-      fallbackFetch: server.app.fetch,
-      publicOrigin,
-      resetStore: seed,
-      store: server.store,
-      tokenMap: server.tokenMap,
-    }),
-    hostname: host,
-    port,
-  });
-
-  await waitForListening(httpServer).catch(async (error: unknown) => {
-    await closeServer(httpServer).catch(() => undefined);
-    throw error;
-  });
-
-  let closed = false;
-
-  return {
-    listenUrl,
-    publicOrigin,
-    store: server.store,
-    url: listenUrl,
-    reset: seed,
-    close: async () => {
-      if (closed) {
-        return;
-      }
-      closed = true;
-      await closeServer(httpServer);
+    seed: (server) => {
+      server.store.reset();
+      githubPlugin.seed?.(server.store, publicOrigin);
+      seedFromConfig(
+        server.store,
+        publicOrigin,
+        createGitHubEmulatorSeed(appOrigin)
+      );
+      addOrgMembership(server.store);
     },
-  };
+    onReady: (server) => {
+      storeRef = server.store;
+      const dispatch = server.webhooks.dispatch.bind(server.webhooks);
+      server.webhooks.dispatch = (async (event, action, payload, owner, repo) =>
+        dispatch(
+          event,
+          action,
+          event === "push"
+            ? enrichPushPayloadWithChangedPaths({
+                payload,
+                store: server.store,
+              })
+            : payload,
+          owner,
+          repo
+        )) as typeof server.webhooks.dispatch;
+    },
+    createFetch: (server, ctx) =>
+      createGitHubCompatibleFetch({
+        appOrigin,
+        fallbackFetch: server.app.fetch,
+        publicOrigin,
+        resetStore: ctx.reset,
+        store: server.store,
+        tokenMap: server.tokenMap,
+      }),
+  });
 }
