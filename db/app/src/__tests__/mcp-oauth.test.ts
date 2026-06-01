@@ -9,6 +9,7 @@ import type {
   McpOauthRefreshToken,
 } from "../schema";
 import {
+  consumeMcpAuthorizationCode,
   createMcpAuthorizationCode,
   createMcpOauthClient,
   createMcpOauthGrant,
@@ -127,6 +128,7 @@ function makeQueuedDb(
   updateResults: Array<{ rowsAffected: number }> = []
 ) {
   const insertedValues: unknown[] = [];
+  const updateWhereConditions: unknown[] = [];
   const updateValues: unknown[] = [];
   const orderBy = vi.fn(() => Promise.resolve(results.shift() ?? []));
   const limit = vi.fn(() => Promise.resolve(results.shift() ?? []));
@@ -137,7 +139,12 @@ function makeQueuedDb(
   });
   const set = vi.fn((value: unknown) => {
     updateValues.push(value);
-    return { where: vi.fn(() => updateResults.shift() ?? { rowsAffected: 1 }) };
+    return {
+      where: vi.fn((condition: unknown) => {
+        updateWhereConditions.push(condition);
+        return updateResults.shift() ?? { rowsAffected: 1 };
+      }),
+    };
   });
   const tx = {
     insert: vi.fn(() => ({ values })),
@@ -154,8 +161,41 @@ function makeQueuedDb(
     db: db as unknown as Database,
     insertedValues,
     spies: { from, limit, orderBy, set, transaction: db.transaction, values },
+    updateWhereConditions,
     updateValues,
   };
+}
+
+function collectConditionText(
+  value: unknown,
+  seen = new Set<object>()
+): string {
+  if (!value || typeof value !== "object") {
+    return "";
+  }
+  if (seen.has(value)) {
+    return "";
+  }
+  seen.add(value);
+
+  const object = value as {
+    name?: unknown;
+    queryChunks?: unknown;
+    value?: unknown;
+  };
+  const parts: string[] = [];
+  if (typeof object.name === "string") {
+    parts.push(object.name);
+  }
+  if (Array.isArray(object.value)) {
+    parts.push(object.value.join(""));
+  }
+  if (Array.isArray(object.queryChunks)) {
+    parts.push(
+      ...object.queryChunks.map((chunk) => collectConditionText(chunk, seen))
+    );
+  }
+  return parts.filter(Boolean).join(" ");
 }
 
 describe("mcp oauth repositories", () => {
@@ -267,6 +307,24 @@ describe("mcp oauth repositories", () => {
     });
     expect(insertedValues[0]).not.toHaveProperty("code");
     expect(insertedValues[0]).not.toHaveProperty("authorizationCode");
+  });
+
+  it("guards authorization code consumption by expiry at update time", async () => {
+    const now = new Date("2026-06-01T00:00:00.000Z");
+    const { db, updateWhereConditions } = makeQueuedDb([
+      [makeAuthorizationCode()],
+    ]);
+
+    await expect(
+      consumeMcpAuthorizationCode(db, {
+        codeHash: "auth_code_hash",
+        now,
+      })
+    ).resolves.toMatchObject({ codeHash: "auth_code_hash", consumedAt: now });
+
+    const updatePredicate = collectConditionText(updateWhereConditions[0]);
+    expect(updatePredicate).toContain("expires_at");
+    expect(updatePredicate).toContain(">");
   });
 
   it("rotates refresh token hashes and marks reuse detection", async () => {

@@ -425,6 +425,7 @@ export async function consumeMcpAuthorizationCode(
     .where(
       and(
         eq(mcpOauthAuthorizationCodes.codeHash, input.codeHash),
+        gt(mcpOauthAuthorizationCodes.expiresAt, now),
         isNull(mcpOauthAuthorizationCodes.consumedAt)
       )
     );
