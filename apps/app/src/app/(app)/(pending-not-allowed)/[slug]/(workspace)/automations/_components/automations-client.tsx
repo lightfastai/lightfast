@@ -52,7 +52,7 @@ export function AutomationsClient() {
         {canManageAutomations && (
           <Button
             asChild
-            className="h-[30px] rounded-[9px]"
+            className="h-7 rounded-[9px]"
             size="sm"
             variant="secondary"
           >

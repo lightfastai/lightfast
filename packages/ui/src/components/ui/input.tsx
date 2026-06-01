@@ -27,7 +27,7 @@ const inputVariants = cva(
       size: {
         default: "h-8 px-3 py-1",
         lg: "h-10 px-4 py-2",
-        lf: "h-[30px] px-3",
+        lf: "h-7 px-3",
       },
     },
     defaultVariants: {

@@ -18,8 +18,10 @@ export interface LfSelectOption {
 /**
  * Single-select styled after the signals "All Signals" view switcher:
  * a ghost button trigger (label + chevron) over a DropdownMenu whose active
- * row carries a Check. Sized to the lf language (30px height, 9px trigger
- * radius); the menu inherits the shared 13/5/8 concentric geometry.
+ * row carries a Check. Sized to the lf language (28px height, 9px trigger
+ * radius); resting fill + border match the lf Input, hover uses accent (so the
+ * trigger matches the menu rows it opens); the menu inherits the shared 13/5/8
+ * concentric geometry.
  */
 export function LfSelect({
   value,
@@ -45,7 +47,7 @@ export function LfSelect({
       <DropdownMenuTrigger asChild>
         <Button
           className={cn(
-            "h-[30px] justify-between gap-1.5 rounded-[9px] border border-border/70 bg-muted/30 px-2.5 font-normal text-[12.5px] text-foreground hover:bg-muted/60",
+            "h-7 justify-between gap-1.5 rounded-[9px] border border-input bg-card px-2.5 font-normal text-[12.5px] text-foreground hover:bg-accent",
             className
           )}
           size="sm"

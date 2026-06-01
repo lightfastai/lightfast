@@ -178,7 +178,7 @@ export function AutomationScheduleEditor({
             value={kind}
           />
 
-          <div className="min-h-[30px]">
+          <div className="min-h-7">
             {kind === "manual" && (
               <p className="font-mono text-[10.5px] text-muted-foreground">
                 Runs only when triggered — no automatic schedule.
@@ -272,7 +272,7 @@ export function AutomationScheduleEditor({
 
           <div className="flex justify-end gap-2.5">
             <Button
-              className="h-[30px] rounded-[9px]"
+              className="h-7 rounded-[9px]"
               onClick={() => setOpen(false)}
               size="sm"
               type="button"
@@ -281,7 +281,7 @@ export function AutomationScheduleEditor({
               Cancel
             </Button>
             <Button
-              className="h-[30px] rounded-[9px]"
+              className="h-7 rounded-[9px]"
               disabled={isSaveDisabled}
               onClick={handleSave}
               size="sm"

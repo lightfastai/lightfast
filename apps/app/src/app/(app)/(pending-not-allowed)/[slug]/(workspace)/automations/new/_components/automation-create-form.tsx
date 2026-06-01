@@ -358,14 +358,14 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
             <div className="flex items-center justify-end gap-2.5 border-border border-t pt-5">
               <Button
                 asChild
-                className="h-[30px] rounded-[9px]"
+                className="h-7 rounded-[9px]"
                 type="button"
                 variant="ghost"
               >
                 <Link href={listHref}>Cancel</Link>
               </Button>
               <Button
-                className="h-[30px] rounded-[9px]"
+                className="h-7 rounded-[9px]"
                 disabled={isSubmitting || !form.formState.isValid}
                 type="submit"
               >
