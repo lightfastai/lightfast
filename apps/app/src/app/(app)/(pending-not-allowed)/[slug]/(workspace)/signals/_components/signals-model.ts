@@ -15,7 +15,7 @@ export type SignalDetailRow =
   AppRouterOutputs["org"]["workspace"]["signals"]["get"];
 
 /**
- * Canonical view-row type for list/board/grouping. It is the projected
+ * Canonical view-row type for list/grouping. It is the projected
  * working-set row plus an optional client-computed `inputPreview` (populated only
  * when adapting a processing row). Classified rows always have
  * `classification.title`, so they leave `inputPreview` undefined.

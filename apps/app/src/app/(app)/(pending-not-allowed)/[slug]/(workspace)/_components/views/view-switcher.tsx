@@ -113,7 +113,7 @@ export function ViewSwitcher({
                 </button>
                 <button
                   aria-label={`Delete ${view.name}`}
-                  className="ml-0.5 rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+                  className="ml-0.5 rounded p-0.5 text-muted-foreground opacity-0 pointer-coarse:opacity-100 transition-opacity hover:text-foreground focus-visible:opacity-100 group-focus-within:opacity-100 group-hover:opacity-100"
                   onClick={() => setPendingDelete(view)}
                   type="button"
                 >
