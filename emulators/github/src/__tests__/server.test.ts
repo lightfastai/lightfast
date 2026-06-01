@@ -568,6 +568,58 @@ describe("@repo/github-emulator", () => {
     );
   });
 
+  it("pushes standard skill fixtures through GitHub-compatible git APIs", async () => {
+    const { pushGitHubEmulatorSkill } = await import("../push");
+    const result = await pushGitHubEmulatorSkill({
+      apiBaseUrl: emulator?.url ?? "",
+      branch: "main",
+      body: "Review the changed files.",
+      description: "Use when reviewing code.",
+      owner: GITHUB_EMULATOR_FIXTURES.githubOrgLogin,
+      repo: GITHUB_EMULATOR_FIXTURES.githubRepoName,
+      skillName: "code-review",
+      token: GITHUB_EMULATOR_FIXTURES.userToken,
+    });
+
+    expect(result.path).toBe("skills/code-review/SKILL.md");
+    expect(result.content).toContain("name: code-review");
+    expect(result.afterSha).not.toBe(result.beforeSha);
+
+    const commitRes = await fetch(
+      `${emulator?.url}/repos/${GITHUB_EMULATOR_FIXTURES.githubOrgLogin}/${GITHUB_EMULATOR_FIXTURES.githubRepoName}/git/commits/${result.afterSha}`,
+      {
+        headers: {
+          authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+        },
+      }
+    );
+    expect(commitRes.status).toBe(200);
+    const commit = (await commitRes.json()) as {
+      commit?: { tree?: { sha?: string } };
+    };
+    const treeSha = commit.commit?.tree?.sha;
+    expect(treeSha).toEqual(expect.any(String));
+
+    const treeRes = await fetch(
+      `${emulator?.url}/repos/${GITHUB_EMULATOR_FIXTURES.githubOrgLogin}/${GITHUB_EMULATOR_FIXTURES.githubRepoName}/git/trees/${treeSha}?recursive=1`,
+      {
+        headers: {
+          authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+        },
+      }
+    );
+    expect(treeRes.status).toBe(200);
+    const tree = (await treeRes.json()) as {
+      tree?: Array<{ path?: string; sha?: string; type?: string }>;
+    };
+    const skillEntry = tree.tree?.find((entry) => entry.path === result.path);
+    expect(skillEntry).toMatchObject({
+      path: result.path,
+      sha: expect.any(String),
+      type: "blob",
+    });
+  });
+
   it("delivers a signed GitHub App push webhook after simulated push", async () => {
     const received: Array<{
       body: string;
@@ -634,14 +686,13 @@ describe("@repo/github-emulator", () => {
       }
       gh.apps.update(app.id, { webhook_url: receiver.url });
 
-      const { pushGitHubEmulatorCommit } = await import("../push");
-      const push = await pushGitHubEmulatorCommit({
+      const { pushGitHubEmulatorSkill } = await import("../push");
+      const push = await pushGitHubEmulatorSkill({
         apiBaseUrl: receiverEmulator.url,
         branch: "main",
-        files: [{ content: "# Demo\n", path: "skills/demo/SKILL.md" }],
-        message: "Add demo skill",
         owner: GITHUB_EMULATOR_FIXTURES.githubOrgLogin,
         repo: GITHUB_EMULATOR_FIXTURES.githubRepoName,
+        skillName: "demo",
         token: GITHUB_EMULATOR_FIXTURES.userToken,
       });
 
@@ -685,7 +736,7 @@ describe("@repo/github-emulator", () => {
       });
       expect(payload.commits).toEqual([
         expect.objectContaining({
-          added: ["skills/demo/SKILL.md"],
+          added: [push.path],
           modified: [],
           removed: [],
         }),

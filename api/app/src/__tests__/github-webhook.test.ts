@@ -249,6 +249,7 @@ describe("handleGitHubWebhook", () => {
     expect(inngestSendMock).toHaveBeenCalledWith({
       name: "app/github.repository.push.received",
       data: expect.objectContaining({
+        afterSha: "a".repeat(40),
         changedPaths: ["skills/demo/SKILL.md"],
         deliveryId: "delivery-1",
         repositoryWatchId: 9,
@@ -340,6 +341,7 @@ describe("handleGitHubWebhook", () => {
     expect(inngestSendMock).toHaveBeenCalledWith({
       name: "app/github.repository.push.received",
       data: expect.objectContaining({
+        afterSha: "a".repeat(40),
         changedPaths: ["skills/demo/SKILL.md"],
         deliveryId: "delivery-1",
         repositoryWatchId: 9,

@@ -13,6 +13,14 @@ interface PushGitHubEmulatorCommitInput {
   token: string;
 }
 
+interface PushGitHubEmulatorSkillInput
+  extends Omit<PushGitHubEmulatorCommitInput, "files" | "message"> {
+  body?: string;
+  description?: string;
+  message?: string;
+  skillName: string;
+}
+
 async function githubJson<T>(
   url: string,
   init: RequestInit,
@@ -115,5 +123,50 @@ export async function pushGitHubEmulatorCommit(
   return {
     afterSha: nextCommit.sha,
     beforeSha,
+  };
+}
+
+export function createGitHubEmulatorSkillFile(input: {
+  body?: string;
+  description?: string;
+  skillName: string;
+}): PushFile {
+  const description =
+    input.description ?? `Use when testing ${input.skillName}.`;
+  const body = input.body ?? `Run ${input.skillName} carefully.`;
+
+  return {
+    content: [
+      "---",
+      `name: ${input.skillName}`,
+      `description: ${description}`,
+      "---",
+      "",
+      body,
+      "",
+    ].join("\n"),
+    path: `skills/${input.skillName}/SKILL.md`,
+  };
+}
+
+export async function pushGitHubEmulatorSkill(
+  input: PushGitHubEmulatorSkillInput
+): Promise<{
+  afterSha: string;
+  beforeSha: string;
+  content: string;
+  path: string;
+}> {
+  const skillFile = createGitHubEmulatorSkillFile(input);
+  const push = await pushGitHubEmulatorCommit({
+    ...input,
+    files: [skillFile],
+    message: input.message ?? `Update ${input.skillName} skill`,
+  });
+
+  return {
+    ...push,
+    content: skillFile.content,
+    path: skillFile.path,
   };
 }
