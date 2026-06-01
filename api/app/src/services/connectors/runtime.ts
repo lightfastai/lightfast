@@ -1,6 +1,7 @@
 import {
   getCurrentOrgConnectorConnection,
   listCurrentOrgConnectorConnections,
+  markCurrentOrgConnectorConnectionError,
   type OrgConnectorConnection,
 } from "@db/app";
 import { db as appDb } from "@db/app/client";
@@ -109,6 +110,13 @@ async function callConnectorRuntimeTool(
     });
     return result;
   } catch (error) {
+    if (isTerminalLinearTokenRefreshError(error)) {
+      await markCurrentOrgConnectorConnectionError(appDb, {
+        clerkOrgId: context.clerkOrgId,
+        provider: "linear",
+      });
+    }
+
     log.warn("[connectors] runtime tool call failed", {
       ...logContext,
       failure: safeErrorDetails(error),
@@ -161,13 +169,42 @@ function normalizeMcpToolInput(input: unknown) {
   return { input };
 }
 
+function isTerminalLinearTokenRefreshError(error: unknown) {
+  return getErrorCode(error) === "LINEAR_TOKEN_REFRESH_FAILED";
+}
+
+function getErrorCode(error: unknown) {
+  return error && typeof error === "object" && "code" in error
+    ? String(error.code)
+    : undefined;
+}
+
+function isKnownLinearError(error: unknown) {
+  const code = getErrorCode(error);
+  return (
+    typeof code === "string" &&
+    code.startsWith("LINEAR_") &&
+    error instanceof Error
+  );
+}
+
+function safeLinearErrorMessage(error: unknown) {
+  switch (getErrorCode(error)) {
+    case "LINEAR_TOKEN_REFRESH_FAILED":
+      return "Linear OAuth token refresh failed.";
+    case "LINEAR_MCP_FAILED":
+      return error instanceof Error ? error.message : "Linear MCP failed.";
+    default:
+      return error instanceof Error ? error.message : undefined;
+  }
+}
+
 function safeErrorDetails(error: unknown) {
   return {
-    code:
-      error && typeof error === "object" && "code" in error
-        ? String(error.code)
-        : undefined,
-    message: error instanceof Error ? error.message : undefined,
+    code: getErrorCode(error),
+    message: isKnownLinearError(error)
+      ? safeLinearErrorMessage(error)
+      : undefined,
     name: error instanceof Error ? error.name : typeof error,
   };
 }

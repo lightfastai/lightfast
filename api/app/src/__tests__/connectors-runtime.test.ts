@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const listCurrentOrgConnectorConnectionsMock = vi.fn();
 const getCurrentOrgConnectorConnectionMock = vi.fn();
+const markCurrentOrgConnectorConnectionErrorMock = vi.fn();
 const getFreshLinearConnectorAccessTokenMock = vi.fn();
 const callLinearMcpToolMock = vi.fn();
 const logInfoMock = vi.fn();
@@ -13,6 +14,8 @@ vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({
   getCurrentOrgConnectorConnection: getCurrentOrgConnectorConnectionMock,
   listCurrentOrgConnectorConnections: listCurrentOrgConnectorConnectionsMock,
+  markCurrentOrgConnectorConnectionError:
+    markCurrentOrgConnectorConnectionErrorMock,
 }));
 
 vi.mock("@repo/linear-app-node", () => ({
@@ -74,6 +77,8 @@ describe("loadConnectorRuntimeTools", () => {
   beforeEach(() => {
     listCurrentOrgConnectorConnectionsMock.mockReset();
     getCurrentOrgConnectorConnectionMock.mockReset();
+    markCurrentOrgConnectorConnectionErrorMock.mockReset();
+    markCurrentOrgConnectorConnectionErrorMock.mockResolvedValue(undefined);
     getFreshLinearConnectorAccessTokenMock.mockReset();
     getFreshLinearConnectorAccessTokenMock.mockResolvedValue("lin_access");
     callLinearMcpToolMock.mockReset();
@@ -203,5 +208,83 @@ describe("loadConnectorRuntimeTools", () => {
     const logged = JSON.stringify(logWarnMock.mock.calls);
     expect(logged).not.toContain("secret-title");
     expect(logged).not.toContain("lin_access");
+  });
+
+  it("omits raw messages for non-Linear runtime failures", async () => {
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([connection()]);
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(connection());
+    callLinearMcpToolMock.mockRejectedValue(
+      new Error("raw downstream secret")
+    );
+
+    const [tool] = await loadConnectorRuntimeTools({
+      automationPublicId: "aut_123",
+      clerkOrgId: "org_acme",
+      runPublicId: "run_123",
+    });
+
+    await expect(tool?.call({ title: "secret-title" })).rejects.toThrow(
+      "raw downstream secret"
+    );
+    expect(markCurrentOrgConnectorConnectionErrorMock).not.toHaveBeenCalled();
+    expect(logWarnMock).toHaveBeenCalledWith(
+      "[connectors] runtime tool call failed",
+      expect.objectContaining({
+        failure: {
+          code: undefined,
+          message: undefined,
+          name: "Error",
+        },
+        provider: "linear",
+        success: false,
+      })
+    );
+    const logged = JSON.stringify(logWarnMock.mock.calls);
+    expect(logged).not.toContain("secret-title");
+    expect(logged).not.toContain("raw downstream secret");
+  });
+
+  it("marks the Linear connector error when token refresh terminally fails during a runtime call", async () => {
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([connection()]);
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(connection());
+    const error = Object.assign(new Error("refresh token leaked raw details"), {
+      code: "LINEAR_TOKEN_REFRESH_FAILED",
+      name: "LinearAppNodeError",
+    });
+    getFreshLinearConnectorAccessTokenMock.mockRejectedValue(error);
+
+    const [tool] = await loadConnectorRuntimeTools({
+      automationPublicId: "aut_123",
+      clerkOrgId: "org_acme",
+      runPublicId: "run_123",
+    });
+
+    await expect(tool?.call({ title: "secret-title" })).rejects.toThrow(
+      "refresh token leaked raw details"
+    );
+    expect(markCurrentOrgConnectorConnectionErrorMock).toHaveBeenCalledWith(
+      {},
+      {
+        clerkOrgId: "org_acme",
+        provider: "linear",
+      }
+    );
+    expect(callLinearMcpToolMock).not.toHaveBeenCalled();
+    expect(logWarnMock).toHaveBeenCalledWith(
+      "[connectors] runtime tool call failed",
+      expect.objectContaining({
+        failure: {
+          code: "LINEAR_TOKEN_REFRESH_FAILED",
+          message: "Linear OAuth token refresh failed.",
+          name: "LinearAppNodeError",
+        },
+        provider: "linear",
+        success: false,
+      })
+    );
+    const logged = JSON.stringify(logWarnMock.mock.calls);
+    expect(logged).not.toContain("secret-title");
+    expect(logged).not.toContain("lin_access");
+    expect(logged).not.toContain("refresh token leaked raw details");
   });
 });
