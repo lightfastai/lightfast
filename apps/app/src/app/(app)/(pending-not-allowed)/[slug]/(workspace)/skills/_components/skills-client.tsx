@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import {
   Select,
@@ -9,23 +8,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { ExternalLink, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { useQueryState } from "nuqs";
 import { useDeferredValue, useMemo, useState } from "react";
-import { useTRPC } from "~/trpc/react";
 import { SkillDialog } from "./skill-dialog";
 import { SkillGrid } from "./skill-grid";
-import { SkillStatus } from "./skill-status";
 import type { Skill } from "./skills-types";
+import { useSkillsList } from "./use-skills-list";
 
 type SkillFilter = "all" | "invalid" | "valid";
 
 export function SkillsClient() {
-  const trpc = useTRPC();
-  const { data } = useSuspenseQuery(
-    trpc.org.workspace.skills.list.queryOptions(undefined, { staleTime: 0 })
-  );
+  const data = useSkillsList();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<SkillFilter>("all");
   const [skillParam, setSkillParam] = useQueryState("skill");
@@ -91,22 +85,6 @@ export function SkillsClient() {
             <SelectItem value="invalid">Invalid</SelectItem>
           </SelectContent>
         </Select>
-      </div>
-
-      <div className="mt-3 flex items-center justify-between gap-3">
-        <SkillStatus freshness={data.freshness} />
-        {data.repositoryUrl && (
-          <Button asChild size="lf" variant="ghost">
-            <a
-              href={data.repositoryUrl}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              Open repository
-              <ExternalLink className="size-3.5" />
-            </a>
-          </Button>
-        )}
       </div>
 
       {data.indexDiagnostics.length > 0 && (
