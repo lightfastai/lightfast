@@ -246,8 +246,15 @@ export const IsoFigure: React.FC<{ scene: IsoScene; width: number }> = ({
   const allPts: Vec2[] = [
     ...shapes.flatMap((s) => s.faces.flatMap((f) => f.contour)),
     ...(scene.shapes ?? []).flatMap((s) => s.faces.flatMap((f) => f.contour)),
+    ...(scene.guides ?? []).flatMap((g) => [project(...g.a), project(...g.b)]),
     ...logoDraw.flatMap((s) => s.pts),
   ];
+  const PAD = 8;
+  if (allPts.length === 0) {
+    return (
+      <svg aria-hidden="true" height={width} viewBox="0 0 1 1" width={width} />
+    );
+  }
   let minX = Number.POSITIVE_INFINITY,
     minY = Number.POSITIVE_INFINITY,
     maxX = Number.NEGATIVE_INFINITY,
@@ -266,7 +273,6 @@ export const IsoFigure: React.FC<{ scene: IsoScene; width: number }> = ({
       maxY = py;
     }
   }
-  const PAD = 8;
   const vx = minX - PAD;
   const vy = minY - PAD;
   const vw = maxX - minX + PAD * 2;
