@@ -38,13 +38,14 @@ import {
   ArrowUpRight,
   Loader2,
   MoreHorizontal,
+  PanelRight,
   RefreshCcw,
   Search,
 } from "lucide-react";
-import type { Route } from "next";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useQueryState } from "nuqs";
 import { useEffect, useMemo, useState } from "react";
 import { useTRPC } from "~/trpc/react";
+import { ConnectorDetailSheet } from "./connector-detail-sheet";
 import { ConnectorIcon } from "./connector-icons";
 import {
   type ConnectorCatalogRow,
@@ -99,9 +100,8 @@ export function ConnectorsClient({
 }: ConnectorsClientProps = {}) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const pathname = usePathname();
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const [selectedProvider, setSelectedProvider] = useQueryState("connector");
+  const [, setErrorParam] = useQueryState("error");
   const listQueryOptions = trpc.org.workspace.connectors.list.queryOptions();
   const { data: connectors } = useSuspenseQuery({
     ...listQueryOptions,
@@ -143,16 +143,14 @@ export function ConnectorsClient({
   );
 
   useEffect(() => {
-    if (callbackConnector || callbackError) {
-      const nextParams = new URLSearchParams(searchParams.toString());
-      nextParams.delete("connector");
-      nextParams.delete("error");
-      const queryString = nextParams.toString();
-      router.replace(
-        (queryString ? `${pathname}?${queryString}` : pathname) as Route
-      );
+    if (!callbackState.error) {
+      return;
     }
-  }, [callbackConnector, callbackError, pathname, router, searchParams]);
+    // A failed connect has no connection to show: clear both params so the
+    // sheet stays closed and the error banner does not re-trigger on refresh.
+    void setSelectedProvider(null);
+    void setErrorParam(null);
+  }, [callbackState.error, setErrorParam, setSelectedProvider]);
 
   const normalizedQuery = query.trim().toLowerCase();
   const filteredConnectors = useMemo(
@@ -192,6 +190,16 @@ export function ConnectorsClient({
     }
   }
 
+  function viewDetails(row: ConnectorCatalogRow) {
+    void setSelectedProvider(row.provider);
+  }
+
+  // Never open the sheet on a failed callback (handled by the cleanup effect).
+  const sheetProvider = callbackState.error ? null : selectedProvider;
+  const sheetRow = sheetProvider
+    ? connectors.find((row) => row.provider === sheetProvider && row.connection)
+    : undefined;
+
   const mutationPending =
     startConnectMutation.isPending ||
     refreshToolsMutation.isPending ||
@@ -218,12 +226,6 @@ export function ConnectorsClient({
           <p className="mt-1 text-destructive/85">{callbackState.error}</p>
         </div>
       )}
-      {callbackState.connector && !callbackState.error && (
-        <div className="mt-6 rounded-[9px] border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 text-emerald-600 text-sm">
-          {displayProviderName(callbackState.connector)} connected.
-        </div>
-      )}
-
       <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -271,6 +273,7 @@ export function ConnectorsClient({
                 onDisconnect={disconnect}
                 onRefreshTools={refreshTools}
                 onSetAutomationEnabled={setAutomationEnabled}
+                onViewDetails={viewDetails}
                 pending={mutationPending}
                 refreshing={
                   refreshToolsMutation.isPending &&
@@ -289,6 +292,15 @@ export function ConnectorsClient({
           )}
         </div>
       )}
+
+      <ConnectorDetailSheet
+        onOpenChange={(open) => {
+          if (!open) {
+            void setSelectedProvider(null);
+          }
+        }}
+        row={sheetRow}
+      />
     </div>
   );
 }
@@ -298,6 +310,7 @@ function ConnectedConnectorCard({
   onDisconnect,
   onRefreshTools,
   onSetAutomationEnabled,
+  onViewDetails,
   pending,
   refreshing,
   row,
@@ -306,6 +319,7 @@ function ConnectedConnectorCard({
   onDisconnect: (row: ConnectorCatalogRow) => void;
   onRefreshTools: (row: ConnectorCatalogRow) => void;
   onSetAutomationEnabled: (row: ConnectorCatalogRow, enabled: boolean) => void;
+  onViewDetails: (row: ConnectorCatalogRow) => void;
   pending: boolean;
   refreshing: boolean;
   row: ConnectorCatalogRow;
@@ -353,6 +367,11 @@ function ConnectedConnectorCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => onViewDetails(row)}>
+                <PanelRight className="size-3.5" />
+                View details
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 disabled={actionDisabled || refreshing}
                 onSelect={() => onRefreshTools(row)}

@@ -52,6 +52,15 @@ const startConnectMutateMock = vi.fn();
 const useMutationMock = vi.fn();
 const useSuspenseQueryMock = vi.fn();
 
+let connectorState: string | null = null;
+let errorState: string | null = null;
+const setConnectorMock = vi.fn((value: string | null) => {
+  connectorState = value;
+});
+const setErrorMock = vi.fn((value: string | null) => {
+  errorState = value;
+});
+
 let pathname = "/acme/connectors";
 let searchParams = new URLSearchParams();
 const capturedMutationOptions: Record<
@@ -129,6 +138,35 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: replaceMock }),
   useSearchParams: () => searchParams,
 }));
+
+vi.mock("nuqs", () => ({
+  useQueryState: (key: string) => {
+    if (key === "error") {
+      return [errorState, setErrorMock];
+    }
+    return [connectorState, setConnectorMock];
+  },
+}));
+
+vi.mock(
+  "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/connectors/_components/connector-detail-sheet",
+  () => ({
+    ConnectorDetailSheet: ({
+      onOpenChange,
+      row,
+    }: {
+      onOpenChange: (open: boolean) => void;
+      row?: { provider: string };
+    }) =>
+      row ? (
+        <div data-provider={row.provider} data-testid="connector-detail-sheet">
+          <button onClick={() => onOpenChange(false)} type="button">
+            close-sheet
+          </button>
+        </div>
+      ) : null,
+  })
+);
 
 vi.mock("@repo/ui/components/ui/alert-dialog", () => ({
   AlertDialog: ({ children }: { children?: ReactNode }) => (
@@ -345,6 +383,10 @@ beforeEach(() => {
   startConnectMutateMock.mockReset();
   useMutationMock.mockReset();
   useSuspenseQueryMock.mockReset();
+  connectorState = null;
+  errorState = null;
+  setConnectorMock.mockClear();
+  setErrorMock.mockClear();
   for (const key of Object.keys(capturedMutationOptions)) {
     delete capturedMutationOptions[key];
   }
@@ -508,7 +550,9 @@ describe("connectors page", () => {
     ).toBeVisible();
   });
 
-  it("renders callback errors inline and clears the callback URL", async () => {
+  it("renders callback errors inline and clears the callback params", async () => {
+    connectorState = "linear";
+    errorState = "access_denied";
     useSuspenseQueryMock.mockReturnValue({ data: [connectedLinear()] });
 
     render(
@@ -521,14 +565,14 @@ describe("connectors page", () => {
     expect(screen.getByText(/linear connection failed/i)).toBeVisible();
     expect(screen.getByText(/access_denied/i)).toBeVisible();
     await waitFor(() => {
-      expect(replaceMock).toHaveBeenCalledWith("/acme/connectors");
+      expect(setConnectorMock).toHaveBeenCalledWith(null);
+      expect(setErrorMock).toHaveBeenCalledWith(null);
     });
   });
 
-  it("clears only callback params and preserves unrelated query params", async () => {
-    searchParams = new URLSearchParams(
-      "connector=linear&error=access_denied&view=all"
-    );
+  it("does not open the detail sheet when a callback error is present", () => {
+    connectorState = "linear";
+    errorState = "access_denied";
     useSuspenseQueryMock.mockReturnValue({ data: [connectedLinear()] });
 
     render(
@@ -538,9 +582,7 @@ describe("connectors page", () => {
       />
     );
 
-    await waitFor(() => {
-      expect(replaceMock).toHaveBeenCalledWith("/acme/connectors?view=all");
-    });
+    expect(screen.queryByTestId("connector-detail-sheet")).toBeNull();
   });
 
   it("redirects same-tab after startConnect succeeds", () => {
@@ -582,5 +624,36 @@ describe("connectors page", () => {
     fireEvent.click(screen.getByRole("button", { name: /disconnect/i }));
     fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
     expect(disconnectMutateMock).toHaveBeenCalledWith({ provider: "linear" });
+  });
+
+  it("opens the detail sheet from the View details action", () => {
+    renderClient([connectedLinear()]);
+
+    fireEvent.click(screen.getByRole("button", { name: /view details/i }));
+    expect(setConnectorMock).toHaveBeenCalledWith("linear");
+  });
+
+  it("opens the detail sheet for the connector in the URL param", () => {
+    connectorState = "linear";
+    renderClient([connectedLinear()]);
+
+    const sheet = screen.getByTestId("connector-detail-sheet");
+    expect(sheet).toBeVisible();
+    expect(sheet).toHaveAttribute("data-provider", "linear");
+  });
+
+  it("does not open the detail sheet for an unconnected provider", () => {
+    connectorState = "linear";
+    renderClient([row()]);
+
+    expect(screen.queryByTestId("connector-detail-sheet")).toBeNull();
+  });
+
+  it("clears the connector param when the sheet is closed", () => {
+    connectorState = "linear";
+    renderClient([connectedLinear()]);
+
+    fireEvent.click(screen.getByRole("button", { name: "close-sheet" }));
+    expect(setConnectorMock).toHaveBeenCalledWith(null);
   });
 });
