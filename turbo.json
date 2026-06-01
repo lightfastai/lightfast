@@ -33,6 +33,10 @@
       "cache": false,
       "persistent": true
     },
+    "//#_x_emulator": {
+      "cache": false,
+      "persistent": true
+    },
     "//#check": {
       "inputs": ["$TURBO_DEFAULT$", "biome.jsonc"],
       "outputs": []
