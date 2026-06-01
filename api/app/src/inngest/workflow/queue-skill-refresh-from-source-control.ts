@@ -2,6 +2,7 @@ import { matchesAnyWatchedPath } from "@repo/source-control-contract";
 
 import { inngest } from "../client";
 import { appEvents } from "../schemas/app";
+import { createSkillRefreshDedupeKey } from "./skill-refresh-event";
 
 export function shouldQueueSkillRefreshFromPush(input: {
   changedPaths: string[];
@@ -33,6 +34,11 @@ export const queueSkillRefreshFromSourceControl = inngest.createFunction(
     await step.sendEvent("queue skill index refresh", {
       name: "app/skills.index.refresh.requested",
       data: {
+        dedupeKey: createSkillRefreshDedupeKey({
+          reason: "webhook",
+          sourceControlRepositoryId: event.data.repositoryWatchId,
+          targetCommitSha: event.data.afterSha,
+        }),
         reason: "webhook" as const,
         sourceControlRepositoryId: event.data.repositoryWatchId,
         targetCommitSha: event.data.afterSha,

@@ -41,6 +41,7 @@ export const appEvents = {
     "app/skills.index.refresh.requested",
     {
       schema: z.object({
+        dedupeKey: z.string().min(1),
         reason: z.enum(["schedule", "setup", "webhook"]),
         sourceControlRepositoryId: z.number().int().positive(),
         targetCommitSha: z.string().min(1).optional(),

@@ -21,6 +21,7 @@ import {
   deriveOrgSetupGate,
   hasMatchingGitHubLightfastRepositoryProof,
 } from "../../../auth/org-setup-gate";
+import { createSkillRefreshDedupeKey } from "../../../inngest/workflow/skill-refresh-event";
 import { getGitHubAppConfig } from "../config";
 
 export class GitHubLightfastRepositorySetupError extends Error {
@@ -78,6 +79,10 @@ async function enqueueInitialSkillRefresh(input: {
     await inngest.send({
       name: "app/skills.index.refresh.requested",
       data: {
+        dedupeKey: createSkillRefreshDedupeKey({
+          reason: "setup",
+          sourceControlRepositoryId: input.sourceControlRepositoryId,
+        }),
         reason: "setup",
         sourceControlRepositoryId: input.sourceControlRepositoryId,
       },

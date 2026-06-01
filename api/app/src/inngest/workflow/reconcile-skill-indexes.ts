@@ -1,5 +1,6 @@
 import { findChangedSkillIndexSources } from "../../services/skills";
 import { inngest } from "../client";
+import { createSkillRefreshDedupeKey } from "./skill-refresh-event";
 
 const RECONCILE_REFRESH_LIMIT = 100;
 const RECONCILE_TOTAL_LIMIT = 1000;
@@ -29,6 +30,11 @@ export const reconcileSkillIndexes = inngest.createFunction(
         {
           name: "app/skills.index.refresh.requested",
           data: {
+            dedupeKey: createSkillRefreshDedupeKey({
+              reason: "schedule",
+              sourceControlRepositoryId: source.sourceControlRepositoryId,
+              targetCommitSha: source.targetCommitSha,
+            }),
             reason: "schedule" as const,
             sourceControlRepositoryId: source.sourceControlRepositoryId,
             targetCommitSha: source.targetCommitSha,

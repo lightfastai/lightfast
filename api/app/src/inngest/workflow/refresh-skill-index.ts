@@ -5,8 +5,7 @@ import { appEvents } from "../schemas/app";
 export const refreshSkillIndex = inngest.createFunction(
   {
     id: "refresh-skill-index",
-    idempotency:
-      'event.data.targetCommitSha ? event.data.sourceControlRepositoryId + "-" + event.data.targetCommitSha : event.id',
+    idempotency: "event.data.dedupeKey",
     retries: 2,
     timeouts: {
       finish: "30s",

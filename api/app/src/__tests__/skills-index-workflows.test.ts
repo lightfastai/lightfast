@@ -17,6 +17,7 @@ type Step = ReturnType<typeof createStep>;
 type RefreshCallback = (input: {
   event: {
     data: {
+      dedupeKey: string;
       reason: "schedule" | "setup" | "webhook";
       sourceControlRepositoryId: number;
       targetCommitSha?: string;
@@ -119,10 +120,8 @@ const { refreshSkillIndex } = await import(
 const { reconcileSkillIndexes } = await import(
   "../inngest/workflow/reconcile-skill-indexes"
 );
-const {
-  queueSkillRefreshFromSourceControl,
-  shouldQueueSkillRefreshFromPush,
-} = await import("../inngest/workflow/queue-skill-refresh-from-source-control");
+const { queueSkillRefreshFromSourceControl, shouldQueueSkillRefreshFromPush } =
+  await import("../inngest/workflow/queue-skill-refresh-from-source-control");
 const { verifyGitHubLightfastRepositorySetup } = await import(
   "../services/github/setup/lightfast-repository"
 );
@@ -143,6 +142,7 @@ function runRefresh(step: Step) {
   return refreshCallback({
     event: {
       data: {
+        dedupeKey: "9-abc123",
         reason: "webhook",
         sourceControlRepositoryId: 9,
         targetCommitSha: "abc123",
@@ -239,8 +239,7 @@ describe("skills index Inngest workflows", () => {
     expect(createFunctionMock).toHaveBeenCalledWith(
       {
         id: "refresh-skill-index",
-        idempotency:
-          'event.data.targetCommitSha ? event.data.sourceControlRepositoryId + "-" + event.data.targetCommitSha : event.id',
+        idempotency: "event.data.dedupeKey",
         retries: 2,
         timeouts: { finish: "30s", start: "2m" },
         triggers: expect.objectContaining({
@@ -301,6 +300,7 @@ describe("skills index Inngest workflows", () => {
     expect(step.sendEvent).toHaveBeenCalledWith("queue skill index refresh", {
       name: "app/skills.index.refresh.requested",
       data: {
+        dedupeKey: "9-abc123",
         reason: "webhook",
         sourceControlRepositoryId: 9,
         targetCommitSha: "abc123",
@@ -341,6 +341,7 @@ describe("skills index Inngest workflows", () => {
       {
         name: "app/skills.index.refresh.requested",
         data: {
+          dedupeKey: "42-def456",
           reason: "schedule",
           sourceControlRepositoryId: 42,
           targetCommitSha: "def456",
@@ -370,6 +371,7 @@ describe("skills index Inngest workflows", () => {
       {
         name: "app/skills.index.refresh.requested",
         data: {
+          dedupeKey: "100-sha-100",
           reason: "schedule",
           sourceControlRepositoryId: 100,
           targetCommitSha: "sha-100",
@@ -398,6 +400,7 @@ describe("skills index Inngest workflows", () => {
     expect(sendMock).toHaveBeenCalledWith({
       name: "app/skills.index.refresh.requested",
       data: {
+        dedupeKey: "42-setup",
         reason: "setup",
         sourceControlRepositoryId: 42,
       },
