@@ -108,6 +108,10 @@ function resolveMarkdownHref(input: {
     return null;
   }
 
+  if (!input.sourceUrlBase.trim()) {
+    return null;
+  }
+
   const sourceDir = input.sourcePath.split("/").slice(0, -1).join("/");
   const normalizedPath = normalizeRelativePath(sourceDir, href);
 
