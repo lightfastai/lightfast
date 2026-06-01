@@ -45,6 +45,47 @@ const repositoryResponseSchema = z.object({
   }),
 });
 
+const installationRepositoriesResponseSchema = z.object({
+  repositories: z.array(
+    z.object({
+      full_name: z.string().min(1),
+      id: z.union([z.number(), z.string().min(1)]),
+      name: z.string().min(1),
+      owner: z.object({
+        id: z.union([z.number(), z.string().min(1)]),
+        login: z.string().min(1),
+      }),
+      private: z.boolean(),
+    })
+  ),
+  total_count: z.number().int().min(0).optional(),
+});
+
+function normalizeGitHubPerPage(value: number | undefined) {
+  if (value === undefined || !Number.isFinite(value)) {
+    return 100;
+  }
+
+  return Math.min(100, Math.max(1, Math.trunc(value)));
+}
+
+function normalizeGitHubPage(value: number | undefined) {
+  if (value === undefined || !Number.isFinite(value)) {
+    return 1;
+  }
+
+  return Math.max(1, Math.trunc(value));
+}
+
+export interface GitHubInstallationRepository {
+  fullName: string;
+  id: string;
+  name: string;
+  ownerId: string;
+  ownerLogin: string;
+  private: boolean;
+}
+
 async function getJson(input: {
   apiVersion?: string;
   fetch?: typeof fetch;
@@ -70,6 +111,51 @@ async function getJson(input: {
     );
   }
   return json;
+}
+
+export async function listGitHubInstallationRepositories(input: {
+  apiBaseUrl?: string;
+  apiVersion?: string;
+  fetch?: typeof fetch;
+  installationToken: string;
+  page?: number;
+  perPage?: number;
+}): Promise<{
+  repositories: GitHubInstallationRepository[];
+  totalCount?: number;
+}> {
+  const apiBaseUrl = normalizeGitHubApiBaseUrl(input.apiBaseUrl);
+  const page = normalizeGitHubPage(input.page);
+  const perPage = normalizeGitHubPerPage(input.perPage);
+  const url = new URL("/installation/repositories", apiBaseUrl);
+  url.searchParams.set("per_page", String(perPage));
+  url.searchParams.set("page", String(page));
+
+  const json = await getJson({
+    apiVersion: input.apiVersion,
+    fetch: input.fetch,
+    installationToken: input.installationToken,
+    url,
+  });
+  const parsed = installationRepositoriesResponseSchema.safeParse(json);
+  if (!parsed.success) {
+    throw new GitHubAppNodeError(
+      "GITHUB_API_RESPONSE_INVALID",
+      "GitHub installation repositories response was invalid."
+    );
+  }
+
+  return {
+    repositories: parsed.data.repositories.map((repository) => ({
+      fullName: repository.full_name,
+      id: String(repository.id),
+      name: repository.name,
+      ownerId: String(repository.owner.id),
+      ownerLogin: repository.owner.login,
+      private: repository.private,
+    })),
+    totalCount: parsed.data.total_count,
+  };
 }
 
 export async function getGitHubCommit(input: {

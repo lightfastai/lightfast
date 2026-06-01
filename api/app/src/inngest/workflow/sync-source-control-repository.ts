@@ -58,6 +58,26 @@ export const syncGitHubSourceControlRepository = inngest.createFunction(
       return { status: "missing-watch" as const };
     }
 
+    if (watch.syncStatus !== "enabled") {
+      await step.run("mark source control delivery ignored", () =>
+        markSourceControlWebhookDeliveryStatusOrThrow({
+          deliveryId: event.data.deliveryId,
+          status: "ignored",
+        })
+      );
+      return { status: "disabled-watch" as const };
+    }
+
+    if (watch.watchedPathGlobs === null) {
+      await step.run("mark source control delivery ignored", () =>
+        markSourceControlWebhookDeliveryStatusOrThrow({
+          deliveryId: event.data.deliveryId,
+          status: "ignored",
+        })
+      );
+      return { status: "unwatched-repository" as const };
+    }
+
     const binding = await step.run("load source control binding", () =>
       getOrgBindingByProviderInstallation(db, {
         provider: "github",

@@ -8,12 +8,27 @@ export const SOURCE_CONTROL_WEBHOOK_DELIVERY_STATUSES = [
   "failed",
 ] as const;
 
+export const SOURCE_CONTROL_REPOSITORY_SYNC_STATUSES = [
+  "enabled",
+  "disabled",
+] as const;
+
+export const SOURCE_CONTROL_ALL_PATHS_GLOB = "**" as const;
+
 export const sourceControlWebhookDeliveryStatusSchema = z.enum(
   SOURCE_CONTROL_WEBHOOK_DELIVERY_STATUSES
 );
 
+export const sourceControlRepositorySyncStatusSchema = z.enum(
+  SOURCE_CONTROL_REPOSITORY_SYNC_STATUSES
+);
+
 export type SourceControlWebhookDeliveryStatus = z.infer<
   typeof sourceControlWebhookDeliveryStatusSchema
+>;
+
+export type SourceControlRepositorySyncStatus = z.infer<
+  typeof sourceControlRepositorySyncStatusSchema
 >;
 
 const sha1Schema = z
@@ -25,6 +40,10 @@ const repositoryFullNameSchema = z
   .regex(/^[^/\s]+\/[^/\s]+$/, "Expected repository full name as owner/repo");
 
 function isSupportedWatchedPathPattern(pattern: string): boolean {
+  if (pattern === SOURCE_CONTROL_ALL_PATHS_GLOB) {
+    return true;
+  }
+
   if (!pattern.includes("*")) {
     return pattern.length > 0;
   }
@@ -75,6 +94,10 @@ export function splitRepositoryFullName(fullName: string): {
 }
 
 function matchesSinglePattern(path: string, pattern: string): boolean {
+  if (pattern === SOURCE_CONTROL_ALL_PATHS_GLOB) {
+    return path.length > 0;
+  }
+
   if (pattern.endsWith("/**")) {
     const prefix = pattern.slice(0, -3);
     return path === prefix || path.startsWith(`${prefix}/`);

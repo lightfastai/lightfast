@@ -93,6 +93,13 @@ export function createGitHubEmulatorSeed(
         language: "TypeScript",
         auto_init: true,
       },
+      {
+        owner: GITHUB_EMULATOR_FIXTURES.githubOrgLogin,
+        name: "api-service",
+        private: false,
+        language: "TypeScript",
+        auto_init: true,
+      },
     ],
     oauth_apps: [
       {

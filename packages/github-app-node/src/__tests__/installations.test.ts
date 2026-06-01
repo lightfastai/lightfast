@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  getGitHubAppInstallation,
   listGitHubUserAccessibleInstallations,
   verifyGitHubUserInstallation,
 } from "../installations";
@@ -370,6 +371,65 @@ describe("GitHub user-accessible installation verification", () => {
         expectedInstallationId: "1001",
         fetch: fetchMock,
         userAccessToken: "gho_test",
+      })
+    ).rejects.toMatchObject({ code: "INSTALLATION_NOT_VERIFIED" });
+  });
+
+  it("fetches current app installation metadata with app authentication", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        id: 1001,
+        account: { id: 20, login: "lightfast-emulated", type: "Organization" },
+        app_id: 424_242,
+        app_slug: "lightfast-local",
+        events: ["push"],
+        html_url: "https://github.com/settings/installations/1001",
+        permissions: { contents: "read" },
+        repository_selection: "all",
+        target_type: "Organization",
+      })
+    );
+
+    await expect(
+      getGitHubAppInstallation({
+        apiBaseUrl: "https://github.lightfast.localhost",
+        appJwt: "app.jwt",
+        fetch: fetchMock,
+        installationId: "1001",
+      })
+    ).resolves.toEqual({
+      account: {
+        id: "20",
+        login: "lightfast-emulated",
+        type: "Organization",
+      },
+      htmlUrl: "https://github.com/settings/installations/1001",
+      id: "1001",
+      targetType: "Organization",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://github.lightfast.localhost/app/installations/1001",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          accept: "application/vnd.github+json",
+          authorization: "Bearer app.jwt",
+        }),
+      })
+    );
+  });
+
+  it("rejects invalid current installation responses", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({ id: 1001, account: null })
+    );
+
+    await expect(
+      getGitHubAppInstallation({
+        apiBaseUrl: "https://github.lightfast.localhost",
+        appJwt: "app.jwt",
+        fetch: fetchMock,
+        installationId: "1001",
       })
     ).rejects.toMatchObject({ code: "INSTALLATION_NOT_VERIFIED" });
   });

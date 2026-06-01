@@ -141,6 +141,8 @@ export {
   getSourceControlWebhookDeliveryByDeliveryId,
   getWatchedSourceControlRepository,
   getWatchedSourceControlRepositoryById,
+  insertWatchedSourceControlRepository,
+  listWatchedSourceControlRepositories,
   markSourceControlWebhookDeliveryStatus,
   type RecordSourceControlWebhookDeliveryReceivedResult,
   recordSourceControlWebhookDeliveryReceived,
