@@ -1,5 +1,5 @@
 import type { SkillDiagnostic } from "@repo/skills-contract";
-import { and, asc, eq, getTableColumns, isNull, lte, or } from "drizzle-orm";
+import { and, asc, eq, getTableColumns, isNull, lt, or } from "drizzle-orm";
 
 import type { Database } from "../client";
 import type {
@@ -114,7 +114,7 @@ export async function acquireSkillIndexRefreshLock(
         eq(skillIndexStates.id, input.stateId),
         or(
           isNull(skillIndexStates.refreshLockedUntil),
-          lte(skillIndexStates.refreshLockedUntil, input.now)
+          lt(skillIndexStates.refreshLockedUntil, input.now)
         )
       )
     );

@@ -116,7 +116,7 @@ describe("skill index helpers", () => {
     const query = renderSql(where.mock.calls[0]?.[0]);
     expect(query.sql).toContain("`id` = ?");
     expect(query.sql).toContain("`refresh_locked_until` is null");
-    expect(query.sql).toContain("`refresh_locked_until` <= ?");
+    expect(query.sql).toContain("`refresh_locked_until` < ?");
     expect(query.params).toEqual(
       expect.arrayContaining([12, "2026-06-01 00:00:00.000"])
     );
