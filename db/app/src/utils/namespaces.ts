@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { lightfastHandleSchema } from "@repo/app-validation";
 import { and, eq } from "drizzle-orm";
 import { createMachine, transition } from "xstate";
@@ -149,21 +148,6 @@ export interface StartNamespaceOperationInput {
   ownerKind: NamespaceKind;
   toHandle: string;
 }
-
-export interface BackfillExistingNamespaceInput {
-  clerkOrgId?: string | null;
-  clerkUserId?: string | null;
-  handle: string;
-  kind: NamespaceKind;
-}
-
-export type BackfillExistingNamespaceResult =
-  | { namespace: Namespace; status: "already_active" }
-  | {
-      namespace: Namespace;
-      operation: NamespaceOperation;
-      status: "backfilled";
-    };
 
 type NamespaceOperationIdempotencyInput = Pick<
   StartNamespaceOperationInput,
@@ -332,88 +316,6 @@ export async function startNamespaceOperation(
     });
     return existing;
   }
-}
-
-export async function backfillExistingNamespace(
-  db: Database,
-  input: BackfillExistingNamespaceInput
-): Promise<BackfillExistingNamespaceResult> {
-  const handle = lightfastHandleSchema.parse(input.handle);
-  const owner = getBackfillOwner(input);
-
-  const existingByHandle = await getActiveNamespaceByHandle(db, handle);
-  if (existingByHandle) {
-    if (isNamespaceOwnedByBackfillInput(existingByHandle, input)) {
-      return { namespace: existingByHandle, status: "already_active" };
-    }
-
-    throw new NamespaceConflictError(
-      "HANDLE_ALREADY_CLAIMED",
-      `Handle ${handle} is already claimed`
-    );
-  }
-
-  const existingByOwner = await getClaimedNamespaceForOwner(db, {
-    clerkOrgId: owner.clerkOrgId,
-    clerkUserId: owner.clerkUserId,
-    ownerKind: input.kind,
-  });
-  if (existingByOwner) {
-    throw new NamespaceConflictError(
-      "OWNER_ALREADY_CLAIMED",
-      "Owner already has a claimed namespace handle"
-    );
-  }
-
-  let operation = await startNamespaceOperation(db, {
-    clerkOrgId: owner.clerkOrgId,
-    clerkUserId: owner.clerkUserId,
-    idempotencyKey: buildBackfillIdempotencyKey({
-      handle,
-      kind: input.kind,
-      ownerId: owner.clerkUserId ?? owner.clerkOrgId,
-    }),
-    operationType: "backfill_existing_handle",
-    ownerKind: input.kind,
-    toHandle: handle,
-  });
-
-  if (operation.status === "failed") {
-    throw new NamespaceConflictError(
-      (operation.errorCode as NamespaceConflictCode | null) ??
-        "HANDLE_ALREADY_CLAIMED",
-      operation.errorMessage ?? `Failed to backfill handle ${handle}`
-    );
-  }
-
-  if (operation.status === "started") {
-    operation = await reserveNamespaceForOperation(db, operation);
-  }
-
-  if (operation.status === "namespace_reserved") {
-    operation = await markNamespaceOperationClerkApplied(db, operation);
-  }
-
-  if (operation.status === "clerk_applied") {
-    operation = await finalizeNamespaceOperation(db, operation);
-  }
-
-  if (operation.status !== "finalized") {
-    throw new Error(
-      `Unexpected namespace backfill operation status: ${operation.status}`
-    );
-  }
-
-  const namespace = await getActiveNamespaceByHandle(db, handle);
-  if (!(namespace && isNamespaceOwnedByBackfillInput(namespace, input))) {
-    throw new Error(`Failed to load backfilled namespace ${handle}`);
-  }
-
-  return {
-    namespace,
-    operation,
-    status: "backfilled",
-  };
 }
 
 type NamespaceReservationResult =
@@ -726,29 +628,6 @@ function isSameNamespaceOwner(
   );
 }
 
-function isNamespaceOwnedByBackfillInput(
-  namespace: Namespace,
-  input: BackfillExistingNamespaceInput
-) {
-  if (namespace.kind !== input.kind) {
-    return false;
-  }
-
-  if (input.kind === "user") {
-    return (
-      !!input.clerkUserId &&
-      (namespace.clerkUserId === input.clerkUserId ||
-        namespace.claimedClerkUserId === input.clerkUserId)
-    );
-  }
-
-  return (
-    !!input.clerkOrgId &&
-    (namespace.clerkOrgId === input.clerkOrgId ||
-      namespace.claimedClerkOrgId === input.clerkOrgId)
-  );
-}
-
 function getNamespaceFinalizationPatch(operation: NamespaceOperation) {
   if (operation.ownerKind === "user") {
     if (!operation.clerkUserId) {
@@ -833,34 +712,4 @@ function assertSameOperationInput(
       "This namespace operation key was already used with different input"
     );
   }
-}
-
-function getBackfillOwner(input: BackfillExistingNamespaceInput) {
-  if (input.kind === "user") {
-    if (!input.clerkUserId) {
-      throw new Error("User namespace backfill requires clerkUserId");
-    }
-    return { clerkOrgId: null, clerkUserId: input.clerkUserId };
-  }
-
-  if (!input.clerkOrgId) {
-    throw new Error("Org namespace backfill requires clerkOrgId");
-  }
-  return { clerkOrgId: input.clerkOrgId, clerkUserId: null };
-}
-
-function buildBackfillIdempotencyKey(input: {
-  handle: string;
-  kind: NamespaceKind;
-  ownerId: string | null;
-}) {
-  if (!input.ownerId) {
-    throw new Error("Namespace backfill idempotency requires an owner id");
-  }
-
-  const digest = createHash("sha256")
-    .update(`${input.kind}:${input.ownerId}:${input.handle}`)
-    .digest("hex")
-    .slice(0, 40);
-  return `bf:${input.kind}:${digest}`;
 }
