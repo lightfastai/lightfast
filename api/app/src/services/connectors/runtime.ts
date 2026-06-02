@@ -133,20 +133,22 @@ async function callConnectorRuntimeTool(
         caller.calledByKind === "automation" ? "automation" : "system",
     });
 
-    if (providerRoutineCall) {
-      await safelyMarkProviderRoutineCallProviderAttempted(
-        {
-          clerkOrgId: context.clerkOrgId,
-          publicId: providerRoutineCall.publicId,
-        },
-        logContext
-      );
-    }
-
     const result =
       context.provider === "linear"
-        ? await callLinearRuntimeTool(input, connection, context)
-        : await callXRuntimeTool(input, connection, context);
+        ? await callLinearRuntimeTool(
+            input,
+            connection,
+            context,
+            providerRoutineCall,
+            logContext
+          )
+        : await callXRuntimeTool(
+            input,
+            connection,
+            context,
+            providerRoutineCall,
+            logContext
+          );
 
     if (providerRoutineCall) {
       await safelyMarkProviderRoutineCallSucceeded(
@@ -303,12 +305,23 @@ async function safelyMarkProviderRoutineCallFailed(
 async function callLinearRuntimeTool(
   input: unknown,
   connection: OrgConnectorConnection,
-  context: RuntimeToolCallContext
+  context: RuntimeToolCallContext,
+  providerRoutineCall: ProviderRoutineCall | null,
+  logContext: Record<string, unknown>
 ) {
   const accessToken = await getFreshLinearConnectorAccessToken({
     connection,
     db: appDb,
   });
+  if (providerRoutineCall) {
+    await safelyMarkProviderRoutineCallProviderAttempted(
+      {
+        clerkOrgId: context.clerkOrgId,
+        publicId: providerRoutineCall.publicId,
+      },
+      logContext
+    );
+  }
   return await callLinearMcpTool({
     accessToken,
     endpoint: connection.mcpEndpoint,
@@ -320,7 +333,9 @@ async function callLinearRuntimeTool(
 async function callXRuntimeTool(
   input: unknown,
   connection: OrgConnectorConnection,
-  context: RuntimeToolCallContext
+  context: RuntimeToolCallContext,
+  providerRoutineCall: ProviderRoutineCall | null,
+  logContext: Record<string, unknown>
 ) {
   const mcpToken = await issueConnectorMcpToken({
     clerkOrgId: context.clerkOrgId,
@@ -329,6 +344,15 @@ async function callXRuntimeTool(
     purpose: "call",
     toolName: context.providerToolName,
   });
+  if (providerRoutineCall) {
+    await safelyMarkProviderRoutineCallProviderAttempted(
+      {
+        clerkOrgId: context.clerkOrgId,
+        publicId: providerRoutineCall.publicId,
+      },
+      logContext
+    );
+  }
   return await callXBridgeMcpTool({
     endpoint: connection.mcpEndpoint,
     input: normalizeMcpToolInput(input),

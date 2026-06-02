@@ -398,6 +398,7 @@ function connectedX(
     availableForAutomations: true,
     connection: {
       connectedAt: new Date("2026-06-01T00:00:00.000Z"),
+      enabledForAgents: true,
       enabledForAutomations: true,
       lastToolRefreshAt: new Date("2026-06-01T00:00:00.000Z"),
       lastToolRefreshErrorAt: null,
@@ -408,6 +409,7 @@ function connectedX(
       tools: [
         {
           availableForAutomations: true,
+          availableForAgents: true,
           description: "Look up account",
           name: "getUsersByUsername",
         },
@@ -710,7 +712,6 @@ describe("connectors page", () => {
     expect(startConnectMutateMock).toHaveBeenCalledWith({ provider: "x" });
   });
 
-  it("calls refresh, toggle, and disconnect mutations from the connected card", () => {
   it("calls refresh, toggle, and disconnect mutations from the connected card", () => {
     useSuspenseQueryMock.mockReturnValue({ data: [connectedLinear()] });
 

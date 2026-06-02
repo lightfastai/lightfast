@@ -66,6 +66,7 @@ function connection(
     encryptedAccessToken: "encrypted_x_access",
     encryptedRefreshToken: "encrypted_x_refresh",
     enabledForAutomations: true,
+    enabledForAgents: true,
     id: 42,
     lastToolRefreshAt: new Date("2026-06-01T00:00:00.000Z"),
     lastToolRefreshErrorAt: null,
