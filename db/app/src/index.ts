@@ -157,9 +157,6 @@ export {
   rotateMcpRefreshToken,
 } from "./utils/mcp-oauth";
 export {
-  type BackfillExistingNamespaceInput,
-  type BackfillExistingNamespaceResult,
-  backfillExistingNamespace,
   deletePreClerkNamespaceReservation,
   failUnreservedNamespaceOperation,
   finalizeNamespaceOperation,
