@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Database } from "../client";
 import {
-  createIntegrationCall,
-  listIntegrationCalls,
-  markIntegrationCallFailed,
-  markIntegrationCallSucceeded,
-} from "../utils/integration-calls";
+  createProviderRoutineCall,
+  listProviderRoutineCalls,
+  markProviderRoutineCallFailed,
+  markProviderRoutineCallProviderAttempted,
+  markProviderRoutineCallSucceeded,
+} from "../utils/provider-routine-calls";
 
 const startedAt = new Date("2026-06-02T00:00:00.000Z");
 const finishedAt = new Date("2026-06-02T00:01:00.000Z");
@@ -64,22 +65,26 @@ function collectColumnNames(value: unknown, seen = new WeakSet<object>()) {
   return names;
 }
 
-describe("integration call helpers", () => {
-  it("lists recent integration calls for one org", async () => {
+describe("provider routine call helpers", () => {
+  it("lists recent provider routine calls for one org", async () => {
     const rows = [
       {
         id: 2,
-        publicId: "integration_call_new",
+        publicId: "provider_routine_call_new",
         clerkOrgId: "org_123",
         calledByKind: "automation",
         calledById: "run_new",
         calledByUserId: null,
         provider: "linear",
-        routineName: "linear__create_issue",
+        routineId: "linear__create_issue",
         providerToolName: "create_issue",
-        connectorConnectionId: 42,
+        providerConnectionId: 42,
         providerWorkspaceId: "workspace_123",
         providerActorId: "actor_123",
+        providerAttempted: true,
+        sourceClientId: "client_123",
+        sourceRef: "grant_123",
+        sourceSurface: "hosted_mcp",
         status: "succeeded",
         inputRedacted: { present: true },
         outputRedacted: { present: true },
@@ -97,7 +102,7 @@ describe("integration call helpers", () => {
     } as unknown as Database;
 
     await expect(
-      listIntegrationCalls(db, {
+      listProviderRoutineCalls(db, {
         clerkOrgId: "org_123",
         limit: 2,
       })
@@ -111,20 +116,24 @@ describe("integration call helpers", () => {
     expect(spies.limit).toHaveBeenCalledWith(2);
   });
 
-  it("creates running integration calls with a generated public id", async () => {
+  it("creates running provider routine calls with a generated public id", async () => {
     const inserted = {
       id: 1,
-      publicId: "integration_call_123e4567-e89b-12d3-a456-426614174000",
+      publicId: "provider_routine_call_123e4567-e89b-12d3-a456-426614174000",
       clerkOrgId: "org_123",
       calledByKind: "automation",
       calledById: "run_123",
       calledByUserId: null,
       provider: "linear",
-      routineName: "linear__create_issue",
+      routineId: "linear__create_issue",
       providerToolName: "create_issue",
-      connectorConnectionId: 42,
+      providerConnectionId: 42,
       providerWorkspaceId: "workspace_123",
       providerActorId: "actor_123",
+      providerAttempted: false,
+      sourceClientId: null,
+      sourceRef: "run_123",
+      sourceSurface: "automation",
       status: "running",
       inputRedacted: { present: true },
       outputRedacted: null,
@@ -144,22 +153,25 @@ describe("integration call helpers", () => {
     } as unknown as Database;
 
     await expect(
-      createIntegrationCall(db, {
+      createProviderRoutineCall(db, {
         calledById: "run_123",
         calledByKind: "automation",
         calledByUserId: null,
         clerkOrgId: "org_123",
-        connectorConnectionId: 42,
+        providerConnectionId: 42,
         inputRedacted: { present: true },
         provider: "linear",
         providerActorId: "actor_123",
         providerToolName: "create_issue",
         providerWorkspaceId: "workspace_123",
-        routineName: "linear__create_issue",
+        routineId: "linear__create_issue",
+        sourceClientId: null,
+        sourceRef: "run_123",
+        sourceSurface: "automation",
         startedAt,
       })
     ).resolves.toMatchObject({
-      publicId: expect.stringMatching(/^integration_call_[0-9a-f-]{36}$/),
+      publicId: expect.stringMatching(/^provider_routine_call_[0-9a-f-]{36}$/),
       status: "running",
     });
 
@@ -168,20 +180,24 @@ describe("integration call helpers", () => {
         calledById: "run_123",
         calledByKind: "automation",
         clerkOrgId: "org_123",
-        connectorConnectionId: 42,
+        providerConnectionId: 42,
         inputRedacted: { present: true },
         provider: "linear",
         providerActorId: "actor_123",
+        providerAttempted: false,
         providerToolName: "create_issue",
         providerWorkspaceId: "workspace_123",
-        publicId: expect.stringMatching(/^integration_call_/),
-        routineName: "linear__create_issue",
+        publicId: expect.stringMatching(/^provider_routine_call_/),
+        routineId: "linear__create_issue",
+        sourceClientId: null,
+        sourceRef: "run_123",
+        sourceSurface: "automation",
         status: "running",
       })
     );
   });
 
-  it("marks running integration calls as succeeded", async () => {
+  it("marks running provider routine calls as provider attempted", async () => {
     const whereMock = vi.fn((_condition: unknown) =>
       Promise.resolve({ affectedRows: 1 })
     );
@@ -191,11 +207,39 @@ describe("integration call helpers", () => {
     } as unknown as Database;
 
     await expect(
-      markIntegrationCallSucceeded(db, {
+      markProviderRoutineCallProviderAttempted(db, {
+        clerkOrgId: "org_123",
+        publicId: "provider_routine_call_123",
+      })
+    ).resolves.toBe(true);
+
+    expect(setMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        providerAttempted: true,
+      })
+    );
+    const whereCondition = whereMock.mock.calls[0]?.[0];
+    const columnNames = collectColumnNames(whereCondition);
+    expect(columnNames).toContain("clerk_org_id");
+    expect(columnNames).toContain("public_id");
+    expect(columnNames).toContain("status");
+  });
+
+  it("marks running provider routine calls as succeeded", async () => {
+    const whereMock = vi.fn((_condition: unknown) =>
+      Promise.resolve({ affectedRows: 1 })
+    );
+    const setMock = vi.fn(() => ({ where: whereMock }));
+    const db = {
+      update: vi.fn(() => ({ set: setMock })),
+    } as unknown as Database;
+
+    await expect(
+      markProviderRoutineCallSucceeded(db, {
         clerkOrgId: "org_123",
         finishedAt,
         outputRedacted: { present: true },
-        publicId: "integration_call_123",
+        publicId: "provider_routine_call_123",
       })
     ).resolves.toBe(true);
 
@@ -215,7 +259,7 @@ describe("integration call helpers", () => {
     expect(columnNames).toContain("status");
   });
 
-  it("marks running integration calls as failed with safe errors", async () => {
+  it("marks running provider routine calls as failed with safe errors", async () => {
     const whereMock = vi.fn((_condition: unknown) =>
       Promise.resolve({ affectedRows: 1 })
     );
@@ -225,12 +269,12 @@ describe("integration call helpers", () => {
     } as unknown as Database;
 
     await expect(
-      markIntegrationCallFailed(db, {
+      markProviderRoutineCallFailed(db, {
         clerkOrgId: "org_123",
         errorCode: "LINEAR_MCP_FAILED",
         errorMessage: "Linear MCP tool call failed.",
         finishedAt,
-        publicId: "integration_call_123",
+        publicId: "provider_routine_call_123",
       })
     ).resolves.toBe(true);
 

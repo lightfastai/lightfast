@@ -4,8 +4,11 @@ import { CliAuthError } from "./auth/errors";
 import { login as defaultLogin } from "./auth/login-flow";
 import { clearSession, type SessionStoreLike } from "./auth/session";
 import { SessionStore } from "./auth/store";
+import { registerProxyCommands } from "./proxy/commands";
 
 interface ProgramDeps {
+  appUrl?: string;
+  fetchImpl?: typeof fetch;
   login?: (input?: Record<string, never>) => Promise<NativeSession>;
   stdout?: NodeJS.WritableStream;
   store?: SessionStoreLike;
@@ -74,6 +77,13 @@ export function createProgram(deps: ProgramDeps = {}) {
       await clearSession(store);
       write(deps.stdout, "Logged out of Lightfast.\n");
     });
+
+  registerProxyCommands(program, {
+    appUrl: deps.appUrl,
+    fetchImpl: deps.fetchImpl,
+    stdout: deps.stdout,
+    store,
+  });
 
   return program;
 }

@@ -22,6 +22,7 @@ function connectedRow(): ConnectorCatalogRow {
     connectAvailability: { status: "available" },
     connection: {
       connectedAt: new Date("2026-06-01T00:00:00.000Z"),
+      enabledForAgents: false,
       enabledForAutomations: true,
       lastToolRefreshAt: new Date("2026-06-01T00:00:00.000Z"),
       lastToolRefreshErrorAt: null,
@@ -31,6 +32,7 @@ function connectedRow(): ConnectorCatalogRow {
       status: "active",
       tools: [
         {
+          availableForAgents: false,
           availableForAutomations: true,
           description: "Create a Linear issue",
           name: "create_issue",

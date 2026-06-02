@@ -12,6 +12,15 @@ import {
   formatMcpSuccess,
   type LightfastMcpToolDefinition,
 } from "@repo/mcp-tools";
+import {
+  type ProviderRoutineCallInput,
+  type ProviderRoutineCallSuccess,
+  type ProviderRoutineFindInput,
+  type ProviderRoutineFindOutput,
+  type ProviderRoutineSourceSurface,
+  providerRoutineCallInputSchema,
+  providerRoutineFindInputSchema,
+} from "@repo/provider-routine-contract";
 import { z } from "zod";
 
 import {
@@ -21,6 +30,8 @@ import {
 } from "../context";
 
 const DEFAULT_VERSION = "0.1.0";
+const OBSERVABILITY_LOG_PACKAGE: string = "@vendor/observability/log/next";
+const PROVIDER_ROUTINES_PACKAGE: string = "@repo/provider-routines";
 
 interface HostedMcpServerAdapter {
   registerTool: (
@@ -44,7 +55,8 @@ export class HostedMcpToolError extends Error {
     message: string,
     readonly status: number,
     readonly auditOutcome: RecordMcpAuditEventInput["outcome"] = "error",
-    options?: ErrorOptions
+    options?: ErrorOptions,
+    readonly providerRoutineCallId?: string
   ) {
     super(message, options);
     this.name = "HostedMcpToolError";
@@ -56,6 +68,7 @@ export interface ExecuteHostedMcpToolDependencies {
     db: Database,
     input: { orgId: string; userId: string }
   ) => Promise<void>;
+  callProviderRoutine: CallProviderRoutineService;
   createSignalForActor: (
     db: Database,
     input: {
@@ -70,6 +83,7 @@ export interface ExecuteHostedMcpToolDependencies {
     }
   ) => Promise<unknown>;
   db: Database;
+  findProviderRoutines: FindProviderRoutinesService;
   getVisibleSignalByPublicId: (
     db: Database,
     input: {
@@ -79,11 +93,56 @@ export interface ExecuteHostedMcpToolDependencies {
     }
   ) => Promise<Signal | undefined>;
   now: () => Date;
+  providerRoutineLog?: ProviderRoutineServiceLog;
   recordMcpAuditEvent: (
     db: Database,
     input: RecordMcpAuditEventInput
   ) => Promise<void>;
   version: string;
+}
+
+interface ProviderRoutineServiceLog {
+  error(message: string, metadata?: Record<string, unknown>): void;
+  info(message: string, metadata?: Record<string, unknown>): void;
+  warn(message: string, metadata?: Record<string, unknown>): void;
+}
+
+interface ProviderRoutineServiceContext {
+  actor: {
+    orgId: string;
+    userId: string;
+  };
+  db: Database;
+  log: ProviderRoutineServiceLog;
+  now: () => Date;
+  scopes: {
+    providerRoutineRead: boolean;
+    providerRoutineWrite: boolean;
+  };
+  source: {
+    clientId?: string | null;
+    ref?: string | null;
+    surface: ProviderRoutineSourceSurface;
+  };
+}
+
+type CallProviderRoutineService = (
+  context: ProviderRoutineServiceContext,
+  input: ProviderRoutineCallInput
+) => Promise<ProviderRoutineCallSuccess>;
+
+type FindProviderRoutinesService = (
+  context: ProviderRoutineServiceContext,
+  input: ProviderRoutineFindInput
+) => Promise<ProviderRoutineFindOutput>;
+
+interface ProviderRoutineServiceModule {
+  callProviderRoutine: CallProviderRoutineService;
+  findProviderRoutines: FindProviderRoutinesService;
+}
+
+interface ObservabilityLogModule {
+  log: ProviderRoutineServiceLog;
 }
 
 export interface ExecuteHostedMcpToolInput {
@@ -97,11 +156,45 @@ export interface ExecuteHostedMcpToolInput {
 export function listHostedMcpTools(
   _context?: HostedMcpContext
 ): LightfastMcpToolDefinition[] {
-  return createLightfastMcpToolDefinitions({
-    contract: apiContract,
-    policy: lightfastMcpToolPolicy,
-  });
+  return [
+    ...createLightfastMcpToolDefinitions({
+      contract: apiContract,
+      policy: lightfastMcpToolPolicy,
+    }),
+    ...PROXY_TOOLS,
+  ];
 }
+
+const PROXY_TOOLS = [
+  {
+    auditEventName: "mcp.proxy.call",
+    contractPath: "proxy.call",
+    description:
+      "Call one enabled provider routine through Lightfast using the current organization connection.",
+    expose: true,
+    inputSchema: providerRoutineCallInputSchema,
+    kind: "write",
+    name: "proxy_call",
+    requiredScope: "mcp:provider_routines:read",
+    requiresBoundOrg: true,
+    scope: "mcp:provider_routines:read",
+    toolName: "proxy_call",
+  },
+  {
+    auditEventName: "mcp.proxy.find",
+    contractPath: "proxy.find",
+    description:
+      "Find enabled provider routines available through Lightfast for the current organization.",
+    expose: true,
+    inputSchema: providerRoutineFindInputSchema,
+    kind: "read",
+    name: "proxy_find",
+    requiredScope: "mcp:provider_routines:read",
+    requiresBoundOrg: true,
+    scope: "mcp:provider_routines:read",
+    toolName: "proxy_find",
+  },
+] satisfies LightfastMcpToolDefinition[];
 
 export function registerHostedMcpTools(server: unknown): void {
   const target = server as HostedMcpServerAdapter;
@@ -144,6 +237,7 @@ export async function executeHostedMcpTool(
   const dependencies = input.dependencies ?? (await defaultDependencies());
   const tool = input.tool ?? toolForContractPath(input.contractPath);
   const startedAt = dependencies.now();
+  let providerRoutineCallId: string | undefined;
 
   try {
     ensureScope(input.context, tool.requiredScope);
@@ -161,12 +255,14 @@ export async function executeHostedMcpTool(
       contractPath: tool.contractPath,
       parsedInput,
     });
+    providerRoutineCallId = providerRoutineCallIdFromResult(result);
 
     await recordAudit({
       context: input.context,
       dependencies,
       error: null,
       outcome: "success",
+      providerRoutineCallId,
       startedAt,
       tool,
     });
@@ -178,6 +274,7 @@ export async function executeHostedMcpTool(
       dependencies,
       error: normalized,
       outcome: normalized.auditOutcome,
+      providerRoutineCallId: normalized.providerRoutineCallId,
       startedAt,
       tool,
     });
@@ -240,6 +337,22 @@ async function executeParsedTool(input: {
       };
     }
 
+    case "proxy.find": {
+      const findInput = input.parsedInput as ProviderRoutineFindInput;
+      return await input.dependencies.findProviderRoutines(
+        providerRoutineContext(input.context, input.dependencies),
+        findInput
+      );
+    }
+
+    case "proxy.call": {
+      const callInput = input.parsedInput as ProviderRoutineCallInput;
+      return await input.dependencies.callProviderRoutine(
+        providerRoutineContext(input.context, input.dependencies),
+        callInput
+      );
+    }
+
     default:
       throw new HostedMcpToolError(
         "unsupported_tool",
@@ -251,7 +364,11 @@ async function executeParsedTool(input: {
 }
 
 function ensureScope(context: HostedMcpContext, requiredScope: McpScope): void {
-  if (!context.scopes.includes(requiredScope)) {
+  const hasScope =
+    context.scopes.includes(requiredScope) ||
+    (requiredScope === "mcp:provider_routines:read" &&
+      context.scopes.includes("mcp:provider_routines:write"));
+  if (!hasScope) {
     throw new HostedMcpToolError(
       "insufficient_scope",
       `MCP token is missing required scope ${requiredScope}.`,
@@ -307,6 +424,7 @@ async function recordAudit(input: {
   dependencies: ExecuteHostedMcpToolDependencies;
   error: HostedMcpToolError | null;
   outcome: RecordMcpAuditEventInput["outcome"];
+  providerRoutineCallId?: string;
   startedAt: Date;
   tool: LightfastMcpToolDefinition;
 }): Promise<void> {
@@ -324,6 +442,9 @@ async function recordAudit(input: {
       error: input.error ? safeAuditError(input.error) : null,
       latencyMs: Math.max(0, endedAt.getTime() - input.startedAt.getTime()),
       requestId: input.context.requestId,
+      ...(input.providerRoutineCallId
+        ? { providerRoutineCallId: input.providerRoutineCallId }
+        : {}),
       requiredScope: input.tool.requiredScope,
       scopes: input.context.scopes,
       toolName: input.tool.name,
@@ -385,6 +506,18 @@ function normalizeToolError(error: unknown): HostedMcpToolError {
     );
   }
 
+  if (isProviderRoutineErrorLike(error)) {
+    const mapped = mapProviderRoutineError(error);
+    return new HostedMcpToolError(
+      mapped.code,
+      error instanceof Error ? error.message : mapped.message,
+      mapped.status,
+      mapped.outcome,
+      { cause: error },
+      error.providerRoutineCallId
+    );
+  }
+
   return new HostedMcpToolError(
     "unsupported_tool",
     error instanceof Error ? error.message : "MCP tool execution failed.",
@@ -395,19 +528,123 @@ function normalizeToolError(error: unknown): HostedMcpToolError {
 }
 
 async function defaultDependencies(): Promise<ExecuteHostedMcpToolDependencies> {
-  const [dbApp, signalService, mcpOauth] = await Promise.all([
-    import("@db/app"),
-    import("@api/app/signals/service"),
-    import("@api/app/mcp-oauth"),
-  ]);
+  const [dbApp, signalService, mcpOauth, providerRoutines, observabilityLog] =
+    await Promise.all([
+      import("@db/app"),
+      import("@api/app/signals/service"),
+      import("@api/app/mcp-oauth"),
+      import(
+        PROVIDER_ROUTINES_PACKAGE
+      ) as Promise<ProviderRoutineServiceModule>,
+      import(OBSERVABILITY_LOG_PACKAGE) as Promise<ObservabilityLogModule>,
+    ]);
 
   return {
     assertOrgAccess: mcpOauth.assertHostedMcpOrgAccess,
+    callProviderRoutine: providerRoutines.callProviderRoutine,
     createSignalForActor: signalService.createSignalForActor,
     db: dbApp.db,
+    findProviderRoutines: providerRoutines.findProviderRoutines,
     getVisibleSignalByPublicId: dbApp.getVisibleSignalByPublicId,
     now: () => new Date(),
+    providerRoutineLog: observabilityLog.log,
     recordMcpAuditEvent: dbApp.recordMcpAuditEvent,
     version: process.env.npm_package_version ?? DEFAULT_VERSION,
   };
+}
+
+function providerRoutineContext(
+  context: HostedMcpContext,
+  dependencies: ExecuteHostedMcpToolDependencies
+): ProviderRoutineServiceContext {
+  const hasWrite = context.scopes.includes("mcp:provider_routines:write");
+  return {
+    actor: {
+      orgId: context.orgId,
+      userId: context.userId,
+    },
+    db: dependencies.db,
+    log: dependencies.providerRoutineLog ?? noopProviderRoutineLog,
+    now: dependencies.now,
+    scopes: {
+      providerRoutineRead:
+        context.scopes.includes("mcp:provider_routines:read") || hasWrite,
+      providerRoutineWrite: hasWrite,
+    },
+    source: {
+      clientId: context.clientId,
+      ref: context.grantId,
+      surface: "hosted_mcp",
+    },
+  };
+}
+
+const noopProviderRoutineLog: ProviderRoutineServiceLog = {
+  error: () => undefined,
+  info: () => undefined,
+  warn: () => undefined,
+};
+
+function providerRoutineCallIdFromResult(result: unknown) {
+  if (
+    result &&
+    typeof result === "object" &&
+    "providerRoutineCallId" in result &&
+    typeof (result as ProviderRoutineCallSuccess).providerRoutineCallId ===
+      "string"
+  ) {
+    return (result as ProviderRoutineCallSuccess).providerRoutineCallId;
+  }
+  return;
+}
+
+function isProviderRoutineErrorLike(
+  error: unknown
+): error is Error & { code: string; providerRoutineCallId?: string } {
+  return (
+    error instanceof Error &&
+    "code" in error &&
+    typeof error.code === "string" &&
+    error.code.startsWith("PROVIDER_ROUTINE_")
+  );
+}
+
+function mapProviderRoutineError(error: { code: string }): {
+  code: HostedMcpToolErrorCode;
+  message: string;
+  outcome: RecordMcpAuditEventInput["outcome"];
+  status: number;
+} {
+  switch (error.code) {
+    case "PROVIDER_ROUTINE_INSUFFICIENT_SCOPE":
+      return {
+        code: "insufficient_scope",
+        message: "Provider routine requires additional scope.",
+        outcome: "denied",
+        status: 403,
+      };
+    case "PROVIDER_ROUTINE_INVALID_INPUT":
+      return {
+        code: "invalid_input",
+        message: "MCP tool input is invalid.",
+        outcome: "denied",
+        status: 400,
+      };
+    case "PROVIDER_ROUTINE_CONNECTION_REQUIRED":
+    case "PROVIDER_ROUTINE_NOT_ENABLED":
+    case "PROVIDER_ROUTINE_NOT_FOUND":
+      return {
+        code: "not_found",
+        message: "Provider routine was not found.",
+        outcome: "denied",
+        status: 404,
+      };
+    default:
+      return {
+        code: "upstream_error",
+        message: "Provider routine failed.",
+        outcome: "error",
+        status: 502,
+      };
+  }
 }

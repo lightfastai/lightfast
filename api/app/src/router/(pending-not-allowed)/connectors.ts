@@ -1,5 +1,6 @@
 import {
   connectorProviderInputSchema,
+  connectorSetAgentEnabledInputSchema,
   connectorSetAutomationEnabledInputSchema,
   connectorStartConnectInputSchema,
 } from "@repo/connector-contract";
@@ -8,6 +9,7 @@ import {
   disconnectConnector,
   listConnectorsForOrg,
   refreshConnectorTools,
+  setConnectorAgentEnabled,
   setConnectorAutomationEnabled,
   startConnectorOAuth,
 } from "../../services/connectors";
@@ -30,6 +32,9 @@ export const connectorsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) =>
       setConnectorAutomationEnabled(ctx, input)
     ),
+  setAgentEnabled: boundOrgAdminProcedure
+    .input(connectorSetAgentEnabledInputSchema)
+    .mutation(async ({ ctx, input }) => setConnectorAgentEnabled(ctx, input)),
   disconnect: boundOrgAdminProcedure
     .input(connectorProviderInputSchema)
     .mutation(async ({ ctx, input }) => disconnectConnector(ctx, input)),

@@ -137,6 +137,11 @@ export function ConnectorsClient({
       onSuccess: invalidateList,
     })
   );
+  const setAgentEnabledMutation = useMutation(
+    trpc.org.workspace.connectors.setAgentEnabled.mutationOptions({
+      onSuccess: invalidateList,
+    })
+  );
   const disconnectMutation = useMutation(
     trpc.org.workspace.connectors.disconnect.mutationOptions({
       onSuccess: invalidateList,
@@ -185,6 +190,12 @@ export function ConnectorsClient({
     }
   }
 
+  function setAgentEnabled(row: ConnectorCatalogRow, enabled: boolean) {
+    if (isConnectableProvider(row.provider)) {
+      setAgentEnabledMutation.mutate({ enabled, provider: row.provider });
+    }
+  }
+
   function disconnect(row: ConnectorCatalogRow) {
     if (isConnectableProvider(row.provider)) {
       disconnectMutation.mutate({ provider: row.provider });
@@ -205,6 +216,7 @@ export function ConnectorsClient({
     startConnectMutation.isPending ||
     refreshToolsMutation.isPending ||
     setAutomationEnabledMutation.isPending ||
+    setAgentEnabledMutation.isPending ||
     disconnectMutation.isPending;
 
   return (
@@ -268,6 +280,7 @@ export function ConnectorsClient({
                 onConnect={connect}
                 onDisconnect={disconnect}
                 onRefreshTools={refreshTools}
+                onSetAgentEnabled={setAgentEnabled}
                 onSetAutomationEnabled={setAutomationEnabled}
                 onViewDetails={viewDetails}
                 pending={mutationPending}
@@ -305,6 +318,7 @@ function ConnectedConnectorCard({
   onConnect,
   onDisconnect,
   onRefreshTools,
+  onSetAgentEnabled,
   onSetAutomationEnabled,
   onViewDetails,
   pending,
@@ -314,6 +328,7 @@ function ConnectedConnectorCard({
   onConnect: (row: ConnectorCatalogRow) => void;
   onDisconnect: (row: ConnectorCatalogRow) => void;
   onRefreshTools: (row: ConnectorCatalogRow) => void;
+  onSetAgentEnabled: (row: ConnectorCatalogRow, enabled: boolean) => void;
   onSetAutomationEnabled: (row: ConnectorCatalogRow, enabled: boolean) => void;
   onViewDetails: (row: ConnectorCatalogRow) => void;
   pending: boolean;
@@ -330,6 +345,8 @@ function ConnectedConnectorCard({
   const status = connectionStatus(connection);
   const actionDisabled = isMutationDisabled(row, pending);
   const connectDisabled = isConnectDisabled(row, pending);
+  const showAdminRequired =
+    !row.canManage && isConnectableProvider(row.provider);
 
   return (
     <section className="rounded-[12px] border border-border bg-background">
@@ -460,6 +477,29 @@ function ConnectedConnectorCard({
           onCheckedChange={(enabled) => onSetAutomationEnabled(row, enabled)}
         />
       </div>
+
+      <div className="h-px bg-border" />
+
+      <div className="flex items-center justify-between gap-6 p-3">
+        <div className="min-w-0">
+          <p className="text-foreground text-sm">Use in agents</p>
+          <p className="mt-1 text-muted-foreground text-xs leading-relaxed">
+            Allow agents to discover and call tools from {row.displayName}.
+          </p>
+        </div>
+        <Switch
+          aria-label="Use in agents"
+          checked={connection.enabledForAgents}
+          disabled={actionDisabled}
+          onCheckedChange={(enabled) => onSetAgentEnabled(row, enabled)}
+        />
+      </div>
+
+      {showAdminRequired && (
+        <p className="px-3 pb-3 text-muted-foreground text-xs">
+          {ADMIN_REQUIRED_MESSAGE}
+        </p>
+      )}
 
       <AlertDialog onOpenChange={setConfirmOpen} open={confirmOpen}>
         <AlertDialogContent>

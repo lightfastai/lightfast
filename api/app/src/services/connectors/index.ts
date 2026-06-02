@@ -1,6 +1,7 @@
 import type { Database } from "@db/app";
 import type {
   connectorProviderInputSchema,
+  connectorSetAgentEnabledInputSchema,
   connectorSetAutomationEnabledInputSchema,
   connectorStartConnectInputSchema,
 } from "@repo/connector-contract";
@@ -11,6 +12,7 @@ import { listConnectorsForOrg } from "./catalog";
 import {
   disconnectLinearConnector,
   refreshLinearConnectorTools,
+  setLinearConnectorAgentEnabled,
   setLinearConnectorAutomationEnabled,
   startLinearConnectorOAuth,
 } from "./linear-flow";
@@ -28,11 +30,15 @@ type ConnectorStartConnectInput = z.infer<
 type ConnectorSetAutomationEnabledInput = z.infer<
   typeof connectorSetAutomationEnabledInputSchema
 >;
+type ConnectorSetAgentEnabledInput = z.infer<
+  typeof connectorSetAgentEnabledInputSchema
+>;
 
 export {
   completeLinearConnectorOAuth,
   disconnectLinearConnector,
   refreshLinearConnectorTools,
+  setLinearConnectorAgentEnabled,
   setLinearConnectorAutomationEnabled,
   startLinearConnectorOAuth,
 } from "./linear-flow";
@@ -76,6 +82,18 @@ export async function setConnectorAutomationEnabled(
   switch (input.provider) {
     case "linear":
       return await setLinearConnectorAutomationEnabled(ctx, input);
+    default:
+      return unsupportedProvider(input.provider);
+  }
+}
+
+export async function setConnectorAgentEnabled(
+  ctx: ConnectorServiceContext,
+  input: ConnectorSetAgentEnabledInput
+) {
+  switch (input.provider) {
+    case "linear":
+      return await setLinearConnectorAgentEnabled(ctx, input);
     default:
       return unsupportedProvider(input.provider);
   }

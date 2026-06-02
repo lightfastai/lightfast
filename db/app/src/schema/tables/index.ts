@@ -16,17 +16,6 @@ export {
   type InsertAutomationRun,
 } from "./automations";
 export {
-  createIntegrationCallId,
-  INTEGRATION_CALL_ID_PREFIX,
-  type InsertIntegrationCall,
-  type IntegrationCall,
-  type IntegrationCallCalledByKind,
-  type IntegrationCallProvider,
-  type IntegrationCallRedactedPayload,
-  type IntegrationCallStatus,
-  integrationCalls,
-} from "./integration-calls";
-export {
   createMcpOauthClientId,
   createMcpOauthGrantId,
   createMcpOauthRegistrationTokenId,
@@ -103,6 +92,18 @@ export {
   type PeopleViewConfig,
   peopleViews,
 } from "./people-views";
+export {
+  createProviderRoutineCallId,
+  type InsertProviderRoutineCall,
+  PROVIDER_ROUTINE_CALL_ID_PREFIX,
+  type ProviderRoutineCall,
+  type ProviderRoutineCallCalledByKind,
+  type ProviderRoutineCallProvider,
+  type ProviderRoutineCallRedactedPayload,
+  type ProviderRoutineCallSourceSurface,
+  type ProviderRoutineCallStatus,
+  providerRoutineCalls,
+} from "./provider-routine-calls";
 export {
   createSignalViewId,
   type InsertSignalView,

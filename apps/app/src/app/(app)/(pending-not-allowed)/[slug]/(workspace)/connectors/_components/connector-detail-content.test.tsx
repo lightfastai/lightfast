@@ -15,6 +15,7 @@ function connectedRow(
     connectAvailability: { status: "available" },
     connection: {
       connectedAt: new Date("2026-06-01T00:00:00.000Z"),
+      enabledForAgents: false,
       enabledForAutomations: true,
       lastToolRefreshAt: new Date("2026-06-01T00:00:00.000Z"),
       lastToolRefreshErrorAt: null,
@@ -24,11 +25,13 @@ function connectedRow(
       status: "active",
       tools: [
         {
+          availableForAgents: false,
           availableForAutomations: true,
           description: "Create a Linear issue",
           name: "create_issue",
         },
         {
+          availableForAgents: false,
           availableForAutomations: false,
           description: "Search Linear issues",
           name: "search_issues",
@@ -52,6 +55,8 @@ describe("ConnectorDetailContent", () => {
     expect(screen.getByText("Acme Linear")).toBeInTheDocument();
     expect(screen.getByText("Lightfast App")).toBeInTheDocument();
     expect(screen.getByText("Enabled")).toBeInTheDocument();
+    expect(screen.getByText("Agents")).toBeInTheDocument();
+    expect(screen.getByText("Disabled")).toBeInTheDocument();
     expect(screen.getByText("Tools")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
     expect(screen.getByText("create_issue")).toBeInTheDocument();
@@ -77,11 +82,26 @@ describe("ConnectorDetailContent", () => {
     render(
       <ConnectorDetailContent
         onCopyLink={vi.fn()}
-        row={connectedRow({ enabledForAutomations: false })}
+        row={connectedRow({
+          enabledForAgents: true,
+          enabledForAutomations: false,
+        })}
       />
     );
 
     expect(screen.getByText("Disabled")).toBeInTheDocument();
+  });
+
+  it("renders the Enabled agents pill", () => {
+    render(
+      <ConnectorDetailContent
+        onCopyLink={vi.fn()}
+        row={connectedRow({ enabledForAgents: true })}
+      />
+    );
+
+    expect(screen.getByText("Agents")).toBeInTheDocument();
+    expect(screen.getAllByText("Enabled").length).toBeGreaterThan(1);
   });
 
   it("renders the tools-stale error code", () => {

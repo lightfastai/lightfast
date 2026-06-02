@@ -449,6 +449,7 @@ describe("proxy pending-session route handling", () => {
     "/api/github/user/oauth/callback",
     "/api/github/webhook",
     "/api/connectors/linear/oauth/callback",
+    "/api/native/proxy/routines",
   ])("runs Clerk middleware but does not enforce signed-in routing for %s", async (pathname) => {
     authMock.mockResolvedValue({
       orgId: null,
@@ -472,7 +473,8 @@ describe("proxy pending-session route handling", () => {
     "/api/github/user/oauth/callback",
     "/api/github/webhook",
     "/api/connectors/linear/oauth/callback",
-  ])("keeps GitHub proxy bypass public for expired tokens on %s", async (pathname) => {
+    "/api/native/proxy/routines",
+  ])("keeps callback and native proxy routes public for expired tokens on %s", async (pathname) => {
     authMock.mockRejectedValue(new Error("Token expired"));
 
     const { response } = await invoke(pathname);

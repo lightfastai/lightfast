@@ -9,6 +9,7 @@ export default defineConfig({
   noExternal: [
     "@repo/native-auth-contract",
     "@repo/native-auth-node",
+    "@repo/provider-routine-contract",
     "@t3-oss/env-core",
     "commander",
     "zod",

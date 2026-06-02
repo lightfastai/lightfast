@@ -197,6 +197,7 @@ export async function markCurrentOrgConnectorConnectionError(
   const result = await db
     .update(orgConnectorConnections)
     .set({
+      enabledForAgents: false,
       enabledForAutomations: false,
       status: "error",
       updatedAt: new Date(),
@@ -269,6 +270,21 @@ export async function setConnectorAutomationEnabled(
     .update(orgConnectorConnections)
     .set({
       enabledForAutomations: input.enabled,
+      updatedAt: new Date(),
+    })
+    .where(activeCurrentConnectorWhere(input));
+
+  return getRowsAffected(result) > 0;
+}
+
+export async function setConnectorAgentEnabled(
+  db: Database,
+  input: GetCurrentOrgConnectorConnectionInput & { enabled: boolean }
+): Promise<boolean> {
+  const result = await db
+    .update(orgConnectorConnections)
+    .set({
+      enabledForAgents: input.enabled,
       updatedAt: new Date(),
     })
     .where(activeCurrentConnectorWhere(input));
@@ -426,6 +442,7 @@ function revokedConnectorConnectionValues(now: Date) {
     currentOrgProviderKey: null,
     encryptedAccessToken: null,
     encryptedRefreshToken: null,
+    enabledForAgents: false,
     enabledForAutomations: false,
     refreshTokenExpiresAt: null,
     revokedAt: now,

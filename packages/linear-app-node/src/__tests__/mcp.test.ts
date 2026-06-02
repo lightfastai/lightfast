@@ -29,7 +29,7 @@ const mcpState = vi.hoisted(() => ({
 }));
 
 vi.mock("@vendor/mcp", () => ({
-  McpClient: class {
+  Client: class {
     callTool = mcpState.callTool;
     close = mcpState.close;
     connect = mcpState.connect;

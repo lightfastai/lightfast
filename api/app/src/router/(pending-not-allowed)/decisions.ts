@@ -1,4 +1,4 @@
-import { listIntegrationCalls } from "@db/app";
+import { listProviderRoutineCalls } from "@db/app";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
 
@@ -13,7 +13,7 @@ const listDecisionsInput = z
 
 export const decisionsRouter = {
   list: boundOrgProcedure.input(listDecisionsInput).query(({ ctx, input }) =>
-    listIntegrationCalls(ctx.db, {
+    listProviderRoutineCalls(ctx.db, {
       clerkOrgId: ctx.auth.identity.orgId,
       limit: input?.limit ?? 50,
     })

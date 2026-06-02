@@ -29,13 +29,14 @@ async function validAccessToken(
     expiresIn?: number | string;
     includeOrg?: boolean;
     includeTokenUse?: boolean;
+    scope?: string;
   } = {}
 ): Promise<string> {
   return await new SignJWT({
     client_id: "mcp_client_test",
     grant_id: "mcp_grant_test",
     ...(input.includeOrg === false ? {} : { org_id: "org_test" }),
-    scope: "mcp:system:read",
+    scope: input.scope ?? "mcp:system:read",
     ...(input.includeTokenUse === false ? {} : { token_use: "mcp_access" }),
     user_id: "user_test",
   })
@@ -134,6 +135,22 @@ describe("verifyMcpBearerToken", () => {
       },
       scopes: new Set(["mcp:system:read"]),
       token,
+    });
+  });
+
+  it("accepts provider routine MCP scopes", async () => {
+    const { verifyMcpBearerToken } = await importVerifier();
+    const token = await validAccessToken({
+      scope: "mcp:provider_routines:read mcp:provider_routines:write",
+    });
+
+    await expect(
+      verifyMcpBearerToken(bearerRequest(token))
+    ).resolves.toMatchObject({
+      scopes: new Set([
+        "mcp:provider_routines:read",
+        "mcp:provider_routines:write",
+      ]),
     });
   });
 });

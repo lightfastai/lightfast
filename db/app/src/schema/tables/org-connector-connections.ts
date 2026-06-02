@@ -86,6 +86,7 @@ export const orgConnectorConnections = mysqlTable(
     enabledForAutomations: boolean("enabled_for_automations")
       .default(false)
       .notNull(),
+    enabledForAgents: boolean("enabled_for_agents").default(false).notNull(),
     metadata: json("metadata").$type<Record<string, unknown>>().notNull(),
     createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)

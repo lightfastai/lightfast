@@ -4,6 +4,8 @@ import type { Contract } from "./contract";
 
 export type McpScope =
   | "mcp:system:read"
+  | "mcp:provider_routines:read"
+  | "mcp:provider_routines:write"
   | "mcp:signals:read"
   | "mcp:signals:write";
 

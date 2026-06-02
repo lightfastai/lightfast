@@ -19,6 +19,8 @@
     "@db/app": "workspace:*",
     "@repo/api-contract": "workspace:*",
     "@repo/mcp-tools": "workspace:*",
+    "@repo/provider-routine-contract": "workspace:*",
+    "@repo/provider-routines": "workspace:*",
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/jose": "workspace:*",

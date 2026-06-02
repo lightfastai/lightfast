@@ -7,11 +7,11 @@ import {
   createAutomationId,
   createAutomationRunId,
 } from "../schema/tables/automations";
-import {
-  createIntegrationCallId,
-  INTEGRATION_CALL_ID_PREFIX,
-} from "../schema/tables/integration-calls";
 import { createPersonId, PERSON_ID_PREFIX } from "../schema/tables/people";
+import {
+  createProviderRoutineCallId,
+  PROVIDER_ROUTINE_CALL_ID_PREFIX,
+} from "../schema/tables/provider-routine-calls";
 import { createSignalId } from "../schema/tables/signals";
 
 const PUBLIC_ID_COLUMN_LENGTH = 80;
@@ -20,13 +20,15 @@ describe("public id generators", () => {
   it("creates long-prefixed public ids that fit current varchar columns", () => {
     const automationId = createAutomationId();
     const automationRunId = createAutomationRunId();
-    const integrationCallId = createIntegrationCallId();
+    const providerRoutineCallId = createProviderRoutineCallId();
     const signalId = createSignalId();
     const personId = createPersonId();
 
     expect(automationId.startsWith(AUTOMATION_ID_PREFIX)).toBe(true);
     expect(automationRunId.startsWith(AUTOMATION_RUN_ID_PREFIX)).toBe(true);
-    expect(integrationCallId.startsWith(INTEGRATION_CALL_ID_PREFIX)).toBe(true);
+    expect(
+      providerRoutineCallId.startsWith(PROVIDER_ROUTINE_CALL_ID_PREFIX)
+    ).toBe(true);
     expect(signalId.startsWith(SIGNAL_ID_PREFIX)).toBe(true);
     expect(personId.startsWith(PERSON_ID_PREFIX)).toBe(true);
     expect(automationId).toMatch(
@@ -35,8 +37,8 @@ describe("public id generators", () => {
     expect(automationRunId).toMatch(
       /^automation_run_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
     );
-    expect(integrationCallId).toMatch(
-      /^integration_call_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+    expect(providerRoutineCallId).toMatch(
+      /^provider_routine_call_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
     );
     expect(signalId).toMatch(
       /^signal_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
@@ -46,7 +48,7 @@ describe("public id generators", () => {
     );
     expect(automationId.length).toBeLessThanOrEqual(PUBLIC_ID_COLUMN_LENGTH);
     expect(automationRunId.length).toBeLessThanOrEqual(PUBLIC_ID_COLUMN_LENGTH);
-    expect(integrationCallId.length).toBeLessThanOrEqual(
+    expect(providerRoutineCallId.length).toBeLessThanOrEqual(
       PUBLIC_ID_COLUMN_LENGTH
     );
     expect(signalId.length).toBeLessThanOrEqual(PUBLIC_ID_COLUMN_LENGTH);
