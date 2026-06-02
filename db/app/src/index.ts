@@ -97,9 +97,6 @@ export {
   updateAutomation,
 } from "./utils/automations";
 export {
-  type BackfillExistingNamespaceInput,
-  type BackfillExistingNamespaceResult,
-  backfillExistingNamespace,
   deletePreClerkNamespaceReservation,
   failUnreservedNamespaceOperation,
   finalizeNamespaceOperation,

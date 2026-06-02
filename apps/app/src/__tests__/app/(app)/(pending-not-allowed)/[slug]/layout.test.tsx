@@ -136,7 +136,7 @@ describe("[slug]/layout — membership/slug access gate", () => {
     expect(notFoundMock).toHaveBeenCalledOnce();
   });
 
-  it("falls back to Clerk org access while namespace backfill is pending", async () => {
+  it("falls back to Clerk org access when no namespace row exists", async () => {
     getActiveNamespaceByHandleMock.mockResolvedValue(undefined);
     fetchQueryMock.mockResolvedValue({
       bindingStatus: "bound",
