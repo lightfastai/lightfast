@@ -51,22 +51,19 @@ beforeEach(() => {
 });
 
 describe("general settings page", () => {
-  it("prefetches the read-only source-control connection in the General settings surface", async () => {
+  it("renders the General settings client without prefetching source control", async () => {
     const element = await SettingsPage({
       params: Promise.resolve({ slug: "acme" }),
     });
     render(element);
 
-    expect(sourceControlGetQueryOptionsMock).toHaveBeenCalledOnce();
+    // Source control moved to its own settings sub-tab; the General page no
+    // longer prefetches it.
+    expect(sourceControlGetQueryOptionsMock).not.toHaveBeenCalled();
     expect(
       sourceControlListRepositoriesQueryOptionsMock
-    ).toHaveBeenCalledOnce();
-    expect(prefetchMock).toHaveBeenCalledWith({
-      queryKey: ["org", "settings", "sourceControl", "get"],
-    });
-    expect(prefetchMock).toHaveBeenCalledWith({
-      queryKey: ["org", "settings", "sourceControl", "listRepositories"],
-    });
+    ).not.toHaveBeenCalled();
+    expect(prefetchMock).not.toHaveBeenCalled();
     expect(screen.getByTestId("hydrated-general")).toHaveTextContent(
       "General settings for acme"
     );
