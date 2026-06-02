@@ -62,6 +62,11 @@ export {
   namespaces,
 } from "./namespaces";
 export {
+  type InsertOrgConnectorConnection,
+  type OrgConnectorConnection,
+  orgConnectorConnections,
+} from "./org-connector-connections";
+export {
   type InsertOrgSourceControlBinding,
   type OrgSourceControlBinding,
   type OrgSourceControlBindingProvider,

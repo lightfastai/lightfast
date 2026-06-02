@@ -42,7 +42,7 @@ export function AutomationsClient() {
     <div className="mx-auto w-full max-w-4xl px-6 py-10">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-medium font-pp text-2xl text-foreground">
+          <h1 className="font-semibold text-2xl text-foreground tracking-[-0.02em]">
             Automations
           </h1>
           <p className="mt-1 text-muted-foreground text-sm">
@@ -50,7 +50,7 @@ export function AutomationsClient() {
           </p>
         </div>
         {canManageAutomations && (
-          <Button asChild size="sm" variant="secondary">
+          <Button asChild size="lf" variant="secondary">
             <Link href={`/${workspaceSlug}/automations/new` as Route}>
               <Plus className="size-4" />
               New automation
@@ -61,9 +61,7 @@ export function AutomationsClient() {
 
       {automations.length === 0 ? (
         <div className="mt-10 border-border border-t pt-6">
-          <p className="font-medium text-foreground text-sm">
-            No automations yet
-          </p>
+          <p className="text-foreground text-sm">No automations yet</p>
           <p className="mt-1 text-muted-foreground text-sm">
             Create a cloud schedule to start recording scaffold runs.
           </p>
@@ -103,8 +101,10 @@ function AutomationSection({
 
   return (
     <section>
-      <h2 className="font-medium text-foreground text-sm">{title}</h2>
-      <div className="mt-3 border-border border-t">
+      <h2 className="font-normal text-muted-foreground text-sm">{title}</h2>
+      {/* Each status group is its own bordered card. p-2 gives the gap between
+          the card border and the rounded item rows inside it. */}
+      <div className="mt-3 space-y-1 rounded-2xl border border-border/60 p-2">
         {automations.map((automation) => (
           <AutomationRow
             automation={automation}
@@ -129,7 +129,7 @@ function AutomationRow({
 
   return (
     <Link
-      className="-mx-3 flex min-h-12 items-center justify-between gap-4 rounded-md border-border border-b px-3 py-3 hover:bg-muted/40"
+      className="flex items-center justify-between gap-4 rounded-xl px-3 py-3 transition-colors hover:bg-muted/40"
       href={`/${workspaceSlug}/automations/${automation.publicId}` as Route}
     >
       <div className="flex min-w-0 items-center gap-3">
@@ -141,9 +141,6 @@ function AutomationRow({
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <p className="truncate font-medium text-foreground text-sm">
             {automation.name}
-          </p>
-          <p className="shrink-0 text-muted-foreground text-xs">
-            {workspaceSlug}
           </p>
         </div>
       </div>

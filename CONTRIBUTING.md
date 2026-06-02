@@ -30,6 +30,37 @@ By participating in this project, you agree to maintain a respectful and inclusi
    - Copy `.env.example` files in relevant app directories
    - Configure required environment variables
 
+### Local URLs (Portless)
+
+`pnpm dev` serves the apps through [Portless](https://www.npmjs.com/package/portless) at stable `.localhost` URLs instead of raw ports:
+
+- `https://lightfast.localhost` — the aggregated app (Vercel Microfrontends)
+- `https://app.lightfast.localhost`, `https://www.lightfast.localhost`, `https://platform.lightfast.localhost` — direct per-service routes
+
+Portless is a workspace dev dependency, so `pnpm install` brings it in automatically, and the root `dev` script starts its HTTPS proxy before Turborepo runs. No separate install is needed for `pnpm dev`.
+
+#### One-time: bind port 443
+
+The proxy serves HTTPS on port **443**, which requires `sudo` to bind on macOS/Linux. So it doesn't prompt on every run — and so it survives reboots — install it as a startup service once per machine:
+
+```bash
+pnpm exec portless service install   # binds 443 at boot as a root-owned daemon (prompts for sudo once)
+pnpm exec portless service status    # verify: "Proxy on 443: responding"
+```
+
+Uninstall later with `pnpm exec portless service uninstall`.
+
+#### Troubleshooting: URLs suddenly need a port suffix
+
+If `https://lightfast.localhost` starts requiring a port (e.g. `https://lightfast.localhost:1355`), the proxy couldn't bind 443 — usually because `sudo` wasn't available when it started (common right after a reboot) — so it fell back to the unprivileged port `1355` and now remembers it. Re-bind 443:
+
+```bash
+pnpm exec portless proxy stop
+pnpm exec portless service install   # or one-off: pnpm exec portless proxy start --https (auto-elevates with sudo)
+```
+
+See `CLAUDE.md` for the full local architecture and worktree URL scheme.
+
 ## Project Structure
 
 This is a monorepo using pnpm workspaces with Turborepo:

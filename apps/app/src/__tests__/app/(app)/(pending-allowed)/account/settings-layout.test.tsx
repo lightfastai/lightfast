@@ -80,7 +80,7 @@ describe("account settings layout", () => {
     );
   });
 
-  it("keeps GitHub setup out of the settings sidebar for the setup-only pass", () => {
+  it("lists General and Source Control & Git in the settings sidebar", () => {
     const element = AccountSettingsLayout({
       children: <div>Account settings page</div>,
     });
@@ -88,7 +88,7 @@ describe("account settings layout", () => {
     render(element);
 
     expect(screen.getByText("General")).toBeVisible();
+    expect(screen.getByText("Source Control & Git")).toBeVisible();
     expect(screen.queryByText("Connections")).not.toBeInTheDocument();
-    expect(screen.queryByText("GitHub")).not.toBeInTheDocument();
   });
 });

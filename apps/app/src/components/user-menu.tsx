@@ -27,7 +27,12 @@ export function UserMenu() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const email = profile.primaryEmailAddress ?? profile.username ?? "";
+  const identityLines = [profile.username, profile.primaryEmailAddress].filter(
+    (value): value is string => Boolean(value)
+  );
+
+  const primaryIdentity = identityLines[0] ?? "User";
+  const secondaryIdentity = identityLines[1] ?? null;
 
   return (
     <DropdownMenu>
@@ -41,10 +46,20 @@ export function UserMenu() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-54">
-        <div className="px-2 py-1.5">
-          <p className="truncate text-muted-foreground text-sm">
-            {email || "User"}
-          </p>
+        <div className="flex items-center gap-2 px-2 py-1.5">
+          <Avatar className="size-6">
+            <AvatarFallback className="bg-foreground text-[10px] text-background">
+              {profile.initials}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-medium text-sm">{primaryIdentity}</p>
+            {secondaryIdentity ? (
+              <p className="truncate text-muted-foreground text-xs">
+                {secondaryIdentity}
+              </p>
+            ) : null}
+          </div>
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild className="cursor-pointer">

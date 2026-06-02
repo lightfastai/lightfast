@@ -1,8 +1,6 @@
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { apiContract, lightfastMcpToolPolicy } from "@repo/api-contract";
 import { registerLightfastMcpTools } from "@repo/mcp-tools";
-import { McpServer } from "@vendor/mcp";
+import { Client, InMemoryTransport, McpServer } from "@vendor/mcp";
 import { describe, expect, it, vi } from "vitest";
 
 const signalId = "signal_123e4567-e89b-12d3-a456-426614174000";

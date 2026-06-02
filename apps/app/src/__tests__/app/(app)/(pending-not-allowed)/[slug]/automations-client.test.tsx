@@ -184,7 +184,16 @@ describe("AutomationsClient", () => {
     expect(screen.getByRole("heading", { name: "Paused" })).toBeInTheDocument();
     expect(screen.getByText("Morning check")).toBeInTheDocument();
     expect(screen.getByText("Sentry errors hourly")).toBeInTheDocument();
-    expect(screen.getAllByText("lightfast")).toHaveLength(2);
+    expect(screen.getByText("Morning check").closest("a")).toHaveAttribute(
+      "href",
+      "/lightfast/automations/automation_123e4567-e89b-12d3-a456-426614174000"
+    );
+    expect(
+      screen.getByText("Sentry errors hourly").closest("a")
+    ).toHaveAttribute(
+      "href",
+      "/lightfast/automations/automation_223e4567-e89b-12d3-a456-426614174000"
+    );
     expect(screen.getByText("Daily at 9:00 AM")).toBeInTheDocument();
     expect(screen.getAllByText("Paused")).toHaveLength(2);
     expect(screen.queryByText("Run history")).not.toBeInTheDocument();

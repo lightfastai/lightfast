@@ -7,8 +7,6 @@ export type SignalViewList =
 export type SignalViewRow = SignalViewList[number];
 export type SignalViewConfig = SignalViewRow["config"];
 
-export const ALL_SIGNALS_VIEW_NAME = "All signals";
-
 export interface SignalViewParamValues {
   disposition: string;
   kind: string;

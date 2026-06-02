@@ -5,4 +5,5 @@
  * Import these in form components and use with zodResolver.
  */
 
+export * from "./account-form";
 export * from "./team-form";

@@ -1,22 +1,17 @@
 "use client";
 
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
-import type { Route } from "next";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { cn } from "@repo/ui/lib/utils";
+import { useIsMutating, useSuspenseQuery } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 import { Suspense } from "react";
 import { useTRPC } from "~/trpc/react";
 import { AutomationActions } from "./automation-actions";
 import { AutomationNameEditor } from "./automation-name-editor";
 import { AutomationPromptEditor } from "./automation-prompt-editor";
-import { AutomationRunsList } from "./automation-runs-list";
+import { AutomationRunsSection } from "./automation-runs-section";
 import { AutomationScheduleEditor } from "./automation-schedule-editor";
 import { AutomationStatusChip } from "./automation-status-chip";
-
-function getSlug(pathname: string) {
-  return pathname.split("/").filter(Boolean)[0] ?? "workspace";
-}
+import { RailRow, RailSection } from "./detail-sections";
 
 function formatDate(date: Date | null | undefined): string {
   if (!date) {
@@ -28,12 +23,41 @@ function formatDate(date: Date | null | undefined): string {
   }).format(date);
 }
 
+function TimestampValue({
+  date,
+  pending = false,
+}: {
+  date: Date | null | undefined;
+  pending?: boolean;
+}) {
+  if (!date) {
+    return <span className="text-muted-foreground text-sm">—</span>;
+  }
+  // Plain read-only value (not a pill) — these timestamps aren't editable, so
+  // they shouldn't read as clickable. The timestamp formats in the viewer's
+  // locale/timezone, which legitimately differs from the server's during SSR,
+  // so suppress the unavoidable text-only hydration diff. While a schedule edit
+  // is in flight the server is recomputing the next run, so dim it with a small
+  // spinner until the authoritative value lands.
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 text-sm",
+        pending ? "text-muted-foreground" : "text-foreground"
+      )}
+      suppressHydrationWarning
+    >
+      {pending ? <Loader2 className="size-3 animate-spin" /> : null}
+      {formatDate(date)}
+    </span>
+  );
+}
+
 export function AutomationDetailClient({
   automationId,
 }: {
   automationId: string;
 }) {
-  const slug = getSlug(usePathname());
   const trpc = useTRPC();
 
   const { data: automation } = useSuspenseQuery({
@@ -41,71 +65,63 @@ export function AutomationDetailClient({
     staleTime: 30_000,
   });
 
-  return (
-    <div className="mx-auto w-full max-w-5xl px-6 py-10">
-      <Link
-        className="inline-flex items-center gap-1.5 text-muted-foreground text-sm hover:text-foreground"
-        href={`/${slug}/automations` as Route}
-      >
-        <ArrowLeft className="size-4" />
-        Back
-      </Link>
+  // A schedule edit is the only `automations.update` that recomputes the
+  // server-derived "Next run"; scope the pending affordance to those (the
+  // schedule editor always sends `schedule`) so a name/prompt edit doesn't
+  // flicker it. The optimistic "Repeats" label has already updated by then.
+  const isRecomputingSchedule =
+    useIsMutating({
+      mutationKey: trpc.org.workspace.automations.update.mutationKey(),
+      predicate: (mutation) =>
+        (mutation.state.variables as { schedule?: unknown } | undefined)
+          ?.schedule !== undefined,
+    }) > 0;
 
-      <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_20rem]">
-        {/* Left column */}
-        <div className="space-y-4">
-          <AutomationNameEditor automation={automation} />
+  return (
+    // On lg the grid is pinned to the viewport height (lg:h-full) so each column
+    // owns its own scroll instead of growing the page. On smaller screens it
+    // falls back to normal stacked page flow.
+    <div className="grid grid-cols-1 lg:h-full lg:grid-cols-[minmax(0,1fr)_22rem]">
+      {/* Left — the document: title + always-editable markdown instructions.
+          Scrolls internally once the content outgrows the viewport. */}
+      <div className="min-w-0 px-8 py-10 lg:min-h-0 lg:overflow-y-auto lg:px-12 lg:py-12">
+        <AutomationNameEditor automation={automation} />
+        <div className="mt-6">
           <AutomationPromptEditor automation={automation} />
         </div>
-
-        {/* Right rail */}
-        <div className="space-y-6 lg:w-80">
-          <AutomationStatusChip automation={automation} />
-
-          <RailSection label="Next run">
-            <p className="text-foreground text-sm">
-              {formatDate(automation.nextRunAt)}
-            </p>
-          </RailSection>
-
-          <RailSection label="Last ran">
-            <p className="text-foreground text-sm">
-              {formatDate(automation.lastRunAt)}
-            </p>
-          </RailSection>
-
-          <AutomationScheduleEditor automation={automation} />
-
-          <AutomationActions automation={automation} />
-
-          <Suspense
-            fallback={
-              <RailSection label="Previous runs">
-                <p className="text-muted-foreground text-sm">Loading…</p>
-              </RailSection>
-            }
-          >
-            <AutomationRunsList automationId={automationId} />
-          </Suspense>
-        </div>
       </div>
-    </div>
-  );
-}
 
-function RailSection({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="border-border border-t pt-4">
-      <p className="mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wide">
-        {label}
-      </p>
-      {children}
+      {/* Right — status / details / actions / previous runs. The left border is
+          the full-height divider: the grid pins both columns to the viewport, so
+          it always spans from the top down. Scrolls on its own when it overflows. */}
+      <div className="space-y-8 px-6 py-10 lg:min-h-0 lg:overflow-y-auto lg:border-border lg:border-l lg:px-8 lg:py-12">
+        <RailSection title="Status">
+          <AutomationStatusChip automation={automation} />
+          <RailRow label="Next run">
+            <TimestampValue
+              date={automation.nextRunAt}
+              pending={isRecomputingSchedule}
+            />
+          </RailRow>
+          <RailRow label="Last ran">
+            <TimestampValue date={automation.lastRunAt} />
+          </RailRow>
+        </RailSection>
+
+        <RailSection title="Details">
+          <AutomationScheduleEditor automation={automation} />
+        </RailSection>
+
+        <AutomationActions automation={automation} />
+
+        <RailSection title="Previous runs">
+          <Suspense
+            fallback={<p className="text-muted-foreground text-sm">Loading…</p>}
+          >
+            <AutomationRunsSection automationId={automationId} />
+          </Suspense>
+        </RailSection>
+      </div>
     </div>
   );
 }

@@ -19,11 +19,14 @@ export default function AccountSettingsLayout({
           {/* Left Sidebar Navigation */}
           <SettingsSidebar
             basePath="/account/settings"
-            items={[{ name: "General", path: "general" }]}
+            items={[
+              { name: "General", path: "general" },
+              { name: "Source Control & Git", path: "source-control" },
+            ]}
           />
 
           {/* Main Content */}
-          <div className="min-w-0 flex-1">{children}</div>
+          <div className="min-w-0 max-w-4xl flex-1">{children}</div>
         </div>
       </div>
     </div>

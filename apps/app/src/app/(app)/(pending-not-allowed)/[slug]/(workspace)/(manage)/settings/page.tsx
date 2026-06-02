@@ -1,4 +1,4 @@
-import { HydrateClient, prefetch, trpc } from "~/trpc/server";
+import { HydrateClient } from "~/trpc/server";
 
 import { TeamGeneralSettingsClient } from "./_components/team-general-settings-client";
 
@@ -9,9 +9,6 @@ export default async function SettingsPage({
 }) {
   // Settings layout already verified org access; no additional checks needed here
   const { slug } = await params;
-
-  prefetch(trpc.org.settings.sourceControl.get.queryOptions());
-  prefetch(trpc.org.settings.sourceControl.listRepositories.queryOptions());
 
   return (
     <HydrateClient>

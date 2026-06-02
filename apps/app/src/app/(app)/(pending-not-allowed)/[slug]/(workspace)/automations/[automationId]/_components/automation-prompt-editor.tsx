@@ -2,14 +2,12 @@
 
 import type { AppRouterOutputs } from "@api/app";
 import { AUTOMATION_PROMPT_MAX_LENGTH } from "@repo/app-validation/schemas";
-import { Button } from "@repo/ui/components/ui/button";
-import { Textarea } from "@repo/ui/components/ui/textarea";
+import { Markdown } from "@repo/ui/components/markdown";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
-import { Loader2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 import { useTRPC } from "~/trpc/react";
-import { setOne, upsertInList } from "../../_components/automations-cache";
+import { automationUpdateMutationOptions } from "../../_components/automations-cache";
+import { useAutosaveField } from "./use-autosave-field";
 
 type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
 
@@ -20,109 +18,39 @@ export function AutomationPromptEditor({
 }) {
   const { has, isLoaded } = useAuth();
   const canManage = isLoaded && !!has?.({ role: "org:admin" });
-  const [isEditing, setIsEditing] = useState(false);
-  const [value, setValue] = useState(automation.prompt);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const qc = useQueryClient();
   const trpc = useTRPC();
   const id = automation.publicId;
 
-  useEffect(() => {
-    if (isEditing) {
-      textareaRef.current?.focus();
-    }
-  }, [isEditing]);
-
   const update = useMutation(
-    trpc.org.workspace.automations.update.mutationOptions({
-      meta: { errorTitle: "Failed to update prompt" },
-      onSuccess: (updated) => {
-        setOne(qc, trpc, id, () => updated);
-        upsertInList(qc, trpc, id, () => updated);
-        setIsEditing(false);
-      },
+    automationUpdateMutationOptions(qc, trpc, id, {
+      errorTitle: "Failed to update instructions",
     })
   );
 
-  const trimmed = value.trim();
-  const isTooLong = trimmed.length > AUTOMATION_PROMPT_MAX_LENGTH;
-  const isUnchanged = trimmed === automation.prompt;
-  const isEmpty = trimmed.length === 0;
-  const isSaveDisabled =
-    update.isPending || isEmpty || isUnchanged || isTooLong;
+  const { fieldProps } = useAutosaveField({
+    value: automation.prompt,
+    multiline: true,
+    onCommit: (next) => update.mutate({ id, prompt: next }),
+  });
 
-  function handleSave() {
-    if (isSaveDisabled) {
-      return;
-    }
-    update.mutate({ id, prompt: trimmed });
-  }
-
-  function handleCancel() {
-    setValue(automation.prompt);
-    setIsEditing(false);
-  }
-
-  const displayBlock = (
-    <p className="whitespace-pre-wrap text-muted-foreground text-sm">
-      {automation.prompt}
-    </p>
-  );
-
+  // Viewers without write access get the rendered markdown instead of an
+  // editable surface.
   if (!canManage) {
-    return displayBlock;
+    return <Markdown className="text-foreground">{automation.prompt}</Markdown>;
   }
 
-  if (!isEditing) {
-    return (
-      <div className="group">
-        {displayBlock}
-        <button
-          className="mt-1 text-muted-foreground text-xs transition-colors hover:text-foreground"
-          onClick={() => {
-            setValue(automation.prompt);
-            setIsEditing(true);
-          }}
-          type="button"
-        >
-          Edit
-        </button>
-      </div>
-    );
-  }
-
+  // Always-editable raw markdown. Borderless, transparent, and auto-growing so
+  // the document simply extends as it fills — never a textarea popping in.
+  // Cmd/Ctrl+Enter commits; plain Enter inserts a newline.
   return (
-    <div className="space-y-2">
-      <Textarea
-        className="min-h-32"
-        onChange={(e) => setValue(e.target.value)}
-        ref={textareaRef}
-        rows={6}
-        value={value}
-      />
-      <p
-        className={`text-xs ${isTooLong ? "text-destructive" : "text-muted-foreground"}`}
-      >
-        {trimmed.length} / {AUTOMATION_PROMPT_MAX_LENGTH}
-      </p>
-      <div className="flex gap-2">
-        <Button onClick={handleCancel} size="sm" type="button" variant="ghost">
-          Cancel
-        </Button>
-        <Button
-          disabled={isSaveDisabled}
-          onClick={handleSave}
-          size="sm"
-          type="button"
-        >
-          {update.isPending ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            "Save"
-          )}
-        </Button>
-      </div>
-    </div>
+    <textarea
+      {...fieldProps}
+      aria-label="Instructions"
+      className="field-sizing-content block w-full resize-none break-words bg-transparent p-0 text-foreground text-sm leading-7 outline-none placeholder:text-muted-foreground"
+      maxLength={AUTOMATION_PROMPT_MAX_LENGTH}
+      placeholder="Describe what this automation should do…"
+    />
   );
 }

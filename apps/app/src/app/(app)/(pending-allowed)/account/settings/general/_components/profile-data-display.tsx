@@ -1,237 +1,173 @@
 "use client";
 
-import {
-  lightfastHandleSchema,
-  normalizeLightfastHandle,
-} from "@repo/app-validation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { AccountSettingsFormValues } from "@repo/app-validation/forms";
+import { accountSettingsFormSchema } from "@repo/app-validation/forms";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { Button } from "@repo/ui/components/ui/button";
-import { Input } from "@repo/ui/components/ui/input";
-import { toast } from "@repo/ui/components/ui/sonner";
 import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
-import { Check, Loader2 } from "lucide-react";
-import type { FormEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+  useFormCompat,
+} from "@repo/ui/components/ui/form";
+import { Input } from "@repo/ui/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+import { useCallback, useEffect } from "react";
+import { SettingRow, SettingsGroup } from "~/components/settings-section";
 import { useTRPC } from "~/trpc/react";
-
-import { GithubAccountConnectionSection } from "./github-account-connection-section";
-
-function createIdempotencyKey() {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
-  }
-  return `username-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
+import { useAccountNameUpdate } from "./account-settings-actions";
 
 export function ProfileDataDisplay() {
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
   const accountQuery = trpc.viewer.account.get.queryOptions();
 
   const { data: profile } = useSuspenseQuery({
     ...accountQuery,
     staleTime: 10 * 60 * 1000,
   });
-  const [name, setName] = useState(profile.fullName ?? "");
-  const [username, setUsername] = useState(profile.username ?? "");
-  const usernameIdempotencyKeyRef = useRef<string | null>(null);
+
+  const currentDisplayName = profile.fullName ?? "";
+  const form = useFormCompat<AccountSettingsFormValues>({
+    resolver: zodResolver(accountSettingsFormSchema),
+    defaultValues: {
+      displayName: currentDisplayName,
+    },
+    mode: "onChange",
+  });
+
+  const { isUpdating, updateDisplayName } = useAccountNameUpdate();
+  const watchedName = form.watch("displayName");
+  const hasNameChanges = (watchedName ?? "").trim() !== currentDisplayName;
 
   useEffect(() => {
-    setName(profile.fullName ?? "");
-    setUsername(profile.username ?? "");
-    usernameIdempotencyKeyRef.current = null;
-  }, [profile.fullName, profile.username]);
+    form.reset({ displayName: currentDisplayName });
+  }, [currentDisplayName, form]);
 
-  const updateNameMutation = useMutation(
-    trpc.viewer.account.updateName.mutationOptions({
-      meta: { errorTitle: "Failed to update name" },
-      onSuccess: (data) => {
-        queryClient.setQueryData(accountQuery.queryKey, data);
-        toast.success("Name updated");
-      },
-    })
+  const onNameSubmit = useCallback(
+    (values: AccountSettingsFormValues) => {
+      updateDisplayName(values.displayName);
+    },
+    [updateDisplayName]
   );
-  const createUsernameMutation = useMutation(
-    trpc.viewer.account.createUsername.mutationOptions({
-      meta: { errorTitle: "Failed to create username" },
-      onSuccess: (data) => {
-        usernameIdempotencyKeyRef.current = null;
-        queryClient.setQueryData(accountQuery.queryKey, data);
-        toast.success("Username created");
-      },
-    })
-  );
-
-  const normalizedName = name.trim();
-  const hasUsername = !!profile.username;
-  const parsedUsername = lightfastHandleSchema.safeParse(username);
-  const isSavingName = updateNameMutation.isPending;
-  const isCreatingUsername = createUsernameMutation.isPending;
-  const canSaveName =
-    normalizedName.length > 0 &&
-    normalizedName !== (profile.fullName ?? "") &&
-    !isSavingName;
-  const canCreateUsername =
-    !hasUsername && parsedUsername.success && !isCreatingUsername;
-
-  function handleNameSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!canSaveName) {
-      return;
-    }
-    updateNameMutation.mutate({ name: normalizedName });
-  }
-
-  function handleUsernameSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!(canCreateUsername && parsedUsername.success)) {
-      return;
-    }
-    usernameIdempotencyKeyRef.current ??= createIdempotencyKey();
-    createUsernameMutation.mutate({
-      idempotencyKey: usernameIdempotencyKeyRef.current,
-      username: parsedUsername.data,
-    });
-  }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <div>
-        <h2 className="font-medium font-pp text-2xl text-foreground">
-          General
-        </h2>
+        <h2 className="font-medium font-pp text-foreground text-xl">General</h2>
         <p className="mt-1 text-muted-foreground text-sm">
           Manage your personal account settings.
         </p>
       </div>
 
-      {/* Avatar Section */}
-      <div className="flex items-start justify-between gap-6">
-        <div>
-          <h2 className="font-semibold text-foreground text-xl">Avatar</h2>
-          <p className="mt-1 text-muted-foreground text-sm">
-            This is your avatar.
-          </p>
-        </div>
-        <Avatar className="size-10">
-          <AvatarFallback className="bg-foreground text-background text-xs">
-            {profile.initials}
-          </AvatarFallback>
-        </Avatar>
-      </div>
+      <SettingsGroup title="Profile">
+        <SettingRow label="Avatar">
+          <Avatar className="size-7">
+            <AvatarFallback className="bg-foreground text-background text-xs">
+              {profile.initials}
+            </AvatarFallback>
+          </Avatar>
+        </SettingRow>
 
-      {/* Display Name Section */}
-      <form className="space-y-4" onSubmit={handleNameSubmit}>
-        <div>
-          <h2 className="font-semibold text-foreground text-xl">Name</h2>
-          <p className="mt-1 text-muted-foreground text-sm">
-            Please enter your full name, or a display name you are comfortable
-            with.
-          </p>
-        </div>
-        <div className="flex items-start gap-3">
-          <div className="flex-1">
-            <label className="sr-only" htmlFor="account-name">
-              Name
-            </label>
-            <Input
-              autoComplete="name"
-              className="bg-muted/50"
-              id="account-name"
-              onChange={(event) => setName(event.target.value)}
-              type="text"
-              value={name}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onNameSubmit)}>
+            <FormField
+              control={form.control}
+              name="displayName"
+              render={({ field }) => (
+                <SettingRow
+                  description="Please enter your full name, or a display name you are comfortable with."
+                  label="Display name"
+                >
+                  <FormItem className="space-y-0">
+                    <div className="flex flex-col items-end gap-2">
+                      <div className="flex items-center gap-2">
+                        <FormControl>
+                          <Input
+                            {...field}
+                            aria-label="Display name"
+                            className="w-64"
+                            placeholder="Your name"
+                            size="lf"
+                            type="text"
+                            variant="lf"
+                          />
+                        </FormControl>
+                        <Button
+                          disabled={
+                            !(hasNameChanges && form.formState.isValid) ||
+                            isUpdating
+                          }
+                          size="lf"
+                          type="submit"
+                        >
+                          {isUpdating ? (
+                            <>
+                              <Loader2 className="size-3.5 animate-spin" />
+                              Saving
+                            </>
+                          ) : (
+                            "Save"
+                          )}
+                        </Button>
+                      </div>
+                      <FormMessage className="text-xs" />
+                    </div>
+                  </FormItem>
+                </SettingRow>
+              )}
             />
-          </div>
-          <Button disabled={!canSaveName} type="submit" variant="secondary">
-            {isSavingName ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Saving
-              </>
-            ) : (
-              "Save"
-            )}
-          </Button>
-        </div>
-      </form>
+          </form>
+        </Form>
 
-      {/* Username Section */}
-      <form className="space-y-4" onSubmit={handleUsernameSubmit}>
-        <div>
-          <h2 className="font-semibold text-foreground text-xl">Username</h2>
-          <p className="mt-1 text-muted-foreground text-sm">
-            This is your stable Lightfast handle.
-          </p>
-        </div>
-        <div className="flex items-start gap-3">
-          <div className="flex-1">
-            <label className="sr-only" htmlFor="account-username">
-              Username
-            </label>
-            <Input
-              autoComplete="username"
-              className="bg-muted/50 font-mono"
-              disabled={hasUsername}
-              id="account-username"
-              onChange={(event) => {
-                setUsername(normalizeLightfastHandle(event.target.value));
-                usernameIdempotencyKeyRef.current = null;
-              }}
-              placeholder="ada-dev"
-              type="text"
-              value={username}
-            />
-            <p className="mt-2 font-mono text-muted-foreground text-sm">
-              lightfast.ai/
-              <span className="text-foreground">
-                {username || "your-username"}
-              </span>
-            </p>
-          </div>
-          <Button
-            disabled={!canCreateUsername}
-            type="submit"
-            variant={hasUsername ? "secondary" : "default"}
-          >
-            {hasUsername ? (
-              <>
-                <Check className="h-4 w-4" />
-                Username created
-              </>
-            ) : isCreatingUsername ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Creating
-              </>
-            ) : (
-              "Create username"
-            )}
-          </Button>
-        </div>
-      </form>
+        <SettingRow
+          description="This is your stable Lightfast handle."
+          label="Username"
+        >
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <Input
+                  aria-label="Username"
+                  autoComplete="username"
+                  className="w-64 bg-muted/50 font-mono"
+                  disabled
+                  placeholder="ada-dev"
+                  readOnly
+                  size="lf"
+                  type="text"
+                  value={profile.username ?? ""}
+                  variant="lf"
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              Changing your username is disabled for now.
+            </TooltipContent>
+          </Tooltip>
+        </SettingRow>
 
-      {/* Email Section (Read-only) */}
-      <div className="space-y-4">
-        <div>
-          <h2 className="font-semibold text-foreground text-xl">Email</h2>
-          <p className="mt-1 text-muted-foreground text-sm">
-            Your primary email address.
-          </p>
-        </div>
-        <Input
-          className="bg-muted/50"
-          disabled
-          type="email"
-          value={profile.primaryEmailAddress ?? ""}
-        />
-      </div>
-
-      <GithubAccountConnectionSection />
+        <SettingRow description="Your primary email address." label="Email">
+          <Input
+            aria-label="Email"
+            className="w-64 bg-muted/50"
+            disabled
+            readOnly
+            size="lf"
+            type="email"
+            value={profile.primaryEmailAddress ?? ""}
+            variant="lf"
+          />
+        </SettingRow>
+      </SettingsGroup>
     </div>
   );
 }

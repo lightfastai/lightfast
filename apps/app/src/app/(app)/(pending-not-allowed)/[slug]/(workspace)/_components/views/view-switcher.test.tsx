@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { LayoutGrid } from "lucide-react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ViewSwitcherProps } from "./view-switcher";
@@ -78,8 +77,6 @@ describe("ViewSwitcher", () => {
     mockIsMobile = false;
     props = {
       activeViewId: null,
-      allLabel: "All signals",
-      icon: LayoutGrid,
       onCreate: vi.fn().mockResolvedValue(undefined),
       onDelete: vi.fn().mockResolvedValue(undefined),
       onSelectAll: vi.fn(),
@@ -90,9 +87,7 @@ describe("ViewSwitcher", () => {
 
   it("renders the All pill", () => {
     render(<ViewSwitcher {...props} />);
-    expect(
-      screen.getByRole("button", { name: "All signals" })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "All" })).toBeInTheDocument();
   });
 
   it("renders one pill per view and no overflow within the cap", () => {
@@ -118,7 +113,7 @@ describe("ViewSwitcher", () => {
 
   it("selects All when the All pill is clicked", () => {
     render(<ViewSwitcher {...props} activeViewId="v_1" views={makeViews(2)} />);
-    fireEvent.click(screen.getByRole("button", { name: "All signals" }));
+    fireEvent.click(screen.getByRole("button", { name: "All" }));
     expect(props.onSelectAll).toHaveBeenCalledTimes(1);
   });
 

@@ -161,7 +161,7 @@ describe("account.updateName", () => {
   it("rejects unauthenticated callers", async () => {
     await expect(
       caller(unauthenticatedIdentity).viewer.account.updateName({
-        name: "Ada Lovelace",
+        displayName: "Ada Lovelace",
       })
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
 
@@ -170,16 +170,16 @@ describe("account.updateName", () => {
 
   it("updates the Clerk first and last name from a display name", async () => {
     await expect(
-      caller().viewer.account.updateName({ name: "Ada Lovelace" })
+      caller().viewer.account.updateName({ displayName: "Ada Lovelace" })
     ).resolves.toMatchObject({
-      firstName: "Ada",
+      firstName: "Ada Lovelace",
       fullName: "Ada Lovelace",
-      lastName: "Lovelace",
+      lastName: "",
     });
 
     expect(updateUserMock).toHaveBeenCalledWith("user_test", {
-      firstName: "Ada",
-      lastName: "Lovelace",
+      firstName: "Ada Lovelace",
+      lastName: "",
     });
   });
 });

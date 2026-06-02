@@ -8,6 +8,7 @@ import {
   createAutomationSchema,
   formatAutomationSchedule,
   formatClockTime,
+  getAutomationRunSchema,
   normalizeAutomationSchedule,
   updateAutomationSchema,
 } from "../schemas/automations";
@@ -67,6 +68,60 @@ describe("normalizeAutomationSchedule", () => {
     });
   });
 
+  it("normalizes manual schedules with an empty config", () => {
+    expect(
+      normalizeAutomationSchedule({
+        kind: "manual",
+        config: {},
+      })
+    ).toEqual({
+      kind: "manual",
+      config: {},
+    });
+  });
+
+  it("rejects manual schedules carrying extra config keys", () => {
+    expect(() =>
+      normalizeAutomationSchedule({
+        kind: "manual",
+        config: { time: "09:00" },
+      })
+    ).toThrow();
+  });
+
+  it("normalizes weekdays schedules into a UTC HH:mm time", () => {
+    expect(
+      normalizeAutomationSchedule({
+        kind: "weekdays",
+        config: { time: "08:15" },
+      })
+    ).toEqual({
+      kind: "weekdays",
+      config: { time: "08:15" },
+    });
+  });
+
+  it("normalizes weekly schedules with a dayOfWeek and time", () => {
+    expect(
+      normalizeAutomationSchedule({
+        kind: "weekly",
+        config: { dayOfWeek: 1, time: "09:00" },
+      })
+    ).toEqual({
+      kind: "weekly",
+      config: { dayOfWeek: 1, time: "09:00" },
+    });
+  });
+
+  it("rejects weekly schedules with a dayOfWeek outside 0..6", () => {
+    expect(() =>
+      normalizeAutomationSchedule({
+        kind: "weekly",
+        config: { dayOfWeek: 7, time: "09:00" },
+      })
+    ).toThrow();
+  });
+
   it("rejects hourly intervals outside 1..24", () => {
     expect(() =>
       normalizeAutomationSchedule({
@@ -108,6 +163,24 @@ describe("normalizeAutomationSchedule", () => {
 });
 
 describe("automation schemas", () => {
+  it("accepts a valid automation run id for run detail lookups", () => {
+    expect(
+      getAutomationRunSchema.parse({
+        id: `${AUTOMATION_RUN_ID_PREFIX}123e4567-e89b-12d3-a456-426614174000`,
+      })
+    ).toEqual({
+      id: `${AUTOMATION_RUN_ID_PREFIX}123e4567-e89b-12d3-a456-426614174000`,
+    });
+  });
+
+  it("rejects an automation id for run detail lookups", () => {
+    expect(() =>
+      getAutomationRunSchema.parse({
+        id: `${AUTOMATION_ID_PREFIX}123e4567-e89b-12d3-a456-426614174000`,
+      })
+    ).toThrow();
+  });
+
   it("accepts a valid IANA timezone when creating an automation", () => {
     expect(
       createAutomationSchema.parse({
@@ -201,5 +274,35 @@ describe("formatAutomationSchedule", () => {
         scheduleConfig: { time: "09:00" },
       })
     ).toBe("Daily at 9:00 AM");
+  });
+
+  it("labels manual schedules as 'Manual'", () => {
+    expect(
+      formatAutomationSchedule({
+        status: "active",
+        scheduleKind: "manual",
+        scheduleConfig: {},
+      })
+    ).toBe("Manual");
+  });
+
+  it("formats weekdays schedules with the 12h clock time", () => {
+    expect(
+      formatAutomationSchedule({
+        status: "active",
+        scheduleKind: "weekdays",
+        scheduleConfig: { time: "08:15" },
+      })
+    ).toBe("Weekdays at 8:15 AM");
+  });
+
+  it("formats weekly schedules with the weekday name and time", () => {
+    expect(
+      formatAutomationSchedule({
+        status: "active",
+        scheduleKind: "weekly",
+        scheduleConfig: { dayOfWeek: 1, time: "09:00" },
+      })
+    ).toBe("Weekly on Monday at 9:00 AM");
   });
 });

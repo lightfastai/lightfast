@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
@@ -134,9 +135,9 @@ export function PeopleDetailContent({
           className="size-4 text-muted-foreground"
           provider={person.identityProvider}
         />
-        <span className="rounded-full border border-border/70 px-2 py-0.5 text-muted-foreground text-xs">
+        <Badge className="text-muted-foreground" variant="outline">
           {getPersonProviderLabel(person.identityProvider)}
-        </span>
+        </Badge>
         <div className="ml-auto flex items-center gap-1">
           <Button
             aria-label="Copy link"
