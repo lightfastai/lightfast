@@ -23,7 +23,7 @@ export function SkillMarkdown({
 
   return (
     <MarkdownContent
-      className="text-sm"
+      className="prose-sm max-w-none"
       sourcePath={skill.path}
       sourceUrlBase={getSkillSourceUrlBase({ repositoryUrl, skill })}
     >

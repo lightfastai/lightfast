@@ -26,7 +26,7 @@ export function SkillDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={Boolean(skill)}>
-      <DialogContent className="flex max-h-[82vh] flex-col gap-0 sm:max-w-2xl">
+      <DialogContent className="flex max-h-[82vh] flex-col gap-0 sm:max-w-lg">
         {skill && (
           <>
             <DialogHeader className="flex-row items-start gap-3 space-y-0 text-left">
@@ -64,7 +64,7 @@ export function SkillDialog({
               </div>
             )}
 
-            <div className="mt-4 min-h-0 flex-1 overflow-y-auto rounded-[12px] border border-border bg-muted/20 p-4">
+            <div className="mt-4 min-h-0 flex-1 overflow-y-auto border-border border-t pt-4">
               <SkillMarkdown repositoryUrl={repositoryUrl} skill={skill} />
             </div>
 

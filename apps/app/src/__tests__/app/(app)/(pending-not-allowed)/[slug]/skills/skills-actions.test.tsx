@@ -29,12 +29,13 @@ const { SkillsActions } = await import(
 );
 
 describe("SkillsActions", () => {
-  it("renders the freshness status and an Open repository link", () => {
+  it("renders the freshness status and a View Source link", () => {
     render(<SkillsActions />);
 
-    expect(screen.getByText("Fresh")).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: /Open repository/i })
-    ).toHaveAttribute("href", "https://github.com/acme/.lightfast");
+    expect(screen.getByText("Latest")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /View Source/i })).toHaveAttribute(
+      "href",
+      "https://github.com/acme/.lightfast"
+    );
   });
 });
