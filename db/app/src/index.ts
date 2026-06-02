@@ -218,9 +218,11 @@ export {
   recordConnectorToolRefreshError,
   setConnectorAgentEnabled,
   setConnectorAutomationEnabled,
+  type UpdateConnectorToolManifestAndAutomationStateInput,
   type UpdateConnectorToolManifestInput,
   type UpdateObservedConnectorTokensInput,
   updateConnectorToolManifest,
+  updateConnectorToolManifestAndAutomationState,
   updateObservedConnectorTokens,
 } from "./utils/org-connector-connections";
 export {

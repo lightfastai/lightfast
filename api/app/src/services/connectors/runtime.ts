@@ -11,16 +11,21 @@ import {
   type ProviderRoutineCallRedactedPayload,
 } from "@db/app";
 import { db as appDb } from "@db/app/client";
-import { connectorRuntimeToolName } from "@repo/connector-contract";
+import {
+  type ConnectableConnectorProvider,
+  connectorRuntimeToolName,
+} from "@repo/connector-contract";
 import { callLinearMcpTool, LinearAppNodeError } from "@repo/linear-app-node";
+import { callXBridgeMcpTool, XAppNodeError } from "@repo/x-app-node";
 import { log } from "@vendor/observability/log/next";
 
 import { getFreshLinearConnectorAccessToken } from "./linear-flow";
+import { issueConnectorMcpToken } from "./mcp-auth";
 
 export interface ConnectorRuntimeToolSource {
   call(input: unknown): Promise<unknown>;
   description?: string;
-  provider: "linear";
+  provider: ConnectableConnectorProvider;
   providerToolName: string;
   runtimeToolName: string;
 }
@@ -28,6 +33,7 @@ export interface ConnectorRuntimeToolSource {
 interface RuntimeToolCallContext {
   automationPublicId?: string;
   clerkOrgId: string;
+  provider: ConnectableConnectorProvider;
   providerToolName: string;
   runPublicId?: string;
   runtimeToolName: string;
@@ -43,12 +49,15 @@ export async function loadConnectorRuntimeTools(input: {
   });
 
   return connections.flatMap((connection) => {
-    if (!isActiveAutomationLinearConnection(connection)) {
+    if (!isActiveAutomationConnection(connection)) {
       return [];
     }
 
     return connection.toolManifest.flatMap((tool) => {
-      const runtimeToolName = safeRuntimeToolName(tool.name);
+      const runtimeToolName = safeRuntimeToolName(
+        connection.provider,
+        tool.name
+      );
       if (!runtimeToolName) {
         return [];
       }
@@ -59,12 +68,13 @@ export async function loadConnectorRuntimeTools(input: {
             callConnectorRuntimeTool(toolInput, {
               automationPublicId: input.automationPublicId,
               clerkOrgId: input.clerkOrgId,
+              provider: connection.provider,
               providerToolName: tool.name,
               runPublicId: input.runPublicId,
               runtimeToolName,
             }),
           description: tool.description,
-          provider: "linear" as const,
+          provider: connection.provider,
           providerToolName: tool.name,
           runtimeToolName,
         },
@@ -80,7 +90,7 @@ async function callConnectorRuntimeTool(
   const logContext = {
     automationPublicId: context.automationPublicId,
     clerkOrgId: context.clerkOrgId,
-    provider: "linear" as const,
+    provider: context.provider,
     providerToolName: context.providerToolName,
     runPublicId: context.runPublicId,
     runtimeToolName: context.runtimeToolName,
@@ -90,16 +100,18 @@ async function callConnectorRuntimeTool(
   try {
     const connection = await getCurrentOrgConnectorConnection(appDb, {
       clerkOrgId: context.clerkOrgId,
-      provider: "linear",
+      provider: context.provider,
     });
     if (
       !(
         connection &&
-        isActiveAutomationLinearConnection(connection) &&
+        isActiveAutomationConnection(connection) &&
         hasValidCurrentTool(connection, context.providerToolName)
       )
     ) {
-      throw new Error("Linear connector is not active for automations.");
+      throw new Error(
+        `${connectorDisplayName(context.provider)} connector is not active for automations.`
+      );
     }
 
     const caller = calledByContext(context);
@@ -110,7 +122,7 @@ async function callConnectorRuntimeTool(
       clerkOrgId: context.clerkOrgId,
       providerConnectionId: connection.id,
       inputRedacted: redactedPresence(input),
-      provider: "linear",
+      provider: context.provider,
       providerActorId: connection.providerActorId,
       providerToolName: context.providerToolName,
       providerWorkspaceId: connection.providerWorkspaceId,
@@ -121,10 +133,6 @@ async function callConnectorRuntimeTool(
         caller.calledByKind === "automation" ? "automation" : "system",
     });
 
-    const accessToken = await getFreshLinearConnectorAccessToken({
-      connection,
-      db: appDb,
-    });
     if (providerRoutineCall) {
       await safelyMarkProviderRoutineCallProviderAttempted(
         {
@@ -134,12 +142,11 @@ async function callConnectorRuntimeTool(
         logContext
       );
     }
-    const result = await callLinearMcpTool({
-      accessToken,
-      endpoint: connection.mcpEndpoint,
-      input: normalizeMcpToolInput(input),
-      name: context.providerToolName,
-    });
+
+    const result =
+      context.provider === "linear"
+        ? await callLinearRuntimeTool(input, connection, context)
+        : await callXRuntimeTool(input, connection, context);
 
     if (providerRoutineCall) {
       await safelyMarkProviderRoutineCallSucceeded(
@@ -170,10 +177,10 @@ async function callConnectorRuntimeTool(
       );
     }
 
-    if (isTerminalLinearTokenRefreshError(error)) {
+    if (isTerminalConnectorAuthError(context.provider, error)) {
       await markCurrentOrgConnectorConnectionError(appDb, {
         clerkOrgId: context.clerkOrgId,
-        provider: "linear",
+        provider: context.provider,
       });
     }
 
@@ -209,7 +216,7 @@ async function safelyCreateProviderRoutineCall(input: {
   clerkOrgId: string;
   providerConnectionId: number;
   inputRedacted: ProviderRoutineCallRedactedPayload;
-  provider: "linear";
+  provider: ConnectableConnectorProvider;
   providerActorId: string | null;
   providerToolName: string;
   providerWorkspaceId: string | null;
@@ -293,14 +300,45 @@ async function safelyMarkProviderRoutineCallFailed(
   }
 }
 
-function isActiveAutomationLinearConnection(
-  connection: OrgConnectorConnection
+async function callLinearRuntimeTool(
+  input: unknown,
+  connection: OrgConnectorConnection,
+  context: RuntimeToolCallContext
 ) {
-  return (
-    connection.provider === "linear" &&
-    connection.status === "active" &&
-    connection.enabledForAutomations
-  );
+  const accessToken = await getFreshLinearConnectorAccessToken({
+    connection,
+    db: appDb,
+  });
+  return await callLinearMcpTool({
+    accessToken,
+    endpoint: connection.mcpEndpoint,
+    input: normalizeMcpToolInput(input),
+    name: context.providerToolName,
+  });
+}
+
+async function callXRuntimeTool(
+  input: unknown,
+  connection: OrgConnectorConnection,
+  context: RuntimeToolCallContext
+) {
+  const mcpToken = await issueConnectorMcpToken({
+    clerkOrgId: context.clerkOrgId,
+    connectionId: connection.id,
+    provider: "x",
+    purpose: "call",
+    toolName: context.providerToolName,
+  });
+  return await callXBridgeMcpTool({
+    endpoint: connection.mcpEndpoint,
+    input: normalizeMcpToolInput(input),
+    mcpToken,
+    name: context.providerToolName,
+  });
+}
+
+function isActiveAutomationConnection(connection: OrgConnectorConnection) {
+  return connection.status === "active" && connection.enabledForAutomations;
 }
 
 function hasValidCurrentTool(
@@ -309,13 +347,17 @@ function hasValidCurrentTool(
 ) {
   return connection.toolManifest.some(
     (tool) =>
-      tool.name === providerToolName && safeRuntimeToolName(tool.name) !== null
+      tool.name === providerToolName &&
+      safeRuntimeToolName(connection.provider, tool.name) !== null
   );
 }
 
-function safeRuntimeToolName(providerToolName: string) {
+function safeRuntimeToolName(
+  provider: ConnectableConnectorProvider,
+  providerToolName: string
+) {
   try {
-    return connectorRuntimeToolName("linear", providerToolName);
+    return connectorRuntimeToolName(provider, providerToolName);
   } catch {
     return null;
   }
@@ -343,10 +385,18 @@ function redactedPresence(value: unknown): ProviderRoutineCallRedactedPayload {
   return { present: true };
 }
 
-function isTerminalLinearTokenRefreshError(error: unknown) {
+function isTerminalConnectorAuthError(
+  provider: ConnectableConnectorProvider,
+  error: unknown
+) {
+  if (provider === "linear") {
+    return (
+      error instanceof LinearAppNodeError &&
+      error.code === "LINEAR_TOKEN_REFRESH_FAILED"
+    );
+  }
   return (
-    error instanceof LinearAppNodeError &&
-    error.code === "LINEAR_TOKEN_REFRESH_FAILED"
+    error instanceof XAppNodeError && error.code === "X_TOKEN_REFRESH_FAILED"
   );
 }
 
@@ -360,6 +410,10 @@ function isKnownLinearError(error: unknown) {
   return error instanceof LinearAppNodeError;
 }
 
+function isKnownXError(error: unknown) {
+  return error instanceof XAppNodeError;
+}
+
 function safeLinearErrorMessage(error: unknown) {
   switch (getErrorCode(error)) {
     case "LINEAR_TOKEN_REFRESH_FAILED":
@@ -371,8 +425,25 @@ function safeLinearErrorMessage(error: unknown) {
   }
 }
 
+function safeXErrorMessage(error: unknown) {
+  switch (getErrorCode(error)) {
+    case "X_TOKEN_REFRESH_FAILED":
+      return "X OAuth token refresh failed.";
+    case "X_MCP_FAILED":
+      return "X MCP tool call failed.";
+    default:
+      return;
+  }
+}
+
 function safeProviderRoutineCallErrorMessage(error: unknown) {
-  return isKnownLinearError(error) ? safeLinearErrorMessage(error) : undefined;
+  if (isKnownLinearError(error)) {
+    return safeLinearErrorMessage(error);
+  }
+  if (isKnownXError(error)) {
+    return safeXErrorMessage(error);
+  }
+  return;
 }
 
 function safeErrorDetails(error: unknown) {
@@ -380,7 +451,13 @@ function safeErrorDetails(error: unknown) {
     code: getErrorCode(error),
     message: isKnownLinearError(error)
       ? safeLinearErrorMessage(error)
-      : undefined,
+      : isKnownXError(error)
+        ? safeXErrorMessage(error)
+        : undefined,
     name: error instanceof Error ? error.name : typeof error,
   };
+}
+
+function connectorDisplayName(provider: ConnectableConnectorProvider) {
+  return provider === "linear" ? "Linear" : "X";
 }

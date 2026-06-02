@@ -3,6 +3,7 @@ import type { z } from "zod";
 import {
   CONNECTABLE_CONNECTOR_PROVIDERS,
   CONNECTOR_CATALOG,
+  CONNECTOR_PROVIDERS,
   connectorRuntimeToolName,
   connectorRuntimeToolNameSchema,
   connectorToolNameSchema,
@@ -10,10 +11,12 @@ import {
 } from "../index";
 
 describe("connector catalog", () => {
-  it("catalogs only the connectable Linear connector", () => {
-    expect(CONNECTABLE_CONNECTOR_PROVIDERS).toEqual(["linear"]);
+  it("includes X as a connectable provider", () => {
+    expect(CONNECTOR_PROVIDERS).toEqual(["linear", "x"]);
+    expect(CONNECTABLE_CONNECTOR_PROVIDERS).toEqual(["linear", "x"]);
     expect(CONNECTOR_CATALOG.map((entry) => entry.provider)).toEqual([
       "linear",
+      "x",
     ]);
     expect(
       CONNECTOR_CATALOG.every((entry) => entry.catalogStatus === "available")
@@ -57,6 +60,19 @@ describe("runtime tool names", () => {
     expect(connectorRuntimeToolNameSchema.parse(runtimeName)).toBe(runtimeName);
   });
 
+  it("accepts case-preserving X tool names", () => {
+    expect(connectorToolNameSchema.parse("getUsersByUsername")).toBe(
+      "getUsersByUsername"
+    );
+    expect(connectorRuntimeToolName("x", "getUsersByUsername")).toBe(
+      "x__getUsersByUsername"
+    );
+    expect(parseConnectorRuntimeToolName("x__getUsersByUsername")).toEqual({
+      provider: "x",
+      providerToolName: "getUsersByUsername",
+    });
+  });
+
   it("rejects runtime tool names with unsupported provider prefixes", () => {
     expect(() =>
       connectorRuntimeToolNameSchema.parse("foo__create_issue")
@@ -79,5 +95,8 @@ describe("runtime tool names", () => {
     expect(connectorToolNameSchema.parse("issue.search")).toBe("issue.search");
     expect(connectorToolNameSchema.parse("issue-search")).toBe("issue-search");
     expect(() => connectorToolNameSchema.parse("Create Issue")).toThrow();
+    expect(connectorToolNameSchema.safeParse("get users").success).toBe(false);
+    expect(connectorToolNameSchema.safeParse("get/users").success).toBe(false);
+    expect(connectorToolNameSchema.safeParse("getUsers!").success).toBe(false);
   });
 });

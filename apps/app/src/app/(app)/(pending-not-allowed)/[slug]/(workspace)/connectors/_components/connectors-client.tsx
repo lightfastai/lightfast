@@ -60,15 +60,13 @@ interface ConnectorsClientProps {
   callbackError?: string;
 }
 
-const CONNECTABLE_PROVIDER: ConnectorProvider = "linear";
+const CONNECTABLE_PROVIDERS = new Set<ConnectorProvider>(["linear", "x"]);
 const ADMIN_REQUIRED_MESSAGE = "Admin access required to manage connectors";
 const DISCONNECT_UNAVAILABLE_MESSAGE =
   "Disconnecting isn't available right now.";
 
-function isConnectableProvider(
-  provider: ConnectorProvider
-): provider is "linear" {
-  return provider === CONNECTABLE_PROVIDER;
+function isConnectableProvider(provider: ConnectorProvider) {
+  return CONNECTABLE_PROVIDERS.has(provider);
 }
 
 function filterMatches(row: ConnectorCatalogRow, filter: StatusFilter) {
@@ -93,6 +91,17 @@ function isConnectDisabled(row: ConnectorCatalogRow, pending: boolean) {
     isMutationDisabled(row, pending) ||
     row.connectAvailability.status !== "available"
   );
+}
+
+function missingConfigMessage(row: ConnectorCatalogRow) {
+  if (row.provider === "x") {
+    return "X OAuth credentials are not configured.";
+  }
+  return "Linear OAuth credentials are not configured.";
+}
+
+function missingConfigFallback(row: ConnectorCatalogRow) {
+  return row.provider === "x" ? "X OAuth" : "Linear OAuth";
 }
 
 export function ConnectorsClient({
@@ -550,15 +559,18 @@ function AvailableConnectorCard({
             {row.description}
           </p>
           {missingConfig && (
-            <p className="mt-1 text-muted-foreground text-xs">
-              Missing config:{" "}
-              <span className="text-foreground">
-                {row.connectAvailability.status === "unavailable"
-                  ? (row.connectAvailability.missing?.join(", ") ??
-                    "Linear OAuth")
-                  : "Linear OAuth"}
-              </span>
-            </p>
+            <div className="mt-1 text-muted-foreground text-xs">
+              <p>{missingConfigMessage(row)}</p>
+              <p>
+                Missing config:{" "}
+                <span className="text-foreground">
+                  {row.connectAvailability.status === "unavailable"
+                    ? (row.connectAvailability.missing?.join(", ") ??
+                      missingConfigFallback(row))
+                    : missingConfigFallback(row)}
+                </span>
+              </p>
+            </div>
           )}
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">

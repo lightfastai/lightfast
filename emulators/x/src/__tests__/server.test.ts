@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { X_EMULATOR_FIXTURES, X_EMULATOR_OAUTH_CODE } from "../fixtures";
+import { xManifest } from "../manifest";
 import { type StartedXEmulator, startXEmulator } from "../server";
 
 const VERIFIER = "x_pkce_verifier_lightfast_local_0123456789";
@@ -29,9 +30,12 @@ async function postForm(path: string, body: Record<string, string>) {
   });
 }
 
-async function authorize(extra: Record<string, string> = {}) {
+async function authorize(
+  extra: Record<string, string> = {},
+  path = "/oauth2/authorize"
+) {
   const active = emulator ?? (await start());
-  const url = new URL("/oauth2/authorize", active.url);
+  const url = new URL(path, active.url);
   url.searchParams.set("client_id", X_EMULATOR_FIXTURES.oauthClientId);
   url.searchParams.set("redirect_uri", REDIRECT_URI);
   url.searchParams.set("code_challenge", CHALLENGE);
@@ -41,6 +45,15 @@ async function authorize(extra: Record<string, string> = {}) {
     url.searchParams.set(key, value);
   }
   return await fetch(url, { redirect: "manual" });
+}
+
+async function getAuthed(path: string) {
+  const active = emulator ?? (await start());
+  return await fetch(`${active.url}${path}`, {
+    headers: {
+      authorization: `Bearer ${X_EMULATOR_FIXTURES.accessToken}`,
+    },
+  });
 }
 
 afterEach(async () => {
@@ -71,6 +84,37 @@ describe("@repo/x-emulator", () => {
       token_type: "bearer",
       expires_in: 7200,
     });
+  });
+
+  it("serves token exchange and revoke under the X API OAuth path shape", async () => {
+    await authorize();
+
+    const tokenRes = await postForm("/2/oauth2/token", {
+      client_id: X_EMULATOR_FIXTURES.oauthClientId,
+      code: X_EMULATOR_OAUTH_CODE,
+      code_verifier: VERIFIER,
+      grant_type: "authorization_code",
+      redirect_uri: REDIRECT_URI,
+    });
+    expect(tokenRes.status).toBe(200);
+    await expect(tokenRes.json()).resolves.toMatchObject({
+      access_token: X_EMULATOR_FIXTURES.accessToken,
+      refresh_token: X_EMULATOR_FIXTURES.refreshToken,
+    });
+
+    const revokeRes = await postForm("/2/oauth2/revoke", {
+      client_id: X_EMULATOR_FIXTURES.oauthClientId,
+      token: X_EMULATOR_FIXTURES.accessToken,
+    });
+    expect(revokeRes.status).toBe(200);
+  });
+
+  it("serves the X OAuth authorize path shape", async () => {
+    const authorizeRes = await authorize({}, "/i/oauth2/authorize");
+    expect(authorizeRes.status).toBe(302);
+
+    const redirectUrl = new URL(authorizeRes.headers.get("location") ?? "");
+    expect(redirectUrl.searchParams.get("code")).toBe(X_EMULATOR_OAUTH_CODE);
   });
 
   it("rejects a token exchange with an invalid PKCE verifier", async () => {
@@ -139,6 +183,89 @@ describe("@repo/x-emulator", () => {
       token: X_EMULATOR_FIXTURES.accessToken,
     });
     expect(revokeRes.status).toBe(200);
+  });
+
+  it("serves authenticated read-only X user lookup endpoints", async () => {
+    const byUsernameRes = await getAuthed("/2/users/by/username/lightfast");
+    expect(byUsernameRes.status).toBe(200);
+    await expect(byUsernameRes.json()).resolves.toMatchObject({
+      data: { id: "x_user_1", username: "lightfast" },
+    });
+
+    const byUsernamesRes = await getAuthed(
+      "/2/users/by?usernames=lightfast,agent"
+    );
+    expect(byUsernamesRes.status).toBe(200);
+    await expect(byUsernamesRes.json()).resolves.toMatchObject({
+      data: [
+        { id: "x_user_1", username: "lightfast" },
+        { id: "x_user_2", username: "agent" },
+      ],
+    });
+
+    const byIdRes = await getAuthed("/2/users/x_user_1");
+    expect(byIdRes.status).toBe(200);
+    await expect(byIdRes.json()).resolves.toMatchObject({
+      data: { id: "x_user_1", username: "lightfast" },
+    });
+
+    const byIdsRes = await getAuthed("/2/users?ids=x_user_1,x_user_2");
+    expect(byIdsRes.status).toBe(200);
+    await expect(byIdsRes.json()).resolves.toMatchObject({
+      data: [
+        { id: "x_user_1", username: "lightfast" },
+        { id: "x_user_2", username: "agent" },
+      ],
+    });
+  });
+
+  it("serves authenticated read-only X post endpoints", async () => {
+    const byIdRes = await getAuthed("/2/tweets/tweet_1");
+    expect(byIdRes.status).toBe(200);
+    await expect(byIdRes.json()).resolves.toMatchObject({
+      data: { author_id: "x_user_1", id: "tweet_1" },
+    });
+
+    const byIdsRes = await getAuthed("/2/tweets?ids=tweet_1,tweet_2");
+    expect(byIdsRes.status).toBe(200);
+    await expect(byIdsRes.json()).resolves.toMatchObject({
+      data: [{ id: "tweet_1" }, { id: "tweet_2" }],
+    });
+
+    const searchRes = await getAuthed(
+      "/2/tweets/search/recent?query=lightfast"
+    );
+    expect(searchRes.status).toBe(200);
+    await expect(searchRes.json()).resolves.toMatchObject({
+      data: [{ id: "tweet_1" }],
+    });
+
+    const countsRes = await getAuthed(
+      "/2/tweets/counts/recent?query=lightfast"
+    );
+    expect(countsRes.status).toBe(200);
+    await expect(countsRes.json()).resolves.toMatchObject({
+      data: [{ tweet_count: 1 }],
+    });
+  });
+
+  it("rejects missing bearer tokens on read-only lookup endpoints", async () => {
+    const active = await start();
+    const res = await fetch(`${active.url}/2/tweets/tweet_1`);
+    expect(res.status).toBe(401);
+  });
+
+  it("emits the app-hosted X MCP endpoint in its manifest", () => {
+    expect(
+      xManifest.env(
+        "https://app.lightfast.localhost",
+        "https://x.lightfast.localhost"
+      )
+    ).toMatchObject({
+      X_API_ORIGIN: "https://x.lightfast.localhost",
+      X_MCP_ENDPOINT: "https://app.lightfast.localhost/api/connectors/x/mcp",
+      X_OAUTH_ORIGIN: "https://x.lightfast.localhost",
+    });
   });
 
   it("rejects missing and invalid bearer tokens on /2/users/me", async () => {

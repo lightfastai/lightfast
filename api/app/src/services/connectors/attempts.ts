@@ -1,9 +1,10 @@
 import { createHash } from "node:crypto";
+import type { ConnectableConnectorProvider } from "@repo/connector-contract";
 import { nanoid } from "@vendor/lib";
 import { redis } from "@vendor/upstash";
 import { z } from "zod";
 
-const OAUTH_PREFIX = "linear-connect-oauth-attempt:";
+const OAUTH_PREFIX = "connector-oauth-attempt:";
 const TTL_SECONDS = 15 * 60;
 
 const stateEnvelopeSchema = z.object({
@@ -11,12 +12,13 @@ const stateEnvelopeSchema = z.object({
   nonce: z.string().min(16),
 });
 
-export interface LinearConnectOAuthAttemptRecord {
+export interface ConnectorOAuthAttemptRecord {
   clerkOrgId: string;
   codeVerifier: string;
   lightfastUserId: string;
   mode: "connect" | "reconnect";
   orgSlug: string;
+  provider: ConnectableConnectorProvider;
   stateHash: string;
 }
 
@@ -40,65 +42,98 @@ function hashState(state: string): string {
   return createHash("sha256").update(state).digest("hex");
 }
 
-function getAttemptKey(state: string) {
-  const envelope = decodeState(state);
-  return envelope ? `${OAUTH_PREFIX}${envelope.attemptId}` : null;
+function getAttemptKey(input: {
+  provider: ConnectableConnectorProvider;
+  state: string;
+}) {
+  const envelope = decodeState(input.state);
+  return envelope
+    ? `${OAUTH_PREFIX}${input.provider}:${envelope.attemptId}`
+    : null;
 }
 
-function isMatchingAttempt(
-  record: LinearConnectOAuthAttemptRecord | null,
-  state: string
-) {
-  return !!record && record.stateHash === hashState(state);
+function isMatchingAttempt(input: {
+  provider: ConnectableConnectorProvider;
+  record: ConnectorOAuthAttemptRecord | null;
+  state: string;
+}) {
+  return (
+    !!input.record &&
+    input.record.provider === input.provider &&
+    input.record.stateHash === hashState(input.state)
+  );
 }
 
-export async function issueLinearConnectOAuthAttempt(input: {
+export async function issueConnectorOAuthAttempt(input: {
   clerkOrgId: string;
   codeVerifier: string;
   lightfastUserId: string;
   mode: "connect" | "reconnect";
   orgSlug: string;
+  provider: ConnectableConnectorProvider;
 }) {
   const attemptId = nanoid(32);
   const state = encodeState({ attemptId, nonce: nanoid(32) });
-  const record: LinearConnectOAuthAttemptRecord = {
+  const record: ConnectorOAuthAttemptRecord = {
     clerkOrgId: input.clerkOrgId,
     codeVerifier: input.codeVerifier,
     lightfastUserId: input.lightfastUserId,
     mode: input.mode,
     orgSlug: input.orgSlug,
+    provider: input.provider,
     stateHash: hashState(state),
   };
-  await redis.set(`${OAUTH_PREFIX}${attemptId}`, record, { ex: TTL_SECONDS });
+  await redis.set(`${OAUTH_PREFIX}${input.provider}:${attemptId}`, record, {
+    ex: TTL_SECONDS,
+  });
   return { attemptId, state };
 }
 
-export async function lookupLinearConnectOAuthAttempt(input: {
+export async function lookupConnectorOAuthAttempt(input: {
+  provider: ConnectableConnectorProvider;
   state: string;
-}): Promise<LinearConnectOAuthAttemptRecord | null> {
-  const key = getAttemptKey(input.state);
+}): Promise<ConnectorOAuthAttemptRecord | null> {
+  const key = getAttemptKey(input);
   if (!key) {
     return null;
   }
 
-  const record = await redis.get<LinearConnectOAuthAttemptRecord>(key);
-  return isMatchingAttempt(record, input.state) ? record : null;
+  const record = await redis.get<ConnectorOAuthAttemptRecord>(key);
+  return isMatchingAttempt({
+    provider: input.provider,
+    record,
+    state: input.state,
+  })
+    ? record
+    : null;
 }
 
-export async function consumeLinearConnectOAuthAttempt(input: {
+export async function consumeConnectorOAuthAttempt(input: {
+  provider: ConnectableConnectorProvider;
   state: string;
-}): Promise<LinearConnectOAuthAttemptRecord | null> {
-  const key = getAttemptKey(input.state);
+}): Promise<ConnectorOAuthAttemptRecord | null> {
+  const key = getAttemptKey(input);
   if (!key) {
     return null;
   }
 
-  const pendingRecord = await redis.get<LinearConnectOAuthAttemptRecord>(key);
-  if (!isMatchingAttempt(pendingRecord, input.state)) {
+  const pendingRecord = await redis.get<ConnectorOAuthAttemptRecord>(key);
+  if (
+    !isMatchingAttempt({
+      provider: input.provider,
+      record: pendingRecord,
+      state: input.state,
+    })
+  ) {
     return null;
   }
 
-  const consumedRecord =
-    await redis.getdel<LinearConnectOAuthAttemptRecord>(key);
-  return isMatchingAttempt(consumedRecord, input.state) ? consumedRecord : null;
+  const consumedRecord = await redis.getdel<ConnectorOAuthAttemptRecord>(key);
+  return isMatchingAttempt({
+    provider: input.provider,
+    record: consumedRecord,
+    state: input.state,
+  })
+    ? consumedRecord
+    : null;
 }
