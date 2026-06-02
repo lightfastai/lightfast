@@ -5,6 +5,7 @@ import { redis } from "@vendor/upstash";
 import { z } from "zod";
 
 const OAUTH_PREFIX = "connector-oauth-attempt:";
+const LEGACY_OAUTH_PREFIX = "linear-connect-oauth-attempt:";
 const TTL_SECONDS = 15 * 60;
 
 const stateEnvelopeSchema = z.object({
@@ -21,6 +22,11 @@ export interface ConnectorOAuthAttemptRecord {
   provider: ConnectableConnectorProvider;
   stateHash: string;
 }
+
+type LegacyConnectorOAuthAttemptRecord = Omit<
+  ConnectorOAuthAttemptRecord,
+  "provider"
+>;
 
 function encodeState(input: { attemptId: string; nonce: string }): string {
   return Buffer.from(JSON.stringify(input), "utf8").toString("base64url");
@@ -52,6 +58,11 @@ function getAttemptKey(input: {
     : null;
 }
 
+function getLegacyAttemptKey(input: { state: string }) {
+  const envelope = decodeState(input.state);
+  return envelope ? `${LEGACY_OAUTH_PREFIX}${envelope.attemptId}` : null;
+}
+
 function isMatchingAttempt(input: {
   provider: ConnectableConnectorProvider;
   record: ConnectorOAuthAttemptRecord | null;
@@ -62,6 +73,69 @@ function isMatchingAttempt(input: {
     input.record.provider === input.provider &&
     input.record.stateHash === hashState(input.state)
   );
+}
+
+function isMatchingLegacyAttempt(input: {
+  record: LegacyConnectorOAuthAttemptRecord | null;
+  state: string;
+}) {
+  return !!input.record && input.record.stateHash === hashState(input.state);
+}
+
+async function readLegacyConnectorOAuthAttempt(input: {
+  provider: ConnectableConnectorProvider;
+  state: string;
+}): Promise<ConnectorOAuthAttemptRecord | null> {
+  if (input.provider !== "linear") {
+    return null;
+  }
+
+  const key = getLegacyAttemptKey(input);
+  if (!key) {
+    return null;
+  }
+
+  const record = await redis.get<LegacyConnectorOAuthAttemptRecord>(key);
+  if (!record || !isMatchingLegacyAttempt({ record, state: input.state })) {
+    return null;
+  }
+
+  return {
+    ...record,
+    provider: input.provider,
+  };
+}
+
+async function consumeLegacyConnectorOAuthAttempt(input: {
+  provider: ConnectableConnectorProvider;
+  state: string;
+}): Promise<ConnectorOAuthAttemptRecord | null> {
+  if (input.provider !== "linear") {
+    return null;
+  }
+
+  const key = getLegacyAttemptKey(input);
+  if (!key) {
+    return null;
+  }
+
+  const pendingRecord = await redis.get<LegacyConnectorOAuthAttemptRecord>(key);
+  if (!pendingRecord || !isMatchingLegacyAttempt({ record: pendingRecord, state: input.state })) {
+    return null;
+  }
+
+  const consumedRecord = await redis.getdel<LegacyConnectorOAuthAttemptRecord>(key);
+  if (
+    !consumedRecord ||
+    !isMatchingLegacyAttempt({ record: consumedRecord, state: input.state })
+  ) {
+    return null;
+  }
+
+  return {
+    ...consumedRecord,
+    provider: input.provider,
+  };
 }
 
 export async function issueConnectorOAuthAttempt(input: {
@@ -99,13 +173,17 @@ export async function lookupConnectorOAuthAttempt(input: {
   }
 
   const record = await redis.get<ConnectorOAuthAttemptRecord>(key);
-  return isMatchingAttempt({
-    provider: input.provider,
-    record,
-    state: input.state,
-  })
-    ? record
-    : null;
+  if (
+    isMatchingAttempt({
+      provider: input.provider,
+      record,
+      state: input.state,
+    })
+  ) {
+    return record;
+  }
+
+  return readLegacyConnectorOAuthAttempt(input);
 }
 
 export async function consumeConnectorOAuthAttempt(input: {
@@ -119,21 +197,24 @@ export async function consumeConnectorOAuthAttempt(input: {
 
   const pendingRecord = await redis.get<ConnectorOAuthAttemptRecord>(key);
   if (
-    !isMatchingAttempt({
+    isMatchingAttempt({
       provider: input.provider,
       record: pendingRecord,
       state: input.state,
     })
   ) {
-    return null;
+    const consumedRecord = await redis.getdel<ConnectorOAuthAttemptRecord>(key);
+    if (
+      isMatchingAttempt({
+        provider: input.provider,
+        record: consumedRecord,
+        state: input.state,
+      })
+    ) {
+      return consumedRecord;
+    }
   }
 
-  const consumedRecord = await redis.getdel<ConnectorOAuthAttemptRecord>(key);
-  return isMatchingAttempt({
-    provider: input.provider,
-    record: consumedRecord,
-    state: input.state,
-  })
-    ? consumedRecord
-    : null;
+  // Maintain temporary linear legacy-key fallback while existing 15-minute attempts drain.
+  return consumeLegacyConnectorOAuthAttempt(input);
 }

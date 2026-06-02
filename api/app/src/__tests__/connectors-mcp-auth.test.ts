@@ -137,6 +137,24 @@ describe("connector MCP auth", () => {
     ).rejects.toThrow("Connector MCP token provider is invalid.");
   });
 
+  it.each([
+    ["zero", 0],
+    ["negative", -1],
+    ["fraction", 60.5],
+    ["non-finite", Number.NaN],
+  ])("rejects non-positive integer ttl: %s", async (_case, ttlSeconds) => {
+    await expect(
+      issueConnectorMcpToken({
+        clerkOrgId: "org_acme",
+        connectionId: 42,
+        now: new Date("2026-06-02T01:00:00.000Z"),
+        provider: "x",
+        purpose: "list",
+        ttlSeconds,
+      })
+    ).rejects.toThrow("Connector MCP token TTL must be a positive integer.");
+  });
+
   it("rejects wrong purpose", async () => {
     const token = await issueConnectorMcpToken({
       clerkOrgId: "org_acme",

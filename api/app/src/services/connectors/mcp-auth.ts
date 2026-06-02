@@ -55,6 +55,17 @@ export async function issueConnectorMcpToken(input: {
   toolName?: string;
   ttlSeconds?: number;
 }): Promise<string> {
+  if (
+    input.ttlSeconds !== undefined &&
+    (!Number.isFinite(input.ttlSeconds) ||
+      !Number.isInteger(input.ttlSeconds) ||
+      input.ttlSeconds <= 0)
+  ) {
+    throw new ConnectorMcpAuthError(
+      "Connector MCP token TTL must be a positive integer."
+    );
+  }
+
   if (input.purpose === "call" && !input.toolName) {
     throw new ConnectorMcpAuthError(
       "Connector MCP call tokens require a tool name."

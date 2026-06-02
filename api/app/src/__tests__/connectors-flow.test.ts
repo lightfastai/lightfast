@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { Database, OrgConnectorConnection } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -136,8 +137,11 @@ const { assertCurrentSessionCanFinalizeConnectorOAuth } = await import(
   "../services/connectors/auth"
 );
 const { getXConnectorConfig } = await import("../services/connectors/config");
-const { consumeConnectorOAuthAttempt, issueConnectorOAuthAttempt } =
-  await import("../services/connectors/attempts");
+const {
+  consumeConnectorOAuthAttempt,
+  issueConnectorOAuthAttempt,
+  lookupConnectorOAuthAttempt,
+} = await import("../services/connectors/attempts");
 const {
   completeLinearConnectorOAuth,
   disconnectLinearConnector,
@@ -421,6 +425,80 @@ describe("connector OAuth attempts", () => {
       "connector-oauth-attempt:x:attempt_123456789012345678901234"
     );
   });
+
+  it("looks up legacy linear attempt records during a short deploy window", async () => {
+    const state = Buffer.from(
+      JSON.stringify({
+        attemptId: "legacy_attempt_000000000000000000",
+        nonce: "legacy_nonce_123456789012345678901234",
+      }),
+      "utf8"
+    ).toString("base64url");
+    const stateHash = createHash("sha256").update(state).digest("hex");
+    const legacyRecord = {
+      clerkOrgId: "org_acme",
+      codeVerifier: "verifier_123",
+      lightfastUserId: "user_current",
+      mode: "connect",
+      orgSlug: "acme",
+      stateHash,
+    };
+    redisGetMock.mockResolvedValueOnce(null);
+    redisGetMock.mockResolvedValueOnce(legacyRecord);
+
+    await expect(
+      lookupConnectorOAuthAttempt({ provider: "linear", state })
+    ).resolves.toMatchObject({
+      clerkOrgId: "org_acme",
+      codeVerifier: "verifier_123",
+      lightfastUserId: "user_current",
+      mode: "connect",
+      orgSlug: "acme",
+      provider: "linear",
+    });
+    expect(redisGetMock).toHaveBeenCalledWith(
+      `linear-connect-oauth-attempt:legacy_attempt_000000000000000000`
+    );
+  });
+
+  it("consumes legacy linear attempt records during a short deploy window", async () => {
+    const state = Buffer.from(
+      JSON.stringify({
+        attemptId: "legacy_attempt_000000000000000000",
+        nonce: "legacy_nonce_123456789012345678901234",
+      }),
+      "utf8"
+    ).toString("base64url");
+    const stateHash = createHash("sha256").update(state).digest("hex");
+    const legacyRecord = {
+      clerkOrgId: "org_acme",
+      codeVerifier: "verifier_123",
+      lightfastUserId: "user_current",
+      mode: "connect",
+      orgSlug: "acme",
+      stateHash,
+    };
+    redisGetMock.mockResolvedValueOnce(null);
+    redisGetMock.mockResolvedValueOnce(legacyRecord);
+    redisGetdelMock.mockResolvedValueOnce(legacyRecord);
+
+    await expect(
+      consumeConnectorOAuthAttempt({ provider: "linear", state })
+    ).resolves.toMatchObject({
+      clerkOrgId: "org_acme",
+      codeVerifier: "verifier_123",
+      lightfastUserId: "user_current",
+      mode: "connect",
+      orgSlug: "acme",
+      provider: "linear",
+    });
+    expect(redisGetMock).toHaveBeenCalledWith(
+      `linear-connect-oauth-attempt:legacy_attempt_000000000000000000`
+    );
+    expect(redisGetdelMock).toHaveBeenCalledWith(
+      `linear-connect-oauth-attempt:legacy_attempt_000000000000000000`
+    );
+  });
 });
 
 describe("connector callback auth helper", () => {
@@ -600,7 +678,10 @@ describe("Linear connector flow", () => {
       orgSlug: "acme",
       provider: "linear",
     });
-    const attemptRecord = redisSetMock.mock.calls[0]?.[1];
+    const attemptRecord = {
+      ...redisSetMock.mock.calls[0]?.[1],
+      provider: "linear",
+    };
     redisGetMock
       .mockResolvedValueOnce(attemptRecord)
       .mockResolvedValueOnce(attemptRecord);

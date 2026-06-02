@@ -5,6 +5,11 @@ import { sentryEnv } from "@vendor/observability/sentry-env";
 import { unkeyEnv } from "@vendor/unkey/env";
 import { z } from "zod";
 
+const isConnectorMcpAuthSecretRequired =
+  process.env.VERCEL_ENV === "production" ||
+  process.env.VERCEL_ENV === "preview" ||
+  process.env.NODE_ENV === "production";
+
 export const env = createEnv({
   extends: [clerkEnvBase, sentryEnv, inngestEnv, unkeyEnv],
   shared: {},
@@ -26,7 +31,9 @@ export const env = createEnv({
     GITHUB_APP_SLUG: z.string().min(1).optional(),
     GITHUB_APP_WEBHOOK_SECRET: z.string().min(1).optional(),
     GITHUB_APP_ENDPOINT_ORIGIN: z.string().url().optional(),
-    CONNECTOR_MCP_AUTH_SECRET: z.string().min(32).optional(),
+    CONNECTOR_MCP_AUTH_SECRET: isConnectorMcpAuthSecretRequired
+      ? z.string().min(32)
+      : z.string().min(32).optional(),
     LINEAR_API_ORIGIN: z.string().url().optional(),
     LINEAR_CLIENT_ID: z.string().min(1).optional(),
     LINEAR_CLIENT_SECRET: z.string().min(1).optional(),

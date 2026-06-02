@@ -99,6 +99,17 @@ function mcpRequest(input: { body: unknown; token?: string }) {
   });
 }
 
+function malformedRequest() {
+  return new Request("https://app.lightfast.localhost/api/connectors/x/mcp", {
+    body: "{bad json",
+    headers: {
+      accept: "application/json, text/event-stream",
+      "content-type": "application/json",
+    },
+    method: "POST",
+  });
+}
+
 async function mcpToken(input: {
   purpose: "call" | "list";
   toolName?: string;
@@ -223,6 +234,72 @@ describe("X MCP bridge service", () => {
           },
         },
         token: await mcpToken({ purpose: "call", toolName: "getUsersMe" }),
+      }),
+    });
+
+    expect(response.status).toBe(401);
+    expect(executeXApiToolMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects requests when the request body is not valid JSON", async () => {
+    const response = await handleXConnectorMcpRequest({
+      request: malformedRequest(),
+    });
+
+    expect(response.status).toBe(400);
+    expect(executeXApiToolMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects requests when the connector connection is missing", async () => {
+    getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(null);
+
+    const response = await handleXConnectorMcpRequest({
+      request: mcpRequest({
+        body: {
+          id: 1,
+          jsonrpc: "2.0",
+          method: "tools/list",
+          params: {},
+        },
+        token: await mcpToken({ purpose: "list" }),
+      }),
+    });
+
+    expect(response.status).toBe(401);
+    expect(executeXApiToolMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects requests when the connector connection id does not match the token", async () => {
+    getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(connection({ id: 43 }));
+
+    const response = await handleXConnectorMcpRequest({
+      request: mcpRequest({
+        body: {
+          id: 1,
+          jsonrpc: "2.0",
+          method: "tools/list",
+        },
+        token: await mcpToken({ purpose: "list" }),
+      }),
+    });
+
+    expect(response.status).toBe(401);
+    expect(executeXApiToolMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects requests when the connector connection is not active", async () => {
+    getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(
+      connection({ status: "revoked" })
+    );
+
+    const response = await handleXConnectorMcpRequest({
+      request: mcpRequest({
+        body: {
+          id: 1,
+          jsonrpc: "2.0",
+          method: "tools/list",
+        },
+        token: await mcpToken({ purpose: "list" }),
       }),
     });
 

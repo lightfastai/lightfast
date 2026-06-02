@@ -33,11 +33,16 @@ type XBridgeRequestKind =
   | { purpose: null };
 
 const permissiveToolInputSchema = z.object({}).passthrough();
+const MALFORMED_JSON_REQUEST = Symbol("malformed-json");
 
 export async function handleXConnectorMcpRequest(input: {
   request: Request;
 }): Promise<Response> {
   const parsedBody = await parseRequestBody(input.request);
+  if (parsedBody === MALFORMED_JSON_REQUEST) {
+    return invalidRequestResponse();
+  }
+
   const token = bearerToken(input.request.headers);
   if (!token) {
     return unauthorizedResponse();
@@ -273,7 +278,11 @@ async function parseRequestBody(request: Request): Promise<unknown> {
     return;
   }
 
-  return JSON.parse(text);
+  try {
+    return JSON.parse(text);
+  } catch {
+    return MALFORMED_JSON_REQUEST;
+  }
 }
 
 function deriveRequestKind(parsedBody: unknown): XBridgeRequestKind {
@@ -315,6 +324,10 @@ function bearerToken(headers: Headers): string | null {
 
 function unauthorizedResponse() {
   return new Response("Unauthorized", { status: 401 });
+}
+
+function invalidRequestResponse() {
+  return new Response("Invalid request body", { status: 400 });
 }
 
 function shouldRefreshAccessToken(connection: OrgConnectorConnection) {
