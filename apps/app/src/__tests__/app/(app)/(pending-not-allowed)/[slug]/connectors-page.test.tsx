@@ -307,6 +307,14 @@ vi.mock("@repo/ui/components/ui/switch", () => ({
   ),
 }));
 
+vi.mock("@repo/ui/components/ui/tooltip", () => ({
+  Tooltip: ({ children }: { children?: ReactNode }) => <>{children}</>,
+  TooltipTrigger: ({ children }: { children?: ReactNode }) => <>{children}</>,
+  TooltipContent: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
+}));
+
 const { ConnectorsClient } = await import(
   "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/connectors/_components/connectors-client"
 );
@@ -519,12 +527,17 @@ describe("connectors page", () => {
       screen.getByRole("button", { name: /refresh tools/i })
     ).toBeDisabled();
     expect(screen.getByRole("button", { name: /reconnect/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /disconnect/i })).toBeDisabled();
+    // Disconnect is fake-disabled (aria-disabled, not the native attribute) so
+    // its tooltip still shows on hover.
+    expect(screen.getByRole("button", { name: /disconnect/i })).toHaveAttribute(
+      "aria-disabled",
+      "true"
+    );
     expect(
       screen.getByRole("switch", { name: /use in automations/i })
     ).toBeDisabled();
     expect(
-      screen.getByText("Admin access required to manage connectors")
+      screen.getByText("Disconnecting isn't available right now.")
     ).toBeVisible();
   });
 

@@ -21,6 +21,11 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Input } from "@repo/ui/components/ui/input";
 import { Switch } from "@repo/ui/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 import { cn } from "@repo/ui/lib/utils";
 import {
   useMutation,
@@ -57,6 +62,8 @@ interface ConnectorsClientProps {
 
 const CONNECTABLE_PROVIDER: ConnectorProvider = "linear";
 const ADMIN_REQUIRED_MESSAGE = "Admin access required to manage connectors";
+const DISCONNECT_UNAVAILABLE_MESSAGE =
+  "Disconnecting isn't available right now.";
 
 function isConnectableProvider(
   provider: ConnectorProvider
@@ -323,8 +330,6 @@ function ConnectedConnectorCard({
   const status = connectionStatus(connection);
   const actionDisabled = isMutationDisabled(row, pending);
   const connectDisabled = isConnectDisabled(row, pending);
-  const showAdminRequired =
-    !row.canManage && isConnectableProvider(row.provider);
 
   return (
     <section className="rounded-[12px] border border-border bg-background">
@@ -380,16 +385,33 @@ function ConnectedConnectorCard({
                 Reconnect
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                disabled={actionDisabled}
-                onSelect={(event) => {
-                  event.preventDefault();
-                  setConfirmOpen(true);
-                }}
-                variant="destructive"
-              >
-                Disconnect
-              </DropdownMenuItem>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuItem
+                    aria-disabled={actionDisabled || undefined}
+                    className={cn(
+                      actionDisabled && "cursor-not-allowed opacity-50"
+                    )}
+                    onSelect={(event) => {
+                      // Keep the menu open on select; a native `disabled` item
+                      // suppresses hover, so we fake-disable to keep the tooltip.
+                      event.preventDefault();
+                      if (actionDisabled) {
+                        return;
+                      }
+                      setConfirmOpen(true);
+                    }}
+                    variant="destructive"
+                  >
+                    Disconnect
+                  </DropdownMenuItem>
+                </TooltipTrigger>
+                {actionDisabled ? (
+                  <TooltipContent>
+                    {DISCONNECT_UNAVAILABLE_MESSAGE}
+                  </TooltipContent>
+                ) : null}
+              </Tooltip>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -438,12 +460,6 @@ function ConnectedConnectorCard({
           onCheckedChange={(enabled) => onSetAutomationEnabled(row, enabled)}
         />
       </div>
-
-      {showAdminRequired && (
-        <p className="px-3 pb-3 text-muted-foreground text-xs">
-          {ADMIN_REQUIRED_MESSAGE}
-        </p>
-      )}
 
       <AlertDialog onOpenChange={setConfirmOpen} open={confirmOpen}>
         <AlertDialogContent>
