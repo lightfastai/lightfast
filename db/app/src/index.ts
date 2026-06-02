@@ -129,25 +129,6 @@ export {
   updateAutomation,
 } from "./utils/automations";
 export {
-  deletePreClerkNamespaceReservation,
-  failUnreservedNamespaceOperation,
-  finalizeNamespaceOperation,
-  getActiveNamespaceByHandle,
-  getClaimedNamespaceForOwner,
-  getNamespaceByHandle,
-  getNamespaceOperationById,
-  getNamespaceOperationByIdempotencyKey,
-  markNamespaceOperationClerkApplied,
-  type NamespaceConflictCode,
-  NamespaceConflictError,
-  NamespaceOperationConcurrencyError,
-  NamespaceOperationTransitionError,
-  reserveNamespaceForOperation,
-  type StartNamespaceOperationInput,
-  startNamespaceOperation,
-  transitionNamespaceOperation,
-} from "./utils/namespaces";
-export {
   type CreateMcpAuthorizationCodeInput,
   type CreateMcpOauthClientInput,
   type CreateMcpOauthGrantInput,
@@ -175,6 +156,28 @@ export {
   revokeMcpRefreshTokenByHash,
   rotateMcpRefreshToken,
 } from "./utils/mcp-oauth";
+export {
+  type BackfillExistingNamespaceInput,
+  type BackfillExistingNamespaceResult,
+  backfillExistingNamespace,
+  deletePreClerkNamespaceReservation,
+  failUnreservedNamespaceOperation,
+  finalizeNamespaceOperation,
+  getActiveNamespaceByHandle,
+  getClaimedNamespaceForOwner,
+  getNamespaceByHandle,
+  getNamespaceOperationById,
+  getNamespaceOperationByIdempotencyKey,
+  markNamespaceOperationClerkApplied,
+  type NamespaceConflictCode,
+  NamespaceConflictError,
+  NamespaceOperationConcurrencyError,
+  NamespaceOperationTransitionError,
+  reserveNamespaceForOperation,
+  type StartNamespaceOperationInput,
+  startNamespaceOperation,
+  transitionNamespaceOperation,
+} from "./utils/namespaces";
 // Utilities
 export { buildOrgNamespace } from "./utils/org";
 // Org source-control binding repository helpers

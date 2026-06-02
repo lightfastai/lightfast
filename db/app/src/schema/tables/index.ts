@@ -16,18 +16,6 @@ export {
   type InsertAutomationRun,
 } from "./automations";
 export {
-  type InsertNamespace,
-  type InsertNamespaceOperation,
-  type Namespace,
-  type NamespaceKind,
-  type NamespaceOperation,
-  type NamespaceOperationStatus,
-  type NamespaceOperationType,
-  type NamespaceStatus,
-  namespaceOperations,
-  namespaces,
-} from "./namespaces";
-export {
   createMcpOauthClientId,
   createMcpOauthGrantId,
   createMcpOauthRegistrationTokenId,
@@ -61,6 +49,18 @@ export {
   mcpOauthRefreshTokens,
   mcpOauthRegistrationTokens,
 } from "./mcp-oauth";
+export {
+  type InsertNamespace,
+  type InsertNamespaceOperation,
+  type Namespace,
+  type NamespaceKind,
+  type NamespaceOperation,
+  type NamespaceOperationStatus,
+  type NamespaceOperationType,
+  type NamespaceStatus,
+  namespaceOperations,
+  namespaces,
+} from "./namespaces";
 export {
   type InsertOrgSourceControlBinding,
   type OrgSourceControlBinding,
