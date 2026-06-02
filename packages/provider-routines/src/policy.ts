@@ -65,7 +65,7 @@ export function classifyLinearRoutine(
 }
 
 export function classifyRoutine(input: {
-  provider: "linear";
+  provider: import("@repo/connector-contract").ConnectableConnectorProvider;
   providerToolName: ProviderToolName | string;
 }): ProviderRoutineClassification {
   switch (input.provider) {
