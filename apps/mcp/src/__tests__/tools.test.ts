@@ -161,4 +161,78 @@ describe("hosted MCP tools", () => {
 
     expect(deps.createSignalForActor).not.toHaveBeenCalled();
   });
+
+  it("normalizes authorization status errors as org access denied", async () => {
+    const deps = dependencies({
+      assertOrgAccess: vi.fn().mockRejectedValue(
+        Object.assign(new Error("Workspace access denied."), {
+          code: "workspace_access_denied",
+          status: 403,
+        })
+      ),
+    });
+
+    await expect(
+      executeHostedMcpTool({
+        context: context(),
+        contractPath: "signals.create",
+        dependencies: deps,
+        rawInput: { input: "Review this profile" },
+      })
+    ).rejects.toMatchObject({
+      code: "org_access_denied",
+      message: "Workspace access denied.",
+      status: 403,
+    });
+
+    expect(deps.recordMcpAuditEvent).toHaveBeenCalledWith(
+      db,
+      expect.objectContaining({
+        outcome: "denied",
+        metadata: expect.objectContaining({
+          error: {
+            code: "org_access_denied",
+            message: "Workspace access denied.",
+          },
+        }),
+      })
+    );
+  });
+
+  it("does not relabel non-authorization status errors as org access denied", async () => {
+    const deps = dependencies({
+      assertOrgAccess: vi.fn().mockRejectedValue(
+        Object.assign(new Error("Org service unavailable."), {
+          code: "service_unavailable",
+          status: 503,
+        })
+      ),
+    });
+
+    await expect(
+      executeHostedMcpTool({
+        context: context(),
+        contractPath: "signals.create",
+        dependencies: deps,
+        rawInput: { input: "Review this profile" },
+      })
+    ).rejects.toMatchObject({
+      code: "upstream_error",
+      message: "Org service unavailable.",
+      status: 503,
+    });
+
+    expect(deps.recordMcpAuditEvent).toHaveBeenCalledWith(
+      db,
+      expect.objectContaining({
+        outcome: "error",
+        metadata: expect.objectContaining({
+          error: {
+            code: "upstream_error",
+            message: "Org service unavailable.",
+          },
+        }),
+      })
+    );
+  });
 });

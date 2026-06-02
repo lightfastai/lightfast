@@ -35,6 +35,7 @@ export type HostedMcpToolErrorCode =
   | "invalid_input"
   | "not_found"
   | "org_access_denied"
+  | "upstream_error"
   | "unsupported_tool";
 
 export class HostedMcpToolError extends Error {
@@ -352,12 +353,23 @@ function normalizeToolError(error: unknown): HostedMcpToolError {
     "status" in error &&
     typeof (error as { status: unknown }).status === "number"
   ) {
+    const status = (error as { status: number }).status;
+    if (status !== 401 && status !== 403) {
+      return new HostedMcpToolError(
+        "upstream_error",
+        error instanceof Error ? error.message : "MCP upstream error.",
+        status,
+        "error",
+        { cause: error }
+      );
+    }
+
     return new HostedMcpToolError(
       "org_access_denied",
       error instanceof Error
         ? error.message
         : "MCP organization access denied.",
-      (error as { status: number }).status,
+      status,
       "denied",
       { cause: error }
     );
