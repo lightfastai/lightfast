@@ -121,6 +121,7 @@ const ORG_ROUTE_POLICIES = [
   { clerkSync: true, pattern: "/:slug/people(.*)", setupExempt: false },
   { clerkSync: true, pattern: "/:slug/automations(.*)", setupExempt: false },
   { clerkSync: true, pattern: "/:slug/connectors(.*)", setupExempt: false },
+  { clerkSync: true, pattern: "/:slug/decisions(.*)", setupExempt: false },
   { clerkSync: true, pattern: "/:slug/settings(.*)", setupExempt: true },
   { clerkSync: true, pattern: "/:slug/tasks/bind(.*)", setupExempt: true },
   {

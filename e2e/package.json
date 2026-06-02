@@ -7,16 +7,19 @@
   "sideEffects": false,
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
+    "decisions:real-clerk": "NODE_OPTIONS=\"--conditions=react-server ${NODE_OPTIONS:-}\" pnpm with-env tsx src/decisions/real-clerk-smoke.ts",
     "github:setup:real-clerk": "pnpm with-env tsx src/github-setup/real-clerk-smoke.ts",
     "sdk": "pnpm --dir ../core/lightfast build && pnpm with-env vitest run src/sdk/system-health.e2e.test.ts",
     "signals": "pnpm with-env vitest run src/signals/signal-pipeline.e2e.test.ts",
-    "test": "vitest run src/helpers/*.test.ts src/github-setup/*.test.ts --passWithNoTests",
-    "typecheck": "tsc --noEmit",
+    "test": "vitest run src/helpers/*.test.ts src/github-setup/*.test.ts src/decisions/*.test.ts --passWithNoTests",
+    "typecheck": "pnpm --dir ../core/lightfast build && tsc --noEmit",
     "with-env": "dotenv -e ../apps/app/.vercel/.env.development.local --"
   },
   "dependencies": {
+    "@api/app": "workspace:*",
     "@db/app": "workspace:*",
     "@repo/api-contract": "workspace:*",
+    "@repo/app-encryption": "workspace:*",
     "drizzle-orm": "catalog:",
     "lightfast": "workspace:*"
   },

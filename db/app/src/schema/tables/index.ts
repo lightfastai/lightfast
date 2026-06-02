@@ -16,6 +16,17 @@ export {
   type InsertAutomationRun,
 } from "./automations";
 export {
+  createIntegrationCallId,
+  INTEGRATION_CALL_ID_PREFIX,
+  type InsertIntegrationCall,
+  type IntegrationCall,
+  type IntegrationCallCalledByKind,
+  type IntegrationCallProvider,
+  type IntegrationCallRedactedPayload,
+  type IntegrationCallStatus,
+  integrationCalls,
+} from "./integration-calls";
+export {
   createMcpOauthClientId,
   createMcpOauthGrantId,
   createMcpOauthRegistrationTokenId,

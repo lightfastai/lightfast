@@ -22,6 +22,7 @@
     "_qstash": "portless run --name qstash.lightfast sh -c 'npx --yes @upstash/qstash-cli dev -port=$PORT'",
     "brain": "turbo run eval",
     "e2e": "pnpm --filter @lightfast/e2e test",
+    "e2e:decisions": "pnpm --filter @lightfast/e2e decisions:real-clerk",
     "e2e:github-setup": "pnpm --filter @lightfast/e2e github:setup:real-clerk",
     "e2e:sdk": "pnpm --filter @lightfast/e2e sdk",
     "e2e:signals": "pnpm --filter @lightfast/e2e signals",

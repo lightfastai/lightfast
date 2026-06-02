@@ -148,6 +148,9 @@ function matchesPattern(pattern: string, pathname: string) {
   if (pattern === "/:slug/connectors(.*)") {
     return /^\/[^/]+\/connectors(?:\/.*)?$/.test(pathname);
   }
+  if (pattern === "/:slug/decisions(.*)") {
+    return /^\/[^/]+\/decisions(?:\/.*)?$/.test(pathname);
+  }
   if (pattern === "/:slug/settings(.*)") {
     return /^\/[^/]+\/settings(?:\/.*)?$/.test(pathname);
   }
@@ -252,6 +255,7 @@ describe("proxy Nemo composition", () => {
           "/:slug/people(.*)",
           "/:slug/automations(.*)",
           "/:slug/connectors(.*)",
+          "/:slug/decisions(.*)",
           "/:slug/settings(.*)",
           "/:slug/tasks/bind(.*)",
           "/:slug/tasks/github/lightfast-repo(.*)",
@@ -568,6 +572,7 @@ describe("proxy bound org product route gate", () => {
     "/acme/workspace",
     "/acme/runs/123",
     "/acme/connectors",
+    "/acme/decisions",
   ])("redirects unbound org product routes from %s to the bind task", async (pathname) => {
     authMock.mockResolvedValue({
       orgId: "org_123",

@@ -21,6 +21,10 @@
       "types": "./src/services/connectors/index.ts",
       "default": "./src/services/connectors/index.ts"
     },
+    "./services/connectors/runtime": {
+      "types": "./src/services/connectors/runtime.ts",
+      "default": "./src/services/connectors/runtime.ts"
+    },
     "./inngest": {
       "types": "./src/inngest/index.ts",
       "default": "./src/inngest/index.ts"

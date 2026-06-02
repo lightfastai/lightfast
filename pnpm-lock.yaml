@@ -1357,12 +1357,18 @@ importers:
 
   e2e:
     dependencies:
+      '@api/app':
+        specifier: workspace:*
+        version: link:../api/app
       '@db/app':
         specifier: workspace:*
         version: link:../db/app
       '@repo/api-contract':
         specifier: workspace:*
         version: link:../packages/api-contract
+      '@repo/app-encryption':
+        specifier: workspace:*
+        version: link:../packages/app-encryption
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.2(@opentelemetry/api@1.9.1)(@planetscale/database@1.20.1)(@types/better-sqlite3@7.6.13)(@types/pg@8.15.6)(@upstash/redis@1.37.0)(better-sqlite3@12.9.0)
