@@ -7,8 +7,8 @@ import { z } from "zod";
 
 const isConnectorMcpAuthSecretRequired =
   process.env.VERCEL_ENV === "production" ||
-  process.env.VERCEL_ENV === "preview" ||
-  process.env.NODE_ENV === "production";
+  (process.env.VERCEL_ENV === undefined &&
+    process.env.NODE_ENV === "production");
 
 export const env = createEnv({
   extends: [clerkEnvBase, sentryEnv, inngestEnv, unkeyEnv],
