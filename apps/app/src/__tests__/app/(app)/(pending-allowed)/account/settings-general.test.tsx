@@ -84,15 +84,17 @@ describe("account General settings", () => {
       screen.getByRole("heading", { name: "General" })
     ).toBeInTheDocument();
     expect(screen.getByText("Display name")).toBeVisible();
-    expect(screen.getByText("Username")).toBeVisible();
+    expect(screen.getByLabelText("Username")).toBeVisible();
     expect(screen.getByText("Email")).toBeVisible();
 
-    const displayNameInput = screen.getByDisplayValue("Test User");
+    const displayNameInput = screen.getByLabelText("Display name");
     expect(displayNameInput).toBeEnabled();
+    expect(displayNameInput).toHaveValue("Test User");
 
-    expect(screen.getByDisplayValue("test-user")).toBeVisible();
+    expect(screen.getByLabelText("Username")).toHaveValue("test-user");
 
-    const emailInput = screen.getByDisplayValue("test@example.com");
+    const emailInput = screen.getByLabelText("Email");
+    expect(emailInput).toHaveValue("test@example.com");
     expect(emailInput).toBeDisabled();
 
     // No changes yet, so Save is disabled.

@@ -104,7 +104,7 @@ describe("ProfileDataDisplay", () => {
 
     render(<ProfileDataDisplay />);
 
-    expect(screen.getByLabelText("Name")).toHaveValue("Ada Lovelace");
+    expect(screen.getByLabelText("Display name")).toHaveValue("Ada Lovelace");
     expect(screen.getByLabelText("Username")).toHaveValue("ada-dev");
     expect(screen.getByLabelText("Username")).toBeDisabled();
     expect(

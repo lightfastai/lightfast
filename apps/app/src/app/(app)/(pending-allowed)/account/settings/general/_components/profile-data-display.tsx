@@ -138,6 +138,7 @@ export function ProfileDataDisplay() {
                         <FormControl>
                           <Input
                             {...field}
+                            aria-label="Display name"
                             className="w-64"
                             placeholder="Your name"
                             size="lf"
@@ -231,6 +232,7 @@ export function ProfileDataDisplay() {
 
         <SettingRow description="Your primary email address." label="Email">
           <Input
+            aria-label="Email"
             className="w-64 bg-muted/50"
             disabled
             readOnly
