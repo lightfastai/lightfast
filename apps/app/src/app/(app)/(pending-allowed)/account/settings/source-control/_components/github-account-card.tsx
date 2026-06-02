@@ -37,61 +37,91 @@ function formatConnectedAt(value: Date): string | null {
   return `Connected on ${shortDateFormatter.format(value)}`;
 }
 
+function IconTile({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-[9px] border border-border bg-transparent text-foreground">
+      {children}
+    </span>
+  );
+}
+
 export function GithubAccountCard({ account }: { account: GithubUserAccount }) {
   const subtitle = formatConnectedAt(account.connectedAt);
 
   return (
-    <section className="flex items-center justify-between gap-4 rounded-[8px] border border-border bg-background p-4">
-      <div className="flex min-w-0 items-center gap-2.5">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-[8px] border border-input bg-background">
-          <Icons.github aria-hidden="true" className="size-4 text-foreground" />
-        </div>
-        <div className="min-w-0">
-          <p className="truncate text-foreground text-sm">
-            {account.provider}:{account.providerUserId}
-          </p>
-          {subtitle ? (
-            <p className="text-muted-foreground text-xs">{subtitle}</p>
-          ) : null}
-        </div>
-      </div>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            className="h-7 rounded-[9px]"
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            <span
+    <section className="rounded-[12px] border border-border bg-background">
+      <div className="flex items-center justify-between gap-4 p-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <IconTile>
+            <Icons.github
               aria-hidden="true"
-              className="size-1.5 rounded-full bg-emerald-500"
+              className="size-4 text-foreground"
             />
-            Connected
-            <ChevronDown aria-hidden="true" className="size-3.5" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuItem asChild>
-            <Link href={{ pathname: GITHUB_ACCOUNT_TASK_HREF }} prefetch={true}>
-              <Settings aria-hidden="true" className="size-4" />
-              View GitHub setup
-            </Link>
-          </DropdownMenuItem>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div>
-                <DropdownMenuItem disabled variant="destructive">
-                  <Unplug aria-hidden="true" className="size-4" />
-                  Disconnect
-                </DropdownMenuItem>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>{DISCONNECT_TOOLTIP}</TooltipContent>
-          </Tooltip>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </IconTile>
+          <div className="min-w-0">
+            <p className="truncate text-foreground text-sm">
+              {account.provider}:{account.providerUserId}
+            </p>
+            {subtitle ? (
+              <p className="text-muted-foreground text-xs">{subtitle}</p>
+            ) : null}
+          </div>
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              className="h-7 shrink-0 justify-between gap-1.5 rounded-[9px] border border-input bg-card px-2.5 font-normal text-foreground text-sm hover:bg-accent"
+              size="sm"
+              type="button"
+              variant="ghost"
+            >
+              <span className="inline-flex min-w-0 items-center gap-1.5">
+                <span
+                  aria-hidden="true"
+                  className="size-1.5 rounded-full bg-emerald-500"
+                />
+                <span className="truncate">Connected</span>
+              </span>
+              <ChevronDown
+                aria-hidden="true"
+                className="size-3.5 shrink-0 text-muted-foreground"
+              />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="w-56 min-w-[var(--radix-dropdown-menu-trigger-width)]"
+          >
+            <DropdownMenuItem asChild className="gap-2">
+              <Link
+                href={{ pathname: GITHUB_ACCOUNT_TASK_HREF }}
+                prefetch={true}
+              >
+                <Settings aria-hidden="true" className="size-4" />
+                <span className="min-w-0 flex-1 truncate">
+                  View GitHub setup
+                </span>
+              </Link>
+            </DropdownMenuItem>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <DropdownMenuItem
+                    className="gap-2"
+                    disabled
+                    variant="destructive"
+                  >
+                    <Unplug aria-hidden="true" className="size-4" />
+                    <span className="min-w-0 flex-1 truncate">Disconnect</span>
+                  </DropdownMenuItem>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>{DISCONNECT_TOOLTIP}</TooltipContent>
+            </Tooltip>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </section>
   );
 }
