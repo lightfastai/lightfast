@@ -17,8 +17,8 @@ import { useAuth } from "@vendor/clerk";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useTRPC } from "~/trpc/react";
+import { LfSelect } from "../../../_components/lf-select";
 import { setOne, upsertInList } from "../../_components/automations-cache";
-import { LfSelect } from "../../_components/lf-select";
 import {
   isTimeBasedKind,
   SCHEDULE_KINDS,

@@ -40,6 +40,35 @@ vi.mock(
   })
 );
 
+vi.mock(
+  "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/_components/lf-select",
+  () => ({
+    LfSelect: ({
+      "aria-label": ariaLabel,
+      onValueChange,
+      options,
+      value,
+    }: {
+      "aria-label"?: string;
+      onValueChange?: (value: string) => void;
+      options: { label: string; value: string }[];
+      value?: string;
+    }) => (
+      <select
+        aria-label={ariaLabel}
+        onChange={(event) => onValueChange?.(event.currentTarget.value)}
+        value={value}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    ),
+  })
+);
+
 const { SkillsClient } = await import(
   "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/_components/skills-client"
 );
@@ -88,7 +117,35 @@ describe("SkillsClient", () => {
 
     render(<SkillsClient />);
 
-    expect(screen.getByText("Invalid")).toBeInTheDocument();
+    // Scope to the grid badge; the filter dropdown also offers an "Invalid" option.
+    expect(
+      screen.getByText("Invalid", { selector: "span" })
+    ).toBeInTheDocument();
+  });
+
+  it("filters the grid by validation status", () => {
+    listData = createListData({
+      skills: [
+        createSkill({ name: "valid-skill", slug: "valid-skill" }),
+        createSkill({
+          name: "broken-skill",
+          slug: "broken-skill",
+          validationStatus: "invalid",
+        }),
+      ],
+    });
+
+    render(<SkillsClient />);
+
+    expect(screen.getByText("valid-skill")).toBeInTheDocument();
+    expect(screen.getByText("broken-skill")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Filter skills" }), {
+      target: { value: "valid" },
+    });
+
+    expect(screen.getByText("valid-skill")).toBeInTheDocument();
+    expect(screen.queryByText("broken-skill")).not.toBeInTheDocument();
   });
 
   it("opens the dialog by setting the skill query param", () => {

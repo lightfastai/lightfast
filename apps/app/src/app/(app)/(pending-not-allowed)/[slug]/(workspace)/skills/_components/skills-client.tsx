@@ -1,16 +1,10 @@
 "use client";
 
 import { Input } from "@repo/ui/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@repo/ui/components/ui/select";
 import { Search } from "lucide-react";
 import { useQueryState } from "nuqs";
 import { useDeferredValue, useMemo, useState } from "react";
+import { LfSelect } from "../../_components/lf-select";
 import { SkillDialog } from "./skill-dialog";
 import { SkillGrid } from "./skill-grid";
 import type { Skill } from "./skills-types";
@@ -68,23 +62,18 @@ export function SkillsClient() {
             variant="lf"
           />
         </div>
-        <Select
+        <LfSelect
+          align="end"
+          aria-label="Filter skills"
+          className="shrink-0 sm:w-32"
           onValueChange={(value) => setFilter(value as SkillFilter)}
+          options={[
+            { label: "All", value: "all" },
+            { label: "Valid", value: "valid" },
+            { label: "Invalid", value: "invalid" },
+          ]}
           value={filter}
-        >
-          <SelectTrigger
-            aria-label="Filter skills"
-            className="h-7 shrink-0 rounded-[9px] sm:w-32"
-            size="sm"
-          >
-            <SelectValue placeholder="All" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="valid">Valid</SelectItem>
-            <SelectItem value="invalid">Invalid</SelectItem>
-          </SelectContent>
-        </Select>
+        />
       </div>
 
       {data.indexDiagnostics.length > 0 && (

@@ -21,7 +21,8 @@ export interface LfSelectOption {
  * row carries a Check. Sized to the lf language (28px height, 9px trigger
  * radius); resting fill + border match the lf Input, hover uses accent (so the
  * trigger matches the menu rows it opens); the menu inherits the shared 13/5/8
- * concentric geometry.
+ * concentric geometry. Workspace-shared so feature filters (automations,
+ * connectors, skills) render the same control.
  */
 export function LfSelect({
   value,
@@ -31,6 +32,7 @@ export function LfSelect({
   align = "start",
   className,
   contentClassName,
+  "aria-label": ariaLabel,
 }: {
   value: string;
   options: readonly LfSelectOption[];
@@ -39,6 +41,7 @@ export function LfSelect({
   align?: "start" | "end";
   className?: string;
   contentClassName?: string;
+  "aria-label"?: string;
 }) {
   const active = options.find((option) => option.value === value);
 
@@ -46,6 +49,7 @@ export function LfSelect({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
+          aria-label={ariaLabel}
           className={cn(
             "h-7 justify-between gap-1.5 rounded-[9px] border border-input bg-card px-2.5 font-normal text-foreground text-sm hover:bg-accent",
             className

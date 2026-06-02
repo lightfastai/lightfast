@@ -259,37 +259,34 @@ vi.mock("@repo/ui/components/ui/input", () => ({
   ),
 }));
 
-vi.mock("@repo/ui/components/ui/select", () => ({
-  Select: ({
-    children,
-    onValueChange,
-    value,
-  }: {
-    children?: ReactNode;
-    onValueChange?: (value: string) => void;
-    value?: string;
-  }) => (
-    <select
-      aria-label="Status"
-      onChange={(event) => onValueChange?.(event.currentTarget.value)}
-      value={value}
-    >
-      {children}
-    </select>
-  ),
-  SelectContent: ({ children }: { children?: ReactNode }) => <>{children}</>,
-  SelectItem: ({
-    children,
-    value,
-  }: {
-    children?: ReactNode;
-    value: string;
-  }) => <option value={value}>{children}</option>,
-  SelectTrigger: ({ children }: { children?: ReactNode }) => <>{children}</>,
-  SelectValue: ({ placeholder }: { placeholder?: string }) => (
-    <span>{placeholder}</span>
-  ),
-}));
+vi.mock(
+  "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/_components/lf-select",
+  () => ({
+    LfSelect: ({
+      "aria-label": ariaLabel,
+      onValueChange,
+      options,
+      value,
+    }: {
+      "aria-label"?: string;
+      onValueChange?: (value: string) => void;
+      options: { label: string; value: string }[];
+      value?: string;
+    }) => (
+      <select
+        aria-label={ariaLabel}
+        onChange={(event) => onValueChange?.(event.currentTarget.value)}
+        value={value}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    ),
+  })
+);
 
 vi.mock("@repo/ui/components/ui/switch", () => ({
   Switch: ({

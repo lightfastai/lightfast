@@ -20,13 +20,6 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Input } from "@repo/ui/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@repo/ui/components/ui/select";
 import { Switch } from "@repo/ui/components/ui/switch";
 import { cn } from "@repo/ui/lib/utils";
 import {
@@ -45,6 +38,7 @@ import {
 import { useQueryState } from "nuqs";
 import { useEffect, useMemo, useState } from "react";
 import { useTRPC } from "~/trpc/react";
+import { LfSelect } from "../../_components/lf-select";
 import { ConnectorDetailSheet } from "./connector-detail-sheet";
 import { ConnectorIcon } from "./connector-icons";
 import {
@@ -239,24 +233,19 @@ export function ConnectorsClient({
             variant="lf"
           />
         </div>
-        <Select
+        <LfSelect
+          align="end"
+          aria-label="Status"
+          className="shrink-0 sm:w-44"
           onValueChange={(value) => setStatusFilter(value as StatusFilter)}
+          options={[
+            { label: "All statuses", value: "all" },
+            { label: "Connected", value: "connected" },
+            { label: "Available", value: "available" },
+            { label: "Needs reconnect", value: "needs_reconnect" },
+          ]}
           value={statusFilter}
-        >
-          <SelectTrigger
-            aria-label="Status"
-            className="h-7 shrink-0 rounded-[9px] sm:w-44"
-            size="sm"
-          >
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="connected">Connected</SelectItem>
-            <SelectItem value="available">Available</SelectItem>
-            <SelectItem value="needs_reconnect">Needs reconnect</SelectItem>
-          </SelectContent>
-        </Select>
+        />
       </div>
 
       {filteredConnectors.length === 0 ? (

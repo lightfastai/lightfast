@@ -28,8 +28,8 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { z } from "zod";
 import { useTRPC } from "~/trpc/react";
+import { LfSelect } from "../../../_components/lf-select";
 import { upsertInList } from "../../_components/automations-cache";
-import { LfSelect } from "../../_components/lf-select";
 import {
   isTimeBasedKind,
   SCHEDULE_KINDS,
