@@ -92,6 +92,13 @@
       "when": 1780312348437,
       "tag": "0012_safe_warhawk",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1780365660238,
+      "tag": "0013_stiff_tyger_tiger",
+      "breakpoints": true
     }
   ]
 }

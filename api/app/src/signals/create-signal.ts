@@ -8,6 +8,8 @@ const QUEUE_ERROR_MESSAGE = "Failed to queue signal for classification.";
 export interface CreateAndQueueSignalInput {
   clerkOrgId: string;
   createdByApiKeyId: string | null;
+  createdByMcpClientId?: string | null;
+  createdByMcpGrantId?: string | null;
   createdByUserId: string;
   input: string;
 }
@@ -33,11 +35,20 @@ export async function createAndQueueSignal(
   db: Database,
   input: CreateAndQueueSignalInput
 ): Promise<CreateSignalOutput> {
+  const mcpAttribution =
+    input.createdByMcpClientId || input.createdByMcpGrantId
+      ? {
+          createdByMcpClientId: input.createdByMcpClientId ?? null,
+          createdByMcpGrantId: input.createdByMcpGrantId ?? null,
+        }
+      : {};
+
   const signal = await createSignal(db, {
     clerkOrgId: input.clerkOrgId,
     createdByApiKeyId: input.createdByApiKeyId,
     createdByUserId: input.createdByUserId,
     input: input.input,
+    ...mcpAttribution,
   });
 
   try {

@@ -5,7 +5,7 @@ import type { AuthIdentity } from "../auth/identity";
 const listSignalsMock = vi.fn();
 const listWorkspaceSignalsMock = vi.fn();
 const getVisibleSignalByPublicIdMock = vi.fn();
-const createAndQueueSignalMock = vi.fn();
+const createSignalForActorMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({
@@ -13,8 +13,10 @@ vi.mock("@db/app", () => ({
   listWorkspaceSignals: listWorkspaceSignalsMock,
   getVisibleSignalByPublicId: getVisibleSignalByPublicIdMock,
 }));
+vi.mock("../signals/service", () => ({
+  createSignalForActor: createSignalForActorMock,
+}));
 vi.mock("../signals/create-signal", () => ({
-  createAndQueueSignal: createAndQueueSignalMock,
   isSignalCreateQueueError: (error: unknown) =>
     error instanceof Error && error.name === "SignalCreateQueueError",
 }));
@@ -62,6 +64,8 @@ const signalRow: Signal = {
   publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
   clerkOrgId: "org_test",
   createdByApiKeyId: "key_test",
+  createdByMcpClientId: null,
+  createdByMcpGrantId: null,
   createdByUserId: "user_test",
   input: "Customer asked for migration help",
   status: "classified",
@@ -120,7 +124,7 @@ beforeEach(() => {
   listSignalsMock.mockReset();
   listWorkspaceSignalsMock.mockReset();
   getVisibleSignalByPublicIdMock.mockReset();
-  createAndQueueSignalMock.mockReset();
+  createSignalForActorMock.mockReset();
   listSignalsMock.mockResolvedValue({
     items: [signalRow],
     nextCursor: { createdAt: signalRow.createdAt, id: signalRow.id },
@@ -133,7 +137,7 @@ beforeEach(() => {
     windowDays: 30,
   });
   getVisibleSignalByPublicIdMock.mockResolvedValue(signalRow);
-  createAndQueueSignalMock.mockResolvedValue({
+  createSignalForActorMock.mockResolvedValue({
     id: "signal_123e4567-e89b-12d3-a456-426614174000",
     status: "queued",
     visibilityScope: "user",
@@ -288,10 +292,12 @@ describe("workspaceSignalsRouter.create", () => {
       visibilityScope: "user",
     });
 
-    expect(createAndQueueSignalMock).toHaveBeenCalledWith(expect.anything(), {
-      clerkOrgId: "org_test",
-      createdByApiKeyId: null,
-      createdByUserId: "user_test",
+    expect(createSignalForActorMock).toHaveBeenCalledWith(expect.anything(), {
+      actor: {
+        kind: "web",
+        orgId: "org_test",
+        userId: "user_test",
+      },
       input: "Reply to the migration thread",
     });
   });
@@ -301,10 +307,12 @@ describe("workspaceSignalsRouter.create", () => {
       input: "Track this from the active org",
     });
 
-    expect(createAndQueueSignalMock).toHaveBeenCalledWith(expect.anything(), {
-      clerkOrgId: "org_other",
-      createdByApiKeyId: null,
-      createdByUserId: "user_test",
+    expect(createSignalForActorMock).toHaveBeenCalledWith(expect.anything(), {
+      actor: {
+        kind: "web",
+        orgId: "org_other",
+        userId: "user_test",
+      },
       input: "Track this from the active org",
     });
   });
@@ -314,7 +322,7 @@ describe("workspaceSignalsRouter.create", () => {
       caller().signals.create({ input: "   " })
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
 
-    expect(createAndQueueSignalMock).not.toHaveBeenCalled();
+    expect(createSignalForActorMock).not.toHaveBeenCalled();
   });
 
   it("translates enqueue failures to an internal tRPC error", async () => {
@@ -322,7 +330,7 @@ describe("workspaceSignalsRouter.create", () => {
       new Error("Failed to queue signal for classification."),
       { name: "SignalCreateQueueError" }
     );
-    createAndQueueSignalMock.mockRejectedValueOnce(enqueueError);
+    createSignalForActorMock.mockRejectedValueOnce(enqueueError);
 
     await expect(
       caller().signals.create({ input: "Queue this signal" })
@@ -362,7 +370,7 @@ describe("workspaceSignalsRouter.create", () => {
       caller(identity).signals.create({ input: "Create a signal" })
     ).rejects.toMatchObject({ code });
 
-    expect(createAndQueueSignalMock).not.toHaveBeenCalled();
+    expect(createSignalForActorMock).not.toHaveBeenCalled();
   });
 });
 

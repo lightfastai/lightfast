@@ -18,6 +18,10 @@ import {
 } from "./router/(pending-allowed)/organization";
 import { automationsRouter } from "./router/(pending-not-allowed)/automations";
 import { githubSetupRouter } from "./router/(pending-not-allowed)/github-setup";
+import {
+  accountMcpConnectionsRouter,
+  orgMcpConnectionsRouter,
+} from "./router/(pending-not-allowed)/mcp-connections";
 import { orgApiKeysRouter } from "./router/(pending-not-allowed)/org-api-keys";
 import { orgBillingRouter } from "./router/(pending-not-allowed)/org-billing";
 import { orgMembersRouter } from "./router/(pending-not-allowed)/org-members";
@@ -34,7 +38,10 @@ export const appRouter = createTRPCRouter({
   }),
   viewer: createTRPCRouter({
     organization: organizationRouter,
-    account: accountRouter,
+    account: createTRPCRouter({
+      ...accountRouter,
+      mcpConnections: accountMcpConnectionsRouter,
+    }),
     githubAccount: githubAccountRouter,
   }),
   org: createTRPCRouter({
@@ -46,6 +53,7 @@ export const appRouter = createTRPCRouter({
       organization: orgSettingsOrganizationRouter,
       orgApiKeys: orgApiKeysRouter,
       orgBilling: orgBillingRouter,
+      mcpConnections: orgMcpConnectionsRouter,
       orgMembers: orgMembersRouter,
       sourceControl: orgSourceControlRouter,
     }),

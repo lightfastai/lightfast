@@ -59,6 +59,7 @@ const GITHUB_BINDING_ROUTE_PATTERNS = [
 ] as const;
 
 const PUBLIC_ROUTE_PATTERNS = [
+  "/.well-known/oauth-authorization-server",
   "/api/oauth/(.*)",
   "/api/trpc/(.*)",
   "/api/health(.*)",
@@ -66,6 +67,10 @@ const PUBLIC_ROUTE_PATTERNS = [
   "/monitoring",
   "/ingest(.*)",
   "/manifest.json",
+  "/oauth/jwks",
+  "/oauth/register(.*)",
+  "/oauth/revoke",
+  "/oauth/token",
   ...GITHUB_BINDING_ROUTE_PATTERNS,
 ] as const;
 
