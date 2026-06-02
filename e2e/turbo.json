@@ -2,6 +2,9 @@
   "extends": ["//"],
   "tags": ["app"],
   "tasks": {
+    "decisions:real-clerk": {
+      "cache": false
+    },
     "sdk": {
       "cache": false
     },

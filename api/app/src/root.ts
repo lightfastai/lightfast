@@ -18,6 +18,7 @@ import {
 } from "./router/(pending-allowed)/organization";
 import { automationsRouter } from "./router/(pending-not-allowed)/automations";
 import { connectorsRouter } from "./router/(pending-not-allowed)/connectors";
+import { decisionsRouter } from "./router/(pending-not-allowed)/decisions";
 import { githubSetupRouter } from "./router/(pending-not-allowed)/github-setup";
 import {
   accountMcpConnectionsRouter,
@@ -61,6 +62,7 @@ export const appRouter = createTRPCRouter({
     workspace: createTRPCRouter({
       automations: automationsRouter,
       connectors: connectorsRouter,
+      decisions: decisionsRouter,
       people: workspacePeopleRouter,
       skills: workspaceSkillsRouter,
       signals: workspaceSignalsRouter,

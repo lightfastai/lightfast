@@ -1,7 +1,12 @@
 import {
+  createIntegrationCall,
   getCurrentOrgConnectorConnection,
+  type IntegrationCall,
+  type IntegrationCallRedactedPayload,
   listCurrentOrgConnectorConnections,
   markCurrentOrgConnectorConnectionError,
+  markIntegrationCallFailed,
+  markIntegrationCallSucceeded,
   type OrgConnectorConnection,
 } from "@db/app";
 import { db as appDb } from "@db/app/client";
@@ -79,6 +84,7 @@ async function callConnectorRuntimeTool(
     runPublicId: context.runPublicId,
     runtimeToolName: context.runtimeToolName,
   };
+  let integrationCall: IntegrationCall | null = null;
 
   try {
     const connection = await getCurrentOrgConnectorConnection(appDb, {
@@ -95,6 +101,21 @@ async function callConnectorRuntimeTool(
       throw new Error("Linear connector is not active for automations.");
     }
 
+    const caller = calledByContext(context);
+    integrationCall = await safelyCreateIntegrationCall({
+      calledById: caller.calledById,
+      calledByKind: caller.calledByKind,
+      calledByUserId: caller.calledByUserId,
+      clerkOrgId: context.clerkOrgId,
+      connectorConnectionId: connection.id,
+      inputRedacted: redactedPresence(input),
+      provider: "linear",
+      providerActorId: connection.providerActorId,
+      providerToolName: context.providerToolName,
+      providerWorkspaceId: connection.providerWorkspaceId,
+      routineName: context.runtimeToolName,
+    });
+
     const accessToken = await getFreshLinearConnectorAccessToken({
       connection,
       db: appDb,
@@ -106,12 +127,35 @@ async function callConnectorRuntimeTool(
       name: context.providerToolName,
     });
 
+    if (integrationCall) {
+      await safelyMarkIntegrationCallSucceeded(
+        {
+          clerkOrgId: context.clerkOrgId,
+          outputRedacted: redactedPresence(result),
+          publicId: integrationCall.publicId,
+        },
+        logContext
+      );
+    }
+
     log.info("[connectors] runtime tool call completed", {
       ...logContext,
       success: true,
     });
     return result;
   } catch (error) {
+    if (integrationCall) {
+      await safelyMarkIntegrationCallFailed(
+        {
+          clerkOrgId: context.clerkOrgId,
+          errorCode: getErrorCode(error),
+          errorMessage: safeIntegrationCallErrorMessage(error),
+          publicId: integrationCall.publicId,
+        },
+        logContext
+      );
+    }
+
     if (isTerminalLinearTokenRefreshError(error)) {
       await markCurrentOrgConnectorConnectionError(appDb, {
         clerkOrgId: context.clerkOrgId,
@@ -125,6 +169,91 @@ async function callConnectorRuntimeTool(
       success: false,
     });
     throw error;
+  }
+}
+
+function calledByContext(context: RuntimeToolCallContext) {
+  if (context.runPublicId) {
+    return {
+      calledById: context.runPublicId,
+      calledByKind: "automation" as const,
+      calledByUserId: null,
+    };
+  }
+
+  return {
+    calledById: "connector-runtime",
+    calledByKind: "system" as const,
+    calledByUserId: null,
+  };
+}
+
+async function safelyCreateIntegrationCall(input: {
+  calledById: string;
+  calledByKind: "automation" | "system" | "user";
+  calledByUserId: string | null;
+  clerkOrgId: string;
+  connectorConnectionId: number;
+  inputRedacted: IntegrationCallRedactedPayload;
+  provider: "linear";
+  providerActorId: string | null;
+  providerToolName: string;
+  providerWorkspaceId: string | null;
+  routineName: string;
+}) {
+  try {
+    return await createIntegrationCall(appDb, input);
+  } catch (error) {
+    log.warn("[connectors] integration call ledger create failed", {
+      clerkOrgId: input.clerkOrgId,
+      failure: safeErrorDetails(error),
+      provider: input.provider,
+      providerToolName: input.providerToolName,
+      routineName: input.routineName,
+      success: false,
+    });
+    return null;
+  }
+}
+
+async function safelyMarkIntegrationCallSucceeded(
+  input: {
+    clerkOrgId: string;
+    outputRedacted: IntegrationCallRedactedPayload;
+    publicId: string;
+  },
+  logContext: Record<string, unknown>
+) {
+  try {
+    await markIntegrationCallSucceeded(appDb, input);
+  } catch (error) {
+    log.warn("[connectors] integration call ledger update failed", {
+      ...logContext,
+      failure: safeErrorDetails(error),
+      integrationCallPublicId: input.publicId,
+      success: false,
+    });
+  }
+}
+
+async function safelyMarkIntegrationCallFailed(
+  input: {
+    clerkOrgId: string;
+    errorCode?: string;
+    errorMessage?: string;
+    publicId: string;
+  },
+  logContext: Record<string, unknown>
+) {
+  try {
+    await markIntegrationCallFailed(appDb, input);
+  } catch (error) {
+    log.warn("[connectors] integration call ledger update failed", {
+      ...logContext,
+      failure: safeErrorDetails(error),
+      integrationCallPublicId: input.publicId,
+      success: false,
+    });
   }
 }
 
@@ -171,6 +300,13 @@ function normalizeMcpToolInput(input: unknown) {
   return { input };
 }
 
+function redactedPresence(value: unknown): IntegrationCallRedactedPayload {
+  if (value === undefined) {
+    return null;
+  }
+  return { present: true };
+}
+
 function isTerminalLinearTokenRefreshError(error: unknown) {
   return (
     error instanceof LinearAppNodeError &&
@@ -197,6 +333,10 @@ function safeLinearErrorMessage(error: unknown) {
     default:
       return;
   }
+}
+
+function safeIntegrationCallErrorMessage(error: unknown) {
+  return isKnownLinearError(error) ? safeLinearErrorMessage(error) : undefined;
 }
 
 function safeErrorDetails(error: unknown) {
