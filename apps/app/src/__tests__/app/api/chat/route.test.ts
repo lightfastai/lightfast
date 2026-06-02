@@ -212,6 +212,33 @@ describe("chat route", () => {
     expect(streamTextMock).not.toHaveBeenCalled();
   });
 
+  it("rejects chat requests with an unauthenticated identity (expired token)", async () => {
+    resolveAuthContextFromClerkMock.mockResolvedValueOnce({
+      identity: { type: "unauthenticated" },
+    });
+
+    const response = await POST(createJsonRequest({ messages: [] }));
+
+    expect(response.status).toBe(401);
+    expect(streamTextMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects chat requests for active users missing a bound org", async () => {
+    resolveAuthContextFromClerkMock.mockResolvedValueOnce({
+      identity: {
+        orgGate: { bindingStatus: "unbound", nextSetupRequirement: "bind" },
+        orgId: "org_123",
+        type: "active",
+        userId: "user_123",
+      },
+    });
+
+    const response = await POST(createJsonRequest({ messages: [] }));
+
+    expect(response.status).toBe(403);
+    expect(streamTextMock).not.toHaveBeenCalled();
+  });
+
   it("persists an idempotent turn and streams canonical conversation history through the Vercel AI Gateway model", async () => {
     const uiMessages = [
       {
@@ -464,6 +491,51 @@ describe("chat route", () => {
       })
     );
     expect(response).toBe(streamResponse);
+  });
+
+  it("does not persist messages when canonical message validation fails", async () => {
+    listWorkspaceAssistantMessagesMock.mockResolvedValueOnce([
+      makeMessage({
+        id: "msg_existing_db",
+        metadata: {},
+        parts: [{ text: "Earlier prompt", type: "text" }],
+        publicId: "msg_existing",
+        role: "user",
+      }),
+    ]);
+    safeValidateUIMessagesMock
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: "client-message-1",
+            metadata: {},
+            parts: [{ text: "Summarize", type: "text" }],
+            role: "user",
+          },
+        ],
+        success: true,
+      })
+      .mockResolvedValueOnce({
+        error: new Error("Invalid tool data"),
+        success: false,
+      });
+
+    const response = await POST(
+      createJsonRequest({
+        messages: [
+          {
+            id: "client-message-1",
+            metadata: {},
+            parts: [{ text: "Summarize", type: "text" }],
+            role: "user",
+          },
+        ],
+      })
+    );
+
+    expect(response.status).toBe(500);
+    expect(appendWorkspaceAssistantMessageMock).not.toHaveBeenCalled();
+    expect(createWorkspaceAssistantGenerationMock).not.toHaveBeenCalled();
   });
 
   it("does not continue a same-org workspace assistant conversation owned by a different user", async () => {

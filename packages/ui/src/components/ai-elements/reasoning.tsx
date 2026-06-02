@@ -24,7 +24,7 @@ import { Streamdown } from "streamdown";
 import { Shimmer } from "./shimmer";
 
 interface ReasoningContextValue {
-  duration: number | undefined;
+  duration: number;
   isOpen: boolean;
   isStreaming: boolean;
   setIsOpen: (open: boolean) => void;
@@ -71,8 +71,8 @@ export const Reasoning = memo(
       onChange: onOpenChange,
       prop: open,
     });
-    const [duration, setDuration] = useControllableState<number | undefined>({
-      defaultProp: undefined,
+    const [duration, setDuration] = useControllableState<number>({
+      defaultProp: 0,
       prop: durationProp,
     });
 

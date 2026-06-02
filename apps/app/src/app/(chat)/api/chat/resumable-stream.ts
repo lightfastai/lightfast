@@ -11,7 +11,12 @@ import { after } from "next/server";
 
 type UpstashSubscription = ReturnType<typeof redis.subscribe<string>>;
 
-const subscribers = new Map<string, UpstashSubscription>();
+type SubscriberRecord = {
+  callbacks: Set<(message: string) => void>;
+  subscription: UpstashSubscription;
+};
+
+const subscribers = new Map<string, SubscriberRecord>();
 
 let streamContext: ResumableStreamContext | undefined;
 
@@ -29,13 +34,20 @@ const publisher: ResumableStreamPublisher = {
 const subscriber: ResumableStreamSubscriber = {
   connect: async () => undefined,
   subscribe: async (channel, callback) => {
-    await unsubscribeChannel(channel);
+    let record = subscribers.get(channel);
+    if (!record) {
+      const subscription = redis.subscribe<string>(channel);
+      const callbacks = new Set<(message: string) => void>();
+      subscription.on(`message:${channel}`, ({ message }) => {
+        for (const next of callbacks) {
+          next(message);
+        }
+      });
+      record = { callbacks, subscription };
+      subscribers.set(channel, record);
+    }
 
-    const subscription = redis.subscribe<string>(channel);
-    subscription.on(`message:${channel}`, ({ message }) => {
-      callback(message);
-    });
-    subscribers.set(channel, subscription);
+    record.callbacks.add(callback);
   },
   unsubscribe: unsubscribeChannel,
 };
@@ -59,7 +71,8 @@ async function unsubscribeChannel(channel: string) {
     return;
   }
 
-  await subscription.unsubscribe([channel]);
-  subscription.removeAllListeners();
+  subscription.callbacks.clear();
+  await subscription.subscription.unsubscribe([channel]);
+  subscription.subscription.removeAllListeners();
   subscribers.delete(channel);
 }

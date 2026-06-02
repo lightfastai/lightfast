@@ -545,17 +545,11 @@ export async function createWorkspaceAssistantGeneration(
       }
     });
 
-  const inserted =
-    (await getWorkspaceAssistantGenerationByAssistantMessageId(db, {
+  const inserted = await getWorkspaceAssistantGenerationByAssistantMessageId(db, {
       assistantMessageId: input.assistantMessage.id,
       clerkOrgId: input.conversation.clerkOrgId,
       requestedByUserId: input.requestedByUserId,
-    })) ??
-    (await getWorkspaceAssistantGenerationByPublicId(db, {
-      clerkOrgId: input.conversation.clerkOrgId,
-      publicId,
-      requestedByUserId: input.requestedByUserId,
-    }));
+    });
   if (!inserted) {
     throw new Error(
       `Failed to create workspace assistant generation ${publicId}`

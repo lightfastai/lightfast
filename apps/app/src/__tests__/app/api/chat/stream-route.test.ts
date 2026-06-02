@@ -87,40 +87,77 @@ describe("chat stream resume route", () => {
     expect(response.headers.get("content-type")).toBe("text/event-stream");
   });
 
-    it("clears stale active stream ids when resume storage is already gone", async () => {
-      resumeExistingStreamMock.mockResolvedValue(null);
+  it("clears stale active stream ids when resume storage is already gone", async () => {
+    resumeExistingStreamMock.mockResolvedValue(null);
 
     const response = await GET(createRequest(), {
       params: Promise.resolve({ id: "conv_123" }),
     });
 
     expect(response.status).toBe(204);
-      expect(
-        setWorkspaceAssistantConversationActiveStreamMock
-      ).toHaveBeenCalledWith(expect.anything(), {
-        clerkOrgId: "org_123",
-        createdByUserId: "user_123",
-        expectedStreamId: "stream_123",
-        publicId: "conv_123",
-        streamId: null,
-      });
+    expect(
+      setWorkspaceAssistantConversationActiveStreamMock
+    ).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_123",
+      createdByUserId: "user_123",
+      expectedStreamId: "stream_123",
+      publicId: "conv_123",
+      streamId: null,
+    });
+  });
+
+  it("rejects stream requests with an unauthenticated identity (expired token)", async () => {
+    resolveAuthContextFromClerkMock.mockResolvedValueOnce({
+      identity: { type: "unauthenticated" },
     });
 
-    it("rejects stream requests with a pending clerk session", async () => {
-      resolveAuthContextFromClerkMock.mockResolvedValueOnce({
-        identity: { type: "pending", userId: "user_123" },
-      });
-
-      const response = await GET(createRequest(), {
-        params: Promise.resolve({ id: "conv_123" }),
-      });
-
-      expect(response.status).toBe(403);
-      expect(resumeExistingStreamMock).not.toHaveBeenCalled();
-      expect(
-        setWorkspaceAssistantConversationActiveStreamMock
-      ).not.toHaveBeenCalled();
+    const response = await GET(createRequest(), {
+      params: Promise.resolve({ id: "conv_123" }),
     });
+
+    expect(response.status).toBe(401);
+    expect(resumeExistingStreamMock).not.toHaveBeenCalled();
+    expect(
+      setWorkspaceAssistantConversationActiveStreamMock
+    ).not.toHaveBeenCalled();
+  });
+
+  it("rejects stream requests with a pending clerk session", async () => {
+    resolveAuthContextFromClerkMock.mockResolvedValueOnce({
+      identity: { type: "pending", userId: "user_123" },
+    });
+
+    const response = await GET(createRequest(), {
+      params: Promise.resolve({ id: "conv_123" }),
+    });
+
+    expect(response.status).toBe(403);
+    expect(resumeExistingStreamMock).not.toHaveBeenCalled();
+    expect(
+      setWorkspaceAssistantConversationActiveStreamMock
+    ).not.toHaveBeenCalled();
+  });
+
+  it("rejects stream requests for active users without a bound organization", async () => {
+    resolveAuthContextFromClerkMock.mockResolvedValueOnce({
+      identity: {
+        orgGate: { bindingStatus: "unbound", nextSetupRequirement: "bind" },
+        orgId: "org_123",
+        type: "active",
+        userId: "user_123",
+      },
+    });
+
+    const response = await GET(createRequest(), {
+      params: Promise.resolve({ id: "conv_123" }),
+    });
+
+    expect(response.status).toBe(403);
+    expect(resumeExistingStreamMock).not.toHaveBeenCalled();
+    expect(
+      setWorkspaceAssistantConversationActiveStreamMock
+    ).not.toHaveBeenCalled();
+  });
 
   it("does not resume a same-org conversation owned by a different user", async () => {
     getWorkspaceAssistantConversationByPublicIdMock.mockResolvedValueOnce(

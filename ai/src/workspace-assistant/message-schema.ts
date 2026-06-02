@@ -44,9 +44,9 @@ type LightfastWorkspaceAssistantDataPart =
   | z.infer<typeof skillDataSchema>;
 
 export interface LightfastWorkspaceAssistantDataParts {
+  [key: string]: LightfastWorkspaceAssistantDataPart | undefined;
   opportunities?: z.infer<typeof opportunityDataSchema>;
   skills?: z.infer<typeof skillDataSchema>;
-  [key: string]: LightfastWorkspaceAssistantDataPart | undefined;
 }
 
 export const lightfastWorkspaceAssistantDataPartSchemas = {

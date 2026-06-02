@@ -130,6 +130,26 @@ export async function POST(req: Request) {
     createdByUserId: identity.userId,
     conversation,
   });
+  const canonicalMessages = [
+    ...existingMessages.map(toUIMessage),
+    submittedMessage,
+  ];
+  const validatedCanonicalMessages =
+    await validateLightfastMessages(canonicalMessages);
+  if (!validatedCanonicalMessages.success) {
+    log.error(
+      "[workspace-assistant] persisted or incoming conversation history failed validation",
+      {
+        clerkOrgId: identity.orgId,
+        conversationId: conversation.publicId,
+        userId: identity.userId,
+      }
+    );
+    return Response.json(
+      { error: "Persisted workspace assistant messages failed validation" },
+      { status: 500 }
+    );
+  }
   const userIdempotencyKey =
     parsed.data.idempotencyKey ??
     createFallbackIdempotencyKey(submittedMessage.id);
@@ -166,30 +186,15 @@ export async function POST(req: Request) {
     conversation,
   });
 
-  const canonicalMessages = [
-    ...existingMessages.map(toUIMessage),
+  const canonicalMessagesForModel = [
+    ...validatedCanonicalMessages.data.slice(0, -1),
     toUIMessage(userMessage),
   ];
-  const validatedCanonicalMessages =
-    await validateLightfastMessages(canonicalMessages);
-  if (!validatedCanonicalMessages.success) {
-    log.error("[workspace-assistant] persisted messages failed validation", {
-      clerkOrgId: identity.orgId,
-      conversationId: conversation.publicId,
-      userId: identity.userId,
-    });
-    return Response.json(
-      { error: "Persisted workspace assistant messages failed validation" },
-      { status: 500 }
-    );
-  }
   const originalMessages = [
-    ...validatedCanonicalMessages.data,
+    ...canonicalMessagesForModel,
     toUIMessage(assistantMessage),
   ];
-  const modelMessages = await convertToModelMessages(
-    validatedCanonicalMessages.data
-  );
+  const modelMessages = await convertToModelMessages(canonicalMessagesForModel);
   const system = await buildSystemPrompt(identity.orgId);
   let completionUsage: WorkspaceAssistantGenerationUsage | null = null;
   let providerMetadata: WorkspaceAssistantRecordMetadata = {};
