@@ -265,7 +265,7 @@ function SidebarTrigger({
       data-slot="sidebar-trigger"
       variant="ghost"
       size="icon"
-      className={cn("h-6 w-6 rounded-xl", className)}
+      className={cn("size-11 rounded-xl lg:h-6 lg:w-6", className)}
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();
@@ -411,7 +411,7 @@ function SidebarGroup({
                 <SidebarMenuButton
                   asChild
                   size="sm"
-                  className="rounded-xl text-muted-foreground hover:bg-sidebar-accent/50 [&>svg]:size-3.5 [&[data-state=closed]>svg]:rotate-[-90deg] [&>svg]:transition-transform [&>svg]:duration-200"
+                  className="h-11 rounded-xl text-muted-foreground hover:bg-sidebar-accent/50 lg:h-7 [&>svg]:size-3.5 [&>svg]:transition-transform [&>svg]:duration-200 [&[data-state=closed]>svg]:rotate-[-90deg]"
                 >
                   <AccordionPrimitive.Trigger>
                     <span>{label}</span>

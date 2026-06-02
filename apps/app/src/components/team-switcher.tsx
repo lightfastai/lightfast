@@ -66,7 +66,7 @@ export function TeamSwitcher() {
       <div className="flex items-center gap-1">
         {mode === "organization" && currentOrg ? (
           <Link
-            className="flex min-w-0 items-center gap-2"
+            className="flex min-h-11 min-w-0 items-center gap-2 lg:min-h-0"
             href={`/${currentOrg.slug}`}
             onClick={async (e) => {
               if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) {
@@ -77,7 +77,7 @@ export function TeamSwitcher() {
             }}
             prefetch={true}
           >
-            <Avatar className="size-6">
+            <Avatar className="size-7 lg:size-6">
               <AvatarFallback className="bg-foreground text-[10px] text-background">
                 {displayInitials}
               </AvatarFallback>
@@ -99,7 +99,11 @@ export function TeamSwitcher() {
           </div>
         )}
         <DropdownMenuTrigger asChild>
-          <Button className="h-6 w-6 rounded-full" size="sm" variant="ghost">
+          <Button
+            className="size-11 rounded-full lg:h-6 lg:w-6"
+            size="sm"
+            variant="ghost"
+          >
             <ChevronsUpDown className="size-3.5 opacity-50" />
           </Button>
         </DropdownMenuTrigger>

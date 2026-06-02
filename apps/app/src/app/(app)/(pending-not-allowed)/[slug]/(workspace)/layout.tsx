@@ -22,7 +22,7 @@ export default function WorkspaceLayout({
       <SidebarInset className="min-h-0 overflow-hidden">
         <AuthenticatedTopbar
           actions={actions}
-          left={<SidebarTrigger className="lg:hidden" />}
+          left={<SidebarTrigger className="size-11 rounded-xl lg:hidden" />}
         />
         <WorkspaceCommandMenu>
           <div className="min-h-0 flex-1 overflow-y-auto">

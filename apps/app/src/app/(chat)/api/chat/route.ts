@@ -1,0 +1,498 @@
+import { createHash } from "node:crypto";
+import { resolveAuthContextFromClerk } from "@api/app/auth/identity";
+import {
+  ensureFreshSkillIndexForRead,
+  getVerifiedLightfastSkillSourceRepositoryId,
+} from "@api/app/services/skills";
+import {
+  appendWorkspaceAssistantMessage,
+  createWorkspaceAssistantConversation,
+  createWorkspaceAssistantGeneration,
+  createWorkspaceAssistantMessageId,
+  createWorkspaceAssistantStreamId,
+  getWorkspaceAssistantConversationByPublicId,
+  listWorkspaceAssistantMessages,
+  markWorkspaceAssistantGenerationCompleted,
+  markWorkspaceAssistantGenerationFailed,
+  markWorkspaceAssistantMessageCompleted,
+  markWorkspaceAssistantMessageFailed,
+  setWorkspaceAssistantConversationActiveStream,
+  type WorkspaceAssistantConversation,
+  type WorkspaceAssistantGenerationUsage,
+  type WorkspaceAssistantMessage,
+  type WorkspaceAssistantMessagePart,
+  type WorkspaceAssistantRecordMetadata,
+} from "@db/app";
+import { db } from "@db/app/client";
+import {
+  type LightfastUIMessage,
+  lightfastWorkspaceAssistantDataPartSchemas,
+  lightfastWorkspaceAssistantMessageMetadataSchema,
+  lightfastWorkspaceAssistantTools,
+} from "@repo/ai/workspace-assistant";
+import {
+  convertToModelMessages,
+  gateway,
+  safeValidateUIMessages,
+  streamText,
+} from "@vendor/ai";
+import { log } from "@vendor/observability/log/next";
+import { z } from "zod";
+import { getLightfastResumableStreamContext } from "~/app/(chat)/api/chat/resumable-stream";
+
+const WORKSPACE_ASSISTANT_MODEL = "anthropic/claude-sonnet-4.6";
+const WORKSPACE_ASSISTANT_FALLBACK_MODELS = ["openai/gpt-5.4"] as const;
+
+const chatRequestSchema = z
+  .object({
+    idempotencyKey: z
+      .string()
+      .trim()
+      .min(1)
+      .max(128)
+      .regex(/^[A-Za-z0-9:_.-]+$/)
+      .optional(),
+    messages: z.unknown(),
+    conversationId: z.string().trim().min(1).optional(),
+  })
+  .passthrough();
+
+const baseSystemPrompt = [
+  "You are Lightfield, the Lightfast workspace assistant.",
+  "Help the user understand and operate their workspace with concise, direct answers.",
+  "When asked about skills, explain what the listed skills can do and suggest the next concrete action.",
+].join(" ");
+
+export const maxDuration = 30;
+
+export async function POST(req: Request) {
+  const authContext = await resolveAuthContextFromClerk({
+    db,
+    headers: req.headers,
+  });
+  const identity = authContext.identity;
+
+  if (identity.type === "unauthenticated") {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (identity.type !== "active") {
+    return Response.json({ error: "Organization required" }, { status: 403 });
+  }
+  if (identity.orgGate.bindingStatus !== "bound") {
+    return Response.json(
+      { error: "Organization setup required" },
+      { status: 403 }
+    );
+  }
+
+  const rawBody = await readJson(req);
+  const parsed = rawBody.success
+    ? chatRequestSchema.safeParse(rawBody.data)
+    : rawBody;
+
+  if (!parsed.success) {
+    return Response.json({ error: "Invalid chat request" }, { status: 400 });
+  }
+
+  const validatedMessages = await validateLightfastMessages(
+    parsed.data.messages
+  );
+  if (!validatedMessages.success) {
+    return Response.json({ error: "Invalid chat messages" }, { status: 400 });
+  }
+
+  const submittedMessage = getSubmittedUserMessage(validatedMessages.data);
+  if (!submittedMessage) {
+    return Response.json({ error: "User message required" }, { status: 400 });
+  }
+  if (hasUnsupportedUserPart(submittedMessage)) {
+    return Response.json(
+      { error: "Only text chat messages are supported right now" },
+      { status: 400 }
+    );
+  }
+
+  const conversation = await resolveConversation({
+    createdByUserId: identity.userId,
+    orgId: identity.orgId,
+    submittedMessage,
+    conversationId: parsed.data.conversationId,
+  });
+  if (!conversation) {
+    return Response.json(
+      { error: "Workspace assistant conversation not found" },
+      { status: 404 }
+    );
+  }
+
+  const existingMessages = await listWorkspaceAssistantMessages(db, {
+    clerkOrgId: identity.orgId,
+    createdByUserId: identity.userId,
+    conversation,
+  });
+  const userIdempotencyKey =
+    parsed.data.idempotencyKey ??
+    createFallbackIdempotencyKey(submittedMessage.id);
+  const assistantIdempotencyKey =
+    createAssistantIdempotencyKey(userIdempotencyKey);
+  const userMessage = await appendWorkspaceAssistantMessage(db, {
+    createdByUserId: identity.userId,
+    idempotencyKey: userIdempotencyKey,
+    parts: submittedMessage.parts as WorkspaceAssistantMessagePart[],
+    publicId: normalizeClientMessageId(submittedMessage.id),
+    role: "user",
+    status: "completed",
+    conversation,
+  });
+  const assistantMessageId = createWorkspaceAssistantMessageId();
+  const assistantMessage = await appendWorkspaceAssistantMessage(db, {
+    createdByUserId: identity.userId,
+    idempotencyKey: assistantIdempotencyKey,
+    parts: [],
+    publicId: assistantMessageId,
+    role: "assistant",
+    status: "streaming",
+    conversation,
+  });
+  const generation = await createWorkspaceAssistantGeneration(db, {
+    assistantMessage,
+    model: WORKSPACE_ASSISTANT_MODEL,
+    requestedByUserId: identity.userId,
+    requestMetadata: {
+      source: "workspace-assistant",
+      conversationId: conversation.publicId,
+    },
+    status: "streaming",
+    conversation,
+  });
+
+  const canonicalMessages = [
+    ...existingMessages.map(toUIMessage),
+    toUIMessage(userMessage),
+  ];
+  const validatedCanonicalMessages =
+    await validateLightfastMessages(canonicalMessages);
+  if (!validatedCanonicalMessages.success) {
+    log.error("[workspace-assistant] persisted messages failed validation", {
+      clerkOrgId: identity.orgId,
+      conversationId: conversation.publicId,
+      userId: identity.userId,
+    });
+    return Response.json(
+      { error: "Persisted workspace assistant messages failed validation" },
+      { status: 500 }
+    );
+  }
+  const originalMessages = [
+    ...validatedCanonicalMessages.data,
+    toUIMessage(assistantMessage),
+  ];
+  const modelMessages = await convertToModelMessages(
+    validatedCanonicalMessages.data
+  );
+  const system = await buildSystemPrompt(identity.orgId);
+  let completionUsage: WorkspaceAssistantGenerationUsage | null = null;
+  let providerMetadata: WorkspaceAssistantRecordMetadata = {};
+  const streamId = createWorkspaceAssistantStreamId();
+  const generationLogMetadata = {
+    clerkOrgId: identity.orgId,
+    generationId: generation.publicId,
+    model: WORKSPACE_ASSISTANT_MODEL,
+    streamId,
+    conversationId: conversation.publicId,
+    userId: identity.userId,
+  };
+
+  await setWorkspaceAssistantConversationActiveStream(db, {
+    clerkOrgId: identity.orgId,
+    createdByUserId: identity.userId,
+    publicId: conversation.publicId,
+    streamId,
+  });
+  log.info("[workspace-assistant] generation started", generationLogMetadata);
+
+  const result = streamText({
+    experimental_telemetry: {
+      functionId: "workspace-assistant.generate",
+      isEnabled: true,
+      metadata: generationLogMetadata,
+      recordInputs: false,
+      recordOutputs: false,
+    },
+    messages: modelMessages,
+    model: gateway(WORKSPACE_ASSISTANT_MODEL),
+    onError: async ({ error }) => {
+      const message = getErrorMessage(error);
+      log.error("[workspace-assistant] generation error", {
+        ...generationLogMetadata,
+        errorMessage: message,
+      });
+      await Promise.all([
+        markWorkspaceAssistantMessageFailed(db, {
+          clerkOrgId: identity.orgId,
+          createdByUserId: identity.userId,
+          errorCode: "CHAT_STREAM_FAILED",
+          errorMessage: message,
+          publicId: assistantMessage.publicId,
+        }),
+        markWorkspaceAssistantGenerationFailed(db, {
+          clerkOrgId: identity.orgId,
+          errorCode: "CHAT_STREAM_FAILED",
+          errorMessage: message,
+          publicId: generation.publicId,
+          requestedByUserId: identity.userId,
+        }),
+        setWorkspaceAssistantConversationActiveStream(db, {
+          clerkOrgId: identity.orgId,
+          createdByUserId: identity.userId,
+          expectedStreamId: streamId,
+          publicId: conversation.publicId,
+          streamId: null,
+        }),
+      ]);
+    },
+    onFinish: ({ providerMetadata: nextProviderMetadata, totalUsage }) => {
+      completionUsage = toJsonRecord(totalUsage);
+      providerMetadata = toJsonRecord(nextProviderMetadata);
+    },
+    providerOptions: {
+      gateway: {
+        cacheControl: "max-age=0",
+        models: [...WORKSPACE_ASSISTANT_FALLBACK_MODELS],
+        tags: [
+          "feature:workspace-assistant",
+          `org:${identity.orgId}`,
+          `conversation:${conversation.publicId}`,
+          `env:${process.env.VERCEL_ENV ?? "development"}`,
+        ],
+        user: identity.userId,
+      },
+    },
+    system,
+  });
+
+  return result.toUIMessageStreamResponse({
+    consumeSseStream: async ({ stream }) => {
+      try {
+        await getLightfastResumableStreamContext().createNewResumableStream(
+          streamId,
+          () => stream
+        );
+      } catch (error) {
+        log.error("[workspace-assistant] failed to register resumable stream", {
+          ...generationLogMetadata,
+          errorMessage: getErrorMessage(error),
+        });
+        await setWorkspaceAssistantConversationActiveStream(db, {
+          clerkOrgId: identity.orgId,
+          createdByUserId: identity.userId,
+          expectedStreamId: streamId,
+          publicId: conversation.publicId,
+          streamId: null,
+        });
+        throw error;
+      }
+    },
+    generateMessageId: () => assistantMessage.publicId,
+    headers: {
+      "x-lightfast-workspace-assistant-conversation-id": conversation.publicId,
+    },
+    messageMetadata: () => ({
+      generationId: generation.publicId,
+      model: WORKSPACE_ASSISTANT_MODEL,
+      source: "workspace-assistant" as const,
+      streamId,
+    }),
+    onError: (error) => getErrorMessage(error),
+    onFinish: async ({ finishReason, isAborted, responseMessage }) => {
+      if (isAborted) {
+        log.warn(
+          "[workspace-assistant] generation aborted",
+          generationLogMetadata
+        );
+        await Promise.all([
+          markWorkspaceAssistantMessageFailed(db, {
+            clerkOrgId: identity.orgId,
+            createdByUserId: identity.userId,
+            errorCode: "CHAT_STREAM_ABORTED",
+            errorMessage: "Workspace assistant stream aborted.",
+            publicId: assistantMessage.publicId,
+          }),
+          markWorkspaceAssistantGenerationFailed(db, {
+            clerkOrgId: identity.orgId,
+            errorCode: "CHAT_STREAM_ABORTED",
+            errorMessage: "Workspace assistant stream aborted.",
+            publicId: generation.publicId,
+            requestedByUserId: identity.userId,
+          }),
+          setWorkspaceAssistantConversationActiveStream(db, {
+            clerkOrgId: identity.orgId,
+            createdByUserId: identity.userId,
+            expectedStreamId: streamId,
+            publicId: conversation.publicId,
+            streamId: null,
+          }),
+        ]);
+        return;
+      }
+
+      log.info("[workspace-assistant] generation finished", {
+        ...generationLogMetadata,
+        finishReason,
+      });
+      await Promise.all([
+        markWorkspaceAssistantMessageCompleted(db, {
+          clerkOrgId: identity.orgId,
+          createdByUserId: identity.userId,
+          parts: responseMessage.parts as WorkspaceAssistantMessagePart[],
+          publicId: assistantMessage.publicId,
+        }),
+        markWorkspaceAssistantGenerationCompleted(db, {
+          clerkOrgId: identity.orgId,
+          finishReason,
+          providerMetadata,
+          publicId: generation.publicId,
+          requestedByUserId: identity.userId,
+          usage: completionUsage,
+        }),
+        setWorkspaceAssistantConversationActiveStream(db, {
+          clerkOrgId: identity.orgId,
+          createdByUserId: identity.userId,
+          expectedStreamId: streamId,
+          publicId: conversation.publicId,
+          streamId: null,
+        }),
+      ]);
+    },
+    originalMessages,
+  });
+}
+
+async function readJson(req: Request) {
+  try {
+    return { data: await req.json(), success: true } as const;
+  } catch {
+    return { error: new Error("Invalid JSON"), success: false } as const;
+  }
+}
+
+function getSubmittedUserMessage(messages: LightfastUIMessage[]) {
+  for (let index = messages.length - 1; index >= 0; index--) {
+    const message = messages[index];
+    if (message?.role === "user") {
+      return message;
+    }
+  }
+  return;
+}
+
+function hasUnsupportedUserPart(message: LightfastUIMessage) {
+  return message.parts.some((part) => part.type !== "text");
+}
+
+async function resolveConversation(input: {
+  createdByUserId: string;
+  orgId: string;
+  submittedMessage: LightfastUIMessage;
+  conversationId?: string;
+}): Promise<WorkspaceAssistantConversation | undefined> {
+  if (input.conversationId) {
+    return getWorkspaceAssistantConversationByPublicId(db, {
+      clerkOrgId: input.orgId,
+      createdByUserId: input.createdByUserId,
+      publicId: input.conversationId,
+    });
+  }
+
+  return createWorkspaceAssistantConversation(db, {
+    clerkOrgId: input.orgId,
+    createdByUserId: input.createdByUserId,
+    title: firstTextPart(input.submittedMessage),
+  });
+}
+
+function normalizeClientMessageId(value: string | undefined) {
+  return value?.startsWith("msg_") ? value : undefined;
+}
+
+function createFallbackIdempotencyKey(value: string | undefined) {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return `client:${createHash("sha256").update("missing").digest("hex")}`;
+  }
+  if (/^[A-Za-z0-9:_.-]{1,128}$/.test(trimmed)) {
+    return trimmed;
+  }
+  return `client:${createHash("sha256").update(trimmed).digest("hex")}`;
+}
+
+function createAssistantIdempotencyKey(userKey: string) {
+  const prefixed = `assistant:${userKey}`;
+  if (prefixed.length <= 128) {
+    return prefixed;
+  }
+  return `assistant:${createHash("sha256").update(userKey).digest("hex")}`;
+}
+
+function firstTextPart(message: LightfastUIMessage) {
+  const text = message.parts.find((part) => part.type === "text")?.text;
+  return typeof text === "string" ? text : undefined;
+}
+
+function toUIMessage(message: WorkspaceAssistantMessage): LightfastUIMessage {
+  return {
+    id: message.publicId,
+    metadata: message.metadata as LightfastUIMessage["metadata"],
+    parts: message.parts as LightfastUIMessage["parts"],
+    role: message.role as LightfastUIMessage["role"],
+  };
+}
+
+function validateLightfastMessages(messages: unknown) {
+  return safeValidateUIMessages<LightfastUIMessage>({
+    dataSchemas: lightfastWorkspaceAssistantDataPartSchemas,
+    messages,
+    metadataSchema: lightfastWorkspaceAssistantMessageMetadataSchema,
+    tools: lightfastWorkspaceAssistantTools,
+  });
+}
+
+async function buildSystemPrompt(clerkOrgId: string) {
+  const skillContext = await getSkillContext(clerkOrgId);
+  return skillContext
+    ? `${baseSystemPrompt}\n\nWorkspace skills:\n${skillContext}`
+    : baseSystemPrompt;
+}
+
+async function getSkillContext(clerkOrgId: string) {
+  try {
+    const sourceControlRepositoryId =
+      await getVerifiedLightfastSkillSourceRepositoryId(db, { clerkOrgId });
+    const result = await ensureFreshSkillIndexForRead({
+      clerkOrgId,
+      sourceControlRepositoryId,
+    });
+
+    return result.skills
+      .filter((skill) => skill.validationStatus === "valid")
+      .slice(0, 12)
+      .map((skill) => {
+        const description = skill.description ? `: ${skill.description}` : "";
+        return `- ${skill.name ?? skill.slug} (${skill.slug})${description}`;
+      })
+      .join("\n");
+  } catch {
+    return "";
+  }
+}
+
+function toJsonRecord(value: unknown): WorkspaceAssistantRecordMetadata {
+  if (!(value && typeof value === "object") || Array.isArray(value)) {
+    return {};
+  }
+  return JSON.parse(JSON.stringify(value)) as WorkspaceAssistantRecordMetadata;
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}

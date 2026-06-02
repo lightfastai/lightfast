@@ -1,0 +1,553 @@
+import type {
+  Database,
+  WorkspaceAssistantConversation,
+  WorkspaceAssistantGeneration,
+  WorkspaceAssistantMessage,
+} from "@db/app";
+import { describe, expect, it, vi } from "vitest";
+
+import {
+  workspaceAssistantConversations,
+  workspaceAssistantGenerations,
+  workspaceAssistantMessages,
+} from "../schema";
+import {
+  appendWorkspaceAssistantMessage,
+  createWorkspaceAssistantConversation,
+  createWorkspaceAssistantGeneration,
+  getWorkspaceAssistantConversationByPublicId,
+  listWorkspaceAssistantConversations,
+  listWorkspaceAssistantMessages,
+  markWorkspaceAssistantGenerationCompleted,
+  markWorkspaceAssistantMessageCompleted,
+} from "../utils/workspace-assistant";
+
+describe("workspace assistant repository", () => {
+  it("creates addressable org-scoped conversations and lists non-deleted conversations", async () => {
+    const { db, state } = makeChatDb();
+
+    const conversation = await createWorkspaceAssistantConversation(db, {
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+      title: "  Summarize my active opportunities  ",
+    });
+
+    expect(conversation).toMatchObject({
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+      status: "active",
+      title: "Summarize my active opportunities",
+    });
+    expect(conversation.publicId).toMatch(/^conv_/);
+
+    state.conversations.push(
+      makeConversation({ id: 99, publicId: "conv_deleted", status: "deleted" })
+    );
+
+    await expect(
+      getWorkspaceAssistantConversationByPublicId(db, {
+        clerkOrgId: "org_test",
+        createdByUserId: "user_test",
+        publicId: conversation.publicId,
+      })
+    ).resolves.toEqual(conversation);
+    await expect(
+      listWorkspaceAssistantConversations(db, {
+        clerkOrgId: "org_test",
+        createdByUserId: "user_test",
+      })
+    ).resolves.toMatchObject({
+      items: [conversation],
+      nextCursor: null,
+    });
+  });
+
+  it("appends messages with stable public ids and conversation-local sequence numbers", async () => {
+    const { db, state } = makeChatDb();
+    const conversation = await createWorkspaceAssistantConversation(db, {
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+      title: "Summarize my active opportunities",
+    });
+
+    const userMessage = await appendWorkspaceAssistantMessage(db, {
+      createdByUserId: "user_test",
+      parts: [{ text: "Summarize my active opportunities", type: "text" }],
+      publicId: "msg_user_1",
+      role: "user",
+      status: "completed",
+      conversation,
+    });
+    const assistantMessage = await appendWorkspaceAssistantMessage(db, {
+      createdByUserId: "user_test",
+      parts: [],
+      publicId: "msg_assistant_1",
+      role: "assistant",
+      status: "streaming",
+      conversation,
+    });
+
+    expect(userMessage.sequence).toBe(0);
+    expect(assistantMessage.sequence).toBe(1);
+    expect(state.conversations[0]).toMatchObject({
+      lastMessageId: assistantMessage.id,
+      title: "Summarize my active opportunities",
+    });
+    await expect(
+      listWorkspaceAssistantMessages(db, {
+        clerkOrgId: "org_test",
+        createdByUserId: "user_test",
+        conversation,
+      })
+    ).resolves.toEqual([userMessage, assistantMessage]);
+  });
+
+  it("returns the existing message when an idempotent append is retried", async () => {
+    const { db, state } = makeChatDb();
+    const conversation = await createWorkspaceAssistantConversation(db, {
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+      title: "Summarize my active opportunities",
+    });
+
+    const first = await appendWorkspaceAssistantMessage(db, {
+      createdByUserId: "user_test",
+      idempotencyKey: "idem_user_1",
+      parts: [{ text: "Summarize my active opportunities", type: "text" }],
+      publicId: "msg_user_1",
+      role: "user",
+      status: "completed",
+      conversation,
+    });
+    const retry = await appendWorkspaceAssistantMessage(db, {
+      createdByUserId: "user_test",
+      idempotencyKey: "idem_user_1",
+      parts: [{ text: "Summarize my active opportunities", type: "text" }],
+      publicId: "msg_user_retry",
+      role: "user",
+      status: "completed",
+      conversation,
+    });
+
+    expect(retry).toEqual(first);
+    expect(state.messages).toHaveLength(1);
+  });
+
+  it("does not move conversation last-message metadata backwards on stale idempotent retries", async () => {
+    const { db, state } = makeChatDb();
+    const conversation = await createWorkspaceAssistantConversation(db, {
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+      title: "Summarize my active opportunities",
+    });
+    const first = await appendWorkspaceAssistantMessage(db, {
+      createdByUserId: "user_test",
+      idempotencyKey: "idem_user_1",
+      parts: [{ text: "Summarize my active opportunities", type: "text" }],
+      publicId: "msg_user_1",
+      role: "user",
+      status: "completed",
+      conversation,
+    });
+    const newerLastMessageAt = new Date("2026-06-02T00:01:00.000Z");
+    state.conversations[0] = {
+      ...state.conversations[0]!,
+      lastMessageAt: newerLastMessageAt,
+      lastMessageId: 99,
+    };
+
+    const retry = await appendWorkspaceAssistantMessage(db, {
+      createdByUserId: "user_test",
+      idempotencyKey: "idem_user_1",
+      parts: [{ text: "Summarize my active opportunities", type: "text" }],
+      publicId: "msg_user_retry",
+      role: "user",
+      status: "completed",
+      conversation,
+    });
+
+    expect(retry).toEqual(first);
+    expect(state.conversations[0]).toMatchObject({
+      lastMessageAt: newerLastMessageAt,
+      lastMessageId: 99,
+    });
+  });
+
+  it("retries sequence collisions instead of duplicating max plus one", async () => {
+    const duplicateSequenceError = Object.assign(
+      new Error("Duplicate entry for key"),
+      { code: "ER_DUP_ENTRY" }
+    );
+    const { db, state } = makeChatDb({
+      messageInsertErrors: [duplicateSequenceError],
+    });
+    const conversation = await createWorkspaceAssistantConversation(db, {
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+      title: "Summarize my active opportunities",
+    });
+    state.messages.push(
+      makeMessage({
+        id: 99,
+        publicId: "msg_existing",
+        sequence: 0,
+      })
+    );
+
+    const inserted = await appendWorkspaceAssistantMessage(db, {
+      createdByUserId: "user_test",
+      idempotencyKey: "idem_user_2",
+      parts: [{ text: "Try again", type: "text" }],
+      publicId: "msg_user_2",
+      role: "user",
+      status: "completed",
+      conversation,
+    });
+
+    expect(inserted.sequence).toBe(1);
+    expect(state.messages.map((message) => message.publicId)).toEqual([
+      "msg_existing",
+      "msg_user_2",
+    ]);
+  });
+
+  it("records a generation lifecycle for the assistant message", async () => {
+    const { db, state } = makeChatDb();
+    const conversation = await createWorkspaceAssistantConversation(db, {
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+      title: "Summarize my active opportunities",
+    });
+    const assistantMessage = await appendWorkspaceAssistantMessage(db, {
+      createdByUserId: "user_test",
+      parts: [],
+      publicId: "msg_assistant_1",
+      role: "assistant",
+      status: "streaming",
+      conversation,
+    });
+
+    const generation = await createWorkspaceAssistantGeneration(db, {
+      assistantMessage,
+      model: "anthropic/claude-sonnet-4.6",
+      requestedByUserId: "user_test",
+      requestMetadata: { source: "workspace-assistant" },
+      status: "streaming",
+      conversation,
+    });
+
+    expect(generation).toMatchObject({
+      assistantMessageId: assistantMessage.id,
+      model: "anthropic/claude-sonnet-4.6",
+      status: "streaming",
+    });
+
+    await markWorkspaceAssistantMessageCompleted(db, {
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+      parts: [{ text: "You do not have any opportunities yet.", type: "text" }],
+      publicId: assistantMessage.publicId,
+    });
+    await markWorkspaceAssistantGenerationCompleted(db, {
+      clerkOrgId: "org_test",
+      finishReason: "stop",
+      providerMetadata: { gateway: { routed: true } },
+      publicId: generation.publicId,
+      requestedByUserId: "user_test",
+      usage: { inputTokens: 10, outputTokens: 12, totalTokens: 22 },
+    });
+
+    expect(state.messages[0]).toMatchObject({
+      parts: [{ text: "You do not have any opportunities yet.", type: "text" }],
+      status: "completed",
+    });
+    expect(state.generations[0]).toMatchObject({
+      finishReason: "stop",
+      status: "completed",
+      usage: { inputTokens: 10, outputTokens: 12, totalTokens: 22 },
+    });
+  });
+
+  it("rejects generations for non-assistant messages", async () => {
+    const { db } = makeChatDb();
+    const conversation = await createWorkspaceAssistantConversation(db, {
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+      title: "Summarize my active opportunities",
+    });
+    const userMessage = await appendWorkspaceAssistantMessage(db, {
+      createdByUserId: "user_test",
+      parts: [{ text: "Summarize my active opportunities", type: "text" }],
+      publicId: "msg_user_1",
+      role: "user",
+      status: "completed",
+      conversation,
+    });
+
+    await expect(
+      createWorkspaceAssistantGeneration(db, {
+        assistantMessage: userMessage,
+        model: "anthropic/claude-sonnet-4.6",
+        requestedByUserId: "user_test",
+        status: "streaming",
+        conversation,
+      })
+    ).rejects.toThrow("assistant message");
+  });
+
+  it("rejects generations for assistant messages from another conversation", async () => {
+    const { db } = makeChatDb();
+    const conversation = await createWorkspaceAssistantConversation(db, {
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+      title: "Summarize my active opportunities",
+    });
+    const assistantMessage = await appendWorkspaceAssistantMessage(db, {
+      createdByUserId: "user_test",
+      parts: [],
+      publicId: "msg_assistant_1",
+      role: "assistant",
+      status: "streaming",
+      conversation,
+    });
+
+    await expect(
+      createWorkspaceAssistantGeneration(db, {
+        assistantMessage: {
+          ...assistantMessage,
+          conversationId: 99,
+          conversationPublicId: "conv_other",
+        },
+        model: "anthropic/claude-sonnet-4.6",
+        requestedByUserId: "user_test",
+        status: "streaming",
+        conversation,
+      })
+    ).rejects.toThrow("another workspace assistant conversation");
+  });
+});
+
+function makeChatDb(options: { messageInsertErrors?: unknown[] } = {}) {
+  const state = {
+    generations: [] as WorkspaceAssistantGeneration[],
+    messages: [] as WorkspaceAssistantMessage[],
+    conversations: [] as WorkspaceAssistantConversation[],
+  };
+  let nextGenerationId = 1;
+  let nextMessageId = 1;
+  let nextConversationId = 1;
+
+  const db = {
+    insert: vi.fn((table: unknown) => ({
+      values: vi.fn(async (value: Record<string, unknown>) => {
+        if (table === workspaceAssistantConversations) {
+          state.conversations.push(
+            makeConversation({
+              ...value,
+              id: nextConversationId++,
+            })
+          );
+        }
+        if (table === workspaceAssistantMessages) {
+          const duplicateMessage = state.messages.find(
+            (message) =>
+              message.conversationId === value.conversationId &&
+              value.idempotencyKey &&
+              message.idempotencyKey === value.idempotencyKey
+          );
+          if (duplicateMessage) {
+            throw Object.assign(new Error("Duplicate entry for key"), {
+              code: "ER_DUP_ENTRY",
+            });
+          }
+          const nextError = options.messageInsertErrors?.shift();
+          if (nextError) {
+            throw nextError;
+          }
+          state.messages.push(
+            makeMessage({
+              ...value,
+              id: nextMessageId++,
+            })
+          );
+        }
+        if (table === workspaceAssistantGenerations) {
+          state.generations.push(
+            makeGeneration({
+              ...value,
+              id: nextGenerationId++,
+            })
+          );
+        }
+      }),
+    })),
+    select: vi.fn((projection?: Record<string, unknown>) => ({
+      from: (table: unknown) => ({
+        where: () => ({
+          limit: (limit: number) =>
+            Promise.resolve(
+              selectPointRows(state, table, projection).slice(0, limit)
+            ),
+          orderBy: () => orderedRows(selectRows(state, table, projection)),
+        }),
+      }),
+    })),
+    update: vi.fn((table: unknown) => ({
+      set: (value: Record<string, unknown>) => ({
+        where: vi.fn(async () => {
+          updateRows(state, table, value);
+        }),
+      }),
+    })),
+  };
+
+  return { db: db as unknown as Database, state };
+}
+
+function orderedRows(rows: unknown[]) {
+  return Object.assign(Promise.resolve(rows), {
+    limit: (limit: number) => Promise.resolve(rows.slice(0, limit)),
+  });
+}
+
+function selectPointRows(
+  state: {
+    generations: WorkspaceAssistantGeneration[];
+    messages: WorkspaceAssistantMessage[];
+    conversations: WorkspaceAssistantConversation[];
+  },
+  table: unknown,
+  projection?: Record<string, unknown>
+) {
+  const rows = selectRows(state, table, projection);
+  if (projection) {
+    return rows;
+  }
+  return rows.slice(-1);
+}
+
+function selectRows(
+  state: {
+    generations: WorkspaceAssistantGeneration[];
+    messages: WorkspaceAssistantMessage[];
+    conversations: WorkspaceAssistantConversation[];
+  },
+  table: unknown,
+  projection?: Record<string, unknown>
+) {
+  if (projection && "sequence" in projection) {
+    const maxSequence = state.messages.reduce(
+      (max, message) => Math.max(max, message.sequence),
+      -1
+    );
+    return [{ sequence: maxSequence }];
+  }
+  if (table === workspaceAssistantConversations) {
+    return state.conversations.filter(
+      (conversation) => conversation.status !== "deleted"
+    );
+  }
+  if (table === workspaceAssistantMessages) {
+    return state.messages;
+  }
+  if (table === workspaceAssistantGenerations) {
+    return state.generations;
+  }
+  return [];
+}
+
+function updateRows(
+  state: {
+    generations: WorkspaceAssistantGeneration[];
+    messages: WorkspaceAssistantMessage[];
+    conversations: WorkspaceAssistantConversation[];
+  },
+  table: unknown,
+  value: Record<string, unknown>
+) {
+  const rows =
+    table === workspaceAssistantConversations
+      ? state.conversations
+      : table === workspaceAssistantMessages
+        ? state.messages
+        : table === workspaceAssistantGenerations
+          ? state.generations
+          : [];
+  for (const row of rows) {
+    Object.assign(row, value);
+  }
+}
+
+function makeConversation(
+  overrides: Partial<WorkspaceAssistantConversation> = {}
+): WorkspaceAssistantConversation {
+  const now = new Date("2026-06-02T00:00:00.000Z");
+  return {
+    clerkOrgId: "org_test",
+    createdAt: now,
+    createdByUserId: "user_test",
+    id: 1,
+    lastMessageAt: null,
+    lastMessageId: null,
+    metadata: {},
+    publicId: "conv_123e4567-e89b-12d3-a456-426614174000",
+    activeStreamId: null,
+    status: "active",
+    title: null,
+    updatedAt: now,
+    ...overrides,
+  };
+}
+
+function makeMessage(
+  overrides: Partial<WorkspaceAssistantMessage> = {}
+): WorkspaceAssistantMessage {
+  const now = new Date("2026-06-02T00:00:00.000Z");
+  return {
+    conversationId: 1,
+    conversationPublicId: "conv_123e4567-e89b-12d3-a456-426614174000",
+    clerkOrgId: "org_test",
+    createdAt: now,
+    createdByUserId: "user_test",
+    errorCode: null,
+    errorMessage: null,
+    id: 1,
+    metadata: {},
+    parts: [],
+    publicId: "msg_123e4567-e89b-12d3-a456-426614174000",
+    role: "user",
+    sequence: 0,
+    idempotencyKey: null,
+    status: "completed",
+    updatedAt: now,
+    ...overrides,
+  };
+}
+
+function makeGeneration(
+  overrides: Partial<WorkspaceAssistantGeneration> = {}
+): WorkspaceAssistantGeneration {
+  const now = new Date("2026-06-02T00:00:00.000Z");
+  return {
+    assistantMessageId: 1,
+    assistantMessagePublicId: "msg_123e4567-e89b-12d3-a456-426614174000",
+    conversationId: 1,
+    clerkOrgId: "org_test",
+    createdAt: now,
+    errorCode: null,
+    errorMessage: null,
+    finishedAt: null,
+    finishReason: null,
+    id: 1,
+    model: "anthropic/claude-sonnet-4.6",
+    providerMetadata: {},
+    publicId: "gen_123e4567-e89b-12d3-a456-426614174000",
+    requestedByUserId: "user_test",
+    requestMetadata: {},
+    startedAt: null,
+    status: "pending",
+    updatedAt: now,
+    usage: null,
+    ...overrides,
+  };
+}

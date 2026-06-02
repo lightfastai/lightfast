@@ -94,9 +94,22 @@ describe("CommandPalette", () => {
     expect(pushMock).toHaveBeenCalledWith("/lightfast/people");
   });
 
+  it("routes to workspace chat", () => {
+    const { onOpenChange } = renderPalette();
+    fireEvent.click(screen.getByRole("button", { name: "Chat" }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(pushMock).toHaveBeenCalledWith("/lightfast/chat");
+  });
+
   it("renders all go-to destinations", () => {
     renderPalette();
-    for (const label of ["Signals", "People", "Automations", "Settings"]) {
+    for (const label of [
+      "Chat",
+      "Signals",
+      "People",
+      "Automations",
+      "Settings",
+    ]) {
       expect(screen.getByRole("button", { name: label })).toBeInTheDocument();
     }
   });

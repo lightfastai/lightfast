@@ -29,6 +29,7 @@ import { orgBillingRouter } from "./router/(pending-not-allowed)/org-billing";
 import { orgMembersRouter } from "./router/(pending-not-allowed)/org-members";
 import { orgSourceControlRouter } from "./router/(pending-not-allowed)/org-source-control";
 import { taskRouter } from "./router/(pending-not-allowed)/task";
+import { workspaceAssistantRouter } from "./router/(pending-not-allowed)/workspace-assistant";
 import { workspacePeopleRouter } from "./router/(pending-not-allowed)/workspace-people";
 import { workspaceSignalsRouter } from "./router/(pending-not-allowed)/workspace-signals";
 import { workspaceSkillsRouter } from "./router/(pending-not-allowed)/workspace-skills";
@@ -63,6 +64,7 @@ export const appRouter = createTRPCRouter({
       automations: automationsRouter,
       connectors: connectorsRouter,
       decisions: decisionsRouter,
+      assistant: workspaceAssistantRouter,
       people: workspacePeopleRouter,
       skills: workspaceSkillsRouter,
       signals: workspaceSignalsRouter,

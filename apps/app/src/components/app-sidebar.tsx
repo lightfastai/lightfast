@@ -1,5 +1,6 @@
 "use client";
 
+import type { AppRouterOutputs } from "@api/app";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -17,8 +18,10 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@repo/ui/components/ui/sidebar";
 import { cn } from "@repo/ui/lib/utils";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   Aperture,
   Blocks,
@@ -29,13 +32,22 @@ import {
   Scroll,
   Settings,
   Workflow,
+  MessageCircle,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 import { TeamSwitcher, TeamSwitcherSkeleton } from "~/components/team-switcher";
+import { useTRPC } from "~/trpc/react";
+
+type WorkspaceAssistantConversationList =
+  AppRouterOutputs["org"]["workspace"]["assistant"]["listConversations"];
+type WorkspaceAssistantConversationListItem =
+  WorkspaceAssistantConversationList["items"][number];
 
 interface NavItem {
+  activePrefix?: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   prefetch?: boolean;
@@ -66,6 +78,12 @@ function getOrgStandaloneItems(orgSlug: string): NavItem[] {
 function getOrgWorkspaceItems(orgSlug: string): NavItem[] {
   return [
     {
+      title: "Chat",
+      href: `/${orgSlug}/chat`,
+      activePrefix: `/${orgSlug}/chat`,
+      icon: MessageCircle,
+    },
+    {
       title: "Signals",
       href: `/${orgSlug}/signals`,
       icon: Aperture,
@@ -88,23 +106,38 @@ function getOrgManageItems(orgSlug: string): NavItem[] {
   ];
 }
 
+function isPathActive(href: string, pathname: string) {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 function isActiveNavItem(item: NavItem, pathname: string) {
-  if (item.title === "Settings") {
-    return pathname.startsWith(item.href);
+  if (item.activePrefix) {
+    return (
+      pathname === item.href ||
+      pathname === item.activePrefix ||
+      pathname.startsWith(`${item.activePrefix}/`)
+    );
   }
-  return pathname === item.href || pathname.startsWith(`${item.href}/`);
+  return isPathActive(item.href, pathname);
 }
 
 function NavItems({ items, pathname }: { items: NavItem[]; pathname: string }) {
+  const { isMobile, setOpenMobile } = useSidebar();
+
   return items.map((item) => {
     const isActive = isActiveNavItem(item, pathname);
+    const handleNavigate = () => {
+      if (isMobile) {
+        setOpenMobile(false);
+      }
+    };
 
     return (
       <SidebarMenuItem key={item.title}>
         <SidebarMenuButton
           asChild
           className={cn(
-            "rounded-xl [&>svg]:size-3.5",
+            "h-11 rounded-xl lg:h-7 [&>svg]:size-3.5",
             isActive
               ? "text-foreground data-[active=true]:text-foreground"
               : "text-muted-foreground"
@@ -112,7 +145,12 @@ function NavItems({ items, pathname }: { items: NavItem[]; pathname: string }) {
           isActive={isActive}
           size="sm"
         >
-          <Link href={{ pathname: item.href }} prefetch={item.prefetch ?? true}>
+          <Link
+            aria-current={isActive ? "page" : undefined}
+            href={{ pathname: item.href }}
+            onClick={handleNavigate}
+            prefetch={item.prefetch ?? true}
+          >
             <item.icon className="size-3.5" />
             <span>{item.title}</span>
           </Link>
@@ -122,8 +160,110 @@ function NavItems({ items, pathname }: { items: NavItem[]; pathname: string }) {
   });
 }
 
+function ChatHistory({
+  orgSlug,
+  pathname,
+}: {
+  orgSlug: string;
+  pathname: string;
+}) {
+  const trpc = useTRPC();
+  const { data } = useSuspenseQuery(
+    trpc.org.workspace.assistant.listConversations.queryOptions(
+      { limit: 20 },
+      { staleTime: 0 }
+    )
+  );
+
+  return (
+    <SidebarGroup collapsible defaultOpen label="Chats">
+      <SidebarGroupContent>
+        <nav aria-label="Chats">
+          <SidebarMenu className="rounded-xl border border-border/50 bg-muted/20 p-1">
+            {data.items.length > 0 ? (
+              data.items.map((conversation) => (
+                <ChatHistoryItem
+                  conversation={conversation}
+                  key={conversation.publicId}
+                  orgSlug={orgSlug}
+                  pathname={pathname}
+                />
+              ))
+            ) : (
+              <li className="px-2 py-2 text-muted-foreground text-xs">
+                No chats yet
+              </li>
+            )}
+          </SidebarMenu>
+        </nav>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  );
+}
+
+function ChatHistoryItem({
+  conversation,
+  orgSlug,
+  pathname,
+}: {
+  conversation: WorkspaceAssistantConversationListItem;
+  orgSlug: string;
+  pathname: string;
+}) {
+  const { isMobile, setOpenMobile } = useSidebar();
+  const href = `/${orgSlug}/chat/${conversation.publicId}`;
+  const isActive = pathname === href;
+  const title = getConversationSidebarTitle(conversation);
+  const handleNavigate = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        asChild
+        className={cn(
+          "h-8 rounded-lg px-2 text-xs [&>svg]:size-3.5",
+          isActive
+            ? "text-foreground data-[active=true]:text-foreground"
+            : "text-muted-foreground"
+        )}
+        isActive={isActive}
+        size="sm"
+      >
+        <Link href={{ pathname: href }} onClick={handleNavigate} prefetch>
+          <MessageCircle className="size-3.5" />
+          <span className="truncate">{title}</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
+
+function ChatHistorySkeleton() {
+  return (
+    <SidebarGroup collapsible defaultOpen label="Chats">
+      <SidebarGroupContent>
+        <div className="rounded-xl border border-border/50 bg-muted/20 p-2 text-muted-foreground text-xs">
+          Loading chats
+        </div>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  );
+}
+
+function getConversationSidebarTitle(
+  conversation: WorkspaceAssistantConversationListItem
+) {
+  const title = conversation.title?.trim();
+  return title || "Untitled chat";
+}
+
 export function AppSidebar() {
   const pathname = usePathname();
+  const { isMobile, setOpenMobile } = useSidebar();
 
   const pathParts = pathname.split("/").filter(Boolean);
   const orgSlug = pathParts[0] ?? "";
@@ -134,6 +274,18 @@ export function AppSidebar() {
         <Suspense fallback={<TeamSwitcherSkeleton />}>
           <TeamSwitcher />
         </Suspense>
+        {isMobile && (
+          <Button
+            aria-label="Close sidebar"
+            className="ml-auto size-11 rounded-xl text-muted-foreground"
+            onClick={() => setOpenMobile(false)}
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            <X className="size-4" />
+          </Button>
+        )}
       </SidebarHeader>
       <SidebarContent>
         {orgSlug && (
@@ -150,24 +302,31 @@ export function AppSidebar() {
             </SidebarGroup>
             <SidebarGroup collapsible defaultOpen label="Workspace">
               <SidebarGroupContent>
-                <SidebarMenu>
-                  <NavItems
-                    items={getOrgWorkspaceItems(orgSlug)}
-                    pathname={pathname}
-                  />
-                </SidebarMenu>
+                <nav aria-label="Workspace">
+                  <SidebarMenu>
+                    <NavItems
+                      items={getOrgWorkspaceItems(orgSlug)}
+                      pathname={pathname}
+                    />
+                  </SidebarMenu>
+                </nav>
               </SidebarGroupContent>
             </SidebarGroup>
             <SidebarGroup collapsible defaultOpen label="Manage">
               <SidebarGroupContent>
-                <SidebarMenu>
-                  <NavItems
-                    items={getOrgManageItems(orgSlug)}
-                    pathname={pathname}
-                  />
-                </SidebarMenu>
+                <nav aria-label="Manage">
+                  <SidebarMenu>
+                    <NavItems
+                      items={getOrgManageItems(orgSlug)}
+                      pathname={pathname}
+                    />
+                  </SidebarMenu>
+                </nav>
               </SidebarGroupContent>
             </SidebarGroup>
+            <Suspense fallback={<ChatHistorySkeleton />}>
+              <ChatHistory orgSlug={orgSlug} pathname={pathname} />
+            </Suspense>
           </>
         )}
       </SidebarContent>
@@ -175,7 +334,7 @@ export function AppSidebar() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              className="h-8 w-8 rounded-full bg-muted p-1"
+              className="size-11 rounded-full bg-muted p-1 lg:h-8 lg:w-8"
               size="icon"
               title="Help"
               variant="outline"

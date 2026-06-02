@@ -10,9 +10,10 @@ import type { BundledLanguage } from "shiki";
 import {
   CodeBlock,
   CodeBlockActions,
-  CodeBlockContent,
   CodeBlockCopyButton,
+  CodeBlockFilename,
   CodeBlockHeader,
+  CodeBlockTitle,
 } from "./ai-elements/code-block";
 
 // Properly typed component props based on react-markdown's actual types
@@ -96,13 +97,17 @@ const components: Partial<ReactMarkdownComponents> = {
           "bg-muted/50 dark:bg-muted/20",
           className
         )}
+        code={code}
+        language={language}
       >
-        <CodeBlockHeader language={language}>
+        <CodeBlockHeader>
+          <CodeBlockTitle>
+            <CodeBlockFilename>{language}</CodeBlockFilename>
+          </CodeBlockTitle>
           <CodeBlockActions>
             <CodeBlockCopyButton />
           </CodeBlockActions>
         </CodeBlockHeader>
-        <CodeBlockContent className="p-3" code={code} language={language} />
       </CodeBlock>
     );
   },
