@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const accountGetQueryOptionsMock = vi.fn(() => ({
@@ -8,17 +8,12 @@ const githubAccountStatusQueryOptionsMock = vi.fn(() => ({
   queryKey: ["viewer", "githubAccount", "status"],
 }));
 const updateNameMutationOptionsMock = vi.fn((options: unknown) => options);
-const createUsernameMutationOptionsMock = vi.fn((options: unknown) => options);
 const useSuspenseQueryMock = vi.fn();
-const mutationInputs: unknown[] = [];
 
 vi.mock("~/trpc/react", () => ({
   useTRPC: () => ({
     viewer: {
       account: {
-        createUsername: {
-          mutationOptions: createUsernameMutationOptionsMock,
-        },
         get: {
           queryOptions: accountGetQueryOptionsMock,
         },
@@ -38,9 +33,7 @@ vi.mock("~/trpc/react", () => ({
 vi.mock("@tanstack/react-query", () => ({
   useMutation: (options: unknown) => ({
     isPending: false,
-    mutate: vi.fn((input: unknown) => {
-      mutationInputs.push(input);
-    }),
+    mutate: vi.fn(),
     mutateAsync: vi.fn(),
     options,
   }),
@@ -81,8 +74,6 @@ beforeEach(() => {
   accountGetQueryOptionsMock.mockClear();
   githubAccountStatusQueryOptionsMock.mockClear();
   updateNameMutationOptionsMock.mockClear();
-  createUsernameMutationOptionsMock.mockClear();
-  mutationInputs.length = 0;
   useSuspenseQueryMock.mockReset();
 });
 
@@ -99,66 +90,36 @@ function mockProfileQuery(data: ReturnType<typeof profile>) {
 }
 
 describe("ProfileDataDisplay", () => {
-  it("locks the username field after a username exists", () => {
+  it("renders the account profile fields", () => {
     mockProfileQuery(profile());
 
     render(<ProfileDataDisplay />);
 
     expect(screen.getByLabelText("Display name")).toHaveValue("Ada Lovelace");
     expect(screen.getByLabelText("Username")).toHaveValue("ada-dev");
+    expect(screen.getByLabelText("Email")).toHaveValue("ada@example.com");
+  });
+
+  it("renders the username as a locked field with no editing action", () => {
+    mockProfileQuery(profile());
+
+    render(<ProfileDataDisplay />);
+
     expect(screen.getByLabelText("Username")).toBeDisabled();
     expect(
-      screen.getByRole("button", { name: "Username created" })
-    ).toBeDisabled();
+      screen.queryByRole("button", { name: "Create username" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Username created" })
+    ).not.toBeInTheDocument();
   });
 
-  it("allows users without a username to create one", () => {
+  it("shows an empty username field when none is set", () => {
     mockProfileQuery(profile({ username: null }));
 
     render(<ProfileDataDisplay />);
 
-    const usernameInput = screen.getByLabelText("Username");
-    expect(usernameInput).toBeEnabled();
-    fireEvent.change(usernameInput, { target: { value: "Ada-Dev" } });
-    expect(usernameInput).toHaveValue("ada-dev");
-    expect(
-      screen.getByRole("button", { name: "Create username" })
-    ).toBeEnabled();
-  });
-
-  it("does not enable username creation for invalid handles", () => {
-    mockProfileQuery(profile({ username: null }));
-
-    render(<ProfileDataDisplay />);
-
-    fireEvent.change(screen.getByLabelText("Username"), {
-      target: { value: "settings" },
-    });
-
-    expect(
-      screen.getByRole("button", { name: "Create username" })
-    ).toBeDisabled();
-  });
-
-  it("reuses the username idempotency key across retries", () => {
-    mockProfileQuery(profile({ username: null }));
-
-    render(<ProfileDataDisplay />);
-
-    fireEvent.change(screen.getByLabelText("Username"), {
-      target: { value: "ada-dev" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Create username" }));
-    fireEvent.click(screen.getByRole("button", { name: "Create username" }));
-
-    expect(mutationInputs).toHaveLength(2);
-    expect(mutationInputs[0]).toMatchObject({ username: "ada-dev" });
-    expect(mutationInputs[1]).toMatchObject({
-      idempotencyKey: expect.any(String),
-      username: "ada-dev",
-    });
-    expect(
-      (mutationInputs[1] as { idempotencyKey: string }).idempotencyKey
-    ).toBe((mutationInputs[0] as { idempotencyKey: string }).idempotencyKey);
+    expect(screen.getByLabelText("Username")).toHaveValue("");
+    expect(screen.getByLabelText("Username")).toBeDisabled();
   });
 });
