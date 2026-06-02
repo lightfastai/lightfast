@@ -16,7 +16,7 @@ export function RailSection({
 }) {
   return (
     <section className={className}>
-      <h2 className="mb-2 text-muted-foreground text-sm">{title}</h2>
+      <h2 className="mb-2 text-muted-foreground/70 text-xs">{title}</h2>
       <div className="space-y-0.5">{children}</div>
     </section>
   );

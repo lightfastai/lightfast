@@ -2,6 +2,7 @@ import {
   createAutomation,
   createAutomationRun,
   getAutomationByPublicId,
+  getAutomationRunByPublicId,
   listAutomationRuns,
   listAutomations,
   markAutomationRunFailed,
@@ -10,6 +11,7 @@ import {
 } from "@db/app";
 import {
   createAutomationSchema,
+  getAutomationRunSchema,
   getAutomationSchema,
   listAutomationRunsSchema,
   updateAutomationSchema,
@@ -24,6 +26,13 @@ function notFound(): never {
   throw new TRPCError({
     code: "NOT_FOUND",
     message: "Automation not found",
+  });
+}
+
+function runNotFound(): never {
+  throw new TRPCError({
+    code: "NOT_FOUND",
+    message: "Automation run not found",
   });
 }
 
@@ -160,4 +169,14 @@ export const automationsRouter = {
         limit: input.limit,
       })
     ),
+
+  getRun: boundOrgProcedure
+    .input(getAutomationRunSchema)
+    .query(async ({ ctx, input }) => {
+      const run = await getAutomationRunByPublicId(ctx.db, {
+        clerkOrgId: ctx.auth.identity.orgId,
+        publicId: input.id,
+      });
+      return run ?? runNotFound();
+    }),
 } satisfies TRPCRouterRecord;

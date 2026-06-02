@@ -1,8 +1,11 @@
 import type { Automation, AutomationRun } from "@db/app/schema";
+import type { AutomationScheduleInput } from "@repo/app-validation/schemas";
 import type { QueryClient } from "@tanstack/react-query";
 import type { useTRPC } from "~/trpc/react";
 
 type TRPCClient = ReturnType<typeof useTRPC>;
+
+export const AUTOMATION_RUNS_PAGE_LIMIT = 20;
 
 export function upsertInList(
   qc: QueryClient,
@@ -37,23 +40,65 @@ export function setRuns(
   qc: QueryClient,
   trpc: TRPCClient,
   automationId: string,
-  transform: (prev?: AutomationRun[]) => AutomationRun[]
+  transform: (prev?: AutomationRun[]) => AutomationRun[],
+  limit = AUTOMATION_RUNS_PAGE_LIMIT
 ): void {
   const key = trpc.org.workspace.automations.listRuns.queryOptions({
     id: automationId,
-    limit: 20,
+    limit,
   }).queryKey;
   qc.setQueryData(key, (old: AutomationRun[] | undefined) => transform(old));
 }
 
+export function upsertRun(
+  qc: QueryClient,
+  trpc: TRPCClient,
+  automationId: string,
+  run: AutomationRun,
+  limit = AUTOMATION_RUNS_PAGE_LIMIT
+): void {
+  const getRunKey = trpc.org.workspace.automations.getRun.queryOptions({
+    id: run.publicId,
+  }).queryKey;
+  qc.setQueryData(getRunKey, run);
+  setRuns(
+    qc,
+    trpc,
+    automationId,
+    (old) => {
+      const next = [
+        run,
+        ...(old ?? []).filter((r) => r.publicId !== run.publicId),
+      ];
+      return next.slice(0, limit);
+    },
+    limit
+  );
+}
+
 export function applyAutomationPatch(
   prev: Automation,
-  patch: { name?: string; prompt?: string }
+  patch: {
+    name?: string;
+    prompt?: string;
+    schedule?: AutomationScheduleInput;
+    timezone?: string;
+  }
 ): Automation {
   return {
     ...prev,
     ...(patch.name === undefined ? {} : { name: patch.name }),
     ...(patch.prompt === undefined ? {} : { prompt: patch.prompt }),
+    ...(patch.schedule === undefined
+      ? {}
+      : {
+          scheduleKind: patch.schedule.kind,
+          // The discriminated union's `config` matches `Automation["scheduleConfig"]`
+          // shape-for-shape, but TS can't carry the kind↔config correlation across
+          // the cast, so narrow it explicitly to the stored column type.
+          scheduleConfig: patch.schedule.config as Automation["scheduleConfig"],
+        }),
+    ...(patch.timezone === undefined ? {} : { timezone: patch.timezone }),
   };
 }
 

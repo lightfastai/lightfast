@@ -18,7 +18,7 @@ import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useTRPC } from "~/trpc/react";
 import { LfSelect } from "../../../_components/lf-select";
-import { setOne, upsertInList } from "../../_components/automations-cache";
+import { automationUpdateMutationOptions } from "../../_components/automations-cache";
 import {
   isTimeBasedKind,
   SCHEDULE_KINDS,
@@ -103,13 +103,14 @@ export function AutomationScheduleEditor({
   const trpc = useTRPC();
   const id = automation.publicId;
 
+  // Reuse the shared optimistic wiring (snapshot → patch get+list caches →
+  // rollback on error → replace with server result). Because the parent feeds
+  // `automation` from the cache-backed suspense query, the optimistic patch makes
+  // `formatAutomationSchedule(automation)` reflect the new schedule immediately —
+  // no roundtrip lag on the "Repeats" label.
   const update = useMutation(
-    trpc.org.workspace.automations.update.mutationOptions({
-      meta: { errorTitle: "Failed to update schedule" },
-      onSuccess: (updated) => {
-        setOne(qc, trpc, id, () => updated);
-        upsertInList(qc, trpc, id, () => updated);
-      },
+    automationUpdateMutationOptions(qc, trpc, id, {
+      errorTitle: "Failed to update schedule",
     })
   );
 

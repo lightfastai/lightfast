@@ -117,6 +117,10 @@ export const getAutomationSchema = z.object({
   id: automationIdSchema,
 });
 
+export const getAutomationRunSchema = z.object({
+  id: automationRunIdSchema,
+});
+
 export const listAutomationRunsSchema = z.object({
   id: automationIdSchema,
   limit: z.number().int().min(1).max(100).default(25),

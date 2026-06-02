@@ -11,6 +11,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
 import { Loader2, Play, Trash } from "lucide-react";
 import { useTRPC } from "~/trpc/react";
+import {
+  AUTOMATION_RUNS_PAGE_LIMIT,
+  upsertRun,
+} from "../../_components/automations-cache";
+import { RailSection } from "./detail-sections";
 
 type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
 
@@ -32,51 +37,54 @@ function AutomationActionsInner({ automation }: { automation: Automation }) {
 
   const listRunsKey = trpc.org.workspace.automations.listRuns.queryOptions({
     id,
-    limit: 20,
+    limit: AUTOMATION_RUNS_PAGE_LIMIT,
   }).queryKey;
 
   const runNowMutation = useMutation(
     trpc.org.workspace.automations.runNow.mutationOptions({
       meta: { errorTitle: "Failed to enqueue run" },
-      onSuccess: () => {
+      onSuccess: (run) => {
+        upsertRun(qc, trpc, id, run);
         void qc.invalidateQueries({ queryKey: listRunsKey });
       },
     })
   );
 
   return (
-    <div className="mt-4 space-y-2">
-      <Button
-        className="w-full justify-start gap-2"
-        disabled={runNowMutation.isPending || automation.status === "paused"}
-        onClick={() => runNowMutation.mutate({ id })}
-        size="lf"
-        variant="secondary"
-      >
-        {runNowMutation.isPending ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          <Play className="size-4" />
-        )}
-        Run now
-      </Button>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            aria-disabled
-            className="w-full cursor-not-allowed justify-start gap-2 opacity-50"
-            size="lf"
-            type="button"
-            variant="secondary"
-          >
-            <Trash className="size-4" />
-            Delete
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          Delete isn&apos;t available yet — pause the automation instead.
-        </TooltipContent>
-      </Tooltip>
-    </div>
+    <RailSection title="Actions">
+      <div className="space-y-2">
+        <Button
+          className="w-full justify-start gap-2"
+          disabled={runNowMutation.isPending || automation.status === "paused"}
+          onClick={() => runNowMutation.mutate({ id })}
+          size="lf"
+          variant="secondary"
+        >
+          {runNowMutation.isPending ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Play className="size-4" />
+          )}
+          Run now
+        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              aria-disabled
+              className="w-full cursor-not-allowed justify-start gap-2 opacity-50"
+              size="lf"
+              type="button"
+              variant="secondary"
+            >
+              <Trash className="size-4" />
+              Delete
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            Delete isn&apos;t available yet — pause the automation instead.
+          </TooltipContent>
+        </Tooltip>
+      </div>
+    </RailSection>
   );
 }
