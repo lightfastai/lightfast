@@ -14,7 +14,12 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 import type { UIMessage } from "@vendor/ai";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
+import type {
+  ComponentProps,
+  HTMLAttributes,
+  MouseEvent,
+  ReactElement,
+} from "react";
 import {
   createContext,
   memo,
@@ -215,7 +220,7 @@ export const MessageBranchContent = ({
         "grid gap-2 overflow-hidden [&>div]:pb-0",
         index === currentBranch ? "block" : "hidden"
       )}
-      key={branch.key}
+      key={branch.key ?? index}
       {...props}
     >
       {branch}
@@ -252,15 +257,22 @@ export type MessageBranchPreviousProps = ComponentProps<typeof Button>;
 
 export const MessageBranchPrevious = ({
   children,
+  onClick,
   ...props
 }: MessageBranchPreviousProps) => {
   const { goToPrevious, totalBranches } = useMessageBranch();
+  const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
+    onClick?.(event);
+    if (!event.defaultPrevented) {
+      goToPrevious();
+    }
+  };
 
   return (
     <Button
       aria-label="Previous branch"
       disabled={totalBranches <= 1}
-      onClick={goToPrevious}
+      onClick={handleClick}
       size="icon-sm"
       type="button"
       variant="ghost"
@@ -275,15 +287,22 @@ export type MessageBranchNextProps = ComponentProps<typeof Button>;
 
 export const MessageBranchNext = ({
   children,
+  onClick,
   ...props
 }: MessageBranchNextProps) => {
   const { goToNext, totalBranches } = useMessageBranch();
+  const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
+    onClick?.(event);
+    if (!event.defaultPrevented) {
+      goToNext();
+    }
+  };
 
   return (
     <Button
       aria-label="Next branch"
       disabled={totalBranches <= 1}
-      onClick={goToNext}
+      onClick={handleClick}
       size="icon-sm"
       type="button"
       variant="ghost"
@@ -325,10 +344,11 @@ export const MessageResponse = memo(
         className
       )}
       {...props}
-    />
+      />
   ),
   (prevProps, nextProps) =>
     prevProps.children === nextProps.children &&
+    prevProps.className === nextProps.className &&
     nextProps.isAnimating === prevProps.isAnimating
 );
 

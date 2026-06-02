@@ -52,7 +52,7 @@ const chatRequestSchema = z
       .max(128)
       .regex(/^[A-Za-z0-9:_.-]+$/)
       .optional(),
-    messages: z.unknown(),
+    messages: z.array(z.unknown()),
     conversationId: z.string().trim().min(1).optional(),
   })
   .passthrough();
@@ -203,12 +203,18 @@ export async function POST(req: Request) {
     userId: identity.userId,
   };
 
-  await setWorkspaceAssistantConversationActiveStream(db, {
+  const activeConversation = await setWorkspaceAssistantConversationActiveStream(db, {
     clerkOrgId: identity.orgId,
     createdByUserId: identity.userId,
     publicId: conversation.publicId,
     streamId,
   });
+  if (!activeConversation) {
+    return Response.json(
+      { error: "Failed to update active stream for conversation." },
+      { status: 409 }
+    );
+  }
   log.info("[workspace-assistant] generation started", generationLogMetadata);
 
   const result = streamText({
@@ -242,12 +248,15 @@ export async function POST(req: Request) {
           publicId: generation.publicId,
           requestedByUserId: identity.userId,
         }),
-        setWorkspaceAssistantConversationActiveStream(db, {
+        clearActiveStream(db, {
           clerkOrgId: identity.orgId,
           createdByUserId: identity.userId,
           expectedStreamId: streamId,
           publicId: conversation.publicId,
           streamId: null,
+          failureMessage: generationLogMetadata,
+          type: "error",
+          warning: "[workspace-assistant] failed to clear active stream after generation error",
         }),
       ]);
     },
@@ -283,12 +292,16 @@ export async function POST(req: Request) {
           ...generationLogMetadata,
           errorMessage: getErrorMessage(error),
         });
-        await setWorkspaceAssistantConversationActiveStream(db, {
+        await clearActiveStream(db, {
           clerkOrgId: identity.orgId,
           createdByUserId: identity.userId,
           expectedStreamId: streamId,
           publicId: conversation.publicId,
           streamId: null,
+          failureMessage: generationLogMetadata,
+          type: "error",
+          warning:
+            "[workspace-assistant] failed to clear active stream after resume failure",
         });
         throw error;
       }
@@ -325,12 +338,16 @@ export async function POST(req: Request) {
             publicId: generation.publicId,
             requestedByUserId: identity.userId,
           }),
-          setWorkspaceAssistantConversationActiveStream(db, {
+          clearActiveStream(db, {
             clerkOrgId: identity.orgId,
             createdByUserId: identity.userId,
             expectedStreamId: streamId,
             publicId: conversation.publicId,
             streamId: null,
+            failureMessage: generationLogMetadata,
+            type: "warn",
+            warning:
+              "[workspace-assistant] failed to clear active stream after generation abort",
           }),
         ]);
         return;
@@ -355,12 +372,16 @@ export async function POST(req: Request) {
           requestedByUserId: identity.userId,
           usage: completionUsage,
         }),
-        setWorkspaceAssistantConversationActiveStream(db, {
+        clearActiveStream(db, {
           clerkOrgId: identity.orgId,
           createdByUserId: identity.userId,
           expectedStreamId: streamId,
           publicId: conversation.publicId,
           streamId: null,
+          failureMessage: generationLogMetadata,
+          type: "warn",
+          warning:
+            "[workspace-assistant] failed to clear active stream after generation finish",
         }),
       ]);
     },
@@ -373,6 +394,34 @@ async function readJson(req: Request) {
     return { data: await req.json(), success: true } as const;
   } catch {
     return { error: new Error("Invalid JSON"), success: false } as const;
+  }
+}
+
+type ClearActiveStreamFailureLevel = "error" | "warn";
+
+async function clearActiveStream(
+  db: Parameters<typeof setWorkspaceAssistantConversationActiveStream>[0],
+  input: {
+    clerkOrgId: string;
+    createdByUserId: string;
+    expectedStreamId: string;
+    publicId: string;
+    streamId: null;
+    failureMessage: Record<string, unknown>;
+    type: ClearActiveStreamFailureLevel;
+    warning: string;
+  }
+) {
+  const updatedConversation = await setWorkspaceAssistantConversationActiveStream(db, {
+    clerkOrgId: input.clerkOrgId,
+    createdByUserId: input.createdByUserId,
+    expectedStreamId: input.expectedStreamId,
+    publicId: input.publicId,
+    streamId: input.streamId,
+  });
+  if (!updatedConversation) {
+    const logger = input.type === "warn" ? log.warn : log.error;
+    logger(input.warning, input.failureMessage);
   }
 }
 

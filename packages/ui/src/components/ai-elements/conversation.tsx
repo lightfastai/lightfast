@@ -155,7 +155,9 @@ export const ConversationDownload = ({
     document.body.append(link);
     link.click();
     link.remove();
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 0);
   }, [messages, filename, formatMessage]);
 
   return (

@@ -148,6 +148,9 @@ beforeEach(() => {
         status: "streaming",
       })
     );
+  setWorkspaceAssistantConversationActiveStreamMock.mockResolvedValue(
+    makeConversation()
+  );
   createWorkspaceAssistantGenerationMock.mockResolvedValue({
     clerkOrgId: "org_123",
     publicId: "gen_123",
@@ -175,6 +178,13 @@ describe("chat route", () => {
     const response = await POST(createJsonRequest({ messages: [] }));
 
     expect(response.status).toBe(401);
+    expect(streamTextMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects malformed chat request payload shape", async () => {
+    const response = await POST(createJsonRequest({ messages: "not-an-array" }));
+
+    expect(response.status).toBe(400);
     expect(streamTextMock).not.toHaveBeenCalled();
   });
 

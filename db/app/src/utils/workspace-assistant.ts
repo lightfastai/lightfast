@@ -20,7 +20,7 @@ import {
   workspaceAssistantGenerations,
   workspaceAssistantMessages,
 } from "../schema";
-import { isDuplicateKeyError } from "./drizzle-results";
+import { getRowsAffected, isDuplicateKeyError } from "./drizzle-results";
 
 const MAX_LIST_LIMIT = 100;
 const DEFAULT_LIST_LIMIT = 50;
@@ -703,7 +703,7 @@ export async function setWorkspaceAssistantConversationActiveStream(
   db: Database,
   input: SetWorkspaceAssistantConversationActiveStreamInput
 ): Promise<WorkspaceAssistantConversation | undefined> {
-  await db
+  const result = await db
     .update(workspaceAssistantConversations)
     .set({
       activeStreamId: input.streamId,
@@ -728,6 +728,9 @@ export async function setWorkspaceAssistantConversationActiveStream(
         ne(workspaceAssistantConversations.status, "deleted")
       )
     );
+  if (getRowsAffected(result) === 0) {
+    return undefined;
+  }
   return getWorkspaceAssistantConversationByPublicId(db, input);
 }
 
