@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import {
@@ -99,9 +100,9 @@ export function SignalDetailContent({
           {formatSignalIdentifier(item)}
         </span>
         {classification ? (
-          <span className="rounded-full border border-border/70 px-2 py-0.5 text-muted-foreground text-xs">
+          <Badge className="text-muted-foreground" variant="outline">
             {getSignalDispositionLabel(classification.disposition)}
-          </span>
+          </Badge>
         ) : null}
         <div className="ml-auto flex items-center gap-1">
           <Button

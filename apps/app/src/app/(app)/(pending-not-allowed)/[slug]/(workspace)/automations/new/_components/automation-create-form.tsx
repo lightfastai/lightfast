@@ -6,6 +6,7 @@ import {
   AUTOMATION_PROMPT_MAX_LENGTH,
   type AutomationScheduleInput,
 } from "@repo/app-validation/schemas";
+import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Form,
@@ -289,9 +290,12 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
                             variant="lf"
                           />
                           {scheduleKind === "weekdays" && (
-                            <span className="rounded-md border border-border px-1.5 py-0.5 text-muted-foreground text-xs">
+                            <Badge
+                              className="text-muted-foreground"
+                              variant="outline"
+                            >
                               Mon–Fri
-                            </span>
+                            </Badge>
                           )}
                         </div>
                         <FormMessage />

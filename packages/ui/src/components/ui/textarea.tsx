@@ -11,7 +11,7 @@ const textareaVariants = cva(
       variant: {
         default:
           "border-input focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 min-h-16 rounded-md border px-3 py-2 text-base shadow-xs focus-visible:ring-[3px] md:text-sm",
-        lf: "bg-card border-input min-h-[92px] rounded-[9px] border px-3 py-2 text-[12.5px] leading-relaxed shadow-none focus-visible:bg-background focus-visible:border-input focus-visible:shadow-[inset_0_0_0_1px_var(--ring)] aria-invalid:border-destructive",
+        lf: "bg-card border-input min-h-[92px] rounded-[9px] border px-3 py-2 text-sm leading-relaxed shadow-none focus-visible:bg-background focus-visible:border-input focus-visible:shadow-[inset_0_0_0_1px_var(--ring)] aria-invalid:border-destructive",
       },
     },
     defaultVariants: {
