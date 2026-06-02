@@ -45,9 +45,9 @@ describe("public id generators", () => {
 
     expect(automationId.startsWith(AUTOMATION_ID_PREFIX)).toBe(true);
     expect(automationRunId.startsWith(AUTOMATION_RUN_ID_PREFIX)).toBe(true);
-    expect(providerRoutineCallId.startsWith(PROVIDER_ROUTINE_CALL_ID_PREFIX)).toBe(
-      true
-    );
+    expect(
+      providerRoutineCallId.startsWith(PROVIDER_ROUTINE_CALL_ID_PREFIX)
+    ).toBe(true);
     expect(
       workspaceAssistantContextItemId.startsWith(
         WORKSPACE_ASSISTANT_CONTEXT_ITEM_ID_PREFIX

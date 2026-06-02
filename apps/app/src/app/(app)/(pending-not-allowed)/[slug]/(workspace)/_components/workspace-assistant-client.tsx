@@ -224,7 +224,9 @@ export function WorkspaceAssistantClient({
         setConversationId(undefined);
         replaceBrowserChatUrl(params.slug);
         setCreationError(
-          error instanceof Error ? error : new Error("Unable to create conversation.")
+          error instanceof Error
+            ? error
+            : new Error("Unable to create conversation.")
         );
         return;
       }

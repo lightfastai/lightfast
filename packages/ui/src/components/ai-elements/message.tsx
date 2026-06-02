@@ -344,7 +344,7 @@ export const MessageResponse = memo(
         className
       )}
       {...props}
-      />
+    />
   ),
   (prevProps, nextProps) =>
     prevProps.children === nextProps.children &&

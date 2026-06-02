@@ -545,11 +545,14 @@ export async function createWorkspaceAssistantGeneration(
       }
     });
 
-  const inserted = await getWorkspaceAssistantGenerationByAssistantMessageId(db, {
+  const inserted = await getWorkspaceAssistantGenerationByAssistantMessageId(
+    db,
+    {
       assistantMessageId: input.assistantMessage.id,
       clerkOrgId: input.conversation.clerkOrgId,
       requestedByUserId: input.requestedByUserId,
-    });
+    }
+  );
   if (!inserted) {
     throw new Error(
       `Failed to create workspace assistant generation ${publicId}`
@@ -723,7 +726,7 @@ export async function setWorkspaceAssistantConversationActiveStream(
       )
     );
   if (getRowsAffected(result) === 0) {
-    return undefined;
+    return;
   }
   return getWorkspaceAssistantConversationByPublicId(db, input);
 }

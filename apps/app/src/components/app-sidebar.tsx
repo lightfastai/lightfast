@@ -28,11 +28,11 @@ import {
   BookOpen,
   HelpCircle,
   Mail,
+  MessageCircle,
   Network,
   Scroll,
   Settings,
   Workflow,
-  MessageCircle,
   X,
 } from "lucide-react";
 import Link from "next/link";

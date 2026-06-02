@@ -39,10 +39,6 @@ const skillDataSchema = z
   })
   .strict();
 
-type LightfastWorkspaceAssistantDataPart =
-  | z.infer<typeof opportunityDataSchema>
-  | z.infer<typeof skillDataSchema>;
-
 export interface LightfastWorkspaceAssistantDataParts {
   opportunities?: z.infer<typeof opportunityDataSchema>;
   skills?: z.infer<typeof skillDataSchema>;

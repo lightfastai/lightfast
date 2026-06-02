@@ -34,7 +34,7 @@ const getClassName = (value: unknown) => {
   if (Array.isArray(value)) {
     return value.join(" ");
   }
-  return undefined;
+  return;
 };
 
 const extractCodeText = (node: unknown): string => {
@@ -52,13 +52,13 @@ const extractCodeText = (node: unknown): string => {
 
 const parseCodeLanguage = (className?: string) => {
   if (!className) {
-    return undefined;
+    return;
   }
   const match = className
     .split(/\s+/)
     .find((value) => value.startsWith("language-"));
   if (!match) {
-    return undefined;
+    return;
   }
   return match.replace(/^language-/, "");
 };
@@ -114,8 +114,11 @@ const components: Partial<ReactMarkdownComponents> = {
       parseCodeLanguage(
         isValidElement(children)
           ? getClassName(
-              (children as React.ReactElement<{ className?: string | string[] }>)
-                .props.className
+              (
+                children as React.ReactElement<{
+                  className?: string | string[];
+                }>
+              ).props.className
             )
           : undefined
       );

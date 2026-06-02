@@ -301,7 +301,7 @@ describe("workspace assistant repository", () => {
     const crossOrgMessages = await listWorkspaceAssistantMessages(db, {
       clerkOrgId: "org_other",
       createdByUserId: "user_other",
-      conversation: conversation,
+      conversation,
     });
     expect(crossOrgMessages).toEqual([]);
 
@@ -454,12 +454,10 @@ function makeChatDb(options: { messageInsertErrors?: unknown[] } = {}) {
         where: (condition?: unknown) => ({
           limit: (limit: number) =>
             Promise.resolve(
-              selectPointRows(
-                state,
-                table,
-                condition,
-                projection
-              ).slice(0, limit)
+              selectPointRows(state, table, condition, projection).slice(
+                0,
+                limit
+              )
             ),
           orderBy: () =>
             orderedRows(selectRows(state, table, condition, projection)),
@@ -483,11 +481,14 @@ type WorkspaceAssistantMockRow =
   | WorkspaceAssistantMessage
   | WorkspaceAssistantGeneration;
 
-function getTableRows(state: {
-  generations: WorkspaceAssistantGeneration[];
-  messages: WorkspaceAssistantMessage[];
-  conversations: WorkspaceAssistantConversation[];
-}, table: unknown) {
+function getTableRows(
+  state: {
+    generations: WorkspaceAssistantGeneration[];
+    messages: WorkspaceAssistantMessage[];
+    conversations: WorkspaceAssistantConversation[];
+  },
+  table: unknown
+) {
   if (table === workspaceAssistantConversations) {
     return state.conversations;
   }
@@ -537,9 +538,7 @@ function selectRows(
     evaluateWorkspaceAssistantWhereCondition(table, row, condition);
 
   if (projection && "sequence" in projection) {
-    const rows = state.messages.filter((message) =>
-      whereCondition(message)
-    );
+    const rows = state.messages.filter((message) => whereCondition(message));
     const maxSequence = rows.reduce(
       (max, message) => Math.max(max, message.sequence),
       -1
@@ -580,18 +579,18 @@ function updateRows(
   }
 }
 
-type ColumnReferenceChunk = {
-  name: string;
+interface ColumnReferenceChunk {
   columnType?: string;
-};
+  name: string;
+}
 
-type SQLConditionChunk = {
+interface SQLConditionChunk {
   queryChunks: unknown[];
-};
+}
 
-type ValueChunk = {
+interface ValueChunk {
   value?: unknown;
-};
+}
 
 function isColumnChunk(value: unknown): value is ColumnReferenceChunk {
   return (
@@ -691,7 +690,7 @@ function getRowValue(
     return (row as Record<string, unknown>)[generationProperty];
   }
 
-  return undefined;
+  return;
 }
 
 function compareWithOperator({
@@ -769,7 +768,11 @@ function evaluateWorkspaceAssistantWhereCondition(
     return true;
   }
 
-  return evaluateWorkspaceAssistantWhereChunks(table, row, condition.queryChunks);
+  return evaluateWorkspaceAssistantWhereChunks(
+    table,
+    row,
+    condition.queryChunks
+  );
 }
 
 function evaluateWorkspaceAssistantWhereChunks(
@@ -798,7 +801,7 @@ function evaluateWorkspaceAssistantWhereChunks(
       continue;
     }
 
-    const lastGroup = groupedChunks[groupedChunks.length - 1];
+    const lastGroup = groupedChunks.at(-1);
     if (!lastGroup) {
       return true;
     }
@@ -806,7 +809,9 @@ function evaluateWorkspaceAssistantWhereChunks(
   }
 
   for (const group of groupedChunks) {
-    const candidateChunks = group.filter((value) => value !== "(" && value !== ")");
+    const candidateChunks = group.filter(
+      (value) => value !== "(" && value !== ")"
+    );
 
     if (candidateChunks.length === 0) {
       values.push(true);
@@ -814,7 +819,11 @@ function evaluateWorkspaceAssistantWhereChunks(
     }
     const nestedChunks = candidateChunks.filter(isSQLChunk);
     if (nestedChunks.length > 0) {
-      values.push(nestedChunks.every((chunk) => evaluateWorkspaceAssistantWhereCondition(table, row, chunk)));
+      values.push(
+        nestedChunks.every((chunk) =>
+          evaluateWorkspaceAssistantWhereCondition(table, row, chunk)
+        )
+      );
       continue;
     }
 
@@ -828,7 +837,11 @@ function evaluateWorkspaceAssistantWhereChunks(
   }
 
   let result = values[0]!;
-  for (let index = 0; index < operators.length && index < values.length - 1; index++) {
+  for (
+    let index = 0;
+    index < operators.length && index < values.length - 1;
+    index++
+  ) {
     const next = values[index + 1];
     if (next === undefined) {
       continue;

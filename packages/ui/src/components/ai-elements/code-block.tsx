@@ -142,10 +142,10 @@ const tokensCache = new Map<string, TokenizedCode>();
 const subscribers = new Map<string, Set<(result: TokenizedCode) => void>>();
 
 const getTokensCacheKey = (code: string, language: BundledLanguage) => {
-  let hash = 2166136261;
+  let hash = 2_166_136_261;
   for (let i = 0; i < code.length; i++) {
     hash ^= code.charCodeAt(i);
-    hash = (hash * 16777619) >>> 0;
+    hash = (hash * 16_777_619) >>> 0;
   }
   return `${language}:${code.length}:${hash.toString(16)}`;
 };

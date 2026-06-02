@@ -67,16 +67,14 @@ export async function GET(
       conversationId: conversation.publicId,
       userId: identity.userId,
     });
-    const updatedConversation = await setWorkspaceAssistantConversationActiveStream(
-      db,
-      {
+    const updatedConversation =
+      await setWorkspaceAssistantConversationActiveStream(db, {
         clerkOrgId: identity.orgId,
         createdByUserId: identity.userId,
         expectedStreamId: conversation.activeStreamId,
         publicId: conversation.publicId,
         streamId: null,
-      }
-    );
+      });
     if (!updatedConversation) {
       log.warn("[workspace-assistant] failed to clear stale stream id", {
         clerkOrgId: identity.orgId,

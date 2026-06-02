@@ -182,7 +182,9 @@ describe("chat route", () => {
   });
 
   it("rejects malformed chat request payload shape", async () => {
-    const response = await POST(createJsonRequest({ messages: "not-an-array" }));
+    const response = await POST(
+      createJsonRequest({ messages: "not-an-array" })
+    );
 
     expect(response.status).toBe(400);
     expect(streamTextMock).not.toHaveBeenCalled();

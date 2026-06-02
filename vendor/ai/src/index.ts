@@ -1,16 +1,4 @@
 export { gateway } from "@ai-sdk/gateway";
-export {
-  APICallError,
-  DefaultChatTransport,
-  NoObjectGeneratedError,
-  Output,
-  UI_MESSAGE_STREAM_HEADERS,
-  RetryError,
-  convertToModelMessages,
-  generateText,
-  safeValidateUIMessages,
-  streamText,
-} from "ai";
 export type {
   ChatStatus,
   DynamicToolUIPart,
@@ -22,6 +10,18 @@ export type {
   SourceDocumentUIPart,
   ToolUIPart,
   UIMessage,
+} from "ai";
+export {
+  APICallError,
+  convertToModelMessages,
+  DefaultChatTransport,
+  generateText,
+  NoObjectGeneratedError,
+  Output,
+  RetryError,
+  safeValidateUIMessages,
+  streamText,
+  UI_MESSAGE_STREAM_HEADERS,
 } from "ai";
 export {
   createResumableStreamContext,

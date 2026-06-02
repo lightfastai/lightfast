@@ -11,10 +11,10 @@ import { after } from "next/server";
 
 type UpstashSubscription = ReturnType<typeof redis.subscribe<string>>;
 
-type SubscriberRecord = {
+interface SubscriberRecord {
   callbacks: Set<(message: string) => void>;
   subscription: UpstashSubscription;
-};
+}
 
 const subscribers = new Map<string, SubscriberRecord>();
 
