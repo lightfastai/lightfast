@@ -1,8 +1,9 @@
-import type { AppEnv, Hono, Store } from "@emulators/core";
+import type { AppEnv, Context, Hono, Store } from "@emulators/core";
 
 import { LINEAR_EMULATOR_TOOLS } from "../fixtures";
 import { isValidBearer } from "./auth";
 import { getFailures } from "./failures";
+import { renderLinearMcpPage } from "./mcp-ui";
 
 interface McpRequestBody {
   id?: number | string | null;
@@ -10,7 +11,43 @@ interface McpRequestBody {
   params?: { name?: string; arguments?: unknown };
 }
 
+function firstHeaderValue(value: string | undefined): string | undefined {
+  return value?.split(",")[0]?.trim() || undefined;
+}
+
+function protocolForHost(c: Context, host: string, requestUrl: URL): string {
+  const forwardedProto = firstHeaderValue(c.req.header("x-forwarded-proto"));
+  if (forwardedProto) {
+    return forwardedProto;
+  }
+  return host.endsWith(".localhost")
+    ? "https"
+    : requestUrl.protocol.replace(":", "");
+}
+
+function mcpEndpointForRequest(c: Context): string {
+  const requestUrl = new URL(c.req.url);
+  const forwardedHost = firstHeaderValue(c.req.header("x-forwarded-host"));
+  const host = forwardedHost ?? firstHeaderValue(c.req.header("host"));
+  const hasPublicHost = host && (forwardedHost || host !== requestUrl.host);
+
+  if (hasPublicHost) {
+    return `${protocolForHost(c, host, requestUrl)}://${host}/mcp`;
+  }
+
+  return `${requestUrl.origin}/mcp`;
+}
+
 export function registerMcp(app: Hono<AppEnv>, store: Store): void {
+  app.get(
+    "/mcp",
+    (c) =>
+      new Response(renderLinearMcpPage(mcpEndpointForRequest(c)), {
+        headers: { "content-type": "text/html; charset=utf-8" },
+        status: 200,
+      })
+  );
+
   app.post("/mcp", async (c) => {
     if (!isValidBearer(c, store)) {
       return c.json({ error: "invalid_token" }, 401);

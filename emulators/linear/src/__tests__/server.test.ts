@@ -210,6 +210,47 @@ describe("@repo/linear-emulator", () => {
     expect(invalidRes.status).toBe(401);
   });
 
+  it("renders a browser UI for the MCP endpoint", async () => {
+    const active = await start();
+
+    const res = await fetch(`${active.url}/mcp`, {
+      headers: { accept: "text/html" },
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("text/html");
+    const html = await res.text();
+    expect(html).toContain("Linear MCP");
+    expect(html).toContain("Lightfast local emulator");
+    expect(html).toContain(LINEAR_EMULATOR_FIXTURES.workspaceName);
+    expect(html).toContain(LINEAR_EMULATOR_FIXTURES.actorName);
+    expect(html).toContain(`${active.url}/mcp`);
+    expect(html).toContain(`npx mcp-remote ${active.url}/mcp`);
+    expect(html).toContain(`${LINEAR_EMULATOR_TOOLS.length} tools`);
+    expect(html).toContain("list_issues");
+    expect(html).toContain("create_issue");
+  });
+
+  it("renders the forwarded public MCP endpoint in the browser UI", async () => {
+    const active = await start();
+
+    const res = await fetch(`${active.url}/mcp`, {
+      headers: {
+        accept: "text/html",
+        "x-forwarded-host": "linear.lightfast.localhost",
+        "x-forwarded-proto": "https",
+      },
+    });
+
+    expect(res.status).toBe(200);
+    const html = await res.text();
+    expect(html).toContain("https://linear.lightfast.localhost/mcp");
+    expect(html).toContain(
+      "npx mcp-remote https://linear.lightfast.localhost/mcp"
+    );
+    expect(html).not.toContain(`${active.url}/mcp`);
+  });
+
   it("lists deterministic MCP tools for a valid bearer token", async () => {
     await start();
 
