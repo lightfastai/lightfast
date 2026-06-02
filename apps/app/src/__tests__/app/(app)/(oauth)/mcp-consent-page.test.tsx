@@ -165,19 +165,24 @@ describe("/oauth/authorize MCP consent", () => {
 
     render(await Page({ searchParams: Promise.resolve({}) }));
 
-    expect(screen.getByLabelText("Organization")).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "Acme" })).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "Beta" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("combobox", { name: "Organization" })
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("Acme").length).toBeGreaterThan(0);
+    expect(
+      document.querySelector<HTMLInputElement>('input[name="organizationId"]')
+        ?.value
+    ).toBe("org_1");
   });
 
   it("opens a details sheet with raw scopes and client id", async () => {
     render(await Page({ searchParams: Promise.resolve({}) }));
 
-    fireEvent.click(screen.getByRole("button", { name: "Details" }));
+    fireEvent.click(screen.getByRole("button", { name: "View details" }));
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByText("mcp_client_test")).toBeInTheDocument();
-    expect(screen.getByText("mcp:signals:write")).toBeInTheDocument();
+    expect(screen.getAllByText("mcp:signals:write").length).toBeGreaterThan(0);
   });
 
   it("renders unverified and write warnings on the main screen", async () => {

@@ -3,9 +3,5 @@ export default function OAuthLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className="flex min-h-svh w-full items-center justify-center bg-background p-4">
-      {children}
-    </div>
-  );
+  return <div className="h-screen w-full overflow-y-auto">{children}</div>;
 }
