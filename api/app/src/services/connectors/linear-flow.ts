@@ -1,17 +1,17 @@
+import type { Database } from "@db/app";
 import {
   finalizeCurrentOrgConnectorConnection,
   getCurrentOrgConnectorConnection,
   markCurrentOrgConnectorConnectionError,
   markCurrentOrgConnectorConnectionRevoked,
+  type OrgConnectorConnection,
   recordConnectorToolRefreshError,
   setConnectorAutomationEnabled as setConnectorAutomationEnabledInDb,
   updateConnectorToolManifest,
   updateObservedConnectorTokens,
-  type OrgConnectorConnection,
 } from "@db/app";
 import { db as appDb } from "@db/app/client";
 import { decrypt, encrypt } from "@repo/app-encryption";
-import type { FullConnectorToolManifest } from "@repo/connector-contract";
 import {
   buildLinearOAuthAuthorizeUrl,
   createLinearPkcePair,
@@ -24,16 +24,14 @@ import {
 } from "@repo/linear-app-node";
 import { TRPCError } from "@trpc/server";
 import { log } from "@vendor/observability/log/next";
-
 import { findUserOrganizationMembership } from "../../auth/clerk-org-membership";
-import type { AuthContext } from "../../trpc";
-import type { Database } from "@db/app";
 import { env } from "../../env";
+import type { AuthContext } from "../../trpc";
 import {
   consumeLinearConnectOAuthAttempt,
   issueLinearConnectOAuthAttempt,
-  lookupLinearConnectOAuthAttempt,
   type LinearConnectOAuthAttemptRecord,
+  lookupLinearConnectOAuthAttempt,
 } from "./attempts";
 import { assertCurrentSessionCanFinalizeConnectorOAuth } from "./auth";
 import {
@@ -346,7 +344,9 @@ export async function getFreshLinearConnectorAccessToken(input: {
     );
   }
 
-  const refreshToken = await decryptToken(input.connection.encryptedRefreshToken);
+  const refreshToken = await decryptToken(
+    input.connection.encryptedRefreshToken
+  );
   const refreshed = await refreshLinearOAuthToken({
     clientId: config.clientId,
     clientSecret: config.clientSecret,
@@ -578,7 +578,9 @@ export async function completeLinearConnectorOAuth(input: {
     });
   }
 
-  const attempt = await consumeLinearConnectOAuthAttempt({ state: parsed.state });
+  const attempt = await consumeLinearConnectOAuthAttempt({
+    state: parsed.state,
+  });
   if (!attempt) {
     return missingAttemptRedirect({ appOrigin });
   }
@@ -609,7 +611,9 @@ export async function completeLinearConnectorOAuth(input: {
   }
 }
 
-export async function refreshLinearConnectorTools(ctx: ConnectorServiceContext) {
+export async function refreshLinearConnectorTools(
+  ctx: ConnectorServiceContext
+) {
   const identity = activeIdentity(ctx);
   const config = requireLinearConnectorConfig();
   const connection = await getCurrentOrgConnectorConnection(ctx.db, {

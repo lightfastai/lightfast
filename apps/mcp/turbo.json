@@ -1,0 +1,35 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "extends": ["//"],
+  "tags": ["app"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "env": [
+        "MCP_AUTH_ISSUER",
+        "MCP_RESOURCE_URL",
+        "NEXT_PUBLIC_SENTRY_DSN",
+        "NEXT_PUBLIC_VERCEL_ENV",
+        "VERCEL_ENV"
+      ],
+      "passThroughEnv": [
+        "SENTRY_AUTH_TOKEN",
+        "SENTRY_ORG",
+        "SENTRY_PROJECT",
+        "SERVICE_JWT_SECRET",
+        "PORT"
+      ],
+      "inputs": ["$TURBO_DEFAULT$", ".vercel/.env*"],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "!.next/dev/**",
+        "next-env.d.ts"
+      ]
+    },
+    "dev:next": {
+      "persistent": true
+    },
+    "transit": {}
+  }
+}

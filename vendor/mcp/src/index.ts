@@ -1,4 +1,7 @@
-export { Client as McpClient } from "@modelcontextprotocol/sdk/client/index.js";
+export {
+  Client,
+  Client as McpClient,
+} from "@modelcontextprotocol/sdk/client/index.js";
 export { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 export { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 export { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -9,3 +12,4 @@ export type {
   ListToolsResult,
   Tool,
 } from "@modelcontextprotocol/sdk/types.js";
+export { createMcpHandler, withMcpAuth } from "mcp-handler";

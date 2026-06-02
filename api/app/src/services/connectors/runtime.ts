@@ -12,11 +12,11 @@ import { log } from "@vendor/observability/log/next";
 import { getFreshLinearConnectorAccessToken } from "./linear-flow";
 
 export interface ConnectorRuntimeToolSource {
-  provider: "linear";
-  runtimeToolName: string;
-  providerToolName: string;
-  description?: string;
   call(input: unknown): Promise<unknown>;
+  description?: string;
+  provider: "linear";
+  providerToolName: string;
+  runtimeToolName: string;
 }
 
 interface RuntimeToolCallContext {
@@ -86,9 +86,11 @@ async function callConnectorRuntimeTool(
       provider: "linear",
     });
     if (
-      !connection ||
-      !isActiveAutomationLinearConnection(connection) ||
-      !hasValidCurrentTool(connection, context.providerToolName)
+      !(
+        connection &&
+        isActiveAutomationLinearConnection(connection) &&
+        hasValidCurrentTool(connection, context.providerToolName)
+      )
     ) {
       throw new Error("Linear connector is not active for automations.");
     }
@@ -193,7 +195,7 @@ function safeLinearErrorMessage(error: unknown) {
     case "LINEAR_MCP_FAILED":
       return "Linear MCP tool call failed.";
     default:
-      return undefined;
+      return;
   }
 }
 

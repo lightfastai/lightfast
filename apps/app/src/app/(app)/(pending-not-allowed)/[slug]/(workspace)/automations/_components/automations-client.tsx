@@ -32,10 +32,10 @@ export function AutomationsClient() {
   });
 
   const currentAutomations = automations.filter(
-    (automation) => automation.status === "active",
+    (automation) => automation.status === "active"
   );
   const pausedAutomations = automations.filter(
-    (automation) => automation.status === "paused",
+    (automation) => automation.status === "paused"
   );
 
   return (
@@ -139,7 +139,7 @@ function AutomationRow({
           strokeWidth={2}
         />
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-          <p className="truncate font-medium text-sm text-foreground">
+          <p className="truncate font-medium text-foreground text-sm">
             {automation.name}
           </p>
         </div>

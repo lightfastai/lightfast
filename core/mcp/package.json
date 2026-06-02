@@ -51,6 +51,7 @@
   },
   "devDependencies": {
     "@repo/api-contract": "workspace:*",
+    "@repo/mcp-tools": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",

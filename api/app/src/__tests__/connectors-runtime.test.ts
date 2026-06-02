@@ -220,9 +220,7 @@ describe("loadConnectorRuntimeTools", () => {
   it("omits raw messages for non-Linear runtime failures", async () => {
     listCurrentOrgConnectorConnectionsMock.mockResolvedValue([connection()]);
     getCurrentOrgConnectorConnectionMock.mockResolvedValue(connection());
-    callLinearMcpToolMock.mockRejectedValue(
-      new Error("raw downstream secret")
-    );
+    callLinearMcpToolMock.mockRejectedValue(new Error("raw downstream secret"));
 
     const [tool] = await loadConnectorRuntimeTools({
       automationPublicId: "aut_123",

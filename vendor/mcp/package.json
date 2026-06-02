@@ -16,7 +16,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0"
+    "@modelcontextprotocol/sdk": "catalog:",
+    "mcp-handler": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

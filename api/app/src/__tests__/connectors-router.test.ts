@@ -100,8 +100,8 @@ describe("connectorsRouter", () => {
 
   it("allows non-admin org members to list connectors", async () => {
     await expect(caller(nonAdminAccess()).connectors.list()).resolves.toEqual([
-        expect.objectContaining({
-          canManage: false,
+      expect.objectContaining({
+        canManage: false,
         connectAvailability: { status: "available" },
         provider: "linear",
       }),

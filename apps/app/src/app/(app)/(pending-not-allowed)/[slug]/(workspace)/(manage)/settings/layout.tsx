@@ -32,6 +32,7 @@ export default async function SettingsLayout({
               { name: "Members", path: "members" },
               { name: "Billing", path: "billing" },
               { name: "API Keys", path: "api-keys" },
+              { name: "MCP", path: "mcp" },
             ]}
           />
 

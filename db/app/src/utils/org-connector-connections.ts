@@ -72,15 +72,15 @@ export interface FinalizeCurrentOrgConnectorConnectionInput {
   encryptedRefreshToken: string | null;
   mcpEndpoint: string;
   metadata: Record<string, unknown>;
+  observedCurrentConnectionId?: number | null;
+  observedEncryptedAccessToken?: string | null;
+  observedEncryptedRefreshToken?: string | null;
   provider: ConnectableConnectorProvider;
   providerActorId: string | null;
   providerActorName: string | null;
   providerWorkspaceId: string | null;
   providerWorkspaceName: string | null;
   refreshTokenExpiresAt: Date | null;
-  observedCurrentConnectionId?: number | null;
-  observedEncryptedAccessToken?: string | null;
-  observedEncryptedRefreshToken?: string | null;
   scopes: string[];
   toolManifest: FullConnectorToolManifest;
 }
@@ -89,72 +89,68 @@ export async function finalizeCurrentOrgConnectorConnection(
   db: Database,
   input: FinalizeCurrentOrgConnectorConnectionInput
 ): Promise<OrgConnectorConnection> {
-  const inserted = await db
-    .transaction(async (tx) => {
-      const current = await getCurrentOrgConnectorConnection(tx, input);
-      const now = new Date();
+  const inserted = await db.transaction(async (tx) => {
+    const current = await getCurrentOrgConnectorConnection(tx, input);
+    const now = new Date();
 
-      if (!matchesObservedCurrentConnection(input, current)) {
-        throw currentConnectorConnectionChangedError(input);
-      }
+    if (!matchesObservedCurrentConnection(input, current)) {
+      throw currentConnectorConnectionChangedError(input);
+    }
 
-      if (current) {
-        const result = await tx
-          .update(orgConnectorConnections)
-          .set(revokedConnectorConnectionValues(now))
-          .where(observedCurrentConnectorMutationWhere(input, current));
+    if (current) {
+      const result = await tx
+        .update(orgConnectorConnections)
+        .set(revokedConnectorConnectionValues(now))
+        .where(observedCurrentConnectorMutationWhere(input, current));
 
-        if (getRowsAffected(result) === 0) {
-          throw new Error(
-            `Failed to revoke current connector connection ${current.id}`
-          );
-        }
-      }
-
-      const [row] = await tx
-        .insert(orgConnectorConnections)
-        .values({
-          accessTokenExpiresAt: input.accessTokenExpiresAt,
-          clerkOrgId: input.clerkOrgId,
-          connectedByUserId: input.connectedByUserId,
-          currentOrgProviderKey: currentOrgProviderKey(
-            input.clerkOrgId,
-            input.provider
-          ),
-          encryptedAccessToken: input.encryptedAccessToken,
-          encryptedRefreshToken: input.encryptedRefreshToken,
-          mcpEndpoint: input.mcpEndpoint,
-          metadata: input.metadata,
-          provider: input.provider,
-          providerActorId: input.providerActorId,
-          providerActorName: input.providerActorName,
-          providerWorkspaceId: input.providerWorkspaceId,
-          providerWorkspaceName: input.providerWorkspaceName,
-          refreshTokenExpiresAt: input.refreshTokenExpiresAt,
-          revokedAt: null,
-          scopes: input.scopes,
-          status: "active",
-          toolManifest: input.toolManifest,
-        })
-        .$returningId();
-
-      if (!row?.id) {
+      if (getRowsAffected(result) === 0) {
         throw new Error(
-          `Failed to insert connector connection for org ${input.clerkOrgId}`
+          `Failed to revoke current connector connection ${current.id}`
         );
       }
+    }
 
-      const insertedConnection = await getOrgConnectorConnectionById(
-        tx,
-        row.id
+    const [row] = await tx
+      .insert(orgConnectorConnections)
+      .values({
+        accessTokenExpiresAt: input.accessTokenExpiresAt,
+        clerkOrgId: input.clerkOrgId,
+        connectedByUserId: input.connectedByUserId,
+        currentOrgProviderKey: currentOrgProviderKey(
+          input.clerkOrgId,
+          input.provider
+        ),
+        encryptedAccessToken: input.encryptedAccessToken,
+        encryptedRefreshToken: input.encryptedRefreshToken,
+        mcpEndpoint: input.mcpEndpoint,
+        metadata: input.metadata,
+        provider: input.provider,
+        providerActorId: input.providerActorId,
+        providerActorName: input.providerActorName,
+        providerWorkspaceId: input.providerWorkspaceId,
+        providerWorkspaceName: input.providerWorkspaceName,
+        refreshTokenExpiresAt: input.refreshTokenExpiresAt,
+        revokedAt: null,
+        scopes: input.scopes,
+        status: "active",
+        toolManifest: input.toolManifest,
+      })
+      .$returningId();
+
+    if (!row?.id) {
+      throw new Error(
+        `Failed to insert connector connection for org ${input.clerkOrgId}`
       );
-      if (!insertedConnection) {
-        throw new Error(
-          `Failed to insert connector connection for org ${input.clerkOrgId}`
-        );
-      }
-      return insertedConnection;
-    });
+    }
+
+    const insertedConnection = await getOrgConnectorConnectionById(tx, row.id);
+    if (!insertedConnection) {
+      throw new Error(
+        `Failed to insert connector connection for org ${input.clerkOrgId}`
+      );
+    }
+    return insertedConnection;
+  });
 
   if (!inserted) {
     throw new Error(

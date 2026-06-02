@@ -1,5 +1,15 @@
 export { apiContract, type Contract } from "./contract";
 export {
+  type ExposedMcpToolPolicyEntry,
+  getContractProcedurePaths,
+  type HiddenMcpToolPolicyEntry,
+  type LightfastMcpToolPolicy,
+  lightfastMcpToolPolicy,
+  type McpScope,
+  type McpToolPolicy,
+  type McpToolPolicyEntry,
+} from "./mcp";
+export {
   type CreateSignalInput,
   type CreateSignalOutput,
   createSignalInput,

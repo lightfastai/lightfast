@@ -15,7 +15,7 @@ import {
 import { LinearAppNodeError } from "./errors";
 
 const DEFAULT_LINEAR_MCP_TIMEOUT_MS = 10_000;
-const DEFAULT_LINEAR_MCP_CLOSE_TIMEOUT_MS = 1_000;
+const DEFAULT_LINEAR_MCP_CLOSE_TIMEOUT_MS = 1000;
 
 export async function listLinearMcpTools(input: {
   accessToken: string;

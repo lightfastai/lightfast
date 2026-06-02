@@ -18,9 +18,7 @@ import {
 } from "../../trpc";
 
 export const connectorsRouter = createTRPCRouter({
-  list: boundOrgProcedure.query(async ({ ctx }) => {
-    return listConnectorsForOrg(ctx);
-  }),
+  list: boundOrgProcedure.query(async ({ ctx }) => listConnectorsForOrg(ctx)),
   startConnect: boundOrgAdminProcedure
     .input(connectorStartConnectInputSchema)
     .mutation(async ({ ctx, input }) => startConnectorOAuth(ctx, input)),

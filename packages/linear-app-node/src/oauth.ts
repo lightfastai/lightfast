@@ -166,7 +166,8 @@ export async function revokeLinearOAuthToken(input: {
         );
 
   try {
-    const revokeUrl = input.revokeUrl ?? DEFAULT_LINEAR_ENDPOINTS.oauthRevokeUrl;
+    const revokeUrl =
+      input.revokeUrl ?? DEFAULT_LINEAR_ENDPOINTS.oauthRevokeUrl;
     assertLinearEndpointAllowed({
       defaultValue: DEFAULT_LINEAR_ENDPOINTS.oauthRevokeUrl,
       nodeEnv: input.nodeEnv,

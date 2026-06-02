@@ -127,9 +127,7 @@ describe("listLinearMcpTools", () => {
     mcpState.listTools.mockImplementationOnce(
       () => new Promise(() => undefined)
     );
-    mcpState.close.mockImplementationOnce(
-      () => new Promise(() => undefined)
-    );
+    mcpState.close.mockImplementationOnce(() => new Promise(() => undefined));
 
     const listPromise = listLinearMcpTools({
       accessToken: "lin_access",
@@ -142,7 +140,7 @@ describe("listLinearMcpTools", () => {
     });
 
     await vi.advanceTimersByTimeAsync(25);
-    await vi.advanceTimersByTimeAsync(1_000);
+    await vi.advanceTimersByTimeAsync(1000);
 
     await expectation;
     expect(mcpState.close).toHaveBeenCalledOnce();
@@ -216,9 +214,7 @@ describe("callLinearMcpTool", () => {
     mcpState.callTool.mockImplementationOnce(
       () => new Promise(() => undefined)
     );
-    mcpState.close.mockImplementationOnce(
-      () => new Promise(() => undefined)
-    );
+    mcpState.close.mockImplementationOnce(() => new Promise(() => undefined));
 
     const callPromise = callLinearMcpTool({
       accessToken: "lin_access",
@@ -232,7 +228,7 @@ describe("callLinearMcpTool", () => {
     });
 
     await vi.advanceTimersByTimeAsync(25);
-    await vi.advanceTimersByTimeAsync(1_000);
+    await vi.advanceTimersByTimeAsync(1000);
 
     await expectation;
     expect(mcpState.close).toHaveBeenCalledOnce();

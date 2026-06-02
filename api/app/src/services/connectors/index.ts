@@ -1,3 +1,4 @@
+import type { Database } from "@db/app";
 import type {
   connectorProviderInputSchema,
   connectorSetAutomationEnabledInputSchema,
@@ -5,9 +6,7 @@ import type {
 } from "@repo/connector-contract";
 import { TRPCError } from "@trpc/server";
 import type { z } from "zod";
-
 import type { AuthContext } from "../../trpc";
-import type { Database } from "@db/app";
 import { listConnectorsForOrg } from "./catalog";
 import {
   disconnectLinearConnector,
@@ -30,7 +29,6 @@ type ConnectorSetAutomationEnabledInput = z.infer<
   typeof connectorSetAutomationEnabledInputSchema
 >;
 
-export { listConnectorsForOrg };
 export {
   completeLinearConnectorOAuth,
   disconnectLinearConnector,
@@ -38,6 +36,7 @@ export {
   setLinearConnectorAutomationEnabled,
   startLinearConnectorOAuth,
 } from "./linear-flow";
+export { listConnectorsForOrg };
 
 function unsupportedProvider(provider: string): never {
   throw new TRPCError({

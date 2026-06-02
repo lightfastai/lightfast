@@ -3,10 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const verifyMock = vi.fn();
 const getActiveOrgBindingMock = vi.fn();
-const createSignalMock = vi.fn();
+const createSignalForActorMock = vi.fn();
 const getVisibleSignalByPublicIdMock = vi.fn();
-const markSignalFailedMock = vi.fn();
-const sendMock = vi.fn();
 
 vi.mock("@vendor/unkey/server", () => ({
   getUnkeyClient: () => ({
@@ -16,17 +14,16 @@ vi.mock("@vendor/unkey/server", () => ({
 
 vi.mock("@db/app/client", () => ({ db: { kind: "mock-db" } }));
 vi.mock("@db/app", () => ({
-  createSignal: createSignalMock,
   getActiveOrgBinding: getActiveOrgBindingMock,
   getVisibleSignalByPublicId: getVisibleSignalByPublicIdMock,
-  markSignalFailed: markSignalFailedMock,
 }));
 
-vi.mock("../inngest/client", () => ({
-  inngest: { send: sendMock },
+vi.mock("../signals/service", () => ({
+  createSignalForActor: createSignalForActorMock,
 }));
 
 const { orpcRouter } = await import("../orpc/router");
+const { SignalCreateQueueError } = await import("../signals/create-signal");
 
 const validKey = `lf_${"a".repeat(40)}`;
 
@@ -54,10 +51,8 @@ function context() {
 beforeEach(() => {
   verifyMock.mockReset();
   getActiveOrgBindingMock.mockReset();
-  createSignalMock.mockReset();
+  createSignalForActorMock.mockReset();
   getVisibleSignalByPublicIdMock.mockReset();
-  markSignalFailedMock.mockReset();
-  sendMock.mockReset();
 
   verifyMock.mockResolvedValue(verifyResult());
   getActiveOrgBindingMock.mockResolvedValue({
@@ -74,14 +69,11 @@ beforeEach(() => {
     providerAccountLogin: "acme",
     providerInstallationId: "1001",
   });
-  createSignalMock.mockResolvedValue({
-    publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
-    clerkOrgId: "org_test",
+  createSignalForActorMock.mockResolvedValue({
+    id: "signal_123e4567-e89b-12d3-a456-426614174000",
     status: "queued",
     visibilityScope: "user",
   });
-  markSignalFailedMock.mockResolvedValue(true);
-  sendMock.mockResolvedValue(undefined);
 });
 
 describe("orpcRouter.signals", () => {
@@ -97,24 +89,21 @@ describe("orpcRouter.signals", () => {
       status: "queued",
       visibilityScope: "user",
     });
-    expect(createSignalMock).toHaveBeenCalledWith(expect.anything(), {
-      clerkOrgId: "org_test",
-      createdByApiKeyId: "key_test",
-      createdByUserId: "user_test",
+    expect(createSignalForActorMock).toHaveBeenCalledWith(expect.anything(), {
+      actor: {
+        apiKeyId: "key_test",
+        kind: "api_key",
+        orgId: "org_test",
+        userId: "user_test",
+      },
       input: "Reply to this relevant post",
     });
-    expect(sendMock).toHaveBeenCalledWith({
-      name: "app/signal.created",
-      data: {
-        clerkOrgId: "org_test",
-        signalId: "signal_123e4567-e89b-12d3-a456-426614174000",
-      },
-    });
-    expect(markSignalFailedMock).not.toHaveBeenCalled();
   });
 
-  it("marks the signal failed when enqueueing the Inngest event fails", async () => {
-    sendMock.mockRejectedValueOnce(new Error("inngest unavailable"));
+  it("translates signal queue failures to an internal error", async () => {
+    createSignalForActorMock.mockRejectedValueOnce(
+      new SignalCreateQueueError(new Error("inngest unavailable"))
+    );
 
     await expect(
       call(
@@ -125,12 +114,6 @@ describe("orpcRouter.signals", () => {
     ).rejects.toMatchObject({
       code: "INTERNAL_SERVER_ERROR",
       message: expect.stringContaining("Failed to queue signal"),
-    });
-    expect(markSignalFailedMock).toHaveBeenCalledWith(expect.anything(), {
-      clerkOrgId: "org_test",
-      errorCode: "INNGEST_ENQUEUE_FAILED",
-      errorMessage: "inngest unavailable",
-      publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
     });
   });
 
@@ -146,8 +129,7 @@ describe("orpcRouter.signals", () => {
     ).rejects.toMatchObject({
       code: "FORBIDDEN",
     });
-    expect(createSignalMock).not.toHaveBeenCalled();
-    expect(sendMock).not.toHaveBeenCalled();
+    expect(createSignalForActorMock).not.toHaveBeenCalled();
   });
 
   it("reads a same-org signal by id", async () => {
@@ -157,6 +139,8 @@ describe("orpcRouter.signals", () => {
       clerkOrgId: "org_test",
       createdByUserId: "user_test",
       createdByApiKeyId: "key_test",
+      createdByMcpClientId: null,
+      createdByMcpGrantId: null,
       input: "Run the test plan",
       status: "classified",
       visibilityScope: "team",

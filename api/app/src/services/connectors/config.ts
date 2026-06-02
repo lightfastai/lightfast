@@ -1,4 +1,7 @@
-import { resolveLinearEndpoints, type LinearEndpoints } from "@repo/linear-app-node";
+import {
+  type LinearEndpoints,
+  resolveLinearEndpoints,
+} from "@repo/linear-app-node";
 import { TRPCError } from "@trpc/server";
 
 import { env as runtimeEnv } from "../../env";
@@ -56,7 +59,7 @@ export function getLinearConnectorConfig(
   if (!clientSecret) {
     missing.push("LINEAR_CLIENT_SECRET");
   }
-  if (!clientId || !clientSecret) {
+  if (!(clientId && clientSecret)) {
     return { status: "missing_config", missing };
   }
 

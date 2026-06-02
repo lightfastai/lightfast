@@ -1,3 +1,4 @@
+import type { Database } from "@db/app";
 import {
   listCurrentOrgConnectorConnections,
   type OrgConnectorConnection,
@@ -5,14 +6,12 @@ import {
 import {
   CONNECTABLE_CONNECTOR_PROVIDERS,
   CONNECTOR_CATALOG,
-  connectorRuntimeToolName,
   type ConnectableConnectorProvider,
   type ConnectorProvider,
+  connectorRuntimeToolName,
   type DisplayConnectorTool,
 } from "@repo/connector-contract";
-
 import type { AuthContext } from "../../trpc";
-import type { Database } from "@db/app";
 import { getLinearConnectorConfig } from "./config";
 
 interface ConnectorServiceContext {
@@ -94,7 +93,7 @@ function canUseToolForAutomation(input: {
 function displayTools(
   connection: OrgConnectorConnection | undefined
 ): DisplayConnectorTool[] {
-  if (!connection || !isConnectableProvider(connection.provider)) {
+  if (!(connection && isConnectableProvider(connection.provider))) {
     return [];
   }
 
@@ -121,7 +120,9 @@ function availabilityFor(input: {
   }
 
   if (input.provider === "linear") {
-    const config = getLinearConnectorConfig({ appOrigin: "https://app.invalid" });
+    const config = getLinearConnectorConfig({
+      appOrigin: "https://app.invalid",
+    });
     if (config.status === "missing_config") {
       return {
         status: "unavailable",
