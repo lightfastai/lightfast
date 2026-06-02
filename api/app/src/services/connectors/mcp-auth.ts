@@ -57,8 +57,9 @@ export async function issueConnectorMcpToken(input: {
 }): Promise<string> {
   if (
     input.ttlSeconds !== undefined &&
-    (!Number.isFinite(input.ttlSeconds) ||
-      !Number.isInteger(input.ttlSeconds) ||
+    (!(
+      Number.isFinite(input.ttlSeconds) && Number.isInteger(input.ttlSeconds)
+    ) ||
       input.ttlSeconds <= 0)
   ) {
     throw new ConnectorMcpAuthError(

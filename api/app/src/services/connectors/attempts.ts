@@ -96,7 +96,7 @@ async function readLegacyConnectorOAuthAttempt(input: {
   }
 
   const record = await redis.get<LegacyConnectorOAuthAttemptRecord>(key);
-  if (!record || !isMatchingLegacyAttempt({ record, state: input.state })) {
+  if (!isMatchingLegacyAttempt({ record, state: input.state })) {
     return null;
   }
 
@@ -120,13 +120,13 @@ async function consumeLegacyConnectorOAuthAttempt(input: {
   }
 
   const pendingRecord = await redis.get<LegacyConnectorOAuthAttemptRecord>(key);
-  if (!pendingRecord || !isMatchingLegacyAttempt({ record: pendingRecord, state: input.state })) {
+  if (!isMatchingLegacyAttempt({ record: pendingRecord, state: input.state })) {
     return null;
   }
 
-  const consumedRecord = await redis.getdel<LegacyConnectorOAuthAttemptRecord>(key);
+  const consumedRecord =
+    await redis.getdel<LegacyConnectorOAuthAttemptRecord>(key);
   if (
-    !consumedRecord ||
     !isMatchingLegacyAttempt({ record: consumedRecord, state: input.state })
   ) {
     return null;
