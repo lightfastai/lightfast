@@ -50,6 +50,7 @@
     "@repo/app-validation": "workspace:^",
     "@repo/github-app-contract": "workspace:*",
     "@repo/github-app-node": "workspace:*",
+    "@repo/identity-contract": "workspace:*",
     "@repo/native-auth-contract": "workspace:*",
     "@repo/skills-contract": "workspace:*",
     "@repo/source-control-contract": "workspace:*",

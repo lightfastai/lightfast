@@ -13,9 +13,11 @@ const classifyPeople = { id: "classify-people" };
 const automationScheduler = { id: "automation-scheduler" };
 const runAutomation = { id: "run-automation" };
 const refreshSkillIndex = { id: "refresh-skill-index" };
+const refreshIdentityIndex = { id: "refresh-identity-index" };
 const reconcileSkillIndexes = { id: "reconcile-skill-indexes" };
-const queueSkillRefreshFromSourceControl = {
-  id: "queue-skill-refresh-from-source-control",
+const reconcileIdentityIndexes = { id: "reconcile-identity-indexes" };
+const queueLightfastIndexRefreshesFromSourceControl = {
+  id: "queue-lightfast-index-refreshes-from-source-control",
 };
 
 vi.mock("inngest/next", () => ({
@@ -56,12 +58,20 @@ vi.mock("../inngest/workflow/refresh-skill-index", () => ({
   refreshSkillIndex,
 }));
 
+vi.mock("../inngest/workflow/refresh-identity-index", () => ({
+  refreshIdentityIndex,
+}));
+
 vi.mock("../inngest/workflow/reconcile-skill-indexes", () => ({
   reconcileSkillIndexes,
 }));
 
+vi.mock("../inngest/workflow/reconcile-identity-indexes", () => ({
+  reconcileIdentityIndexes,
+}));
+
 vi.mock("../inngest/workflow/queue-skill-refresh-from-source-control", () => ({
-  queueSkillRefreshFromSourceControl,
+  queueLightfastIndexRefreshesFromSourceControl,
 }));
 
 const { createInngestRouteContext, inngest } = await import("../inngest");
@@ -81,8 +91,10 @@ describe("createInngestRouteContext", () => {
         automationScheduler,
         runAutomation,
         refreshSkillIndex,
+        refreshIdentityIndex,
         reconcileSkillIndexes,
-        queueSkillRefreshFromSourceControl,
+        reconcileIdentityIndexes,
+        queueLightfastIndexRefreshesFromSourceControl,
       ],
       serveOrigin: "https://app.lightfast.localhost",
       servePath: "/api/inngest",

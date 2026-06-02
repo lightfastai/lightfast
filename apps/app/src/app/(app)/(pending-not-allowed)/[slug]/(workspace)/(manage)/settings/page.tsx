@@ -12,6 +12,7 @@ export default async function SettingsPage({
 
   prefetch(trpc.org.settings.sourceControl.get.queryOptions());
   prefetch(trpc.org.settings.sourceControl.listRepositories.queryOptions());
+  prefetch(trpc.org.settings.identity.get.queryOptions());
 
   return (
     <HydrateClient>

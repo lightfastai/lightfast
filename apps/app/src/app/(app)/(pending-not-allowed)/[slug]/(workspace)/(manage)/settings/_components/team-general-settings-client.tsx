@@ -22,6 +22,7 @@ import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useTRPC } from "~/trpc/react";
+import { IdentitySettingsSection } from "./identity-settings-section";
 import {
   LightfastRepositorySection,
   SourceControlConnectionSection,
@@ -51,6 +52,9 @@ export function TeamGeneralSettingsClient({
   );
   const { data: sourceControlRepositories } = useSuspenseQuery(
     trpc.org.settings.sourceControl.listRepositories.queryOptions()
+  );
+  const { data: identitySettings } = useSuspenseQuery(
+    trpc.org.settings.identity.get.queryOptions()
   );
   const currentOrg = useMemo(
     () => organizations.find((org) => org.slug === slug),
@@ -209,6 +213,7 @@ export function TeamGeneralSettingsClient({
         connection={sourceControlConnection.binding}
         orgSlug={slug}
       />
+      <IdentitySettingsSection identity={identitySettings} />
     </div>
   );
 }

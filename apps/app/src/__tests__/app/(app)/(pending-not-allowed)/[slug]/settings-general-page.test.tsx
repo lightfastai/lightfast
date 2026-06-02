@@ -8,6 +8,9 @@ const sourceControlGetQueryOptionsMock = vi.fn(() => ({
 const sourceControlListRepositoriesQueryOptionsMock = vi.fn(() => ({
   queryKey: ["org", "settings", "sourceControl", "listRepositories"],
 }));
+const identityGetQueryOptionsMock = vi.fn(() => ({
+  queryKey: ["org", "settings", "identity", "get"],
+}));
 const prefetchMock = vi.fn();
 
 vi.mock("~/trpc/server", () => ({
@@ -24,6 +27,11 @@ vi.mock("~/trpc/server", () => ({
           },
           listRepositories: {
             queryOptions: sourceControlListRepositoriesQueryOptionsMock,
+          },
+        },
+        identity: {
+          get: {
+            queryOptions: identityGetQueryOptionsMock,
           },
         },
       },
@@ -47,6 +55,7 @@ const { default: SettingsPage } = await import(
 beforeEach(() => {
   sourceControlGetQueryOptionsMock.mockClear();
   sourceControlListRepositoriesQueryOptionsMock.mockClear();
+  identityGetQueryOptionsMock.mockClear();
   prefetchMock.mockClear();
 });
 
@@ -61,11 +70,15 @@ describe("general settings page", () => {
     expect(
       sourceControlListRepositoriesQueryOptionsMock
     ).toHaveBeenCalledOnce();
+    expect(identityGetQueryOptionsMock).toHaveBeenCalledOnce();
     expect(prefetchMock).toHaveBeenCalledWith({
       queryKey: ["org", "settings", "sourceControl", "get"],
     });
     expect(prefetchMock).toHaveBeenCalledWith({
       queryKey: ["org", "settings", "sourceControl", "listRepositories"],
+    });
+    expect(prefetchMock).toHaveBeenCalledWith({
+      queryKey: ["org", "settings", "identity", "get"],
     });
     expect(screen.getByTestId("hydrated-general")).toHaveTextContent(
       "General settings for acme"

@@ -339,7 +339,7 @@ describe("githubSetupRouter", () => {
       fullName: "acme/.lightfast",
       orgSourceControlBindingId: 7,
       providerRepositoryId: "987",
-      watchedPathGlobs: ["skills/**"],
+      watchedPathGlobs: ["skills/**", "IDENTITY.md", "SOUL.md"],
     });
     expect(mirrorOrgSetupGateMock).toHaveBeenCalledWith({
       clerkOrgId: "org_1",

@@ -96,6 +96,7 @@ function makeSignal(overrides: Partial<Signal> = {}): Signal {
     input: "Customer asked for migration help",
     status: "classified",
     classification: makeClassification(),
+    classificationMetadata: null,
     errorCode: null,
     errorMessage: null,
     createdAt: new Date("2026-05-27T01:00:00.000Z"),
@@ -601,6 +602,44 @@ describe("markSignalClassified", () => {
         errorMessage: null,
         status: "classified",
         visibilityScope: "team",
+      })
+    );
+  });
+
+  it("persists workflow-owned classification metadata when supplied", async () => {
+    const { db, spies } = makeUpdateDb();
+    const classification = makeClassification();
+    const classificationMetadata = {
+      organizationIdentity: {
+        surface: "signal" as const,
+        includedFiles: [
+          {
+            kind: "identity" as const,
+            path: "IDENTITY.md",
+            status: "present" as const,
+            contentHash: "sha256:abc",
+            commitSha: "commit-sha",
+          },
+        ],
+        diagnostics: [],
+        systemSectionHash: "sha256:def",
+      },
+    };
+
+    await expect(
+      markSignalClassified(db, {
+        clerkOrgId: "org_test",
+        publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
+        classification,
+        classificationMetadata,
+      })
+    ).resolves.toBe(true);
+
+    expect(spies.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        classification,
+        classificationMetadata,
+        status: "classified",
       })
     );
   });

@@ -42,6 +42,7 @@
   "dependencies": {
     "@repo/api-contract": "workspace:*",
     "@repo/app-validation": "workspace:*",
+    "@repo/identity-contract": "workspace:*",
     "@repo/skills-contract": "workspace:*",
     "@repo/source-control-contract": "workspace:*",
     "@t3-oss/env-core": "catalog:",

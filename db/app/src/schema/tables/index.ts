@@ -16,6 +16,14 @@ export {
   type InsertAutomationRun,
 } from "./automations";
 export {
+  type IdentityIndexFile,
+  type IdentityIndexState,
+  type InsertIdentityIndexFile,
+  type InsertIdentityIndexState,
+  identityIndexFiles,
+  identityIndexStates,
+} from "./identity-index";
+export {
   type InsertNamespace,
   type InsertNamespaceOperation,
   type Namespace,

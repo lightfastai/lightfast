@@ -8,6 +8,8 @@ const markSignalFailedMock = vi.fn();
 const buildSignalClassificationRequestMock = vi.fn();
 const classifySignalInputMock = vi.fn();
 const getSignalClassificationFailureMock = vi.fn();
+const getOrgIdentityContextMock = vi.fn();
+const formatOrgIdentitySystemSectionMock = vi.fn();
 const logInfoMock = vi.fn();
 const logWarnMock = vi.fn();
 const sendMock = vi.fn();
@@ -66,6 +68,11 @@ vi.mock("@repo/ai/signal-classifier", () => ({
   buildSignalClassificationRequest: buildSignalClassificationRequestMock,
   classifySignalInput: classifySignalInputMock,
   getSignalClassificationFailure: getSignalClassificationFailureMock,
+}));
+
+vi.mock("../services/identity", () => ({
+  formatOrgIdentitySystemSection: formatOrgIdentitySystemSectionMock,
+  getOrgIdentityContext: getOrgIdentityContextMock,
 }));
 
 vi.mock("@vendor/observability/log/next", () => ({
@@ -152,6 +159,37 @@ const userClassification = {
     },
   },
 };
+const identityContext = {
+  provenance: {
+    surface: "signal" as const,
+    includedFiles: [
+      {
+        kind: "identity" as const,
+        path: "IDENTITY.md",
+        status: "present" as const,
+        contentHash: "sha256:abc",
+        commitSha: "commit-sha",
+      },
+    ],
+    diagnostics: [],
+    systemSectionHash: null,
+  },
+  sections: [
+    {
+      kind: "identity" as const,
+      path: "IDENTITY.md",
+      status: "present" as const,
+      sourceMarkdown: "# Acme",
+      contentHash: "sha256:abc",
+      contentSha: "content-sha",
+      commitSha: "commit-sha",
+    },
+  ],
+  state: null,
+  surface: "signal" as const,
+};
+const organizationIdentitySystemSection =
+  '## Organization Identity\n\n<identity-file path="IDENTITY.md">\n# Acme\n</identity-file>';
 const reviewRequiredClassification = {
   ...teamPeopleClassification,
   disposition: "needs_context",
@@ -244,6 +282,8 @@ beforeEach(() => {
   buildSignalClassificationRequestMock.mockReset();
   classifySignalInputMock.mockReset();
   getSignalClassificationFailureMock.mockReset();
+  getOrgIdentityContextMock.mockReset();
+  formatOrgIdentitySystemSectionMock.mockReset();
   logInfoMock.mockReset();
   logWarnMock.mockReset();
   sendMock.mockReset();
@@ -253,6 +293,10 @@ beforeEach(() => {
   markSignalClassifiedMock.mockResolvedValue(true);
   markSignalFailedMock.mockResolvedValue(true);
   sendMock.mockResolvedValue(undefined);
+  getOrgIdentityContextMock.mockResolvedValue(identityContext);
+  formatOrgIdentitySystemSectionMock.mockReturnValue(
+    organizationIdentitySystemSection
+  );
   buildSignalClassificationRequestMock.mockReturnValue({
     clerkOrgId: "org_test",
     deploymentEnvironment: "development",
@@ -310,6 +354,7 @@ describe("classifySignal", () => {
       clerkOrgId: "org_test",
       deploymentEnvironment: "development",
       input: "Run the PR test plan",
+      organizationIdentitySystemSection,
       signalId,
     });
     expect(step.ai.wrap).toHaveBeenCalledWith(
@@ -331,11 +376,26 @@ describe("classifySignal", () => {
         logger: expect.any(Object),
       })
     );
-    expect(markSignalClassifiedMock).toHaveBeenCalledWith(db, {
-      classification: teamPeopleClassification,
+    expect(getOrgIdentityContextMock).toHaveBeenCalledWith({
       clerkOrgId: "org_test",
-      publicId: signalId,
+      maxChars: 4000,
+      surface: "signal",
     });
+    expect(markSignalClassifiedMock).toHaveBeenCalledWith(
+      db,
+      expect.objectContaining({
+        classification: teamPeopleClassification,
+        classificationMetadata: {
+          organizationIdentity: expect.objectContaining({
+            includedFiles: identityContext.provenance.includedFiles,
+            surface: "signal",
+            systemSectionHash: expect.stringMatching(/^sha256:/),
+          }),
+        },
+        clerkOrgId: "org_test",
+        publicId: signalId,
+      })
+    );
     expect(sendMock).toHaveBeenCalledWith({
       name: "app/people.classification.requested",
       data: {
@@ -371,11 +431,14 @@ describe("classifySignal", () => {
       routedPeople: false,
     });
 
-    expect(markSignalClassifiedMock).toHaveBeenCalledWith(db, {
-      classification: reviewRequiredClassification,
-      clerkOrgId: "org_test",
-      publicId: signalId,
-    });
+    expect(markSignalClassifiedMock).toHaveBeenCalledWith(
+      db,
+      expect.objectContaining({
+        classification: reviewRequiredClassification,
+        clerkOrgId: "org_test",
+        publicId: signalId,
+      })
+    );
     expect(sendMock).not.toHaveBeenCalled();
   });
 

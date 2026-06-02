@@ -42,7 +42,7 @@ export const appEvents = {
     {
       schema: z.object({
         dedupeKey: z.string().min(1),
-        reason: z.enum(["schedule", "setup", "webhook"]),
+        reason: z.enum(["read", "schedule", "setup", "webhook"]),
         sourceControlRepositoryId: z.number().int().positive(),
         targetCommitSha: z.string().min(1).optional(),
       }),
@@ -50,6 +50,25 @@ export const appEvents = {
   ),
   "app/skills.index.reconcile.requested": eventType(
     "app/skills.index.reconcile.requested",
+    {
+      schema: z.object({
+        requestedAt: z.string().datetime(),
+      }),
+    }
+  ),
+  "app/identity.index.refresh.requested": eventType(
+    "app/identity.index.refresh.requested",
+    {
+      schema: z.object({
+        dedupeKey: z.string().min(1),
+        reason: z.enum(["schedule", "setup", "webhook"]),
+        sourceControlRepositoryId: z.number().int().positive(),
+        targetCommitSha: z.string().min(1).optional(),
+      }),
+    }
+  ),
+  "app/identity.index.reconcile.requested": eventType(
+    "app/identity.index.reconcile.requested",
     {
       schema: z.object({
         requestedAt: z.string().datetime(),

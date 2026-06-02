@@ -8,7 +8,9 @@ const getActiveOrgBindingMock = vi.fn();
 const getGitHubRepositoryMock = vi.fn();
 const mirrorOrgSetupGateMock = vi.fn();
 const markDeliveryMock = vi.fn();
+const findChangedIdentityIndexSourcesMock = vi.fn();
 const findChangedSkillIndexSourcesMock = vi.fn();
+const refreshIdentityIndexSourceMock = vi.fn();
 const refreshSkillIndexSourceMock = vi.fn();
 const reconcileSkillIndexSourcesMock = vi.fn();
 const sendMock = vi.fn();
@@ -52,7 +54,9 @@ interface FunctionConfig {
 }
 
 let refreshCallback: RefreshCallback | undefined;
+let identityRefreshCallback: RefreshCallback | undefined;
 let reconcileCallback: ReconcileCallback | undefined;
+let identityReconcileCallback: ReconcileCallback | undefined;
 let queueCallback: QueueCallback | undefined;
 let queueConfig: FunctionConfig | undefined;
 
@@ -64,10 +68,16 @@ const createFunctionMock = vi.fn(
     if (config.id === "refresh-skill-index") {
       refreshCallback = handler as RefreshCallback;
     }
+    if (config.id === "refresh-identity-index") {
+      identityRefreshCallback = handler as RefreshCallback;
+    }
     if (config.id === "reconcile-skill-indexes") {
       reconcileCallback = handler as ReconcileCallback;
     }
-    if (config.id === "queue-skill-refresh-from-source-control") {
+    if (config.id === "reconcile-identity-indexes") {
+      identityReconcileCallback = handler as ReconcileCallback;
+    }
+    if (config.id === "queue-lightfast-index-refreshes-from-source-control") {
       queueConfig = config;
       queueCallback = handler as QueueCallback;
     }
@@ -138,14 +148,27 @@ vi.mock("../services/skills", () => ({
   refreshSkillIndexSource: refreshSkillIndexSourceMock,
 }));
 
+vi.mock("../services/identity", () => ({
+  findChangedIdentityIndexSources: findChangedIdentityIndexSourcesMock,
+  refreshIdentityIndexSource: refreshIdentityIndexSourceMock,
+}));
+
 const { refreshSkillIndex } = await import(
   "../inngest/workflow/refresh-skill-index"
+);
+const { refreshIdentityIndex } = await import(
+  "../inngest/workflow/refresh-identity-index"
 );
 const { reconcileSkillIndexes } = await import(
   "../inngest/workflow/reconcile-skill-indexes"
 );
-const { queueSkillRefreshFromSourceControl, shouldQueueSkillRefreshFromPush } =
-  await import("../inngest/workflow/queue-skill-refresh-from-source-control");
+const { reconcileIdentityIndexes } = await import(
+  "../inngest/workflow/reconcile-identity-indexes"
+);
+const {
+  getLightfastRefreshTargetsFromPush,
+  queueLightfastIndexRefreshesFromSourceControl,
+} = await import("../inngest/workflow/queue-skill-refresh-from-source-control");
 const { verifyGitHubLightfastRepositorySetup } = await import(
   "../services/github/setup/lightfast-repository"
 );
@@ -176,6 +199,23 @@ function runRefresh(step: Step) {
   });
 }
 
+function runIdentityRefresh(step: Step) {
+  if (!identityRefreshCallback) {
+    throw new Error("identity refresh callback was not registered");
+  }
+  return identityRefreshCallback({
+    event: {
+      data: {
+        dedupeKey: "9-abc123",
+        reason: "webhook",
+        sourceControlRepositoryId: 9,
+        targetCommitSha: "abc123",
+      },
+    },
+    step,
+  });
+}
+
 function runReconcile(step: Step) {
   if (!reconcileCallback) {
     throw new Error("reconcile callback was not registered");
@@ -183,7 +223,21 @@ function runReconcile(step: Step) {
   return reconcileCallback({ step });
 }
 
-function runQueue(step: Step, input: { changedPaths: string[]; ref: string }) {
+function runIdentityReconcile(step: Step) {
+  if (!identityReconcileCallback) {
+    throw new Error("identity reconcile callback was not registered");
+  }
+  return identityReconcileCallback({ step });
+}
+
+function runQueue(
+  step: Step,
+  input: {
+    changedPaths: string[];
+    changedPathsComplete?: boolean;
+    ref: string;
+  }
+) {
   if (!queueCallback) {
     throw new Error("queue callback was not registered");
   }
@@ -195,7 +249,7 @@ function runQueue(step: Step, input: { changedPaths: string[]; ref: string }) {
         deliveryId: "delivery_1",
         ref: input.ref,
         repositoryWatchId: 9,
-        changedPathsComplete: true,
+        changedPathsComplete: input.changedPathsComplete ?? true,
       },
     },
     step,
@@ -211,7 +265,9 @@ beforeEach(() => {
   getGitHubRepositoryMock.mockReset();
   mirrorOrgSetupGateMock.mockReset();
   markDeliveryMock.mockReset();
+  findChangedIdentityIndexSourcesMock.mockReset();
   findChangedSkillIndexSourcesMock.mockReset();
+  refreshIdentityIndexSourceMock.mockReset();
   refreshSkillIndexSourceMock.mockReset();
   reconcileSkillIndexSourcesMock.mockReset();
   sendMock.mockReset();
@@ -252,6 +308,16 @@ beforeEach(() => {
     ],
     checked: 1,
   });
+  findChangedIdentityIndexSourcesMock.mockResolvedValue({
+    changed: [
+      {
+        sourceControlRepositoryId: 42,
+        targetCommitSha: "def456",
+      },
+    ],
+    checked: 1,
+  });
+  refreshIdentityIndexSourceMock.mockResolvedValue({ status: "fresh" });
   refreshSkillIndexSourceMock.mockResolvedValue({ status: "fresh" });
   reconcileSkillIndexSourcesMock.mockResolvedValue({ checked: 1, queued: 1 });
   sendMock.mockResolvedValue({ ids: ["event_setup"] });
@@ -291,60 +357,89 @@ describe("skills index Inngest workflows", () => {
     });
   });
 
-  it("accepts only main branch pushes with skills changes", () => {
-    expect(
-      shouldQueueSkillRefreshFromPush({
-        changedPaths: ["skills/demo/SKILL.md"],
-        changedPathsComplete: true,
-        ref: "refs/heads/main",
-      })
-    ).toBe(true);
-    expect(
-      shouldQueueSkillRefreshFromPush({
-        changedPaths: ["skills/demo/SKILL.md"],
-        changedPathsComplete: true,
-        ref: "refs/heads/feature",
-      })
-    ).toBe(false);
-    expect(
-      shouldQueueSkillRefreshFromPush({
-        changedPaths: ["docs/demo.md"],
-        changedPathsComplete: true,
-        ref: "refs/heads/main",
-      })
-    ).toBe(false);
-    expect(
-      shouldQueueSkillRefreshFromPush({
-        changedPaths: ["docs/demo.md"],
-        changedPathsComplete: false,
-        ref: "refs/heads/main",
-      })
-    ).toBe(true);
-    expect(
-      shouldQueueSkillRefreshFromPush({
-        changedPaths: ["docs/demo.md"],
-        changedPathsComplete: false,
-        ref: "refs/heads/feature",
-      })
-    ).toBe(false);
+  it("registers the identity refresh workflow and calls the shared service", async () => {
+    expect(refreshIdentityIndex).toEqual({ id: "refresh-identity-index" });
+    expect(createFunctionMock).toHaveBeenCalledWith(
+      {
+        id: "refresh-identity-index",
+        idempotency: "event.data.dedupeKey",
+        retries: 2,
+        timeouts: { finish: "30s", start: "2m" },
+        triggers: expect.objectContaining({
+          event: "app/identity.index.refresh.requested",
+        }),
+      },
+      expect.any(Function)
+    );
+
+    const step = createStep();
+    await runIdentityRefresh(step);
+
+    expect(step.run).toHaveBeenCalledWith(
+      "refresh identity index source",
+      expect.any(Function)
+    );
+    expect(refreshIdentityIndexSourceMock).toHaveBeenCalledWith({
+      reason: "webhook",
+      sourceControlRepositoryId: 9,
+      targetCommitSha: "abc123",
+    });
   });
 
-  it("queues a webhook refresh from matching source control pushes", async () => {
+  it("detects skills and identity refresh targets from main branch pushes", () => {
+    expect(
+      getLightfastRefreshTargetsFromPush({
+        changedPaths: ["skills/demo/SKILL.md"],
+        changedPathsComplete: true,
+        ref: "refs/heads/main",
+      })
+    ).toEqual({ identity: false, skills: true });
+    expect(
+      getLightfastRefreshTargetsFromPush({
+        changedPaths: ["IDENTITY.md"],
+        changedPathsComplete: true,
+        ref: "refs/heads/main",
+      })
+    ).toEqual({ identity: true, skills: false });
+    expect(
+      getLightfastRefreshTargetsFromPush({
+        changedPaths: ["skills/demo/SKILL.md"],
+        changedPathsComplete: false,
+        ref: "refs/heads/main",
+      })
+    ).toEqual({ identity: true, skills: true });
+    expect(
+      getLightfastRefreshTargetsFromPush({
+        changedPaths: ["IDENTITY.md"],
+        changedPathsComplete: true,
+        ref: "refs/heads/feature",
+      })
+    ).toEqual({ identity: false, skills: false });
+    expect(
+      getLightfastRefreshTargetsFromPush({
+        changedPaths: ["docs/demo.md"],
+        changedPathsComplete: true,
+        ref: "refs/heads/main",
+      })
+    ).toEqual({ identity: false, skills: false });
+  });
+
+  it("queues webhook refreshes from matching source control pushes", async () => {
     const step = createStep();
 
     await expect(
       runQueue(step, {
-        changedPaths: ["skills/demo/SKILL.md"],
+        changedPaths: ["skills/demo/SKILL.md", "IDENTITY.md"],
         ref: "refs/heads/main",
       })
-    ).resolves.toEqual({ queued: true });
+    ).resolves.toEqual({ queued: { identity: true, skills: true } });
 
-    expect(queueSkillRefreshFromSourceControl).toEqual({
-      id: "queue-skill-refresh-from-source-control",
+    expect(queueLightfastIndexRefreshesFromSourceControl).toEqual({
+      id: "queue-lightfast-index-refreshes-from-source-control",
     });
     expect(createFunctionMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: "queue-skill-refresh-from-source-control",
+        id: "queue-lightfast-index-refreshes-from-source-control",
         idempotency: "event.data.deliveryId",
         retries: 1,
         timeouts: { finish: "30s", start: "2m" },
@@ -360,6 +455,18 @@ describe("skills index Inngest workflows", () => {
         targetCommitSha: "abc123",
       },
     });
+    expect(step.sendEvent).toHaveBeenCalledWith(
+      "queue identity index refresh",
+      {
+        name: "app/identity.index.refresh.requested",
+        data: {
+          dedupeKey: "9-abc123",
+          reason: "webhook",
+          sourceControlRepositoryId: 9,
+          targetCommitSha: "abc123",
+        },
+      }
+    );
     expect(markDeliveryMock).toHaveBeenCalledWith(expect.anything(), {
       deliveryId: "delivery_1",
       status: "processed",
@@ -435,6 +542,48 @@ describe("skills index Inngest workflows", () => {
     );
   });
 
+  it("registers identity reconcile on an hourly cron and sends identity refresh events", async () => {
+    expect(reconcileIdentityIndexes).toEqual({
+      id: "reconcile-identity-indexes",
+    });
+    expect(createFunctionMock).toHaveBeenCalledWith(
+      {
+        id: "reconcile-identity-indexes",
+        retries: 1,
+        timeouts: { finish: "5m", start: "2m" },
+        triggers: { cron: "15 * * * *" },
+      },
+      expect.any(Function)
+    );
+
+    const step = createStep();
+    await expect(runIdentityReconcile(step)).resolves.toEqual({
+      checked: 1,
+      queued: 1,
+    });
+
+    expect(step.run).toHaveBeenCalledWith(
+      "reconcile identity index sources",
+      expect.any(Function)
+    );
+    expect(findChangedIdentityIndexSourcesMock).toHaveBeenCalledWith({
+      limit: 100,
+      totalLimit: 1000,
+    });
+    expect(step.sendEvent).toHaveBeenCalledWith(
+      "queue identity index refresh 42",
+      {
+        name: "app/identity.index.refresh.requested",
+        data: {
+          dedupeKey: "42-def456",
+          reason: "schedule",
+          sourceControlRepositoryId: 42,
+          targetCommitSha: "def456",
+        },
+      }
+    );
+  });
+
   it("caps reconcile refresh event sends to the workflow limit", async () => {
     findChangedSkillIndexSourcesMock.mockResolvedValueOnce({
       changed: Array.from({ length: 101 }, (_, index) => ({
@@ -469,7 +618,7 @@ describe("skills index Inngest workflows", () => {
     );
   });
 
-  it("prewarms the initial skill refresh without blocking setup success", async () => {
+  it("prewarms the initial skill and identity refreshes without blocking setup success", async () => {
     sendMock.mockRejectedValueOnce(new Error("inngest unavailable"));
 
     await expect(
@@ -484,6 +633,14 @@ describe("skills index Inngest workflows", () => {
 
     expect(sendMock).toHaveBeenCalledWith({
       name: "app/skills.index.refresh.requested",
+      data: {
+        dedupeKey: "42-setup",
+        reason: "setup",
+        sourceControlRepositoryId: 42,
+      },
+    });
+    expect(sendMock).toHaveBeenCalledWith({
+      name: "app/identity.index.refresh.requested",
       data: {
         dedupeKey: "42-setup",
         reason: "setup",
