@@ -2,11 +2,7 @@ import {
   type FullConnectorToolManifest,
   fullConnectorToolManifestSchema,
 } from "@repo/connector-contract";
-import {
-  McpClient,
-  StreamableHTTPClientTransport,
-  type Tool,
-} from "@vendor/mcp";
+import { Client, StreamableHTTPClientTransport, type Tool } from "@vendor/mcp";
 
 import {
   assertLinearEndpointAllowed,
@@ -29,7 +25,7 @@ export async function listLinearMcpTools(input: {
     value: input.endpoint,
   });
 
-  const client = new McpClient({
+  const client = new Client({
     name: "lightfast-linear-app-node",
     version: "0.1.0",
   });
@@ -82,7 +78,7 @@ export async function callLinearMcpTool(input: {
     value: input.endpoint,
   });
 
-  const client = new McpClient({
+  const client = new Client({
     name: "lightfast-linear-app-node",
     version: "0.1.0",
   });

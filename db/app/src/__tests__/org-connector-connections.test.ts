@@ -42,6 +42,7 @@ function connection(
     scopes: ["issues:write"],
     mcpEndpoint: "https://mcp.linear.app/sse",
     toolManifest,
+    enabledForAgents: false,
     lastToolRefreshAt: new Date("2026-06-01T00:00:00.000Z"),
     lastToolRefreshErrorAt: null,
     lastToolRefreshErrorCode: null,
@@ -127,6 +128,7 @@ describe("org connector connection helpers", () => {
     expect(orgConnectorConnections.encryptedAccessToken.notNull).toBe(false);
     expect(orgConnectorConnections.encryptedRefreshToken.notNull).toBe(false);
     expect(orgConnectorConnections.toolManifest.notNull).toBe(true);
+    expect("enabledForAgents" in orgConnectorConnections).toBe(true);
   });
 
   it("finalizes current org connector connections by revoking prior rows and inserting replacement rows", async () => {
@@ -179,6 +181,7 @@ describe("org connector connection helpers", () => {
         currentOrgProviderKey: null,
         encryptedAccessToken: null,
         encryptedRefreshToken: null,
+        enabledForAgents: false,
         enabledForAutomations: false,
         revokedAt: expect.any(Date),
         status: "revoked",
@@ -294,6 +297,7 @@ describe("org connector connection helpers", () => {
     const revoked = connection({
       encryptedAccessToken: null,
       encryptedRefreshToken: null,
+      enabledForAgents: false,
       enabledForAutomations: false,
       revokedAt: new Date("2026-06-01T01:00:00.000Z"),
       status: "revoked",
@@ -327,6 +331,7 @@ describe("org connector connection helpers", () => {
         encryptedRefreshToken: null,
         accessTokenExpiresAt: null,
         refreshTokenExpiresAt: null,
+        enabledForAgents: false,
         enabledForAutomations: false,
         revokedAt: expect.any(Date),
         status: "revoked",
@@ -390,6 +395,7 @@ describe("org connector connection helpers", () => {
   it("marks current org connector connection errors without clearing tokens", async () => {
     const active = connection();
     const errored = connection({
+      enabledForAgents: false,
       enabledForAutomations: false,
       status: "error",
     });
@@ -418,6 +424,7 @@ describe("org connector connection helpers", () => {
     );
     expect(set).toHaveBeenCalledWith(
       expect.objectContaining({
+        enabledForAgents: false,
         enabledForAutomations: false,
         status: "error",
         updatedAt: expect.any(Date),
@@ -540,6 +547,42 @@ describe("org connector connection helpers", () => {
     expect(set).toHaveBeenCalledWith(
       expect.objectContaining({
         enabledForAutomations: true,
+        updatedAt: expect.any(Date),
+      })
+    );
+    const columnNames = collectColumnNames(updateWhere.mock.calls[0]?.[0]);
+    expect(columnNames).toContain("current_org_provider_key");
+    expect(columnNames).toContain("status");
+  });
+
+  it("sets agent enablement only for active current connector rows", async () => {
+    const { setConnectorAgentEnabled } = (await import(
+      "../utils/org-connector-connections"
+    )) as {
+      setConnectorAgentEnabled?: (
+        db: Database,
+        input: { clerkOrgId: string; enabled: boolean; provider: "linear" }
+      ) => Promise<boolean>;
+    };
+    expect(typeof setConnectorAgentEnabled).toBe("function");
+    const updateWhere = vi.fn((_condition: unknown) =>
+      Promise.resolve({ affectedRows: 1 })
+    );
+    const set = vi.fn(() => ({ where: updateWhere }));
+    const update = vi.fn(() => ({ set }));
+    const db = { update } as unknown as Database;
+
+    await expect(
+      setConnectorAgentEnabled?.(db, {
+        clerkOrgId: "org_123",
+        enabled: true,
+        provider: "linear",
+      })
+    ).resolves.toBe(true);
+
+    expect(set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabledForAgents: true,
         updatedAt: expect.any(Date),
       })
     );

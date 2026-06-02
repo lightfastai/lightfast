@@ -39,6 +39,7 @@
   "devDependencies": {
     "@repo/native-auth-contract": "workspace:*",
     "@repo/native-auth-node": "workspace:*",
+    "@repo/provider-routine-contract": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
     "@t3-oss/env-core": "catalog:",

@@ -7,6 +7,7 @@ const listConnectorsForOrgMock = vi.fn();
 const startConnectorOAuthMock = vi.fn();
 const refreshConnectorToolsMock = vi.fn();
 const setConnectorAutomationEnabledMock = vi.fn();
+const setConnectorAgentEnabledMock = vi.fn();
 const disconnectConnectorMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
@@ -26,6 +27,7 @@ vi.mock("../services/connectors", () => ({
   disconnectConnector: disconnectConnectorMock,
   listConnectorsForOrg: listConnectorsForOrgMock,
   refreshConnectorTools: refreshConnectorToolsMock,
+  setConnectorAgentEnabled: setConnectorAgentEnabledMock,
   setConnectorAutomationEnabled: setConnectorAutomationEnabledMock,
   startConnectorOAuth: startConnectorOAuthMock,
 }));
@@ -77,6 +79,7 @@ describe("connectorsRouter", () => {
     startConnectorOAuthMock.mockReset();
     refreshConnectorToolsMock.mockReset();
     setConnectorAutomationEnabledMock.mockReset();
+    setConnectorAgentEnabledMock.mockReset();
     disconnectConnectorMock.mockReset();
 
     listConnectorsForOrgMock.mockResolvedValue([
@@ -95,6 +98,7 @@ describe("connectorsRouter", () => {
     });
     refreshConnectorToolsMock.mockResolvedValue({ refreshed: true });
     setConnectorAutomationEnabledMock.mockResolvedValue({ enabled: true });
+    setConnectorAgentEnabledMock.mockResolvedValue({ enabled: true });
     disconnectConnectorMock.mockResolvedValue({ disconnected: true });
   });
 
@@ -130,12 +134,26 @@ describe("connectorsRouter", () => {
       })
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(
+      (
+        caller(nonAdminAccess()).connectors as unknown as {
+          setAgentEnabled: (input: {
+            enabled: boolean;
+            provider: "linear";
+          }) => Promise<unknown>;
+        }
+      ).setAgentEnabled({
+        enabled: true,
+        provider: "linear",
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(
       caller(nonAdminAccess()).connectors.disconnect({ provider: "linear" })
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
 
     expect(startConnectorOAuthMock).not.toHaveBeenCalled();
     expect(refreshConnectorToolsMock).not.toHaveBeenCalled();
     expect(setConnectorAutomationEnabledMock).not.toHaveBeenCalled();
+    expect(setConnectorAgentEnabledMock).not.toHaveBeenCalled();
     expect(disconnectConnectorMock).not.toHaveBeenCalled();
   });
 
@@ -156,7 +174,29 @@ describe("connectorsRouter", () => {
       })
     ).resolves.toEqual({ enabled: true });
     await expect(
+      (
+        caller().connectors as unknown as {
+          setAgentEnabled: (input: {
+            enabled: boolean;
+            provider: "linear";
+          }) => Promise<unknown>;
+        }
+      ).setAgentEnabled({
+        enabled: true,
+        provider: "linear",
+      })
+    ).resolves.toEqual({ enabled: true });
+    await expect(
       caller().connectors.disconnect({ provider: "linear" })
     ).resolves.toEqual({ disconnected: true });
+
+    expect(setConnectorAgentEnabledMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        auth: expect.objectContaining({
+          identity: expect.objectContaining({ orgId: "org_acme" }),
+        }),
+      }),
+      { enabled: true, provider: "linear" }
+    );
   });
 });

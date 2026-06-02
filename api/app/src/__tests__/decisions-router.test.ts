@@ -1,12 +1,12 @@
-import type { Database, IntegrationCall } from "@db/app";
+import type { Database, ProviderRoutineCall } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthIdentity } from "../auth/identity";
 
-const listIntegrationCallsMock = vi.fn();
+const listProviderRoutineCallsMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({
-  listIntegrationCalls: listIntegrationCallsMock,
+  listProviderRoutineCalls: listProviderRoutineCallsMock,
 }));
 vi.mock("@vendor/clerk/env", () => ({
   clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
@@ -43,17 +43,21 @@ function caller(identity: AuthIdentity = activeIdentity) {
 
 const decision = {
   id: 1,
-  publicId: "integration_call_123",
+  publicId: "provider_routine_call_123",
   clerkOrgId: "org_acme",
   calledByKind: "automation",
   calledById: "run_123",
   calledByUserId: null,
   provider: "linear",
-  routineName: "linear__create_issue",
+  routineId: "linear__create_issue",
   providerToolName: "create_issue",
-  connectorConnectionId: 42,
+  providerConnectionId: 42,
   providerWorkspaceId: "workspace_123",
   providerActorId: "actor_123",
+  providerAttempted: true,
+  sourceClientId: null,
+  sourceRef: "run_123",
+  sourceSurface: "automation",
   status: "succeeded",
   inputRedacted: { present: true },
   outputRedacted: { present: true },
@@ -63,12 +67,12 @@ const decision = {
   finishedAt: new Date("2026-06-02T03:20:11.966Z"),
   createdAt: new Date("2026-06-02T03:20:11.419Z"),
   updatedAt: new Date("2026-06-02T03:20:11.966Z"),
-} satisfies IntegrationCall;
+} satisfies ProviderRoutineCall;
 
 describe("decisionsRouter", () => {
   beforeEach(() => {
-    listIntegrationCallsMock.mockReset();
-    listIntegrationCallsMock.mockResolvedValue([decision]);
+    listProviderRoutineCallsMock.mockReset();
+    listProviderRoutineCallsMock.mockResolvedValue([decision]);
   });
 
   it("lists recent decisions for the active organization", async () => {
@@ -76,19 +80,25 @@ describe("decisionsRouter", () => {
       decision,
     ]);
 
-    expect(listIntegrationCallsMock).toHaveBeenCalledWith(expect.anything(), {
-      clerkOrgId: "org_acme",
-      limit: 10,
-    });
+    expect(listProviderRoutineCallsMock).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        clerkOrgId: "org_acme",
+        limit: 10,
+      }
+    );
   });
 
   it("uses the default limit when no input is provided", async () => {
     await expect(caller().decisions.list()).resolves.toEqual([decision]);
 
-    expect(listIntegrationCallsMock).toHaveBeenCalledWith(expect.anything(), {
-      clerkOrgId: "org_acme",
-      limit: 50,
-    });
+    expect(listProviderRoutineCallsMock).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        clerkOrgId: "org_acme",
+        limit: 50,
+      }
+    );
   });
 
   it("rejects pending users", async () => {
@@ -96,6 +106,6 @@ describe("decisionsRouter", () => {
       caller({ type: "pending", userId: "user_current" }).decisions.list()
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
 
-    expect(listIntegrationCallsMock).not.toHaveBeenCalled();
+    expect(listProviderRoutineCallsMock).not.toHaveBeenCalled();
   });
 });

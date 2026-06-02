@@ -17,6 +17,7 @@ interface ConnectorRow {
       };
   connection: {
     connectedAt: Date;
+    enabledForAgents: boolean;
     enabledForAutomations: boolean;
     lastToolRefreshAt: Date | null;
     lastToolRefreshErrorAt: Date | null;
@@ -25,6 +26,7 @@ interface ConnectorRow {
     providerWorkspaceName: string | null;
     status: "active" | "error" | "revoked";
     tools: Array<{
+      availableForAgents: boolean;
       availableForAutomations: boolean;
       description?: string;
       name: string;
@@ -47,6 +49,7 @@ const listQueryOptions = {
 const listQueryOptionsMock = vi.fn(() => listQueryOptions);
 const refreshMutateMock = vi.fn();
 const replaceMock = vi.fn();
+const setAgentEnabledMutateMock = vi.fn();
 const setAutomationEnabledMutateMock = vi.fn();
 const startConnectMutateMock = vi.fn();
 const useMutationMock = vi.fn();
@@ -111,6 +114,12 @@ vi.mock("~/trpc/react", () => ({
             mutationOptions: (options: unknown) => ({
               ...(options as object),
               mutationName: "setAutomationEnabled",
+            }),
+          },
+          setAgentEnabled: {
+            mutationOptions: (options: unknown) => ({
+              ...(options as object),
+              mutationName: "setAgentEnabled",
             }),
           },
           startConnect: {
@@ -345,6 +354,7 @@ function connectedLinear(
     availableForAutomations: true,
     connection: {
       connectedAt: new Date("2026-06-01T00:00:00.000Z"),
+      enabledForAgents: false,
       enabledForAutomations: true,
       lastToolRefreshAt: new Date("2026-06-01T00:00:00.000Z"),
       lastToolRefreshErrorAt: null,
@@ -354,11 +364,13 @@ function connectedLinear(
       status: "active",
       tools: [
         {
+          availableForAgents: false,
           availableForAutomations: true,
           description: "Create a Linear issue",
           name: "create_issue",
         },
         {
+          availableForAgents: false,
           availableForAutomations: true,
           description: "Search Linear issues",
           name: "search_issues",
@@ -384,6 +396,7 @@ beforeEach(() => {
   refreshMutateMock.mockReset();
   replaceMock.mockReset();
   searchParams = new URLSearchParams();
+  setAgentEnabledMutateMock.mockReset();
   setAutomationEnabledMutateMock.mockReset();
   startConnectMutateMock.mockReset();
   useMutationMock.mockReset();
@@ -411,6 +424,11 @@ beforeEach(() => {
             isPending: false,
             mutate: setAutomationEnabledMutateMock,
           };
+        case "setAgentEnabled":
+          return {
+            isPending: false,
+            mutate: setAgentEnabledMutateMock,
+          };
         case "startConnect":
           return { isPending: false, mutate: startConnectMutateMock };
         default:
@@ -437,7 +455,7 @@ describe("connectors page", () => {
     );
   });
 
-  it("renders the connected Linear card with tools and automation toggle", () => {
+  it("renders the connected Linear card with tools, automation, and agent toggles", () => {
     renderClient();
 
     expect(screen.getByRole("heading", { name: "Connectors" })).toBeVisible();
@@ -452,6 +470,7 @@ describe("connectors page", () => {
     expect(screen.getByText("create_issue")).toBeVisible();
     expect(screen.getByText("search_issues")).toBeVisible();
     expect(screen.getByText("Use in automations")).toBeVisible();
+    expect(screen.getByText("Use in agents")).toBeVisible();
   });
 
   it("renders the connect card for an available Linear connector", () => {
@@ -460,6 +479,7 @@ describe("connectors page", () => {
     expect(screen.getByRole("heading", { name: "Linear" })).toBeVisible();
     expect(screen.getByRole("button", { name: /^connect$/i })).toBeVisible();
     expect(screen.queryByText("Use in automations")).toBeNull();
+    expect(screen.queryByText("Use in agents")).toBeNull();
   });
 
   it("filters connectors by search query", () => {
@@ -537,7 +557,13 @@ describe("connectors page", () => {
       screen.getByRole("switch", { name: /use in automations/i })
     ).toBeDisabled();
     expect(
+      screen.getByRole("switch", { name: /use in agents/i })
+    ).toBeDisabled();
+    expect(
       screen.getByText("Disconnecting isn't available right now.")
+    ).toBeVisible();
+    expect(
+      screen.getByText("Admin access required to manage connectors")
     ).toBeVisible();
   });
 
@@ -611,7 +637,7 @@ describe("connectors page", () => {
     expect(window.location.href).toBe("https://linear.example/oauth");
   });
 
-  it("calls refresh, toggle, and disconnect mutations from the connected card", () => {
+  it("calls refresh, toggles, and disconnect mutations from the connected card", () => {
     useSuspenseQueryMock.mockReturnValue({ data: [connectedLinear()] });
 
     render(<ConnectorsClient />);
@@ -628,6 +654,12 @@ describe("connectors page", () => {
     );
     expect(setAutomationEnabledMutateMock).toHaveBeenCalledWith({
       enabled: false,
+      provider: "linear",
+    });
+
+    fireEvent.click(screen.getByRole("switch", { name: /use in agents/i }));
+    expect(setAgentEnabledMutateMock).toHaveBeenCalledWith({
+      enabled: true,
       provider: "linear",
     });
 

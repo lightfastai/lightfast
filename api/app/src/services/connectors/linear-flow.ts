@@ -6,6 +6,7 @@ import {
   markCurrentOrgConnectorConnectionRevoked,
   type OrgConnectorConnection,
   recordConnectorToolRefreshError,
+  setConnectorAgentEnabled as setConnectorAgentEnabledInDb,
   setConnectorAutomationEnabled as setConnectorAutomationEnabledInDb,
   updateConnectorToolManifest,
   updateObservedConnectorTokens,
@@ -725,6 +726,25 @@ export async function setLinearConnectorAutomationEnabled(
 ) {
   const identity = activeIdentity(ctx);
   const updated = await setConnectorAutomationEnabledInDb(ctx.db, {
+    clerkOrgId: identity.orgId,
+    enabled: input.enabled,
+    provider: "linear",
+  });
+  if (!updated) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Linear connector is not connected.",
+    });
+  }
+  return { enabled: input.enabled };
+}
+
+export async function setLinearConnectorAgentEnabled(
+  ctx: ConnectorServiceContext,
+  input: { enabled: boolean }
+) {
+  const identity = activeIdentity(ctx);
+  const updated = await setConnectorAgentEnabledInDb(ctx.db, {
     clerkOrgId: identity.orgId,
     enabled: input.enabled,
     provider: "linear",

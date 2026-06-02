@@ -5,6 +5,7 @@ import { apiContract } from "../contract";
 import {
   getContractProcedurePaths,
   lightfastMcpToolPolicy,
+  type McpScope,
   type McpToolPolicyEntry,
 } from "../mcp";
 
@@ -48,5 +49,17 @@ describe("lightfastMcpToolPolicy", () => {
 
   it("only counts oRPC contract procedures", () => {
     expect(isContractProcedure(apiContract.signals.create)).toBe(true);
+  });
+
+  it("includes provider routine MCP scopes in the public scope type", () => {
+    const scopes = [
+      "mcp:provider_routines:read",
+      "mcp:provider_routines:write",
+    ] satisfies McpScope[];
+
+    expect(scopes).toEqual([
+      "mcp:provider_routines:read",
+      "mcp:provider_routines:write",
+    ]);
   });
 });

@@ -4,9 +4,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const listCurrentOrgConnectorConnectionsMock = vi.fn();
 const getCurrentOrgConnectorConnectionMock = vi.fn();
 const markCurrentOrgConnectorConnectionErrorMock = vi.fn();
-const createIntegrationCallMock = vi.fn();
-const markIntegrationCallFailedMock = vi.fn();
-const markIntegrationCallSucceededMock = vi.fn();
+const createProviderRoutineCallMock = vi.fn();
+const markProviderRoutineCallFailedMock = vi.fn();
+const markProviderRoutineCallProviderAttemptedMock = vi.fn();
+const markProviderRoutineCallSucceededMock = vi.fn();
 const getFreshLinearConnectorAccessTokenMock = vi.fn();
 const callLinearMcpToolMock = vi.fn();
 const logInfoMock = vi.fn();
@@ -15,13 +16,15 @@ const logWarnMock = vi.fn();
 vi.mock("@db/app/client", () => ({ db: {} }));
 
 vi.mock("@db/app", () => ({
-  createIntegrationCall: createIntegrationCallMock,
+  createProviderRoutineCall: createProviderRoutineCallMock,
   getCurrentOrgConnectorConnection: getCurrentOrgConnectorConnectionMock,
   listCurrentOrgConnectorConnections: listCurrentOrgConnectorConnectionsMock,
+  markProviderRoutineCallFailed: markProviderRoutineCallFailedMock,
+  markProviderRoutineCallProviderAttempted:
+    markProviderRoutineCallProviderAttemptedMock,
+  markProviderRoutineCallSucceeded: markProviderRoutineCallSucceededMock,
   markCurrentOrgConnectorConnectionError:
     markCurrentOrgConnectorConnectionErrorMock,
-  markIntegrationCallFailed: markIntegrationCallFailedMock,
-  markIntegrationCallSucceeded: markIntegrationCallSucceededMock,
 }));
 
 vi.mock("@repo/linear-app-node", async (importOriginal) => {
@@ -59,6 +62,7 @@ function connection(
     createdAt: new Date("2026-06-01T00:00:00.000Z"),
     encryptedAccessToken: "encrypted_access",
     encryptedRefreshToken: "encrypted_refresh",
+    enabledForAgents: false,
     enabledForAutomations: true,
     id: 1,
     lastToolRefreshAt: new Date("2026-06-01T00:00:00.000Z"),
@@ -90,14 +94,16 @@ describe("loadConnectorRuntimeTools", () => {
     getCurrentOrgConnectorConnectionMock.mockReset();
     markCurrentOrgConnectorConnectionErrorMock.mockReset();
     markCurrentOrgConnectorConnectionErrorMock.mockResolvedValue(undefined);
-    createIntegrationCallMock.mockReset();
-    createIntegrationCallMock.mockResolvedValue({
-      publicId: "integration_call_123",
+    createProviderRoutineCallMock.mockReset();
+    createProviderRoutineCallMock.mockResolvedValue({
+      publicId: "provider_routine_call_123",
     });
-    markIntegrationCallFailedMock.mockReset();
-    markIntegrationCallFailedMock.mockResolvedValue(true);
-    markIntegrationCallSucceededMock.mockReset();
-    markIntegrationCallSucceededMock.mockResolvedValue(true);
+    markProviderRoutineCallFailedMock.mockReset();
+    markProviderRoutineCallFailedMock.mockResolvedValue(true);
+    markProviderRoutineCallProviderAttemptedMock.mockReset();
+    markProviderRoutineCallProviderAttemptedMock.mockResolvedValue(true);
+    markProviderRoutineCallSucceededMock.mockReset();
+    markProviderRoutineCallSucceededMock.mockResolvedValue(true);
     getFreshLinearConnectorAccessTokenMock.mockReset();
     getFreshLinearConnectorAccessTokenMock.mockResolvedValue("lin_access");
     callLinearMcpToolMock.mockReset();
@@ -148,7 +154,7 @@ describe("loadConnectorRuntimeTools", () => {
       "Linear connector is not active for automations."
     );
     expect(callLinearMcpToolMock).not.toHaveBeenCalled();
-    expect(createIntegrationCallMock).not.toHaveBeenCalled();
+    expect(createProviderRoutineCallMock).not.toHaveBeenCalled();
   });
 
   it("records Linear MCP runtime calls as succeeded with redacted payload presence", async () => {
@@ -166,20 +172,23 @@ describe("loadConnectorRuntimeTools", () => {
     const result = await tool?.call({ title: "secret-title" });
 
     expect(result).toEqual({ content: [{ text: "mcp_result" }] });
-    expect(createIntegrationCallMock).toHaveBeenCalledWith(
+    expect(createProviderRoutineCallMock).toHaveBeenCalledWith(
       {},
       expect.objectContaining({
         calledById: "run_123",
         calledByKind: "automation",
         calledByUserId: null,
         clerkOrgId: "org_acme",
-        connectorConnectionId: 1,
+        providerConnectionId: 1,
         inputRedacted: { present: true },
         provider: "linear",
         providerActorId: "actor_1",
         providerToolName: "create_issue",
         providerWorkspaceId: "workspace_1",
-        routineName: "linear__create_issue",
+        routineId: "linear__create_issue",
+        sourceClientId: null,
+        sourceRef: "run_123",
+        sourceSurface: "automation",
       })
     );
     expect(getFreshLinearConnectorAccessTokenMock).toHaveBeenCalledWith({
@@ -192,12 +201,19 @@ describe("loadConnectorRuntimeTools", () => {
       input: { title: "secret-title" },
       name: "create_issue",
     });
-    expect(markIntegrationCallSucceededMock).toHaveBeenCalledWith(
+    expect(markProviderRoutineCallProviderAttemptedMock).toHaveBeenCalledWith(
+      {},
+      {
+        clerkOrgId: "org_acme",
+        publicId: "provider_routine_call_123",
+      }
+    );
+    expect(markProviderRoutineCallSucceededMock).toHaveBeenCalledWith(
       {},
       expect.objectContaining({
         clerkOrgId: "org_acme",
         outputRedacted: { present: true },
-        publicId: "integration_call_123",
+        publicId: "provider_routine_call_123",
       })
     );
     expect(logInfoMock).toHaveBeenCalledWith(
@@ -227,12 +243,14 @@ describe("loadConnectorRuntimeTools", () => {
     });
     await tool?.call(undefined);
 
-    expect(createIntegrationCallMock).toHaveBeenCalledWith(
+    expect(createProviderRoutineCallMock).toHaveBeenCalledWith(
       {},
       expect.objectContaining({
         calledById: "connector-runtime",
         calledByKind: "system",
         inputRedacted: null,
+        sourceRef: "connector-runtime",
+        sourceSurface: "system",
       })
     );
   });
@@ -256,13 +274,13 @@ describe("loadConnectorRuntimeTools", () => {
     await expect(tool?.call({ title: "secret-title" })).rejects.toThrow(
       "Linear MCP tool call failed."
     );
-    expect(markIntegrationCallFailedMock).toHaveBeenCalledWith(
+    expect(markProviderRoutineCallFailedMock).toHaveBeenCalledWith(
       {},
       expect.objectContaining({
         clerkOrgId: "org_acme",
         errorCode: "LINEAR_MCP_FAILED",
         errorMessage: "Linear MCP tool call failed.",
-        publicId: "integration_call_123",
+        publicId: "provider_routine_call_123",
       })
     );
     expect(logWarnMock).toHaveBeenCalledWith(
@@ -287,7 +305,7 @@ describe("loadConnectorRuntimeTools", () => {
   it("continues the provider call when creating the ledger row fails", async () => {
     listCurrentOrgConnectorConnectionsMock.mockResolvedValue([connection()]);
     getCurrentOrgConnectorConnectionMock.mockResolvedValue(connection());
-    createIntegrationCallMock.mockRejectedValue(
+    createProviderRoutineCallMock.mockRejectedValue(
       new Error("ledger write secret")
     );
     callLinearMcpToolMock.mockResolvedValue({
@@ -304,9 +322,9 @@ describe("loadConnectorRuntimeTools", () => {
     });
 
     expect(callLinearMcpToolMock).toHaveBeenCalledOnce();
-    expect(markIntegrationCallSucceededMock).not.toHaveBeenCalled();
+    expect(markProviderRoutineCallSucceededMock).not.toHaveBeenCalled();
     expect(logWarnMock).toHaveBeenCalledWith(
-      "[connectors] integration call ledger create failed",
+      "[connectors] provider routine call ledger create failed",
       expect.objectContaining({
         clerkOrgId: "org_acme",
         failure: {
@@ -408,13 +426,13 @@ describe("loadConnectorRuntimeTools", () => {
     await expect(tool?.call({ title: "secret-title" })).rejects.toThrow(
       "refresh token leaked raw details"
     );
-    expect(markIntegrationCallFailedMock).toHaveBeenCalledWith(
+    expect(markProviderRoutineCallFailedMock).toHaveBeenCalledWith(
       {},
       expect.objectContaining({
         clerkOrgId: "org_acme",
         errorCode: "LINEAR_TOKEN_REFRESH_FAILED",
         errorMessage: "Linear OAuth token refresh failed.",
-        publicId: "integration_call_123",
+        publicId: "provider_routine_call_123",
       })
     );
     expect(markCurrentOrgConnectorConnectionErrorMock).toHaveBeenCalledWith(
@@ -425,6 +443,7 @@ describe("loadConnectorRuntimeTools", () => {
       }
     );
     expect(callLinearMcpToolMock).not.toHaveBeenCalled();
+    expect(markProviderRoutineCallProviderAttemptedMock).not.toHaveBeenCalled();
     expect(logWarnMock).toHaveBeenCalledWith(
       "[connectors] runtime tool call failed",
       expect.objectContaining({

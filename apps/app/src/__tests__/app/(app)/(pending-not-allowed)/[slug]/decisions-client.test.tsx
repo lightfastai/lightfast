@@ -35,17 +35,21 @@ const { DecisionsClient } = await import(
 
 const baseDecision = {
   id: 1,
-  publicId: "integration_call_123",
+  publicId: "provider_routine_call_123",
   clerkOrgId: "org_acme",
   calledByKind: "automation",
   calledById: "run_123",
   calledByUserId: null,
   provider: "linear",
-  routineName: "linear__create_issue",
+  routineId: "linear__create_issue",
   providerToolName: "create_issue",
-  connectorConnectionId: 42,
+  providerConnectionId: 42,
   providerWorkspaceId: "linear_workspace_lightfast_emulated",
   providerActorId: "linear_actor_lightfast_local",
+  providerAttempted: true,
+  sourceClientId: null,
+  sourceRef: "run_123",
+  sourceSurface: "automation",
   status: "succeeded",
   inputRedacted: { present: true },
   outputRedacted: { present: true },
@@ -82,7 +86,7 @@ describe("DecisionsClient", () => {
         {
           ...baseDecision,
           id: 2,
-          publicId: "integration_call_failed",
+          publicId: "provider_routine_call_failed",
           calledById: "run_failed",
           status: "failed",
           outputRedacted: null,
@@ -132,7 +136,7 @@ describe("DecisionsClient", () => {
     );
 
     const detail = screen.getByRole("dialog", { name: "Decision details" });
-    expect(within(detail).getByText("integration_call_123")).toBeVisible();
+    expect(within(detail).getByText("provider_routine_call_123")).toBeVisible();
     expect(within(detail).getByText("linear__create_issue")).toBeVisible();
     expect(within(detail).getByText("Automation run_123")).toBeVisible();
     expect(within(detail).getByText("LINEAR_MCP_FAILED")).toBeVisible();

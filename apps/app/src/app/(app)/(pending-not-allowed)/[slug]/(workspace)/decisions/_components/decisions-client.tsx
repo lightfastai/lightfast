@@ -199,13 +199,13 @@ function DecisionDetailPanel({
               <DetailCode>{decision.publicId}</DetailCode>
             </DetailField>
             <DetailField label="Routine">
-              <DetailCode>{decision.routineName}</DetailCode>
+              <DetailCode>{decision.routineId}</DetailCode>
             </DetailField>
             <DetailField label="Provider tool">
               <DetailCode>{decision.providerToolName}</DetailCode>
             </DetailField>
-            <DetailField label="Connector connection">
-              <DetailCode>{decision.connectorConnectionId}</DetailCode>
+            <DetailField label="Provider connection">
+              <DetailCode>{decision.providerConnectionId}</DetailCode>
             </DetailField>
             {decision.providerWorkspaceId && (
               <DetailField label="Provider workspace">

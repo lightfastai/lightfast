@@ -1,13 +1,14 @@
 import {
-  createIntegrationCall,
+  createProviderRoutineCall,
   getCurrentOrgConnectorConnection,
-  type IntegrationCall,
-  type IntegrationCallRedactedPayload,
   listCurrentOrgConnectorConnections,
   markCurrentOrgConnectorConnectionError,
-  markIntegrationCallFailed,
-  markIntegrationCallSucceeded,
+  markProviderRoutineCallFailed,
+  markProviderRoutineCallProviderAttempted,
+  markProviderRoutineCallSucceeded,
   type OrgConnectorConnection,
+  type ProviderRoutineCall,
+  type ProviderRoutineCallRedactedPayload,
 } from "@db/app";
 import { db as appDb } from "@db/app/client";
 import { connectorRuntimeToolName } from "@repo/connector-contract";
@@ -84,7 +85,7 @@ async function callConnectorRuntimeTool(
     runPublicId: context.runPublicId,
     runtimeToolName: context.runtimeToolName,
   };
-  let integrationCall: IntegrationCall | null = null;
+  let providerRoutineCall: ProviderRoutineCall | null = null;
 
   try {
     const connection = await getCurrentOrgConnectorConnection(appDb, {
@@ -102,24 +103,37 @@ async function callConnectorRuntimeTool(
     }
 
     const caller = calledByContext(context);
-    integrationCall = await safelyCreateIntegrationCall({
+    providerRoutineCall = await safelyCreateProviderRoutineCall({
       calledById: caller.calledById,
       calledByKind: caller.calledByKind,
       calledByUserId: caller.calledByUserId,
       clerkOrgId: context.clerkOrgId,
-      connectorConnectionId: connection.id,
+      providerConnectionId: connection.id,
       inputRedacted: redactedPresence(input),
       provider: "linear",
       providerActorId: connection.providerActorId,
       providerToolName: context.providerToolName,
       providerWorkspaceId: connection.providerWorkspaceId,
-      routineName: context.runtimeToolName,
+      routineId: context.runtimeToolName,
+      sourceClientId: null,
+      sourceRef: caller.calledById,
+      sourceSurface:
+        caller.calledByKind === "automation" ? "automation" : "system",
     });
 
     const accessToken = await getFreshLinearConnectorAccessToken({
       connection,
       db: appDb,
     });
+    if (providerRoutineCall) {
+      await safelyMarkProviderRoutineCallProviderAttempted(
+        {
+          clerkOrgId: context.clerkOrgId,
+          publicId: providerRoutineCall.publicId,
+        },
+        logContext
+      );
+    }
     const result = await callLinearMcpTool({
       accessToken,
       endpoint: connection.mcpEndpoint,
@@ -127,12 +141,12 @@ async function callConnectorRuntimeTool(
       name: context.providerToolName,
     });
 
-    if (integrationCall) {
-      await safelyMarkIntegrationCallSucceeded(
+    if (providerRoutineCall) {
+      await safelyMarkProviderRoutineCallSucceeded(
         {
           clerkOrgId: context.clerkOrgId,
           outputRedacted: redactedPresence(result),
-          publicId: integrationCall.publicId,
+          publicId: providerRoutineCall.publicId,
         },
         logContext
       );
@@ -144,13 +158,13 @@ async function callConnectorRuntimeTool(
     });
     return result;
   } catch (error) {
-    if (integrationCall) {
-      await safelyMarkIntegrationCallFailed(
+    if (providerRoutineCall) {
+      await safelyMarkProviderRoutineCallFailed(
         {
           clerkOrgId: context.clerkOrgId,
           errorCode: getErrorCode(error),
-          errorMessage: safeIntegrationCallErrorMessage(error),
-          publicId: integrationCall.publicId,
+          errorMessage: safeProviderRoutineCallErrorMessage(error),
+          publicId: providerRoutineCall.publicId,
         },
         logContext
       );
@@ -188,55 +202,77 @@ function calledByContext(context: RuntimeToolCallContext) {
   };
 }
 
-async function safelyCreateIntegrationCall(input: {
+async function safelyCreateProviderRoutineCall(input: {
   calledById: string;
   calledByKind: "automation" | "system" | "user";
   calledByUserId: string | null;
   clerkOrgId: string;
-  connectorConnectionId: number;
-  inputRedacted: IntegrationCallRedactedPayload;
+  providerConnectionId: number;
+  inputRedacted: ProviderRoutineCallRedactedPayload;
   provider: "linear";
   providerActorId: string | null;
   providerToolName: string;
   providerWorkspaceId: string | null;
-  routineName: string;
+  routineId: string;
+  sourceClientId: string | null;
+  sourceRef: string | null;
+  sourceSurface: "automation" | "hosted_mcp" | "native_cli" | "system";
 }) {
   try {
-    return await createIntegrationCall(appDb, input);
+    return await createProviderRoutineCall(appDb, input);
   } catch (error) {
-    log.warn("[connectors] integration call ledger create failed", {
+    log.warn("[connectors] provider routine call ledger create failed", {
       clerkOrgId: input.clerkOrgId,
       failure: safeErrorDetails(error),
       provider: input.provider,
       providerToolName: input.providerToolName,
-      routineName: input.routineName,
+      routineId: input.routineId,
       success: false,
     });
     return null;
   }
 }
 
-async function safelyMarkIntegrationCallSucceeded(
+async function safelyMarkProviderRoutineCallProviderAttempted(
   input: {
     clerkOrgId: string;
-    outputRedacted: IntegrationCallRedactedPayload;
     publicId: string;
   },
   logContext: Record<string, unknown>
 ) {
   try {
-    await markIntegrationCallSucceeded(appDb, input);
+    await markProviderRoutineCallProviderAttempted(appDb, input);
   } catch (error) {
-    log.warn("[connectors] integration call ledger update failed", {
+    log.warn("[connectors] provider routine call attempted update failed", {
       ...logContext,
       failure: safeErrorDetails(error),
-      integrationCallPublicId: input.publicId,
+      providerRoutineCallPublicId: input.publicId,
       success: false,
     });
   }
 }
 
-async function safelyMarkIntegrationCallFailed(
+async function safelyMarkProviderRoutineCallSucceeded(
+  input: {
+    clerkOrgId: string;
+    outputRedacted: ProviderRoutineCallRedactedPayload;
+    publicId: string;
+  },
+  logContext: Record<string, unknown>
+) {
+  try {
+    await markProviderRoutineCallSucceeded(appDb, input);
+  } catch (error) {
+    log.warn("[connectors] provider routine call ledger update failed", {
+      ...logContext,
+      failure: safeErrorDetails(error),
+      providerRoutineCallPublicId: input.publicId,
+      success: false,
+    });
+  }
+}
+
+async function safelyMarkProviderRoutineCallFailed(
   input: {
     clerkOrgId: string;
     errorCode?: string;
@@ -246,12 +282,12 @@ async function safelyMarkIntegrationCallFailed(
   logContext: Record<string, unknown>
 ) {
   try {
-    await markIntegrationCallFailed(appDb, input);
+    await markProviderRoutineCallFailed(appDb, input);
   } catch (error) {
-    log.warn("[connectors] integration call ledger update failed", {
+    log.warn("[connectors] provider routine call ledger update failed", {
       ...logContext,
       failure: safeErrorDetails(error),
-      integrationCallPublicId: input.publicId,
+      providerRoutineCallPublicId: input.publicId,
       success: false,
     });
   }
@@ -300,7 +336,7 @@ function normalizeMcpToolInput(input: unknown) {
   return { input };
 }
 
-function redactedPresence(value: unknown): IntegrationCallRedactedPayload {
+function redactedPresence(value: unknown): ProviderRoutineCallRedactedPayload {
   if (value === undefined) {
     return null;
   }
@@ -335,7 +371,7 @@ function safeLinearErrorMessage(error: unknown) {
   }
 }
 
-function safeIntegrationCallErrorMessage(error: unknown) {
+function safeProviderRoutineCallErrorMessage(error: unknown) {
   return isKnownLinearError(error) ? safeLinearErrorMessage(error) : undefined;
 }
 

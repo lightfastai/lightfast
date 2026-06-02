@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { z } from "zod";
 import {
   CONNECTABLE_CONNECTOR_PROVIDERS,
   CONNECTOR_CATALOG,
@@ -23,6 +24,25 @@ describe("connector catalog", () => {
     expect(
       CONNECTOR_CATALOG.every((entry) => entry.builder === "Lightfast")
     ).toBe(true);
+  });
+});
+
+describe("connector inputs", () => {
+  it("validates agent enablement input separately from automation enablement", async () => {
+    const contract = (await import("../index")) as {
+      connectorSetAgentEnabledInputSchema?: z.ZodType<unknown>;
+    };
+
+    expect("connectorSetAgentEnabledInputSchema" in contract).toBe(true);
+    expect(
+      contract.connectorSetAgentEnabledInputSchema?.parse({
+        enabled: true,
+        provider: "linear",
+      })
+    ).toEqual({
+      enabled: true,
+      provider: "linear",
+    });
   });
 });
 

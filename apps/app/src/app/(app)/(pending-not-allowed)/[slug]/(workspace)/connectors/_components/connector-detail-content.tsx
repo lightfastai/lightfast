@@ -6,6 +6,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import {
   Activity,
+  Bot,
   Building2,
   CalendarDays,
   Link2,
@@ -123,6 +124,11 @@ export function ConnectorDetailContent({
               {connection.enabledForAutomations ? "Enabled" : "Disabled"}
             </Badge>
           </PropertyRow>
+          <PropertyRow icon={<Bot className={iconClass} />} label="Agents">
+            <Badge className="text-muted-foreground" variant="outline">
+              {connection.enabledForAgents ? "Enabled" : "Disabled"}
+            </Badge>
+          </PropertyRow>
           {lastRefreshAt ? (
             <PropertyRow
               icon={<RefreshCcw className={iconClass} />}
@@ -163,6 +169,14 @@ export function ConnectorDetailContent({
                   </p>
                 ) : null}
               </div>
+              {tool.availableForAgents ? (
+                <span
+                  aria-label="Available for agents"
+                  className="mt-1.5 size-1.5 shrink-0 rounded-full bg-sky-500"
+                  role="img"
+                  title="Available for agents"
+                />
+              ) : null}
               {tool.availableForAutomations ? (
                 <span
                   aria-label="Available for automations"

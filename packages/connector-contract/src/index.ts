@@ -108,6 +108,7 @@ export type FullConnectorToolManifest = z.infer<
 export const displayConnectorToolSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
+  availableForAgents: z.boolean(),
   availableForAutomations: z.boolean(),
 });
 export type DisplayConnectorTool = z.infer<typeof displayConnectorToolSchema>;
@@ -140,6 +141,11 @@ export const connectorProviderInputSchema = z.object({
 });
 
 export const connectorSetAutomationEnabledInputSchema = z.object({
+  provider: connectableConnectorProviderSchema,
+  enabled: z.boolean(),
+});
+
+export const connectorSetAgentEnabledInputSchema = z.object({
   provider: connectableConnectorProviderSchema,
   enabled: z.boolean(),
 });

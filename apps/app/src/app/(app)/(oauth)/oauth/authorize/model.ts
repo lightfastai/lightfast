@@ -155,6 +155,22 @@ function permissionForScope(
         label: "Read signals",
         scope,
       };
+    case "mcp:provider_routines:write":
+      return {
+        description:
+          "Call enabled connector routines for your selected organization.",
+        kind: "write",
+        label: "Call connector routines",
+        scope,
+      };
+    case "mcp:provider_routines:read":
+      return {
+        description:
+          "Find enabled connector routines for your selected organization.",
+        kind: "read",
+        label: "Find connector routines",
+        scope,
+      };
     case "mcp:system:read":
       return {
         description: "Check connection health and available capabilities.",

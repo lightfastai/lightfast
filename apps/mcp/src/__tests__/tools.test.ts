@@ -10,6 +10,7 @@ import {
 
 const db = { kind: "mock-db" } as unknown as Database;
 const signalId = "signal_123e4567-e89b-12d3-a456-426614174000";
+const providerRoutineCallId = "provider_routine_call_123";
 
 function context(overrides: Partial<HostedMcpContext> = {}): HostedMcpContext {
   return {
@@ -50,12 +51,31 @@ function dependencies(
 ): ExecuteHostedMcpToolDependencies {
   return {
     assertOrgAccess: vi.fn().mockResolvedValue(undefined),
+    callProviderRoutine: vi.fn().mockResolvedValue({
+      provider: "linear",
+      providerRoutineCallId,
+      providerToolName: "list_issues",
+      result: { content: [{ text: "ok" }] },
+      routineId: "linear__list_issues",
+      status: "succeeded",
+    }),
     createSignalForActor: vi.fn().mockResolvedValue({
       id: signalId,
       status: "queued",
       visibilityScope: "user",
     }),
     db,
+    findProviderRoutines: vi.fn().mockResolvedValue({
+      routines: [
+        {
+          classification: "read",
+          provider: "linear",
+          providerToolName: "list_issues",
+          routineId: "linear__list_issues",
+          title: "List Issues",
+        },
+      ],
+    }),
     getVisibleSignalByPublicId: vi.fn().mockResolvedValue(signal()),
     now: vi.fn(() => new Date("2026-06-01T00:00:00.000Z")),
     recordMcpAuditEvent: vi.fn().mockResolvedValue(undefined),
@@ -81,6 +101,16 @@ describe("hosted MCP tools", () => {
         contractPath: "system.health",
         name: "lightfast_system_health",
         requiredScope: "mcp:system:read",
+      }),
+      expect.objectContaining({
+        contractPath: "proxy.call",
+        name: "proxy_call",
+        requiredScope: "mcp:provider_routines:read",
+      }),
+      expect.objectContaining({
+        contractPath: "proxy.find",
+        name: "proxy_find",
+        requiredScope: "mcp:provider_routines:read",
       }),
     ]);
   });
@@ -234,5 +264,141 @@ describe("hosted MCP tools", () => {
         }),
       })
     );
+  });
+
+  it("calls proxy_find with read provider-routine scope", async () => {
+    const deps = dependencies();
+
+    await expect(
+      executeHostedMcpTool({
+        context: context({ scopes: ["mcp:provider_routines:read"] }),
+        contractPath: "proxy.find",
+        dependencies: deps,
+        rawInput: { query: "issues" },
+      })
+    ).resolves.toEqual({
+      routines: [
+        {
+          classification: "read",
+          provider: "linear",
+          providerToolName: "list_issues",
+          routineId: "linear__list_issues",
+          title: "List Issues",
+        },
+      ],
+    });
+
+    expect(deps.findProviderRoutines).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actor: { orgId: "org_test", userId: "user_test" },
+        db,
+        scopes: {
+          providerRoutineRead: true,
+          providerRoutineWrite: false,
+        },
+        source: {
+          clientId: "mcp_client_test",
+          ref: "mcp_grant_test",
+          surface: "hosted_mcp",
+        },
+      }),
+      { query: "issues" }
+    );
+  });
+
+  it("lets write provider-routine scope discover read routines", async () => {
+    const deps = dependencies();
+
+    await expect(
+      executeHostedMcpTool({
+        context: context({ scopes: ["mcp:provider_routines:write"] }),
+        contractPath: "proxy.find",
+        dependencies: deps,
+        rawInput: { readOnly: true },
+      })
+    ).resolves.toEqual(
+      expect.objectContaining({ routines: expect.any(Array) })
+    );
+
+    expect(deps.findProviderRoutines).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scopes: {
+          providerRoutineRead: true,
+          providerRoutineWrite: true,
+        },
+      }),
+      { readOnly: true }
+    );
+  });
+
+  it("calls proxy_call and records provider routine call id in audit", async () => {
+    const deps = dependencies();
+
+    await expect(
+      executeHostedMcpTool({
+        context: context({ scopes: ["mcp:provider_routines:read"] }),
+        contractPath: "proxy.call",
+        dependencies: deps,
+        rawInput: {
+          input: { query: "ABC" },
+          routineId: "linear__list_issues",
+        },
+      })
+    ).resolves.toEqual({
+      provider: "linear",
+      providerRoutineCallId,
+      providerToolName: "list_issues",
+      result: { content: [{ text: "ok" }] },
+      routineId: "linear__list_issues",
+      status: "succeeded",
+    });
+
+    expect(deps.callProviderRoutine).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scopes: {
+          providerRoutineRead: true,
+          providerRoutineWrite: false,
+        },
+      }),
+      {
+        input: { query: "ABC" },
+        routineId: "linear__list_issues",
+      }
+    );
+    expect(deps.recordMcpAuditEvent).toHaveBeenCalledWith(
+      db,
+      expect.objectContaining({
+        eventName: "mcp.proxy.call",
+        metadata: expect.objectContaining({
+          providerRoutineCallId,
+          toolName: "proxy_call",
+        }),
+      })
+    );
+  });
+
+  it("maps provider routine scope failures from proxy_call", async () => {
+    const deps = dependencies({
+      callProviderRoutine: vi.fn().mockRejectedValue(
+        Object.assign(new Error("Provider routine requires write scope."), {
+          code: "PROVIDER_ROUTINE_INSUFFICIENT_SCOPE",
+        })
+      ),
+    });
+
+    await expect(
+      executeHostedMcpTool({
+        context: context({ scopes: ["mcp:provider_routines:read"] }),
+        contractPath: "proxy.call",
+        dependencies: deps,
+        rawInput: {
+          input: { title: "Bug" },
+          routineId: "linear__create_issue",
+        },
+      })
+    ).rejects.toMatchObject({
+      code: "insufficient_scope",
+      status: 403,
+    });
   });
 });

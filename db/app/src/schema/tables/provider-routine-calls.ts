@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  boolean,
   index,
   json,
   mysqlTable,
@@ -11,7 +12,7 @@ import {
   varchar,
 } from "drizzle-orm/mysql-core";
 
-export const INTEGRATION_CALL_ID_PREFIX = "integration_call_";
+export const PROVIDER_ROUTINE_CALL_ID_PREFIX = "provider_routine_call_";
 
 const PUBLIC_ID_LENGTH = 80;
 const CLERK_ID_LENGTH = 64;
@@ -20,18 +21,24 @@ const CODE_LENGTH = 32;
 const ROUTINE_NAME_LENGTH = 128;
 const PROVIDER_REF_LENGTH = 128;
 const ERROR_CODE_LENGTH = 64;
+const SOURCE_REF_LENGTH = 128;
 
-export type IntegrationCallCalledByKind = "automation" | "system" | "user";
-export type IntegrationCallProvider = "linear";
-export type IntegrationCallStatus = "failed" | "running" | "succeeded";
-export type IntegrationCallRedactedPayload = Record<string, unknown> | null;
+export type ProviderRoutineCallCalledByKind = "automation" | "system" | "user";
+export type ProviderRoutineCallProvider = "linear";
+export type ProviderRoutineCallSourceSurface =
+  | "automation"
+  | "hosted_mcp"
+  | "native_cli"
+  | "system";
+export type ProviderRoutineCallStatus = "failed" | "running" | "succeeded";
+export type ProviderRoutineCallRedactedPayload = Record<string, unknown> | null;
 
-export function createIntegrationCallId() {
-  return `${INTEGRATION_CALL_ID_PREFIX}${randomUUID()}`;
+export function createProviderRoutineCallId() {
+  return `${PROVIDER_ROUTINE_CALL_ID_PREFIX}${randomUUID()}`;
 }
 
-export const integrationCalls = mysqlTable(
-  "lightfast_integration_calls",
+export const providerRoutineCalls = mysqlTable(
+  "lightfast_provider_routine_calls",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -39,12 +46,12 @@ export const integrationCalls = mysqlTable(
 
     publicId: varchar("public_id", { length: PUBLIC_ID_LENGTH })
       .notNull()
-      .$defaultFn(createIntegrationCallId),
+      .$defaultFn(createProviderRoutineCallId),
 
     clerkOrgId: varchar("clerk_org_id", { length: CLERK_ID_LENGTH }).notNull(),
 
     calledByKind: varchar("called_by_kind", { length: CODE_LENGTH })
-      .$type<IntegrationCallCalledByKind>()
+      .$type<ProviderRoutineCallCalledByKind>()
       .notNull(),
 
     calledById: varchar("called_by_id", { length: CALLER_ID_LENGTH }).notNull(),
@@ -54,10 +61,10 @@ export const integrationCalls = mysqlTable(
     }),
 
     provider: varchar("provider", { length: CODE_LENGTH })
-      .$type<IntegrationCallProvider>()
+      .$type<ProviderRoutineCallProvider>()
       .notNull(),
 
-    routineName: varchar("routine_name", {
+    routineId: varchar("routine_id", {
       length: ROUTINE_NAME_LENGTH,
     }).notNull(),
 
@@ -65,7 +72,7 @@ export const integrationCalls = mysqlTable(
       length: ROUTINE_NAME_LENGTH,
     }).notNull(),
 
-    connectorConnectionId: bigint("connector_connection_id", {
+    providerConnectionId: bigint("provider_connection_id", {
       mode: "number",
       unsigned: true,
     }).notNull(),
@@ -78,15 +85,26 @@ export const integrationCalls = mysqlTable(
       length: PROVIDER_REF_LENGTH,
     }),
 
+    providerAttempted: boolean("provider_attempted").default(false).notNull(),
+
+    sourceSurface: varchar("source_surface", { length: CODE_LENGTH })
+      .$type<ProviderRoutineCallSourceSurface>()
+      .default("system")
+      .notNull(),
+
+    sourceRef: varchar("source_ref", { length: SOURCE_REF_LENGTH }),
+
+    sourceClientId: varchar("source_client_id", { length: SOURCE_REF_LENGTH }),
+
     status: varchar("status", { length: CODE_LENGTH })
-      .$type<IntegrationCallStatus>()
+      .$type<ProviderRoutineCallStatus>()
       .notNull(),
 
     inputRedacted:
-      json("input_redacted").$type<IntegrationCallRedactedPayload>(),
+      json("input_redacted").$type<ProviderRoutineCallRedactedPayload>(),
 
     outputRedacted:
-      json("output_redacted").$type<IntegrationCallRedactedPayload>(),
+      json("output_redacted").$type<ProviderRoutineCallRedactedPayload>(),
 
     errorCode: varchar("error_code", { length: ERROR_CODE_LENGTH }),
 
@@ -106,31 +124,32 @@ export const integrationCalls = mysqlTable(
       .notNull(),
   },
   (table) => ({
-    publicIdUq: uniqueIndex("integration_calls_public_id_uq").on(
+    publicIdUq: uniqueIndex("provider_routine_calls_public_id_uq").on(
       table.publicId
     ),
-    orgCreatedIdx: index("integration_calls_org_created_idx").on(
+    orgCreatedIdx: index("provider_routine_calls_org_created_idx").on(
       table.clerkOrgId,
       table.createdAt,
       table.id
     ),
-    orgCallerCreatedIdx: index("integration_calls_org_caller_created_idx").on(
+    orgCallerCreatedIdx: index(
+      "provider_routine_calls_org_caller_created_idx"
+    ).on(
       table.clerkOrgId,
       table.calledByKind,
       table.calledById,
       table.createdAt,
       table.id
     ),
-    connectionCreatedIdx: index("integration_calls_connection_created_idx").on(
-      table.connectorConnectionId,
-      table.createdAt,
-      table.id
-    ),
+    connectionCreatedIdx: index(
+      "provider_routine_calls_connection_created_idx"
+    ).on(table.providerConnectionId, table.createdAt, table.id),
     providerRoutineCreatedIdx: index(
-      "integration_calls_provider_routine_created_idx"
-    ).on(table.provider, table.routineName, table.createdAt, table.id),
+      "provider_routine_calls_provider_routine_created_idx"
+    ).on(table.provider, table.routineId, table.createdAt, table.id),
   })
 );
 
-export type IntegrationCall = typeof integrationCalls.$inferSelect;
-export type InsertIntegrationCall = typeof integrationCalls.$inferInsert;
+export type ProviderRoutineCall = typeof providerRoutineCalls.$inferSelect;
+export type InsertProviderRoutineCall =
+  typeof providerRoutineCalls.$inferInsert;

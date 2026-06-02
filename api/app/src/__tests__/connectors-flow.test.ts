@@ -15,6 +15,7 @@ const markCurrentOrgConnectorConnectionErrorMock = vi.fn();
 const updateConnectorToolManifestMock = vi.fn();
 const recordConnectorToolRefreshErrorMock = vi.fn();
 const setConnectorAutomationEnabledDbMock = vi.fn();
+const setConnectorAgentEnabledDbMock = vi.fn();
 const updateObservedConnectorTokensMock = vi.fn();
 const createLinearPkcePairMock = vi.fn();
 const exchangeLinearOAuthCodeMock = vi.fn();
@@ -49,6 +50,7 @@ vi.mock("@db/app", () => ({
   markCurrentOrgConnectorConnectionRevoked:
     markCurrentOrgConnectorConnectionRevokedMock,
   recordConnectorToolRefreshError: recordConnectorToolRefreshErrorMock,
+  setConnectorAgentEnabled: setConnectorAgentEnabledDbMock,
   setConnectorAutomationEnabled: setConnectorAutomationEnabledDbMock,
   updateConnectorToolManifest: updateConnectorToolManifestMock,
   updateObservedConnectorTokens: updateObservedConnectorTokensMock,
@@ -112,6 +114,12 @@ const {
   refreshLinearConnectorTools,
   startLinearConnectorOAuth,
 } = await import("../services/connectors/linear-flow");
+const linearFlow = (await import("../services/connectors/linear-flow")) as {
+  setLinearConnectorAgentEnabled?: (
+    context: ReturnType<typeof ctx>,
+    input: { enabled: boolean }
+  ) => Promise<{ enabled: boolean }>;
+};
 const { listConnectorsForOrg } = await import("../services/connectors/catalog");
 
 function ctx(input: { isAdmin?: boolean } = {}) {
@@ -150,6 +158,7 @@ function connection(
     createdAt: new Date("2026-06-01T00:00:00.000Z"),
     encryptedAccessToken: "encrypted_access",
     encryptedRefreshToken: "encrypted_refresh",
+    enabledForAgents: false,
     enabledForAutomations: true,
     id: 1,
     lastToolRefreshAt: new Date("2026-06-01T00:00:00.000Z"),
@@ -202,19 +211,23 @@ describe("connector catalog services", () => {
     expect(rows).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
+          availableForAgents: false,
           availableForAutomations: true,
           canManage: true,
           catalogStatus: "available",
           connectAvailability: { status: "available" },
           connection: expect.objectContaining({
+            enabledForAgents: false,
             status: "active",
             tools: [
               {
+                availableForAgents: false,
                 availableForAutomations: true,
                 description: "Create issue",
                 name: "create_issue",
               },
               {
+                availableForAgents: false,
                 availableForAutomations: false,
                 description: "Unsupported",
                 name: "Create Issue",
@@ -387,6 +400,8 @@ describe("Linear connector flow", () => {
     markCurrentOrgConnectorConnectionErrorMock.mockReset();
     markCurrentOrgConnectorConnectionRevokedMock.mockReset();
     recordConnectorToolRefreshErrorMock.mockReset();
+    setConnectorAgentEnabledDbMock.mockReset();
+    setConnectorAgentEnabledDbMock.mockResolvedValue(true);
     refreshLinearOAuthTokenMock.mockReset();
     revokeLinearOAuthTokenMock.mockReset();
     updateConnectorToolManifestMock.mockReset();
@@ -848,6 +863,23 @@ describe("Linear connector flow", () => {
       }
     );
     expect(listLinearMcpToolsMock).not.toHaveBeenCalled();
+  });
+
+  it("sets Linear agent enablement through the current org connector row", async () => {
+    expect(typeof linearFlow.setLinearConnectorAgentEnabled).toBe("function");
+
+    await expect(
+      linearFlow.setLinearConnectorAgentEnabled?.(ctx(), { enabled: true })
+    ).resolves.toEqual({ enabled: true });
+
+    expect(setConnectorAgentEnabledDbMock).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        clerkOrgId: "org_acme",
+        enabled: true,
+        provider: "linear",
+      }
+    );
   });
 
   it("wipes local tokens and manifest even when provider revoke fails", async () => {

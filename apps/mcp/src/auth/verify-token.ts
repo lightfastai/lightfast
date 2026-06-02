@@ -6,6 +6,8 @@ import { env } from "../env";
 
 const mcpScopeSchema = z.enum([
   "mcp:system:read",
+  "mcp:provider_routines:read",
+  "mcp:provider_routines:write",
   "mcp:signals:read",
   "mcp:signals:write",
 ]);

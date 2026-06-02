@@ -259,6 +259,7 @@ async function createBoundSourceControlBinding(input: {
 }
 
 async function seedDecisionRows(input: {
+  providerConnectionId: number;
   orgId: string;
   userId: string;
   nowMs?: number;
@@ -266,48 +267,53 @@ async function seedDecisionRows(input: {
   const [
     { db },
     {
-      createIntegrationCall,
-      markIntegrationCallFailed,
-      markIntegrationCallSucceeded,
+      createProviderRoutineCall,
+      markProviderRoutineCallFailed,
+      markProviderRoutineCallSucceeded,
     },
   ] = await Promise.all([import("@db/app/client"), import("@db/app")]);
   const now = input.nowMs ?? Date.now();
 
-  const success = await createIntegrationCall(db, {
+  const success = await createProviderRoutineCall(db, {
     calledById: "automation_run_daily-triage",
     calledByKind: "automation",
     clerkOrgId: input.orgId,
-    connectorConnectionId: 101,
     inputRedacted: { present: true },
     provider: "linear",
     providerActorId: "linear-user-agent",
+    providerConnectionId: input.providerConnectionId,
     providerToolName: "create_issue",
     providerWorkspaceId: "linear-workspace-lightfast",
-    routineName: "linear__create_issue",
+    routineId: "linear__create_issue",
+    sourceSurface: "automation",
+    sourceRef: "run_decisions_seed_success",
     startedAt: new Date(now - 12 * 60 * 1000),
   });
-  await markIntegrationCallSucceeded(db, {
+  await markProviderRoutineCallSucceeded(db, {
     clerkOrgId: input.orgId,
     finishedAt: new Date(now - 12 * 60 * 1000 + 1840),
     outputRedacted: { present: true },
     publicId: success.publicId,
   });
 
-  const failed = await createIntegrationCall(db, {
+  const failed = await createProviderRoutineCall(db, {
     calledById: "chat_message_decision-1",
     calledByKind: "user",
     calledByUserId: input.userId,
     clerkOrgId: input.orgId,
-    connectorConnectionId: 101,
     inputRedacted: { present: true },
     provider: "linear",
     providerActorId: "linear-user-agent",
+    providerConnectionId: input.providerConnectionId,
     providerToolName: "list_issues",
     providerWorkspaceId: "linear-workspace-lightfast",
-    routineName: "linear__list_issues",
+    routineId: "linear__list_issues",
+    sourceSurface: "hosted_mcp",
+    sourceRef: "mcp_decisions_seed_failed",
+    sourceClientId: "mcp_decisions_seed_client",
     startedAt: new Date(now - 7 * 60 * 1000),
   });
-  await markIntegrationCallFailed(db, {
+  await markProviderRoutineCallFailed(db, {
     clerkOrgId: input.orgId,
     errorCode: "LINEAR_MCP_TIMEOUT",
     errorMessage: "Linear MCP tool call timed out.",
@@ -315,17 +321,19 @@ async function seedDecisionRows(input: {
     publicId: failed.publicId,
   });
 
-  await createIntegrationCall(db, {
+  await createProviderRoutineCall(db, {
     calledById: "system-sync-linear-webhook",
     calledByKind: "system",
     clerkOrgId: input.orgId,
-    connectorConnectionId: 101,
     inputRedacted: { present: true },
     provider: "linear",
     providerActorId: "linear-app-lightfast",
+    providerConnectionId: input.providerConnectionId,
     providerToolName: "sync_webhook_event",
     providerWorkspaceId: "linear-workspace-lightfast",
-    routineName: "linear__sync_webhook_event",
+    routineId: "linear__sync_webhook_event",
+    sourceSurface: "system",
+    sourceRef: "system_decisions_seed_running",
     startedAt: new Date(now - 90 * 1000),
   });
 }
@@ -356,16 +364,23 @@ async function createActiveLinearRuntimeConnection(input: {
   config: DecisionsSmokeConfig;
   orgId: string;
   userId: string;
-}) {
-  const [{ db }, { finalizeCurrentOrgConnectorConnection }, { encrypt }] =
-    await Promise.all([
-      import("@db/app/client"),
-      import("@db/app"),
-      import("@repo/app-encryption"),
-    ]);
+}): Promise<number> {
+  const [
+    { db },
+    {
+      finalizeCurrentOrgConnectorConnection,
+      setConnectorAgentEnabled,
+      setConnectorAutomationEnabled,
+    },
+    { encrypt },
+  ] = await Promise.all([
+    import("@db/app/client"),
+    import("@db/app"),
+    import("@repo/app-encryption"),
+  ]);
   const encryptionKey = requireEncryptionKey();
 
-  await finalizeCurrentOrgConnectorConnection(db, {
+  const connection = await finalizeCurrentOrgConnectorConnection(db, {
     accessTokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
     clerkOrgId: input.orgId,
     connectedByUserId: input.userId,
@@ -397,12 +412,17 @@ async function createActiveLinearRuntimeConnection(input: {
     ],
   });
 
-  const { setConnectorAutomationEnabled } = await import("@db/app");
   await setConnectorAutomationEnabled(db, {
     clerkOrgId: input.orgId,
     enabled: true,
     provider: "linear",
   });
+  await setConnectorAgentEnabled(db, {
+    clerkOrgId: input.orgId,
+    enabled: true,
+    provider: "linear",
+  });
+  return connection.id;
 }
 
 async function recordRuntimeDecision(input: {
@@ -604,15 +624,20 @@ export async function runRealClerkDecisionsSmoke(
       orgSlug: config.orgSlug,
       userId: user.id,
     });
+    let providerConnectionId = 0;
     if (config.runtimeDecisionEnabled) {
-      await createActiveLinearRuntimeConnection({
+      providerConnectionId = await createActiveLinearRuntimeConnection({
         config,
         orgId: org.id,
         userId: user.id,
       });
       await recordRuntimeDecision({ config, orgId: org.id });
     }
-    await seedDecisionRows({ orgId: org.id, userId: user.id });
+    await seedDecisionRows({
+      orgId: org.id,
+      providerConnectionId,
+      userId: user.id,
+    });
 
     const ticket = await createClerkSignInToken(config, user.id);
     await signInWithClerkTicket(config, { orgId: org.id, ticket });

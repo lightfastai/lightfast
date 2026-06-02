@@ -28,6 +28,7 @@ type ConnectAvailability =
     };
 
 export interface ConnectorCatalogRow {
+  availableForAgents: boolean;
   availableForAutomations: boolean;
   builder: "Lightfast";
   canManage: boolean;
@@ -36,6 +37,7 @@ export interface ConnectorCatalogRow {
   connectAvailability: ConnectAvailability;
   connection: {
     connectedAt: Date;
+    enabledForAgents: boolean;
     enabledForAutomations: boolean;
     lastToolRefreshAt: Date | null;
     lastToolRefreshErrorAt: Date | null;
@@ -90,6 +92,26 @@ function canUseToolForAutomation(input: {
   }
 }
 
+function canUseToolForAgent(input: {
+  connection: OrgConnectorConnection;
+  provider: ConnectableConnectorProvider;
+  toolName: string;
+}) {
+  if (
+    input.connection.status !== "active" ||
+    !input.connection.enabledForAgents
+  ) {
+    return false;
+  }
+
+  try {
+    connectorRuntimeToolName(input.provider, input.toolName);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function displayTools(
   connection: OrgConnectorConnection | undefined
 ): DisplayConnectorTool[] {
@@ -100,6 +122,11 @@ function displayTools(
   return connection.toolManifest.map((tool) => ({
     name: tool.name,
     ...(tool.description ? { description: tool.description } : {}),
+    availableForAgents: canUseToolForAgent({
+      connection,
+      provider: connection.provider,
+      toolName: tool.name,
+    }),
     availableForAutomations: canUseToolForAutomation({
       connection,
       provider: connection.provider,
@@ -145,6 +172,7 @@ function shapeConnection(
   const tools = displayTools(connection);
   return {
     connectedAt: connection.connectedAt,
+    enabledForAgents: connection.enabledForAgents,
     enabledForAutomations: connection.enabledForAutomations,
     lastToolRefreshAt: connection.lastToolRefreshAt,
     lastToolRefreshErrorAt: connection.lastToolRefreshErrorAt,
@@ -177,6 +205,9 @@ export async function listConnectorsForOrg(
     const shapedConnection = shapeConnection(connection);
     return {
       ...catalogItem,
+      availableForAgents:
+        shapedConnection?.tools.some((tool) => tool.availableForAgents) ??
+        false,
       availableForAutomations:
         shapedConnection?.tools.some((tool) => tool.availableForAutomations) ??
         false,

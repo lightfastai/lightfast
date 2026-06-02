@@ -22,8 +22,17 @@ const context = {
 function dependencies(): ExecuteHostedMcpToolDependencies {
   return {
     assertOrgAccess: vi.fn().mockResolvedValue(undefined),
+    callProviderRoutine: vi.fn().mockResolvedValue({
+      provider: "linear",
+      providerRoutineCallId: "provider_routine_call_123",
+      providerToolName: "list_issues",
+      result: { content: [{ text: "ok" }] },
+      routineId: "linear__list_issues",
+      status: "succeeded",
+    }),
     createSignalForActor: vi.fn(),
     db,
+    findProviderRoutines: vi.fn(),
     getVisibleSignalByPublicId: vi.fn(),
     now: vi
       .fn()
@@ -101,5 +110,36 @@ describe("hosted MCP audit", () => {
     expect(auditPayload).not.toContain("secret-token");
     expect(auditPayload).not.toContain("rawInput");
     expect(auditPayload).not.toContain("structuredContent");
+  });
+
+  it("links proxy_call audit events to provider routine call ids", async () => {
+    const deps = dependencies();
+
+    await executeHostedMcpTool({
+      context: {
+        ...context,
+        scopes: ["mcp:provider_routines:read"],
+      },
+      contractPath: "proxy.call",
+      dependencies: deps,
+      rawInput: {
+        input: { query: "secret-query" },
+        routineId: "linear__list_issues",
+      },
+    });
+
+    expect(deps.recordMcpAuditEvent).toHaveBeenCalledWith(
+      db,
+      expect.objectContaining({
+        eventName: "mcp.proxy.call",
+        metadata: expect.objectContaining({
+          providerRoutineCallId: "provider_routine_call_123",
+        }),
+      })
+    );
+    const auditPayload = JSON.stringify(
+      (deps.recordMcpAuditEvent as ReturnType<typeof vi.fn>).mock.calls
+    );
+    expect(auditPayload).not.toContain("secret-query");
   });
 });

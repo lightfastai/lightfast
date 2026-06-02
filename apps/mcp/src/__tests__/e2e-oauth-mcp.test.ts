@@ -562,8 +562,17 @@ function mcpToolDependencies(): ExecuteHostedMcpToolDependencies {
   });
   return {
     assertOrgAccess: vi.fn().mockResolvedValue(undefined),
+    callProviderRoutine: vi.fn().mockResolvedValue({
+      provider: "linear",
+      providerRoutineCallId: "provider_routine_call_123",
+      providerToolName: "list_issues",
+      result: { content: [{ text: "ok" }] },
+      routineId: "linear__list_issues",
+      status: "succeeded",
+    }),
     createSignalForActor,
     db,
+    findProviderRoutines: vi.fn().mockResolvedValue({ routines: [] }),
     getVisibleSignalByPublicId: vi
       .fn()
       .mockResolvedValue(undefined as Signal | undefined),

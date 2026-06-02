@@ -113,6 +113,13 @@
       "when": 1780387553388,
       "tag": "0015_married_talisman",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "5",
+      "when": 1780407236831,
+      "tag": "0016_normal_gabe_jones",
+      "breakpoints": true
     }
   ]
 }
