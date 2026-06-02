@@ -36,20 +36,20 @@ describe("RepositoryCard", () => {
 
     expect(screen.getByText("acme-live/web")).toBeVisible();
     expect(screen.getByText("Private")).toBeVisible();
-    expect(screen.getByText("Not syncing")).toBeVisible();
+    expect(screen.getByText("Disabled")).toBeVisible();
     expect(
       screen.getByRole("link", { name: "Open on GitHub" })
     ).toHaveAttribute("href", "https://github.com/acme-live/web");
   });
 
-  it("shows the syncing label for enabled repositories", () => {
+  it("shows the enabled label for enabled repositories", () => {
     render(
       <RepositoryCard
         repository={{ ...baseRepository, syncStatus: "enabled" }}
       />
     );
 
-    expect(screen.getByText("Syncing")).toBeVisible();
+    expect(screen.getByText("Enabled")).toBeVisible();
   });
 
   it("reveals the empty watched-paths message when expanded", () => {

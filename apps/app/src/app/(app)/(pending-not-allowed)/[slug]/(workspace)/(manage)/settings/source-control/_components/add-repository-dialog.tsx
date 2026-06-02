@@ -15,7 +15,7 @@ import {
 } from "@repo/ui/components/ui/dialog";
 import { Input } from "@repo/ui/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { GitBranch, Loader2, Search } from "lucide-react";
+import { GitBranch, Loader2, Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTRPC } from "~/trpc/react";
 
@@ -91,13 +91,8 @@ export function AddRepositoryDialog({
   return (
     <Dialog onOpenChange={handleOpenChange} open={isOpen}>
       <DialogTrigger asChild>
-        <Button
-          className="h-6 rounded-lg border border-border/70 bg-muted/30 px-2.5 font-normal text-muted-foreground text-sm hover:bg-muted/60 hover:text-foreground"
-          disabled={disabled}
-          size="sm"
-          type="button"
-          variant="ghost"
-        >
+        <Button disabled={disabled} size="lf" type="button" variant="outline">
+          <Plus aria-hidden="true" className="size-3.5" />
           Add repository
         </Button>
       </DialogTrigger>

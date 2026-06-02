@@ -43,21 +43,18 @@ vi.mock("next/link", () => ({
 }));
 
 vi.mock(
-  "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/(manage)/settings/source-control/_components/organization-card",
+  "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/(manage)/settings/source-control/_components/source-control-connection-card",
   () => ({
-    OrganizationCard: ({
+    SourceControlConnectionCard: ({
       connection,
+      orgSlug,
     }: {
       connection: { accountLogin: string };
-    }) => <div data-testid="organization-card">{connection.accountLogin}</div>,
-  })
-);
-
-vi.mock(
-  "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/(manage)/settings/source-control/_components/lightfast-repository-card",
-  () => ({
-    LightfastRepositoryCard: ({ orgSlug }: { orgSlug: string }) => (
-      <div data-testid="lightfast-repository-card">{orgSlug}</div>
+      orgSlug: string;
+    }) => (
+      <div data-testid="connection-card">
+        {connection.accountLogin}:{orgSlug}
+      </div>
     ),
   })
 );
@@ -125,7 +122,7 @@ beforeEach(() => {
 });
 
 describe("SourceControlSettingsClient", () => {
-  it("renders the three sections when bound", () => {
+  it("renders the connection card and repository list when bound", () => {
     mockQueries({ binding: boundBinding, repositories: boundRepositories });
     render(<SourceControlSettingsClient slug="acme" />);
 
@@ -134,11 +131,8 @@ describe("SourceControlSettingsClient", () => {
     expect(
       screen.getByRole("heading", { name: "Source Control & Git" })
     ).toBeVisible();
-    expect(screen.getByTestId("organization-card")).toHaveTextContent(
-      "acme-live"
-    );
-    expect(screen.getByTestId("lightfast-repository-card")).toHaveTextContent(
-      "acme"
+    expect(screen.getByTestId("connection-card")).toHaveTextContent(
+      "acme-live:acme"
     );
     expect(screen.getByTestId("repository-list")).toHaveTextContent(
       "acme-live"
@@ -164,8 +158,7 @@ describe("SourceControlSettingsClient", () => {
       "href",
       "/acme/tasks/bind"
     );
-    expect(screen.queryByTestId("organization-card")).toBeNull();
-    expect(screen.queryByTestId("lightfast-repository-card")).toBeNull();
+    expect(screen.queryByTestId("connection-card")).toBeNull();
     expect(screen.queryByTestId("repository-list")).toBeNull();
   });
 });

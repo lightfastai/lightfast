@@ -29,8 +29,8 @@ const SYNC_STATUS_LABEL: Record<
   SourceControlRepositoryRow["syncStatus"],
   string
 > = {
-  enabled: "Syncing",
-  disabled: "Not syncing",
+  enabled: "Enabled",
+  disabled: "Disabled",
 };
 
 function SyncStatusIndicator({
@@ -98,10 +98,10 @@ export function RepositoryCard({
   const watchedRegionId = `repository-${repository.id}-watched`;
 
   return (
-    <div className="rounded-[8px] border border-border bg-background p-4">
+    <div className="rounded-[12px] border border-border bg-background p-3">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 gap-2.5">
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-[8px] border border-input bg-background">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-[9px] border border-border bg-transparent">
             <GitBranch
               aria-hidden="true"
               className="size-3.5 text-foreground"
@@ -141,12 +141,15 @@ export function RepositoryCard({
           <DropdownMenuTrigger asChild>
             <Button
               aria-label={`Repository actions for ${repository.fullName}`}
-              className="size-7 rounded-[9px] p-0"
+              className="h-6 w-6 rounded-full"
               size="sm"
               type="button"
               variant="ghost"
             >
-              <MoreHorizontal aria-hidden="true" className="size-4" />
+              <MoreHorizontal
+                aria-hidden="true"
+                className="size-3.5 opacity-50"
+              />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -165,7 +168,7 @@ export function RepositoryCard({
 
       {expanded ? (
         <div
-          className="mt-3 rounded-[8px] border border-border bg-background/50 p-3"
+          className="mt-3 rounded-[8px] border border-border bg-card/60 p-3"
           id={watchedRegionId}
         >
           <WatchedPaths globs={repository.watchedPathGlobs} />

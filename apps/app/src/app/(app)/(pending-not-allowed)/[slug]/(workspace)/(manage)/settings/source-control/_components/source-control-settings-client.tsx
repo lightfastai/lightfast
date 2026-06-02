@@ -6,9 +6,8 @@ import { ExternalLink } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { useTRPC } from "~/trpc/react";
-import { LightfastRepositoryCard } from "./lightfast-repository-card";
-import { OrganizationCard } from "./organization-card";
 import { RepositoryList } from "./repository-list";
+import { SourceControlConnectionCard } from "./source-control-connection-card";
 
 interface SourceControlSettingsClientProps {
   slug: string;
@@ -42,12 +41,11 @@ export function SourceControlSettingsClient({
 
       {connection ? (
         <>
-          <OrganizationCard connection={connection} />
-          <LightfastRepositoryCard connection={connection} orgSlug={slug} />
+          <SourceControlConnectionCard connection={connection} orgSlug={slug} />
           <RepositoryList repositories={sourceControlRepositories} />
         </>
       ) : (
-        <div className="rounded-[8px] border border-border bg-background p-4">
+        <div className="rounded-[12px] border border-border bg-background p-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
               <p className="font-medium text-foreground text-sm">

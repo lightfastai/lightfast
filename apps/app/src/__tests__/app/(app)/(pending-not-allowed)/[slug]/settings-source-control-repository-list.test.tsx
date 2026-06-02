@@ -142,6 +142,30 @@ describe("RepositoryList", () => {
     expect(cards[0]).toHaveTextContent("acme-live/app");
   });
 
+  it("filters imported repositories by search query", () => {
+    renderList();
+
+    expect(screen.getByTestId("repository-card")).toHaveTextContent(
+      "acme-live/app"
+    );
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Search repositories" }),
+      { target: { value: "no-such-repo" } }
+    );
+    expect(screen.queryByTestId("repository-card")).toBeNull();
+    expect(
+      screen.getByText("No repositories match these filters.")
+    ).toBeVisible();
+  });
+
+  it("hides the search controls when no repositories are imported", () => {
+    renderList({ repositories: [availableRepo] });
+
+    expect(
+      screen.queryByRole("textbox", { name: "Search repositories" })
+    ).toBeNull();
+  });
+
   it("shows the empty prompt when no repositories are imported", () => {
     renderList({ repositories: [availableRepo] });
 
