@@ -82,6 +82,20 @@ function isMatchingLegacyAttempt(input: {
   return !!input.record && input.record.stateHash === hashState(input.state);
 }
 
+function isStoredLegacyConnectorOAuthAttemptRecord(
+  record: LegacyConnectorOAuthAttemptRecord | null
+): record is Omit<ConnectorOAuthAttemptRecord, "provider"> {
+  return (
+    !!record &&
+    typeof record.clerkOrgId === "string" &&
+    typeof record.codeVerifier === "string" &&
+    typeof record.lightfastUserId === "string" &&
+    (record.mode === "connect" || record.mode === "reconnect") &&
+    typeof record.orgSlug === "string" &&
+    typeof record.stateHash === "string"
+  );
+}
+
 async function readLegacyConnectorOAuthAttempt(input: {
   provider: ConnectableConnectorProvider;
   state: string;
@@ -96,7 +110,12 @@ async function readLegacyConnectorOAuthAttempt(input: {
   }
 
   const record = await redis.get<LegacyConnectorOAuthAttemptRecord>(key);
-  if (!isMatchingLegacyAttempt({ record, state: input.state })) {
+  if (
+    !(
+      isMatchingLegacyAttempt({ record, state: input.state }) &&
+      isStoredLegacyConnectorOAuthAttemptRecord(record)
+    )
+  ) {
     return null;
   }
 
@@ -120,14 +139,24 @@ async function consumeLegacyConnectorOAuthAttempt(input: {
   }
 
   const pendingRecord = await redis.get<LegacyConnectorOAuthAttemptRecord>(key);
-  if (!isMatchingLegacyAttempt({ record: pendingRecord, state: input.state })) {
+  if (
+    !(
+      isMatchingLegacyAttempt({ record: pendingRecord, state: input.state }) &&
+      isStoredLegacyConnectorOAuthAttemptRecord(pendingRecord)
+    )
+  ) {
     return null;
   }
 
   const consumedRecord =
     await redis.getdel<LegacyConnectorOAuthAttemptRecord>(key);
   if (
-    !isMatchingLegacyAttempt({ record: consumedRecord, state: input.state })
+    !(
+      isMatchingLegacyAttempt({
+        record: consumedRecord,
+        state: input.state,
+      }) && isStoredLegacyConnectorOAuthAttemptRecord(consumedRecord)
+    )
   ) {
     return null;
   }

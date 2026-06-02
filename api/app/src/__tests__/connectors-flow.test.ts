@@ -457,7 +457,7 @@ describe("connector OAuth attempts", () => {
       provider: "linear",
     });
     expect(redisGetMock).toHaveBeenCalledWith(
-      `linear-connect-oauth-attempt:legacy_attempt_000000000000000000`
+      "linear-connect-oauth-attempt:legacy_attempt_000000000000000000"
     );
   });
 
@@ -493,10 +493,10 @@ describe("connector OAuth attempts", () => {
       provider: "linear",
     });
     expect(redisGetMock).toHaveBeenCalledWith(
-      `linear-connect-oauth-attempt:legacy_attempt_000000000000000000`
+      "linear-connect-oauth-attempt:legacy_attempt_000000000000000000"
     );
     expect(redisGetdelMock).toHaveBeenCalledWith(
-      `linear-connect-oauth-attempt:legacy_attempt_000000000000000000`
+      "linear-connect-oauth-attempt:legacy_attempt_000000000000000000"
     );
   });
 });

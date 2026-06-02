@@ -270,7 +270,9 @@ describe("X MCP bridge service", () => {
   });
 
   it("rejects requests when the connector connection id does not match the token", async () => {
-    getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(connection({ id: 43 }));
+    getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(
+      connection({ id: 43 })
+    );
 
     const response = await handleXConnectorMcpRequest({
       request: mcpRequest({
