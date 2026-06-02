@@ -44,10 +44,12 @@ type LightfastWorkspaceAssistantDataPart =
   | z.infer<typeof skillDataSchema>;
 
 export interface LightfastWorkspaceAssistantDataParts {
-  [key: string]: LightfastWorkspaceAssistantDataPart | undefined;
   opportunities?: z.infer<typeof opportunityDataSchema>;
   skills?: z.infer<typeof skillDataSchema>;
 }
+
+type LightfastWorkspaceAssistantDataPartsWithUnknownKeys =
+  LightfastWorkspaceAssistantDataParts & Record<string, unknown>;
 
 export const lightfastWorkspaceAssistantDataPartSchemas = {
   opportunities: opportunityDataSchema,
@@ -66,7 +68,7 @@ export type LightfastWorkspaceAssistantMessageMetadata = z.infer<
 
 export type LightfastUIMessage = UIMessage<
   LightfastWorkspaceAssistantMessageMetadata,
-  LightfastWorkspaceAssistantDataParts
+  LightfastWorkspaceAssistantDataPartsWithUnknownKeys
 >;
 
 export type LightfastWorkspaceAssistantMessagePart =

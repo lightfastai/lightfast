@@ -48,8 +48,10 @@ const subscriber: ResumableStreamSubscriber = {
     }
 
     record.callbacks.add(callback);
+    return;
   },
-  unsubscribe: unsubscribeChannel,
+  unsubscribe: (channel: string, callback?: (message: string) => void) =>
+    unsubscribeChannel(channel, callback),
 };
 
 export function getLightfastResumableStreamContext() {
@@ -65,13 +67,25 @@ export function getLightfastResumableStreamContext() {
   return streamContext;
 }
 
-async function unsubscribeChannel(channel: string) {
+async function unsubscribeChannel(
+  channel: string,
+  callback?: (message: string) => void
+) {
   const subscription = subscribers.get(channel);
   if (!subscription) {
     return;
   }
 
-  subscription.callbacks.clear();
+  if (callback) {
+    subscription.callbacks.delete(callback);
+  } else {
+    subscription.callbacks.clear();
+  }
+
+  if (subscription.callbacks.size > 0) {
+    return;
+  }
+
   await subscription.subscription.unsubscribe([channel]);
   subscription.subscription.removeAllListeners();
   subscribers.delete(channel);

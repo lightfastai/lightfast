@@ -268,6 +268,74 @@ describe("workspace assistant repository", () => {
     });
   });
 
+  it("only reads and updates rows matching mocked where conditions", async () => {
+    const { db, state } = makeChatDb();
+    const conversation = await createWorkspaceAssistantConversation(db, {
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+      title: "Scope test",
+    });
+    const otherConversation = await createWorkspaceAssistantConversation(db, {
+      clerkOrgId: "org_other",
+      createdByUserId: "user_other",
+      title: "Other org chat",
+    });
+
+    await appendWorkspaceAssistantMessage(db, {
+      createdByUserId: "user_test",
+      parts: [{ text: "Test message", type: "text" }],
+      publicId: "msg_user_test",
+      role: "user",
+      status: "streaming",
+      conversation,
+    });
+    await appendWorkspaceAssistantMessage(db, {
+      createdByUserId: "user_other",
+      parts: [{ text: "Wrong org message", type: "text" }],
+      publicId: "msg_user_other_org",
+      role: "user",
+      status: "streaming",
+      conversation: otherConversation,
+    });
+
+    const crossOrgMessages = await listWorkspaceAssistantMessages(db, {
+      clerkOrgId: "org_other",
+      createdByUserId: "user_other",
+      conversation: conversation,
+    });
+    expect(crossOrgMessages).toEqual([]);
+
+    const messageToMark = state.messages.find(
+      (message) => message.publicId === "msg_user_test"
+    );
+    expect(messageToMark).toBeDefined();
+    expect(messageToMark?.status).toBe("streaming");
+    await markWorkspaceAssistantMessageCompleted(db, {
+      clerkOrgId: "org_other",
+      createdByUserId: "user_other",
+      parts: [{ text: "updated from wrong org", type: "text" }],
+      publicId: "msg_user_test",
+    });
+    const unchangedMessage = state.messages.find(
+      (message) => message.publicId === "msg_user_test"
+    );
+    expect(unchangedMessage?.status).toBe("streaming");
+
+    await markWorkspaceAssistantMessageCompleted(db, {
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+      parts: [{ text: "updated from owner org", type: "text" }],
+      publicId: "msg_user_test",
+    });
+    const changedMessage = state.messages.find(
+      (message) => message.publicId === "msg_user_test"
+    );
+    expect(changedMessage?.status).toBe("completed");
+    expect(changedMessage?.parts).toEqual([
+      { text: "updated from owner org", type: "text" },
+    ]);
+  });
+
   it("rejects generations for non-assistant messages", async () => {
     const { db } = makeChatDb();
     const conversation = await createWorkspaceAssistantConversation(db, {
@@ -383,25 +451,53 @@ function makeChatDb(options: { messageInsertErrors?: unknown[] } = {}) {
     })),
     select: vi.fn((projection?: Record<string, unknown>) => ({
       from: (table: unknown) => ({
-        where: () => ({
+        where: (condition?: unknown) => ({
           limit: (limit: number) =>
             Promise.resolve(
-              selectPointRows(state, table, projection).slice(0, limit)
+              selectPointRows(
+                state,
+                table,
+                condition,
+                projection
+              ).slice(0, limit)
             ),
-          orderBy: () => orderedRows(selectRows(state, table, projection)),
+          orderBy: () =>
+            orderedRows(selectRows(state, table, condition, projection)),
         }),
       }),
     })),
     update: vi.fn((table: unknown) => ({
       set: (value: Record<string, unknown>) => ({
-        where: vi.fn(async () => {
-          updateRows(state, table, value);
+        where: vi.fn(async (condition?: unknown) => {
+          updateRows(state, table, value, condition);
         }),
       }),
     })),
   };
 
   return { db: db as unknown as Database, state };
+}
+
+type WorkspaceAssistantMockRow =
+  | WorkspaceAssistantConversation
+  | WorkspaceAssistantMessage
+  | WorkspaceAssistantGeneration;
+
+function getTableRows(state: {
+  generations: WorkspaceAssistantGeneration[];
+  messages: WorkspaceAssistantMessage[];
+  conversations: WorkspaceAssistantConversation[];
+}, table: unknown) {
+  if (table === workspaceAssistantConversations) {
+    return state.conversations;
+  }
+  if (table === workspaceAssistantMessages) {
+    return state.messages;
+  }
+  if (table === workspaceAssistantGenerations) {
+    return state.generations;
+  }
+  return [];
 }
 
 function orderedRows(rows: unknown[]) {
@@ -417,9 +513,10 @@ function selectPointRows(
     conversations: WorkspaceAssistantConversation[];
   },
   table: unknown,
+  condition: unknown,
   projection?: Record<string, unknown>
 ) {
-  const rows = selectRows(state, table, projection);
+  const rows = selectRows(state, table, condition, projection);
   if (projection) {
     return rows;
   }
@@ -433,25 +530,34 @@ function selectRows(
     conversations: WorkspaceAssistantConversation[];
   },
   table: unknown,
+  condition: unknown,
   projection?: Record<string, unknown>
 ) {
+  const whereCondition = (row: WorkspaceAssistantMockRow) =>
+    evaluateWorkspaceAssistantWhereCondition(table, row, condition);
+
   if (projection && "sequence" in projection) {
-    const maxSequence = state.messages.reduce(
+    const rows = state.messages.filter((message) =>
+      whereCondition(message)
+    );
+    const maxSequence = rows.reduce(
       (max, message) => Math.max(max, message.sequence),
       -1
     );
     return [{ sequence: maxSequence }];
   }
+
   if (table === workspaceAssistantConversations) {
     return state.conversations.filter(
-      (conversation) => conversation.status !== "deleted"
+      (conversation) =>
+        conversation.status !== "deleted" && whereCondition(conversation)
     );
   }
   if (table === workspaceAssistantMessages) {
-    return state.messages;
+    return state.messages.filter(whereCondition);
   }
   if (table === workspaceAssistantGenerations) {
-    return state.generations;
+    return state.generations.filter(whereCondition);
   }
   return [];
 }
@@ -463,19 +569,315 @@ function updateRows(
     conversations: WorkspaceAssistantConversation[];
   },
   table: unknown,
-  value: Record<string, unknown>
+  value: Record<string, unknown>,
+  condition: unknown
 ) {
-  const rows =
-    table === workspaceAssistantConversations
-      ? state.conversations
-      : table === workspaceAssistantMessages
-        ? state.messages
-        : table === workspaceAssistantGenerations
-          ? state.generations
-          : [];
-  for (const row of rows) {
+  const rows = getTableRows(state, table);
+  for (const row of rows.filter((candidate) =>
+    evaluateWorkspaceAssistantWhereCondition(table, candidate, condition)
+  )) {
     Object.assign(row, value);
   }
+}
+
+type ColumnReferenceChunk = {
+  name: string;
+  columnType?: string;
+};
+
+type SQLConditionChunk = {
+  queryChunks: unknown[];
+};
+
+type ValueChunk = {
+  value?: unknown;
+};
+
+function isColumnChunk(value: unknown): value is ColumnReferenceChunk {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    typeof (value as { columnType?: unknown }).columnType === "string" &&
+    typeof (value as { name?: unknown }).name === "string"
+  );
+}
+
+function isSQLChunk(value: unknown): value is SQLConditionChunk {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    Array.isArray((value as { queryChunks?: unknown[] }).queryChunks)
+  );
+}
+
+function isParamChunk(value: unknown): value is ValueChunk {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    "value" in value &&
+    !Array.isArray((value as { value?: unknown }).value)
+  );
+}
+
+function getChunkText(value: unknown): string {
+  if (!value || typeof value !== "object") {
+    return "";
+  }
+  const chunk = value as { value?: unknown };
+  if (Array.isArray(chunk.value)) {
+    return chunk.value.join("");
+  }
+  if (typeof chunk.value === "string") {
+    return chunk.value;
+  }
+  return "";
+}
+
+const workspaceAssistantConversationColumnToProperty = {
+  clerk_org_id: "clerkOrgId",
+  created_by_user_id: "createdByUserId",
+  public_id: "publicId",
+  status: "status",
+  id: "id",
+  updated_at: "updatedAt",
+  active_stream_id: "activeStreamId",
+} as const satisfies Record<string, keyof WorkspaceAssistantConversation>;
+
+const workspaceAssistantMessageColumnToProperty = {
+  clerk_org_id: "clerkOrgId",
+  created_by_user_id: "createdByUserId",
+  conversation_id: "conversationId",
+  public_id: "publicId",
+  conversation_public_id: "conversationPublicId",
+  idempotency_key: "idempotencyKey",
+} as const satisfies Record<string, keyof WorkspaceAssistantMessage>;
+
+const workspaceAssistantGenerationColumnToProperty = {
+  assistant_message_id: "assistantMessageId",
+  clerk_org_id: "clerkOrgId",
+  requested_by_user_id: "requestedByUserId",
+  public_id: "publicId",
+} as const satisfies Record<string, keyof WorkspaceAssistantGeneration>;
+
+function getRowValue(
+  table: unknown,
+  column: string,
+  row:
+    | WorkspaceAssistantConversation
+    | WorkspaceAssistantMessage
+    | WorkspaceAssistantGeneration
+) {
+  const conversationProperty =
+    workspaceAssistantConversationColumnToProperty[
+      column as keyof typeof workspaceAssistantConversationColumnToProperty
+    ];
+  if (conversationProperty && table === workspaceAssistantConversations) {
+    return (row as Record<string, unknown>)[conversationProperty];
+  }
+
+  const messageProperty =
+    workspaceAssistantMessageColumnToProperty[
+      column as keyof typeof workspaceAssistantMessageColumnToProperty
+    ];
+  if (messageProperty && table === workspaceAssistantMessages) {
+    return (row as Record<string, unknown>)[messageProperty];
+  }
+
+  const generationProperty =
+    workspaceAssistantGenerationColumnToProperty[
+      column as keyof typeof workspaceAssistantGenerationColumnToProperty
+    ];
+  if (generationProperty && table === workspaceAssistantGenerations) {
+    return (row as Record<string, unknown>)[generationProperty];
+  }
+
+  return undefined;
+}
+
+function compareWithOperator({
+  actual,
+  operator,
+  expected,
+}: {
+  actual: unknown;
+  operator: string;
+  expected: unknown;
+}): boolean {
+  if (
+    actual === null ||
+    actual === undefined ||
+    expected === null ||
+    expected === undefined
+  ) {
+    return false;
+  }
+
+  let left: string | number | boolean;
+  let right: string | number | boolean;
+
+  if (
+    typeof actual === "boolean" ||
+    typeof actual === "number" ||
+    typeof actual === "string"
+  ) {
+    if (
+      typeof expected !== "boolean" &&
+      typeof expected !== "number" &&
+      typeof expected !== "string"
+    ) {
+      return false;
+    }
+    left = actual;
+    right = expected;
+  } else if (actual instanceof Date) {
+    if (!(expected instanceof Date) && typeof expected !== "number") {
+      return false;
+    }
+    left = actual.getTime();
+    right = expected instanceof Date ? expected.getTime() : expected;
+  } else {
+    return false;
+  }
+
+  switch (operator) {
+    case "!=":
+    case "<>":
+      return left !== right;
+    case "<":
+      return left < right;
+    case "<=":
+      return left <= right;
+    case ">":
+      return left > right;
+    case ">=":
+      return left >= right;
+    default:
+      return left === right;
+  }
+}
+
+function evaluateWorkspaceAssistantWhereCondition(
+  table: unknown,
+  row: WorkspaceAssistantMockRow,
+  condition: unknown
+): boolean {
+  if (!condition || typeof condition !== "object") {
+    return true;
+  }
+
+  if (!isSQLChunk(condition)) {
+    return true;
+  }
+
+  return evaluateWorkspaceAssistantWhereChunks(table, row, condition.queryChunks);
+}
+
+function evaluateWorkspaceAssistantWhereChunks(
+  table: unknown,
+  row: WorkspaceAssistantMockRow,
+  chunks: unknown[]
+): boolean {
+  if (!chunks.length) {
+    return true;
+  }
+
+  const values: boolean[] = [];
+  const operators: Array<"and" | "or"> = [];
+  const groupedChunks: unknown[][] = [[]];
+
+  for (const chunk of chunks) {
+    const text = getChunkText(chunk).toLowerCase();
+    if (/^\s*and\s*$/i.test(text)) {
+      operators.push("and");
+      groupedChunks.push([]);
+      continue;
+    }
+    if (/^\s*or\s*$/i.test(text)) {
+      operators.push("or");
+      groupedChunks.push([]);
+      continue;
+    }
+
+    const lastGroup = groupedChunks[groupedChunks.length - 1];
+    if (!lastGroup) {
+      return true;
+    }
+    lastGroup.push(chunk);
+  }
+
+  for (const group of groupedChunks) {
+    const candidateChunks = group.filter((value) => value !== "(" && value !== ")");
+
+    if (candidateChunks.length === 0) {
+      values.push(true);
+      continue;
+    }
+    const nestedChunks = candidateChunks.filter(isSQLChunk);
+    if (nestedChunks.length > 0) {
+      values.push(nestedChunks.every((chunk) => evaluateWorkspaceAssistantWhereCondition(table, row, chunk)));
+      continue;
+    }
+
+    values.push(
+      evaluateWorkspaceAssistantWherePredicate(table, row, candidateChunks)
+    );
+  }
+
+  if (values.length === 0) {
+    return true;
+  }
+
+  let result = values[0]!;
+  for (let index = 0; index < operators.length && index < values.length - 1; index++) {
+    const next = values[index + 1];
+    if (next === undefined) {
+      continue;
+    }
+    if (operators[index] === "or") {
+      result = result || next;
+    } else {
+      result = result && next;
+    }
+  }
+
+  return result;
+}
+
+function evaluateWorkspaceAssistantWherePredicate(
+  table: unknown,
+  row: WorkspaceAssistantMockRow,
+  chunks: unknown[]
+): boolean {
+  const text = chunks.map(getChunkText).join("").toLowerCase();
+  const column = chunks.find(isColumnChunk)?.name;
+  if (!column) {
+    return true;
+  }
+
+  const expected = chunks.find(isParamChunk)?.value;
+  const actual = getRowValue(table, column, row);
+  if (text.includes(" is not null")) {
+    return actual !== null;
+  }
+  if (text.includes(" is null")) {
+    return actual === null;
+  }
+  if (text.includes("!=") || text.includes("<>")) {
+    return actual !== expected;
+  }
+  if (text.includes("<=")) {
+    return compareWithOperator({ actual, operator: "<=", expected });
+  }
+  if (text.includes(">=")) {
+    return compareWithOperator({ actual, operator: ">=", expected });
+  }
+  if (text.includes("<")) {
+    return compareWithOperator({ actual, operator: "<", expected });
+  }
+  if (text.includes(">")) {
+    return compareWithOperator({ actual, operator: ">", expected });
+  }
+  return actual === expected;
 }
 
 function makeConversation(

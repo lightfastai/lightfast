@@ -87,6 +87,7 @@ export function WorkspaceAssistantClient({
   const [conversationId, setConversationId] = useState(
     initialConversation?.conversation.publicId
   );
+  const [creationError, setCreationError] = useState<Error | undefined>();
   const copyResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
@@ -151,6 +152,7 @@ export function WorkspaceAssistantClient({
   }, [data.skills, skillTab]);
 
   const hasMessages = messages.length > 0;
+  const displayError = creationError ?? error;
   const composerStatus: ChatStatus = createConversation.isPending
     ? "submitted"
     : status;
@@ -161,6 +163,7 @@ export function WorkspaceAssistantClient({
       stop();
     }
     clearError();
+    setCreationError(undefined);
     setCopyState("idle");
     setText("");
     setConversationId(undefined);
@@ -209,6 +212,7 @@ export function WorkspaceAssistantClient({
       conversationIdRef.current = activeConversationId;
       setConversationId(activeConversationId);
       replaceBrowserChatUrl(params.slug, activeConversationId);
+      setCreationError(undefined);
 
       try {
         await createConversation.mutateAsync({
@@ -219,7 +223,10 @@ export function WorkspaceAssistantClient({
         conversationIdRef.current = undefined;
         setConversationId(undefined);
         replaceBrowserChatUrl(params.slug);
-        throw error;
+        setCreationError(
+          error instanceof Error ? error : new Error("Unable to create conversation.")
+        );
+        return;
       }
     }
 
@@ -288,7 +295,7 @@ export function WorkspaceAssistantClient({
       <div className="shrink-0 px-4 pb-5 md:px-8">
         <ChatComposer
           disabled={composerStatus !== "ready"}
-          error={error}
+          error={displayError}
           onSubmit={handleSubmit}
           onTextChange={setText}
           status={composerStatus}

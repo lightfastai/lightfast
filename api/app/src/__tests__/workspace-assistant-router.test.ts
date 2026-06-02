@@ -49,12 +49,17 @@ const testRouter = createTRPCRouter({ assistant: workspaceAssistantRouter });
 const createCaller = createCallerFactory(testRouter);
 
 type ActiveAuthIdentity = Extract<AuthIdentity, { type: "active" }>;
+type PendingAuthIdentity = Extract<AuthIdentity, { type: "pending" }>;
 
 const activeIdentity: ActiveAuthIdentity = {
   type: "active",
   userId: "user_test",
   orgId: "org_test",
   orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
+};
+const pendingIdentity: PendingAuthIdentity = {
+  type: "pending",
+  userId: "user_test",
 };
 
 function caller(identity: AuthIdentity = activeIdentity) {
@@ -197,6 +202,61 @@ describe("workspaceAssistantRouter", () => {
       publicId: "conv_other_user",
     });
     expect(listWorkspaceAssistantMessagesMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects callers without an active org for conversation creation", async () => {
+    await expect(
+      caller(pendingIdentity).assistant.createConversation({
+        publicId: "conv_456",
+        title: "Summarize my opportunities",
+      })
+    ).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+    expect(createWorkspaceAssistantConversationMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects callers without an organization for conversation retrieval", async () => {
+    await expect(
+      caller(pendingIdentity).assistant.getConversation({ id: "conv_123" })
+    ).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+    expect(listWorkspaceAssistantMessagesMock).not.toHaveBeenCalled();
+  });
+
+  it("returns not found when a conversation is requested from a different org", async () => {
+    getWorkspaceAssistantConversationByPublicIdMock.mockResolvedValueOnce(
+      undefined
+    );
+
+    await expect(
+      caller({
+        ...activeIdentity,
+        orgId: "org_other",
+      }).assistant.getConversation({ id: "conv_123" })
+    ).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+    expect(
+      getWorkspaceAssistantConversationByPublicIdMock
+    ).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_other",
+      createdByUserId: "user_test",
+      publicId: "conv_123",
+    });
+    expect(listWorkspaceAssistantMessagesMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects expired tokens with unauthorized", async () => {
+    await expect(
+      caller({
+        type: "unauthenticated",
+      } as AuthIdentity).assistant.listConversations(undefined)
+    ).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
+    expect(listWorkspaceAssistantConversationsMock).not.toHaveBeenCalled();
   });
 });
 
