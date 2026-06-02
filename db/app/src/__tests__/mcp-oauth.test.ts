@@ -166,38 +166,6 @@ function makeQueuedDb(
   };
 }
 
-function collectConditionText(
-  value: unknown,
-  seen = new Set<object>()
-): string {
-  if (!value || typeof value !== "object") {
-    return "";
-  }
-  if (seen.has(value)) {
-    return "";
-  }
-  seen.add(value);
-
-  const object = value as {
-    name?: unknown;
-    queryChunks?: unknown;
-    value?: unknown;
-  };
-  const parts: string[] = [];
-  if (typeof object.name === "string") {
-    parts.push(object.name);
-  }
-  if (Array.isArray(object.value)) {
-    parts.push(object.value.join(""));
-  }
-  if (Array.isArray(object.queryChunks)) {
-    parts.push(
-      ...object.queryChunks.map((chunk) => collectConditionText(chunk, seen))
-    );
-  }
-  return parts.filter(Boolean).join(" ");
-}
-
 describe("mcp oauth repositories", () => {
   it("creates and reads an oauth client by public client id", async () => {
     const redirectUri =
@@ -309,10 +277,34 @@ describe("mcp oauth repositories", () => {
     expect(insertedValues[0]).not.toHaveProperty("authorizationCode");
   });
 
-  it("guards authorization code consumption by expiry at update time", async () => {
+  it("does not consume expired authorization codes", async () => {
     const now = new Date("2026-06-01T00:00:00.000Z");
-    const { db, updateWhereConditions } = makeQueuedDb([
-      [makeAuthorizationCode()],
+    const { db, updateValues } = makeQueuedDb([
+      [
+        makeAuthorizationCode({
+          expiresAt: new Date("2026-05-31T23:59:59.000Z"),
+        }),
+      ],
+    ]);
+
+    await expect(
+      consumeMcpAuthorizationCode(db, {
+        codeHash: "auth_code_hash",
+        now,
+      })
+    ).resolves.toBeUndefined();
+
+    expect(updateValues).toHaveLength(0);
+  });
+
+  it("consumes unexpired authorization codes", async () => {
+    const now = new Date("2026-06-01T00:00:00.000Z");
+    const { db, updateValues } = makeQueuedDb([
+      [
+        makeAuthorizationCode({
+          expiresAt: new Date("2026-06-01T00:10:00.000Z"),
+        }),
+      ],
     ]);
 
     await expect(
@@ -322,9 +314,9 @@ describe("mcp oauth repositories", () => {
       })
     ).resolves.toMatchObject({ codeHash: "auth_code_hash", consumedAt: now });
 
-    const updatePredicate = collectConditionText(updateWhereConditions[0]);
-    expect(updatePredicate).toContain("expires_at");
-    expect(updatePredicate).toContain(">");
+    expect(updateValues).toEqual([
+      expect.objectContaining({ consumedAt: now }),
+    ]);
   });
 
   it("rotates refresh token hashes and marks reuse detection", async () => {

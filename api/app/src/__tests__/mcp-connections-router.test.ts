@@ -51,6 +51,15 @@ function adminAccess() {
   };
 }
 
+function adminAccessForOrg(orgId: string) {
+  return {
+    kind: "clerk-session" as const,
+    userId: "user_current",
+    orgId,
+    has: ({ role }: { role?: string }) => role === "org:admin",
+  };
+}
+
 function nonAdminAccess() {
   return {
     kind: "clerk-session" as const,
@@ -60,13 +69,23 @@ function nonAdminAccess() {
   };
 }
 
-function caller(
-  access?: ReturnType<typeof adminAccess> | ReturnType<typeof nonAdminAccess>
-) {
+type TestAccess =
+  | ReturnType<typeof adminAccess>
+  | ReturnType<typeof adminAccessForOrg>
+  | ReturnType<typeof nonAdminAccess>;
+
+function caller(access?: TestAccess) {
+  return callerWithAuth({ access, identity: activeIdentity });
+}
+
+function callerWithAuth(input: {
+  access?: TestAccess;
+  identity: AuthIdentity;
+}) {
   return createCaller({
-    auth: access
-      ? { identity: activeIdentity, access }
-      : { identity: activeIdentity },
+    auth: input.access
+      ? { access: input.access, identity: input.identity }
+      : { identity: input.identity },
     db: {} as Database,
     headers: new Headers(),
   });
@@ -192,6 +211,33 @@ describe("MCP connection routers", () => {
     );
   });
 
+  it("blocks unauthenticated account revokes before grant lookup", async () => {
+    await expect(
+      callerWithAuth({
+        identity: { type: "unauthenticated" },
+      }).accountMcpConnections.revoke({ grantId: "mcp_grant_test" })
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+
+    expect(getMcpOauthGrantByPublicIdMock).not.toHaveBeenCalled();
+    expect(revokeMcpOauthGrantMock).not.toHaveBeenCalled();
+  });
+
+  it("does not revoke grants owned by another user", async () => {
+    getMcpOauthGrantByPublicIdMock.mockResolvedValueOnce(
+      grant({ clerkUserId: "user_other" })
+    );
+
+    await expect(
+      caller().accountMcpConnections.revoke({ grantId: "mcp_grant_test" })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+
+    expect(getMcpOauthGrantByPublicIdMock).toHaveBeenCalledWith(
+      {},
+      { publicId: "mcp_grant_test" }
+    );
+    expect(revokeMcpOauthGrantMock).not.toHaveBeenCalled();
+  });
+
   it("allows org admins to revoke an org grant", async () => {
     await expect(
       caller(adminAccess()).orgMcpConnections.revoke({
@@ -203,5 +249,56 @@ describe("MCP connection routers", () => {
       {},
       { publicId: "mcp_grant_test" }
     );
+  });
+
+  it("blocks unauthenticated org revokes before grant lookup", async () => {
+    await expect(
+      callerWithAuth({
+        identity: { type: "unauthenticated" },
+      }).orgMcpConnections.revoke({ grantId: "mcp_grant_test" })
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+
+    expect(getMcpOauthGrantByPublicIdMock).not.toHaveBeenCalled();
+    expect(revokeMcpOauthGrantMock).not.toHaveBeenCalled();
+  });
+
+  it("blocks non-admin org revokes before grant lookup", async () => {
+    await expect(
+      caller(nonAdminAccess()).orgMcpConnections.revoke({
+        grantId: "mcp_grant_test",
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    expect(getMcpOauthGrantByPublicIdMock).not.toHaveBeenCalled();
+    expect(revokeMcpOauthGrantMock).not.toHaveBeenCalled();
+  });
+
+  it("blocks mismatched Clerk org sessions before grant lookup", async () => {
+    await expect(
+      caller(adminAccessForOrg("org_other")).orgMcpConnections.revoke({
+        grantId: "mcp_grant_test",
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    expect(getMcpOauthGrantByPublicIdMock).not.toHaveBeenCalled();
+    expect(revokeMcpOauthGrantMock).not.toHaveBeenCalled();
+  });
+
+  it("does not revoke grants owned by another org", async () => {
+    getMcpOauthGrantByPublicIdMock.mockResolvedValueOnce(
+      grant({ clerkOrgId: "org_other" })
+    );
+
+    await expect(
+      caller(adminAccess()).orgMcpConnections.revoke({
+        grantId: "mcp_grant_test",
+      })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+
+    expect(getMcpOauthGrantByPublicIdMock).toHaveBeenCalledWith(
+      {},
+      { publicId: "mcp_grant_test" }
+    );
+    expect(revokeMcpOauthGrantMock).not.toHaveBeenCalled();
   });
 });

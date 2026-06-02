@@ -1,4 +1,4 @@
-import { SignJWT } from "jose";
+import { SignJWT } from "@vendor/jose";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const audience = "https://mcp.lightfast.localhost/mcp";
@@ -24,12 +24,17 @@ function jwtSecretKey(): Uint8Array {
 }
 
 async function validAccessToken(
-  input: { audience?: string; includeTokenUse?: boolean } = {}
+  input: {
+    audience?: string;
+    expiresIn?: number | string;
+    includeOrg?: boolean;
+    includeTokenUse?: boolean;
+  } = {}
 ): Promise<string> {
   return await new SignJWT({
     client_id: "mcp_client_test",
     grant_id: "mcp_grant_test",
-    org_id: "org_test",
+    ...(input.includeOrg === false ? {} : { org_id: "org_test" }),
     scope: "mcp:system:read",
     ...(input.includeTokenUse === false ? {} : { token_use: "mcp_access" }),
     user_id: "user_test",
@@ -39,7 +44,7 @@ async function validAccessToken(
     .setAudience(input.audience ?? audience)
     .setSubject("user_test")
     .setIssuedAt()
-    .setExpirationTime("15m")
+    .setExpirationTime(input.expiresIn ?? "15m")
     .sign(jwtSecretKey());
 }
 
@@ -75,6 +80,32 @@ describe("verifyMcpBearerToken", () => {
   it("rejects JWTs without token_use=mcp_access", async () => {
     const { verifyMcpBearerToken } = await importVerifier();
     const token = await validAccessToken({ includeTokenUse: false });
+
+    await expect(
+      verifyMcpBearerToken(bearerRequest(token))
+    ).rejects.toMatchObject({
+      code: "invalid_token",
+      status: 401,
+    });
+  });
+
+  it("rejects expired JWTs", async () => {
+    const { verifyMcpBearerToken } = await importVerifier();
+    const token = await validAccessToken({
+      expiresIn: Math.floor(Date.now() / 1000) - 60,
+    });
+
+    await expect(
+      verifyMcpBearerToken(bearerRequest(token))
+    ).rejects.toMatchObject({
+      code: "invalid_token",
+      status: 401,
+    });
+  });
+
+  it("rejects JWTs without an organization claim", async () => {
+    const { verifyMcpBearerToken } = await importVerifier();
+    const token = await validAccessToken({ includeOrg: false });
 
     await expect(
       verifyMcpBearerToken(bearerRequest(token))

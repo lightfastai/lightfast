@@ -1,5 +1,5 @@
 import type { Database, McpOauthRefreshToken } from "@db/app";
-import { SignJWT } from "jose";
+import { SignJWT } from "@vendor/jose";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const rotateMcpRefreshTokenMock = vi.fn();
@@ -115,6 +115,33 @@ describe("mcp access tokens", () => {
     ).rejects.toEqual(
       new McpOAuthError("invalid_grant", "Access token is not an MCP token.")
     );
+  });
+
+  it("rejects expired access tokens", async () => {
+    const key = createJwtSecretKey("test-secret");
+    const token = await new SignJWT({
+      client_id: "mcp_client_test",
+      grant_id: "mcp_grant_test",
+      org_id: "org_test",
+      scope: "mcp:signals:read",
+      token_use: "mcp_access",
+      user_id: "user_test",
+    })
+      .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+      .setIssuer("https://app.lightfast.localhost")
+      .setAudience(resource)
+      .setSubject("user_test")
+      .setIssuedAt()
+      .setExpirationTime(Math.floor(Date.now() / 1000) - 60)
+      .sign(key);
+
+    await expect(
+      verifyMcpAccessToken(token, {
+        audience: resource,
+        issuer: "https://app.lightfast.localhost",
+        jwtSecret: "test-secret",
+      })
+    ).rejects.toMatchObject({ code: "ERR_JWT_EXPIRED" });
   });
 });
 

@@ -65,6 +65,7 @@
     "@trpc/server": "catalog:",
     "@vendor/clerk": "workspace:*",
     "@vendor/inngest": "workspace:*",
+    "@vendor/jose": "workspace:*",
     "@vendor/lib": "workspace:*",
     "@vendor/observability": "workspace:*",
     "@vendor/unkey": "workspace:*",
@@ -72,7 +73,6 @@
     "@vercel/related-projects": "catalog:",
     "drizzle-orm": "catalog:",
     "inngest": "catalog:",
-    "jose": "catalog:",
     "superjson": "catalog:",
     "zod": "catalog:"
   },

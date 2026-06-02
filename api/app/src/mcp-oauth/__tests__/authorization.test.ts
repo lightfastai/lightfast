@@ -178,7 +178,7 @@ describe("exchangeMcpAuthorizationCode", () => {
     );
   });
 
-  it("rejects a reused code", async () => {
+  it("rejects invalid, reused, or expired codes before creating refresh tokens", async () => {
     consumeMcpAuthorizationCodeMock.mockResolvedValueOnce(undefined);
 
     await expect(
@@ -194,5 +194,83 @@ describe("exchangeMcpAuthorizationCode", () => {
     ).rejects.toEqual(
       new McpOAuthError("invalid_grant", "Authorization code is invalid.")
     );
+
+    expect(createMcpRefreshTokenMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects authorization codes issued to another client", async () => {
+    consumeMcpAuthorizationCodeMock.mockResolvedValueOnce(
+      authorizationCode({ clientPublicId: "mcp_client_other" })
+    );
+
+    await expect(
+      exchangeMcpAuthorizationCode(db, {
+        audience: resource,
+        clientId: "mcp_client_test",
+        code: "mcp_code_raw",
+        codeVerifier: "verifier_test",
+        issuer: "https://app.lightfast.localhost",
+        jwtSecret: "test-secret",
+        redirectUri,
+      })
+    ).rejects.toEqual(
+      new McpOAuthError("invalid_grant", "Authorization code is invalid.")
+    );
+
+    expect(getActiveMcpOauthGrantMock).not.toHaveBeenCalled();
+    expect(createMcpOauthGrantMock).not.toHaveBeenCalled();
+    expect(createMcpRefreshTokenMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects authorization codes issued to another redirect uri", async () => {
+    consumeMcpAuthorizationCodeMock.mockResolvedValueOnce(
+      authorizationCode({
+        redirectUri: "https://backend.lightfield.app/other-callback",
+      })
+    );
+
+    await expect(
+      exchangeMcpAuthorizationCode(db, {
+        audience: resource,
+        clientId: "mcp_client_test",
+        code: "mcp_code_raw",
+        codeVerifier: "verifier_test",
+        issuer: "https://app.lightfast.localhost",
+        jwtSecret: "test-secret",
+        redirectUri,
+      })
+    ).rejects.toEqual(
+      new McpOAuthError("invalid_grant", "Authorization code is invalid.")
+    );
+
+    expect(getActiveMcpOauthGrantMock).not.toHaveBeenCalled();
+    expect(createMcpOauthGrantMock).not.toHaveBeenCalled();
+    expect(createMcpRefreshTokenMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects PKCE mismatches before creating refresh tokens", async () => {
+    consumeMcpAuthorizationCodeMock.mockResolvedValueOnce(
+      authorizationCode({
+        codeChallenge: createCodeChallenge("other_verifier"),
+      })
+    );
+
+    await expect(
+      exchangeMcpAuthorizationCode(db, {
+        audience: resource,
+        clientId: "mcp_client_test",
+        code: "mcp_code_raw",
+        codeVerifier: "verifier_test",
+        issuer: "https://app.lightfast.localhost",
+        jwtSecret: "test-secret",
+        redirectUri,
+      })
+    ).rejects.toEqual(
+      new McpOAuthError("invalid_grant", "PKCE verification failed.")
+    );
+
+    expect(getActiveMcpOauthGrantMock).not.toHaveBeenCalled();
+    expect(createMcpOauthGrantMock).not.toHaveBeenCalled();
+    expect(createMcpRefreshTokenMock).not.toHaveBeenCalled();
   });
 });

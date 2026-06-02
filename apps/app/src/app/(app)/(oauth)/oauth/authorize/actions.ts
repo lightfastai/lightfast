@@ -3,7 +3,7 @@
 import { issueMcpAuthorizationCode, McpOAuthError } from "@api/app";
 import { getMcpOauthClientByClientId } from "@db/app";
 import { db } from "@db/app/client";
-import { auth } from "@vendor/clerk/server";
+import { auth, clerkClient } from "@vendor/clerk/server";
 import type { Route } from "next";
 import { redirect } from "next/navigation";
 
@@ -13,10 +13,16 @@ export async function approveMcpAuthorizationAction(formData: FormData) {
     throw new McpOAuthError("access_denied", "Authentication required.", 401);
   }
 
+  const clerkOrgId = requireString(formData, "organizationId");
+  await requireUserOrgMembership({
+    clerkOrgId,
+    userId: authState.userId,
+  });
+
   const redirectUri = requireString(formData, "redirectUri");
   const result = await issueMcpAuthorizationCode(db, {
     clientId: requireString(formData, "clientId"),
-    clerkOrgId: requireString(formData, "organizationId"),
+    clerkOrgId,
     clerkUserId: authState.userId,
     codeChallenge: requireString(formData, "codeChallenge"),
     codeChallengeMethod: "S256",
@@ -34,7 +40,34 @@ export async function approveMcpAuthorizationAction(formData: FormData) {
   redirect(url.toString() as Route);
 }
 
+async function requireUserOrgMembership(input: {
+  clerkOrgId: string;
+  userId: string;
+}): Promise<void> {
+  const clerk = await clerkClient();
+  const memberships = await clerk.users.getOrganizationMembershipList({
+    limit: 100,
+    userId: input.userId,
+  });
+  if (
+    !memberships.data.some(
+      (membership) => membership.organization.id === input.clerkOrgId
+    )
+  ) {
+    throw new McpOAuthError(
+      "access_denied",
+      "Organization access denied.",
+      403
+    );
+  }
+}
+
 export async function denyMcpAuthorizationAction(formData: FormData) {
+  const authState = await auth();
+  if (!authState.userId) {
+    throw new McpOAuthError("access_denied", "Authentication required.", 401);
+  }
+
   const redirectUri = await requireRegisteredRedirectUri(formData);
   const url = new URL(redirectUri);
   url.searchParams.set("error", "access_denied");

@@ -44,6 +44,11 @@ In local development, the resource URL is:
 https://[<wt>.]mcp.lightfast.localhost/mcp
 ```
 
+`[<wt>.]` is an optional local worktree prefix. Use
+`https://mcp.lightfast.localhost/mcp` in the primary worktree, or a prefixed
+URL such as `https://remote-mcp.mcp.lightfast.localhost/mcp` in a secondary
+worktree.
+
 The OAuth flow creates a user-connected grant bound to the selected organization. You can review or revoke grants from MCP settings.
 
 ## Local stdio MCP
@@ -154,19 +159,42 @@ Once configured, your AI assistant has access to the Lightfast MCP tools selecte
 
 Check whether the Lightfast MCP connection is authenticated and reachable.
 
+Required scope: `mcp:system:read`
+
+Parameters: none.
+
+Response includes `status`, `timestamp`, and `version`.
+
 ### lightfast_signals_create
 
 Create a signal in the connected organization.
 
-**Parameters:**
-- `input` (required): signal text
+Required scope: `mcp:signals:write`
+
+Requires the grant to be bound to the selected organization.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `input` | `string` | Yes | Signal text. Trimmed, 1-4000 characters. |
+
+Response includes the new `signal_<uuid>` id, `status: "queued"`, and
+`visibilityScope: "user"`.
 
 ### lightfast_signals_get
 
 Get a visible signal by id from the connected organization.
 
-**Parameters:**
-- `id` (required): signal id
+Required scope: `mcp:signals:read`
+
+Requires the grant to be bound to the selected organization.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | `string` | Yes | Signal id in `signal_<uuid>` format. |
+
+Response includes `id`, `input`, `status`, `classification`,
+`visibilityScope`, `createdAt`, and `updatedAt`. `classification` is `null`
+until available.
 
 ## Usage Examples
 
@@ -238,4 +266,5 @@ This is especially useful in MCP configurations where you don't want to hardcode
 ## Next Steps
 
 - <NextLink href="/docs/integrate/sdk">Use the SDK in your application</NextLink>
-- [View local MCP source on GitHub](https://github.com/lightfastai/lightfast/tree/main/core/mcp)
+- [View hosted OAuth MCP source on GitHub](https://github.com/lightfastai/lightfast/tree/main/apps/mcp)
+- [View local stdio MCP source on GitHub](https://github.com/lightfastai/lightfast/tree/main/core/mcp)

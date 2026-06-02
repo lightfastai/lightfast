@@ -12,7 +12,7 @@ import {
   rotateMcpRefreshToken as rotateStoredMcpRefreshToken,
 } from "@db/app";
 import type { McpScope } from "@repo/api-contract";
-import { jwtVerify, SignJWT } from "jose";
+import { jwtVerify, SignJWT } from "@vendor/jose";
 
 import { findOrCreateMcpOauthGrant } from "./grants";
 import { hashOpaqueToken } from "./hash";

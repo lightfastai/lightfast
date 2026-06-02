@@ -1,8 +1,9 @@
 {
-  "name": "@vendor/mcp",
-  "private": true,
+  "name": "@vendor/jose",
   "version": "0.1.0",
+  "private": true,
   "type": "module",
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./src/index.ts",
@@ -15,12 +16,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "catalog:",
-    "mcp-handler": "catalog:"
+    "jose": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "@types/node": "catalog:",
     "typescript": "catalog:"
   }
 }

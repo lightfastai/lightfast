@@ -83,6 +83,9 @@ export async function getMcpConsentViewModel(
       userId: authState.userId,
     }),
   ]);
+  if (memberships.data.length === 0) {
+    notFound();
+  }
 
   return {
     client: {

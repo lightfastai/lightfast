@@ -1,4 +1,4 @@
-import { createMcpHandler, withMcpAuth } from "mcp-handler";
+import { createMcpHandler, withMcpAuth } from "@vendor/mcp";
 import { verifyMcpAuthInfo } from "../../auth/verify-token";
 import { env } from "../../env";
 import { registerHostedMcpTools } from "../../tools/execute";

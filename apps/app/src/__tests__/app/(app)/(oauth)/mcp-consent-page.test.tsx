@@ -1,8 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const authMock = vi.fn();
 const getMcpConsentViewModelMock = vi.fn();
 const getMcpOauthClientByClientIdMock = vi.fn();
+const getOrganizationMembershipListMock = vi.fn();
 const issueMcpAuthorizationCodeMock = vi.fn();
 const redirectMock = vi.fn((url: string) => {
   throw new Error(`redirect:${url}`);
@@ -36,11 +38,12 @@ vi.mock("@db/app/client", () => ({
 }));
 
 vi.mock("@vendor/clerk/server", () => ({
-  auth: vi.fn(() =>
-    Promise.resolve({
-      userId: "user_test",
-    })
-  ),
+  auth: authMock,
+  clerkClient: vi.fn(async () => ({
+    users: {
+      getOrganizationMembershipList: getOrganizationMembershipListMock,
+    },
+  })),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -97,14 +100,23 @@ function consentModel(overrides: Record<string, unknown> = {}) {
 }
 
 beforeEach(() => {
+  authMock.mockReset();
   getMcpConsentViewModelMock.mockReset();
   getMcpOauthClientByClientIdMock.mockReset();
+  getOrganizationMembershipListMock.mockReset();
   issueMcpAuthorizationCodeMock.mockReset();
   redirectMock.mockClear();
+  authMock.mockResolvedValue({
+    userId: "user_test",
+  });
   getMcpConsentViewModelMock.mockResolvedValue(consentModel());
   getMcpOauthClientByClientIdMock.mockResolvedValue({
     publicClientId: "mcp_client_test",
     redirectUris: ["https://backend.lightfield.app/connections/callback/MCP"],
+  });
+  getOrganizationMembershipListMock.mockResolvedValue({
+    data: [{ organization: { id: "org_1" } }],
+    totalCount: 1,
   });
   issueMcpAuthorizationCodeMock.mockResolvedValue({
     code: "mcp_code_secret",
@@ -203,6 +215,35 @@ describe("/oauth/authorize MCP consent", () => {
     );
   });
 
+  it("rejects forged organization ids before issuing an authorization code", async () => {
+    const formData = new FormData();
+    formData.set("clientId", "mcp_client_test");
+    formData.set("codeChallenge", "challenge_test");
+    formData.set("codeChallengeMethod", "S256");
+    formData.set("organizationId", "org_other");
+    formData.set(
+      "redirectUri",
+      "https://backend.lightfield.app/connections/callback/MCP"
+    );
+    formData.set("resource", "https://mcp.lightfast.localhost/mcp");
+    formData.set("scope", "mcp:signals:write");
+    formData.set("state", "state_test");
+
+    await expect(approveMcpAuthorizationAction(formData)).rejects.toMatchObject(
+      {
+        error: "access_denied",
+        message: "Organization access denied.",
+      }
+    );
+
+    expect(getOrganizationMembershipListMock).toHaveBeenCalledWith({
+      limit: 100,
+      userId: "user_test",
+    });
+    expect(issueMcpAuthorizationCodeMock).not.toHaveBeenCalled();
+    expect(redirectMock).not.toHaveBeenCalled();
+  });
+
   it("does not redirect deny responses to unregistered redirect uris", async () => {
     const formData = new FormData();
     formData.set("clientId", "mcp_client_test");
@@ -218,6 +259,25 @@ describe("/oauth/authorize MCP consent", () => {
       expect.anything(),
       { publicClientId: "mcp_client_test" }
     );
+    expect(redirectMock).not.toHaveBeenCalled();
+  });
+
+  it("does not redirect deny responses for unauthenticated users", async () => {
+    authMock.mockResolvedValueOnce({ userId: null });
+    const formData = new FormData();
+    formData.set("clientId", "mcp_client_test");
+    formData.set(
+      "redirectUri",
+      "https://backend.lightfield.app/connections/callback/MCP"
+    );
+    formData.set("state", "state_test");
+
+    await expect(denyMcpAuthorizationAction(formData)).rejects.toMatchObject({
+      error: "access_denied",
+      message: "Authentication required.",
+    });
+
+    expect(getMcpOauthClientByClientIdMock).not.toHaveBeenCalled();
     expect(redirectMock).not.toHaveBeenCalled();
   });
 });

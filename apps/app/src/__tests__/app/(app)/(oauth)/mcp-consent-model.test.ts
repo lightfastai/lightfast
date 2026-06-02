@@ -60,6 +60,15 @@ const { getMcpConsentViewModel } = await import(
   "~/app/(app)/(oauth)/oauth/authorize/model"
 );
 
+const validRequest = {
+  client_id: "mcp_client_test",
+  code_challenge: "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabc",
+  code_challenge_method: "S256",
+  redirect_uri: "https://backend.lightfield.app/connections/callback/MCP",
+  resource: "https://mcp.lightfast.localhost/mcp",
+  scope: "mcp:signals:write",
+};
+
 beforeEach(() => {
   authMock.mockReset();
   currentUserMock.mockReset();
@@ -93,14 +102,31 @@ beforeEach(() => {
 });
 
 describe("getMcpConsentViewModel", () => {
+  it("routes unauthenticated users through notFound", async () => {
+    authMock.mockResolvedValueOnce({ userId: null });
+
+    await expect(getMcpConsentViewModel(validRequest)).rejects.toThrow(
+      "NEXT_NOT_FOUND"
+    );
+
+    expect(notFoundMock).toHaveBeenCalledOnce();
+    expect(getMcpOauthClientByClientIdMock).not.toHaveBeenCalled();
+  });
+
+  it("routes users without organization memberships through notFound", async () => {
+    getOrganizationMembershipListMock.mockResolvedValueOnce({ data: [] });
+
+    await expect(getMcpConsentViewModel(validRequest)).rejects.toThrow(
+      "NEXT_NOT_FOUND"
+    );
+
+    expect(notFoundMock).toHaveBeenCalledOnce();
+  });
+
   it("routes unsupported scopes through notFound", async () => {
     await expect(
       getMcpConsentViewModel({
-        client_id: "mcp_client_test",
-        code_challenge: "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabc",
-        code_challenge_method: "S256",
-        redirect_uri: "https://backend.lightfield.app/connections/callback/MCP",
-        resource: "https://mcp.lightfast.localhost/mcp",
+        ...validRequest,
         scope: "mcp:unknown",
       })
     ).rejects.toThrow("NEXT_NOT_FOUND");

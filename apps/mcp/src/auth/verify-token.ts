@@ -1,5 +1,5 @@
 import type { McpScope } from "@repo/api-contract";
-import { type JWTPayload, jwtVerify } from "jose";
+import { type JWTPayload, jwtVerify } from "@vendor/jose";
 import { z } from "zod";
 
 import { env } from "../env";
