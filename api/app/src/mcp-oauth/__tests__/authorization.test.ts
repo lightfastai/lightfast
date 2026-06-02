@@ -65,7 +65,11 @@ beforeEach(() => {
   });
   getActiveMcpOauthGrantMock.mockResolvedValue(undefined);
   createMcpOauthGrantMock.mockResolvedValue({
+    clientPublicId: "mcp_client_test",
+    clerkOrgId: "org_test",
+    clerkUserId: "user_test",
     publicId: "mcp_grant_test",
+    resource,
     scopes: ["mcp:signals:write"],
   });
   createMcpAuthorizationCodeMock.mockResolvedValue(authorizationCode());
@@ -270,6 +274,36 @@ describe("exchangeMcpAuthorizationCode", () => {
     );
 
     expect(getActiveMcpOauthGrantMock).not.toHaveBeenCalled();
+    expect(createMcpOauthGrantMock).not.toHaveBeenCalled();
+    expect(createMcpRefreshTokenMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { clerkOrgId: "org_other", clerkUserId: "user_test" },
+    { clerkOrgId: "org_test", clerkUserId: "user_other" },
+  ])("rejects grants that do not match the consumed authorization code", async (grantOverride) => {
+    getActiveMcpOauthGrantMock.mockResolvedValueOnce({
+      clientPublicId: "mcp_client_test",
+      publicId: "mcp_grant_test",
+      resource,
+      scopes: ["mcp:signals:write"],
+      ...grantOverride,
+    });
+
+    await expect(
+      exchangeMcpAuthorizationCode(db, {
+        audience: resource,
+        clientId: "mcp_client_test",
+        code: "mcp_code_raw",
+        codeVerifier: "verifier_test",
+        issuer: "https://app.lightfast.localhost",
+        jwtSecret: "test-secret",
+        redirectUri,
+      })
+    ).rejects.toEqual(
+      new McpOAuthError("invalid_grant", "Authorization grant is invalid.")
+    );
+
     expect(createMcpOauthGrantMock).not.toHaveBeenCalled();
     expect(createMcpRefreshTokenMock).not.toHaveBeenCalled();
   });

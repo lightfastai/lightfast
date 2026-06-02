@@ -147,6 +147,7 @@ export async function exchangeMcpAuthorizationCode(
     resource: code.resource,
     scopes: code.scopes,
   });
+  validateGrantForAuthorizationCode(code, grant);
   const accessGrant = grantFromAuthorizationCode(code, grant);
 
   const refreshToken = createRefreshTokenSecret();
@@ -195,6 +196,20 @@ function validateAuthorizationCodeForExchange(
       : input.codeVerifier;
   if (code.codeChallenge !== expectedChallenge) {
     throw new McpOAuthError("invalid_grant", "PKCE verification failed.");
+  }
+}
+
+function validateGrantForAuthorizationCode(
+  code: McpOauthAuthorizationCode,
+  grant: McpOauthGrant
+): void {
+  if (
+    grant.clientPublicId !== code.clientPublicId ||
+    grant.clerkOrgId !== code.clerkOrgId ||
+    grant.clerkUserId !== code.clerkUserId ||
+    grant.resource !== code.resource
+  ) {
+    throw new McpOAuthError("invalid_grant", "Authorization grant is invalid.");
   }
 }
 

@@ -199,7 +199,7 @@ describe("hosted MCP tools", () => {
     );
   });
 
-  it("does not relabel non-authorization status errors as org access denied", async () => {
+  it("relabels non-authorization status errors as upstream_error", async () => {
     const deps = dependencies({
       assertOrgAccess: vi.fn().mockRejectedValue(
         Object.assign(new Error("Org service unavailable."), {
