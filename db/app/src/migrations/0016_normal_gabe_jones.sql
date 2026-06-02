@@ -6,8 +6,6 @@ DROP INDEX `integration_calls_org_created_idx` ON `lightfast_provider_routine_ca
 DROP INDEX `integration_calls_org_caller_created_idx` ON `lightfast_provider_routine_calls`;--> statement-breakpoint
 DROP INDEX `integration_calls_connection_created_idx` ON `lightfast_provider_routine_calls`;--> statement-breakpoint
 DROP INDEX `integration_calls_provider_routine_created_idx` ON `lightfast_provider_routine_calls`;--> statement-breakpoint
-ALTER TABLE `lightfast_provider_routine_calls` DROP PRIMARY KEY;--> statement-breakpoint
-ALTER TABLE `lightfast_provider_routine_calls` ADD PRIMARY KEY(`id`);--> statement-breakpoint
 ALTER TABLE `lightfast_provider_routine_calls` ADD `provider_attempted` boolean DEFAULT false NOT NULL;--> statement-breakpoint
 ALTER TABLE `lightfast_provider_routine_calls` ADD `source_surface` varchar(32) DEFAULT 'system' NOT NULL;--> statement-breakpoint
 ALTER TABLE `lightfast_provider_routine_calls` ADD `source_ref` varchar(128);--> statement-breakpoint

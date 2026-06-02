@@ -18,4 +18,18 @@ describe("migration SQL", () => {
 
     expect(offenders).toEqual([]);
   });
+
+  it("does not emit primary key rebuild statements", () => {
+    const migrationsDir = join(process.cwd(), "src/migrations");
+    const offenders = readdirSync(migrationsDir)
+      .filter((file) => file.endsWith(".sql"))
+      .flatMap((file) => {
+        const sql = readFileSync(join(migrationsDir, file), "utf8");
+        const invalid = sql.match(/\b(?:DROP|ADD)\s+PRIMARY\s+KEY\b/gi);
+
+        return invalid ? [file] : [];
+      });
+
+    expect(offenders).toEqual([]);
+  });
 });
