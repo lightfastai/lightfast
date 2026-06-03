@@ -359,6 +359,7 @@ function callProviderRuntimeTool(
   providerRoutineCall: ProviderRoutineCall | null,
   logContext: Record<string, unknown>
 ) {
+  // Keep dispatch explicit so new providers fail loudly at compile-time.
   switch (context.provider) {
     case "linear":
       return callLinearRuntimeTool(
