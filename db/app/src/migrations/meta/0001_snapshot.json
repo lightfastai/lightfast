@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "2a96df24-dce0-4ba0-bcd9-672440d2d095",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "32ae99b2-bf42-4232-b152-0d883632ec22",
+  "prevId": "2a96df24-dce0-4ba0-bcd9-672440d2d095",
   "tables": {
     "lightfast_org_source_control_bindings": {
       "name": "lightfast_org_source_control_bindings",
@@ -16,71 +16,71 @@
         },
         "clerk_org_id": {
           "name": "clerk_org_id",
-          "type": "varchar(191)",
+          "type": "varchar(64)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "active_clerk_org_id": {
           "name": "active_clerk_org_id",
-          "type": "varchar(191)",
+          "type": "varchar(64)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
         "provider": {
           "name": "provider",
-          "type": "varchar(50)",
+          "type": "varchar(32)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "provider_account_id": {
           "name": "provider_account_id",
-          "type": "varchar(191)",
+          "type": "varchar(128)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
         "provider_account_login": {
           "name": "provider_account_login",
-          "type": "varchar(191)",
+          "type": "varchar(128)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
         "provider_installation_id": {
           "name": "provider_installation_id",
-          "type": "varchar(191)",
+          "type": "varchar(128)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
         "status": {
           "name": "status",
-          "type": "varchar(50)",
+          "type": "varchar(32)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "connected_by_user_id": {
           "name": "connected_by_user_id",
-          "type": "varchar(191)",
+          "type": "varchar(64)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "connected_at": {
           "name": "connected_at",
-          "type": "timestamp",
+          "type": "timestamp(3)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "CURRENT_TIMESTAMP(3)"
         },
         "revoked_at": {
           "name": "revoked_at",
-          "type": "timestamp",
+          "type": "timestamp(3)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -94,19 +94,20 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp(3)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "CURRENT_TIMESTAMP(3)"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp",
+          "type": "timestamp(3)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
+          "onUpdate": true,
+          "default": "CURRENT_TIMESTAMP(3)"
         }
       },
       "indexes": {
