@@ -10,8 +10,6 @@ export default async function SettingsPage({
   // Settings layout already verified org access; no additional checks needed here
   const { slug } = await params;
 
-  prefetch(trpc.org.settings.sourceControl.get.queryOptions());
-  prefetch(trpc.org.settings.sourceControl.listRepositories.queryOptions());
   prefetch(trpc.org.settings.identity.get.queryOptions());
 
   return (

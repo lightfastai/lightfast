@@ -25,10 +25,6 @@ import { useCallback, useMemo } from "react";
 import { useTRPC } from "~/trpc/react";
 import { IdentitySettingsSection } from "./identity-settings-section";
 import {
-  LightfastRepositorySection,
-  SourceControlConnectionSection,
-} from "./source-control-connection-section";
-import {
   normalizeTeamSlugInput,
   useTeamNameUpdate,
 } from "./team-general-settings-actions";
@@ -48,12 +44,6 @@ export function TeamGeneralSettingsClient({
     ...trpc.viewer.organization.listUserOrganizations.queryOptions(),
     staleTime: 5 * 60 * 1000,
   });
-  const { data: sourceControlConnection } = useSuspenseQuery(
-    trpc.org.settings.sourceControl.get.queryOptions()
-  );
-  const { data: sourceControlRepositories } = useSuspenseQuery(
-    trpc.org.settings.sourceControl.listRepositories.queryOptions()
-  );
   const identitySettingsQuery = useQuery(
     trpc.org.settings.identity.get.queryOptions()
   );
@@ -205,15 +195,6 @@ export function TeamGeneralSettingsClient({
         </form>
       </Form>
 
-      <SourceControlConnectionSection
-        connection={sourceControlConnection.binding}
-        orgSlug={slug}
-        repositories={sourceControlRepositories}
-      />
-      <LightfastRepositorySection
-        connection={sourceControlConnection.binding}
-        orgSlug={slug}
-      />
       {identitySettingsQuery.isError &&
       isIdentityNotConfigured(identitySettingsQuery.error) ? (
         <p className="text-muted-foreground text-sm">
