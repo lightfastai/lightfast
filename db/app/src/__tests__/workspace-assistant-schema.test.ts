@@ -105,24 +105,25 @@ describe("workspace assistant schema", () => {
     ).toMatchObject({ unique: true });
     expect(
       indexColumnNames(
-        indexes.get("org_workspace_assistant_messages_conversation_sequence_uq")!
+        indexes.get(
+          "org_workspace_assistant_messages_conversation_sequence_uq"
+        )!
       )
     ).toEqual(["conversation_id", "sequence"]);
     expect(
-      indexes.get(
-        "org_workspace_assistant_messages_conv_idempotency_key_uq"
-      )?.config
+      indexes.get("org_workspace_assistant_messages_conv_idempotency_key_uq")
+        ?.config
     ).toMatchObject({ unique: true });
     expect(
       indexColumnNames(
-        indexes.get(
-          "org_workspace_assistant_messages_conv_idempotency_key_uq"
-        )!
+        indexes.get("org_workspace_assistant_messages_conv_idempotency_key_uq")!
       )
     ).toEqual(["conversation_id", "idempotency_key"]);
     expect(
       indexColumnNames(
-        indexes.get("org_workspace_assistant_messages_conversation_created_idx")!
+        indexes.get(
+          "org_workspace_assistant_messages_conversation_created_idx"
+        )!
       )
     ).toEqual(["conversation_id", "created_at", "id"]);
     expect(
@@ -190,7 +191,9 @@ describe("workspace assistant schema", () => {
     ).toEqual(["assistant_message_id"]);
     expect(
       indexColumnNames(
-        generationIndexes.get("org_workspace_assistant_generations_org_status_idx")!
+        generationIndexes.get(
+          "org_workspace_assistant_generations_org_status_idx"
+        )!
       )
     ).toEqual(["clerk_org_id", "status", "created_at", "id"]);
     expect(
@@ -270,7 +273,9 @@ describe("workspace assistant schema", () => {
     );
     expect(
       indexColumnNames(
-        indexes.get("org_workspace_assistant_context_items_conversation_kind_idx")!
+        indexes.get(
+          "org_workspace_assistant_context_items_conversation_kind_idx"
+        )!
       )
     ).toEqual(["conversation_id", "kind", "id"]);
     expect(

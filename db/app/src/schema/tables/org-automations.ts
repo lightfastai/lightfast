@@ -183,15 +183,15 @@ export const orgAutomationRuns = mysqlTable(
       .notNull(),
   },
   (table) => ({
-    publicIdUq: uniqueIndex("org_automation_runs_public_id_uq").on(table.publicId),
+    publicIdUq: uniqueIndex("org_automation_runs_public_id_uq").on(
+      table.publicId
+    ),
     idempotencyKeyUq: uniqueIndex("org_automation_runs_idempotency_key_uq").on(
       table.idempotencyKey
     ),
-    automationCreatedIdx: index("org_automation_runs_automation_created_idx").on(
-      table.automationPublicId,
-      table.createdAt,
-      table.id
-    ),
+    automationCreatedIdx: index(
+      "org_automation_runs_automation_created_idx"
+    ).on(table.automationPublicId, table.createdAt, table.id),
     orgStatusCreatedIdx: index("org_automation_runs_org_status_created_idx").on(
       table.clerkOrgId,
       table.status,

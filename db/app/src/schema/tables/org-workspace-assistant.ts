@@ -319,18 +319,15 @@ export const orgWorkspaceAssistantGenerations = mysqlTable(
       .notNull(),
   },
   (table) => ({
-    publicIdUq: uniqueIndex("org_workspace_assistant_generations_public_id_uq").on(
-      table.publicId
-    ),
+    publicIdUq: uniqueIndex(
+      "org_workspace_assistant_generations_public_id_uq"
+    ).on(table.publicId),
     assistantMessageUq: uniqueIndex(
       "org_workspace_assistant_generations_assistant_message_uq"
     ).on(table.assistantMessageId),
-    orgStatusIdx: index("org_workspace_assistant_generations_org_status_idx").on(
-      table.clerkOrgId,
-      table.status,
-      table.createdAt,
-      table.id
-    ),
+    orgStatusIdx: index(
+      "org_workspace_assistant_generations_org_status_idx"
+    ).on(table.clerkOrgId, table.status, table.createdAt, table.id),
     orgUserStatusIdx: index(
       "org_workspace_assistant_generations_org_user_status_idx"
     ).on(
@@ -408,9 +405,9 @@ export const orgWorkspaceAssistantToolCalls = mysqlTable(
       .notNull(),
   },
   (table) => ({
-    publicIdUq: uniqueIndex("org_workspace_assistant_tool_calls_public_id_uq").on(
-      table.publicId
-    ),
+    publicIdUq: uniqueIndex(
+      "org_workspace_assistant_tool_calls_public_id_uq"
+    ).on(table.publicId),
     generationToolCallUq: uniqueIndex(
       "org_workspace_assistant_tool_calls_generation_tool_call_uq"
     ).on(table.generationId, table.toolCallId),
@@ -419,11 +416,9 @@ export const orgWorkspaceAssistantToolCalls = mysqlTable(
       table.createdAt,
       table.id
     ),
-    orgCreatedIdx: index("org_workspace_assistant_tool_calls_org_created_idx").on(
-      table.clerkOrgId,
-      table.createdAt,
-      table.id
-    ),
+    orgCreatedIdx: index(
+      "org_workspace_assistant_tool_calls_org_created_idx"
+    ).on(table.clerkOrgId, table.createdAt, table.id),
   })
 );
 

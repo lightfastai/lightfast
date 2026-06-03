@@ -73,8 +73,14 @@ export const systemNamespaces = mysqlTable(
       table.claimedClerkUserId
     ),
     handleUq: uniqueIndex("system_namespaces_handle_uq").on(table.handle),
-    orgIdx: index("system_namespaces_org_idx").on(table.clerkOrgId, table.status),
-    userIdx: index("system_namespaces_user_idx").on(table.clerkUserId, table.status),
+    orgIdx: index("system_namespaces_org_idx").on(
+      table.clerkOrgId,
+      table.status
+    ),
+    userIdx: index("system_namespaces_user_idx").on(
+      table.clerkUserId,
+      table.status
+    ),
   })
 );
 
@@ -118,7 +124,9 @@ export const systemNamespaceOperations = mysqlTable(
     expiresAt: datetime("expires_at", { mode: "date", fsp: 3 }),
   },
   (table) => ({
-    orgIdempotencyUq: uniqueIndex("system_namespace_operations_org_idempotency_uq").on(
+    orgIdempotencyUq: uniqueIndex(
+      "system_namespace_operations_org_idempotency_uq"
+    ).on(
       table.idempotencyClerkOrgId,
       table.operationType,
       table.idempotencyKey
@@ -148,4 +156,5 @@ export const systemNamespaceOperations = mysqlTable(
 export type Namespace = typeof systemNamespaces.$inferSelect;
 export type InsertNamespace = typeof systemNamespaces.$inferInsert;
 export type NamespaceOperation = typeof systemNamespaceOperations.$inferSelect;
-export type InsertNamespaceOperation = typeof systemNamespaceOperations.$inferInsert;
+export type InsertNamespaceOperation =
+  typeof systemNamespaceOperations.$inferInsert;

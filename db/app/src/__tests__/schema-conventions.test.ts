@@ -136,7 +136,8 @@ describe("schema conventions", () => {
 
   it("uses scoped snake-case index names within MySQL limits", () => {
     const snapshot = latestSnapshot();
-    const indexNamePattern = /^(org|user|system)_[a-z0-9]+(?:_[a-z0-9]+)*_(idx|uq)$/;
+    const indexNamePattern =
+      /^(org|user|system)_[a-z0-9]+(?:_[a-z0-9]+)*_(idx|uq)$/;
     const violations: string[] = [];
 
     for (const [tableName, table] of Object.entries(snapshot.tables)) {
@@ -166,7 +167,10 @@ describe("schema conventions", () => {
 
     for (const [tableName, table] of Object.entries(snapshot.tables)) {
       for (const [columnName, column] of Object.entries(table.columns)) {
-        if (/(?:_at|_until)$/.test(columnName) && column.type !== "datetime(3)") {
+        if (
+          /(?:_at|_until)$/.test(columnName) &&
+          column.type !== "datetime(3)"
+        ) {
           violations.push(`${tableName}.${columnName}: ${column.type}`);
         }
       }
@@ -197,17 +201,21 @@ describe("schema conventions", () => {
     }
 
     for (const file of readdirSync(tablesDir)) {
-      if (!file.endsWith(".ts") || file.startsWith("_") || file === "index.ts") {
+      if (
+        !file.endsWith(".ts") ||
+        file.startsWith("_") ||
+        file === "index.ts"
+      ) {
         continue;
       }
 
       const source = readFileSync(join(tablesDir, file), "utf8");
-      const updatedAtDeclarations = source.match(
-        /updatedAt:\s*datetime\("updated_at"/g
-      ) ?? [];
-      const updatedAtHooks = source.match(
-        /updatedAt:\s*datetime\("updated_at",\s*\{\s*mode:\s*"date",\s*fsp:\s*3\s*\}\)[\s\S]*?\.\$onUpdate\(\(\) => new Date\(\)\)[\s\S]*?\.notNull\(\)/g
-      ) ?? [];
+      const updatedAtDeclarations =
+        source.match(/updatedAt:\s*datetime\("updated_at"/g) ?? [];
+      const updatedAtHooks =
+        source.match(
+          /updatedAt:\s*datetime\("updated_at",\s*\{\s*mode:\s*"date",\s*fsp:\s*3\s*\}\)[\s\S]*?\.\$onUpdate\(\(\) => new Date\(\)\)[\s\S]*?\.notNull\(\)/g
+        ) ?? [];
 
       if (updatedAtDeclarations.length !== updatedAtHooks.length) {
         violations.push(`${file}: updatedAt missing runtime hook`);
@@ -247,7 +255,7 @@ describe("schema conventions", () => {
   });
 
   it("keeps mysql2 and direct PlanetScale imports out of app code", () => {
-    const directPlanetScaleSpecifier = "@planet" + "scale/";
+    const directPlanetScaleSpecifier = "@planetscale/";
     const packageViolations: string[] = [];
     const sourceViolations: string[] = [];
 

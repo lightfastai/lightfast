@@ -184,7 +184,8 @@ export const orgIdentityIndexFiles = mysqlTable(
 );
 
 export type IdentityIndexState = typeof orgIdentityIndexStates.$inferSelect;
-export type InsertIdentityIndexState = typeof orgIdentityIndexStates.$inferInsert;
+export type InsertIdentityIndexState =
+  typeof orgIdentityIndexStates.$inferInsert;
 
 export type IdentityIndexFile = typeof orgIdentityIndexFiles.$inferSelect;
 export type InsertIdentityIndexFile = typeof orgIdentityIndexFiles.$inferInsert;

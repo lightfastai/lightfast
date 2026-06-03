@@ -4,7 +4,11 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { Database } from "../client";
 import type { IdentityIndexFile, IdentityIndexState } from "../schema";
-import { orgIdentityIndexFiles as identityIndexFiles, orgIdentityIndexStates as identityIndexStates, orgSignals as signals } from "../schema";
+import {
+  orgIdentityIndexFiles as identityIndexFiles,
+  orgIdentityIndexStates as identityIndexStates,
+  orgSignals as signals,
+} from "../schema";
 import {
   acquireIdentityIndexRefreshLock,
   createOrLoadIdentityIndexState,

@@ -10,7 +10,10 @@ import type {
   NamespaceOperationStatus,
   NamespaceOperationType,
 } from "../schema";
-import { systemNamespaceOperations as namespaceOperations, systemNamespaces as namespaces } from "../schema";
+import {
+  systemNamespaceOperations as namespaceOperations,
+  systemNamespaces as namespaces,
+} from "../schema";
 import { getRowsAffected, isDuplicateKeyError } from "./drizzle-results";
 
 export type NamespaceOperationEvent =

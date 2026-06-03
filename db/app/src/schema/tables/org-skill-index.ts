@@ -193,10 +193,9 @@ export const orgSkillIndexEntries = mysqlTable(
       table.skillIndexStateId,
       table.slug
     ),
-    stateValidationIdx: index("org_skill_index_entries_state_validation_idx").on(
-      table.skillIndexStateId,
-      table.validationStatus
-    ),
+    stateValidationIdx: index(
+      "org_skill_index_entries_state_validation_idx"
+    ).on(table.skillIndexStateId, table.validationStatus),
   })
 );
 

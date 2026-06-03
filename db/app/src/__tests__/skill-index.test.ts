@@ -4,7 +4,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { Database } from "../client";
 import type { SkillIndexEntry, SkillIndexState } from "../schema";
-import { orgSkillIndexEntries as skillIndexEntries, orgSkillIndexStates as skillIndexStates } from "../schema";
+import {
+  orgSkillIndexEntries as skillIndexEntries,
+  orgSkillIndexStates as skillIndexStates,
+} from "../schema";
 import {
   acquireSkillIndexRefreshLock,
   createOrLoadSkillIndexState,

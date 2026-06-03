@@ -121,7 +121,9 @@ export const systemMcpOauthClientRedirectUris = mysqlTable(
       .notNull(),
   },
   (table) => ({
-    clientIdx: index("system_mcp_redirect_uris_client_idx").on(table.clientPublicId),
+    clientIdx: index("system_mcp_redirect_uris_client_idx").on(
+      table.clientPublicId
+    ),
   })
 );
 
@@ -156,7 +158,9 @@ export const systemMcpOauthRegistrationTokens = mysqlTable(
     updatedAt: updatedAtColumn(),
   },
   (table) => ({
-    publicIdUq: uniqueIndex("system_mcp_registration_public_id_uq").on(table.publicId),
+    publicIdUq: uniqueIndex("system_mcp_registration_public_id_uq").on(
+      table.publicId
+    ),
     tokenHashUq: uniqueIndex("system_mcp_registration_token_hash_uq").on(
       table.tokenHash
     ),
@@ -275,7 +279,9 @@ export const systemMcpOauthGrants = mysqlTable(
     updatedAt: updatedAtColumn(),
   },
   (table) => ({
-    publicIdUq: uniqueIndex("system_mcp_grants_public_id_uq").on(table.publicId),
+    publicIdUq: uniqueIndex("system_mcp_grants_public_id_uq").on(
+      table.publicId
+    ),
     lookupIdx: index("system_mcp_grants_lookup_idx").on(
       table.clerkUserId,
       table.clerkOrgId,
@@ -340,7 +346,9 @@ export const systemMcpOauthRefreshTokens = mysqlTable(
     updatedAt: updatedAtColumn(),
   },
   (table) => ({
-    tokenHashUq: uniqueIndex("system_mcp_refresh_token_hash_uq").on(table.tokenHash),
+    tokenHashUq: uniqueIndex("system_mcp_refresh_token_hash_uq").on(
+      table.tokenHash
+    ),
     grantStatusIdx: index("system_mcp_refresh_grant_status_idx").on(
       table.grantPublicId,
       table.status,
@@ -408,7 +416,8 @@ export type InsertMcpOauthAuthorizationCode =
   typeof systemMcpOauthAuthorizationCodes.$inferInsert;
 export type McpOauthGrant = typeof systemMcpOauthGrants.$inferSelect;
 export type InsertMcpOauthGrant = typeof systemMcpOauthGrants.$inferInsert;
-export type McpOauthRefreshToken = typeof systemMcpOauthRefreshTokens.$inferSelect;
+export type McpOauthRefreshToken =
+  typeof systemMcpOauthRefreshTokens.$inferSelect;
 export type InsertMcpOauthRefreshToken =
   typeof systemMcpOauthRefreshTokens.$inferInsert;
 export type McpAuditEvent = typeof systemMcpAuditEvents.$inferSelect;

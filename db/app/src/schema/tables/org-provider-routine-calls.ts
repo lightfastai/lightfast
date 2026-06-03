@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 import { sql } from "drizzle-orm";
 import {
   bigint,
-  datetime,
   boolean,
+  datetime,
   index,
   json,
   mysqlTable,
