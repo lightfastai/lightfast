@@ -1,0 +1,55 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "extends": ["//"],
+  "tags": ["app"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "env": [
+        "BRAINTRUST_API_KEY",
+        "CLERK_SECRET_KEY",
+        "HEALTH_CHECK_AUTH_TOKEN",
+        "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+        "NEXT_PUBLIC_SENTRY_DSN",
+        "NEXT_PUBLIC_VERCEL_ENV",
+        "SENTRY_AUTH_TOKEN",
+        "SENTRY_DSN",
+        "SENTRY_ORG",
+        "SENTRY_PROJECT",
+        "SERVICE_JWT_SECRET",
+        "VERCEL_ENV",
+        "VITE_*"
+      ],
+      "passThroughEnv": [
+        "DATABASE_HOST",
+        "DATABASE_USERNAME",
+        "DATABASE_PASSWORD",
+        "HOST",
+        "KV_REST_API_TOKEN",
+        "KV_REST_API_URL",
+        "PORT",
+        "PORTLESS_URL",
+        "UNKEY_API_ID",
+        "UNKEY_ROOT_KEY"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env.overrides.local",
+        ".vercel/.env*",
+        "../app/.env.overrides.local",
+        "../app/.vercel/.env*"
+      ],
+      "outputs": [".output/**", "dist/**", "src/routeTree.gen.ts"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "passThroughEnv": ["HOST", "PORT", "PORTLESS_URL"]
+    },
+    "dev:next": {
+      "cache": false,
+      "persistent": true
+    },
+    "transit": {}
+  }
+}
