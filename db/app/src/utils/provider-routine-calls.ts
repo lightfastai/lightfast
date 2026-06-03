@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray, lt, or, sql } from "drizzle-orm";
 import type { Database } from "../client";
 import {
   createProviderRoutineCallId,
@@ -7,6 +7,7 @@ import {
   type ProviderRoutineCallProvider,
   type ProviderRoutineCallRedactedPayload,
   type ProviderRoutineCallSourceSurface,
+  type ProviderRoutineCallStatus,
   providerRoutineCalls,
 } from "../schema";
 import { getRowsAffected } from "./drizzle-results";
@@ -37,21 +38,85 @@ function normalizeLimit(limit: number | undefined): number {
   return Math.max(1, Math.min(Math.trunc(limit), 100));
 }
 
+function isDefined<T>(value: T | undefined): value is T {
+  return value !== undefined;
+}
+
+function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, "\\$&");
+}
+
+export interface ProviderRoutineCallCursor {
+  createdAt: Date;
+  id: number;
+}
+
+export interface ListProviderRoutineCallsResult {
+  items: ProviderRoutineCall[];
+  nextCursor: ProviderRoutineCallCursor | null;
+}
+
+export interface ListProviderRoutineCallsInput {
+  clerkOrgId: string;
+  cursor?: ProviderRoutineCallCursor | null;
+  limit?: number;
+  providers?: ProviderRoutineCallProvider[];
+  search?: string;
+  statuses?: ProviderRoutineCallStatus[];
+}
+
 export async function listProviderRoutineCalls(
   db: Database,
-  input: { clerkOrgId: string; limit?: number }
-): Promise<ProviderRoutineCall[]> {
+  input: ListProviderRoutineCallsInput
+): Promise<ListProviderRoutineCallsResult> {
   const limit = normalizeLimit(input.limit);
+  const search = input.search?.trim();
+  const searchPattern = search ? `%${escapeLikePattern(search)}%` : undefined;
+  const conditions = [
+    eq(providerRoutineCalls.clerkOrgId, input.clerkOrgId),
+    searchPattern
+      ? or(
+          sql`${providerRoutineCalls.routineId} like ${searchPattern} escape '\\\\'`,
+          sql`${providerRoutineCalls.providerToolName} like ${searchPattern} escape '\\\\'`,
+          sql`${providerRoutineCalls.calledById} like ${searchPattern} escape '\\\\'`
+        )
+      : undefined,
+    input.providers?.length
+      ? inArray(providerRoutineCalls.provider, input.providers)
+      : undefined,
+    input.statuses?.length
+      ? inArray(providerRoutineCalls.status, input.statuses)
+      : undefined,
+    input.cursor
+      ? or(
+          lt(providerRoutineCalls.createdAt, input.cursor.createdAt),
+          and(
+            eq(providerRoutineCalls.createdAt, input.cursor.createdAt),
+            lt(providerRoutineCalls.id, input.cursor.id)
+          )
+        )
+      : undefined,
+  ].filter(isDefined);
 
-  return db
+  const rows = await db
     .select()
     .from(providerRoutineCalls)
-    .where(eq(providerRoutineCalls.clerkOrgId, input.clerkOrgId))
+    .where(and(...conditions))
     .orderBy(
       desc(providerRoutineCalls.createdAt),
       desc(providerRoutineCalls.id)
     )
-    .limit(limit);
+    .limit(limit + 1);
+
+  const items = rows.slice(0, limit);
+  const lastItem = items.at(-1);
+  return {
+    items,
+    nextCursor:
+      rows.length > limit && lastItem
+        ? { createdAt: lastItem.createdAt, id: lastItem.id }
+        : null,
+  };
 }
 
 export async function createProviderRoutineCall(

@@ -69,43 +69,106 @@ const decision = {
   updatedAt: new Date("2026-06-02T03:20:11.966Z"),
 } satisfies ProviderRoutineCall;
 
+const page = { items: [decision], nextCursor: null };
+
 describe("decisionsRouter", () => {
   beforeEach(() => {
     listProviderRoutineCallsMock.mockReset();
-    listProviderRoutineCallsMock.mockResolvedValue([decision]);
+    listProviderRoutineCallsMock.mockResolvedValue(page);
   });
 
-  it("lists recent decisions for the active organization", async () => {
-    await expect(caller().decisions.list({ limit: 10 })).resolves.toEqual([
-      decision,
-    ]);
+  it("forwards cursor, limit, and search and returns the page unchanged", async () => {
+    await expect(
+      caller().decisions.list({
+        cursor: { createdAt: new Date("2026-06-02T03:20:11.419Z"), id: 1 },
+        limit: 25,
+        search: "create_issue",
+      })
+    ).resolves.toEqual(page);
 
     expect(listProviderRoutineCallsMock).toHaveBeenCalledWith(
       expect.anything(),
       {
         clerkOrgId: "org_acme",
-        limit: 10,
+        cursor: { createdAt: new Date("2026-06-02T03:20:11.419Z"), id: 1 },
+        limit: 25,
+        providers: undefined,
+        search: "create_issue",
+        statuses: undefined,
       }
     );
   });
 
-  it("uses the default limit when no input is provided", async () => {
-    await expect(caller().decisions.list()).resolves.toEqual([decision]);
+  it("forwards provider and status filters", async () => {
+    await caller().decisions.list({
+      providers: ["linear"],
+      statuses: ["failed", "succeeded"],
+    });
 
     expect(listProviderRoutineCallsMock).toHaveBeenCalledWith(
       expect.anything(),
       {
         clerkOrgId: "org_acme",
-        limit: 50,
+        cursor: undefined,
+        limit: undefined,
+        providers: ["linear"],
+        search: undefined,
+        statuses: ["failed", "succeeded"],
       }
     );
+  });
+
+  it("coerces empty filter arrays and blank search to undefined", async () => {
+    await caller().decisions.list({
+      providers: [],
+      statuses: [],
+      search: "   ",
+    });
+
+    expect(listProviderRoutineCallsMock).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        clerkOrgId: "org_acme",
+        cursor: undefined,
+        limit: undefined,
+        providers: undefined,
+        search: undefined,
+        statuses: undefined,
+      }
+    );
+  });
+
+  it("rejects unknown provider values", async () => {
+    await expect(
+      caller().decisions.list({
+        providers: ["github" as unknown as "linear"],
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(listProviderRoutineCallsMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects unknown status values", async () => {
+    await expect(
+      caller().decisions.list({
+        statuses: ["pending" as unknown as "failed"],
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(listProviderRoutineCallsMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects non-date cursor values before querying", async () => {
+    await expect(
+      caller().decisions.list({
+        cursor: { createdAt: 123 as unknown as Date, id: 1 },
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(listProviderRoutineCallsMock).not.toHaveBeenCalled();
   });
 
   it("rejects pending users", async () => {
     await expect(
-      caller({ type: "pending", userId: "user_current" }).decisions.list()
+      caller({ type: "pending", userId: "user_current" }).decisions.list({})
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
-
     expect(listProviderRoutineCallsMock).not.toHaveBeenCalled();
   });
 });

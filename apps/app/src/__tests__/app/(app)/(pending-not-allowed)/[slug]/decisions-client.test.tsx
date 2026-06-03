@@ -1,20 +1,31 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const listQueryOptionsMock = vi.fn((input: unknown) => ({
+const useInfiniteQueryMock = vi.fn();
+const infiniteQueryOptionsMock = vi.fn((input: unknown) => ({
   input,
   queryKey: ["org", "workspace", "decisions", "list", input],
 }));
-const useSuspenseQueryMock = vi.fn();
+
+const queryStates: Record<string, string | null> = {
+  q: "",
+  provider: "",
+  status: "",
+  decision: null,
+};
+const setQuery = vi.fn((value: string | null) => {
+  queryStates.q = value;
+});
+const setProvider = vi.fn();
+const setStatus = vi.fn();
+const setDecision = vi.fn();
 
 vi.mock("~/trpc/react", () => ({
   useTRPC: () => ({
     org: {
       workspace: {
         decisions: {
-          list: {
-            queryOptions: listQueryOptionsMock,
-          },
+          list: { infiniteQueryOptions: infiniteQueryOptionsMock },
         },
       },
     },
@@ -22,16 +33,58 @@ vi.mock("~/trpc/react", () => ({
 }));
 
 vi.mock("@tanstack/react-query", () => ({
-  useSuspenseQuery: useSuspenseQueryMock,
+  useInfiniteQuery: () => useInfiniteQueryMock(),
 }));
 
 vi.mock("@vendor/lib/time", () => ({
   formatRelativeTimeToNow: () => "just now",
+  formatDuration: () => "547ms",
+  formatUtcCalendarDate: () => "2 Jun 2026",
 }));
 
-const { DecisionsClient } = await import(
-  "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/decisions/_components/decisions-client"
-);
+// CodeBlock pulls in Shiki (async highlight) — stub it to a <pre> so we can
+// still assert the serialized JSON is rendered.
+vi.mock("@repo/ui/components/ai-elements/code-block", () => ({
+  CodeBlock: ({ code }: { code: string }) => <pre>{code}</pre>,
+  CodeBlockActions: ({ children }: { children?: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  CodeBlockCopyButton: () => <button type="button">copy</button>,
+  CodeBlockHeader: ({ children }: { children?: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  CodeBlockTitle: ({ children }: { children?: React.ReactNode }) => (
+    <span>{children}</span>
+  ),
+}));
+
+vi.mock("@repo/ui/components/ssr-code-block", () => ({
+  SSRCodeBlockCopyButton: () => <button type="button">copy</button>,
+}));
+
+vi.mock("@vercel/microfrontends/next/client", () => ({
+  Link: ({
+    children,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+    <a {...props}>{children}</a>
+  ),
+}));
+
+vi.mock("nuqs", () => ({
+  parseAsString: {
+    withDefault: () => "parser",
+  },
+  useQueryState: (key: string) => {
+    const setters: Record<string, (value: string | null) => void> = {
+      q: setQuery,
+      provider: setProvider,
+      status: setStatus,
+      decision: setDecision,
+    };
+    return [queryStates[key] ?? null, setters[key] ?? vi.fn()];
+  },
+}));
 
 const baseDecision = {
   id: 1,
@@ -44,15 +97,15 @@ const baseDecision = {
   routineId: "linear__create_issue",
   providerToolName: "create_issue",
   providerConnectionId: 42,
-  providerWorkspaceId: "linear_workspace_lightfast_emulated",
-  providerActorId: "linear_actor_lightfast_local",
+  providerWorkspaceId: "workspace_123",
+  providerActorId: "actor_123",
   providerAttempted: true,
   sourceClientId: null,
   sourceRef: "run_123",
   sourceSurface: "automation",
   status: "succeeded",
-  inputRedacted: { present: true },
-  outputRedacted: { present: true },
+  inputRedacted: { tool: "create_issue" },
+  outputRedacted: null,
   errorCode: null,
   errorMessage: null,
   startedAt: new Date("2026-06-02T03:20:11.419Z"),
@@ -61,108 +114,130 @@ const baseDecision = {
   updatedAt: new Date("2026-06-02T03:20:11.966Z"),
 };
 
+function mockRows(items: unknown[]) {
+  useInfiniteQueryMock.mockReturnValue({
+    data: { pages: [{ items, nextCursor: null }] },
+    fetchNextPage: vi.fn(),
+    hasNextPage: false,
+    isError: false,
+    isFetching: false,
+    isFetchingNextPage: false,
+    isPlaceholderData: false,
+    refetch: vi.fn(),
+  });
+}
+
 beforeEach(() => {
-  listQueryOptionsMock.mockClear();
-  useSuspenseQueryMock.mockReset();
+  // Pin "now" well after the fixtures so day-grouping treats them as
+  // historical (neither Today nor Yesterday) and uses the mocked
+  // formatUtcCalendarDate label deterministically, regardless of run date.
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-07-01T12:00:00.000Z"));
+  queryStates.q = "";
+  queryStates.provider = "";
+  queryStates.status = "";
+  queryStates.decision = null;
+  setQuery.mockClear();
+  setProvider.mockClear();
+  setStatus.mockClear();
+  setDecision.mockClear();
+  infiniteQueryOptionsMock.mockClear();
+  mockRows([baseDecision]);
 });
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+const { DecisionsClient } = await import(
+  "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/decisions/_components/decisions-client"
+);
+
 describe("DecisionsClient", () => {
-  it("renders an empty state when no decisions have been recorded", () => {
-    useSuspenseQueryMock.mockReturnValue({ data: [] });
-
+  it("renders a decision row grouped under a day header", () => {
     render(<DecisionsClient />);
 
-    expect(listQueryOptionsMock).toHaveBeenCalledWith({ limit: 50 });
-    expect(screen.getByRole("heading", { name: "Decisions" })).toBeVisible();
-    expect(
-      screen.getByText("No decisions have been recorded yet.")
-    ).toBeVisible();
+    expect(screen.getByText("2 Jun 2026")).toBeInTheDocument();
+    expect(screen.getByText("Linear / create_issue")).toBeInTheDocument();
+    expect(screen.getByText("Automation run_123")).toBeInTheDocument();
+    expect(screen.getByText("Succeeded")).toBeInTheDocument();
+    expect(screen.getByText("Automation")).toBeInTheDocument();
   });
 
-  it("renders succeeded and failed decisions without raw error messages", () => {
-    useSuspenseQueryMock.mockReturnValue({
-      data: [
-        baseDecision,
-        {
-          ...baseDecision,
-          id: 2,
-          publicId: "provider_routine_call_failed",
-          calledById: "run_failed",
-          status: "failed",
-          outputRedacted: null,
-          errorCode: "LINEAR_MCP_FAILED",
-          errorMessage: "raw provider error should stay hidden",
-          finishedAt: new Date("2026-06-02T03:20:12.419Z"),
-        },
-      ],
-    });
-
+  it("toggles the decision URL param when a row is clicked", () => {
     render(<DecisionsClient />);
 
-    expect(screen.getAllByText("Linear")).toHaveLength(2);
-    expect(screen.getAllByText("create_issue")).toHaveLength(2);
-    expect(screen.getByText("Succeeded")).toBeVisible();
-    expect(screen.getByText("Failed")).toBeVisible();
-    expect(screen.getByText("Automation run_123")).toBeVisible();
-    expect(screen.getByText("Automation run_failed")).toBeVisible();
-    expect(screen.getAllByText("Input captured")).toHaveLength(2);
-    expect(screen.getByText("Output captured")).toBeVisible();
-    expect(screen.getByText("547 ms")).toBeVisible();
-    expect(screen.getByText("1s")).toBeVisible();
-    expect(screen.getByText("LINEAR_MCP_FAILED")).toBeVisible();
-    expect(
-      screen.queryByText("raw provider error should stay hidden")
-    ).not.toBeInTheDocument();
+    // The Radix filter trigger also reports aria-expanded=false, so target the
+    // row button unambiguously by its action text.
+    fireEvent.click(screen.getByRole("button", { name: /create_issue/i }));
+
+    expect(setDecision).toHaveBeenCalledWith("provider_routine_call_123");
   });
 
-  it("opens a detail panel for a decision without exposing raw provider errors", () => {
-    useSuspenseQueryMock.mockReturnValue({
-      data: [
-        {
-          ...baseDecision,
-          status: "failed",
-          outputRedacted: null,
-          errorCode: "LINEAR_MCP_FAILED",
-          errorMessage: "raw provider error should stay hidden",
-          finishedAt: new Date("2026-06-02T03:20:12.419Z"),
-        },
-      ],
-    });
+  it("renders the inline detail with the full error message and JSON payload", () => {
+    queryStates.decision = "provider_routine_call_failed";
+    mockRows([
+      {
+        ...baseDecision,
+        publicId: "provider_routine_call_failed",
+        status: "failed",
+        inputRedacted: { tool: "create_issue" },
+        errorCode: "LINEAR_MCP_FAILED",
+        errorMessage: "raw provider error is now shown",
+      },
+    ]);
 
     render(<DecisionsClient />);
 
-    fireEvent.click(
-      screen.getByRole("button", { name: /view create_issue decision/i })
+    expect(
+      screen.getByText("provider_routine_call_failed")
+    ).toBeInTheDocument();
+    expect(screen.getByText("linear__create_issue")).toBeInTheDocument();
+    expect(screen.getByText("LINEAR_MCP_FAILED")).toBeInTheDocument();
+    expect(
+      screen.getByText("raw provider error is now shown")
+    ).toBeInTheDocument();
+    // JSON inspector renders the serialized input payload.
+    expect(screen.getByText(/"tool": "create_issue"/)).toBeInTheDocument();
+  });
+
+  it("renders the empty state with no rows and no filters", () => {
+    mockRows([]);
+    render(<DecisionsClient />);
+    expect(screen.getByText("No decisions yet")).toBeInTheDocument();
+  });
+
+  it("renders the no-results state when a filter excludes everything", () => {
+    queryStates.status = "failed";
+    mockRows([]);
+    render(<DecisionsClient />);
+    expect(screen.getByText("No matching decisions")).toBeInTheDocument();
+  });
+
+  it("passes deferred search text into the decisions list query", () => {
+    queryStates.q = " create_issue ";
+
+    render(<DecisionsClient />);
+
+    expect(infiniteQueryOptionsMock).toHaveBeenCalledWith(
+      {
+        limit: 50,
+        providers: undefined,
+        search: "create_issue",
+        statuses: undefined,
+      },
+      expect.anything()
+    );
+  });
+
+  it("writes search input changes to the q param", () => {
+    render(<DecisionsClient />);
+
+    fireEvent.change(
+      screen.getByRole("searchbox", { name: "Search decisions" }),
+      { target: { value: "linear" } }
     );
 
-    const detail = screen.getByRole("dialog", { name: "Decision details" });
-    expect(within(detail).getByText("provider_routine_call_123")).toBeVisible();
-    expect(within(detail).getByText("linear__create_issue")).toBeVisible();
-    expect(within(detail).getByText("Automation run_123")).toBeVisible();
-    expect(within(detail).getByText("LINEAR_MCP_FAILED")).toBeVisible();
-    expect(within(detail).getByText("Input captured")).toBeVisible();
-    expect(within(detail).queryByText("Output captured")).toBeNull();
-    expect(
-      within(detail).queryByText("raw provider error should stay hidden")
-    ).toBeNull();
-  });
-
-  it("closes the detail panel with Escape", () => {
-    useSuspenseQueryMock.mockReturnValue({ data: [baseDecision] });
-
-    render(<DecisionsClient />);
-
-    fireEvent.click(
-      screen.getByRole("button", { name: /view create_issue decision/i })
-    );
-    expect(
-      screen.getByRole("dialog", { name: "Decision details" })
-    ).toBeVisible();
-
-    fireEvent.keyDown(document, { key: "Escape" });
-
-    expect(
-      screen.queryByRole("dialog", { name: "Decision details" })
-    ).toBeNull();
+    expect(setQuery).toHaveBeenCalledWith("linear");
   });
 });
