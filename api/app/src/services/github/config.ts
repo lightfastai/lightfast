@@ -24,7 +24,7 @@ export const DEFAULT_GITHUB_APP_ENDPOINTS: GitHubAppEndpoints = {
   webBaseUrl: "https://github.com",
 };
 
-interface GitHubConfigEnv {
+interface GitHubAppConfigEnv {
   GITHUB_API_VERSION?: string;
   GITHUB_APP_CLIENT_ID?: string;
   GITHUB_APP_CLIENT_SECRET?: string;
@@ -105,31 +105,16 @@ export function resolveGitHubAppEndpoints(
   return resolveOriginUrls(endpointOrigin);
 }
 
-export function getGitHubAppConfig(
-  input: { env?: GitHubConfigEnv } = {}
+export function parseGitHubAppConfig(
+  configEnv: GitHubAppConfigEnv
 ): GitHubAppConfig {
-  const explicitEnv = input.env;
-  const configEnv = explicitEnv ?? runtimeEnv;
-  const endpointsInput: Parameters<typeof resolveGitHubAppEndpoints>[0] = {};
-  if (explicitEnv) {
-    endpointsInput.endpointOrigin = explicitEnv.GITHUB_APP_ENDPOINT_ORIGIN;
-    endpointsInput.legacyInstallUrlOverride =
-      explicitEnv.GITHUB_INSTALL_URL_OVERRIDE;
-    endpointsInput.vercelEnv = explicitEnv.VERCEL_ENV ?? "development";
-  } else {
-    endpointsInput.endpointOrigin = configEnv.GITHUB_APP_ENDPOINT_ORIGIN;
-    endpointsInput.vercelEnv = configEnv.VERCEL_ENV;
-  }
-  const endpoints = resolveGitHubAppEndpoints(endpointsInput);
+  const endpoints = resolveGitHubAppEndpoints({
+    endpointOrigin: configEnv.GITHUB_APP_ENDPOINT_ORIGIN,
+    legacyInstallUrlOverride: configEnv.GITHUB_INSTALL_URL_OVERRIDE,
+    vercelEnv: configEnv.VERCEL_ENV ?? "development",
+  });
 
-  const required = {
-    apiVersion: configEnv.GITHUB_API_VERSION ?? "2022-11-28",
-    appId: configEnv.GITHUB_APP_ID,
-    appSlug: configEnv.GITHUB_APP_SLUG,
-    clientId: configEnv.GITHUB_APP_CLIENT_ID,
-    clientSecret: configEnv.GITHUB_APP_CLIENT_SECRET,
-    privateKey: configEnv.GITHUB_APP_PRIVATE_KEY,
-  };
+  const required = parseRequiredGitHubAppConfig(configEnv);
 
   if (
     !(
@@ -151,5 +136,33 @@ export function getGitHubAppConfig(
     clientSecret: required.clientSecret,
     endpoints,
     privateKey: normalizeGitHubPrivateKey(required.privateKey),
+  };
+}
+
+export function getGitHubAppConfig(): GitHubAppConfig {
+  const endpoints = resolveGitHubAppEndpoints({
+    endpointOrigin: runtimeEnv.GITHUB_APP_ENDPOINT_ORIGIN,
+    vercelEnv: runtimeEnv.VERCEL_ENV,
+  });
+
+  return {
+    apiVersion: runtimeEnv.GITHUB_API_VERSION,
+    appId: runtimeEnv.GITHUB_APP_ID,
+    appSlug: runtimeEnv.GITHUB_APP_SLUG,
+    clientId: runtimeEnv.GITHUB_APP_CLIENT_ID,
+    clientSecret: runtimeEnv.GITHUB_APP_CLIENT_SECRET,
+    endpoints,
+    privateKey: normalizeGitHubPrivateKey(runtimeEnv.GITHUB_APP_PRIVATE_KEY),
+  };
+}
+
+function parseRequiredGitHubAppConfig(configEnv: GitHubAppConfigEnv) {
+  return {
+    apiVersion: configEnv.GITHUB_API_VERSION ?? "2022-11-28",
+    appId: configEnv.GITHUB_APP_ID,
+    appSlug: configEnv.GITHUB_APP_SLUG,
+    clientId: configEnv.GITHUB_APP_CLIENT_ID,
+    clientSecret: configEnv.GITHUB_APP_CLIENT_SECRET,
+    privateKey: configEnv.GITHUB_APP_PRIVATE_KEY,
   };
 }
