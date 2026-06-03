@@ -77,6 +77,18 @@ export {
   orgConnectorConnections,
 } from "./org-connector-connections";
 export {
+  createDeveloperConnectionId,
+  createDeveloperConnectionLeaseId,
+  type DeveloperConnection,
+  DEVELOPER_CONNECTION_ID_PREFIX,
+  type DeveloperConnectionLease,
+  DEVELOPER_CONNECTION_LEASE_ID_PREFIX,
+  developerConnectionLeases,
+  developerConnections,
+  type InsertDeveloperConnection,
+  type InsertDeveloperConnectionLease,
+} from "./developer-connections";
+export {
   type InsertOrgSourceControlBinding,
   type OrgSourceControlBinding,
   type OrgSourceControlBindingProvider,

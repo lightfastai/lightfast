@@ -1500,6 +1500,9 @@ importers:
       '@repo/connector-contract':
         specifier: workspace:*
         version: link:../../packages/connector-contract
+      '@repo/developer-connection-contract':
+        specifier: workspace:*
+        version: link:../../packages/developer-connection-contract
       '@repo/identity-contract':
         specifier: workspace:*
         version: link:../../packages/identity-contract
