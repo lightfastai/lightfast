@@ -17,20 +17,20 @@ export interface SentryAuthBoxCompleteResult {
 }
 
 export interface SentryAuthBoxClient {
-  start(input: {
-    clerkOrgId: string;
-    actorUserId: string;
-    providerAccountName: string;
-  }): Promise<SentryAuthBoxStartResult>;
   complete(input: {
     attemptId: string;
     clerkOrgId: string;
     actorUserId: string;
   }): Promise<SentryAuthBoxCompleteResult>;
+  start(input: {
+    clerkOrgId: string;
+    actorUserId: string;
+    providerAccountName: string;
+  }): Promise<SentryAuthBoxStartResult>;
 }
 
 function authBoxConfig() {
-  if (!env.DEVELOPER_AUTH_BOX_ORIGIN || !env.DEVELOPER_AUTH_BOX_TOKEN) {
+  if (!(env.DEVELOPER_AUTH_BOX_ORIGIN && env.DEVELOPER_AUTH_BOX_TOKEN)) {
     throw new TRPCError({
       code: "PRECONDITION_FAILED",
       message: "Developer auth box is not configured.",

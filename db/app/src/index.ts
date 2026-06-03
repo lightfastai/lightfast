@@ -33,13 +33,13 @@ export {
   createWorkspaceAssistantMessageId,
   createWorkspaceAssistantStreamId,
   createWorkspaceAssistantToolCallId,
-  hashMcpOauthResource,
-  type DeveloperConnection,
   DEVELOPER_CONNECTION_ID_PREFIX,
-  type DeveloperConnectionLease,
   DEVELOPER_CONNECTION_LEASE_ID_PREFIX,
+  type DeveloperConnection,
+  type DeveloperConnectionLease,
   developerConnectionLeases,
   developerConnections,
+  hashMcpOauthResource,
   type IdentityIndexFile,
   type IdentityIndexState,
   type InsertAutomation,
@@ -174,6 +174,20 @@ export {
   updateAutomation,
 } from "./utils/automations";
 export {
+  currentDeveloperConnectionKey,
+  developerConnectionLeaseExpiresAt,
+  getCurrentDeveloperConnection,
+  getDeveloperConnectionById,
+  getDeveloperConnectionLeaseById,
+  issueDeveloperConnectionLease,
+  listCurrentDeveloperConnections,
+  markCurrentDeveloperConnectionNeedsReconnect,
+  replaceCurrentDeveloperConnection,
+  revokeCurrentDeveloperConnection,
+  revokeDeveloperConnectionLease,
+  setCurrentDeveloperConnectionSandboxEnabled,
+} from "./utils/developer-connections";
+export {
   acquireIdentityIndexRefreshLock,
   createOrLoadIdentityIndexState,
   getIdentityIndexRefreshCandidateById,
@@ -248,20 +262,6 @@ export {
   updateConnectorToolManifestAndAutomationState,
   updateObservedConnectorTokens,
 } from "./utils/org-connector-connections";
-export {
-  currentDeveloperConnectionKey,
-  developerConnectionLeaseExpiresAt,
-  getCurrentDeveloperConnection,
-  getDeveloperConnectionById,
-  getDeveloperConnectionLeaseById,
-  issueDeveloperConnectionLease,
-  listCurrentDeveloperConnections,
-  markCurrentDeveloperConnectionNeedsReconnect,
-  replaceCurrentDeveloperConnection,
-  revokeCurrentDeveloperConnection,
-  revokeDeveloperConnectionLease,
-  setCurrentDeveloperConnectionSandboxEnabled,
-} from "./utils/developer-connections";
 export {
   getPersonByIdentityKey,
   getPersonByPublicId,

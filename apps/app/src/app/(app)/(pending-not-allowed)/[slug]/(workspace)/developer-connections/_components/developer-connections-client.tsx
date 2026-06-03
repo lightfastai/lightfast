@@ -72,9 +72,12 @@ interface DeveloperConnectionsClientProps {
 const ADMIN_REQUIRED_MESSAGE =
   "Admin access required to manage developer connections.";
 
-function filterMatches(row: DeveloperConnectionCatalogRow, filter: StatusFilter) {
-  const status = developerConnectionStatus(row).label
-    .toLowerCase()
+function filterMatches(
+  row: DeveloperConnectionCatalogRow,
+  filter: StatusFilter
+) {
+  const status = developerConnectionStatus(row)
+    .label.toLowerCase()
     .replace(" ", "_");
   return filter === "all" || status === filter;
 }
@@ -316,6 +319,7 @@ function DeveloperConnectionCard({
   const connected = Boolean(row.connection);
   const canManage =
     row.canManage && row.connectAvailability.status === "available";
+  const sandboxSwitchId = `developer-connection-${row.provider}-sandbox`;
 
   return (
     <section className="rounded-[12px] border border-border bg-background p-4">
@@ -343,18 +347,22 @@ function DeveloperConnectionCard({
                 <p className="text-foreground text-sm">
                   {row.connection?.providerAccountName}
                 </p>
-                {!canManage ? (
+                {canManage ? null : (
                   <p className="mt-1 text-muted-foreground text-xs">
                     {ADMIN_REQUIRED_MESSAGE}
                   </p>
-                ) : null}
+                )}
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <label className="flex items-center gap-2 rounded-[8px] border border-border px-2.5 py-1.5 text-sm">
+                <label
+                  className="flex items-center gap-2 rounded-[8px] border border-border px-2.5 py-1.5 text-sm"
+                  htmlFor={sandboxSwitchId}
+                >
                   <Switch
                     aria-label="Use in sandboxes"
                     checked={row.connection?.enabledForSandboxes ?? false}
                     disabled={!canManage || pending}
+                    id={sandboxSwitchId}
                     onCheckedChange={(enabled) =>
                       onSetSandboxEnabled(row.provider, enabled)
                     }

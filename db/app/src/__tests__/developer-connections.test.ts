@@ -74,7 +74,9 @@ describe("developer connection helpers", () => {
   it("exports helper functions used by services", () => {
     expect(typeof replaceCurrentDeveloperConnection).toBe("function");
     expect(typeof setCurrentDeveloperConnectionSandboxEnabled).toBe("function");
-    expect(typeof markCurrentDeveloperConnectionNeedsReconnect).toBe("function");
+    expect(typeof markCurrentDeveloperConnectionNeedsReconnect).toBe(
+      "function"
+    );
     expect(typeof issueDeveloperConnectionLease).toBe("function");
     expect(typeof revokeDeveloperConnectionLease).toBe("function");
   });

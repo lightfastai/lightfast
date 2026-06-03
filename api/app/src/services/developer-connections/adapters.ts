@@ -6,25 +6,27 @@ import type {
 
 export interface VerifiedDeveloperCredential {
   credentialKind: DeveloperConnectionCredentialKind;
-  credentialSchemaVersion: "1";
   credentialPayload: Record<string, unknown>;
+  credentialSchemaVersion: "1";
+  expiresAt: Date | null;
+  metadata: Record<string, unknown>;
   providerAccountId: string | null;
   providerAccountName: string;
   scopes: string[];
-  metadata: Record<string, unknown>;
-  expiresAt: Date | null;
 }
 
 export interface DeveloperConnectionMaterialization {
-  provider: DeveloperConnectionProvider;
   env: Record<string, string>;
   files: Array<{ path: string; contents: string; mode: "0600" }>;
+  provider: DeveloperConnectionProvider;
 }
 
 export async function verifyDeveloperConnectionInput(
   input: DeveloperConnectionConnectInput
 ): Promise<VerifiedDeveloperCredential> {
-  switch (input.provider) {
+  const provider = input.provider;
+
+  switch (provider) {
     case "pscale":
       return {
         credentialKind: "pscale_service_token",
@@ -82,6 +84,12 @@ export async function verifyDeveloperConnectionInput(
         },
         expiresAt: null,
       };
+    default: {
+      const unsupportedProvider: never = provider;
+      throw new Error(
+        `Unsupported developer connection provider: ${unsupportedProvider}`
+      );
+    }
   }
 }
 
@@ -89,7 +97,9 @@ export function materializeDeveloperCredential(input: {
   provider: DeveloperConnectionProvider;
   credentialPayload: Record<string, unknown>;
 }): DeveloperConnectionMaterialization {
-  switch (input.provider) {
+  const provider = input.provider;
+
+  switch (provider) {
     case "pscale":
       return {
         provider: "pscale",
@@ -137,5 +147,11 @@ export function materializeDeveloperCredential(input: {
         },
         files: [],
       };
+    default: {
+      const unsupportedProvider: never = provider;
+      throw new Error(
+        `Unsupported developer connection provider: ${unsupportedProvider}`
+      );
+    }
   }
 }

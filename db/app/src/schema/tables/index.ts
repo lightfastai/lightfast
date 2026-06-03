@@ -16,6 +16,18 @@ export {
   type InsertAutomationRun,
 } from "./automations";
 export {
+  createDeveloperConnectionId,
+  createDeveloperConnectionLeaseId,
+  DEVELOPER_CONNECTION_ID_PREFIX,
+  DEVELOPER_CONNECTION_LEASE_ID_PREFIX,
+  type DeveloperConnection,
+  type DeveloperConnectionLease,
+  developerConnectionLeases,
+  developerConnections,
+  type InsertDeveloperConnection,
+  type InsertDeveloperConnectionLease,
+} from "./developer-connections";
+export {
   type IdentityIndexFile,
   type IdentityIndexState,
   type InsertIdentityIndexFile,
@@ -76,18 +88,6 @@ export {
   type OrgConnectorConnection,
   orgConnectorConnections,
 } from "./org-connector-connections";
-export {
-  createDeveloperConnectionId,
-  createDeveloperConnectionLeaseId,
-  type DeveloperConnection,
-  DEVELOPER_CONNECTION_ID_PREFIX,
-  type DeveloperConnectionLease,
-  DEVELOPER_CONNECTION_LEASE_ID_PREFIX,
-  developerConnectionLeases,
-  developerConnections,
-  type InsertDeveloperConnection,
-  type InsertDeveloperConnectionLease,
-} from "./developer-connections";
 export {
   type InsertOrgSourceControlBinding,
   type OrgSourceControlBinding,

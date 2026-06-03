@@ -167,9 +167,7 @@ vi.mock("@repo/ui/components/ui/dialog", () => ({
   DialogHeader: ({ children }: { children?: ReactNode }) => (
     <div>{children}</div>
   ),
-  DialogTitle: ({ children }: { children?: ReactNode }) => (
-    <h2>{children}</h2>
-  ),
+  DialogTitle: ({ children }: { children?: ReactNode }) => <h2>{children}</h2>,
 }));
 
 vi.mock("@repo/ui/components/ui/input", () => ({
@@ -322,13 +320,16 @@ beforeEach(() => {
   vi.clearAllMocks();
   connectionState = null;
   errorState = null;
-  Object.keys(capturedMutationOptions).forEach((key) => {
+  for (const key of Object.keys(capturedMutationOptions)) {
     delete capturedMutationOptions[key];
-  });
+  }
   fetchQueryMock.mockResolvedValue([]);
   useSuspenseQueryMock.mockReturnValue({ data: [] });
   useMutationMock.mockImplementation(
-    (options: { mutationName?: string; onSuccess?: (data?: unknown) => void }) => {
+    (options: {
+      mutationName?: string;
+      onSuccess?: (data?: unknown) => void;
+    }) => {
       if (options.mutationName) {
         capturedMutationOptions[options.mutationName] = options;
       }
@@ -433,7 +434,9 @@ describe("DeveloperConnectionsPage", () => {
     });
     expect(screen.getByText("ABCD-EFGH")).toBeVisible();
 
-    fireEvent.click(screen.getByRole("button", { name: /complete connection/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /complete connection/i })
+    );
 
     expect(completeSentryAuthMutateMock).toHaveBeenCalledWith({
       provider: "sentry",

@@ -123,7 +123,9 @@ export const developerConnectionLeases = mysqlTable(
       unsigned: true,
     }).notNull(),
     clerkOrgId: varchar("clerk_org_id", { length: CLERK_ID_LENGTH }).notNull(),
-    actorUserId: varchar("actor_user_id", { length: CLERK_ID_LENGTH }).notNull(),
+    actorUserId: varchar("actor_user_id", {
+      length: CLERK_ID_LENGTH,
+    }).notNull(),
     sandboxRunId: varchar("sandbox_run_id", {
       length: PROVIDER_REF_LENGTH,
     }).notNull(),

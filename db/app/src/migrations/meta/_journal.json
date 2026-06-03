@@ -120,6 +120,13 @@
       "when": 1780451989566,
       "tag": "0019_typical_morlun",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1780469178437,
+      "tag": "0020_wealthy_silhouette",
+      "breakpoints": true
     }
   ]
 }
