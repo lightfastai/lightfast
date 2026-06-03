@@ -6,7 +6,7 @@ export const systemHealth = inngest.createFunction(
     id: "system-health",
     idempotency: "event.id",
     retries: 2,
-    triggers: { cron: "* * * * *" },
+    triggers: { cron: "*/30 * * * *" },
     timeouts: {
       finish: "30s",
       start: "30s",

@@ -49,7 +49,7 @@ describe("systemHealth", () => {
         id: "system-health",
         retries: 0,
         timeouts: { finish: "30s", start: "30s" },
-        triggers: { cron: "* * * * *" },
+        triggers: { cron: "*/30 * * * *" },
       },
       expect.any(Function)
     );
