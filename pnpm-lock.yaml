@@ -650,9 +650,6 @@ importers:
       '@hookform/resolvers':
         specifier: 'catalog:'
         version: 5.2.2(react-hook-form@7.72.1(react@19.2.6))(zod@4.3.6)
-      '@logtail/next':
-        specifier: ^0.3.1
-        version: 0.3.1(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)
       '@next/bundle-analyzer':
         specifier: ^16.2.6
         version: 16.2.6
@@ -2875,9 +2872,6 @@ importers:
 
   vendor/observability:
     dependencies:
-      '@logtail/next':
-        specifier: ^0.3.1
-        version: 0.3.1(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)
       '@orpc/client':
         specifier: ^1.14.2
         version: 1.14.2(@opentelemetry/api@1.9.1)

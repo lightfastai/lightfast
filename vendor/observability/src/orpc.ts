@@ -3,13 +3,13 @@ import "server-only";
 import { ORPCError } from "@orpc/client";
 import type { Meta, Middleware, ORPCErrorConstructorMap } from "@orpc/server";
 import {
-  captureException,
   getActiveSpan,
   SEMANTIC_ATTRIBUTE_SENTRY_ORIGIN,
   SEMANTIC_ATTRIBUTE_SENTRY_SOURCE,
   startSpan,
   withIsolationScope,
 } from "@sentry/core";
+import * as Sentry from "@sentry/nextjs";
 
 import { log } from "./log/next";
 import { withRequestContext } from "./request";
@@ -25,7 +25,6 @@ interface ObservabilityContext {
  * - Selective Sentry capture (server errors only)
  * - Structured logging with trace ID correlation
  * - ALS request context seeding (requestId + traceId)
- * - Request journal emission
  *
  * Follows the same pattern as createObservabilityMiddleware in trpc.ts.
  *
@@ -70,11 +69,10 @@ export function createORPCObservabilityMiddleware<
           const span = getActiveSpan();
           const traceId = span?.spanContext().traceId;
 
-          // Catch errors inside withRequestContext so we still get journal + durationMs.
+          // Catch errors inside withRequestContext so we still get durationMs.
           // oRPC errors propagate as thrown exceptions (unlike tRPC's result.ok pattern).
           const {
             result,
-            journal,
             durationMs,
             ctx: enrichedCtx,
           } = await withRequestContext(
@@ -99,15 +97,6 @@ export function createORPCObservabilityMiddleware<
 
           if (result.ok) {
             log.info("[orpc] ok", { ...meta, ok: true });
-            if (journal.length > 0) {
-              log.info("[orpc] request journal", {
-                path: procedurePath,
-                durationMs,
-                ok: true,
-                entryCount: journal.length,
-                entries: journal,
-              });
-            }
             return result.value;
           }
 
@@ -120,11 +109,6 @@ export function createORPCObservabilityMiddleware<
           if (httpStatus >= 500) {
             log.error("[orpc] server error", { ...meta, ok: false, errorCode });
 
-            scope.setTag("orpc.path", procedurePath);
-            scope.setTag("orpc.error_code", errorCode);
-            scope.setExtra("durationMs", durationMs);
-            scope.setExtra("requestId", requestId);
-
             // Unwrap .cause for better Sentry grouping (same as trpc.ts:127-131)
             const reportedError =
               errorCode === "INTERNAL_SERVER_ERROR" &&
@@ -133,10 +117,14 @@ export function createORPCObservabilityMiddleware<
                 ? error.cause
                 : error;
 
-            captureException(reportedError, {
-              mechanism: {
-                handled: false,
-                type: "auto.rpc.orpc.middleware",
+            Sentry.captureException(reportedError, {
+              extra: {
+                durationMs,
+                requestId,
+              },
+              tags: {
+                "orpc.error_code": errorCode,
+                "orpc.path": procedurePath,
               },
             });
           } else {
@@ -144,16 +132,6 @@ export function createORPCObservabilityMiddleware<
               ...meta,
               ok: false,
               errorCode,
-            });
-          }
-
-          if (journal.length > 0) {
-            log.info("[orpc] request journal", {
-              path: procedurePath,
-              durationMs,
-              ok: false,
-              entryCount: journal.length,
-              entries: journal,
             });
           }
 
