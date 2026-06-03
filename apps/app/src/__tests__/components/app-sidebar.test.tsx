@@ -201,6 +201,9 @@ describe("AppSidebar", () => {
       "/acme/connectors"
     );
     expect(
+      screen.getByRole("link", { name: /developer connections/i })
+    ).toHaveAttribute("href", "/acme/developer-connections");
+    expect(
       screen.getByRole("region", { name: "Workspace" })
     ).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Manage" })).toBeInTheDocument();
@@ -212,6 +215,19 @@ describe("AppSidebar", () => {
 
     const connectorsLink = screen.getByRole("link", { name: /connectors/i });
     expect(connectorsLink.closest("[data-active]")).toHaveAttribute(
+      "data-active",
+      "true"
+    );
+  });
+
+  it("marks developer connections active by route section", () => {
+    pathname = "/acme/developer-connections";
+    render(<AppSidebar />);
+
+    const link = screen.getByRole("link", {
+      name: /developer connections/i,
+    });
+    expect(link.closest("[data-active]")).toHaveAttribute(
       "data-active",
       "true"
     );
