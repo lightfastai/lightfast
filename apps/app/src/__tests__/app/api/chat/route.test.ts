@@ -484,18 +484,18 @@ describe("chat route", () => {
     expect(response).toBe(streamResponse);
   });
 
-  it("exposes connector provider routines to the workspace assistant as server tools", async () => {
+  it("exposes read-only connector provider routines to the workspace assistant as server tools", async () => {
     const uiMessages = [
       {
         id: "client-message-1",
-        parts: [{ text: "Create a Linear issue for this bug", type: "text" }],
+        parts: [{ text: "Summarize my Linear issues", type: "text" }],
         role: "user",
       },
     ];
     const streamResponse = new Response("stream");
 
     convertToModelMessagesMock.mockResolvedValue([
-      { content: "Create a Linear issue for this bug", role: "user" },
+      { content: "Summarize my Linear issues", role: "user" },
     ]);
     gatewayMock.mockReturnValue("gateway:anthropic/claude-sonnet-4.6");
     streamTextMock.mockReturnValue({
@@ -517,11 +517,13 @@ describe("chat route", () => {
         stopWhen: { count: 5, kind: "step-count" },
         tools: {
           callProviderRoutine: expect.objectContaining({
-            description: expect.stringContaining("Call one connected"),
+            description: expect.stringContaining(
+              "Call one read-only connected"
+            ),
             execute: expect.any(Function),
           }),
           findProviderRoutines: expect.objectContaining({
-            description: expect.stringContaining("Find connected"),
+            description: expect.stringContaining("Find read-only connected"),
             execute: expect.any(Function),
           }),
         },
@@ -539,7 +541,7 @@ describe("chat route", () => {
         db: { kind: "mock-db" },
         scopes: {
           providerRoutineRead: true,
-          providerRoutineWrite: true,
+          providerRoutineWrite: false,
         },
         source: {
           clientId: null,
@@ -550,12 +552,13 @@ describe("chat route", () => {
       {
         includeSchema: true,
         query: "issue",
+        readOnly: true,
       }
     );
 
     await streamOptions.tools.callProviderRoutine.execute({
-      input: { title: "Bug" },
-      routineId: "linear__create_issue",
+      input: { id: "issue_123" },
+      routineId: "linear__get_issue",
     });
     expect(callProviderRoutineMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -566,6 +569,10 @@ describe("chat route", () => {
           warn: expect.any(Function),
         }),
         now: expect.any(Function),
+        scopes: {
+          providerRoutineRead: true,
+          providerRoutineWrite: false,
+        },
         source: {
           clientId: null,
           ref: "conv_123",
@@ -573,8 +580,8 @@ describe("chat route", () => {
         },
       }),
       {
-        input: { title: "Bug" },
-        routineId: "linear__create_issue",
+        input: { id: "issue_123" },
+        routineId: "linear__get_issue",
       }
     );
     expect(response).toBe(streamResponse);

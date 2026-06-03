@@ -76,7 +76,8 @@ const baseSystemPrompt = [
   "Help the user understand and operate their workspace with concise, direct answers.",
   "When asked about skills, explain what the listed skills can do and suggest the next concrete action.",
   "When connector tools are useful, first find connected provider routines, then call the selected routine by routineId.",
-  "Only call provider routines for the active workspace, and only perform externally visible write actions when the user has clearly requested them.",
+  "Only call provider routines for the active workspace.",
+  "Connected provider routines in chat are read-only; do not use them to create, update, delete, post, assign, archive, or move external records.",
 ].join(" ");
 
 export const maxDuration = 30;
@@ -426,7 +427,7 @@ function createWorkspaceAssistantProviderRoutineTools(input: {
   return {
     callProviderRoutine: tool({
       description:
-        "Call one connected provider routine by routineId using this workspace's enabled connector. Use routineIds returned by findProviderRoutines.",
+        "Call one read-only connected provider routine by routineId using this workspace's enabled connector. Use routineIds returned by findProviderRoutines.",
       inputSchema: providerRoutineCallInputSchema,
       outputSchema: providerRoutineCallSuccessSchema,
       execute: async (toolInput) =>
@@ -434,11 +435,14 @@ function createWorkspaceAssistantProviderRoutineTools(input: {
     }),
     findProviderRoutines: tool({
       description:
-        "Find connected provider routines available to this workspace through enabled connectors. Use this before calling callProviderRoutine.",
+        "Find read-only connected provider routines available to this workspace through enabled connectors. Use this before calling callProviderRoutine.",
       inputSchema: providerRoutineFindInputSchema,
       outputSchema: providerRoutineFindOutputSchema,
       execute: async (toolInput) =>
-        findProviderRoutines(providerRoutineContext(input), toolInput),
+        findProviderRoutines(providerRoutineContext(input), {
+          ...toolInput,
+          readOnly: true,
+        }),
     }),
   };
 }
@@ -458,7 +462,7 @@ function providerRoutineContext(input: {
     now: () => new Date(),
     scopes: {
       providerRoutineRead: true,
-      providerRoutineWrite: true,
+      providerRoutineWrite: false,
     },
     source: {
       clientId: null,
