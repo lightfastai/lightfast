@@ -9,11 +9,11 @@ import { sql } from "drizzle-orm";
 import {
   bigint,
   boolean,
+  datetime,
   index,
   json,
   mysqlTable,
   text,
-  timestamp,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -36,7 +36,7 @@ export function createDeveloperConnectionLeaseId() {
   return `${DEVELOPER_CONNECTION_LEASE_ID_PREFIX}${randomUUID()}`;
 }
 
-export const developerConnections = mysqlTable(
+export const orgDeveloperConnections = mysqlTable(
   "lightfast_org_developer_connections",
   {
     id: bigint("id", { mode: "number", unsigned: true })
@@ -73,9 +73,9 @@ export const developerConnections = mysqlTable(
     encryptedCredential: text("encrypted_credential"),
     scopes: json("scopes").$type<string[]>().notNull(),
     metadata: json("metadata").$type<Record<string, unknown>>().notNull(),
-    expiresAt: timestamp("expires_at", { mode: "date", fsp: 3 }),
-    lastVerifiedAt: timestamp("last_verified_at", { mode: "date", fsp: 3 }),
-    lastUsedAt: timestamp("last_used_at", { mode: "date", fsp: 3 }),
+    expiresAt: datetime("expires_at", { mode: "date", fsp: 3 }),
+    lastVerifiedAt: datetime("last_verified_at", { mode: "date", fsp: 3 }),
+    lastUsedAt: datetime("last_used_at", { mode: "date", fsp: 3 }),
     lastUsedByUserId: varchar("last_used_by_user_id", {
       length: CLERK_ID_LENGTH,
     }),
@@ -85,13 +85,13 @@ export const developerConnections = mysqlTable(
     updatedByUserId: varchar("updated_by_user_id", {
       length: CLERK_ID_LENGTH,
     }).notNull(),
-    revokedAt: timestamp("revoked_at", { mode: "date", fsp: 3 }),
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    revokedAt: datetime("revoked_at", { mode: "date", fsp: 3 }),
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
     // Keep update semantics in Drizzle runtime because drizzle-kit emits an
-    // invalid Vitess DDL clause for timestamp(3) ON UPDATE.
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    // invalid Vitess DDL clause for datetime(3) ON UPDATE.
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),
@@ -109,8 +109,8 @@ export const developerConnections = mysqlTable(
   })
 );
 
-export const developerConnectionLeases = mysqlTable(
-  "lightfast_developer_connection_leases",
+export const orgDeveloperConnectionLeases = mysqlTable(
+  "lightfast_org_developer_connection_leases",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -138,20 +138,20 @@ export const developerConnectionLeases = mysqlTable(
     status: varchar("status", { length: CODE_LENGTH })
       .$type<DeveloperConnectionLeaseStatus>()
       .notNull(),
-    requestedAt: timestamp("requested_at", { mode: "date", fsp: 3 })
+    requestedAt: datetime("requested_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
-    issuedAt: timestamp("issued_at", { mode: "date", fsp: 3 }).notNull(),
-    materializedAt: timestamp("materialized_at", { mode: "date", fsp: 3 }),
-    expiresAt: timestamp("expires_at", { mode: "date", fsp: 3 }).notNull(),
-    revokedAt: timestamp("revoked_at", { mode: "date", fsp: 3 }),
+    issuedAt: datetime("issued_at", { mode: "date", fsp: 3 }).notNull(),
+    materializedAt: datetime("materialized_at", { mode: "date", fsp: 3 }),
+    expiresAt: datetime("expires_at", { mode: "date", fsp: 3 }).notNull(),
+    revokedAt: datetime("revoked_at", { mode: "date", fsp: 3 }),
     failureCode: varchar("failure_code", { length: CODE_LENGTH }),
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
     // Keep update semantics in Drizzle runtime because drizzle-kit emits an
-    // invalid Vitess DDL clause for timestamp(3) ON UPDATE.
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    // invalid Vitess DDL clause for datetime(3) ON UPDATE.
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),
@@ -172,14 +172,14 @@ export const developerConnectionLeases = mysqlTable(
   })
 );
 
-type DeveloperConnectionRow = typeof developerConnections.$inferSelect;
+type DeveloperConnectionRow = typeof orgDeveloperConnections.$inferSelect;
 export type DeveloperConnection = Omit<
   DeveloperConnectionRow,
   "currentOrgProviderKey"
 >;
 export type InsertDeveloperConnection =
-  typeof developerConnections.$inferInsert;
+  typeof orgDeveloperConnections.$inferInsert;
 export type DeveloperConnectionLease =
-  typeof developerConnectionLeases.$inferSelect;
+  typeof orgDeveloperConnectionLeases.$inferSelect;
 export type InsertDeveloperConnectionLease =
-  typeof developerConnectionLeases.$inferInsert;
+  typeof orgDeveloperConnectionLeases.$inferInsert;

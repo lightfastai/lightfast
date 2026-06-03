@@ -2,11 +2,11 @@ import { randomUUID } from "node:crypto";
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  datetime,
   index,
   int,
   json,
   mysqlTable,
-  timestamp,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -48,8 +48,8 @@ export function createDeveloperSandboxCommandId() {
   return `${DEVELOPER_SANDBOX_COMMAND_ID_PREFIX}${randomUUID()}`;
 }
 
-export const developerSandboxRuns = mysqlTable(
-  "lightfast_developer_sandbox_runs",
+export const orgDeveloperSandboxRuns = mysqlTable(
+  "lightfast_org_developer_sandbox_runs",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -70,25 +70,25 @@ export const developerSandboxRuns = mysqlTable(
     status: varchar("status", { length: CODE_LENGTH })
       .$type<DeveloperSandboxRunStatus>()
       .notNull(),
-    credentialsLoadedAt: timestamp("credentials_loaded_at", {
+    credentialsLoadedAt: datetime("credentials_loaded_at", {
       mode: "date",
       fsp: 3,
     }),
-    expiresAt: timestamp("expires_at", { mode: "date", fsp: 3 }).notNull(),
-    stoppedAt: timestamp("stopped_at", { mode: "date", fsp: 3 }),
-    cleanupAttemptedAt: timestamp("cleanup_attempted_at", {
+    expiresAt: datetime("expires_at", { mode: "date", fsp: 3 }).notNull(),
+    stoppedAt: datetime("stopped_at", { mode: "date", fsp: 3 }),
+    cleanupAttemptedAt: datetime("cleanup_attempted_at", {
       mode: "date",
       fsp: 3,
     }),
     cleanupFailureCode: varchar("cleanup_failure_code", {
       length: CODE_LENGTH,
     }),
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
     // Keep update semantics in Drizzle runtime because drizzle-kit emits an
-    // invalid Vitess DDL clause for timestamp(3) ON UPDATE.
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    // invalid Vitess DDL clause for datetime(3) ON UPDATE.
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),
@@ -109,8 +109,8 @@ export const developerSandboxRuns = mysqlTable(
   })
 );
 
-export const developerSandboxCommands = mysqlTable(
-  "lightfast_developer_sandbox_commands",
+export const orgDeveloperSandboxCommands = mysqlTable(
+  "lightfast_org_developer_sandbox_commands",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -143,14 +143,14 @@ export const developerSandboxCommands = mysqlTable(
     redactionCount: int("redaction_count", { unsigned: true })
       .default(0)
       .notNull(),
-    startedAt: timestamp("started_at", { mode: "date", fsp: 3 }),
-    finishedAt: timestamp("finished_at", { mode: "date", fsp: 3 }),
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    startedAt: datetime("started_at", { mode: "date", fsp: 3 }),
+    finishedAt: datetime("finished_at", { mode: "date", fsp: 3 }),
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
     // Keep update semantics in Drizzle runtime because drizzle-kit emits an
-    // invalid Vitess DDL clause for timestamp(3) ON UPDATE.
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    // invalid Vitess DDL clause for datetime(3) ON UPDATE.
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),
@@ -169,10 +169,10 @@ export const developerSandboxCommands = mysqlTable(
   })
 );
 
-export type DeveloperSandboxRun = typeof developerSandboxRuns.$inferSelect;
+export type DeveloperSandboxRun = typeof orgDeveloperSandboxRuns.$inferSelect;
 export type InsertDeveloperSandboxRun =
-  typeof developerSandboxRuns.$inferInsert;
+  typeof orgDeveloperSandboxRuns.$inferInsert;
 export type DeveloperSandboxCommand =
-  typeof developerSandboxCommands.$inferSelect;
+  typeof orgDeveloperSandboxCommands.$inferSelect;
 export type InsertDeveloperSandboxCommand =
-  typeof developerSandboxCommands.$inferInsert;
+  typeof orgDeveloperSandboxCommands.$inferInsert;

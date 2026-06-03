@@ -4,8 +4,8 @@ import {
   createDeveloperSandboxRunId,
   DEVELOPER_SANDBOX_COMMAND_ID_PREFIX,
   DEVELOPER_SANDBOX_RUN_ID_PREFIX,
-  developerSandboxCommands,
-  developerSandboxRuns,
+  orgDeveloperSandboxCommands,
+  orgDeveloperSandboxRuns,
 } from "../schema";
 import {
   createDeveloperSandboxCommand,
@@ -35,30 +35,30 @@ describe("developer sandbox run schema", () => {
   });
 
   it("exports run fields required by the sandbox service", () => {
-    expect(developerSandboxRuns.clerkOrgId.notNull).toBe(true);
-    expect(developerSandboxRuns.actorUserId.notNull).toBe(true);
-    expect(developerSandboxRuns.vercelSandboxId.notNull).toBe(true);
-    expect(developerSandboxRuns.status.notNull).toBe(true);
-    expect(developerSandboxRuns.credentialsLoadedAt.notNull).toBe(false);
-    expect(developerSandboxRuns.expiresAt.notNull).toBe(true);
-    expect(developerSandboxRuns.stoppedAt.notNull).toBe(false);
-    expect(developerSandboxRuns.cleanupAttemptedAt.notNull).toBe(false);
-    expect(developerSandboxRuns.cleanupFailureCode.notNull).toBe(false);
+    expect(orgDeveloperSandboxRuns.clerkOrgId.notNull).toBe(true);
+    expect(orgDeveloperSandboxRuns.actorUserId.notNull).toBe(true);
+    expect(orgDeveloperSandboxRuns.vercelSandboxId.notNull).toBe(true);
+    expect(orgDeveloperSandboxRuns.status.notNull).toBe(true);
+    expect(orgDeveloperSandboxRuns.credentialsLoadedAt.notNull).toBe(false);
+    expect(orgDeveloperSandboxRuns.expiresAt.notNull).toBe(true);
+    expect(orgDeveloperSandboxRuns.stoppedAt.notNull).toBe(false);
+    expect(orgDeveloperSandboxRuns.cleanupAttemptedAt.notNull).toBe(false);
+    expect(orgDeveloperSandboxRuns.cleanupFailureCode.notNull).toBe(false);
   });
 
   it("exports command metadata fields without raw output columns", () => {
-    expect(developerSandboxCommands.sandboxRunId.notNull).toBe(true);
-    expect(developerSandboxCommands.clerkOrgId.notNull).toBe(true);
-    expect(developerSandboxCommands.actorUserId.notNull).toBe(true);
-    expect(developerSandboxCommands.cmd.notNull).toBe(true);
-    expect(developerSandboxCommands.args.notNull).toBe(true);
-    expect(developerSandboxCommands.status.notNull).toBe(true);
-    expect(developerSandboxCommands.policyDecision.notNull).toBe(true);
-    expect(developerSandboxCommands.stdoutBytes.notNull).toBe(true);
-    expect(developerSandboxCommands.stderrBytes.notNull).toBe(true);
-    expect(developerSandboxCommands.redactionCount.notNull).toBe(true);
-    expect("stdout" in developerSandboxCommands).toBe(false);
-    expect("stderr" in developerSandboxCommands).toBe(false);
+    expect(orgDeveloperSandboxCommands.sandboxRunId.notNull).toBe(true);
+    expect(orgDeveloperSandboxCommands.clerkOrgId.notNull).toBe(true);
+    expect(orgDeveloperSandboxCommands.actorUserId.notNull).toBe(true);
+    expect(orgDeveloperSandboxCommands.cmd.notNull).toBe(true);
+    expect(orgDeveloperSandboxCommands.args.notNull).toBe(true);
+    expect(orgDeveloperSandboxCommands.status.notNull).toBe(true);
+    expect(orgDeveloperSandboxCommands.policyDecision.notNull).toBe(true);
+    expect(orgDeveloperSandboxCommands.stdoutBytes.notNull).toBe(true);
+    expect(orgDeveloperSandboxCommands.stderrBytes.notNull).toBe(true);
+    expect(orgDeveloperSandboxCommands.redactionCount.notNull).toBe(true);
+    expect("stdout" in orgDeveloperSandboxCommands).toBe(false);
+    expect("stderr" in orgDeveloperSandboxCommands).toBe(false);
   });
 });
 

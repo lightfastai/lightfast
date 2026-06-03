@@ -5,13 +5,16 @@ import type {
 import { and, eq, getTableColumns, inArray, isNotNull } from "drizzle-orm";
 import type { Database } from "../client";
 import type { DeveloperConnection, DeveloperConnectionLease } from "../schema";
-import { developerConnectionLeases, developerConnections } from "../schema";
+import {
+  orgDeveloperConnectionLeases,
+  orgDeveloperConnections,
+} from "../schema";
 import { getRowsAffected } from "./drizzle-results";
 
 const {
   currentOrgProviderKey: _currentOrgProviderKey,
   ...connectionSelection
-} = getTableColumns(developerConnections);
+} = getTableColumns(orgDeveloperConnections);
 
 const DEFAULT_LEASE_TTL_MS = 15 * 60 * 1000;
 const MAX_LEASE_TTL_MS = 30 * 60 * 1000;
@@ -29,10 +32,10 @@ export async function getCurrentDeveloperConnection(
 ): Promise<DeveloperConnection | undefined> {
   const [row] = await db
     .select(connectionSelection)
-    .from(developerConnections)
+    .from(orgDeveloperConnections)
     .where(
       eq(
-        developerConnections.currentOrgProviderKey,
+        orgDeveloperConnections.currentOrgProviderKey,
         currentDeveloperConnectionKey(input.clerkOrgId, input.provider)
       )
     )
@@ -46,8 +49,8 @@ export async function getDeveloperConnectionById(
 ): Promise<DeveloperConnection | undefined> {
   const [row] = await db
     .select(connectionSelection)
-    .from(developerConnections)
-    .where(eq(developerConnections.id, id))
+    .from(orgDeveloperConnections)
+    .where(eq(orgDeveloperConnections.id, id))
     .limit(1);
   return row;
 }
@@ -58,11 +61,11 @@ export async function listCurrentDeveloperConnections(
 ): Promise<DeveloperConnection[]> {
   return await db
     .select(connectionSelection)
-    .from(developerConnections)
+    .from(orgDeveloperConnections)
     .where(
       and(
-        eq(developerConnections.clerkOrgId, input.clerkOrgId),
-        isNotNull(developerConnections.currentOrgProviderKey)
+        eq(orgDeveloperConnections.clerkOrgId, input.clerkOrgId),
+        isNotNull(orgDeveloperConnections.currentOrgProviderKey)
       )
     );
 }
@@ -90,7 +93,7 @@ export async function replaceCurrentDeveloperConnection(
 
     if (current) {
       const result = await tx
-        .update(developerConnections)
+        .update(orgDeveloperConnections)
         .set({
           currentOrgProviderKey: null,
           encryptedCredential: null,
@@ -99,7 +102,7 @@ export async function replaceCurrentDeveloperConnection(
           updatedAt: now,
           updatedByUserId: input.actorUserId,
         })
-        .where(eq(developerConnections.id, current.id));
+        .where(eq(orgDeveloperConnections.id, current.id));
 
       if (getRowsAffected(result) === 0) {
         throw new Error(`Failed to replace developer connection ${current.id}`);
@@ -107,7 +110,7 @@ export async function replaceCurrentDeveloperConnection(
     }
 
     const [inserted] = await tx
-      .insert(developerConnections)
+      .insert(orgDeveloperConnections)
       .values({
         clerkOrgId: input.clerkOrgId,
         currentOrgProviderKey: currentDeveloperConnectionKey(
@@ -158,13 +161,13 @@ export async function setCurrentDeveloperConnectionSandboxEnabled(
   }
 
   const result = await db
-    .update(developerConnections)
+    .update(orgDeveloperConnections)
     .set({
       enabledForSandboxes: input.enabled,
       updatedAt: new Date(),
       updatedByUserId: input.actorUserId,
     })
-    .where(eq(developerConnections.id, current.id));
+    .where(eq(orgDeveloperConnections.id, current.id));
 
   if (getRowsAffected(result) === 0) {
     return;
@@ -182,12 +185,12 @@ export async function markCurrentDeveloperConnectionNeedsReconnect(
   }
 
   const result = await db
-    .update(developerConnections)
+    .update(orgDeveloperConnections)
     .set({
       status: "needs_reconnect",
       updatedAt: new Date(),
     })
-    .where(eq(developerConnections.id, current.id));
+    .where(eq(orgDeveloperConnections.id, current.id));
 
   if (getRowsAffected(result) === 0) {
     return;
@@ -210,7 +213,7 @@ export async function revokeCurrentDeveloperConnection(
 
   const now = new Date();
   const result = await db
-    .update(developerConnections)
+    .update(orgDeveloperConnections)
     .set({
       currentOrgProviderKey: null,
       encryptedCredential: null,
@@ -219,7 +222,7 @@ export async function revokeCurrentDeveloperConnection(
       updatedAt: now,
       updatedByUserId: input.actorUserId,
     })
-    .where(eq(developerConnections.id, current.id));
+    .where(eq(orgDeveloperConnections.id, current.id));
 
   if (getRowsAffected(result) === 0) {
     return;
@@ -250,7 +253,7 @@ export async function issueDeveloperConnectionLease(
 ): Promise<DeveloperConnectionLease> {
   return await db.transaction(async (tx) => {
     const [inserted] = await tx
-      .insert(developerConnectionLeases)
+      .insert(orgDeveloperConnectionLeases)
       .values({
         connectionId: input.connectionId,
         clerkOrgId: input.clerkOrgId,
@@ -272,13 +275,13 @@ export async function issueDeveloperConnectionLease(
     }
 
     await tx
-      .update(developerConnections)
+      .update(orgDeveloperConnections)
       .set({
         lastUsedAt: input.issuedAt,
         lastUsedByUserId: input.actorUserId,
         updatedAt: input.issuedAt,
       })
-      .where(eq(developerConnections.id, input.connectionId));
+      .where(eq(orgDeveloperConnections.id, input.connectionId));
 
     const lease = await getDeveloperConnectionLeaseById(tx, inserted.id);
     if (!lease) {
@@ -294,8 +297,8 @@ export async function getDeveloperConnectionLeaseById(
 ): Promise<DeveloperConnectionLease | undefined> {
   const [row] = await db
     .select()
-    .from(developerConnectionLeases)
-    .where(eq(developerConnectionLeases.id, id))
+    .from(orgDeveloperConnectionLeases)
+    .where(eq(orgDeveloperConnectionLeases.id, id))
     .limit(1);
   return row;
 }
@@ -305,13 +308,13 @@ export async function revokeDeveloperConnectionLease(
   input: { leaseId: number; revokedAt: Date }
 ): Promise<DeveloperConnectionLease | undefined> {
   const result = await db
-    .update(developerConnectionLeases)
+    .update(orgDeveloperConnectionLeases)
     .set({
       status: "revoked",
       revokedAt: input.revokedAt,
       updatedAt: input.revokedAt,
     })
-    .where(eq(developerConnectionLeases.id, input.leaseId));
+    .where(eq(orgDeveloperConnectionLeases.id, input.leaseId));
 
   if (getRowsAffected(result) === 0) {
     return;
@@ -325,11 +328,11 @@ export async function listDeveloperConnectionLeasesForSandboxRun(
 ): Promise<DeveloperConnectionLease[]> {
   return await db
     .select()
-    .from(developerConnectionLeases)
+    .from(orgDeveloperConnectionLeases)
     .where(
       and(
-        eq(developerConnectionLeases.clerkOrgId, input.clerkOrgId),
-        eq(developerConnectionLeases.sandboxRunId, input.sandboxRunId)
+        eq(orgDeveloperConnectionLeases.clerkOrgId, input.clerkOrgId),
+        eq(orgDeveloperConnectionLeases.sandboxRunId, input.sandboxRunId)
       )
     );
 }
@@ -339,13 +342,13 @@ export async function markDeveloperConnectionLeaseMaterialized(
   input: { leaseId: number; materializedAt: Date }
 ): Promise<DeveloperConnectionLease | undefined> {
   const result = await db
-    .update(developerConnectionLeases)
+    .update(orgDeveloperConnectionLeases)
     .set({
       status: "materialized",
       materializedAt: input.materializedAt,
       updatedAt: input.materializedAt,
     })
-    .where(eq(developerConnectionLeases.id, input.leaseId));
+    .where(eq(orgDeveloperConnectionLeases.id, input.leaseId));
 
   if (getRowsAffected(result) === 0) {
     return;
@@ -358,7 +361,7 @@ export async function revokeDeveloperConnectionLeasesForSandboxRun(
   input: { clerkOrgId: string; sandboxRunId: string; revokedAt: Date }
 ): Promise<DeveloperConnectionLease[]> {
   await db
-    .update(developerConnectionLeases)
+    .update(orgDeveloperConnectionLeases)
     .set({
       status: "revoked",
       revokedAt: input.revokedAt,
@@ -366,9 +369,9 @@ export async function revokeDeveloperConnectionLeasesForSandboxRun(
     })
     .where(
       and(
-        eq(developerConnectionLeases.clerkOrgId, input.clerkOrgId),
-        eq(developerConnectionLeases.sandboxRunId, input.sandboxRunId),
-        inArray(developerConnectionLeases.status, ["issued", "materialized"])
+        eq(orgDeveloperConnectionLeases.clerkOrgId, input.clerkOrgId),
+        eq(orgDeveloperConnectionLeases.sandboxRunId, input.sandboxRunId),
+        inArray(orgDeveloperConnectionLeases.status, ["issued", "materialized"])
       )
     );
 

@@ -10,6 +10,10 @@ import type {
 
 type VercelSandbox = Awaited<ReturnType<typeof Sandbox.get>>;
 type VercelCommand = Awaited<ReturnType<VercelSandbox["runCommand"]>>;
+type VercelSandboxWithId = VercelSandbox & { sandboxId?: string };
+type VercelSandboxGetInput = Parameters<typeof Sandbox.get>[0] & {
+  sandboxId?: string;
+};
 
 function wrapCommand(command: VercelCommand): SandboxCommand {
   return {
@@ -28,8 +32,10 @@ function wrapCommand(command: VercelCommand): SandboxCommand {
 }
 
 function wrapSandbox(sandbox: VercelSandbox): SandboxHandle {
+  const sandboxWithId = sandbox as VercelSandboxWithId;
+
   return {
-    id: sandbox.name,
+    id: sandboxWithId.sandboxId ?? sandbox.name,
     get status() {
       return sandbox.status;
     },
@@ -60,6 +66,13 @@ function wrapSandbox(sandbox: VercelSandbox): SandboxHandle {
   };
 }
 
+async function getSandbox(id: string) {
+  return await Sandbox.get({
+    name: id,
+    sandboxId: id,
+  } as VercelSandboxGetInput);
+}
+
 export function createVercelSandboxRuntime(): SandboxRuntime {
   return {
     async create(input: SandboxCreateInput = {}) {
@@ -77,11 +90,11 @@ export function createVercelSandboxRuntime(): SandboxRuntime {
       return wrapSandbox(sandbox);
     },
     async get(id) {
-      const sandbox = await Sandbox.get({ name: id });
+      const sandbox = await getSandbox(id);
       return wrapSandbox(sandbox);
     },
     async destroy(id) {
-      const sandbox = await Sandbox.get({ name: id });
+      const sandbox = await getSandbox(id);
       await sandbox.stop();
     },
   };

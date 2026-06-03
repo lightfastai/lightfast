@@ -331,8 +331,8 @@
       "uniqueConstraints": {},
       "checkConstraint": {}
     },
-    "lightfast_developer_connection_leases": {
-      "name": "lightfast_developer_connection_leases",
+    "lightfast_org_developer_connection_leases": {
+      "name": "lightfast_org_developer_connection_leases",
       "columns": {
         "id": {
           "name": "id",
@@ -399,7 +399,7 @@
         },
         "requested_at": {
           "name": "requested_at",
-          "type": "timestamp(3)",
+          "type": "datetime(3)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -407,28 +407,28 @@
         },
         "issued_at": {
           "name": "issued_at",
-          "type": "timestamp(3)",
+          "type": "datetime(3)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "materialized_at": {
           "name": "materialized_at",
-          "type": "timestamp(3)",
+          "type": "datetime(3)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
         "expires_at": {
           "name": "expires_at",
-          "type": "timestamp(3)",
+          "type": "datetime(3)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "revoked_at": {
           "name": "revoked_at",
-          "type": "timestamp(3)",
+          "type": "datetime(3)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -442,7 +442,7 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp(3)",
+          "type": "datetime(3)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -450,7 +450,7 @@
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp(3)",
+          "type": "datetime(3)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -485,8 +485,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_developer_connection_leases_id": {
-          "name": "lightfast_developer_connection_leases_id",
+        "lightfast_org_developer_connection_leases_id": {
+          "name": "lightfast_org_developer_connection_leases_id",
           "columns": [
             "id"
           ]
@@ -599,21 +599,21 @@
         },
         "expires_at": {
           "name": "expires_at",
-          "type": "timestamp(3)",
+          "type": "datetime(3)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
         "last_verified_at": {
           "name": "last_verified_at",
-          "type": "timestamp(3)",
+          "type": "datetime(3)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
         "last_used_at": {
           "name": "last_used_at",
-          "type": "timestamp(3)",
+          "type": "datetime(3)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -641,14 +641,14 @@
         },
         "revoked_at": {
           "name": "revoked_at",
-          "type": "timestamp(3)",
+          "type": "datetime(3)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp(3)",
+          "type": "datetime(3)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -656,7 +656,7 @@
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp(3)",
+          "type": "datetime(3)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,

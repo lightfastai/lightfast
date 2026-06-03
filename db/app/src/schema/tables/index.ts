@@ -22,8 +22,8 @@ export {
   DEVELOPER_CONNECTION_LEASE_ID_PREFIX,
   type DeveloperConnection,
   type DeveloperConnectionLease,
-  developerConnectionLeases,
-  developerConnections,
+  orgDeveloperConnectionLeases,
+  orgDeveloperConnections,
   type InsertDeveloperConnection,
   type InsertDeveloperConnectionLease,
 } from "./developer-connections";
@@ -37,8 +37,8 @@ export {
   type DeveloperSandboxCommandStatus,
   type DeveloperSandboxRun,
   type DeveloperSandboxRunStatus,
-  developerSandboxCommands,
-  developerSandboxRuns,
+  orgDeveloperSandboxCommands,
+  orgDeveloperSandboxRuns,
   type InsertDeveloperSandboxCommand,
   type InsertDeveloperSandboxRun,
 } from "./developer-sandbox-runs";

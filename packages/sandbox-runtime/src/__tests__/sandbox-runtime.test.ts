@@ -102,7 +102,10 @@ describe("@repo/sandbox-runtime", () => {
     await sandbox.updateNetworkPolicy("deny-all");
     await sandbox.stop();
 
-    expect(sandboxSdk.get).toHaveBeenCalledWith({ name: "sandbox_test" });
+    expect(sandboxSdk.get).toHaveBeenCalledWith({
+      name: "sandbox_test",
+      sandboxId: "sandbox_test",
+    });
     expect(sdk.writeFiles).toHaveBeenCalledWith([
       { path: "/vercel/sandbox/test.txt", content: "contents", mode: 0o600 },
     ]);

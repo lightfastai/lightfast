@@ -4,8 +4,8 @@ import {
   createDeveloperConnectionLeaseId,
   DEVELOPER_CONNECTION_ID_PREFIX,
   DEVELOPER_CONNECTION_LEASE_ID_PREFIX,
-  developerConnectionLeases,
-  developerConnections,
+  orgDeveloperConnectionLeases,
+  orgDeveloperConnections,
 } from "../schema";
 import {
   currentDeveloperConnectionKey,
@@ -35,24 +35,24 @@ describe("developer connection schema", () => {
   });
 
   it("exports the current connection fields required by the service", () => {
-    expect(developerConnections.clerkOrgId.notNull).toBe(true);
-    expect(developerConnections.currentOrgProviderKey.notNull).toBe(false);
-    expect(developerConnections.provider.notNull).toBe(true);
-    expect(developerConnections.status.notNull).toBe(true);
-    expect(developerConnections.enabledForSandboxes.notNull).toBe(true);
-    expect(developerConnections.encryptedCredential.notNull).toBe(false);
-    expect(developerConnections.lastUsedAt.notNull).toBe(false);
-    expect(developerConnections.lastUsedByUserId.notNull).toBe(false);
-    expect(developerConnections.revokedAt.notNull).toBe(false);
+    expect(orgDeveloperConnections.clerkOrgId.notNull).toBe(true);
+    expect(orgDeveloperConnections.currentOrgProviderKey.notNull).toBe(false);
+    expect(orgDeveloperConnections.provider.notNull).toBe(true);
+    expect(orgDeveloperConnections.status.notNull).toBe(true);
+    expect(orgDeveloperConnections.enabledForSandboxes.notNull).toBe(true);
+    expect(orgDeveloperConnections.encryptedCredential.notNull).toBe(false);
+    expect(orgDeveloperConnections.lastUsedAt.notNull).toBe(false);
+    expect(orgDeveloperConnections.lastUsedByUserId.notNull).toBe(false);
+    expect(orgDeveloperConnections.revokedAt.notNull).toBe(false);
   });
 
   it("exports lease rows without credential payload fields", () => {
-    expect(developerConnectionLeases.clerkOrgId.notNull).toBe(true);
-    expect(developerConnectionLeases.actorUserId.notNull).toBe(true);
-    expect(developerConnectionLeases.provider.notNull).toBe(true);
-    expect(developerConnectionLeases.status.notNull).toBe(true);
-    expect(developerConnectionLeases.expiresAt.notNull).toBe(true);
-    expect("encryptedCredential" in developerConnectionLeases).toBe(false);
+    expect(orgDeveloperConnectionLeases.clerkOrgId.notNull).toBe(true);
+    expect(orgDeveloperConnectionLeases.actorUserId.notNull).toBe(true);
+    expect(orgDeveloperConnectionLeases.provider.notNull).toBe(true);
+    expect(orgDeveloperConnectionLeases.status.notNull).toBe(true);
+    expect(orgDeveloperConnectionLeases.expiresAt.notNull).toBe(true);
+    expect("encryptedCredential" in orgDeveloperConnectionLeases).toBe(false);
   });
 });
 

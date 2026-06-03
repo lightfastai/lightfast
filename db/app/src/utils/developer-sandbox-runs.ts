@@ -7,7 +7,10 @@ import type {
   DeveloperSandboxRun,
   DeveloperSandboxRunStatus,
 } from "../schema";
-import { developerSandboxCommands, developerSandboxRuns } from "../schema";
+import {
+  orgDeveloperSandboxCommands,
+  orgDeveloperSandboxRuns,
+} from "../schema";
 import { getRowsAffected } from "./drizzle-results";
 
 const DEFAULT_RUN_TTL_MS = 10 * 60 * 1000;
@@ -36,7 +39,7 @@ export async function createDeveloperSandboxRun(
 ): Promise<DeveloperSandboxRun> {
   const now = input.createdAt ?? new Date();
   const [inserted] = await db
-    .insert(developerSandboxRuns)
+    .insert(orgDeveloperSandboxRuns)
     .values({
       clerkOrgId: input.clerkOrgId,
       actorUserId: input.actorUserId,
@@ -68,8 +71,8 @@ export async function getDeveloperSandboxRunById(
 ): Promise<DeveloperSandboxRun | undefined> {
   const [row] = await db
     .select()
-    .from(developerSandboxRuns)
-    .where(eq(developerSandboxRuns.id, id))
+    .from(orgDeveloperSandboxRuns)
+    .where(eq(orgDeveloperSandboxRuns.id, id))
     .limit(1);
   return row;
 }
@@ -80,11 +83,11 @@ export async function getDeveloperSandboxRunByPublicId(
 ): Promise<DeveloperSandboxRun | undefined> {
   const [row] = await db
     .select()
-    .from(developerSandboxRuns)
+    .from(orgDeveloperSandboxRuns)
     .where(
       and(
-        eq(developerSandboxRuns.clerkOrgId, input.clerkOrgId),
-        eq(developerSandboxRuns.publicId, input.publicId)
+        eq(orgDeveloperSandboxRuns.clerkOrgId, input.clerkOrgId),
+        eq(orgDeveloperSandboxRuns.publicId, input.publicId)
       )
     )
     .limit(1);
@@ -96,12 +99,12 @@ export async function markDeveloperSandboxRunCredentialsLoaded(
   input: { runId: number; loadedAt: Date }
 ): Promise<DeveloperSandboxRun | undefined> {
   const result = await db
-    .update(developerSandboxRuns)
+    .update(orgDeveloperSandboxRuns)
     .set({
       credentialsLoadedAt: input.loadedAt,
       updatedAt: input.loadedAt,
     })
-    .where(eq(developerSandboxRuns.id, input.runId));
+    .where(eq(orgDeveloperSandboxRuns.id, input.runId));
 
   if (getRowsAffected(result) === 0) {
     return;
@@ -114,13 +117,13 @@ export async function markDeveloperSandboxRunStopped(
   input: { runId: number; stoppedAt: Date }
 ): Promise<DeveloperSandboxRun | undefined> {
   const result = await db
-    .update(developerSandboxRuns)
+    .update(orgDeveloperSandboxRuns)
     .set({
       status: "stopped",
       stoppedAt: input.stoppedAt,
       updatedAt: input.stoppedAt,
     })
-    .where(eq(developerSandboxRuns.id, input.runId));
+    .where(eq(orgDeveloperSandboxRuns.id, input.runId));
 
   if (getRowsAffected(result) === 0) {
     return;
@@ -133,13 +136,13 @@ export async function markDeveloperSandboxRunExpired(
   input: { runId: number; expiredAt: Date }
 ): Promise<DeveloperSandboxRun | undefined> {
   const result = await db
-    .update(developerSandboxRuns)
+    .update(orgDeveloperSandboxRuns)
     .set({
       status: "expired",
       cleanupAttemptedAt: input.expiredAt,
       updatedAt: input.expiredAt,
     })
-    .where(eq(developerSandboxRuns.id, input.runId));
+    .where(eq(orgDeveloperSandboxRuns.id, input.runId));
 
   if (getRowsAffected(result) === 0) {
     return;
@@ -152,13 +155,13 @@ export async function markDeveloperSandboxRunCleanupFailed(
   input: { runId: number; attemptedAt: Date; failureCode: string }
 ): Promise<DeveloperSandboxRun | undefined> {
   const result = await db
-    .update(developerSandboxRuns)
+    .update(orgDeveloperSandboxRuns)
     .set({
       cleanupAttemptedAt: input.attemptedAt,
       cleanupFailureCode: input.failureCode,
       updatedAt: input.attemptedAt,
     })
-    .where(eq(developerSandboxRuns.id, input.runId));
+    .where(eq(orgDeveloperSandboxRuns.id, input.runId));
 
   if (getRowsAffected(result) === 0) {
     return;
@@ -172,18 +175,18 @@ export async function listExpiredDeveloperSandboxRuns(
 ): Promise<DeveloperSandboxRun[]> {
   return await db
     .select()
-    .from(developerSandboxRuns)
+    .from(orgDeveloperSandboxRuns)
     .where(
       and(
-        lte(developerSandboxRuns.expiresAt, input.now),
-        inArray(developerSandboxRuns.status, [
+        lte(orgDeveloperSandboxRuns.expiresAt, input.now),
+        inArray(orgDeveloperSandboxRuns.status, [
           "starting",
           "running",
           "stopping",
         ])
       )
     )
-    .orderBy(asc(developerSandboxRuns.expiresAt))
+    .orderBy(asc(orgDeveloperSandboxRuns.expiresAt))
     .limit(input.limit ?? 25);
 }
 
@@ -206,7 +209,7 @@ export async function createDeveloperSandboxCommand(
 ): Promise<DeveloperSandboxCommand> {
   const now = input.createdAt ?? new Date();
   const [inserted] = await db
-    .insert(developerSandboxCommands)
+    .insert(orgDeveloperSandboxCommands)
     .values({
       sandboxRunId: input.sandboxRunId,
       clerkOrgId: input.clerkOrgId,
@@ -241,8 +244,8 @@ export async function getDeveloperSandboxCommandById(
 ): Promise<DeveloperSandboxCommand | undefined> {
   const [row] = await db
     .select()
-    .from(developerSandboxCommands)
-    .where(eq(developerSandboxCommands.id, id))
+    .from(orgDeveloperSandboxCommands)
+    .where(eq(orgDeveloperSandboxCommands.id, id))
     .limit(1);
   return row;
 }
@@ -252,13 +255,13 @@ export async function markDeveloperSandboxCommandRunning(
   input: { commandId: number; startedAt: Date }
 ): Promise<DeveloperSandboxCommand | undefined> {
   const result = await db
-    .update(developerSandboxCommands)
+    .update(orgDeveloperSandboxCommands)
     .set({
       status: "running",
       startedAt: input.startedAt,
       updatedAt: input.startedAt,
     })
-    .where(eq(developerSandboxCommands.id, input.commandId));
+    .where(eq(orgDeveloperSandboxCommands.id, input.commandId));
 
   if (getRowsAffected(result) === 0) {
     return;
@@ -282,7 +285,7 @@ export async function finishDeveloperSandboxCommand(
   }
 ): Promise<DeveloperSandboxCommand | undefined> {
   const result = await db
-    .update(developerSandboxCommands)
+    .update(orgDeveloperSandboxCommands)
     .set({
       status: input.status,
       policyDecision: input.policyDecision,
@@ -295,7 +298,7 @@ export async function finishDeveloperSandboxCommand(
       finishedAt: input.finishedAt,
       updatedAt: input.finishedAt,
     })
-    .where(eq(developerSandboxCommands.id, input.commandId));
+    .where(eq(orgDeveloperSandboxCommands.id, input.commandId));
 
   if (getRowsAffected(result) === 0) {
     return;
