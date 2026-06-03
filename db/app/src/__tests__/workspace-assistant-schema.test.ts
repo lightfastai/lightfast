@@ -110,13 +110,13 @@ describe("workspace assistant schema", () => {
     ).toEqual(["conversation_id", "sequence"]);
     expect(
       indexes.get(
-        "org_workspace_assistant_messages_conversation_idempotency_key_uq"
+        "org_workspace_assistant_messages_conv_idempotency_key_uq"
       )?.config
     ).toMatchObject({ unique: true });
     expect(
       indexColumnNames(
         indexes.get(
-          "org_workspace_assistant_messages_conversation_idempotency_key_uq"
+          "org_workspace_assistant_messages_conv_idempotency_key_uq"
         )!
       )
     ).toEqual(["conversation_id", "idempotency_key"]);

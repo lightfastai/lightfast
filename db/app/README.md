@@ -52,7 +52,10 @@ Do not hand-write migration SQL. Change schema TypeScript and run
 
 ## Schema Conventions
 
-- App table names use `lightfast_<scope>_<domain>_<entity_plural>`.
+- App table names are scope-first: use `lightfast_<scope>_<entity_plural>`
+  when the entity is self-describing, or
+  `lightfast_<scope>_<domain>_<entity_plural>` when a separate domain grouping
+  adds clarity.
 - Valid table scopes are `org`, `user`, and `system`.
 - Schema file names mirror scope and domain without the global `lightfast_`
   prefix, such as `org-signals.ts`, `user-source-control.ts`, and

@@ -227,7 +227,7 @@ export const orgWorkspaceAssistantMessages = mysqlTable(
       "org_workspace_assistant_messages_conversation_sequence_uq"
     ).on(table.conversationId, table.sequence),
     conversationIdempotencyKeyUq: uniqueIndex(
-      "org_workspace_assistant_messages_conversation_idempotency_key_uq"
+      "org_workspace_assistant_messages_conv_idempotency_key_uq"
     ).on(table.conversationId, table.idempotencyKey),
     conversationCreatedIdx: index(
       "org_workspace_assistant_messages_conversation_created_idx"

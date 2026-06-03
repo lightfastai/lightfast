@@ -392,7 +392,7 @@ CREATE TABLE `lightfast_org_workspace_assistant_messages` (
 	CONSTRAINT `lightfast_org_workspace_assistant_messages_id` PRIMARY KEY(`id`),
 	CONSTRAINT `org_workspace_assistant_messages_public_id_uq` UNIQUE(`public_id`),
 	CONSTRAINT `org_workspace_assistant_messages_conversation_sequence_uq` UNIQUE(`conversation_id`,`sequence`),
-	CONSTRAINT `org_workspace_assistant_messages_conversation_idempotency_key_uq` UNIQUE(`conversation_id`,`idempotency_key`)
+	CONSTRAINT `org_workspace_assistant_messages_conv_idempotency_key_uq` UNIQUE(`conversation_id`,`idempotency_key`)
 );
 --> statement-breakpoint
 CREATE TABLE `lightfast_org_workspace_assistant_tool_calls` (

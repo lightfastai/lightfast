@@ -51,7 +51,7 @@ pscale password create lightfast staging bootstrap -f json
 DATABASE_HOST=<host> \
 DATABASE_USERNAME=<username> \
 DATABASE_PASSWORD=<password> \
-  pnpm --filter @db/app db:baseline -- --through=0000_common_wrecker
+  pnpm --filter @db/app db:baseline -- --through=0000_blushing_titania
 pscale password delete lightfast staging <password-id> --force
 ```
 
@@ -68,7 +68,10 @@ DATABASE_PASSWORD=<password> \
 
 ## Migration Rules
 
-- App table names use `lightfast_<scope>_<domain>_<entity_plural>`.
+- App table names are scope-first: use `lightfast_<scope>_<entity_plural>`
+  when the entity is self-describing, or
+  `lightfast_<scope>_<domain>_<entity_plural>` when a separate domain grouping
+  adds clarity.
 - Valid table scopes are `org`, `user`, and `system`.
 - Schema file names mirror scope and domain without the global `lightfast_`
   prefix, such as `org-signals.ts`, `user-source-control.ts`, and

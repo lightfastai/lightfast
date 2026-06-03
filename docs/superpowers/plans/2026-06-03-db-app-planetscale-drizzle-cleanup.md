@@ -42,7 +42,11 @@
 
 ## Target Conventions
 
-- Table names: `mysqlTable("lightfast_<scope>_<domain>_<entity_plural>", ...)`.
+- Table names are scope-first: use
+  `mysqlTable("lightfast_<scope>_<entity_plural>", ...)` when the entity is
+  self-describing, or
+  `mysqlTable("lightfast_<scope>_<domain>_<entity_plural>", ...)` when a
+  separate domain grouping adds clarity.
 - Scope prefixes:
   - `org_`: organization-owned product data. These tables must include `clerk_org_id` unless ownership is inherited from a same-scope parent row in the same file.
   - `user_`: user-owned private data. These tables must include `clerk_user_id` or another explicit user-owner column.
@@ -831,7 +835,10 @@ Add this section after the Driver section:
 ```md
 ## Schema Conventions
 
-- App table names use `lightfast_<scope>_<domain>_<entity_plural>`.
+- App table names are scope-first: use `lightfast_<scope>_<entity_plural>`
+  when the entity is self-describing, or
+  `lightfast_<scope>_<domain>_<entity_plural>` when a separate domain grouping
+  adds clarity.
 - Valid table scopes are `org`, `user`, and `system`.
 - Schema file names mirror scope and domain without the global `lightfast_` prefix, such as `org-signals.ts`, `user-source-control.ts`, and `system-mcp-oauth.ts`.
 - Drizzle table export names mirror the scoped table name without `lightfast_`, in camelCase, such as `orgSignals`, `userSourceControlAccounts`, and `systemMcpOauthClients`.

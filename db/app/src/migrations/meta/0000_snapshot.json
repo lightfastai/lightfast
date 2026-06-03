@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "9bc2f6be-94ab-4e44-a308-a6f8dc966eb8",
+  "id": "d9302848-ba92-45e2-b89b-aea8d245db7f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "lightfast_org_automation_runs": {
@@ -2970,8 +2970,8 @@
           ],
           "isUnique": true
         },
-        "org_workspace_assistant_messages_conversation_idempotency_key_uq": {
-          "name": "org_workspace_assistant_messages_conversation_idempotency_key_uq",
+        "org_workspace_assistant_messages_conv_idempotency_key_uq": {
+          "name": "org_workspace_assistant_messages_conv_idempotency_key_uq",
           "columns": [
             "conversation_id",
             "idempotency_key"
