@@ -16,14 +16,14 @@ import {
 export type EmulatorServer = ReturnType<typeof createServer>;
 
 export interface StartEmulatorContext {
-  appOrigin?: string;
+  callbackUrl?: string;
   publicOrigin?: string;
   /** Re-run seeding (store.reset() + seed). Wired to the emulator's reset(). */
   reset(): void;
 }
 
 export interface StartEmulatorOptions extends ServerOptions {
-  appOrigin?: string;
+  callbackUrl?: string;
   /** Wrap the fetch handler (e.g. host-routing shims). Default: server.app.fetch. */
   createFetch?(server: EmulatorServer, ctx: StartEmulatorContext): FetchHandler;
   host?: string;
@@ -119,7 +119,7 @@ export async function startEmulator(
   };
 
   const ctx: StartEmulatorContext = {
-    appOrigin: options.appOrigin,
+    callbackUrl: options.callbackUrl,
     publicOrigin: options.publicOrigin,
     reset: runSeed,
   };

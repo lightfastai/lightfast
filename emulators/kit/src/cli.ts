@@ -21,33 +21,40 @@ function redactEnvValueForLog(key: string, value: string): string {
 }
 
 export function runEnvSh(manifest: EmulatorManifest): void {
-  const appOrigin = readOption("--app-origin");
-  const emulatorOrigin = readOption("--emulator-origin");
+  const callbackUrl = readOption("--callback-url");
+  const publicOrigin = readOption("--public-origin");
 
   const env = createEmulatorEnv(manifest, {
     ...process.env,
-    ...(appOrigin ? { LIGHTFAST_APP_ORIGIN: appOrigin } : {}),
-    ...(emulatorOrigin ? { [manifest.originEnvVar]: emulatorOrigin } : {}),
+    ...(callbackUrl ? { CALLBACK_URL: callbackUrl } : {}),
+    ...(publicOrigin ? { PUBLIC_ORIGIN: publicOrigin } : {}),
   });
 
-  const origin = env.emulatorOrigin ?? `http://127.0.0.1:${env.port}`;
-  console.log(formatEnvString(manifest.env(env.appOrigin, origin)));
+  const origin = env.publicOrigin ?? `http://127.0.0.1:${env.port}`;
+  console.log(
+    formatEnvString(
+      manifest.env({ callbackUrl: env.callbackUrl, publicOrigin: origin })
+    )
+  );
 }
 
 export async function runStart(manifest: EmulatorManifest): Promise<void> {
   const env = createEmulatorEnv(manifest);
   const emulator = await manifest.start({
-    appOrigin: env.appOrigin,
+    callbackUrl: env.callbackUrl,
     host: env.host,
     port: env.port,
-    publicOrigin: env.emulatorOrigin,
+    publicOrigin: env.publicOrigin,
   });
 
   const label = `[${manifest.name}-emulator]`;
   console.log(`${label} listening on ${emulator.listenUrl}`);
   console.log(`${label} public origin ${emulator.publicOrigin}`);
   for (const [key, value] of Object.entries(
-    manifest.env(env.appOrigin, emulator.publicOrigin)
+    manifest.env({
+      callbackUrl: env.callbackUrl,
+      publicOrigin: emulator.publicOrigin,
+    })
   )) {
     console.log(`${key}=${JSON.stringify(redactEnvValueForLog(key, value))}`);
   }

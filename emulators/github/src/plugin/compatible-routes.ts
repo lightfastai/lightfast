@@ -2,10 +2,6 @@ import { Buffer } from "node:buffer";
 import { createHash, createPublicKey, randomBytes } from "node:crypto";
 import type { Store, TokenMap } from "@emulators/core";
 import { getGitHubStore } from "@emulators/github";
-import {
-  GITHUB_SETUP_PATH,
-  GITHUB_USER_ACCOUNT_OAUTH_CALLBACK_PATH,
-} from "@repo/github-app-contract";
 import { jwtVerify } from "jose";
 
 import { GITHUB_EMULATOR_FIXTURES } from "../fixtures";
@@ -31,7 +27,7 @@ interface OAuthUserToken {
 }
 
 interface GitHubCompatibleFetchInput {
-  appOrigin: string;
+  callbackUrl?: string;
   fallbackFetch: (request: Request) => Response | Promise<Response>;
   publicOrigin: string;
   resetStore: () => void;
@@ -39,8 +35,8 @@ interface GitHubCompatibleFetchInput {
   tokenMap: TokenMap;
 }
 
-const PENDING_CODES_KEY = "lightfast.github.oauth.pendingCodes";
-const OAUTH_USER_TOKENS_KEY = "lightfast.github.oauth.userTokens";
+const PENDING_CODES_KEY = "github.emulator.oauth.pendingCodes";
+const OAUTH_USER_TOKENS_KEY = "github.emulator.oauth.userTokens";
 const CODE_TTL_MS = 5 * 60 * 1000;
 const USER_ACCOUNT_ACCESS_TOKEN_TTL_MS = 28_800 * 1000;
 const USER_ACCOUNT_REFRESH_TOKEN_TTL_MS = 15_768_000 * 1000;
@@ -202,10 +198,17 @@ function validatePkce(input: { codeChallenge: string; codeVerifier: string }) {
   return challenge === input.codeChallenge;
 }
 
-function isUserAccountRedirectUri(redirectUri: string) {
-  return (
-    new URL(redirectUri).pathname === GITHUB_USER_ACCOUNT_OAUTH_CALLBACK_PATH
-  );
+function isRefreshableOAuthRedirectUri(redirectUri: string) {
+  return new URL(redirectUri).pathname.endsWith("/user/oauth/callback");
+}
+
+function isValidRedirectUri(redirectUri: string) {
+  try {
+    new URL(redirectUri);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function createOAuthToken(prefix: "gho" | "ghr" | "ghu") {
@@ -369,7 +372,7 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
   return async function gitHubCompatibleFetch(request: Request) {
     const url = new URL(request.url);
 
-    if (request.method === "POST" && url.pathname === "/__lightfast/reset") {
+    if (request.method === "POST" && url.pathname === "/__emulator/reset") {
       const token = getBearerToken(request);
       if (token !== GITHUB_EMULATOR_FIXTURES.userToken) {
         return json({ message: "Bad credentials" }, 401);
@@ -475,7 +478,10 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
       if (!(installation && state)) {
         return json({ message: "Bad Request" }, 400);
       }
-      const redirectUrl = new URL(GITHUB_SETUP_PATH, input.appOrigin);
+      if (!input.callbackUrl) {
+        return json({ message: "Bad Request" }, 400);
+      }
+      const redirectUrl = new URL(input.callbackUrl);
       redirectUrl.searchParams.set(
         "installation_id",
         String(installation.installation_id)
@@ -495,7 +501,8 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
       const oauthApp = gh.oauthApps.findOneBy("client_id", clientId);
       if (
         !(
-          oauthApp?.redirect_uris.includes(redirectUri) &&
+          oauthApp &&
+          isValidRedirectUri(redirectUri) &&
           state &&
           codeChallenge
         ) ||
@@ -626,7 +633,7 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
         });
       }
       const scopes = ["repo", "user", "read:org"];
-      if (isUserAccountRedirectUri(pending.redirectUri)) {
+      if (isRefreshableOAuthRedirectUri(pending.redirectUri)) {
         const token = createOAuthToken("ghu");
         const tokenRefreshToken = createOAuthToken("ghr");
         setOAuthToken({

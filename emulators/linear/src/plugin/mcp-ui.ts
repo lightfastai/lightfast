@@ -23,7 +23,7 @@ export function renderLinearMcpPage(endpoint: string): string {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Linear MCP - Lightfast local emulator</title>
+  <title>Linear MCP - Local emulator</title>
   <style>
     :root {
       color-scheme: light;
@@ -251,7 +251,7 @@ export function renderLinearMcpPage(endpoint: string): string {
     <header>
       <div>
         <h1>Linear MCP</h1>
-        <p>Lightfast local emulator for the Linear MCP endpoint. Use this page to inspect the local endpoint that connector development talks to.</p>
+        <p>Local emulator for the Linear MCP endpoint. Use this page to inspect the local endpoint that connector development talks to.</p>
       </div>
       <div class="status">Local emulator online</div>
     </header>
@@ -284,7 +284,7 @@ export function renderLinearMcpPage(endpoint: string): string {
             <dt>Actor</dt>
             <dd>${escapeHtml(LINEAR_EMULATOR_FIXTURES.actorName)} <code>${escapeHtml(LINEAR_EMULATOR_FIXTURES.actorId)}</code></dd>
             <dt>Mode</dt>
-            <dd><span class="pill">Lightfast local emulator</span></dd>
+            <dd><span class="pill">Local emulator</span></dd>
           </dl>
         </div>
       </section>

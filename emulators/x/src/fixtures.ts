@@ -1,22 +1,22 @@
 export const X_EMULATOR_FIXTURES = {
-  oauthClientId: "x_lightfast_local",
+  oauthClientId: "x_emulator_local",
   oauthClientSecret: "x-local-secret",
   userId: "x_user_1",
-  userName: "Lightfast",
-  username: "lightfast",
+  userName: "Emulator User",
+  username: "emulator",
   accessToken: "x_access_valid",
   refreshToken: "x_refresh_valid",
 } as const;
 
-export const X_EMULATOR_OAUTH_CODE = "x_oauth_code_lightfast_local";
+export const X_EMULATOR_OAUTH_CODE = "x_oauth_code_emulator_local";
 
 export const X_EMULATOR_SCOPE = "tweet.read users.read offline.access";
 
 export const X_EMULATOR_USERS = [
   {
     id: "x_user_1",
-    name: "Lightfast",
-    username: "lightfast",
+    name: "Emulator User",
+    username: "emulator",
   },
   {
     id: "x_user_2",
@@ -28,7 +28,7 @@ export const X_EMULATOR_USERS = [
 export const X_EMULATOR_POSTS = [
   {
     id: "tweet_1",
-    text: "Lightfast connector test post",
+    text: "Emulator connector test post",
     author_id: "x_user_1",
   },
   {

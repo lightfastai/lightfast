@@ -18,7 +18,7 @@ import { createGitHubCompatibleFetch } from "./compatible-routes";
 import { enrichPushPayloadWithChangedPaths } from "./webhook/push-payload";
 
 export interface StartGitHubEmulatorInput {
-  appOrigin?: string;
+  callbackUrl?: string;
   host?: string;
   port?: number;
   publicOrigin?: string;
@@ -79,7 +79,7 @@ export function addOrgMembership(store: Parameters<typeof getGitHubStore>[0]) {
 export function startGitHubEmulator(
   input: StartGitHubEmulatorInput = {}
 ): Promise<StartedGitHubEmulator> {
-  const appOrigin = input.appOrigin ?? "https://lightfast.localhost";
+  const callbackUrl = input.callbackUrl;
   const host = input.host ?? "127.0.0.1";
   const port = input.port ?? 4567;
   // The emulator seeds and serves URL-bearing data (installation/avatar/html
@@ -109,7 +109,7 @@ export function startGitHubEmulator(
 
   return startEmulator(githubPlugin, {
     appKeyResolver,
-    appOrigin,
+    callbackUrl,
     host,
     port,
     publicOrigin,
@@ -123,11 +123,7 @@ export function startGitHubEmulator(
     seed: (server) => {
       server.store.reset();
       githubPlugin.seed?.(server.store, publicOrigin);
-      seedFromConfig(
-        server.store,
-        publicOrigin,
-        createGitHubEmulatorSeed(appOrigin)
-      );
+      seedFromConfig(server.store, publicOrigin, createGitHubEmulatorSeed());
       addOrgMembership(server.store);
     },
     onReady: (server) => {
@@ -149,7 +145,7 @@ export function startGitHubEmulator(
     },
     createFetch: (server, ctx) =>
       createGitHubCompatibleFetch({
-        appOrigin,
+        callbackUrl,
         fallbackFetch: server.app.fetch,
         publicOrigin,
         resetStore: ctx.reset,

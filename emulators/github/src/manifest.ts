@@ -6,7 +6,6 @@ import { startGitHubEmulator } from "./plugin";
 export const githubManifest: EmulatorManifest = {
   name: "github",
   port: 4567,
-  originEnvVar: "GITHUB_EMULATOR_ORIGIN",
   env: getGitHubEmulatorEnv,
   start: startGitHubEmulator,
 };

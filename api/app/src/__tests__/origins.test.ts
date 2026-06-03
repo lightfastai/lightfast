@@ -23,7 +23,7 @@ describe("api app origins", () => {
   it("uses local origin env vars in local mode", async () => {
     vi.stubEnv("SKIP_ENV_VALIDATION", "1");
     vi.stubEnv("VERCEL_ENV", "development");
-    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://app.lightfast.localhost");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://lightfast.localhost");
     vi.stubEnv("NEXT_PUBLIC_WWW_URL", "https://www.lightfast.localhost");
     vi.stubEnv(
       "NEXT_PUBLIC_PLATFORM_URL",
@@ -32,7 +32,7 @@ describe("api app origins", () => {
 
     const origins = await importOrigins();
 
-    expect(origins.appUrl).toBe("https://app.lightfast.localhost");
+    expect(origins.appUrl).toBe("https://lightfast.localhost");
     expect(origins.wwwUrl).toBe("https://www.lightfast.localhost");
     expect(origins.platformUrl).toBe("https://platform.lightfast.localhost");
   });
