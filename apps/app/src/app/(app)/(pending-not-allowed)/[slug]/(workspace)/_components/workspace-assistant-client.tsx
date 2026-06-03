@@ -38,7 +38,6 @@ import {
   ToolOutput,
   type ToolPart,
 } from "@repo/ui/components/ai-elements/tool";
-import { Button } from "@repo/ui/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import { cn } from "@repo/ui/lib/utils";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
@@ -47,11 +46,11 @@ import {
   DefaultChatTransport,
   type UIMessage,
 } from "@vendor/ai";
-import { Box, LinkIcon, MessageCircle, Plus } from "lucide-react";
+import { Box } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTRPC } from "~/trpc/react";
 
 type SkillsListResult = AppRouterOutputs["org"]["workspace"]["skills"]["list"];
@@ -59,7 +58,6 @@ type Skill = SkillsListResult["skills"][number];
 type SkillTab = "recent" | "explore";
 type WorkspaceAssistantConversationResult =
   AppRouterOutputs["org"]["workspace"]["assistant"]["getConversation"];
-type CopyState = "copied" | "error" | "idle";
 
 interface WorkspaceAssistantClientProps {
   initialConversation?: WorkspaceAssistantConversationResult;
@@ -69,7 +67,6 @@ export function WorkspaceAssistantClient({
   initialConversation,
 }: WorkspaceAssistantClientProps) {
   const params = useParams<{ slug: string }>();
-  const router = useRouter();
   const trpc = useTRPC();
   const { data } = useSuspenseQuery(
     trpc.org.workspace.skills.list.queryOptions(undefined, { staleTime: 0 })
@@ -82,29 +79,16 @@ export function WorkspaceAssistantClient({
     [initialConversation]
   );
   const [text, setText] = useState("");
-  const [copyState, setCopyState] = useState<CopyState>("idle");
   const [skillTab, setSkillTab] = useState<SkillTab>("recent");
   const [conversationId, setConversationId] = useState(
     initialConversation?.conversation.publicId
   );
   const [creationError, setCreationError] = useState<Error | undefined>();
-  const copyResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
   const conversationIdRef = useRef(conversationId);
 
   useEffect(() => {
     conversationIdRef.current = conversationId;
   }, [conversationId]);
-
-  useEffect(
-    () => () => {
-      if (copyResetTimeoutRef.current) {
-        clearTimeout(copyResetTimeoutRef.current);
-      }
-    },
-    []
-  );
 
   const transport = useMemo(
     () =>
@@ -125,15 +109,7 @@ export function WorkspaceAssistantClient({
     []
   );
 
-  const {
-    clearError,
-    error,
-    messages,
-    sendMessage,
-    setMessages = () => undefined,
-    status,
-    stop,
-  } = useChat({
+  const { clearError, error, messages, sendMessage, status, stop } = useChat({
     id: conversationId ?? undefined,
     dataPartSchemas: lightfastWorkspaceAssistantDataPartSchemas,
     messageMetadataSchema: lightfastWorkspaceAssistantMessageMetadataSchema,
@@ -156,46 +132,6 @@ export function WorkspaceAssistantClient({
   const composerStatus: ChatStatus = createConversation.isPending
     ? "submitted"
     : status;
-  const isGenerating = status === "submitted" || status === "streaming";
-
-  const handleNewChat = useCallback(() => {
-    if (isGenerating) {
-      stop();
-    }
-    clearError();
-    setCreationError(undefined);
-    setCopyState("idle");
-    setText("");
-    setConversationId(undefined);
-    setMessages([]);
-    router.push(`/${params.slug}/chat` as Route);
-  }, [clearError, isGenerating, params.slug, router, setMessages, stop]);
-
-  const setTransientCopyState = useCallback((nextState: CopyState) => {
-    setCopyState(nextState);
-    if (copyResetTimeoutRef.current) {
-      clearTimeout(copyResetTimeoutRef.current);
-    }
-    copyResetTimeoutRef.current = setTimeout(() => {
-      setCopyState("idle");
-      copyResetTimeoutRef.current = null;
-    }, 2000);
-  }, []);
-
-  const handleCopyLink = useCallback(async () => {
-    if (!(conversationId && typeof navigator !== "undefined")) {
-      return;
-    }
-    try {
-      if (!navigator.clipboard?.writeText) {
-        throw new Error("Clipboard is not available.");
-      }
-      await navigator.clipboard.writeText(window.location.href);
-      setTransientCopyState("copied");
-    } catch {
-      setTransientCopyState("error");
-    }
-  }, [setTransientCopyState, conversationId]);
 
   const handleSubmit = async (message: PromptInputMessage) => {
     const nextText = message.text.trim();
@@ -246,15 +182,6 @@ export function WorkspaceAssistantClient({
 
   return (
     <main className="flex h-full min-h-0 flex-1 flex-col bg-background text-foreground">
-      <ChatHeader
-        canCopyLink={!!conversationId && hasMessages}
-        copyState={copyState}
-        hasMessages={hasMessages}
-        onCopyLink={handleCopyLink}
-        onNewChat={handleNewChat}
-        title={getConversationTitle(messages)}
-      />
-
       <div className="relative min-h-0 flex-1">
         {hasMessages ? (
           <Conversation className="h-full">
@@ -332,63 +259,6 @@ function replaceBrowserChatUrl(orgSlug: string, conversationId?: string) {
     ? `/${orgSlug}/chat/${conversationId}`
     : `/${orgSlug}/chat`;
   window.history.replaceState(null, "", nextPath);
-}
-
-function ChatHeader({
-  canCopyLink,
-  copyState,
-  hasMessages,
-  onCopyLink,
-  onNewChat,
-  title,
-}: {
-  canCopyLink: boolean;
-  copyState: CopyState;
-  hasMessages: boolean;
-  onCopyLink: () => void;
-  onNewChat: () => void;
-  title: string;
-}) {
-  return (
-    <header className="flex h-16 shrink-0 items-center px-5 md:px-7">
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        {hasMessages && <MessageCircle className="size-5 text-foreground" />}
-        {hasMessages && (
-          <h1 className="truncate font-medium text-foreground text-lg">
-            {title}
-          </h1>
-        )}
-      </div>
-      <div className="flex shrink-0 items-center gap-2">
-        <span aria-live="polite" className="sr-only">
-          {copyState === "copied" && "Chat link copied"}
-          {copyState === "error" && "Could not copy chat link"}
-        </span>
-        <Button
-          aria-label={
-            copyState === "copied" ? "Chat link copied" : "Copy chat link"
-          }
-          className="size-11 text-muted-foreground sm:size-9"
-          disabled={!canCopyLink}
-          onClick={onCopyLink}
-          size="icon"
-          type="button"
-          variant="ghost"
-        >
-          <LinkIcon className="size-4" />
-        </Button>
-        <Button
-          className="h-11 gap-2 rounded-xl bg-muted px-3 font-normal text-foreground hover:bg-muted/80 sm:h-9"
-          onClick={onNewChat}
-          type="button"
-          variant="secondary"
-        >
-          <Plus className="size-4" />
-          New chat
-        </Button>
-      </div>
-    </header>
-  );
 }
 
 function EmptyChatState({
@@ -656,19 +526,4 @@ function isToolPart(part: UIMessage["parts"][number]): part is ToolPart {
 
 function formatPartLabel(value: string) {
   return value.split(/[-_]/g).filter(Boolean).join(" ");
-}
-
-function getConversationTitle(
-  messages: ReturnType<typeof useChat>["messages"]
-) {
-  const firstUserMessage = messages.find((message) => message.role === "user");
-  const firstText = firstUserMessage?.parts.find(
-    (part) => part.type === "text"
-  );
-
-  if (!firstText?.text) {
-    return "New chat";
-  }
-
-  return firstText.text;
 }
