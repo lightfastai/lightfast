@@ -180,6 +180,8 @@ The core mechanism was proven on the local machine before any cloud config, with
 - `LIGHTFAST_VERCEL_PROJECT_ID_PLATFORM`
 - `LIGHTFAST_VERCEL_PROJECT_ID_MCP`
 
+Add these in each cloud's **Secrets** section, *not* Environment variables. Codex (verified against [its docs](https://developers.openai.com/codex/cloud/environments)) decrypts secrets only for the **setup-script phase** and **removes them before the agent phase** — which exactly matches `setup.sh`'s setup-only consumption (it bakes the results into on-disk `.vercel/*` files that persist for the agent). Consequence: the agent cannot re-run `vercel pull`/`setup.sh` mid-session (no creds); re-run the environment setup to re-hydrate. Do not demote them to Environment variables to enable re-pull — that re-exposes `VERCEL_TOKEN` to the agent. Secret values live only in the cloud UI, never in `.codex/environments/environment.toml` (setup-script text only).
+
 **Claude cloud** (environment `env_017JcTSzELtWsWzRmXzAKqCH`, or a new one):
 1. **Setup script** → `bash scripts/cloud/setup.sh`
 2. **Network** → Trusted
