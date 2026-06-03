@@ -10,9 +10,10 @@ import type { BundledLanguage } from "shiki";
 import {
   CodeBlock,
   CodeBlockActions,
-  CodeBlockContent,
   CodeBlockCopyButton,
+  CodeBlockFilename,
   CodeBlockHeader,
+  CodeBlockTitle,
 } from "./ai-elements/code-block";
 
 // Properly typed component props based on react-markdown's actual types
@@ -25,6 +26,42 @@ type MarkdownComponentProps = React.HTMLAttributes<HTMLElement> & {
 interface CodeComponentProps extends MarkdownComponentProps {
   inline?: boolean;
 }
+
+const getClassName = (value: unknown) => {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return value.join(" ");
+  }
+  return;
+};
+
+const extractCodeText = (node: unknown): string => {
+  if (typeof node === "string") {
+    return node;
+  }
+  if (Array.isArray(node)) {
+    return node.map(extractCodeText).join("");
+  }
+  if (isValidElement(node) && typeof node.props === "object" && node.props) {
+    return extractCodeText((node.props as { children?: unknown }).children);
+  }
+  return "";
+};
+
+const parseCodeLanguage = (className?: string) => {
+  if (!className) {
+    return;
+  }
+  const match = className
+    .split(/\s+/)
+    .find((value) => value.startsWith("language-"));
+  if (!match) {
+    return;
+  }
+  return match.replace(/^language-/, "");
+};
 
 /**
  * Custom components for react-markdown with Next.js optimizations
@@ -67,27 +104,31 @@ const components: Partial<ReactMarkdownComponents> = {
   pre({ node: _node, className, children }: MarkdownComponentProps) {
     let language: BundledLanguage = "javascript";
 
-    const node = _node as { properties?: { className?: string } } | undefined;
-    if (node?.properties && typeof node.properties.className === "string") {
-      language = node.properties.className.replace(
-        "language-",
-        ""
-      ) as BundledLanguage;
+    const nodeClassName = getClassName(
+      (_node as { properties?: { className?: string | string[] } } | undefined)
+        ?.properties?.className
+    );
+    const contentClassName =
+      parseCodeLanguage(nodeClassName) ??
+      parseCodeLanguage(className) ??
+      parseCodeLanguage(
+        isValidElement(children)
+          ? getClassName(
+              (
+                children as React.ReactElement<{
+                  className?: string | string[];
+                }>
+              ).props.className
+            )
+          : undefined
+      );
+
+    if (contentClassName) {
+      language = contentClassName as BundledLanguage;
     }
 
     // Extract code content from children safely
-    let code = "";
-    if (
-      isValidElement(children) &&
-      children.props &&
-      typeof children.props === "object" &&
-      "children" in children.props &&
-      typeof children.props.children === "string"
-    ) {
-      code = children.props.children;
-    } else if (typeof children === "string") {
-      code = children;
-    }
+    const code = extractCodeText(children);
 
     return (
       <CodeBlock
@@ -96,13 +137,17 @@ const components: Partial<ReactMarkdownComponents> = {
           "bg-muted/50 dark:bg-muted/20",
           className
         )}
+        code={code}
+        language={language}
       >
-        <CodeBlockHeader language={language}>
+        <CodeBlockHeader>
+          <CodeBlockTitle>
+            <CodeBlockFilename>{language}</CodeBlockFilename>
+          </CodeBlockTitle>
           <CodeBlockActions>
             <CodeBlockCopyButton />
           </CodeBlockActions>
         </CodeBlockHeader>
-        <CodeBlockContent className="p-3" code={code} language={language} />
       </CodeBlock>
     );
   },

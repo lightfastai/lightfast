@@ -37,8 +37,8 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button className="size-8 rounded-full p-0" variant="ghost">
-          <Avatar className="size-6">
+        <Button className="size-11 rounded-full p-0 lg:size-8" variant="ghost">
+          <Avatar className="size-7 lg:size-6">
             <AvatarFallback className="bg-foreground text-[10px] text-background">
               {profile.initials}
             </AvatarFallback>

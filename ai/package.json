@@ -18,6 +18,10 @@
       "types": "./src/telemetry/index.ts",
       "default": "./src/telemetry/index.ts"
     },
+    "./workspace-assistant": {
+      "types": "./src/workspace-assistant/index.ts",
+      "default": "./src/workspace-assistant/index.ts"
+    },
     "./triage": {
       "types": "./src/triage/index.ts",
       "default": "./src/triage/index.ts"
