@@ -75,6 +75,7 @@
     "@repo/identity-contract": "workspace:*",
     "@repo/linear-app-node": "workspace:*",
     "@repo/native-auth-contract": "workspace:*",
+    "@repo/sandbox-runtime": "workspace:*",
     "@repo/skills-contract": "workspace:*",
     "@repo/source-control-contract": "workspace:*",
     "@repo/x-app-node": "workspace:*",
