@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { Database, OrgConnectorConnection } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -12,6 +13,7 @@ const listCurrentOrgConnectorConnectionsMock = vi.fn();
 const finalizeCurrentOrgConnectorConnectionMock = vi.fn();
 const markCurrentOrgConnectorConnectionRevokedMock = vi.fn();
 const markCurrentOrgConnectorConnectionErrorMock = vi.fn();
+const updateConnectorToolManifestAndAutomationStateMock = vi.fn();
 const updateConnectorToolManifestMock = vi.fn();
 const recordConnectorToolRefreshErrorMock = vi.fn();
 const setConnectorAutomationEnabledDbMock = vi.fn();
@@ -23,11 +25,18 @@ const getLinearViewerMetadataMock = vi.fn();
 const listLinearMcpToolsMock = vi.fn();
 const refreshLinearOAuthTokenMock = vi.fn();
 const revokeLinearOAuthTokenMock = vi.fn();
+const createXPkcePairMock = vi.fn();
+const exchangeXOAuthCodeMock = vi.fn();
+const getXViewerMetadataMock = vi.fn();
+const listXBridgeMcpToolsMock = vi.fn();
+const refreshXOAuthTokenMock = vi.fn();
+const revokeXOAuthTokenMock = vi.fn();
 const encryptMock = vi.fn();
 const decryptMock = vi.fn();
 const logWarnMock = vi.fn();
 
 const envMock = {
+  CONNECTOR_MCP_AUTH_SECRET: "mcp_auth_secret_12345678901234567890",
   ENCRYPTION_KEY:
     "0000000000000000000000000000000000000000000000000000000000000000",
   LINEAR_API_ORIGIN: "https://linear.test",
@@ -36,6 +45,11 @@ const envMock = {
   LINEAR_MCP_ENDPOINT: "https://linear.test/mcp",
   NEXT_PUBLIC_APP_URL: "https://app.lightfast.localhost",
   VERCEL_ENV: "development",
+  X_API_ORIGIN: "https://x.test",
+  X_CLIENT_ID: "x_client_test",
+  X_CLIENT_SECRET: "x_secret_test",
+  X_MCP_ENDPOINT: "https://app.lightfast.localhost/api/connectors/x/mcp",
+  X_OAUTH_ORIGIN: "https://x.test",
 };
 
 vi.mock("@db/app/client", () => ({ db: {} }));
@@ -52,6 +66,8 @@ vi.mock("@db/app", () => ({
   recordConnectorToolRefreshError: recordConnectorToolRefreshErrorMock,
   setConnectorAgentEnabled: setConnectorAgentEnabledDbMock,
   setConnectorAutomationEnabled: setConnectorAutomationEnabledDbMock,
+  updateConnectorToolManifestAndAutomationState:
+    updateConnectorToolManifestAndAutomationStateMock,
   updateConnectorToolManifest: updateConnectorToolManifestMock,
   updateObservedConnectorTokens: updateObservedConnectorTokensMock,
 }));
@@ -71,6 +87,19 @@ vi.mock("@repo/linear-app-node", async (importOriginal) => {
     listLinearMcpTools: listLinearMcpToolsMock,
     refreshLinearOAuthToken: refreshLinearOAuthTokenMock,
     revokeLinearOAuthToken: revokeLinearOAuthTokenMock,
+  };
+});
+
+vi.mock("@repo/x-app-node", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@repo/x-app-node")>();
+  return {
+    ...actual,
+    createXPkcePair: createXPkcePairMock,
+    exchangeXOAuthCode: exchangeXOAuthCodeMock,
+    getXViewerMetadata: getXViewerMetadataMock,
+    listXBridgeMcpTools: listXBridgeMcpToolsMock,
+    refreshXOAuthToken: refreshXOAuthTokenMock,
+    revokeXOAuthToken: revokeXOAuthTokenMock,
   };
 });
 
@@ -103,11 +132,16 @@ vi.mock("@vendor/upstash", () => ({
 vi.mock("../env", () => ({ env: envMock }));
 
 const { LinearAppNodeError } = await import("@repo/linear-app-node");
+const { XAppNodeError } = await import("@repo/x-app-node");
 const { assertCurrentSessionCanFinalizeConnectorOAuth } = await import(
   "../services/connectors/auth"
 );
-const { consumeLinearConnectOAuthAttempt, issueLinearConnectOAuthAttempt } =
-  await import("../services/connectors/attempts");
+const { getXConnectorConfig } = await import("../services/connectors/config");
+const {
+  consumeConnectorOAuthAttempt,
+  issueConnectorOAuthAttempt,
+  lookupConnectorOAuthAttempt,
+} = await import("../services/connectors/attempts");
 const {
   completeLinearConnectorOAuth,
   disconnectLinearConnector,
@@ -120,6 +154,18 @@ const linearFlow = (await import("../services/connectors/linear-flow")) as {
     input: { enabled: boolean }
   ) => Promise<{ enabled: boolean }>;
 };
+const {
+  completeXConnectorOAuth,
+  disconnectXConnector,
+  refreshXConnectorTools,
+  startXConnectorOAuth,
+} = await import("../services/connectors/x-flow");
+const {
+  disconnectConnector,
+  refreshConnectorTools,
+  setConnectorAutomationEnabled,
+  startConnectorOAuth,
+} = await import("../services/connectors");
 const { listConnectorsForOrg } = await import("../services/connectors/catalog");
 
 function ctx(input: { isAdmin?: boolean } = {}) {
@@ -197,6 +243,10 @@ function membership(role = "org:admin") {
 
 describe("connector catalog services", () => {
   beforeEach(() => {
+    envMock.LINEAR_CLIENT_ID = "linear_client_test";
+    envMock.LINEAR_CLIENT_SECRET = "linear_secret_test";
+    envMock.X_CLIENT_ID = "x_client_test";
+    envMock.X_CLIENT_SECRET = "x_secret_test";
     listCurrentOrgConnectorConnectionsMock.mockReset();
     listCurrentOrgConnectorConnectionsMock.mockResolvedValue([]);
   });
@@ -238,6 +288,10 @@ describe("connector catalog services", () => {
         }),
       ])
     );
+    expect(rows.find((row) => row.provider === "x")).toMatchObject({
+      connectAvailability: { status: "available" },
+      provider: "x",
+    });
 
     envMock.LINEAR_CLIENT_SECRET = undefined as unknown as string;
     const missingConfigRows = await listConnectorsForOrg(ctx());
@@ -246,6 +300,19 @@ describe("connector catalog services", () => {
     ).toMatchObject({
       connectAvailability: {
         missing: ["LINEAR_CLIENT_SECRET"],
+        reason: "missing_config",
+        status: "unavailable",
+      },
+    });
+
+    envMock.LINEAR_CLIENT_SECRET = "linear_secret_test";
+    envMock.X_CLIENT_SECRET = undefined as unknown as string;
+    const missingXConfigRows = await listConnectorsForOrg(ctx());
+    expect(
+      missingXConfigRows.find((row) => row.provider === "x")
+    ).toMatchObject({
+      connectAvailability: {
+        missing: ["X_CLIENT_SECRET"],
         reason: "missing_config",
         status: "unavailable",
       },
@@ -262,13 +329,47 @@ describe("connector OAuth attempts", () => {
     nanoidMock.mockReturnValue("attempt_123456789012345678901234");
   });
 
-  it("issues one-time Linear OAuth attempts with hashed state", async () => {
-    const issued = await issueLinearConnectOAuthAttempt({
+  it("resolves X connector config from environment", () => {
+    expect(getXConnectorConfig({ env: {} })).toEqual({
+      missing: ["X_CLIENT_ID", "X_CLIENT_SECRET"],
+      status: "missing_config",
+    });
+
+    expect(
+      getXConnectorConfig({
+        appOrigin: "https://app.lightfast.localhost",
+        env: {
+          X_API_ORIGIN: "https://x.test",
+          X_CLIENT_ID: "x_client_test",
+          X_CLIENT_SECRET: "x_secret_test",
+          X_MCP_ENDPOINT:
+            "https://app.lightfast.localhost/api/connectors/x/mcp",
+          X_OAUTH_ORIGIN: "https://x.test",
+        },
+        nodeEnv: "development",
+      })
+    ).toMatchObject({
+      config: {
+        clientId: "x_client_test",
+        clientSecret: "x_secret_test",
+        endpoints: {
+          apiOrigin: "https://x.test",
+          mcpEndpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
+          oauthAuthorizeUrl: "https://x.test/i/oauth2/authorize",
+        },
+      },
+      status: "configured",
+    });
+  });
+
+  it("issues one-time provider-scoped OAuth attempts with hashed state", async () => {
+    const issued = await issueConnectorOAuthAttempt({
       clerkOrgId: "org_acme",
       codeVerifier: "verifier_123",
       lightfastUserId: "user_current",
       mode: "connect",
       orgSlug: "acme",
+      provider: "linear",
     });
     const record = redisSetMock.mock.calls[0]?.[1];
 
@@ -278,11 +379,12 @@ describe("connector OAuth attempts", () => {
       lightfastUserId: "user_current",
       mode: "connect",
       orgSlug: "acme",
+      provider: "linear",
       stateHash: expect.stringMatching(/^[a-f0-9]{64}$/),
     });
     expect(JSON.stringify(record)).not.toContain(issued.state);
     expect(redisSetMock).toHaveBeenCalledWith(
-      "linear-connect-oauth-attempt:attempt_123456789012345678901234",
+      "connector-oauth-attempt:linear:attempt_123456789012345678901234",
       record,
       { ex: 900 }
     );
@@ -291,7 +393,7 @@ describe("connector OAuth attempts", () => {
     redisGetdelMock.mockResolvedValueOnce(record);
 
     await expect(
-      consumeLinearConnectOAuthAttempt({ state: issued.state })
+      consumeConnectorOAuthAttempt({ provider: "linear", state: issued.state })
     ).resolves.toMatchObject({
       clerkOrgId: "org_acme",
       lightfastUserId: "user_current",
@@ -302,8 +404,100 @@ describe("connector OAuth attempts", () => {
     redisGetdelMock.mockResolvedValueOnce(null);
 
     await expect(
-      consumeLinearConnectOAuthAttempt({ state: issued.state })
+      consumeConnectorOAuthAttempt({ provider: "linear", state: issued.state })
     ).resolves.toBeNull();
+  });
+
+  it("does not consume an OAuth attempt through the wrong provider scope", async () => {
+    const issued = await issueConnectorOAuthAttempt({
+      clerkOrgId: "org_acme",
+      codeVerifier: "verifier_123",
+      lightfastUserId: "user_current",
+      mode: "connect",
+      orgSlug: "acme",
+      provider: "linear",
+    });
+
+    await expect(
+      consumeConnectorOAuthAttempt({ provider: "x", state: issued.state })
+    ).resolves.toBeNull();
+    expect(redisGetMock).toHaveBeenCalledWith(
+      "connector-oauth-attempt:x:attempt_123456789012345678901234"
+    );
+  });
+
+  it("looks up legacy linear attempt records during a short deploy window", async () => {
+    const state = Buffer.from(
+      JSON.stringify({
+        attemptId: "legacy_attempt_000000000000000000",
+        nonce: "legacy_nonce_123456789012345678901234",
+      }),
+      "utf8"
+    ).toString("base64url");
+    const stateHash = createHash("sha256").update(state).digest("hex");
+    const legacyRecord = {
+      clerkOrgId: "org_acme",
+      codeVerifier: "verifier_123",
+      lightfastUserId: "user_current",
+      mode: "connect",
+      orgSlug: "acme",
+      stateHash,
+    };
+    redisGetMock.mockResolvedValueOnce(null);
+    redisGetMock.mockResolvedValueOnce(legacyRecord);
+
+    await expect(
+      lookupConnectorOAuthAttempt({ provider: "linear", state })
+    ).resolves.toMatchObject({
+      clerkOrgId: "org_acme",
+      codeVerifier: "verifier_123",
+      lightfastUserId: "user_current",
+      mode: "connect",
+      orgSlug: "acme",
+      provider: "linear",
+    });
+    expect(redisGetMock).toHaveBeenCalledWith(
+      "linear-connect-oauth-attempt:legacy_attempt_000000000000000000"
+    );
+  });
+
+  it("consumes legacy linear attempt records during a short deploy window", async () => {
+    const state = Buffer.from(
+      JSON.stringify({
+        attemptId: "legacy_attempt_000000000000000000",
+        nonce: "legacy_nonce_123456789012345678901234",
+      }),
+      "utf8"
+    ).toString("base64url");
+    const stateHash = createHash("sha256").update(state).digest("hex");
+    const legacyRecord = {
+      clerkOrgId: "org_acme",
+      codeVerifier: "verifier_123",
+      lightfastUserId: "user_current",
+      mode: "connect",
+      orgSlug: "acme",
+      stateHash,
+    };
+    redisGetMock.mockResolvedValueOnce(null);
+    redisGetMock.mockResolvedValueOnce(legacyRecord);
+    redisGetdelMock.mockResolvedValueOnce(legacyRecord);
+
+    await expect(
+      consumeConnectorOAuthAttempt({ provider: "linear", state })
+    ).resolves.toMatchObject({
+      clerkOrgId: "org_acme",
+      codeVerifier: "verifier_123",
+      lightfastUserId: "user_current",
+      mode: "connect",
+      orgSlug: "acme",
+      provider: "linear",
+    });
+    expect(redisGetMock).toHaveBeenCalledWith(
+      "linear-connect-oauth-attempt:legacy_attempt_000000000000000000"
+    );
+    expect(redisGetdelMock).toHaveBeenCalledWith(
+      "linear-connect-oauth-attempt:legacy_attempt_000000000000000000"
+    );
   });
 });
 
@@ -460,7 +654,7 @@ describe("Linear connector flow", () => {
     });
 
     expect(redisSetMock).toHaveBeenLastCalledWith(
-      "linear-connect-oauth-attempt:attempt_123456789012345678901234",
+      "connector-oauth-attempt:linear:attempt_123456789012345678901234",
       expect.objectContaining({ mode: "reconnect" }),
       { ex: 900 }
     );
@@ -476,14 +670,18 @@ describe("Linear connector flow", () => {
   });
 
   it("completes OAuth with the public oauth callback path", async () => {
-    const issued = await issueLinearConnectOAuthAttempt({
+    const issued = await issueConnectorOAuthAttempt({
       clerkOrgId: "org_acme",
       codeVerifier: "verifier_123",
       lightfastUserId: "user_current",
       mode: "connect",
       orgSlug: "acme",
+      provider: "linear",
     });
-    const attemptRecord = redisSetMock.mock.calls[0]?.[1];
+    const attemptRecord = {
+      ...redisSetMock.mock.calls[0]?.[1],
+      provider: "linear",
+    };
     redisGetMock
       .mockResolvedValueOnce(attemptRecord)
       .mockResolvedValueOnce(attemptRecord);
@@ -525,12 +723,13 @@ describe("Linear connector flow", () => {
   });
 
   it("revokes the previous current Linear tokens before replacing them on reconnect", async () => {
-    const issued = await issueLinearConnectOAuthAttempt({
+    const issued = await issueConnectorOAuthAttempt({
       clerkOrgId: "org_acme",
       codeVerifier: "verifier_123",
       lightfastUserId: "user_current",
       mode: "reconnect",
       orgSlug: "acme",
+      provider: "linear",
     });
     const attemptRecord = redisSetMock.mock.calls[0]?.[1];
     redisGetMock
@@ -610,12 +809,13 @@ describe("Linear connector flow", () => {
   });
 
   it("revokes issued tokens when post-exchange Linear discovery fails", async () => {
-    const issued = await issueLinearConnectOAuthAttempt({
+    const issued = await issueConnectorOAuthAttempt({
       clerkOrgId: "org_acme",
       codeVerifier: "verifier_123",
       lightfastUserId: "user_current",
       mode: "connect",
       orgSlug: "acme",
+      provider: "linear",
     });
     const attemptRecord = redisSetMock.mock.calls[0]?.[1];
     redisGetMock
@@ -991,5 +1191,423 @@ describe("Linear connector flow", () => {
     expect(revokeLinearOAuthTokenMock).toHaveBeenCalledWith(
       expect.objectContaining({ token: "refresh_token_new" })
     );
+  });
+});
+
+describe("X connector flow", () => {
+  beforeEach(() => {
+    envMock.CONNECTOR_MCP_AUTH_SECRET = "mcp_auth_secret_12345678901234567890";
+    envMock.X_API_ORIGIN = "https://x.test";
+    envMock.X_CLIENT_ID = "x_client_test";
+    envMock.X_CLIENT_SECRET = "x_secret_test";
+    envMock.X_MCP_ENDPOINT =
+      "https://app.lightfast.localhost/api/connectors/x/mcp";
+    envMock.X_OAUTH_ORIGIN = "https://x.test";
+    process.env.NEXT_PUBLIC_APP_URL = "https://app.lightfast.localhost";
+
+    clerkGetOrganizationMembershipListMock.mockReset();
+    createXPkcePairMock.mockReset();
+    decryptMock.mockReset();
+    encryptMock.mockReset();
+    exchangeXOAuthCodeMock.mockReset();
+    finalizeCurrentOrgConnectorConnectionMock.mockReset();
+    getCurrentOrgConnectorConnectionMock.mockReset();
+    getXViewerMetadataMock.mockReset();
+    listXBridgeMcpToolsMock.mockReset();
+    logWarnMock.mockReset();
+    markCurrentOrgConnectorConnectionRevokedMock.mockReset();
+    recordConnectorToolRefreshErrorMock.mockReset();
+    refreshXOAuthTokenMock.mockReset();
+    revokeXOAuthTokenMock.mockReset();
+    updateConnectorToolManifestAndAutomationStateMock.mockReset();
+    nanoidMock.mockReset();
+    redisGetMock.mockReset();
+    redisGetdelMock.mockReset();
+    redisSetMock.mockReset();
+
+    clerkGetOrganizationMembershipListMock.mockResolvedValue({
+      data: [membership()],
+      totalCount: 1,
+    });
+    createXPkcePairMock.mockReturnValue({
+      codeChallenge: "x_challenge_123",
+      codeChallengeMethod: "S256",
+      codeVerifier: "x_verifier_123",
+    });
+    decryptMock.mockImplementation(async (value: string) =>
+      value === "encrypted_x_access_new"
+        ? "x_access_token_new"
+        : value === "encrypted_x_refresh_new"
+          ? "x_refresh_token_new"
+          : value === "encrypted_x_access"
+            ? "x_access_token"
+            : "x_refresh_token"
+    );
+    encryptMock.mockImplementation(
+      async (value: string) => `encrypted:${value}`
+    );
+    nanoidMock.mockReturnValue("attempt_123456789012345678901234");
+    markCurrentOrgConnectorConnectionRevokedMock.mockResolvedValue(
+      connection({ provider: "x", status: "revoked" })
+    );
+  });
+
+  it("starts connect or reconnect with the X OAuth callback path", async () => {
+    getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(undefined);
+
+    const connectResult = await startXConnectorOAuth(ctx());
+
+    expect(connectResult).toMatchObject({
+      authorizationUrl: expect.stringContaining(
+        "https://x.test/i/oauth2/authorize"
+      ),
+      mode: "connect",
+    });
+    const connectUrl = new URL(connectResult.authorizationUrl);
+    expect(connectUrl.searchParams.get("redirect_uri")).toBe(
+      "https://app.lightfast.localhost/api/connectors/x/oauth/callback"
+    );
+    expect(connectUrl.searchParams.get("scope")).toBe(
+      "tweet.read users.read offline.access"
+    );
+
+    getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(
+      connection({ provider: "x" })
+    );
+
+    await expect(startXConnectorOAuth(ctx())).resolves.toMatchObject({
+      authorizationUrl: expect.stringContaining("state="),
+      mode: "reconnect",
+    });
+
+    expect(redisSetMock).toHaveBeenLastCalledWith(
+      "connector-oauth-attempt:x:attempt_123456789012345678901234",
+      expect.objectContaining({ mode: "reconnect", provider: "x" }),
+      { ex: 900 }
+    );
+  });
+
+  it("completes OAuth, persists X, discovers bridge tools, and enables automations", async () => {
+    const issued = await issueConnectorOAuthAttempt({
+      clerkOrgId: "org_acme",
+      codeVerifier: "x_verifier_123",
+      lightfastUserId: "user_current",
+      mode: "connect",
+      orgSlug: "acme",
+      provider: "x",
+    });
+    const attemptRecord = redisSetMock.mock.calls[0]?.[1];
+    redisGetMock
+      .mockResolvedValueOnce(attemptRecord)
+      .mockResolvedValueOnce(attemptRecord);
+    redisGetdelMock.mockResolvedValueOnce(attemptRecord);
+    authMock.mockResolvedValue({ orgId: "org_acme", userId: "user_current" });
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(undefined);
+    exchangeXOAuthCodeMock.mockResolvedValue({
+      accessToken: "x_access_token",
+      accessTokenExpiresIn: 3600,
+      refreshToken: "x_refresh_token",
+      refreshTokenExpiresIn: 86_400,
+      scopes: ["tweet.read", "users.read", "offline.access"],
+      tokenType: "Bearer",
+    });
+    getXViewerMetadataMock.mockResolvedValue({
+      actorId: "x_user_1",
+      actorName: "@lightfast",
+      name: "Lightfast",
+      username: "lightfast",
+    });
+    finalizeCurrentOrgConnectorConnectionMock.mockResolvedValue(
+      connection({
+        id: 42,
+        mcpEndpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
+        provider: "x",
+        toolManifest: [],
+      })
+    );
+    listXBridgeMcpToolsMock.mockResolvedValue([{ name: "getUsersMe" }]);
+    updateConnectorToolManifestAndAutomationStateMock.mockResolvedValue(true);
+
+    await expect(
+      completeXConnectorOAuth({
+        appOrigin: "https://app.lightfast.localhost",
+        requestUrl: `https://app.lightfast.localhost/api/connectors/x/oauth/callback?code=code_123&state=${issued.state}`,
+      })
+    ).resolves.toEqual({
+      redirectUrl:
+        "https://app.lightfast.localhost/acme/connectors?connector=x",
+    });
+
+    expect(finalizeCurrentOrgConnectorConnectionMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        enabledForAutomations: false,
+        mcpEndpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
+        metadata: {
+          mode: "connect",
+          name: "Lightfast",
+          username: "lightfast",
+        },
+        provider: "x",
+        providerActorId: "x_user_1",
+        providerActorName: "@lightfast",
+        providerWorkspaceId: null,
+        providerWorkspaceName: "X",
+        scopes: ["tweet.read", "users.read", "offline.access"],
+        toolManifest: [],
+      })
+    );
+    expect(listXBridgeMcpToolsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        endpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
+        mcpToken: expect.stringMatching(/^lfmcp_v1\./),
+      })
+    );
+    expect(
+      updateConnectorToolManifestAndAutomationStateMock
+    ).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        clerkOrgId: "org_acme",
+        enabledForAutomations: true,
+        provider: "x",
+        toolManifest: [{ name: "getUsersMe" }],
+      })
+    );
+  });
+
+  it("records tool discovery failure after persisting X and keeps automations disabled", async () => {
+    const issued = await issueConnectorOAuthAttempt({
+      clerkOrgId: "org_acme",
+      codeVerifier: "x_verifier_123",
+      lightfastUserId: "user_current",
+      mode: "connect",
+      orgSlug: "acme",
+      provider: "x",
+    });
+    const attemptRecord = redisSetMock.mock.calls[0]?.[1];
+    redisGetMock
+      .mockResolvedValueOnce(attemptRecord)
+      .mockResolvedValueOnce(attemptRecord);
+    redisGetdelMock.mockResolvedValueOnce(attemptRecord);
+    authMock.mockResolvedValue({ orgId: "org_acme", userId: "user_current" });
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(undefined);
+    exchangeXOAuthCodeMock.mockResolvedValue({
+      accessToken: "x_access_token",
+      accessTokenExpiresIn: 3600,
+      refreshToken: "x_refresh_token",
+      refreshTokenExpiresIn: 86_400,
+      scopes: ["tweet.read", "users.read", "offline.access"],
+      tokenType: "Bearer",
+    });
+    getXViewerMetadataMock.mockResolvedValue({
+      actorId: "x_user_1",
+      actorName: "@lightfast",
+      name: "Lightfast",
+      username: "lightfast",
+    });
+    finalizeCurrentOrgConnectorConnectionMock.mockResolvedValue(
+      connection({
+        enabledForAutomations: false,
+        id: 42,
+        provider: "x",
+        toolManifest: [],
+      })
+    );
+    listXBridgeMcpToolsMock.mockRejectedValue(
+      new XAppNodeError("X_MCP_FAILED", "X MCP tool listing failed.")
+    );
+
+    await expect(
+      completeXConnectorOAuth({
+        appOrigin: "https://app.lightfast.localhost",
+        requestUrl: `https://app.lightfast.localhost/api/connectors/x/oauth/callback?code=code_123&state=${issued.state}`,
+      })
+    ).resolves.toEqual({
+      redirectUrl:
+        "https://app.lightfast.localhost/acme/connectors?connector=x&error=x_tool_discovery_failed",
+    });
+
+    expect(recordConnectorToolRefreshErrorMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        clerkOrgId: "org_acme",
+        lastToolRefreshErrorCode: "X_MCP_FAILED",
+        provider: "x",
+      })
+    );
+    expect(finalizeCurrentOrgConnectorConnectionMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        enabledForAutomations: false,
+      })
+    );
+    expect(
+      updateConnectorToolManifestAndAutomationStateMock
+    ).not.toHaveBeenCalled();
+  });
+
+  it("revokes issued X tokens when metadata finalization fails", async () => {
+    const issued = await issueConnectorOAuthAttempt({
+      clerkOrgId: "org_acme",
+      codeVerifier: "x_verifier_123",
+      lightfastUserId: "user_current",
+      mode: "connect",
+      orgSlug: "acme",
+      provider: "x",
+    });
+    const attemptRecord = redisSetMock.mock.calls[0]?.[1];
+    redisGetMock
+      .mockResolvedValueOnce(attemptRecord)
+      .mockResolvedValueOnce(attemptRecord);
+    redisGetdelMock.mockResolvedValueOnce(attemptRecord);
+    authMock.mockResolvedValue({ orgId: "org_acme", userId: "user_current" });
+    exchangeXOAuthCodeMock.mockResolvedValue({
+      accessToken: "x_access_token",
+      accessTokenExpiresIn: 3600,
+      refreshToken: "x_refresh_token",
+      refreshTokenExpiresIn: 86_400,
+      scopes: ["tweet.read", "users.read", "offline.access"],
+      tokenType: "Bearer",
+    });
+    getXViewerMetadataMock.mockRejectedValue(
+      new XAppNodeError("X_METADATA_FAILED", "X metadata request failed.")
+    );
+
+    await expect(
+      completeXConnectorOAuth({
+        appOrigin: "https://app.lightfast.localhost",
+        requestUrl: `https://app.lightfast.localhost/api/connectors/x/oauth/callback?code=code_123&state=${issued.state}`,
+      })
+    ).resolves.toEqual({
+      redirectUrl:
+        "https://app.lightfast.localhost/acme/connectors?connector=x&error=x_transient_error",
+    });
+
+    expect(revokeXOAuthTokenMock).toHaveBeenCalledTimes(2);
+    expect(revokeXOAuthTokenMock).toHaveBeenCalledWith(
+      expect.objectContaining({ token: "x_access_token" })
+    );
+    expect(revokeXOAuthTokenMock).toHaveBeenCalledWith(
+      expect.objectContaining({ token: "x_refresh_token" })
+    );
+    expect(finalizeCurrentOrgConnectorConnectionMock).not.toHaveBeenCalled();
+  });
+
+  it("refreshes X tools through the bridge and updates automation state", async () => {
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(
+      connection({
+        id: 42,
+        mcpEndpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
+        provider: "x",
+      })
+    );
+    listXBridgeMcpToolsMock.mockResolvedValue([{ name: "getUsersMe" }]);
+    updateConnectorToolManifestAndAutomationStateMock.mockResolvedValue(true);
+
+    await expect(refreshXConnectorTools(ctx())).resolves.toEqual({
+      refreshed: true,
+      status: "ok",
+      toolManifest: [{ name: "getUsersMe" }],
+    });
+
+    expect(listXBridgeMcpToolsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mcpToken: expect.stringMatching(/^lfmcp_v1\./),
+      })
+    );
+    expect(
+      updateConnectorToolManifestAndAutomationStateMock
+    ).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        enabledForAutomations: true,
+        provider: "x",
+        toolManifest: [{ name: "getUsersMe" }],
+      })
+    );
+  });
+
+  it("preserves the previous X manifest on non-auth bridge discovery failure", async () => {
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(
+      connection({ id: 42, provider: "x" })
+    );
+    listXBridgeMcpToolsMock.mockRejectedValue(
+      new XAppNodeError("X_MCP_FAILED", "X MCP tool listing failed.")
+    );
+
+    await expect(refreshXConnectorTools(ctx())).resolves.toEqual({
+      refreshed: false,
+      status: "refresh_error",
+    });
+
+    expect(recordConnectorToolRefreshErrorMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        lastToolRefreshErrorCode: "X_MCP_FAILED",
+        provider: "x",
+      })
+    );
+    expect(
+      updateConnectorToolManifestAndAutomationStateMock
+    ).not.toHaveBeenCalled();
+  });
+
+  it("disconnects X by revoking upstream tokens and revoking the local row", async () => {
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(
+      connection({
+        encryptedAccessToken: "encrypted_x_access",
+        encryptedRefreshToken: "encrypted_x_refresh",
+        provider: "x",
+      })
+    );
+
+    await expect(disconnectXConnector(ctx())).resolves.toEqual({
+      disconnected: true,
+    });
+
+    expect(revokeXOAuthTokenMock).toHaveBeenCalledTimes(2);
+    expect(revokeXOAuthTokenMock).toHaveBeenCalledWith(
+      expect.objectContaining({ token: "x_access_token" })
+    );
+    expect(revokeXOAuthTokenMock).toHaveBeenCalledWith(
+      expect.objectContaining({ token: "x_refresh_token" })
+    );
+    expect(markCurrentOrgConnectorConnectionRevokedMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        provider: "x",
+        observedEncryptedAccessToken: "encrypted_x_access",
+        observedEncryptedRefreshToken: "encrypted_x_refresh",
+      })
+    );
+  });
+
+  it("dispatches generic connector operations to X", async () => {
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(
+      connection({
+        id: 42,
+        mcpEndpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
+        provider: "x",
+      })
+    );
+    listXBridgeMcpToolsMock.mockResolvedValue([{ name: "getUsersMe" }]);
+    updateConnectorToolManifestAndAutomationStateMock.mockResolvedValue(true);
+    setConnectorAutomationEnabledDbMock.mockResolvedValue(true);
+
+    await expect(
+      startConnectorOAuth(ctx(), { provider: "x" })
+    ).resolves.toMatchObject({ mode: "reconnect" });
+    await expect(
+      refreshConnectorTools(ctx(), { provider: "x" })
+    ).resolves.toMatchObject({ refreshed: true, status: "ok" });
+    await expect(
+      setConnectorAutomationEnabled(ctx(), { enabled: true, provider: "x" })
+    ).resolves.toEqual({ enabled: true });
+    await expect(
+      disconnectConnector(ctx(), { provider: "x" })
+    ).resolves.toEqual({
+      disconnected: true,
+    });
   });
 });

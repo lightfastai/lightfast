@@ -29,10 +29,10 @@ import { findUserOrganizationMembership } from "../../auth/clerk-org-membership"
 import { env } from "../../env";
 import type { AuthContext } from "../../trpc";
 import {
-  consumeLinearConnectOAuthAttempt,
-  issueLinearConnectOAuthAttempt,
-  type LinearConnectOAuthAttemptRecord,
-  lookupLinearConnectOAuthAttempt,
+  type ConnectorOAuthAttemptRecord,
+  consumeConnectorOAuthAttempt,
+  issueConnectorOAuthAttempt,
+  lookupConnectorOAuthAttempt,
 } from "./attempts";
 import { assertCurrentSessionCanFinalizeConnectorOAuth } from "./auth";
 import {
@@ -433,12 +433,13 @@ export async function startLinearConnectorOAuth(
     userId: identity.userId,
   });
   const pkce = createLinearPkcePair();
-  const attempt = await issueLinearConnectOAuthAttempt({
+  const attempt = await issueConnectorOAuthAttempt({
     clerkOrgId: identity.orgId,
     codeVerifier: pkce.codeVerifier,
     lightfastUserId: identity.userId,
     mode,
     orgSlug,
+    provider: "linear",
   });
   const authorizationUrl = buildLinearOAuthAuthorizeUrl({
     callbackUrl: new URL(
@@ -462,7 +463,7 @@ export async function startLinearConnectorOAuth(
 
 async function finalizeLinearConnection(input: {
   appOrigin: string;
-  attempt: LinearConnectOAuthAttemptRecord;
+  attempt: ConnectorOAuthAttemptRecord;
   code: string;
 }) {
   const config = requireLinearConnectorConfig({ appOrigin: input.appOrigin });
@@ -556,7 +557,8 @@ export async function completeLinearConnectorOAuth(input: {
     return missingAttemptRedirect({ appOrigin });
   }
 
-  const pendingAttempt = await lookupLinearConnectOAuthAttempt({
+  const pendingAttempt = await lookupConnectorOAuthAttempt({
+    provider: "linear",
     state: parsed.state,
   });
   if (!pendingAttempt) {
@@ -579,7 +581,8 @@ export async function completeLinearConnectorOAuth(input: {
     });
   }
 
-  const attempt = await consumeLinearConnectOAuthAttempt({
+  const attempt = await consumeConnectorOAuthAttempt({
+    provider: "linear",
     state: parsed.state,
   });
   if (!attempt) {

@@ -129,7 +129,10 @@ function matchesFilters(
     .some((value) => value.toLowerCase().includes(query));
 }
 
-function safeRoutineId(provider: "linear", providerToolName: string) {
+function safeRoutineId(
+  provider: import("@repo/connector-contract").ConnectableConnectorProvider,
+  providerToolName: string
+) {
   try {
     return providerRoutineId(provider, providerToolName);
   } catch {

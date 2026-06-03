@@ -10,8 +10,16 @@ const markProviderRoutineCallProviderAttemptedMock = vi.fn();
 const markProviderRoutineCallSucceededMock = vi.fn();
 const getFreshLinearConnectorAccessTokenMock = vi.fn();
 const callLinearMcpToolMock = vi.fn();
+const callXBridgeMcpToolMock = vi.fn();
 const logInfoMock = vi.fn();
 const logWarnMock = vi.fn();
+
+const envMock = {
+  CONNECTOR_MCP_AUTH_SECRET: "mcp_auth_secret_12345678901234567890",
+  ENCRYPTION_KEY:
+    "0000000000000000000000000000000000000000000000000000000000000000",
+  VERCEL_ENV: "test",
+};
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 
@@ -35,9 +43,19 @@ vi.mock("@repo/linear-app-node", async (importOriginal) => {
   };
 });
 
+vi.mock("@repo/x-app-node", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@repo/x-app-node")>();
+  return {
+    ...actual,
+    callXBridgeMcpTool: callXBridgeMcpToolMock,
+  };
+});
+
 vi.mock("../services/connectors/linear-flow", () => ({
   getFreshLinearConnectorAccessToken: getFreshLinearConnectorAccessTokenMock,
 }));
+
+vi.mock("../env", () => ({ env: envMock }));
 
 vi.mock("@vendor/observability/log/next", () => ({
   log: {
@@ -50,6 +68,7 @@ const { loadConnectorRuntimeTools } = await import(
   "../services/connectors/runtime"
 );
 const { LinearAppNodeError } = await import("@repo/linear-app-node");
+const { XAppNodeError } = await import("@repo/x-app-node");
 
 function connection(
   overrides: Partial<OrgConnectorConnection> = {}
@@ -108,13 +127,26 @@ describe("loadConnectorRuntimeTools", () => {
     getFreshLinearConnectorAccessTokenMock.mockResolvedValue("lin_access");
     callLinearMcpToolMock.mockReset();
     callLinearMcpToolMock.mockResolvedValue({ content: [{ text: "ok" }] });
+    callXBridgeMcpToolMock.mockReset();
+    callXBridgeMcpToolMock.mockResolvedValue({ content: [{ text: "x ok" }] });
     logInfoMock.mockReset();
     logWarnMock.mockReset();
   });
 
-  it("loads only active automation-enabled Linear connections and valid cached tools", async () => {
+  it("loads active automation-enabled Linear and X connections with valid cached tools", async () => {
     listCurrentOrgConnectorConnectionsMock.mockResolvedValue([
       connection(),
+      connection({
+        id: 4,
+        mcpEndpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
+        provider: "x",
+        providerWorkspaceId: null,
+        providerWorkspaceName: "X",
+        scopes: ["tweet.read", "users.read", "offline.access"],
+        toolManifest: [
+          { description: "Look up account", name: "getUsersByUsername" },
+        ],
+      }),
       connection({
         enabledForAutomations: false,
         id: 2,
@@ -129,13 +161,22 @@ describe("loadConnectorRuntimeTools", () => {
 
     const tools = await loadConnectorRuntimeTools({ clerkOrgId: "org_acme" });
 
-    expect(tools).toHaveLength(1);
-    expect(tools[0]).toMatchObject({
-      description: "Create issue",
-      provider: "linear",
-      providerToolName: "create_issue",
-      runtimeToolName: "linear__create_issue",
-    });
+    expect(tools).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          description: "Create issue",
+          provider: "linear",
+          providerToolName: "create_issue",
+          runtimeToolName: "linear__create_issue",
+        }),
+        expect.objectContaining({
+          description: "Look up account",
+          provider: "x",
+          providerToolName: "getUsersByUsername",
+          runtimeToolName: "x__getUsersByUsername",
+        }),
+      ])
+    );
     expect(listCurrentOrgConnectorConnectionsMock).toHaveBeenCalledWith(
       {},
       { clerkOrgId: "org_acme" }
@@ -459,6 +500,116 @@ describe("loadConnectorRuntimeTools", () => {
     const logged = JSON.stringify(logWarnMock.mock.calls);
     expect(logged).not.toContain("secret-title");
     expect(logged).not.toContain("lin_access");
+    expect(logged).not.toContain("refresh token leaked raw details");
+  });
+
+  it("calls X bridge MCP with a short-lived Lightfast MCP token", async () => {
+    const xConnection = connection({
+      id: 42,
+      mcpEndpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
+      provider: "x",
+      providerWorkspaceId: null,
+      providerWorkspaceName: "X",
+      scopes: ["tweet.read", "users.read", "offline.access"],
+      toolManifest: [{ name: "getUsersByUsername" }],
+    });
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([xConnection]);
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(xConnection);
+
+    const [tool] = await loadConnectorRuntimeTools({
+      automationPublicId: "aut_123",
+      clerkOrgId: "org_acme",
+      runPublicId: "run_123",
+    });
+    const result = await tool?.call({ username: "lightfast" });
+
+    expect(result).toEqual({ content: [{ text: "x ok" }] });
+    expect(getFreshLinearConnectorAccessTokenMock).not.toHaveBeenCalled();
+    expect(callXBridgeMcpToolMock).toHaveBeenCalledWith({
+      endpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
+      input: { username: "lightfast" },
+      mcpToken: expect.stringMatching(/^lfmcp_v1\./),
+      name: "getUsersByUsername",
+    });
+    const callInput = callXBridgeMcpToolMock.mock.calls[0]?.[0];
+    expect(JSON.stringify(callInput)).not.toContain("encrypted_x_access");
+    expect(JSON.stringify(callInput)).not.toContain("x_access_token");
+    expect(logInfoMock).toHaveBeenCalledWith(
+      "[connectors] runtime tool call completed",
+      expect.objectContaining({
+        provider: "x",
+        providerToolName: "getUsersByUsername",
+        runtimeToolName: "x__getUsersByUsername",
+        success: true,
+      })
+    );
+  });
+
+  it("rejects X runtime calls when the current manifest no longer has the tool", async () => {
+    const staleXConnection = connection({
+      id: 42,
+      provider: "x",
+      toolManifest: [{ name: "getUsersByUsername" }],
+    });
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([
+      staleXConnection,
+    ]);
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(
+      connection({ id: 42, provider: "x", toolManifest: [] })
+    );
+
+    const [tool] = await loadConnectorRuntimeTools({ clerkOrgId: "org_acme" });
+
+    await expect(tool?.call({ username: "lightfast" })).rejects.toThrow(
+      "X connector is not active for automations."
+    );
+    expect(callXBridgeMcpToolMock).not.toHaveBeenCalled();
+  });
+
+  it("marks the X connector error when bridge auth terminally fails", async () => {
+    const xConnection = connection({
+      id: 42,
+      provider: "x",
+      toolManifest: [{ name: "getUsersMe" }],
+    });
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([xConnection]);
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(xConnection);
+    callXBridgeMcpToolMock.mockRejectedValue(
+      new XAppNodeError(
+        "X_TOKEN_REFRESH_FAILED",
+        "refresh token leaked raw details"
+      )
+    );
+
+    const [tool] = await loadConnectorRuntimeTools({
+      automationPublicId: "aut_123",
+      clerkOrgId: "org_acme",
+      runPublicId: "run_123",
+    });
+
+    await expect(tool?.call({})).rejects.toThrow(
+      "refresh token leaked raw details"
+    );
+    expect(markCurrentOrgConnectorConnectionErrorMock).toHaveBeenCalledWith(
+      {},
+      {
+        clerkOrgId: "org_acme",
+        provider: "x",
+      }
+    );
+    expect(logWarnMock).toHaveBeenCalledWith(
+      "[connectors] runtime tool call failed",
+      expect.objectContaining({
+        failure: {
+          code: "X_TOKEN_REFRESH_FAILED",
+          message: "X OAuth token refresh failed.",
+          name: "XAppNodeError",
+        },
+        provider: "x",
+        success: false,
+      })
+    );
+    const logged = JSON.stringify(logWarnMock.mock.calls);
     expect(logged).not.toContain("refresh token leaked raw details");
   });
 });

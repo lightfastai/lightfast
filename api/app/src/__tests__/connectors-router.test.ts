@@ -198,5 +198,38 @@ describe("connectorsRouter", () => {
       }),
       { enabled: true, provider: "linear" }
     );
+
+    await expect(
+      caller().connectors.startConnect({ provider: "x" })
+    ).resolves.toEqual({
+      authorizationUrl: "https://linear.test/oauth/authorize",
+      mode: "connect",
+    });
+    await expect(
+      caller().connectors.refreshTools({ provider: "x" })
+    ).resolves.toEqual({ refreshed: true });
+    await expect(
+      caller().connectors.setAutomationEnabled({
+        enabled: true,
+        provider: "x",
+      })
+    ).resolves.toEqual({ enabled: true });
+    await expect(
+      caller().connectors.disconnect({ provider: "x" })
+    ).resolves.toEqual({ disconnected: true });
+
+    expect(startConnectorOAuthMock).toHaveBeenCalledWith(expect.anything(), {
+      provider: "x",
+    });
+    expect(refreshConnectorToolsMock).toHaveBeenCalledWith(expect.anything(), {
+      provider: "x",
+    });
+    expect(setConnectorAutomationEnabledMock).toHaveBeenCalledWith(
+      expect.anything(),
+      { enabled: true, provider: "x" }
+    );
+    expect(disconnectConnectorMock).toHaveBeenCalledWith(expect.anything(), {
+      provider: "x",
+    });
   });
 });
