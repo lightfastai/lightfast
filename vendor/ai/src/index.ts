@@ -6,9 +6,11 @@ export type {
   FlexibleSchema,
   LanguageModel,
   LanguageModelUsage,
+  InferUITools,
   SafeValidateUIMessagesResult,
   SourceDocumentUIPart,
   ToolUIPart,
+  Tool,
   UIMessage,
 } from "ai";
 export {
@@ -20,7 +22,9 @@ export {
   Output,
   RetryError,
   safeValidateUIMessages,
+  stepCountIs,
   streamText,
+  tool,
   UI_MESSAGE_STREAM_HEADERS,
 } from "ai";
 export {

@@ -62,6 +62,7 @@ export const providerRoutineSourceSurfaceSchema = z.enum([
   "hosted_mcp",
   "native_cli",
   "automation",
+  "chat",
   "system",
 ]);
 export type ProviderRoutineSourceSurface = z.infer<
