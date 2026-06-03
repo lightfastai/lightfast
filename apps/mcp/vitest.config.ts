@@ -9,6 +9,7 @@ export default mergeConfig(
       environment: "node",
       include: ["src/**/*.{test,spec}.ts"],
       passWithNoTests: true,
+      setupFiles: ["src/__tests__/setup-env.ts"],
     },
     resolve: {
       alias: {
