@@ -1,5 +1,5 @@
 export interface EmulatorStartInput {
-  appOrigin?: string;
+  callbackUrl?: string;
   host?: string;
   port?: number;
   publicOrigin?: string;
@@ -12,9 +12,11 @@ export interface RunnableEmulator {
 }
 
 export interface EmulatorManifest {
-  env(appOrigin: string, emulatorOrigin: string): Record<string, string>;
+  env(input: {
+    callbackUrl?: string;
+    publicOrigin: string;
+  }): Record<string, string>;
   name: string;
-  originEnvVar: string;
   port: number;
   start(input: EmulatorStartInput): Promise<RunnableEmulator>;
 }

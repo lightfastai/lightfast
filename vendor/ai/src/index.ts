@@ -4,10 +4,12 @@ export type {
   DynamicToolUIPart,
   FileUIPart,
   FlexibleSchema,
+  InferUITools,
   LanguageModel,
   LanguageModelUsage,
   SafeValidateUIMessagesResult,
   SourceDocumentUIPart,
+  Tool,
   ToolUIPart,
   UIMessage,
 } from "ai";
@@ -20,7 +22,9 @@ export {
   Output,
   RetryError,
   safeValidateUIMessages,
+  stepCountIs,
   streamText,
+  tool,
   UI_MESSAGE_STREAM_HEADERS,
 } from "ai";
 export {

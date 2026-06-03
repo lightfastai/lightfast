@@ -15,12 +15,12 @@ pnpm dev
 The emulator is routed at:
 
 ```text
-https://linear.lightfast.localhost
+https://linear.example.test
 ```
 
-The app dev process receives deterministic `LINEAR_*` values from
-`@lightfast/app`'s `with-related-projects` wrapper. Do not copy
-worktree-specific emulator URLs into `.vercel/.env.development.local`.
+The consuming app process receives deterministic `LINEAR_*` values from its
+local-dev wrapper. Do not copy worktree-specific emulator URLs into checked-in
+env files.
 
 To run only the emulator:
 
@@ -49,8 +49,7 @@ Optional environment variables:
 ```bash
 PORT=4568
 HOST=127.0.0.1
-LIGHTFAST_APP_ORIGIN=https://lightfast.localhost
-LINEAR_EMULATOR_ORIGIN=https://linear.lightfast.localhost
+PUBLIC_ORIGIN=https://linear.example.test
 ```
 
 ## Test

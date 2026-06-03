@@ -3,11 +3,11 @@ import { sql } from "drizzle-orm";
 import {
   bigint,
   boolean,
+  datetime,
   index,
   json,
   mysqlTable,
   text,
-  timestamp,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -27,6 +27,7 @@ export type ProviderRoutineCallCalledByKind = "automation" | "system" | "user";
 export type ProviderRoutineCallProvider = "linear" | "x";
 export type ProviderRoutineCallSourceSurface =
   | "automation"
+  | "chat"
   | "hosted_mcp"
   | "native_cli"
   | "system";
@@ -37,8 +38,8 @@ export function createProviderRoutineCallId() {
   return `${PROVIDER_ROUTINE_CALL_ID_PREFIX}${randomUUID()}`;
 }
 
-export const providerRoutineCalls = mysqlTable(
-  "lightfast_provider_routine_calls",
+export const orgProviderRoutineCalls = mysqlTable(
+  "lightfast_org_provider_routine_calls",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -110,30 +111,30 @@ export const providerRoutineCalls = mysqlTable(
 
     errorMessage: text("error_message"),
 
-    startedAt: timestamp("started_at", { mode: "date", fsp: 3 }).notNull(),
+    startedAt: datetime("started_at", { mode: "date", fsp: 3 }).notNull(),
 
-    finishedAt: timestamp("finished_at", { mode: "date", fsp: 3 }),
+    finishedAt: datetime("finished_at", { mode: "date", fsp: 3 }),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => ({
-    publicIdUq: uniqueIndex("provider_routine_calls_public_id_uq").on(
+    publicIdUq: uniqueIndex("org_provider_routine_calls_public_id_uq").on(
       table.publicId
     ),
-    orgCreatedIdx: index("provider_routine_calls_org_created_idx").on(
+    orgCreatedIdx: index("org_provider_routine_calls_org_created_idx").on(
       table.clerkOrgId,
       table.createdAt,
       table.id
     ),
     orgCallerCreatedIdx: index(
-      "provider_routine_calls_org_caller_created_idx"
+      "org_provider_routine_calls_org_caller_created_idx"
     ).on(
       table.clerkOrgId,
       table.calledByKind,
@@ -142,14 +143,14 @@ export const providerRoutineCalls = mysqlTable(
       table.id
     ),
     connectionCreatedIdx: index(
-      "provider_routine_calls_connection_created_idx"
+      "org_provider_routine_calls_connection_created_idx"
     ).on(table.providerConnectionId, table.createdAt, table.id),
     providerRoutineCreatedIdx: index(
-      "provider_routine_calls_provider_routine_created_idx"
+      "org_provider_routine_calls_provider_routine_created_idx"
     ).on(table.provider, table.routineId, table.createdAt, table.id),
   })
 );
 
-export type ProviderRoutineCall = typeof providerRoutineCalls.$inferSelect;
+export type ProviderRoutineCall = typeof orgProviderRoutineCalls.$inferSelect;
 export type InsertProviderRoutineCall =
-  typeof providerRoutineCalls.$inferInsert;
+  typeof orgProviderRoutineCalls.$inferInsert;

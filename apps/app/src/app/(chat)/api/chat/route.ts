@@ -31,10 +31,23 @@ import {
   lightfastWorkspaceAssistantTools,
 } from "@repo/ai/workspace-assistant";
 import {
+  providerRoutineCallInputSchema,
+  providerRoutineCallSuccessSchema,
+  providerRoutineFindInputSchema,
+  providerRoutineFindOutputSchema,
+} from "@repo/provider-routine-contract";
+import {
+  callProviderRoutine,
+  findProviderRoutines,
+  type ProviderRoutineServiceContext,
+} from "@repo/provider-routines";
+import {
   convertToModelMessages,
   gateway,
   safeValidateUIMessages,
+  stepCountIs,
   streamText,
+  tool,
 } from "@vendor/ai";
 import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
@@ -43,6 +56,7 @@ import { isResumableStreamEnabled } from "~/app/(chat)/api/chat/resumable-stream
 
 const WORKSPACE_ASSISTANT_MODEL = "anthropic/claude-sonnet-4.6";
 const WORKSPACE_ASSISTANT_FALLBACK_MODELS = ["openai/gpt-5.4"] as const;
+const WORKSPACE_ASSISTANT_MAX_TOOL_STEPS = 5;
 
 const chatRequestSchema = z
   .object({
@@ -62,6 +76,9 @@ const baseSystemPrompt = [
   "You are Lightfield, the Lightfast workspace assistant.",
   "Help the user understand and operate their workspace with concise, direct answers.",
   "When asked about skills, explain what the listed skills can do and suggest the next concrete action.",
+  "When connector tools are useful, first find connected provider routines, then call the selected routine by routineId.",
+  "Only call provider routines for the active workspace.",
+  "Connected provider routines in chat are read-only; do not use them to create, update, delete, post, assign, archive, or move external records.",
 ].join(" ");
 
 export const maxDuration = 30;
@@ -293,7 +310,13 @@ export async function POST(req: Request) {
         user: identity.userId,
       },
     },
+    stopWhen: stepCountIs(WORKSPACE_ASSISTANT_MAX_TOOL_STEPS),
     system,
+    tools: createWorkspaceAssistantProviderRoutineTools({
+      conversation,
+      orgId: identity.orgId,
+      userId: identity.userId,
+    }),
   });
 
   // Resumable replay is disabled in local dev; leaving `consumeSseStream`
@@ -457,6 +480,59 @@ export async function POST(req: Request) {
     },
     originalMessages,
   });
+}
+
+function createWorkspaceAssistantProviderRoutineTools(input: {
+  conversation: WorkspaceAssistantConversation;
+  orgId: string;
+  userId: string;
+}) {
+  return {
+    callProviderRoutine: tool({
+      description:
+        "Call one read-only connected provider routine by routineId using this workspace's enabled connector. Use routineIds returned by findProviderRoutines.",
+      inputSchema: providerRoutineCallInputSchema,
+      outputSchema: providerRoutineCallSuccessSchema,
+      execute: async (toolInput) =>
+        callProviderRoutine(providerRoutineContext(input), toolInput),
+    }),
+    findProviderRoutines: tool({
+      description:
+        "Find read-only connected provider routines available to this workspace through enabled connectors. Use this before calling callProviderRoutine.",
+      inputSchema: providerRoutineFindInputSchema,
+      outputSchema: providerRoutineFindOutputSchema,
+      execute: async (toolInput) =>
+        findProviderRoutines(providerRoutineContext(input), {
+          ...toolInput,
+          readOnly: true,
+        }),
+    }),
+  };
+}
+
+function providerRoutineContext(input: {
+  conversation: WorkspaceAssistantConversation;
+  orgId: string;
+  userId: string;
+}): ProviderRoutineServiceContext {
+  return {
+    actor: {
+      orgId: input.orgId,
+      userId: input.userId,
+    },
+    db,
+    log,
+    now: () => new Date(),
+    scopes: {
+      providerRoutineRead: true,
+      providerRoutineWrite: false,
+    },
+    source: {
+      clientId: null,
+      ref: input.conversation.publicId,
+      surface: "chat",
+    },
+  };
 }
 
 async function readJson(req: Request) {

@@ -11,8 +11,8 @@ import {
   type Automation,
   type AutomationRun,
   type AutomationRunTrigger,
-  automationRuns,
-  automations,
+  orgAutomationRuns as automationRuns,
+  orgAutomations as automations,
   createAutomationId,
   createAutomationRunId,
 } from "../schema";

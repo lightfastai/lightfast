@@ -271,6 +271,81 @@ describe("provider routine call helpers", () => {
     );
   });
 
+  it("creates chat-sourced provider routine calls", async () => {
+    const inserted = {
+      id: 1,
+      publicId: "provider_routine_call_123e4567-e89b-12d3-a456-426614174000",
+      clerkOrgId: "org_123",
+      calledByKind: "user",
+      calledById: "user_123",
+      calledByUserId: "user_123",
+      provider: "linear",
+      routineId: "linear__list_issues",
+      providerToolName: "list_issues",
+      providerConnectionId: 42,
+      providerWorkspaceId: "workspace_123",
+      providerActorId: "actor_123",
+      providerAttempted: false,
+      sourceClientId: null,
+      sourceRef: "conv_123",
+      sourceSurface: "chat",
+      status: "running",
+      inputRedacted: { present: true },
+      outputRedacted: null,
+      errorCode: null,
+      errorMessage: null,
+      startedAt,
+      finishedAt: null,
+      createdAt: startedAt,
+      updatedAt: startedAt,
+    };
+    const valuesMock = vi.fn(() => ({
+      $returningId: () => Promise.resolve([{ id: 1 }]),
+    }));
+    const db = {
+      insert: vi.fn(() => ({ values: valuesMock })),
+      select: vi.fn(() => selectRows([inserted])),
+    } as unknown as Database;
+
+    await expect(
+      createProviderRoutineCall(db, {
+        calledById: "user_123",
+        calledByKind: "user",
+        calledByUserId: "user_123",
+        clerkOrgId: "org_123",
+        providerConnectionId: 42,
+        inputRedacted: { present: true },
+        provider: "linear",
+        providerActorId: "actor_123",
+        providerToolName: "list_issues",
+        providerWorkspaceId: "workspace_123",
+        routineId: "linear__list_issues",
+        sourceClientId: null,
+        sourceRef: "conv_123",
+        sourceSurface: "chat",
+        startedAt,
+      })
+    ).resolves.toMatchObject({
+      publicId: expect.stringMatching(/^provider_routine_call_[0-9a-f-]{36}$/),
+      sourceRef: "conv_123",
+      sourceSurface: "chat",
+      status: "running",
+    });
+
+    expect(valuesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        calledById: "user_123",
+        calledByKind: "user",
+        calledByUserId: "user_123",
+        clerkOrgId: "org_123",
+        sourceClientId: null,
+        sourceRef: "conv_123",
+        sourceSurface: "chat",
+        status: "running",
+      })
+    );
+  });
+
   it("marks running provider routine calls as provider attempted", async () => {
     const whereMock = vi.fn((_condition: unknown) =>
       Promise.resolve({ affectedRows: 1 })

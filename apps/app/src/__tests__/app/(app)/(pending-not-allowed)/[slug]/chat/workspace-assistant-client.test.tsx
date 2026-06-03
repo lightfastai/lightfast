@@ -49,6 +49,7 @@ vi.mock("@vendor/ai", () => ({
       transportOptions = options as Record<string, unknown>;
     }
   },
+  tool: vi.fn((definition: unknown) => definition),
 }));
 
 vi.mock("@tanstack/react-virtual", () => ({

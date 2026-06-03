@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "8487e184-aa96-476e-b0dc-4563590166c1",
+  "id": "c47ceed4-fe90-4149-9c79-2ada9d9bf809",
   "prevId": "a0b03a78-f9af-4e1f-9001-9ba26ac6c4a7",
   "tables": {
     "lightfast_automation_runs": {
@@ -331,8 +331,8 @@
       "uniqueConstraints": {},
       "checkConstraint": {}
     },
-    "lightfast_identity_index_files": {
-      "name": "lightfast_identity_index_files",
+    "lightfast_mcp_audit_events": {
+      "name": "lightfast_mcp_audit_events",
       "columns": {
         "id": {
           "name": "id",
@@ -341,76 +341,54 @@
           "notNull": true,
           "autoincrement": true
         },
-        "identity_index_state_id": {
-          "name": "identity_index_state_id",
-          "type": "bigint unsigned",
+        "event_name": {
+          "name": "event_name",
+          "type": "varchar(128)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "indexed_commit_sha": {
-          "name": "indexed_commit_sha",
+        "outcome": {
+          "name": "outcome",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "clerk_org_id": {
+          "name": "clerk_org_id",
           "type": "varchar(64)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "kind": {
-          "name": "kind",
+        "clerk_user_id": {
+          "name": "clerk_user_id",
           "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "path": {
-          "name": "path",
-          "type": "varchar(512)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "source_markdown": {
-          "name": "source_markdown",
-          "type": "mediumtext",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "content_hash": {
-          "name": "content_hash",
+        "client_public_id": {
+          "name": "client_public_id",
           "type": "varchar(128)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "content_sha": {
-          "name": "content_sha",
-          "type": "varchar(64)",
+        "grant_public_id": {
+          "name": "grant_public_id",
+          "type": "varchar(128)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "content_size": {
-          "name": "content_size",
-          "type": "int unsigned",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "diagnostics": {
-          "name": "diagnostics",
+        "metadata": {
+          "name": "metadata",
           "type": "json",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(JSON_ARRAY())"
+          "notNull": false,
+          "autoincrement": false
         },
         "created_at": {
           "name": "created_at",
@@ -419,38 +397,32 @@
           "notNull": true,
           "autoincrement": false,
           "default": "CURRENT_TIMESTAMP(3)"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
         }
       },
       "indexes": {
-        "identity_index_files_state_kind_uq": {
-          "name": "identity_index_files_state_kind_uq",
+        "mcp_audit_org_created_idx": {
+          "name": "mcp_audit_org_created_idx",
           "columns": [
-            "identity_index_state_id",
-            "kind"
+            "clerk_org_id",
+            "created_at",
+            "id"
           ],
-          "isUnique": true
+          "isUnique": false
         },
-        "identity_index_files_state_status_idx": {
-          "name": "identity_index_files_state_status_idx",
+        "mcp_audit_client_created_idx": {
+          "name": "mcp_audit_client_created_idx",
           "columns": [
-            "identity_index_state_id",
-            "status"
+            "client_public_id",
+            "created_at",
+            "id"
           ],
           "isUnique": false
         }
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_identity_index_files_id": {
-          "name": "lightfast_identity_index_files_id",
+        "lightfast_mcp_audit_events_id": {
+          "name": "lightfast_mcp_audit_events_id",
           "columns": [
             "id"
           ]
@@ -459,8 +431,8 @@
       "uniqueConstraints": {},
       "checkConstraint": {}
     },
-    "lightfast_identity_index_states": {
-      "name": "lightfast_identity_index_states",
+    "lightfast_mcp_oauth_authorization_codes": {
+      "name": "lightfast_mcp_oauth_authorization_codes",
       "columns": {
         "id": {
           "name": "id",
@@ -469,140 +441,85 @@
           "notNull": true,
           "autoincrement": true
         },
-        "source_control_repository_id": {
-          "name": "source_control_repository_id",
-          "type": "bigint unsigned",
+        "code_hash": {
+          "name": "code_hash",
+          "type": "varchar(128)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "indexed_commit_sha": {
-          "name": "indexed_commit_sha",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "indexed_tree_sha": {
-          "name": "indexed_tree_sha",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "indexed_at": {
-          "name": "indexed_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "present_file_count": {
-          "name": "present_file_count",
-          "type": "int unsigned",
+        "client_public_id": {
+          "name": "client_public_id",
+          "type": "varchar(128)",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "missing_file_count": {
-          "name": "missing_file_count",
-          "type": "int unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "too_large_file_count": {
-          "name": "too_large_file_count",
-          "type": "int unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "read_error_file_count": {
-          "name": "read_error_file_count",
-          "type": "int unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "last_checked_commit_sha": {
-          "name": "last_checked_commit_sha",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
           "autoincrement": false
         },
-        "last_checked_at": {
-          "name": "last_checked_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "github_ref_etag": {
-          "name": "github_ref_etag",
-          "type": "varchar(256)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "last_refresh_status": {
-          "name": "last_refresh_status",
+        "clerk_user_id": {
+          "name": "clerk_user_id",
           "type": "varchar(64)",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "'never'"
-        },
-        "last_refresh_error_code": {
-          "name": "last_refresh_error_code",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
           "autoincrement": false
         },
-        "last_refresh_error_message": {
-          "name": "last_refresh_error_message",
+        "clerk_org_id": {
+          "name": "clerk_org_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "redirect_uri": {
+          "name": "redirect_uri",
+          "type": "varchar(2048)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "resource": {
+          "name": "resource",
           "type": "varchar(512)",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
-        "last_refresh_succeeded_at": {
-          "name": "last_refresh_succeeded_at",
-          "type": "timestamp(3)",
+        "resource_hash": {
+          "name": "resource_hash",
+          "type": "varchar(64)",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
-        "last_refresh_failed_at": {
-          "name": "last_refresh_failed_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "index_diagnostics": {
-          "name": "index_diagnostics",
+        "scopes": {
+          "name": "scopes",
           "type": "json",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "(JSON_ARRAY())"
-        },
-        "refresh_lock_token": {
-          "name": "refresh_lock_token",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": false,
           "autoincrement": false
         },
-        "refresh_locked_until": {
-          "name": "refresh_locked_until",
+        "code_challenge": {
+          "name": "code_challenge",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "code_challenge_method": {
+          "name": "code_challenge_method",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "consumed_at": {
+          "name": "consumed_at",
           "type": "timestamp(3)",
           "primaryKey": false,
           "notNull": false,
@@ -626,32 +543,553 @@
         }
       },
       "indexes": {
-        "identity_index_states_source_control_repository_uq": {
-          "name": "identity_index_states_source_control_repository_uq",
+        "mcp_authorization_codes_hash_uq": {
+          "name": "mcp_authorization_codes_hash_uq",
           "columns": [
-            "source_control_repository_id"
+            "code_hash"
           ],
           "isUnique": true
         },
-        "identity_index_states_last_checked_idx": {
-          "name": "identity_index_states_last_checked_idx",
+        "mcp_authorization_client_user_idx": {
+          "name": "mcp_authorization_client_user_idx",
           "columns": [
-            "last_checked_at"
-          ],
-          "isUnique": false
-        },
-        "identity_index_states_refresh_locked_until_idx": {
-          "name": "identity_index_states_refresh_locked_until_idx",
-          "columns": [
-            "refresh_locked_until"
+            "client_public_id",
+            "clerk_user_id",
+            "created_at"
           ],
           "isUnique": false
         }
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_identity_index_states_id": {
-          "name": "lightfast_identity_index_states_id",
+        "lightfast_mcp_oauth_authorization_codes_id": {
+          "name": "lightfast_mcp_oauth_authorization_codes_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lightfast_mcp_oauth_client_redirect_uris": {
+      "name": "lightfast_mcp_oauth_client_redirect_uris",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "client_public_id": {
+          "name": "client_public_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "redirect_uri": {
+          "name": "redirect_uri",
+          "type": "varchar(2048)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {
+        "mcp_redirect_uris_client_idx": {
+          "name": "mcp_redirect_uris_client_idx",
+          "columns": [
+            "client_public_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "lightfast_mcp_oauth_client_redirect_uris_id": {
+          "name": "lightfast_mcp_oauth_client_redirect_uris_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lightfast_mcp_oauth_clients": {
+      "name": "lightfast_mcp_oauth_clients",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "public_client_id": {
+          "name": "public_client_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "client_name": {
+          "name": "client_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "client_uri": {
+          "name": "client_uri",
+          "type": "varchar(2048)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "logo_uri": {
+          "name": "logo_uri",
+          "type": "varchar(2048)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "contacts": {
+          "name": "contacts",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'active'"
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {
+        "mcp_oauth_clients_public_id_uq": {
+          "name": "mcp_oauth_clients_public_id_uq",
+          "columns": [
+            "public_client_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "lightfast_mcp_oauth_clients_id": {
+          "name": "lightfast_mcp_oauth_clients_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lightfast_mcp_oauth_grants": {
+      "name": "lightfast_mcp_oauth_grants",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "public_id": {
+          "name": "public_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "client_public_id": {
+          "name": "client_public_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "clerk_user_id": {
+          "name": "clerk_user_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "clerk_org_id": {
+          "name": "clerk_org_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "resource": {
+          "name": "resource",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "resource_hash": {
+          "name": "resource_hash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "scopes": {
+          "name": "scopes",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'active'"
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "last_used_at": {
+          "name": "last_used_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {
+        "mcp_grants_public_id_uq": {
+          "name": "mcp_grants_public_id_uq",
+          "columns": [
+            "public_id"
+          ],
+          "isUnique": true
+        },
+        "mcp_grants_lookup_idx": {
+          "name": "mcp_grants_lookup_idx",
+          "columns": [
+            "clerk_user_id",
+            "clerk_org_id",
+            "client_public_id",
+            "resource_hash",
+            "status"
+          ],
+          "isUnique": false
+        },
+        "mcp_grants_org_active_idx": {
+          "name": "mcp_grants_org_active_idx",
+          "columns": [
+            "clerk_org_id",
+            "status",
+            "created_at",
+            "id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "lightfast_mcp_oauth_grants_id": {
+          "name": "lightfast_mcp_oauth_grants_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lightfast_mcp_oauth_refresh_tokens": {
+      "name": "lightfast_mcp_oauth_refresh_tokens",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "grant_public_id": {
+          "name": "grant_public_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "client_public_id": {
+          "name": "client_public_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "clerk_user_id": {
+          "name": "clerk_user_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "clerk_org_id": {
+          "name": "clerk_org_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "parent_token_hash": {
+          "name": "parent_token_hash",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "rotated_to_token_hash": {
+          "name": "rotated_to_token_hash",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'active'"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reuse_detected_at": {
+          "name": "reuse_detected_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {
+        "mcp_refresh_token_hash_uq": {
+          "name": "mcp_refresh_token_hash_uq",
+          "columns": [
+            "token_hash"
+          ],
+          "isUnique": true
+        },
+        "mcp_refresh_grant_status_idx": {
+          "name": "mcp_refresh_grant_status_idx",
+          "columns": [
+            "grant_public_id",
+            "status",
+            "created_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "lightfast_mcp_oauth_refresh_tokens_id": {
+          "name": "lightfast_mcp_oauth_refresh_tokens_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lightfast_mcp_oauth_registration_tokens": {
+      "name": "lightfast_mcp_oauth_registration_tokens",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "public_id": {
+          "name": "public_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "client_public_id": {
+          "name": "client_public_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'active'"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {
+        "mcp_registration_public_id_uq": {
+          "name": "mcp_registration_public_id_uq",
+          "columns": [
+            "public_id"
+          ],
+          "isUnique": true
+        },
+        "mcp_registration_token_hash_uq": {
+          "name": "mcp_registration_token_hash_uq",
+          "columns": [
+            "token_hash"
+          ],
+          "isUnique": true
+        },
+        "mcp_registration_client_status_idx": {
+          "name": "mcp_registration_client_status_idx",
+          "columns": [
+            "client_public_id",
+            "status"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "lightfast_mcp_oauth_registration_tokens_id": {
+          "name": "lightfast_mcp_oauth_registration_tokens_id",
           "columns": [
             "id"
           ]
@@ -1500,6 +1938,20 @@
           "notNull": false,
           "autoincrement": false
         },
+        "created_by_mcp_client_id": {
+          "name": "created_by_mcp_client_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_by_mcp_grant_id": {
+          "name": "created_by_mcp_grant_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "visibility_scope": {
           "name": "visibility_scope",
           "type": "varchar(32)",
@@ -1524,13 +1976,6 @@
         },
         "classification": {
           "name": "classification",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "classification_metadata": {
-          "name": "classification_metadata",
           "type": "json",
           "primaryKey": false,
           "notNull": false,
@@ -1602,6 +2047,14 @@
             "visibility_scope",
             "created_at",
             "id"
+          ],
+          "isUnique": false
+        },
+        "signals_mcp_attribution_idx": {
+          "name": "signals_mcp_attribution_idx",
+          "columns": [
+            "created_by_mcp_client_id",
+            "created_by_mcp_grant_id"
           ],
           "isUnique": false
         }
@@ -2331,838 +2784,6 @@
       "compositePrimaryKeys": {
         "lightfast_user_source_control_accounts_id": {
           "name": "lightfast_user_source_control_accounts_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "lightfast_workspace_assistant_context_items": {
-      "name": "lightfast_workspace_assistant_context_items",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "public_id": {
-          "name": "public_id",
-          "type": "varchar(80)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "conversation_id": {
-          "name": "conversation_id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "message_id": {
-          "name": "message_id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "clerk_org_id": {
-          "name": "clerk_org_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "kind": {
-          "name": "kind",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "source_public_id": {
-          "name": "source_public_id",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "source_slug": {
-          "name": "source_slug",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "title": {
-          "name": "title",
-          "type": "varchar(160)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "snapshot": {
-          "name": "snapshot",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "metadata": {
-          "name": "metadata",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(JSON_OBJECT())"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        }
-      },
-      "indexes": {
-        "workspace_assistant_context_items_public_id_uq": {
-          "name": "workspace_assistant_context_items_public_id_uq",
-          "columns": [
-            "public_id"
-          ],
-          "isUnique": true
-        },
-        "workspace_assistant_context_items_conversation_kind_idx": {
-          "name": "workspace_assistant_context_items_conversation_kind_idx",
-          "columns": [
-            "conversation_id",
-            "kind",
-            "id"
-          ],
-          "isUnique": false
-        },
-        "workspace_assistant_context_items_message_kind_idx": {
-          "name": "workspace_assistant_context_items_message_kind_idx",
-          "columns": [
-            "message_id",
-            "kind",
-            "id"
-          ],
-          "isUnique": false
-        },
-        "workspace_assistant_context_items_org_created_idx": {
-          "name": "workspace_assistant_context_items_org_created_idx",
-          "columns": [
-            "clerk_org_id",
-            "created_at",
-            "id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "lightfast_workspace_assistant_context_items_id": {
-          "name": "lightfast_workspace_assistant_context_items_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "lightfast_workspace_assistant_conversations": {
-      "name": "lightfast_workspace_assistant_conversations",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "public_id": {
-          "name": "public_id",
-          "type": "varchar(80)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "clerk_org_id": {
-          "name": "clerk_org_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_by_user_id": {
-          "name": "created_by_user_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "title": {
-          "name": "title",
-          "type": "varchar(160)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'active'"
-        },
-        "active_stream_id": {
-          "name": "active_stream_id",
-          "type": "varchar(80)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "last_message_id": {
-          "name": "last_message_id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "last_message_at": {
-          "name": "last_message_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "metadata": {
-          "name": "metadata",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(JSON_OBJECT())"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        }
-      },
-      "indexes": {
-        "workspace_assistant_conversations_public_id_uq": {
-          "name": "workspace_assistant_conversations_public_id_uq",
-          "columns": [
-            "public_id"
-          ],
-          "isUnique": true
-        },
-        "workspace_assistant_conversations_org_user_status_updated_idx": {
-          "name": "workspace_assistant_conversations_org_user_status_updated_idx",
-          "columns": [
-            "clerk_org_id",
-            "created_by_user_id",
-            "status",
-            "updated_at",
-            "id"
-          ],
-          "isUnique": false
-        },
-        "workspace_assistant_conversations_org_created_idx": {
-          "name": "workspace_assistant_conversations_org_created_idx",
-          "columns": [
-            "clerk_org_id",
-            "created_at",
-            "id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "lightfast_workspace_assistant_conversations_id": {
-          "name": "lightfast_workspace_assistant_conversations_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "lightfast_workspace_assistant_generations": {
-      "name": "lightfast_workspace_assistant_generations",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "public_id": {
-          "name": "public_id",
-          "type": "varchar(80)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "conversation_id": {
-          "name": "conversation_id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "assistant_message_id": {
-          "name": "assistant_message_id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "assistant_message_public_id": {
-          "name": "assistant_message_public_id",
-          "type": "varchar(80)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "clerk_org_id": {
-          "name": "clerk_org_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "requested_by_user_id": {
-          "name": "requested_by_user_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "model": {
-          "name": "model",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'pending'"
-        },
-        "finish_reason": {
-          "name": "finish_reason",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "usage": {
-          "name": "usage",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "provider_metadata": {
-          "name": "provider_metadata",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(JSON_OBJECT())"
-        },
-        "request_metadata": {
-          "name": "request_metadata",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(JSON_OBJECT())"
-        },
-        "error_code": {
-          "name": "error_code",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "error_message": {
-          "name": "error_message",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "started_at": {
-          "name": "started_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "finished_at": {
-          "name": "finished_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        }
-      },
-      "indexes": {
-        "workspace_assistant_generations_public_id_uq": {
-          "name": "workspace_assistant_generations_public_id_uq",
-          "columns": [
-            "public_id"
-          ],
-          "isUnique": true
-        },
-        "workspace_assistant_generations_assistant_message_uq": {
-          "name": "workspace_assistant_generations_assistant_message_uq",
-          "columns": [
-            "assistant_message_id"
-          ],
-          "isUnique": true
-        },
-        "workspace_assistant_generations_org_status_idx": {
-          "name": "workspace_assistant_generations_org_status_idx",
-          "columns": [
-            "clerk_org_id",
-            "status",
-            "created_at",
-            "id"
-          ],
-          "isUnique": false
-        },
-        "workspace_assistant_generations_org_user_status_idx": {
-          "name": "workspace_assistant_generations_org_user_status_idx",
-          "columns": [
-            "clerk_org_id",
-            "requested_by_user_id",
-            "status",
-            "created_at",
-            "id"
-          ],
-          "isUnique": false
-        },
-        "workspace_assistant_generations_conversation_created_idx": {
-          "name": "workspace_assistant_generations_conversation_created_idx",
-          "columns": [
-            "conversation_id",
-            "created_at",
-            "id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "lightfast_workspace_assistant_generations_id": {
-          "name": "lightfast_workspace_assistant_generations_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "lightfast_workspace_assistant_messages": {
-      "name": "lightfast_workspace_assistant_messages",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "public_id": {
-          "name": "public_id",
-          "type": "varchar(80)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "conversation_id": {
-          "name": "conversation_id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "conversation_public_id": {
-          "name": "conversation_public_id",
-          "type": "varchar(80)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "clerk_org_id": {
-          "name": "clerk_org_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_by_user_id": {
-          "name": "created_by_user_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "role": {
-          "name": "role",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'completed'"
-        },
-        "sequence": {
-          "name": "sequence",
-          "type": "int unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "idempotency_key": {
-          "name": "idempotency_key",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "parts": {
-          "name": "parts",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(JSON_ARRAY())"
-        },
-        "metadata": {
-          "name": "metadata",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(JSON_OBJECT())"
-        },
-        "error_code": {
-          "name": "error_code",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "error_message": {
-          "name": "error_message",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        }
-      },
-      "indexes": {
-        "workspace_assistant_messages_public_id_uq": {
-          "name": "workspace_assistant_messages_public_id_uq",
-          "columns": [
-            "public_id"
-          ],
-          "isUnique": true
-        },
-        "workspace_assistant_messages_conversation_sequence_uq": {
-          "name": "workspace_assistant_messages_conversation_sequence_uq",
-          "columns": [
-            "conversation_id",
-            "sequence"
-          ],
-          "isUnique": true
-        },
-        "workspace_assistant_messages_conversation_idempotency_key_uq": {
-          "name": "workspace_assistant_messages_conversation_idempotency_key_uq",
-          "columns": [
-            "conversation_id",
-            "idempotency_key"
-          ],
-          "isUnique": true
-        },
-        "workspace_assistant_messages_conversation_created_idx": {
-          "name": "workspace_assistant_messages_conversation_created_idx",
-          "columns": [
-            "conversation_id",
-            "created_at",
-            "id"
-          ],
-          "isUnique": false
-        },
-        "workspace_assistant_messages_org_user_conversation_sequence_idx": {
-          "name": "workspace_assistant_messages_org_user_conversation_sequence_idx",
-          "columns": [
-            "clerk_org_id",
-            "created_by_user_id",
-            "conversation_id",
-            "sequence",
-            "id"
-          ],
-          "isUnique": false
-        },
-        "workspace_assistant_messages_org_created_idx": {
-          "name": "workspace_assistant_messages_org_created_idx",
-          "columns": [
-            "clerk_org_id",
-            "created_at",
-            "id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "lightfast_workspace_assistant_messages_id": {
-          "name": "lightfast_workspace_assistant_messages_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "lightfast_workspace_assistant_tool_calls": {
-      "name": "lightfast_workspace_assistant_tool_calls",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "public_id": {
-          "name": "public_id",
-          "type": "varchar(80)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "generation_id": {
-          "name": "generation_id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "generation_public_id": {
-          "name": "generation_public_id",
-          "type": "varchar(80)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "message_id": {
-          "name": "message_id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "clerk_org_id": {
-          "name": "clerk_org_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "tool_call_id": {
-          "name": "tool_call_id",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "tool_name": {
-          "name": "tool_name",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'pending'"
-        },
-        "input": {
-          "name": "input",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "(JSON_OBJECT())"
-        },
-        "output": {
-          "name": "output",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "error_code": {
-          "name": "error_code",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "error_message": {
-          "name": "error_message",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "started_at": {
-          "name": "started_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "finished_at": {
-          "name": "finished_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        }
-      },
-      "indexes": {
-        "workspace_assistant_tool_calls_public_id_uq": {
-          "name": "workspace_assistant_tool_calls_public_id_uq",
-          "columns": [
-            "public_id"
-          ],
-          "isUnique": true
-        },
-        "workspace_assistant_tool_calls_generation_tool_call_uq": {
-          "name": "workspace_assistant_tool_calls_generation_tool_call_uq",
-          "columns": [
-            "generation_id",
-            "tool_call_id"
-          ],
-          "isUnique": true
-        },
-        "workspace_assistant_tool_calls_message_idx": {
-          "name": "workspace_assistant_tool_calls_message_idx",
-          "columns": [
-            "message_id",
-            "created_at",
-            "id"
-          ],
-          "isUnique": false
-        },
-        "workspace_assistant_tool_calls_org_created_idx": {
-          "name": "workspace_assistant_tool_calls_org_created_idx",
-          "columns": [
-            "clerk_org_id",
-            "created_at",
-            "id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "lightfast_workspace_assistant_tool_calls_id": {
-          "name": "lightfast_workspace_assistant_tool_calls_id",
           "columns": [
             "id"
           ]

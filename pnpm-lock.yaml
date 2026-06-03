@@ -425,6 +425,9 @@ importers:
       '@repo/identity-contract':
         specifier: workspace:*
         version: link:../packages/identity-contract
+      '@repo/provider-routine-contract':
+        specifier: workspace:*
+        version: link:../packages/provider-routine-contract
       '@vendor/ai':
         specifier: workspace:*
         version: link:../vendor/ai

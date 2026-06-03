@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "7f13be44-3b3e-4e4c-ae49-35852cbdb55b",
-  "prevId": "c8411f38-0f43-47dc-88f3-92dd49aa1fd0",
+  "id": "7f5cf09e-c485-4fe9-910f-c4194d0c7f47",
+  "prevId": "7f13be44-3b3e-4e4c-ae49-35852cbdb55b",
   "tables": {
     "lightfast_automation_runs": {
       "name": "lightfast_automation_runs",
@@ -126,7 +126,6 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "onUpdate": true,
           "default": "CURRENT_TIMESTAMP(3)"
         }
       },
@@ -167,8 +166,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_automation_runs_id": {
-          "name": "lightfast_automation_runs_id",
+        "lightfast_org_automation_runs_id": {
+          "name": "lightfast_org_automation_runs_id",
           "columns": [
             "id"
           ]
@@ -287,7 +286,6 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "onUpdate": true,
           "default": "CURRENT_TIMESTAMP(3)"
         }
       },
@@ -321,8 +319,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_automations_id": {
-          "name": "lightfast_automations_id",
+        "lightfast_org_automations_id": {
+          "name": "lightfast_org_automations_id",
           "columns": [
             "id"
           ]
@@ -449,8 +447,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_identity_index_files_id": {
-          "name": "lightfast_identity_index_files_id",
+        "lightfast_org_identity_index_files_id": {
+          "name": "lightfast_org_identity_index_files_id",
           "columns": [
             "id"
           ]
@@ -650,8 +648,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_identity_index_states_id": {
-          "name": "lightfast_identity_index_states_id",
+        "lightfast_org_identity_index_states_id": {
+          "name": "lightfast_org_identity_index_states_id",
           "columns": [
             "id"
           ]
@@ -750,8 +748,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_mcp_audit_events_id": {
-          "name": "lightfast_mcp_audit_events_id",
+        "lightfast_system_mcp_audit_events_id": {
+          "name": "lightfast_system_mcp_audit_events_id",
           "columns": [
             "id"
           ]
@@ -891,8 +889,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_mcp_oauth_authorization_codes_id": {
-          "name": "lightfast_mcp_oauth_authorization_codes_id",
+        "lightfast_system_mcp_oauth_authorization_codes_id": {
+          "name": "lightfast_system_mcp_oauth_authorization_codes_id",
           "columns": [
             "id"
           ]
@@ -945,8 +943,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_mcp_oauth_client_redirect_uris_id": {
-          "name": "lightfast_mcp_oauth_client_redirect_uris_id",
+        "lightfast_system_mcp_oauth_client_redirect_uris_id": {
+          "name": "lightfast_system_mcp_oauth_client_redirect_uris_id",
           "columns": [
             "id"
           ]
@@ -1043,8 +1041,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_mcp_oauth_clients_id": {
-          "name": "lightfast_mcp_oauth_clients_id",
+        "lightfast_system_mcp_oauth_clients_id": {
+          "name": "lightfast_system_mcp_oauth_clients_id",
           "columns": [
             "id"
           ]
@@ -1190,8 +1188,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_mcp_oauth_grants_id": {
-          "name": "lightfast_mcp_oauth_grants_id",
+        "lightfast_system_mcp_oauth_grants_id": {
+          "name": "lightfast_system_mcp_oauth_grants_id",
           "columns": [
             "id"
           ]
@@ -1318,8 +1316,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_mcp_oauth_refresh_tokens_id": {
-          "name": "lightfast_mcp_oauth_refresh_tokens_id",
+        "lightfast_system_mcp_oauth_refresh_tokens_id": {
+          "name": "lightfast_system_mcp_oauth_refresh_tokens_id",
           "columns": [
             "id"
           ]
@@ -1417,8 +1415,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_mcp_oauth_registration_tokens_id": {
-          "name": "lightfast_mcp_oauth_registration_tokens_id",
+        "lightfast_system_mcp_oauth_registration_tokens_id": {
+          "name": "lightfast_system_mcp_oauth_registration_tokens_id",
           "columns": [
             "id"
           ]
@@ -1591,8 +1589,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_namespace_operations_id": {
-          "name": "lightfast_namespace_operations_id",
+        "lightfast_system_namespace_operations_id": {
+          "name": "lightfast_system_namespace_operations_id",
           "columns": [
             "id"
           ]
@@ -1732,8 +1730,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_namespaces_id": {
-          "name": "lightfast_namespaces_id",
+        "lightfast_system_namespaces_id": {
+          "name": "lightfast_system_namespaces_id",
           "columns": [
             "id"
           ]
@@ -2080,7 +2078,6 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "onUpdate": true,
           "default": "CURRENT_TIMESTAMP(3)"
         }
       },
@@ -2237,7 +2234,6 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "onUpdate": true,
           "default": "CURRENT_TIMESTAMP(3)"
         }
       },
@@ -2269,8 +2265,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_people_id": {
-          "name": "lightfast_people_id",
+        "lightfast_org_people_id": {
+          "name": "lightfast_org_people_id",
           "columns": [
             "id"
           ]
@@ -2362,8 +2358,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_people_views_id": {
-          "name": "lightfast_people_views_id",
+        "lightfast_org_people_views_id": {
+          "name": "lightfast_org_people_views_id",
           "columns": [
             "id"
           ]
@@ -2605,8 +2601,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_provider_routine_calls_id": {
-          "name": "lightfast_provider_routine_calls_id",
+        "lightfast_org_provider_routine_calls_id": {
+          "name": "lightfast_org_provider_routine_calls_id",
           "columns": [
             "id"
           ]
@@ -2698,8 +2694,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_signal_views_id": {
-          "name": "lightfast_signal_views_id",
+        "lightfast_org_signal_views_id": {
+          "name": "lightfast_org_signal_views_id",
           "columns": [
             "id"
           ]
@@ -2824,7 +2820,6 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "onUpdate": true,
           "default": "CURRENT_TIMESTAMP(3)"
         }
       },
@@ -2876,8 +2871,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_signals_id": {
-          "name": "lightfast_signals_id",
+        "lightfast_org_signals_id": {
+          "name": "lightfast_org_signals_id",
           "columns": [
             "id"
           ]
@@ -3070,8 +3065,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_skill_index_entries_id": {
-          "name": "lightfast_skill_index_entries_id",
+        "lightfast_org_skill_index_entries_id": {
+          "name": "lightfast_org_skill_index_entries_id",
           "columns": [
             "id"
           ]
@@ -3248,8 +3243,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_skill_index_states_id": {
-          "name": "lightfast_skill_index_states_id",
+        "lightfast_org_skill_index_states_id": {
+          "name": "lightfast_org_skill_index_states_id",
           "columns": [
             "id"
           ]
@@ -3318,7 +3313,6 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "onUpdate": true,
           "default": "CURRENT_TIMESTAMP(3)"
         }
       },
@@ -3341,8 +3335,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_source_control_repositories_id": {
-          "name": "lightfast_source_control_repositories_id",
+        "lightfast_org_source_control_repositories_id": {
+          "name": "lightfast_org_source_control_repositories_id",
           "columns": [
             "id"
           ]
@@ -3410,7 +3404,6 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "onUpdate": true,
           "default": "CURRENT_TIMESTAMP(3)"
         }
       },
@@ -3441,8 +3434,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_source_control_webhook_deliveries_id": {
-          "name": "lightfast_source_control_webhook_deliveries_id",
+        "lightfast_org_source_control_webhook_deliveries_id": {
+          "name": "lightfast_org_source_control_webhook_deliveries_id",
           "columns": [
             "id"
           ]
@@ -3735,8 +3728,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_workspace_assistant_context_items_id": {
-          "name": "lightfast_workspace_assistant_context_items_id",
+        "lightfast_org_workspace_assistant_context_items_id": {
+          "name": "lightfast_org_workspace_assistant_context_items_id",
           "columns": [
             "id"
           ]
@@ -3868,8 +3861,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_workspace_assistant_conversations_id": {
-          "name": "lightfast_workspace_assistant_conversations_id",
+        "lightfast_org_workspace_assistant_conversations_id": {
+          "name": "lightfast_org_workspace_assistant_conversations_id",
           "columns": [
             "id"
           ]
@@ -4068,8 +4061,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_workspace_assistant_generations_id": {
-          "name": "lightfast_workspace_assistant_generations_id",
+        "lightfast_org_workspace_assistant_generations_id": {
+          "name": "lightfast_org_workspace_assistant_generations_id",
           "columns": [
             "id"
           ]
@@ -4255,8 +4248,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_workspace_assistant_messages_id": {
-          "name": "lightfast_workspace_assistant_messages_id",
+        "lightfast_org_workspace_assistant_messages_id": {
+          "name": "lightfast_org_workspace_assistant_messages_id",
           "columns": [
             "id"
           ]
@@ -4429,8 +4422,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "lightfast_workspace_assistant_tool_calls_id": {
-          "name": "lightfast_workspace_assistant_tool_calls_id",
+        "lightfast_org_workspace_assistant_tool_calls_id": {
+          "name": "lightfast_org_workspace_assistant_tool_calls_id",
           "columns": [
             "id"
           ]

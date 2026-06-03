@@ -1,10 +1,10 @@
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  datetime,
   index,
   mysqlTable,
   text,
-  timestamp,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -45,25 +45,26 @@ export const userSourceControlAccounts = mysqlTable(
     status: varchar("status", { length: CODE_LENGTH })
       .$type<UserSourceControlAccountStatus>()
       .notNull(),
-    connectedAt: timestamp("connected_at", { mode: "date", fsp: 3 })
+    connectedAt: datetime("connected_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
-    revokedAt: timestamp("revoked_at", { mode: "date", fsp: 3 }),
+    revokedAt: datetime("revoked_at", { mode: "date", fsp: 3 }),
     encryptedAccessToken: text("encrypted_access_token").notNull(),
     encryptedRefreshToken: text("encrypted_refresh_token").notNull(),
-    accessTokenExpiresAt: timestamp("access_token_expires_at", {
+    accessTokenExpiresAt: datetime("access_token_expires_at", {
       mode: "date",
       fsp: 3,
     }).notNull(),
-    refreshTokenExpiresAt: timestamp("refresh_token_expires_at", {
+    refreshTokenExpiresAt: datetime("refresh_token_expires_at", {
       mode: "date",
       fsp: 3,
     }).notNull(),
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
+      .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => ({

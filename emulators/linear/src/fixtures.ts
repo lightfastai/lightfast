@@ -1,15 +1,15 @@
 export const LINEAR_EMULATOR_FIXTURES = {
-  oauthClientId: "linear_lightfast_local",
+  oauthClientId: "linear_emulator_local",
   oauthClientSecret: "linear-local-secret",
-  workspaceId: "linear_workspace_lightfast_emulated",
-  workspaceName: "lightfast-emulated",
-  actorId: "linear_actor_lightfast_local",
-  actorName: "Lightfast Local",
+  workspaceId: "linear_workspace_emulated",
+  workspaceName: "emulator-workspace",
+  actorId: "linear_actor_emulator_local",
+  actorName: "Linear Emulator",
   accessToken: "linear_access_valid",
   refreshToken: "linear_refresh_valid",
 } as const;
 
-export const LINEAR_EMULATOR_OAUTH_CODE = "linear_oauth_code_lightfast_local";
+export const LINEAR_EMULATOR_OAUTH_CODE = "linear_oauth_code_emulator_local";
 
 export const LINEAR_EMULATOR_TOOLS = [
   "list_issues",

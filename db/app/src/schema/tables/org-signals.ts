@@ -9,11 +9,11 @@ import type { SignalClassificationMetadata } from "@repo/identity-contract";
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  datetime,
   index,
   json,
   mysqlTable,
   text,
-  timestamp,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -30,8 +30,8 @@ export function createSignalId() {
   return `${SIGNAL_ID_PREFIX}${randomUUID()}`;
 }
 
-export const signals = mysqlTable(
-  "lightfast_signals",
+export const orgSignals = mysqlTable(
+  "lightfast_org_signals",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -80,40 +80,40 @@ export const signals = mysqlTable(
 
     errorMessage: text("error_message"),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => ({
-    publicIdUq: uniqueIndex("signals_public_id_uq").on(table.publicId),
-    orgCreatedIdx: index("signals_org_created_idx").on(
+    publicIdUq: uniqueIndex("org_signals_public_id_uq").on(table.publicId),
+    orgCreatedIdx: index("org_signals_org_created_idx").on(
       table.clerkOrgId,
       table.createdAt,
       table.id
     ),
-    orgStatusCreatedIdx: index("signals_org_status_created_idx").on(
+    orgStatusCreatedIdx: index("org_signals_org_status_created_idx").on(
       table.clerkOrgId,
       table.status,
       table.createdAt,
       table.id
     ),
-    orgVisibilityCreatedIdx: index("signals_org_visibility_created_idx").on(
+    orgVisibilityCreatedIdx: index("org_signals_org_visibility_created_idx").on(
       table.clerkOrgId,
       table.visibilityScope,
       table.createdAt,
       table.id
     ),
-    mcpAttributionIdx: index("signals_mcp_attribution_idx").on(
+    mcpAttributionIdx: index("org_signals_mcp_attribution_idx").on(
       table.createdByMcpClientId,
       table.createdByMcpGrantId
     ),
   })
 );
 
-export type Signal = typeof signals.$inferSelect;
-export type InsertSignal = typeof signals.$inferInsert;
+export type Signal = typeof orgSignals.$inferSelect;
+export type InsertSignal = typeof orgSignals.$inferInsert;

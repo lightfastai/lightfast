@@ -8,7 +8,7 @@ import {
   type ProviderRoutineCallRedactedPayload,
   type ProviderRoutineCallSourceSurface,
   type ProviderRoutineCallStatus,
-  providerRoutineCalls,
+  orgProviderRoutineCalls as providerRoutineCalls,
 } from "../schema";
 import { getRowsAffected } from "./drizzle-results";
 

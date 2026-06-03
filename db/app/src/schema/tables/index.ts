@@ -8,21 +8,137 @@ export {
   type AutomationScheduleConfig,
   type AutomationScheduleKind,
   type AutomationStatus,
-  automationRuns,
-  automations,
   createAutomationId,
   createAutomationRunId,
   type InsertAutomation,
   type InsertAutomationRun,
-} from "./automations";
+  orgAutomationRuns,
+  orgAutomations,
+} from "./org-automations";
+// Connector tables and types
+export {
+  type InsertOrgConnectorConnection,
+  type OrgConnectorConnection,
+  orgConnectorConnections,
+} from "./org-connectors";
 export {
   type IdentityIndexFile,
   type IdentityIndexState,
   type InsertIdentityIndexFile,
   type InsertIdentityIndexState,
-  identityIndexFiles,
-  identityIndexStates,
-} from "./identity-index";
+  orgIdentityIndexFiles,
+  orgIdentityIndexStates,
+} from "./org-identity-index";
+export {
+  createPersonId,
+  type InsertPerson,
+  orgPeople,
+  PERSON_DISPLAY_NAME_LENGTH,
+  PERSON_ID_PREFIX,
+  PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH,
+  type Person,
+  type PersonIdentityProvider,
+  type PersonIdentityType,
+} from "./org-people";
+export {
+  createPeopleViewId,
+  type InsertPeopleView,
+  orgPeopleViews,
+  PEOPLE_VIEW_ID_PREFIX,
+  type PeopleView,
+  type PeopleViewConfig,
+} from "./org-people-views";
+export {
+  createProviderRoutineCallId,
+  type InsertProviderRoutineCall,
+  orgProviderRoutineCalls,
+  PROVIDER_ROUTINE_CALL_ID_PREFIX,
+  type ProviderRoutineCall,
+  type ProviderRoutineCallCalledByKind,
+  type ProviderRoutineCallProvider,
+  type ProviderRoutineCallRedactedPayload,
+  type ProviderRoutineCallSourceSurface,
+  type ProviderRoutineCallStatus,
+} from "./org-provider-routine-calls";
+export {
+  createSignalViewId,
+  type InsertSignalView,
+  orgSignalViews,
+  SIGNAL_VIEW_ID_PREFIX,
+  type SignalView,
+  type SignalViewConfig,
+} from "./org-signal-views";
+export {
+  createSignalId,
+  type InsertSignal,
+  orgSignals,
+  type Signal,
+} from "./org-signals";
+export {
+  type InsertSkillIndexEntry,
+  type InsertSkillIndexState,
+  orgSkillIndexEntries,
+  orgSkillIndexStates,
+  type ResourcesTruncatedFlag,
+  type SkillIndexEntry,
+  type SkillIndexEntryMetadata,
+  type SkillIndexState,
+} from "./org-skill-index";
+export {
+  type InsertOrgSourceControlBinding,
+  type OrgSourceControlBinding,
+  type OrgSourceControlBindingProvider,
+  type OrgSourceControlBindingStatus,
+  orgSourceControlBindings,
+} from "./org-source-control-bindings";
+export {
+  type InsertSourceControlRepository,
+  type InsertSourceControlWebhookDelivery,
+  orgSourceControlRepositories,
+  orgSourceControlWebhookDeliveries,
+  type SourceControlRepository,
+  type SourceControlWebhookDelivery,
+} from "./org-source-control-repositories";
+export {
+  createWorkspaceAssistantContextItemId,
+  createWorkspaceAssistantConversationId,
+  createWorkspaceAssistantGenerationId,
+  createWorkspaceAssistantMessageId,
+  createWorkspaceAssistantStreamId,
+  createWorkspaceAssistantToolCallId,
+  type InsertWorkspaceAssistantContextItem,
+  type InsertWorkspaceAssistantConversation,
+  type InsertWorkspaceAssistantGeneration,
+  type InsertWorkspaceAssistantMessage,
+  type InsertWorkspaceAssistantToolCall,
+  orgWorkspaceAssistantContextItems,
+  orgWorkspaceAssistantConversations,
+  orgWorkspaceAssistantGenerations,
+  orgWorkspaceAssistantMessages,
+  orgWorkspaceAssistantToolCalls,
+  WORKSPACE_ASSISTANT_CONTEXT_ITEM_ID_PREFIX,
+  WORKSPACE_ASSISTANT_CONVERSATION_ID_PREFIX,
+  WORKSPACE_ASSISTANT_GENERATION_ID_PREFIX,
+  WORKSPACE_ASSISTANT_MESSAGE_ID_PREFIX,
+  WORKSPACE_ASSISTANT_STREAM_ID_PREFIX,
+  WORKSPACE_ASSISTANT_TOOL_CALL_ID_PREFIX,
+  type WorkspaceAssistantContextItem,
+  type WorkspaceAssistantContextItemKind,
+  type WorkspaceAssistantContextSnapshot,
+  type WorkspaceAssistantConversation,
+  type WorkspaceAssistantConversationStatus,
+  type WorkspaceAssistantGeneration,
+  type WorkspaceAssistantGenerationStatus,
+  type WorkspaceAssistantGenerationUsage,
+  type WorkspaceAssistantMessage,
+  type WorkspaceAssistantMessagePart,
+  type WorkspaceAssistantMessageRole,
+  type WorkspaceAssistantMessageStatus,
+  type WorkspaceAssistantRecordMetadata,
+  type WorkspaceAssistantToolCall,
+  type WorkspaceAssistantToolCallStatus,
+  type WorkspaceAssistantToolPayload,
+} from "./org-workspace-assistant";
 // MCP OAuth tables and types
 export {
   createMcpOauthClientId,
@@ -50,14 +166,14 @@ export {
   type McpOauthRefreshTokenStatus,
   type McpOauthRegistrationToken,
   type McpOauthRegistrationTokenStatus,
-  mcpAuditEvents,
-  mcpOauthAuthorizationCodes,
-  mcpOauthClientRedirectUris,
-  mcpOauthClients,
-  mcpOauthGrants,
-  mcpOauthRefreshTokens,
-  mcpOauthRegistrationTokens,
-} from "./mcp-oauth";
+  systemMcpAuditEvents,
+  systemMcpOauthAuthorizationCodes,
+  systemMcpOauthClientRedirectUris,
+  systemMcpOauthClients,
+  systemMcpOauthGrants,
+  systemMcpOauthRefreshTokens,
+  systemMcpOauthRegistrationTokens,
+} from "./system-mcp-oauth";
 export {
   type InsertNamespace,
   type InsertNamespaceOperation,
@@ -67,129 +183,13 @@ export {
   type NamespaceOperationStatus,
   type NamespaceOperationType,
   type NamespaceStatus,
-  namespaceOperations,
-  namespaces,
-} from "./namespaces";
-// Connector tables and types
-export {
-  type InsertOrgConnectorConnection,
-  type OrgConnectorConnection,
-  orgConnectorConnections,
-} from "./org-connector-connections";
-export {
-  type InsertOrgSourceControlBinding,
-  type OrgSourceControlBinding,
-  type OrgSourceControlBindingProvider,
-  type OrgSourceControlBindingStatus,
-  orgSourceControlBindings,
-} from "./org-source-control-bindings";
-export {
-  createPersonId,
-  type InsertPerson,
-  PERSON_DISPLAY_NAME_LENGTH,
-  PERSON_ID_PREFIX,
-  PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH,
-  type Person,
-  type PersonIdentityProvider,
-  type PersonIdentityType,
-  people,
-} from "./people";
-export {
-  createPeopleViewId,
-  type InsertPeopleView,
-  PEOPLE_VIEW_ID_PREFIX,
-  type PeopleView,
-  type PeopleViewConfig,
-  peopleViews,
-} from "./people-views";
-export {
-  createProviderRoutineCallId,
-  type InsertProviderRoutineCall,
-  PROVIDER_ROUTINE_CALL_ID_PREFIX,
-  type ProviderRoutineCall,
-  type ProviderRoutineCallCalledByKind,
-  type ProviderRoutineCallProvider,
-  type ProviderRoutineCallRedactedPayload,
-  type ProviderRoutineCallSourceSurface,
-  type ProviderRoutineCallStatus,
-  providerRoutineCalls,
-} from "./provider-routine-calls";
-export {
-  createSignalViewId,
-  type InsertSignalView,
-  SIGNAL_VIEW_ID_PREFIX,
-  type SignalView,
-  type SignalViewConfig,
-  signalViews,
-} from "./signal-views";
-export {
-  createSignalId,
-  type InsertSignal,
-  type Signal,
-  signals,
-} from "./signals";
-export {
-  type InsertSkillIndexEntry,
-  type InsertSkillIndexState,
-  type ResourcesTruncatedFlag,
-  type SkillIndexEntry,
-  type SkillIndexEntryMetadata,
-  type SkillIndexState,
-  skillIndexEntries,
-  skillIndexStates,
-} from "./skill-index";
-export {
-  type InsertSourceControlRepository,
-  type InsertSourceControlWebhookDelivery,
-  type SourceControlRepository,
-  type SourceControlWebhookDelivery,
-  sourceControlRepositories,
-  sourceControlWebhookDeliveries,
-} from "./source-control-repositories";
+  systemNamespaceOperations,
+  systemNamespaces,
+} from "./system-namespaces";
 export {
   type InsertUserSourceControlAccount,
   type UserSourceControlAccount,
   type UserSourceControlAccountProvider,
   type UserSourceControlAccountStatus,
   userSourceControlAccounts,
-} from "./user-source-control-accounts";
-export {
-  createWorkspaceAssistantContextItemId,
-  createWorkspaceAssistantConversationId,
-  createWorkspaceAssistantGenerationId,
-  createWorkspaceAssistantMessageId,
-  createWorkspaceAssistantStreamId,
-  createWorkspaceAssistantToolCallId,
-  type InsertWorkspaceAssistantContextItem,
-  type InsertWorkspaceAssistantConversation,
-  type InsertWorkspaceAssistantGeneration,
-  type InsertWorkspaceAssistantMessage,
-  type InsertWorkspaceAssistantToolCall,
-  WORKSPACE_ASSISTANT_CONTEXT_ITEM_ID_PREFIX,
-  WORKSPACE_ASSISTANT_CONVERSATION_ID_PREFIX,
-  WORKSPACE_ASSISTANT_GENERATION_ID_PREFIX,
-  WORKSPACE_ASSISTANT_MESSAGE_ID_PREFIX,
-  WORKSPACE_ASSISTANT_STREAM_ID_PREFIX,
-  WORKSPACE_ASSISTANT_TOOL_CALL_ID_PREFIX,
-  type WorkspaceAssistantContextItem,
-  type WorkspaceAssistantContextItemKind,
-  type WorkspaceAssistantContextSnapshot,
-  type WorkspaceAssistantConversation,
-  type WorkspaceAssistantConversationStatus,
-  type WorkspaceAssistantGeneration,
-  type WorkspaceAssistantGenerationStatus,
-  type WorkspaceAssistantGenerationUsage,
-  type WorkspaceAssistantMessage,
-  type WorkspaceAssistantMessagePart,
-  type WorkspaceAssistantMessageRole,
-  type WorkspaceAssistantMessageStatus,
-  type WorkspaceAssistantRecordMetadata,
-  type WorkspaceAssistantToolCall,
-  type WorkspaceAssistantToolCallStatus,
-  type WorkspaceAssistantToolPayload,
-  workspaceAssistantContextItems,
-  workspaceAssistantConversations,
-  workspaceAssistantGenerations,
-  workspaceAssistantMessages,
-  workspaceAssistantToolCalls,
-} from "./workspace-assistant";
+} from "./user-source-control";

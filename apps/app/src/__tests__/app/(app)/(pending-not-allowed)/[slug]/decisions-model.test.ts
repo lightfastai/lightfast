@@ -56,6 +56,7 @@ describe("formatCaller", () => {
 describe("getSourceLabel", () => {
   it("maps every source surface to a human label", () => {
     expect(getSourceLabel("automation")).toBe("Automation");
+    expect(getSourceLabel("chat")).toBe("Chat");
     expect(getSourceLabel("hosted_mcp")).toBe("Hosted MCP");
     expect(getSourceLabel("native_cli")).toBe("Native CLI");
     expect(getSourceLabel("system")).toBe("System");

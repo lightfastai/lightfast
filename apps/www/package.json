@@ -19,7 +19,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ./.vercel/.env.development.local --",
-    "with-related-projects": "NEXT_PUBLIC_APP_URL=$(portless get app.lightfast) NEXT_PUBLIC_WWW_URL=$(portless get www.lightfast) NEXT_PUBLIC_PLATFORM_URL=$(portless get platform.lightfast)"
+    "with-related-projects": "NEXT_PUBLIC_APP_URL=$(portless get lightfast) NEXT_PUBLIC_WWW_URL=$(portless get www.lightfast) NEXT_PUBLIC_PLATFORM_URL=$(portless get platform.lightfast)"
   },
   "dependencies": {
     "@logtail/next": "^0.3.1",

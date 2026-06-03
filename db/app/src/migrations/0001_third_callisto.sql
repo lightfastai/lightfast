@@ -9,4 +9,4 @@ ALTER TABLE `lightfast_org_source_control_bindings` MODIFY COLUMN `connected_by_
 ALTER TABLE `lightfast_org_source_control_bindings` MODIFY COLUMN `connected_at` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3);--> statement-breakpoint
 ALTER TABLE `lightfast_org_source_control_bindings` MODIFY COLUMN `revoked_at` timestamp(3);--> statement-breakpoint
 ALTER TABLE `lightfast_org_source_control_bindings` MODIFY COLUMN `created_at` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3);--> statement-breakpoint
-ALTER TABLE `lightfast_org_source_control_bindings` MODIFY COLUMN `updated_at` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3);
+ALTER TABLE `lightfast_org_source_control_bindings` MODIFY COLUMN `updated_at` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3);

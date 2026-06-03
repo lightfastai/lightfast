@@ -88,6 +88,7 @@ export function formatCaller(decision: DecisionRow): string {
 
 const SOURCE_LABELS: Record<DecisionSourceSurface, string> = {
   automation: "Automation",
+  chat: "Chat",
   hosted_mcp: "Hosted MCP",
   native_cli: "Native CLI",
   system: "System",

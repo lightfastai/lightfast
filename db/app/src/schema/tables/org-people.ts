@@ -6,12 +6,12 @@ import type {
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  datetime,
   index,
   int,
   json,
   mysqlTable,
   text,
-  timestamp,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -30,8 +30,8 @@ export function createPersonId() {
   return `${PERSON_ID_PREFIX}${randomUUID()}`;
 }
 
-export const people = mysqlTable(
-  "lightfast_people",
+export const orgPeople = mysqlTable(
+  "lightfast_org_people",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -77,22 +77,22 @@ export const people = mysqlTable(
 
     metadata: json("metadata").$type<Record<string, unknown>>().notNull(),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => ({
-    publicIdUq: uniqueIndex("people_public_id_uq").on(table.publicId),
-    orgIdentityKeyUq: uniqueIndex("people_org_identity_key_uq").on(
+    publicIdUq: uniqueIndex("org_people_public_id_uq").on(table.publicId),
+    orgIdentityKeyUq: uniqueIndex("org_people_org_identity_key_uq").on(
       table.clerkOrgId,
       table.identityKey
     ),
-    orgCreatedIdx: index("people_org_created_idx").on(
+    orgCreatedIdx: index("org_people_org_created_idx").on(
       table.clerkOrgId,
       table.createdAt,
       table.id
@@ -100,5 +100,5 @@ export const people = mysqlTable(
   })
 );
 
-export type Person = typeof people.$inferSelect;
-export type InsertPerson = typeof people.$inferInsert;
+export type Person = typeof orgPeople.$inferSelect;
+export type InsertPerson = typeof orgPeople.$inferInsert;

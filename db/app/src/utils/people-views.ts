@@ -5,7 +5,7 @@ import {
   createPeopleViewId,
   type PeopleView,
   type PeopleViewConfig,
-  peopleViews,
+  orgPeopleViews as peopleViews,
 } from "../schema";
 
 export interface ListPeopleViewsParams {

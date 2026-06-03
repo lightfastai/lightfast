@@ -3,7 +3,7 @@ import { type StartedEmulator, startEmulator } from "@repo/emulator-kit";
 import { linearPlugin } from "./plugin";
 
 export interface StartLinearEmulatorInput {
-  appOrigin?: string;
+  callbackUrl?: string;
   host?: string;
   port?: number;
   publicOrigin?: string;
@@ -15,7 +15,7 @@ export function startLinearEmulator(
   input: StartLinearEmulatorInput = {}
 ): Promise<StartedLinearEmulator> {
   return startEmulator(linearPlugin, {
-    appOrigin: input.appOrigin,
+    callbackUrl: input.callbackUrl,
     host: input.host,
     port: input.port ?? 4568,
     publicOrigin: input.publicOrigin,
