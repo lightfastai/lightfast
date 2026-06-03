@@ -451,6 +451,7 @@ describe("proxy pending-session route handling", () => {
     "/api/github/webhook",
     "/api/connectors/linear/oauth/callback",
     "/api/native/proxy/routines",
+    "/api/connectors/x/oauth/callback",
   ])("runs Clerk middleware but does not enforce signed-in routing for %s", async (pathname) => {
     authMock.mockResolvedValue({
       orgId: null,
@@ -474,8 +475,9 @@ describe("proxy pending-session route handling", () => {
     "/api/github/user/oauth/callback",
     "/api/github/webhook",
     "/api/connectors/linear/oauth/callback",
+    "/api/connectors/x/oauth/callback",
     "/api/native/proxy/routines",
-  ])("keeps callback and native proxy routes public for expired tokens on %s", async (pathname) => {
+  ])("keeps callback and public routes public for expired tokens on %s", async (pathname) => {
     authMock.mockRejectedValue(new Error("Token expired"));
 
     const { response } = await invoke(pathname);
@@ -518,6 +520,15 @@ describe("proxy pending-session route handling", () => {
 
   it("does not run microfrontend routing for app-owned API routes", async () => {
     const { response } = await invoke("/api/v1/system/health");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+    expect(authMock).not.toHaveBeenCalled();
+    expect(runMicrofrontendsMiddlewareMock).not.toHaveBeenCalled();
+  });
+
+  it("leaves the X MCP bridge to route-level bearer auth", async () => {
+    const { response } = await invoke("/api/connectors/x/mcp");
 
     expect(response.status).toBe(200);
     expect(response.headers.get("location")).toBeNull();

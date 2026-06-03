@@ -30,6 +30,27 @@ const LINEAR_WRITE_ROUTINES = new Set([
   "update_project",
 ]);
 
+function providerToolNameIs(pattern: string, providerToolName: string) {
+  return new RegExp(`^${pattern}(_|[A-Z]|$)`).test(providerToolName);
+}
+
+export function classifyXRoutine(
+  providerToolName: string
+): ProviderRoutineClassification {
+  if (providerToolNameIs("get|list|search|viewer", providerToolName)) {
+    return "read";
+  }
+  if (
+    providerToolNameIs(
+      "archive|assign|create|delete|move|remove|set|update|post",
+      providerToolName
+    )
+  ) {
+    return "write";
+  }
+  return "read";
+}
+
 export function hasRoutineScope(input: {
   classification: ProviderRoutineClassification;
   scopes: { providerRoutineRead: boolean; providerRoutineWrite: boolean };
@@ -65,12 +86,14 @@ export function classifyLinearRoutine(
 }
 
 export function classifyRoutine(input: {
-  provider: "linear";
+  provider: import("@repo/connector-contract").ConnectableConnectorProvider;
   providerToolName: ProviderToolName | string;
 }): ProviderRoutineClassification {
   switch (input.provider) {
     case "linear":
       return classifyLinearRoutine(input.providerToolName);
+    case "x":
+      return classifyXRoutine(input.providerToolName);
     default:
       return "unknown_write_default";
   }

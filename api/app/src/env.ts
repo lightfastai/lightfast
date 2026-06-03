@@ -5,6 +5,11 @@ import { sentryEnv } from "@vendor/observability/sentry-env";
 import { unkeyEnv } from "@vendor/unkey/env";
 import { z } from "zod";
 
+const isConnectorMcpAuthSecretRequired =
+  process.env.VERCEL_ENV === "production" ||
+  (process.env.VERCEL_ENV === undefined &&
+    process.env.NODE_ENV === "production");
+
 export const env = createEnv({
   extends: [clerkEnvBase, sentryEnv, inngestEnv, unkeyEnv],
   shared: {},
@@ -26,6 +31,9 @@ export const env = createEnv({
     GITHUB_APP_SLUG: z.string().min(1).optional(),
     GITHUB_APP_WEBHOOK_SECRET: z.string().min(1).optional(),
     GITHUB_APP_ENDPOINT_ORIGIN: z.string().url().optional(),
+    CONNECTOR_MCP_AUTH_SECRET: isConnectorMcpAuthSecretRequired
+      ? z.string().min(32)
+      : z.string().min(32).optional(),
     LINEAR_API_ORIGIN: z.string().url().optional(),
     LINEAR_CLIENT_ID: z.string().min(1).optional(),
     LINEAR_CLIENT_SECRET: z.string().min(1).optional(),
@@ -33,6 +41,11 @@ export const env = createEnv({
     VERCEL_ENV: z
       .enum(["development", "preview", "production"])
       .default("development"),
+    X_API_ORIGIN: z.string().url().optional(),
+    X_OAUTH_ORIGIN: z.string().url().optional(),
+    X_CLIENT_ID: z.string().min(1).optional(),
+    X_CLIENT_SECRET: z.string().min(1).optional(),
+    X_MCP_ENDPOINT: z.string().url().optional(),
   },
   client: {},
   experimental__runtimeEnv: {
@@ -47,11 +60,17 @@ export const env = createEnv({
     GITHUB_APP_SLUG: process.env.GITHUB_APP_SLUG,
     GITHUB_APP_WEBHOOK_SECRET: process.env.GITHUB_APP_WEBHOOK_SECRET,
     GITHUB_APP_ENDPOINT_ORIGIN: process.env.GITHUB_APP_ENDPOINT_ORIGIN,
+    CONNECTOR_MCP_AUTH_SECRET: process.env.CONNECTOR_MCP_AUTH_SECRET,
     LINEAR_API_ORIGIN: process.env.LINEAR_API_ORIGIN,
     LINEAR_CLIENT_ID: process.env.LINEAR_CLIENT_ID,
     LINEAR_CLIENT_SECRET: process.env.LINEAR_CLIENT_SECRET,
     LINEAR_MCP_ENDPOINT: process.env.LINEAR_MCP_ENDPOINT,
     VERCEL_ENV: process.env.VERCEL_ENV ?? "development",
+    X_API_ORIGIN: process.env.X_API_ORIGIN,
+    X_OAUTH_ORIGIN: process.env.X_OAUTH_ORIGIN,
+    X_CLIENT_ID: process.env.X_CLIENT_ID,
+    X_CLIENT_SECRET: process.env.X_CLIENT_SECRET,
+    X_MCP_ENDPOINT: process.env.X_MCP_ENDPOINT,
   },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||

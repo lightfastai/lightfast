@@ -11,6 +11,7 @@ export const xManifest: EmulatorManifest = {
     X_CLIENT_ID: X_EMULATOR_FIXTURES.oauthClientId,
     X_CLIENT_SECRET: X_EMULATOR_FIXTURES.oauthClientSecret,
     X_API_ORIGIN: emulatorOrigin,
+    X_MCP_ENDPOINT: `${_appOrigin}/api/connectors/x/mcp`,
     X_OAUTH_ORIGIN: emulatorOrigin,
   }),
   start: startXEmulator,

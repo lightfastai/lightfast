@@ -16,6 +16,12 @@ import {
   setLinearConnectorAutomationEnabled,
   startLinearConnectorOAuth,
 } from "./linear-flow";
+import {
+  disconnectXConnector,
+  refreshXConnectorTools,
+  setXConnectorAutomationEnabled,
+  startXConnectorOAuth,
+} from "./x-flow";
 
 interface ConnectorServiceContext {
   auth: AuthContext;
@@ -42,6 +48,14 @@ export {
   setLinearConnectorAutomationEnabled,
   startLinearConnectorOAuth,
 } from "./linear-flow";
+export {
+  completeXConnectorOAuth,
+  disconnectXConnector,
+  refreshXConnectorTools,
+  setXConnectorAutomationEnabled,
+  startXConnectorOAuth,
+} from "./x-flow";
+export { handleXConnectorMcpRequest } from "./x-mcp-bridge";
 export { listConnectorsForOrg };
 
 function unsupportedProvider(provider: string): never {
@@ -58,6 +72,8 @@ export async function startConnectorOAuth(
   switch (input.provider) {
     case "linear":
       return await startLinearConnectorOAuth(ctx);
+    case "x":
+      return await startXConnectorOAuth(ctx);
     default:
       return unsupportedProvider(input.provider);
   }
@@ -70,6 +86,8 @@ export async function refreshConnectorTools(
   switch (input.provider) {
     case "linear":
       return await refreshLinearConnectorTools(ctx);
+    case "x":
+      return await refreshXConnectorTools(ctx);
     default:
       return unsupportedProvider(input.provider);
   }
@@ -82,6 +100,8 @@ export async function setConnectorAutomationEnabled(
   switch (input.provider) {
     case "linear":
       return await setLinearConnectorAutomationEnabled(ctx, input);
+    case "x":
+      return await setXConnectorAutomationEnabled(ctx, input);
     default:
       return unsupportedProvider(input.provider);
   }
@@ -106,6 +126,8 @@ export async function disconnectConnector(
   switch (input.provider) {
     case "linear":
       return await disconnectLinearConnector(ctx);
+    case "x":
+      return await disconnectXConnector(ctx);
     default:
       return unsupportedProvider(input.provider);
   }

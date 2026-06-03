@@ -1,10 +1,10 @@
 import { z } from "zod";
 
-export const CONNECTOR_PROVIDERS = ["linear"] as const;
+export const CONNECTOR_PROVIDERS = ["linear", "x"] as const;
 export const connectorProviderSchema = z.enum(CONNECTOR_PROVIDERS);
 export type ConnectorProvider = z.infer<typeof connectorProviderSchema>;
 
-export const CONNECTABLE_CONNECTOR_PROVIDERS = ["linear"] as const;
+export const CONNECTABLE_CONNECTOR_PROVIDERS = ["linear", "x"] as const;
 export const connectableConnectorProviderSchema = z.enum(
   CONNECTABLE_CONNECTOR_PROVIDERS
 );
@@ -41,7 +41,7 @@ export type ConnectorConnectUnavailableReason = z.infer<
 export const connectorToolNameSchema = z
   .string()
   .min(1)
-  .regex(/^[a-z0-9_.-]+$/, "Unsupported connector tool name");
+  .regex(/^[A-Za-z0-9_.-]+$/, "Unsupported connector tool name");
 export type ConnectorToolName = z.infer<typeof connectorToolNameSchema>;
 
 export const connectorRuntimeToolNameSchema = z
@@ -121,6 +121,15 @@ export const CONNECTOR_CATALOG = [
       "Find, create, and manage issues, projects, and comments in Linear.",
     builder: "Lightfast",
     category: "Project management",
+    catalogStatus: "available",
+  },
+  {
+    provider: "x",
+    displayName: "X",
+    description:
+      "Search posts and look up X accounts from Lightfast automations.",
+    builder: "Lightfast",
+    category: "Social",
     catalogStatus: "available",
   },
 ] as const satisfies ReadonlyArray<{

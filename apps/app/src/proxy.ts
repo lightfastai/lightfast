@@ -61,6 +61,7 @@ const GITHUB_BINDING_ROUTE_PATTERNS = [
 const PUBLIC_ROUTE_PATTERNS = [
   "/api/connectors/linear/oauth/callback",
   "/.well-known/oauth-authorization-server",
+  "/api/connectors/x/oauth/callback",
   "/api/oauth/(.*)",
   "/api/native/proxy/(.*)",
   "/api/trpc/(.*)",
@@ -85,11 +86,16 @@ const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS]);
 //   /api/inngest     — Inngest signature
 //   /api/v1/*        — Unkey lf_ org API key via oRPC authMiddleware
 const isApiRouteMatcher = createRouteMatcher([
+  "/api/connectors/x/mcp(.*)",
   "/api/inngest(.*)",
   "/api/v1/(.*)",
 ]);
 
-const APP_OWNED_API_PREFIXES = ["/api/inngest", "/api/v1"];
+const APP_OWNED_API_PREFIXES = [
+  "/api/connectors/x/mcp",
+  "/api/inngest",
+  "/api/v1",
+];
 
 function isApiRoute(req: NextRequest) {
   return (

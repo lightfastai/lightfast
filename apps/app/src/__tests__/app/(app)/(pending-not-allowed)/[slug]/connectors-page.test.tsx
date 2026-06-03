@@ -34,7 +34,7 @@ interface ConnectorRow {
   } | null;
   description: string;
   displayName: string;
-  provider: "linear";
+  provider: "linear" | "x";
 }
 
 const disconnectMutateMock = vi.fn();
@@ -381,6 +381,44 @@ function connectedLinear(
   });
 }
 
+function xRow(overrides: Partial<ConnectorRow> = {}): ConnectorRow {
+  return row({
+    category: "Social",
+    description: "Search posts and look up X accounts from Lightfast.",
+    displayName: "X",
+    provider: "x",
+    ...overrides,
+  });
+}
+
+function connectedX(
+  overrides: Partial<NonNullable<ConnectorRow["connection"]>> = {}
+): ConnectorRow {
+  return xRow({
+    availableForAutomations: true,
+    connection: {
+      connectedAt: new Date("2026-06-01T00:00:00.000Z"),
+      enabledForAgents: true,
+      enabledForAutomations: true,
+      lastToolRefreshAt: new Date("2026-06-01T00:00:00.000Z"),
+      lastToolRefreshErrorAt: null,
+      lastToolRefreshErrorCode: null,
+      providerActorName: "@lightfast",
+      providerWorkspaceName: "X",
+      status: "active",
+      tools: [
+        {
+          availableForAutomations: true,
+          availableForAgents: true,
+          description: "Look up account",
+          name: "getUsersByUsername",
+        },
+      ],
+      ...overrides,
+    },
+  });
+}
+
 function renderClient(rows: ConnectorRow[] = [connectedLinear()]) {
   useSuspenseQueryMock.mockReturnValue({ data: rows });
   return render(<ConnectorsClient />);
@@ -482,6 +520,16 @@ describe("connectors page", () => {
     expect(screen.queryByText("Use in agents")).toBeNull();
   });
 
+  it("renders the X connector card", () => {
+    renderClient([xRow()]);
+
+    expect(screen.getByRole("heading", { name: "X" })).toBeVisible();
+    expect(
+      screen.getByText(/search posts and look up x accounts/i)
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: /^connect$/i })).toBeVisible();
+  });
+
   it("filters connectors by search query", () => {
     renderClient();
 
@@ -529,6 +577,24 @@ describe("connectors page", () => {
     expect(screen.getByRole("button", { name: /^connect$/i })).toBeDisabled();
     expect(screen.getByText(/missing config/i)).toBeVisible();
     expect(screen.getByText(/LINEAR_CLIENT_ID/)).toBeVisible();
+  });
+
+  it("uses provider-aware missing config copy for X", () => {
+    renderClient([
+      xRow({
+        connectAvailability: {
+          status: "unavailable",
+          reason: "missing_config",
+          missing: ["X_CLIENT_ID"],
+        },
+      }),
+    ]);
+
+    expect(screen.getByRole("button", { name: /^connect$/i })).toBeDisabled();
+    expect(
+      screen.getByText("X OAuth credentials are not configured.")
+    ).toBeVisible();
+    expect(screen.getByText(/X_CLIENT_ID/)).toBeVisible();
   });
 
   it("disables overflow actions and toggle for non-admin members", () => {
@@ -637,7 +703,16 @@ describe("connectors page", () => {
     expect(window.location.href).toBe("https://linear.example/oauth");
   });
 
-  it("calls refresh, toggles, and disconnect mutations from the connected card", () => {
+  it("starts X connect with provider x", () => {
+    useSuspenseQueryMock.mockReturnValue({ data: [xRow()] });
+
+    render(<ConnectorsClient />);
+    fireEvent.click(screen.getByRole("button", { name: /^connect$/i }));
+
+    expect(startConnectMutateMock).toHaveBeenCalledWith({ provider: "x" });
+  });
+
+  it("calls refresh, toggle, and disconnect mutations from the connected card", () => {
     useSuspenseQueryMock.mockReturnValue({ data: [connectedLinear()] });
 
     render(<ConnectorsClient />);
@@ -682,6 +757,15 @@ describe("connectors page", () => {
     const sheet = screen.getByTestId("connector-detail-sheet");
     expect(sheet).toBeVisible();
     expect(sheet).toHaveAttribute("data-provider", "linear");
+  });
+
+  it("opens the detail sheet for X in the URL param", () => {
+    connectorState = "x";
+    renderClient([connectedX()]);
+
+    const sheet = screen.getByTestId("connector-detail-sheet");
+    expect(sheet).toBeVisible();
+    expect(sheet).toHaveAttribute("data-provider", "x");
   });
 
   it("does not open the detail sheet for an unconnected provider", () => {

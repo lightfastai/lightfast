@@ -217,7 +217,27 @@ export {
   type UpsertActiveOrgBindingInput,
   upsertActiveOrgBinding,
 } from "./utils/org-binding";
-export * from "./utils/org-connector-connections";
+export {
+  currentOrgProviderKey,
+  type FinalizeCurrentOrgConnectorConnectionInput,
+  finalizeCurrentOrgConnectorConnection,
+  type GetCurrentOrgConnectorConnectionInput,
+  getCurrentOrgConnectorConnection,
+  listCurrentOrgConnectorConnections,
+  markCurrentOrgConnectorConnectionError,
+  markCurrentOrgConnectorConnectionRevoked,
+  type ObservedCurrentOrgConnectorConnectionInput,
+  type RecordConnectorToolRefreshErrorInput,
+  recordConnectorToolRefreshError,
+  setConnectorAgentEnabled,
+  setConnectorAutomationEnabled,
+  type UpdateConnectorToolManifestAndAutomationStateInput,
+  type UpdateConnectorToolManifestInput,
+  type UpdateObservedConnectorTokensInput,
+  updateConnectorToolManifest,
+  updateConnectorToolManifestAndAutomationState,
+  updateObservedConnectorTokens,
+} from "./utils/org-connector-connections";
 export {
   getPersonByIdentityKey,
   getPersonByPublicId,

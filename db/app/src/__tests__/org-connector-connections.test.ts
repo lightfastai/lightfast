@@ -9,6 +9,7 @@ import {
   recordConnectorToolRefreshError,
   setConnectorAutomationEnabled,
   updateConnectorToolManifest,
+  updateConnectorToolManifestAndAutomationState,
   updateObservedConnectorTokens,
 } from "../utils/org-connector-connections";
 
@@ -292,6 +293,81 @@ describe("org connector connection helpers", () => {
     ).rejects.toBe(duplicate);
   });
 
+  it("finalizes connector rows with initial tool and automation state", async () => {
+    const inserted = connection({
+      enabledForAutomations: false,
+      id: 2,
+      lastToolRefreshErrorAt: new Date("2026-06-02T10:00:00.000Z"),
+      lastToolRefreshErrorCode: "X_MCP_FAILED",
+      provider: "x",
+      providerActorId: "x_user_1",
+      providerActorName: "@lightfast",
+      providerWorkspaceId: null,
+      providerWorkspaceName: "X",
+      toolManifest: [],
+    });
+    const valuesMock = vi.fn(() => ({
+      $returningId: () => Promise.resolve([{ id: 2 }]),
+    }));
+    const tx = {
+      insert: vi.fn(() => ({ values: valuesMock })),
+      select: vi
+        .fn()
+        .mockReturnValueOnce(selectRows([]))
+        .mockReturnValueOnce(selectRows([inserted])),
+      update: vi.fn(() => ({
+        set: () => ({ where: () => Promise.resolve({ affectedRows: 1 }) }),
+      })),
+    };
+    const db = {
+      transaction: vi.fn(async (callback: (value: typeof tx) => unknown) =>
+        callback(tx)
+      ),
+    } as unknown as Database;
+    const erroredAt = new Date("2026-06-02T10:00:00.000Z");
+
+    await expect(
+      finalizeCurrentOrgConnectorConnection(
+        db,
+        finalizeInput({
+          enabledForAutomations: false,
+          lastToolRefreshAt: null,
+          lastToolRefreshErrorAt: erroredAt,
+          lastToolRefreshErrorCode: "X_MCP_FAILED",
+          metadata: {
+            mode: "connect",
+            name: "Lightfast",
+            username: "lightfast",
+          },
+          mcpEndpoint: "https://app.test/api/connectors/x/mcp",
+          provider: "x",
+          providerActorId: "x_user_1",
+          providerActorName: "@lightfast",
+          providerWorkspaceId: null,
+          providerWorkspaceName: "X",
+          scopes: ["tweet.read", "users.read", "offline.access"],
+          toolManifest: [],
+        })
+      )
+    ).resolves.toMatchObject({
+      enabledForAutomations: false,
+      provider: "x",
+      toolManifest: [],
+    });
+
+    expect(valuesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        currentOrgProviderKey: "org_123:x",
+        enabledForAutomations: false,
+        lastToolRefreshAt: null,
+        lastToolRefreshErrorAt: erroredAt,
+        lastToolRefreshErrorCode: "X_MCP_FAILED",
+        provider: "x",
+        toolManifest: [],
+      })
+    );
+  });
+
   it("revokes current org connector connections by clearing current key, tokens, automation, and manifest", async () => {
     const active = connection();
     const revoked = connection({
@@ -487,6 +563,41 @@ describe("org connector connection helpers", () => {
     ).resolves.toBe(true);
 
     expect(set).toHaveBeenCalledWith({
+      lastToolRefreshAt: refreshedAt,
+      lastToolRefreshErrorAt: null,
+      lastToolRefreshErrorCode: null,
+      toolManifest: nextManifest,
+      updatedAt: refreshedAt,
+    });
+    const columnNames = collectColumnNames(updateWhere.mock.calls[0]?.[0]);
+    expect(columnNames).toContain("current_org_provider_key");
+    expect(columnNames).toContain("status");
+  });
+
+  it("updates connector tools and automation state together", async () => {
+    const refreshedAt = new Date("2026-06-02T10:00:00.000Z");
+    const nextManifest = [{ name: "getUsersByUsername" }];
+    const updateWhere = vi.fn((_condition: unknown) =>
+      Promise.resolve({ affectedRows: 1 })
+    );
+    const set = vi.fn(() => ({
+      where: updateWhere,
+    }));
+    const update = vi.fn(() => ({ set }));
+    const db = { update } as unknown as Database;
+
+    await expect(
+      updateConnectorToolManifestAndAutomationState(db, {
+        clerkOrgId: "org_123",
+        enabledForAutomations: true,
+        lastToolRefreshAt: refreshedAt,
+        provider: "x",
+        toolManifest: nextManifest,
+      })
+    ).resolves.toBe(true);
+
+    expect(set).toHaveBeenCalledWith({
+      enabledForAutomations: true,
       lastToolRefreshAt: refreshedAt,
       lastToolRefreshErrorAt: null,
       lastToolRefreshErrorCode: null,

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import type { AppEnv, Hono, Store } from "@emulators/core";
+import type { AppEnv, Context, Hono, Store } from "@emulators/core";
 
 import {
   X_EMULATOR_FIXTURES,
@@ -26,7 +26,7 @@ function tokenResponse() {
 }
 
 export function registerOAuth(app: Hono<AppEnv>, store: Store): void {
-  app.get("/oauth2/authorize", (c) => {
+  const handleAuthorize = (c: Context) => {
     const clientId = c.req.query("client_id");
     const redirectUri = c.req.query("redirect_uri");
     const codeChallenge = c.req.query("code_challenge");
@@ -50,9 +50,12 @@ export function registerOAuth(app: Hono<AppEnv>, store: Store): void {
       redirectUrl.searchParams.set("state", state);
     }
     return c.redirect(redirectUrl.toString(), 302);
-  });
+  };
 
-  app.post("/oauth2/token", async (c) => {
+  app.get("/i/oauth2/authorize", handleAuthorize);
+  app.get("/oauth2/authorize", handleAuthorize);
+
+  const handleToken = async (c: Context) => {
     const form = await c.req.parseBody();
     const clientId = String(form.client_id ?? "");
     const grantType = String(form.grant_type ?? "");
@@ -89,9 +92,12 @@ export function registerOAuth(app: Hono<AppEnv>, store: Store): void {
     }
 
     return c.json({ error: "unsupported_grant_type" }, 400);
-  });
+  };
 
-  app.post("/oauth2/revoke", async (c) => {
+  app.post("/oauth2/token", handleToken);
+  app.post("/2/oauth2/token", handleToken);
+
+  const handleRevoke = async (c: Context) => {
     const form = await c.req.parseBody();
     if (String(form.client_id ?? "") !== X_EMULATOR_FIXTURES.oauthClientId) {
       return c.json({ error: "invalid_client" }, 401);
@@ -104,5 +110,8 @@ export function registerOAuth(app: Hono<AppEnv>, store: Store): void {
       return c.body(null, 200);
     }
     return c.json({ error: "invalid_token" }, 400);
-  });
+  };
+
+  app.post("/oauth2/revoke", handleRevoke);
+  app.post("/2/oauth2/revoke", handleRevoke);
 }

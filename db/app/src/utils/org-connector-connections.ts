@@ -68,8 +68,12 @@ export interface FinalizeCurrentOrgConnectorConnectionInput {
   accessTokenExpiresAt: Date | null;
   clerkOrgId: string;
   connectedByUserId: string;
+  enabledForAutomations?: boolean;
   encryptedAccessToken: string;
   encryptedRefreshToken: string | null;
+  lastToolRefreshAt?: Date | null;
+  lastToolRefreshErrorAt?: Date | null;
+  lastToolRefreshErrorCode?: string | null;
   mcpEndpoint: string;
   metadata: Record<string, unknown>;
   observedCurrentConnectionId?: number | null;
@@ -122,6 +126,10 @@ export async function finalizeCurrentOrgConnectorConnection(
         ),
         encryptedAccessToken: input.encryptedAccessToken,
         encryptedRefreshToken: input.encryptedRefreshToken,
+        enabledForAutomations: input.enabledForAutomations ?? false,
+        lastToolRefreshAt: input.lastToolRefreshAt ?? null,
+        lastToolRefreshErrorAt: input.lastToolRefreshErrorAt ?? null,
+        lastToolRefreshErrorCode: input.lastToolRefreshErrorCode ?? null,
         mcpEndpoint: input.mcpEndpoint,
         metadata: input.metadata,
         provider: input.provider,
@@ -229,6 +237,32 @@ export async function updateConnectorToolManifest(
   const result = await db
     .update(orgConnectorConnections)
     .set({
+      lastToolRefreshAt: input.lastToolRefreshAt,
+      lastToolRefreshErrorAt: null,
+      lastToolRefreshErrorCode: null,
+      toolManifest: input.toolManifest,
+      updatedAt: input.lastToolRefreshAt,
+    })
+    .where(activeCurrentConnectorWhere(input));
+
+  return getRowsAffected(result) > 0;
+}
+
+export interface UpdateConnectorToolManifestAndAutomationStateInput
+  extends GetCurrentOrgConnectorConnectionInput {
+  enabledForAutomations: boolean;
+  lastToolRefreshAt: Date;
+  toolManifest: FullConnectorToolManifest;
+}
+
+export async function updateConnectorToolManifestAndAutomationState(
+  db: Database,
+  input: UpdateConnectorToolManifestAndAutomationStateInput
+): Promise<boolean> {
+  const result = await db
+    .update(orgConnectorConnections)
+    .set({
+      enabledForAutomations: input.enabledForAutomations,
       lastToolRefreshAt: input.lastToolRefreshAt,
       lastToolRefreshErrorAt: null,
       lastToolRefreshErrorCode: null,

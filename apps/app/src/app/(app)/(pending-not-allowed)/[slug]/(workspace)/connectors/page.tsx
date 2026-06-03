@@ -1,4 +1,6 @@
 import { getQueryClient, HydrateClient, trpc } from "~/trpc/server";
+
+// No-op change to trigger a fresh CodeRabbit review cycle.
 import { ConnectorsClient } from "./_components/connectors-client";
 
 export const dynamic = "force-dynamic";

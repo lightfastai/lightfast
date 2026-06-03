@@ -24,7 +24,7 @@ const ERROR_CODE_LENGTH = 64;
 const SOURCE_REF_LENGTH = 128;
 
 export type ProviderRoutineCallCalledByKind = "automation" | "system" | "user";
-export type ProviderRoutineCallProvider = "linear";
+export type ProviderRoutineCallProvider = "linear" | "x";
 export type ProviderRoutineCallSourceSurface =
   | "automation"
   | "hosted_mcp"

@@ -23,8 +23,27 @@ function LinearMark({ className }: { className?: string }) {
   );
 }
 
+function XMark({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="12"
+      viewBox="0 0 100 100"
+    >
+      <path d="M18 18 82 82" />
+      <path d="M82 18 18 82" />
+    </svg>
+  );
+}
+
 const marks: Record<ConnectorProvider, FC<{ className?: string }>> = {
   linear: LinearMark,
+  x: XMark,
 };
 
 export function ConnectorIcon({ className, provider }: ConnectorIconProps) {

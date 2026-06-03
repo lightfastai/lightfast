@@ -12,7 +12,7 @@ import {
   type DisplayConnectorTool,
 } from "@repo/connector-contract";
 import type { AuthContext } from "../../trpc";
-import { getLinearConnectorConfig } from "./config";
+import { getLinearConnectorConfig, getXConnectorConfig } from "./config";
 
 interface ConnectorServiceContext {
   auth: AuthContext;
@@ -150,6 +150,16 @@ function availabilityFor(input: {
     const config = getLinearConnectorConfig({
       appOrigin: "https://app.invalid",
     });
+    if (config.status === "missing_config") {
+      return {
+        status: "unavailable",
+        reason: "missing_config",
+        missing: config.missing,
+      };
+    }
+  }
+  if (input.provider === "x") {
+    const config = getXConnectorConfig({ appOrigin: "https://app.invalid" });
     if (config.status === "missing_config") {
       return {
         status: "unavailable",

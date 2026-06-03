@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { classifyLinearRoutine, hasRoutineScope } from "../policy";
+import {
+  classifyLinearRoutine,
+  classifyXRoutine,
+  hasRoutineScope,
+} from "../policy";
 
 describe("provider routine policy", () => {
   it("lets write scope satisfy read routines", () => {
@@ -38,5 +42,12 @@ describe("provider routine policy", () => {
     expect(classifyLinearRoutine("some_future_tool")).toBe(
       "unknown_write_default"
     );
+  });
+
+  it("classifies known X routines with read/write prefixes", () => {
+    expect(classifyXRoutine("getUsersMe")).toBe("read");
+    expect(classifyXRoutine("list_users")).toBe("read");
+    expect(classifyXRoutine("post_status_update")).toBe("write");
+    expect(classifyXRoutine("some_future_tool")).toBe("read");
   });
 });
