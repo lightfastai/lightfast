@@ -27,7 +27,7 @@ vi.mock("inngest/next", () => ({
 
 vi.mock("../env", () => ({
   env: {
-    INNGEST_SERVE_ORIGIN: "https://app.lightfast.localhost",
+    INNGEST_SERVE_ORIGIN: "https://lightfast.localhost",
   },
 }));
 
@@ -102,7 +102,7 @@ describe("createInngestRouteContext", () => {
         reconcileIdentityIndexes,
         queueLightfastIndexRefreshesFromSourceControl,
       ],
-      serveOrigin: "https://app.lightfast.localhost",
+      serveOrigin: "https://lightfast.localhost",
       servePath: "/api/inngest",
     });
   });

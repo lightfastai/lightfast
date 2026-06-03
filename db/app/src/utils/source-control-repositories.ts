@@ -12,8 +12,8 @@ import type {
 } from "../schema";
 import {
   orgSourceControlBindings,
-  sourceControlRepositories,
-  sourceControlWebhookDeliveries,
+  orgSourceControlRepositories as sourceControlRepositories,
+  orgSourceControlWebhookDeliveries as sourceControlWebhookDeliveries,
 } from "../schema";
 import { getRowsAffected, isDuplicateKeyError } from "./drizzle-results";
 

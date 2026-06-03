@@ -103,7 +103,6 @@ describe("@repo/sandbox-runtime", () => {
     await sandbox.stop();
 
     expect(sandboxSdk.get).toHaveBeenCalledWith({
-      name: "sandbox_test",
       sandboxId: "sandbox_test",
     });
     expect(sdk.writeFiles).toHaveBeenCalledWith([

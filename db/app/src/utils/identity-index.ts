@@ -18,10 +18,10 @@ import type {
   SourceControlRepository,
 } from "../schema";
 import {
-  identityIndexFiles,
-  identityIndexStates,
+  orgIdentityIndexFiles as identityIndexFiles,
+  orgIdentityIndexStates as identityIndexStates,
   orgSourceControlBindings,
-  sourceControlRepositories,
+  orgSourceControlRepositories as sourceControlRepositories,
 } from "../schema";
 import { getRowsAffected, isDuplicateKeyError } from "./drizzle-results";
 

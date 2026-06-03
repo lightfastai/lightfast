@@ -3,65 +3,65 @@
 import { relations } from "drizzle-orm";
 
 import {
-  identityIndexFiles,
-  identityIndexStates,
-  skillIndexEntries,
-  skillIndexStates,
-  sourceControlRepositories,
+  orgIdentityIndexFiles,
+  orgIdentityIndexStates,
+  orgSkillIndexEntries,
+  orgSkillIndexStates,
+  orgSourceControlRepositories,
 } from "./tables";
 
 export const sourceControlRepositoriesRelations = relations(
-  sourceControlRepositories,
+  orgSourceControlRepositories,
   ({ one }) => ({
-    identityIndexState: one(identityIndexStates, {
-      fields: [sourceControlRepositories.id],
-      references: [identityIndexStates.sourceControlRepositoryId],
+    identityIndexState: one(orgIdentityIndexStates, {
+      fields: [orgSourceControlRepositories.id],
+      references: [orgIdentityIndexStates.sourceControlRepositoryId],
     }),
-    skillIndexState: one(skillIndexStates, {
-      fields: [sourceControlRepositories.id],
-      references: [skillIndexStates.sourceControlRepositoryId],
+    skillIndexState: one(orgSkillIndexStates, {
+      fields: [orgSourceControlRepositories.id],
+      references: [orgSkillIndexStates.sourceControlRepositoryId],
     }),
   })
 );
 
 export const identityIndexStatesRelations = relations(
-  identityIndexStates,
+  orgIdentityIndexStates,
   ({ many, one }) => ({
-    files: many(identityIndexFiles),
-    sourceControlRepository: one(sourceControlRepositories, {
-      fields: [identityIndexStates.sourceControlRepositoryId],
-      references: [sourceControlRepositories.id],
+    files: many(orgIdentityIndexFiles),
+    sourceControlRepository: one(orgSourceControlRepositories, {
+      fields: [orgIdentityIndexStates.sourceControlRepositoryId],
+      references: [orgSourceControlRepositories.id],
     }),
   })
 );
 
 export const identityIndexFilesRelations = relations(
-  identityIndexFiles,
+  orgIdentityIndexFiles,
   ({ one }) => ({
-    state: one(identityIndexStates, {
-      fields: [identityIndexFiles.identityIndexStateId],
-      references: [identityIndexStates.id],
+    state: one(orgIdentityIndexStates, {
+      fields: [orgIdentityIndexFiles.identityIndexStateId],
+      references: [orgIdentityIndexStates.id],
     }),
   })
 );
 
 export const skillIndexStatesRelations = relations(
-  skillIndexStates,
+  orgSkillIndexStates,
   ({ many, one }) => ({
-    entries: many(skillIndexEntries),
-    sourceControlRepository: one(sourceControlRepositories, {
-      fields: [skillIndexStates.sourceControlRepositoryId],
-      references: [sourceControlRepositories.id],
+    entries: many(orgSkillIndexEntries),
+    sourceControlRepository: one(orgSourceControlRepositories, {
+      fields: [orgSkillIndexStates.sourceControlRepositoryId],
+      references: [orgSourceControlRepositories.id],
     }),
   })
 );
 
 export const skillIndexEntriesRelations = relations(
-  skillIndexEntries,
+  orgSkillIndexEntries,
   ({ one }) => ({
-    state: one(skillIndexStates, {
-      fields: [skillIndexEntries.skillIndexStateId],
-      references: [skillIndexStates.id],
+    state: one(orgSkillIndexStates, {
+      fields: [orgSkillIndexEntries.skillIndexStateId],
+      references: [orgSkillIndexStates.id],
     }),
   })
 );

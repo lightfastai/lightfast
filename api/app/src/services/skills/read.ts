@@ -1,4 +1,5 @@
 import type { SkillIndexEntry } from "@db/app";
+import { buildGitHubRepositoryUrl } from "@repo/github-app-node";
 import type { SkillDiagnostic } from "@repo/skills-contract";
 
 import { getGitHubAppConfig } from "../github/config";
@@ -195,11 +196,13 @@ async function readEntries(
 }
 
 function getRepositoryUrl(fullName: string): string {
-  let webBaseUrl = "https://github.com";
   try {
-    webBaseUrl = getGitHubAppConfig().endpoints.webBaseUrl;
+    return buildGitHubRepositoryUrl({
+      fullName,
+      webBaseUrl: getGitHubAppConfig().endpoints.webBaseUrl,
+    });
   } catch {
     // Tests and local callers can inject all data deps without GitHub env.
+    return buildGitHubRepositoryUrl({ fullName });
   }
-  return new URL(fullName, `${webBaseUrl}/`).toString();
 }

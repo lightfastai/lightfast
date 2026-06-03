@@ -6,12 +6,11 @@ import { startLinearEmulator } from "./server";
 export const linearManifest: EmulatorManifest = {
   name: "linear",
   port: 4568,
-  originEnvVar: "LINEAR_EMULATOR_ORIGIN",
-  env: (_appOrigin, emulatorOrigin) => ({
+  env: ({ publicOrigin }) => ({
     LINEAR_CLIENT_ID: LINEAR_EMULATOR_FIXTURES.oauthClientId,
     LINEAR_CLIENT_SECRET: LINEAR_EMULATOR_FIXTURES.oauthClientSecret,
-    LINEAR_API_ORIGIN: emulatorOrigin,
-    LINEAR_MCP_ENDPOINT: `${emulatorOrigin}/mcp`,
+    LINEAR_API_ORIGIN: publicOrigin,
+    LINEAR_MCP_ENDPOINT: `${publicOrigin}/mcp`,
   }),
   start: startLinearEmulator,
 };

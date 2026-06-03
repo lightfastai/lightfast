@@ -31,17 +31,32 @@ import {
   lightfastWorkspaceAssistantTools,
 } from "@repo/ai/workspace-assistant";
 import {
+  providerRoutineCallInputSchema,
+  providerRoutineCallSuccessSchema,
+  providerRoutineFindInputSchema,
+  providerRoutineFindOutputSchema,
+} from "@repo/provider-routine-contract";
+import {
+  callProviderRoutine,
+  findProviderRoutines,
+  type ProviderRoutineServiceContext,
+} from "@repo/provider-routines";
+import {
   convertToModelMessages,
   gateway,
   safeValidateUIMessages,
+  stepCountIs,
   streamText,
+  tool,
 } from "@vendor/ai";
 import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
 import { getLightfastResumableStreamContext } from "~/app/(chat)/api/chat/resumable-stream";
+import { isResumableStreamEnabled } from "~/app/(chat)/api/chat/resumable-stream-config";
 
 const WORKSPACE_ASSISTANT_MODEL = "anthropic/claude-sonnet-4.6";
 const WORKSPACE_ASSISTANT_FALLBACK_MODELS = ["openai/gpt-5.4"] as const;
+const WORKSPACE_ASSISTANT_MAX_TOOL_STEPS = 5;
 
 const chatRequestSchema = z
   .object({
@@ -61,6 +76,9 @@ const baseSystemPrompt = [
   "You are Lightfield, the Lightfast workspace assistant.",
   "Help the user understand and operate their workspace with concise, direct answers.",
   "When asked about skills, explain what the listed skills can do and suggest the next concrete action.",
+  "When connector tools are useful, first find connected provider routines, then call the selected routine by routineId.",
+  "Only call provider routines for the active workspace.",
+  "Connected provider routines in chat are read-only; do not use them to create, update, delete, post, assign, archive, or move external records.",
 ].join(" ");
 
 export const maxDuration = 30;
@@ -131,7 +149,13 @@ export async function POST(req: Request) {
     conversation,
   });
   const canonicalMessages = [
-    ...existingMessages.map(toUIMessage),
+    // Skip degenerate persisted turns that have no parts (e.g. an assistant
+    // message whose generation failed before producing content). They cannot
+    // be rendered or converted to model messages, and including them fails UI
+    // message validation.
+    ...existingMessages
+      .filter((message) => message.parts.length > 0)
+      .map(toUIMessage),
     submittedMessage,
   ];
   const validatedCanonicalMessages =
@@ -198,6 +222,7 @@ export async function POST(req: Request) {
   const system = await buildSystemPrompt(identity.orgId);
   let completionUsage: WorkspaceAssistantGenerationUsage | null = null;
   let providerMetadata: WorkspaceAssistantRecordMetadata = {};
+  let streamErrored = false;
   const streamId = createWorkspaceAssistantStreamId();
   const generationLogMetadata = {
     clerkOrgId: identity.orgId,
@@ -234,6 +259,7 @@ export async function POST(req: Request) {
     messages: modelMessages,
     model: gateway(WORKSPACE_ASSISTANT_MODEL),
     onError: async ({ error }) => {
+      streamErrored = true;
       const message = getErrorMessage(error);
       log.error("[workspace-assistant] generation error", {
         ...generationLogMetadata,
@@ -284,35 +310,51 @@ export async function POST(req: Request) {
         user: identity.userId,
       },
     },
+    stopWhen: stepCountIs(WORKSPACE_ASSISTANT_MAX_TOOL_STEPS),
     system,
+    tools: createWorkspaceAssistantProviderRoutineTools({
+      conversation,
+      orgId: identity.orgId,
+      userId: identity.userId,
+    }),
   });
 
-  return result.toUIMessageStreamResponse({
-    consumeSseStream: async ({ stream }) => {
-      try {
-        await getLightfastResumableStreamContext().createNewResumableStream(
-          streamId,
-          () => stream
-        );
-      } catch (error) {
-        log.error("[workspace-assistant] failed to register resumable stream", {
-          ...generationLogMetadata,
-          errorMessage: getErrorMessage(error),
-        });
-        await clearActiveStream(db, {
-          clerkOrgId: identity.orgId,
-          createdByUserId: identity.userId,
-          expectedStreamId: streamId,
-          publicId: conversation.publicId,
-          streamId: null,
-          failureMessage: generationLogMetadata,
-          type: "error",
-          warning:
-            "[workspace-assistant] failed to clear active stream after resume failure",
-        });
-        throw error;
+  // Resumable replay is disabled in local dev; leaving `consumeSseStream`
+  // undefined means the AI SDK skips teeing the SSE stream into Redis and the
+  // live stream flows straight to the client.
+  const consumeSseStream = isResumableStreamEnabled
+    ? async ({ stream }: { stream: ReadableStream<string> }) => {
+        try {
+          await getLightfastResumableStreamContext().createNewResumableStream(
+            streamId,
+            () => stream
+          );
+        } catch (error) {
+          log.error(
+            "[workspace-assistant] failed to register resumable stream",
+            {
+              ...generationLogMetadata,
+              errorMessage: getErrorMessage(error),
+            }
+          );
+          await clearActiveStream(db, {
+            clerkOrgId: identity.orgId,
+            createdByUserId: identity.userId,
+            expectedStreamId: streamId,
+            publicId: conversation.publicId,
+            streamId: null,
+            failureMessage: generationLogMetadata,
+            type: "error",
+            warning:
+              "[workspace-assistant] failed to clear active stream after resume failure",
+          });
+          throw error;
+        }
       }
-    },
+    : undefined;
+
+  return result.toUIMessageStreamResponse({
+    consumeSseStream,
     generateMessageId: () => assistantMessage.publicId,
     headers: {
       "x-lightfast-workspace-assistant-conversation-id": conversation.publicId,
@@ -360,6 +402,50 @@ export async function POST(req: Request) {
         return;
       }
 
+      if (streamErrored) {
+        // The streamText onError handler already marked this turn failed and
+        // cleared the active stream. Never overwrite it with a "completed"
+        // status — doing so previously persisted an assistant message with no
+        // parts, which fails UI message validation on read and bricks the
+        // whole conversation page.
+        return;
+      }
+
+      if (responseMessage.parts.length === 0) {
+        log.warn(
+          "[workspace-assistant] generation produced no content",
+          generationLogMetadata
+        );
+        await Promise.all([
+          markWorkspaceAssistantMessageFailed(db, {
+            clerkOrgId: identity.orgId,
+            createdByUserId: identity.userId,
+            errorCode: "CHAT_STREAM_EMPTY",
+            errorMessage: "Workspace assistant generation produced no content.",
+            publicId: assistantMessage.publicId,
+          }),
+          markWorkspaceAssistantGenerationFailed(db, {
+            clerkOrgId: identity.orgId,
+            errorCode: "CHAT_STREAM_EMPTY",
+            errorMessage: "Workspace assistant generation produced no content.",
+            publicId: generation.publicId,
+            requestedByUserId: identity.userId,
+          }),
+          clearActiveStream(db, {
+            clerkOrgId: identity.orgId,
+            createdByUserId: identity.userId,
+            expectedStreamId: streamId,
+            publicId: conversation.publicId,
+            streamId: null,
+            failureMessage: generationLogMetadata,
+            type: "warn",
+            warning:
+              "[workspace-assistant] failed to clear active stream after empty generation",
+          }),
+        ]);
+        return;
+      }
+
       log.info("[workspace-assistant] generation finished", {
         ...generationLogMetadata,
         finishReason,
@@ -394,6 +480,59 @@ export async function POST(req: Request) {
     },
     originalMessages,
   });
+}
+
+function createWorkspaceAssistantProviderRoutineTools(input: {
+  conversation: WorkspaceAssistantConversation;
+  orgId: string;
+  userId: string;
+}) {
+  return {
+    callProviderRoutine: tool({
+      description:
+        "Call one read-only connected provider routine by routineId using this workspace's enabled connector. Use routineIds returned by findProviderRoutines.",
+      inputSchema: providerRoutineCallInputSchema,
+      outputSchema: providerRoutineCallSuccessSchema,
+      execute: async (toolInput) =>
+        callProviderRoutine(providerRoutineContext(input), toolInput),
+    }),
+    findProviderRoutines: tool({
+      description:
+        "Find read-only connected provider routines available to this workspace through enabled connectors. Use this before calling callProviderRoutine.",
+      inputSchema: providerRoutineFindInputSchema,
+      outputSchema: providerRoutineFindOutputSchema,
+      execute: async (toolInput) =>
+        findProviderRoutines(providerRoutineContext(input), {
+          ...toolInput,
+          readOnly: true,
+        }),
+    }),
+  };
+}
+
+function providerRoutineContext(input: {
+  conversation: WorkspaceAssistantConversation;
+  orgId: string;
+  userId: string;
+}): ProviderRoutineServiceContext {
+  return {
+    actor: {
+      orgId: input.orgId,
+      userId: input.userId,
+    },
+    db,
+    log,
+    now: () => new Date(),
+    scopes: {
+      providerRoutineRead: true,
+      providerRoutineWrite: false,
+    },
+    source: {
+      clientId: null,
+      ref: input.conversation.publicId,
+      surface: "chat",
+    },
+  };
 }
 
 async function readJson(req: Request) {

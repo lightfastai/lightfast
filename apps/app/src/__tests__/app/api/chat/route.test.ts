@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const appendWorkspaceAssistantMessageMock = vi.fn();
+const callProviderRoutineMock = vi.fn();
 const createNewResumableStreamMock = vi.fn();
 const createWorkspaceAssistantGenerationMock = vi.fn();
 const createWorkspaceAssistantConversationMock = vi.fn();
 const convertToModelMessagesMock = vi.fn();
 const ensureFreshSkillIndexForReadMock = vi.fn();
+const findProviderRoutinesMock = vi.fn();
 const gatewayMock = vi.fn();
 const getWorkspaceAssistantConversationByPublicIdMock = vi.fn();
 const getVerifiedLightfastSkillSourceRepositoryIdMock = vi.fn();
@@ -20,8 +22,14 @@ const markWorkspaceAssistantMessageFailedMock = vi.fn();
 const setWorkspaceAssistantConversationActiveStreamMock = vi.fn();
 const resolveAuthContextFromClerkMock = vi.fn();
 const safeValidateUIMessagesMock = vi.fn();
+const stepCountIsMock = vi.fn();
 const toUIMessageStreamResponseMock = vi.fn();
+const toolMock = vi.fn();
 const streamTextMock = vi.fn();
+const workspaceAssistantToolsMock = {
+  callProviderRoutine: { inputSchema: { kind: "call-input" } },
+  findProviderRoutines: { inputSchema: { kind: "find-input" } },
+};
 
 vi.mock("@api/app/auth/identity", () => ({
   resolveAuthContextFromClerk: resolveAuthContextFromClerkMock,
@@ -62,7 +70,14 @@ vi.mock("@vendor/ai", () => ({
   convertToModelMessages: convertToModelMessagesMock,
   gateway: gatewayMock,
   safeValidateUIMessages: safeValidateUIMessagesMock,
+  stepCountIs: stepCountIsMock,
   streamText: streamTextMock,
+  tool: toolMock,
+}));
+
+vi.mock("@repo/provider-routines", () => ({
+  callProviderRoutine: callProviderRoutineMock,
+  findProviderRoutines: findProviderRoutinesMock,
 }));
 
 vi.mock("@repo/ai/workspace-assistant", () => ({
@@ -70,7 +85,7 @@ vi.mock("@repo/ai/workspace-assistant", () => ({
     opportunities: { kind: "schema" },
   },
   lightfastWorkspaceAssistantMessageMetadataSchema: { kind: "metadata-schema" },
-  lightfastWorkspaceAssistantTools: {},
+  lightfastWorkspaceAssistantTools: workspaceAssistantToolsMock,
 }));
 
 vi.mock("@vendor/observability/log/next", () => ({
@@ -91,11 +106,13 @@ const { POST } = await import("~/app/(chat)/api/chat/route");
 
 beforeEach(() => {
   appendWorkspaceAssistantMessageMock.mockReset();
+  callProviderRoutineMock.mockReset();
   createNewResumableStreamMock.mockReset();
   createWorkspaceAssistantGenerationMock.mockReset();
   createWorkspaceAssistantConversationMock.mockReset();
   convertToModelMessagesMock.mockReset();
   ensureFreshSkillIndexForReadMock.mockReset();
+  findProviderRoutinesMock.mockReset();
   gatewayMock.mockReset();
   getWorkspaceAssistantConversationByPublicIdMock.mockReset();
   getVerifiedLightfastSkillSourceRepositoryIdMock.mockReset();
@@ -110,7 +127,9 @@ beforeEach(() => {
   setWorkspaceAssistantConversationActiveStreamMock.mockReset();
   resolveAuthContextFromClerkMock.mockReset();
   safeValidateUIMessagesMock.mockReset();
+  stepCountIsMock.mockReset();
   toUIMessageStreamResponseMock.mockReset();
+  toolMock.mockReset();
   streamTextMock.mockReset();
 
   resolveAuthContextFromClerkMock.mockResolvedValue({
@@ -167,6 +186,20 @@ beforeEach(() => {
     ],
   });
   createNewResumableStreamMock.mockResolvedValue(new ReadableStream<string>());
+  callProviderRoutineMock.mockResolvedValue({
+    provider: "linear",
+    providerRoutineCallId: "prc_123",
+    providerToolName: "create_issue",
+    result: { id: "issue_123" },
+    routineId: "linear__create_issue",
+    status: "succeeded",
+  });
+  findProviderRoutinesMock.mockResolvedValue({ routines: [] });
+  stepCountIsMock.mockImplementation((count) => ({
+    count,
+    kind: "step-count",
+  }));
+  toolMock.mockImplementation((definition) => definition);
 });
 
 describe("chat route", () => {
@@ -302,7 +335,7 @@ describe("chat route", () => {
       dataSchemas: { opportunities: { kind: "schema" } },
       messages: uiMessages,
       metadataSchema: { kind: "metadata-schema" },
-      tools: {},
+      tools: workspaceAssistantToolsMock,
     });
 
     expect(
@@ -446,6 +479,212 @@ describe("chat route", () => {
         publicId: "gen_123",
         requestedByUserId: "user_123",
         usage: { inputTokens: 10, outputTokens: 12, totalTokens: 22 },
+      })
+    );
+    expect(response).toBe(streamResponse);
+  });
+
+  it("does not register a resumable stream when resumable streaming is disabled (local dev)", async () => {
+    const uiMessages = [
+      {
+        id: "client-message-1",
+        parts: [{ text: "Summarize my active opportunities", type: "text" }],
+        role: "user",
+      },
+    ];
+    const streamResponse = new Response("stream");
+
+    convertToModelMessagesMock.mockResolvedValue([
+      { content: "Summarize my active opportunities", role: "user" },
+    ]);
+    gatewayMock.mockReturnValue("gateway:anthropic/claude-sonnet-4.6");
+    streamTextMock.mockReturnValue({
+      toUIMessageStreamResponse: toUIMessageStreamResponseMock,
+    });
+    toUIMessageStreamResponseMock.mockReturnValue(streamResponse);
+
+    vi.resetModules();
+    vi.doMock("~/app/(chat)/api/chat/resumable-stream-config", () => ({
+      isResumableStreamEnabled: false,
+    }));
+    const { POST: DevPOST } = await import("~/app/(chat)/api/chat/route");
+
+    const response = await DevPOST(
+      createJsonRequest({
+        idempotencyKey: "idem_user_1",
+        messages: uiMessages,
+        conversationId: "conv_123",
+      })
+    );
+
+    const streamResponseOptions =
+      toUIMessageStreamResponseMock.mock.calls[0]?.[0];
+    expect(streamResponseOptions.consumeSseStream).toBeUndefined();
+    expect(createNewResumableStreamMock).not.toHaveBeenCalled();
+    expect(response).toBe(streamResponse);
+
+    vi.doUnmock("~/app/(chat)/api/chat/resumable-stream-config");
+  });
+
+  it("exposes read-only connector provider routines to the workspace assistant as server tools", async () => {
+    const uiMessages = [
+      {
+        id: "client-message-1",
+        parts: [{ text: "Summarize my Linear issues", type: "text" }],
+        role: "user",
+      },
+    ];
+    const streamResponse = new Response("stream");
+
+    convertToModelMessagesMock.mockResolvedValue([
+      { content: "Summarize my Linear issues", role: "user" },
+    ]);
+    gatewayMock.mockReturnValue("gateway:anthropic/claude-sonnet-4.6");
+    streamTextMock.mockReturnValue({
+      toUIMessageStreamResponse: toUIMessageStreamResponseMock,
+    });
+    toUIMessageStreamResponseMock.mockReturnValue(streamResponse);
+
+    const response = await POST(
+      createJsonRequest({
+        idempotencyKey: "idem_user_1",
+        messages: uiMessages,
+        conversationId: "conv_123",
+      })
+    );
+
+    const streamOptions = streamTextMock.mock.calls[0]?.[0];
+    expect(streamOptions).toEqual(
+      expect.objectContaining({
+        stopWhen: { count: 5, kind: "step-count" },
+        tools: {
+          callProviderRoutine: expect.objectContaining({
+            description: expect.stringContaining(
+              "Call one read-only connected"
+            ),
+            execute: expect.any(Function),
+          }),
+          findProviderRoutines: expect.objectContaining({
+            description: expect.stringContaining("Find read-only connected"),
+            execute: expect.any(Function),
+          }),
+        },
+      })
+    );
+    expect(stepCountIsMock).toHaveBeenCalledWith(5);
+
+    await streamOptions.tools.findProviderRoutines.execute({
+      includeSchema: true,
+      query: "issue",
+    });
+    expect(findProviderRoutinesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actor: { orgId: "org_123", userId: "user_123" },
+        db: { kind: "mock-db" },
+        scopes: {
+          providerRoutineRead: true,
+          providerRoutineWrite: false,
+        },
+        source: {
+          clientId: null,
+          ref: "conv_123",
+          surface: "chat",
+        },
+      }),
+      {
+        includeSchema: true,
+        query: "issue",
+        readOnly: true,
+      }
+    );
+
+    await streamOptions.tools.callProviderRoutine.execute({
+      input: { id: "issue_123" },
+      routineId: "linear__get_issue",
+    });
+    expect(callProviderRoutineMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actor: { orgId: "org_123", userId: "user_123" },
+        log: expect.objectContaining({
+          error: expect.any(Function),
+          info: expect.any(Function),
+          warn: expect.any(Function),
+        }),
+        now: expect.any(Function),
+        scopes: {
+          providerRoutineRead: true,
+          providerRoutineWrite: false,
+        },
+        source: {
+          clientId: null,
+          ref: "conv_123",
+          surface: "chat",
+        },
+      }),
+      {
+        input: { id: "issue_123" },
+        routineId: "linear__get_issue",
+      }
+    );
+    expect(response).toBe(streamResponse);
+  });
+
+  it("marks the assistant turn failed when the model produces no content", async () => {
+    const uiMessages = [
+      {
+        id: "client-message-1",
+        parts: [{ text: "hey", type: "text" }],
+        role: "user",
+      },
+    ];
+    const streamResponse = new Response("stream");
+
+    convertToModelMessagesMock.mockResolvedValue([
+      { content: "hey", role: "user" },
+    ]);
+    gatewayMock.mockReturnValue("gateway:anthropic/claude-sonnet-4.6");
+    streamTextMock.mockReturnValue({
+      toUIMessageStreamResponse: toUIMessageStreamResponseMock,
+    });
+    toUIMessageStreamResponseMock.mockImplementation((options) => {
+      void options.onFinish?.({
+        finishReason: "stop",
+        isAborted: false,
+        isContinuation: true,
+        messages: [],
+        responseMessage: {
+          id: "msg_assistant",
+          parts: [],
+          role: "assistant",
+        },
+      });
+      return streamResponse;
+    });
+
+    const response = await POST(
+      createJsonRequest({
+        idempotencyKey: "idem_user_1",
+        messages: uiMessages,
+        conversationId: "conv_123",
+      })
+    );
+
+    expect(markWorkspaceAssistantMessageCompletedMock).not.toHaveBeenCalled();
+    expect(
+      markWorkspaceAssistantGenerationCompletedMock
+    ).not.toHaveBeenCalled();
+    expect(markWorkspaceAssistantMessageFailedMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        errorCode: "CHAT_STREAM_EMPTY",
+        publicId: "msg_assistant",
+      })
+    );
+    expect(markWorkspaceAssistantGenerationFailedMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        errorCode: "CHAT_STREAM_EMPTY",
+        publicId: "gen_123",
       })
     );
     expect(response).toBe(streamResponse);

@@ -2,7 +2,7 @@
   "version": "5",
   "dialect": "mysql",
   "id": "3f70306b-493d-471e-b923-0f4ef31eb476",
-  "prevId": "cb46e96a-65cb-431e-93e3-40b500a82b2b",
+  "prevId": "c47ceed4-fe90-4149-9c79-2ada9d9bf809",
   "tables": {
     "lightfast_automation_runs": {
       "name": "lightfast_automation_runs",

@@ -10,11 +10,11 @@ Local DB/Redis provisioning for this repo. Replaces the old `pnpm db:up`,
 
 ## Boundaries
 
-- No repo runtime scripts, root package scripts, or replacement CLI.
+- No provisioning runtime scripts, root package scripts, or replacement CLI.
 - No interactive `pscale auth login` in the agent shell — ask the human.
 - No provider deletes. `drop` is intentionally deferred.
-- Only write the managed keys listed in `references/env-files.md`. Leave
-  legacy/non-managed keys alone unless the human explicitly prunes.
+- Only write the managed keys listed in `references/env-files.md` to local
+  override files. Do not write DB/Redis credentials to Vercel-pulled env files.
 
 ## First Probes
 

@@ -11,9 +11,13 @@ import {
   listAllGitHubInstallationRepositories,
 } from "./repositories";
 
-vi.mock("@repo/github-app-node", () => ({
-  listGitHubInstallationRepositories: vi.fn(),
-}));
+vi.mock("@repo/github-app-node", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@repo/github-app-node")>();
+  return {
+    ...actual,
+    listGitHubInstallationRepositories: vi.fn(),
+  };
+});
 
 const binding = {
   id: 7,
@@ -76,6 +80,7 @@ describe("GitHub source-control repository service", () => {
     expect(
       buildSourceControlRepositoryResponse({
         binding,
+        webBaseUrl: "https://github.lightfast.localhost",
         liveRepositories: [
           {
             fullName: "acme/.lightfast",
@@ -135,6 +140,7 @@ describe("GitHub source-control repository service", () => {
         private: true,
         syncStatus: "disabled",
         watchedPathGlobs: ["**"],
+        webUrl: "https://github.lightfast.localhost/acme/workspace",
       },
     ]);
   });
@@ -142,6 +148,7 @@ describe("GitHub source-control repository service", () => {
   it("falls back to live .lightfast name exclusion when setup proof is absent", () => {
     const rows = buildSourceControlRepositoryResponse({
       binding: { id: 7, metadata: {}, providerAccountId: "20" },
+      webBaseUrl: "https://github.lightfast.localhost",
       liveRepositories: [
         {
           fullName: "acme/.lightfast",

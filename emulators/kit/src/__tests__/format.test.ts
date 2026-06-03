@@ -8,13 +8,13 @@ describe("formatEnvString", () => {
       formatEnvString({
         GITHUB_APP_ID: "424242",
         GITHUB_APP_PRIVATE_KEY: "line1 line2\\nline3",
-        GITHUB_APP_ENDPOINT_ORIGIN: "https://github.lightfast.localhost",
+        GITHUB_APP_ENDPOINT_ORIGIN: "https://github.example.test",
       })
     ).toBe(
       [
         "GITHUB_APP_ID='424242'",
         "GITHUB_APP_PRIVATE_KEY='line1 line2\\nline3'",
-        "GITHUB_APP_ENDPOINT_ORIGIN='https://github.lightfast.localhost'",
+        "GITHUB_APP_ENDPOINT_ORIGIN='https://github.example.test'",
       ].join("\n")
     );
   });

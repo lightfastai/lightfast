@@ -24,7 +24,12 @@
         "SERVICE_JWT_SECRET",
         "PORT"
       ],
-      "inputs": ["$TURBO_DEFAULT$", ".vercel/.env*"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "../app/.env.overrides.local",
+        "../app/.vercel/.env*",
+        ".vercel/.env*"
+      ],
       "outputs": [
         ".next/**",
         "!.next/cache/**",

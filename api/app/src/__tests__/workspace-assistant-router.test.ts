@@ -158,6 +158,33 @@ describe("workspaceAssistantRouter", () => {
     );
   });
 
+  it("drops persisted messages without renderable parts instead of failing validation", async () => {
+    listWorkspaceAssistantMessagesMock.mockResolvedValueOnce([
+      makeMessage({
+        id: 1,
+        parts: [{ text: "hey", type: "text" }],
+        publicId: "msg_user",
+        role: "user",
+        sequence: 0,
+      }),
+      makeMessage({
+        id: 2,
+        parts: [],
+        publicId: "msg_assistant_empty",
+        role: "assistant",
+        sequence: 1,
+        status: "completed",
+      }),
+    ]);
+
+    const result = await caller().assistant.getConversation({ id: "conv_123" });
+
+    expect(result.messages).toHaveLength(1);
+    expect(result.messages).toEqual([
+      expect.objectContaining({ publicId: "msg_user" }),
+    ]);
+  });
+
   it("throws NOT_FOUND when a conversation is not in the active organization", async () => {
     getWorkspaceAssistantConversationByPublicIdMock.mockResolvedValueOnce(
       undefined

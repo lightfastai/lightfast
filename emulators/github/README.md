@@ -20,18 +20,18 @@ pnpm dev
 The emulator is routed at:
 
 ```text
-https://github.lightfast.localhost
+https://github.emulator.localhost
 ```
 
 Linked worktrees receive the usual Portless branch prefix, for example:
 
 ```text
-https://feature-x.github.lightfast.localhost
+https://feature-x.github.emulator.localhost
 ```
 
-The app dev process receives the deterministic `GITHUB_*` values at runtime
-from `@lightfast/app`'s `with-related-projects` wrapper. Do not copy
-worktree-specific emulator URLs into `.vercel/.env.development.local`.
+The consuming app process receives deterministic `GITHUB_*` values at runtime
+from its local-dev wrapper. Do not copy worktree-specific emulator URLs into
+checked-in env files.
 
 To run only the emulator:
 
@@ -40,14 +40,14 @@ pnpm --filter @repo/github-emulator dev
 ```
 
 This runs the raw server process. The root `pnpm dev` flow is responsible for
-wrapping it in `portless run --name github.lightfast`, matching the Inngest and
+wrapping it in `portless run --name github.emulator`, matching the Inngest and
 QStash dev service pattern.
 
 The app and API receive `GITHUB_APP_ENDPOINT_ORIGIN` from
 `pnpm --filter @repo/github-emulator env:sh`. Local setup starts at:
 
 ```text
-https://github.lightfast.localhost/apps/lightfast-local/installations/new
+https://github.emulator.localhost/apps/github-emulator/installations/new
 ```
 
 The emulator redirects to `/api/github/setup`, completes OAuth through
@@ -61,17 +61,17 @@ Optional environment variables:
 ```bash
 PORT=4567
 HOST=127.0.0.1
-LIGHTFAST_APP_ORIGIN=https://lightfast.localhost
-GITHUB_EMULATOR_ORIGIN=https://github.lightfast.localhost
+CALLBACK_URL=https://app.example.test/api/github/setup
+PUBLIC_ORIGIN=https://github.emulator.localhost
 ```
 
 The deterministic seed creates:
 
-- GitHub user `lightfast-dev`
-- GitHub org `lightfast-emulated`
-- Private repo `lightfast-emulated/workspace`
-- OAuth app `Iv1.lightfastlocal`
-- GitHub App `lightfast-local`
+- GitHub user `emulator-dev`
+- GitHub org `emulator-org`
+- Private repo `emulator-org/workspace`
+- OAuth app `Iv1.githubemulator`
+- GitHub App `github-emulator`
 - Org installation `1001`
 
 ## Test

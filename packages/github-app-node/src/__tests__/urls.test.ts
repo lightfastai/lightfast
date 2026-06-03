@@ -3,6 +3,7 @@ import {
   buildGitHubInstallationUrl,
   buildGitHubNewRepositoryUrl,
   buildGitHubOAuthAuthorizeUrl,
+  buildGitHubRepositoryUrl,
 } from "../urls";
 
 describe("GitHub URL builders", () => {
@@ -39,6 +40,21 @@ describe("GitHub URL builders", () => {
     ).toBe(
       "https://github.lightfast.localhost/organizations/lightfast-emulated/repositories/new?name=.lightfast"
     );
+  });
+
+  it("builds a default repository URL", () => {
+    expect(buildGitHubRepositoryUrl({ fullName: "acme/workspace" })).toBe(
+      "https://github.com/acme/workspace"
+    );
+  });
+
+  it("builds a custom-origin repository URL", () => {
+    expect(
+      buildGitHubRepositoryUrl({
+        fullName: "acme/workspace",
+        webBaseUrl: "https://github.lightfast.localhost",
+      })
+    ).toBe("https://github.lightfast.localhost/acme/workspace");
   });
 
   it("builds a default OAuth authorize URL", () => {

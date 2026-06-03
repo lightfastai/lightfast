@@ -7,7 +7,6 @@ import {
   type SourceControlRepository,
 } from "@db/app";
 import type { TRPCRouterRecord } from "@trpc/server";
-import { TRPCError } from "@trpc/server";
 
 import { createIdentityRefreshDedupeKey } from "../../inngest/workflow/identity-refresh-event";
 import { readIdentityRepositoryMainRef } from "../../services/identity";
@@ -48,11 +47,11 @@ export const orgIdentityRouter = {
     const candidate = candidates.find((row) =>
       isVerifiedLightfastIdentityRepository(row)
     );
+    // "Not configured" is an expected product state (no .lightfast repo
+    // connected yet), so it is returned as data rather than thrown. This lets
+    // the client read this query with useSuspenseQuery instead of error-sniffing.
     if (!candidate) {
-      throw new TRPCError({
-        code: "PRECONDITION_FAILED",
-        message: "No verified Lightfast identity repository is configured.",
-      });
+      return { configured: false as const };
     }
 
     const state =
@@ -71,6 +70,7 @@ export const orgIdentityRouter = {
       : [];
 
     return {
+      configured: true as const,
       repository: repositoryResponse(candidate.repository, defaultBranch),
       state: stateResponse(state),
       files: IDENTITY_FILES.map((target) =>

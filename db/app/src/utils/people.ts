@@ -7,7 +7,7 @@ import {
   type Person,
   type PersonIdentityProvider,
   type PersonIdentityType,
-  people,
+  orgPeople as people,
 } from "../schema";
 
 export interface ListCursor {

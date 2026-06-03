@@ -1,34 +1,15 @@
 import { render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const listQueryOptionsMock = vi.fn(() => ({
-  queryKey: ["org", "workspace", "skills", "list"],
-}));
-const prefetchMock = vi.fn();
-
-vi.mock("~/trpc/server", () => ({
-  HydrateClient: ({ children }: { children?: ReactNode }) => (
-    <div data-testid="hydrated-chat">{children}</div>
-  ),
-  prefetch: prefetchMock,
-  trpc: {
-    org: {
-      workspace: {
-        skills: {
-          list: {
-            queryOptions: listQueryOptionsMock,
-          },
-        },
-      },
-    },
-  },
-}));
+let receivedProps: { conversationId?: string } = {};
 
 vi.mock(
   "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/_components/workspace-assistant-client",
   () => ({
-    WorkspaceAssistantClient: () => <div>Workspace assistant client</div>,
+    WorkspaceAssistantClient: (props: { conversationId: string }) => {
+      receivedProps = props;
+      return <div>Workspace assistant client</div>;
+    },
   })
 );
 
@@ -37,21 +18,25 @@ const { default: ChatPage } = await import(
 );
 
 beforeEach(() => {
-  listQueryOptionsMock.mockClear();
-  prefetchMock.mockClear();
+  receivedProps = {};
 });
 
 describe("workspace chat page", () => {
-  it("renders the empty workspace assistant chat at the canonical chat URL", () => {
+  it("renders the assistant with a fresh, addressable conversation id", () => {
     render(ChatPage());
 
-    expect(listQueryOptionsMock).toHaveBeenCalledWith(
-      undefined,
-      expect.objectContaining({ staleTime: 0 })
-    );
-    expect(prefetchMock).toHaveBeenCalled();
-    expect(screen.getByTestId("hydrated-chat")).toHaveTextContent(
-      "Workspace assistant client"
-    );
+    expect(screen.getByText("Workspace assistant client")).toBeVisible();
+    // The route owns identity now: it hands the client a stable, addressable id
+    // up-front so useChat never has to flip from undefined to a real id mid-send.
+    expect(receivedProps.conversationId).toMatch(/^conv_/);
+  });
+
+  it("generates a distinct conversation id per request", () => {
+    render(ChatPage());
+    const first = receivedProps.conversationId;
+    render(ChatPage());
+    const second = receivedProps.conversationId;
+
+    expect(first).not.toBe(second);
   });
 });

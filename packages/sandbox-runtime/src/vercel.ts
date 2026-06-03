@@ -68,7 +68,6 @@ function wrapSandbox(sandbox: VercelSandbox): SandboxHandle {
 
 async function getSandbox(id: string) {
   return await Sandbox.get({
-    name: id,
     sandboxId: id,
   } as VercelSandboxGetInput);
 }

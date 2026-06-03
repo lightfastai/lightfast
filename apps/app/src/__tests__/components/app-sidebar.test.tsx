@@ -1,10 +1,12 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import type {
   AnchorHTMLAttributes,
   ButtonHTMLAttributes,
   HTMLAttributes,
+  ReactElement,
   ReactNode,
 } from "react";
+import { cloneElement, isValidElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 let pathname = "/acme/signals";
@@ -129,14 +131,23 @@ vi.mock("@repo/ui/components/ui/sidebar", () => ({
 
 vi.mock("@repo/ui/components/ui/button", () => ({
   Button: ({
+    asChild,
     children,
     type = "button",
     ...props
-  }: ButtonHTMLAttributes<HTMLButtonElement> & { children?: ReactNode }) => (
-    <button type={type} {...props}>
-      {children}
-    </button>
-  ),
+  }: ButtonHTMLAttributes<HTMLButtonElement> & {
+    asChild?: boolean;
+    children?: ReactNode;
+  }) => {
+    if (asChild && isValidElement(children)) {
+      return cloneElement(children as ReactElement, props);
+    }
+    return (
+      <button type={type} {...props}>
+        {children}
+      </button>
+    );
+  },
 }));
 
 vi.mock("@repo/ui/components/ui/popover", () => ({
@@ -175,7 +186,6 @@ describe("AppSidebar", () => {
   it("renders workspace links separately from manage links", () => {
     render(<AppSidebar />);
 
-    expect(getWorkspaceChatLink()).toHaveAttribute("href", "/acme/chat");
     expect(screen.getByRole("link", { name: /signals/i })).toHaveAttribute(
       "href",
       "/acme/signals"
@@ -244,7 +254,7 @@ describe("AppSidebar", () => {
     ).toBeInTheDocument();
   });
 
-  it("places chat at the top of the workspace navigation", () => {
+  it("renders the workspace navigation links in order", () => {
     render(<AppSidebar />);
 
     const workspaceLinks = screen
@@ -252,43 +262,17 @@ describe("AppSidebar", () => {
       .querySelectorAll("a");
 
     expect(Array.from(workspaceLinks).map((link) => link.textContent)).toEqual([
-      "Chat",
       "Signals",
       "People",
     ]);
   });
 
-  it("marks chat active on new and persisted chat routes only", () => {
-    pathname = "/acme/chat";
-    const { rerender } = render(<AppSidebar />);
-
-    const chatLink = getWorkspaceChatLink();
-    expect(chatLink.closest("[data-active]")).toHaveAttribute(
-      "data-active",
-      "true"
-    );
-
-    pathname = "/acme/chat/conv_123";
-    rerender(<AppSidebar />);
-    expect(getWorkspaceChatLink().closest("[data-active]")).toHaveAttribute(
-      "data-active",
-      "true"
-    );
-
-    pathname = "/acme/signals";
-    rerender(<AppSidebar />);
-    expect(getWorkspaceChatLink().closest("[data-active]")).toHaveAttribute(
-      "data-active",
-      "false"
-    );
-  });
-
   it("marks the active nav link with aria-current", () => {
-    pathname = "/acme/chat/conv_123";
+    pathname = "/acme/people";
     render(<AppSidebar />);
 
     expect(screen.getByRole("link", { current: "page" })).toHaveAccessibleName(
-      "Chat"
+      "People"
     );
   });
 
@@ -320,6 +304,24 @@ describe("AppSidebar", () => {
       { limit: 20 },
       expect.objectContaining({ staleTime: 0 })
     );
+  });
+
+  it("renders a new chat button in the header", () => {
+    render(<AppSidebar />);
+
+    expect(screen.getByRole("link", { name: "New chat" })).toHaveAttribute(
+      "href",
+      "/acme/chat"
+    );
+  });
+
+  it("hides the chats group when there are no conversations", () => {
+    conversationsData = { items: [], nextCursor: null };
+    render(<AppSidebar />);
+
+    expect(
+      screen.queryByRole("region", { name: "Chats" })
+    ).not.toBeInTheDocument();
   });
 
   it("marks the active existing chat in the chat history", () => {
@@ -374,9 +376,3 @@ describe("AppSidebar", () => {
     );
   });
 });
-
-function getWorkspaceChatLink() {
-  return within(
-    screen.getByRole("navigation", { name: "Workspace" })
-  ).getByRole("link", { name: "Chat" });
-}

@@ -33,15 +33,15 @@ afterEach(() => {
 describe("origins (dev — NEXT_PUBLIC_VERCEL_ENV defaults to development)", () => {
   beforeEach(() => {
     mockEnv({
-      appUrl: "https://app.lightfast.localhost",
+      appUrl: "https://lightfast.localhost",
       wwwUrl: "https://www.lightfast.localhost",
       platformUrl: "https://platform.lightfast.localhost",
     });
   });
 
-  it("appUrl resolves to the injected portless self URL", async () => {
+  it("appUrl resolves to the injected MFE aggregate URL", async () => {
     const { appUrl } = await import("../origins");
-    expect(appUrl).toBe("https://app.lightfast.localhost");
+    expect(appUrl).toBe("https://lightfast.localhost");
   });
 
   it("wwwUrl resolves to the injected portless sibling URL", async () => {

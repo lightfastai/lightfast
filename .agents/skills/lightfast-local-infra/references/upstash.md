@@ -1,7 +1,7 @@
 # Upstash Redis Up
 
 `redis up` creates or reuses one Upstash Redis database for this checkout and
-writes REST credentials to the app and platform env files.
+writes REST credentials to the app and platform local override env files.
 
 ## Inputs
 
@@ -19,7 +19,7 @@ runtime code for this V1 setup.
 
 ```bash
 redis_region=${redis_region:-ap-southeast-2}
-eval "$(node .claude/skills/lightfast-local-infra/lib/compute-identity.mjs)"
+eval "$(node .agents/skills/lightfast-local-infra/lib/compute-identity.mjs)"
 ```
 
 This sets `redis_name` (and pscale fields that are unused here).
@@ -40,12 +40,12 @@ output instead of guessing.
 ```bash
 upstash redis list --json > /tmp/lightfast-upstash-list.json
 
-eval "$(node .claude/skills/lightfast-local-infra/lib/upstash-extract.mjs \
+eval "$(node .agents/skills/lightfast-local-infra/lib/upstash-extract.mjs \
   --mode id --file /tmp/lightfast-upstash-list.json --name "$redis_name")"
 
 if [ -z "$redis_id" ]; then
   upstash redis create --name "$redis_name" --region "$redis_region" --json > /tmp/lightfast-upstash-create.json
-  eval "$(node .claude/skills/lightfast-local-infra/lib/upstash-extract.mjs \
+  eval "$(node .agents/skills/lightfast-local-infra/lib/upstash-extract.mjs \
     --mode id --file /tmp/lightfast-upstash-create.json)"
 fi
 
@@ -57,13 +57,14 @@ Fetch details:
 ```bash
 upstash redis get --id "$redis_id" --json > /tmp/lightfast-upstash-db.json
 
-eval "$(node .claude/skills/lightfast-local-infra/lib/upstash-extract.mjs \
+eval "$(node .agents/skills/lightfast-local-infra/lib/upstash-extract.mjs \
   --mode rest --file /tmp/lightfast-upstash-db.json)"
 
 test -n "$kv_rest_api_url" && test -n "$kv_rest_api_token"
 ```
 
-Then write app and platform env files with `references/env-files.md`.
+Then write app and platform local override env files with
+`references/env-files.md`.
 
 ## Verify
 

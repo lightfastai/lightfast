@@ -4,10 +4,10 @@ import { z } from "zod";
 import type { EmulatorManifest } from "./manifest";
 
 export interface ResolvedEmulatorEnv {
-  appOrigin: string;
-  emulatorOrigin?: string;
+  callbackUrl?: string;
   host: string;
   port: number;
+  publicOrigin?: string;
 }
 
 function readOptionalUrl(
@@ -32,29 +32,24 @@ export function createEmulatorEnv(
   const env = createEnv({
     emptyStringAsUndefined: true,
     runtimeEnv: {
+      CALLBACK_URL: runtimeEnv.CALLBACK_URL,
       HOST: runtimeEnv.HOST,
-      LIGHTFAST_APP_ORIGIN: runtimeEnv.LIGHTFAST_APP_ORIGIN,
       PORT: runtimeEnv.PORT,
-      PORTLESS_URL: runtimeEnv.PORTLESS_URL,
+      PUBLIC_ORIGIN: runtimeEnv.PUBLIC_ORIGIN,
     },
     server: {
+      CALLBACK_URL: z.string().url().optional(),
       HOST: z.string().min(1).default("127.0.0.1"),
-      LIGHTFAST_APP_ORIGIN: z
-        .string()
-        .url()
-        .default("https://lightfast.localhost"),
       PORT: z.coerce.number().int().min(1).max(65_535).default(manifest.port),
-      PORTLESS_URL: z.string().url().optional(),
+      PUBLIC_ORIGIN: z.string().url().optional(),
     },
     skipValidation,
   });
 
   return {
-    appOrigin: env.LIGHTFAST_APP_ORIGIN,
-    emulatorOrigin:
-      readOptionalUrl(runtimeEnv[manifest.originEnvVar], skipValidation) ??
-      env.PORTLESS_URL,
+    callbackUrl: readOptionalUrl(env.CALLBACK_URL, skipValidation),
     host: env.HOST,
     port: env.PORT,
+    publicOrigin: readOptionalUrl(env.PUBLIC_ORIGIN, skipValidation),
   };
 }

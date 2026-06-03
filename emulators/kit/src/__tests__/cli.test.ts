@@ -6,9 +6,9 @@ import type { EmulatorManifest } from "../manifest";
 const manifest: EmulatorManifest = {
   name: "test",
   port: 4599,
-  originEnvVar: "TEST_EMULATOR_ORIGIN",
-  env: (_appOrigin, emulatorOrigin) => ({
-    TEST_API_ORIGIN: emulatorOrigin,
+  env: ({ callbackUrl, publicOrigin }) => ({
+    ...(callbackUrl ? { TEST_CALLBACK_URL: callbackUrl } : {}),
+    TEST_API_ORIGIN: publicOrigin,
     TEST_CLIENT_ID: "test_client",
   }),
   start: () =>
@@ -24,21 +24,21 @@ afterEach(() => {
 });
 
 describe("runEnvSh", () => {
-  it("emits shell assignments using --emulator-origin", () => {
+  it("emits shell assignments using generic callback URL and public origin", () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
     const argv = [
       ...process.argv.slice(0, 2),
-      "--app-origin",
-      "https://app.lightfast.localhost",
-      "--emulator-origin",
-      "https://test.lightfast.localhost",
+      "--callback-url",
+      "https://callback.example.test",
+      "--public-origin",
+      "https://test.example.test",
     ];
     vi.spyOn(process, "argv", "get").mockReturnValue(argv);
 
     runEnvSh(manifest);
 
     expect(log).toHaveBeenCalledWith(
-      "TEST_API_ORIGIN='https://test.lightfast.localhost'\nTEST_CLIENT_ID='test_client'"
+      "TEST_CALLBACK_URL='https://callback.example.test'\nTEST_API_ORIGIN='https://test.example.test'\nTEST_CLIENT_ID='test_client'"
     );
   });
 

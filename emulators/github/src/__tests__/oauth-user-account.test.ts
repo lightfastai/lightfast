@@ -200,7 +200,7 @@ describe("GitHub emulator user account OAuth", () => {
       addOrgMembership(store);
       const tokenMap = new Map();
       const fetchCompatible = createGitHubCompatibleFetch({
-        appOrigin: "https://lightfast.localhost",
+        callbackUrl: "https://app.example.test/api/github/setup",
         fallbackFetch: () =>
           Response.json({ message: "fallback" }, { status: 418 }),
         publicOrigin: GITHUB_EMULATOR_FIXTURES.origin,

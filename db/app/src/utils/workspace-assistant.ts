@@ -16,9 +16,9 @@ import {
   type WorkspaceAssistantMessageRole,
   type WorkspaceAssistantMessageStatus,
   type WorkspaceAssistantRecordMetadata,
-  workspaceAssistantConversations,
-  workspaceAssistantGenerations,
-  workspaceAssistantMessages,
+  orgWorkspaceAssistantConversations as workspaceAssistantConversations,
+  orgWorkspaceAssistantGenerations as workspaceAssistantGenerations,
+  orgWorkspaceAssistantMessages as workspaceAssistantMessages,
 } from "../schema";
 import { getRowsAffected, isDuplicateKeyError } from "./drizzle-results";
 

@@ -28,8 +28,10 @@ import {
   BookOpen,
   HelpCircle,
   KeyRound,
+  ListChecks,
   Mail,
   MessageCircle,
+  MessageCirclePlus,
   Network,
   Scroll,
   Settings,
@@ -78,17 +80,16 @@ function getOrgStandaloneItems(orgSlug: string): NavItem[] {
       icon: Scroll,
       prefetch: false,
     },
+    {
+      title: "Decisions",
+      href: `/${orgSlug}/decisions`,
+      icon: ListChecks,
+    },
   ];
 }
 
 function getOrgWorkspaceItems(orgSlug: string): NavItem[] {
   return [
-    {
-      title: "Chat",
-      href: `/${orgSlug}/chat`,
-      activePrefix: `/${orgSlug}/chat`,
-      icon: MessageCircle,
-    },
     {
       title: "Signals",
       href: `/${orgSlug}/signals`,
@@ -181,25 +182,23 @@ function ChatHistory({
     )
   );
 
+  if (data.items.length === 0) {
+    return null;
+  }
+
   return (
     <SidebarGroup collapsible defaultOpen label="Chats">
       <SidebarGroupContent>
         <nav aria-label="Chats">
-          <SidebarMenu className="rounded-xl border border-border/50 bg-muted/20 p-1">
-            {data.items.length > 0 ? (
-              data.items.map((conversation) => (
-                <ChatHistoryItem
-                  conversation={conversation}
-                  key={conversation.publicId}
-                  orgSlug={orgSlug}
-                  pathname={pathname}
-                />
-              ))
-            ) : (
-              <li className="px-2 py-2 text-muted-foreground text-xs">
-                No chats yet
-              </li>
-            )}
+          <SidebarMenu>
+            {data.items.map((conversation) => (
+              <ChatHistoryItem
+                conversation={conversation}
+                key={conversation.publicId}
+                orgSlug={orgSlug}
+                pathname={pathname}
+              />
+            ))}
           </SidebarMenu>
         </nav>
       </SidebarGroupContent>
@@ -231,7 +230,7 @@ function ChatHistoryItem({
       <SidebarMenuButton
         asChild
         className={cn(
-          "h-8 rounded-lg px-2 text-xs [&>svg]:size-3.5",
+          "h-11 rounded-xl lg:h-7 [&>svg]:size-3.5",
           isActive
             ? "text-foreground data-[active=true]:text-foreground"
             : "text-muted-foreground"
@@ -241,22 +240,10 @@ function ChatHistoryItem({
       >
         <Link href={{ pathname: href }} onClick={handleNavigate} prefetch>
           <MessageCircle className="size-3.5" />
-          <span className="truncate">{title}</span>
+          <span>{title}</span>
         </Link>
       </SidebarMenuButton>
     </SidebarMenuItem>
-  );
-}
-
-function ChatHistorySkeleton() {
-  return (
-    <SidebarGroup collapsible defaultOpen label="Chats">
-      <SidebarGroupContent>
-        <div className="rounded-xl border border-border/50 bg-muted/20 p-2 text-muted-foreground text-xs">
-          Loading chats
-        </div>
-      </SidebarGroupContent>
-    </SidebarGroup>
   );
 }
 
@@ -280,18 +267,42 @@ export function AppSidebar() {
         <Suspense fallback={<TeamSwitcherSkeleton />}>
           <TeamSwitcher />
         </Suspense>
-        {isMobile && (
-          <Button
-            aria-label="Close sidebar"
-            className="ml-auto size-11 rounded-xl text-muted-foreground"
-            onClick={() => setOpenMobile(false)}
-            size="icon"
-            type="button"
-            variant="ghost"
-          >
-            <X className="size-4" />
-          </Button>
-        )}
+        <div className="ml-auto flex items-center gap-1">
+          {orgSlug && (
+            <Button
+              aria-label="New chat"
+              asChild
+              className="size-11 rounded-full lg:h-6 lg:w-6"
+              size="sm"
+              title="New chat"
+              variant="ghost"
+            >
+              <Link
+                href={{ pathname: `/${orgSlug}/chat` }}
+                onClick={() => {
+                  if (isMobile) {
+                    setOpenMobile(false);
+                  }
+                }}
+                prefetch
+              >
+                <MessageCirclePlus className="size-3.5" />
+              </Link>
+            </Button>
+          )}
+          {isMobile && (
+            <Button
+              aria-label="Close sidebar"
+              className="size-11 rounded-xl text-muted-foreground"
+              onClick={() => setOpenMobile(false)}
+              size="icon"
+              type="button"
+              variant="ghost"
+            >
+              <X className="size-4" />
+            </Button>
+          )}
+        </div>
       </SidebarHeader>
       <SidebarContent>
         {orgSlug && (
@@ -330,7 +341,7 @@ export function AppSidebar() {
                 </nav>
               </SidebarGroupContent>
             </SidebarGroup>
-            <Suspense fallback={<ChatHistorySkeleton />}>
+            <Suspense fallback={null}>
               <ChatHistory orgSlug={orgSlug} pathname={pathname} />
             </Suspense>
           </>

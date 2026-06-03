@@ -1,23 +1,15 @@
 # Project-scoped Codex MCP configuration.
 # Docs: https://developers.openai.com/codex/mcp
+#
+# Standardized with .mcp.json (Claude Code): both harnesses run the same
+# MCP server set. Keep these two files in sync.
 
-[mcp_servers.lightfast]
-command = "bash"
-args = [".mcp/start-lightfast.sh"]
+# [mcp_servers.exa]
+# url = "https://mcp.exa.ai/mcp"
 
-[mcp_servers.playwright]
+[mcp_servers.inngest]
+url = "http://127.0.0.1:8288/mcp"
+
+[mcp_servers.next-devtools]
 command = "npx"
-args = [
-  "@playwright/mcp@latest",
-  "--isolated",
-  "--user-data-dir=/tmp/playwright-mcp",
-  "--storage-state=.auth/browser-session.json"
-]
-
-[mcp_servers.exa]
-command = "bash"
-args = [".mcp/start-exa.sh"]
-
-[mcp_servers.knock]
-command = "bash"
-args = [".mcp/start-knock.sh"]
+args = ["-y", "next-devtools-mcp@0.3.10"]

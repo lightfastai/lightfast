@@ -28,6 +28,7 @@
         "CLERK_DESKTOP_OAUTH_CLIENT_ID",
         "DEVELOPER_AUTH_BOX_ORIGIN",
         "DEVELOPER_AUTH_BOX_TOKEN",
+        "CONNECTOR_MCP_AUTH_SECRET",
         "ENCRYPTION_KEY",
         "DATABASE_HOST",
         "DATABASE_USERNAME",
@@ -45,7 +46,7 @@
         "SERVICE_JWT_SECRET",
         "PORT"
       ],
-      "inputs": ["$TURBO_DEFAULT$", ".vercel/.env*"],
+      "inputs": ["$TURBO_DEFAULT$", ".env.overrides.local", ".vercel/.env*"],
       "outputs": [
         ".next/**",
         "!.next/cache/**",
