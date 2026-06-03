@@ -17,6 +17,10 @@
       "types": "./src/services/github/index.ts",
       "default": "./src/services/github/index.ts"
     },
+    "./services/skills": {
+      "types": "./src/services/skills/index.ts",
+      "default": "./src/services/skills/index.ts"
+    },
     "./services/connectors": {
       "types": "./src/services/connectors/index.ts",
       "default": "./src/services/connectors/index.ts"
