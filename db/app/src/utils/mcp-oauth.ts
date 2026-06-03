@@ -12,13 +12,13 @@ import {
   type McpOauthClient,
   type McpOauthGrant,
   type McpOauthRefreshToken,
-  mcpAuditEvents,
-  mcpOauthAuthorizationCodes,
-  mcpOauthClientRedirectUris,
-  mcpOauthClients,
-  mcpOauthGrants,
-  mcpOauthRefreshTokens,
-  mcpOauthRegistrationTokens,
+  systemMcpAuditEvents as mcpAuditEvents,
+  systemMcpOauthAuthorizationCodes as mcpOauthAuthorizationCodes,
+  systemMcpOauthClientRedirectUris as mcpOauthClientRedirectUris,
+  systemMcpOauthClients as mcpOauthClients,
+  systemMcpOauthGrants as mcpOauthGrants,
+  systemMcpOauthRefreshTokens as mcpOauthRefreshTokens,
+  systemMcpOauthRegistrationTokens as mcpOauthRegistrationTokens,
 } from "../schema";
 import { getRowsAffected } from "./drizzle-results";
 

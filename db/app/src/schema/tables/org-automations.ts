@@ -12,7 +12,6 @@ import {
   json,
   mysqlTable,
   text,
-  timestamp,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -56,8 +55,8 @@ export function createAutomationRunId() {
   return `${AUTOMATION_RUN_ID_PREFIX}${randomUUID()}`;
 }
 
-export const automations = mysqlTable(
-  "lightfast_automations",
+export const orgAutomations = mysqlTable(
+  "lightfast_org_automations",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -101,24 +100,24 @@ export const automations = mysqlTable(
       .default(1)
       .notNull(),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => ({
-    publicIdUq: uniqueIndex("automations_public_id_uq").on(table.publicId),
-    orgStatusNextRunIdx: index("automations_org_status_next_run_idx").on(
+    publicIdUq: uniqueIndex("org_automations_public_id_uq").on(table.publicId),
+    orgStatusNextRunIdx: index("org_automations_org_status_next_run_idx").on(
       table.clerkOrgId,
       table.status,
       table.nextRunAt,
       table.id
     ),
-    dueIdx: index("automations_due_idx").on(
+    dueIdx: index("org_automations_due_idx").on(
       table.status,
       table.nextRunAt,
       table.id
@@ -126,8 +125,8 @@ export const automations = mysqlTable(
   })
 );
 
-export const automationRuns = mysqlTable(
-  "lightfast_automation_runs",
+export const orgAutomationRuns = mysqlTable(
+  "lightfast_org_automation_runs",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -174,26 +173,26 @@ export const automationRuns = mysqlTable(
 
     errorMessage: text("error_message"),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => ({
-    publicIdUq: uniqueIndex("automation_runs_public_id_uq").on(table.publicId),
-    idempotencyKeyUq: uniqueIndex("automation_runs_idempotency_key_uq").on(
+    publicIdUq: uniqueIndex("org_automation_runs_public_id_uq").on(table.publicId),
+    idempotencyKeyUq: uniqueIndex("org_automation_runs_idempotency_key_uq").on(
       table.idempotencyKey
     ),
-    automationCreatedIdx: index("automation_runs_automation_created_idx").on(
+    automationCreatedIdx: index("org_automation_runs_automation_created_idx").on(
       table.automationPublicId,
       table.createdAt,
       table.id
     ),
-    orgStatusCreatedIdx: index("automation_runs_org_status_created_idx").on(
+    orgStatusCreatedIdx: index("org_automation_runs_org_status_created_idx").on(
       table.clerkOrgId,
       table.status,
       table.createdAt,
@@ -202,7 +201,7 @@ export const automationRuns = mysqlTable(
   })
 );
 
-export type Automation = typeof automations.$inferSelect;
-export type InsertAutomation = typeof automations.$inferInsert;
-export type AutomationRun = typeof automationRuns.$inferSelect;
-export type InsertAutomationRun = typeof automationRuns.$inferInsert;
+export type Automation = typeof orgAutomations.$inferSelect;
+export type InsertAutomation = typeof orgAutomations.$inferInsert;
+export type AutomationRun = typeof orgAutomationRuns.$inferSelect;
+export type InsertAutomationRun = typeof orgAutomationRuns.$inferInsert;

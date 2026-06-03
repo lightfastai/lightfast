@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { Database } from "../client";
 import type { IdentityIndexFile, IdentityIndexState } from "../schema";
-import { identityIndexFiles, identityIndexStates, signals } from "../schema";
+import { orgIdentityIndexFiles as identityIndexFiles, orgIdentityIndexStates as identityIndexStates, orgSignals as signals } from "../schema";
 import {
   acquireIdentityIndexRefreshLock,
   createOrLoadIdentityIndexState,
@@ -26,7 +26,7 @@ describe("identity index schema", () => {
     const fileConfig = getTableConfig(identityIndexFiles);
     const signalConfig = getTableConfig(signals);
 
-    expect(stateConfig.name).toBe("lightfast_identity_index_states");
+    expect(stateConfig.name).toBe("lightfast_org_identity_index_states");
     expect(stateConfig.columns.map((column) => column.name)).toEqual(
       expect.arrayContaining([
         "source_control_repository_id",
@@ -49,13 +49,13 @@ describe("identity index schema", () => {
     );
     expect(stateConfig.indexes.map((index) => index.config.name)).toEqual(
       expect.arrayContaining([
-        "identity_index_states_source_control_repository_uq",
-        "identity_index_states_last_checked_idx",
-        "identity_index_states_refresh_locked_until_idx",
+        "org_identity_index_states_source_control_repository_uq",
+        "org_identity_index_states_last_checked_idx",
+        "org_identity_index_states_refresh_locked_until_idx",
       ])
     );
 
-    expect(fileConfig.name).toBe("lightfast_identity_index_files");
+    expect(fileConfig.name).toBe("lightfast_org_identity_index_files");
     expect(fileConfig.columns.map((column) => column.name)).toEqual(
       expect.arrayContaining([
         "identity_index_state_id",
@@ -77,8 +77,8 @@ describe("identity index schema", () => {
     ).toEqual(["mediumtext"]);
     expect(fileConfig.indexes.map((index) => index.config.name)).toEqual(
       expect.arrayContaining([
-        "identity_index_files_state_kind_uq",
-        "identity_index_files_state_status_idx",
+        "org_identity_index_files_state_kind_uq",
+        "org_identity_index_files_state_status_idx",
       ])
     );
     expect(signalConfig.columns.map((column) => column.name)).toContain(

@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { Database } from "../client";
 import type { SkillIndexEntry, SkillIndexState } from "../schema";
-import { skillIndexEntries, skillIndexStates } from "../schema";
+import { orgSkillIndexEntries as skillIndexEntries, orgSkillIndexStates as skillIndexStates } from "../schema";
 import {
   acquireSkillIndexRefreshLock,
   createOrLoadSkillIndexState,
@@ -26,7 +26,7 @@ describe("skill index schema", () => {
     const stateConfig = getTableConfig(skillIndexStates);
     const entryConfig = getTableConfig(skillIndexEntries);
 
-    expect(stateConfig.name).toBe("lightfast_skill_index_states");
+    expect(stateConfig.name).toBe("lightfast_org_skill_index_states");
     expect(stateConfig.columns.map((column) => column.name)).toEqual(
       expect.arrayContaining([
         "source_control_repository_id",
@@ -40,13 +40,13 @@ describe("skill index schema", () => {
     );
     expect(stateConfig.indexes.map((index) => index.config.name)).toEqual(
       expect.arrayContaining([
-        "skill_index_states_source_control_repository_uq",
-        "skill_index_states_last_checked_idx",
-        "skill_index_states_refresh_locked_until_idx",
+        "org_skill_index_states_source_control_repository_uq",
+        "org_skill_index_states_last_checked_idx",
+        "org_skill_index_states_refresh_locked_until_idx",
       ])
     );
 
-    expect(entryConfig.name).toBe("lightfast_skill_index_entries");
+    expect(entryConfig.name).toBe("lightfast_org_skill_index_entries");
     expect(entryConfig.columns.map((column) => column.name)).toEqual(
       expect.arrayContaining([
         "skill_index_state_id",
@@ -68,8 +68,8 @@ describe("skill index schema", () => {
     ).toEqual(["mediumtext", "mediumtext"]);
     expect(entryConfig.indexes.map((index) => index.config.name)).toEqual(
       expect.arrayContaining([
-        "skill_index_entries_state_slug_uq",
-        "skill_index_entries_state_validation_idx",
+        "org_skill_index_entries_state_slug_uq",
+        "org_skill_index_entries_state_validation_idx",
       ])
     );
   });

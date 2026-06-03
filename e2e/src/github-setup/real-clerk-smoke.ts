@@ -84,7 +84,7 @@ export function buildSmokeConfig(
 }
 
 async function cleanupLocalEmulatorBinding() {
-  const [{ db }, { orgSourceControlBindings, sourceControlRepositories }] =
+  const [{ db }, { orgSourceControlBindings, orgSourceControlRepositories }] =
     await Promise.all([import("@db/app/client"), import("@db/app/schema")]);
 
   const bindings = await db
@@ -103,9 +103,9 @@ async function cleanupLocalEmulatorBinding() {
 
   for (const binding of bindings) {
     await db
-      .delete(sourceControlRepositories)
+      .delete(orgSourceControlRepositories)
       .where(
-        eq(sourceControlRepositories.orgSourceControlBindingId, binding.id)
+        eq(orgSourceControlRepositories.orgSourceControlBindingId, binding.id)
       );
     await db
       .delete(orgSourceControlBindings)

@@ -2,11 +2,11 @@ import { getTableConfig } from "drizzle-orm/mysql-core";
 import { describe, expect, it } from "vitest";
 
 import {
-  workspaceAssistantContextItems,
-  workspaceAssistantConversations,
-  workspaceAssistantGenerations,
-  workspaceAssistantMessages,
-  workspaceAssistantToolCalls,
+  orgWorkspaceAssistantContextItems as workspaceAssistantContextItems,
+  orgWorkspaceAssistantConversations as workspaceAssistantConversations,
+  orgWorkspaceAssistantGenerations as workspaceAssistantGenerations,
+  orgWorkspaceAssistantMessages as workspaceAssistantMessages,
+  orgWorkspaceAssistantToolCalls as workspaceAssistantToolCalls,
 } from "../schema";
 
 function indexColumnNames(index: { config: { columns: unknown[] } }) {
@@ -25,7 +25,7 @@ describe("workspace assistant schema", () => {
       config.indexes.map((index) => [index.config.name, index])
     );
 
-    expect(config.name).toBe("lightfast_workspace_assistant_conversations");
+    expect(config.name).toBe("lightfast_org_workspace_assistant_conversations");
     expect(config.columns.map((column) => column.name)).toEqual(
       expect.arrayContaining([
         "id",
@@ -43,19 +43,19 @@ describe("workspace assistant schema", () => {
       ])
     );
     expect(
-      indexes.get("workspace_assistant_conversations_public_id_uq")?.config
+      indexes.get("org_workspace_assistant_conversations_public_id_uq")?.config
     ).toMatchObject({
       unique: true,
     });
     expect(
       indexColumnNames(
-        indexes.get("workspace_assistant_conversations_public_id_uq")!
+        indexes.get("org_workspace_assistant_conversations_public_id_uq")!
       )
     ).toEqual(["public_id"]);
     expect(
       indexColumnNames(
         indexes.get(
-          "workspace_assistant_conversations_org_user_status_updated_idx"
+          "org_workspace_assistant_conversations_user_status_updated_idx"
         )!
       )
     ).toEqual([
@@ -73,7 +73,7 @@ describe("workspace assistant schema", () => {
       config.indexes.map((index) => [index.config.name, index])
     );
 
-    expect(config.name).toBe("lightfast_workspace_assistant_messages");
+    expect(config.name).toBe("lightfast_org_workspace_assistant_messages");
     expect(config.columns.map((column) => column.name)).toEqual(
       expect.arrayContaining([
         "id",
@@ -95,40 +95,40 @@ describe("workspace assistant schema", () => {
       ])
     );
     expect(
-      indexes.get("workspace_assistant_messages_public_id_uq")?.config
+      indexes.get("org_workspace_assistant_messages_public_id_uq")?.config
     ).toMatchObject({
       unique: true,
     });
     expect(
-      indexes.get("workspace_assistant_messages_conversation_sequence_uq")
+      indexes.get("org_workspace_assistant_messages_conversation_sequence_uq")
         ?.config
     ).toMatchObject({ unique: true });
     expect(
       indexColumnNames(
-        indexes.get("workspace_assistant_messages_conversation_sequence_uq")!
+        indexes.get("org_workspace_assistant_messages_conversation_sequence_uq")!
       )
     ).toEqual(["conversation_id", "sequence"]);
     expect(
       indexes.get(
-        "workspace_assistant_messages_conversation_idempotency_key_uq"
+        "org_workspace_assistant_messages_conversation_idempotency_key_uq"
       )?.config
     ).toMatchObject({ unique: true });
     expect(
       indexColumnNames(
         indexes.get(
-          "workspace_assistant_messages_conversation_idempotency_key_uq"
+          "org_workspace_assistant_messages_conversation_idempotency_key_uq"
         )!
       )
     ).toEqual(["conversation_id", "idempotency_key"]);
     expect(
       indexColumnNames(
-        indexes.get("workspace_assistant_messages_conversation_created_idx")!
+        indexes.get("org_workspace_assistant_messages_conversation_created_idx")!
       )
     ).toEqual(["conversation_id", "created_at", "id"]);
     expect(
       indexColumnNames(
         indexes.get(
-          "workspace_assistant_messages_org_user_conversation_sequence_idx"
+          "org_workspace_assistant_messages_user_conversation_sequence_idx"
         )!
       )
     ).toEqual([
@@ -151,7 +151,7 @@ describe("workspace assistant schema", () => {
     );
 
     expect(generationConfig.name).toBe(
-      "lightfast_workspace_assistant_generations"
+      "lightfast_org_workspace_assistant_generations"
     );
     expect(generationConfig.columns.map((column) => column.name)).toEqual(
       expect.arrayContaining([
@@ -178,25 +178,25 @@ describe("workspace assistant schema", () => {
     );
     expect(
       generationIndexes.get(
-        "workspace_assistant_generations_assistant_message_uq"
+        "org_workspace_assistant_generations_assistant_message_uq"
       )?.config
     ).toMatchObject({ unique: true });
     expect(
       indexColumnNames(
         generationIndexes.get(
-          "workspace_assistant_generations_assistant_message_uq"
+          "org_workspace_assistant_generations_assistant_message_uq"
         )!
       )
     ).toEqual(["assistant_message_id"]);
     expect(
       indexColumnNames(
-        generationIndexes.get("workspace_assistant_generations_org_status_idx")!
+        generationIndexes.get("org_workspace_assistant_generations_org_status_idx")!
       )
     ).toEqual(["clerk_org_id", "status", "created_at", "id"]);
     expect(
       indexColumnNames(
         generationIndexes.get(
-          "workspace_assistant_generations_org_user_status_idx"
+          "org_workspace_assistant_generations_org_user_status_idx"
         )!
       )
     ).toEqual([
@@ -208,7 +208,7 @@ describe("workspace assistant schema", () => {
     ]);
 
     expect(toolCallConfig.name).toBe(
-      "lightfast_workspace_assistant_tool_calls"
+      "lightfast_org_workspace_assistant_tool_calls"
     );
     expect(toolCallConfig.columns.map((column) => column.name)).toEqual(
       expect.arrayContaining([
@@ -233,13 +233,13 @@ describe("workspace assistant schema", () => {
     );
     expect(
       toolCallIndexes.get(
-        "workspace_assistant_tool_calls_generation_tool_call_uq"
+        "org_workspace_assistant_tool_calls_generation_tool_call_uq"
       )?.config
     ).toMatchObject({ unique: true });
     expect(
       indexColumnNames(
         toolCallIndexes.get(
-          "workspace_assistant_tool_calls_generation_tool_call_uq"
+          "org_workspace_assistant_tool_calls_generation_tool_call_uq"
         )!
       )
     ).toEqual(["generation_id", "tool_call_id"]);
@@ -251,7 +251,7 @@ describe("workspace assistant schema", () => {
       config.indexes.map((index) => [index.config.name, index])
     );
 
-    expect(config.name).toBe("lightfast_workspace_assistant_context_items");
+    expect(config.name).toBe("lightfast_org_workspace_assistant_context_items");
     expect(config.columns.map((column) => column.name)).toEqual(
       expect.arrayContaining([
         "id",
@@ -270,12 +270,12 @@ describe("workspace assistant schema", () => {
     );
     expect(
       indexColumnNames(
-        indexes.get("workspace_assistant_context_items_conversation_kind_idx")!
+        indexes.get("org_workspace_assistant_context_items_conversation_kind_idx")!
       )
     ).toEqual(["conversation_id", "kind", "id"]);
     expect(
       indexColumnNames(
-        indexes.get("workspace_assistant_context_items_message_kind_idx")!
+        indexes.get("org_workspace_assistant_context_items_message_kind_idx")!
       )
     ).toEqual(["message_id", "kind", "id"]);
   });

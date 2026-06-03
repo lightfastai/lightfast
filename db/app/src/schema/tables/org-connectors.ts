@@ -6,12 +6,12 @@ import type {
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  datetime,
   boolean,
   index,
   json,
   mysqlTable,
   text,
-  timestamp,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -41,10 +41,10 @@ export const orgConnectorConnections = mysqlTable(
     connectedByUserId: varchar("connected_by_user_id", {
       length: CLERK_ID_LENGTH,
     }).notNull(),
-    connectedAt: timestamp("connected_at", { mode: "date", fsp: 3 })
+    connectedAt: datetime("connected_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
-    revokedAt: timestamp("revoked_at", { mode: "date", fsp: 3 }),
+    revokedAt: datetime("revoked_at", { mode: "date", fsp: 3 }),
     providerWorkspaceId: varchar("provider_workspace_id", {
       length: PROVIDER_REF_LENGTH,
     }),
@@ -59,11 +59,11 @@ export const orgConnectorConnections = mysqlTable(
     }),
     encryptedAccessToken: text("encrypted_access_token"),
     encryptedRefreshToken: text("encrypted_refresh_token"),
-    accessTokenExpiresAt: timestamp("access_token_expires_at", {
+    accessTokenExpiresAt: datetime("access_token_expires_at", {
       mode: "date",
       fsp: 3,
     }),
-    refreshTokenExpiresAt: timestamp("refresh_token_expires_at", {
+    refreshTokenExpiresAt: datetime("refresh_token_expires_at", {
       mode: "date",
       fsp: 3,
     }),
@@ -72,11 +72,11 @@ export const orgConnectorConnections = mysqlTable(
     toolManifest: json("tool_manifest")
       .$type<FullConnectorToolManifest>()
       .notNull(),
-    lastToolRefreshAt: timestamp("last_tool_refresh_at", {
+    lastToolRefreshAt: datetime("last_tool_refresh_at", {
       mode: "date",
       fsp: 3,
     }),
-    lastToolRefreshErrorAt: timestamp("last_tool_refresh_error_at", {
+    lastToolRefreshErrorAt: datetime("last_tool_refresh_error_at", {
       mode: "date",
       fsp: 3,
     }),
@@ -88,12 +88,12 @@ export const orgConnectorConnections = mysqlTable(
       .notNull(),
     enabledForAgents: boolean("enabled_for_agents").default(false).notNull(),
     metadata: json("metadata").$type<Record<string, unknown>>().notNull(),
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
     // Match the views tables: keep update semantics in Drizzle runtime because
-    // drizzle-kit emits an invalid Vitess DDL clause for timestamp(3).
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    // drizzle-kit emits an invalid Vitess DDL clause for datetime(3).
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),

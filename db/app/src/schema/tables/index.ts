@@ -8,21 +8,21 @@ export {
   type AutomationScheduleConfig,
   type AutomationScheduleKind,
   type AutomationStatus,
-  automationRuns,
-  automations,
+  orgAutomationRuns,
+  orgAutomations,
   createAutomationId,
   createAutomationRunId,
   type InsertAutomation,
   type InsertAutomationRun,
-} from "./automations";
+} from "./org-automations";
 export {
   type IdentityIndexFile,
   type IdentityIndexState,
   type InsertIdentityIndexFile,
   type InsertIdentityIndexState,
-  identityIndexFiles,
-  identityIndexStates,
-} from "./identity-index";
+  orgIdentityIndexFiles,
+  orgIdentityIndexStates,
+} from "./org-identity-index";
 // MCP OAuth tables and types
 export {
   createMcpOauthClientId,
@@ -50,14 +50,14 @@ export {
   type McpOauthRefreshTokenStatus,
   type McpOauthRegistrationToken,
   type McpOauthRegistrationTokenStatus,
-  mcpAuditEvents,
-  mcpOauthAuthorizationCodes,
-  mcpOauthClientRedirectUris,
-  mcpOauthClients,
-  mcpOauthGrants,
-  mcpOauthRefreshTokens,
-  mcpOauthRegistrationTokens,
-} from "./mcp-oauth";
+  systemMcpAuditEvents,
+  systemMcpOauthAuthorizationCodes,
+  systemMcpOauthClientRedirectUris,
+  systemMcpOauthClients,
+  systemMcpOauthGrants,
+  systemMcpOauthRefreshTokens,
+  systemMcpOauthRegistrationTokens,
+} from "./system-mcp-oauth";
 export {
   type InsertNamespace,
   type InsertNamespaceOperation,
@@ -67,15 +67,15 @@ export {
   type NamespaceOperationStatus,
   type NamespaceOperationType,
   type NamespaceStatus,
-  namespaceOperations,
-  namespaces,
-} from "./namespaces";
+  systemNamespaceOperations,
+  systemNamespaces,
+} from "./system-namespaces";
 // Connector tables and types
 export {
   type InsertOrgConnectorConnection,
   type OrgConnectorConnection,
   orgConnectorConnections,
-} from "./org-connector-connections";
+} from "./org-connectors";
 export {
   type InsertOrgSourceControlBinding,
   type OrgSourceControlBinding,
@@ -92,16 +92,16 @@ export {
   type Person,
   type PersonIdentityProvider,
   type PersonIdentityType,
-  people,
-} from "./people";
+  orgPeople,
+} from "./org-people";
 export {
   createPeopleViewId,
   type InsertPeopleView,
   PEOPLE_VIEW_ID_PREFIX,
   type PeopleView,
   type PeopleViewConfig,
-  peopleViews,
-} from "./people-views";
+  orgPeopleViews,
+} from "./org-people-views";
 export {
   createProviderRoutineCallId,
   type InsertProviderRoutineCall,
@@ -112,22 +112,22 @@ export {
   type ProviderRoutineCallRedactedPayload,
   type ProviderRoutineCallSourceSurface,
   type ProviderRoutineCallStatus,
-  providerRoutineCalls,
-} from "./provider-routine-calls";
+  orgProviderRoutineCalls,
+} from "./org-provider-routine-calls";
 export {
   createSignalViewId,
   type InsertSignalView,
   SIGNAL_VIEW_ID_PREFIX,
   type SignalView,
   type SignalViewConfig,
-  signalViews,
-} from "./signal-views";
+  orgSignalViews,
+} from "./org-signal-views";
 export {
   createSignalId,
   type InsertSignal,
   type Signal,
-  signals,
-} from "./signals";
+  orgSignals,
+} from "./org-signals";
 export {
   type InsertSkillIndexEntry,
   type InsertSkillIndexState,
@@ -135,24 +135,24 @@ export {
   type SkillIndexEntry,
   type SkillIndexEntryMetadata,
   type SkillIndexState,
-  skillIndexEntries,
-  skillIndexStates,
-} from "./skill-index";
+  orgSkillIndexEntries,
+  orgSkillIndexStates,
+} from "./org-skill-index";
 export {
   type InsertSourceControlRepository,
   type InsertSourceControlWebhookDelivery,
   type SourceControlRepository,
   type SourceControlWebhookDelivery,
-  sourceControlRepositories,
-  sourceControlWebhookDeliveries,
-} from "./source-control-repositories";
+  orgSourceControlRepositories,
+  orgSourceControlWebhookDeliveries,
+} from "./org-source-control-repositories";
 export {
   type InsertUserSourceControlAccount,
   type UserSourceControlAccount,
   type UserSourceControlAccountProvider,
   type UserSourceControlAccountStatus,
   userSourceControlAccounts,
-} from "./user-source-control-accounts";
+} from "./user-source-control";
 export {
   createWorkspaceAssistantContextItemId,
   createWorkspaceAssistantConversationId,
@@ -187,9 +187,9 @@ export {
   type WorkspaceAssistantToolCall,
   type WorkspaceAssistantToolCallStatus,
   type WorkspaceAssistantToolPayload,
-  workspaceAssistantContextItems,
-  workspaceAssistantConversations,
-  workspaceAssistantGenerations,
-  workspaceAssistantMessages,
-  workspaceAssistantToolCalls,
-} from "./workspace-assistant";
+  orgWorkspaceAssistantContextItems,
+  orgWorkspaceAssistantConversations,
+  orgWorkspaceAssistantGenerations,
+  orgWorkspaceAssistantMessages,
+  orgWorkspaceAssistantToolCalls,
+} from "./org-workspace-assistant";

@@ -7,9 +7,9 @@ import type {
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  workspaceAssistantConversations,
-  workspaceAssistantGenerations,
-  workspaceAssistantMessages,
+  orgWorkspaceAssistantConversations as workspaceAssistantConversations,
+  orgWorkspaceAssistantGenerations as workspaceAssistantGenerations,
+  orgWorkspaceAssistantMessages as workspaceAssistantMessages,
 } from "../schema";
 import {
   appendWorkspaceAssistantMessage,

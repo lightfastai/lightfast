@@ -20,9 +20,9 @@ import type {
 } from "../schema";
 import {
   orgSourceControlBindings,
-  skillIndexEntries,
-  skillIndexStates,
-  sourceControlRepositories,
+  orgSkillIndexEntries as skillIndexEntries,
+  orgSkillIndexStates as skillIndexStates,
+  orgSourceControlRepositories as sourceControlRepositories,
 } from "../schema";
 import { getRowsAffected, isDuplicateKeyError } from "./drizzle-results";
 

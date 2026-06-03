@@ -8,7 +8,7 @@ import type { SQL } from "drizzle-orm";
 import { and, desc, eq, gte, inArray, lt, or } from "drizzle-orm";
 
 import type { Database } from "../client";
-import { createSignalId, type Signal, signals } from "../schema";
+import { createSignalId, type Signal, orgSignals as signals } from "../schema";
 import { getRowsAffected } from "./drizzle-results";
 
 const WORKSPACE_SIGNALS_WINDOW_DAYS = 30;

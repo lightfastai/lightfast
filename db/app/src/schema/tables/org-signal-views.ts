@@ -3,10 +3,10 @@ import type { SignalClassification } from "@repo/api-contract";
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  datetime,
   index,
   json,
   mysqlTable,
-  timestamp,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -30,8 +30,8 @@ export interface SignalViewConfig {
   };
 }
 
-export const signalViews = mysqlTable(
-  "lightfast_signal_views",
+export const orgSignalViews = mysqlTable(
+  "lightfast_org_signal_views",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -51,24 +51,20 @@ export const signalViews = mysqlTable(
 
     config: json("config").$type<SignalViewConfig>().notNull(),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    // NOTE: we intentionally use drizzle's runtime `$onUpdate` hook instead of
-    // the DDL `.onUpdateNow()`. drizzle-kit 0.31.10 emits `ON UPDATE
-    // CURRENT_TIMESTAMP` without the `(3)` precision that a `timestamp(3)`
-    // column requires, which Vitess rejects on CREATE TABLE (errno 1294). The
-    // runtime hook keeps updated-at-on-write semantics without emitting the
-    // invalid DDL clause.
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    // Runtime hook keeps updated-at-on-write semantics without database-side
+    // on-update DDL.
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => [
-    uniqueIndex("signal_views_public_id_uq").on(table.publicId),
-    index("signal_views_org_user_created_idx").on(
+    uniqueIndex("org_signal_views_public_id_uq").on(table.publicId),
+    index("org_signal_views_org_user_created_idx").on(
       table.clerkOrgId,
       table.createdByUserId,
       table.createdAt,
@@ -77,5 +73,5 @@ export const signalViews = mysqlTable(
   ]
 );
 
-export type SignalView = typeof signalViews.$inferSelect;
-export type InsertSignalView = typeof signalViews.$inferInsert;
+export type SignalView = typeof orgSignalViews.$inferSelect;
+export type InsertSignalView = typeof orgSignalViews.$inferInsert;

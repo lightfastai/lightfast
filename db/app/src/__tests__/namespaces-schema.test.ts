@@ -1,7 +1,7 @@
 import { getTableConfig } from "drizzle-orm/mysql-core";
 import { describe, expect, it } from "vitest";
 
-import { namespaceOperations, namespaces } from "../schema";
+import { systemNamespaceOperations as namespaceOperations, systemNamespaces as namespaces } from "../schema";
 
 function indexColumnNames(index: { config: { columns: unknown[] } }) {
   return index.config.columns.map((column) => {
@@ -20,7 +20,7 @@ describe("namespaces schema", () => {
     );
     const columnNames = config.columns.map((column) => column.name);
 
-    expect(config.name).toBe("lightfast_namespaces");
+    expect(config.name).toBe("lightfast_system_namespaces");
     expect(columnNames).toEqual(
       expect.arrayContaining([
         "id",
@@ -37,37 +37,37 @@ describe("namespaces schema", () => {
       ])
     );
 
-    expect(indexes.get("namespaces_handle_uq")?.config).toMatchObject({
+    expect(indexes.get("system_namespaces_handle_uq")?.config).toMatchObject({
       unique: true,
     });
-    expect(indexColumnNames(indexes.get("namespaces_handle_uq")!)).toEqual([
+    expect(indexColumnNames(indexes.get("system_namespaces_handle_uq")!)).toEqual([
       "handle",
     ]);
-    expect(indexes.get("namespaces_active_operation_uq")?.config).toMatchObject(
+    expect(indexes.get("system_namespaces_active_operation_uq")?.config).toMatchObject(
       {
         unique: true,
       }
     );
     expect(
-      indexColumnNames(indexes.get("namespaces_active_operation_uq")!)
+      indexColumnNames(indexes.get("system_namespaces_active_operation_uq")!)
     ).toEqual(["active_operation_id"]);
-    expect(indexes.get("namespaces_claimed_user_uq")?.config).toMatchObject({
+    expect(indexes.get("system_namespaces_claimed_user_uq")?.config).toMatchObject({
       unique: true,
     });
     expect(
-      indexColumnNames(indexes.get("namespaces_claimed_user_uq")!)
+      indexColumnNames(indexes.get("system_namespaces_claimed_user_uq")!)
     ).toEqual(["claimed_clerk_user_id"]);
-    expect(indexes.get("namespaces_claimed_org_uq")?.config).toMatchObject({
+    expect(indexes.get("system_namespaces_claimed_org_uq")?.config).toMatchObject({
       unique: true,
     });
-    expect(indexColumnNames(indexes.get("namespaces_claimed_org_uq")!)).toEqual(
+    expect(indexColumnNames(indexes.get("system_namespaces_claimed_org_uq")!)).toEqual(
       ["claimed_clerk_org_id"]
     );
-    expect(indexColumnNames(indexes.get("namespaces_user_idx")!)).toEqual([
+    expect(indexColumnNames(indexes.get("system_namespaces_user_idx")!)).toEqual([
       "clerk_user_id",
       "status",
     ]);
-    expect(indexColumnNames(indexes.get("namespaces_org_idx")!)).toEqual([
+    expect(indexColumnNames(indexes.get("system_namespaces_org_idx")!)).toEqual([
       "clerk_org_id",
       "status",
     ]);
@@ -80,7 +80,7 @@ describe("namespaces schema", () => {
     );
     const columnNames = config.columns.map((column) => column.name);
 
-    expect(config.name).toBe("lightfast_namespace_operations");
+    expect(config.name).toBe("lightfast_system_namespace_operations");
     expect(columnNames).toEqual(
       expect.arrayContaining([
         "id",
@@ -103,33 +103,33 @@ describe("namespaces schema", () => {
     );
 
     expect(
-      indexes.get("namespace_operations_user_idempotency_uq")?.config
+      indexes.get("system_namespace_operations_user_idempotency_uq")?.config
     ).toMatchObject({ unique: true });
     expect(
-      indexColumnNames(indexes.get("namespace_operations_user_idempotency_uq")!)
+      indexColumnNames(indexes.get("system_namespace_operations_user_idempotency_uq")!)
     ).toEqual([
       "idempotency_clerk_user_id",
       "operation_type",
       "idempotency_key",
     ]);
     expect(
-      indexes.get("namespace_operations_org_idempotency_uq")?.config
+      indexes.get("system_namespace_operations_org_idempotency_uq")?.config
     ).toMatchObject({ unique: true });
     expect(
-      indexColumnNames(indexes.get("namespace_operations_org_idempotency_uq")!)
+      indexColumnNames(indexes.get("system_namespace_operations_org_idempotency_uq")!)
     ).toEqual([
       "idempotency_clerk_org_id",
       "operation_type",
       "idempotency_key",
     ]);
     expect(
-      indexColumnNames(indexes.get("namespace_operations_status_idx")!)
+      indexColumnNames(indexes.get("system_namespace_operations_status_idx")!)
     ).toEqual(["status", "updated_at"]);
     expect(
-      indexColumnNames(indexes.get("namespace_operations_user_idx")!)
+      indexColumnNames(indexes.get("system_namespace_operations_user_idx")!)
     ).toEqual(["clerk_user_id", "status"]);
     expect(
-      indexColumnNames(indexes.get("namespace_operations_org_idx")!)
+      indexColumnNames(indexes.get("system_namespace_operations_org_idx")!)
     ).toEqual(["clerk_org_id", "status"]);
   });
 });

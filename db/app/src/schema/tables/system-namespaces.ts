@@ -1,9 +1,9 @@
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  datetime,
   index,
   mysqlTable,
-  timestamp,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -29,8 +29,8 @@ const IDEMPOTENCY_KEY_LENGTH = 128;
 const ERROR_CODE_LENGTH = 64;
 const ERROR_MESSAGE_LENGTH = 512;
 
-export const namespaces = mysqlTable(
-  "lightfast_namespaces",
+export const systemNamespaces = mysqlTable(
+  "lightfast_system_namespaces",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -54,32 +54,32 @@ export const namespaces = mysqlTable(
       mode: "number",
       unsigned: true,
     }),
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => ({
-    activeOperationUq: uniqueIndex("namespaces_active_operation_uq").on(
+    activeOperationUq: uniqueIndex("system_namespaces_active_operation_uq").on(
       table.activeOperationId
     ),
-    claimedOrgUq: uniqueIndex("namespaces_claimed_org_uq").on(
+    claimedOrgUq: uniqueIndex("system_namespaces_claimed_org_uq").on(
       table.claimedClerkOrgId
     ),
-    claimedUserUq: uniqueIndex("namespaces_claimed_user_uq").on(
+    claimedUserUq: uniqueIndex("system_namespaces_claimed_user_uq").on(
       table.claimedClerkUserId
     ),
-    handleUq: uniqueIndex("namespaces_handle_uq").on(table.handle),
-    orgIdx: index("namespaces_org_idx").on(table.clerkOrgId, table.status),
-    userIdx: index("namespaces_user_idx").on(table.clerkUserId, table.status),
+    handleUq: uniqueIndex("system_namespaces_handle_uq").on(table.handle),
+    orgIdx: index("system_namespaces_org_idx").on(table.clerkOrgId, table.status),
+    userIdx: index("system_namespaces_user_idx").on(table.clerkUserId, table.status),
   })
 );
 
-export const namespaceOperations = mysqlTable(
-  "lightfast_namespace_operations",
+export const systemNamespaceOperations = mysqlTable(
+  "lightfast_system_namespace_operations",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -108,44 +108,44 @@ export const namespaceOperations = mysqlTable(
     }).notNull(),
     errorCode: varchar("error_code", { length: ERROR_CODE_LENGTH }),
     errorMessage: varchar("error_message", { length: ERROR_MESSAGE_LENGTH }),
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),
-    expiresAt: timestamp("expires_at", { mode: "date", fsp: 3 }),
+    expiresAt: datetime("expires_at", { mode: "date", fsp: 3 }),
   },
   (table) => ({
-    orgIdempotencyUq: uniqueIndex("namespace_operations_org_idempotency_uq").on(
+    orgIdempotencyUq: uniqueIndex("system_namespace_operations_org_idempotency_uq").on(
       table.idempotencyClerkOrgId,
       table.operationType,
       table.idempotencyKey
     ),
-    orgIdx: index("namespace_operations_org_idx").on(
+    orgIdx: index("system_namespace_operations_org_idx").on(
       table.clerkOrgId,
       table.status
     ),
-    statusIdx: index("namespace_operations_status_idx").on(
+    statusIdx: index("system_namespace_operations_status_idx").on(
       table.status,
       table.updatedAt
     ),
     userIdempotencyUq: uniqueIndex(
-      "namespace_operations_user_idempotency_uq"
+      "system_namespace_operations_user_idempotency_uq"
     ).on(
       table.idempotencyClerkUserId,
       table.operationType,
       table.idempotencyKey
     ),
-    userIdx: index("namespace_operations_user_idx").on(
+    userIdx: index("system_namespace_operations_user_idx").on(
       table.clerkUserId,
       table.status
     ),
   })
 );
 
-export type Namespace = typeof namespaces.$inferSelect;
-export type InsertNamespace = typeof namespaces.$inferInsert;
-export type NamespaceOperation = typeof namespaceOperations.$inferSelect;
-export type InsertNamespaceOperation = typeof namespaceOperations.$inferInsert;
+export type Namespace = typeof systemNamespaces.$inferSelect;
+export type InsertNamespace = typeof systemNamespaces.$inferInsert;
+export type NamespaceOperation = typeof systemNamespaceOperations.$inferSelect;
+export type InsertNamespaceOperation = typeof systemNamespaceOperations.$inferInsert;
