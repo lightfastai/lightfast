@@ -24,7 +24,7 @@
         "KV_REST_API_TOKEN",
         "PORT"
       ],
-      "inputs": ["$TURBO_DEFAULT$", ".vercel/.env*"],
+      "inputs": ["$TURBO_DEFAULT$", ".env.overrides.local", ".vercel/.env*"],
       "outputs": [
         ".next/**",
         "!.next/cache/**",

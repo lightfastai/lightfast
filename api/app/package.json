@@ -56,7 +56,9 @@
     "seed:people": "pnpm with-env tsx scripts/seed-people-signals.ts",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
-    "with-env": "dotenv -e ../../apps/app/.vercel/.env.development.local --"
+    "with-env": "dotenv -e ../../apps/app/.env.overrides.local -e ../../apps/app/.vercel/.env.development.local --",
+    "with-env:local": "dotenv -e ../../apps/app/.env.overrides.local -e ../../apps/app/.vercel/.env.development.local --",
+    "with-env:vercel": "dotenv -e ../../apps/app/.vercel/.env.development.local --"
   },
   "dependencies": {
     "@db/app": "workspace:*",

@@ -38,7 +38,9 @@
     "db:studio": "portless run --name db.lightfast sh -c 'pnpm with-env drizzle-kit studio --config=./src/drizzle.config.ts --host \"$HOST\" --port \"$PORT\"'",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
-    "with-env": "dotenv -e ../../apps/app/.vercel/.env.development.local --"
+    "with-env": "dotenv -e ../../apps/app/.env.overrides.local -e ../../apps/app/.vercel/.env.development.local --",
+    "with-env:local": "dotenv -e ../../apps/app/.env.overrides.local -e ../../apps/app/.vercel/.env.development.local --",
+    "with-env:vercel": "dotenv -e ../../apps/app/.vercel/.env.development.local --"
   },
   "dependencies": {
     "@repo/ai": "workspace:*",

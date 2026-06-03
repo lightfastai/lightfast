@@ -26,7 +26,7 @@ pnpm db:studio  # Open Drizzle Studio through Portless
 Local PlanetScale branch/password setup is skill-driven. Load
 `.agents/skills/lightfast-local-infra` and use its `db up` runbook to create or
 reuse a branch and write `DATABASE_HOST`, `DATABASE_USERNAME`, and
-`DATABASE_PASSWORD` to `apps/app/.vercel/.env.development.local`.
+`DATABASE_PASSWORD` to `apps/app/.env.overrides.local`.
 
 ## Branch Model & Deploy Pipeline
 
