@@ -13,6 +13,7 @@ import {
 } from "@repo/ui/components/ai-elements/conversation";
 import {
   Message,
+  MessageActions,
   MessageContent,
   MessageResponse,
 } from "@repo/ui/components/ai-elements/message";
@@ -52,6 +53,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTRPC } from "~/trpc/react";
+import { extractMessageText, MessageCopyButton } from "./message-copy-button";
 
 type SkillsListResult = AppRouterOutputs["org"]["workspace"]["skills"]["list"];
 type Skill = SkillsListResult["skills"][number];
@@ -180,58 +182,78 @@ export function WorkspaceAssistantClient({
     setText("");
   };
 
+  const composer = (
+    <ChatComposer
+      disabled={composerStatus !== "ready"}
+      error={displayError}
+      onSubmit={handleSubmit}
+      onTextChange={setText}
+      status={composerStatus}
+      stop={stop}
+      text={text}
+    />
+  );
+
   return (
     <main className="flex h-full min-h-0 flex-1 flex-col bg-background text-foreground">
-      <div className="relative min-h-0 flex-1">
-        {hasMessages ? (
-          <Conversation className="h-full">
-            <ConversationContent className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 pt-10 pb-40 md:px-10">
-              {messages.map((message) => (
-                <Message from={message.role} key={message.id}>
-                  <MessageContent
-                    className={cn(
-                      message.role === "user" &&
-                        "rounded-3xl bg-muted px-5 py-3 text-[15px] leading-6",
-                      message.role === "assistant" &&
-                        "w-full max-w-none bg-transparent px-0 py-0 text-[15px] leading-7"
-                    )}
-                  >
-                    {message.parts.map((part, index) => (
-                      <WorkspaceAssistantMessagePart
-                        isStreaming={
-                          message.role === "assistant" && status === "streaming"
-                        }
-                        key={`${message.id}-${index}`}
-                        part={part}
-                      />
-                    ))}
-                  </MessageContent>
-                </Message>
-              ))}
-            </ConversationContent>
-            <ConversationScrollButton />
-          </Conversation>
-        ) : (
+      {hasMessages ? (
+        <>
+          <div className="relative min-h-0 flex-1">
+            <Conversation className="h-full">
+              <ConversationContent className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 pt-10 pb-40 md:px-10">
+                {messages.map((message) => {
+                  const copyText = extractMessageText(message);
+                  return (
+                    <Message from={message.role} key={message.id}>
+                      <MessageContent
+                        className={cn(
+                          message.role === "user" &&
+                            "rounded-3xl bg-muted px-5 py-3 text-[15px] leading-6",
+                          message.role === "assistant" &&
+                            "w-full max-w-none bg-transparent px-0 py-0 text-[15px] leading-7"
+                        )}
+                      >
+                        {message.parts.map((part, index) => (
+                          <WorkspaceAssistantMessagePart
+                            isStreaming={
+                              message.role === "assistant" &&
+                              status === "streaming"
+                            }
+                            key={`${message.id}-${index}`}
+                            part={part}
+                          />
+                        ))}
+                      </MessageContent>
+                      {copyText ? (
+                        <MessageActions
+                          className={cn(
+                            "opacity-0 transition-opacity duration-150 focus-within:opacity-100 group-hover:opacity-100",
+                            message.role === "user" && "ml-auto"
+                          )}
+                        >
+                          <MessageCopyButton text={copyText} />
+                        </MessageActions>
+                      ) : null}
+                    </Message>
+                  );
+                })}
+              </ConversationContent>
+              <ConversationScrollButton />
+            </Conversation>
+          </div>
+          <div className="shrink-0 px-4 pb-5 md:px-8">{composer}</div>
+        </>
+      ) : (
+        <div className="relative min-h-0 flex-1 overflow-y-auto">
           <EmptyChatState
+            composer={composer}
             onTabChange={setSkillTab}
             orgSlug={params.slug}
             skills={visibleSkills}
             tab={skillTab}
           />
-        )}
-      </div>
-
-      <div className="shrink-0 px-4 pb-5 md:px-8">
-        <ChatComposer
-          disabled={composerStatus !== "ready"}
-          error={displayError}
-          onSubmit={handleSubmit}
-          onTextChange={setText}
-          status={composerStatus}
-          stop={stop}
-          text={text}
-        />
-      </div>
+        </div>
+      )}
     </main>
   );
 }
@@ -262,25 +284,30 @@ function replaceBrowserChatUrl(orgSlug: string, conversationId?: string) {
 }
 
 function EmptyChatState({
+  composer,
   onTabChange,
   orgSlug,
   skills,
   tab,
 }: {
+  composer: React.ReactNode;
   onTabChange: (tab: SkillTab) => void;
   orgSlug: string;
   skills: SkillCard[];
   tab: SkillTab;
 }) {
   return (
-    <section className="mx-auto flex h-full w-full max-w-3xl flex-col justify-start overflow-y-auto px-5 pt-8 pb-40 sm:justify-center sm:overflow-visible sm:pt-0 md:px-10 md:pb-36">
-      <div className="mb-8 text-center">
+    <section className="mx-auto flex min-h-full w-full max-w-3xl flex-col justify-center px-5 py-10 md:px-10">
+      <div className="mb-6 text-center">
         <h1 className="font-medium text-2xl text-foreground tracking-normal md:text-3xl">
           Ready when you are.
         </h1>
       </div>
 
+      {composer}
+
       <Tabs
+        className="mt-6"
         onValueChange={(value) => onTabChange(value as SkillTab)}
         value={tab}
       >
