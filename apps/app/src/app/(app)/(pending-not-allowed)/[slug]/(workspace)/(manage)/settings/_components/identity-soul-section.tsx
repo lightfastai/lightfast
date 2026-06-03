@@ -8,8 +8,10 @@ import { ExternalLink, FileText } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 
-type IdentitySettingsData =
-  AppRouterOutputs["org"]["settings"]["identity"]["get"];
+type IdentitySettingsData = Extract<
+  AppRouterOutputs["org"]["settings"]["identity"]["get"],
+  { configured: true }
+>;
 type IdentitySettingsFile = IdentitySettingsData["files"][number];
 
 function SectionHeader() {

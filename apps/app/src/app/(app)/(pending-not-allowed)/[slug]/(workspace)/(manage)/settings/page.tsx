@@ -1,6 +1,10 @@
+import { Suspense } from "react";
 import { HydrateClient, prefetch, trpc } from "~/trpc/server";
 
+import { IdentitySoulCard } from "./_components/identity-soul-card";
+import { IdentitySoulLoading } from "./_components/identity-soul-loading";
 import { TeamGeneralSettingsClient } from "./_components/team-general-settings-client";
+import { TeamProfileLoading } from "./_components/team-profile-loading";
 
 export default async function SettingsPage({
   params,
@@ -10,32 +14,32 @@ export default async function SettingsPage({
   // Settings layout already verified org access; no additional checks needed here
   const { slug } = await params;
 
+  // Prefetch every query the client tree reads via useSuspenseQuery. The
+  // organization list is also prefetched by the ancestor ShellDataBoundary;
+  // repeating it here keeps this route self-documenting and is a no-op dedupe.
   prefetch(trpc.org.settings.identity.get.queryOptions());
+  prefetch(trpc.viewer.organization.listUserOrganizations.queryOptions());
 
   return (
     <HydrateClient>
-      <TeamGeneralSettingsClient slug={slug} />
+      <div className="space-y-10">
+        <div>
+          <h2 className="font-medium font-pp text-2xl text-foreground">
+            General
+          </h2>
+          <p className="mt-1 text-muted-foreground text-sm">
+            Manage your team's profile and preferences.
+          </p>
+        </div>
+
+        <Suspense fallback={<TeamProfileLoading />}>
+          <TeamGeneralSettingsClient slug={slug} />
+        </Suspense>
+
+        <Suspense fallback={<IdentitySoulLoading />}>
+          <IdentitySoulCard slug={slug} />
+        </Suspense>
+      </div>
     </HydrateClient>
   );
 }
-
-// Unused for now but may be needed if we add Suspense boundaries
-// function GeneralSettingsSkeleton() {
-//   return (
-//     <div className="space-y-8">
-//       <div className="space-y-4">
-//         <div>
-//           <Skeleton className="h-7 w-48" />
-//           <Skeleton className="h-4 w-72 mt-2" />
-//         </div>
-//         <div className="w-full space-y-4">
-//           <Skeleton className="h-10 w-full" />
-//           <Skeleton className="h-4 w-56" />
-//           <div className="flex justify-end">
-//             <Skeleton className="h-9 w-16" />
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
