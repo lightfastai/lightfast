@@ -332,10 +332,13 @@ describe("X MCP bridge service", () => {
     });
 
     expect(response.status).toBe(401);
-    expect(getCurrentOrgConnectorConnectionMock).toHaveBeenCalledWith({}, {
-      clerkOrgId: "org_other",
-      provider: "x",
-    });
+    expect(getCurrentOrgConnectorConnectionMock).toHaveBeenCalledWith(
+      {},
+      {
+        clerkOrgId: "org_other",
+        provider: "x",
+      }
+    );
     expect(executeXApiToolMock).not.toHaveBeenCalled();
   });
 

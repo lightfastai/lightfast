@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { classifyLinearRoutine, classifyXRoutine, hasRoutineScope } from "../policy";
+import {
+  classifyLinearRoutine,
+  classifyXRoutine,
+  hasRoutineScope,
+} from "../policy";
 
 describe("provider routine policy", () => {
   it("lets write scope satisfy read routines", () => {
