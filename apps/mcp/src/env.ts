@@ -1,29 +1,48 @@
+import "@tanstack/react-start/server-only";
+
 import { env as dbEnv } from "@db/app/env";
-import { createEnv } from "@t3-oss/env-nextjs";
-import { vercel } from "@t3-oss/env-nextjs/presets-zod";
-import { sentryEnv } from "@vendor/observability/sentry-env";
+import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
+const vercelEnvSchema = z
+  .enum(["development", "preview", "production"])
+  .default("development");
+
 export const env = createEnv({
-  extends: [vercel(), dbEnv, sentryEnv],
-  shared: {
+  extends: [dbEnv],
+  clientPrefix: "VITE_",
+  client: {
+    VITE_SENTRY_DSN: z.string().url().optional(),
+  },
+  server: {
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
-  },
-  server: {
     MCP_AUTH_ISSUER: z.string().url(),
     MCP_RESOURCE_URL: z.string().url(),
+    NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
     SERVICE_JWT_SECRET: z.string().min(32),
+    SENTRY_DSN: z.string().url().optional(),
+    SENTRY_AUTH_TOKEN: z.string().min(1).optional(),
+    SENTRY_ORG: z.string().min(1).optional(),
+    SENTRY_PROJECT: z.string().min(1).optional(),
+    VERCEL_ENV: vercelEnvSchema,
   },
-  client: {
-    NEXT_PUBLIC_VERCEL_ENV: z
-      .enum(["development", "preview", "production"])
-      .default("development"),
-  },
-  experimental__runtimeEnv: {
+  runtimeEnv: {
+    DATABASE_HOST: process.env.DATABASE_HOST,
+    DATABASE_USERNAME: process.env.DATABASE_USERNAME,
+    DATABASE_PASSWORD: process.env.DATABASE_PASSWORD,
     NODE_ENV: process.env.NODE_ENV,
-    NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
+    MCP_AUTH_ISSUER: process.env.MCP_AUTH_ISSUER,
+    MCP_RESOURCE_URL: process.env.MCP_RESOURCE_URL,
+    NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    SERVICE_JWT_SECRET: process.env.SERVICE_JWT_SECRET,
+    SENTRY_DSN: process.env.SENTRY_DSN,
+    SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
+    SENTRY_ORG: process.env.SENTRY_ORG,
+    SENTRY_PROJECT: process.env.SENTRY_PROJECT,
+    VERCEL_ENV: process.env.VERCEL_ENV,
+    VITE_SENTRY_DSN: process.env.VITE_SENTRY_DSN,
   },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||

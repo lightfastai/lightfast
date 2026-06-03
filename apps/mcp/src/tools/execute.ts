@@ -21,6 +21,7 @@ import {
   providerRoutineCallInputSchema,
   providerRoutineFindInputSchema,
 } from "@repo/provider-routine-contract";
+import * as Sentry from "@sentry/tanstackstart-react";
 import { z } from "zod";
 
 import {
@@ -30,8 +31,6 @@ import {
 } from "../context";
 
 const DEFAULT_VERSION = "0.1.0";
-const OBSERVABILITY_LOG_PACKAGE: string = "@vendor/observability/log/next";
-const PROVIDER_ROUTINES_PACKAGE: string = "@repo/provider-routines";
 
 interface HostedMcpServerAdapter {
   registerTool: (
@@ -139,10 +138,6 @@ type FindProviderRoutinesService = (
 interface ProviderRoutineServiceModule {
   callProviderRoutine: CallProviderRoutineService;
   findProviderRoutines: FindProviderRoutinesService;
-}
-
-interface ObservabilityLogModule {
-  log: ProviderRoutineServiceLog;
 }
 
 export interface ExecuteHostedMcpToolInput {
@@ -528,16 +523,12 @@ function normalizeToolError(error: unknown): HostedMcpToolError {
 }
 
 async function defaultDependencies(): Promise<ExecuteHostedMcpToolDependencies> {
-  const [dbApp, signalService, mcpOauth, providerRoutines, observabilityLog] =
-    await Promise.all([
-      import("@db/app"),
-      import("@api/app/signals/service"),
-      import("@api/app/mcp-oauth"),
-      import(
-        PROVIDER_ROUTINES_PACKAGE
-      ) as Promise<ProviderRoutineServiceModule>,
-      import(OBSERVABILITY_LOG_PACKAGE) as Promise<ObservabilityLogModule>,
-    ]);
+  const [dbApp, signalService, mcpOauth, providerRoutines] = await Promise.all([
+    import("@db/app"),
+    import("@api/app/signals/service"),
+    import("@api/app/mcp-oauth"),
+    import("@repo/provider-routines") as Promise<ProviderRoutineServiceModule>,
+  ]);
 
   return {
     assertOrgAccess: mcpOauth.assertHostedMcpOrgAccess,
@@ -547,7 +538,7 @@ async function defaultDependencies(): Promise<ExecuteHostedMcpToolDependencies> 
     findProviderRoutines: providerRoutines.findProviderRoutines,
     getVisibleSignalByPublicId: dbApp.getVisibleSignalByPublicId,
     now: () => new Date(),
-    providerRoutineLog: observabilityLog.log,
+    providerRoutineLog: sentryProviderRoutineLog,
     recordMcpAuditEvent: dbApp.recordMcpAuditEvent,
     version: process.env.npm_package_version ?? DEFAULT_VERSION,
   };
@@ -583,6 +574,21 @@ const noopProviderRoutineLog: ProviderRoutineServiceLog = {
   error: () => undefined,
   info: () => undefined,
   warn: () => undefined,
+};
+
+const sentryProviderRoutineLog: ProviderRoutineServiceLog = {
+  error: (message, metadata) => {
+    console.error(message, metadata);
+    Sentry.logger.error(message, metadata);
+  },
+  info: (message, metadata) => {
+    console.info(message, metadata);
+    Sentry.logger.info(message, metadata);
+  },
+  warn: (message, metadata) => {
+    console.warn(message, metadata);
+    Sentry.logger.warn(message, metadata);
+  },
 };
 
 function providerRoutineCallIdFromResult(result: unknown) {
