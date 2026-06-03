@@ -17,7 +17,7 @@ const createFunctionMock = vi.fn(
   (config: { id: string }, handler: CleanupCallback): { id: string } => {
     cleanupCallback = handler;
     return { id: config.id };
-  },
+  }
 );
 
 vi.mock("@db/app/client", () => ({ db }));
@@ -70,7 +70,7 @@ describe("cleanupDeveloperSandboxRuns", () => {
         timeouts: { finish: "2m", start: "1m" },
         triggers: { cron: "*/5 * * * *" },
       },
-      expect.any(Function),
+      expect.any(Function)
     );
   });
 
@@ -88,7 +88,7 @@ describe("cleanupDeveloperSandboxRuns", () => {
     });
     expect(step.run).toHaveBeenCalledWith(
       "cleanup expired developer sandbox runs",
-      expect.any(Function),
+      expect.any(Function)
     );
   });
 });

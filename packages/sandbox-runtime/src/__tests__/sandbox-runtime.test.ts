@@ -9,17 +9,15 @@ vi.mock("@vendor/vercel-sandbox", () => ({
   Sandbox: sandboxSdk,
 }));
 
-const {
-  createInMemorySandboxRuntimeForTests,
-  createVercelSandboxRuntime,
-} = await import("../index");
+const { createInMemorySandboxRuntimeForTests, createVercelSandboxRuntime } =
+  await import("../index");
 
 function createSdkCommand(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     cmdId: "cmd_sdk_1",
     exitCode: 0,
     kill: vi.fn(async () => undefined),
-    logs: async function* logs() {
+    async *logs() {
       yield { stream: "stdout" as const, data: "hello\n" };
     },
     stderr: vi.fn(async () => ""),
@@ -99,7 +97,7 @@ describe("@repo/sandbox-runtime", () => {
       { path: "/vercel/sandbox/test.txt", content: "contents", mode: 0o600 },
     ]);
     await expect(
-      sandbox.readFileToBuffer("/vercel/sandbox/test.txt"),
+      sandbox.readFileToBuffer("/vercel/sandbox/test.txt")
     ).resolves.toEqual(Buffer.from("file contents"));
     await sandbox.updateNetworkPolicy("deny-all");
     await sandbox.stop();

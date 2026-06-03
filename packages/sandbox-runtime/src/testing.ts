@@ -32,7 +32,7 @@ export interface InMemorySandboxRuntimeOptions {
 
 function createCommand(
   input: SandboxExecInput,
-  options: Required<InMemorySandboxRuntimeOptions>,
+  options: Required<InMemorySandboxRuntimeOptions>
 ): SandboxCommand {
   return {
     id: `cmd_${input.cmd}`,
@@ -54,13 +54,13 @@ function createCommand(
       return options.stderr;
     },
     async kill() {
-      return undefined;
+      return;
     },
   };
 }
 
 export function createInMemorySandboxRuntimeForTests(
-  options: InMemorySandboxRuntimeOptions = {},
+  options: InMemorySandboxRuntimeOptions = {}
 ): InMemorySandboxRuntime {
   const resolvedOptions = {
     commandResult: options.commandResult ?? { exitCode: 0 },

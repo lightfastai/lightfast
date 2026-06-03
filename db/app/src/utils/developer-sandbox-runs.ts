@@ -15,7 +15,7 @@ const MAX_RUN_TTL_MS = 30 * 60 * 1000;
 
 export function developerSandboxRunExpiresAt(
   now: Date,
-  requestedTtlMs = DEFAULT_RUN_TTL_MS,
+  requestedTtlMs = DEFAULT_RUN_TTL_MS
 ) {
   const ttlMs = Math.min(requestedTtlMs, MAX_RUN_TTL_MS);
   return new Date(now.getTime() + ttlMs);
@@ -32,7 +32,7 @@ export async function createDeveloperSandboxRun(
     createdAt?: Date;
     expiresAt?: Date;
     requestedTtlMs?: number;
-  },
+  }
 ): Promise<DeveloperSandboxRun> {
   const now = input.createdAt ?? new Date();
   const [inserted] = await db
@@ -64,7 +64,7 @@ export async function createDeveloperSandboxRun(
 
 export async function getDeveloperSandboxRunById(
   db: Database,
-  id: number,
+  id: number
 ): Promise<DeveloperSandboxRun | undefined> {
   const [row] = await db
     .select()
@@ -76,7 +76,7 @@ export async function getDeveloperSandboxRunById(
 
 export async function getDeveloperSandboxRunByPublicId(
   db: Database,
-  input: { clerkOrgId: string; publicId: string },
+  input: { clerkOrgId: string; publicId: string }
 ): Promise<DeveloperSandboxRun | undefined> {
   const [row] = await db
     .select()
@@ -84,8 +84,8 @@ export async function getDeveloperSandboxRunByPublicId(
     .where(
       and(
         eq(developerSandboxRuns.clerkOrgId, input.clerkOrgId),
-        eq(developerSandboxRuns.publicId, input.publicId),
-      ),
+        eq(developerSandboxRuns.publicId, input.publicId)
+      )
     )
     .limit(1);
   return row;
@@ -93,7 +93,7 @@ export async function getDeveloperSandboxRunByPublicId(
 
 export async function markDeveloperSandboxRunCredentialsLoaded(
   db: Database,
-  input: { runId: number; loadedAt: Date },
+  input: { runId: number; loadedAt: Date }
 ): Promise<DeveloperSandboxRun | undefined> {
   const result = await db
     .update(developerSandboxRuns)
@@ -111,7 +111,7 @@ export async function markDeveloperSandboxRunCredentialsLoaded(
 
 export async function markDeveloperSandboxRunStopped(
   db: Database,
-  input: { runId: number; stoppedAt: Date },
+  input: { runId: number; stoppedAt: Date }
 ): Promise<DeveloperSandboxRun | undefined> {
   const result = await db
     .update(developerSandboxRuns)
@@ -130,7 +130,7 @@ export async function markDeveloperSandboxRunStopped(
 
 export async function markDeveloperSandboxRunExpired(
   db: Database,
-  input: { runId: number; expiredAt: Date },
+  input: { runId: number; expiredAt: Date }
 ): Promise<DeveloperSandboxRun | undefined> {
   const result = await db
     .update(developerSandboxRuns)
@@ -149,7 +149,7 @@ export async function markDeveloperSandboxRunExpired(
 
 export async function markDeveloperSandboxRunCleanupFailed(
   db: Database,
-  input: { runId: number; attemptedAt: Date; failureCode: string },
+  input: { runId: number; attemptedAt: Date; failureCode: string }
 ): Promise<DeveloperSandboxRun | undefined> {
   const result = await db
     .update(developerSandboxRuns)
@@ -168,7 +168,7 @@ export async function markDeveloperSandboxRunCleanupFailed(
 
 export async function listExpiredDeveloperSandboxRuns(
   db: Database,
-  input: { now: Date; limit?: number },
+  input: { now: Date; limit?: number }
 ): Promise<DeveloperSandboxRun[]> {
   return await db
     .select()
@@ -180,8 +180,8 @@ export async function listExpiredDeveloperSandboxRuns(
           "starting",
           "running",
           "stopping",
-        ]),
-      ),
+        ])
+      )
     )
     .orderBy(asc(developerSandboxRuns.expiresAt))
     .limit(input.limit ?? 25);
@@ -202,7 +202,7 @@ export async function createDeveloperSandboxCommand(
     policyReason?: string | null;
     startedAt?: Date | null;
     createdAt?: Date;
-  },
+  }
 ): Promise<DeveloperSandboxCommand> {
   const now = input.createdAt ?? new Date();
   const [inserted] = await db
@@ -237,7 +237,7 @@ export async function createDeveloperSandboxCommand(
 
 export async function getDeveloperSandboxCommandById(
   db: Database,
-  id: number,
+  id: number
 ): Promise<DeveloperSandboxCommand | undefined> {
   const [row] = await db
     .select()
@@ -249,7 +249,7 @@ export async function getDeveloperSandboxCommandById(
 
 export async function markDeveloperSandboxCommandRunning(
   db: Database,
-  input: { commandId: number; startedAt: Date },
+  input: { commandId: number; startedAt: Date }
 ): Promise<DeveloperSandboxCommand | undefined> {
   const result = await db
     .update(developerSandboxCommands)
@@ -279,7 +279,7 @@ export async function finishDeveloperSandboxCommand(
     policyDecision?: DeveloperSandboxCommandPolicyDecision;
     policyRuleId?: string | null;
     policyReason?: string | null;
-  },
+  }
 ): Promise<DeveloperSandboxCommand | undefined> {
   const result = await db
     .update(developerSandboxCommands)

@@ -42,8 +42,8 @@ interface DeveloperSandboxRunServiceOptions {
 }
 
 interface DeveloperSandboxCommandInput {
-  cmd: string;
   args?: string[];
+  cmd: string;
   cwd?: string;
   env?: Record<string, string>;
   timeoutMs?: number;
@@ -55,7 +55,7 @@ interface MaterializedCredentials {
 }
 
 export function canUseDeveloperSandboxes(
-  ctx: DeveloperSandboxRunServiceContext,
+  ctx: DeveloperSandboxRunServiceContext
 ) {
   return ctx.auth.identity.type === "active";
 }
@@ -89,19 +89,19 @@ function credentialFilePath(leasePublicId: string, path: string) {
 }
 
 function materializedEnv(
-  materialization: Array<{ env: Record<string, string> }>,
+  materialization: Array<{ env: Record<string, string> }>
 ) {
-  return Object.assign({}, ...materialization.map((entry) => entry.env)) as Record<
-    string,
-    string
-  >;
+  return Object.assign(
+    {},
+    ...materialization.map((entry) => entry.env)
+  ) as Record<string, string>;
 }
 
 function materializedSecrets(
   materialization: Array<{
     env: Record<string, string>;
     files: Array<{ contents: string }>;
-  }>,
+  }>
 ) {
   return materialization.flatMap((entry) => [
     ...Object.values(entry.env),
@@ -121,14 +121,14 @@ function cleanupFailureCode(error: unknown) {
 }
 
 export function createDeveloperSandboxRunService(
-  options: DeveloperSandboxRunServiceOptions,
+  options: DeveloperSandboxRunServiceOptions
 ) {
   const runtime = options.runtime ?? createVercelSandboxRuntime();
   const now = options.now ?? (() => new Date());
 
   async function loadRun(
     ctx: DeveloperSandboxRunServiceContext,
-    sandboxRunId: string,
+    sandboxRunId: string
   ) {
     const identity = activeIdentity(ctx);
     const run = await getDeveloperSandboxRunByPublicId(options.db, {
@@ -143,12 +143,12 @@ export function createDeveloperSandboxRunService(
 
   async function materializeCredentials(
     ctx: DeveloperSandboxRunServiceContext,
-    run: DeveloperSandboxRun,
+    run: DeveloperSandboxRun
   ): Promise<MaterializedCredentials> {
     if (run.credentialsLoadedAt) {
       const existing = await materializeDeveloperConnectionLeasesForSandboxRun(
         ctx,
-        { sandboxRunId: run.publicId },
+        { sandboxRunId: run.publicId }
       );
       return {
         env: materializedEnv(existing.materialization),
@@ -183,8 +183,8 @@ export function createDeveloperSandboxRunService(
         markDeveloperConnectionLeaseMaterialized(options.db, {
           leaseId: lease.id,
           materializedAt: loadedAt,
-        }),
-      ),
+        })
+      )
     );
     await markDeveloperSandboxRunCredentialsLoaded(options.db, {
       runId: run.id,
@@ -200,7 +200,7 @@ export function createDeveloperSandboxRunService(
   return {
     async createDeveloperSandboxRun(
       ctx: DeveloperSandboxRunServiceContext,
-      input: { requestedTtlMs?: number; workflowRunId?: string | null } = {},
+      input: { requestedTtlMs?: number; workflowRunId?: string | null } = {}
     ) {
       const identity = activeIdentity(ctx);
       const sandbox = await runtime.create({
@@ -228,7 +228,7 @@ export function createDeveloperSandboxRunService(
       input: {
         sandboxRunId: string;
         command: DeveloperSandboxCommandInput;
-      },
+      }
     ) {
       const { identity, run } = await loadRun(ctx, input.sandboxRunId);
       const startedAt = now();
@@ -313,7 +313,7 @@ export function createDeveloperSandboxRunService(
 
     async stopDeveloperSandboxRun(
       ctx: DeveloperSandboxRunServiceContext,
-      input: { sandboxRunId: string },
+      input: { sandboxRunId: string }
     ) {
       const { identity, run } = await loadRun(ctx, input.sandboxRunId);
       const stoppedAt = now();

@@ -14,8 +14,8 @@ export const cleanupDeveloperSandboxRuns = inngest.createFunction(
   },
   async ({ step }) =>
     step.run("cleanup expired developer sandbox runs", () =>
-      createDeveloperSandboxRunService({ db }).cleanupExpiredDeveloperSandboxRuns(
-        { limit: 25 },
-      ),
-    ),
+      createDeveloperSandboxRunService({
+        db,
+      }).cleanupExpiredDeveloperSandboxRuns({ limit: 25 })
+    )
 );

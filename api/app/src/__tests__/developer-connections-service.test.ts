@@ -348,30 +348,32 @@ describe("developer connection services", () => {
         revokedAt: null,
       },
     ]);
-    issueDeveloperConnectionLeaseMock.mockImplementation(async (_db, input) => ({
-      id: input.provider === "pscale" ? 10 : 11,
-      publicId: `developer_connection_lease_${input.provider}`,
-      connectionId: input.connectionId,
-      clerkOrgId: input.clerkOrgId,
-      actorUserId: input.actorUserId,
-      provider: input.provider,
-      status: "issued",
-      sandboxRunId: input.sandboxRunId,
-      workflowRunId: input.workflowRunId,
-      requestedAt: input.issuedAt,
-      issuedAt: input.issuedAt,
-      materializedAt: null,
-      expiresAt: new Date(input.issuedAt.getTime() + 15 * 60 * 1000),
-      revokedAt: null,
-      failureCode: null,
-      createdAt: input.issuedAt,
-      updatedAt: input.issuedAt,
-    }));
+    issueDeveloperConnectionLeaseMock.mockImplementation(
+      async (_db, input) => ({
+        id: input.provider === "pscale" ? 10 : 11,
+        publicId: `developer_connection_lease_${input.provider}`,
+        connectionId: input.connectionId,
+        clerkOrgId: input.clerkOrgId,
+        actorUserId: input.actorUserId,
+        provider: input.provider,
+        status: "issued",
+        sandboxRunId: input.sandboxRunId,
+        workflowRunId: input.workflowRunId,
+        requestedAt: input.issuedAt,
+        issuedAt: input.issuedAt,
+        materializedAt: null,
+        expiresAt: new Date(input.issuedAt.getTime() + 15 * 60 * 1000),
+        revokedAt: null,
+        failureCode: null,
+        createdAt: input.issuedAt,
+        updatedAt: input.issuedAt,
+      })
+    );
 
     await expect(
       issueAllEnabledDeveloperConnectionLeases(ctx(), {
         sandboxRunId: "developer_sandbox_run_1",
-      }),
+      })
     ).resolves.toEqual({
       leases: [
         expect.objectContaining({
@@ -444,7 +446,7 @@ describe("developer connection services", () => {
       materializeDeveloperConnectionLeasesForSandboxRun(ctx(), {
         now: new Date("2026-06-03T00:05:00.000Z"),
         sandboxRunId: "developer_sandbox_run_1",
-      }),
+      })
     ).resolves.toEqual({
       leases: [expect.objectContaining({ provider: "sentry" })],
       materialization: [

@@ -8,30 +8,34 @@ export type SandboxStatus =
   | "failed"
   | (string & {});
 
-export type SandboxRuntimeRuntime = "node24" | "node22" | "node26" | "python3.13";
+export type SandboxRuntimeRuntime =
+  | "node24"
+  | "node22"
+  | "node26"
+  | "python3.13";
 
 export type SandboxNetworkPolicy = NetworkPolicy;
 
 export interface SandboxCreateInput {
   name?: string;
-  runtime?: SandboxRuntimeRuntime;
-  timeoutMs?: number;
+  networkPolicy?: SandboxNetworkPolicy;
+  ports?: number[];
   resources?: {
     vcpus?: number;
   };
-  networkPolicy?: SandboxNetworkPolicy;
-  ports?: number[];
+  runtime?: SandboxRuntimeRuntime;
+  timeoutMs?: number;
 }
 
 export interface SandboxFile {
-  path: string;
   content: string | Uint8Array;
   mode?: number;
+  path: string;
 }
 
 export interface SandboxExecInput {
-  cmd: string;
   args?: string[];
+  cmd: string;
   cwd?: string;
   detached?: boolean;
   env?: Record<string, string>;
@@ -39,8 +43,8 @@ export interface SandboxExecInput {
 }
 
 export interface SandboxLogChunk {
-  stream: "stdout" | "stderr";
   data: string;
+  stream: "stdout" | "stderr";
 }
 
 export interface SandboxCommandResult {
@@ -49,25 +53,25 @@ export interface SandboxCommandResult {
 
 export interface SandboxCommand {
   id: string;
-  logs(): AsyncIterable<SandboxLogChunk>;
-  wait(): Promise<SandboxCommandResult>;
-  stdout(): Promise<string>;
-  stderr(): Promise<string>;
   kill(): Promise<void>;
+  logs(): AsyncIterable<SandboxLogChunk>;
+  stderr(): Promise<string>;
+  stdout(): Promise<string>;
+  wait(): Promise<SandboxCommandResult>;
 }
 
 export interface SandboxHandle {
-  id: string;
-  status: SandboxStatus;
-  writeFiles(files: SandboxFile[]): Promise<void>;
-  readFileToBuffer(path: string): Promise<Buffer | null>;
   exec(input: SandboxExecInput): Promise<SandboxCommand>;
-  updateNetworkPolicy(policy: SandboxNetworkPolicy): Promise<void>;
+  id: string;
+  readFileToBuffer(path: string): Promise<Buffer | null>;
+  status: SandboxStatus;
   stop(): Promise<void>;
+  updateNetworkPolicy(policy: SandboxNetworkPolicy): Promise<void>;
+  writeFiles(files: SandboxFile[]): Promise<void>;
 }
 
 export interface SandboxRuntime {
   create(input?: SandboxCreateInput): Promise<SandboxHandle>;
-  get(id: string): Promise<SandboxHandle>;
   destroy(id: string): Promise<void>;
+  get(id: string): Promise<SandboxHandle>;
 }

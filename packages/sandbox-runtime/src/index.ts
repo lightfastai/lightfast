@@ -1,3 +1,8 @@
+export {
+  createInMemorySandboxRuntimeForTests,
+  type InMemorySandboxRuntime,
+  type InMemorySandboxRuntimeOptions,
+} from "./testing";
 export type {
   SandboxCommand,
   SandboxCommandResult,
@@ -11,10 +16,4 @@ export type {
   SandboxRuntimeRuntime,
   SandboxStatus,
 } from "./types";
-
-export {
-  createInMemorySandboxRuntimeForTests,
-  type InMemorySandboxRuntime,
-  type InMemorySandboxRuntimeOptions,
-} from "./testing";
 export { createVercelSandboxRuntime } from "./vercel";

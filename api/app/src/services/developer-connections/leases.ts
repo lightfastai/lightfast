@@ -1,9 +1,13 @@
-import type { Database, DeveloperConnection, DeveloperConnectionLease } from "@db/app";
+import type {
+  Database,
+  DeveloperConnection,
+  DeveloperConnectionLease,
+} from "@db/app";
 import {
   getDeveloperConnectionById,
   issueDeveloperConnectionLease,
-  listDeveloperConnectionLeasesForSandboxRun,
   listCurrentDeveloperConnections,
+  listDeveloperConnectionLeasesForSandboxRun,
 } from "@db/app";
 import {
   DEVELOPER_CONNECTION_PROVIDERS,
@@ -66,9 +70,10 @@ async function materializeConnection(
       message: `${connection.provider} has no credential material`,
     });
   }
-  const credentialPayload = await decryptDeveloperCredential<
-    Record<string, unknown>
-  >(encryptedCredential);
+  const credentialPayload =
+    await decryptDeveloperCredential<Record<string, unknown>>(
+      encryptedCredential
+    );
   return materializeDeveloperCredential({
     provider: connection.provider,
     credentialPayload,
@@ -184,7 +189,10 @@ export async function materializeDeveloperConnectionLeasesForSandboxRun(
   const materialization: DeveloperConnectionMaterialization[] = [];
 
   for (const lease of leases) {
-    const connection = await getDeveloperConnectionById(ctx.db, lease.connectionId);
+    const connection = await getDeveloperConnectionById(
+      ctx.db,
+      lease.connectionId
+    );
     if (!connection || connection.clerkOrgId !== identity.orgId) {
       throw new TRPCError({
         code: "PRECONDITION_FAILED",

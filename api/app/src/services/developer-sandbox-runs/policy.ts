@@ -1,6 +1,6 @@
 interface DeveloperSandboxCommandInput {
-  cmd: string;
   args?: string[];
+  cmd: string;
 }
 
 interface AllowedPolicyResult {
@@ -9,8 +9,8 @@ interface AllowedPolicyResult {
 
 interface DeniedPolicyResult {
   allowed: false;
-  ruleId: string;
   reason: string;
+  ruleId: string;
 }
 
 export type DeveloperSandboxCommandPolicyResult =
@@ -18,9 +18,9 @@ export type DeveloperSandboxCommandPolicyResult =
   | DeniedPolicyResult;
 
 interface DefaultDenyRule {
+  action: "login" | "logout";
   provider: "pscale" | "upstash" | "sentry" | "clerk";
   providerName: string;
-  action: "login" | "logout";
 }
 
 const DEFAULT_DENY_RULES: DefaultDenyRule[] = [
@@ -39,7 +39,7 @@ function escapeRegExp(value: string) {
 }
 
 export function normalizeCommandTextForPolicy(
-  input: DeveloperSandboxCommandInput,
+  input: DeveloperSandboxCommandInput
 ) {
   return [input.cmd, ...(input.args ?? [])]
     .join(" ")
@@ -66,12 +66,12 @@ function ruleRegex(rule: DefaultDenyRule) {
       action,
       "(?=$|\\s|;)",
     ].join(""),
-    "i",
+    "i"
   );
 }
 
 export function evaluateDeveloperSandboxCommandPolicy(
-  input: DeveloperSandboxCommandInput,
+  input: DeveloperSandboxCommandInput
 ): DeveloperSandboxCommandPolicyResult {
   const commandText = normalizeCommandTextForPolicy(input);
 

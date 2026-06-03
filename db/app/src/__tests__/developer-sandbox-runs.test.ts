@@ -23,14 +23,14 @@ import {
 describe("developer sandbox run schema", () => {
   it("creates public ids with stable prefixes", () => {
     expect(createDeveloperSandboxRunId()).toMatch(
-      /^developer_sandbox_run_[0-9a-f-]{36}$/,
+      /^developer_sandbox_run_[0-9a-f-]{36}$/
     );
     expect(createDeveloperSandboxCommandId()).toMatch(
-      /^developer_sandbox_command_[0-9a-f-]{36}$/,
+      /^developer_sandbox_command_[0-9a-f-]{36}$/
     );
     expect(DEVELOPER_SANDBOX_RUN_ID_PREFIX).toBe("developer_sandbox_run_");
     expect(DEVELOPER_SANDBOX_COMMAND_ID_PREFIX).toBe(
-      "developer_sandbox_command_",
+      "developer_sandbox_command_"
     );
   });
 
@@ -67,10 +67,10 @@ describe("developer sandbox run helpers", () => {
     const now = new Date("2026-06-03T00:00:00.000Z");
 
     expect(developerSandboxRunExpiresAt(now).toISOString()).toBe(
-      "2026-06-03T00:10:00.000Z",
+      "2026-06-03T00:10:00.000Z"
     );
     expect(
-      developerSandboxRunExpiresAt(now, 45 * 60 * 1000).toISOString(),
+      developerSandboxRunExpiresAt(now, 45 * 60 * 1000).toISOString()
     ).toBe("2026-06-03T00:30:00.000Z");
   });
 

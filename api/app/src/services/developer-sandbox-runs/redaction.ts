@@ -8,7 +8,7 @@ export function redactText(text: string, secrets: string[]) {
   let redacted = text;
   let redactionCount = 0;
   const uniqueSecrets = Array.from(new Set(secrets)).filter(
-    (secret) => secret.length >= MIN_SECRET_LENGTH,
+    (secret) => secret.length >= MIN_SECRET_LENGTH
   );
 
   for (const secret of uniqueSecrets) {

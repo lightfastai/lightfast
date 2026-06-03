@@ -3,7 +3,7 @@ import { createVercelSandboxRuntime } from "@repo/sandbox-runtime";
 async function main() {
   if (!process.env.VERCEL_OIDC_TOKEN) {
     throw new Error(
-      "VERCEL_OIDC_TOKEN is missing. Run `vercel link && vercel env pull` for apps/app, then run `pnpm smoke:sandbox-runtime` from api/app.",
+      "VERCEL_OIDC_TOKEN is missing. Run `vercel link && vercel env pull` for apps/app, then run `pnpm smoke:sandbox-runtime` from api/app."
     );
   }
 
@@ -37,7 +37,7 @@ async function main() {
       },
     ]);
     const file = await sandbox.readFileToBuffer(
-      "/vercel/sandbox/lightfast-smoke.txt",
+      "/vercel/sandbox/lightfast-smoke.txt"
     );
 
     console.log(
@@ -49,8 +49,8 @@ async function main() {
           sandboxId: sandbox.id,
         },
         null,
-        2,
-      ),
+        2
+      )
     );
   } finally {
     await sandbox.stop();

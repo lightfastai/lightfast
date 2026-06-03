@@ -11,7 +11,7 @@ describe("developer sandbox command policy", () => {
       evaluateDeveloperSandboxCommandPolicy({
         cmd: "pscale",
         args: ["auth", "login"],
-      }),
+      })
     ).toEqual({
       allowed: false,
       reason: "PlanetScale auth login is managed by Lightfast.",
@@ -22,7 +22,7 @@ describe("developer sandbox command policy", () => {
       evaluateDeveloperSandboxCommandPolicy({
         cmd: "upstash",
         args: ["auth", "logout"],
-      }),
+      })
     ).toEqual({
       allowed: false,
       reason: "Upstash auth logout is managed by Lightfast.",
@@ -35,14 +35,14 @@ describe("developer sandbox command policy", () => {
       normalizeCommandTextForPolicy({
         cmd: "bash",
         args: ["-lc", "pnpm test;\nclerk auth login"],
-      }),
+      })
     ).toContain("clerk auth login");
 
     expect(
       evaluateDeveloperSandboxCommandPolicy({
         cmd: "bash",
         args: ["-lc", "echo ok && npx --yes sentry auth logout"],
-      }),
+      })
     ).toEqual({
       allowed: false,
       reason: "Sentry auth logout is managed by Lightfast.",
@@ -55,14 +55,14 @@ describe("developer sandbox command policy", () => {
       evaluateDeveloperSandboxCommandPolicy({
         cmd: "pscale",
         args: ["branch", "list", "lightfast"],
-      }),
+      })
     ).toEqual({ allowed: true });
 
     expect(
       evaluateDeveloperSandboxCommandPolicy({
         cmd: "bash",
         args: ["-lc", "npx --yes clerk --help && echo done"],
-      }),
+      })
     ).toEqual({ allowed: true });
   });
 });
@@ -73,7 +73,7 @@ describe("developer sandbox output redaction", () => {
       redactText("token-secret token-secret sentry-token", [
         "token-secret",
         "sentry-token",
-      ]),
+      ])
     ).toEqual({
       redactionCount: 3,
       text: "[redacted] [redacted] [redacted]",
@@ -85,7 +85,7 @@ describe("developer sandbox output redaction", () => {
       {
         redactionCount: 1,
         text: "abc [redacted]",
-      },
+      }
     );
   });
 });

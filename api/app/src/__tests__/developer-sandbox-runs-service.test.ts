@@ -135,15 +135,23 @@ function runtime(output: { stderr?: string; stdout?: string } = {}) {
             async wait() {
               return { exitCode: 0 };
             },
-            async *logs() {},
-            async kill() {},
+            async *logs() {
+              yield* [];
+            },
+            async kill() {
+              return;
+            },
           };
         },
         async readFileToBuffer() {
           return null;
         },
-        async stop() {},
-        async updateNetworkPolicy() {},
+        async stop() {
+          return;
+        },
+        async updateNetworkPolicy() {
+          return;
+        },
         async writeFiles(files: unknown) {
           calls.writeFiles.push(files);
         },
@@ -182,7 +190,7 @@ describe("developer sandbox run service", () => {
         status: input.status,
         stderrBytes: input.stderrBytes ?? 0,
         stdoutBytes: input.stdoutBytes ?? 0,
-      }),
+      })
     );
     createDeveloperSandboxRunMock.mockImplementation(async (_db, input) =>
       sandboxRun({
@@ -190,7 +198,7 @@ describe("developer sandbox run service", () => {
         clerkOrgId: input.clerkOrgId,
         vercelSandboxId: input.vercelSandboxId,
         workflowRunId: input.workflowRunId ?? null,
-      }),
+      })
     );
     getDeveloperSandboxRunByPublicIdMock.mockResolvedValue(sandboxRun());
     issueAllEnabledDeveloperConnectionLeasesMock.mockResolvedValue({
@@ -235,7 +243,7 @@ describe("developer sandbox run service", () => {
     await expect(
       service.createDeveloperSandboxRun(ctx(), {
         workflowRunId: "workflow_run_1",
-      }),
+      })
     ).resolves.toMatchObject({
       publicId: "developer_sandbox_run_1",
       status: "running",
@@ -249,7 +257,7 @@ describe("developer sandbox run service", () => {
         clerkOrgId: "org_acme",
         vercelSandboxId: "vercel_sandbox_1",
         workflowRunId: "workflow_run_1",
-      }),
+      })
     );
     expect(issueAllEnabledDeveloperConnectionLeasesMock).not.toHaveBeenCalled();
   });
@@ -262,7 +270,7 @@ describe("developer sandbox run service", () => {
       service.runDeveloperSandboxCommand(ctx(), {
         sandboxRunId: "developer_sandbox_run_1",
         command: { cmd: "pscale", args: ["auth", "login"] },
-      }),
+      })
     ).resolves.toMatchObject({
       exitCode: null,
       policy: {
@@ -280,7 +288,7 @@ describe("developer sandbox run service", () => {
         policyDecision: "denied",
         policyRuleId: "lightfast_default.pscale.auth_login",
         status: "blocked",
-      }),
+      })
     );
   });
 
@@ -292,7 +300,7 @@ describe("developer sandbox run service", () => {
       service.runDeveloperSandboxCommand(ctx(), {
         sandboxRunId: "developer_sandbox_run_1",
         command: { cmd: "node", args: ["--version"] },
-      }),
+      })
     ).resolves.toEqual({
       commandId: "developer_sandbox_command_1",
       exitCode: 0,
@@ -314,11 +322,11 @@ describe("developer sandbox run service", () => {
     ]);
     expect(markDeveloperConnectionLeaseMaterializedMock).toHaveBeenCalledWith(
       {},
-      expect.objectContaining({ leaseId: 10 }),
+      expect.objectContaining({ leaseId: 10 })
     );
     expect(markDeveloperSandboxRunCredentialsLoadedMock).toHaveBeenCalledWith(
       {},
-      expect.objectContaining({ runId: 100 }),
+      expect.objectContaining({ runId: 100 })
     );
     expect(fakeRuntime.calls.exec).toEqual([
       expect.objectContaining({
@@ -333,13 +341,13 @@ describe("developer sandbox run service", () => {
         redactionCount: 1,
         status: "succeeded",
         stdoutBytes: "sentry-token ok\n".length,
-      }),
+      })
     );
   });
 
   it("reuses existing lease materialization on subsequent commands", async () => {
     getDeveloperSandboxRunByPublicIdMock.mockResolvedValue(
-      sandboxRun({ credentialsLoadedAt: new Date("2026-06-03T00:00:01.000Z") }),
+      sandboxRun({ credentialsLoadedAt: new Date("2026-06-03T00:00:01.000Z") })
     );
     const fakeRuntime = runtime({ stdout: "ok\n" });
     const service = createService(fakeRuntime);
@@ -350,10 +358,11 @@ describe("developer sandbox run service", () => {
     });
 
     expect(issueAllEnabledDeveloperConnectionLeasesMock).not.toHaveBeenCalled();
-    expect(materializeDeveloperConnectionLeasesForSandboxRunMock).toHaveBeenCalledWith(
-      expect.anything(),
-      { sandboxRunId: "developer_sandbox_run_1" },
-    );
+    expect(
+      materializeDeveloperConnectionLeasesForSandboxRunMock
+    ).toHaveBeenCalledWith(expect.anything(), {
+      sandboxRunId: "developer_sandbox_run_1",
+    });
   });
 
   it("stops a sandbox run and revokes its leases", async () => {
@@ -363,20 +372,22 @@ describe("developer sandbox run service", () => {
     await expect(
       service.stopDeveloperSandboxRun(ctx(), {
         sandboxRunId: "developer_sandbox_run_1",
-      }),
+      })
     ).resolves.toEqual({ stopped: true });
 
-    expect(revokeDeveloperConnectionLeasesForSandboxRunMock).toHaveBeenCalledWith(
+    expect(
+      revokeDeveloperConnectionLeasesForSandboxRunMock
+    ).toHaveBeenCalledWith(
       {},
       expect.objectContaining({
         clerkOrgId: "org_acme",
         sandboxRunId: "developer_sandbox_run_1",
-      }),
+      })
     );
     expect(fakeRuntime.calls.destroy).toEqual(["vercel_sandbox_1"]);
     expect(markDeveloperSandboxRunStoppedMock).toHaveBeenCalledWith(
       {},
-      expect.objectContaining({ runId: 100 }),
+      expect.objectContaining({ runId: 100 })
     );
   });
 
@@ -388,19 +399,21 @@ describe("developer sandbox run service", () => {
     const service = createService(fakeRuntime);
 
     await expect(
-      service.cleanupExpiredDeveloperSandboxRuns({ limit: 10 }),
+      service.cleanupExpiredDeveloperSandboxRuns({ limit: 10 })
     ).resolves.toEqual({ cleaned: 1, failed: 0 });
 
-    expect(revokeDeveloperConnectionLeasesForSandboxRunMock).toHaveBeenCalledWith(
+    expect(
+      revokeDeveloperConnectionLeasesForSandboxRunMock
+    ).toHaveBeenCalledWith(
       {},
       expect.objectContaining({
         sandboxRunId: "developer_sandbox_run_expired",
-      }),
+      })
     );
     expect(fakeRuntime.calls.destroy).toEqual(["vercel_sandbox_1"]);
     expect(markDeveloperSandboxRunExpiredMock).toHaveBeenCalledWith(
       {},
-      expect.objectContaining({ runId: 100 }),
+      expect.objectContaining({ runId: 100 })
     );
   });
 });

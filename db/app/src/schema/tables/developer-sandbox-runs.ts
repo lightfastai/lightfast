@@ -12,8 +12,7 @@ import {
 } from "drizzle-orm/mysql-core";
 
 export const DEVELOPER_SANDBOX_RUN_ID_PREFIX = "developer_sandbox_run_";
-export const DEVELOPER_SANDBOX_COMMAND_ID_PREFIX =
-  "developer_sandbox_command_";
+export const DEVELOPER_SANDBOX_COMMAND_ID_PREFIX = "developer_sandbox_command_";
 
 const PUBLIC_ID_LENGTH = 96;
 const CLERK_ID_LENGTH = 64;
@@ -96,18 +95,18 @@ export const developerSandboxRuns = mysqlTable(
   },
   (table) => ({
     publicIdUq: uniqueIndex("developer_sandbox_runs_public_id_uq").on(
-      table.publicId,
+      table.publicId
     ),
     orgActorStatusIdx: index("developer_sandbox_runs_org_actor_status_idx").on(
       table.clerkOrgId,
       table.actorUserId,
-      table.status,
+      table.status
     ),
     expiresStatusIdx: index("developer_sandbox_runs_expires_status_idx").on(
       table.expiresAt,
-      table.status,
+      table.status
     ),
-  }),
+  })
 );
 
 export const developerSandboxCommands = mysqlTable(
@@ -158,20 +157,21 @@ export const developerSandboxCommands = mysqlTable(
   },
   (table) => ({
     publicIdUq: uniqueIndex("developer_sandbox_commands_public_id_uq").on(
-      table.publicId,
+      table.publicId
     ),
     runStatusIdx: index("developer_sandbox_commands_run_status_idx").on(
       table.sandboxRunId,
-      table.status,
+      table.status
     ),
     orgActorCreatedIdx: index(
-      "developer_sandbox_commands_org_actor_created_idx",
+      "developer_sandbox_commands_org_actor_created_idx"
     ).on(table.clerkOrgId, table.actorUserId, table.createdAt),
-  }),
+  })
 );
 
 export type DeveloperSandboxRun = typeof developerSandboxRuns.$inferSelect;
-export type InsertDeveloperSandboxRun = typeof developerSandboxRuns.$inferInsert;
+export type InsertDeveloperSandboxRun =
+  typeof developerSandboxRuns.$inferInsert;
 export type DeveloperSandboxCommand =
   typeof developerSandboxCommands.$inferSelect;
 export type InsertDeveloperSandboxCommand =
