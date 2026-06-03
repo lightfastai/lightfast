@@ -83,7 +83,7 @@ export const people = mysqlTable(
 
     updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
-      .onUpdateNow()
+      .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => ({

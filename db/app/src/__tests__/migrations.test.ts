@@ -32,4 +32,17 @@ describe("migration SQL", () => {
 
     expect(offenders).toEqual([]);
   });
+
+  it("does not use DDL on-update timestamp helpers in schema files", () => {
+    const tablesDir = join(process.cwd(), "src/schema/tables");
+    const offenders = readdirSync(tablesDir)
+      .filter((file) => file.endsWith(".ts"))
+      .flatMap((file) => {
+        const source = readFileSync(join(tablesDir, file), "utf8");
+
+        return /^\s*\.onUpdateNow\(\)/m.test(source) ? [file] : [];
+      });
+
+    expect(offenders).toEqual([]);
+  });
 });
