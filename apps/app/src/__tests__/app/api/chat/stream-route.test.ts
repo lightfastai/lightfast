@@ -106,6 +106,28 @@ describe("chat stream resume route", () => {
     });
   });
 
+  it("returns no content without touching storage when resumable streaming is disabled (local dev)", async () => {
+    vi.resetModules();
+    vi.doMock("~/app/(chat)/api/chat/resumable-stream-config", () => ({
+      isResumableStreamEnabled: false,
+    }));
+    const { GET: DevGET } = await import(
+      "~/app/(chat)/api/chat/[id]/stream/route"
+    );
+
+    const response = await DevGET(createRequest(), {
+      params: Promise.resolve({ id: "conv_123" }),
+    });
+
+    expect(response.status).toBe(204);
+    expect(
+      getWorkspaceAssistantConversationByPublicIdMock
+    ).not.toHaveBeenCalled();
+    expect(resumeExistingStreamMock).not.toHaveBeenCalled();
+
+    vi.doUnmock("~/app/(chat)/api/chat/resumable-stream-config");
+  });
+
   it("rejects stream requests with an unauthenticated identity (expired token)", async () => {
     resolveAuthContextFromClerkMock.mockResolvedValueOnce({
       identity: { type: "unauthenticated" },

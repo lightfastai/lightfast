@@ -1,5 +1,5 @@
 import { renderHook } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createListData, createSkill } from "./fixtures";
 
 let listData = createListData();
@@ -27,16 +27,9 @@ vi.mock("@tanstack/react-query", () => ({
 const { useSkillsList } = await import(
   "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/_components/use-skills-list"
 );
-const { DEV_MOCK_LIST } = await import(
-  "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/_components/skills-dev-data"
-);
 
 beforeEach(() => {
   listData = createListData();
-});
-
-afterEach(() => {
-  vi.unstubAllEnvs();
 });
 
 describe("useSkillsList", () => {
@@ -49,18 +42,8 @@ describe("useSkillsList", () => {
     expect(result.current.skills[0]?.slug).toBe("real");
   });
 
-  it("falls back to dev mock data only when empty in development", () => {
+  it("returns an empty list when the org has no indexed skills", () => {
     listData = createListData({ skills: [] });
-    vi.stubEnv("NODE_ENV", "development");
-
-    const { result } = renderHook(() => useSkillsList());
-
-    expect(result.current.skills).toHaveLength(DEV_MOCK_LIST.skills.length);
-  });
-
-  it("does not use dev mock data outside development", () => {
-    listData = createListData({ skills: [] });
-    vi.stubEnv("NODE_ENV", "production");
 
     const { result } = renderHook(() => useSkillsList());
 

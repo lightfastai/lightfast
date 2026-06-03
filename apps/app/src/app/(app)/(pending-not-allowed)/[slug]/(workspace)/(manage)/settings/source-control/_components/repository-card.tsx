@@ -13,6 +13,7 @@ import { cn } from "@repo/ui/lib/utils";
 import {
   ChevronDown,
   ChevronRight,
+  CornerDownRight,
   GitBranch,
   MoreHorizontal,
 } from "lucide-react";
@@ -33,59 +34,84 @@ const SYNC_STATUS_LABEL: Record<
   disabled: "Disabled",
 };
 
-function SyncStatusIndicator({
+type WatchedPathsSummary =
+  | { kind: "all" }
+  | { kind: "list"; globs: string[] }
+  | { kind: "none" };
+
+function summarizeWatchedPaths(globs: string[] | null): WatchedPathsSummary {
+  if (globs === null) {
+    return { kind: "none" };
+  }
+  if (globs.includes(ALL_PATHS_GLOB)) {
+    return { kind: "all" };
+  }
+  return { kind: "list", globs };
+}
+
+function watchedPathsLabel(summary: WatchedPathsSummary): string {
+  if (summary.kind === "none") {
+    return "No paths";
+  }
+  if (summary.kind === "all") {
+    return "All paths";
+  }
+  const count = summary.globs.length;
+  return `${count} path${count === 1 ? "" : "s"}`;
+}
+
+function IconTile({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-[9px] border border-border bg-transparent text-foreground">
+      {children}
+    </span>
+  );
+}
+
+function SyncStatusBadge({
   status,
 }: {
   status: SourceControlRepositoryRow["syncStatus"];
 }) {
   const enabled = status === "enabled";
   return (
-    <span
+    <Badge
       className={cn(
-        "inline-flex shrink-0 items-center gap-1 text-[10px]",
+        "shrink-0 gap-1.5",
         enabled
-          ? "text-emerald-700 dark:text-emerald-300"
-          : "text-muted-foreground"
+          ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+          : "border-border bg-muted/40 text-muted-foreground"
       )}
+      variant="outline"
     >
-      <span
-        aria-hidden="true"
-        className={cn(
-          "size-1.5 rounded-full",
-          enabled ? "bg-emerald-500" : "bg-muted-foreground/50"
-        )}
-      />
+      <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
       {SYNC_STATUS_LABEL[status]}
-    </span>
+    </Badge>
   );
 }
 
-function WatchedPaths({ globs }: { globs: string[] | null }) {
-  if (globs === null) {
+function WatchedPathsTree({ summary }: { summary: WatchedPathsSummary }) {
+  if (summary.kind === "list") {
     return (
-      <p className="text-[11px] text-muted-foreground">
-        No watched paths configured
-      </p>
-    );
-  }
-
-  if (globs.includes(ALL_PATHS_GLOB)) {
-    return (
-      <p className="text-[11px] text-muted-foreground">Watching all paths</p>
+      <>
+        {summary.globs.map((glob) => (
+          <li
+            className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground"
+            key={glob}
+          >
+            <CornerDownRight aria-hidden="true" className="size-3 opacity-50" />
+            {glob}
+          </li>
+        ))}
+      </>
     );
   }
 
   return (
-    <div className="flex flex-wrap gap-1.5">
-      {globs.map((glob) => (
-        <span
-          className="inline-flex items-center rounded-[7px] border border-border px-2 py-1 text-[10px] text-muted-foreground"
-          key={glob}
-        >
-          {glob}
-        </span>
-      ))}
-    </div>
+    <li className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+      <CornerDownRight aria-hidden="true" className="size-3 opacity-50" />
+      {summary.kind === "all" ? "Watching all paths" : "No paths watched"}
+    </li>
   );
 }
 
@@ -96,34 +122,31 @@ export function RepositoryCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   const watchedRegionId = `repository-${repository.id}-watched`;
+  const summary = summarizeWatchedPaths(repository.watchedPathGlobs);
 
   return (
-    <div className="rounded-[12px] border border-border bg-background p-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 gap-2.5">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-[9px] border border-border bg-transparent">
-            <GitBranch
-              aria-hidden="true"
-              className="size-3.5 text-foreground"
-            />
-          </div>
+    <div className="p-3">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <IconTile>
+            <GitBranch aria-hidden="true" className="size-4 text-foreground" />
+          </IconTile>
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2">
               <p className="truncate text-foreground text-sm">
                 {repository.fullName}
               </p>
               <Badge
-                className="rounded-[7px] px-1.5 py-0 text-[10px]"
+                className="shrink-0 rounded-[7px] px-1.5 py-0 text-[10px] text-muted-foreground"
                 variant="outline"
               >
                 {repository.private ? "Private" : "Public"}
               </Badge>
-              <SyncStatusIndicator status={repository.syncStatus} />
             </div>
             <button
               aria-controls={watchedRegionId}
               aria-expanded={expanded}
-              className="mt-2 inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+              className="mt-0.5 inline-flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground"
               onClick={() => setExpanded((value) => !value)}
               type="button"
             >
@@ -132,47 +155,43 @@ export function RepositoryCard({
               ) : (
                 <ChevronRight aria-hidden="true" className="size-3" />
               )}
-              Watched paths
+              {watchedPathsLabel(summary)}
             </button>
           </div>
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              aria-label={`Repository actions for ${repository.fullName}`}
-              className="h-6 w-6 rounded-full"
-              size="sm"
-              type="button"
-              variant="ghost"
-            >
-              <MoreHorizontal
-                aria-hidden="true"
-                className="size-3.5 opacity-50"
-              />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <a
-                href={`https://github.com/${repository.fullName}`}
-                rel="noreferrer"
-                target="_blank"
+        <div className="flex shrink-0 items-center gap-2">
+          <SyncStatusBadge status={repository.syncStatus} />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                aria-label={`Repository actions for ${repository.fullName}`}
+                className="size-7 rounded-[9px]"
+                size="sm"
+                type="button"
+                variant="ghost"
               >
-                Open on GitHub
-              </a>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+                <MoreHorizontal
+                  aria-hidden="true"
+                  className="size-3.5 text-muted-foreground"
+                />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <a href={repository.webUrl} rel="noreferrer" target="_blank">
+                  Open on GitHub
+                </a>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {expanded ? (
-        <div
-          className="mt-3 rounded-[8px] border border-border bg-card/60 p-3"
-          id={watchedRegionId}
-        >
-          <WatchedPaths globs={repository.watchedPathGlobs} />
-        </div>
+        <ul className="mt-2 space-y-1 pl-[46px]" id={watchedRegionId}>
+          <WatchedPathsTree summary={summary} />
+        </ul>
       ) : null}
     </div>
   );

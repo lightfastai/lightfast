@@ -104,6 +104,7 @@ beforeEach(() => {
 describe("org.settings.identity.get", () => {
   it("returns indexed Identity and Soul settings rows for a bound org", async () => {
     await expect(caller().org.settings.identity.get()).resolves.toMatchObject({
+      configured: true,
       repository: {
         defaultBranch: "main",
         id: "1",
@@ -156,11 +157,14 @@ describe("org.settings.identity.get", () => {
 
     const result = await caller().org.settings.identity.get();
 
-    expect(result.state.status).toBe("never");
-    expect(result.files).toEqual([
-      expect.objectContaining({ kind: "identity", status: "missing" }),
-      expect.objectContaining({ kind: "soul", status: "missing" }),
-    ]);
+    expect(result).toMatchObject({
+      configured: true,
+      state: { status: "never" },
+      files: [
+        expect.objectContaining({ kind: "identity", status: "missing" }),
+        expect.objectContaining({ kind: "soul", status: "missing" }),
+      ],
+    });
     expect(sendMock).toHaveBeenCalledWith({
       name: "app/identity.index.refresh.requested",
       data: {
@@ -169,6 +173,17 @@ describe("org.settings.identity.get", () => {
         sourceControlRepositoryId: 1,
       },
     });
+  });
+
+  it("returns { configured: false } when no verified repository is configured", async () => {
+    listIdentityIndexRefreshCandidatesMock.mockResolvedValueOnce([]);
+
+    await expect(caller().org.settings.identity.get()).resolves.toEqual({
+      configured: false,
+    });
+
+    expect(listIdentityIndexFilesMock).not.toHaveBeenCalled();
+    expect(sendMock).not.toHaveBeenCalled();
   });
 
   it("rejects callers without a bound organization", async () => {

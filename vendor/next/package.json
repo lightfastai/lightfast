@@ -28,6 +28,7 @@
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/observability": "workspace:*",
-    "next-secure-headers": "^2.2.0"
+    "next-secure-headers": "^2.2.0",
+    "zod": "catalog:"
   }
 }

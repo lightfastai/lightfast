@@ -1,28 +1,17 @@
-import { Loader2 } from "lucide-react";
-import { Suspense } from "react";
-import { HydrateClient, prefetch, trpc } from "~/trpc/server";
+import { randomUUID } from "node:crypto";
 import { WorkspaceAssistantClient } from "../_components/workspace-assistant-client";
 
 export const dynamic = "force-dynamic";
 
 export default function WorkspaceAssistantChatPage() {
-  prefetch(
-    trpc.org.workspace.skills.list.queryOptions(undefined, { staleTime: 0 })
-  );
-
+  // Generate the conversation id up-front so `useChat` has a stable identity
+  // from the first render. `force-dynamic` regenerates it per request, so each
+  // visit to /chat (including the "New chat" button) starts a fresh thread.
+  const conversationId = `conv_${randomUUID()}`;
   return (
-    <HydrateClient>
-      <Suspense fallback={<ChatLoading />}>
-        <WorkspaceAssistantClient />
-      </Suspense>
-    </HydrateClient>
-  );
-}
-
-function ChatLoading() {
-  return (
-    <div className="flex h-full min-h-0 w-full items-center justify-center bg-background">
-      <Loader2 className="size-6 animate-spin text-muted-foreground" />
-    </div>
+    <WorkspaceAssistantClient
+      conversationId={conversationId}
+      key={conversationId}
+    />
   );
 }

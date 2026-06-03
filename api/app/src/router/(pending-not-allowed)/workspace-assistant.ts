@@ -84,8 +84,15 @@ export const workspaceAssistantRouter = {
         createdByUserId: ctx.auth.identity.userId,
         conversation,
       });
+      // Drop degenerate persisted turns that have no parts (e.g. an assistant
+      // message whose generation failed before producing content). They have
+      // nothing to render and would fail UI message validation, which must not
+      // brick the entire conversation page.
+      const renderableMessages = messages.filter(
+        (message) => message.parts.length > 0
+      );
       const validated = await safeValidateLightfastUIMessages({
-        messages: messages.map((message) => ({
+        messages: renderableMessages.map((message) => ({
           id: message.publicId,
           metadata: message.metadata,
           parts: message.parts,
@@ -94,12 +101,13 @@ export const workspaceAssistantRouter = {
       });
       if (!validated.success) {
         throw new TRPCError({
+          cause: validated.error,
           code: "INTERNAL_SERVER_ERROR",
           message: "Persisted workspace assistant messages failed validation",
         });
       }
 
-      return { messages, conversation };
+      return { messages: renderableMessages, conversation };
     }),
 
   listConversations: boundOrgProcedure

@@ -12,6 +12,7 @@
     "build:app": "turbo run build -F @lightfast/app",
     "build:www": "turbo run build -F @lightfast/www",
     "build:platform": "turbo run build -F @lightfast/platform",
+    "build:mcp": "turbo run build -F @lightfast/mcp",
     "clean": "git clean -xdf node_modules",
     "clean:workspaces": "turbo run clean",
     "dev": "portless proxy start && turbo run dev:next @lightfast/app#mfe:proxy //#_inngest //#_qstash //#_github_emulator //#_linear_emulator //#_x_emulator --concurrency=16 -F @lightfast/www -F @lightfast/app -F @lightfast/platform -F @lightfast/mcp --continue",

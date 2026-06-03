@@ -8,7 +8,6 @@ import { Button } from "@repo/ui/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormMessage,
@@ -16,18 +15,13 @@ import {
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/components/ui/sonner";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { TRPCClientError } from "@trpc/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useOrganizationList } from "@vendor/clerk";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
+import { SettingRow, SettingsGroup } from "~/components/settings-section";
 import { useTRPC } from "~/trpc/react";
-import { IdentitySettingsSection } from "./identity-settings-section";
-import {
-  LightfastRepositorySection,
-  SourceControlConnectionSection,
-} from "./source-control-connection-section";
 import {
   normalizeTeamSlugInput,
   useTeamNameUpdate,
@@ -48,15 +42,6 @@ export function TeamGeneralSettingsClient({
     ...trpc.viewer.organization.listUserOrganizations.queryOptions(),
     staleTime: 5 * 60 * 1000,
   });
-  const { data: sourceControlConnection } = useSuspenseQuery(
-    trpc.org.settings.sourceControl.get.queryOptions()
-  );
-  const { data: sourceControlRepositories } = useSuspenseQuery(
-    trpc.org.settings.sourceControl.listRepositories.queryOptions()
-  );
-  const identitySettingsQuery = useQuery(
-    trpc.org.settings.identity.get.queryOptions()
-  );
   const currentOrg = useMemo(
     () => organizations.find((org) => org.slug === slug),
     [organizations, slug]
@@ -120,123 +105,67 @@ export function TeamGeneralSettingsClient({
   );
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="font-medium font-pp text-2xl text-foreground">
-          General
-        </h2>
-        <p className="mt-1 text-muted-foreground text-sm">
-          Manage your team's profile and preferences.
-        </p>
-      </div>
-
-      {/* Avatar Section */}
-      <div className="flex items-start justify-between gap-6">
-        <div>
-          <h2 className="font-semibold text-foreground text-xl">Avatar</h2>
-          <p className="mt-1 text-muted-foreground text-sm">
-            This is your team's avatar.
-          </p>
-        </div>
-        <Avatar className="size-10">
+    <SettingsGroup title="Profile">
+      <SettingRow label="Avatar">
+        <Avatar className="size-7">
           <AvatarFallback className="bg-foreground text-background text-xs">
             {currentOrg?.initials ?? "?"}
           </AvatarFallback>
         </Avatar>
-      </div>
+      </SettingRow>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          {/* Team Name Section */}
-          <div className="space-y-4">
-            <div>
-              <h2 className="font-semibold text-foreground text-xl">
-                Team Name
-              </h2>
-              <p className="mt-1 text-muted-foreground text-sm">
-                This is your team's visible name within Lightfast.
-              </p>
-            </div>
-
-            <FormField
-              control={form.control}
-              name="teamName"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-start gap-3">
-                    <div className="flex-1 space-y-2">
+          <FormField
+            control={form.control}
+            name="teamName"
+            render={({ field }) => (
+              <SettingRow
+                description="This is your team's visible name within Lightfast. Lowercase letters, numbers, and hyphens (3-39 characters)."
+                label="Team name"
+              >
+                <FormItem className="space-y-0">
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="flex items-center gap-2">
                       <FormControl>
                         <Input
                           {...field}
+                          aria-label="Team name"
+                          className="w-64"
                           onChange={(event) =>
                             handleTeamNameChange(field.onChange, event)
                           }
                           placeholder="acme-inc"
+                          size="lf"
                           type="text"
+                          variant="lf"
                         />
                       </FormControl>
-                      <FormDescription>
-                        Lowercase letters, numbers, and hyphens (3-39
-                        characters)
-                      </FormDescription>
-                      <FormMessage />
+                      <Button
+                        disabled={
+                          !(hasChanges && form.formState.isValid) || isUpdating
+                        }
+                        size="lf"
+                        type="submit"
+                      >
+                        {isUpdating ? (
+                          <>
+                            <Loader2 className="size-3.5 animate-spin" />
+                            Saving
+                          </>
+                        ) : (
+                          "Save"
+                        )}
+                      </Button>
                     </div>
-                    <Button
-                      disabled={
-                        !(hasChanges && form.formState.isValid) || isUpdating
-                      }
-                      type="submit"
-                      variant="secondary"
-                    >
-                      {isUpdating ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        "Save"
-                      )}
-                    </Button>
+                    <FormMessage className="text-xs" />
                   </div>
                 </FormItem>
-              )}
-            />
-          </div>
+              </SettingRow>
+            )}
+          />
         </form>
       </Form>
-
-      <SourceControlConnectionSection
-        connection={sourceControlConnection.binding}
-        orgSlug={slug}
-        repositories={sourceControlRepositories}
-      />
-      <LightfastRepositorySection
-        connection={sourceControlConnection.binding}
-        orgSlug={slug}
-      />
-      {identitySettingsQuery.isError &&
-      isIdentityNotConfigured(identitySettingsQuery.error) ? (
-        <p className="text-muted-foreground text-sm">
-          Identity repository is not configured.
-        </p>
-      ) : identitySettingsQuery.data ? (
-        <IdentitySettingsSection identity={identitySettingsQuery.data} />
-      ) : null}
-    </div>
-  );
-}
-
-function isIdentityNotConfigured(
-  error: unknown
-): error is Error & { data: { code: "PRECONDITION_FAILED" } } {
-  if (error instanceof TRPCClientError) {
-    return error.data?.code === "PRECONDITION_FAILED";
-  }
-  return (
-    !!error &&
-    typeof error === "object" &&
-    "data" in error &&
-    (error as { data?: { code?: unknown } }).data?.code ===
-      "PRECONDITION_FAILED"
+    </SettingsGroup>
   );
 }

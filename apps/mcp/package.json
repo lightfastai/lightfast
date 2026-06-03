@@ -8,7 +8,7 @@
   "scripts": {
     "build": "pnpm with-env next build",
     "clean": "git clean -xdf .cache .next .turbo .vercel node_modules",
-    "dev:next": "portless run pnpm with-related-projects pnpm with-env next dev",
+    "dev:next": "portless run pnpm with-related-projects pnpm with-env next dev --turbo",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../app/.vercel/.env.development.local -e ./.vercel/.env.development.local --",

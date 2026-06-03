@@ -1,3 +1,5 @@
+import type { SQL } from "drizzle-orm";
+import { MySqlDialect } from "drizzle-orm/mysql-core";
 import { describe, expect, it, vi } from "vitest";
 import type { Database } from "../client";
 import {
@@ -10,6 +12,37 @@ import {
 
 const startedAt = new Date("2026-06-02T00:00:00.000Z");
 const finishedAt = new Date("2026-06-02T00:01:00.000Z");
+
+function makeCall(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 1,
+    publicId: "provider_routine_call_1",
+    clerkOrgId: "org_123",
+    calledByKind: "automation",
+    calledById: "run_1",
+    calledByUserId: null,
+    provider: "linear",
+    routineId: "linear__create_issue",
+    providerToolName: "create_issue",
+    providerConnectionId: 42,
+    providerWorkspaceId: "workspace_1",
+    providerActorId: "actor_1",
+    providerAttempted: true,
+    sourceClientId: null,
+    sourceRef: "run_1",
+    sourceSurface: "automation",
+    status: "succeeded",
+    inputRedacted: { present: true },
+    outputRedacted: { present: true },
+    errorCode: null,
+    errorMessage: null,
+    startedAt,
+    finishedAt,
+    createdAt: finishedAt,
+    updatedAt: finishedAt,
+    ...overrides,
+  };
+}
 
 function selectRows<T>(rows: T[]) {
   return {
@@ -66,54 +99,95 @@ function collectColumnNames(value: unknown, seen = new WeakSet<object>()) {
 }
 
 describe("provider routine call helpers", () => {
-  it("lists recent provider routine calls for one org", async () => {
-    const rows = [
-      {
-        id: 2,
-        publicId: "provider_routine_call_new",
-        clerkOrgId: "org_123",
-        calledByKind: "automation",
-        calledById: "run_new",
-        calledByUserId: null,
-        provider: "linear",
-        routineId: "linear__create_issue",
-        providerToolName: "create_issue",
-        providerConnectionId: 42,
-        providerWorkspaceId: "workspace_123",
-        providerActorId: "actor_123",
-        providerAttempted: true,
-        sourceClientId: "client_123",
-        sourceRef: "grant_123",
-        sourceSurface: "hosted_mcp",
-        status: "succeeded",
-        inputRedacted: { present: true },
-        outputRedacted: { present: true },
-        errorCode: null,
-        errorMessage: null,
-        startedAt,
-        finishedAt,
-        createdAt: finishedAt,
-        updatedAt: finishedAt,
-      },
-    ];
-    const { query, spies } = listRows(rows);
-    const db = {
-      select: vi.fn(() => query),
-    } as unknown as Database;
+  describe("listProviderRoutineCalls", () => {
+    it("returns rows with keyset cursor pagination", async () => {
+      const rows = [
+        makeCall({ id: 3, publicId: "provider_routine_call_3" }),
+        makeCall({ id: 2, publicId: "provider_routine_call_2" }),
+        makeCall({ id: 1, publicId: "provider_routine_call_1" }),
+      ];
+      const { query, spies } = listRows(rows);
+      const db = { select: vi.fn(() => query) } as unknown as Database;
 
-    await expect(
-      listProviderRoutineCalls(db, {
-        clerkOrgId: "org_123",
-        limit: 2,
-      })
-    ).resolves.toEqual(rows);
+      await expect(
+        listProviderRoutineCalls(db, { clerkOrgId: "org_123", limit: 2 })
+      ).resolves.toEqual({
+        items: rows.slice(0, 2),
+        nextCursor: { createdAt: rows[1]!.createdAt, id: rows[1]!.id },
+      });
 
-    expect(spies.where).toHaveBeenCalledWith(expect.anything());
-    expect(spies.orderBy).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.anything()
-    );
-    expect(spies.limit).toHaveBeenCalledWith(2);
+      expect(spies.where).toHaveBeenCalledOnce();
+      expect(spies.orderBy).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything()
+      );
+      expect(spies.limit).toHaveBeenCalledWith(3);
+    });
+
+    it("returns a null cursor on the last page", async () => {
+      const rows = [makeCall({ id: 1 })];
+      const { query, spies } = listRows(rows);
+      const db = { select: vi.fn(() => query) } as unknown as Database;
+
+      await expect(
+        listProviderRoutineCalls(db, { clerkOrgId: "org_123", limit: 2 })
+      ).resolves.toEqual({ items: rows, nextCursor: null });
+      expect(spies.limit).toHaveBeenCalledWith(3);
+    });
+
+    it("bounds limits to 100 rows", async () => {
+      const { query, spies } = listRows([]);
+      const db = { select: vi.fn(() => query) } as unknown as Database;
+
+      await listProviderRoutineCalls(db, { clerkOrgId: "org_123", limit: 500 });
+      expect(spies.limit).toHaveBeenCalledWith(101);
+    });
+
+    it("escapes MySQL LIKE wildcards in search input", async () => {
+      const { query, spies } = listRows([]);
+      const db = { select: vi.fn(() => query) } as unknown as Database;
+
+      await listProviderRoutineCalls(db, {
+        clerkOrgId: "org_123",
+        search: String.raw`50%_done\soon`,
+      });
+
+      const condition = spies.where.mock.calls[0]?.[0] as SQL;
+      const compiled = new MySqlDialect().sqlToQuery(condition);
+      expect(compiled.sql).toContain("like ? escape '\\\\'");
+      expect(compiled.params).toContain(String.raw`%50\%\_done\\soon%`);
+    });
+
+    it("passes provider and status filters without throwing", async () => {
+      const row = makeCall();
+      const { query, spies } = listRows([row]);
+      const db = { select: vi.fn(() => query) } as unknown as Database;
+
+      await expect(
+        listProviderRoutineCalls(db, {
+          clerkOrgId: "org_123",
+          providers: ["linear", "x"],
+          statuses: ["failed"],
+          limit: 10,
+        })
+      ).resolves.toEqual({ items: [row], nextCursor: null });
+
+      expect(spies.where).toHaveBeenCalledOnce();
+      expect(spies.limit).toHaveBeenCalledWith(11);
+    });
+
+    it("ignores empty filter arrays", async () => {
+      const { query, spies } = listRows([]);
+      const db = { select: vi.fn(() => query) } as unknown as Database;
+
+      await listProviderRoutineCalls(db, {
+        clerkOrgId: "org_123",
+        providers: [],
+        statuses: [],
+        limit: 10,
+      });
+      expect(spies.where).toHaveBeenCalledOnce();
+    });
   });
 
   it("creates running provider routine calls with a generated public id", async () => {

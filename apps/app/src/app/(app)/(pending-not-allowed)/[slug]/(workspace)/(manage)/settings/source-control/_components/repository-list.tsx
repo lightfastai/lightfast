@@ -61,7 +61,7 @@ export function RepositoryList({
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="font-normal text-[11px] text-muted-foreground">
+        <h3 className="font-semibold text-base text-foreground">
           Repositories
         </h3>
         <div className="flex items-center gap-2">
@@ -120,7 +120,7 @@ export function RepositoryList({
           </div>
 
           {filteredRepositories.length > 0 ? (
-            <div className="space-y-3">
+            <div className="divide-y divide-border rounded-[12px] border border-border bg-background">
               {filteredRepositories.map((repository) => (
                 <RepositoryCard key={repository.id} repository={repository} />
               ))}

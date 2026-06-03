@@ -34,6 +34,9 @@ export const env = createEnv({
       .enum(["development", "preview", "production"])
       .default("development"),
     NEXT_PUBLIC_APP_URL: z.string().url().default("https://lightfast.ai"),
+    // Browser-visible GitHub web origin. Only set in local dev by the GitHub
+    // emulator; unset in prod, where consumers fall back to https://github.com.
+    NEXT_PUBLIC_GITHUB_APP_ENDPOINT_ORIGIN: z.string().url().optional(),
     NEXT_PUBLIC_WWW_URL: z.string().url().default("https://lightfast.ai"),
     NEXT_PUBLIC_PLATFORM_URL: z
       .string()
@@ -44,6 +47,8 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_GITHUB_APP_ENDPOINT_ORIGIN:
+      process.env.NEXT_PUBLIC_GITHUB_APP_ENDPOINT_ORIGIN,
     NEXT_PUBLIC_WWW_URL: process.env.NEXT_PUBLIC_WWW_URL,
     NEXT_PUBLIC_PLATFORM_URL: process.env.NEXT_PUBLIC_PLATFORM_URL,
   },

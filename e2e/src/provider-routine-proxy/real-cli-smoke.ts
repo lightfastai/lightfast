@@ -881,7 +881,7 @@ async function assertProviderRoutineLedger(input: {
     clerkOrgId: input.orgId,
     limit: 20,
   });
-  const call = calls.find(
+  const call = calls.items.find(
     (item) => item.publicId === input.providerRoutineCallId
   );
   if (!call) {

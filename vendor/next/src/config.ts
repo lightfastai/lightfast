@@ -14,9 +14,12 @@ export const baseConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
 
-  // React Compiler and optimizeCss add significant overhead in local dev.
-  // Only enable on Vercel where builds are one-shot.
-  reactCompiler: !!env.VERCEL,
+  // React Compiler and optimizeCss add significant overhead in local dev,
+  // so gate them on production builds. env.NODE_ENV is "production" for every
+  // `next build` (Vercel or any other CI/local prod build) and "development"
+  // for `next dev`, so the compiler runs in all production builds — not just
+  // Vercel — while staying off in local dev.
+  reactCompiler: env.NODE_ENV === "production",
 
   compiler: {
     removeConsole:

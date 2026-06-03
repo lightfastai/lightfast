@@ -2,23 +2,22 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const fetchQueryMock = vi.fn();
-const listQueryOptionsMock = vi.fn((input: unknown) => ({
-  input,
-  queryKey: ["org", "workspace", "decisions", "list", input],
+const infiniteQueryOptionsMock = vi.fn(() => ({
+  queryKey: ["org", "workspace", "decisions", "list"],
 }));
+const prefetchMock = vi.fn();
 
 vi.mock("~/trpc/server", () => ({
-  getQueryClient: () => ({ fetchQuery: fetchQueryMock }),
   HydrateClient: ({ children }: { children?: ReactNode }) => (
     <div data-testid="hydrated-decisions">{children}</div>
   ),
+  prefetch: prefetchMock,
   trpc: {
     org: {
       workspace: {
         decisions: {
           list: {
-            queryOptions: listQueryOptionsMock,
+            infiniteQueryOptions: infiniteQueryOptionsMock,
           },
         },
       },
@@ -29,7 +28,14 @@ vi.mock("~/trpc/server", () => ({
 vi.mock(
   "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/decisions/_components/decisions-client",
   () => ({
-    DecisionsClient: () => <div>Decision rows</div>,
+    DecisionsClient: () => <div>Decisions client</div>,
+  })
+);
+
+vi.mock(
+  "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/decisions/_components/decisions-loading",
+  () => ({
+    DecisionsLoading: () => <div>Loading decisions</div>,
   })
 );
 
@@ -38,24 +44,21 @@ const { default: DecisionsPage } = await import(
 );
 
 beforeEach(() => {
-  fetchQueryMock.mockReset();
-  listQueryOptionsMock.mockClear();
+  infiniteQueryOptionsMock.mockClear();
+  prefetchMock.mockClear();
 });
 
 describe("decisions page", () => {
-  it("awaits the decisions list before rendering hydrated client UI", async () => {
-    fetchQueryMock.mockResolvedValue([]);
+  it("prefetches the infinite decisions list before rendering the client island", () => {
+    render(DecisionsPage());
 
-    const element = await DecisionsPage();
-    render(element);
-
-    expect(listQueryOptionsMock).toHaveBeenCalledWith({ limit: 50 });
-    expect(fetchQueryMock).toHaveBeenCalledWith({
-      input: { limit: 50 },
-      queryKey: ["org", "workspace", "decisions", "list", { limit: 50 }],
-    });
+    expect(infiniteQueryOptionsMock).toHaveBeenCalledWith(
+      { limit: 50 },
+      expect.objectContaining({ staleTime: 60_000 })
+    );
+    expect(prefetchMock).toHaveBeenCalled();
     expect(screen.getByTestId("hydrated-decisions")).toHaveTextContent(
-      "Decision rows"
+      "Decisions client"
     );
   });
 });

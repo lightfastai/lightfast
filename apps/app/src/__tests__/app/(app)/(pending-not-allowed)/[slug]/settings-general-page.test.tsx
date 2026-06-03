@@ -2,14 +2,11 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const sourceControlGetQueryOptionsMock = vi.fn(() => ({
-  queryKey: ["org", "settings", "sourceControl", "get"],
-}));
-const sourceControlListRepositoriesQueryOptionsMock = vi.fn(() => ({
-  queryKey: ["org", "settings", "sourceControl", "listRepositories"],
-}));
 const identityGetQueryOptionsMock = vi.fn(() => ({
   queryKey: ["org", "settings", "identity", "get"],
+}));
+const listUserOrganizationsQueryOptionsMock = vi.fn(() => ({
+  queryKey: ["viewer", "organization", "listUserOrganizations"],
 }));
 const prefetchMock = vi.fn();
 
@@ -21,18 +18,17 @@ vi.mock("~/trpc/server", () => ({
   trpc: {
     org: {
       settings: {
-        sourceControl: {
-          get: {
-            queryOptions: sourceControlGetQueryOptionsMock,
-          },
-          listRepositories: {
-            queryOptions: sourceControlListRepositoriesQueryOptionsMock,
-          },
-        },
         identity: {
           get: {
             queryOptions: identityGetQueryOptionsMock,
           },
+        },
+      },
+    },
+    viewer: {
+      organization: {
+        listUserOrganizations: {
+          queryOptions: listUserOrganizationsQueryOptionsMock,
         },
       },
     },
@@ -48,40 +44,45 @@ vi.mock(
   })
 );
 
+vi.mock(
+  "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/(manage)/settings/_components/identity-soul-card",
+  () => ({
+    IdentitySoulCard: ({ slug }: { slug: string }) => (
+      <div>Identity and soul for {slug}</div>
+    ),
+  })
+);
+
 const { default: SettingsPage } = await import(
   "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/(manage)/settings/page"
 );
 
 beforeEach(() => {
-  sourceControlGetQueryOptionsMock.mockClear();
-  sourceControlListRepositoriesQueryOptionsMock.mockClear();
   identityGetQueryOptionsMock.mockClear();
+  listUserOrganizationsQueryOptionsMock.mockClear();
   prefetchMock.mockClear();
 });
 
 describe("general settings page", () => {
-  it("prefetches the read-only source-control connection in the General settings surface", async () => {
+  it("prefetches the General settings queries", async () => {
     const element = await SettingsPage({
       params: Promise.resolve({ slug: "acme" }),
     });
     render(element);
 
-    expect(sourceControlGetQueryOptionsMock).toHaveBeenCalledOnce();
-    expect(
-      sourceControlListRepositoriesQueryOptionsMock
-    ).toHaveBeenCalledOnce();
     expect(identityGetQueryOptionsMock).toHaveBeenCalledOnce();
-    expect(prefetchMock).toHaveBeenCalledWith({
-      queryKey: ["org", "settings", "sourceControl", "get"],
-    });
-    expect(prefetchMock).toHaveBeenCalledWith({
-      queryKey: ["org", "settings", "sourceControl", "listRepositories"],
-    });
+    expect(listUserOrganizationsQueryOptionsMock).toHaveBeenCalledOnce();
     expect(prefetchMock).toHaveBeenCalledWith({
       queryKey: ["org", "settings", "identity", "get"],
     });
+    expect(prefetchMock).toHaveBeenCalledWith({
+      queryKey: ["viewer", "organization", "listUserOrganizations"],
+    });
     expect(screen.getByTestId("hydrated-general")).toHaveTextContent(
       "General settings for acme"
+    );
+    expect(screen.getByTestId("hydrated-general")).toHaveTextContent(
+      "Identity and soul for acme"
     );
   });
 });
