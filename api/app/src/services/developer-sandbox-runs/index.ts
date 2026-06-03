@@ -145,56 +145,65 @@ export function createDeveloperSandboxRunService(
     ctx: DeveloperSandboxRunServiceContext,
     run: DeveloperSandboxRun
   ): Promise<MaterializedCredentials> {
+    async function issueAndWriteCredentials() {
+      const issued = await issueAllEnabledDeveloperConnectionLeases(ctx, {
+        sandboxRunId: run.publicId,
+        workflowRunId: run.workflowRunId,
+      });
+      const sandbox = await runtime.get(run.vercelSandboxId);
+      const files = issued.materialization.flatMap((entry, index) => {
+        const lease = issued.leases[index];
+        if (!lease) {
+          return [];
+        }
+        return entry.files.map((file) => ({
+          content: file.contents,
+          mode: file.mode === "0600" ? 0o600 : undefined,
+          path: credentialFilePath(lease.publicId, file.path),
+        }));
+      });
+
+      if (files.length > 0) {
+        await sandbox.writeFiles(files);
+      }
+
+      const loadedAt = now();
+      await Promise.all(
+        issued.leases.map((lease) =>
+          markDeveloperConnectionLeaseMaterialized(options.db, {
+            leaseId: lease.id,
+            materializedAt: loadedAt,
+          })
+        )
+      );
+
+      return {
+        env: materializedEnv(issued.materialization),
+        secrets: materializedSecrets(issued.materialization),
+      };
+    }
+
     if (run.credentialsLoadedAt) {
       const existing = await materializeDeveloperConnectionLeasesForSandboxRun(
         ctx,
         { sandboxRunId: run.publicId }
       );
+      if (existing.leases.length === 0) {
+        return await issueAndWriteCredentials();
+      }
       return {
         env: materializedEnv(existing.materialization),
         secrets: materializedSecrets(existing.materialization),
       };
     }
 
-    const issued = await issueAllEnabledDeveloperConnectionLeases(ctx, {
-      sandboxRunId: run.publicId,
-      workflowRunId: run.workflowRunId,
-    });
-    const sandbox = await runtime.get(run.vercelSandboxId);
-    const files = issued.materialization.flatMap((entry, index) => {
-      const lease = issued.leases[index];
-      if (!lease) {
-        return [];
-      }
-      return entry.files.map((file) => ({
-        content: file.contents,
-        mode: file.mode === "0600" ? 0o600 : undefined,
-        path: credentialFilePath(lease.publicId, file.path),
-      }));
-    });
-
-    if (files.length > 0) {
-      await sandbox.writeFiles(files);
-    }
-
-    const loadedAt = now();
-    await Promise.all(
-      issued.leases.map((lease) =>
-        markDeveloperConnectionLeaseMaterialized(options.db, {
-          leaseId: lease.id,
-          materializedAt: loadedAt,
-        })
-      )
-    );
+    const credentials = await issueAndWriteCredentials();
     await markDeveloperSandboxRunCredentialsLoaded(options.db, {
       runId: run.id,
-      loadedAt,
+      loadedAt: now(),
     });
 
-    return {
-      env: materializedEnv(issued.materialization),
-      secrets: materializedSecrets(issued.materialization),
-    };
+    return credentials;
   }
 
   return {

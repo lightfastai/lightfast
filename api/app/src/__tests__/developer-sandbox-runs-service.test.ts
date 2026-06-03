@@ -224,7 +224,13 @@ describe("developer sandbox run service", () => {
       ],
     });
     materializeDeveloperConnectionLeasesForSandboxRunMock.mockResolvedValue({
-      leases: [],
+      leases: [
+        {
+          id: 10,
+          publicId: "developer_connection_lease_1",
+          provider: "sentry",
+        },
+      ],
       materialization: [
         {
           provider: "sentry",
@@ -363,6 +369,50 @@ describe("developer sandbox run service", () => {
     ).toHaveBeenCalledWith(expect.anything(), {
       sandboxRunId: "developer_sandbox_run_1",
     });
+  });
+
+  it("reissues credentials when a loaded run has no active leases left", async () => {
+    getDeveloperSandboxRunByPublicIdMock.mockResolvedValue(
+      sandboxRun({ credentialsLoadedAt: new Date("2026-06-03T00:00:01.000Z") })
+    );
+    materializeDeveloperConnectionLeasesForSandboxRunMock.mockResolvedValue({
+      leases: [],
+      materialization: [],
+    });
+    const fakeRuntime = runtime({ stdout: "ok\n" });
+    const service = createService(fakeRuntime);
+
+    await service.runDeveloperSandboxCommand(ctx(), {
+      sandboxRunId: "developer_sandbox_run_1",
+      command: { cmd: "node", args: ["--version"] },
+    });
+
+    expect(issueAllEnabledDeveloperConnectionLeasesMock).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        sandboxRunId: "developer_sandbox_run_1",
+        workflowRunId: null,
+      }
+    );
+    expect(fakeRuntime.calls.writeFiles).toEqual([
+      [
+        {
+          content: "token=sentry-token",
+          mode: 0o600,
+          path: "/vercel/sandbox/.lightfast/provider-auth/developer_connection_lease_1/.sentryclirc",
+        },
+      ],
+    ]);
+    expect(markDeveloperConnectionLeaseMaterializedMock).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({ leaseId: 10 })
+    );
+    expect(markDeveloperSandboxRunCredentialsLoadedMock).not.toHaveBeenCalled();
+    expect(fakeRuntime.calls.exec.at(-1)).toEqual(
+      expect.objectContaining({
+        env: { SENTRY_AUTH_TOKEN: "sentry-token" },
+      })
+    );
   });
 
   it("stops a sandbox run and revokes its leases", async () => {
