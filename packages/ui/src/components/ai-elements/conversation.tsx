@@ -4,39 +4,100 @@ import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 import type { UIMessage } from "@vendor/ai";
 import { ArrowDownIcon, DownloadIcon } from "lucide-react";
-import type { ComponentProps } from "react";
-import { useCallback } from "react";
-import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
+import type { ComponentProps, RefObject } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useRef,
+  useState,
+} from "react";
 
-export type ConversationProps = ComponentProps<typeof StickToBottom>;
+const STICK_TO_BOTTOM_THRESHOLD_PX = 70;
+
+interface ConversationScrollState {
+  scrollRef: RefObject<HTMLDivElement | null>;
+  isAtBottom: boolean;
+  scrollToBottom: () => void;
+}
+
+const ConversationScrollContext = createContext<ConversationScrollState | null>(
+  null
+);
+
+function useConversationScroll(): ConversationScrollState {
+  const ctx = useContext(ConversationScrollContext);
+  if (!ctx) {
+    throw new Error(
+      "Conversation components must be used within <Conversation>"
+    );
+  }
+  return ctx;
+}
+
+export type ConversationProps = ComponentProps<"div"> & {
+  "aria-label"?: string;
+};
 
 export const Conversation = ({
   "aria-label": ariaLabel,
   className,
+  children,
   ...props
-}: ConversationProps) => (
-  <StickToBottom
-    aria-label={ariaLabel ?? "Conversation"}
-    className={cn("relative flex-1 overflow-y-hidden", className)}
-    initial="smooth"
-    resize="smooth"
-    role="log"
-    {...props}
-  />
-);
+}: ConversationProps) => {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [isAtBottom, setIsAtBottom] = useState(true);
 
-export type ConversationContentProps = ComponentProps<
-  typeof StickToBottom.Content
->;
+  const recompute = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) {
+      return;
+    }
+    const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+    setIsAtBottom(distance <= STICK_TO_BOTTOM_THRESHOLD_PX);
+  }, []);
+
+  const scrollToBottom = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) {
+      return;
+    }
+    el.scrollTo({ top: el.scrollHeight });
+  }, []);
+
+  return (
+    <ConversationScrollContext.Provider
+      value={{ scrollRef, isAtBottom, scrollToBottom }}
+    >
+      <div
+        aria-label={ariaLabel ?? "Conversation"}
+        className={cn("relative flex-1 overflow-hidden", className)}
+        role="log"
+        {...props}
+      >
+        <div
+          className="h-full overflow-y-auto"
+          data-slot="conversation-scroller"
+          onScroll={recompute}
+          ref={scrollRef}
+        >
+          {children}
+        </div>
+      </div>
+    </ConversationScrollContext.Provider>
+  );
+};
+
+export type ConversationContentProps = ComponentProps<"div">;
 
 export const ConversationContent = ({
   className,
+  children,
   ...props
 }: ConversationContentProps) => (
-  <StickToBottom.Content
-    className={cn("flex flex-col gap-8 p-4", className)}
-    {...props}
-  />
+  <div className={cn("flex flex-col gap-8 p-4", className)} {...props}>
+    {children}
+  </div>
 );
 
 export type ConversationEmptyStateProps = ComponentProps<"div"> & {
@@ -81,29 +142,27 @@ export const ConversationScrollButton = ({
   className,
   ...props
 }: ConversationScrollButtonProps) => {
-  const { isAtBottom, scrollToBottom } = useStickToBottomContext();
+  const { isAtBottom, scrollToBottom } = useConversationScroll();
 
-  const handleScrollToBottom = useCallback(() => {
-    scrollToBottom();
-  }, [scrollToBottom]);
+  if (isAtBottom) {
+    return null;
+  }
 
   return (
-    !isAtBottom && (
-      <Button
-        aria-label={ariaLabel ?? "Scroll to latest message"}
-        className={cn(
-          "absolute bottom-4 left-[50%] translate-x-[-50%] rounded-full dark:bg-background dark:hover:bg-muted",
-          className
-        )}
-        onClick={handleScrollToBottom}
-        size="icon"
-        type="button"
-        variant="outline"
-        {...props}
-      >
-        <ArrowDownIcon className="size-4" />
-      </Button>
-    )
+    <Button
+      aria-label={ariaLabel ?? "Scroll to latest message"}
+      className={cn(
+        "absolute bottom-4 left-[50%] translate-x-[-50%] rounded-full dark:bg-background dark:hover:bg-muted",
+        className
+      )}
+      onClick={scrollToBottom}
+      size="icon"
+      type="button"
+      variant="outline"
+      {...props}
+    >
+      <ArrowDownIcon className="size-4" />
+    </Button>
   );
 };
 
