@@ -49,7 +49,7 @@ const securityHeaders = securityMiddleware({
 
 // Public routes — clerkMiddleware still runs (required for ClerkProvider server-side context),
 // but auth is not enforced, so no JWKS fetch for unauthenticated visitors.
-// tRPC stays here because native OAuth Bearer resolution calls auth({ acceptsToken }),
+// tRPC and native proxy stay here because native OAuth Bearer resolution calls auth({ acceptsToken }),
 // which requires clerkMiddleware context; auth enforcement remains in procedures.
 const GITHUB_BINDING_ROUTE_PATTERNS = [
   "/api/github/setup",
@@ -59,13 +59,20 @@ const GITHUB_BINDING_ROUTE_PATTERNS = [
 ] as const;
 
 const PUBLIC_ROUTE_PATTERNS = [
+  "/api/connectors/linear/oauth/callback",
+  "/.well-known/oauth-authorization-server",
   "/api/oauth/(.*)",
+  "/api/native/proxy/(.*)",
   "/api/trpc/(.*)",
   "/api/health(.*)",
   "/docs(.*)",
   "/monitoring",
   "/ingest(.*)",
   "/manifest.json",
+  "/oauth/jwks",
+  "/oauth/register(.*)",
+  "/oauth/revoke",
+  "/oauth/token",
   ...GITHUB_BINDING_ROUTE_PATTERNS,
 ] as const;
 
@@ -114,6 +121,8 @@ const ORG_ROUTE_POLICIES = [
   { clerkSync: true, pattern: "/:slug/signals(.*)", setupExempt: false },
   { clerkSync: true, pattern: "/:slug/people(.*)", setupExempt: false },
   { clerkSync: true, pattern: "/:slug/automations(.*)", setupExempt: false },
+  { clerkSync: true, pattern: "/:slug/connectors(.*)", setupExempt: false },
+  { clerkSync: true, pattern: "/:slug/decisions(.*)", setupExempt: false },
   { clerkSync: true, pattern: "/:slug/settings(.*)", setupExempt: true },
   { clerkSync: true, pattern: "/:slug/tasks/bind(.*)", setupExempt: true },
   {

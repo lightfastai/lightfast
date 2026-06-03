@@ -10,16 +10,15 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
   createGitHubEmulatorSeed,
-  formatGitHubEmulatorEnvString,
   GITHUB_EMULATOR_FIXTURES,
   getGitHubEmulatorEnv,
 } from "../fixtures";
-import { createGitHubCompatibleFetch } from "../github-compatible-routes";
 import {
   addOrgMembership,
   type StartedGitHubEmulator,
   startGitHubEmulator,
-} from "../server";
+} from "../plugin";
+import { createGitHubCompatibleFetch } from "../plugin/compatible-routes";
 import {
   appCallbackUrl,
   authorizeOAuthCode,
@@ -721,7 +720,7 @@ describe("@repo/github-emulator", () => {
   });
 
   it("simulates a push through GitHub-compatible git APIs", async () => {
-    const { pushGitHubEmulatorCommit } = await import("../push");
+    const { pushGitHubEmulatorCommit } = await import("../plugin/webhook/push");
     const demoPath = "skills/demo/SKILL.md";
     const result = await pushGitHubEmulatorCommit({
       apiBaseUrl: emulator?.url ?? "",
@@ -796,7 +795,7 @@ describe("@repo/github-emulator", () => {
   });
 
   it("pushes standard skill fixtures through GitHub-compatible git APIs", async () => {
-    const { pushGitHubEmulatorSkill } = await import("../push");
+    const { pushGitHubEmulatorSkill } = await import("../plugin/webhook/push");
     const result = await pushGitHubEmulatorSkill({
       apiBaseUrl: emulator?.url ?? "",
       branch: "main",
@@ -848,7 +847,9 @@ describe("@repo/github-emulator", () => {
   });
 
   it("creates safe skill fixture paths and frontmatter", async () => {
-    const { createGitHubEmulatorSkillFile } = await import("../push");
+    const { createGitHubEmulatorSkillFile } = await import(
+      "../plugin/webhook/push"
+    );
 
     expect(
       createGitHubEmulatorSkillFile({
@@ -932,7 +933,9 @@ describe("@repo/github-emulator", () => {
       }
       gh.apps.update(app.id, { webhook_url: receiver.url });
 
-      const { pushGitHubEmulatorSkill } = await import("../push");
+      const { pushGitHubEmulatorSkill } = await import(
+        "../plugin/webhook/push"
+      );
       const push = await pushGitHubEmulatorSkill({
         apiBaseUrl: receiverEmulator.url,
         branch: "main",
@@ -1032,36 +1035,6 @@ describe("@repo/github-emulator", () => {
     } finally {
       await portlessEmulator.close();
     }
-  });
-
-  it("formats quoted env assignments for eval-free runtime injection", () => {
-    expect(
-      formatGitHubEmulatorEnvString({
-        GITHUB_APP_ID: "424242",
-        GITHUB_APP_PRIVATE_KEY: "line1 line2\\nline3",
-        GITHUB_APP_ENDPOINT_ORIGIN: "https://github.lightfast.localhost",
-      })
-    ).toBe(
-      [
-        "GITHUB_APP_ID='424242'",
-        "GITHUB_APP_PRIVATE_KEY='line1 line2\\nline3'",
-        "GITHUB_APP_ENDPOINT_ORIGIN='https://github.lightfast.localhost'",
-      ].join("\n")
-    );
-  });
-
-  it("rejects env assignments that cannot be safely passed through env -S", () => {
-    expect(() =>
-      formatGitHubEmulatorEnvString({
-        "GITHUB APP ID": "424242",
-      })
-    ).toThrow(/Invalid environment variable name/);
-
-    expect(() =>
-      formatGitHubEmulatorEnvString({
-        GITHUB_APP_PRIVATE_KEY: "line1\0line2",
-      })
-    ).toThrow(/contains a NUL byte/);
   });
 
   it("rejects when the requested port is already in use", async () => {

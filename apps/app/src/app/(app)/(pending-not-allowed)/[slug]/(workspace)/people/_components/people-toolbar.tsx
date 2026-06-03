@@ -135,15 +135,20 @@ export function PeopleToolbar({
       </div>
 
       <div className="ml-auto flex w-full min-w-0 items-center justify-end gap-1.5 sm:w-auto">
-        <div className="flex h-6 w-full items-center gap-2 rounded-lg border border-border/70 bg-muted/30 px-2 text-muted-foreground sm:w-56">
-          <Search aria-hidden="true" className="size-3" />
+        <div className="relative w-full sm:w-56">
+          <Search
+            aria-hidden="true"
+            className="absolute top-1/2 left-2.5 size-3 -translate-y-1/2 text-muted-foreground"
+          />
           <Input
             aria-label="Search people"
-            className="h-5 border-0 bg-transparent px-0 py-0 text-sm shadow-none focus-visible:ring-0"
+            className="pl-7"
             onChange={(event) => onQueryChange(event.currentTarget.value)}
             placeholder="Search people"
             role="searchbox"
+            size="lf-sm"
             value={query}
+            variant="lf"
           />
         </div>
       </div>

@@ -15,6 +15,13 @@ const clientLabels = {
   desktop: "Lightfast Desktop",
 } satisfies Record<NativeClient, string>;
 
+const CLERK_DEV_AUTHORIZE_HOST_SUFFIXES = [
+  ".clerk.accounts.dev",
+  ".accounts.dev",
+];
+const CLERK_DEV_BROWSER_COOKIE = "__clerk_db_jwt";
+const CLERK_DEV_BROWSER_PARAM = "__clerk_db_jwt";
+
 function getOrgInitials(name: string) {
   return name
     .split(/\s+/)
@@ -22,6 +29,39 @@ function getOrgInitials(name: string) {
     .slice(0, 2)
     .map((part) => part.at(0)?.toUpperCase())
     .join("");
+}
+
+function readCookie(name: string) {
+  const prefix = `${name}=`;
+  return (
+    document.cookie
+      .split(";")
+      .map((cookie) => cookie.trim())
+      .find((cookie) => cookie.startsWith(prefix))
+      ?.slice(prefix.length) ?? null
+  );
+}
+
+function withClerkDevBrowserContext(authorizationUrl: string) {
+  const devBrowserId = readCookie(CLERK_DEV_BROWSER_COOKIE);
+  if (!devBrowserId) {
+    return authorizationUrl;
+  }
+
+  try {
+    const url = new URL(authorizationUrl);
+    if (
+      !CLERK_DEV_AUTHORIZE_HOST_SUFFIXES.some((suffix) =>
+        url.hostname.endsWith(suffix)
+      )
+    ) {
+      return authorizationUrl;
+    }
+    url.searchParams.set(CLERK_DEV_BROWSER_PARAM, devBrowserId);
+    return url.toString();
+  } catch {
+    return authorizationUrl;
+  }
 }
 
 export function NativeAuthOrgSelect({
@@ -41,7 +81,9 @@ export function NativeAuthOrgSelect({
   const createAttemptMutation = useMutation(
     trpc.native.auth.createAttempt.mutationOptions({
       onSuccess: (result) => {
-        window.location.assign(result.authorizationUrl);
+        window.location.assign(
+          withClerkDevBrowserContext(result.authorizationUrl)
+        );
       },
     })
   );

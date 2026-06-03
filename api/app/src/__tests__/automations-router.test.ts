@@ -6,6 +6,7 @@ import type { AuthIdentity } from "../auth/identity";
 const createAutomationMock = vi.fn();
 const createAutomationRunMock = vi.fn();
 const getAutomationByPublicIdMock = vi.fn();
+const getAutomationRunByPublicIdMock = vi.fn();
 const listAutomationRunsMock = vi.fn();
 const listAutomationsMock = vi.fn();
 const setAutomationStatusMock = vi.fn();
@@ -17,6 +18,7 @@ vi.mock("@db/app", () => ({
   createAutomation: createAutomationMock,
   createAutomationRun: createAutomationRunMock,
   getAutomationByPublicId: getAutomationByPublicIdMock,
+  getAutomationRunByPublicId: getAutomationRunByPublicIdMock,
   listAutomationRuns: listAutomationRunsMock,
   listAutomations: listAutomationsMock,
   setAutomationStatus: setAutomationStatusMock,
@@ -165,6 +167,7 @@ beforeEach(() => {
   createAutomationMock.mockReset();
   createAutomationRunMock.mockReset();
   getAutomationByPublicIdMock.mockReset();
+  getAutomationRunByPublicIdMock.mockReset();
   listAutomationRunsMock.mockReset();
   listAutomationsMock.mockReset();
   setAutomationStatusMock.mockReset();
@@ -174,6 +177,7 @@ beforeEach(() => {
   createAutomationMock.mockResolvedValue(automation);
   createAutomationRunMock.mockResolvedValue(run);
   getAutomationByPublicIdMock.mockResolvedValue(automation);
+  getAutomationRunByPublicIdMock.mockResolvedValue(run);
   listAutomationRunsMock.mockResolvedValue([run]);
   listAutomationsMock.mockResolvedValue([automation]);
   setAutomationStatusMock.mockResolvedValue({
@@ -324,5 +328,23 @@ describe("automationsRouter", () => {
     expect(getAutomationByPublicIdMock).not.toHaveBeenCalled();
     expect(createAutomationRunMock).not.toHaveBeenCalled();
     expect(sendMock).not.toHaveBeenCalled();
+  });
+
+  it("gets a single run scoped to the active organization", async () => {
+    const result = await caller().automations.getRun({ id: run.publicId });
+
+    expect(result).toEqual(run);
+    expect(getAutomationRunByPublicIdMock).toHaveBeenCalledWith(
+      expect.anything(),
+      { clerkOrgId: "org_acme", publicId: run.publicId }
+    );
+  });
+
+  it("returns NOT_FOUND when the run is missing", async () => {
+    getAutomationRunByPublicIdMock.mockResolvedValueOnce(undefined);
+
+    await expect(
+      caller().automations.getRun({ id: run.publicId })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 });

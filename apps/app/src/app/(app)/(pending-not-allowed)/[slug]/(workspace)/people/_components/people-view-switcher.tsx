@@ -1,6 +1,5 @@
 "use client";
 
-import { Users } from "lucide-react";
 import { useQueryStates } from "nuqs";
 import { ViewSwitcher } from "../../_components/views/view-switcher";
 import {
@@ -11,7 +10,6 @@ import {
   personTypeParser,
 } from "./people-search-params";
 import {
-  ALL_PEOPLE_VIEW_NAME,
   allPeopleParamValues,
   selectionToConfig,
   viewConfigToParamValues,
@@ -47,8 +45,6 @@ export function PeopleViewSwitcher() {
   return (
     <ViewSwitcher
       activeViewId={activeViewId}
-      allLabel={ALL_PEOPLE_VIEW_NAME}
-      icon={Users}
       onCreate={async (name) => {
         const view = await createView.mutateAsync({
           config: currentConfig,

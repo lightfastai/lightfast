@@ -91,6 +91,8 @@ function makeSignal(overrides: Partial<Signal> = {}): Signal {
     publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
     clerkOrgId: "org_test",
     createdByApiKeyId: "key_test",
+    createdByMcpClientId: null,
+    createdByMcpGrantId: null,
     createdByUserId: "user_test",
     visibilityScope: "team",
     input: "Customer asked for migration help",
@@ -454,6 +456,26 @@ describe("createSignal", () => {
         input: "Create a user-facing signal",
         status: "queued",
         visibilityScope: "user",
+      })
+    );
+  });
+
+  it("stores MCP client and grant attribution when provided", async () => {
+    const { db, spies } = makeCreateDb();
+
+    await createSignal(db, {
+      clerkOrgId: "org_test",
+      createdByApiKeyId: null,
+      createdByMcpClientId: "mcp_client_test_123",
+      createdByMcpGrantId: "mcp_grant_test_123",
+      createdByUserId: "user_test",
+      input: "Create an MCP-originated signal",
+    });
+
+    expect(spies.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        createdByMcpClientId: "mcp_client_test_123",
+        createdByMcpGrantId: "mcp_grant_test_123",
       })
     );
   });

@@ -2,10 +2,11 @@
 
 import { Button } from "@repo/ui/components/ui/button";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@repo/ui/components/ui/popover";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@repo/ui/components/ui/dropdown-menu";
 import {
   Sidebar,
   SidebarContent,
@@ -19,14 +20,15 @@ import {
 } from "@repo/ui/components/ui/sidebar";
 import { cn } from "@repo/ui/lib/utils";
 import {
+  Aperture,
+  Blocks,
   BookOpen,
-  BrainCircuit,
-  CalendarClock,
   HelpCircle,
   Mail,
+  Network,
+  Scroll,
   Settings,
-  Signal,
-  UsersRound,
+  Workflow,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -40,34 +42,44 @@ interface NavItem {
   title: string;
 }
 
+function getOrgStandaloneItems(orgSlug: string): NavItem[] {
+  return [
+    {
+      title: "Automations",
+      href: `/${orgSlug}/automations`,
+      icon: Workflow,
+    },
+    {
+      title: "Connectors",
+      href: `/${orgSlug}/connectors`,
+      icon: Blocks,
+    },
+    {
+      title: "Skills",
+      href: `/${orgSlug}/skills`,
+      icon: Scroll,
+      prefetch: false,
+    },
+  ];
+}
+
 function getOrgWorkspaceItems(orgSlug: string): NavItem[] {
   return [
     {
       title: "Signals",
       href: `/${orgSlug}/signals`,
-      icon: Signal,
+      icon: Aperture,
     },
     {
       title: "People",
       href: `/${orgSlug}/people`,
-      icon: UsersRound,
-    },
-    {
-      title: "Skills",
-      href: `/${orgSlug}/skills`,
-      icon: BrainCircuit,
-      prefetch: false,
+      icon: Network,
     },
   ];
 }
 
 function getOrgManageItems(orgSlug: string): NavItem[] {
   return [
-    {
-      title: "Automations",
-      href: `/${orgSlug}/automations`,
-      icon: CalendarClock,
-    },
     {
       title: "Settings",
       href: `/${orgSlug}/settings`,
@@ -126,6 +138,16 @@ export function AppSidebar() {
       <SidebarContent>
         {orgSlug && (
           <>
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <NavItems
+                    items={getOrgStandaloneItems(orgSlug)}
+                    pathname={pathname}
+                  />
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
             <SidebarGroup collapsible defaultOpen label="Workspace">
               <SidebarGroupContent>
                 <SidebarMenu>
@@ -150,8 +172,8 @@ export function AppSidebar() {
         )}
       </SidebarContent>
       <SidebarFooter>
-        <Popover>
-          <PopoverTrigger asChild>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <Button
               className="h-8 w-8 rounded-full bg-muted p-1"
               size="icon"
@@ -160,38 +182,26 @@ export function AppSidebar() {
             >
               <HelpCircle className="size-3.5" />
             </Button>
-          </PopoverTrigger>
-          <PopoverContent align="center" className="w-48 p-0.5">
-            <div className="flex flex-col gap-1">
-              <Button
-                asChild
-                className="justify-start gap-2 rounded-xl text-sm"
-                size="sm"
-                variant="ghost"
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="center" className="w-48">
+            <DropdownMenuItem asChild>
+              <a href="mailto:support@lightfast.ai">
+                <Mail className="size-3.5" />
+                Contact Support
+              </a>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link
+                href="https://lightfast.ai/docs/get-started/overview"
+                rel="noopener noreferrer"
+                target="_blank"
               >
-                <a href="mailto:support@lightfast.ai">
-                  <Mail className="size-3.5" />
-                  Contact Support
-                </a>
-              </Button>
-              <Button
-                asChild
-                className="justify-start gap-2 rounded-xl text-sm"
-                size="sm"
-                variant="ghost"
-              >
-                <Link
-                  href="https://lightfast.ai/docs/get-started/overview"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  <BookOpen className="size-3.5" />
-                  Help Docs
-                </Link>
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
+                <BookOpen className="size-3.5" />
+                Help Docs
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </SidebarFooter>
     </Sidebar>
   );

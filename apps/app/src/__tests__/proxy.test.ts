@@ -145,6 +145,12 @@ function matchesPattern(pattern: string, pathname: string) {
   if (pattern === "/:slug/(.*)") {
     return /^\/[^/]+(?:\/.*)?$/.test(pathname);
   }
+  if (pattern === "/:slug/connectors(.*)") {
+    return /^\/[^/]+\/connectors(?:\/.*)?$/.test(pathname);
+  }
+  if (pattern === "/:slug/decisions(.*)") {
+    return /^\/[^/]+\/decisions(?:\/.*)?$/.test(pathname);
+  }
   if (pattern === "/:slug/settings(.*)") {
     return /^\/[^/]+\/settings(?:\/.*)?$/.test(pathname);
   }
@@ -248,6 +254,8 @@ describe("proxy Nemo composition", () => {
           "/:slug/signals(.*)",
           "/:slug/people(.*)",
           "/:slug/automations(.*)",
+          "/:slug/connectors(.*)",
+          "/:slug/decisions(.*)",
           "/:slug/settings(.*)",
           "/:slug/tasks/bind(.*)",
           "/:slug/tasks/github/lightfast-repo(.*)",
@@ -440,6 +448,8 @@ describe("proxy pending-session route handling", () => {
     "/api/github/oauth/callback",
     "/api/github/user/oauth/callback",
     "/api/github/webhook",
+    "/api/connectors/linear/oauth/callback",
+    "/api/native/proxy/routines",
   ])("runs Clerk middleware but does not enforce signed-in routing for %s", async (pathname) => {
     authMock.mockResolvedValue({
       orgId: null,
@@ -462,7 +472,9 @@ describe("proxy pending-session route handling", () => {
     "/api/github/oauth/callback",
     "/api/github/user/oauth/callback",
     "/api/github/webhook",
-  ])("keeps GitHub proxy bypass public for expired tokens on %s", async (pathname) => {
+    "/api/connectors/linear/oauth/callback",
+    "/api/native/proxy/routines",
+  ])("keeps callback and native proxy routes public for expired tokens on %s", async (pathname) => {
     authMock.mockRejectedValue(new Error("Token expired"));
 
     const { response } = await invoke(pathname);
@@ -561,6 +573,8 @@ describe("proxy bound org product route gate", () => {
   it.each([
     "/acme/workspace",
     "/acme/runs/123",
+    "/acme/connectors",
+    "/acme/decisions",
   ])("redirects unbound org product routes from %s to the bind task", async (pathname) => {
     authMock.mockResolvedValue({
       orgId: "org_123",

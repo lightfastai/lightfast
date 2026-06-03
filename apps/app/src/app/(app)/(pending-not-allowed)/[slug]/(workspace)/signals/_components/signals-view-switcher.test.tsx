@@ -93,9 +93,9 @@ beforeEach(() => {
 });
 
 describe("SignalsViewSwitcher", () => {
-  it("passes signals identity to the shared switcher", () => {
+  it("maps the active view param onto the shared switcher", () => {
     render(<SignalsViewSwitcher />);
-    expect(switcherProps.allLabel).toBe("All signals");
+    expect(switcherProps.activeViewId).toBeNull();
   });
 
   it("stamps a view's filters and ?view atomically on select", () => {

@@ -51,10 +51,12 @@
   },
   "devDependencies": {
     "@repo/api-contract": "workspace:*",
+    "@repo/mcp-tools": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",
     "@vendor/mcp": "workspace:*",
+    "@vendor/orpc-mcp-adapter": "workspace:*",
     "lightfast": "workspace:*",
     "tsup": "^8.5.1",
     "typescript": "catalog:",

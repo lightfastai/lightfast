@@ -1,0 +1,47 @@
+{
+  "name": "@lightfast/mcp",
+  "license": "Apache-2.0",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "portless": "mcp.lightfast",
+  "scripts": {
+    "build": "pnpm with-env next build",
+    "clean": "git clean -xdf .cache .next .turbo .vercel node_modules",
+    "dev:next": "portless run pnpm with-related-projects pnpm with-env next dev",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e ../app/.vercel/.env.development.local -e ./.vercel/.env.development.local --",
+    "with-related-projects": "NEXT_PUBLIC_APP_URL=$(portless get app.lightfast) MCP_RESOURCE_URL=$(portless get mcp.lightfast)/mcp MCP_AUTH_ISSUER=$(portless get app.lightfast) INNGEST_DEV=$(portless get inngest.lightfast) QSTASH_URL=$(portless get qstash.lightfast)"
+  },
+  "dependencies": {
+    "@api/app": "workspace:*",
+    "@db/app": "workspace:*",
+    "@repo/api-contract": "workspace:*",
+    "@repo/mcp-tools": "workspace:*",
+    "@repo/provider-routine-contract": "workspace:*",
+    "@repo/provider-routines": "workspace:*",
+    "@sentry/nextjs": "catalog:",
+    "@t3-oss/env-nextjs": "catalog:",
+    "@vendor/jose": "workspace:*",
+    "@vendor/mcp": "workspace:*",
+    "@vendor/next": "workspace:*",
+    "@vendor/observability": "workspace:*",
+    "@vendor/security": "workspace:*",
+    "@vercel/related-projects": "catalog:",
+    "next": "catalog:next16",
+    "react": "catalog:react19",
+    "react-dom": "catalog:react19",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@repo/vitest-config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:react19",
+    "@types/react-dom": "catalog:react19",
+    "dotenv-cli": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

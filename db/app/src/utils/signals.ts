@@ -307,6 +307,8 @@ export async function listWorkspaceSignals(
 export interface CreateSignalRecordInput {
   clerkOrgId: string;
   createdByApiKeyId: string | null;
+  createdByMcpClientId?: string | null;
+  createdByMcpGrantId?: string | null;
   createdByUserId: string;
   input: string;
 }
@@ -321,6 +323,8 @@ export async function createSignal(
     clerkOrgId: input.clerkOrgId,
     createdByUserId: input.createdByUserId,
     createdByApiKeyId: input.createdByApiKeyId,
+    createdByMcpClientId: input.createdByMcpClientId ?? null,
+    createdByMcpGrantId: input.createdByMcpGrantId ?? null,
     visibilityScope: "user",
     input: input.input,
     status: "queued",

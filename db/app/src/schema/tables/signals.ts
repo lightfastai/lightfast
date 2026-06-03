@@ -21,6 +21,8 @@ import {
 const SIGNAL_ID_LENGTH = 64;
 const CLERK_ID_LENGTH = 64;
 const API_KEY_ID_LENGTH = 128;
+const MCP_CLIENT_ID_LENGTH = 128;
+const MCP_GRANT_ID_LENGTH = 128;
 const CODE_LENGTH = 32;
 const ERROR_CODE_LENGTH = 64;
 
@@ -47,6 +49,14 @@ export const signals = mysqlTable(
 
     createdByApiKeyId: varchar("created_by_api_key_id", {
       length: API_KEY_ID_LENGTH,
+    }),
+
+    createdByMcpClientId: varchar("created_by_mcp_client_id", {
+      length: MCP_CLIENT_ID_LENGTH,
+    }),
+
+    createdByMcpGrantId: varchar("created_by_mcp_grant_id", {
+      length: MCP_GRANT_ID_LENGTH,
     }),
 
     visibilityScope: varchar("visibility_scope", { length: CODE_LENGTH })
@@ -97,6 +107,10 @@ export const signals = mysqlTable(
       table.visibilityScope,
       table.createdAt,
       table.id
+    ),
+    mcpAttributionIdx: index("signals_mcp_attribution_idx").on(
+      table.createdByMcpClientId,
+      table.createdByMcpGrantId
     ),
   })
 );

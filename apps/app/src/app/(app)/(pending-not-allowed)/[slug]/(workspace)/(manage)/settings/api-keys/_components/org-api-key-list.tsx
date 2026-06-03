@@ -10,6 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@repo/ui/components/ui/alert-dialog";
+import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -171,15 +172,9 @@ const OrgApiKeyRow = memo(function OrgApiKeyRow({
       <div className="min-w-0 space-y-1">
         <div className="flex items-center gap-2">
           <p className="font-medium text-sm">{keyName}</p>
-          {!keyItem.enabled && (
-            <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs">
-              Revoked
-            </span>
-          )}
+          {!keyItem.enabled && <Badge variant="secondary">Revoked</Badge>}
           {isExpired && keyItem.enabled && (
-            <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs">
-              Expired
-            </span>
+            <Badge variant="secondary">Expired</Badge>
           )}
         </div>
         <div className="flex items-center gap-3 text-muted-foreground text-xs">

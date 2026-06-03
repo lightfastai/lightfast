@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./src/index.ts",
@@ -15,9 +16,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
-    "@orpc/contract": "^1.14.2",
-    "@vendor/observability": "workspace:*"
+    "@modelcontextprotocol/sdk": "catalog:",
+    "mcp-handler": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

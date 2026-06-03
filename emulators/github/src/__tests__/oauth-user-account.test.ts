@@ -6,8 +6,8 @@ import {
   createGitHubEmulatorSeed,
   GITHUB_EMULATOR_FIXTURES,
 } from "../fixtures";
-import { createGitHubCompatibleFetch } from "../github-compatible-routes";
-import { addOrgMembership, type StartedGitHubEmulator } from "../server";
+import { addOrgMembership, type StartedGitHubEmulator } from "../plugin";
+import { createGitHubCompatibleFetch } from "../plugin/compatible-routes";
 import {
   authorizeOAuthCode,
   createCodeChallenge,

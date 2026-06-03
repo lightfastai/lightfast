@@ -1,6 +1,5 @@
 "use client";
 
-import { LayoutGrid } from "lucide-react";
 import { useQueryStates } from "nuqs";
 import { ViewSwitcher } from "../../_components/views/view-switcher";
 import {
@@ -14,7 +13,6 @@ import {
   signalSavedViewParser,
 } from "./signals-search-params";
 import {
-  ALL_SIGNALS_VIEW_NAME,
   allSignalsParamValues,
   selectionToConfig,
   viewConfigToParamValues,
@@ -54,8 +52,6 @@ export function SignalsViewSwitcher() {
   return (
     <ViewSwitcher
       activeViewId={activeViewId}
-      allLabel={ALL_SIGNALS_VIEW_NAME}
-      icon={LayoutGrid}
       onCreate={async (name) => {
         const view = await createView.mutateAsync({
           config: currentConfig,

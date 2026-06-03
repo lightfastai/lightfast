@@ -38,6 +38,15 @@ export const automationRunIdSchema = z
     "Invalid automation run id"
   );
 
+const timeSchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:mm format");
+
+const manualScheduleSchema = z.object({
+  kind: z.literal("manual"),
+  config: z.object({}).strict(),
+});
+
 const hourlyScheduleSchema = z.object({
   kind: z.literal("hourly"),
   config: z.object({
@@ -48,13 +57,31 @@ const hourlyScheduleSchema = z.object({
 const dailyScheduleSchema = z.object({
   kind: z.literal("daily"),
   config: z.object({
-    time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:mm format"),
+    time: timeSchema,
+  }),
+});
+
+const weekdaysScheduleSchema = z.object({
+  kind: z.literal("weekdays"),
+  config: z.object({
+    time: timeSchema,
+  }),
+});
+
+const weeklyScheduleSchema = z.object({
+  kind: z.literal("weekly"),
+  config: z.object({
+    dayOfWeek: z.number().int().min(0).max(6),
+    time: timeSchema,
   }),
 });
 
 export const automationScheduleSchema = z.discriminatedUnion("kind", [
+  manualScheduleSchema,
   hourlyScheduleSchema,
   dailyScheduleSchema,
+  weekdaysScheduleSchema,
+  weeklyScheduleSchema,
 ]);
 
 export const createAutomationSchema = z.object({
@@ -90,6 +117,10 @@ export const getAutomationSchema = z.object({
   id: automationIdSchema,
 });
 
+export const getAutomationRunSchema = z.object({
+  id: automationRunIdSchema,
+});
+
 export const listAutomationRunsSchema = z.object({
   id: automationIdSchema,
   limit: z.number().int().min(1).max(100).default(25),
@@ -116,6 +147,20 @@ export function normalizeAutomationSchedule(
   return automationScheduleSchema.parse(input);
 }
 
+const WEEKDAY_LABELS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+] as const;
+
+export function formatWeekday(dayOfWeek: number): string {
+  return WEEKDAY_LABELS[dayOfWeek] ?? "Sunday";
+}
+
 export function formatClockTime(value: string): string {
   const [hourText = "0", minuteText = "0"] = value.split(":");
   const hour = Number.parseInt(hourText, 10);
@@ -126,8 +171,12 @@ export function formatClockTime(value: string): string {
 }
 
 export interface AutomationScheduleSummary {
-  scheduleConfig: { intervalHours: number } | { time: string };
-  scheduleKind: "hourly" | "daily";
+  scheduleConfig:
+    | Record<string, never>
+    | { intervalHours: number }
+    | { time: string }
+    | { dayOfWeek: number; time: string };
+  scheduleKind: "manual" | "hourly" | "daily" | "weekdays" | "weekly";
   status: "active" | "paused" | "deleted";
 }
 
@@ -142,17 +191,29 @@ export function formatAutomationSchedule(
     return "Paused";
   }
 
-  if (automation.scheduleKind === "hourly") {
-    const interval =
-      "intervalHours" in automation.scheduleConfig
-        ? automation.scheduleConfig.intervalHours
-        : 1;
-    return interval === 1 ? "Hourly" : `Every ${interval} hours`;
-  }
+  const config = automation.scheduleConfig;
 
-  const time =
-    "time" in automation.scheduleConfig
-      ? automation.scheduleConfig.time
-      : "09:00";
-  return `Daily at ${formatClockTime(time)}`;
+  switch (automation.scheduleKind) {
+    case "manual":
+      return "Manual";
+    case "hourly": {
+      const interval = "intervalHours" in config ? config.intervalHours : 1;
+      return interval === 1 ? "Hourly" : `Every ${interval} hours`;
+    }
+    case "daily": {
+      const time = "time" in config ? config.time : "09:00";
+      return `Daily at ${formatClockTime(time)}`;
+    }
+    case "weekdays": {
+      const time = "time" in config ? config.time : "09:00";
+      return `Weekdays at ${formatClockTime(time)}`;
+    }
+    case "weekly": {
+      const time = "time" in config ? config.time : "09:00";
+      const dayOfWeek = "dayOfWeek" in config ? config.dayOfWeek : 1;
+      return `Weekly on ${formatWeekday(dayOfWeek)} at ${formatClockTime(time)}`;
+    }
+    default:
+      return "Manual";
+  }
 }

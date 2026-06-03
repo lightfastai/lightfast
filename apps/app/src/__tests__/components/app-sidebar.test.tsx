@@ -117,10 +117,25 @@ describe("AppSidebar", () => {
       "href",
       "/acme/settings"
     );
+    expect(screen.getByRole("link", { name: /connectors/i })).toHaveAttribute(
+      "href",
+      "/acme/connectors"
+    );
     expect(
       screen.getByRole("region", { name: "Workspace" })
     ).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Manage" })).toBeInTheDocument();
+  });
+
+  it("marks connectors active by route section", () => {
+    pathname = "/acme/connectors";
+    render(<AppSidebar />);
+
+    const connectorsLink = screen.getByRole("link", { name: /connectors/i });
+    expect(connectorsLink.closest("[data-active]")).toHaveAttribute(
+      "data-active",
+      "true"
+    );
   });
 
   it("marks people active by route section", () => {

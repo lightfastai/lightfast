@@ -47,6 +47,13 @@ vi.mock("next/navigation", () => ({
 const Page = (await import("~/app/(app)/(oauth)/oauth/[client]/start/page"))
   .default;
 
+function setDocumentCookieForTest(value: string) {
+  Object.defineProperty(document, "cookie", {
+    configurable: true,
+    value,
+  });
+}
+
 describe("/oauth/[client]/start", () => {
   let assignSpy: ReturnType<typeof vi.spyOn>;
 
@@ -85,6 +92,7 @@ describe("/oauth/[client]/start", () => {
   });
 
   afterEach(() => {
+    setDocumentCookieForTest("");
     assignSpy.mockRestore();
   });
 
@@ -133,6 +141,44 @@ describe("/oauth/[client]/start", () => {
       });
       expect(assignSpy).toHaveBeenCalledWith(
         "https://clerk.example.com/oauth/authorize?x=1"
+      );
+    });
+  });
+
+  it("carries Clerk development browser context to development authorize URLs", async () => {
+    setDocumentCookieForTest("__clerk_db_jwt=dvb_test");
+    useMutationMock.mockImplementation(
+      (options?: {
+        onSuccess?: (result: { authorizationUrl: string }) => void;
+      }) => ({
+        isPending: false,
+        mutate: (input: unknown) => {
+          mutateMock(input);
+          options?.onSuccess?.({
+            authorizationUrl:
+              "https://charmed-shark-52.clerk.accounts.dev/oauth/authorize?x=1",
+          });
+        },
+      })
+    );
+
+    render(
+      await Page({
+        params: Promise.resolve({ client: "cli" }),
+        searchParams: Promise.resolve({
+          code_challenge: "a".repeat(43),
+          code_challenge_method: "S256",
+          redirect_uri: "http://127.0.0.1:51010/callback",
+          state: "nonce_1234567890",
+        }),
+      })
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Acme/ }));
+
+    await waitFor(() => {
+      expect(assignSpy).toHaveBeenCalledWith(
+        "https://charmed-shark-52.clerk.accounts.dev/oauth/authorize?x=1&__clerk_db_jwt=dvb_test"
       );
     });
   });

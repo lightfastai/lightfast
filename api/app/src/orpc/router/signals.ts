@@ -7,10 +7,8 @@ import {
   type GetSignalInput,
 } from "@repo/api-contract";
 
-import {
-  createAndQueueSignal,
-  isSignalCreateQueueError,
-} from "../../signals/create-signal";
+import { isSignalCreateQueueError } from "../../signals/create-signal";
+import { createSignalForActor } from "../../signals/service";
 import { boundOrg } from "../procedures";
 
 export const signalsRouter = {
@@ -18,10 +16,13 @@ export const signalsRouter = {
     async ({ context, input }) => {
       const createInput = input as CreateSignalInput;
       try {
-        return await createAndQueueSignal(db, {
-          clerkOrgId: context.auth.identity.orgId,
-          createdByApiKeyId: context.apiKeyId,
-          createdByUserId: context.auth.identity.userId,
+        return await createSignalForActor(db, {
+          actor: {
+            apiKeyId: context.apiKeyId,
+            kind: "api_key",
+            orgId: context.auth.identity.orgId,
+            userId: context.auth.identity.userId,
+          },
           input: createInput.input,
         });
       } catch (error) {

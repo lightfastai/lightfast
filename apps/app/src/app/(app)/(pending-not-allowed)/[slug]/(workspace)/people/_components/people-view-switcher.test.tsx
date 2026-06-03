@@ -77,9 +77,9 @@ beforeEach(() => {
 });
 
 describe("PeopleViewSwitcher", () => {
-  it("passes people identity to the shared switcher", () => {
+  it("maps the active view param onto the shared switcher", () => {
     render(<PeopleViewSwitcher />);
-    expect(switcherProps.allLabel).toBe("All people");
+    expect(switcherProps.activeViewId).toBeNull();
   });
 
   it("stamps a view's filters and ?view atomically on select", () => {

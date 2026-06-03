@@ -30,7 +30,7 @@ function getStatusLabel(status: Freshness["status"]) {
 }
 
 const STATUS_LABELS: Record<Freshness["status"], string> = {
-  fresh: "Fresh",
+  fresh: "Latest",
   refreshing: "Refreshing",
   stale: "Stale",
   unavailable: "Unavailable",
