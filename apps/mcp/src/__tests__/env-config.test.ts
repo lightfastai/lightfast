@@ -38,6 +38,23 @@ describe("MCP environment validation wiring", () => {
     expect(viteConfigSource).toContain("SENTRY_DSN");
   });
 
+  it("passes Sentry env fallbacks through the Turbo build task", () => {
+    const turboConfig = JSON.parse(
+      readFileSync(resolve(appRoot, "turbo.json"), "utf8")
+    ) as { tasks: { build: { env: string[] } } };
+
+    expect(turboConfig.tasks.build.env).toEqual(
+      expect.arrayContaining([
+        "NEXT_PUBLIC_SENTRY_DSN",
+        "SENTRY_AUTH_TOKEN",
+        "SENTRY_DSN",
+        "SENTRY_ORG",
+        "SENTRY_PROJECT",
+        "VITE_*",
+      ])
+    );
+  });
+
   it("loads app-specific env before the shared app fallback", () => {
     const packageJson = JSON.parse(
       readFileSync(resolve(appRoot, "package.json"), "utf8")
