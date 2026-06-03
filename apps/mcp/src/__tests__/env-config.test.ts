@@ -44,7 +44,7 @@ describe("MCP environment validation wiring", () => {
     ) as { scripts: Record<string, string> };
 
     expect(packageJson.scripts["with-env"]).toBe(
-      "dotenv -e ./.vercel/.env.development.local -e ../app/.vercel/.env.development.local --"
+      "dotenv -e ./.vercel/.env.development.local -e ../app/.env.overrides.local -e ../app/.vercel/.env.development.local --"
     );
   });
 });

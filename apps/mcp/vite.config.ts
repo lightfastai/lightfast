@@ -2,6 +2,7 @@ import { fileURLToPath } from "node:url";
 import { sentryTanstackStart } from "@sentry/tanstackstart-react/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import react from "@vitejs/plugin-react";
+import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 import { env } from "./src/env";
 
@@ -48,6 +49,7 @@ function requireSentryBuildEnv(command: "build" | "serve") {
 export default defineConfig(({ command }) => ({
   plugins: [
     ...tanstackStart(),
+    nitro(),
     react(),
     ...sentryTanstackStart(requireSentryBuildEnv(command)),
   ],
