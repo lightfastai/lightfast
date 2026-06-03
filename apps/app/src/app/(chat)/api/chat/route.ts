@@ -131,7 +131,13 @@ export async function POST(req: Request) {
     conversation,
   });
   const canonicalMessages = [
-    ...existingMessages.map(toUIMessage),
+    // Skip degenerate persisted turns that have no parts (e.g. an assistant
+    // message whose generation failed before producing content). They cannot
+    // be rendered or converted to model messages, and including them fails UI
+    // message validation.
+    ...existingMessages
+      .filter((message) => message.parts.length > 0)
+      .map(toUIMessage),
     submittedMessage,
   ];
   const validatedCanonicalMessages =
@@ -198,6 +204,7 @@ export async function POST(req: Request) {
   const system = await buildSystemPrompt(identity.orgId);
   let completionUsage: WorkspaceAssistantGenerationUsage | null = null;
   let providerMetadata: WorkspaceAssistantRecordMetadata = {};
+  let streamErrored = false;
   const streamId = createWorkspaceAssistantStreamId();
   const generationLogMetadata = {
     clerkOrgId: identity.orgId,
@@ -234,6 +241,7 @@ export async function POST(req: Request) {
     messages: modelMessages,
     model: gateway(WORKSPACE_ASSISTANT_MODEL),
     onError: async ({ error }) => {
+      streamErrored = true;
       const message = getErrorMessage(error);
       log.error("[workspace-assistant] generation error", {
         ...generationLogMetadata,
@@ -355,6 +363,50 @@ export async function POST(req: Request) {
             type: "warn",
             warning:
               "[workspace-assistant] failed to clear active stream after generation abort",
+          }),
+        ]);
+        return;
+      }
+
+      if (streamErrored) {
+        // The streamText onError handler already marked this turn failed and
+        // cleared the active stream. Never overwrite it with a "completed"
+        // status — doing so previously persisted an assistant message with no
+        // parts, which fails UI message validation on read and bricks the
+        // whole conversation page.
+        return;
+      }
+
+      if (responseMessage.parts.length === 0) {
+        log.warn(
+          "[workspace-assistant] generation produced no content",
+          generationLogMetadata
+        );
+        await Promise.all([
+          markWorkspaceAssistantMessageFailed(db, {
+            clerkOrgId: identity.orgId,
+            createdByUserId: identity.userId,
+            errorCode: "CHAT_STREAM_EMPTY",
+            errorMessage: "Workspace assistant generation produced no content.",
+            publicId: assistantMessage.publicId,
+          }),
+          markWorkspaceAssistantGenerationFailed(db, {
+            clerkOrgId: identity.orgId,
+            errorCode: "CHAT_STREAM_EMPTY",
+            errorMessage: "Workspace assistant generation produced no content.",
+            publicId: generation.publicId,
+            requestedByUserId: identity.userId,
+          }),
+          clearActiveStream(db, {
+            clerkOrgId: identity.orgId,
+            createdByUserId: identity.userId,
+            expectedStreamId: streamId,
+            publicId: conversation.publicId,
+            streamId: null,
+            failureMessage: generationLogMetadata,
+            type: "warn",
+            warning:
+              "[workspace-assistant] failed to clear active stream after empty generation",
           }),
         ]);
         return;

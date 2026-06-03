@@ -451,6 +451,67 @@ describe("chat route", () => {
     expect(response).toBe(streamResponse);
   });
 
+  it("marks the assistant turn failed when the model produces no content", async () => {
+    const uiMessages = [
+      {
+        id: "client-message-1",
+        parts: [{ text: "hey", type: "text" }],
+        role: "user",
+      },
+    ];
+    const streamResponse = new Response("stream");
+
+    convertToModelMessagesMock.mockResolvedValue([
+      { content: "hey", role: "user" },
+    ]);
+    gatewayMock.mockReturnValue("gateway:anthropic/claude-sonnet-4.6");
+    streamTextMock.mockReturnValue({
+      toUIMessageStreamResponse: toUIMessageStreamResponseMock,
+    });
+    toUIMessageStreamResponseMock.mockImplementation((options) => {
+      void options.onFinish?.({
+        finishReason: "stop",
+        isAborted: false,
+        isContinuation: true,
+        messages: [],
+        responseMessage: {
+          id: "msg_assistant",
+          parts: [],
+          role: "assistant",
+        },
+      });
+      return streamResponse;
+    });
+
+    const response = await POST(
+      createJsonRequest({
+        idempotencyKey: "idem_user_1",
+        messages: uiMessages,
+        conversationId: "conv_123",
+      })
+    );
+
+    expect(markWorkspaceAssistantMessageCompletedMock).not.toHaveBeenCalled();
+    expect(
+      markWorkspaceAssistantGenerationCompletedMock
+    ).not.toHaveBeenCalled();
+    expect(markWorkspaceAssistantMessageFailedMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        errorCode: "CHAT_STREAM_EMPTY",
+        publicId: "msg_assistant",
+      })
+    );
+    expect(markWorkspaceAssistantGenerationFailedMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        errorCode: "CHAT_STREAM_EMPTY",
+        publicId: "gen_123",
+      })
+    );
+    expect(response).toBe(streamResponse);
+  });
+
   it("uses the submitted UI message id as the retry key when no explicit idempotency key is provided", async () => {
     const uiMessages = [
       {
