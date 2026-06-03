@@ -16,8 +16,8 @@ import {
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/components/ui/sonner";
-import { TRPCClientError } from "@trpc/client";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { TRPCClientError } from "@trpc/client";
 import { useOrganizationList } from "@vendor/clerk";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";

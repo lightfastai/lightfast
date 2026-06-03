@@ -2,8 +2,8 @@ import {
   GitHubAppNodeError,
   getGitHubBlobText,
   getGitHubCommit,
-  getGitHubRepository,
   getGitHubReference,
+  getGitHubRepository,
   getGitHubTree,
 } from "@repo/github-app-node";
 

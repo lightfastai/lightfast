@@ -256,7 +256,8 @@ async function readIdentityBlobs(input: {
     (file) =>
       file.type === "blob" &&
       targetPaths.has(file.path) &&
-      (file.size === undefined || file.size <= IDENTITY_INDEX_MAX_CHARS_PER_FILE)
+      (file.size === undefined ||
+        file.size <= IDENTITY_INDEX_MAX_CHARS_PER_FILE)
   );
   const blobs = new Map<string, string>();
   for (const file of files) {

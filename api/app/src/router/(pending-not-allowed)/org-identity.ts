@@ -114,7 +114,7 @@ async function getIdentityRepositoryDefaultBranch(candidate: {
       installationId: candidate.binding.providerInstallationId,
     });
     return ref.status === "found"
-      ? ref.defaultBranch ?? DEFAULT_IDENTITY_BRANCH
+      ? (ref.defaultBranch ?? DEFAULT_IDENTITY_BRANCH)
       : DEFAULT_IDENTITY_BRANCH;
   } catch {
     return DEFAULT_IDENTITY_BRANCH;
