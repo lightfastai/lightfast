@@ -17,7 +17,11 @@ import { verifyDeveloperConnectionInput } from "./adapters";
 import { sentryAuthBoxClient } from "./auth-box";
 import { listDeveloperConnectionsForOrg } from "./catalog";
 import { encryptDeveloperCredential } from "./credentials";
-import { issueDeveloperConnectionLeases } from "./leases";
+import {
+  issueAllEnabledDeveloperConnectionLeases,
+  issueDeveloperConnectionLeases,
+  materializeDeveloperConnectionLeasesForSandboxRun,
+} from "./leases";
 
 interface DeveloperConnectionServiceContext {
   auth: AuthContext;
@@ -25,7 +29,12 @@ interface DeveloperConnectionServiceContext {
   headers: Headers;
 }
 
-export { issueDeveloperConnectionLeases, listDeveloperConnectionsForOrg };
+export {
+  issueAllEnabledDeveloperConnectionLeases,
+  issueDeveloperConnectionLeases,
+  listDeveloperConnectionsForOrg,
+  materializeDeveloperConnectionLeasesForSandboxRun,
+};
 
 function activeAdmin(ctx: DeveloperConnectionServiceContext) {
   const identity = ctx.auth.identity;

@@ -6,6 +6,8 @@ const decryptMock = vi.fn(async (value: string) =>
   value.startsWith("encrypted:") ? value.slice("encrypted:".length) : value
 );
 const listCurrentDeveloperConnectionsMock = vi.fn();
+const getDeveloperConnectionByIdMock = vi.fn();
+const listDeveloperConnectionLeasesForSandboxRunMock = vi.fn();
 const replaceCurrentDeveloperConnectionMock = vi.fn();
 const setCurrentDeveloperConnectionSandboxEnabledMock = vi.fn();
 const revokeCurrentDeveloperConnectionMock = vi.fn();
@@ -29,7 +31,10 @@ vi.mock("@repo/app-encryption", () => ({
 }));
 
 vi.mock("@db/app", () => ({
+  getDeveloperConnectionById: getDeveloperConnectionByIdMock,
   listCurrentDeveloperConnections: listCurrentDeveloperConnectionsMock,
+  listDeveloperConnectionLeasesForSandboxRun:
+    listDeveloperConnectionLeasesForSandboxRunMock,
   replaceCurrentDeveloperConnection: replaceCurrentDeveloperConnectionMock,
   setCurrentDeveloperConnectionSandboxEnabled:
     setCurrentDeveloperConnectionSandboxEnabledMock,
@@ -48,8 +53,10 @@ const {
   completeSentryDeveloperConnectionAuth,
   connectDeveloperConnection,
   disconnectDeveloperConnection,
+  issueAllEnabledDeveloperConnectionLeases,
   issueDeveloperConnectionLeases,
   listDeveloperConnectionsForOrg,
+  materializeDeveloperConnectionLeasesForSandboxRun,
   setDeveloperConnectionSandboxEnabled,
   startSentryDeveloperConnectionAuth,
 } = await import("../services/developer-connections");
@@ -83,6 +90,7 @@ describe("developer connection services", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     listCurrentDeveloperConnectionsMock.mockResolvedValue([]);
+    listDeveloperConnectionLeasesForSandboxRunMock.mockResolvedValue([]);
     replaceCurrentDeveloperConnectionMock.mockImplementation(
       async (_db, input) => ({
         id: 1,
@@ -128,6 +136,7 @@ describe("developer connection services", () => {
       createdAt: new Date("2026-06-03T00:00:00.000Z"),
       updatedAt: new Date("2026-06-03T00:00:00.000Z"),
     });
+    getDeveloperConnectionByIdMock.mockResolvedValue(undefined);
     sentryAuthBoxStartMock.mockResolvedValue({
       attemptId: "auth_attempt_1",
       expiresAt: new Date("2026-06-03T00:05:00.000Z"),
@@ -277,6 +286,167 @@ describe("developer connection services", () => {
           status: "issued",
         }),
       ],
+      materialization: [
+        expect.objectContaining({
+          provider: "sentry",
+          env: { SENTRY_AUTH_TOKEN: "sentry-token" },
+        }),
+      ],
+    });
+  });
+
+  it("issues leases for all enabled connected developer connections", async () => {
+    listCurrentDeveloperConnectionsMock.mockResolvedValue([
+      {
+        id: 1,
+        publicId: "developer_connection_pscale",
+        clerkOrgId: "org_acme",
+        provider: "pscale",
+        providerAccountId: "token-id",
+        providerAccountName: "lightfast/main",
+        status: "connected",
+        enabledForSandboxes: true,
+        credentialKind: "pscale_service_token",
+        credentialSchemaVersion: "1",
+        encryptedCredential:
+          'encrypted:{"serviceTokenId":"token-id","serviceToken":"token-secret"}',
+        scopes: ["pscale:service-token"],
+        metadata: {},
+        expiresAt: null,
+        lastVerifiedAt: new Date("2026-06-03T00:00:00.000Z"),
+        lastUsedAt: null,
+        lastUsedByUserId: null,
+        createdByUserId: "user_admin",
+        updatedByUserId: "user_admin",
+        createdAt: new Date("2026-06-03T00:00:00.000Z"),
+        updatedAt: new Date("2026-06-03T00:00:00.000Z"),
+        revokedAt: null,
+      },
+      {
+        id: 2,
+        publicId: "developer_connection_clerk",
+        clerkOrgId: "org_acme",
+        provider: "clerk",
+        providerAccountId: "app_123:dev",
+        providerAccountName: "Lightfast dev",
+        status: "connected",
+        enabledForSandboxes: false,
+        credentialKind: "clerk_instance_secret",
+        credentialSchemaVersion: "1",
+        encryptedCredential:
+          'encrypted:{"appId":"app_123","instanceId":"dev","secretKey":"sk_test"}',
+        scopes: ["clerk:instance"],
+        metadata: {},
+        expiresAt: null,
+        lastVerifiedAt: new Date("2026-06-03T00:00:00.000Z"),
+        lastUsedAt: null,
+        lastUsedByUserId: null,
+        createdByUserId: "user_admin",
+        updatedByUserId: "user_admin",
+        createdAt: new Date("2026-06-03T00:00:00.000Z"),
+        updatedAt: new Date("2026-06-03T00:00:00.000Z"),
+        revokedAt: null,
+      },
+    ]);
+    issueDeveloperConnectionLeaseMock.mockImplementation(async (_db, input) => ({
+      id: input.provider === "pscale" ? 10 : 11,
+      publicId: `developer_connection_lease_${input.provider}`,
+      connectionId: input.connectionId,
+      clerkOrgId: input.clerkOrgId,
+      actorUserId: input.actorUserId,
+      provider: input.provider,
+      status: "issued",
+      sandboxRunId: input.sandboxRunId,
+      workflowRunId: input.workflowRunId,
+      requestedAt: input.issuedAt,
+      issuedAt: input.issuedAt,
+      materializedAt: null,
+      expiresAt: new Date(input.issuedAt.getTime() + 15 * 60 * 1000),
+      revokedAt: null,
+      failureCode: null,
+      createdAt: input.issuedAt,
+      updatedAt: input.issuedAt,
+    }));
+
+    await expect(
+      issueAllEnabledDeveloperConnectionLeases(ctx(), {
+        sandboxRunId: "developer_sandbox_run_1",
+      }),
+    ).resolves.toEqual({
+      leases: [
+        expect.objectContaining({
+          provider: "pscale",
+          sandboxRunId: "developer_sandbox_run_1",
+          workflowRunId: "developer_sandbox_run_1",
+        }),
+      ],
+      materialization: [
+        expect.objectContaining({
+          provider: "pscale",
+          env: {
+            PLANETSCALE_SERVICE_TOKEN_ID: "token-id",
+            PLANETSCALE_SERVICE_TOKEN: "token-secret",
+          },
+        }),
+      ],
+    });
+    expect(issueDeveloperConnectionLeaseMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("materializes active leases for a sandbox run", async () => {
+    listDeveloperConnectionLeasesForSandboxRunMock.mockResolvedValue([
+      {
+        id: 10,
+        publicId: "developer_connection_lease_1",
+        connectionId: 1,
+        clerkOrgId: "org_acme",
+        actorUserId: "user_admin",
+        provider: "sentry",
+        status: "materialized",
+        sandboxRunId: "developer_sandbox_run_1",
+        workflowRunId: "developer_sandbox_run_1",
+        requestedAt: new Date("2026-06-03T00:00:00.000Z"),
+        issuedAt: new Date("2026-06-03T00:00:00.000Z"),
+        materializedAt: new Date("2026-06-03T00:00:01.000Z"),
+        expiresAt: new Date("2026-06-03T00:15:00.000Z"),
+        revokedAt: null,
+        failureCode: null,
+        createdAt: new Date("2026-06-03T00:00:00.000Z"),
+        updatedAt: new Date("2026-06-03T00:00:01.000Z"),
+      },
+    ]);
+    getDeveloperConnectionByIdMock.mockResolvedValue({
+      id: 1,
+      publicId: "developer_connection_1",
+      clerkOrgId: "org_acme",
+      provider: "sentry",
+      providerAccountId: "org:lightfast",
+      providerAccountName: "lightfast/app",
+      status: "connected",
+      enabledForSandboxes: true,
+      credentialKind: "sentry_token",
+      credentialSchemaVersion: "1",
+      encryptedCredential: 'encrypted:{"token":"sentry-token"}',
+      scopes: ["project:read"],
+      metadata: {},
+      expiresAt: null,
+      lastVerifiedAt: new Date("2026-06-03T00:00:00.000Z"),
+      lastUsedAt: null,
+      lastUsedByUserId: null,
+      createdByUserId: "user_admin",
+      updatedByUserId: "user_admin",
+      createdAt: new Date("2026-06-03T00:00:00.000Z"),
+      updatedAt: new Date("2026-06-03T00:00:00.000Z"),
+      revokedAt: null,
+    });
+
+    await expect(
+      materializeDeveloperConnectionLeasesForSandboxRun(ctx(), {
+        now: new Date("2026-06-03T00:05:00.000Z"),
+        sandboxRunId: "developer_sandbox_run_1",
+      }),
+    ).resolves.toEqual({
+      leases: [expect.objectContaining({ provider: "sentry" })],
       materialization: [
         expect.objectContaining({
           provider: "sentry",

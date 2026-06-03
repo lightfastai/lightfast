@@ -193,10 +193,13 @@ export {
   getDeveloperConnectionById,
   getDeveloperConnectionLeaseById,
   issueDeveloperConnectionLease,
+  listDeveloperConnectionLeasesForSandboxRun,
   listCurrentDeveloperConnections,
+  markDeveloperConnectionLeaseMaterialized,
   markCurrentDeveloperConnectionNeedsReconnect,
   replaceCurrentDeveloperConnection,
   revokeCurrentDeveloperConnection,
+  revokeDeveloperConnectionLeasesForSandboxRun,
   revokeDeveloperConnectionLease,
   setCurrentDeveloperConnectionSandboxEnabled,
 } from "./utils/developer-connections";

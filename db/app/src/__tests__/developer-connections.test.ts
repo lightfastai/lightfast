@@ -10,9 +10,12 @@ import {
 import {
   currentDeveloperConnectionKey,
   developerConnectionLeaseExpiresAt,
+  listDeveloperConnectionLeasesForSandboxRun,
   issueDeveloperConnectionLease,
   markCurrentDeveloperConnectionNeedsReconnect,
+  markDeveloperConnectionLeaseMaterialized,
   replaceCurrentDeveloperConnection,
+  revokeDeveloperConnectionLeasesForSandboxRun,
   revokeDeveloperConnectionLease,
   setCurrentDeveloperConnectionSandboxEnabled,
 } from "../utils/developer-connections";
@@ -78,6 +81,11 @@ describe("developer connection helpers", () => {
       "function"
     );
     expect(typeof issueDeveloperConnectionLease).toBe("function");
+    expect(typeof listDeveloperConnectionLeasesForSandboxRun).toBe("function");
+    expect(typeof markDeveloperConnectionLeaseMaterialized).toBe("function");
     expect(typeof revokeDeveloperConnectionLease).toBe("function");
+    expect(typeof revokeDeveloperConnectionLeasesForSandboxRun).toBe(
+      "function",
+    );
   });
 });

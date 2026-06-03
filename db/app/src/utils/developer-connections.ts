@@ -2,7 +2,7 @@ import type {
   DeveloperConnectionCredentialKind,
   DeveloperConnectionProvider,
 } from "@repo/developer-connection-contract";
-import { and, eq, getTableColumns, isNotNull } from "drizzle-orm";
+import { and, eq, getTableColumns, inArray, isNotNull } from "drizzle-orm";
 import type { Database } from "../client";
 import type { DeveloperConnection, DeveloperConnectionLease } from "../schema";
 import { developerConnectionLeases, developerConnections } from "../schema";
@@ -317,4 +317,60 @@ export async function revokeDeveloperConnectionLease(
     return;
   }
   return await getDeveloperConnectionLeaseById(db, input.leaseId);
+}
+
+export async function listDeveloperConnectionLeasesForSandboxRun(
+  db: Database,
+  input: { clerkOrgId: string; sandboxRunId: string }
+): Promise<DeveloperConnectionLease[]> {
+  return await db
+    .select()
+    .from(developerConnectionLeases)
+    .where(
+      and(
+        eq(developerConnectionLeases.clerkOrgId, input.clerkOrgId),
+        eq(developerConnectionLeases.sandboxRunId, input.sandboxRunId)
+      )
+    );
+}
+
+export async function markDeveloperConnectionLeaseMaterialized(
+  db: Database,
+  input: { leaseId: number; materializedAt: Date }
+): Promise<DeveloperConnectionLease | undefined> {
+  const result = await db
+    .update(developerConnectionLeases)
+    .set({
+      status: "materialized",
+      materializedAt: input.materializedAt,
+      updatedAt: input.materializedAt,
+    })
+    .where(eq(developerConnectionLeases.id, input.leaseId));
+
+  if (getRowsAffected(result) === 0) {
+    return;
+  }
+  return await getDeveloperConnectionLeaseById(db, input.leaseId);
+}
+
+export async function revokeDeveloperConnectionLeasesForSandboxRun(
+  db: Database,
+  input: { clerkOrgId: string; sandboxRunId: string; revokedAt: Date }
+): Promise<DeveloperConnectionLease[]> {
+  await db
+    .update(developerConnectionLeases)
+    .set({
+      status: "revoked",
+      revokedAt: input.revokedAt,
+      updatedAt: input.revokedAt,
+    })
+    .where(
+      and(
+        eq(developerConnectionLeases.clerkOrgId, input.clerkOrgId),
+        eq(developerConnectionLeases.sandboxRunId, input.sandboxRunId),
+        inArray(developerConnectionLeases.status, ["issued", "materialized"])
+      )
+    );
+
+  return await listDeveloperConnectionLeasesForSandboxRun(db, input);
 }
