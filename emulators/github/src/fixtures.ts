@@ -1,5 +1,4 @@
 import type { GitHubSeedConfig } from "@emulators/github";
-import { GITHUB_WEBHOOK_PATH } from "@repo/github-app-contract";
 
 const githubAppPrivateKey = `-----BEGIN RSA PRIVATE KEY-----
 MIIEowIBAAKCAQEAouLr+xRpS3PjnON4PW2cgwUUmRpZWBKy22PJrBIJ58MFG9T6
@@ -31,44 +30,35 @@ cjljNGHUA1K2apyhpQxvm6BtdXY3ZDIMXLav6ZbUtvjZibC9cDNb
 
 export const GITHUB_EMULATOR_FIXTURES = {
   origin: "http://127.0.0.1:4567",
-  githubUserLogin: "lightfast-dev",
-  githubUserEmail: "lightfast-dev@example.test",
-  githubOrgLogin: "lightfast-emulated",
-  githubLightfastRepoName: ".lightfast",
+  githubUserLogin: "emulator-dev",
+  githubUserEmail: "emulator-dev@example.test",
+  githubOrgLogin: "emulator-org",
+  githubConfigRepoName: ".emulator",
   githubRepoName: "workspace",
-  oauthClientId: "Iv1.lightfastlocal",
-  oauthClientSecret: "lightfast-local-secret",
+  oauthClientId: "Iv1.githubemulator",
+  oauthClientSecret: "github-emulator-secret",
   githubAppId: 424_242,
-  githubAppSlug: "lightfast-local",
-  githubAppName: "Lightfast Local",
+  githubAppSlug: "github-emulator",
+  githubAppName: "GitHub Emulator",
   githubAppPrivateKey: githubAppPrivateKey.trim(),
-  githubWebhookSecret: "lightfast-local-webhook-secret",
+  githubWebhookSecret: "github-emulator-webhook-secret",
   installationId: 1001,
-  userToken: "test_token_lightfast",
+  userToken: "test_token_github_emulator",
 } as const;
 
-export function createGitHubEmulatorSeed(
-  appOrigin = "https://lightfast.localhost"
-): GitHubSeedConfig {
-  const oauthCallbackUrl = new URL("/api/github/oauth/callback", appOrigin);
-  const userAccountCallbackUrl = new URL(
-    "/api/github/user/oauth/callback",
-    appOrigin
-  );
-  const webhookUrl = new URL(GITHUB_WEBHOOK_PATH, appOrigin);
-
+export function createGitHubEmulatorSeed(): GitHubSeedConfig {
   return {
     users: [
       {
         login: GITHUB_EMULATOR_FIXTURES.githubUserLogin,
-        name: "Lightfast Dev",
+        name: "Emulator Dev",
         email: GITHUB_EMULATOR_FIXTURES.githubUserEmail,
       },
     ],
     orgs: [
       {
         login: GITHUB_EMULATOR_FIXTURES.githubOrgLogin,
-        name: "Lightfast Emulated",
+        name: "Emulator Org",
         email: "engineering@example.test",
       },
     ],
@@ -81,7 +71,7 @@ export function createGitHubEmulatorSeed(
     repos: [
       {
         owner: GITHUB_EMULATOR_FIXTURES.githubOrgLogin,
-        name: GITHUB_EMULATOR_FIXTURES.githubLightfastRepoName,
+        name: GITHUB_EMULATOR_FIXTURES.githubConfigRepoName,
         private: true,
         language: "Markdown",
         auto_init: true,
@@ -105,11 +95,8 @@ export function createGitHubEmulatorSeed(
       {
         client_id: GITHUB_EMULATOR_FIXTURES.oauthClientId,
         client_secret: GITHUB_EMULATOR_FIXTURES.oauthClientSecret,
-        name: "Lightfast Local OAuth",
-        redirect_uris: [
-          oauthCallbackUrl.toString(),
-          userAccountCallbackUrl.toString(),
-        ],
+        name: "GitHub Emulator OAuth",
+        redirect_uris: [],
       },
     ],
     apps: [
@@ -118,7 +105,7 @@ export function createGitHubEmulatorSeed(
         slug: GITHUB_EMULATOR_FIXTURES.githubAppSlug,
         name: GITHUB_EMULATOR_FIXTURES.githubAppName,
         private_key: GITHUB_EMULATOR_FIXTURES.githubAppPrivateKey,
-        webhook_url: webhookUrl.toString(),
+        webhook_url: undefined,
         webhook_secret: GITHUB_EMULATOR_FIXTURES.githubWebhookSecret,
         permissions: {
           contents: "read",
@@ -139,17 +126,19 @@ export function createGitHubEmulatorSeed(
   };
 }
 
-export function getGitHubEmulatorEnv(
-  _appOrigin: string,
-  emulatorOrigin: string = GITHUB_EMULATOR_FIXTURES.origin
-) {
+export function getGitHubEmulatorEnv({
+  publicOrigin,
+}: {
+  callbackUrl?: string;
+  publicOrigin: string;
+}) {
   return {
     GITHUB_APP_ID: String(GITHUB_EMULATOR_FIXTURES.githubAppId),
     GITHUB_APP_SLUG: GITHUB_EMULATOR_FIXTURES.githubAppSlug,
     GITHUB_API_VERSION: "2022-11-28",
     GITHUB_APP_CLIENT_ID: GITHUB_EMULATOR_FIXTURES.oauthClientId,
     GITHUB_APP_CLIENT_SECRET: GITHUB_EMULATOR_FIXTURES.oauthClientSecret,
-    GITHUB_APP_ENDPOINT_ORIGIN: emulatorOrigin,
+    GITHUB_APP_ENDPOINT_ORIGIN: publicOrigin,
     GITHUB_APP_PRIVATE_KEY:
       GITHUB_EMULATOR_FIXTURES.githubAppPrivateKey.replace(/\n/g, "\\n"),
     GITHUB_APP_WEBHOOK_SECRET: GITHUB_EMULATOR_FIXTURES.githubWebhookSecret,

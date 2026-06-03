@@ -63,7 +63,7 @@ export function createCodeChallenge(verifier: string) {
 }
 
 export function appCallbackUrl(path = "/api/github/oauth/callback") {
-  return new URL(path, "https://lightfast.localhost").toString();
+  return new URL(path, "https://app.example.test").toString();
 }
 
 export function userAccountCallbackUrl() {

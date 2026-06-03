@@ -3,7 +3,7 @@ import { type StartedEmulator, startEmulator } from "@repo/emulator-kit";
 import { xPlugin } from "./plugin";
 
 export interface StartXEmulatorInput {
-  appOrigin?: string;
+  callbackUrl?: string;
   host?: string;
   port?: number;
   publicOrigin?: string;
@@ -15,7 +15,7 @@ export function startXEmulator(
   input: StartXEmulatorInput = {}
 ): Promise<StartedXEmulator> {
   return startEmulator(xPlugin, {
-    appOrigin: input.appOrigin,
+    callbackUrl: input.callbackUrl,
     host: input.host,
     port: input.port ?? 4569,
     publicOrigin: input.publicOrigin,

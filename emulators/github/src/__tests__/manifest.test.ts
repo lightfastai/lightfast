@@ -5,12 +5,12 @@ import { githubManifest } from "../manifest";
 
 describe("githubManifest.env", () => {
   it("projects the GitHub App env from the emulator origin", () => {
-    const env = githubManifest.env(
-      "https://app.lightfast.localhost",
-      "https://github.lightfast.localhost"
-    );
+    const env = githubManifest.env({
+      callbackUrl: "https://callback.example.test",
+      publicOrigin: "https://github.emulator.localhost",
+    });
     expect(env.GITHUB_APP_ENDPOINT_ORIGIN).toBe(
-      "https://github.lightfast.localhost"
+      "https://github.emulator.localhost"
     );
     expect(env.GITHUB_APP_CLIENT_ID).toBe(
       GITHUB_EMULATOR_FIXTURES.oauthClientId

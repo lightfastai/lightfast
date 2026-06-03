@@ -19,12 +19,12 @@ pnpm dev
 The emulator is routed at:
 
 ```text
-https://x.lightfast.localhost
+https://x.example.test
 ```
 
-The app dev process receives deterministic `X_*` values from `@lightfast/app`'s
-`with-related-projects` wrapper. Do not copy worktree-specific emulator URLs
-into `.vercel/.env.development.local`.
+The consuming app process receives deterministic `X_*` values from its
+local-dev wrapper. Do not copy worktree-specific emulator URLs into checked-in
+env files.
 
 To run only the emulator:
 
@@ -51,8 +51,8 @@ Optional environment variables:
 ```bash
 PORT=4569
 HOST=127.0.0.1
-LIGHTFAST_APP_ORIGIN=https://lightfast.localhost
-X_EMULATOR_ORIGIN=https://x.lightfast.localhost
+CALLBACK_URL=https://app.example.test/api/connectors/x/mcp
+PUBLIC_ORIGIN=https://x.example.test
 ```
 
 ## Test
