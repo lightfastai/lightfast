@@ -16,10 +16,10 @@ export const env = createEnv({
   },
   server: {
     HEALTH_CHECK_AUTH_TOKEN: z.string().min(32).optional(),
-    SENTRY_AUTH_TOKEN: z.string().min(1),
+    SENTRY_AUTH_TOKEN: z.string().min(1).optional(),
     SENTRY_DSN: z.string().min(1),
-    SENTRY_ORG: z.string().min(1),
-    SENTRY_PROJECT: z.string().min(1),
+    SENTRY_ORG: z.string().min(1).optional(),
+    SENTRY_PROJECT: z.string().min(1).optional(),
     SERVICE_JWT_SECRET: z.string().min(32),
   },
   client: {

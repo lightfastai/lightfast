@@ -123,12 +123,24 @@ const appConfig: NextConfig = merge({}, baseConfig, {
   },
 } satisfies NextConfig);
 
+const hasSentrySourceMapUploadCredentials = Boolean(
+  env.SENTRY_AUTH_TOKEN && env.SENTRY_ORG && env.SENTRY_PROJECT
+);
+
 const appSentryOptions: Parameters<typeof withSentryConfig>[1] = {
-  org: env.SENTRY_ORG,
-  project: env.SENTRY_PROJECT,
-  authToken: env.SENTRY_AUTH_TOKEN,
+  ...(hasSentrySourceMapUploadCredentials
+    ? {
+        authToken: env.SENTRY_AUTH_TOKEN,
+        org: env.SENTRY_ORG,
+        project: env.SENTRY_PROJECT,
+      }
+    : {
+        sourcemaps: { disable: true },
+      }),
   silent: !process.env.CI,
-  widenClientFileUpload: env.NEXT_PUBLIC_VERCEL_ENV === "production",
+  widenClientFileUpload:
+    hasSentrySourceMapUploadCredentials &&
+    env.NEXT_PUBLIC_VERCEL_ENV === "production",
   tunnelRoute: "/monitoring",
   bundleSizeOptimizations: { excludeDebugStatements: true },
   webpack: {
