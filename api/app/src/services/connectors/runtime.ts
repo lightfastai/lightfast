@@ -133,22 +133,13 @@ async function callConnectorRuntimeTool(
         caller.calledByKind === "automation" ? "automation" : "system",
     });
 
-    const result =
-      context.provider === "linear"
-        ? await callLinearRuntimeTool(
-            input,
-            connection,
-            context,
-            providerRoutineCall,
-            logContext
-          )
-        : await callXRuntimeTool(
-            input,
-            connection,
-            context,
-            providerRoutineCall,
-            logContext
-          );
+    const result = await callProviderRuntimeTool(
+      input,
+      connection,
+      context,
+      providerRoutineCall,
+      logContext
+    );
 
     if (providerRoutineCall) {
       await safelyMarkProviderRoutineCallSucceeded(
@@ -340,7 +331,7 @@ async function callXRuntimeTool(
   const mcpToken = await issueConnectorMcpToken({
     clerkOrgId: context.clerkOrgId,
     connectionId: connection.id,
-    provider: "x",
+    provider: context.provider,
     purpose: "call",
     toolName: context.providerToolName,
   });
@@ -359,6 +350,35 @@ async function callXRuntimeTool(
     mcpToken,
     name: context.providerToolName,
   });
+}
+
+function callProviderRuntimeTool(
+  input: unknown,
+  connection: OrgConnectorConnection,
+  context: RuntimeToolCallContext,
+  providerRoutineCall: ProviderRoutineCall | null,
+  logContext: Record<string, unknown>
+) {
+  switch (context.provider) {
+    case "linear":
+      return callLinearRuntimeTool(
+        input,
+        connection,
+        context,
+        providerRoutineCall,
+        logContext
+      );
+    case "x":
+      return callXRuntimeTool(
+        input,
+        connection,
+        context,
+        providerRoutineCall,
+        logContext
+      );
+    default:
+      return assertNever(context.provider);
+  }
 }
 
 function isActiveAutomationConnection(connection: OrgConnectorConnection) {
@@ -413,15 +433,20 @@ function isTerminalConnectorAuthError(
   provider: ConnectableConnectorProvider,
   error: unknown
 ) {
-  if (provider === "linear") {
-    return (
-      error instanceof LinearAppNodeError &&
-      error.code === "LINEAR_TOKEN_REFRESH_FAILED"
-    );
+  switch (provider) {
+    case "linear":
+      return (
+        error instanceof LinearAppNodeError &&
+        error.code === "LINEAR_TOKEN_REFRESH_FAILED"
+      );
+    case "x":
+      return (
+        error instanceof XAppNodeError &&
+        error.code === "X_TOKEN_REFRESH_FAILED"
+      );
+    default:
+      return assertNever(provider);
   }
-  return (
-    error instanceof XAppNodeError && error.code === "X_TOKEN_REFRESH_FAILED"
-  );
 }
 
 function getErrorCode(error: unknown) {
@@ -483,5 +508,16 @@ function safeErrorDetails(error: unknown) {
 }
 
 function connectorDisplayName(provider: ConnectableConnectorProvider) {
-  return provider === "linear" ? "Linear" : "X";
+  switch (provider) {
+    case "linear":
+      return "Linear";
+    case "x":
+      return "X";
+    default:
+      return assertNever(provider);
+  }
+}
+
+function assertNever(value: never): never {
+  throw new Error(`Unhandled connector provider: ${String(value)}`);
 }
