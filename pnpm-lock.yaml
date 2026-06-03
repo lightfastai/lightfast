@@ -2856,6 +2856,9 @@ importers:
       next-secure-headers:
         specifier: ^2.2.0
         version: 2.2.0
+      zod:
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*

@@ -1,16 +1,23 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets-zod";
+import { z } from "zod";
 
 import { sentryEnv } from "@vendor/observability/sentry-env";
 
 export const env = createEnv({
   extends: [vercel(), sentryEnv],
-  shared: {},
+  shared: {
+    NODE_ENV: z
+      .enum(["development", "production", "test"])
+      .default("development"),
+  },
   server: {
     // Added by Vercel
   },
   client: {},
-  experimental__runtimeEnv: {},
+  experimental__runtimeEnv: {
+    NODE_ENV: process.env.NODE_ENV,
+  },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||
     process.env.npm_lifecycle_event === "lint",
