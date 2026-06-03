@@ -27,6 +27,7 @@ export type ProviderRoutineCallCalledByKind = "automation" | "system" | "user";
 export type ProviderRoutineCallProvider = "linear" | "x";
 export type ProviderRoutineCallSourceSurface =
   | "automation"
+  | "chat"
   | "hosted_mcp"
   | "native_cli"
   | "system";

@@ -55,4 +55,46 @@ describe("Lightfast workspace assistant message schema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("validates persisted provider routine tool parts", async () => {
+    const validResult = await safeValidateLightfastUIMessages({
+      messages: [
+        {
+          id: "msg_123",
+          parts: [
+            {
+              input: { includeSchema: true, query: "issue" },
+              output: { routines: [] },
+              state: "output-available",
+              toolCallId: "tool_call_123",
+              type: "tool-findProviderRoutines",
+            },
+          ],
+          role: "assistant",
+        },
+      ],
+    });
+
+    expect(validResult.success).toBe(true);
+
+    const invalidResult = await safeValidateLightfastUIMessages({
+      messages: [
+        {
+          id: "msg_123",
+          parts: [
+            {
+              input: { limit: 1000 },
+              output: { routines: [] },
+              state: "output-available",
+              toolCallId: "tool_call_123",
+              type: "tool-findProviderRoutines",
+            },
+          ],
+          role: "assistant",
+        },
+      ],
+    });
+
+    expect(invalidResult.success).toBe(false);
+  });
 });

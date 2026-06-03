@@ -1,7 +1,15 @@
 import {
+  providerRoutineCallInputSchema,
+  providerRoutineCallSuccessSchema,
+  providerRoutineFindInputSchema,
+  providerRoutineFindOutputSchema,
+} from "@repo/provider-routine-contract";
+import {
   type FlexibleSchema,
+  type InferUITools,
   type SafeValidateUIMessagesResult,
   safeValidateUIMessages,
+  tool,
   type UIMessage,
 } from "@vendor/ai";
 import { z } from "zod";
@@ -56,7 +64,24 @@ export const lightfastWorkspaceAssistantDataPartSchemas = {
   >;
 };
 
-export const lightfastWorkspaceAssistantTools = {};
+export const lightfastWorkspaceAssistantTools = {
+  callProviderRoutine: tool({
+    description:
+      "Call one connected provider routine by routineId using this workspace's enabled connector.",
+    inputSchema: providerRoutineCallInputSchema,
+    outputSchema: providerRoutineCallSuccessSchema,
+  }),
+  findProviderRoutines: tool({
+    description:
+      "Find connected provider routines available to this workspace through enabled connectors.",
+    inputSchema: providerRoutineFindInputSchema,
+    outputSchema: providerRoutineFindOutputSchema,
+  }),
+};
+
+type LightfastWorkspaceAssistantTools = InferUITools<
+  typeof lightfastWorkspaceAssistantTools
+>;
 
 export type LightfastWorkspaceAssistantMessageMetadata = z.infer<
   typeof lightfastWorkspaceAssistantMessageMetadataObjectSchema
@@ -64,7 +89,8 @@ export type LightfastWorkspaceAssistantMessageMetadata = z.infer<
 
 export type LightfastUIMessage = UIMessage<
   LightfastWorkspaceAssistantMessageMetadata,
-  LightfastWorkspaceAssistantDataPartsWithUnknownKeys
+  LightfastWorkspaceAssistantDataPartsWithUnknownKeys,
+  LightfastWorkspaceAssistantTools
 >;
 
 export type LightfastWorkspaceAssistantMessagePart =

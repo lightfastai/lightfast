@@ -5,6 +5,7 @@ import {
   providerRoutineFindInputSchema,
   providerRoutineId,
   providerRoutineIdSchema,
+  providerRoutineSourceSurfaceSchema,
 } from "../index";
 
 describe("provider routine ids", () => {
@@ -34,6 +35,10 @@ describe("provider routine ids", () => {
 });
 
 describe("proxy schemas", () => {
+  it("accepts chat as a provider routine source surface", () => {
+    expect(providerRoutineSourceSurfaceSchema.parse("chat")).toBe("chat");
+  });
+
   it("parses compact find input", () => {
     expect(
       providerRoutineFindInputSchema.parse({
