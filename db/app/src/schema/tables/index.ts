@@ -23,6 +23,41 @@ export {
   identityIndexFiles,
   identityIndexStates,
 } from "./identity-index";
+// MCP OAuth tables and types
+export {
+  createMcpOauthClientId,
+  createMcpOauthGrantId,
+  createMcpOauthRegistrationTokenId,
+  hashMcpOauthResource,
+  type InsertMcpAuditEvent,
+  type InsertMcpOauthAuthorizationCode,
+  type InsertMcpOauthClient,
+  type InsertMcpOauthClientRedirectUri,
+  type InsertMcpOauthGrant,
+  type InsertMcpOauthRefreshToken,
+  type InsertMcpOauthRegistrationToken,
+  type McpAuditEvent,
+  type McpAuditOutcome,
+  type McpCodeChallengeMethod,
+  type McpOauthAuthorizationCode,
+  type McpOauthClient,
+  type McpOauthClientRedirectUri,
+  type McpOauthClientStatus,
+  type McpOauthGrant,
+  type McpOauthGrantStatus,
+  type McpOauthMetadata,
+  type McpOauthRefreshToken,
+  type McpOauthRefreshTokenStatus,
+  type McpOauthRegistrationToken,
+  type McpOauthRegistrationTokenStatus,
+  mcpAuditEvents,
+  mcpOauthAuthorizationCodes,
+  mcpOauthClientRedirectUris,
+  mcpOauthClients,
+  mcpOauthGrants,
+  mcpOauthRefreshTokens,
+  mcpOauthRegistrationTokens,
+} from "./mcp-oauth";
 export {
   type InsertNamespace,
   type InsertNamespaceOperation,
@@ -35,6 +70,12 @@ export {
   namespaceOperations,
   namespaces,
 } from "./namespaces";
+// Connector tables and types
+export {
+  type InsertOrgConnectorConnection,
+  type OrgConnectorConnection,
+  orgConnectorConnections,
+} from "./org-connector-connections";
 export {
   type InsertOrgSourceControlBinding,
   type OrgSourceControlBinding,
@@ -61,6 +102,18 @@ export {
   type PeopleViewConfig,
   peopleViews,
 } from "./people-views";
+export {
+  createProviderRoutineCallId,
+  type InsertProviderRoutineCall,
+  PROVIDER_ROUTINE_CALL_ID_PREFIX,
+  type ProviderRoutineCall,
+  type ProviderRoutineCallCalledByKind,
+  type ProviderRoutineCallProvider,
+  type ProviderRoutineCallRedactedPayload,
+  type ProviderRoutineCallSourceSurface,
+  type ProviderRoutineCallStatus,
+  providerRoutineCalls,
+} from "./provider-routine-calls";
 export {
   createSignalViewId,
   type InsertSignalView,

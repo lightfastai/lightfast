@@ -9,6 +9,10 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
+    "./mcp-oauth": {
+      "types": "./src/mcp-oauth/index.ts",
+      "default": "./src/mcp-oauth/index.ts"
+    },
     "./env": {
       "types": "./src/env.ts",
       "default": "./src/env.ts"
@@ -16,6 +20,18 @@
     "./services/github": {
       "types": "./src/services/github/index.ts",
       "default": "./src/services/github/index.ts"
+    },
+    "./services/connectors": {
+      "types": "./src/services/connectors/index.ts",
+      "default": "./src/services/connectors/index.ts"
+    },
+    "./services/connectors/runtime": {
+      "types": "./src/services/connectors/runtime.ts",
+      "default": "./src/services/connectors/runtime.ts"
+    },
+    "./signals/service": {
+      "types": "./src/signals/service.ts",
+      "default": "./src/signals/service.ts"
     },
     "./inngest": {
       "types": "./src/inngest/index.ts",
@@ -48,9 +64,11 @@
     "@repo/app-encryption": "workspace:*",
     "@repo/app-setup-contract": "workspace:*",
     "@repo/app-validation": "workspace:^",
+    "@repo/connector-contract": "workspace:*",
     "@repo/github-app-contract": "workspace:*",
     "@repo/github-app-node": "workspace:*",
     "@repo/identity-contract": "workspace:*",
+    "@repo/linear-app-node": "workspace:*",
     "@repo/native-auth-contract": "workspace:*",
     "@repo/skills-contract": "workspace:*",
     "@repo/source-control-contract": "workspace:*",
@@ -58,6 +76,7 @@
     "@trpc/server": "catalog:",
     "@vendor/clerk": "workspace:*",
     "@vendor/inngest": "workspace:*",
+    "@vendor/jose": "workspace:*",
     "@vendor/lib": "workspace:*",
     "@vendor/observability": "workspace:*",
     "@vendor/unkey": "workspace:*",

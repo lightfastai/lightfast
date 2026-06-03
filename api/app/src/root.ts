@@ -17,7 +17,13 @@ import {
   orgSettingsOrganizationRouter,
 } from "./router/(pending-allowed)/organization";
 import { automationsRouter } from "./router/(pending-not-allowed)/automations";
+import { connectorsRouter } from "./router/(pending-not-allowed)/connectors";
+import { decisionsRouter } from "./router/(pending-not-allowed)/decisions";
 import { githubSetupRouter } from "./router/(pending-not-allowed)/github-setup";
+import {
+  accountMcpConnectionsRouter,
+  orgMcpConnectionsRouter,
+} from "./router/(pending-not-allowed)/mcp-connections";
 import { orgApiKeysRouter } from "./router/(pending-not-allowed)/org-api-keys";
 import { orgBillingRouter } from "./router/(pending-not-allowed)/org-billing";
 import { orgIdentityRouter } from "./router/(pending-not-allowed)/org-identity";
@@ -35,7 +41,10 @@ export const appRouter = createTRPCRouter({
   }),
   viewer: createTRPCRouter({
     organization: organizationRouter,
-    account: accountRouter,
+    account: createTRPCRouter({
+      ...accountRouter,
+      mcpConnections: accountMcpConnectionsRouter,
+    }),
     githubAccount: githubAccountRouter,
   }),
   org: createTRPCRouter({
@@ -50,12 +59,15 @@ export const appRouter = createTRPCRouter({
       identity: orgIdentityRouter,
       orgMembers: orgMembersRouter,
       sourceControl: orgSourceControlRouter,
+      mcpConnections: orgMcpConnectionsRouter,
     }),
     workspace: createTRPCRouter({
       automations: automationsRouter,
       people: workspacePeopleRouter,
       skills: workspaceSkillsRouter,
       signals: workspaceSignalsRouter,
+      connectors: connectorsRouter,
+      decisions: decisionsRouter,
     }),
   }),
 });

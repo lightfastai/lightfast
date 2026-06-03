@@ -18,10 +18,14 @@ export {
   automations,
   createAutomationId,
   createAutomationRunId,
+  createMcpOauthClientId,
+  createMcpOauthGrantId,
+  createMcpOauthRegistrationTokenId,
   createPeopleViewId,
   createPersonId,
   createSignalId,
   createSignalViewId,
+  hashMcpOauthResource,
   type IdentityIndexFile,
   type IdentityIndexState,
   type InsertAutomation,
@@ -42,6 +46,21 @@ export {
   identityIndexFilesRelations,
   identityIndexStates,
   identityIndexStatesRelations,
+  type McpAuditEvent,
+  type McpAuditOutcome,
+  type McpCodeChallengeMethod,
+  type McpOauthAuthorizationCode,
+  type McpOauthClient,
+  type McpOauthClientRedirectUri,
+  type McpOauthClientStatus,
+  type McpOauthGrant,
+  type McpOauthGrantStatus,
+  type McpOauthMetadata,
+  type McpOauthRefreshToken,
+  type McpOauthRefreshTokenStatus,
+  type McpOauthRegistrationToken,
+  type McpOauthRegistrationTokenStatus,
+  type OrgConnectorConnection,
   type OrgSourceControlBinding,
   type OrgSourceControlBindingProvider,
   type OrgSourceControlBindingStatus,
@@ -55,6 +74,8 @@ export {
   type Person,
   type PersonIdentityProvider,
   type PersonIdentityType,
+  type ProviderRoutineCall,
+  type ProviderRoutineCallRedactedPayload,
   people,
   peopleViews,
   type ResourcesTruncatedFlag,
@@ -121,6 +142,8 @@ export {
   replaceIdentityIndexFiles,
   updateIdentityIndexRefCheck,
 } from "./utils/identity-index";
+// MCP OAuth, connector, and provider-routine DB helpers
+export * from "./utils/mcp-oauth";
 export {
   deletePreClerkNamespaceReservation,
   failUnreservedNamespaceOperation,
@@ -156,6 +179,7 @@ export {
   type UpsertActiveOrgBindingInput,
   upsertActiveOrgBinding,
 } from "./utils/org-binding";
+export * from "./utils/org-connector-connections";
 export {
   getPersonByIdentityKey,
   getPersonByPublicId,
@@ -173,6 +197,7 @@ export {
   type ListPeopleViewsParams,
   listPeopleViews,
 } from "./utils/people-views";
+export * from "./utils/provider-routine-calls";
 export {
   type CreateSignalViewParams,
   createSignalView,

@@ -333,6 +333,9 @@ importers:
       '@repo/app-validation':
         specifier: workspace:^
         version: link:../../packages/app-validation
+      '@repo/connector-contract':
+        specifier: workspace:*
+        version: link:../../packages/connector-contract
       '@repo/github-app-contract':
         specifier: workspace:*
         version: link:../../packages/github-app-contract
@@ -342,6 +345,9 @@ importers:
       '@repo/identity-contract':
         specifier: workspace:*
         version: link:../../packages/identity-contract
+      '@repo/linear-app-node':
+        specifier: workspace:*
+        version: link:../../packages/linear-app-node
       '@repo/native-auth-contract':
         specifier: workspace:*
         version: link:../../packages/native-auth-contract
@@ -363,6 +369,9 @@ importers:
       '@vendor/inngest':
         specifier: workspace:*
         version: link:../../vendor/inngest
+      '@vendor/jose':
+        specifier: workspace:*
+        version: link:../../vendor/jose
       '@vendor/lib':
         specifier: workspace:*
         version: link:../../vendor/lib
@@ -1314,6 +1323,9 @@ importers:
       '@repo/app-validation':
         specifier: workspace:*
         version: link:../../packages/app-validation
+      '@repo/connector-contract':
+        specifier: workspace:*
+        version: link:../../packages/connector-contract
       '@repo/identity-contract':
         specifier: workspace:*
         version: link:../../packages/identity-contract
