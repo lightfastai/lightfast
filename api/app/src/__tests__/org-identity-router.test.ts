@@ -5,6 +5,7 @@ import type { AuthIdentity } from "../auth/identity";
 const getIdentityIndexStateBySourceControlRepositoryIdMock = vi.fn();
 const listIdentityIndexFilesMock = vi.fn();
 const listIdentityIndexRefreshCandidatesMock = vi.fn();
+const readIdentityRepositoryMainRefMock = vi.fn();
 const sendMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
@@ -13,6 +14,9 @@ vi.mock("@db/app", () => ({
     getIdentityIndexStateBySourceControlRepositoryIdMock,
   listIdentityIndexFiles: listIdentityIndexFilesMock,
   listIdentityIndexRefreshCandidates: listIdentityIndexRefreshCandidatesMock,
+}));
+vi.mock("../services/identity", () => ({
+  readIdentityRepositoryMainRef: readIdentityRepositoryMainRefMock,
 }));
 vi.mock("../inngest/client", () => ({
   inngest: { send: sendMock },
@@ -74,6 +78,12 @@ beforeEach(() => {
   sendMock.mockReset();
 
   listIdentityIndexRefreshCandidatesMock.mockResolvedValue([candidate()]);
+  readIdentityRepositoryMainRefMock.mockResolvedValue({
+    defaultBranch: "main",
+    etag: "etag",
+    sha: "commit-main",
+    status: "found" as const,
+  });
   listIdentityIndexFilesMock.mockResolvedValue([
     file({
       kind: "identity",

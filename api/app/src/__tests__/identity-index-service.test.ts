@@ -41,6 +41,33 @@ describe("buildIdentityIndexFilesFromTree", () => {
     });
   });
 
+  it("supports tree entries without explicit sizes by validating fetched content size", () => {
+    const result = buildIdentityIndexFilesFromTree({
+      blobs: new Map([
+        ["identity-sha", "# Acme\n\nWe build Lightfast."],
+        ["soul-sha", "# Soul\n\nDirect and pragmatic."],
+      ]),
+      commitSha: "commit-main",
+      tree: [
+        identityFileNoSize("IDENTITY.md", "identity-sha"),
+        identityFileNoSize("SOUL.md", "soul-sha"),
+      ],
+    });
+
+    expect(result.files).toEqual([
+      expect.objectContaining({
+        kind: "identity",
+        path: "IDENTITY.md",
+        status: "present",
+      }),
+      expect.objectContaining({
+        kind: "soul",
+        path: "SOUL.md",
+        status: "present",
+      }),
+    ]);
+  });
+
   it("creates missing and too_large rows without markdown", () => {
     const result = buildIdentityIndexFilesFromTree({
       blobs: new Map(),
@@ -162,6 +189,15 @@ function identityFile(path: string, sha: string, size: number) {
     path,
     sha,
     size,
+    type: "blob" as const,
+  };
+}
+
+function identityFileNoSize(path: string, sha: string) {
+  return {
+    mode: "100644",
+    path,
+    sha,
     type: "blob" as const,
   };
 }

@@ -14,7 +14,7 @@ const identityGetQueryOptionsMock = vi.fn(() => ({
   queryKey: ["org", "settings", "identity", "get"],
 }));
 const updateNameMutationOptionsMock = vi.fn((options: unknown) => options);
-const useSuspenseQueryMock = vi.fn();
+const useQueryMock = vi.fn();
 
 vi.mock("~/trpc/react", () => ({
   useTRPC: () => ({
@@ -50,19 +50,53 @@ vi.mock("~/trpc/react", () => ({
   }),
 }));
 
-vi.mock("@tanstack/react-query", () => ({
-  useMutation: () => ({
-    isPending: false,
-    mutate: vi.fn(),
-  }),
-  useQueryClient: () => ({
-    cancelQueries: vi.fn(),
-    getQueryData: vi.fn(),
-    invalidateQueries: vi.fn(),
-    setQueryData: vi.fn(),
-  }),
-  useSuspenseQuery: useSuspenseQueryMock,
-}));
+  vi.mock("@tanstack/react-query", () => ({
+    useMutation: () => ({
+      isPending: false,
+      mutate: vi.fn(),
+    }),
+    useQueryClient: () => ({
+      cancelQueries: vi.fn(),
+      getQueryData: vi.fn(),
+      invalidateQueries: vi.fn(),
+      setQueryData: vi.fn(),
+    }),
+    useQuery: useQueryMock,
+    useSuspenseQuery: vi.fn((options: { queryKey: readonly unknown[] }) => {
+      if (options.queryKey.includes("listUserOrganizations")) {
+        return {
+          data: [{ initials: "AI", slug: "acme" }],
+        };
+      }
+
+      if (options.queryKey.includes("get")) {
+        return {
+          data: {
+            binding: {
+              accountLogin: "lightfast-emulated",
+              connectedAt: new Date("2026-05-29T01:02:03.000Z"),
+              importedRepositoryCount: 2,
+              lightfastRepository: {
+                fullName: "lightfast-emulated/.lightfast",
+                id: "repo_lightfast",
+                verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
+              },
+              provider: "github",
+              providerLabel: "GitHub",
+            },
+            status: "bound",
+          },
+        };
+      }
+
+      return {
+        data: {
+          organization: { login: "acme-live" },
+          binding: null,
+        },
+      };
+    }),
+  }));
 
 vi.mock("@vendor/clerk", () => ({
   useOrganizationList: () => ({
@@ -118,93 +152,141 @@ beforeEach(() => {
   sourceControlListRepositoriesQueryOptionsMock.mockClear();
   identityGetQueryOptionsMock.mockClear();
   updateNameMutationOptionsMock.mockClear();
-  useSuspenseQueryMock.mockReset();
-  useSuspenseQueryMock.mockImplementation(
-    (options: { queryKey: readonly unknown[] }) => {
-      if (options.queryKey[0] === "viewer") {
-        return {
-          data: [{ initials: "AI", slug: "acme" }],
-        };
-      }
+  useQueryMock.mockReset();
+  useQueryMock.mockImplementation((options: { queryKey: readonly unknown[] }) => {
+    if (options.queryKey[0] === "viewer") {
+      return {
+        data: [{ initials: "AI", slug: "acme" }],
+      };
+    }
 
-      if (options.queryKey.includes("listRepositories")) {
-        return {
-          data: {
-            binding: {
-              accountLogin: "lightfast-emulated",
-              connectedAt: new Date("2026-05-29T01:02:03.000Z"),
-              importedRepositoryCount: 2,
-              lightfastRepository: {
-                fullName: "lightfast-emulated/.lightfast",
-                id: "repo_lightfast",
-                verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
-              },
-              provider: "github",
-              providerLabel: "GitHub",
+    if (options.queryKey.includes("listRepositories")) {
+      return {
+        data: {
+          binding: {
+            accountLogin: "lightfast-emulated",
+            connectedAt: new Date("2026-05-29T01:02:03.000Z"),
+            importedRepositoryCount: 2,
+            lightfastRepository: {
+              fullName: "lightfast-emulated/.lightfast",
+              id: "repo_lightfast",
+              verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
             },
-            organization: {
-              id: "987654",
-              installationManageUrl:
-                "https://github.com/apps/lightfast/installations/1001",
-              login: "acme-live",
-            },
-            lightfastRepository: null,
-            repositories: [],
-            repositoriesError: null,
-            status: "bound",
+            provider: "github",
+            providerLabel: "GitHub",
           },
-        };
-      }
+          organization: {
+            id: "987654",
+            installationManageUrl:
+              "https://github.com/apps/lightfast/installations/1001",
+            login: "acme-live",
+          },
+          lightfastRepository: null,
+          repositories: [],
+          repositoriesError: null,
+          status: "bound",
+        },
+      };
+    }
 
+    if (options.queryKey.includes("identity")) {
+      return {
+        data: {
+          repository: {
+            defaultBranch: "main",
+            id: "1",
+            name: ".lightfast",
+            owner: "lightfast-emulated",
+          },
+          state: {
+            diagnostics: [],
+            indexedCommitSha: "commit-main",
+            indexedTreeSha: "tree-sha",
+            lastCheckedAt: new Date("2026-06-01T00:00:00.000Z"),
+            lastFailureAt: null,
+            lastSuccessAt: new Date("2026-06-01T00:00:00.000Z"),
+            status: "fresh",
+          },
+          files: [
+            {
+              contentHash: "sha256:abc",
+              contentSha: "content-sha",
+              diagnostics: [],
+              githubUrl:
+                "https://github.com/lightfast-emulated/.lightfast/blob/main/IDENTITY.md",
+              indexedCommitSha: "commit-main",
+              kind: "identity",
+              label: "Identity",
+              path: "IDENTITY.md",
+              size: 8,
+              sourceMarkdown: "# Acme",
+              status: "present",
+            },
+            {
+              contentHash: null,
+              contentSha: null,
+              diagnostics: ["SOUL.md is missing."],
+              githubUrl:
+                "https://github.com/lightfast-emulated/.lightfast/blob/main/SOUL.md",
+              indexedCommitSha: "commit-main",
+              kind: "soul",
+              label: "Soul",
+              path: "SOUL.md",
+              size: null,
+              sourceMarkdown: null,
+              status: "missing",
+            },
+          ],
+        },
+      };
+    }
+
+    return {
+      data: {
+        binding: {
+          accountLogin: "lightfast-emulated",
+          connectedAt: new Date("2026-05-29T01:02:03.000Z"),
+          importedRepositoryCount: 2,
+          lightfastRepository: {
+            fullName: "lightfast-emulated/.lightfast",
+            id: "repo_lightfast",
+            verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
+          },
+          provider: "github",
+          providerLabel: "GitHub",
+        },
+        status: "bound",
+      },
+    };
+  });
+});
+
+describe("TeamGeneralSettingsClient", () => {
+  it("loads and renders read-only source-control sections on General settings", () => {
+    render(<TeamGeneralSettingsClient slug="acme" />);
+
+    expect(sourceControlGetQueryOptionsMock).toHaveBeenCalled();
+    expect(sourceControlListRepositoriesQueryOptionsMock).toHaveBeenCalled();
+    expect(identityGetQueryOptionsMock).toHaveBeenCalled();
+    expect(screen.getByTestId("source-control-section")).toHaveTextContent(
+      "acme:2:acme-live"
+    );
+    expect(
+      screen.getByTestId("lightfast-repository-section")
+    ).toHaveTextContent("acme:lightfast-emulated");
+    expect(screen.getByRole("heading", { name: "Identity" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Soul" })).toBeVisible();
+    expect(screen.getByText("IDENTITY.md")).toBeVisible();
+    expect(screen.getByText("SOUL.md is missing")).toBeVisible();
+  });
+
+  it("renders a placeholder when identity settings are unconfigured", () => {
+    useQueryMock.mockImplementation((options: { queryKey: readonly unknown[] }) => {
       if (options.queryKey.includes("identity")) {
         return {
-          data: {
-            repository: {
-              defaultBranch: "main",
-              id: "1",
-              name: ".lightfast",
-              owner: "lightfast-emulated",
-            },
-            state: {
-              diagnostics: [],
-              indexedCommitSha: "commit-main",
-              indexedTreeSha: "tree-sha",
-              lastCheckedAt: new Date("2026-06-01T00:00:00.000Z"),
-              lastFailureAt: null,
-              lastSuccessAt: new Date("2026-06-01T00:00:00.000Z"),
-              status: "fresh",
-            },
-            files: [
-              {
-                contentHash: "sha256:abc",
-                contentSha: "content-sha",
-                diagnostics: [],
-                githubUrl:
-                  "https://github.com/lightfast-emulated/.lightfast/blob/main/IDENTITY.md",
-                indexedCommitSha: "commit-main",
-                kind: "identity",
-                label: "Identity",
-                path: "IDENTITY.md",
-                size: 8,
-                sourceMarkdown: "# Acme",
-                status: "present",
-              },
-              {
-                contentHash: null,
-                contentSha: null,
-                diagnostics: ["SOUL.md is missing."],
-                githubUrl:
-                  "https://github.com/lightfast-emulated/.lightfast/blob/main/SOUL.md",
-                indexedCommitSha: "commit-main",
-                kind: "soul",
-                label: "Soul",
-                path: "SOUL.md",
-                size: null,
-                sourceMarkdown: null,
-                status: "missing",
-              },
-            ],
-          },
+          data: undefined,
+          error: { data: { code: "PRECONDITION_FAILED" } },
+          isError: true,
         };
       }
 
@@ -225,26 +307,13 @@ beforeEach(() => {
           status: "bound",
         },
       };
-    }
-  );
-});
+    });
 
-describe("TeamGeneralSettingsClient", () => {
-  it("loads and renders read-only source-control sections on General settings", () => {
     render(<TeamGeneralSettingsClient slug="acme" />);
 
-    expect(sourceControlGetQueryOptionsMock).toHaveBeenCalled();
-    expect(sourceControlListRepositoriesQueryOptionsMock).toHaveBeenCalled();
-    expect(identityGetQueryOptionsMock).toHaveBeenCalled();
-    expect(screen.getByTestId("source-control-section")).toHaveTextContent(
-      "acme:2:acme-live"
-    );
     expect(
-      screen.getByTestId("lightfast-repository-section")
-    ).toHaveTextContent("acme:lightfast-emulated");
-    expect(screen.getByRole("heading", { name: "Identity" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Soul" })).toBeVisible();
-    expect(screen.getByText("IDENTITY.md")).toBeVisible();
-    expect(screen.getByText("SOUL.md is missing")).toBeVisible();
+      screen.getByText("Identity repository is not configured.")
+    ).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Identity" })).toBeNull();
   });
 });

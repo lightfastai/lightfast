@@ -24,7 +24,7 @@ const statusLabels: Record<IdentitySettingsFile["status"], string> = {
 export function IdentitySettingsSection({
   identity,
 }: IdentitySettingsSectionProps) {
-  const sourceUrlBase = `https://github.com/${identity.repository.owner}/${identity.repository.name}/blob/main/`;
+  const sourceUrlBase = `https://github.com/${identity.repository.owner}/${identity.repository.name}/blob/${identity.repository.defaultBranch}/`;
 
   return (
     <div className="space-y-8">

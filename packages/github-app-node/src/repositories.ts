@@ -55,6 +55,7 @@ const repositoryResponseSchema = z.object({
   full_name: z.string().min(1),
   id: z.union([z.number(), z.string().min(1)]),
   name: z.string().min(1),
+  default_branch: z.string().min(1).optional(),
   owner: z.object({
     login: z.string().min(1),
   }),
@@ -336,6 +337,7 @@ export async function getGitHubRepository(input: {
   id: string;
   name: string;
   owner: string;
+  defaultBranch: string;
 }> {
   const apiBaseUrl = normalizeGitHubApiBaseUrl(input.apiBaseUrl);
   const url = `${apiBaseUrl}/repos/${githubPathSegment(
@@ -360,6 +362,7 @@ export async function getGitHubRepository(input: {
     id: String(parsed.data.id),
     name: parsed.data.name,
     owner: parsed.data.owner.login,
+    defaultBranch: parsed.data.default_branch ?? "main",
   };
 }
 

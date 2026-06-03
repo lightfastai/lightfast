@@ -61,7 +61,7 @@ export const appEvents = {
     {
       schema: z.object({
         dedupeKey: z.string().min(1),
-        reason: z.enum(["schedule", "setup", "webhook"]),
+        reason: z.enum(["read", "schedule", "setup", "webhook"]),
         sourceControlRepositoryId: z.number().int().positive(),
         targetCommitSha: z.string().min(1).optional(),
       }),

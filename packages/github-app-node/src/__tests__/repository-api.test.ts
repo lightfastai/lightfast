@@ -150,6 +150,7 @@ describe("GitHub repository API helpers", () => {
       fullName: "lightfast-emulated/.lightfast",
       id: "987",
       name: ".lightfast",
+      defaultBranch: "main",
       owner: "lightfast-emulated",
     });
 

@@ -62,7 +62,10 @@ function buildFile(input: {
     };
   }
 
-  if (input.entry.size > IDENTITY_INDEX_MAX_CHARS_PER_FILE) {
+  if (
+    input.entry.size !== undefined &&
+    input.entry.size > IDENTITY_INDEX_MAX_CHARS_PER_FILE
+  ) {
     return {
       contentHash: null,
       contentSha: input.entry.sha,
@@ -82,7 +85,7 @@ function buildFile(input: {
     return {
       contentHash: null,
       contentSha: input.entry.sha,
-      contentSize: input.entry.size,
+      contentSize: input.entry.size ?? null,
       diagnostics: [`${input.path} could not be read.`],
       indexedCommitSha: input.commitSha,
       kind: input.kind,
@@ -111,7 +114,7 @@ function buildFile(input: {
   return {
     contentHash: `sha256:${createHash("sha256").update(input.blobText).digest("hex")}`,
     contentSha: input.entry.sha,
-    contentSize: input.entry.size,
+    contentSize: input.entry.size ?? input.blobText.length,
     diagnostics: [],
     indexedCommitSha: input.commitSha,
     kind: input.kind,

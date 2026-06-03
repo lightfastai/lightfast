@@ -16,7 +16,8 @@ import {
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/components/ui/sonner";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { TRPCClientError } from "@trpc/client";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useOrganizationList } from "@vendor/clerk";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -53,7 +54,7 @@ export function TeamGeneralSettingsClient({
   const { data: sourceControlRepositories } = useSuspenseQuery(
     trpc.org.settings.sourceControl.listRepositories.queryOptions()
   );
-  const { data: identitySettings } = useSuspenseQuery(
+  const identitySettingsQuery = useQuery(
     trpc.org.settings.identity.get.queryOptions()
   );
   const currentOrg = useMemo(
@@ -213,7 +214,29 @@ export function TeamGeneralSettingsClient({
         connection={sourceControlConnection.binding}
         orgSlug={slug}
       />
-      <IdentitySettingsSection identity={identitySettings} />
+      {identitySettingsQuery.isError &&
+      isIdentityNotConfigured(identitySettingsQuery.error) ? (
+        <p className="text-muted-foreground text-sm">
+          Identity repository is not configured.
+        </p>
+      ) : identitySettingsQuery.data ? (
+        <IdentitySettingsSection identity={identitySettingsQuery.data} />
+      ) : null}
     </div>
+  );
+}
+
+function isIdentityNotConfigured(
+  error: unknown
+): error is Error & { data: { code: "PRECONDITION_FAILED" } } {
+  if (error instanceof TRPCClientError) {
+    return error.data?.code === "PRECONDITION_FAILED";
+  }
+  return (
+    !!error &&
+    typeof error === "object" &&
+    "data" in error &&
+    (error as { data?: { code?: unknown } }).data?.code ===
+      "PRECONDITION_FAILED"
   );
 }

@@ -10,6 +10,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 
 import { createIdentityRefreshDedupeKey } from "../../inngest/workflow/identity-refresh-event";
+import { readIdentityRepositoryMainRef } from "../../services/identity";
 import { isVerifiedLightfastIdentityRepository } from "../../services/identity/eligibility";
 import { boundOrgProcedure } from "../../trpc";
 
@@ -35,6 +36,8 @@ const IDENTITY_FILES = [
   },
   { kind: "soul" as const, label: "Soul" as const, path: "SOUL.md" as const },
 ];
+
+const DEFAULT_IDENTITY_BRANCH = "main" as const;
 
 export const orgIdentityRouter = {
   get: boundOrgProcedure.query(async ({ ctx }) => {
@@ -62,16 +65,18 @@ export const orgIdentityRouter = {
       await enqueueIdentityRefresh(candidate.repository.id);
     }
 
+    const defaultBranch = await getIdentityRepositoryDefaultBranch(candidate);
     const files = state
       ? await listIdentityIndexFiles(ctx.db, { stateId: state.id })
       : [];
 
     return {
-      repository: repositoryResponse(candidate.repository),
+      repository: repositoryResponse(candidate.repository, defaultBranch),
       state: stateResponse(state),
       files: IDENTITY_FILES.map((target) =>
         fileResponse({
           file: files.find((item) => item.kind === target.kind),
+          defaultBranch,
           fullName: candidate.repository.fullName,
           target,
         })
@@ -80,14 +85,40 @@ export const orgIdentityRouter = {
   }),
 } satisfies TRPCRouterRecord;
 
-function repositoryResponse(repository: SourceControlRepository) {
+function repositoryResponse(
+  repository: SourceControlRepository,
+  defaultBranch: string
+) {
   const [owner = "", name = ""] = repository.fullName.split("/");
   return {
-    defaultBranch: "main" as const,
+    defaultBranch,
     id: String(repository.id),
     name,
     owner,
   };
+}
+
+async function getIdentityRepositoryDefaultBranch(candidate: {
+  binding: {
+    providerInstallationId: string | null;
+  };
+  repository: SourceControlRepository;
+}): Promise<string> {
+  if (!candidate.binding.providerInstallationId) {
+    return DEFAULT_IDENTITY_BRANCH;
+  }
+
+  try {
+    const ref = await readIdentityRepositoryMainRef({
+      fullName: candidate.repository.fullName,
+      installationId: candidate.binding.providerInstallationId,
+    });
+    return ref.status === "found"
+      ? ref.defaultBranch ?? DEFAULT_IDENTITY_BRANCH
+      : DEFAULT_IDENTITY_BRANCH;
+  } catch {
+    return DEFAULT_IDENTITY_BRANCH;
+  }
 }
 
 function stateResponse(state: IdentityIndexState | null) {
@@ -104,6 +135,7 @@ function stateResponse(state: IdentityIndexState | null) {
 
 function fileResponse(input: {
   file: IdentityIndexFile | undefined;
+  defaultBranch: string;
   fullName: string;
   target: (typeof IDENTITY_FILES)[number];
 }): IdentityFileResponse {
@@ -112,7 +144,7 @@ function fileResponse(input: {
     contentHash: file?.contentHash ?? null,
     contentSha: file?.contentSha ?? null,
     diagnostics: file?.diagnostics ?? [`${input.target.path} is missing.`],
-    githubUrl: `https://github.com/${input.fullName}/blob/main/${input.target.path}`,
+    githubUrl: `https://github.com/${input.fullName}/blob/${input.defaultBranch}/${input.target.path}`,
     indexedCommitSha: file?.indexedCommitSha ?? null,
     kind: input.target.kind,
     label: input.target.label,

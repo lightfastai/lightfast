@@ -2,6 +2,7 @@ import {
   GitHubAppNodeError,
   getGitHubBlobText,
   getGitHubCommit,
+  getGitHubRepository,
   getGitHubReference,
   getGitHubTree,
 } from "@repo/github-app-node";
@@ -23,16 +24,28 @@ export async function readIdentityRepositoryMainRef(input: {
     signal: input.signal,
   });
   try {
-    return await getGitHubReference({
+    const repository = await getGitHubRepository({
+      apiBaseUrl: config.endpoints.apiBaseUrl,
+      apiVersion: config.apiVersion,
+      installationToken,
+      owner,
+      repo,
+      signal: input.signal,
+    });
+    const reference = await getGitHubReference({
       apiBaseUrl: config.endpoints.apiBaseUrl,
       apiVersion: config.apiVersion,
       etag: input.etag,
       installationToken,
       owner,
-      ref: "heads/main",
+      ref: `heads/${repository.defaultBranch}`,
       repo,
       signal: input.signal,
     });
+    return {
+      ...reference,
+      defaultBranch: repository.defaultBranch,
+    };
   } catch (error) {
     if (
       error instanceof GitHubAppNodeError &&
@@ -81,10 +94,7 @@ export async function readIdentityRepositoryTree(input: {
     commit,
     tree: {
       ...tree,
-      tree: tree.tree.map((entry) => ({
-        ...entry,
-        size: entry.size ?? 0,
-      })),
+      tree: tree.tree.map((entry) => ({ ...entry })),
     },
   };
 }

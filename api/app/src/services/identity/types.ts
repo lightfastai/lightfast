@@ -16,12 +16,17 @@ export interface IdentityTreeEntry {
   mode: string;
   path: string;
   sha: string;
-  size: number;
+  size?: number;
   type: "blob" | "tree" | string;
 }
 
 export type IdentityRepositoryMainRef =
-  | { etag: string | null; sha: string; status: "found" }
+  | {
+      defaultBranch?: string;
+      etag: string | null;
+      sha: string;
+      status: "found";
+    }
   | { status: "missing" }
   | { status: "not_modified" };
 
