@@ -70,7 +70,7 @@ and worktree isolation must come from Portless naming, not Inngest CLI state.
 
 ## Non-Goals
 
-- Do not introduce ngrok.
+- Do not introduce public tunneling.
 - Do not sync Inngest through `https://lightfast.localhost`.
 - Do not pin Inngest to `8288`.
 - Do not add branch-specific behavior to Inngest SDK configuration beyond

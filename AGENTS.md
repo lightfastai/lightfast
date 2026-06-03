@@ -102,7 +102,7 @@ pnpm db:migrate
 pnpm db:studio        # starts Drizzle Studio through Portless
 ```
 
-`pnpm dev` is the only root local-dev entrypoint. It starts app, mcp, www, platform, local Inngest, local QStash, and the Portless-backed Vercel Microfrontends aggregate for `https://lightfast.localhost`. The hosted MCP resource is available at `https://[<wt>.]mcp.lightfast.localhost/mcp` and is intentionally not part of `apps/app/microfrontends.json`. Direct Portless routes are still used for service registration and project URL injection: Inngest serve URLs use `portless get app.lightfast` and `portless get platform.lightfast`, and `NEXT_PUBLIC_*`, `INNGEST_DEV`, `QSTASH_URL`, `MCP_RESOURCE_URL`, and `MCP_AUTH_ISSUER` values use the concrete service URLs. It does not start ngrok automatically.
+`pnpm dev` is the only root local-dev entrypoint. It starts app, mcp, www, platform, local Inngest, local QStash, and the Portless-backed Vercel Microfrontends aggregate for `https://lightfast.localhost`. The hosted MCP resource is available at `https://[<wt>.]mcp.lightfast.localhost/mcp` and is intentionally not part of `apps/app/microfrontends.json`. Direct Portless routes are still used for service registration and project URL injection: Inngest serve URLs use `portless get app.lightfast` and `portless get platform.lightfast`, and `NEXT_PUBLIC_*`, `INNGEST_DEV`, `QSTASH_URL`, `MCP_RESOURCE_URL`, and `MCP_AUTH_ISSUER` values use the concrete service URLs. It does not start public tunnels automatically.
 
 ## Next.js Agent Diagnostics
 
