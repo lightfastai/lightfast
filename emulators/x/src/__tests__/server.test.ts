@@ -6,10 +6,10 @@ import { X_EMULATOR_FIXTURES, X_EMULATOR_OAUTH_CODE } from "../fixtures";
 import { xManifest } from "../manifest";
 import { type StartedXEmulator, startXEmulator } from "../server";
 
-const VERIFIER = "x_pkce_verifier_lightfast_local_0123456789";
+const VERIFIER = "x_pkce_verifier_emulator_local_0123456789";
 const CHALLENGE = createHash("sha256").update(VERIFIER).digest("base64url");
 const REDIRECT_URI =
-  "https://app.lightfast.localhost/api/connectors/x/callback";
+  "https://app.example.test/api/connectors/x/callback";
 
 let emulator: StartedXEmulator | undefined;
 
@@ -186,19 +186,19 @@ describe("@repo/x-emulator", () => {
   });
 
   it("serves authenticated read-only X user lookup endpoints", async () => {
-    const byUsernameRes = await getAuthed("/2/users/by/username/lightfast");
+    const byUsernameRes = await getAuthed("/2/users/by/username/emulator");
     expect(byUsernameRes.status).toBe(200);
     await expect(byUsernameRes.json()).resolves.toMatchObject({
-      data: { id: "x_user_1", username: "lightfast" },
+      data: { id: "x_user_1", username: "emulator" },
     });
 
     const byUsernamesRes = await getAuthed(
-      "/2/users/by?usernames=lightfast,agent"
+      "/2/users/by?usernames=emulator,agent"
     );
     expect(byUsernamesRes.status).toBe(200);
     await expect(byUsernamesRes.json()).resolves.toMatchObject({
       data: [
-        { id: "x_user_1", username: "lightfast" },
+        { id: "x_user_1", username: "emulator" },
         { id: "x_user_2", username: "agent" },
       ],
     });
@@ -206,14 +206,14 @@ describe("@repo/x-emulator", () => {
     const byIdRes = await getAuthed("/2/users/x_user_1");
     expect(byIdRes.status).toBe(200);
     await expect(byIdRes.json()).resolves.toMatchObject({
-      data: { id: "x_user_1", username: "lightfast" },
+      data: { id: "x_user_1", username: "emulator" },
     });
 
     const byIdsRes = await getAuthed("/2/users?ids=x_user_1,x_user_2");
     expect(byIdsRes.status).toBe(200);
     await expect(byIdsRes.json()).resolves.toMatchObject({
       data: [
-        { id: "x_user_1", username: "lightfast" },
+        { id: "x_user_1", username: "emulator" },
         { id: "x_user_2", username: "agent" },
       ],
     });
@@ -233,7 +233,7 @@ describe("@repo/x-emulator", () => {
     });
 
     const searchRes = await getAuthed(
-      "/2/tweets/search/recent?query=lightfast"
+      "/2/tweets/search/recent?query=emulator"
     );
     expect(searchRes.status).toBe(200);
     await expect(searchRes.json()).resolves.toMatchObject({
@@ -241,7 +241,7 @@ describe("@repo/x-emulator", () => {
     });
 
     const countsRes = await getAuthed(
-      "/2/tweets/counts/recent?query=lightfast"
+      "/2/tweets/counts/recent?query=emulator"
     );
     expect(countsRes.status).toBe(200);
     await expect(countsRes.json()).resolves.toMatchObject({
@@ -257,14 +257,14 @@ describe("@repo/x-emulator", () => {
 
   it("emits the app-hosted X MCP endpoint in its manifest", () => {
     expect(
-      xManifest.env(
-        "https://app.lightfast.localhost",
-        "https://x.lightfast.localhost"
-      )
+      xManifest.env({
+        callbackUrl: "https://app.example.test/api/connectors/x/mcp",
+        publicOrigin: "https://x.example.test",
+      })
     ).toMatchObject({
-      X_API_ORIGIN: "https://x.lightfast.localhost",
-      X_MCP_ENDPOINT: "https://app.lightfast.localhost/api/connectors/x/mcp",
-      X_OAUTH_ORIGIN: "https://x.lightfast.localhost",
+      X_API_ORIGIN: "https://x.example.test",
+      X_MCP_ENDPOINT: "https://app.example.test/api/connectors/x/mcp",
+      X_OAUTH_ORIGIN: "https://x.example.test",
     });
   });
 

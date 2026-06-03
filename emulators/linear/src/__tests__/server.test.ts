@@ -48,7 +48,7 @@ async function exchangeCode(code: string) {
     code_verifier: "verifier",
     grant_type: "authorization_code",
     redirect_uri:
-      "https://app.lightfast.localhost/api/connectors/linear/callback",
+      "https://app.example.test/api/connectors/linear/callback",
   });
 }
 
@@ -67,7 +67,7 @@ describe("@repo/linear-emulator", () => {
     );
     authorizeUrl.searchParams.set(
       "redirect_uri",
-      "https://app.lightfast.localhost/api/connectors/linear/callback"
+      "https://app.example.test/api/connectors/linear/callback"
     );
     authorizeUrl.searchParams.set("state", "state_123");
 
@@ -76,7 +76,7 @@ describe("@repo/linear-emulator", () => {
     expect(authorizeRes.status).toBe(302);
     const redirectUrl = new URL(authorizeRes.headers.get("location") ?? "");
     expect(redirectUrl.searchParams.get("code")).toBe(
-      "linear_oauth_code_lightfast_local"
+      "linear_oauth_code_emulator_local"
     );
     expect(redirectUrl.searchParams.get("state")).toBe("state_123");
 
@@ -101,10 +101,10 @@ describe("@repo/linear-emulator", () => {
     const res = await postForm("/oauth/token", {
       client_id: LINEAR_EMULATOR_FIXTURES.oauthClientId,
       client_secret: "wrong-secret",
-      code: "linear_oauth_code_lightfast_local",
+      code: "linear_oauth_code_emulator_local",
       grant_type: "authorization_code",
       redirect_uri:
-        "https://app.lightfast.localhost/api/connectors/linear/callback",
+        "https://app.example.test/api/connectors/linear/callback",
     });
 
     expect(res.status).toBe(401);
@@ -221,7 +221,7 @@ describe("@repo/linear-emulator", () => {
     expect(res.headers.get("content-type")).toContain("text/html");
     const html = await res.text();
     expect(html).toContain("Linear MCP");
-    expect(html).toContain("Lightfast local emulator");
+    expect(html).toContain("Local emulator");
     expect(html).toContain(LINEAR_EMULATOR_FIXTURES.workspaceName);
     expect(html).toContain(LINEAR_EMULATOR_FIXTURES.actorName);
     expect(html).toContain(`${active.url}/mcp`);
@@ -237,16 +237,16 @@ describe("@repo/linear-emulator", () => {
     const res = await fetch(`${active.url}/mcp`, {
       headers: {
         accept: "text/html",
-        "x-forwarded-host": "linear.lightfast.localhost",
+        "x-forwarded-host": "linear.example.test",
         "x-forwarded-proto": "https",
       },
     });
 
     expect(res.status).toBe(200);
     const html = await res.text();
-    expect(html).toContain("https://linear.lightfast.localhost/mcp");
+    expect(html).toContain("https://linear.example.test/mcp");
     expect(html).toContain(
-      "npx mcp-remote https://linear.lightfast.localhost/mcp"
+      "npx mcp-remote https://linear.example.test/mcp"
     );
     expect(html).not.toContain(`${active.url}/mcp`);
   });
@@ -282,7 +282,7 @@ describe("@repo/linear-emulator", () => {
 
   it("supports a deterministic MCP list-tools failure switch", async () => {
     const active = await start();
-    await exchangeCode("linear_oauth_code_lightfast_local");
+    await exchangeCode("linear_oauth_code_emulator_local");
     await fetch(`${active.url}/failures`, {
       body: JSON.stringify({ mcpListTools: true }),
       headers: { "content-type": "application/json" },

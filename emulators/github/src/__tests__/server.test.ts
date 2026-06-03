@@ -49,7 +49,9 @@ async function createInstallationToken() {
 }
 
 beforeAll(async () => {
-  emulator = await startGitHubEmulatorOnAvailablePort();
+  emulator = await startGitHubEmulatorOnAvailablePort({
+    callbackUrl: "https://app.example.test/api/github/setup",
+  });
   emulatorPort = Number(new URL(emulator.url).port);
 });
 
@@ -63,20 +65,20 @@ describe("@repo/github-emulator", () => {
     expect(emulator?.listenUrl).toBe(`http://127.0.0.1:${emulatorPort}`);
     expect(emulator?.publicOrigin).toBe(`http://127.0.0.1:${emulatorPort}`);
 
-    const res = await fetch(`${emulator?.url}/orgs/lightfast-emulated`);
+    const res = await fetch(`${emulator?.url}/orgs/emulator-org`);
     await expect(res.json()).resolves.toMatchObject({
-      login: "lightfast-emulated",
-      name: "Lightfast Emulated",
+      login: "emulator-org",
+      name: "Emulator Org",
     });
   });
 
-  it("seeds the GitHub App webhook URL from the Lightfast app origin", () => {
+  it("does not require an app-owned webhook URL in the default seed", () => {
     const store = new Store();
     githubPlugin.seed?.(store, GITHUB_EMULATOR_FIXTURES.origin);
     seedFromConfig(
       store,
       GITHUB_EMULATOR_FIXTURES.origin,
-      createGitHubEmulatorSeed("https://app.lightfast.localhost")
+      createGitHubEmulatorSeed()
     );
     const gh = getGitHubStore(store);
     const app = gh.apps.findOneBy(
@@ -84,16 +86,14 @@ describe("@repo/github-emulator", () => {
       GITHUB_EMULATOR_FIXTURES.githubAppId
     );
 
-    expect(app?.webhook_url).toBe(
-      "https://app.lightfast.localhost/api/github/webhook"
-    );
+    expect(app?.webhook_url).toBeNull();
     expect(app?.webhook_secret).toBe(
       GITHUB_EMULATOR_FIXTURES.githubWebhookSecret
     );
   });
 
   it("seeds the OAuth user as a member of the GitHub org", async () => {
-    const token = "test_token_lightfast";
+    const token = "test_token_github_emulator";
     const res = await fetch(`${emulator?.url}/user/orgs`, {
       headers: { authorization: `Bearer ${token}` },
     });
@@ -101,7 +101,7 @@ describe("@repo/github-emulator", () => {
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ login: "lightfast-emulated" }),
+        expect.objectContaining({ login: "emulator-org" }),
       ])
     );
   });
@@ -191,8 +191,8 @@ describe("@repo/github-emulator", () => {
       total_count: 3,
       repositories: expect.arrayContaining([
         expect.objectContaining({
-          full_name: `${GITHUB_EMULATOR_FIXTURES.githubOrgLogin}/${GITHUB_EMULATOR_FIXTURES.githubLightfastRepoName}`,
-          name: GITHUB_EMULATOR_FIXTURES.githubLightfastRepoName,
+          full_name: `${GITHUB_EMULATOR_FIXTURES.githubOrgLogin}/${GITHUB_EMULATOR_FIXTURES.githubConfigRepoName}`,
+          name: GITHUB_EMULATOR_FIXTURES.githubConfigRepoName,
           private: true,
         }),
         expect.objectContaining({
@@ -227,7 +227,7 @@ describe("@repo/github-emulator", () => {
       total_count: 3,
       repositories: [
         expect.objectContaining({
-          name: GITHUB_EMULATOR_FIXTURES.githubLightfastRepoName,
+          name: GITHUB_EMULATOR_FIXTURES.githubConfigRepoName,
         }),
         expect.objectContaining({
           name: GITHUB_EMULATOR_FIXTURES.githubRepoName,
@@ -257,7 +257,7 @@ describe("@repo/github-emulator", () => {
       total_count: 3,
       repositories: [
         expect.objectContaining({
-          name: GITHUB_EMULATOR_FIXTURES.githubLightfastRepoName,
+          name: GITHUB_EMULATOR_FIXTURES.githubConfigRepoName,
         }),
       ],
     });
@@ -332,12 +332,12 @@ describe("@repo/github-emulator", () => {
     expect(res.status).toBe(401);
   });
 
-  it("seeds .lightfast so the local installation requirement is already satisfied", async () => {
+  it("seeds .emulator so the local installation requirement is already satisfied", async () => {
     const jwt = await createAppJwt();
     const owner = GITHUB_EMULATOR_FIXTURES.githubOrgLogin;
 
     const installationRes = await fetch(
-      `${emulator?.url}/repos/${owner}/${GITHUB_EMULATOR_FIXTURES.githubLightfastRepoName}/installation`,
+      `${emulator?.url}/repos/${owner}/${GITHUB_EMULATOR_FIXTURES.githubConfigRepoName}/installation`,
       {
         headers: {
           accept: "application/vnd.github+json",
@@ -354,7 +354,7 @@ describe("@repo/github-emulator", () => {
 
   it("serves a local new repository page that creates a new repository", async () => {
     const owner = GITHUB_EMULATOR_FIXTURES.githubOrgLogin;
-    const repoName = "lightfast-created-from-ui";
+    const repoName = "emulator-created-from-ui";
     const pageRes = await fetch(
       `${emulator?.url}/organizations/${owner}/repositories/new?name=${repoName}`
     );
@@ -413,7 +413,7 @@ describe("@repo/github-emulator", () => {
     });
     expect(createRes.status).toBe(201);
 
-    const resetRes = await fetch(`${emulator?.url}/__lightfast/reset`, {
+    const resetRes = await fetch(`${emulator?.url}/__emulator/reset`, {
       method: "POST",
       headers: {
         authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
@@ -438,8 +438,8 @@ describe("@repo/github-emulator", () => {
     );
     expect(transientRes.status).toBe(404);
 
-    const lightfastRes = await fetch(
-      `${emulator?.url}/repos/${owner}/${GITHUB_EMULATOR_FIXTURES.githubLightfastRepoName}/installation`,
+    const configRepoRes = await fetch(
+      `${emulator?.url}/repos/${owner}/${GITHUB_EMULATOR_FIXTURES.githubConfigRepoName}/installation`,
       {
         headers: {
           accept: "application/vnd.github+json",
@@ -447,7 +447,7 @@ describe("@repo/github-emulator", () => {
         },
       }
     );
-    expect(lightfastRes.status).toBe(200);
+    expect(configRepoRes.status).toBe(200);
 
     const installRes = await fetch(
       `${emulator?.url}/apps/${GITHUB_EMULATOR_FIXTURES.githubAppSlug}/installations/new?state=install_state_after_reset`,
@@ -459,7 +459,7 @@ describe("@repo/github-emulator", () => {
     );
   });
 
-  it("redirects GitHub App install requests to the Lightfast setup callback", async () => {
+  it("redirects GitHub App install requests to the configured setup callback", async () => {
     const res = await fetch(
       `${emulator?.url}/apps/${GITHUB_EMULATOR_FIXTURES.githubAppSlug}/installations/new?state=install_state_123`,
       { redirect: "manual" }
@@ -467,7 +467,7 @@ describe("@repo/github-emulator", () => {
 
     expect(res.status).toBe(302);
     expect(res.headers.get("location")).toBe(
-      "https://lightfast.localhost/api/github/setup?installation_id=1001&setup_action=install&state=install_state_123"
+      "https://app.example.test/api/github/setup?installation_id=1001&setup_action=install&state=install_state_123"
     );
   });
 
@@ -653,7 +653,7 @@ describe("@repo/github-emulator", () => {
     });
     const tokenMap = new Map();
     const fetchCompatible = createGitHubCompatibleFetch({
-      appOrigin: "https://lightfast.localhost",
+      callbackUrl: "https://app.example.test/api/github/setup",
       fallbackFetch: () =>
         Response.json({ message: "fallback" }, { status: 418 }),
       publicOrigin: GITHUB_EMULATOR_FIXTURES.origin,
@@ -921,7 +921,7 @@ describe("@repo/github-emulator", () => {
     let receiverEmulator: StartedGitHubEmulator | undefined;
     try {
       receiverEmulator = await startGitHubEmulatorOnAvailablePort({
-        appOrigin: "https://app.lightfast.localhost",
+        callbackUrl: "https://app.emulator.localhost/api/github/setup",
       });
       const gh = getGitHubStore(receiverEmulator.store);
       const app = gh.apps.findOneBy(
@@ -997,7 +997,12 @@ describe("@repo/github-emulator", () => {
   });
 
   it("prints the env values consumed by app and api packages", () => {
-    expect(getGitHubEmulatorEnv("https://lightfast.localhost")).toEqual(
+    expect(
+      getGitHubEmulatorEnv({
+        callbackUrl: "https://callback.example.test",
+        publicOrigin: GITHUB_EMULATOR_FIXTURES.origin,
+      })
+    ).toEqual(
       expect.objectContaining({
         GITHUB_APP_ENDPOINT_ORIGIN: GITHUB_EMULATOR_FIXTURES.origin,
         GITHUB_APP_ID: String(GITHUB_EMULATOR_FIXTURES.githubAppId),
@@ -1005,14 +1010,17 @@ describe("@repo/github-emulator", () => {
       })
     );
     expect(
-      getGitHubEmulatorEnv("https://lightfast.localhost")
+      getGitHubEmulatorEnv({
+        callbackUrl: "https://callback.example.test",
+        publicOrigin: GITHUB_EMULATOR_FIXTURES.origin,
+      })
     ).not.toHaveProperty("GITHUB_INSTALL_URL_OVERRIDE");
   });
 
   it("starts with a distinct Portless public origin", async () => {
     const portlessEmulator = await startGitHubEmulatorOnAvailablePort({
-      appOrigin: "https://feature.lightfast.localhost",
-      publicOrigin: "https://feature.github.lightfast.localhost",
+      callbackUrl: "https://feature.emulator.localhost/api/github/setup",
+      publicOrigin: "https://feature.github.emulator.localhost",
     });
     const portlessPort = Number(new URL(portlessEmulator.url).port);
 
@@ -1022,15 +1030,15 @@ describe("@repo/github-emulator", () => {
         `http://127.0.0.1:${portlessPort}`
       );
       expect(portlessEmulator.publicOrigin).toBe(
-        "https://feature.github.lightfast.localhost"
+        "https://feature.github.emulator.localhost"
       );
 
       const res = await fetch(
-        `${portlessEmulator.url}/orgs/lightfast-emulated`
+        `${portlessEmulator.url}/orgs/emulator-org`
       );
       expect(res.status).toBe(200);
       await expect(res.json()).resolves.toMatchObject({
-        login: "lightfast-emulated",
+        login: "emulator-org",
       });
     } finally {
       await portlessEmulator.close();

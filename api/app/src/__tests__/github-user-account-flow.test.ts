@@ -122,7 +122,7 @@ vi.mock("../services/github/config", () => ({
       webBaseUrl: "https://github.lightfast.localhost",
     },
   }),
-  resolveGitHubAppOrigin: () => "https://app.lightfast.localhost",
+  resolveGitHubAppOrigin: () => "https://lightfast.localhost",
 }));
 
 const {
@@ -232,7 +232,7 @@ describe("github user account flow", () => {
       })
     ).resolves.toEqual({
       authorizationUrl:
-        "https://github.lightfast.localhost/login/oauth/authorize?client_id=github_client_test&redirect_uri=https%3A%2F%2Fapp.lightfast.localhost%2Fapi%2Fgithub%2Fuser%2Foauth%2Fcallback&state=state_123&code_challenge=challenge_123&code_challenge_method=S256",
+        "https://github.lightfast.localhost/login/oauth/authorize?client_id=github_client_test&redirect_uri=https%3A%2F%2Flightfast.localhost%2Fapi%2Fgithub%2Fuser%2Foauth%2Fcallback&state=state_123&code_challenge=challenge_123&code_challenge_method=S256",
     });
     expect(logInfoMock).toHaveBeenCalledWith(
       "[github-user-account] binding started",
@@ -285,11 +285,11 @@ describe("github user account flow", () => {
 
     const result = await completeGitHubUserAccountOAuth({
       requestUrl:
-        "https://app.lightfast.localhost/api/github/user/oauth/callback?code=abc&state=state_123",
+        "https://lightfast.localhost/api/github/user/oauth/callback?code=abc&state=state_123",
     });
 
     expect(result.redirectUrl).toBe(
-      "https://app.lightfast.localhost/account/tasks/github?github_error=missing_refresh_token"
+      "https://lightfast.localhost/account/tasks/github?github_error=missing_refresh_token"
     );
     expect(logWarnMock).toHaveBeenCalledWith(
       "[github-user-account] binding failed",
@@ -324,7 +324,7 @@ describe("github user account flow", () => {
 
     await completeGitHubUserAccountOAuth({
       requestUrl:
-        "https://app.lightfast.localhost/api/github/user/oauth/callback?code=abc&state=state_123",
+        "https://lightfast.localhost/api/github/user/oauth/callback?code=abc&state=state_123",
     });
 
     expect(finalizeActiveUserSourceControlAccountMock).toHaveBeenCalledWith(
@@ -361,11 +361,11 @@ describe("github user account flow", () => {
     await expect(
       completeGitHubUserAccountOAuth({
         requestUrl:
-          "https://app.lightfast.localhost/api/github/user/oauth/callback?code=abc&state=state_123",
+          "https://lightfast.localhost/api/github/user/oauth/callback?code=abc&state=state_123",
       })
     ).resolves.toEqual({
       redirectUrl:
-        "https://app.lightfast.localhost/sign-in?redirect_url=%2Fapi%2Fgithub%2Fuser%2Foauth%2Fcallback%3Fcode%3Dabc%26state%3Dstate_123",
+        "https://lightfast.localhost/sign-in?redirect_url=%2Fapi%2Fgithub%2Fuser%2Foauth%2Fcallback%3Fcode%3Dabc%26state%3Dstate_123",
     });
     expect(consumeAttemptMock).not.toHaveBeenCalled();
   });
@@ -381,11 +381,11 @@ describe("github user account flow", () => {
     await expect(
       completeGitHubUserAccountOAuth({
         requestUrl:
-          "https://app.lightfast.localhost/api/github/user/oauth/callback?code=abc&state=state_123",
+          "https://lightfast.localhost/api/github/user/oauth/callback?code=abc&state=state_123",
       })
     ).resolves.toEqual({
       redirectUrl:
-        "https://app.lightfast.localhost/sign-in?redirect_url=%2Fapi%2Fgithub%2Fuser%2Foauth%2Fcallback%3Fcode%3Dabc%26state%3Dstate_123",
+        "https://lightfast.localhost/sign-in?redirect_url=%2Fapi%2Fgithub%2Fuser%2Foauth%2Fcallback%3Fcode%3Dabc%26state%3Dstate_123",
     });
     expect(consumeAttemptMock).not.toHaveBeenCalled();
   });
@@ -397,11 +397,11 @@ describe("github user account flow", () => {
     await expect(
       completeGitHubUserAccountOAuth({
         requestUrl:
-          "https://app.lightfast.localhost/api/github/user/oauth/callback?code=abc&state=state_123",
+          "https://lightfast.localhost/api/github/user/oauth/callback?code=abc&state=state_123",
       })
     ).resolves.toEqual({
       redirectUrl:
-        "https://app.lightfast.localhost/account/tasks/github?github_error=permission_required",
+        "https://lightfast.localhost/account/tasks/github?github_error=permission_required",
     });
     expect(consumeAttemptMock).not.toHaveBeenCalled();
   });
@@ -413,11 +413,11 @@ describe("github user account flow", () => {
     await expect(
       completeGitHubUserAccountOAuth({
         requestUrl:
-          "https://app.lightfast.localhost/api/github/user/oauth/callback?error=access_denied&state=state_123",
+          "https://lightfast.localhost/api/github/user/oauth/callback?error=access_denied&state=state_123",
       })
     ).resolves.toEqual({
       redirectUrl:
-        "https://app.lightfast.localhost/sign-in?redirect_url=%2Fapi%2Fgithub%2Fuser%2Foauth%2Fcallback%3Ferror%3Daccess_denied%26state%3Dstate_123",
+        "https://lightfast.localhost/sign-in?redirect_url=%2Fapi%2Fgithub%2Fuser%2Foauth%2Fcallback%3Ferror%3Daccess_denied%26state%3Dstate_123",
     });
     expect(consumeAttemptMock).not.toHaveBeenCalled();
   });
@@ -429,11 +429,11 @@ describe("github user account flow", () => {
     await expect(
       completeGitHubUserAccountOAuth({
         requestUrl:
-          "https://app.lightfast.localhost/api/github/user/oauth/callback?error=access_denied&state=state_123",
+          "https://lightfast.localhost/api/github/user/oauth/callback?error=access_denied&state=state_123",
       })
     ).resolves.toEqual({
       redirectUrl:
-        "https://app.lightfast.localhost/account/tasks/github?github_error=permission_required",
+        "https://lightfast.localhost/account/tasks/github?github_error=permission_required",
     });
     expect(consumeAttemptMock).not.toHaveBeenCalled();
   });
@@ -445,11 +445,11 @@ describe("github user account flow", () => {
     await expect(
       completeGitHubUserAccountOAuth({
         requestUrl:
-          "https://app.lightfast.localhost/api/github/user/oauth/callback?error=access_denied&state=state_123",
+          "https://lightfast.localhost/api/github/user/oauth/callback?error=access_denied&state=state_123",
       })
     ).resolves.toEqual({
       redirectUrl:
-        "https://app.lightfast.localhost/account/tasks/github?github_error=github_authorization_denied",
+        "https://lightfast.localhost/account/tasks/github?github_error=github_authorization_denied",
     });
     expect(consumeAttemptMock).toHaveBeenCalledWith({ state: "state_123" });
   });
@@ -458,11 +458,11 @@ describe("github user account flow", () => {
     await expect(
       completeGitHubUserAccountOAuth({
         requestUrl:
-          "https://app.lightfast.localhost/api/github/user/oauth/callback?error=access_denied",
+          "https://lightfast.localhost/api/github/user/oauth/callback?error=access_denied",
       })
     ).resolves.toEqual({
       redirectUrl:
-        "https://app.lightfast.localhost/account/tasks/github?github_error=expired_state",
+        "https://lightfast.localhost/account/tasks/github?github_error=expired_state",
     });
     expect(lookupAttemptMock).not.toHaveBeenCalled();
     expect(consumeAttemptMock).not.toHaveBeenCalled();
@@ -474,11 +474,11 @@ describe("github user account flow", () => {
     await expect(
       completeGitHubUserAccountOAuth({
         requestUrl:
-          "https://app.lightfast.localhost/api/github/user/oauth/callback?code=abc&state=state_123",
+          "https://lightfast.localhost/api/github/user/oauth/callback?code=abc&state=state_123",
       })
     ).resolves.toEqual({
       redirectUrl:
-        "https://app.lightfast.localhost/account/tasks/github?github_error=expired_state",
+        "https://lightfast.localhost/account/tasks/github?github_error=expired_state",
     });
     expect(consumeAttemptMock).not.toHaveBeenCalled();
   });
@@ -491,11 +491,11 @@ describe("github user account flow", () => {
     await expect(
       completeGitHubUserAccountOAuth({
         requestUrl:
-          "https://app.lightfast.localhost/api/github/user/oauth/callback?code=abc&state=state_123",
+          "https://lightfast.localhost/api/github/user/oauth/callback?code=abc&state=state_123",
       })
     ).resolves.toEqual({
       redirectUrl:
-        "https://app.lightfast.localhost/account/tasks/github/complete?return_to=%2Faccount%2Ftasks%2Fgithub",
+        "https://lightfast.localhost/account/tasks/github/complete?return_to=%2Faccount%2Ftasks%2Fgithub",
     });
   });
 
@@ -510,11 +510,11 @@ describe("github user account flow", () => {
     await expect(
       completeGitHubUserAccountOAuth({
         requestUrl:
-          "https://app.lightfast.localhost/api/github/user/oauth/callback?code=abc&state=state_123",
+          "https://lightfast.localhost/api/github/user/oauth/callback?code=abc&state=state_123",
       })
     ).resolves.toEqual({
       redirectUrl:
-        "https://app.lightfast.localhost/account/tasks/github/complete",
+        "https://lightfast.localhost/account/tasks/github/complete",
     });
   });
 
