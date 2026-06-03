@@ -36,6 +36,15 @@ interface GitHubAppConfigEnv {
   VERCEL_ENV?: "development" | "preview" | "production";
 }
 
+interface RequiredGitHubAppConfigValues {
+  apiVersion: string;
+  appId: string;
+  appSlug: string;
+  clientId: string;
+  clientSecret: string;
+  privateKey: string;
+}
+
 export function normalizeGitHubPrivateKey(value: string): string {
   return value.replace(/\\n/g, "\n");
 }
@@ -116,18 +125,6 @@ export function parseGitHubAppConfig(
 
   const required = parseRequiredGitHubAppConfig(configEnv);
 
-  if (
-    !(
-      required.appId &&
-      required.appSlug &&
-      required.clientId &&
-      required.clientSecret &&
-      required.privateKey
-    )
-  ) {
-    throw new Error("GitHub App environment is incomplete.");
-  }
-
   return {
     apiVersion: required.apiVersion,
     appId: required.appId,
@@ -144,25 +141,42 @@ export function getGitHubAppConfig(): GitHubAppConfig {
     endpointOrigin: runtimeEnv.GITHUB_APP_ENDPOINT_ORIGIN,
     vercelEnv: runtimeEnv.VERCEL_ENV,
   });
+  const required = parseRequiredGitHubAppConfig(runtimeEnv);
 
   return {
-    apiVersion: runtimeEnv.GITHUB_API_VERSION,
-    appId: runtimeEnv.GITHUB_APP_ID,
-    appSlug: runtimeEnv.GITHUB_APP_SLUG,
-    clientId: runtimeEnv.GITHUB_APP_CLIENT_ID,
-    clientSecret: runtimeEnv.GITHUB_APP_CLIENT_SECRET,
+    apiVersion: required.apiVersion,
+    appId: required.appId,
+    appSlug: required.appSlug,
+    clientId: required.clientId,
+    clientSecret: required.clientSecret,
     endpoints,
-    privateKey: normalizeGitHubPrivateKey(runtimeEnv.GITHUB_APP_PRIVATE_KEY),
+    privateKey: normalizeGitHubPrivateKey(required.privateKey),
   };
 }
 
-function parseRequiredGitHubAppConfig(configEnv: GitHubAppConfigEnv) {
-  return {
+function parseRequiredGitHubAppConfig(
+  configEnv: GitHubAppConfigEnv
+): RequiredGitHubAppConfigValues {
+  const required = {
     apiVersion: configEnv.GITHUB_API_VERSION ?? "2022-11-28",
     appId: configEnv.GITHUB_APP_ID,
     appSlug: configEnv.GITHUB_APP_SLUG,
     clientId: configEnv.GITHUB_APP_CLIENT_ID,
     clientSecret: configEnv.GITHUB_APP_CLIENT_SECRET,
     privateKey: configEnv.GITHUB_APP_PRIVATE_KEY,
+  };
+  const { appId, appSlug, clientId, clientSecret, privateKey } = required;
+
+  if (!(appId && appSlug && clientId && clientSecret && privateKey)) {
+    throw new Error("GitHub App environment is incomplete.");
+  }
+
+  return {
+    apiVersion: required.apiVersion,
+    appId,
+    appSlug,
+    clientId,
+    clientSecret,
+    privateKey,
   };
 }

@@ -121,6 +121,28 @@ describe("GitHub config", () => {
     );
   });
 
+  it("rejects incomplete ambient config when env validation is skipped", async () => {
+    vi.stubEnv("GITHUB_API_VERSION", "2022-11-28");
+    vi.stubEnv("GITHUB_APP_CLIENT_ID", "github_client_test");
+    vi.stubEnv("GITHUB_APP_CLIENT_SECRET", "github_secret_test");
+    vi.stubEnv("GITHUB_APP_ENDPOINT_ORIGIN", "");
+    vi.stubEnv("GITHUB_APP_ID", "12345");
+    vi.stubEnv("GITHUB_APP_PRIVATE_KEY", "");
+    vi.stubEnv("GITHUB_APP_SLUG", "lightfast-test");
+    vi.stubEnv("GITHUB_INSTALL_URL_OVERRIDE", "");
+    vi.stubEnv("SKIP_ENV_VALIDATION", "1");
+    vi.stubEnv("VERCEL_ENV", "development");
+    vi.resetModules();
+
+    const { getGitHubAppConfig: getRuntimeGitHubAppConfig } = await import(
+      "../services/github/config"
+    );
+
+    expect(() => getRuntimeGitHubAppConfig()).toThrow(
+      "GitHub App environment is incomplete."
+    );
+  });
+
   it("keeps getGitHubAppConfig ambient-only at the type interface", () => {
     const runtimeConfigIsAmbientOnly: Parameters<
       typeof getGitHubAppConfig
