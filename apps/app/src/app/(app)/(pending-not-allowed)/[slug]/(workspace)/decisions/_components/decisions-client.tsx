@@ -72,7 +72,9 @@ export function DecisionsClient() {
         }
         onToggleStatus={(value) =>
           void setStatusState(
-            serializeDecisionValues(toggleDecisionValue(filters.statuses, value))
+            serializeDecisionValues(
+              toggleDecisionValue(filters.statuses, value)
+            )
           )
         }
         query={query}

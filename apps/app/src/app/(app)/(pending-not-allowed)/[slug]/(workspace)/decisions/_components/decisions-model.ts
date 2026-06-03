@@ -34,8 +34,8 @@ export interface DecisionFilters {
 
 export interface DecisionStatusMeta {
   label: string;
-  tone: string; // glyph color classes
   rail: string; // left-rail border color
+  tone: string; // glyph color classes
 }
 
 const STATUS_META: Record<DecisionStatus, DecisionStatusMeta> = {
@@ -56,7 +56,9 @@ const STATUS_META: Record<DecisionStatus, DecisionStatusMeta> = {
   },
 };
 
-export function getDecisionStatusMeta(status: DecisionStatus): DecisionStatusMeta {
+export function getDecisionStatusMeta(
+  status: DecisionStatus
+): DecisionStatusMeta {
   return STATUS_META[status];
 }
 
@@ -102,9 +104,9 @@ export function flattenDecisionPages(
 }
 
 export interface DecisionDayGroup {
+  failureCount: number;
   key: string;
   label: string;
-  failureCount: number;
   rows: DecisionRow[];
 }
 

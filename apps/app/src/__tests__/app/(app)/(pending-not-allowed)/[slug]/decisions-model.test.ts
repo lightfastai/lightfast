@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   formatCaller,
-  getSourceLabel,
   getDecisionStatusMeta,
+  getSourceLabel,
   groupDecisionsByDay,
 } from "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/decisions/_components/decisions-model";
 
@@ -45,9 +45,7 @@ describe("formatCaller", () => {
       "Automation run_1"
     );
     expect(
-      formatCaller(
-        makeRow({ calledByKind: "user", calledByUserId: "user_42" })
-      )
+      formatCaller(makeRow({ calledByKind: "user", calledByUserId: "user_42" }))
     ).toBe("User user_42");
     expect(formatCaller(makeRow({ calledByKind: "system" }))).toBe(
       "System run_1"

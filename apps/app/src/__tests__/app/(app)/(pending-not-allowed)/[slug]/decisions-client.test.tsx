@@ -189,7 +189,9 @@ describe("DecisionsClient", () => {
 
     render(<DecisionsClient />);
 
-    expect(screen.getByText("provider_routine_call_failed")).toBeInTheDocument();
+    expect(
+      screen.getByText("provider_routine_call_failed")
+    ).toBeInTheDocument();
     expect(screen.getByText("linear__create_issue")).toBeInTheDocument();
     expect(screen.getByText("LINEAR_MCP_FAILED")).toBeInTheDocument();
     expect(

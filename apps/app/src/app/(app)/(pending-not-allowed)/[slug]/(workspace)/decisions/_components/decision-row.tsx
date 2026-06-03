@@ -54,7 +54,10 @@ export function DecisionRow({
     >
       <button
         aria-expanded={isExpanded}
-        className={cn(ROW_GRID, "min-h-11 w-full px-4 text-left hover:bg-muted/30")}
+        className={cn(
+          ROW_GRID,
+          "min-h-11 w-full px-4 text-left hover:bg-muted/30"
+        )}
         onClick={onToggle}
         type="button"
       >
