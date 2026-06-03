@@ -7,6 +7,7 @@ import { db } from "@db/app/client";
 import { UI_MESSAGE_STREAM_HEADERS } from "@vendor/ai";
 import { log } from "@vendor/observability/log/next";
 import { getLightfastResumableStreamContext } from "~/app/(chat)/api/chat/resumable-stream";
+import { isResumableStreamEnabled } from "~/app/(chat)/api/chat/resumable-stream-config";
 
 export const maxDuration = 30;
 
@@ -31,6 +32,12 @@ export async function GET(
       { error: "Organization setup required" },
       { status: 403 }
     );
+  }
+
+  // Resumable replay is disabled in local dev: nothing is published to Redis, so
+  // there is nothing to resume. Skip the lookup entirely and report no content.
+  if (!isResumableStreamEnabled) {
+    return new Response(null, { status: 204 });
   }
 
   const { id } = await params;

@@ -39,6 +39,7 @@ import {
 import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
 import { getLightfastResumableStreamContext } from "~/app/(chat)/api/chat/resumable-stream";
+import { isResumableStreamEnabled } from "~/app/(chat)/api/chat/resumable-stream-config";
 
 const WORKSPACE_ASSISTANT_MODEL = "anthropic/claude-sonnet-4.6";
 const WORKSPACE_ASSISTANT_FALLBACK_MODELS = ["openai/gpt-5.4"] as const;
@@ -295,32 +296,42 @@ export async function POST(req: Request) {
     system,
   });
 
-  return result.toUIMessageStreamResponse({
-    consumeSseStream: async ({ stream }) => {
-      try {
-        await getLightfastResumableStreamContext().createNewResumableStream(
-          streamId,
-          () => stream
-        );
-      } catch (error) {
-        log.error("[workspace-assistant] failed to register resumable stream", {
-          ...generationLogMetadata,
-          errorMessage: getErrorMessage(error),
-        });
-        await clearActiveStream(db, {
-          clerkOrgId: identity.orgId,
-          createdByUserId: identity.userId,
-          expectedStreamId: streamId,
-          publicId: conversation.publicId,
-          streamId: null,
-          failureMessage: generationLogMetadata,
-          type: "error",
-          warning:
-            "[workspace-assistant] failed to clear active stream after resume failure",
-        });
-        throw error;
+  // Resumable replay is disabled in local dev; leaving `consumeSseStream`
+  // undefined means the AI SDK skips teeing the SSE stream into Redis and the
+  // live stream flows straight to the client.
+  const consumeSseStream = isResumableStreamEnabled
+    ? async ({ stream }: { stream: ReadableStream<string> }) => {
+        try {
+          await getLightfastResumableStreamContext().createNewResumableStream(
+            streamId,
+            () => stream
+          );
+        } catch (error) {
+          log.error(
+            "[workspace-assistant] failed to register resumable stream",
+            {
+              ...generationLogMetadata,
+              errorMessage: getErrorMessage(error),
+            }
+          );
+          await clearActiveStream(db, {
+            clerkOrgId: identity.orgId,
+            createdByUserId: identity.userId,
+            expectedStreamId: streamId,
+            publicId: conversation.publicId,
+            streamId: null,
+            failureMessage: generationLogMetadata,
+            type: "error",
+            warning:
+              "[workspace-assistant] failed to clear active stream after resume failure",
+          });
+          throw error;
+        }
       }
-    },
+    : undefined;
+
+  return result.toUIMessageStreamResponse({
+    consumeSseStream,
     generateMessageId: () => assistantMessage.publicId,
     headers: {
       "x-lightfast-workspace-assistant-conversation-id": conversation.publicId,

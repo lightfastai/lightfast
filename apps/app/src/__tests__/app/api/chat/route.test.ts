@@ -451,6 +451,48 @@ describe("chat route", () => {
     expect(response).toBe(streamResponse);
   });
 
+  it("does not register a resumable stream when resumable streaming is disabled (local dev)", async () => {
+    const uiMessages = [
+      {
+        id: "client-message-1",
+        parts: [{ text: "Summarize my active opportunities", type: "text" }],
+        role: "user",
+      },
+    ];
+    const streamResponse = new Response("stream");
+
+    convertToModelMessagesMock.mockResolvedValue([
+      { content: "Summarize my active opportunities", role: "user" },
+    ]);
+    gatewayMock.mockReturnValue("gateway:anthropic/claude-sonnet-4.6");
+    streamTextMock.mockReturnValue({
+      toUIMessageStreamResponse: toUIMessageStreamResponseMock,
+    });
+    toUIMessageStreamResponseMock.mockReturnValue(streamResponse);
+
+    vi.resetModules();
+    vi.doMock("~/app/(chat)/api/chat/resumable-stream-config", () => ({
+      isResumableStreamEnabled: false,
+    }));
+    const { POST: DevPOST } = await import("~/app/(chat)/api/chat/route");
+
+    const response = await DevPOST(
+      createJsonRequest({
+        idempotencyKey: "idem_user_1",
+        messages: uiMessages,
+        conversationId: "conv_123",
+      })
+    );
+
+    const streamResponseOptions =
+      toUIMessageStreamResponseMock.mock.calls[0]?.[0];
+    expect(streamResponseOptions.consumeSseStream).toBeUndefined();
+    expect(createNewResumableStreamMock).not.toHaveBeenCalled();
+    expect(response).toBe(streamResponse);
+
+    vi.doUnmock("~/app/(chat)/api/chat/resumable-stream-config");
+  });
+
   it("marks the assistant turn failed when the model produces no content", async () => {
     const uiMessages = [
       {
