@@ -113,14 +113,17 @@ function malformedRequest() {
 
 async function mcpToken(input: {
   purpose: "call" | "list";
+  clerkOrgId?: string;
   toolName?: string;
+  now?: Date;
 }) {
   return await issueConnectorMcpToken({
-    clerkOrgId: "org_acme",
+    clerkOrgId: input.clerkOrgId ?? "org_acme",
     connectionId: 42,
     provider: "x",
     purpose: input.purpose,
     toolName: input.toolName,
+    ...(input.now ? { now: input.now } : {}),
   });
 }
 
@@ -307,6 +310,53 @@ describe("X MCP bridge service", () => {
     });
 
     expect(response.status).toBe(401);
+    expect(executeXApiToolMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects requests when the token clerk org id does not match any connection", async () => {
+    getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(null);
+
+    const response = await handleXConnectorMcpRequest({
+      request: mcpRequest({
+        body: {
+          id: 1,
+          jsonrpc: "2.0",
+          method: "tools/list",
+          params: {},
+        },
+        token: await mcpToken({
+          clerkOrgId: "org_other",
+          purpose: "list",
+        }),
+      }),
+    });
+
+    expect(response.status).toBe(401);
+    expect(getCurrentOrgConnectorConnectionMock).toHaveBeenCalledWith({}, {
+      clerkOrgId: "org_other",
+      provider: "x",
+    });
+    expect(executeXApiToolMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects expired tokens before any tool execution", async () => {
+    const response = await handleXConnectorMcpRequest({
+      request: mcpRequest({
+        body: {
+          id: 1,
+          jsonrpc: "2.0",
+          method: "tools/list",
+          params: {},
+        },
+        token: await mcpToken({
+          purpose: "list",
+          now: new Date(Date.now() - 600_000),
+        }),
+      }),
+    });
+
+    expect(response.status).toBe(401);
+    expect(getCurrentOrgConnectorConnectionMock).not.toHaveBeenCalled();
     expect(executeXApiToolMock).not.toHaveBeenCalled();
   });
 });

@@ -1407,7 +1407,12 @@ describe("X connector flow", () => {
       username: "lightfast",
     });
     finalizeCurrentOrgConnectorConnectionMock.mockResolvedValue(
-      connection({ id: 42, provider: "x", toolManifest: [] })
+      connection({
+        enabledForAutomations: false,
+        id: 42,
+        provider: "x",
+        toolManifest: [],
+      })
     );
     listXBridgeMcpToolsMock.mockRejectedValue(
       new XAppNodeError("X_MCP_FAILED", "X MCP tool listing failed.")
@@ -1429,6 +1434,12 @@ describe("X connector flow", () => {
         clerkOrgId: "org_acme",
         lastToolRefreshErrorCode: "X_MCP_FAILED",
         provider: "x",
+      })
+    );
+    expect(finalizeCurrentOrgConnectorConnectionMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        enabledForAutomations: false,
       })
     );
     expect(
