@@ -13,7 +13,7 @@ A web sandbox is a headless Anthropic-managed Linux VM that clones the repo, run
 - `pnpm dev` is **100% Portless-orchestrated** (`portless proxy start && turbo run dev:next …`); every service resolves URLs via `portless get …` and runs under `portless run …`. Inngest/QStash/emulator scripts call `portless get`/`portless run` directly.
 - Each app boots with `with-env = dotenv -e ./.vercel/.env.development.local`. Those env files (~40 keys for `app` alone, including the **rotating** `VERCEL_OIDC_TOKEN`) are gitignored and produced by `vercel env pull`. A fresh sandbox has none of them.
 - Vercel linkage (`.vercel/repo.json`, `apps/*/.vercel/project.json`) is gitignored, so the sandbox starts with no link to the Vercel projects.
-- `.mcp.json` stdio servers shell out to local scripts: `start-exa.sh`/`start-lightfast.sh` `exit 1` without `.env.mcp`; `start-postgres.sh` needs the pulled app env; `inngest` points at `127.0.0.1:8288`.
+- **MCP config is now harness-standardized** (done as part of this work): `.mcp.json` (Claude) and `.codex/config.toml` (Codex) run an identical set — `exa` (hosted `https://mcp.exa.ai/mcp`), `next-devtools` (npx), `inngest` (`127.0.0.1:8288`). The old local `.mcp/*.sh` scripts (exa/lightfast/postgres) and `.env.mcp`/`.env.mcp.example` are deleted, so **no MCP secrets** are needed in the sandbox.
 
 A cloud environment already exists for this repo (local pointer `env_017JcTSzELtWsWzRmXzAKqCH` in `.claude/settings.local.json`). This work makes that environment **reproducible and robust**, with the repo carrying the versioned setup and the web UI carrying only secrets + network mode.
 
@@ -21,8 +21,8 @@ A cloud environment already exists for this repo (local pointer `env_017JcTSzELt
 
 - A fresh web sandbox can run the full `pnpm dev` stack after the setup script completes.
 - Env is hydrated automatically from Vercel using a **single** `VERCEL_TOKEN` secret — no pasting ~40 vars, resilient to `VERCEL_OIDC_TOKEN` rotation.
-- MCP servers either work or degrade quietly in the sandbox (no `exit 1` noise).
-- The exact web-UI configuration (setup-script path, network mode, the small set of secrets) is documented in-repo.
+- MCP config is identical across Claude and Codex and needs no sandbox secrets (`exa` hosted/keyless, `next-devtools` npx, `inngest` local HTTP live once the stack is up).
+- The exact web-UI configuration (setup-script path, network mode, the single `VERCEL_TOKEN` secret) is documented in-repo.
 
 ## Non-goals
 
@@ -40,6 +40,7 @@ A cloud environment already exists for this repo (local pointer `env_017JcTSzELt
 | Env hydration | `vercel env pull` driven by one `VERCEL_TOKEN` secret |
 | Network mode | **Trusted** (default) — broad egress incl. package registries |
 | Vercel linkage | Re-link at setup via `vercel link --repo --yes --token=$VERCEL_TOKEN`; **nothing new committed** |
+| MCP config | Standardized across Claude (`.mcp.json`) + Codex (`.codex/config.toml`): `exa` (hosted, keyless), `next-devtools`, `inngest`. `lightfast`/`postgres`/`playwright`/`knock` removed |
 
 ## Architecture — split of responsibilities
 
@@ -47,7 +48,7 @@ A cloud environment already exists for this repo (local pointer `env_017JcTSzELt
 |---|---|
 | `scripts/cloud/setup.sh` — the setup script | **Setup script** field → `bash scripts/cloud/setup.sh` |
 | `scripts/cloud/dev.sh` — sandbox-tuned stack start | **Network**: Trusted |
-| Cloud-safety tweaks to `.mcp/*.sh` | **Secrets**: `VERCEL_TOKEN`, `EXA_API_KEY`, `LIGHTFAST_API_KEY` |
+| Standardized `.mcp.json` + `.codex/config.toml` (hosted/HTTP MCP) | **Secrets**: `VERCEL_TOKEN` only |
 | CLAUDE.md "Cloud sandbox" section + this spec | (all other env flows from `vercel env pull`) |
 
 ## Components
@@ -61,23 +62,23 @@ Idempotent, `set -x` for debuggability, non-critical steps guarded with `|| true
 3. `vercel link --repo --yes --token="$VERCEL_TOKEN"` — regenerates `.vercel/repo.json` + per-app `.vercel/project.json` from the git remote (org `team_oOLHPMLVuBjXyFafgsGKEZxl`, projects `lightfast-{app,www,platform}`).
 4. For each of `apps/app`, `apps/www`, `apps/platform`:
    `vercel env pull .vercel/.env.development.local --environment=development --token="$VERCEL_TOKEN"` → hydrates `~/.../.vercel/.env.development.local`.
-5. If `EXA_API_KEY` / `LIGHTFAST_API_KEY` are present in the environment, write `.env.mcp` so those stdio MCP servers can start. Skip silently otherwise.
-6. Optional warmups guarded by `|| true` (e.g. prime turbo / next typegen) — only if they stay within the time budget.
+5. Optional warmups guarded by `|| true` (e.g. prime turbo / next typegen) — only if they stay within the time budget.
 
-**Failure policy:** steps 1–4 are critical (fail the setup loudly if they error, so a broken environment is obvious); steps 5–6 are best-effort.
+**Failure policy:** steps 1–4 are critical (fail the setup loudly if they error, so a broken environment is obvious); step 5 is best-effort. No MCP secrets / `.env.mcp` step is needed — MCP is hosted/npx now.
 
 ### 2. `scripts/cloud/dev.sh` (sandbox-tuned stack start)
 
 A thin wrapper that runs the same orchestration as root `pnpm dev` but with sandbox-appropriate Portless settings (see §Portless validation). Default behavior delegates to `pnpm dev`; environment knobs let milestone 1 swap the Portless bind strategy without rewriting the root script. The root `package.json` `dev` script is **not** modified.
 
-### 3. MCP cloud-safety (`.mcp/*.sh`)
+### 3. Standardized MCP config (`.mcp.json` + `.codex/config.toml`) — done
 
-Make the three local-script servers degrade quietly in a sandbox while preserving the loud local behavior for humans:
+Both harnesses run an identical, cloud-native MCP set; the local `.mcp/*.sh` scripts, `.env.mcp`, and `.env.mcp.example` are deleted:
 
-- `start-exa.sh` / `start-lightfast.sh`: when the required key is absent, **skip gracefully** (exit 0 / no-op) instead of `exit 1`, so Claude simply doesn't get that tool rather than seeing a failed server. Keep the local "missing key" guidance when running interactively. Gating signal: a `LIGHTFAST_CLOUD=1` marker exported by `setup.sh`/`dev.sh` (we do not assume an Anthropic-provided env var). When `LIGHTFAST_CLOUD=1` and the key is missing → exit 0; otherwise preserve the loud local `exit 1`.
-- `start-postgres.sh`: unchanged — it works once `apps/app/.vercel/.env.development.local` is hydrated (step 4).
-- `inngest` (`http://127.0.0.1:8288/mcp`): works once the stack is up.
-- `next-devtools`: works via npx, unchanged.
+- `exa` → `{type: http, url: https://mcp.exa.ai/mcp}` (hosted, keyless) — works in cloud and local with no secret.
+- `next-devtools` → `npx -y next-devtools-mcp@0.3.10` — works via npx.
+- `inngest` → `{type: http, url: http://127.0.0.1:8288/mcp}` — live once the local Inngest dev server is up (dev-time only, both surfaces).
+
+Removed: `lightfast` + `postgres` (Claude), `lightfast` + `playwright` + `knock` (Codex). `playwright` was dropped from the canonical set. No cloud-detection gating or soft-fail is required anymore.
 
 ### 4. Docs
 
@@ -88,10 +89,9 @@ Make the three local-script servers degrade quietly in a sandbox while preservin
 
 ```
 Environment creation:
-  web UI secrets (VERCEL_TOKEN, EXA_API_KEY, LIGHTFAST_API_KEY)
+  web UI secret (VERCEL_TOKEN)
     → setup.sh → vercel link + env pull
-      → apps/{app,www,platform}/.vercel/.env.development.local  (hydrated)
-      → .env.mcp                                                (if keys present)
+      → apps/{app,www,platform}/.vercel/.env.development.local  (hydrated, ~40 keys)
 
 Session start:
   dev.sh → portless proxy start → turbo dev:next + inngest + qstash + emulators
@@ -116,13 +116,13 @@ Honest expectation: the stack **runs and is programmatically reachable**; the br
 ## Error handling
 
 - Setup `vercel` steps fail loudly (a half-provisioned env should be obvious, not silently degraded).
-- MCP servers fail **soft** in cloud (skip, don't `exit 1`).
+- MCP needs no sandbox secrets, so there is nothing to fail soft (`exa` is keyless; `inngest` is simply absent until the stack is up).
 - `|| true` only on genuinely optional warmups.
-- No secret ever written to a tracked file; `.env.mcp` and `.vercel/*` stay gitignored.
+- No secret ever written to a tracked file; `.vercel/*` stays gitignored.
 
 ## Testing / validation
 
-- **Local regression:** `pnpm dev` still starts unchanged; `start-*.sh` keep their loud local behavior when keys are missing. `pnpm check && pnpm typecheck` clean.
+- **Local regression:** `pnpm dev` still starts unchanged; both harnesses load the standardized MCP set (`exa`/`inngest`/`next-devtools`). `pnpm check && pnpm typecheck` clean.
 - **Cloud milestone 1:** a real web sandbox session runs `setup.sh` then the stack; record whether Portless binds and which fallback (if any) was needed.
 - **Cloud milestone 2:** confirm a representative end-to-end path works (e.g. an app route that touches DB + Clerk) using the pulled env.
 
@@ -133,13 +133,10 @@ For environment `env_017JcTSzELtWsWzRmXzAKqCH` (or a new one):
 1. **Setup script** → `bash scripts/cloud/setup.sh`
 2. **Network** → Trusted
 3. **Secrets**:
-   - `VERCEL_TOKEN` — a Vercel token scoped to org `team_oOLHPMLVuBjXyFafgsGKEZxl` (linchpin; hydrates all app env)
-   - `EXA_API_KEY` — enables the `exa` MCP server
-   - `LIGHTFAST_API_KEY` — enables the `lightfast` MCP server
+   - `VERCEL_TOKEN` — a Vercel token scoped to org `team_oOLHPMLVuBjXyFafgsGKEZxl` (the only secret; hydrates all app env via `vercel env pull`)
 
 ## Open items (resolve during planning/implementation)
 
-- Exact cloud-detection signal for MCP soft-fail (proposed: `LIGHTFAST_CLOUD=1` exported by `setup.sh`/`dev.sh`).
 - Whether `apps/mcp` needs its own pulled env (it's in the dev filter but is not one of the three Vercel projects) — confirm in milestone 1.
 - Whether any managed service (PlanetScale/Upstash/Clerk) needs the sandbox's egress IP allowlisted on the provider side under Trusted mode.
 - Final Portless bind strategy, decided by milestone-1 evidence.

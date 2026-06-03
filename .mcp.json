@@ -1,19 +1,8 @@
 {
   "mcpServers": {
     "exa": {
-      "type": "stdio",
-      "command": "bash",
-      "args": [".mcp/start-exa.sh"]
-    },
-    "lightfast": {
-      "type": "stdio",
-      "command": "bash",
-      "args": [".mcp/start-lightfast.sh"]
-    },
-    "postgres": {
-      "type": "stdio",
-      "command": "bash",
-      "args": [".mcp/start-postgres.sh"]
+      "type": "http",
+      "url": "https://mcp.exa.ai/mcp"
     },
     "inngest": {
       "type": "http",
