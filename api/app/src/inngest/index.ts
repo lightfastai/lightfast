@@ -4,8 +4,10 @@ import { inngest } from "./client";
 import { automationScheduler } from "./workflow/automation-scheduler";
 import { classifyPeople } from "./workflow/classify-people";
 import { classifySignal } from "./workflow/classify-signal";
-import { queueSkillRefreshFromSourceControl } from "./workflow/queue-skill-refresh-from-source-control";
+import { queueLightfastIndexRefreshesFromSourceControl } from "./workflow/queue-skill-refresh-from-source-control";
+import { reconcileIdentityIndexes } from "./workflow/reconcile-identity-indexes";
 import { reconcileSkillIndexes } from "./workflow/reconcile-skill-indexes";
+import { refreshIdentityIndex } from "./workflow/refresh-identity-index";
 import { refreshSkillIndex } from "./workflow/refresh-skill-index";
 import { runAutomation } from "./workflow/run-automation";
 import { systemHealth } from "./workflow/system-health";
@@ -22,8 +24,10 @@ export function createInngestRouteContext() {
       automationScheduler,
       runAutomation,
       refreshSkillIndex,
+      refreshIdentityIndex,
       reconcileSkillIndexes,
-      queueSkillRefreshFromSourceControl,
+      reconcileIdentityIndexes,
+      queueLightfastIndexRefreshesFromSourceControl,
     ],
     serveOrigin: env.INNGEST_SERVE_ORIGIN,
     servePath: "/api/inngest",

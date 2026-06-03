@@ -26,6 +26,7 @@ import {
 } from "./router/(pending-not-allowed)/mcp-connections";
 import { orgApiKeysRouter } from "./router/(pending-not-allowed)/org-api-keys";
 import { orgBillingRouter } from "./router/(pending-not-allowed)/org-billing";
+import { orgIdentityRouter } from "./router/(pending-not-allowed)/org-identity";
 import { orgMembersRouter } from "./router/(pending-not-allowed)/org-members";
 import { orgSourceControlRouter } from "./router/(pending-not-allowed)/org-source-control";
 import { taskRouter } from "./router/(pending-not-allowed)/task";
@@ -56,15 +57,16 @@ export const appRouter = createTRPCRouter({
       organization: orgSettingsOrganizationRouter,
       orgApiKeys: orgApiKeysRouter,
       orgBilling: orgBillingRouter,
-      mcpConnections: orgMcpConnectionsRouter,
+      identity: orgIdentityRouter,
       orgMembers: orgMembersRouter,
       sourceControl: orgSourceControlRouter,
+      mcpConnections: orgMcpConnectionsRouter,
     }),
     workspace: createTRPCRouter({
       automations: automationsRouter,
+      assistant: workspaceAssistantRouter,
       connectors: connectorsRouter,
       decisions: decisionsRouter,
-      assistant: workspaceAssistantRouter,
       people: workspacePeopleRouter,
       skills: workspaceSkillsRouter,
       signals: workspaceSignalsRouter,

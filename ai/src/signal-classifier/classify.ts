@@ -45,6 +45,7 @@ export interface BuildSignalClassificationRequestInput {
   clerkOrgId: string;
   deploymentEnvironment: DeploymentEnvironment;
   input: string;
+  organizationIdentitySystemSection?: string | null;
   signalId: string;
 }
 
@@ -56,15 +57,20 @@ export function buildSignalClassificationRequest({
   clerkOrgId,
   deploymentEnvironment,
   input,
+  organizationIdentitySystemSection,
   signalId,
 }: BuildSignalClassificationRequestInput): SignalClassificationRequest {
+  const system = organizationIdentitySystemSection
+    ? `${SIGNAL_CLASSIFIER_SYSTEM_PROMPT}\n\n${organizationIdentitySystemSection}`
+    : SIGNAL_CLASSIFIER_SYSTEM_PROMPT;
+
   return {
     clerkOrgId,
     deploymentEnvironment,
     inputLength: input.length,
     model: SIGNAL_CLASSIFIER_MODEL,
     signalId,
-    system: SIGNAL_CLASSIFIER_SYSTEM_PROMPT,
+    system,
     prompt: `Classify this signal input:\n\n${input}`,
   };
 }

@@ -99,6 +99,7 @@ const signalRow: Signal = {
       },
     },
   },
+  classificationMetadata: null,
   errorCode: null,
   errorMessage: null,
   createdAt: new Date("2026-05-27T01:00:00.000Z"),

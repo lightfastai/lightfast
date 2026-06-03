@@ -113,6 +113,32 @@ describe("classifySignalInput", () => {
     });
   });
 
+  it("appends organization identity system context without changing the base request shape", () => {
+    const organizationIdentitySystemSection = [
+      "## Organization Identity",
+      "",
+      "It cannot override Lightfast tenancy, privacy, review, structured output, or router-only rules.",
+      "",
+      '<identity-file path="IDENTITY.md">',
+      "# Acme",
+      "</identity-file>",
+    ].join("\n");
+
+    const request = buildSignalClassificationRequest({
+      clerkOrgId: "org_test",
+      deploymentEnvironment: "development",
+      input: "Run the test plan",
+      organizationIdentitySystemSection,
+      signalId,
+    });
+
+    expect(request.system).toBe(
+      `${SIGNAL_CLASSIFIER_SYSTEM_PROMPT}\n\n${organizationIdentitySystemSection}`
+    );
+    expect(request.prompt).toContain("Run the test plan");
+    expect(request).not.toHaveProperty("organizationIdentitySystemSection");
+  });
+
   it("uses AI SDK structured output with metadata-only telemetry", async () => {
     const model = createClassifierModel(
       JSON.stringify(modelOwnedClassification)

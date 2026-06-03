@@ -16,6 +16,15 @@ export {
   type InsertAutomationRun,
 } from "./automations";
 export {
+  type IdentityIndexFile,
+  type IdentityIndexState,
+  type InsertIdentityIndexFile,
+  type InsertIdentityIndexState,
+  identityIndexFiles,
+  identityIndexStates,
+} from "./identity-index";
+// MCP OAuth tables and types
+export {
   createMcpOauthClientId,
   createMcpOauthGrantId,
   createMcpOauthRegistrationTokenId,
@@ -61,6 +70,7 @@ export {
   namespaceOperations,
   namespaces,
 } from "./namespaces";
+// Connector tables and types
 export {
   type InsertOrgConnectorConnection,
   type OrgConnectorConnection,

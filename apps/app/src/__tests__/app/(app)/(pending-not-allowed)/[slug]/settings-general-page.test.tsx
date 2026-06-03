@@ -8,6 +8,9 @@ const sourceControlGetQueryOptionsMock = vi.fn(() => ({
 const sourceControlListRepositoriesQueryOptionsMock = vi.fn(() => ({
   queryKey: ["org", "settings", "sourceControl", "listRepositories"],
 }));
+const identityGetQueryOptionsMock = vi.fn(() => ({
+  queryKey: ["org", "settings", "identity", "get"],
+}));
 const prefetchMock = vi.fn();
 
 vi.mock("~/trpc/server", () => ({
@@ -24,6 +27,11 @@ vi.mock("~/trpc/server", () => ({
           },
           listRepositories: {
             queryOptions: sourceControlListRepositoriesQueryOptionsMock,
+          },
+        },
+        identity: {
+          get: {
+            queryOptions: identityGetQueryOptionsMock,
           },
         },
       },
@@ -47,23 +55,31 @@ const { default: SettingsPage } = await import(
 beforeEach(() => {
   sourceControlGetQueryOptionsMock.mockClear();
   sourceControlListRepositoriesQueryOptionsMock.mockClear();
+  identityGetQueryOptionsMock.mockClear();
   prefetchMock.mockClear();
 });
 
 describe("general settings page", () => {
-  it("renders the General settings client without prefetching source control", async () => {
+  it("prefetches the read-only source-control connection in the General settings surface", async () => {
     const element = await SettingsPage({
       params: Promise.resolve({ slug: "acme" }),
     });
     render(element);
 
-    // Source control moved to its own settings sub-tab; the General page no
-    // longer prefetches it.
-    expect(sourceControlGetQueryOptionsMock).not.toHaveBeenCalled();
+    expect(sourceControlGetQueryOptionsMock).toHaveBeenCalledOnce();
     expect(
       sourceControlListRepositoriesQueryOptionsMock
-    ).not.toHaveBeenCalled();
-    expect(prefetchMock).not.toHaveBeenCalled();
+    ).toHaveBeenCalledOnce();
+    expect(identityGetQueryOptionsMock).toHaveBeenCalledOnce();
+    expect(prefetchMock).toHaveBeenCalledWith({
+      queryKey: ["org", "settings", "sourceControl", "get"],
+    });
+    expect(prefetchMock).toHaveBeenCalledWith({
+      queryKey: ["org", "settings", "sourceControl", "listRepositories"],
+    });
+    expect(prefetchMock).toHaveBeenCalledWith({
+      queryKey: ["org", "settings", "identity", "get"],
+    });
     expect(screen.getByTestId("hydrated-general")).toHaveTextContent(
       "General settings for acme"
     );

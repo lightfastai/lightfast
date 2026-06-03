@@ -3,6 +3,7 @@ import {
   type SignalClassification,
   type SignalVisibilityScope,
 } from "@repo/api-contract";
+import type { SignalClassificationMetadata } from "@repo/identity-contract";
 import type { SQL } from "drizzle-orm";
 import { and, desc, eq, gte, inArray, lt, or } from "drizzle-orm";
 
@@ -406,6 +407,7 @@ export async function claimSignalForClassification(
 
 export interface MarkSignalClassifiedParams {
   classification: SignalClassification;
+  classificationMetadata?: SignalClassificationMetadata | null;
   clerkOrgId: string;
   publicId: string;
 }
@@ -419,6 +421,7 @@ export async function markSignalClassified(
     .set({
       status: "classified",
       classification: input.classification,
+      classificationMetadata: input.classificationMetadata ?? null,
       visibilityScope: input.classification.routing.visibility.scope,
       errorCode: null,
       errorMessage: null,

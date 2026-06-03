@@ -39,6 +39,7 @@
   "dependencies": {
     "@repo/api-contract": "workspace:*",
     "@repo/app-validation": "workspace:*",
+    "@repo/identity-contract": "workspace:*",
     "@vendor/ai": "workspace:*",
     "server-only": "catalog:",
     "zod": "catalog:"

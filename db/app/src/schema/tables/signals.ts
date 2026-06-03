@@ -5,6 +5,7 @@ import {
   type SignalStatus,
   type SignalVisibilityScope,
 } from "@repo/api-contract";
+import type { SignalClassificationMetadata } from "@repo/identity-contract";
 import { sql } from "drizzle-orm";
 import {
   bigint,
@@ -70,6 +71,10 @@ export const signals = mysqlTable(
       .notNull(),
 
     classification: json("classification").$type<SignalClassification | null>(),
+
+    classificationMetadata: json(
+      "classification_metadata"
+    ).$type<SignalClassificationMetadata | null>(),
 
     errorCode: varchar("error_code", { length: ERROR_CODE_LENGTH }),
 

@@ -29,6 +29,7 @@ function signal(overrides: Partial<Signal> = {}): Signal {
   return {
     id: 1,
     classification: null,
+    classificationMetadata: null,
     clerkOrgId: "org_test",
     createdAt: new Date("2026-06-01T00:00:00.000Z"),
     createdByApiKeyId: null,

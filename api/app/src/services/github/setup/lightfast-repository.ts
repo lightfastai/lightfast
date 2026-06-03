@@ -15,6 +15,7 @@ import {
   getGitHubRepository,
   verifyGitHubInstallationRepository,
 } from "@repo/github-app-node";
+import { IDENTITY_WATCHED_PATH_GLOBS } from "@repo/identity-contract";
 import { log } from "@vendor/observability/log/next";
 
 import { mirrorOrgSetupGate } from "../../../auth/org-binding-mirror";
@@ -22,6 +23,7 @@ import {
   deriveOrgSetupGate,
   hasMatchingGitHubLightfastRepositoryProof,
 } from "../../../auth/org-setup-gate";
+import { createIdentityRefreshDedupeKey } from "../../../inngest/workflow/identity-refresh-event";
 import { createSkillRefreshDedupeKey } from "../../../inngest/workflow/skill-refresh-event";
 import { getGitHubAppConfig } from "../config";
 
@@ -68,7 +70,7 @@ async function ensureWatchedLightfastRepository(input: {
     fullName: input.fullName,
     orgSourceControlBindingId: input.bindingId,
     providerRepositoryId: input.providerRepositoryId,
-    watchedPathGlobs: ["skills/**"],
+    watchedPathGlobs: [...IDENTITY_WATCHED_PATH_GLOBS],
   });
 }
 
@@ -97,6 +99,31 @@ async function enqueueInitialSkillRefresh(input: {
   }
 }
 
+async function enqueueInitialIdentityRefresh(input: {
+  sourceControlRepositoryId: number;
+}) {
+  try {
+    const { inngest } = await import("../../../inngest/client");
+    await inngest.send({
+      name: "app/identity.index.refresh.requested",
+      data: {
+        dedupeKey: createIdentityRefreshDedupeKey({
+          reason: "setup",
+          sourceControlRepositoryId: input.sourceControlRepositoryId,
+        }),
+        reason: "setup",
+        sourceControlRepositoryId: input.sourceControlRepositoryId,
+      },
+    });
+  } catch (error) {
+    log.warn("[github-setup] initial identity refresh enqueue failed", {
+      error,
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+    });
+    return;
+  }
+}
+
 export async function verifyGitHubLightfastRepositorySetup(input: {
   clerkOrgId: string;
   db: Database;
@@ -115,6 +142,9 @@ export async function verifyGitHubLightfastRepositorySetup(input: {
       providerRepositoryId: proof.id,
     });
     await enqueueInitialSkillRefresh({
+      sourceControlRepositoryId: watchedRepository.id,
+    });
+    await enqueueInitialIdentityRefresh({
       sourceControlRepositoryId: watchedRepository.id,
     });
     const gate = deriveOrgSetupGate(binding);
@@ -196,7 +226,7 @@ export async function verifyGitHubLightfastRepositorySetup(input: {
         fullName: proof.fullName,
         orgSourceControlBindingId: binding.id,
         providerRepositoryId: proof.id,
-        watchedPathGlobs: ["skills/**"],
+        watchedPathGlobs: [...IDENTITY_WATCHED_PATH_GLOBS],
       }
     );
   } catch {
@@ -206,6 +236,9 @@ export async function verifyGitHubLightfastRepositorySetup(input: {
     );
   }
   await enqueueInitialSkillRefresh({
+    sourceControlRepositoryId: watchedRepository.id,
+  });
+  await enqueueInitialIdentityRefresh({
     sourceControlRepositoryId: watchedRepository.id,
   });
 

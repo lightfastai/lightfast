@@ -9,6 +9,10 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
+    "./mcp-oauth": {
+      "types": "./src/mcp-oauth/index.ts",
+      "default": "./src/mcp-oauth/index.ts"
+    },
     "./env": {
       "types": "./src/env.ts",
       "default": "./src/env.ts"
@@ -29,6 +33,10 @@
       "types": "./src/services/connectors/runtime.ts",
       "default": "./src/services/connectors/runtime.ts"
     },
+    "./signals/service": {
+      "types": "./src/signals/service.ts",
+      "default": "./src/signals/service.ts"
+    },
     "./inngest": {
       "types": "./src/inngest/index.ts",
       "default": "./src/inngest/index.ts"
@@ -36,14 +44,6 @@
     "./inngest/client": {
       "types": "./src/inngest/client.ts",
       "default": "./src/inngest/client.ts"
-    },
-    "./mcp-oauth": {
-      "types": "./src/mcp-oauth/index.ts",
-      "default": "./src/mcp-oauth/index.ts"
-    },
-    "./signals/service": {
-      "types": "./src/signals/service.ts",
-      "default": "./src/signals/service.ts"
     },
     "./auth/identity": {
       "types": "./src/auth/identity.ts",
@@ -71,6 +71,7 @@
     "@repo/connector-contract": "workspace:*",
     "@repo/github-app-contract": "workspace:*",
     "@repo/github-app-node": "workspace:*",
+    "@repo/identity-contract": "workspace:*",
     "@repo/linear-app-node": "workspace:*",
     "@repo/native-auth-contract": "workspace:*",
     "@repo/skills-contract": "workspace:*",
