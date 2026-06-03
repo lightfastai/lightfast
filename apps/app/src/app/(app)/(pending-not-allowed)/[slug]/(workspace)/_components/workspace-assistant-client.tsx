@@ -51,7 +51,7 @@ import { ArrowUp, Box } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTRPC } from "~/trpc/react";
 import { extractMessageText, MessageCopyButton } from "./message-copy-button";
 
@@ -135,52 +135,55 @@ export function WorkspaceAssistantClient({
     ? "submitted"
     : status;
 
-  const handleSubmit = async (message: PromptInputMessage) => {
-    const nextText = message.text.trim();
+  const handleSubmit = useCallback(
+    async (message: PromptInputMessage) => {
+      const nextText = message.text.trim();
 
-    if (!nextText) {
-      return;
-    }
-
-    clearError();
-
-    let activeConversationId = conversationIdRef.current;
-    if (!activeConversationId) {
-      activeConversationId = createWorkspaceAssistantConversationId();
-      conversationIdRef.current = activeConversationId;
-      setConversationId(activeConversationId);
-      replaceBrowserChatUrl(params.slug, activeConversationId);
-      setCreationError(undefined);
-
-      try {
-        await createConversation.mutateAsync({
-          publicId: activeConversationId,
-          title: nextText,
-        });
-      } catch (error) {
-        conversationIdRef.current = undefined;
-        setConversationId(undefined);
-        replaceBrowserChatUrl(params.slug);
-        setCreationError(
-          error instanceof Error
-            ? error
-            : new Error("Unable to create conversation.")
-        );
+      if (!nextText) {
         return;
       }
-    }
 
-    await sendMessage(
-      { text: nextText },
-      {
-        body: {
-          idempotencyKey: createWorkspaceAssistantIdempotencyKey(),
-          conversationId: activeConversationId,
-        },
+      clearError();
+
+      let activeConversationId = conversationIdRef.current;
+      if (!activeConversationId) {
+        activeConversationId = createWorkspaceAssistantConversationId();
+        conversationIdRef.current = activeConversationId;
+        setConversationId(activeConversationId);
+        replaceBrowserChatUrl(params.slug, activeConversationId);
+        setCreationError(undefined);
+
+        try {
+          await createConversation.mutateAsync({
+            publicId: activeConversationId,
+            title: nextText,
+          });
+        } catch (error) {
+          conversationIdRef.current = undefined;
+          setConversationId(undefined);
+          replaceBrowserChatUrl(params.slug);
+          setCreationError(
+            error instanceof Error
+              ? error
+              : new Error("Unable to create conversation.")
+          );
+          return;
+        }
       }
-    );
-    setText("");
-  };
+
+      await sendMessage(
+        { text: nextText },
+        {
+          body: {
+            idempotencyKey: createWorkspaceAssistantIdempotencyKey(),
+            conversationId: activeConversationId,
+          },
+        }
+      );
+      setText("");
+    },
+    [params.slug, createConversation.mutateAsync, sendMessage, clearError]
+  );
 
   const composer = (
     <ChatComposer
@@ -478,7 +481,7 @@ export const ChatMessage = memo(function ChatMessage({
   );
 });
 
-function ChatComposer({
+const ChatComposer = memo(function ChatComposer({
   disabled,
   error,
   onSubmit,
@@ -532,7 +535,7 @@ function ChatComposer({
       </PromptInput>
     </div>
   );
-}
+});
 
 interface SkillCard {
   description: string;
