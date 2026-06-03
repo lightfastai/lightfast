@@ -26,12 +26,12 @@
     "@repo/mcp-tools": "workspace:*",
     "@repo/provider-routine-contract": "workspace:*",
     "@repo/provider-routines": "workspace:*",
+    "@sentry/tanstackstart-react": "catalog:",
     "@t3-oss/env-core": "catalog:",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "catalog:",
     "@vendor/jose": "workspace:*",
     "@vendor/mcp": "workspace:*",
-    "@vendor/observability": "workspace:*",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
     "zod": "catalog:"

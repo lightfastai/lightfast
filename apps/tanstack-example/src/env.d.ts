@@ -9,12 +9,4 @@ interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
 
-declare global {
-  namespace NodeJS {
-    interface ProcessEnv {
-      readonly SERVICE_JWT_SECRET?: string;
-    }
-  }
-}
-
 export {};

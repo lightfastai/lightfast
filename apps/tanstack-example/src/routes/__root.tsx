@@ -1,9 +1,9 @@
 import {
+  createRootRoute,
   HeadContent,
   Link,
   Outlet,
   Scripts,
-  createRootRoute,
 } from "@tanstack/react-router";
 
 export const Route = createRootRoute({
@@ -35,6 +35,7 @@ export const Route = createRootRoute({
 function RootComponent() {
   return (
     <html lang="en">
+      {/* biome-ignore lint/style/noHeadElement: TanStack Start root routes render the document shell. */}
       <head>
         <HeadContent />
       </head>
@@ -89,13 +90,13 @@ function NotFoundPage() {
           Page not found
         </h1>
         <Link
-          to="/"
           style={{
             width: "fit-content",
             color: "#064e3b",
             fontWeight: 600,
             textDecoration: "none",
           }}
+          to="/"
         >
           Go home
         </Link>

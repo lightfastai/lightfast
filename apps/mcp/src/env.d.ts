@@ -1,13 +1,11 @@
 /// <reference types="vite/client" />
 
-declare global {
-  namespace NodeJS {
-    interface ProcessEnv {
-      readonly MCP_AUTH_ISSUER: string;
-      readonly MCP_RESOURCE_URL: string;
-      readonly SERVICE_JWT_SECRET: string;
-    }
-  }
+interface ImportMetaEnv {
+  readonly VITE_SENTRY_DSN?: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
 }
 
 export {};

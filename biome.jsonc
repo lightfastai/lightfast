@@ -13,7 +13,8 @@
       "!packages/ui/src/hooks",
       "!packages/ui/src/lib",
       "!packages/app-api-contract/openapi.json",
-      "!db/app/src/migrations"
+      "!db/app/src/migrations",
+      "!**/routeTree.gen.ts"
     ]
   },
   "linter": {

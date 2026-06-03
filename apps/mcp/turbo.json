@@ -9,6 +9,9 @@
         "MCP_AUTH_ISSUER",
         "MCP_RESOURCE_URL",
         "SERVICE_JWT_SECRET",
+        "SENTRY_AUTH_TOKEN",
+        "SENTRY_ORG",
+        "SENTRY_PROJECT",
         "VITE_*",
         "VERCEL_ENV"
       ],
@@ -16,11 +19,6 @@
         "DATABASE_HOST",
         "DATABASE_USERNAME",
         "DATABASE_PASSWORD",
-        "LOGTAIL_URL",
-        "LOGTAIL_SOURCE_TOKEN",
-        "SENTRY_AUTH_TOKEN",
-        "SENTRY_ORG",
-        "SENTRY_PROJECT",
         "HOST",
         "PORT"
       ],
