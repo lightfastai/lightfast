@@ -82,6 +82,31 @@ vi.mock("@repo/ui/components/ai-elements/message", () => ({
   MessageResponse: ({ children }: { children?: ReactNode }) => (
     <div>{children}</div>
   ),
+  MessageActions: ({
+    children,
+    className,
+  }: {
+    children?: ReactNode;
+    className?: string;
+  }) => (
+    <div className={className} data-testid="message-actions">
+      {children}
+    </div>
+  ),
+  MessageAction: ({
+    children,
+    label,
+    onClick,
+  }: {
+    children?: ReactNode;
+    label?: string;
+    onClick?: () => void;
+    tooltip?: string;
+  }) => (
+    <button aria-label={label} onClick={onClick} type="button">
+      {children}
+    </button>
+  ),
 }));
 
 vi.mock("@repo/ui/components/ai-elements/reasoning", () => ({
@@ -431,7 +456,7 @@ describe("WorkspaceAssistantClient", () => {
     );
 
     const messageContents = screen.getAllByTestId("message-content");
-    expect(messageContents[0]).toHaveClass("bg-muted");
+    expect(messageContents[0]).toHaveClass("group-[.is-user]:rounded-3xl");
     expect(messageContents[1]).toHaveClass("bg-transparent");
     expect(screen.getByText("No active opportunities yet.")).toBeVisible();
 
@@ -467,14 +492,17 @@ describe("WorkspaceAssistantClient", () => {
     const { container } = render(<WorkspaceAssistantClient />);
 
     expect(container.querySelector("form")).toHaveClass(
-      "border-border",
-      "bg-background",
+      "rounded-[1.75rem]",
+      "border",
+      "border-border/50",
+      "bg-secondary",
+      "shadow-lg",
       "[&_[data-slot=input-group]]:border-0",
       "[&_[data-slot=input-group]]:bg-transparent"
     );
   });
 
-  it("shows feedback when copying a persisted chat link", async () => {
+  it("copies a message's text and shows copied feedback", async () => {
     render(
       <WorkspaceAssistantClient
         initialConversation={{
@@ -492,13 +520,15 @@ describe("WorkspaceAssistantClient", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Copy chat link" }));
+    fireEvent.click(screen.getByRole("button", { name: "Copy" }));
 
     await waitFor(() => {
-      expect(writeTextMock).toHaveBeenCalledWith(window.location.href);
+      expect(writeTextMock).toHaveBeenCalledWith(
+        "Summarize my active opportunities"
+      );
     });
     expect(
-      screen.getByRole("button", { name: "Chat link copied" })
+      screen.getByRole("button", { name: "Copied" })
     ).toBeInTheDocument();
   });
 
