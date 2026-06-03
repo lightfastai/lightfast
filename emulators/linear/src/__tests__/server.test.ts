@@ -47,8 +47,7 @@ async function exchangeCode(code: string) {
     code,
     code_verifier: "verifier",
     grant_type: "authorization_code",
-    redirect_uri:
-      "https://app.example.test/api/connectors/linear/callback",
+    redirect_uri: "https://app.example.test/api/connectors/linear/callback",
   });
 }
 
@@ -103,8 +102,7 @@ describe("@repo/linear-emulator", () => {
       client_secret: "wrong-secret",
       code: "linear_oauth_code_emulator_local",
       grant_type: "authorization_code",
-      redirect_uri:
-        "https://app.example.test/api/connectors/linear/callback",
+      redirect_uri: "https://app.example.test/api/connectors/linear/callback",
     });
 
     expect(res.status).toBe(401);
@@ -245,9 +243,7 @@ describe("@repo/linear-emulator", () => {
     expect(res.status).toBe(200);
     const html = await res.text();
     expect(html).toContain("https://linear.example.test/mcp");
-    expect(html).toContain(
-      "npx mcp-remote https://linear.example.test/mcp"
-    );
+    expect(html).toContain("npx mcp-remote https://linear.example.test/mcp");
     expect(html).not.toContain(`${active.url}/mcp`);
   });
 

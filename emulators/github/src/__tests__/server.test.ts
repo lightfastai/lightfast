@@ -1033,9 +1033,7 @@ describe("@repo/github-emulator", () => {
         "https://feature.github.emulator.localhost"
       );
 
-      const res = await fetch(
-        `${portlessEmulator.url}/orgs/emulator-org`
-      );
+      const res = await fetch(`${portlessEmulator.url}/orgs/emulator-org`);
       expect(res.status).toBe(200);
       await expect(res.json()).resolves.toMatchObject({
         login: "emulator-org",

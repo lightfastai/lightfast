@@ -1,4 +1,5 @@
 import type { GitHubSeedConfig } from "@emulators/github";
+
 const githubAppPrivateKey = `-----BEGIN RSA PRIVATE KEY-----
 MIIEowIBAAKCAQEAouLr+xRpS3PjnON4PW2cgwUUmRpZWBKy22PJrBIJ58MFG9T6
 zWcYQlEsxAuKvVSrPLZLcox2cJqySdEeWgXTc4QpAS8S1UMhCUyyHWeWcwwnfvTE
@@ -125,9 +126,12 @@ export function createGitHubEmulatorSeed(): GitHubSeedConfig {
   };
 }
 
-export function getGitHubEmulatorEnv(
-  { publicOrigin }: { callbackUrl?: string; publicOrigin: string }
-) {
+export function getGitHubEmulatorEnv({
+  publicOrigin,
+}: {
+  callbackUrl?: string;
+  publicOrigin: string;
+}) {
   return {
     GITHUB_APP_ID: String(GITHUB_EMULATOR_FIXTURES.githubAppId),
     GITHUB_APP_SLUG: GITHUB_EMULATOR_FIXTURES.githubAppSlug,

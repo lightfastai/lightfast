@@ -123,11 +123,7 @@ export function startGitHubEmulator(
     seed: (server) => {
       server.store.reset();
       githubPlugin.seed?.(server.store, publicOrigin);
-      seedFromConfig(
-        server.store,
-        publicOrigin,
-        createGitHubEmulatorSeed()
-      );
+      seedFromConfig(server.store, publicOrigin, createGitHubEmulatorSeed());
       addOrgMembership(server.store);
     },
     onReady: (server) => {

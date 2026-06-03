@@ -8,8 +8,7 @@ import { type StartedXEmulator, startXEmulator } from "../server";
 
 const VERIFIER = "x_pkce_verifier_emulator_local_0123456789";
 const CHALLENGE = createHash("sha256").update(VERIFIER).digest("base64url");
-const REDIRECT_URI =
-  "https://app.example.test/api/connectors/x/callback";
+const REDIRECT_URI = "https://app.example.test/api/connectors/x/callback";
 
 let emulator: StartedXEmulator | undefined;
 
@@ -232,17 +231,13 @@ describe("@repo/x-emulator", () => {
       data: [{ id: "tweet_1" }, { id: "tweet_2" }],
     });
 
-    const searchRes = await getAuthed(
-      "/2/tweets/search/recent?query=emulator"
-    );
+    const searchRes = await getAuthed("/2/tweets/search/recent?query=emulator");
     expect(searchRes.status).toBe(200);
     await expect(searchRes.json()).resolves.toMatchObject({
       data: [{ id: "tweet_1" }],
     });
 
-    const countsRes = await getAuthed(
-      "/2/tweets/counts/recent?query=emulator"
-    );
+    const countsRes = await getAuthed("/2/tweets/counts/recent?query=emulator");
     expect(countsRes.status).toBe(200);
     await expect(countsRes.json()).resolves.toMatchObject({
       data: [{ tweet_count: 1 }],

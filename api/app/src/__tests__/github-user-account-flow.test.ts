@@ -513,8 +513,7 @@ describe("github user account flow", () => {
           "https://lightfast.localhost/api/github/user/oauth/callback?code=abc&state=state_123",
       })
     ).resolves.toEqual({
-      redirectUrl:
-        "https://lightfast.localhost/account/tasks/github/complete",
+      redirectUrl: "https://lightfast.localhost/account/tasks/github/complete",
     });
   });
 
