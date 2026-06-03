@@ -17,8 +17,8 @@ import {
 const STICK_TO_BOTTOM_THRESHOLD_PX = 70;
 
 interface ConversationScrollState {
-  scrollRef: RefObject<HTMLDivElement | null>;
   isAtBottom: boolean;
+  scrollRef: RefObject<HTMLDivElement | null>;
   scrollToBottom: () => void;
 }
 

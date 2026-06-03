@@ -547,9 +547,7 @@ describe("WorkspaceAssistantClient", () => {
         "Summarize my active opportunities"
       );
     });
-    expect(
-      screen.getByRole("button", { name: "Copied" })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Copied" })).toBeInTheDocument();
   });
 
   it("renders non-text message parts with visible fallbacks", () => {
