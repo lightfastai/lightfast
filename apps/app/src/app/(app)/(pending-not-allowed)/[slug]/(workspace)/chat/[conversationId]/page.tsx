@@ -1,6 +1,6 @@
 import { Loader2 } from "lucide-react";
 import { Suspense } from "react";
-import { getQueryClient, HydrateClient, prefetch, trpc } from "~/trpc/server";
+import { getQueryClient, HydrateClient, trpc } from "~/trpc/server";
 import { WorkspaceAssistantClient } from "../../_components/workspace-assistant-client";
 
 export const dynamic = "force-dynamic";
@@ -13,9 +13,6 @@ export default async function WorkspaceAssistantConversationPage({
   const { conversationId } = await params;
   const qc = getQueryClient();
 
-  prefetch(
-    trpc.org.workspace.skills.list.queryOptions(undefined, { staleTime: 0 })
-  );
   const initialConversation = await qc.fetchQuery(
     trpc.org.workspace.assistant.getConversation.queryOptions({
       id: conversationId,

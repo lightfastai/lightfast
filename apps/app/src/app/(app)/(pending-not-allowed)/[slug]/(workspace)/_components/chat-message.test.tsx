@@ -48,7 +48,7 @@ vi.mock("@repo/ui/components/ai-elements/tool", () => ({
   ToolOutput: () => <div>Tool output</div>,
 }));
 
-const { ChatMessage } = await import("./workspace-assistant-client");
+const { ChatMessage } = await import("./chat-message");
 
 function Harness({
   message,
