@@ -1,4 +1,10 @@
 import {
+  providerRoutineCallInputSchema,
+  providerRoutineCallSuccessSchema,
+  providerRoutineFindInputSchema,
+  providerRoutineFindOutputSchema,
+} from "@repo/provider-routine-contract";
+import {
   type FlexibleSchema,
   type InferUITools,
   type SafeValidateUIMessagesResult,
@@ -6,12 +12,6 @@ import {
   tool,
   type UIMessage,
 } from "@vendor/ai";
-import {
-  providerRoutineCallInputSchema,
-  providerRoutineCallSuccessSchema,
-  providerRoutineFindInputSchema,
-  providerRoutineFindOutputSchema,
-} from "@repo/provider-routine-contract";
 import { z } from "zod";
 
 const lightfastWorkspaceAssistantMessageMetadataObjectSchema = z
