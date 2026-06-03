@@ -1,10 +1,11 @@
+import { env as dbEnv } from "@db/app/env";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { sentryEnv } from "@vendor/observability/sentry-env";
 import { z } from "zod";
 
 export const env = createEnv({
-  extends: [vercel(), sentryEnv],
+  extends: [vercel(), dbEnv, sentryEnv],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])

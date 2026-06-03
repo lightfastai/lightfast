@@ -20,7 +20,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "ai": "catalog:"
+    "@ai-sdk/gateway": "catalog:",
+    "ai": "catalog:",
+    "resumable-stream": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

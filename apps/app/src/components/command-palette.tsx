@@ -11,6 +11,7 @@ import {
 } from "@repo/ui/components/ui/command";
 import {
   CalendarClock,
+  MessageCircle,
   Plus,
   Settings,
   Signal,
@@ -27,6 +28,7 @@ interface CommandPaletteProps {
 }
 
 const GO_TO = [
+  { icon: MessageCircle, label: "Chat", section: "chat" },
   { icon: Signal, label: "Signals", section: "signals" },
   { icon: UsersRound, label: "People", section: "people" },
   { icon: CalendarClock, label: "Automations", section: "automations" },
@@ -42,12 +44,12 @@ export function CommandPalette({
   const org = useActiveOrg();
   const slug = org?.slug;
 
-  function goTo(section: string) {
+  function goTo(section: string | null) {
     if (!slug) {
       return;
     }
     onOpenChange(false);
-    router.push(`/${slug}/${section}` as Route);
+    router.push((section ? `/${slug}/${section}` : `/${slug}`) as Route);
   }
 
   return (

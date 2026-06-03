@@ -256,6 +256,7 @@ describe("proxy Nemo composition", () => {
           "/:slug/automations(.*)",
           "/:slug/connectors(.*)",
           "/:slug/decisions(.*)",
+          "/:slug/chat(.*)",
           "/:slug/settings(.*)",
           "/:slug/tasks/bind(.*)",
           "/:slug/tasks/github/lightfast-repo(.*)",

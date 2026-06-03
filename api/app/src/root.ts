@@ -30,6 +30,7 @@ import { orgIdentityRouter } from "./router/(pending-not-allowed)/org-identity";
 import { orgMembersRouter } from "./router/(pending-not-allowed)/org-members";
 import { orgSourceControlRouter } from "./router/(pending-not-allowed)/org-source-control";
 import { taskRouter } from "./router/(pending-not-allowed)/task";
+import { workspaceAssistantRouter } from "./router/(pending-not-allowed)/workspace-assistant";
 import { workspacePeopleRouter } from "./router/(pending-not-allowed)/workspace-people";
 import { workspaceSignalsRouter } from "./router/(pending-not-allowed)/workspace-signals";
 import { workspaceSkillsRouter } from "./router/(pending-not-allowed)/workspace-skills";
@@ -63,11 +64,12 @@ export const appRouter = createTRPCRouter({
     }),
     workspace: createTRPCRouter({
       automations: automationsRouter,
+      assistant: workspaceAssistantRouter,
+      connectors: connectorsRouter,
+      decisions: decisionsRouter,
       people: workspacePeopleRouter,
       skills: workspaceSkillsRouter,
       signals: workspaceSignalsRouter,
-      connectors: connectorsRouter,
-      decisions: decisionsRouter,
     }),
   }),
 });

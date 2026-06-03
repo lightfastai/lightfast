@@ -1,1 +1,1 @@
-export * from "ai/test";
+export { MockLanguageModelV3 } from "ai/test";

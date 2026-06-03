@@ -18,6 +18,7 @@
     "with-related-projects": "env -S \"$(pnpm --silent --filter @repo/github-emulator env:sh -- --app-origin \"$(portless get app.lightfast)\" --emulator-origin \"$(portless get github.lightfast)\")\n$(pnpm --silent --filter @repo/linear-emulator env:sh -- --app-origin \"$(portless get app.lightfast)\" --emulator-origin \"$(portless get linear.lightfast)\")\n$(pnpm --silent --filter @repo/x-emulator env:sh -- --app-origin \"$(portless get app.lightfast)\" --emulator-origin \"$(portless get x.lightfast)\")\" INNGEST_SERVE_ORIGIN=$(portless get app.lightfast) NEXT_PUBLIC_APP_URL=$(portless get app.lightfast) NEXT_PUBLIC_WWW_URL=$(portless get www.lightfast) NEXT_PUBLIC_PLATFORM_URL=$(portless get platform.lightfast) INNGEST_DEV=$(portless get inngest.lightfast) QSTASH_URL=$(portless get qstash.lightfast)"
   },
   "dependencies": {
+    "@ai-sdk/react": "catalog:",
     "@api/app": "workspace:*",
     "@clerk/nextjs": "catalog:",
     "@db/app": "workspace:*",
@@ -46,6 +47,7 @@
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
     "@trpc/tanstack-react-query": "catalog:",
+    "@vendor/ai": "workspace:*",
     "@vendor/analytics": "workspace:*",
     "@vendor/braintrust": "workspace:*",
     "@vendor/clerk": "workspace:*",

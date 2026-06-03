@@ -11,7 +11,14 @@
         "!.next/cache/**",
         "!.next/dev/**"
       ],
-      "env": ["NEXT_PUBLIC_*", "SENTRY_*", "VERCEL_ENV"]
+      "env": [
+        "DATABASE_HOST",
+        "DATABASE_PASSWORD",
+        "DATABASE_USERNAME",
+        "NEXT_PUBLIC_*",
+        "SENTRY_*",
+        "VERCEL_ENV"
+      ]
     },
     "dev:next": {
       "cache": false,
