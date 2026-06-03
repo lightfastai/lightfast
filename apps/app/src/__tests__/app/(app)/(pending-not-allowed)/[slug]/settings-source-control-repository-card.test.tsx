@@ -52,12 +52,12 @@ describe("RepositoryCard", () => {
     expect(screen.getByText("Enabled")).toBeVisible();
   });
 
-  it("reveals the empty watched-paths message when expanded", () => {
+  it("summarizes paths in the toggle and reveals the empty message when expanded", () => {
     render(<RepositoryCard repository={baseRepository} />);
 
-    expect(screen.queryByText("No watched paths configured")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Watched paths" }));
-    expect(screen.getByText("No watched paths configured")).toBeVisible();
+    expect(screen.queryByText("No paths watched")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "No paths" }));
+    expect(screen.getByText("No paths watched")).toBeVisible();
   });
 
   it("describes the all-paths glob in human terms", () => {
@@ -67,11 +67,11 @@ describe("RepositoryCard", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Watched paths" }));
+    fireEvent.click(screen.getByRole("button", { name: "All paths" }));
     expect(screen.getByText("Watching all paths")).toBeVisible();
   });
 
-  it("lists each specific watched glob as a chip", () => {
+  it("counts paths in the toggle and lists each watched glob when expanded", () => {
     render(
       <RepositoryCard
         repository={{
@@ -81,7 +81,7 @@ describe("RepositoryCard", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Watched paths" }));
+    fireEvent.click(screen.getByRole("button", { name: "2 paths" }));
     expect(screen.getByText("apps/**")).toBeVisible();
     expect(screen.getByText("packages/**")).toBeVisible();
   });
