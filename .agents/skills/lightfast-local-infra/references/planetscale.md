@@ -1,7 +1,7 @@
 # PlanetScale Up
 
 `db up` creates or reuses a PlanetScale branch for this checkout and writes a
-fresh branch password to the app env file.
+fresh branch password to the app local override env file.
 
 ## Inputs
 
@@ -20,7 +20,7 @@ app env files.
 ## Compute Identity
 
 ```bash
-eval "$(node .claude/skills/lightfast-local-infra/lib/compute-identity.mjs)"
+eval "$(node .agents/skills/lightfast-local-infra/lib/compute-identity.mjs)"
 ```
 
 This sets `database_name`, `base_branch`, `pscale_branch`, and
@@ -55,8 +55,8 @@ fi
 
 ## Mint Password
 
-PlanetScale shows the plain-text password only once. Write it to the env file
-immediately.
+PlanetScale shows the plain-text password only once. Write it to the local
+override env file immediately.
 
 ```bash
 pscale password create "$database_name" "$pscale_branch" "$pscale_credential_name" --role admin --format json > /tmp/lightfast-pscale-password.json
@@ -68,14 +68,14 @@ database_password=$(node -e 'const d=require("/tmp/lightfast-pscale-password.jso
 test -n "$database_host" && test -n "$database_username" && test -n "$database_password"
 ```
 
-Then write the app env file with `references/env-files.md`.
+Then write the app local override env file with `references/env-files.md`.
 
 ## Baseline Inherited Schema
 
 A branch created from `main` may inherit app tables without matching rows in
 `__drizzle_migrations`. In that state, the migration runner tries to replay
-`0000` against existing tables. Detect the state after the env file contains the
-fresh branch credentials:
+`0000` against existing tables. Detect the state after the local override env
+file contains the fresh branch credentials:
 
 ```bash
 schema_state=$(
