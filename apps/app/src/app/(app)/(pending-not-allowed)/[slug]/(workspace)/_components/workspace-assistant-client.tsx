@@ -51,7 +51,7 @@ import { ArrowUp, Box } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useTRPC } from "~/trpc/react";
 import { extractMessageText, MessageCopyButton } from "./message-copy-button";
 
@@ -201,46 +201,15 @@ export function WorkspaceAssistantClient({
           <div className="relative min-h-0 flex-1">
             <Conversation className="h-full">
               <ConversationContent className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 pt-10 pb-40 md:px-10">
-                {messages.map((message) => {
-                  const copyText = extractMessageText(message);
-                  return (
-                    <Message
-                      className="relative"
-                      from={message.role}
-                      key={message.id}
-                    >
-                      <MessageContent
-                        className={cn(
-                          message.role === "user" &&
-                            "text-base leading-6 group-[.is-user]:rounded-3xl group-[.is-user]:px-5 group-[.is-user]:py-2",
-                          message.role === "assistant" &&
-                            "w-full max-w-none bg-transparent px-0 py-0 text-base leading-7"
-                        )}
-                      >
-                        {message.parts.map((part, index) => (
-                          <WorkspaceAssistantMessagePart
-                            isStreaming={
-                              message.role === "assistant" &&
-                              status === "streaming"
-                            }
-                            key={`${message.id}-${index}`}
-                            part={part}
-                          />
-                        ))}
-                      </MessageContent>
-                      {copyText ? (
-                        <MessageActions
-                          className={cn(
-                            "absolute top-full mt-2 opacity-0 transition-opacity duration-150 focus-within:opacity-100 group-hover:opacity-100",
-                            message.role === "user" ? "right-0" : "left-0"
-                          )}
-                        >
-                          <MessageCopyButton text={copyText} />
-                        </MessageActions>
-                      ) : null}
-                    </Message>
-                  );
-                })}
+                {messages.map((message, index) => (
+                  <ChatMessage
+                    isStreaming={
+                      status === "streaming" && index === messages.length - 1
+                    }
+                    key={message.id}
+                    message={message}
+                  />
+                ))}
               </ConversationContent>
               <ConversationScrollButton />
             </Conversation>
@@ -362,7 +331,7 @@ function EmptyChatState({
   );
 }
 
-function WorkspaceAssistantMessagePart({
+const WorkspaceAssistantMessagePart = memo(function WorkspaceAssistantMessagePart({
   isStreaming,
   part,
 }: {
@@ -467,7 +436,47 @@ function WorkspaceAssistantMessagePart({
       {formatPartLabel(part.type)} received
     </div>
   );
-}
+});
+
+export const ChatMessage = memo(function ChatMessage({
+  isStreaming,
+  message,
+}: {
+  isStreaming: boolean;
+  message: UIMessage;
+}) {
+  const copyText = extractMessageText(message);
+  return (
+    <Message className="relative" from={message.role}>
+      <MessageContent
+        className={cn(
+          message.role === "user" &&
+            "text-base leading-6 group-[.is-user]:rounded-3xl group-[.is-user]:px-5 group-[.is-user]:py-2",
+          message.role === "assistant" &&
+            "w-full max-w-none bg-transparent px-0 py-0 text-base leading-7"
+        )}
+      >
+        {message.parts.map((part, index) => (
+          <WorkspaceAssistantMessagePart
+            isStreaming={isStreaming}
+            key={`${message.id}-${index}`}
+            part={part}
+          />
+        ))}
+      </MessageContent>
+      {copyText ? (
+        <MessageActions
+          className={cn(
+            "absolute top-full mt-2 opacity-0 transition-opacity duration-150 focus-within:opacity-100 group-hover:opacity-100",
+            message.role === "user" ? "right-0" : "left-0"
+          )}
+        >
+          <MessageCopyButton text={copyText} />
+        </MessageActions>
+      ) : null}
+    </Message>
+  );
+});
 
 function ChatComposer({
   disabled,
