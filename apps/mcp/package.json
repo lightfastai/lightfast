@@ -25,6 +25,8 @@
     "@repo/provider-routines": "workspace:*",
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
+    "@tanstack/react-router": "catalog:",
+    "@tanstack/react-start": "catalog:",
     "@vendor/jose": "workspace:*",
     "@vendor/mcp": "workspace:*",
     "@vendor/next": "workspace:*",
@@ -39,11 +41,13 @@
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
+    "@tanstack/router-plugin": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
     "dotenv-cli": "catalog:",
     "typescript": "catalog:",
+    "vite": "catalog:",
     "vitest": "catalog:"
   }
 }
