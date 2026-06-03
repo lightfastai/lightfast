@@ -1,6 +1,7 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import { baseConfig, sentryOptions } from "@vendor/next/config";
 import type { NextConfig } from "next";
+import "./src/env";
 
 const mcpConfig = {
   ...baseConfig,
