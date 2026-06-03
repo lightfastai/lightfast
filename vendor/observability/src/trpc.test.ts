@@ -8,7 +8,6 @@ const logInfoMock = vi.fn();
 vi.mock("server-only", () => ({}));
 
 vi.mock("@sentry/core", () => ({
-  captureException: captureExceptionMock,
   getActiveSpan: () => ({
     spanContext: () => ({ traceId: "trace_1" }),
   }),
@@ -28,6 +27,10 @@ vi.mock("@sentry/core", () => ({
       setExtra: vi.fn(),
       setTag: vi.fn(),
     }),
+}));
+
+vi.mock("@sentry/nextjs", () => ({
+  captureException: captureExceptionMock,
 }));
 
 vi.mock("@vendor/lib", () => ({
@@ -91,6 +94,9 @@ describe("createObservabilityMiddleware", () => {
     expect(captureExceptionMock).toHaveBeenCalledWith(
       cause,
       expect.any(Object)
+    );
+    expect(captureExceptionMock.mock.invocationCallOrder[0]).toBeLessThan(
+      logErrorMock.mock.invocationCallOrder[0] ?? Number.POSITIVE_INFINITY
     );
   });
 });

@@ -23,7 +23,6 @@
     "@clerk/nextjs": "catalog:",
     "@db/app": "workspace:*",
     "@hookform/resolvers": "catalog:",
-    "@logtail/next": "^0.3.1",
     "@next/bundle-analyzer": "^16.2.6",
     "@orpc/openapi": "^1.14.2",
     "@repo/ai": "workspace:*",

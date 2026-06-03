@@ -1,7 +1,6 @@
-import { withBetterStack } from "@logtail/next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
-import { baseConfig, sentryOptions } from "@vendor/next/config";
+import { baseConfig } from "@vendor/next/config";
 import { withMicrofrontends } from "@vercel/microfrontends/next/config";
 import withVercelToolbar from "@vercel/toolbar/plugins/next";
 import merge from "lodash.merge";
@@ -124,9 +123,24 @@ const appConfig: NextConfig = merge({}, baseConfig, {
   },
 } satisfies NextConfig);
 
+const appSentryOptions: Parameters<typeof withSentryConfig>[1] = {
+  org: env.SENTRY_ORG,
+  project: env.SENTRY_PROJECT,
+  authToken: env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.CI,
+  widenClientFileUpload: env.NEXT_PUBLIC_VERCEL_ENV === "production",
+  tunnelRoute: "/monitoring",
+  bundleSizeOptimizations: { excludeDebugStatements: true },
+  webpack: {
+    reactComponentAnnotation: { enabled: false },
+    treeshake: { removeDebugLogging: true },
+    automaticVercelMonitors: false,
+  },
+};
+
 const config = withSentryConfig(
-  withBetterStack(withVercelToolbar()(appConfig)),
-  sentryOptions
+  withVercelToolbar()(appConfig),
+  appSentryOptions
 );
 
 const baseExport = withMicrofrontends(config, {

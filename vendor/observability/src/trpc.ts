@@ -1,19 +1,19 @@
 import "server-only";
 
 import {
-  captureException,
   getActiveSpan,
   SEMANTIC_ATTRIBUTE_SENTRY_ORIGIN,
   SEMANTIC_ATTRIBUTE_SENTRY_SOURCE,
   startSpan,
   withIsolationScope,
 } from "@sentry/core";
+import * as Sentry from "@sentry/nextjs";
 import type { TRPCError } from "@trpc/server";
 import { getHTTPStatusCodeFromError } from "@trpc/server/http";
 import { nanoid } from "@vendor/lib";
 
 import { log } from "./log/next";
-import { emitJournal, withRequestContext } from "./request";
+import { withRequestContext } from "./request";
 
 type AuthFields = Record<string, unknown>;
 
@@ -49,7 +49,6 @@ function errorLogFields(error: TRPCError): Record<string, unknown> {
  * - Error classification via HTTP status derivation (no constants needed)
  * - Selective Sentry capture (server errors only, with tags)
  * - Structured logging with trace ID correlation
- * - Request journal emission
  */
 export function createObservabilityMiddleware<TCtx>(
   opts: CreateObservabilityMiddlewareOptions<TCtx>
@@ -107,7 +106,7 @@ export function createObservabilityMiddleware<TCtx>(
           const traceId = span?.spanContext().traceId;
 
           const requestId = nanoid();
-          const { result, journal, durationMs } = await withRequestContext(
+          const { result, durationMs } = await withRequestContext(
             { requestId, ...(traceId && { traceId }), ...authFields },
             () => next()
           );
@@ -133,12 +132,6 @@ export function createObservabilityMiddleware<TCtx>(
             const httpStatus = getHTTPStatusCodeFromError(result.error);
 
             if (httpStatus >= 500) {
-              log.error("[trpc] server error", meta);
-              scope.setTag("trpc.path", path);
-              scope.setTag("trpc.type", type);
-              scope.setTag("trpc.error_code", result.error.code);
-              scope.setExtra("durationMs", durationMs);
-              scope.setExtra("requestId", requestId);
               // Send the original error for better Sentry grouping and titles.
               // TRPCError wraps raw Errors with a generic message; the cause has the real info.
               const reportedError =
@@ -147,18 +140,22 @@ export function createObservabilityMiddleware<TCtx>(
                   ? result.error.cause
                   : result.error;
 
-              captureException(reportedError, {
-                mechanism: {
-                  handled: false,
-                  type: "auto.rpc.trpc.middleware",
+              Sentry.captureException(reportedError, {
+                extra: {
+                  durationMs,
+                  requestId,
+                },
+                tags: {
+                  "trpc.error_code": result.error.code,
+                  "trpc.path": path,
+                  "trpc.type": type,
                 },
               });
+              log.error("[trpc] server error", meta);
             } else {
               log.info("[trpc] client error", meta);
             }
           }
-
-          emitJournal(journal, { path, durationMs, ok: result.ok });
 
           return result;
         }
