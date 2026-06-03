@@ -1,3 +1,4 @@
+import { env } from "~/env";
 import type { Skill, SkillsListResult } from "./skills-types";
 
 // DEV-ONLY preview data.
@@ -7,7 +8,12 @@ import type { Skill, SkillsListResult } from "./skills-types";
 // production builds and never shows once real skills are indexed. Safe to
 // delete this file (and the dev branch in `use-skills-list.ts`) at any time.
 
-const REPO_URL = "https://github.com/lightfastai/.lightfast";
+// Mirror the server's getRepositoryUrl: resolve against the GitHub web origin
+// (the local emulator in dev), falling back to github.com when it is unset.
+const REPO_URL = new URL(
+  "/lightfastai/.lightfast",
+  env.NEXT_PUBLIC_GITHUB_APP_ENDPOINT_ORIGIN ?? "https://github.com"
+).toString();
 const COMMIT = "abc1234def5678901234567890abcdef12345678";
 
 function mock(input: {

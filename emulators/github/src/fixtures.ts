@@ -150,6 +150,10 @@ export function getGitHubEmulatorEnv(
     GITHUB_APP_CLIENT_ID: GITHUB_EMULATOR_FIXTURES.oauthClientId,
     GITHUB_APP_CLIENT_SECRET: GITHUB_EMULATOR_FIXTURES.oauthClientSecret,
     GITHUB_APP_ENDPOINT_ORIGIN: emulatorOrigin,
+    // Browser-visible mirror so dev-only client previews (e.g. the skills
+    // page DEV_MOCK_LIST) can build GitHub web URLs against the emulator
+    // instead of hardcoding github.com. Absent in prod -> defaults to github.com.
+    NEXT_PUBLIC_GITHUB_APP_ENDPOINT_ORIGIN: emulatorOrigin,
     GITHUB_APP_PRIVATE_KEY:
       GITHUB_EMULATOR_FIXTURES.githubAppPrivateKey.replace(/\n/g, "\\n"),
     GITHUB_APP_WEBHOOK_SECRET: GITHUB_EMULATOR_FIXTURES.githubWebhookSecret,

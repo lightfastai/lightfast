@@ -28,6 +28,7 @@ const baseRepository = {
   private: true,
   syncStatus: "disabled" as const,
   watchedPathGlobs: null,
+  webUrl: "https://github.lightfast.localhost/acme-live/web",
 };
 
 describe("RepositoryCard", () => {
@@ -39,7 +40,10 @@ describe("RepositoryCard", () => {
     expect(screen.getByText("Disabled")).toBeVisible();
     expect(
       screen.getByRole("link", { name: "Open on GitHub" })
-    ).toHaveAttribute("href", "https://github.com/acme-live/web");
+    ).toHaveAttribute(
+      "href",
+      "https://github.lightfast.localhost/acme-live/web"
+    );
   });
 
   it("shows the enabled label for enabled repositories", () => {

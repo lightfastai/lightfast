@@ -4,6 +4,7 @@ import {
   LIGHTFAST_REPOSITORY_NAME,
 } from "@repo/app-setup-contract";
 import {
+  buildGitHubRepositoryUrl,
   type GitHubInstallationRepository,
   listGitHubInstallationRepositories,
 } from "@repo/github-app-node";
@@ -20,6 +21,7 @@ export interface SourceControlRepositoryRow {
   private: boolean;
   syncStatus: SourceControlRepository["syncStatus"];
   watchedPathGlobs: string[] | null;
+  webUrl: string;
 }
 
 export interface LightfastSourceControlRepositoryRow {
@@ -71,6 +73,7 @@ export function buildSourceControlRepositoryResponse(input: {
   };
   liveRepositories: GitHubInstallationRepository[];
   watchedRepositories: SourceControlRepository[];
+  webBaseUrl: string;
 }): SourceControlRepositoryRow[] {
   const lightfastRepositoryId = lightfastRepositoryIdFromBinding(input.binding);
   const watchedByProviderId = new Map(
@@ -100,6 +103,10 @@ export function buildSourceControlRepositoryResponse(input: {
         private: repository.private,
         syncStatus: watched?.syncStatus ?? "disabled",
         watchedPathGlobs: watched?.watchedPathGlobs ?? null,
+        webUrl: buildGitHubRepositoryUrl({
+          fullName: repository.fullName,
+          webBaseUrl: input.webBaseUrl,
+        }),
       };
     });
 }

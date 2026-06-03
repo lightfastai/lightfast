@@ -27,6 +27,14 @@ export function buildGitHubNewRepositoryUrl(input: {
   return url.toString();
 }
 
+export function buildGitHubRepositoryUrl(input: {
+  fullName: string;
+  webBaseUrl?: string;
+}): string {
+  const baseUrl = trimTrailingSlash(input.webBaseUrl ?? "https://github.com");
+  return new URL(`/${input.fullName}`, baseUrl).toString();
+}
+
 export function buildGitHubOAuthAuthorizeUrl(input: {
   clientId: string;
   codeChallenge: string;

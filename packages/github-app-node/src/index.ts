@@ -31,6 +31,7 @@ export {
   buildGitHubInstallationUrl,
   buildGitHubNewRepositoryUrl,
   buildGitHubOAuthAuthorizeUrl,
+  buildGitHubRepositoryUrl,
 } from "./urls";
 export {
   type GitHubAuthenticatedUser,

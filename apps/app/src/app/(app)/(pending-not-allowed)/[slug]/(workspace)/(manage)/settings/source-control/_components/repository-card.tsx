@@ -179,11 +179,7 @@ export function RepositoryCard({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem asChild>
-                <a
-                  href={`https://github.com/${repository.fullName}`}
-                  rel="noreferrer"
-                  target="_blank"
-                >
+                <a href={repository.webUrl} rel="noreferrer" target="_blank">
                   Open on GitHub
                 </a>
               </DropdownMenuItem>

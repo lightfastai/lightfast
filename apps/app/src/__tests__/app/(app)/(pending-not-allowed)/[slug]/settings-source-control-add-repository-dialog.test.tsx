@@ -118,6 +118,7 @@ const repositories = [
     private: true,
     syncStatus: "disabled" as const,
     watchedPathGlobs: ["**"],
+    webUrl: "https://github.lightfast.localhost/acme-live/app",
   },
   {
     fullName: "acme-live/docs",
@@ -128,6 +129,7 @@ const repositories = [
     private: false,
     syncStatus: "disabled" as const,
     watchedPathGlobs: null,
+    webUrl: "https://github.lightfast.localhost/acme-live/docs",
   },
 ];
 
@@ -180,6 +182,7 @@ describe("AddRepositoryDialog", () => {
             private: true,
             syncStatus: "disabled" as const,
             watchedPathGlobs: null,
+            webUrl: "https://github.lightfast.localhost/acme-live/.lightfast",
           },
         ]}
       />
