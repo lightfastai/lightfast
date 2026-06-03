@@ -1,29 +1,35 @@
+import "@tanstack/react-start/server-only";
+
 import { env as dbEnv } from "@db/app/env";
-import { createEnv } from "@t3-oss/env-nextjs";
-import { vercel } from "@t3-oss/env-nextjs/presets-zod";
-import { sentryEnv } from "@vendor/observability/sentry-env";
+import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
+const vercelEnvSchema = z
+  .enum(["development", "preview", "production"])
+  .default("development");
+
 export const env = createEnv({
-  extends: [vercel(), dbEnv, sentryEnv],
-  shared: {
+  extends: [dbEnv],
+  clientPrefix: "VITE_",
+  client: {},
+  server: {
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
-  },
-  server: {
     MCP_AUTH_ISSUER: z.string().url(),
     MCP_RESOURCE_URL: z.string().url(),
     SERVICE_JWT_SECRET: z.string().min(32),
+    VERCEL_ENV: vercelEnvSchema,
   },
-  client: {
-    NEXT_PUBLIC_VERCEL_ENV: z
-      .enum(["development", "preview", "production"])
-      .default("development"),
-  },
-  experimental__runtimeEnv: {
+  runtimeEnv: {
+    DATABASE_HOST: process.env.DATABASE_HOST,
+    DATABASE_USERNAME: process.env.DATABASE_USERNAME,
+    DATABASE_PASSWORD: process.env.DATABASE_PASSWORD,
     NODE_ENV: process.env.NODE_ENV,
-    NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
+    MCP_AUTH_ISSUER: process.env.MCP_AUTH_ISSUER,
+    MCP_RESOURCE_URL: process.env.MCP_RESOURCE_URL,
+    SERVICE_JWT_SECRET: process.env.SERVICE_JWT_SECRET,
+    VERCEL_ENV: process.env.VERCEL_ENV,
   },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||

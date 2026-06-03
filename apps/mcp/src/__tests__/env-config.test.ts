@@ -8,16 +8,18 @@ describe("MCP environment validation wiring", () => {
   it("validates DB env requirements in the MCP env schema", () => {
     const envSource = readFileSync(resolve(appRoot, "src/env.ts"), "utf8");
 
+    expect(envSource).toContain('import "@tanstack/react-start/server-only"');
     expect(envSource).toContain('from "@db/app/env"');
-    expect(envSource).toContain("extends: [vercel(), dbEnv, sentryEnv]");
+    expect(envSource).toContain('from "@t3-oss/env-core"');
+    expect(envSource).toContain("extends: [dbEnv]");
   });
 
-  it("evaluates the MCP env schema during Next config loading", () => {
-    const nextConfigSource = readFileSync(
-      resolve(appRoot, "next.config.ts"),
+  it("evaluates the MCP env schema during Vite config loading", () => {
+    const viteConfigSource = readFileSync(
+      resolve(appRoot, "vite.config.ts"),
       "utf8"
     );
 
-    expect(nextConfigSource).toContain('import "./src/env"');
+    expect(viteConfigSource).toContain('import "./src/env"');
   });
 });

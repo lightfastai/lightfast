@@ -30,8 +30,6 @@ import {
 } from "../context";
 
 const DEFAULT_VERSION = "0.1.0";
-const OBSERVABILITY_LOG_PACKAGE: string = "@vendor/observability/log/next";
-const PROVIDER_ROUTINES_PACKAGE: string = "@repo/provider-routines";
 
 interface HostedMcpServerAdapter {
   registerTool: (
@@ -533,10 +531,8 @@ async function defaultDependencies(): Promise<ExecuteHostedMcpToolDependencies> 
       import("@db/app"),
       import("@api/app/signals/service"),
       import("@api/app/mcp-oauth"),
-      import(
-        PROVIDER_ROUTINES_PACKAGE
-      ) as Promise<ProviderRoutineServiceModule>,
-      import(OBSERVABILITY_LOG_PACKAGE) as Promise<ObservabilityLogModule>,
+      import("@repo/provider-routines") as Promise<ProviderRoutineServiceModule>,
+      import("@vendor/observability/log/next") as Promise<ObservabilityLogModule>,
     ]);
 
   return {
