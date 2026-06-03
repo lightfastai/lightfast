@@ -41,6 +41,7 @@
     "remotion:studio": "pnpm --filter @repo/app-remotion studio",
     "remotion:render": "pnpm --filter @repo/app-remotion render:all",
     "db:generate": "pnpm --filter @db/app db:generate",
+    "db:audit": "pnpm --filter @db/app db:audit",
     "db:push": "pnpm --filter @db/app db:push",
     "db:migrate": "pnpm --filter @db/app db:migrate",
     "db:studio": "pnpm --filter @db/app db:studio",

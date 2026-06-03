@@ -6,10 +6,10 @@ import type {
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  datetime,
   index,
   json,
   mysqlTable,
-  timestamp,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -18,8 +18,8 @@ const PROVIDER_REF_LENGTH = 128;
 const REPOSITORY_FULL_NAME_LENGTH = 256;
 const CODE_LENGTH = 64;
 
-export const sourceControlRepositories = mysqlTable(
-  "lightfast_source_control_repositories",
+export const orgSourceControlRepositories = mysqlTable(
+  "lightfast_org_source_control_repositories",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -47,27 +47,27 @@ export const sourceControlRepositories = mysqlTable(
       .default("enabled")
       .notNull(),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => ({
     bindingRepositoryUq: uniqueIndex(
-      "source_control_repositories_binding_repository_uq"
+      "org_source_control_repositories_binding_repository_uq"
     ).on(table.orgSourceControlBindingId, table.providerRepositoryId),
     providerRepositoryIdx: index(
-      "source_control_repositories_provider_repository_idx"
+      "org_source_control_repositories_provider_repository_idx"
     ).on(table.providerRepositoryId),
   })
 );
 
-export const sourceControlWebhookDeliveries = mysqlTable(
-  "lightfast_source_control_webhook_deliveries",
+export const orgSourceControlWebhookDeliveries = mysqlTable(
+  "lightfast_org_source_control_webhook_deliveries",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -91,34 +91,34 @@ export const sourceControlWebhookDeliveries = mysqlTable(
       .$type<SourceControlWebhookDeliveryStatus>()
       .notNull(),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => ({
     deliveryIdUq: uniqueIndex(
-      "source_control_webhook_deliveries_delivery_id_uq"
+      "org_source_control_webhook_deliveries_delivery_id_uq"
     ).on(table.deliveryId),
     installationRepositoryIdx: index(
-      "source_control_webhook_deliveries_installation_repository_idx"
+      "org_source_control_webhook_deliveries_installation_repo_idx"
     ).on(table.providerInstallationId, table.providerRepositoryId),
     statusUpdatedIdx: index(
-      "source_control_webhook_deliveries_status_updated_idx"
+      "org_source_control_webhook_deliveries_status_updated_idx"
     ).on(table.status, table.updatedAt),
   })
 );
 
 export type SourceControlRepository =
-  typeof sourceControlRepositories.$inferSelect;
+  typeof orgSourceControlRepositories.$inferSelect;
 export type InsertSourceControlRepository =
-  typeof sourceControlRepositories.$inferInsert;
+  typeof orgSourceControlRepositories.$inferInsert;
 
 export type SourceControlWebhookDelivery =
-  typeof sourceControlWebhookDeliveries.$inferSelect;
+  typeof orgSourceControlWebhookDeliveries.$inferSelect;
 export type InsertSourceControlWebhookDelivery =
-  typeof sourceControlWebhookDeliveries.$inferInsert;
+  typeof orgSourceControlWebhookDeliveries.$inferInsert;

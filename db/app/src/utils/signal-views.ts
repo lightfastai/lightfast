@@ -5,7 +5,7 @@ import {
   createSignalViewId,
   type SignalView,
   type SignalViewConfig,
-  signalViews,
+  orgSignalViews as signalViews,
 } from "../schema";
 
 export interface ListSignalViewsParams {

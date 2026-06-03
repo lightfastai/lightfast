@@ -7,12 +7,12 @@ import type {
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  datetime,
   index,
   int,
   json,
   mediumtext,
   mysqlTable,
-  timestamp,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -26,8 +26,8 @@ export type SkillIndexEntryMetadata = Record<
 >;
 export type ResourcesTruncatedFlag = 0 | 1;
 
-export const skillIndexStates = mysqlTable(
-  "lightfast_skill_index_states",
+export const orgSkillIndexStates = mysqlTable(
+  "lightfast_org_skill_index_states",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -42,7 +42,7 @@ export const skillIndexStates = mysqlTable(
 
     indexedTreeSha: varchar("indexed_tree_sha", { length: SHA_LENGTH }),
 
-    indexedAt: timestamp("indexed_at", { mode: "date", fsp: 3 }),
+    indexedAt: datetime("indexed_at", { mode: "date", fsp: 3 }),
 
     skillCount: int("skill_count", { unsigned: true }).default(0).notNull(),
 
@@ -54,7 +54,7 @@ export const skillIndexStates = mysqlTable(
       length: SHA_LENGTH,
     }),
 
-    lastCheckedAt: timestamp("last_checked_at", { mode: "date", fsp: 3 }),
+    lastCheckedAt: datetime("last_checked_at", { mode: "date", fsp: 3 }),
 
     githubRefEtag: varchar("github_ref_etag", { length: 256 }),
 
@@ -71,7 +71,7 @@ export const skillIndexStates = mysqlTable(
       length: 512,
     }),
 
-    lastRefreshFailedAt: timestamp("last_refresh_failed_at", {
+    lastRefreshFailedAt: datetime("last_refresh_failed_at", {
       mode: "date",
       fsp: 3,
     }),
@@ -83,38 +83,37 @@ export const skillIndexStates = mysqlTable(
 
     refreshLockToken: varchar("refresh_lock_token", { length: 128 }),
 
-    refreshLockedUntil: timestamp("refresh_locked_until", {
+    refreshLockedUntil: datetime("refresh_locked_until", {
       mode: "date",
       fsp: 3,
     }),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    // NOTE: runtime `$onUpdate` hook, NOT the DDL `.onUpdateNow()`. drizzle-kit
-    // emits `ON UPDATE CURRENT_TIMESTAMP` without the required `(3)` precision
-    // for timestamp(3), which Vitess rejects on CREATE TABLE.
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    // Runtime hook keeps updated-at-on-write semantics without database-side
+    // on-update DDL.
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => ({
     sourceControlRepositoryUq: uniqueIndex(
-      "skill_index_states_source_control_repository_uq"
+      "org_skill_index_states_source_control_repository_uq"
     ).on(table.sourceControlRepositoryId),
-    lastCheckedIdx: index("skill_index_states_last_checked_idx").on(
+    lastCheckedIdx: index("org_skill_index_states_last_checked_idx").on(
       table.lastCheckedAt
     ),
     refreshLockedUntilIdx: index(
-      "skill_index_states_refresh_locked_until_idx"
+      "org_skill_index_states_refresh_locked_until_idx"
     ).on(table.refreshLockedUntil),
   })
 );
 
-export const skillIndexEntries = mysqlTable(
-  "lightfast_skill_index_entries",
+export const orgSkillIndexEntries = mysqlTable(
+  "lightfast_org_skill_index_entries",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -178,32 +177,30 @@ export const skillIndexEntries = mysqlTable(
       .default(0)
       .notNull(),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    // NOTE: runtime `$onUpdate` hook, NOT the DDL `.onUpdateNow()`. drizzle-kit
-    // emits `ON UPDATE CURRENT_TIMESTAMP` without the required `(3)` precision
-    // for timestamp(3), which Vitess rejects on CREATE TABLE.
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    // Runtime hook keeps updated-at-on-write semantics without database-side
+    // on-update DDL.
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => ({
-    stateSlugUq: uniqueIndex("skill_index_entries_state_slug_uq").on(
+    stateSlugUq: uniqueIndex("org_skill_index_entries_state_slug_uq").on(
       table.skillIndexStateId,
       table.slug
     ),
-    stateValidationIdx: index("skill_index_entries_state_validation_idx").on(
-      table.skillIndexStateId,
-      table.validationStatus
-    ),
+    stateValidationIdx: index(
+      "org_skill_index_entries_state_validation_idx"
+    ).on(table.skillIndexStateId, table.validationStatus),
   })
 );
 
-export type SkillIndexState = typeof skillIndexStates.$inferSelect;
-export type InsertSkillIndexState = typeof skillIndexStates.$inferInsert;
+export type SkillIndexState = typeof orgSkillIndexStates.$inferSelect;
+export type InsertSkillIndexState = typeof orgSkillIndexStates.$inferInsert;
 
-export type SkillIndexEntry = typeof skillIndexEntries.$inferSelect;
-export type InsertSkillIndexEntry = typeof skillIndexEntries.$inferInsert;
+export type SkillIndexEntry = typeof orgSkillIndexEntries.$inferSelect;
+export type InsertSkillIndexEntry = typeof orgSkillIndexEntries.$inferInsert;

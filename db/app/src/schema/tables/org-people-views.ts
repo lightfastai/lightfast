@@ -6,10 +6,10 @@ import type {
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  datetime,
   index,
   json,
   mysqlTable,
-  timestamp,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -31,8 +31,8 @@ export interface PeopleViewConfig {
   };
 }
 
-export const peopleViews = mysqlTable(
-  "lightfast_people_views",
+export const orgPeopleViews = mysqlTable(
+  "lightfast_org_people_views",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -52,23 +52,20 @@ export const peopleViews = mysqlTable(
 
     config: json("config").$type<PeopleViewConfig>().notNull(),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    // NOTE: runtime `$onUpdate` hook, NOT the DDL `.onUpdateNow()`. drizzle-kit
-    // 0.31.10 emits `ON UPDATE CURRENT_TIMESTAMP` without the `(3)` precision a
-    // `timestamp(3)` column requires, which Vitess rejects on CREATE TABLE
-    // (errno 1294). The runtime hook keeps updated-at-on-write semantics
-    // without emitting the invalid DDL clause. See signal-views.ts.
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    // Runtime hook keeps updated-at-on-write semantics without database-side
+    // on-update DDL.
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => [
-    uniqueIndex("people_views_public_id_uq").on(table.publicId),
-    index("people_views_org_user_created_idx").on(
+    uniqueIndex("org_people_views_public_id_uq").on(table.publicId),
+    index("org_people_views_org_user_created_idx").on(
       table.clerkOrgId,
       table.createdByUserId,
       table.createdAt,
@@ -77,5 +74,5 @@ export const peopleViews = mysqlTable(
   ]
 );
 
-export type PeopleView = typeof peopleViews.$inferSelect;
-export type InsertPeopleView = typeof peopleViews.$inferInsert;
+export type PeopleView = typeof orgPeopleViews.$inferSelect;
+export type InsertPeopleView = typeof orgPeopleViews.$inferInsert;

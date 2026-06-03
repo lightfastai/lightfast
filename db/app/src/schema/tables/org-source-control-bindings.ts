@@ -20,10 +20,10 @@
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  datetime,
   index,
   json,
   mysqlTable,
-  timestamp,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -56,7 +56,9 @@ export const orgSourceControlBindings = mysqlTable(
     /**
      * Internal BIGINT primary key.
      */
-    id: bigint("id", { mode: "number" }).primaryKey().autoincrement(),
+    id: bigint("id", { mode: "number", unsigned: true })
+      .primaryKey()
+      .autoincrement(),
 
     /**
      * Clerk org ID (no FK — Clerk is the source of truth for orgs).
@@ -119,14 +121,14 @@ export const orgSourceControlBindings = mysqlTable(
     /**
      * When the binding was established.
      */
-    connectedAt: timestamp("connected_at", { mode: "date", fsp: 3 })
+    connectedAt: datetime("connected_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
     /**
      * When the provider binding was removed; null while active.
      */
-    revokedAt: timestamp("revoked_at", { mode: "date", fsp: 3 }),
+    revokedAt: datetime("revoked_at", { mode: "date", fsp: 3 }),
 
     /**
      * Provider-specific details.
@@ -136,14 +138,14 @@ export const orgSourceControlBindings = mysqlTable(
     /**
      * Row creation timestamp.
      */
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
     /**
      * Row last-update timestamp. Maintained by the repository helpers.
      */
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),

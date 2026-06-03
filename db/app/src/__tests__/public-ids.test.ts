@@ -6,13 +6,13 @@ import {
   AUTOMATION_RUN_ID_PREFIX,
   createAutomationId,
   createAutomationRunId,
-} from "../schema/tables/automations";
-import { createPersonId, PERSON_ID_PREFIX } from "../schema/tables/people";
+} from "../schema/tables/org-automations";
+import { createPersonId, PERSON_ID_PREFIX } from "../schema/tables/org-people";
 import {
   createProviderRoutineCallId,
   PROVIDER_ROUTINE_CALL_ID_PREFIX,
-} from "../schema/tables/provider-routine-calls";
-import { createSignalId } from "../schema/tables/signals";
+} from "../schema/tables/org-provider-routine-calls";
+import { createSignalId } from "../schema/tables/org-signals";
 import {
   createWorkspaceAssistantContextItemId,
   createWorkspaceAssistantConversationId,
@@ -24,7 +24,7 @@ import {
   WORKSPACE_ASSISTANT_GENERATION_ID_PREFIX,
   WORKSPACE_ASSISTANT_MESSAGE_ID_PREFIX,
   WORKSPACE_ASSISTANT_TOOL_CALL_ID_PREFIX,
-} from "../schema/tables/workspace-assistant";
+} from "../schema/tables/org-workspace-assistant";
 
 const PUBLIC_ID_COLUMN_LENGTH = 80;
 

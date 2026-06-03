@@ -30,6 +30,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
+    "db:audit": "pnpm test src/__tests__/migrations.test.ts src/__tests__/schema-conventions.test.ts && pnpm typecheck && SKIP_ENV_VALIDATION=1 drizzle-kit check --config=./src/drizzle.config.ts",
     "db:push": "pnpm with-env drizzle-kit push --config=./src/drizzle.config.ts",
     "db:generate": "SKIP_ENV_VALIDATION=1 drizzle-kit generate --config=./src/drizzle.config.ts",
     "db:migrate": "pnpm with-env tsx ./src/migrate.ts",

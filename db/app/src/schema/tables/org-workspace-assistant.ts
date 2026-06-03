@@ -3,12 +3,12 @@ import type { LightfastWorkspaceAssistantMessagePart } from "@repo/ai/workspace-
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  datetime,
   index,
   int,
   json,
   mysqlTable,
   text,
-  timestamp,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -89,8 +89,8 @@ export function createWorkspaceAssistantContextItemId() {
   return `${WORKSPACE_ASSISTANT_CONTEXT_ITEM_ID_PREFIX}${randomUUID()}`;
 }
 
-export const workspaceAssistantConversations = mysqlTable(
-  "lightfast_workspace_assistant_conversations",
+export const orgWorkspaceAssistantConversations = mysqlTable(
+  "lightfast_org_workspace_assistant_conversations",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -120,28 +120,28 @@ export const workspaceAssistantConversations = mysqlTable(
       unsigned: true,
     }),
 
-    lastMessageAt: timestamp("last_message_at", { mode: "date", fsp: 3 }),
+    lastMessageAt: datetime("last_message_at", { mode: "date", fsp: 3 }),
 
     metadata: json("metadata")
       .$type<WorkspaceAssistantRecordMetadata>()
       .default(sql`(JSON_OBJECT())`)
       .notNull(),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => ({
     publicIdUq: uniqueIndex(
-      "workspace_assistant_conversations_public_id_uq"
+      "org_workspace_assistant_conversations_public_id_uq"
     ).on(table.publicId),
     orgUserStatusUpdatedIdx: index(
-      "workspace_assistant_conversations_org_user_status_updated_idx"
+      "org_workspace_assistant_conversations_user_status_updated_idx"
     ).on(
       table.clerkOrgId,
       table.createdByUserId,
@@ -150,13 +150,13 @@ export const workspaceAssistantConversations = mysqlTable(
       table.id
     ),
     orgCreatedIdx: index(
-      "workspace_assistant_conversations_org_created_idx"
+      "org_workspace_assistant_conversations_org_created_idx"
     ).on(table.clerkOrgId, table.createdAt, table.id),
   })
 );
 
-export const workspaceAssistantMessages = mysqlTable(
-  "lightfast_workspace_assistant_messages",
+export const orgWorkspaceAssistantMessages = mysqlTable(
+  "lightfast_org_workspace_assistant_messages",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -210,30 +210,30 @@ export const workspaceAssistantMessages = mysqlTable(
 
     errorMessage: text("error_message"),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => ({
-    publicIdUq: uniqueIndex("workspace_assistant_messages_public_id_uq").on(
+    publicIdUq: uniqueIndex("org_workspace_assistant_messages_public_id_uq").on(
       table.publicId
     ),
     conversationSequenceUq: uniqueIndex(
-      "workspace_assistant_messages_conversation_sequence_uq"
+      "org_workspace_assistant_messages_conversation_sequence_uq"
     ).on(table.conversationId, table.sequence),
     conversationIdempotencyKeyUq: uniqueIndex(
-      "workspace_assistant_messages_conversation_idempotency_key_uq"
+      "org_workspace_assistant_messages_conv_idempotency_key_uq"
     ).on(table.conversationId, table.idempotencyKey),
     conversationCreatedIdx: index(
-      "workspace_assistant_messages_conversation_created_idx"
+      "org_workspace_assistant_messages_conversation_created_idx"
     ).on(table.conversationId, table.createdAt, table.id),
     orgUserConversationSequenceIdx: index(
-      "workspace_assistant_messages_org_user_conversation_sequence_idx"
+      "org_workspace_assistant_messages_user_conversation_sequence_idx"
     ).on(
       table.clerkOrgId,
       table.createdByUserId,
@@ -241,7 +241,7 @@ export const workspaceAssistantMessages = mysqlTable(
       table.sequence,
       table.id
     ),
-    orgCreatedIdx: index("workspace_assistant_messages_org_created_idx").on(
+    orgCreatedIdx: index("org_workspace_assistant_messages_org_created_idx").on(
       table.clerkOrgId,
       table.createdAt,
       table.id
@@ -249,8 +249,8 @@ export const workspaceAssistantMessages = mysqlTable(
   })
 );
 
-export const workspaceAssistantGenerations = mysqlTable(
-  "lightfast_workspace_assistant_generations",
+export const orgWorkspaceAssistantGenerations = mysqlTable(
+  "lightfast_org_workspace_assistant_generations",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -305,34 +305,31 @@ export const workspaceAssistantGenerations = mysqlTable(
 
     errorMessage: text("error_message"),
 
-    startedAt: timestamp("started_at", { mode: "date", fsp: 3 }),
+    startedAt: datetime("started_at", { mode: "date", fsp: 3 }),
 
-    finishedAt: timestamp("finished_at", { mode: "date", fsp: 3 }),
+    finishedAt: datetime("finished_at", { mode: "date", fsp: 3 }),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => ({
-    publicIdUq: uniqueIndex("workspace_assistant_generations_public_id_uq").on(
-      table.publicId
-    ),
+    publicIdUq: uniqueIndex(
+      "org_workspace_assistant_generations_public_id_uq"
+    ).on(table.publicId),
     assistantMessageUq: uniqueIndex(
-      "workspace_assistant_generations_assistant_message_uq"
+      "org_workspace_assistant_generations_assistant_message_uq"
     ).on(table.assistantMessageId),
-    orgStatusIdx: index("workspace_assistant_generations_org_status_idx").on(
-      table.clerkOrgId,
-      table.status,
-      table.createdAt,
-      table.id
-    ),
+    orgStatusIdx: index(
+      "org_workspace_assistant_generations_org_status_idx"
+    ).on(table.clerkOrgId, table.status, table.createdAt, table.id),
     orgUserStatusIdx: index(
-      "workspace_assistant_generations_org_user_status_idx"
+      "org_workspace_assistant_generations_org_user_status_idx"
     ).on(
       table.clerkOrgId,
       table.requestedByUserId,
@@ -341,13 +338,13 @@ export const workspaceAssistantGenerations = mysqlTable(
       table.id
     ),
     conversationCreatedIdx: index(
-      "workspace_assistant_generations_conversation_created_idx"
+      "org_workspace_assistant_generations_conversation_created_idx"
     ).on(table.conversationId, table.createdAt, table.id),
   })
 );
 
-export const workspaceAssistantToolCalls = mysqlTable(
-  "lightfast_workspace_assistant_tool_calls",
+export const orgWorkspaceAssistantToolCalls = mysqlTable(
+  "lightfast_org_workspace_assistant_tool_calls",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -394,41 +391,39 @@ export const workspaceAssistantToolCalls = mysqlTable(
 
     errorMessage: text("error_message"),
 
-    startedAt: timestamp("started_at", { mode: "date", fsp: 3 }),
+    startedAt: datetime("started_at", { mode: "date", fsp: 3 }),
 
-    finishedAt: timestamp("finished_at", { mode: "date", fsp: 3 }),
+    finishedAt: datetime("finished_at", { mode: "date", fsp: 3 }),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => ({
-    publicIdUq: uniqueIndex("workspace_assistant_tool_calls_public_id_uq").on(
-      table.publicId
-    ),
+    publicIdUq: uniqueIndex(
+      "org_workspace_assistant_tool_calls_public_id_uq"
+    ).on(table.publicId),
     generationToolCallUq: uniqueIndex(
-      "workspace_assistant_tool_calls_generation_tool_call_uq"
+      "org_workspace_assistant_tool_calls_generation_tool_call_uq"
     ).on(table.generationId, table.toolCallId),
-    messageIdx: index("workspace_assistant_tool_calls_message_idx").on(
+    messageIdx: index("org_workspace_assistant_tool_calls_message_idx").on(
       table.messageId,
       table.createdAt,
       table.id
     ),
-    orgCreatedIdx: index("workspace_assistant_tool_calls_org_created_idx").on(
-      table.clerkOrgId,
-      table.createdAt,
-      table.id
-    ),
+    orgCreatedIdx: index(
+      "org_workspace_assistant_tool_calls_org_created_idx"
+    ).on(table.clerkOrgId, table.createdAt, table.id),
   })
 );
 
-export const workspaceAssistantContextItems = mysqlTable(
-  "lightfast_workspace_assistant_context_items",
+export const orgWorkspaceAssistantContextItems = mysqlTable(
+  "lightfast_org_workspace_assistant_context_items",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -469,43 +464,43 @@ export const workspaceAssistantContextItems = mysqlTable(
       .default(sql`(JSON_OBJECT())`)
       .notNull(),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
   },
   (table) => ({
     publicIdUq: uniqueIndex(
-      "workspace_assistant_context_items_public_id_uq"
+      "org_workspace_assistant_context_items_public_id_uq"
     ).on(table.publicId),
     conversationKindIdx: index(
-      "workspace_assistant_context_items_conversation_kind_idx"
+      "org_workspace_assistant_context_items_conversation_kind_idx"
     ).on(table.conversationId, table.kind, table.id),
     messageKindIdx: index(
-      "workspace_assistant_context_items_message_kind_idx"
+      "org_workspace_assistant_context_items_message_kind_idx"
     ).on(table.messageId, table.kind, table.id),
     orgCreatedIdx: index(
-      "workspace_assistant_context_items_org_created_idx"
+      "org_workspace_assistant_context_items_org_created_idx"
     ).on(table.clerkOrgId, table.createdAt, table.id),
   })
 );
 
 export type WorkspaceAssistantConversation =
-  typeof workspaceAssistantConversations.$inferSelect;
+  typeof orgWorkspaceAssistantConversations.$inferSelect;
 export type InsertWorkspaceAssistantConversation =
-  typeof workspaceAssistantConversations.$inferInsert;
+  typeof orgWorkspaceAssistantConversations.$inferInsert;
 export type WorkspaceAssistantMessage =
-  typeof workspaceAssistantMessages.$inferSelect;
+  typeof orgWorkspaceAssistantMessages.$inferSelect;
 export type InsertWorkspaceAssistantMessage =
-  typeof workspaceAssistantMessages.$inferInsert;
+  typeof orgWorkspaceAssistantMessages.$inferInsert;
 export type WorkspaceAssistantGeneration =
-  typeof workspaceAssistantGenerations.$inferSelect;
+  typeof orgWorkspaceAssistantGenerations.$inferSelect;
 export type InsertWorkspaceAssistantGeneration =
-  typeof workspaceAssistantGenerations.$inferInsert;
+  typeof orgWorkspaceAssistantGenerations.$inferInsert;
 export type WorkspaceAssistantToolCall =
-  typeof workspaceAssistantToolCalls.$inferSelect;
+  typeof orgWorkspaceAssistantToolCalls.$inferSelect;
 export type InsertWorkspaceAssistantToolCall =
-  typeof workspaceAssistantToolCalls.$inferInsert;
+  typeof orgWorkspaceAssistantToolCalls.$inferInsert;
 export type WorkspaceAssistantContextItem =
-  typeof workspaceAssistantContextItems.$inferSelect;
+  typeof orgWorkspaceAssistantContextItems.$inferSelect;
 export type InsertWorkspaceAssistantContextItem =
-  typeof workspaceAssistantContextItems.$inferInsert;
+  typeof orgWorkspaceAssistantContextItems.$inferInsert;

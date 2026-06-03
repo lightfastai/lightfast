@@ -3,10 +3,10 @@ import type { McpScope } from "@repo/api-contract";
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  datetime,
   index,
   json,
   mysqlTable,
-  timestamp,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -27,9 +27,8 @@ const EVENT_NAME_LENGTH = 128;
 const CODE_CHALLENGE_LENGTH = 256;
 
 function updatedAtColumn() {
-  // Keep updated-at-on-write semantics without emitting Vitess-invalid
-  // `ON UPDATE CURRENT_TIMESTAMP` for timestamp(3) columns.
-  return timestamp("updated_at", { mode: "date", fsp: 3 })
+  // Keep updated-at-on-write semantics without database-side on-update DDL.
+  return datetime("updated_at", { mode: "date", fsp: 3 })
     .default(sql`CURRENT_TIMESTAMP(3)`)
     .$onUpdate(() => new Date())
     .notNull();
@@ -63,8 +62,8 @@ export function hashMcpOauthResource(resource: string): string {
   return createHash("sha256").update(resource).digest("hex");
 }
 
-export const mcpOauthClients = mysqlTable(
-  "lightfast_mcp_oauth_clients",
+export const systemMcpOauthClients = mysqlTable(
+  "lightfast_system_mcp_oauth_clients",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -91,21 +90,21 @@ export const mcpOauthClients = mysqlTable(
 
     metadata: json("metadata").$type<McpOauthMetadata | null>(),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
     updatedAt: updatedAtColumn(),
   },
   (table) => ({
-    publicClientIdUq: uniqueIndex("mcp_oauth_clients_public_id_uq").on(
+    publicClientIdUq: uniqueIndex("system_mcp_oauth_clients_public_id_uq").on(
       table.publicClientId
     ),
   })
 );
 
-export const mcpOauthClientRedirectUris = mysqlTable(
-  "lightfast_mcp_oauth_client_redirect_uris",
+export const systemMcpOauthClientRedirectUris = mysqlTable(
+  "lightfast_system_mcp_oauth_client_redirect_uris",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -117,17 +116,19 @@ export const mcpOauthClientRedirectUris = mysqlTable(
 
     redirectUri: varchar("redirect_uri", { length: URI_LENGTH }).notNull(),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
   },
   (table) => ({
-    clientIdx: index("mcp_redirect_uris_client_idx").on(table.clientPublicId),
+    clientIdx: index("system_mcp_redirect_uris_client_idx").on(
+      table.clientPublicId
+    ),
   })
 );
 
-export const mcpOauthRegistrationTokens = mysqlTable(
-  "lightfast_mcp_oauth_registration_tokens",
+export const systemMcpOauthRegistrationTokens = mysqlTable(
+  "lightfast_system_mcp_oauth_registration_tokens",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -148,28 +149,30 @@ export const mcpOauthRegistrationTokens = mysqlTable(
       .notNull()
       .default("active"),
 
-    expiresAt: timestamp("expires_at", { mode: "date", fsp: 3 }),
+    expiresAt: datetime("expires_at", { mode: "date", fsp: 3 }),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
     updatedAt: updatedAtColumn(),
   },
   (table) => ({
-    publicIdUq: uniqueIndex("mcp_registration_public_id_uq").on(table.publicId),
-    tokenHashUq: uniqueIndex("mcp_registration_token_hash_uq").on(
+    publicIdUq: uniqueIndex("system_mcp_registration_public_id_uq").on(
+      table.publicId
+    ),
+    tokenHashUq: uniqueIndex("system_mcp_registration_token_hash_uq").on(
       table.tokenHash
     ),
-    clientStatusIdx: index("mcp_registration_client_status_idx").on(
+    clientStatusIdx: index("system_mcp_registration_client_status_idx").on(
       table.clientPublicId,
       table.status
     ),
   })
 );
 
-export const mcpOauthAuthorizationCodes = mysqlTable(
-  "lightfast_mcp_oauth_authorization_codes",
+export const systemMcpOauthAuthorizationCodes = mysqlTable(
+  "lightfast_system_mcp_oauth_authorization_codes",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -207,21 +210,21 @@ export const mcpOauthAuthorizationCodes = mysqlTable(
       .$type<McpCodeChallengeMethod>()
       .notNull(),
 
-    expiresAt: timestamp("expires_at", { mode: "date", fsp: 3 }).notNull(),
+    expiresAt: datetime("expires_at", { mode: "date", fsp: 3 }).notNull(),
 
-    consumedAt: timestamp("consumed_at", { mode: "date", fsp: 3 }),
+    consumedAt: datetime("consumed_at", { mode: "date", fsp: 3 }),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
     updatedAt: updatedAtColumn(),
   },
   (table) => ({
-    codeHashUq: uniqueIndex("mcp_authorization_codes_hash_uq").on(
+    codeHashUq: uniqueIndex("system_mcp_authorization_codes_hash_uq").on(
       table.codeHash
     ),
-    clientUserIdx: index("mcp_authorization_client_user_idx").on(
+    clientUserIdx: index("system_mcp_authorization_client_user_idx").on(
       table.clientPublicId,
       table.clerkUserId,
       table.createdAt
@@ -229,8 +232,8 @@ export const mcpOauthAuthorizationCodes = mysqlTable(
   })
 );
 
-export const mcpOauthGrants = mysqlTable(
-  "lightfast_mcp_oauth_grants",
+export const systemMcpOauthGrants = mysqlTable(
+  "lightfast_system_mcp_oauth_grants",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -265,26 +268,28 @@ export const mcpOauthGrants = mysqlTable(
 
     metadata: json("metadata").$type<McpOauthMetadata | null>(),
 
-    lastUsedAt: timestamp("last_used_at", { mode: "date", fsp: 3 }),
+    lastUsedAt: datetime("last_used_at", { mode: "date", fsp: 3 }),
 
-    revokedAt: timestamp("revoked_at", { mode: "date", fsp: 3 }),
+    revokedAt: datetime("revoked_at", { mode: "date", fsp: 3 }),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
     updatedAt: updatedAtColumn(),
   },
   (table) => ({
-    publicIdUq: uniqueIndex("mcp_grants_public_id_uq").on(table.publicId),
-    lookupIdx: index("mcp_grants_lookup_idx").on(
+    publicIdUq: uniqueIndex("system_mcp_grants_public_id_uq").on(
+      table.publicId
+    ),
+    lookupIdx: index("system_mcp_grants_lookup_idx").on(
       table.clerkUserId,
       table.clerkOrgId,
       table.clientPublicId,
       table.resourceHash,
       table.status
     ),
-    orgActiveIdx: index("mcp_grants_org_active_idx").on(
+    orgActiveIdx: index("system_mcp_grants_org_active_idx").on(
       table.clerkOrgId,
       table.status,
       table.createdAt,
@@ -293,8 +298,8 @@ export const mcpOauthGrants = mysqlTable(
   })
 );
 
-export const mcpOauthRefreshTokens = mysqlTable(
-  "lightfast_mcp_oauth_refresh_tokens",
+export const systemMcpOauthRefreshTokens = mysqlTable(
+  "lightfast_system_mcp_oauth_refresh_tokens",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -327,22 +332,24 @@ export const mcpOauthRefreshTokens = mysqlTable(
       .notNull()
       .default("active"),
 
-    expiresAt: timestamp("expires_at", { mode: "date", fsp: 3 }).notNull(),
+    expiresAt: datetime("expires_at", { mode: "date", fsp: 3 }).notNull(),
 
-    reuseDetectedAt: timestamp("reuse_detected_at", {
+    reuseDetectedAt: datetime("reuse_detected_at", {
       mode: "date",
       fsp: 3,
     }),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
     updatedAt: updatedAtColumn(),
   },
   (table) => ({
-    tokenHashUq: uniqueIndex("mcp_refresh_token_hash_uq").on(table.tokenHash),
-    grantStatusIdx: index("mcp_refresh_grant_status_idx").on(
+    tokenHashUq: uniqueIndex("system_mcp_refresh_token_hash_uq").on(
+      table.tokenHash
+    ),
+    grantStatusIdx: index("system_mcp_refresh_grant_status_idx").on(
       table.grantPublicId,
       table.status,
       table.createdAt
@@ -350,8 +357,8 @@ export const mcpOauthRefreshTokens = mysqlTable(
   })
 );
 
-export const mcpAuditEvents = mysqlTable(
-  "lightfast_mcp_audit_events",
+export const systemMcpAuditEvents = mysqlTable(
+  "lightfast_system_mcp_audit_events",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .primaryKey()
@@ -375,17 +382,17 @@ export const mcpAuditEvents = mysqlTable(
 
     metadata: json("metadata").$type<McpOauthMetadata | null>(),
 
-    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
   },
   (table) => ({
-    orgCreatedIdx: index("mcp_audit_org_created_idx").on(
+    orgCreatedIdx: index("system_mcp_audit_org_created_idx").on(
       table.clerkOrgId,
       table.createdAt,
       table.id
     ),
-    clientCreatedIdx: index("mcp_audit_client_created_idx").on(
+    clientCreatedIdx: index("system_mcp_audit_client_created_idx").on(
       table.clientPublicId,
       table.createdAt,
       table.id
@@ -393,24 +400,25 @@ export const mcpAuditEvents = mysqlTable(
   })
 );
 
-export type McpOauthClient = typeof mcpOauthClients.$inferSelect;
-export type InsertMcpOauthClient = typeof mcpOauthClients.$inferInsert;
+export type McpOauthClient = typeof systemMcpOauthClients.$inferSelect;
+export type InsertMcpOauthClient = typeof systemMcpOauthClients.$inferInsert;
 export type McpOauthClientRedirectUri =
-  typeof mcpOauthClientRedirectUris.$inferSelect;
+  typeof systemMcpOauthClientRedirectUris.$inferSelect;
 export type InsertMcpOauthClientRedirectUri =
-  typeof mcpOauthClientRedirectUris.$inferInsert;
+  typeof systemMcpOauthClientRedirectUris.$inferInsert;
 export type McpOauthRegistrationToken =
-  typeof mcpOauthRegistrationTokens.$inferSelect;
+  typeof systemMcpOauthRegistrationTokens.$inferSelect;
 export type InsertMcpOauthRegistrationToken =
-  typeof mcpOauthRegistrationTokens.$inferInsert;
+  typeof systemMcpOauthRegistrationTokens.$inferInsert;
 export type McpOauthAuthorizationCode =
-  typeof mcpOauthAuthorizationCodes.$inferSelect;
+  typeof systemMcpOauthAuthorizationCodes.$inferSelect;
 export type InsertMcpOauthAuthorizationCode =
-  typeof mcpOauthAuthorizationCodes.$inferInsert;
-export type McpOauthGrant = typeof mcpOauthGrants.$inferSelect;
-export type InsertMcpOauthGrant = typeof mcpOauthGrants.$inferInsert;
-export type McpOauthRefreshToken = typeof mcpOauthRefreshTokens.$inferSelect;
+  typeof systemMcpOauthAuthorizationCodes.$inferInsert;
+export type McpOauthGrant = typeof systemMcpOauthGrants.$inferSelect;
+export type InsertMcpOauthGrant = typeof systemMcpOauthGrants.$inferInsert;
+export type McpOauthRefreshToken =
+  typeof systemMcpOauthRefreshTokens.$inferSelect;
 export type InsertMcpOauthRefreshToken =
-  typeof mcpOauthRefreshTokens.$inferInsert;
-export type McpAuditEvent = typeof mcpAuditEvents.$inferSelect;
-export type InsertMcpAuditEvent = typeof mcpAuditEvents.$inferInsert;
+  typeof systemMcpOauthRefreshTokens.$inferInsert;
+export type McpAuditEvent = typeof systemMcpAuditEvents.$inferSelect;
+export type InsertMcpAuditEvent = typeof systemMcpAuditEvents.$inferInsert;
