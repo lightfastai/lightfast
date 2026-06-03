@@ -203,17 +203,20 @@ export function WorkspaceAssistantClient({
         <>
           <div className="relative min-h-0 flex-1">
             <Conversation className="h-full">
-              <ConversationContent className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 pt-10 pb-40 md:px-10">
-                {messages.map((message, index) => (
-                  <ChatMessage
-                    isStreaming={
-                      status === "streaming" && index === messages.length - 1
-                    }
-                    key={message.id}
-                    message={message}
-                  />
-                ))}
-              </ConversationContent>
+              <ConversationContent
+                getItemKey={(message) => message.id}
+                items={messages}
+                renderItem={(message, index) => (
+                  <div className="mx-auto w-full max-w-3xl px-5 pt-8 md:px-10">
+                    <ChatMessage
+                      isStreaming={
+                        status === "streaming" && index === messages.length - 1
+                      }
+                      message={message}
+                    />
+                  </div>
+                )}
+              />
               <ConversationScrollButton />
             </Conversation>
           </div>

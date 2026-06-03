@@ -2,9 +2,10 @@
 
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import type { UIMessage } from "@vendor/ai";
 import { ArrowDownIcon, DownloadIcon } from "lucide-react";
-import type { ComponentProps, RefObject } from "react";
+import type { ComponentProps, ReactNode, RefObject } from "react";
 import {
   createContext,
   useCallback,
@@ -88,17 +89,61 @@ export const Conversation = ({
   );
 };
 
-export type ConversationContentProps = ComponentProps<"div">;
+const DEFAULT_ESTIMATE_SIZE = 120;
 
-export const ConversationContent = ({
+export type ConversationContentProps<T> = Omit<
+  ComponentProps<"div">,
+  "children"
+> & {
+  items: T[];
+  renderItem: (item: T, index: number) => ReactNode;
+  getItemKey: (item: T, index: number) => string;
+  estimateSize?: number;
+};
+
+export const ConversationContent = <T,>({
   className,
-  children,
+  items,
+  renderItem,
+  getItemKey,
+  estimateSize = DEFAULT_ESTIMATE_SIZE,
   ...props
-}: ConversationContentProps) => (
-  <div className={cn("flex flex-col gap-8 p-4", className)} {...props}>
-    {children}
-  </div>
-);
+}: ConversationContentProps<T>) => {
+  const { scrollRef } = useConversationScroll();
+
+  const virtualizer = useVirtualizer({
+    count: items.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => estimateSize,
+    getItemKey: (index) => getItemKey(items[index] as T, index),
+    // Native end-anchoring keeps the view pinned to the bottom while the last
+    // row grows during streaming (virtual-core 3.16 options, surfaced through
+    // react-virtual 3.13's VirtualizerOptions import).
+    anchorTo: "end",
+    followOnAppend: "smooth",
+    scrollEndThreshold: STICK_TO_BOTTOM_THRESHOLD_PX,
+  });
+
+  return (
+    <div
+      className={cn("relative w-full", className)}
+      style={{ height: `${virtualizer.getTotalSize()}px` }}
+      {...props}
+    >
+      {virtualizer.getVirtualItems().map((virtualItem) => (
+        <div
+          className="absolute top-0 left-0 w-full"
+          data-index={virtualItem.index}
+          key={virtualItem.key}
+          ref={virtualizer.measureElement}
+          style={{ transform: `translateY(${virtualItem.start}px)` }}
+        >
+          {renderItem(items[virtualItem.index] as T, virtualItem.index)}
+        </div>
+      ))}
+    </div>
+  );
+};
 
 export type ConversationEmptyStateProps = ComponentProps<"div"> & {
   title?: string;

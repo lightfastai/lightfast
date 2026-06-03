@@ -1,10 +1,33 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
 } from "./conversation";
+
+vi.mock("@tanstack/react-virtual", () => ({
+  useVirtualizer: ({
+    count,
+    getItemKey,
+  }: {
+    count: number;
+    getItemKey: (index: number) => string | number;
+  }) => {
+    const windowSize = Math.min(count, 5);
+    return {
+      getTotalSize: () => count * 80,
+      getVirtualItems: () =>
+        Array.from({ length: windowSize }, (_, index) => ({
+          index,
+          key: getItemKey(index),
+          start: index * 80,
+          size: 80,
+        })),
+      measureElement: () => undefined,
+    };
+  },
+}));
 
 function setGeometry(
   el: HTMLElement,
@@ -25,9 +48,11 @@ describe("Conversation scroll button", () => {
   it("hides at bottom and shows after scrolling up", () => {
     const { container } = render(
       <Conversation>
-        <ConversationContent>
-          <div style={{ height: 2000 }}>messages</div>
-        </ConversationContent>
+        <ConversationContent
+          getItemKey={(item) => item}
+          items={["messages"]}
+          renderItem={(item) => <div style={{ height: 2000 }}>{item}</div>}
+        />
         <ConversationScrollButton />
       </Conversation>
     );
@@ -58,5 +83,23 @@ describe("Conversation scroll button", () => {
     expect(
       screen.queryByRole("button", { name: "Scroll to latest message" })
     ).not.toBeNull();
+  });
+});
+
+describe("ConversationContent virtualization", () => {
+  it("renders only the windowed items", () => {
+    const items = Array.from({ length: 50 }, (_, i) => `Message ${i + 1}`);
+    render(
+      <Conversation>
+        <ConversationContent
+          getItemKey={(item) => item}
+          items={items}
+          renderItem={(item) => <div>{item}</div>}
+        />
+      </Conversation>
+    );
+
+    expect(screen.queryByText("Message 1")).not.toBeNull();
+    expect(screen.queryByText("Message 40")).toBeNull();
   });
 });

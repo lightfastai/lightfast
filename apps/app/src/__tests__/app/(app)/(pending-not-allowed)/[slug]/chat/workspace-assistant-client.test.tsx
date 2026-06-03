@@ -47,6 +47,26 @@ vi.mock("@vendor/ai", () => ({
   },
 }));
 
+vi.mock("@tanstack/react-virtual", () => ({
+  useVirtualizer: ({
+    count,
+    getItemKey,
+  }: {
+    count: number;
+    getItemKey: (index: number) => string | number;
+  }) => ({
+    getTotalSize: () => count * 120,
+    getVirtualItems: () =>
+      Array.from({ length: count }, (_, index) => ({
+        index,
+        key: getItemKey(index),
+        start: index * 120,
+        size: 120,
+      })),
+    measureElement: () => undefined,
+  }),
+}));
+
 vi.mock("@ai-sdk/react", () => ({
   useChat: (
     options: { messages?: WorkspaceAssistantMessageFixture[] } = {}

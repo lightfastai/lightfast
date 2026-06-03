@@ -81,6 +81,7 @@
     "@shikijs/langs": "catalog:",
     "@shikijs/themes": "catalog:",
     "@tanstack/react-table": "catalog:",
+    "@tanstack/react-virtual": "catalog:",
     "@tanstack/table-core": "catalog:",
     "@vendor/ai": "workspace:*",
     "@vendor/forms": "workspace:*",
