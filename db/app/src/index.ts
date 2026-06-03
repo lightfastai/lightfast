@@ -249,6 +249,20 @@ export {
   updateObservedConnectorTokens,
 } from "./utils/org-connector-connections";
 export {
+  currentDeveloperConnectionKey,
+  developerConnectionLeaseExpiresAt,
+  getCurrentDeveloperConnection,
+  getDeveloperConnectionById,
+  getDeveloperConnectionLeaseById,
+  issueDeveloperConnectionLease,
+  listCurrentDeveloperConnections,
+  markCurrentDeveloperConnectionNeedsReconnect,
+  replaceCurrentDeveloperConnection,
+  revokeCurrentDeveloperConnection,
+  revokeDeveloperConnectionLease,
+  setCurrentDeveloperConnectionSandboxEnabled,
+} from "./utils/developer-connections";
+export {
   getPersonByIdentityKey,
   getPersonByPublicId,
   type ListPeopleParams,
