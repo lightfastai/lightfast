@@ -45,11 +45,16 @@ export function MessageCopyButton({ text }: { text: string }) {
 
   return (
     <MessageAction
+      className="rounded-full"
       label={label}
       onClick={() => void handleCopy()}
       tooltip={label}
     >
-      {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+      {copied ? (
+        <Check className="size-3.5" />
+      ) : (
+        <Copy className="size-3.5 opacity-50" />
+      )}
     </MessageAction>
   );
 }

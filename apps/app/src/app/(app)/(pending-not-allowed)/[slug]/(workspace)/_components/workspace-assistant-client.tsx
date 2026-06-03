@@ -47,7 +47,7 @@ import {
   DefaultChatTransport,
   type UIMessage,
 } from "@vendor/ai";
-import { Box } from "lucide-react";
+import { ArrowUp, Box } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -200,17 +200,21 @@ export function WorkspaceAssistantClient({
         <>
           <div className="relative min-h-0 flex-1">
             <Conversation className="h-full">
-              <ConversationContent className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 pt-10 pb-40 md:px-10">
+              <ConversationContent className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 pt-10 pb-40 md:px-10">
                 {messages.map((message) => {
                   const copyText = extractMessageText(message);
                   return (
-                    <Message from={message.role} key={message.id}>
+                    <Message
+                      className="relative"
+                      from={message.role}
+                      key={message.id}
+                    >
                       <MessageContent
                         className={cn(
                           message.role === "user" &&
-                            "rounded-3xl bg-muted px-5 py-3 text-[15px] leading-6",
+                            "text-base leading-6 group-[.is-user]:rounded-3xl group-[.is-user]:px-5 group-[.is-user]:py-2",
                           message.role === "assistant" &&
-                            "w-full max-w-none bg-transparent px-0 py-0 text-[15px] leading-7"
+                            "w-full max-w-none bg-transparent px-0 py-0 text-base leading-7"
                         )}
                       >
                         {message.parts.map((part, index) => (
@@ -227,8 +231,8 @@ export function WorkspaceAssistantClient({
                       {copyText ? (
                         <MessageActions
                           className={cn(
-                            "opacity-0 transition-opacity duration-150 focus-within:opacity-100 group-hover:opacity-100",
-                            message.role === "user" && "ml-auto"
+                            "absolute top-full mt-2 opacity-0 transition-opacity duration-150 focus-within:opacity-100 group-hover:opacity-100",
+                            message.role === "user" ? "right-0" : "left-0"
                           )}
                         >
                           <MessageCopyButton text={copyText} />
@@ -492,27 +496,29 @@ function ChatComposer({
         <p className="mb-2 px-3 text-destructive text-sm">{error.message}</p>
       )}
       <PromptInput
-        className="rounded-[1.75rem] border border-border bg-background shadow-sm [&_[data-slot=input-group]]:border-0 [&_[data-slot=input-group]]:bg-transparent [&_[data-slot=input-group]]:shadow-none dark:[&_[data-slot=input-group]]:bg-transparent"
+        className="rounded-[1.75rem] border border-border/50 bg-secondary shadow-lg [&_[data-slot=input-group]]:rounded-[1.75rem] [&_[data-slot=input-group]]:border-0 [&_[data-slot=input-group]]:bg-transparent [&_[data-slot=input-group]]:shadow-none dark:[&_[data-slot=input-group]]:bg-transparent"
         onSubmit={onSubmit}
       >
         <PromptInputBody>
           <PromptInputTextarea
-            className="min-h-16 px-5 py-4 text-base"
+            className="min-h-9 px-5 py-3 text-base"
             disabled={disabled}
             onChange={(event) => onTextChange(event.target.value)}
             placeholder="Ask Lightfield"
             value={text}
           />
         </PromptInputBody>
-        <PromptInputFooter className="px-3 pb-3">
+        <PromptInputFooter className="px-2.5 pb-2.5">
           <PromptInputTools />
           <PromptInputSubmit
             aria-label={isGenerating ? "Stop generating" : "Send message"}
-            className="size-11 rounded-2xl sm:size-8"
+            className="size-8 rounded-full"
             disabled={submitDisabled}
             onStop={stop}
             status={status}
-          />
+          >
+            {status === "ready" ? <ArrowUp className="size-4" /> : undefined}
+          </PromptInputSubmit>
         </PromptInputFooter>
       </PromptInput>
     </div>
