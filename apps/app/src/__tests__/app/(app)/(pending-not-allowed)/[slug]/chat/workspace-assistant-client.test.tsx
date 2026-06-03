@@ -18,6 +18,10 @@ const writeTextMock = vi.fn();
 const historyReplaceStateMock = vi.fn();
 let useChatOptions: Record<string, unknown> | undefined;
 let transportOptions: Record<string, unknown> | undefined;
+// Every id handed to useChat, in render order. Conversation identity must be a
+// stable input (never an undefined -> real flip mid-send, which would orphan the
+// in-flight Chat instance — see @ai-sdk/react recreate-on-id-change).
+const recordedChatIds: (string | undefined)[] = [];
 
 let chatStatus: "error" | "ready" | "streaming" | "submitted" = "ready";
 let workspaceAssistantMessages: WorkspaceAssistantMessageFixture[] = [];
@@ -69,10 +73,11 @@ vi.mock("@tanstack/react-virtual", () => ({
 
 vi.mock("@ai-sdk/react", () => ({
   useChat: (
-    options: { messages?: WorkspaceAssistantMessageFixture[] } = {}
+    options: { id?: string; messages?: WorkspaceAssistantMessageFixture[] } = {}
   ) => {
     const { messages = [] } = options;
     useChatOptions = options as Record<string, unknown>;
+    recordedChatIds.push(options.id);
     workspaceAssistantMessages = messages;
     return {
       clearError: clearErrorMock,
@@ -274,6 +279,7 @@ beforeEach(() => {
   historyReplaceStateMock.mockReset();
   useChatOptions = undefined;
   transportOptions = undefined;
+  recordedChatIds.length = 0;
   vi.stubGlobal("crypto", {
     randomUUID: () => "123e4567-e89b-12d3-a456-426614174000",
   });
@@ -305,26 +311,20 @@ beforeEach(() => {
 });
 
 describe("WorkspaceAssistantClient", () => {
-  it("shows recent skills when the chat is empty", () => {
-    const { container } = render(<WorkspaceAssistantClient />);
+  it("renders the empty state ready for the first prompt", () => {
+    const { container } = render(
+      <WorkspaceAssistantClient conversationId="conv_new" />
+    );
 
     expect(
       screen.getByRole("heading", { name: "Ready when you are." })
     ).toBeVisible();
     expect(container.querySelector("main")).toHaveClass("bg-background");
-    expect(
-      screen.getByRole("tab", { name: "Recent skills" })
-    ).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Explore skills" })).toBeVisible();
-    expect(screen.getByText("Create skill")).toBeVisible();
-    expect(screen.getByText("Add knowledge")).toBeVisible();
-    expect(
-      container.querySelector('a[href="/acme/skills/create-skill"]')
-    ).toHaveClass("min-w-0");
+    expect(screen.getByPlaceholderText("Ask Lightfield")).toBeVisible();
   });
 
   it("disables sending until text is entered", () => {
-    render(<WorkspaceAssistantClient />);
+    render(<WorkspaceAssistantClient conversationId="conv_new" />);
 
     const submit = screen.getByRole("button", { name: "Send message" });
     expect(submit).toBeDisabled();
@@ -337,7 +337,7 @@ describe("WorkspaceAssistantClient", () => {
   });
 
   it("creates an addressable conversation before sending the first prompt", async () => {
-    render(<WorkspaceAssistantClient />);
+    render(<WorkspaceAssistantClient conversationId="conv_new" />);
 
     fireEvent.change(screen.getByPlaceholderText("Ask Lightfield"), {
       target: { value: "Summarize my active opportunities" },
@@ -346,14 +346,14 @@ describe("WorkspaceAssistantClient", () => {
 
     await waitFor(() => {
       expect(mutateAsyncMock).toHaveBeenCalledWith({
-        publicId: "conv_123e4567-e89b-12d3-a456-426614174000",
+        publicId: "conv_new",
         title: "Summarize my active opportunities",
       });
     });
     expect(historyReplaceStateMock).toHaveBeenCalledWith(
       null,
       "",
-      "/acme/chat/conv_123e4567-e89b-12d3-a456-426614174000"
+      "/acme/chat/conv_new"
     );
     expect(replaceMock).not.toHaveBeenCalled();
     expect(sendMessageMock).toHaveBeenCalledWith(
@@ -361,7 +361,7 @@ describe("WorkspaceAssistantClient", () => {
       {
         body: {
           idempotencyKey: expect.stringMatching(/^idem_/),
-          conversationId: "conv_123e4567-e89b-12d3-a456-426614174000",
+          conversationId: "conv_new",
         },
       }
     );
@@ -377,7 +377,7 @@ describe("WorkspaceAssistantClient", () => {
           resolveCreate = resolve;
         })
     );
-    render(<WorkspaceAssistantClient />);
+    render(<WorkspaceAssistantClient conversationId="conv_new" />);
 
     fireEvent.change(screen.getByPlaceholderText("Ask Lightfield"), {
       target: { value: "Summarize my active opportunities" },
@@ -387,16 +387,16 @@ describe("WorkspaceAssistantClient", () => {
     expect(historyReplaceStateMock).toHaveBeenCalledWith(
       null,
       "",
-      "/acme/chat/conv_123e4567-e89b-12d3-a456-426614174000"
+      "/acme/chat/conv_new"
     );
     expect(mutateAsyncMock).toHaveBeenCalledWith({
-      publicId: "conv_123e4567-e89b-12d3-a456-426614174000",
+      publicId: "conv_new",
       title: "Summarize my active opportunities",
     });
     expect(sendMessageMock).not.toHaveBeenCalled();
 
     resolveCreate?.({
-      publicId: "conv_123e4567-e89b-12d3-a456-426614174000",
+      publicId: "conv_new",
       title: "Summarize my active opportunities",
     });
 
@@ -406,7 +406,7 @@ describe("WorkspaceAssistantClient", () => {
         {
           body: {
             idempotencyKey: expect.stringMatching(/^idem_/),
-            conversationId: "conv_123e4567-e89b-12d3-a456-426614174000",
+            conversationId: "conv_new",
           },
         }
       );
@@ -422,7 +422,7 @@ describe("WorkspaceAssistantClient", () => {
         url: "data:text/plain;base64,bm90ZXM=",
       },
     ];
-    render(<WorkspaceAssistantClient />);
+    render(<WorkspaceAssistantClient conversationId="conv_new" />);
 
     fireEvent.change(screen.getByPlaceholderText("Ask Lightfield"), {
       target: { value: "Summarize my active opportunities" },
@@ -435,7 +435,7 @@ describe("WorkspaceAssistantClient", () => {
         {
           body: {
             idempotencyKey: expect.stringMatching(/^idem_/),
-            conversationId: "conv_123e4567-e89b-12d3-a456-426614174000",
+            conversationId: "conv_new",
           },
         }
       );
@@ -445,7 +445,7 @@ describe("WorkspaceAssistantClient", () => {
   it("labels the submit control as stop while generation is running", () => {
     chatStatus = "streaming";
 
-    render(<WorkspaceAssistantClient />);
+    render(<WorkspaceAssistantClient conversationId="conv_new" />);
 
     expect(
       screen.getByRole("button", { name: "Stop generating" })
@@ -455,6 +455,7 @@ describe("WorkspaceAssistantClient", () => {
   it("renders persisted chat messages and sends follow-ups to the existing conversation", async () => {
     render(
       <WorkspaceAssistantClient
+        conversationId="conv_existing"
         initialConversation={{
           messages: [
             makeWorkspaceAssistantMessage({
@@ -509,7 +510,9 @@ describe("WorkspaceAssistantClient", () => {
   });
 
   it("uses tokenized composer styling", () => {
-    const { container } = render(<WorkspaceAssistantClient />);
+    const { container } = render(
+      <WorkspaceAssistantClient conversationId="conv_new" />
+    );
 
     expect(container.querySelector("form")).toHaveClass(
       "rounded-[1.75rem]",
@@ -525,6 +528,7 @@ describe("WorkspaceAssistantClient", () => {
   it("copies a message's text and shows copied feedback", async () => {
     render(
       <WorkspaceAssistantClient
+        conversationId="conv_existing"
         initialConversation={{
           messages: [
             makeWorkspaceAssistantMessage({
@@ -553,6 +557,7 @@ describe("WorkspaceAssistantClient", () => {
   it("renders non-text message parts with visible fallbacks", () => {
     render(
       <WorkspaceAssistantClient
+        conversationId="conv_existing"
         initialConversation={{
           messages: [
             makeWorkspaceAssistantMessage({
@@ -587,6 +592,54 @@ describe("WorkspaceAssistantClient", () => {
     );
     expect(screen.getByText("Source: CRM export")).toBeVisible();
     expect(screen.getByText("opportunities data received")).toBeVisible();
+  });
+
+  it("keeps a stable chat id across the first message in a new chat", async () => {
+    render(<WorkspaceAssistantClient conversationId="conv_new" />);
+
+    fireEvent.change(screen.getByPlaceholderText("Ask Lightfield"), {
+      target: { value: "Summarize my active opportunities" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => expect(sendMessageMock).toHaveBeenCalledTimes(1));
+
+    // The id must never flip (e.g. undefined -> real) while the first message is
+    // in flight, or the stream lands on an orphaned Chat instance and the view
+    // never leaves the empty state.
+    expect(recordedChatIds.every((id) => id === "conv_new")).toBe(true);
+  });
+
+  it("drives the chat id from the conversationId prop, not frozen state", () => {
+    const { rerender } = render(
+      <WorkspaceAssistantClient
+        conversationId="conv_a"
+        initialConversation={{
+          messages: [],
+          conversation: {
+            ...makeWorkspaceAssistantConversation(),
+            publicId: "conv_a",
+          },
+        }}
+      />
+    );
+
+    // Simulate navigating to a different thread without a remount (the failure
+    // mode behind sidebar thread clicks): the id must follow the prop.
+    rerender(
+      <WorkspaceAssistantClient
+        conversationId="conv_b"
+        initialConversation={{
+          messages: [],
+          conversation: {
+            ...makeWorkspaceAssistantConversation(),
+            publicId: "conv_b",
+          },
+        }}
+      />
+    );
+
+    expect(recordedChatIds.at(-1)).toBe("conv_b");
   });
 });
 

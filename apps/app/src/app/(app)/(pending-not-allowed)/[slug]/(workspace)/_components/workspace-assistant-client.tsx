@@ -19,7 +19,7 @@ import {
   type UIMessage,
 } from "@vendor/ai";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { isResumableStreamEnabled } from "~/app/(chat)/api/chat/resumable-stream-config";
 import { useTRPC } from "~/trpc/react";
 import { ChatComposer } from "./chat-composer";
@@ -29,10 +29,16 @@ type WorkspaceAssistantConversationResult =
   AppRouterOutputs["org"]["workspace"]["assistant"]["getConversation"];
 
 interface WorkspaceAssistantClientProps {
+  // Stable conversation identity, generated up-front by the route. Feeding this
+  // straight into `useChat` (never via local state that mutates mid-send) keeps
+  // the same Chat instance — and its in-flight stream — alive across the first
+  // message of a new chat. Switching threads remounts via a `key` on the route.
+  conversationId: string;
   initialConversation?: WorkspaceAssistantConversationResult;
 }
 
 export function WorkspaceAssistantClient({
+  conversationId,
   initialConversation,
 }: WorkspaceAssistantClientProps) {
   const params = useParams<{ slug: string }>();
@@ -45,15 +51,10 @@ export function WorkspaceAssistantClient({
     [initialConversation]
   );
   const [text, setText] = useState("");
-  const [conversationId, setConversationId] = useState(
-    initialConversation?.conversation.publicId
-  );
   const [creationError, setCreationError] = useState<Error | undefined>();
-  const conversationIdRef = useRef(conversationId);
-
-  useEffect(() => {
-    conversationIdRef.current = conversationId;
-  }, [conversationId]);
+  // Existing conversations are already persisted; new chats create lazily on the
+  // first message. We never recreate, so a ref (not state) is enough.
+  const conversationCreatedRef = useRef(Boolean(initialConversation));
 
   const transport = useMemo(
     () =>
@@ -67,19 +68,19 @@ export function WorkspaceAssistantClient({
           body: {
             ...body,
             messages,
-            conversationId: conversationIdRef.current,
+            conversationId,
           },
         }),
       }),
-    []
+    [conversationId]
   );
 
   const { clearError, error, messages, sendMessage, status, stop } = useChat({
-    id: conversationId ?? undefined,
+    id: conversationId,
     dataPartSchemas: lightfastWorkspaceAssistantDataPartSchemas,
     messageMetadataSchema: lightfastWorkspaceAssistantMessageMetadataSchema,
     messages: initialMessages,
-    resume: isResumableStreamEnabled && !!conversationId,
+    resume: isResumableStreamEnabled && Boolean(initialConversation),
     transport,
   });
 
@@ -99,22 +100,19 @@ export function WorkspaceAssistantClient({
 
       clearError();
 
-      let activeConversationId = conversationIdRef.current;
-      if (!activeConversationId) {
-        activeConversationId = createWorkspaceAssistantConversationId();
-        conversationIdRef.current = activeConversationId;
-        setConversationId(activeConversationId);
-        replaceBrowserChatUrl(params.slug, activeConversationId);
+      if (!conversationCreatedRef.current) {
         setCreationError(undefined);
-
+        // Reflect the conversation in the URL right away — without a navigation,
+        // so the stable Chat instance (and its live stream) stays mounted. The id
+        // is known up-front, so this is safe to do before the create resolves.
+        replaceBrowserChatUrl(params.slug, conversationId);
         try {
           await createConversation.mutateAsync({
-            publicId: activeConversationId,
+            publicId: conversationId,
             title: nextText,
           });
+          conversationCreatedRef.current = true;
         } catch (error) {
-          conversationIdRef.current = undefined;
-          setConversationId(undefined);
           replaceBrowserChatUrl(params.slug);
           setCreationError(
             error instanceof Error
@@ -130,13 +128,19 @@ export function WorkspaceAssistantClient({
         {
           body: {
             idempotencyKey: createWorkspaceAssistantIdempotencyKey(),
-            conversationId: activeConversationId,
+            conversationId,
           },
         }
       );
       setText("");
     },
-    [params.slug, createConversation.mutateAsync, sendMessage, clearError]
+    [
+      params.slug,
+      conversationId,
+      createConversation.mutateAsync,
+      sendMessage,
+      clearError,
+    ]
   );
 
   const renderComposer = (compact: boolean) => (
@@ -185,10 +189,6 @@ export function WorkspaceAssistantClient({
       )}
     </main>
   );
-}
-
-function createWorkspaceAssistantConversationId() {
-  return `conv_${createUuid()}`;
 }
 
 function createWorkspaceAssistantIdempotencyKey() {

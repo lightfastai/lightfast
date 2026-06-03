@@ -22,7 +22,11 @@ export default async function WorkspaceAssistantConversationPage({
   return (
     <HydrateClient>
       <Suspense fallback={<ChatLoading />}>
-        <WorkspaceAssistantClient initialConversation={initialConversation} />
+        <WorkspaceAssistantClient
+          conversationId={conversationId}
+          initialConversation={initialConversation}
+          key={conversationId}
+        />
       </Suspense>
     </HydrateClient>
   );
