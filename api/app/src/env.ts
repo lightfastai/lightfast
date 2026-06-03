@@ -16,6 +16,8 @@ export const env = createEnv({
   server: {
     CLERK_CLI_OAUTH_CLIENT_ID: z.string().min(1).optional(),
     CLERK_DESKTOP_OAUTH_CLIENT_ID: z.string().min(1).optional(),
+    DEVELOPER_AUTH_BOX_ORIGIN: z.string().url().optional(),
+    DEVELOPER_AUTH_BOX_TOKEN: z.string().min(1).optional(),
     ENCRYPTION_KEY: z
       .string()
       .refine(
@@ -51,6 +53,8 @@ export const env = createEnv({
   experimental__runtimeEnv: {
     CLERK_CLI_OAUTH_CLIENT_ID: process.env.CLERK_CLI_OAUTH_CLIENT_ID,
     CLERK_DESKTOP_OAUTH_CLIENT_ID: process.env.CLERK_DESKTOP_OAUTH_CLIENT_ID,
+    DEVELOPER_AUTH_BOX_ORIGIN: process.env.DEVELOPER_AUTH_BOX_ORIGIN,
+    DEVELOPER_AUTH_BOX_TOKEN: process.env.DEVELOPER_AUTH_BOX_TOKEN,
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
     GITHUB_API_VERSION: process.env.GITHUB_API_VERSION,
     GITHUB_APP_CLIENT_ID: process.env.GITHUB_APP_CLIENT_ID,
