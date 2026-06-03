@@ -239,7 +239,6 @@ describe("AppSidebar", () => {
       "Chat",
       "Signals",
       "People",
-      "Skills",
     ]);
   });
 
@@ -284,13 +283,12 @@ describe("AppSidebar", () => {
       .getByRole("region", { name: "Manage" })
       .querySelectorAll("a");
     expect(Array.from(manageLinks).map((link) => link.textContent)).toEqual([
-      "Automations",
       "Settings",
     ]);
 
     const chatHistory = screen.getByRole("region", { name: "Chats" });
     expect(chatHistory).toBeInTheDocument();
-    expect(chatHistory.compareDocumentPosition(manageLinks[1]!)).toBe(
+    expect(chatHistory.compareDocumentPosition(manageLinks[0]!)).toBe(
       Node.DOCUMENT_POSITION_PRECEDING
     );
     expect(
