@@ -12,7 +12,6 @@ import {
   ConversationScrollButton,
 } from "@repo/ui/components/ai-elements/conversation";
 import type { PromptInputMessage } from "@repo/ui/components/ai-elements/prompt-input";
-import { useMutation } from "@tanstack/react-query";
 import {
   type ChatStatus,
   DefaultChatTransport,
@@ -22,7 +21,6 @@ import { useParams } from "next/navigation";
 import type { CSSProperties } from "react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { isResumableStreamEnabled } from "~/app/(chat)/api/chat/resumable-stream-config";
-import { useTRPC } from "~/trpc/react";
 import { ChatComposer } from "./chat-composer";
 import { ChatMessage } from "./chat-message";
 
@@ -48,19 +46,15 @@ export function WorkspaceAssistantClient({
   initialConversation,
 }: WorkspaceAssistantClientProps) {
   const params = useParams<{ slug: string }>();
-  const trpc = useTRPC();
-  const createConversation = useMutation(
-    trpc.org.workspace.assistant.createConversation.mutationOptions()
-  );
   const initialMessages = useMemo(
     () => initialConversation?.messages.map(toUIMessage) ?? [],
     [initialConversation]
   );
   const [text, setText] = useState("");
-  const [creationError, setCreationError] = useState<Error | undefined>();
   // Existing conversations are already persisted; new chats create lazily on the
-  // first message. We never recreate, so a ref (not state) is enough.
-  const conversationCreatedRef = useRef(Boolean(initialConversation));
+  // first message through /api/chat. We only need to reflect the generated id
+  // in the URL once.
+  const conversationAddressedRef = useRef(Boolean(initialConversation));
 
   const transport = useMemo(
     () =>
@@ -91,10 +85,7 @@ export function WorkspaceAssistantClient({
   });
 
   const hasMessages = messages.length > 0;
-  const displayError = creationError ?? error;
-  const composerStatus: ChatStatus = createConversation.isPending
-    ? "submitted"
-    : status;
+  const composerStatus: ChatStatus = status;
 
   const handleSubmit = useCallback(
     async (message: PromptInputMessage) => {
@@ -105,28 +96,13 @@ export function WorkspaceAssistantClient({
       }
 
       clearError();
+      setText("");
 
-      if (!conversationCreatedRef.current) {
-        setCreationError(undefined);
-        // Reflect the conversation in the URL right away — without a navigation,
-        // so the stable Chat instance (and its live stream) stays mounted. The id
-        // is known up-front, so this is safe to do before the create resolves.
+      if (!conversationAddressedRef.current) {
+        // Reflect the conversation in the URL right away without a navigation,
+        // so the stable Chat instance (and its live stream) stays mounted.
         replaceBrowserChatUrl(params.slug, conversationId);
-        try {
-          await createConversation.mutateAsync({
-            publicId: conversationId,
-            title: nextText,
-          });
-          conversationCreatedRef.current = true;
-        } catch (error) {
-          replaceBrowserChatUrl(params.slug);
-          setCreationError(
-            error instanceof Error
-              ? error
-              : new Error("Unable to create conversation.")
-          );
-          return;
-        }
+        conversationAddressedRef.current = true;
       }
 
       await sendMessage(
@@ -138,21 +114,14 @@ export function WorkspaceAssistantClient({
           },
         }
       );
-      setText("");
     },
-    [
-      params.slug,
-      conversationId,
-      createConversation.mutateAsync,
-      sendMessage,
-      clearError,
-    ]
+    [params.slug, conversationId, sendMessage, clearError]
   );
 
   const renderComposer = (compact: boolean) => (
     <ChatComposer
       compact={compact}
-      error={displayError}
+      error={error}
       onSubmit={handleSubmit}
       onTextChange={setText}
       status={composerStatus}

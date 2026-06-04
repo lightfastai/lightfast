@@ -11,6 +11,7 @@ import {
   createWorkspaceAssistantMessageId,
   createWorkspaceAssistantStreamId,
   getWorkspaceAssistantConversationByPublicId,
+  isDuplicateKeyError,
   listWorkspaceAssistantMessages,
   markWorkspaceAssistantGenerationCompleted,
   markWorkspaceAssistantGenerationFailed,
@@ -68,7 +69,13 @@ const chatRequestSchema = z
       .regex(/^[A-Za-z0-9:_.-]+$/)
       .optional(),
     messages: z.array(z.unknown()),
-    conversationId: z.string().trim().min(1).optional(),
+    conversationId: z
+      .string()
+      .trim()
+      .min(1)
+      .max(80)
+      .regex(/^conv_[A-Za-z0-9_-]+$/)
+      .optional(),
   })
   .passthrough();
 
@@ -593,11 +600,28 @@ async function resolveConversation(input: {
   conversationId?: string;
 }): Promise<WorkspaceAssistantConversation | undefined> {
   if (input.conversationId) {
-    return getWorkspaceAssistantConversationByPublicId(db, {
+    const existing = await getWorkspaceAssistantConversationByPublicId(db, {
       clerkOrgId: input.orgId,
       createdByUserId: input.createdByUserId,
       publicId: input.conversationId,
     });
+    if (existing) {
+      return existing;
+    }
+
+    try {
+      return await createWorkspaceAssistantConversation(db, {
+        clerkOrgId: input.orgId,
+        createdByUserId: input.createdByUserId,
+        publicId: input.conversationId,
+        title: firstTextPart(input.submittedMessage),
+      });
+    } catch (error) {
+      if (isDuplicateKeyError(error)) {
+        return undefined;
+      }
+      throw error;
+    }
   }
 
   return createWorkspaceAssistantConversation(db, {
