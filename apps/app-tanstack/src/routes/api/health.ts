@@ -16,7 +16,10 @@ export function getHealth(request: Request): Response {
     const authHeader = request.headers.get("authorization");
 
     if (!authHeader) {
-      return Response.json({ error: "Authorization required" }, { status: 401 });
+      return Response.json(
+        { error: "Authorization required" },
+        { status: 401 }
+      );
     }
 
     const bearerMatch = /^Bearer\s+(.+)$/i.exec(authHeader);
