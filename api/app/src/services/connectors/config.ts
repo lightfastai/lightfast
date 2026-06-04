@@ -3,6 +3,7 @@ import {
   resolveLinearEndpoints,
 } from "@repo/linear-app-node";
 import { resolveXEndpoints, type XEndpoints } from "@repo/x-app-node";
+import { TRPCError } from "@trpc/server";
 
 import { env as runtimeEnv } from "../../env";
 
