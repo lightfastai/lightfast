@@ -57,6 +57,7 @@ describe("SEO discovery content", () => {
     const productionRobots = seoModule.generateRobotsTxt("production");
     expect(productionRobots).toContain("Allow: /llms.txt");
     expect(productionRobots).toContain("Disallow: /api/");
+    expect(productionRobots).not.toContain("/pitch-deck");
     expect(productionRobots).toContain("Sitemap: https://lightfast.ai/sitemap.xml");
   });
 

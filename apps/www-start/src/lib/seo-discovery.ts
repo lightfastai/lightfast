@@ -283,7 +283,6 @@ export function generateRobotsTxt(env: DeploymentEnv = getDeploymentEnv()) {
     "Disallow: /*/insights/",
     "Disallow: /*/jobs/",
     "Disallow: /*/search/",
-    "Disallow: /pitch-deck",
     "Disallow: /confirm/",
     "",
   ];

@@ -63,7 +63,6 @@
           "group": "marketing",
           "paths": [
             "/opengraph-image-:hash",
-            "/pitch-deck",
             "/integrations",
             "/integrations/:path*",
             "/api/health",

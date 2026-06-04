@@ -86,6 +86,7 @@ describe("microfrontends config", () => {
         "/manifest.webmanifest",
       ])
     );
+    expect(oldWwwPaths.has("/pitch-deck")).toBe(false);
 
     for (const route of startPaths) {
       expect(oldWwwPaths.has(route)).toBe(false);
