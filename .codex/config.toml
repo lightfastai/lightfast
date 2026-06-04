@@ -4,8 +4,8 @@
 # Standardized with .mcp.json (Claude Code): both harnesses run the same
 # MCP server set. Keep these two files in sync.
 
-# [mcp_servers.exa]
-# url = "https://mcp.exa.ai/mcp"
+[mcp_servers.exa]
+url = "https://mcp.exa.ai/mcp"
 
 [mcp_servers.inngest]
 url = "http://127.0.0.1:8288/mcp"
