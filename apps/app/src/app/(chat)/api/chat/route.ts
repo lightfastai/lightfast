@@ -46,6 +46,7 @@ import {
   convertToModelMessages,
   gateway,
   safeValidateUIMessages,
+  smoothStream,
   stepCountIs,
   streamText,
   tool,
@@ -58,6 +59,10 @@ import { isResumableStreamEnabled } from "~/app/(chat)/api/chat/resumable-stream
 const WORKSPACE_ASSISTANT_MODEL = "anthropic/claude-sonnet-4.6";
 const WORKSPACE_ASSISTANT_FALLBACK_MODELS = ["openai/gpt-5.4"] as const;
 const WORKSPACE_ASSISTANT_MAX_TOOL_STEPS = 5;
+const WORKSPACE_ASSISTANT_STREAM_SMOOTHING = {
+  chunking: "word",
+  delayInMs: 20,
+} as const;
 
 const chatRequestSchema = z
   .object({
@@ -263,6 +268,7 @@ export async function POST(req: Request) {
       recordInputs: false,
       recordOutputs: false,
     },
+    experimental_transform: smoothStream(WORKSPACE_ASSISTANT_STREAM_SMOOTHING),
     messages: modelMessages,
     model: gateway(WORKSPACE_ASSISTANT_MODEL),
     onError: async ({ error }) => {

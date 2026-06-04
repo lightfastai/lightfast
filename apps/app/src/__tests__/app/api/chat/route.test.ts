@@ -23,6 +23,7 @@ const markWorkspaceAssistantMessageFailedMock = vi.fn();
 const setWorkspaceAssistantConversationActiveStreamMock = vi.fn();
 const resolveAuthContextFromClerkMock = vi.fn();
 const safeValidateUIMessagesMock = vi.fn();
+const smoothStreamMock = vi.fn();
 const stepCountIsMock = vi.fn();
 const toUIMessageStreamResponseMock = vi.fn();
 const toolMock = vi.fn();
@@ -72,6 +73,7 @@ vi.mock("@vendor/ai", () => ({
   convertToModelMessages: convertToModelMessagesMock,
   gateway: gatewayMock,
   safeValidateUIMessages: safeValidateUIMessagesMock,
+  smoothStream: smoothStreamMock,
   stepCountIs: stepCountIsMock,
   streamText: streamTextMock,
   tool: toolMock,
@@ -130,6 +132,7 @@ beforeEach(() => {
   setWorkspaceAssistantConversationActiveStreamMock.mockReset();
   resolveAuthContextFromClerkMock.mockReset();
   safeValidateUIMessagesMock.mockReset();
+  smoothStreamMock.mockReset();
   stepCountIsMock.mockReset();
   toUIMessageStreamResponseMock.mockReset();
   toolMock.mockReset();
@@ -199,6 +202,7 @@ beforeEach(() => {
     status: "succeeded",
   });
   findProviderRoutinesMock.mockResolvedValue({ routines: [] });
+  smoothStreamMock.mockReturnValue("smooth-stream-transform");
   stepCountIsMock.mockImplementation((count) => ({
     count,
     kind: "step-count",
@@ -417,6 +421,10 @@ describe("chat route", () => {
       },
     ]);
     expect(gatewayMock).toHaveBeenCalledWith("anthropic/claude-sonnet-4.6");
+    expect(smoothStreamMock).toHaveBeenCalledWith({
+      chunking: "word",
+      delayInMs: 20,
+    });
     expect(streamTextMock).toHaveBeenCalledWith(
       expect.objectContaining({
         experimental_telemetry: expect.objectContaining({
@@ -425,6 +433,7 @@ describe("chat route", () => {
           recordInputs: false,
           recordOutputs: false,
         }),
+        experimental_transform: "smooth-stream-transform",
         messages: modelMessages,
         model: "gateway:anthropic/claude-sonnet-4.6",
         providerOptions: {
