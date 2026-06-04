@@ -1,6 +1,7 @@
 import type { Database } from "@db/app";
 
 import {
+  type CreateAndQueueSignalDependencies,
   type CreateAndQueueSignalInput,
   createAndQueueSignal,
 } from "./create-signal";
@@ -37,7 +38,8 @@ export async function createSignalForActor(
   input: {
     actor: SignalActor;
     input: string;
-  }
+  },
+  dependencies?: CreateAndQueueSignalDependencies
 ): Promise<SignalCreateResult> {
   const signalInput: CreateAndQueueSignalInput = {
     clerkOrgId: input.actor.orgId,
@@ -47,5 +49,5 @@ export async function createSignalForActor(
     createdByUserId: input.actor.userId,
     input: input.input,
   };
-  return createAndQueueSignal(db, signalInput);
+  return createAndQueueSignal(db, signalInput, dependencies);
 }

@@ -10,10 +10,6 @@ vi.mock("@db/app", () => ({
   markSignalFailed: markSignalFailedMock,
 }));
 
-vi.mock("../inngest/client", () => ({
-  inngest: { send: sendMock },
-}));
-
 const {
   SIGNAL_ENQUEUE_FAILED_ERROR_CODE,
   SignalCreateQueueError,
@@ -42,12 +38,18 @@ beforeEach(() => {
 describe("createAndQueueSignal", () => {
   it("creates a signal and sends the classification event", async () => {
     await expect(
-      createAndQueueSignal(db, {
-        clerkOrgId: "org_test",
-        createdByApiKeyId: null,
-        createdByUserId: "user_test",
-        input: "Create from app UI",
-      })
+      createAndQueueSignal(
+        db,
+        {
+          clerkOrgId: "org_test",
+          createdByApiKeyId: null,
+          createdByUserId: "user_test",
+          input: "Create from app UI",
+        },
+        {
+          sendSignalCreatedEvent: sendMock,
+        }
+      )
     ).resolves.toEqual({
       id: "signal_123e4567-e89b-12d3-a456-426614174000",
       status: "queued",
@@ -70,12 +72,18 @@ describe("createAndQueueSignal", () => {
   });
 
   it("preserves API key attribution for public API-created signals", async () => {
-    await createAndQueueSignal(db, {
-      clerkOrgId: "org_test",
-      createdByApiKeyId: "key_test",
-      createdByUserId: "user_test",
-      input: "Create from public API",
-    });
+    await createAndQueueSignal(
+      db,
+      {
+        clerkOrgId: "org_test",
+        createdByApiKeyId: "key_test",
+        createdByUserId: "user_test",
+        input: "Create from public API",
+      },
+      {
+        sendSignalCreatedEvent: sendMock,
+      }
+    );
 
     expect(createSignalMock).toHaveBeenCalledWith(db, {
       clerkOrgId: "org_test",
@@ -88,12 +96,18 @@ describe("createAndQueueSignal", () => {
   it("marks the created signal failed and throws a typed error when enqueue fails", async () => {
     sendMock.mockRejectedValueOnce(new Error("inngest unavailable"));
 
-    const error = await createAndQueueSignal(db, {
-      clerkOrgId: "org_test",
-      createdByApiKeyId: null,
-      createdByUserId: "user_test",
-      input: "Create from app UI",
-    }).catch((caught: unknown) => caught);
+    const error = await createAndQueueSignal(
+      db,
+      {
+        clerkOrgId: "org_test",
+        createdByApiKeyId: null,
+        createdByUserId: "user_test",
+        input: "Create from app UI",
+      },
+      {
+        sendSignalCreatedEvent: sendMock,
+      }
+    ).catch((caught: unknown) => caught);
 
     expect(error).toBeInstanceOf(SignalCreateQueueError);
     expect(isSignalCreateQueueError(error)).toBe(true);
@@ -112,12 +126,18 @@ describe("createAndQueueSignal", () => {
       new Error("database unavailable")
     );
 
-    const error = await createAndQueueSignal(db, {
-      clerkOrgId: "org_test",
-      createdByApiKeyId: null,
-      createdByUserId: "user_test",
-      input: "Create from app UI",
-    }).catch((caught: unknown) => caught);
+    const error = await createAndQueueSignal(
+      db,
+      {
+        clerkOrgId: "org_test",
+        createdByApiKeyId: null,
+        createdByUserId: "user_test",
+        input: "Create from app UI",
+      },
+      {
+        sendSignalCreatedEvent: sendMock,
+      }
+    ).catch((caught: unknown) => caught);
 
     expect(error).toBeInstanceOf(SignalCreateQueueError);
     expect(isSignalCreateQueueError(error)).toBe(true);
@@ -138,16 +158,22 @@ describe("createSignalForActor", () => {
     });
 
     await expect(
-      createSignalForActor(db, {
-        actor: {
-          clientId: "mcp_client_test",
-          grantId: "mcp_grant_test",
-          kind: "mcp",
-          orgId: "org_test",
-          userId: "user_test",
+      createSignalForActor(
+        db,
+        {
+          actor: {
+            clientId: "mcp_client_test",
+            grantId: "mcp_grant_test",
+            kind: "mcp",
+            orgId: "org_test",
+            userId: "user_test",
+          },
+          input: "Create a signal from MCP",
         },
-        input: "Create a signal from MCP",
-      })
+        {
+          sendSignalCreatedEvent: sendMock,
+        }
+      )
     ).resolves.toEqual({
       id: "signal_123e4567-e89b-12d3-a456-426614174000",
       status: "queued",

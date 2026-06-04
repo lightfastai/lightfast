@@ -84,16 +84,19 @@ const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS]);
 // would otherwise redirect OPTIONS preflight to /sign-in, which browsers
 // reject as ERR_INVALID_REDIRECT).
 //   /api/inngest     — Inngest signature
+//   /api/internal/*   — service-to-service auth owned by the route
 //   /api/v1/*        — Unkey lf_ org API key via oRPC authMiddleware
 const isApiRouteMatcher = createRouteMatcher([
   "/api/connectors/x/mcp(.*)",
   "/api/inngest(.*)",
+  "/api/internal/mcp/signals(.*)",
   "/api/v1/(.*)",
 ]);
 
 const APP_OWNED_API_PREFIXES = [
   "/api/connectors/x/mcp",
   "/api/inngest",
+  "/api/internal/mcp/signals",
   "/api/v1",
 ];
 
