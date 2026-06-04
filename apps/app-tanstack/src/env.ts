@@ -2,8 +2,8 @@ import "@tanstack/react-start/server-only";
 
 import { env as dbEnv } from "@db/app/env";
 import { createEnv } from "@t3-oss/env-core";
-import { upstashEnv } from "@vendor/upstash/env";
 import { unkeyEnv } from "@vendor/unkey/env";
+import { upstashEnv } from "@vendor/upstash/env";
 import { z } from "zod";
 
 const vercelEnvSchema = z

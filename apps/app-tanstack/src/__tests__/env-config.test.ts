@@ -39,7 +39,11 @@ describe("app-tanstack environment validation wiring", () => {
       "utf8"
     );
 
-    expect(viteConfigSource).toContain('import { env } from "./src/env"');
+    expect(viteConfigSource).toContain('from "./src/env"');
+    expect(viteConfigSource).toContain("env.VITE_LIGHTFAST_APP_URL");
+    expect(viteConfigSource).toContain("env.SENTRY_AUTH_TOKEN");
+    expect(viteConfigSource).toContain("sentryClientDsn");
+    expect(viteConfigSource).toContain("sentryServerDsn");
   });
 
   it("configures TanStack Start, Nitro, React, and Sentry plugins", () => {
