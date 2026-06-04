@@ -845,12 +845,14 @@ export const PromptInput = ({
       event.preventDefault();
 
       const form = event.currentTarget;
-      const text = usingProvider
-        ? controller.textInput.value
-        : (() => {
-            const formData = new FormData(form);
-            return (formData.get("message") as string) || "";
-          })();
+      const formData = new FormData(form);
+      const messageEntry = formData.get("message");
+      const text =
+        typeof messageEntry === "string"
+          ? messageEntry
+          : usingProvider
+            ? controller.textInput.value
+            : "";
       const clearSubmission = () => {
         if (!usingProvider) {
           form.reset();
@@ -959,6 +961,7 @@ export const PromptInputTextarea = ({
   const controller = useOptionalPromptInputController();
   const attachments = usePromptInputAttachments();
   const [isComposing, setIsComposing] = useState(false);
+  const hasExternalTextControl = props.value !== undefined;
 
   const handleKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = useCallback(
     (e) => {
@@ -1038,13 +1041,20 @@ export const PromptInputTextarea = ({
   const handleCompositionStart = useCallback(() => setIsComposing(true), []);
 
   const controlledProps = controller
-    ? {
-        onChange: (e: ChangeEvent<HTMLTextAreaElement>) => {
-          controller.textInput.setInput(e.currentTarget.value);
-          onChange?.(e);
-        },
-        value: controller.textInput.value,
-      }
+    ? hasExternalTextControl
+      ? {
+          onChange: (e: ChangeEvent<HTMLTextAreaElement>) => {
+            controller.textInput.setInput(e.currentTarget.value);
+            onChange?.(e);
+          },
+        }
+      : {
+          onChange: (e: ChangeEvent<HTMLTextAreaElement>) => {
+            controller.textInput.setInput(e.currentTarget.value);
+            onChange?.(e);
+          },
+          value: controller.textInput.value,
+        }
     : {
         onChange,
       };
