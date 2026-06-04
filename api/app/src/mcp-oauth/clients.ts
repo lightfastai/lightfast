@@ -10,6 +10,9 @@ import { hashOpaqueToken } from "./hash";
 import { createMcpClientId, createRegistrationAccessTokenSecret } from "./ids";
 import { McpOAuthError } from "./types";
 
+const REDIRECT_URI_POLICY_ERROR =
+  "Redirect URIs must be exact HTTPS URLs or loopback HTTP URLs with explicit ports and no fragments.";
+
 const registrationRequestSchema = z
   .object({
     client_name: z.string().trim().min(1).max(255),
@@ -142,7 +145,7 @@ function parseRegistrationRequest(
   }
 
   for (const redirectUri of parsed.redirect_uris) {
-    assertPublicHttpsRedirectUri(redirectUri);
+    assertAllowedRedirectUri(redirectUri);
   }
 
   for (const key of [
@@ -161,7 +164,7 @@ function parseRegistrationRequest(
   return parsed;
 }
 
-function assertPublicHttpsRedirectUri(value: string): void {
+function assertAllowedRedirectUri(value: string): void {
   if (value.includes("*")) {
     throw new McpOAuthError(
       "invalid_request",
@@ -170,12 +173,38 @@ function assertPublicHttpsRedirectUri(value: string): void {
   }
 
   const url = new URL(value);
-  if (url.protocol !== "https:" || url.hash) {
+  if (url.hash) {
     throw new McpOAuthError(
       "invalid_request",
-      "Redirect URIs must be exact HTTPS URLs without fragments."
+      REDIRECT_URI_POLICY_ERROR
     );
   }
+  if (url.protocol === "https:") {
+    return;
+  }
+  if (
+    url.protocol === "http:" &&
+    isLoopbackHostname(url.hostname) &&
+    hasExplicitLoopbackPort(value)
+  ) {
+    return;
+  }
+
+  throw new McpOAuthError("invalid_request", REDIRECT_URI_POLICY_ERROR);
+}
+
+function isLoopbackHostname(hostname: string): boolean {
+  const value = hostname.toLowerCase();
+  return value === "localhost" || value === "127.0.0.1" || value === "[::1]";
+}
+
+function hasExplicitLoopbackPort(value: string): boolean {
+  const match =
+    /^http:\/\/(?:localhost|127\.0\.0\.1|\[::1\]):(?<port>\d+)(?:[/?#]|$)/iu.exec(
+      value
+    );
+  const port = Number(match?.groups?.port);
+  return Number.isInteger(port) && port >= 1 && port <= 65535;
 }
 
 function assertPublicMetadataUrl(name: string, value: string): void {

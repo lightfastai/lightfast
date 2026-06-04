@@ -62,7 +62,7 @@ export async function getMcpConsentViewModel(
     notFound();
   }
 
-  const authState = await auth();
+  const authState = await auth({ treatPendingAsSignedOut: false });
   if (!authState.userId) {
     notFound();
   }

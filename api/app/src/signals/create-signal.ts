@@ -1,6 +1,8 @@
 import type { Database } from "@db/app";
 import { createSignal, markSignalFailed } from "@db/app";
 import type { CreateSignalOutput } from "@repo/api-contract";
+import { Inngest } from "@vendor/inngest";
+import { env as inngestEnv } from "@vendor/inngest/env";
 
 export const SIGNAL_ENQUEUE_FAILED_ERROR_CODE = "INNGEST_ENQUEUE_FAILED";
 const QUEUE_ERROR_MESSAGE = "Failed to queue signal for classification.";
@@ -12,6 +14,18 @@ export interface CreateAndQueueSignalInput {
   createdByMcpGrantId?: string | null;
   createdByUserId: string;
   input: string;
+}
+
+type SignalCreatedEvent = {
+  data: {
+    clerkOrgId: string;
+    signalId: string;
+  };
+  name: "app/signal.created";
+};
+
+export interface CreateAndQueueSignalDependencies {
+  sendSignalCreatedEvent?: (event: SignalCreatedEvent) => Promise<unknown>;
 }
 
 export class SignalCreateQueueError extends Error {
@@ -33,7 +47,8 @@ function getErrorMessage(error: unknown): string {
 
 export async function createAndQueueSignal(
   db: Database,
-  input: CreateAndQueueSignalInput
+  input: CreateAndQueueSignalInput,
+  dependencies: CreateAndQueueSignalDependencies = {}
 ): Promise<CreateSignalOutput> {
   const mcpAttribution =
     input.createdByMcpClientId || input.createdByMcpGrantId
@@ -52,8 +67,7 @@ export async function createAndQueueSignal(
   });
 
   try {
-    const { inngest } = await import("../inngest/client");
-    await inngest.send({
+    await (dependencies.sendSignalCreatedEvent ?? sendSignalCreatedEvent)({
       name: "app/signal.created",
       data: {
         clerkOrgId: signal.clerkOrgId,
@@ -79,4 +93,18 @@ export async function createAndQueueSignal(
     status: "queued",
     visibilityScope: "user",
   };
+}
+
+let signalEventClient: Inngest | undefined;
+
+function getSignalEventClient(): Inngest {
+  signalEventClient ??= new Inngest({
+    id: inngestEnv.INNGEST_APP_NAME,
+    eventKey: inngestEnv.INNGEST_EVENT_KEY,
+  });
+  return signalEventClient;
+}
+
+async function sendSignalCreatedEvent(event: SignalCreatedEvent) {
+  await getSignalEventClient().send(event);
 }

@@ -285,6 +285,17 @@ export const createSignalInput = z.object({
   input: z.string().trim().min(1).max(SIGNAL_INPUT_MAX_LENGTH),
 });
 
+export const createMcpSignalCommandInput = z.object({
+  actor: z.object({
+    clientId: z.string().min(1),
+    grantId: z.string().min(1),
+    kind: z.literal("mcp"),
+    orgId: z.string().min(1),
+    userId: z.string().min(1),
+  }),
+  input: createSignalInput.shape.input,
+});
+
 export const createSignalOutput = z.object({
   id: signalIdSchema,
   status: z.literal("queued"),
@@ -322,6 +333,9 @@ export type SignalClassificationRouting = z.infer<
 >;
 export type SignalStatus = z.infer<typeof signalStatusSchema>;
 export type CreateSignalInput = z.infer<typeof createSignalInput>;
+export type CreateMcpSignalCommandInput = z.infer<
+  typeof createMcpSignalCommandInput
+>;
 export type CreateSignalOutput = z.infer<typeof createSignalOutput>;
 export type GetSignalInput = z.infer<typeof getSignalInput>;
 export type GetSignalOutput = z.infer<typeof getSignalOutput>;

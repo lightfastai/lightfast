@@ -10,6 +10,8 @@ export {
   type McpToolPolicyEntry,
 } from "./mcp";
 export {
+  type CreateMcpSignalCommandInput,
+  createMcpSignalCommandInput,
   type CreateSignalInput,
   type CreateSignalOutput,
   createSignalInput,

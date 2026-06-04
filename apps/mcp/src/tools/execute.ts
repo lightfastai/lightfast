@@ -229,8 +229,9 @@ export function registerHostedMcpTools(server: unknown): void {
 export async function executeHostedMcpTool(
   input: ExecuteHostedMcpToolInput
 ): Promise<unknown> {
-  const dependencies = input.dependencies ?? (await defaultDependencies());
   const tool = input.tool ?? toolForContractPath(input.contractPath);
+  const dependencies =
+    input.dependencies ?? (await defaultDependencies(tool.contractPath));
   const startedAt = dependencies.now();
   let providerRoutineCallId: string | undefined;
 
@@ -522,26 +523,103 @@ function normalizeToolError(error: unknown): HostedMcpToolError {
   );
 }
 
-async function defaultDependencies(): Promise<ExecuteHostedMcpToolDependencies> {
-  const [dbApp, signalService, mcpOauth, providerRoutines] = await Promise.all([
-    import("@db/app"),
-    import("@api/app/signals/service"),
-    import("@api/app/mcp-oauth"),
-    import("@repo/provider-routines") as Promise<ProviderRoutineServiceModule>,
-  ]);
-
-  return {
-    assertOrgAccess: mcpOauth.assertHostedMcpOrgAccess,
-    callProviderRoutine: providerRoutines.callProviderRoutine,
-    createSignalForActor: signalService.createSignalForActor,
+async function defaultDependencies(
+  contractPath: string
+): Promise<ExecuteHostedMcpToolDependencies> {
+  const dbApp = await import("@db/app");
+  const base = {
     db: dbApp.db,
-    findProviderRoutines: providerRoutines.findProviderRoutines,
-    getVisibleSignalByPublicId: dbApp.getVisibleSignalByPublicId,
     now: () => new Date(),
     providerRoutineLog: sentryProviderRoutineLog,
     recordMcpAuditEvent: dbApp.recordMcpAuditEvent,
     version: process.env.npm_package_version ?? DEFAULT_VERSION,
   };
+
+  if (contractPath === "system.health") {
+    return {
+      ...base,
+      assertOrgAccess: unavailableAssertOrgAccess,
+      callProviderRoutine: unavailableCallProviderRoutine,
+      createSignalForActor: unavailableCreateSignalForActor,
+      findProviderRoutines: unavailableFindProviderRoutines,
+      getVisibleSignalByPublicId: dbApp.getVisibleSignalByPublicId,
+    };
+  }
+
+  if (contractPath === "signals.create") {
+    const [appSignalIntake, mcpOauth] = await Promise.all([
+      import("./app-signal-intake"),
+      import("@api/app/mcp-oauth"),
+    ]);
+    return {
+      ...base,
+      assertOrgAccess: mcpOauth.assertHostedMcpOrgAccess,
+      callProviderRoutine: unavailableCallProviderRoutine,
+      createSignalForActor: appSignalIntake.createSignalForActorViaApp,
+      findProviderRoutines: unavailableFindProviderRoutines,
+      getVisibleSignalByPublicId: dbApp.getVisibleSignalByPublicId,
+    };
+  }
+
+  if (contractPath === "signals.get") {
+    const mcpOauth = await import("@api/app/mcp-oauth");
+    return {
+      ...base,
+      assertOrgAccess: mcpOauth.assertHostedMcpOrgAccess,
+      callProviderRoutine: unavailableCallProviderRoutine,
+      createSignalForActor: unavailableCreateSignalForActor,
+      findProviderRoutines: unavailableFindProviderRoutines,
+      getVisibleSignalByPublicId: dbApp.getVisibleSignalByPublicId,
+    };
+  }
+
+  if (contractPath === "proxy.find" || contractPath === "proxy.call") {
+    const [mcpOauth, providerRoutines] = await Promise.all([
+      import("@api/app/mcp-oauth"),
+      import("@repo/provider-routines") as Promise<ProviderRoutineServiceModule>,
+    ]);
+    return {
+      ...base,
+      assertOrgAccess: mcpOauth.assertHostedMcpOrgAccess,
+      callProviderRoutine: providerRoutines.callProviderRoutine,
+      createSignalForActor: unavailableCreateSignalForActor,
+      findProviderRoutines: providerRoutines.findProviderRoutines,
+      getVisibleSignalByPublicId: dbApp.getVisibleSignalByPublicId,
+    };
+  }
+
+  return {
+    ...base,
+    assertOrgAccess: unavailableAssertOrgAccess,
+    callProviderRoutine: unavailableCallProviderRoutine,
+    createSignalForActor: unavailableCreateSignalForActor,
+    findProviderRoutines: unavailableFindProviderRoutines,
+    getVisibleSignalByPublicId: dbApp.getVisibleSignalByPublicId,
+  };
+}
+
+async function unavailableAssertOrgAccess(): Promise<void> {
+  throw unavailableDependencyError();
+}
+
+async function unavailableCreateSignalForActor(): Promise<never> {
+  throw unavailableDependencyError();
+}
+
+async function unavailableFindProviderRoutines(): Promise<never> {
+  throw unavailableDependencyError();
+}
+
+async function unavailableCallProviderRoutine(): Promise<never> {
+  throw unavailableDependencyError();
+}
+
+function unavailableDependencyError() {
+  return new HostedMcpToolError(
+    "unsupported_tool",
+    "MCP tool dependency is unavailable for this tool.",
+    500
+  );
 }
 
 function providerRoutineContext(

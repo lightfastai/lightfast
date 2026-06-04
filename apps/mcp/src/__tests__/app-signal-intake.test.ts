@@ -1,0 +1,114 @@
+import { jwtVerify } from "@vendor/jose";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+const jwtSecret = "test-service-jwt-secret-at-least-32-chars";
+
+async function importAdapter() {
+  vi.stubEnv("MCP_AUTH_ISSUER", "https://lightfast.ai");
+  vi.stubEnv("MCP_RESOURCE_URL", "https://mcp.lightfast.ai/mcp");
+  vi.stubEnv("SERVICE_JWT_SECRET", jwtSecret);
+  return await import("../tools/app-signal-intake");
+}
+
+describe("app signal intake adapter", () => {
+  afterEach(() => {
+    vi.resetModules();
+    vi.unstubAllEnvs();
+  });
+
+  it("posts MCP signal commands to the app with a service JWT", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: "signal_123e4567-e89b-12d3-a456-426614174000",
+          status: "queued",
+          visibilityScope: "user",
+        }),
+        { status: 200 }
+      )
+    );
+    const { createSignalForActorViaApp } = await importAdapter();
+
+    await expect(
+      createSignalForActorViaApp(
+        {} as never,
+        {
+          actor: {
+            clientId: "mcp_client_test",
+            grantId: "mcp_grant_test",
+            kind: "mcp",
+            orgId: "org_test",
+            userId: "user_test",
+          },
+          input: "Signal from MCP",
+        },
+        { fetch: fetchMock }
+      )
+    ).resolves.toEqual({
+      id: "signal_123e4567-e89b-12d3-a456-426614174000",
+      status: "queued",
+      visibilityScope: "user",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://lightfast.ai/api/internal/mcp/signals",
+      expect.objectContaining({
+        method: "POST",
+      })
+    );
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const authorization = (init.headers as Record<string, string>)
+      .authorization;
+    expect(authorization).toBeDefined();
+    const bearer = authorization!.replace(/^Bearer\s+/, "");
+    const { payload } = await jwtVerify(
+      bearer,
+      new TextEncoder().encode(jwtSecret),
+      { audience: "lightfast-app" }
+    );
+    expect(payload).toMatchObject({
+      iss: "mcp",
+      token_use: "service_access",
+    });
+    expect(JSON.parse(String(init.body))).toEqual({
+      actor: {
+        clientId: "mcp_client_test",
+        grantId: "mcp_grant_test",
+        kind: "mcp",
+        orgId: "org_test",
+        userId: "user_test",
+      },
+      input: "Signal from MCP",
+    });
+  });
+
+  it("throws a stable upstream error for non-2xx app responses", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json(
+        { error: "signal_enqueue_failed", message: "Failed to queue signal." },
+        { status: 500 }
+      )
+    );
+    const { createSignalForActorViaApp } = await importAdapter();
+
+    await expect(
+      createSignalForActorViaApp(
+        {} as never,
+        {
+          actor: {
+            clientId: "mcp_client_test",
+            grantId: "mcp_grant_test",
+            kind: "mcp",
+            orgId: "org_test",
+            userId: "user_test",
+          },
+          input: "Signal from MCP",
+        },
+        { fetch: fetchMock }
+      )
+    ).rejects.toMatchObject({
+      code: "app_signal_intake_failed",
+      status: 502,
+    });
+  });
+});
