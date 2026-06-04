@@ -91,7 +91,7 @@ async function configFromEnv(): Promise<LinearProviderRoutineConfig> {
   if (!(clientId && clientSecret && encryptionKey)) {
     throw linearError(
       "LINEAR_TOKEN_REFRESH_FAILED",
-      "Linear connector config is missing."
+      "Linear connector environment is incomplete."
     );
   }
 
