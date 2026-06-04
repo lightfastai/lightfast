@@ -58,4 +58,34 @@ describe("PromptInputTextarea", () => {
       )
     );
   });
+
+  it("keeps provider control when onChange only observes text", async () => {
+    const onChange = vi.fn();
+    const onSubmit = vi.fn();
+
+    render(
+      <PromptInputProvider>
+        <PromptInput onSubmit={onSubmit}>
+          <PromptInputTextarea onChange={onChange} placeholder="Ask" />
+          <button type="submit">Send</button>
+        </PromptInput>
+      </PromptInputProvider>
+    );
+
+    const textarea = screen.getByPlaceholderText<HTMLTextAreaElement>("Ask");
+
+    fireEvent.change(textarea, {
+      target: { value: "Send this message" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        { files: [], text: "Send this message" },
+        expect.any(Object)
+      )
+    );
+    expect(onChange).toHaveBeenCalled();
+    expect(textarea.value).toBe("");
+  });
 });

@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { getQueryClient, HydrateClient, trpc } from "~/trpc/server";
 import { WorkspaceAssistantClient } from "../../_components/workspace-assistant-client";
@@ -40,10 +41,19 @@ async function getInitialConversation(
     );
   } catch (error) {
     if (isConversationNotFoundError(error)) {
+      if (!isPreallocatedConversationId(conversationId)) {
+        notFound();
+      }
       return;
     }
     throw error;
   }
+}
+
+function isPreallocatedConversationId(conversationId: string) {
+  return /^conv_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    conversationId
+  );
 }
 
 function isConversationNotFoundError(error: unknown) {

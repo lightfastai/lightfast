@@ -846,9 +846,13 @@ export const PromptInput = ({
 
       const form = event.currentTarget;
       const formData = new FormData(form);
-      const formText = (formData.get("message") as string) || "";
+      const messageEntry = formData.get("message");
       const text =
-        formText || (usingProvider ? controller.textInput.value : "");
+        typeof messageEntry === "string"
+          ? messageEntry
+          : usingProvider
+            ? controller.textInput.value
+            : "";
       const clearSubmission = () => {
         if (!usingProvider) {
           form.reset();
@@ -957,8 +961,7 @@ export const PromptInputTextarea = ({
   const controller = useOptionalPromptInputController();
   const attachments = usePromptInputAttachments();
   const [isComposing, setIsComposing] = useState(false);
-  const hasExternalTextControl =
-    props.value !== undefined || onChange !== undefined;
+  const hasExternalTextControl = props.value !== undefined;
 
   const handleKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = useCallback(
     (e) => {
@@ -1048,6 +1051,7 @@ export const PromptInputTextarea = ({
       : {
           onChange: (e: ChangeEvent<HTMLTextAreaElement>) => {
             controller.textInput.setInput(e.currentTarget.value);
+            onChange?.(e);
           },
           value: controller.textInput.value,
         }

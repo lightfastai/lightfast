@@ -7,6 +7,9 @@ const getConversationQueryOptionsMock = vi.fn((input: { id: string }) => ({
   input,
   queryKey: ["org", "workspace", "assistant", "getConversation", input.id],
 }));
+const notFoundMock = vi.fn(() => {
+  throw new Error("NEXT_NOT_FOUND");
+});
 let receivedProps:
   | {
       conversationId?: string;
@@ -32,6 +35,10 @@ vi.mock("~/trpc/server", () => ({
   },
 }));
 
+vi.mock("next/navigation", () => ({
+  notFound: notFoundMock,
+}));
+
 vi.mock(
   "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/_components/workspace-assistant-client",
   () => ({
@@ -52,6 +59,7 @@ const { default: ConversationPage } = await import(
 beforeEach(() => {
   fetchQueryMock.mockReset();
   getConversationQueryOptionsMock.mockClear();
+  notFoundMock.mockClear();
   receivedProps = undefined;
 });
 
@@ -104,16 +112,35 @@ describe("workspace conversation page", () => {
     render(
       await ConversationPage({
         params: Promise.resolve({
-          conversationId: "conv_draft",
+          conversationId: "conv_123e4567-e89b-12d3-a456-426614174000",
           slug: "acme",
         }),
       })
     );
 
     expect(receivedProps).toEqual({
-      conversationId: "conv_draft",
+      conversationId: "conv_123e4567-e89b-12d3-a456-426614174000",
       initialConversation: undefined,
     });
+  });
+
+  it("does not turn arbitrary missing conversation ids into drafts", async () => {
+    fetchQueryMock.mockRejectedValue(
+      Object.assign(new Error("Workspace assistant conversation not found"), {
+        code: "NOT_FOUND",
+      })
+    );
+
+    await expect(
+      ConversationPage({
+        params: Promise.resolve({
+          conversationId: "conv_typo",
+          slug: "acme",
+        }),
+      })
+    ).rejects.toThrow("NEXT_NOT_FOUND");
+    expect(notFoundMock).toHaveBeenCalledOnce();
+    expect(receivedProps).toBeUndefined();
   });
 
   it("lets non-404 load errors reach the route error boundary", async () => {
