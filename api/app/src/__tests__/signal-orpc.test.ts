@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const verifyMock = vi.fn();
 const getActiveOrgBindingMock = vi.fn();
+const getCurrentOrgConnectorConnectionMock = vi.fn();
 const createSignalForActorMock = vi.fn();
 const getVisibleSignalByPublicIdMock = vi.fn();
 
@@ -15,6 +16,7 @@ vi.mock("@vendor/unkey/server", () => ({
 vi.mock("@db/app/client", () => ({ db: { kind: "mock-db" } }));
 vi.mock("@db/app", () => ({
   getActiveOrgBinding: getActiveOrgBindingMock,
+  getCurrentOrgConnectorConnection: getCurrentOrgConnectorConnectionMock,
   getVisibleSignalByPublicId: getVisibleSignalByPublicIdMock,
 }));
 
@@ -51,10 +53,14 @@ function context() {
 beforeEach(() => {
   verifyMock.mockReset();
   getActiveOrgBindingMock.mockReset();
+  getCurrentOrgConnectorConnectionMock.mockReset();
   createSignalForActorMock.mockReset();
   getVisibleSignalByPublicIdMock.mockReset();
 
   verifyMock.mockResolvedValue(verifyResult());
+  getCurrentOrgConnectorConnectionMock.mockResolvedValue({
+    status: "active",
+  });
   getActiveOrgBindingMock.mockResolvedValue({
     metadata: {
       lightfastRepository: {

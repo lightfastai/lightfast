@@ -107,6 +107,22 @@ describe("GitHubBindCompleteClient", () => {
     });
   });
 
+  it("routes to the X connector task when that is the next setup requirement", async () => {
+    mutateAsyncMock.mockResolvedValue({
+      bindingStatus: "unbound",
+      nextSetupRequirement: "x_connector",
+    });
+    reloadMock.mockResolvedValue(undefined);
+
+    render(<GitHubBindCompleteClient orgSlug="acme" />);
+
+    await waitFor(() => {
+      expect(mutateAsyncMock).toHaveBeenCalledTimes(1);
+      expect(reloadMock).toHaveBeenCalledTimes(1);
+      expect(replaceMock).toHaveBeenCalledWith("/acme/tasks/connectors/x");
+    });
+  });
+
   it("waits for the Clerk session to load before syncing and redirecting", async () => {
     sessionState = { isLoaded: false, session: null };
     mutateAsyncMock.mockResolvedValue({ bindingStatus: "bound" });

@@ -5,6 +5,7 @@ import type { AuthIdentity } from "../auth/identity";
 const clerkGetOrganizationMembershipListMock = vi.fn();
 const completeWatchedSourceControlRepositorySetupMock = vi.fn();
 const getActiveOrgBindingMock = vi.fn();
+const getCurrentOrgConnectorConnectionMock = vi.fn();
 const mirrorOrgSetupGateMock = vi.fn();
 const nanoidMock = vi.fn();
 const redisSetMock = vi.fn();
@@ -21,6 +22,7 @@ vi.mock("@db/app", () => ({
   completeWatchedSourceControlRepositorySetup:
     completeWatchedSourceControlRepositorySetupMock,
   getActiveOrgBinding: getActiveOrgBindingMock,
+  getCurrentOrgConnectorConnection: getCurrentOrgConnectorConnectionMock,
   upsertWatchedSourceControlRepository:
     upsertWatchedSourceControlRepositoryMock,
 }));
@@ -144,6 +146,7 @@ describe("githubSetupRouter", () => {
     clerkGetOrganizationMembershipListMock.mockReset();
     completeWatchedSourceControlRepositorySetupMock.mockReset();
     getActiveOrgBindingMock.mockReset();
+    getCurrentOrgConnectorConnectionMock.mockReset();
     mirrorOrgSetupGateMock.mockReset();
     nanoidMock.mockReset();
     redisGetdelMock.mockReset();
@@ -158,6 +161,9 @@ describe("githubSetupRouter", () => {
       .mockReturnValueOnce("attempt_123456789012345678901234")
       .mockReturnValueOnce("nonce_1234567890123456789012345");
     getActiveOrgBindingMock.mockResolvedValue(undefined);
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue({
+      status: "active",
+    });
     completeWatchedSourceControlRepositorySetupMock.mockResolvedValue({});
     upsertWatchedSourceControlRepositoryMock.mockResolvedValue({});
     createGitHubAppJwtMock.mockResolvedValue("app.jwt");

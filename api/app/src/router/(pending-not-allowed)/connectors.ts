@@ -15,13 +15,14 @@ import {
 } from "../../services/connectors";
 import {
   boundOrgAdminProcedure,
-  boundOrgProcedure,
   createTRPCRouter,
+  orgAdminProcedure,
+  setupProcedure,
 } from "../../trpc";
 
 export const connectorsRouter = createTRPCRouter({
-  list: boundOrgProcedure.query(async ({ ctx }) => listConnectorsForOrg(ctx)),
-  startConnect: boundOrgAdminProcedure
+  list: setupProcedure.query(async ({ ctx }) => listConnectorsForOrg(ctx)),
+  startConnect: orgAdminProcedure
     .input(connectorStartConnectInputSchema)
     .mutation(async ({ ctx, input }) => startConnectorOAuth(ctx, input)),
   refreshTools: boundOrgAdminProcedure

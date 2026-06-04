@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const verifyMock = vi.fn();
 const getActiveOrgBindingMock = vi.fn();
+const getCurrentOrgConnectorConnectionMock = vi.fn();
 
 vi.mock("@vendor/unkey/server", () => ({
   getUnkeyClient: () => ({
@@ -14,6 +15,7 @@ vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({
   createSignal: vi.fn(),
   getActiveOrgBinding: getActiveOrgBindingMock,
+  getCurrentOrgConnectorConnection: getCurrentOrgConnectorConnectionMock,
   getSignalByPublicId: vi.fn(),
   markSignalFailed: vi.fn(),
 }));
@@ -25,6 +27,10 @@ const validKey = `lf_${"a".repeat(40)}`;
 beforeEach(() => {
   verifyMock.mockReset();
   getActiveOrgBindingMock.mockReset();
+  getCurrentOrgConnectorConnectionMock.mockReset();
+  getCurrentOrgConnectorConnectionMock.mockResolvedValue({
+    status: "active",
+  });
   getActiveOrgBindingMock.mockResolvedValue({
     metadata: {
       lightfastRepository: {
