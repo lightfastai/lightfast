@@ -17,6 +17,10 @@
       "types": "./src/env.ts",
       "default": "./src/env.ts"
     },
+    "./feature-flags": {
+      "types": "./src/feature-flags.ts",
+      "default": "./src/feature-flags.ts"
+    },
     "./services/github": {
       "types": "./src/services/github/index.ts",
       "default": "./src/services/github/index.ts"
@@ -92,6 +96,8 @@
     "@vendor/observability": "workspace:*",
     "@vendor/unkey": "workspace:*",
     "@vendor/upstash": "workspace:*",
+    "@vendor/vercel-flags": "workspace:*",
+    "@vercel/flags-core": "^1.1.0",
     "@vercel/related-projects": "catalog:",
     "drizzle-orm": "catalog:",
     "inngest": "catalog:",

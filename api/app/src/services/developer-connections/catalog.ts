@@ -5,6 +5,7 @@ import {
   type DeveloperConnectionProvider,
 } from "@repo/developer-connection-contract";
 import type { AuthContext } from "../../trpc";
+import { isDeveloperAuthBoxConfigured } from "./auth-box";
 
 interface DeveloperConnectionServiceContext {
   auth: AuthContext;
@@ -33,6 +34,7 @@ export interface DeveloperConnectionCatalogRow {
   description: string;
   displayName: string;
   provider: DeveloperConnectionProvider;
+  sentryBrowserOAuthAvailable: boolean;
 }
 
 export function canManageDeveloperConnections(
@@ -92,5 +94,7 @@ export async function listDeveloperConnectionsForOrg(
     canManage,
     connectAvailability: availabilityFor(canManage),
     connection: shapeConnection(byProvider.get(catalogItem.provider)),
+    sentryBrowserOAuthAvailable:
+      catalogItem.provider === "sentry" && isDeveloperAuthBoxConfigured(),
   }));
 }

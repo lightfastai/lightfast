@@ -57,8 +57,11 @@ interface NavItem {
   title: string;
 }
 
-function getOrgStandaloneItems(orgSlug: string): NavItem[] {
-  return [
+function getOrgStandaloneItems(
+  orgSlug: string,
+  developerConnectionsEnabled: boolean
+): NavItem[] {
+  const items: NavItem[] = [
     {
       title: "Automations",
       href: `/${orgSlug}/automations`,
@@ -68,11 +71,6 @@ function getOrgStandaloneItems(orgSlug: string): NavItem[] {
       title: "Connectors",
       href: `/${orgSlug}/connectors`,
       icon: Blocks,
-    },
-    {
-      title: "Developer Connections",
-      href: `/${orgSlug}/developer-connections`,
-      icon: KeyRound,
     },
     {
       title: "Skills",
@@ -86,6 +84,16 @@ function getOrgStandaloneItems(orgSlug: string): NavItem[] {
       icon: ListChecks,
     },
   ];
+
+  if (developerConnectionsEnabled) {
+    items.splice(2, 0, {
+      title: "Developer Connections",
+      href: `/${orgSlug}/developer-connections`,
+      icon: KeyRound,
+    });
+  }
+
+  return items;
 }
 
 function getOrgWorkspaceItems(orgSlug: string): NavItem[] {
@@ -254,7 +262,11 @@ function getConversationSidebarTitle(
   return title || "Untitled chat";
 }
 
-export function AppSidebar() {
+export function AppSidebar({
+  developerConnectionsEnabled = false,
+}: {
+  developerConnectionsEnabled?: boolean;
+}) {
   const pathname = usePathname();
   const { isMobile, setOpenMobile } = useSidebar();
 
@@ -311,7 +323,10 @@ export function AppSidebar() {
               <SidebarGroupContent>
                 <SidebarMenu>
                   <NavItems
-                    items={getOrgStandaloneItems(orgSlug)}
+                    items={getOrgStandaloneItems(
+                      orgSlug,
+                      developerConnectionsEnabled
+                    )}
                     pathname={pathname}
                   />
                 </SidebarMenu>

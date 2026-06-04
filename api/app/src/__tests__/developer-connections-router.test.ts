@@ -8,6 +8,7 @@ const connectDeveloperConnectionMock = vi.fn();
 const completeSentryDeveloperConnectionAuthMock = vi.fn();
 const setDeveloperConnectionSandboxEnabledMock = vi.fn();
 const disconnectDeveloperConnectionMock = vi.fn();
+const isDeveloperConnectionsEnabledMock = vi.fn();
 const startSentryDeveloperConnectionAuthMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
@@ -32,6 +33,10 @@ vi.mock("../services/developer-connections", () => ({
   setDeveloperConnectionSandboxEnabled:
     setDeveloperConnectionSandboxEnabledMock,
   startSentryDeveloperConnectionAuth: startSentryDeveloperConnectionAuthMock,
+}));
+
+vi.mock("../feature-flags", () => ({
+  isDeveloperConnectionsEnabled: isDeveloperConnectionsEnabledMock,
 }));
 
 const { createCallerFactory, createTRPCRouter } = await import("../trpc");
@@ -75,6 +80,7 @@ function caller(access = adminAccess()) {
 describe("developerConnectionsRouter", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    isDeveloperConnectionsEnabledMock.mockResolvedValue(true);
     listDeveloperConnectionsForOrgMock.mockResolvedValue([
       { provider: "sentry", canManage: false, connection: null },
     ]);
@@ -102,6 +108,16 @@ describe("developerConnectionsRouter", () => {
     await expect(
       caller(nonAdminAccess()).developerConnections.list()
     ).resolves.toEqual([expect.objectContaining({ provider: "sentry" })]);
+  });
+
+  it("hides developer connections procedures when the feature flag is disabled", async () => {
+    isDeveloperConnectionsEnabledMock.mockResolvedValue(false);
+
+    await expect(caller().developerConnections.list()).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+
+    expect(listDeveloperConnectionsForOrgMock).not.toHaveBeenCalled();
   });
 
   it("does not expose public lease materialization on the workspace router", () => {

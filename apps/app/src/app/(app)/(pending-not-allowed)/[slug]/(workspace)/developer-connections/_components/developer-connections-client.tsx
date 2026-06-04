@@ -536,52 +536,54 @@ function DeveloperConnectionConnectDialog({
 
           {row.provider === "sentry" ? (
             <>
-              <div className="rounded-[9px] border border-border p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="font-medium text-sm">Browser OAuth</p>
-                    <p className="mt-1 text-muted-foreground text-xs">
-                      Preferred Sentry auth path for admin setup.
-                    </p>
-                  </div>
-                  <Button
-                    disabled={!providerAccountName}
-                    onClick={() => onStartSentryAuth(providerAccountName)}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                  >
-                    <ArrowUpRight className="mr-1.5 size-3.5" />
-                    Browser OAuth
-                  </Button>
-                </div>
-                {sentryAuthAttempt ? (
-                  <div className="mt-3 rounded-[8px] bg-muted p-3">
-                    <p className="text-muted-foreground text-xs">User code</p>
-                    <p className="mt-1 font-mono text-foreground text-sm">
-                      {sentryAuthAttempt.userCode}
-                    </p>
-                    <a
-                      className="mt-2 inline-flex text-primary text-xs underline"
-                      href={sentryAuthAttempt.verificationUri}
-                      rel="noreferrer"
-                      target="_blank"
-                    >
-                      Open Sentry authorization
-                    </a>
+              {row.sentryBrowserOAuthAvailable ? (
+                <div className="rounded-[9px] border border-border p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-medium text-sm">Browser OAuth</p>
+                      <p className="mt-1 text-muted-foreground text-xs">
+                        Preferred Sentry auth path for admin setup.
+                      </p>
+                    </div>
                     <Button
-                      className="mt-3"
-                      onClick={() =>
-                        onCompleteSentryAuth(sentryAuthAttempt.attemptId)
-                      }
+                      disabled={!providerAccountName}
+                      onClick={() => onStartSentryAuth(providerAccountName)}
                       size="sm"
                       type="button"
+                      variant="outline"
                     >
-                      Complete connection
+                      <ArrowUpRight className="mr-1.5 size-3.5" />
+                      Browser OAuth
                     </Button>
                   </div>
-                ) : null}
-              </div>
+                  {sentryAuthAttempt ? (
+                    <div className="mt-3 rounded-[8px] bg-muted p-3">
+                      <p className="text-muted-foreground text-xs">User code</p>
+                      <p className="mt-1 font-mono text-foreground text-sm">
+                        {sentryAuthAttempt.userCode}
+                      </p>
+                      <a
+                        className="mt-2 inline-flex text-primary text-xs underline"
+                        href={sentryAuthAttempt.verificationUri}
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        Open Sentry authorization
+                      </a>
+                      <Button
+                        className="mt-3"
+                        onClick={() =>
+                          onCompleteSentryAuth(sentryAuthAttempt.attemptId)
+                        }
+                        size="sm"
+                        type="button"
+                      >
+                        Complete connection
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
               <TextField
                 id="sentry-token"
                 label="Sentry token"
