@@ -1,13 +1,7 @@
 import "@tanstack/react-start/server-only";
 
-import { db } from "@db/app/client";
+import { createTRPCContext } from "@api/app";
 
 export async function createTanStackTRPCContext(opts: { headers: Headers }) {
-  return {
-    auth: {
-      identity: { type: "unauthenticated" as const },
-    },
-    db,
-    headers: opts.headers,
-  };
+  return createTRPCContext({ headers: opts.headers });
 }
