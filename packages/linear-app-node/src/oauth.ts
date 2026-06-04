@@ -74,6 +74,7 @@ export function buildLinearOAuthAuthorizeUrl(input: {
 
   const url = new URL(oauthAuthorizeUrl);
   url.searchParams.set("actor", "app");
+  url.searchParams.set("response_type", "code");
   url.searchParams.set("client_id", input.clientId);
   url.searchParams.set("redirect_uri", input.callbackUrl);
   url.searchParams.set("scope", "read,write");

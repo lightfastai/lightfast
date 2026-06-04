@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const clerkGetUserMock = vi.fn();
 const clerkGetOrganizationMembershipListMock = vi.fn();
 const getActiveOrgBindingMock = vi.fn();
+const getCurrentOrgConnectorConnectionMock = vi.fn();
 const issueNativeAuthAttemptMock = vi.fn();
 const consumeNativeAuthAttemptMock = vi.fn();
 
@@ -11,6 +12,7 @@ vi.mock("@db/app/client", () => ({ db: {} }));
 
 vi.mock("@db/app", () => ({
   getActiveOrgBinding: getActiveOrgBindingMock,
+  getCurrentOrgConnectorConnection: getCurrentOrgConnectorConnectionMock,
 }));
 
 vi.mock("@vendor/clerk/env", () => ({
@@ -92,6 +94,10 @@ describe("nativeAuthRouter", () => {
     issueNativeAuthAttemptMock.mockReset();
     consumeNativeAuthAttemptMock.mockReset();
     getActiveOrgBindingMock.mockReset();
+    getCurrentOrgConnectorConnectionMock.mockReset();
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue({
+      status: "active",
+    });
     getActiveOrgBindingMock.mockImplementation(
       async (_db: Database, orgId: string) =>
         orgId === "org_1"

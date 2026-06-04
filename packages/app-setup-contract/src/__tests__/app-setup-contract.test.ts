@@ -11,10 +11,11 @@ import {
 } from "../index";
 
 describe("@repo/app-setup-contract", () => {
-  it("defines the two setup requirements in order", () => {
+  it("defines the setup requirements in order", () => {
     expect(ORG_SETUP_REQUIREMENTS).toEqual([
       "github_org",
       "github_lightfast_repo",
+      "x_connector",
     ]);
   });
 
@@ -26,6 +27,9 @@ describe("@repo/app-setup-contract", () => {
     expect(repairIdForSetupRequirement("github_org")).toBe("setup-github-org");
     expect(repairIdForSetupRequirement("github_lightfast_repo")).toBe(
       "setup-github-lightfast-repo"
+    );
+    expect(repairIdForSetupRequirement("x_connector")).toBe(
+      "setup-x-connector"
     );
   });
 
@@ -42,6 +46,12 @@ describe("@repo/app-setup-contract", () => {
         requirement: "github_lightfast_repo",
       })
     ).toBe("/acme/tasks/github/lightfast-repo");
+    expect(
+      pathForSetupRequirement({
+        orgSlug: "acme",
+        requirement: "x_connector",
+      })
+    ).toBe("/acme/tasks/connectors/x");
   });
 
   it("models setup gate states without impossible nullable combinations", () => {

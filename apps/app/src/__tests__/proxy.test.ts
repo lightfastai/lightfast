@@ -160,6 +160,9 @@ function matchesPattern(pattern: string, pathname: string) {
   if (pattern === "/:slug/tasks/github/lightfast-repo(.*)") {
     return /^\/[^/]+\/tasks\/github\/lightfast-repo(?:\/.*)?$/.test(pathname);
   }
+  if (pattern === "/:slug/tasks/connectors/x(.*)") {
+    return /^\/[^/]+\/tasks\/connectors\/x(?:\/.*)?$/.test(pathname);
+  }
   if (pattern.endsWith("(.*)")) {
     const prefix = pattern.slice(0, -4);
     return pathname === prefix.slice(0, -1) || pathname.startsWith(prefix);
@@ -260,6 +263,7 @@ describe("proxy Nemo composition", () => {
           "/:slug/settings(.*)",
           "/:slug/tasks/bind(.*)",
           "/:slug/tasks/github/lightfast-repo(.*)",
+          "/:slug/tasks/connectors/x(.*)",
         ],
       },
     });
@@ -575,6 +579,26 @@ describe("proxy bound org product route gate", () => {
     );
   });
 
+  it("redirects orgs missing the X connector from the workspace root to the X connector task", async () => {
+    authMock.mockResolvedValue({
+      orgId: "org_123",
+      orgSlug: "acme",
+      sessionClaims: {
+        lf_binding_status: "unbound",
+        lf_next_setup_requirement: "x_connector",
+      },
+      sessionStatus: "active",
+      userId: "user_123",
+    });
+
+    const { response } = await invoke("/acme");
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(
+      "https://app.lightfast.localhost/acme/tasks/connectors/x"
+    );
+  });
+
   it("passes bound orgs through on the workspace root", async () => {
     const { response } = await invoke("/acme");
 
@@ -662,6 +686,24 @@ describe("proxy bound org product route gate", () => {
     });
 
     const { response } = await invoke("/acme/tasks/github/lightfast-repo");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+  });
+
+  it("does not gate the X connector setup route", async () => {
+    authMock.mockResolvedValue({
+      orgId: "org_123",
+      orgSlug: "acme",
+      sessionClaims: {
+        lf_binding_status: "unbound",
+        lf_next_setup_requirement: "x_connector",
+      },
+      sessionStatus: "active",
+      userId: "user_123",
+    });
+
+    const { response } = await invoke("/acme/tasks/connectors/x");
 
     expect(response.status).toBe(200);
     expect(response.headers.get("location")).toBeNull();

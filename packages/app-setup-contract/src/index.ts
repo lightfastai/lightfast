@@ -5,6 +5,7 @@ export const LIGHTFAST_REPOSITORY_NAME = ".lightfast" as const;
 export const ORG_SETUP_REQUIREMENTS = [
   "github_org",
   "github_lightfast_repo",
+  "x_connector",
 ] as const;
 
 export type OrgSetupRequirement = (typeof ORG_SETUP_REQUIREMENTS)[number];
@@ -26,7 +27,8 @@ export type OrgSetupGate = z.infer<typeof orgSetupGateSchema>;
 
 export type OrgSetupRepairId =
   | "setup-github-org"
-  | "setup-github-lightfast-repo";
+  | "setup-github-lightfast-repo"
+  | "setup-x-connector";
 
 export function repairIdForSetupRequirement(
   requirement: OrgSetupRequirement
@@ -36,6 +38,8 @@ export function repairIdForSetupRequirement(
       return "setup-github-org";
     case "github_lightfast_repo":
       return "setup-github-lightfast-repo";
+    case "x_connector":
+      return "setup-x-connector";
     default: {
       const exhaustive: never = requirement;
       return exhaustive;
@@ -52,6 +56,8 @@ export function pathForSetupRequirement(input: {
       return `/${input.orgSlug}/tasks/bind`;
     case "github_lightfast_repo":
       return `/${input.orgSlug}/tasks/github/lightfast-repo`;
+    case "x_connector":
+      return `/${input.orgSlug}/tasks/connectors/x`;
     default: {
       const exhaustive: never = input.requirement;
       return exhaustive;

@@ -49,6 +49,11 @@ const activeIdentity = {
   userId: "user_current",
 } satisfies AuthIdentity;
 
+const xSetupIdentity = {
+  ...activeIdentity,
+  orgGate: { bindingStatus: "unbound", nextSetupRequirement: "x_connector" },
+} satisfies AuthIdentity;
+
 function adminAccess() {
   return {
     has: ({ role }: { role?: string }) => role === "org:admin",
@@ -65,9 +70,12 @@ function nonAdminAccess() {
   };
 }
 
-function caller(access = adminAccess()) {
+function caller(
+  access = adminAccess(),
+  identity: AuthIdentity = activeIdentity
+) {
   return createCaller({
-    auth: { access, identity: activeIdentity },
+    auth: { access, identity },
     db: {} as Database,
     headers: new Headers(),
   });
@@ -229,6 +237,26 @@ describe("connectorsRouter", () => {
       { enabled: true, provider: "x" }
     );
     expect(disconnectConnectorMock).toHaveBeenCalledWith(expect.anything(), {
+      provider: "x",
+    });
+  });
+
+  it("allows X setup to list connectors and start X OAuth before the org is bound", async () => {
+    await expect(
+      caller(adminAccess(), xSetupIdentity).connectors.list()
+    ).resolves.toEqual([expect.objectContaining({ provider: "linear" })]);
+
+    await expect(
+      caller(adminAccess(), xSetupIdentity).connectors.startConnect({
+        provider: "x",
+      })
+    ).resolves.toEqual({
+      authorizationUrl: "https://linear.test/oauth/authorize",
+      mode: "connect",
+    });
+
+    expect(listConnectorsForOrgMock).toHaveBeenCalled();
+    expect(startConnectorOAuthMock).toHaveBeenCalledWith(expect.anything(), {
       provider: "x",
     });
   });

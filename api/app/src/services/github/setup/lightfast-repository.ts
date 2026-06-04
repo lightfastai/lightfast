@@ -2,6 +2,7 @@ import type { Database } from "@db/app";
 import {
   completeWatchedSourceControlRepositorySetup,
   getActiveOrgBinding,
+  getCurrentOrgConnectorConnection,
   upsertWatchedSourceControlRepository,
 } from "@db/app";
 import {
@@ -124,6 +125,18 @@ async function enqueueInitialIdentityRefresh(input: {
   }
 }
 
+async function deriveSetupGateWithConnector(input: {
+  binding: NonNullable<Awaited<ReturnType<typeof getActiveOrgBinding>>>;
+  clerkOrgId: string;
+  db: Database;
+}) {
+  const xConnection = await getCurrentOrgConnectorConnection(input.db, {
+    clerkOrgId: input.clerkOrgId,
+    provider: "x",
+  });
+  return deriveOrgSetupGate(input.binding, xConnection);
+}
+
 export async function verifyGitHubLightfastRepositorySetup(input: {
   clerkOrgId: string;
   db: Database;
@@ -147,7 +160,11 @@ export async function verifyGitHubLightfastRepositorySetup(input: {
     await enqueueInitialIdentityRefresh({
       sourceControlRepositoryId: watchedRepository.id,
     });
-    const gate = deriveOrgSetupGate(binding);
+    const gate = await deriveSetupGateWithConnector({
+      binding,
+      clerkOrgId: input.clerkOrgId,
+      db: input.db,
+    });
     await mirrorOrgSetupGate({
       clerkOrgId: input.clerkOrgId,
       gate,
@@ -242,9 +259,13 @@ export async function verifyGitHubLightfastRepositorySetup(input: {
     sourceControlRepositoryId: watchedRepository.id,
   });
 
-  const gate = deriveOrgSetupGate({
-    ...binding,
-    metadata,
+  const gate = await deriveSetupGateWithConnector({
+    binding: {
+      ...binding,
+      metadata,
+    },
+    clerkOrgId: input.clerkOrgId,
+    db: input.db,
   });
   await mirrorOrgSetupGate({
     clerkOrgId: input.clerkOrgId,

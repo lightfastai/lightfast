@@ -3,9 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const authMock = vi.fn();
 const getActiveOrgBindingMock = vi.fn();
+const getCurrentOrgConnectorConnectionMock = vi.fn();
 
 vi.mock("@db/app", () => ({
   getActiveOrgBinding: (...args: unknown[]) => getActiveOrgBindingMock(...args),
+  getCurrentOrgConnectorConnection: (...args: unknown[]) =>
+    getCurrentOrgConnectorConnectionMock(...args),
 }));
 
 vi.mock("@vendor/clerk/env", () => ({
@@ -37,6 +40,8 @@ const db = {} as Database;
 beforeEach(() => {
   authMock.mockReset();
   getActiveOrgBindingMock.mockReset();
+  getCurrentOrgConnectorConnectionMock.mockReset();
+  getCurrentOrgConnectorConnectionMock.mockResolvedValue({ status: "active" });
 });
 
 function resolve(headers = new Headers()) {
