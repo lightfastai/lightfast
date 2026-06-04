@@ -1,8 +1,8 @@
 import type { Database } from "@db/app";
 
 import {
-  type CreateAndQueueSignalInput,
   type CreateAndQueueSignalDependencies,
+  type CreateAndQueueSignalInput,
   createAndQueueSignal,
 } from "./create-signal";
 

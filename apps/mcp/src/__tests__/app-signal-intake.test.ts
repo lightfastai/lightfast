@@ -85,7 +85,10 @@ describe("app signal intake adapter", () => {
   it("throws a stable upstream error for non-2xx app responses", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       Response.json(
-        { error: "signal_enqueue_failed", message: "Failed to queue signal." },
+        {
+          error: "signal_enqueue_failed",
+          message: "Failed to queue signal.",
+        },
         { status: 500 }
       )
     );

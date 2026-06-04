@@ -60,10 +60,14 @@ export async function verifyServiceJWT(input: {
   token: string;
 }): Promise<{ audience: ServiceJwtAudience; caller: ServiceJwtCaller }> {
   try {
-    const { payload } = await jwtVerify(input.token, secretKey(input.jwtSecret), {
-      algorithms: ["HS256"],
-      audience: input.audience,
-    });
+    const { payload } = await jwtVerify(
+      input.token,
+      secretKey(input.jwtSecret),
+      {
+        algorithms: ["HS256"],
+        audience: input.audience,
+      }
+    );
     const parsed = serviceJwtPayloadSchema.parse(payload);
     const caller = parsed.iss;
 
@@ -83,8 +87,13 @@ export async function verifyServiceJWT(input: {
     if (error instanceof ServiceJwtError) {
       throw error;
     }
-    throw new ServiceJwtError("invalid_token", "Service token is invalid.", 401, {
-      cause: error,
-    });
+    throw new ServiceJwtError(
+      "invalid_token",
+      "Service token is invalid.",
+      401,
+      {
+        cause: error,
+      }
+    );
   }
 }

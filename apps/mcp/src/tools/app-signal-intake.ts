@@ -1,9 +1,9 @@
-import type { Database } from "@db/app";
 import { signServiceJWT } from "@api/app/service-jwt";
+import type { Database } from "@db/app";
 import {
+  type CreateSignalOutput,
   createMcpSignalCommandInput,
   createSignalOutput,
-  type CreateSignalOutput,
 } from "@repo/api-contract";
 
 import { env } from "../env";

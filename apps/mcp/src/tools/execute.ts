@@ -572,7 +572,9 @@ async function defaultDependencies(
   if (contractPath === "proxy.find" || contractPath === "proxy.call") {
     const [mcpOauth, providerRoutines] = await Promise.all([
       import("@api/app/mcp-oauth"),
-      import("@repo/provider-routines") as Promise<ProviderRoutineServiceModule>,
+      import(
+        "@repo/provider-routines"
+      ) as Promise<ProviderRoutineServiceModule>,
     ]);
     return {
       ...base,

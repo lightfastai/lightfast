@@ -16,13 +16,13 @@ export interface CreateAndQueueSignalInput {
   input: string;
 }
 
-type SignalCreatedEvent = {
+interface SignalCreatedEvent {
   data: {
     clerkOrgId: string;
     signalId: string;
   };
   name: "app/signal.created";
-};
+}
 
 export interface CreateAndQueueSignalDependencies {
   sendSignalCreatedEvent?: (event: SignalCreatedEvent) => Promise<unknown>;

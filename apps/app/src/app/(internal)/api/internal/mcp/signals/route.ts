@@ -1,5 +1,5 @@
-import { verifyServiceJWT } from "@api/app/service-jwt";
 import { assertHostedMcpOrgAccess } from "@api/app/mcp-oauth/resource-access";
+import { verifyServiceJWT } from "@api/app/service-jwt";
 import { createSignalForActor } from "@api/app/signals/service";
 import { db } from "@db/app/client";
 import { createMcpSignalCommandInput } from "@repo/api-contract";

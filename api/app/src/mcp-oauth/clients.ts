@@ -174,10 +174,7 @@ function assertAllowedRedirectUri(value: string): void {
 
   const url = new URL(value);
   if (url.hash) {
-    throw new McpOAuthError(
-      "invalid_request",
-      REDIRECT_URI_POLICY_ERROR
-    );
+    throw new McpOAuthError("invalid_request", REDIRECT_URI_POLICY_ERROR);
   }
   if (url.protocol === "https:") {
     return;
@@ -204,7 +201,7 @@ function hasExplicitLoopbackPort(value: string): boolean {
       value
     );
   const port = Number(match?.groups?.port);
-  return Number.isInteger(port) && port >= 1 && port <= 65535;
+  return Number.isInteger(port) && port >= 1 && port <= 65_535;
 }
 
 function assertPublicMetadataUrl(name: string, value: string): void {
