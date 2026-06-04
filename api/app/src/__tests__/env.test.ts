@@ -9,6 +9,11 @@ const GITHUB_APP_ENV_KEYS = [
   "GITHUB_APP_WEBHOOK_SECRET",
 ] as const;
 
+const LINEAR_ENV_KEYS = [
+  "LINEAR_CLIENT_ID",
+  "LINEAR_CLIENT_SECRET",
+] as const;
+
 const MUTATED_ENV_KEYS = [
   "CLERK_SECRET_KEY",
   "CONNECTOR_MCP_AUTH_SECRET",
@@ -20,6 +25,7 @@ const MUTATED_ENV_KEYS = [
   "UNKEY_ROOT_KEY",
   "VERCEL_ENV",
   ...GITHUB_APP_ENV_KEYS,
+  ...LINEAR_ENV_KEYS,
 ] as const;
 
 const ORIGINAL_ENV = Object.fromEntries(
@@ -79,6 +85,27 @@ describe("api app env", () => {
       expect(loggedErrors).toContain(key);
     }
   });
+
+  it.each([
+    "development",
+    "preview",
+    "production",
+  ] as const)("requires Linear env during %s env module evaluation", async (vercelEnv) => {
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    setValidBaseEnv(vercelEnv);
+    unsetLinearEnv();
+    vi.resetModules();
+
+    await expect(import("../env")).rejects.toThrow(
+      "Invalid environment variables"
+    );
+    const loggedErrors = JSON.stringify(consoleErrorSpy.mock.calls);
+    for (const key of LINEAR_ENV_KEYS) {
+      expect(loggedErrors).toContain(key);
+    }
+  });
 });
 
 function restoreEnv(name: string, value: string | undefined) {
@@ -94,6 +121,8 @@ function setValidBaseEnv(vercelEnv: "development" | "preview" | "production") {
   process.env.CONNECTOR_MCP_AUTH_SECRET = "x".repeat(32);
   process.env.ENCRYPTION_KEY = "0".repeat(64);
   process.env.INNGEST_APP_NAME = "lightfast-test";
+  process.env.LINEAR_CLIENT_ID = "linear_client_test";
+  process.env.LINEAR_CLIENT_SECRET = "linear_secret_test";
   process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY =
     "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk";
   delete process.env.SKIP_ENV_VALIDATION;
@@ -104,6 +133,12 @@ function setValidBaseEnv(vercelEnv: "development" | "preview" | "production") {
 
 function unsetGitHubAppEnv() {
   for (const key of GITHUB_APP_ENV_KEYS) {
+    delete process.env[key];
+  }
+}
+
+function unsetLinearEnv() {
+  for (const key of LINEAR_ENV_KEYS) {
     delete process.env[key];
   }
 }
