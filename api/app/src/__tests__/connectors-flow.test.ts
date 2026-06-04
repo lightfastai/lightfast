@@ -1428,6 +1428,7 @@ describe("X connector flow", () => {
     );
     expect(listXBridgeMcpToolsMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        allowedEndpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
         endpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
         mcpToken: expect.stringMatching(/^lfmcp_v1\./),
       })
@@ -1582,6 +1583,8 @@ describe("X connector flow", () => {
 
     expect(listXBridgeMcpToolsMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        allowedEndpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
+        endpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
         mcpToken: expect.stringMatching(/^lfmcp_v1\./),
       })
     );
