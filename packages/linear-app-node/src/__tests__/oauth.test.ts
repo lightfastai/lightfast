@@ -24,6 +24,7 @@ describe("buildLinearOAuthAuthorizeUrl", () => {
       "https://linear.test/oauth/authorize"
     );
     expect(url.searchParams.get("actor")).toBe("app");
+    expect(url.searchParams.get("response_type")).toBe("code");
     expect(url.searchParams.get("scope")).toBe("read,write");
     expect(url.searchParams.get("state")).toBe("state_123");
     expect(url.searchParams.get("code_challenge")).toBe("challenge_123");
