@@ -391,6 +391,7 @@ export {
   UserSourceControlAccountConflictError,
   updateObservedUserSourceControlAccountTokens,
 } from "./utils/user-source-control-account";
+export { isDuplicateKeyError } from "./utils/drizzle-results";
 export {
   type AppendWorkspaceAssistantMessageInput,
   appendWorkspaceAssistantMessage,

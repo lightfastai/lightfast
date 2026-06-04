@@ -337,7 +337,7 @@ describe("WorkspaceAssistantClient", () => {
     expect(submit).toBeEnabled();
   });
 
-  it("creates an addressable conversation before sending the first prompt", async () => {
+  it("updates the URL and sends the first prompt to the generated conversation id", async () => {
     render(<WorkspaceAssistantClient conversationId="conv_new" />);
 
     fireEvent.change(screen.getByPlaceholderText("Ask Lightfield"), {
@@ -345,18 +345,13 @@ describe("WorkspaceAssistantClient", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Send message" }));
 
-    await waitFor(() => {
-      expect(mutateAsyncMock).toHaveBeenCalledWith({
-        publicId: "conv_new",
-        title: "Summarize my active opportunities",
-      });
-    });
     expect(historyReplaceStateMock).toHaveBeenCalledWith(
       null,
       "",
       "/acme/chat/conv_new"
     );
     expect(replaceMock).not.toHaveBeenCalled();
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
     expect(sendMessageMock).toHaveBeenCalledWith(
       { text: "Summarize my active opportunities" },
       {
@@ -368,16 +363,7 @@ describe("WorkspaceAssistantClient", () => {
     );
   });
 
-  it("updates the URL immediately before waiting for the first conversation create", async () => {
-    let resolveCreate:
-      | ((conversation: { publicId: string; title: string }) => void)
-      | undefined;
-    mutateAsyncMock.mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          resolveCreate = resolve;
-        })
-    );
+  it("sends and clears the first prompt immediately", async () => {
     render(<WorkspaceAssistantClient conversationId="conv_new" />);
 
     fireEvent.change(screen.getByPlaceholderText("Ask Lightfield"), {
@@ -390,28 +376,66 @@ describe("WorkspaceAssistantClient", () => {
       "",
       "/acme/chat/conv_new"
     );
-    expect(mutateAsyncMock).toHaveBeenCalledWith({
-      publicId: "conv_new",
-      title: "Summarize my active opportunities",
-    });
-    expect(sendMessageMock).not.toHaveBeenCalled();
-
-    resolveCreate?.({
-      publicId: "conv_new",
-      title: "Summarize my active opportunities",
-    });
-
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
+    expect(sendMessageMock).toHaveBeenCalledWith(
+      { text: "Summarize my active opportunities" },
+      {
+        body: {
+          idempotencyKey: expect.stringMatching(/^idem_/),
+          conversationId: "conv_new",
+        },
+      }
+    );
     await waitFor(() => {
-      expect(sendMessageMock).toHaveBeenCalledWith(
-        { text: "Summarize my active opportunities" },
-        {
-          body: {
-            idempotencyKey: expect.stringMatching(/^idem_/),
-            conversationId: "conv_new",
-          },
-        }
-      );
+      expect(screen.getByPlaceholderText("Ask Lightfield")).toHaveValue("");
     });
+    expect(screen.getByRole("button", { name: "Send message" })).toBeDisabled();
+  });
+
+  it("clears a follow-up prompt immediately while the send is in flight", async () => {
+    let resolveSend: (() => void) | undefined;
+    sendMessageMock.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveSend = resolve;
+        })
+    );
+    render(
+      <WorkspaceAssistantClient
+        conversationId="conv_existing"
+        initialConversation={{
+          messages: [
+            makeWorkspaceAssistantMessage({
+              parts: [{ text: "Earlier prompt", type: "text" }],
+              publicId: "msg_user",
+              role: "user",
+            }),
+          ],
+          conversation: makeWorkspaceAssistantConversation(),
+        }}
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText("Ask Lightfield"), {
+      target: { value: "What should I do next?" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    expect(sendMessageMock).toHaveBeenCalledWith(
+      { text: "What should I do next?" },
+      {
+        body: {
+          idempotencyKey: expect.stringMatching(/^idem_/),
+          conversationId: "conv_existing",
+        },
+      }
+    );
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText("Ask Lightfield")).toHaveValue("");
+    });
+    expect(screen.getByRole("button", { name: "Send message" })).toBeDisabled();
+
+    resolveSend?.();
   });
 
   it("does not let hidden attachment state block a text prompt", async () => {
@@ -451,6 +475,16 @@ describe("WorkspaceAssistantClient", () => {
     expect(
       screen.getByRole("button", { name: "Stop generating" })
     ).toBeEnabled();
+  });
+
+  it("disables the submit control while a prompt is submitted", () => {
+    chatStatus = "submitted";
+
+    render(<WorkspaceAssistantClient conversationId="conv_new" />);
+
+    expect(
+      screen.getByRole("button", { name: "Stop generating" })
+    ).toBeDisabled();
   });
 
   it("renders persisted chat messages and sends follow-ups to the existing conversation", async () => {

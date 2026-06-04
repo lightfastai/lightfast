@@ -32,7 +32,8 @@ export const ChatComposer = memo(function ChatComposer({
   text: string;
 }) {
   const isGenerating = status === "submitted" || status === "streaming";
-  const submitDisabled = !isGenerating && text.trim().length === 0;
+  const submitDisabled =
+    status === "submitted" || (!isGenerating && text.trim().length === 0);
 
   // Keep the textarea editable while a response streams so the next message
   // can be drafted. The button acts as Stop during generation, and Enter is
@@ -41,7 +42,9 @@ export const ChatComposer = memo(function ChatComposer({
     if (isGenerating) {
       return;
     }
-    return onSubmit(message);
+
+    const submittedText = message.text.trim() ? message.text : text;
+    return onSubmit({ ...message, text: submittedText });
   };
 
   const submit = (
