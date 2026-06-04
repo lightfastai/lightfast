@@ -546,6 +546,7 @@ async function finalizeXConnection(input: {
 
   try {
     await discoverXConnectorTools({
+      allowedEndpoint: config.endpoints.mcpEndpoint,
       clerkOrgId: input.attempt.clerkOrgId,
       connection: persisted,
       db: appDb,
@@ -643,6 +644,7 @@ export async function refreshXConnectorTools(ctx: ConnectorServiceContext) {
 
   try {
     const toolManifest = await discoverXConnectorTools({
+      allowedEndpoint: config.endpoints.mcpEndpoint,
       clerkOrgId: identity.orgId,
       connection,
       db: ctx.db,
@@ -667,6 +669,7 @@ export async function refreshXConnectorTools(ctx: ConnectorServiceContext) {
 }
 
 async function discoverXConnectorTools(input: {
+  allowedEndpoint: string;
   clerkOrgId: string;
   connection: OrgConnectorConnection;
   db: Database;
@@ -679,6 +682,7 @@ async function discoverXConnectorTools(input: {
     purpose: "list",
   });
   const toolManifest = await listXBridgeMcpTools({
+    allowedEndpoint: input.allowedEndpoint,
     endpoint: input.endpoint,
     mcpToken,
   });

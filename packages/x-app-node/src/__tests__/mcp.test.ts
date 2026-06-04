@@ -101,6 +101,37 @@ describe("X bridge MCP client helpers", () => {
     ]);
   });
 
+  it("allows the configured first-party MCP endpoint in production", async () => {
+    await expect(
+      listXBridgeMcpTools({
+        allowedEndpoint: "https://lightfast.ai/api/connectors/x/mcp",
+        endpoint: "https://lightfast.ai/api/connectors/x/mcp",
+        mcpToken: "lfmcp_v1.test.payload.signature",
+        nodeEnv: "production",
+      })
+    ).resolves.toEqual([
+      {
+        description: "Look up an X user by username",
+        inputSchema: {
+          properties: { username: { type: "string" } },
+          required: ["username"],
+          type: "object",
+        },
+        name: "getUsersByUsername",
+      },
+    ]);
+  });
+
+  it("rejects unconfigured MCP endpoints in production", async () => {
+    await expect(
+      listXBridgeMcpTools({
+        endpoint: "https://other.example/api/connectors/x/mcp",
+        mcpToken: "lfmcp_v1.test.payload.signature",
+        nodeEnv: "production",
+      })
+    ).rejects.toMatchObject({ code: "X_CUSTOM_ENDPOINT_FORBIDDEN" });
+  });
+
   it("calls tools with a Lightfast MCP bearer token", async () => {
     await expect(
       callXBridgeMcpTool({
@@ -125,5 +156,18 @@ describe("X bridge MCP client helpers", () => {
       },
       url: "https://app.test/api/connectors/x/mcp",
     });
+  });
+
+  it("calls tools against the configured first-party MCP endpoint in production", async () => {
+    await expect(
+      callXBridgeMcpTool({
+        allowedEndpoint: "https://lightfast.ai/api/connectors/x/mcp",
+        endpoint: "https://lightfast.ai/api/connectors/x/mcp",
+        input: { username: "lightfast" },
+        mcpToken: "lfmcp_v1.test.payload.signature",
+        name: "getUsersByUsername",
+        nodeEnv: "production",
+      })
+    ).resolves.toEqual({ content: [{ text: "done", type: "text" }] });
   });
 });

@@ -15,13 +15,14 @@ const DEFAULT_X_MCP_TIMEOUT_MS = 10_000;
 const DEFAULT_X_MCP_CLOSE_TIMEOUT_MS = 1000;
 
 export async function listXBridgeMcpTools(input: {
+  allowedEndpoint?: string;
   endpoint: string;
   mcpToken: string;
   nodeEnv?: string;
   timeoutMs?: number;
 }): Promise<FullConnectorToolManifest> {
   assertXEndpointAllowed({
-    defaultValue: DEFAULT_X_ENDPOINTS.mcpEndpoint,
+    defaultValue: input.allowedEndpoint ?? DEFAULT_X_ENDPOINTS.mcpEndpoint,
     nodeEnv: input.nodeEnv,
     value: input.endpoint,
   });
@@ -66,6 +67,7 @@ export async function listXBridgeMcpTools(input: {
 }
 
 export async function callXBridgeMcpTool(input: {
+  allowedEndpoint?: string;
   endpoint: string;
   input?: Record<string, unknown>;
   mcpToken: string;
@@ -74,7 +76,7 @@ export async function callXBridgeMcpTool(input: {
   timeoutMs?: number;
 }): Promise<unknown> {
   assertXEndpointAllowed({
-    defaultValue: DEFAULT_X_ENDPOINTS.mcpEndpoint,
+    defaultValue: input.allowedEndpoint ?? DEFAULT_X_ENDPOINTS.mcpEndpoint,
     nodeEnv: input.nodeEnv,
     value: input.endpoint,
   });
