@@ -25,15 +25,39 @@ describe("app-tanstack workspace wiring", () => {
     ) as { scripts: Record<string, string> };
 
     expect(rootPackageJson.scripts.dev).toContain("-F @lightfast/app-tanstack");
+    expect(rootPackageJson.scripts.dev).toContain(
+      "@lightfast/app-tanstack#mfe:proxy"
+    );
+    expect(rootPackageJson.scripts.dev).not.toContain(
+      "@lightfast/app#mfe:proxy"
+    );
   });
 
-  it("does not replace the current app in the MFE mesh", () => {
+  it("owns the default MFE mesh for the aggregate app URL", () => {
     const microfrontendsJson = readFileSync(
-      resolve(repoRoot, "apps/app/microfrontends.json"),
+      resolve(appRoot, "microfrontends.json"),
       "utf8"
     );
 
-    expect(microfrontendsJson).toContain('"packageName": "@lightfast/app"');
-    expect(microfrontendsJson).not.toContain("@lightfast/app-tanstack");
+    expect(microfrontendsJson).toContain(
+      '"packageName": "@lightfast/app-tanstack"'
+    );
+    expect(microfrontendsJson).toContain('"packageName": "@lightfast/www"');
+  });
+
+  it("injects aggregate app URLs into the TanStack dev server", () => {
+    const packageJson = JSON.parse(
+      readFileSync(resolve(appRoot, "package.json"), "utf8")
+    ) as { scripts: Record<string, string> };
+
+    expect(packageJson.scripts["mfe:proxy"]).toContain(
+      "lightfast-app-tanstack=$(portless get app-tanstack.lightfast)"
+    );
+    expect(packageJson.scripts["with-related-projects"]).toContain(
+      "NEXT_PUBLIC_APP_URL=$(portless get lightfast)"
+    );
+    expect(packageJson.scripts["with-related-projects"]).toContain(
+      "VITE_LIGHTFAST_APP_URL=$(portless get lightfast)"
+    );
   });
 });

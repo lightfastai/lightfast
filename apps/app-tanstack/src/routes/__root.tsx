@@ -1,9 +1,12 @@
+import { ClerkProvider } from "@clerk/tanstack-react-start";
+import { Toaster } from "@repo/ui/components/ui/sonner";
 import {
   createRootRoute,
   HeadContent,
   Outlet,
   Scripts,
 } from "@tanstack/react-router";
+import "~/styles/globals.css";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -61,17 +64,15 @@ function RootComponent() {
       <head>
         <HeadContent />
       </head>
-      <body
-        style={{
-          margin: 0,
-          minHeight: "100vh",
-          background: "#09090b",
-          color: "#fafafa",
-          fontFamily:
-            "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
-        }}
-      >
-        <Outlet />
+      <body className="min-h-screen bg-background font-sans text-foreground antialiased">
+        <ClerkProvider
+          publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}
+          signInFallbackRedirectUrl="/"
+          signUpFallbackRedirectUrl="/"
+        >
+          <Outlet />
+          <Toaster />
+        </ClerkProvider>
         <Scripts />
       </body>
     </html>

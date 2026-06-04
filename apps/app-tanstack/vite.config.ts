@@ -8,6 +8,8 @@ import { env, sentryClientDsn, sentryServerDsn } from "./src/env";
 
 const host = process.env.HOST;
 const port = process.env.PORT ? Number(process.env.PORT) : undefined;
+const portlessUrl = process.env.PORTLESS_URL;
+const hmrHost = portlessUrl ? new URL(portlessUrl).hostname : undefined;
 
 const sentryBuildEnvKeys = [
   "SENTRY_AUTH_TOKEN",
@@ -51,11 +53,35 @@ export default defineConfig(({ command }) => ({
     ...sentryTanstackStart(requireSentryBuildEnv(command)),
   ],
   resolve: {
-    alias: {
-      "~": fileURLToPath(new URL("./src", import.meta.url)),
-    },
+    alias: [
+      {
+        find: "~",
+        replacement: fileURLToPath(new URL("./src", import.meta.url)),
+      },
+      {
+        find: /^server-only$/,
+        replacement: fileURLToPath(
+          new URL("./src/compat/server-only.ts", import.meta.url)
+        ),
+      },
+      {
+        find: /^@vendor\/clerk\/server$/,
+        replacement: fileURLToPath(
+          new URL("./src/compat/clerk-server.ts", import.meta.url)
+        ),
+      },
+      {
+        find: /^@vendor\/clerk$/,
+        replacement: fileURLToPath(
+          new URL("./src/compat/clerk.ts", import.meta.url)
+        ),
+      },
+    ],
   },
   define: {
+    "import.meta.env.VITE_CLERK_PUBLISHABLE_KEY": JSON.stringify(
+      env.VITE_CLERK_PUBLISHABLE_KEY
+    ),
     "import.meta.env.VITE_LIGHTFAST_APP_URL": JSON.stringify(
       env.VITE_LIGHTFAST_APP_URL
     ),
@@ -70,5 +96,14 @@ export default defineConfig(({ command }) => ({
   server: {
     ...(host ? { host } : {}),
     ...(port ? { port, strictPort: true } : {}),
+    ...(hmrHost
+      ? {
+          hmr: {
+            clientPort: 443,
+            host: hmrHost,
+            protocol: "wss" as const,
+          },
+        }
+      : {}),
   },
 }));

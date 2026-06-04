@@ -21,6 +21,7 @@ export const env = createEnv({
   extends: [dbEnv, upstashEnv, unkeyEnv],
   clientPrefix: "VITE_",
   client: {
+    VITE_CLERK_PUBLISHABLE_KEY: z.string().min(1).startsWith("pk_"),
     VITE_LIGHTFAST_APP_URL: z.string().url(),
     VITE_LIGHTFAST_PLATFORM_URL: z.string().url(),
     VITE_LIGHTFAST_WWW_URL: z.string().url(),
@@ -71,6 +72,9 @@ export const env = createEnv({
       process.env.VITE_LIGHTFAST_APP_URL ??
       process.env.NEXT_PUBLIC_APP_URL ??
       defaultAppUrl,
+    VITE_CLERK_PUBLISHABLE_KEY:
+      process.env.VITE_CLERK_PUBLISHABLE_KEY ??
+      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
     VITE_LIGHTFAST_PLATFORM_URL:
       process.env.VITE_LIGHTFAST_PLATFORM_URL ??
       process.env.NEXT_PUBLIC_PLATFORM_URL ??

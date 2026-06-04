@@ -16,6 +16,15 @@ describe("security headers", () => {
     expect(response.headers.get("Content-Security-Policy")).toContain(
       "connect-src 'self'"
     );
+    expect(response.headers.get("Content-Security-Policy")).toContain(
+      "https://*.clerk.accounts.dev"
+    );
+    expect(response.headers.get("Content-Security-Policy")).toContain(
+      "wss://127.0.0.1:*"
+    );
+    expect(response.headers.get("Content-Security-Policy")).toContain(
+      "wss://*.lightfast.localhost"
+    );
     await expect(response.json()).resolves.toEqual({ ok: true });
   });
 

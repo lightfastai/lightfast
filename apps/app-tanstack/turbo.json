@@ -50,6 +50,10 @@
       "cache": false,
       "persistent": true
     },
+    "mfe:proxy": {
+      "cache": false,
+      "persistent": true
+    },
     "transit": {}
   }
 }

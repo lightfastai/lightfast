@@ -1,3 +1,4 @@
+import { clerkMiddleware } from "@clerk/tanstack-react-start/server";
 import {
   sentryGlobalFunctionMiddleware,
   sentryGlobalRequestMiddleware,
@@ -17,6 +18,14 @@ const securityHeadersMiddleware = createMiddleware().server(
 );
 
 export const startInstance = createStart(() => ({
-  requestMiddleware: [sentryGlobalRequestMiddleware, securityHeadersMiddleware],
+  requestMiddleware: [
+    sentryGlobalRequestMiddleware,
+    clerkMiddleware({
+      publishableKey: import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
+      signInUrl: "/sign-in",
+      signUpUrl: "/sign-up",
+    }),
+    securityHeadersMiddleware,
+  ],
   functionMiddleware: [sentryGlobalFunctionMiddleware],
 }));

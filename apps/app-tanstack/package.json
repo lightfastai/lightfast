@@ -10,6 +10,7 @@
     "clean": "git clean -xdf .cache .output .tanstack .turbo .vercel dist node_modules src/routeTree.gen.ts",
     "dev": "portless run pnpm with-related-projects pnpm with-env vite dev",
     "dev:next": "pnpm dev",
+    "mfe:proxy": "portless run --name lightfast sh -c 'pnpm exec microfrontends proxy ./microfrontends.json --port \"$PORT\" --local-apps lightfast-app-tanstack lightfast-www --local-app-url lightfast-app-tanstack=$(portless get app-tanstack.lightfast) --local-app-url lightfast-www=$(portless get www.lightfast)'",
     "preview": "pnpm with-env vite preview",
     "start": "pnpm preview",
     "test": "vitest run",
@@ -17,9 +18,11 @@
     "with-env": "dotenv -e ./.env.overrides.local -e ./.vercel/.env.development.local -e ../app/.env.overrides.local -e ../app/.vercel/.env.development.local --",
     "with-env:local": "dotenv -e ./.env.overrides.local -e ./.vercel/.env.development.local -e ../app/.env.overrides.local -e ../app/.vercel/.env.development.local --",
     "with-env:vercel": "dotenv -e ./.vercel/.env.development.local -e ../app/.vercel/.env.development.local --",
-    "with-related-projects": "env -S \"$(pnpm --silent --filter @repo/github-emulator env:sh -- --callback-url \"$(portless get lightfast)/api/github/setup\" --public-origin \"$(portless get github.lightfast)\")\n$(pnpm --silent --filter @repo/linear-emulator env:sh -- --public-origin \"$(portless get linear.lightfast)\")\n$(pnpm --silent --filter @repo/x-emulator env:sh -- --callback-url \"$(portless get lightfast)/api/connectors/x/mcp\" --public-origin \"$(portless get x.lightfast)\")\" INNGEST_SERVE_ORIGIN=$(portless get app-tanstack.lightfast) NEXT_PUBLIC_APP_URL=$(portless get app-tanstack.lightfast) NEXT_PUBLIC_WWW_URL=$(portless get www.lightfast) NEXT_PUBLIC_PLATFORM_URL=$(portless get platform.lightfast) VITE_LIGHTFAST_APP_URL=$(portless get app-tanstack.lightfast) VITE_LIGHTFAST_WWW_URL=$(portless get www.lightfast) VITE_LIGHTFAST_PLATFORM_URL=$(portless get platform.lightfast) VITE_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN:-} INNGEST_DEV=$(portless get inngest.lightfast) QSTASH_URL=$(portless get qstash.lightfast)"
+    "with-related-projects": "env -S \"$(pnpm --silent --filter @repo/github-emulator env:sh -- --callback-url \"$(portless get lightfast)/api/github/setup\" --public-origin \"$(portless get github.lightfast)\")\n$(pnpm --silent --filter @repo/linear-emulator env:sh -- --public-origin \"$(portless get linear.lightfast)\")\n$(pnpm --silent --filter @repo/x-emulator env:sh -- --callback-url \"$(portless get lightfast)/api/connectors/x/mcp\" --public-origin \"$(portless get x.lightfast)\")\" INNGEST_SERVE_ORIGIN=$(portless get lightfast) NEXT_PUBLIC_APP_URL=$(portless get lightfast) NEXT_PUBLIC_WWW_URL=$(portless get www.lightfast) NEXT_PUBLIC_PLATFORM_URL=$(portless get platform.lightfast) VITE_LIGHTFAST_APP_URL=$(portless get lightfast) VITE_LIGHTFAST_WWW_URL=$(portless get www.lightfast) VITE_LIGHTFAST_PLATFORM_URL=$(portless get platform.lightfast) VITE_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN:-} INNGEST_DEV=$(portless get inngest.lightfast) QSTASH_URL=$(portless get qstash.lightfast)"
   },
   "dependencies": {
+    "@api/app": "workspace:*",
+    "@clerk/tanstack-react-start": "catalog:",
     "@db/app": "workspace:*",
     "@repo/ai": "workspace:*",
     "@repo/ui": "workspace:*",
@@ -27,16 +30,22 @@
     "@t3-oss/env-core": "catalog:",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "catalog:",
+    "@trpc/server": "catalog:",
     "@vendor/braintrust": "workspace:*",
     "@vendor/unkey": "workspace:*",
     "@vendor/upstash": "workspace:*",
+    "@vercel/microfrontends": "^2.3.2",
+    "lucide-react": "catalog:",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
+    "tw-animate-css": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
+    "@tailwindcss/postcss": "catalog:tailwind4",
+    "@tailwindcss/typography": "catalog:tailwind4",
     "@tanstack/router-plugin": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:react19",
@@ -44,6 +53,8 @@
     "@vitejs/plugin-react": "catalog:",
     "dotenv-cli": "catalog:",
     "nitro": "catalog:",
+    "postcss": "catalog:tailwind4",
+    "tailwindcss": "catalog:tailwind4",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:"
