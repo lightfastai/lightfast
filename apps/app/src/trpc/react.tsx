@@ -13,6 +13,7 @@ import { createTRPCContext } from "@trpc/tanstack-react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import SuperJSON from "superjson";
+import { env } from "~/env";
 
 import { createQueryClient } from "./query-client";
 import "./react-query-meta";
@@ -72,9 +73,7 @@ export function TRPCReactProvider({ children }: { children: React.ReactNode }) {
     return createTRPCClient<AppRouter>({
       links: [
         loggerLink({
-          enabled: (op) =>
-            process.env.NODE_ENV === "development" ||
-            (op.direction === "down" && op.result instanceof Error),
+          enabled: () => env.NODE_ENV === "development",
         }),
         httpBatchStreamLink({
           transformer: SuperJSON,

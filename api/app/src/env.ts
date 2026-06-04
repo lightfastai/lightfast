@@ -26,12 +26,12 @@ export const env = createEnv({
         "ENCRYPTION_KEY must be 32 bytes as 64 hex chars or 44 base64 chars"
       ),
     GITHUB_API_VERSION: z.string().min(1).default("2022-11-28"),
-    GITHUB_APP_CLIENT_ID: z.string().min(1).optional(),
-    GITHUB_APP_CLIENT_SECRET: z.string().min(1).optional(),
-    GITHUB_APP_ID: z.string().min(1).optional(),
-    GITHUB_APP_PRIVATE_KEY: z.string().min(1).optional(),
-    GITHUB_APP_SLUG: z.string().min(1).optional(),
-    GITHUB_APP_WEBHOOK_SECRET: z.string().min(1).optional(),
+    GITHUB_APP_CLIENT_ID: z.string().min(1),
+    GITHUB_APP_CLIENT_SECRET: z.string().min(1),
+    GITHUB_APP_ID: z.string().min(1),
+    GITHUB_APP_PRIVATE_KEY: z.string().min(1),
+    GITHUB_APP_SLUG: z.string().min(1),
+    GITHUB_APP_WEBHOOK_SECRET: z.string().min(1),
     GITHUB_APP_ENDPOINT_ORIGIN: z.string().url().optional(),
     CONNECTOR_MCP_AUTH_SECRET: isConnectorMcpAuthSecretRequired
       ? z.string().min(32)

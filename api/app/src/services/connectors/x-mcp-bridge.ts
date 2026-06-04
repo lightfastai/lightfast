@@ -35,6 +35,8 @@ type XBridgeRequestKind =
 const permissiveToolInputSchema = z.object({}).passthrough();
 const MALFORMED_JSON_REQUEST = Symbol("malformed-json");
 
+type XToolArgs = Record<string, unknown>;
+
 export async function handleXConnectorMcpRequest(input: {
   request: Request;
 }): Promise<Response> {
@@ -94,50 +96,50 @@ function registerXTools(
   }
 ) {
   for (const definition of getXToolDefinitions()) {
+    const handleToolCall = async (args: XToolArgs) => {
+      if (!input.connection) {
+        throw new XAppNodeError(
+          "X_TOKEN_REFRESH_FAILED",
+          "X connector connection is not available."
+        );
+      }
+
+      try {
+        const config = requireXConnectorConfig({
+          appOrigin: input.appOrigin,
+        });
+        const accessToken = await getFreshXBridgeAccessToken({
+          config,
+          connection: input.connection,
+        });
+        const result = await executeXApiTool({
+          accessToken,
+          apiOrigin: config.endpoints.apiOrigin,
+          input: args,
+          name: definition.name,
+        });
+        return {
+          content: result.content,
+          structuredContent: structuredContentObject(result.structuredContent),
+        };
+      } catch (error) {
+        if (isTerminalXAuthError(error)) {
+          await markCurrentOrgConnectorConnectionError(appDb, {
+            clerkOrgId: input.claims.clerkOrgId,
+            provider: "x",
+          });
+        }
+        throw error;
+      }
+    };
+
     server.registerTool(
       definition.name,
       {
         description: definition.description,
         inputSchema: permissiveToolInputSchema,
-      },
-      async (args) => {
-        if (!input.connection) {
-          throw new XAppNodeError(
-            "X_TOKEN_REFRESH_FAILED",
-            "X connector connection is not available."
-          );
-        }
-
-        try {
-          const config = requireXConnectorConfig({
-            appOrigin: input.appOrigin,
-          });
-          const accessToken = await getFreshXBridgeAccessToken({
-            config,
-            connection: input.connection,
-          });
-          const result = await executeXApiTool({
-            accessToken,
-            apiOrigin: config.endpoints.apiOrigin,
-            input: args,
-            name: definition.name,
-          });
-          return {
-            content: result.content,
-            structuredContent: structuredContentObject(
-              result.structuredContent
-            ),
-          };
-        } catch (error) {
-          if (isTerminalXAuthError(error)) {
-            await markCurrentOrgConnectorConnectionError(appDb, {
-              clerkOrgId: input.claims.clerkOrgId,
-              provider: "x",
-            });
-          }
-          throw error;
-        }
-      }
+      } as never,
+      handleToolCall as never
     );
   }
 }

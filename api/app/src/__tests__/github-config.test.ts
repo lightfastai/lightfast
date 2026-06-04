@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_GITHUB_APP_ENDPOINTS,
-  getGitHubAppConfig,
+  type getGitHubAppConfig,
   normalizeGitHubPrivateKey,
+  parseGitHubAppConfig,
   resolveGitHubAppEndpoints,
   resolveGitHubAppOrigin,
 } from "../services/github/config";
@@ -120,40 +121,54 @@ describe("GitHub config", () => {
     );
   });
 
-  it("treats env undefined as runtime config for legacy guard resolution", async () => {
-    vi.stubEnv(
-      "GITHUB_INSTALL_URL_OVERRIDE",
-      "https://app.lightfast.localhost/api/dev/github/install?installation_id=1001"
-    );
+  it("rejects incomplete ambient config when env validation is skipped", async () => {
+    vi.stubEnv("GITHUB_API_VERSION", "2022-11-28");
+    vi.stubEnv("GITHUB_APP_CLIENT_ID", "github_client_test");
+    vi.stubEnv("GITHUB_APP_CLIENT_SECRET", "github_secret_test");
+    vi.stubEnv("GITHUB_APP_ENDPOINT_ORIGIN", "");
+    vi.stubEnv("GITHUB_APP_ID", "12345");
+    vi.stubEnv("GITHUB_APP_PRIVATE_KEY", "");
+    vi.stubEnv("GITHUB_APP_SLUG", "lightfast-test");
+    vi.stubEnv("GITHUB_INSTALL_URL_OVERRIDE", "");
+    vi.stubEnv("SKIP_ENV_VALIDATION", "1");
+    vi.stubEnv("VERCEL_ENV", "development");
     vi.resetModules();
 
     const { getGitHubAppConfig: getRuntimeGitHubAppConfig } = await import(
       "../services/github/config"
     );
 
-    expect(() => getRuntimeGitHubAppConfig({ env: undefined })).toThrow(
-      /GITHUB_INSTALL_URL_OVERRIDE is no longer supported/
+    expect(() => getRuntimeGitHubAppConfig()).toThrow(
+      "GitHub App environment is incomplete."
     );
   });
 
-  it("uses explicit config env instead of ambient legacy install override", () => {
+  it("keeps getGitHubAppConfig ambient-only at the type interface", () => {
+    const runtimeConfigIsAmbientOnly: Parameters<
+      typeof getGitHubAppConfig
+    > extends []
+      ? true
+      : never = true;
+
+    expect(runtimeConfigIsAmbientOnly).toBe(true);
+  });
+
+  it("uses explicit parsed config env instead of ambient legacy install override", () => {
     vi.stubEnv(
       "GITHUB_INSTALL_URL_OVERRIDE",
       "https://app.lightfast.localhost/api/dev/github/install?installation_id=1001"
     );
 
-    const config = getGitHubAppConfig({
-      env: {
-        GITHUB_API_VERSION: "2022-11-28",
-        GITHUB_APP_CLIENT_ID: "github_client_test",
-        GITHUB_APP_CLIENT_SECRET: "github_secret_test",
-        GITHUB_APP_ENDPOINT_ORIGIN: "https://github.lightfast.localhost",
-        GITHUB_APP_ID: "12345",
-        GITHUB_APP_PRIVATE_KEY: "line1\\nline2",
-        GITHUB_APP_SLUG: "lightfast-test",
-        GITHUB_INSTALL_URL_OVERRIDE: undefined,
-        VERCEL_ENV: "development",
-      },
+    const config = parseGitHubAppConfig({
+      GITHUB_API_VERSION: "2022-11-28",
+      GITHUB_APP_CLIENT_ID: "github_client_test",
+      GITHUB_APP_CLIENT_SECRET: "github_secret_test",
+      GITHUB_APP_ENDPOINT_ORIGIN: "https://github.lightfast.localhost",
+      GITHUB_APP_ID: "12345",
+      GITHUB_APP_PRIVATE_KEY: "line1\\nline2",
+      GITHUB_APP_SLUG: "lightfast-test",
+      GITHUB_INSTALL_URL_OVERRIDE: undefined,
+      VERCEL_ENV: "development",
     });
 
     expect(config.endpoints.apiBaseUrl).toBe(
@@ -167,16 +182,14 @@ describe("GitHub config", () => {
       "https://github.lightfast.localhost"
     );
 
-    const config = getGitHubAppConfig({
-      env: {
-        GITHUB_API_VERSION: "2022-11-28",
-        GITHUB_APP_CLIENT_ID: "github_client_test",
-        GITHUB_APP_CLIENT_SECRET: "github_secret_test",
-        GITHUB_APP_ID: "12345",
-        GITHUB_APP_PRIVATE_KEY: "line1\\nline2",
-        GITHUB_APP_SLUG: "lightfast-test",
-        VERCEL_ENV: "development",
-      },
+    const config = parseGitHubAppConfig({
+      GITHUB_API_VERSION: "2022-11-28",
+      GITHUB_APP_CLIENT_ID: "github_client_test",
+      GITHUB_APP_CLIENT_SECRET: "github_secret_test",
+      GITHUB_APP_ID: "12345",
+      GITHUB_APP_PRIVATE_KEY: "line1\\nline2",
+      GITHUB_APP_SLUG: "lightfast-test",
+      VERCEL_ENV: "development",
     });
 
     expect(config.endpoints).toEqual(DEFAULT_GITHUB_APP_ENDPOINTS);
@@ -185,16 +198,14 @@ describe("GitHub config", () => {
   it("defaults omitted explicit VERCEL_ENV to development", () => {
     vi.stubEnv("VERCEL_ENV", "production");
 
-    const config = getGitHubAppConfig({
-      env: {
-        GITHUB_API_VERSION: "2022-11-28",
-        GITHUB_APP_CLIENT_ID: "github_client_test",
-        GITHUB_APP_CLIENT_SECRET: "github_secret_test",
-        GITHUB_APP_ENDPOINT_ORIGIN: "https://github.lightfast.localhost",
-        GITHUB_APP_ID: "12345",
-        GITHUB_APP_PRIVATE_KEY: "line1\\nline2",
-        GITHUB_APP_SLUG: "lightfast-test",
-      },
+    const config = parseGitHubAppConfig({
+      GITHUB_API_VERSION: "2022-11-28",
+      GITHUB_APP_CLIENT_ID: "github_client_test",
+      GITHUB_APP_CLIENT_SECRET: "github_secret_test",
+      GITHUB_APP_ENDPOINT_ORIGIN: "https://github.lightfast.localhost",
+      GITHUB_APP_ID: "12345",
+      GITHUB_APP_PRIVATE_KEY: "line1\\nline2",
+      GITHUB_APP_SLUG: "lightfast-test",
     });
 
     expect(config.endpoints.apiBaseUrl).toBe(
@@ -204,11 +215,9 @@ describe("GitHub config", () => {
 
   it("rejects incomplete explicit config env", () => {
     expect(() =>
-      getGitHubAppConfig({
-        env: {
-          GITHUB_APP_ENDPOINT_ORIGIN: "https://github.lightfast.localhost",
-          VERCEL_ENV: "development",
-        },
+      parseGitHubAppConfig({
+        GITHUB_APP_ENDPOINT_ORIGIN: "https://github.lightfast.localhost",
+        VERCEL_ENV: "development",
       })
     ).toThrow("GitHub App environment is incomplete.");
   });
@@ -216,26 +225,9 @@ describe("GitHub config", () => {
   it.each([
     "preview",
     "production",
-  ] as const)("getGitHubAppConfig rejects custom endpoint origins in %s", (vercelEnv) => {
+  ] as const)("parseGitHubAppConfig rejects custom endpoint origins in %s", (vercelEnv) => {
     expect(() =>
-      getGitHubAppConfig({
-        env: {
-          GITHUB_API_VERSION: "2022-11-28",
-          GITHUB_APP_CLIENT_ID: "github_client_test",
-          GITHUB_APP_CLIENT_SECRET: "github_secret_test",
-          GITHUB_APP_ENDPOINT_ORIGIN: "https://github.lightfast.localhost",
-          GITHUB_APP_ID: "12345",
-          GITHUB_APP_PRIVATE_KEY: "line1\\nline2",
-          GITHUB_APP_SLUG: "lightfast-test",
-          VERCEL_ENV: vercelEnv,
-        },
-      })
-    ).toThrow(/custom GitHub endpoints are allowed only in local development/);
-  });
-
-  it("returns complete GitHub App config when required values are present", () => {
-    const config = getGitHubAppConfig({
-      env: {
+      parseGitHubAppConfig({
         GITHUB_API_VERSION: "2022-11-28",
         GITHUB_APP_CLIENT_ID: "github_client_test",
         GITHUB_APP_CLIENT_SECRET: "github_secret_test",
@@ -243,8 +235,21 @@ describe("GitHub config", () => {
         GITHUB_APP_ID: "12345",
         GITHUB_APP_PRIVATE_KEY: "line1\\nline2",
         GITHUB_APP_SLUG: "lightfast-test",
-        VERCEL_ENV: "development",
-      },
+        VERCEL_ENV: vercelEnv,
+      })
+    ).toThrow(/custom GitHub endpoints are allowed only in local development/);
+  });
+
+  it("returns complete GitHub App config when required values are present", () => {
+    const config = parseGitHubAppConfig({
+      GITHUB_API_VERSION: "2022-11-28",
+      GITHUB_APP_CLIENT_ID: "github_client_test",
+      GITHUB_APP_CLIENT_SECRET: "github_secret_test",
+      GITHUB_APP_ENDPOINT_ORIGIN: "https://github.lightfast.localhost",
+      GITHUB_APP_ID: "12345",
+      GITHUB_APP_PRIVATE_KEY: "line1\\nline2",
+      GITHUB_APP_SLUG: "lightfast-test",
+      VERCEL_ENV: "development",
     });
 
     expect(config).toMatchObject({

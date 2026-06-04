@@ -157,6 +157,12 @@
       "skillPath": "plugins/sentry-cli/skills/sentry-cli/SKILL.md",
       "computedHash": "2de41d6ab06014582517707d7c50db01873309096c7d73910effb9d3b1cbfc08"
     },
+    "sentry-nextjs-sdk": {
+      "source": "getsentry/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/sentry-nextjs-sdk/SKILL.md",
+      "computedHash": "6bbb2bce22fa8fc3e0385dbe06fe5a26770b2f91f66ad8e78d80c1df3d4b2e05"
+    },
     "streamdown": {
       "source": "vercel/streamdown",
       "sourceType": "github",

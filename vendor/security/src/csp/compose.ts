@@ -25,7 +25,17 @@ function mergeDirectives(...directiveArrays: readonly Source[][]): Source[] {
     }
   }
 
-  return [...Array.from(merged), ...functions] as Source[];
+  const sources = Array.from(merged);
+  const hasOtherSources = sources.length > 1 || functions.length > 0;
+
+  if (hasOtherSources && sources.includes("'none'")) {
+    return [
+      ...sources.filter((source) => source !== "'none'"),
+      ...functions,
+    ] as Source[];
+  }
+
+  return [...sources, ...functions] as Source[];
 }
 
 /**

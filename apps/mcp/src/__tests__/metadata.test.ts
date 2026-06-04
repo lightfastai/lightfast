@@ -11,11 +11,11 @@ describe("OAuth protected resource metadata", () => {
     vi.stubEnv("MCP_RESOURCE_URL", "https://mcp.lightfast.localhost/mcp");
     vi.stubEnv("SERVICE_JWT_SECRET", "test-mcp-jwt-secret-test-mcp-jwt-secret");
 
-    const { GET } = await import(
-      "../app/.well-known/oauth-protected-resource/route"
+    const { getProtectedResourceMetadata } = await import(
+      "../routes/[.]well-known/oauth-protected-resource"
     );
 
-    const response = await GET();
+    const response = await getProtectedResourceMetadata();
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({

@@ -10,18 +10,19 @@
         "MCP_RESOURCE_URL",
         "NEXT_PUBLIC_SENTRY_DSN",
         "NEXT_PUBLIC_VERCEL_ENV",
+        "SERVICE_JWT_SECRET",
+        "SENTRY_AUTH_TOKEN",
+        "SENTRY_DSN",
+        "SENTRY_ORG",
+        "SENTRY_PROJECT",
+        "VITE_*",
         "VERCEL_ENV"
       ],
       "passThroughEnv": [
         "DATABASE_HOST",
         "DATABASE_USERNAME",
         "DATABASE_PASSWORD",
-        "LOGTAIL_URL",
-        "LOGTAIL_SOURCE_TOKEN",
-        "SENTRY_AUTH_TOKEN",
-        "SENTRY_ORG",
-        "SENTRY_PROJECT",
-        "SERVICE_JWT_SECRET",
+        "HOST",
         "PORT"
       ],
       "inputs": [
@@ -30,14 +31,15 @@
         "../app/.vercel/.env*",
         ".vercel/.env*"
       ],
-      "outputs": [
-        ".next/**",
-        "!.next/cache/**",
-        "!.next/dev/**",
-        "next-env.d.ts"
-      ]
+      "outputs": [".output/**", "dist/**", "src/routeTree.gen.ts"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "passThroughEnv": ["HOST", "PORT", "PORTLESS_URL"]
     },
     "dev:next": {
+      "cache": false,
       "persistent": true
     },
     "transit": {}

@@ -1,10 +1,9 @@
 import {
-  captureConsoleIntegration,
   captureRouterTransitionStart,
+  consoleLoggingIntegration,
   extraErrorDataIntegration,
   httpClientIntegration,
   init as initSentry,
-  spotlightBrowserIntegration,
 } from "@sentry/nextjs";
 import { TRPCClientError } from "@trpc/client";
 
@@ -51,16 +50,13 @@ initSentry({
     httpClientIntegration({
       failedRequestStatusCodes: [[400, 599]],
     }),
-    captureConsoleIntegration({
+    consoleLoggingIntegration({
       levels: ["error", "warn"],
     }),
     extraErrorDataIntegration({
       depth: 3,
     }),
     // feedbackIntegration lazy-loaded below
-    ...(env.NEXT_PUBLIC_VERCEL_ENV === "development"
-      ? [spotlightBrowserIntegration()]
-      : []),
   ],
 });
 

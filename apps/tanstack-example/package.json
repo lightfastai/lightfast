@@ -1,0 +1,34 @@
+{
+  "name": "@lightfast/tanstack-example",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "portless": "tanstack-example.lightfast",
+  "scripts": {
+    "build": "pnpm with-env vite build",
+    "clean": "git clean -xdf .cache .output .tanstack .turbo dist node_modules src/routeTree.gen.ts",
+    "dev": "portless run pnpm with-env vite dev",
+    "preview": "pnpm with-env vite preview",
+    "start": "pnpm preview",
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e ../app/.vercel/.env.development.local --"
+  },
+  "dependencies": {
+    "@t3-oss/env-core": "catalog:",
+    "@tanstack/react-router": "catalog:",
+    "@tanstack/react-start": "catalog:",
+    "react": "catalog:react19",
+    "react-dom": "catalog:react19",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:react19",
+    "@types/react-dom": "catalog:react19",
+    "@vitejs/plugin-react": "catalog:",
+    "dotenv-cli": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}
