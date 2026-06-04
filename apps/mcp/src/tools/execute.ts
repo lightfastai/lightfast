@@ -3,6 +3,7 @@ import {
   apiContract,
   type CreateSignalInput,
   type GetSignalInput,
+  type GetSignalOutput,
   lightfastMcpToolPolicy,
   type McpScope,
 } from "@repo/api-contract";
@@ -83,6 +84,19 @@ export interface ExecuteHostedMcpToolDependencies {
   ) => Promise<unknown>;
   db: Database;
   findProviderRoutines: FindProviderRoutinesService;
+  getSignalForActor?: (
+    db: Database,
+    input: {
+      actor: {
+        clientId: string;
+        grantId: string;
+        kind: "mcp";
+        orgId: string;
+        userId: string;
+      };
+      id: string;
+    }
+  ) => Promise<GetSignalOutput | null | undefined>;
   getVisibleSignalByPublicId: (
     db: Database,
     input: {
@@ -311,6 +325,26 @@ async function executeParsedTool(input: {
 
     case "signals.get": {
       const getInput = input.parsedInput as GetSignalInput;
+      if (input.dependencies.getSignalForActor) {
+        const result = await input.dependencies.getSignalForActor(
+          input.dependencies.db,
+          {
+            actor: {
+              clientId: input.context.clientId,
+              grantId: input.context.grantId,
+              kind: "mcp",
+              orgId: input.context.orgId,
+              userId: input.context.userId,
+            },
+            id: getInput.id,
+          }
+        );
+        if (!result) {
+          throw new HostedMcpToolError("not_found", "Signal not found.", 404);
+        }
+        return result;
+      }
+
       const signal = await input.dependencies.getVisibleSignalByPublicId(
         input.dependencies.db,
         {
@@ -559,12 +593,14 @@ async function defaultDependencies(
   }
 
   if (contractPath === "signals.get") {
+    const appSignalIntake = await import("./app-signal-intake");
     return {
       ...base,
       assertOrgAccess: signalOrgAccessHandledDownstream,
       callProviderRoutine: unavailableCallProviderRoutine,
       createSignalForActor: unavailableCreateSignalForActor,
       findProviderRoutines: unavailableFindProviderRoutines,
+      getSignalForActor: appSignalIntake.getSignalForActorViaApp,
       getVisibleSignalByPublicId: dbApp.getVisibleSignalByPublicId,
     };
   }

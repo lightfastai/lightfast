@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const assertHostedMcpOrgAccessMock = vi.fn();
 const createSignalForActorMock = vi.fn();
+const getVisibleSignalByPublicIdMock = vi.fn();
 
 vi.mock("@api/app/mcp-oauth/resource-access", () => ({
   assertHostedMcpOrgAccess: assertHostedMcpOrgAccessMock,
@@ -10,6 +11,10 @@ vi.mock("@api/app/mcp-oauth/resource-access", () => ({
 
 vi.mock("@api/app/signals/service", () => ({
   createSignalForActor: createSignalForActorMock,
+}));
+
+vi.mock("@db/app", () => ({
+  getVisibleSignalByPublicId: getVisibleSignalByPublicIdMock,
 }));
 
 vi.mock("@db/app/client", () => ({
@@ -48,11 +53,23 @@ function request(body: unknown, bearerToken?: string): Request {
   });
 }
 
+function getRequest(body: unknown, bearerToken?: string): Request {
+  return new Request("https://lightfast.ai/api/internal/mcp/signals/get", {
+    body: JSON.stringify(body),
+    headers: {
+      ...(bearerToken ? { authorization: `Bearer ${bearerToken}` } : {}),
+      "content-type": "application/json",
+    },
+    method: "POST",
+  });
+}
+
 describe("internal MCP signal route", () => {
   beforeEach(() => {
     assertHostedMcpOrgAccessMock.mockReset();
     assertHostedMcpOrgAccessMock.mockResolvedValue(undefined);
     createSignalForActorMock.mockReset();
+    getVisibleSignalByPublicIdMock.mockReset();
   });
 
   it("rejects missing service bearer tokens", async () => {
@@ -226,5 +243,125 @@ describe("internal MCP signal route", () => {
       message: "MCP organization is not connected.",
     });
     expect(createSignalForActorMock).not.toHaveBeenCalled();
+  });
+
+  it("gets a signal after checking app-side organization access", async () => {
+    getVisibleSignalByPublicIdMock.mockResolvedValueOnce({
+      classification: null,
+      createdAt: new Date("2026-06-01T00:00:00.000Z"),
+      input: "Production smoke signal",
+      publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
+      status: "queued",
+      updatedAt: new Date("2026-06-01T00:01:00.000Z"),
+      visibilityScope: "user",
+    });
+    const { POST } = await import(
+      "~/app/(internal)/api/internal/mcp/signals/get/route"
+    );
+
+    const res = await POST(
+      getRequest(
+        {
+          actor: {
+            clientId: "mcp_client_test",
+            grantId: "mcp_grant_test",
+            kind: "mcp",
+            orgId: "org_test",
+            userId: "user_test",
+          },
+          id: "signal_123e4567-e89b-12d3-a456-426614174000",
+        },
+        await token()
+      )
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({
+      classification: null,
+      createdAt: "2026-06-01T00:00:00.000Z",
+      id: "signal_123e4567-e89b-12d3-a456-426614174000",
+      input: "Production smoke signal",
+      status: "queued",
+      updatedAt: "2026-06-01T00:01:00.000Z",
+      visibilityScope: "user",
+    });
+    expect(assertHostedMcpOrgAccessMock).toHaveBeenCalledWith(
+      { kind: "mock-db" },
+      {
+        orgId: "org_test",
+        userId: "user_test",
+      }
+    );
+    expect(getVisibleSignalByPublicIdMock).toHaveBeenCalledWith(
+      { kind: "mock-db" },
+      {
+        clerkOrgId: "org_test",
+        createdByUserId: "user_test",
+        publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
+      }
+    );
+  });
+
+  it("rejects app-side organization access failures before signal reads", async () => {
+    assertHostedMcpOrgAccessMock.mockRejectedValueOnce(
+      Object.assign(new Error("MCP organization is not connected."), {
+        status: 403,
+      })
+    );
+    const { POST } = await import(
+      "~/app/(internal)/api/internal/mcp/signals/get/route"
+    );
+
+    const res = await POST(
+      getRequest(
+        {
+          actor: {
+            clientId: "mcp_client_test",
+            grantId: "mcp_grant_test",
+            kind: "mcp",
+            orgId: "org_test",
+            userId: "user_test",
+          },
+          id: "signal_123e4567-e89b-12d3-a456-426614174000",
+        },
+        await token()
+      )
+    );
+
+    expect(res.status).toBe(403);
+    await expect(res.json()).resolves.toEqual({
+      error: "org_access_denied",
+      message: "MCP organization is not connected.",
+    });
+    expect(getVisibleSignalByPublicIdMock).not.toHaveBeenCalled();
+  });
+
+  it("returns not found for invisible MCP signal reads", async () => {
+    getVisibleSignalByPublicIdMock.mockResolvedValueOnce(undefined);
+    const { POST } = await import(
+      "~/app/(internal)/api/internal/mcp/signals/get/route"
+    );
+
+    const res = await POST(
+      getRequest(
+        {
+          actor: {
+            clientId: "mcp_client_test",
+            grantId: "mcp_grant_test",
+            kind: "mcp",
+            orgId: "org_test",
+            userId: "user_test",
+          },
+          id: "signal_123e4567-e89b-12d3-a456-426614174000",
+        },
+        await token()
+      )
+    );
+
+    expect(res.status).toBe(404);
+    await expect(res.json()).resolves.toEqual({
+      error: "not_found",
+      message: "Signal not found.",
+    });
   });
 });

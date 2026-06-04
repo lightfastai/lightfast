@@ -503,12 +503,20 @@ describe("hosted MCP tools", () => {
   });
 
   it("does not load OAuth defaults for signal get", async () => {
-    const getVisibleSignalByPublicId = vi.fn().mockResolvedValue(signal());
+    const getSignalForActor = vi.fn().mockResolvedValue({
+      classification: null,
+      createdAt: "2026-06-01T00:00:00.000Z",
+      id: signalId,
+      input: "Review this profile",
+      status: "queued",
+      updatedAt: "2026-06-01T00:01:00.000Z",
+      visibilityScope: "user",
+    });
     const recordMcpAuditEvent = vi.fn().mockResolvedValue(undefined);
 
     vi.doMock("@db/app", () => ({
       db,
-      getVisibleSignalByPublicId,
+      getVisibleSignalByPublicId: vi.fn(),
       recordMcpAuditEvent,
     }));
     vi.doMock("@api/app/mcp-oauth", () => {
@@ -517,6 +525,9 @@ describe("hosted MCP tools", () => {
     vi.doMock("@api/app/signals/service", () => {
       throw new Error("signal service should not load for signal get");
     });
+    vi.doMock("../tools/app-signal-intake", () => ({
+      getSignalForActorViaApp: getSignalForActor,
+    }));
     vi.doMock("@repo/provider-routines", () => {
       throw new Error("provider routines should not load for signal get");
     });
@@ -532,10 +543,15 @@ describe("hosted MCP tools", () => {
       status: "queued",
     });
 
-    expect(getVisibleSignalByPublicId).toHaveBeenCalledWith(db, {
-      clerkOrgId: "org_test",
-      createdByUserId: "user_test",
-      publicId: signalId,
+    expect(getSignalForActor).toHaveBeenCalledWith(db, {
+      actor: {
+        clientId: "mcp_client_test",
+        grantId: "mcp_grant_test",
+        kind: "mcp",
+        orgId: "org_test",
+        userId: "user_test",
+      },
+      id: signalId,
     });
   });
 });

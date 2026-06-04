@@ -114,4 +114,96 @@ describe("app signal intake adapter", () => {
       status: 502,
     });
   });
+
+  it("preserves app-side authorization failures", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json(
+        {
+          error: "org_access_denied",
+          message: "MCP organization is not connected.",
+        },
+        { status: 403 }
+      )
+    );
+    const { createSignalForActorViaApp } = await importAdapter();
+
+    await expect(
+      createSignalForActorViaApp(
+        {} as never,
+        {
+          actor: {
+            clientId: "mcp_client_test",
+            grantId: "mcp_grant_test",
+            kind: "mcp",
+            orgId: "org_test",
+            userId: "user_test",
+          },
+          input: "Signal from MCP",
+        },
+        { fetch: fetchMock }
+      )
+    ).rejects.toMatchObject({
+      code: "org_access_denied",
+      message: "MCP organization is not connected.",
+      status: 403,
+    });
+  });
+
+  it("posts MCP signal get commands to the app with service auth", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json({
+        classification: null,
+        createdAt: "2026-06-01T00:00:00.000Z",
+        id: "signal_123e4567-e89b-12d3-a456-426614174000",
+        input: "Signal from MCP",
+        status: "queued",
+        updatedAt: "2026-06-01T00:01:00.000Z",
+        visibilityScope: "user",
+      })
+    );
+    const { getSignalForActorViaApp } = await importAdapter();
+
+    await expect(
+      getSignalForActorViaApp(
+        {} as never,
+        {
+          actor: {
+            clientId: "mcp_client_test",
+            grantId: "mcp_grant_test",
+            kind: "mcp",
+            orgId: "org_test",
+            userId: "user_test",
+          },
+          id: "signal_123e4567-e89b-12d3-a456-426614174000",
+        },
+        { fetch: fetchMock }
+      )
+    ).resolves.toEqual({
+      classification: null,
+      createdAt: "2026-06-01T00:00:00.000Z",
+      id: "signal_123e4567-e89b-12d3-a456-426614174000",
+      input: "Signal from MCP",
+      status: "queued",
+      updatedAt: "2026-06-01T00:01:00.000Z",
+      visibilityScope: "user",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://lightfast.ai/api/internal/mcp/signals/get",
+      expect.objectContaining({
+        method: "POST",
+      })
+    );
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toEqual({
+      actor: {
+        clientId: "mcp_client_test",
+        grantId: "mcp_grant_test",
+        kind: "mcp",
+        orgId: "org_test",
+        userId: "user_test",
+      },
+      id: "signal_123e4567-e89b-12d3-a456-426614174000",
+    });
+  });
 });
