@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  mcpProviderRoutineCallCommandInputSchema,
+  mcpProviderRoutineFindCommandInputSchema,
   parseProviderRoutineId,
   providerRoutineCallInputSchema,
   providerRoutineFindInputSchema,
@@ -70,6 +72,62 @@ describe("proxy schemas", () => {
       providerRoutineCallInputSchema.parse({
         input: ["not", "an", "object"],
         routineId: "linear__create_issue",
+      })
+    ).toThrow();
+  });
+
+  it("parses MCP provider routine proxy commands with actor and scope context", () => {
+    expect(
+      mcpProviderRoutineFindCommandInputSchema.parse({
+        actor: {
+          clientId: "mcp_client_test",
+          grantId: "mcp_grant_test",
+          kind: "mcp",
+          orgId: "org_test",
+          userId: "user_test",
+        },
+        input: {
+          query: "issues",
+        },
+        scopes: {
+          providerRoutineRead: true,
+          providerRoutineWrite: false,
+        },
+      })
+    ).toEqual({
+      actor: {
+        clientId: "mcp_client_test",
+        grantId: "mcp_grant_test",
+        kind: "mcp",
+        orgId: "org_test",
+        userId: "user_test",
+      },
+      input: {
+        query: "issues",
+      },
+      scopes: {
+        providerRoutineRead: true,
+        providerRoutineWrite: false,
+      },
+    });
+
+    expect(() =>
+      mcpProviderRoutineCallCommandInputSchema.parse({
+        actor: {
+          clientId: "mcp_client_test",
+          grantId: "mcp_grant_test",
+          kind: "mcp",
+          orgId: "org_test",
+          userId: "user_test",
+        },
+        input: {
+          input: ["not", "an", "object"],
+          routineId: "linear__create_issue",
+        },
+        scopes: {
+          providerRoutineRead: true,
+          providerRoutineWrite: false,
+        },
       })
     ).toThrow();
   });

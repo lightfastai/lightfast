@@ -91,6 +91,7 @@ describe("hosted MCP tools", () => {
     vi.doUnmock("@api/app/signals/service");
     vi.doUnmock("@db/app");
     vi.doUnmock("@repo/provider-routines");
+    vi.doUnmock("../tools/app-proxy-intake");
     vi.doUnmock("../tools/app-signal-intake");
   });
 
@@ -553,5 +554,68 @@ describe("hosted MCP tools", () => {
       },
       id: signalId,
     });
+  });
+
+  it("does not load app OAuth or provider routine defaults for proxy calls", async () => {
+    const callProviderRoutine = vi.fn().mockResolvedValue({
+      provider: "linear",
+      providerRoutineCallId,
+      providerToolName: "list_issues",
+      result: { content: [{ text: "ok" }] },
+      routineId: "linear__list_issues",
+      status: "succeeded",
+    });
+    const findProviderRoutines = vi.fn();
+    const recordMcpAuditEvent = vi.fn().mockResolvedValue(undefined);
+
+    vi.doMock("@db/app", () => ({
+      db,
+      getVisibleSignalByPublicId: vi.fn(),
+      recordMcpAuditEvent,
+    }));
+    vi.doMock("@api/app/mcp-oauth", () => {
+      throw new Error("mcp-oauth should not load for proxy calls");
+    });
+    vi.doMock("@api/app/signals/service", () => {
+      throw new Error("signal service should not load for proxy calls");
+    });
+    vi.doMock("../tools/app-signal-intake", () => {
+      throw new Error("app signal intake should not load for proxy calls");
+    });
+    vi.doMock("../tools/app-proxy-intake", () => ({
+      callProviderRoutineViaApp: callProviderRoutine,
+      findProviderRoutinesViaApp: findProviderRoutines,
+    }));
+    vi.doMock("@repo/provider-routines", () => {
+      throw new Error("provider routines should not load for proxy calls");
+    });
+
+    await expect(
+      executeHostedMcpTool({
+        context: context({ scopes: ["mcp:provider_routines:read"] }),
+        contractPath: "proxy.call",
+        rawInput: {
+          input: { query: "ABC" },
+          routineId: "linear__list_issues",
+        },
+      })
+    ).resolves.toMatchObject({
+      providerRoutineCallId,
+      status: "succeeded",
+    });
+
+    expect(callProviderRoutine).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actor: { orgId: "org_test", userId: "user_test" },
+        scopes: {
+          providerRoutineRead: true,
+          providerRoutineWrite: false,
+        },
+      }),
+      {
+        input: { query: "ABC" },
+        routineId: "linear__list_issues",
+      }
+    );
   });
 });

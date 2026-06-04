@@ -149,11 +149,6 @@ type FindProviderRoutinesService = (
   input: ProviderRoutineFindInput
 ) => Promise<ProviderRoutineFindOutput>;
 
-interface ProviderRoutineServiceModule {
-  callProviderRoutine: CallProviderRoutineService;
-  findProviderRoutines: FindProviderRoutinesService;
-}
-
 export interface ExecuteHostedMcpToolInput {
   context: HostedMcpContext;
   contractPath: string;
@@ -497,6 +492,18 @@ function normalizeToolError(error: unknown): HostedMcpToolError {
     return error;
   }
 
+  if (isProviderRoutineErrorLike(error)) {
+    const mapped = mapProviderRoutineError(error);
+    return new HostedMcpToolError(
+      mapped.code,
+      error instanceof Error ? error.message : mapped.message,
+      mapped.status,
+      mapped.outcome,
+      { cause: error },
+      error.providerRoutineCallId
+    );
+  }
+
   if (
     error &&
     typeof error === "object" &&
@@ -533,18 +540,6 @@ function normalizeToolError(error: unknown): HostedMcpToolError {
       400,
       "denied",
       { cause: error }
-    );
-  }
-
-  if (isProviderRoutineErrorLike(error)) {
-    const mapped = mapProviderRoutineError(error);
-    return new HostedMcpToolError(
-      mapped.code,
-      error instanceof Error ? error.message : mapped.message,
-      mapped.status,
-      mapped.outcome,
-      { cause: error },
-      error.providerRoutineCallId
     );
   }
 
@@ -606,18 +601,13 @@ async function defaultDependencies(
   }
 
   if (contractPath === "proxy.find" || contractPath === "proxy.call") {
-    const [mcpOauth, providerRoutines] = await Promise.all([
-      import("@api/app/mcp-oauth"),
-      import(
-        "@repo/provider-routines"
-      ) as Promise<ProviderRoutineServiceModule>,
-    ]);
+    const appProxyIntake = await import("./app-proxy-intake");
     return {
       ...base,
-      assertOrgAccess: mcpOauth.assertHostedMcpOrgAccess,
-      callProviderRoutine: providerRoutines.callProviderRoutine,
+      assertOrgAccess: appOrgAccessHandledDownstream,
+      callProviderRoutine: appProxyIntake.callProviderRoutineViaApp,
       createSignalForActor: unavailableCreateSignalForActor,
-      findProviderRoutines: providerRoutines.findProviderRoutines,
+      findProviderRoutines: appProxyIntake.findProviderRoutinesViaApp,
       getVisibleSignalByPublicId: dbApp.getVisibleSignalByPublicId,
     };
   }
@@ -637,6 +627,10 @@ async function unavailableAssertOrgAccess(): Promise<void> {
 }
 
 async function signalOrgAccessHandledDownstream(): Promise<void> {
+  return;
+}
+
+async function appOrgAccessHandledDownstream(): Promise<void> {
   return;
 }
 
