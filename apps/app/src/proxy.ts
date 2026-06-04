@@ -137,6 +137,11 @@ const ORG_ROUTE_POLICIES = [
     pattern: "/:slug/tasks/github/lightfast-repo(.*)",
     setupExempt: true,
   },
+  {
+    clerkSync: true,
+    pattern: "/:slug/tasks/connectors/x(.*)",
+    setupExempt: true,
+  },
 ] as const;
 
 const ORG_PRODUCT_ROUTE_PATTERNS = ["/:slug", "/:slug/(.*)"] as const;

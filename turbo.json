@@ -4,6 +4,13 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!src/**/__tests__/**",
+        "!src/**/*.test.*",
+        "!src/**/*.spec.*",
+        "!vitest.config.ts"
+      ],
       "outputs": [
         ".cache/tsbuildinfo.json",
         "dist/**",
@@ -58,7 +65,14 @@
       "outputs": []
     },
     "transit": {
-      "dependsOn": ["^transit"]
+      "dependsOn": ["^transit"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!src/**/__tests__/**",
+        "!src/**/*.test.*",
+        "!src/**/*.spec.*",
+        "!vitest.config.ts"
+      ]
     },
     "test": {
       "dependsOn": ["^build"],

@@ -4,7 +4,7 @@
   "tags": ["app"],
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["transit"],
       "env": [
         "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
         "NEXT_PUBLIC_SENTRY_DSN",
@@ -15,6 +15,8 @@
         "NEXT_PUBLIC_APP_URL",
         "NEXT_PUBLIC_WWW_URL",
         "NEXT_PUBLIC_PLATFORM_URL",
+        "LINEAR_API_ORIGIN",
+        "LINEAR_MCP_ENDPOINT",
         "VERCEL_ENV"
       ],
       "passThroughEnv": [
@@ -25,8 +27,12 @@
         "CLERK_SECRET_KEY",
         "CLERK_CLI_OAUTH_CLIENT_ID",
         "CLERK_DESKTOP_OAUTH_CLIENT_ID",
+        "DEVELOPER_AUTH_BOX_ORIGIN",
+        "DEVELOPER_AUTH_BOX_TOKEN",
         "CONNECTOR_MCP_AUTH_SECRET",
         "ENCRYPTION_KEY",
+        "LINEAR_CLIENT_ID",
+        "LINEAR_CLIENT_SECRET",
         "DATABASE_HOST",
         "DATABASE_USERNAME",
         "DATABASE_PASSWORD",
@@ -43,7 +49,15 @@
         "SERVICE_JWT_SECRET",
         "PORT"
       ],
-      "inputs": ["$TURBO_DEFAULT$", ".env.overrides.local", ".vercel/.env*"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!src/**/__tests__/**",
+        "!src/**/*.test.*",
+        "!src/**/*.spec.*",
+        "!vitest.config.ts",
+        ".env.overrides.local",
+        ".vercel/.env*"
+      ],
       "outputs": [
         ".next/**",
         "!.next/cache/**",

@@ -27,6 +27,7 @@ import {
   Blocks,
   BookOpen,
   HelpCircle,
+  KeyRound,
   ListChecks,
   Mail,
   MessageCircle,
@@ -67,6 +68,11 @@ function getOrgStandaloneItems(orgSlug: string): NavItem[] {
       title: "Connectors",
       href: `/${orgSlug}/connectors`,
       icon: Blocks,
+    },
+    {
+      title: "Developer Connections",
+      href: `/${orgSlug}/developer-connections`,
+      icon: KeyRound,
     },
     {
       title: "Skills",

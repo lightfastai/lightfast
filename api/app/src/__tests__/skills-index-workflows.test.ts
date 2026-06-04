@@ -5,6 +5,7 @@ const completeWatchedSourceControlRepositorySetupMock = vi.fn();
 const createGitHubAppJwtMock = vi.fn();
 const createGitHubInstallationTokenMock = vi.fn();
 const getActiveOrgBindingMock = vi.fn();
+const getCurrentOrgConnectorConnectionMock = vi.fn();
 const getGitHubRepositoryMock = vi.fn();
 const mirrorOrgSetupGateMock = vi.fn();
 const markDeliveryMock = vi.fn();
@@ -91,6 +92,7 @@ vi.mock("@db/app", () => ({
   completeWatchedSourceControlRepositorySetup:
     completeWatchedSourceControlRepositorySetupMock,
   getActiveOrgBinding: getActiveOrgBindingMock,
+  getCurrentOrgConnectorConnection: getCurrentOrgConnectorConnectionMock,
   markSourceControlWebhookDeliveryStatus: markDeliveryMock,
   upsertWatchedSourceControlRepository:
     upsertWatchedSourceControlRepositoryMock,
@@ -262,6 +264,7 @@ beforeEach(() => {
   createGitHubAppJwtMock.mockReset();
   createGitHubInstallationTokenMock.mockReset();
   getActiveOrgBindingMock.mockReset();
+  getCurrentOrgConnectorConnectionMock.mockReset();
   getGitHubRepositoryMock.mockReset();
   mirrorOrgSetupGateMock.mockReset();
   markDeliveryMock.mockReset();
@@ -290,6 +293,9 @@ beforeEach(() => {
     provider: "github",
     providerAccountLogin: "acme",
     providerInstallationId: "1001",
+  });
+  getCurrentOrgConnectorConnectionMock.mockResolvedValue({
+    status: "active",
   });
   getGitHubRepositoryMock.mockResolvedValue({
     fullName: "acme/.lightfast",

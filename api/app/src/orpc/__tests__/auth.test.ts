@@ -3,9 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const verifyMock = vi.fn();
 const getActiveOrgBindingMock = vi.fn();
+const getCurrentOrgConnectorConnectionMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
-vi.mock("@db/app", () => ({ getActiveOrgBinding: getActiveOrgBindingMock }));
+vi.mock("@db/app", () => ({
+  getActiveOrgBinding: getActiveOrgBindingMock,
+  getCurrentOrgConnectorConnection: getCurrentOrgConnectorConnectionMock,
+}));
 
 vi.mock("@vendor/unkey/server", () => ({
   getUnkeyClient: () => ({
@@ -54,6 +58,10 @@ async function invokeAuth(headers: Headers) {
 beforeEach(() => {
   verifyMock.mockReset();
   getActiveOrgBindingMock.mockReset();
+  getCurrentOrgConnectorConnectionMock.mockReset();
+  getCurrentOrgConnectorConnectionMock.mockResolvedValue({
+    status: "active",
+  });
   getActiveOrgBindingMock.mockResolvedValue({
     metadata: {
       lightfastRepository: {

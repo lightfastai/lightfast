@@ -16,6 +16,8 @@ export const env = createEnv({
   server: {
     CLERK_CLI_OAUTH_CLIENT_ID: z.string().min(1).optional(),
     CLERK_DESKTOP_OAUTH_CLIENT_ID: z.string().min(1).optional(),
+    DEVELOPER_AUTH_BOX_ORIGIN: z.string().url().optional(),
+    DEVELOPER_AUTH_BOX_TOKEN: z.string().min(1).optional(),
     ENCRYPTION_KEY: z
       .string()
       .refine(
@@ -24,19 +26,19 @@ export const env = createEnv({
         "ENCRYPTION_KEY must be 32 bytes as 64 hex chars or 44 base64 chars"
       ),
     GITHUB_API_VERSION: z.string().min(1).default("2022-11-28"),
-    GITHUB_APP_CLIENT_ID: z.string().min(1).optional(),
-    GITHUB_APP_CLIENT_SECRET: z.string().min(1).optional(),
-    GITHUB_APP_ID: z.string().min(1).optional(),
-    GITHUB_APP_PRIVATE_KEY: z.string().min(1).optional(),
-    GITHUB_APP_SLUG: z.string().min(1).optional(),
-    GITHUB_APP_WEBHOOK_SECRET: z.string().min(1).optional(),
+    GITHUB_APP_CLIENT_ID: z.string().min(1),
+    GITHUB_APP_CLIENT_SECRET: z.string().min(1),
+    GITHUB_APP_ID: z.string().min(1),
+    GITHUB_APP_PRIVATE_KEY: z.string().min(1),
+    GITHUB_APP_SLUG: z.string().min(1),
+    GITHUB_APP_WEBHOOK_SECRET: z.string().min(1),
     GITHUB_APP_ENDPOINT_ORIGIN: z.string().url().optional(),
     CONNECTOR_MCP_AUTH_SECRET: isConnectorMcpAuthSecretRequired
       ? z.string().min(32)
       : z.string().min(32).optional(),
     LINEAR_API_ORIGIN: z.string().url().optional(),
-    LINEAR_CLIENT_ID: z.string().min(1).optional(),
-    LINEAR_CLIENT_SECRET: z.string().min(1).optional(),
+    LINEAR_CLIENT_ID: z.string().min(1),
+    LINEAR_CLIENT_SECRET: z.string().min(1),
     LINEAR_MCP_ENDPOINT: z.string().url().optional(),
     VERCEL_ENV: z
       .enum(["development", "preview", "production"])
@@ -51,6 +53,8 @@ export const env = createEnv({
   experimental__runtimeEnv: {
     CLERK_CLI_OAUTH_CLIENT_ID: process.env.CLERK_CLI_OAUTH_CLIENT_ID,
     CLERK_DESKTOP_OAUTH_CLIENT_ID: process.env.CLERK_DESKTOP_OAUTH_CLIENT_ID,
+    DEVELOPER_AUTH_BOX_ORIGIN: process.env.DEVELOPER_AUTH_BOX_ORIGIN,
+    DEVELOPER_AUTH_BOX_TOKEN: process.env.DEVELOPER_AUTH_BOX_TOKEN,
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
     GITHUB_API_VERSION: process.env.GITHUB_API_VERSION,
     GITHUB_APP_CLIENT_ID: process.env.GITHUB_APP_CLIENT_ID,

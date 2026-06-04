@@ -1,145 +1,128 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
 } from "./conversation";
 
-vi.mock("@tanstack/react-virtual", () => ({
-  useVirtualizer: ({
-    count,
-    getItemKey,
-  }: {
-    count: number;
-    getItemKey: (index: number) => string | number;
-  }) => {
-    const windowSize = Math.min(count, 5);
-    return {
-      getTotalSize: () => count * 80,
-      getVirtualItems: () =>
-        Array.from({ length: windowSize }, (_, index) => ({
-          index,
-          key: getItemKey(index),
-          start: index * 80,
-          size: 80,
-        })),
-      measureElement: () => undefined,
-    };
+const stickToBottomMock = vi.hoisted(() => ({
+  scrollToBottom: vi.fn(),
+  state: {
+    isAtBottom: true,
   },
 }));
 
-function setGeometry(
-  el: HTMLElement,
-  geo: { scrollTop: number; scrollHeight: number; clientHeight: number }
-) {
-  Object.defineProperty(el, "scrollHeight", {
-    configurable: true,
-    value: geo.scrollHeight,
-  });
-  Object.defineProperty(el, "clientHeight", {
-    configurable: true,
-    value: geo.clientHeight,
-  });
-  el.scrollTop = geo.scrollTop;
-}
+vi.mock("use-stick-to-bottom", async () => {
+  const React = await import("react");
+
+  type StickToBottomProps = React.ComponentProps<"div"> & {
+    initial?: string;
+    resize?: string;
+  };
+
+  const StickToBottom = ({
+    children,
+    className,
+    initial,
+    resize,
+    ...props
+  }: StickToBottomProps) => (
+    <div
+      className={className}
+      data-initial={initial}
+      data-resize={resize}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+
+  StickToBottom.Content = ({
+    children,
+    className,
+    ...props
+  }: React.ComponentProps<"div">) => (
+    <div className={className} {...props}>
+      {children}
+    </div>
+  );
+
+  return {
+    StickToBottom,
+    useStickToBottomContext: () => ({
+      isAtBottom: stickToBottomMock.state.isAtBottom,
+      scrollToBottom: stickToBottomMock.scrollToBottom,
+    }),
+  };
+});
+
+beforeEach(() => {
+  stickToBottomMock.state.isAtBottom = true;
+  stickToBottomMock.scrollToBottom.mockClear();
+});
 
 describe("Conversation scroll button", () => {
-  it("hides at bottom and shows after scrolling up", () => {
-    const { container } = render(
+  it("hides at bottom and scrolls to the latest message when shown", () => {
+    const { rerender } = render(
       <Conversation>
-        <ConversationContent
-          getItemKey={(item) => item}
-          items={["messages"]}
-          renderItem={(item) => <div style={{ height: 2000 }}>{item}</div>}
-        />
+        <ConversationContent>
+          <div style={{ height: 2000 }}>messages</div>
+        </ConversationContent>
         <ConversationScrollButton />
       </Conversation>
     );
 
-    const scroller = container.querySelector(
-      "[data-slot=conversation-scroller]"
-    ) as HTMLElement;
-    expect(scroller).not.toBeNull();
-
-    // At bottom: scrollTop + clientHeight === scrollHeight → button hidden.
-    setGeometry(scroller, {
-      scrollTop: 1500,
-      scrollHeight: 2000,
-      clientHeight: 500,
-    });
-    fireEvent.scroll(scroller);
     expect(
       screen.queryByRole("button", { name: "Scroll to latest message" })
     ).toBeNull();
 
-    // Scrolled up: gap > threshold → button shows.
-    setGeometry(scroller, {
-      scrollTop: 0,
-      scrollHeight: 2000,
-      clientHeight: 500,
-    });
-    fireEvent.scroll(scroller);
-    expect(
-      screen.queryByRole("button", { name: "Scroll to latest message" })
-    ).not.toBeNull();
-  });
-
-  it("scrolls to the bottom when messages append while the user is already at the bottom", () => {
-    const { container, rerender } = render(
-      <Conversation>
-        <ConversationContent
-          getItemKey={(item) => item}
-          items={["Message 1"]}
-          renderItem={(item) => <div>{item}</div>}
-        />
-        <ConversationScrollButton />
-      </Conversation>
-    );
-
-    const scroller = container.querySelector(
-      "[data-slot=conversation-scroller]"
-    ) as HTMLElement;
-    const scrollTo = vi.fn();
-    Object.defineProperty(scroller, "scrollTo", {
-      configurable: true,
-      value: scrollTo,
-    });
-    setGeometry(scroller, {
-      scrollTop: 1500,
-      scrollHeight: 2000,
-      clientHeight: 500,
-    });
-
+    stickToBottomMock.state.isAtBottom = false;
     rerender(
       <Conversation>
-        <ConversationContent
-          getItemKey={(item) => item}
-          items={["Message 1", "Message 2"]}
-          renderItem={(item) => <div>{item}</div>}
-        />
+        <ConversationContent>
+          <div style={{ height: 2000 }}>messages</div>
+        </ConversationContent>
         <ConversationScrollButton />
       </Conversation>
     );
 
-    expect(scrollTo).toHaveBeenCalledWith({ top: 2000 });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Scroll to latest message" })
+    );
+
+    expect(stickToBottomMock.scrollToBottom).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses smooth bottom sticking for initial render and content growth", () => {
+    render(
+      <Conversation>
+        <ConversationContent>
+          <div>Message 1</div>
+        </ConversationContent>
+      </Conversation>
+    );
+
+    const log = screen.getByRole("log", { name: "Conversation" });
+    expect(log.getAttribute("data-initial")).toBe("smooth");
+    expect(log.getAttribute("data-resize")).toBe("smooth");
   });
 });
 
-describe("ConversationContent virtualization", () => {
-  it("renders only the windowed items", () => {
+describe("ConversationContent", () => {
+  it("renders every child so native scrolling can stay attached to the message DOM", () => {
     const items = Array.from({ length: 50 }, (_, i) => `Message ${i + 1}`);
     render(
       <Conversation>
-        <ConversationContent
-          getItemKey={(item) => item}
-          items={items}
-          renderItem={(item) => <div>{item}</div>}
-        />
+        <ConversationContent>
+          {items.map((item) => (
+            <div key={item}>{item}</div>
+          ))}
+        </ConversationContent>
       </Conversation>
     );
 
     expect(screen.queryByText("Message 1")).not.toBeNull();
-    expect(screen.queryByText("Message 40")).toBeNull();
+    expect(screen.queryByText("Message 40")).not.toBeNull();
   });
 });

@@ -10,6 +10,7 @@ const inngestClient = { id: "app-inngest-client" };
 const systemHealth = { id: "system-health" };
 const classifySignal = { id: "classify-signal" };
 const classifyPeople = { id: "classify-people" };
+const cleanupDeveloperSandboxRuns = { id: "cleanup-developer-sandbox-runs" };
 const automationScheduler = { id: "automation-scheduler" };
 const runAutomation = { id: "run-automation" };
 const refreshSkillIndex = { id: "refresh-skill-index" };
@@ -44,6 +45,10 @@ vi.mock("../inngest/workflow/classify-signal", () => ({
 
 vi.mock("../inngest/workflow/classify-people", () => ({
   classifyPeople,
+}));
+
+vi.mock("../inngest/workflow/cleanup-developer-sandbox-runs", () => ({
+  cleanupDeveloperSandboxRuns,
 }));
 
 vi.mock("../inngest/workflow/automation-scheduler", () => ({
@@ -88,6 +93,7 @@ describe("createInngestRouteContext", () => {
         systemHealth,
         classifySignal,
         classifyPeople,
+        cleanupDeveloperSandboxRuns,
         automationScheduler,
         runAutomation,
         refreshSkillIndex,

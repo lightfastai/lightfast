@@ -15,6 +15,9 @@ let headerPathname = "/acme";
 const notFoundMock = vi.fn(() => {
   throw new Error("NEXT_NOT_FOUND");
 });
+const redirectMock = vi.fn((path: string) => {
+  throw new Error(`NEXT_REDIRECT:${path}`);
+});
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 
@@ -77,6 +80,7 @@ vi.mock("~/components/shell-data-boundary", () => ({
 
 vi.mock("next/navigation", () => ({
   notFound: notFoundMock,
+  redirect: redirectMock,
 }));
 
 vi.mock("next/headers", () => ({
@@ -175,9 +179,36 @@ describe("[slug]/layout — membership/slug access gate", () => {
     expect(notFoundMock).toHaveBeenCalledOnce();
   });
 
-  it("returns a UI-less membership boundary with shell data when org access is allowed", async () => {
+  it("redirects product routes using the DB-derived setup requirement", async () => {
     fetchQueryMock.mockResolvedValue({
       bindingStatus: "unbound",
+      nextSetupRequirement: "x_connector",
+      org: {
+        id: "org_123",
+        imageUrl: "",
+        name: "Acme",
+        slug: "acme",
+      },
+      role: "org:member",
+    });
+
+    await expect(invoke("acme")).rejects.toThrow(
+      "NEXT_REDIRECT:/acme/tasks/connectors/x"
+    );
+
+    expect(redirectMock).toHaveBeenCalledWith("/acme/tasks/connectors/x");
+    expect(getActiveNamespaceByHandleMock).toHaveBeenCalledWith(
+      expect.anything(),
+      "acme"
+    );
+    expect(getBySlugQueryOptionsMock).toHaveBeenCalledWith({ slug: "acme" });
+  });
+
+  it("allows the active setup route for an unbound org", async () => {
+    headerPathname = "/acme/tasks/connectors/x";
+    fetchQueryMock.mockResolvedValue({
+      bindingStatus: "unbound",
+      nextSetupRequirement: "x_connector",
       org: {
         id: "org_123",
         imageUrl: "",
@@ -194,15 +225,31 @@ describe("[slug]/layout — membership/slug access gate", () => {
     expect(screen.getByTestId("shell-data-boundary")).toHaveTextContent(
       "Workspace"
     );
-    expect(
-      screen.queryByTestId("authenticated-topbar")
-    ).not.toBeInTheDocument();
-    expect(screen.queryByTestId("app-sidebar")).not.toBeInTheDocument();
-    expect(getActiveNamespaceByHandleMock).toHaveBeenCalledWith(
-      expect.anything(),
-      "acme"
+    expect(redirectMock).not.toHaveBeenCalled();
+  });
+
+  it("allows settings routes for an unbound org", async () => {
+    headerPathname = "/acme/settings";
+    fetchQueryMock.mockResolvedValue({
+      bindingStatus: "unbound",
+      nextSetupRequirement: "x_connector",
+      org: {
+        id: "org_123",
+        imageUrl: "",
+        name: "Acme",
+        slug: "acme",
+      },
+      role: "org:member",
+    });
+
+    const element = await invoke("acme");
+
+    render(element);
+
+    expect(screen.getByTestId("shell-data-boundary")).toHaveTextContent(
+      "Workspace"
     );
-    expect(getBySlugQueryOptionsMock).toHaveBeenCalledWith({ slug: "acme" });
+    expect(redirectMock).not.toHaveBeenCalled();
   });
 
   it("renders a user namespace root without trying org membership access", async () => {

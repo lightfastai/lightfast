@@ -47,6 +47,7 @@
     "@repo/api-contract": "workspace:*",
     "@repo/app-validation": "workspace:*",
     "@repo/connector-contract": "workspace:*",
+    "@repo/developer-connection-contract": "workspace:*",
     "@repo/identity-contract": "workspace:*",
     "@repo/skills-contract": "workspace:*",
     "@repo/source-control-contract": "workspace:*",

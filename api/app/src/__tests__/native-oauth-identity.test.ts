@@ -3,10 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const authMock = vi.fn();
 const getActiveOrgBindingMock = vi.fn();
+const getCurrentOrgConnectorConnectionMock = vi.fn();
 const clerkGetOrganizationMembershipListMock = vi.fn();
 
 vi.mock("@db/app", () => ({
   getActiveOrgBinding: getActiveOrgBindingMock,
+  getCurrentOrgConnectorConnection: getCurrentOrgConnectorConnectionMock,
 }));
 
 vi.mock("@vendor/clerk/env", () => ({
@@ -36,7 +38,11 @@ describe("native OAuth identity resolution", () => {
   beforeEach(() => {
     authMock.mockReset();
     getActiveOrgBindingMock.mockReset();
+    getCurrentOrgConnectorConnectionMock.mockReset();
     clerkGetOrganizationMembershipListMock.mockReset();
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue({
+      status: "active",
+    });
     getActiveOrgBindingMock.mockResolvedValue({
       metadata: {
         lightfastRepository: {
