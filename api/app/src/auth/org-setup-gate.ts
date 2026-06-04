@@ -1,5 +1,10 @@
 import type { Database } from "@db/app";
-import { getActiveOrgBinding, type OrgSourceControlBinding } from "@db/app";
+import {
+  getActiveOrgBinding,
+  getCurrentOrgConnectorConnection,
+  type OrgConnectorConnection,
+  type OrgSourceControlBinding,
+} from "@db/app";
 import {
   type GitHubLightfastRepositoryProof,
   githubLightfastRepositoryProofSchema,
@@ -64,7 +69,8 @@ export function hasMatchingGitHubLightfastRepositoryProof(
 }
 
 export function deriveOrgSetupGate(
-  binding: OrgSourceControlBinding | undefined
+  binding: OrgSourceControlBinding | undefined,
+  xConnection?: OrgConnectorConnection
 ): OrgSetupGate {
   if (!(binding && hasGitHubOrgRequirement(binding))) {
     return {
@@ -80,6 +86,13 @@ export function deriveOrgSetupGate(
     };
   }
 
+  if (xConnection?.status !== "active") {
+    return {
+      bindingStatus: "unbound",
+      nextSetupRequirement: "x_connector",
+    };
+  }
+
   return {
     bindingStatus: "bound",
     nextSetupRequirement: null,
@@ -91,5 +104,13 @@ export async function resolveOrgSetupGate(input: {
   clerkOrgId: string;
 }): Promise<OrgSetupGate> {
   const binding = await getActiveOrgBinding(input.db, input.clerkOrgId);
-  return deriveOrgSetupGate(binding);
+  if (!(binding && hasMatchingGitHubLightfastRepositoryProof(binding))) {
+    return deriveOrgSetupGate(binding);
+  }
+
+  const xConnection = await getCurrentOrgConnectorConnection(input.db, {
+    clerkOrgId: input.clerkOrgId,
+    provider: "x",
+  });
+  return deriveOrgSetupGate(binding, xConnection);
 }

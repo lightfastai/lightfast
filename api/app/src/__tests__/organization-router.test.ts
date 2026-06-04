@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthIdentity } from "../auth/identity";
 
 const getActiveOrgBindingMock = vi.fn();
+const getCurrentOrgConnectorConnectionMock = vi.fn();
 const authMock = vi.fn();
 const createOrganizationMock = vi.fn();
 const getOrganizationMock = vi.fn();
@@ -32,6 +33,7 @@ vi.mock("@db/app", () => ({
   deletePreClerkNamespaceReservation: deletePreClerkNamespaceReservationMock,
   finalizeNamespaceOperation: finalizeNamespaceOperationMock,
   getActiveOrgBinding: getActiveOrgBindingMock,
+  getCurrentOrgConnectorConnection: getCurrentOrgConnectorConnectionMock,
   markNamespaceOperationClerkApplied: markNamespaceOperationClerkAppliedMock,
   reserveNamespaceForOperation: reserveNamespaceForOperationMock,
   startNamespaceOperation: startNamespaceOperationMock,
@@ -144,6 +146,7 @@ beforeEach(() => {
   getOrganizationMock.mockReset();
   getOrganizationMembershipListMock.mockReset();
   getActiveOrgBindingMock.mockReset();
+  getCurrentOrgConnectorConnectionMock.mockReset();
   updateOrganizationMock.mockReset();
   startNamespaceOperationMock.mockReset();
   reserveNamespaceForOperationMock.mockReset();
@@ -169,6 +172,7 @@ beforeEach(() => {
     operation({ clerkOrgId: "org_acme", status: "finalized" })
   );
   isClerkConflictErrorMock.mockReturnValue(false);
+  getCurrentOrgConnectorConnectionMock.mockResolvedValue({ status: "active" });
 });
 
 describe("organization.listUserOrganizations", () => {
