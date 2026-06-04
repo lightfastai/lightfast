@@ -12,13 +12,13 @@ import {
   ConversationScrollButton,
 } from "@repo/ui/components/ai-elements/conversation";
 import type { PromptInputMessage } from "@repo/ui/components/ai-elements/prompt-input";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   type ChatStatus,
   DefaultChatTransport,
   type UIMessage,
 } from "@vendor/ai";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { isResumableStreamEnabled } from "~/app/(chat)/api/chat/resumable-stream-config";
 import { useTRPC } from "~/trpc/react";
@@ -42,9 +42,15 @@ export function WorkspaceAssistantClient({
   initialConversation,
 }: WorkspaceAssistantClientProps) {
   const params = useParams<{ slug: string }>();
+  const router = useRouter();
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const createConversation = useMutation(
     trpc.org.workspace.assistant.createConversation.mutationOptions()
+  );
+  const listConversationsQueryFilter = useMemo(
+    () => trpc.org.workspace.assistant.listConversations.queryFilter(),
+    [trpc]
   );
   const initialMessages = useMemo(
     () => initialConversation?.messages.map(toUIMessage) ?? [],
@@ -102,9 +108,6 @@ export function WorkspaceAssistantClient({
 
       if (!conversationCreatedRef.current) {
         setCreationError(undefined);
-        // Reflect the conversation in the URL right away — without a navigation,
-        // so the stable Chat instance (and its live stream) stays mounted. The id
-        // is known up-front, so this is safe to do before the create resolves.
         replaceBrowserChatUrl(params.slug, conversationId);
         try {
           await createConversation.mutateAsync({
@@ -112,6 +115,7 @@ export function WorkspaceAssistantClient({
             title: nextText,
           });
           conversationCreatedRef.current = true;
+          void queryClient.invalidateQueries(listConversationsQueryFilter);
         } catch (error) {
           replaceBrowserChatUrl(params.slug);
           setCreationError(
@@ -133,11 +137,18 @@ export function WorkspaceAssistantClient({
         }
       );
       setText("");
+      if (!initialConversation) {
+        router.refresh();
+      }
     },
     [
-      params.slug,
       conversationId,
       createConversation.mutateAsync,
+      initialConversation,
+      listConversationsQueryFilter,
+      params.slug,
+      queryClient,
+      router,
       sendMessage,
       clearError,
     ]
@@ -209,7 +220,7 @@ function replaceBrowserChatUrl(orgSlug: string, conversationId?: string) {
   const nextPath = conversationId
     ? `/${orgSlug}/chat/${conversationId}`
     : `/${orgSlug}/chat`;
-  window.history.replaceState(null, "", nextPath);
+  window.history.replaceState({}, "", nextPath);
 }
 
 function EmptyChatState({ composer }: { composer: React.ReactNode }) {

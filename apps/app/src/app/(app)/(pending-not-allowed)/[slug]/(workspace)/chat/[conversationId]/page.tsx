@@ -1,7 +1,7 @@
-import { Loader2 } from "lucide-react";
 import { Suspense } from "react";
 import { getQueryClient, HydrateClient, trpc } from "~/trpc/server";
 import { WorkspaceAssistantClient } from "../../_components/workspace-assistant-client";
+import ChatLoading from "../loading";
 
 export const dynamic = "force-dynamic";
 
@@ -13,11 +13,7 @@ export default async function WorkspaceAssistantConversationPage({
   const { conversationId } = await params;
   const qc = getQueryClient();
 
-  const initialConversation = await qc.fetchQuery(
-    trpc.org.workspace.assistant.getConversation.queryOptions({
-      id: conversationId,
-    })
-  );
+  const initialConversation = await getInitialConversation(conversationId, qc);
 
   return (
     <HydrateClient>
@@ -32,10 +28,37 @@ export default async function WorkspaceAssistantConversationPage({
   );
 }
 
-function ChatLoading() {
+async function getInitialConversation(
+  conversationId: string,
+  qc: ReturnType<typeof getQueryClient>
+) {
+  try {
+    return await qc.fetchQuery(
+      trpc.org.workspace.assistant.getConversation.queryOptions({
+        id: conversationId,
+      })
+    );
+  } catch (error) {
+    if (isConversationNotFoundError(error)) {
+      return;
+    }
+    throw error;
+  }
+}
+
+function isConversationNotFoundError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const maybeCode = error as {
+    code?: unknown;
+    data?: { code?: unknown };
+  };
+
   return (
-    <div className="flex h-full min-h-0 w-full items-center justify-center bg-background">
-      <Loader2 className="size-6 animate-spin text-muted-foreground" />
-    </div>
+    maybeCode.code === "NOT_FOUND" ||
+    maybeCode.data?.code === "NOT_FOUND" ||
+    error.message === "Workspace assistant conversation not found"
   );
 }

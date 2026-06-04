@@ -84,6 +84,46 @@ describe("Conversation scroll button", () => {
       screen.queryByRole("button", { name: "Scroll to latest message" })
     ).not.toBeNull();
   });
+
+  it("scrolls to the bottom when messages append while the user is already at the bottom", () => {
+    const { container, rerender } = render(
+      <Conversation>
+        <ConversationContent
+          getItemKey={(item) => item}
+          items={["Message 1"]}
+          renderItem={(item) => <div>{item}</div>}
+        />
+        <ConversationScrollButton />
+      </Conversation>
+    );
+
+    const scroller = container.querySelector(
+      "[data-slot=conversation-scroller]"
+    ) as HTMLElement;
+    const scrollTo = vi.fn();
+    Object.defineProperty(scroller, "scrollTo", {
+      configurable: true,
+      value: scrollTo,
+    });
+    setGeometry(scroller, {
+      scrollTop: 1500,
+      scrollHeight: 2000,
+      clientHeight: 500,
+    });
+
+    rerender(
+      <Conversation>
+        <ConversationContent
+          getItemKey={(item) => item}
+          items={["Message 1", "Message 2"]}
+          renderItem={(item) => <div>{item}</div>}
+        />
+        <ConversationScrollButton />
+      </Conversation>
+    );
+
+    expect(scrollTo).toHaveBeenCalledWith({ top: 2000 });
+  });
 });
 
 describe("ConversationContent virtualization", () => {

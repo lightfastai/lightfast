@@ -75,6 +75,7 @@ export const ChatComposer = memo(function ChatComposer({
               compact ? "min-h-0 py-3 pr-2 pl-5" : "min-h-9 px-5 py-3"
             )}
             onChange={(event) => onTextChange(event.target.value)}
+            onInput={(event) => onTextChange(event.currentTarget.value)}
             placeholder="Ask Lightfield"
             rows={compact ? 1 : undefined}
             value={text}

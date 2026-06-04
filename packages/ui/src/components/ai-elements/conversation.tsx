@@ -10,6 +10,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -109,7 +110,9 @@ export const ConversationContent = <T,>({
   estimateSize = DEFAULT_ESTIMATE_SIZE,
   ...props
 }: ConversationContentProps<T>) => {
-  const { scrollRef } = useConversationScroll();
+  const { isAtBottom, scrollRef, scrollToBottom } = useConversationScroll();
+  const previousItemCountRef = useRef(items.length);
+  const previousTotalSizeRef = useRef(0);
 
   const virtualizer = useVirtualizer({
     count: items.length,
@@ -123,11 +126,28 @@ export const ConversationContent = <T,>({
     followOnAppend: "smooth",
     scrollEndThreshold: STICK_TO_BOTTOM_THRESHOLD_PX,
   });
+  const totalSize = virtualizer.getTotalSize();
+
+  useLayoutEffect(() => {
+    const previousItemCount = previousItemCountRef.current;
+    const previousTotalSize = previousTotalSizeRef.current;
+    previousItemCountRef.current = items.length;
+    previousTotalSizeRef.current = totalSize;
+
+    const grew =
+      items.length > previousItemCount || totalSize > previousTotalSize;
+
+    if (!(grew && isAtBottom)) {
+      return;
+    }
+
+    scrollToBottom();
+  }, [isAtBottom, items.length, scrollToBottom, totalSize]);
 
   return (
     <div
       className={cn("relative w-full", className)}
-      style={{ height: `${virtualizer.getTotalSize()}px` }}
+      style={{ height: `${totalSize}px` }}
       {...props}
     >
       {virtualizer.getVirtualItems().map((virtualItem) => (

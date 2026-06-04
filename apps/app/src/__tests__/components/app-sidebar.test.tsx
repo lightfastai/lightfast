@@ -30,6 +30,7 @@ let conversationsData = {
   ],
   nextCursor: null,
 };
+let conversationsIsError = false;
 
 vi.mock("next/navigation", () => ({
   usePathname: () => pathname,
@@ -76,7 +77,7 @@ vi.mock("~/trpc/react", () => ({
 }));
 
 vi.mock("@tanstack/react-query", () => ({
-  useSuspenseQuery: () => ({ data: conversationsData }),
+  useQuery: () => ({ data: conversationsData, isError: conversationsIsError }),
 }));
 
 vi.mock("@repo/ui/components/ui/sidebar", () => ({
@@ -180,6 +181,7 @@ beforeEach(() => {
     ],
     nextCursor: null,
   };
+  conversationsIsError = false;
 });
 
 describe("AppSidebar", () => {
@@ -293,14 +295,22 @@ describe("AppSidebar", () => {
   it("renders a new chat button in the header", () => {
     render(<AppSidebar />);
 
-    expect(screen.getByRole("link", { name: "New chat" })).toHaveAttribute(
-      "href",
-      "/acme/chat"
-    );
+    const newChat = screen.getByRole("link", { name: "New chat" });
+    expect(newChat).toHaveAttribute("href", "/acme/chat");
+    expect(newChat).toHaveAttribute("data-prefetch", "false");
   });
 
   it("hides the chats group when there are no conversations", () => {
     conversationsData = { items: [], nextCursor: null };
+    render(<AppSidebar />);
+
+    expect(
+      screen.queryByRole("region", { name: "Chats" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides the chats group when the chat-history query errors", () => {
+    conversationsIsError = true;
     render(<AppSidebar />);
 
     expect(

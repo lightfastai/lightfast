@@ -7,9 +7,14 @@ const listQueryOptionsMock = vi.fn(() => ({
   queryKey: ["org", "workspace", "skills", "list"],
 }));
 const createConversationMutationOptionsMock = vi.fn(() => ({}));
+const listConversationsQueryFilterMock = vi.fn(() => ({
+  queryKey: ["org", "workspace", "assistant", "listConversations"],
+}));
 const clearErrorMock = vi.fn();
+const invalidateQueriesMock = vi.fn();
 const mutateAsyncMock = vi.fn();
 const pushMock = vi.fn();
+const refreshMock = vi.fn();
 const replaceMock = vi.fn();
 const sendMessageMock = vi.fn();
 const setMessagesMock = vi.fn();
@@ -216,6 +221,9 @@ vi.mock("~/trpc/react", () => ({
           createConversation: {
             mutationOptions: createConversationMutationOptionsMock,
           },
+          listConversations: {
+            queryFilter: listConversationsQueryFilterMock,
+          },
         },
         skills: {
           list: {
@@ -232,6 +240,9 @@ vi.mock("@tanstack/react-query", () => ({
     isPending: false,
     mutateAsync: mutateAsyncMock,
   }),
+  useQueryClient: () => ({
+    invalidateQueries: invalidateQueriesMock,
+  }),
   useSuspenseQuery: () => ({ data: listData }),
 }));
 
@@ -239,6 +250,7 @@ vi.mock("next/navigation", () => ({
   useParams: () => ({ slug: "acme" }),
   useRouter: () => ({
     push: pushMock,
+    refresh: refreshMock,
     replace: replaceMock,
   }),
 }));
@@ -265,12 +277,15 @@ beforeEach(() => {
   promptInputFiles = [];
   clearErrorMock.mockClear();
   createConversationMutationOptionsMock.mockClear();
+  listConversationsQueryFilterMock.mockClear();
+  invalidateQueriesMock.mockClear();
   mutateAsyncMock.mockReset();
   mutateAsyncMock.mockResolvedValue({
     publicId: "conv_new",
     title: "Summarize my active opportunities",
   });
   pushMock.mockClear();
+  refreshMock.mockClear();
   replaceMock.mockClear();
   sendMessageMock.mockReset();
   sendMessageMock.mockResolvedValue(undefined);
@@ -337,6 +352,19 @@ describe("WorkspaceAssistantClient", () => {
     expect(submit).toBeEnabled();
   });
 
+  it("enables sending from textarea input events", () => {
+    render(<WorkspaceAssistantClient conversationId="conv_new" />);
+
+    const submit = screen.getByRole("button", { name: "Send message" });
+    expect(submit).toBeDisabled();
+
+    fireEvent.input(screen.getByPlaceholderText("Ask Lightfield"), {
+      target: { value: "Summarize my active opportunities" },
+    });
+
+    expect(submit).toBeEnabled();
+  });
+
   it("creates an addressable conversation before sending the first prompt", async () => {
     render(<WorkspaceAssistantClient conversationId="conv_new" />);
 
@@ -352,11 +380,14 @@ describe("WorkspaceAssistantClient", () => {
       });
     });
     expect(historyReplaceStateMock).toHaveBeenCalledWith(
-      null,
+      {},
       "",
       "/acme/chat/conv_new"
     );
     expect(replaceMock).not.toHaveBeenCalled();
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: ["org", "workspace", "assistant", "listConversations"],
+    });
     expect(sendMessageMock).toHaveBeenCalledWith(
       { text: "Summarize my active opportunities" },
       {
@@ -366,9 +397,10 @@ describe("WorkspaceAssistantClient", () => {
         },
       }
     );
+    expect(refreshMock).toHaveBeenCalledOnce();
   });
 
-  it("updates the URL immediately before waiting for the first conversation create", async () => {
+  it("keeps the preallocated route stable while waiting for the first conversation create", async () => {
     let resolveCreate:
       | ((conversation: { publicId: string; title: string }) => void)
       | undefined;
@@ -386,15 +418,17 @@ describe("WorkspaceAssistantClient", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send message" }));
 
     expect(historyReplaceStateMock).toHaveBeenCalledWith(
-      null,
+      {},
       "",
       "/acme/chat/conv_new"
     );
+    expect(replaceMock).not.toHaveBeenCalled();
     expect(mutateAsyncMock).toHaveBeenCalledWith({
       publicId: "conv_new",
       title: "Summarize my active opportunities",
     });
     expect(sendMessageMock).not.toHaveBeenCalled();
+    expect(refreshMock).not.toHaveBeenCalled();
 
     resolveCreate?.({
       publicId: "conv_new",
@@ -412,6 +446,37 @@ describe("WorkspaceAssistantClient", () => {
         }
       );
     });
+    expect(refreshMock).toHaveBeenCalledOnce();
+  });
+
+  it("stays on the draft conversation route and shows an error when creation fails", async () => {
+    mutateAsyncMock.mockRejectedValue(new Error("Unable to create draft"));
+
+    render(<WorkspaceAssistantClient conversationId="conv_new" />);
+
+    fireEvent.change(screen.getByPlaceholderText("Ask Lightfield"), {
+      target: { value: "Summarize my active opportunities" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    expect(replaceMock).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.getByText("Unable to create draft")).toBeVisible();
+    });
+    expect(historyReplaceStateMock).toHaveBeenNthCalledWith(
+      1,
+      {},
+      "",
+      "/acme/chat/conv_new"
+    );
+    expect(historyReplaceStateMock).toHaveBeenNthCalledWith(
+      2,
+      {},
+      "",
+      "/acme/chat"
+    );
+    expect(refreshMock).not.toHaveBeenCalled();
+    expect(sendMessageMock).not.toHaveBeenCalled();
   });
 
   it("does not let hidden attachment state block a text prompt", async () => {
