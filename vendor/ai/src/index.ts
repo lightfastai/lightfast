@@ -22,6 +22,7 @@ export {
   Output,
   RetryError,
   safeValidateUIMessages,
+  smoothStream,
   stepCountIs,
   streamText,
   tool,
