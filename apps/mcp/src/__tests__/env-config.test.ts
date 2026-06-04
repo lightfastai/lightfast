@@ -55,13 +55,13 @@ describe("MCP environment validation wiring", () => {
     );
   });
 
-  it("loads app-specific env before the shared app fallback", () => {
+  it("loads shared app env before app-specific MCP env", () => {
     const packageJson = JSON.parse(
       readFileSync(resolve(appRoot, "package.json"), "utf8")
     ) as { scripts: Record<string, string> };
 
     expect(packageJson.scripts["with-env"]).toBe(
-      "dotenv -e ./.vercel/.env.development.local -e ../app/.env.overrides.local -e ../app/.vercel/.env.development.local --"
+      "dotenv -e ../app/.env.overrides.local -e ../app/.vercel/.env.development.local -e ./.vercel/.env.development.local --"
     );
   });
 });

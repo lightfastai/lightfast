@@ -136,7 +136,11 @@ const { XAppNodeError } = await import("@repo/x-app-node");
 const { assertCurrentSessionCanFinalizeConnectorOAuth } = await import(
   "../services/connectors/auth"
 );
-const { getXConnectorConfig } = await import("../services/connectors/config");
+const {
+  getLinearConnectorConfig,
+  getXConnectorConfig,
+  parseLinearConnectorConfig,
+} = await import("../services/connectors/config");
 const {
   consumeConnectorOAuthAttempt,
   issueConnectorOAuthAttempt,
@@ -293,19 +297,6 @@ describe("connector catalog services", () => {
       provider: "x",
     });
 
-    envMock.LINEAR_CLIENT_SECRET = undefined as unknown as string;
-    const missingConfigRows = await listConnectorsForOrg(ctx());
-    expect(
-      missingConfigRows.find((row) => row.provider === "linear")
-    ).toMatchObject({
-      connectAvailability: {
-        missing: ["LINEAR_CLIENT_SECRET"],
-        reason: "missing_config",
-        status: "unavailable",
-      },
-    });
-
-    envMock.LINEAR_CLIENT_SECRET = "linear_secret_test";
     envMock.X_CLIENT_SECRET = undefined as unknown as string;
     const missingXConfigRows = await listConnectorsForOrg(ctx());
     expect(
@@ -327,6 +318,85 @@ describe("connector OAuth attempts", () => {
     redisGetdelMock.mockReset();
     redisSetMock.mockReset();
     nanoidMock.mockReturnValue("attempt_123456789012345678901234");
+  });
+
+  it("resolves required Linear connector config with defaults and development overrides", () => {
+    expect(
+      parseLinearConnectorConfig({
+        appOrigin: "https://app.lightfast.localhost",
+        env: {
+          LINEAR_CLIENT_ID: "linear_client_test",
+          LINEAR_CLIENT_SECRET: "linear_secret_test",
+        },
+        nodeEnv: "production",
+      })
+    ).toMatchObject({
+      clientId: "linear_client_test",
+      clientSecret: "linear_secret_test",
+      endpoints: {
+        apiOrigin: "https://api.linear.app",
+        appOrigin: "https://linear.app",
+        mcpEndpoint: "https://mcp.linear.app/mcp",
+        oauthAuthorizeUrl: "https://linear.app/oauth/authorize",
+        oauthRevokeUrl: "https://api.linear.app/oauth/revoke",
+        oauthTokenUrl: "https://api.linear.app/oauth/token",
+        viewerUrl: "https://api.linear.app/graphql",
+      },
+    });
+
+    expect(
+      parseLinearConnectorConfig({
+        appOrigin: "https://app.lightfast.localhost",
+        env: {
+          LINEAR_API_ORIGIN: "https://linear.test",
+          LINEAR_CLIENT_ID: "linear_client_test",
+          LINEAR_CLIENT_SECRET: "linear_secret_test",
+          LINEAR_MCP_ENDPOINT: "https://linear.test/mcp",
+        },
+        nodeEnv: "development",
+      })
+    ).toMatchObject({
+      endpoints: {
+        apiOrigin: "https://linear.test",
+        appOrigin: "https://linear.test",
+        mcpEndpoint: "https://linear.test/mcp",
+        oauthAuthorizeUrl: "https://linear.test/oauth/authorize",
+        oauthRevokeUrl: "https://linear.test/oauth/revoke",
+        oauthTokenUrl: "https://linear.test/oauth/token",
+        viewerUrl: "https://linear.test/graphql",
+      },
+    });
+  });
+
+  it("rejects incomplete Linear connector config when env validation is skipped", () => {
+    const previous = envMock.LINEAR_CLIENT_SECRET;
+    envMock.LINEAR_CLIENT_SECRET = undefined as unknown as string;
+
+    try {
+      expect(() =>
+        getLinearConnectorConfig({
+          appOrigin: "https://app.lightfast.localhost",
+        })
+      ).toThrow("Linear connector environment is incomplete.");
+    } finally {
+      envMock.LINEAR_CLIENT_SECRET = previous;
+    }
+  });
+
+  it("rejects custom Linear endpoints outside development and test", () => {
+    expect(() =>
+      parseLinearConnectorConfig({
+        appOrigin: "https://app.lightfast.localhost",
+        env: {
+          LINEAR_API_ORIGIN: "https://linear.test",
+          LINEAR_CLIENT_ID: "linear_client_test",
+          LINEAR_CLIENT_SECRET: "linear_secret_test",
+        },
+        nodeEnv: "production",
+      })
+    ).toThrow(
+      expect.objectContaining({ code: "LINEAR_CUSTOM_ENDPOINT_FORBIDDEN" })
+    );
   });
 
   it("resolves X connector config from environment", () => {
@@ -660,13 +730,12 @@ describe("Linear connector flow", () => {
     );
   });
 
-  it("throws a typed tRPC error when Linear config is missing", async () => {
+  it("throws a clear error when skipped validation leaves Linear config incomplete", async () => {
     envMock.LINEAR_CLIENT_SECRET = undefined as unknown as string;
 
-    await expect(startLinearConnectorOAuth(ctx())).rejects.toMatchObject({
-      code: "PRECONDITION_FAILED",
-      message: "Linear connector is not configured.",
-    });
+    await expect(startLinearConnectorOAuth(ctx())).rejects.toThrow(
+      "Linear connector environment is incomplete."
+    );
   });
 
   it("completes OAuth with the public oauth callback path", async () => {
