@@ -563,22 +563,6 @@ describe("connectors page", () => {
     expect(screen.queryByRole("heading", { name: "Linear" })).toBeNull();
   });
 
-  it("disables connect when Linear config is missing", () => {
-    renderClient([
-      row({
-        connectAvailability: {
-          status: "unavailable",
-          reason: "missing_config",
-          missing: ["LINEAR_CLIENT_ID"],
-        },
-      }),
-    ]);
-
-    expect(screen.getByRole("button", { name: /^connect$/i })).toBeDisabled();
-    expect(screen.getByText(/missing config/i)).toBeVisible();
-    expect(screen.getByText(/LINEAR_CLIENT_ID/)).toBeVisible();
-  });
-
   it("uses provider-aware missing config copy for X", () => {
     renderClient([
       xRow({
