@@ -6,6 +6,7 @@ import {
 } from "@repo/app-setup-contract";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
+import type { Route } from "next";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { OrgPageErrorBoundary } from "~/components/errors/org-page-error-boundary";
@@ -80,7 +81,7 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
     pathname: requestPathname,
   });
   if (setupRedirectPath) {
-    redirect(setupRedirectPath);
+    redirect(setupRedirectPath as Route);
   }
 
   return (
