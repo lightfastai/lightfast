@@ -32,7 +32,9 @@ if (process.env.BRAINTRUST_API_KEY) {
   const { LIGHTFAST_AGENT_RUNTIME_BRAINTRUST_PARENT } = await import(
     "@repo/ai/telemetry"
   );
-  const { registerBraintrustOTel } = await import("@vendor/braintrust/otel");
+  const { registerBraintrustOTel } = await import(
+    "@vendor/braintrust/otel-tanstack"
+  );
 
   registerBraintrustOTel({
     parent: LIGHTFAST_AGENT_RUNTIME_BRAINTRUST_PARENT,

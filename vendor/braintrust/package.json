@@ -17,6 +17,10 @@
     "./otel": {
       "types": "./src/otel.ts",
       "default": "./src/otel.ts"
+    },
+    "./otel-tanstack": {
+      "types": "./src/otel-tanstack.ts",
+      "default": "./src/otel-tanstack.ts"
     }
   },
   "scripts": {
