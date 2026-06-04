@@ -81,7 +81,6 @@
     "@shikijs/langs": "catalog:",
     "@shikijs/themes": "catalog:",
     "@tanstack/react-table": "catalog:",
-    "@tanstack/react-virtual": "catalog:",
     "@tanstack/table-core": "catalog:",
     "@vendor/ai": "workspace:*",
     "@vendor/forms": "workspace:*",
@@ -109,6 +108,7 @@
     "streamdown": "catalog:",
     "tailwind-merge": "catalog:",
     "tw-animate-css": "catalog:",
+    "use-stick-to-bottom": "catalog:",
     "vaul": "catalog:",
     "zod": "catalog:"
   }

@@ -19,6 +19,7 @@ import {
   type UIMessage,
 } from "@vendor/ai";
 import { useParams } from "next/navigation";
+import type { CSSProperties } from "react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { isResumableStreamEnabled } from "~/app/(chat)/api/chat/resumable-stream-config";
 import { useTRPC } from "~/trpc/react";
@@ -27,6 +28,11 @@ import { ChatMessage } from "./chat-message";
 
 type WorkspaceAssistantConversationResult =
   AppRouterOutputs["org"]["workspace"]["assistant"]["getConversation"];
+
+const messageRowRenderingHints = {
+  containIntrinsicSize: "0 160px",
+  contentVisibility: "auto",
+} satisfies CSSProperties;
 
 interface WorkspaceAssistantClientProps {
   // Stable conversation identity, generated up-front by the route. Feeding this
@@ -161,11 +167,13 @@ export function WorkspaceAssistantClient({
         <>
           <div className="relative min-h-0 flex-1">
             <Conversation className="h-full">
-              <ConversationContent
-                getItemKey={(message) => message.id}
-                items={messages}
-                renderItem={(message, index) => (
-                  <div className="mx-auto w-full max-w-3xl px-5 pt-8 md:px-10">
+              <ConversationContent className="gap-0 p-0 pb-8">
+                {messages.map((message, index) => (
+                  <div
+                    className="mx-auto w-full max-w-3xl px-5 pt-8 md:px-10"
+                    key={message.id}
+                    style={messageRowRenderingHints}
+                  >
                     <ChatMessage
                       isStreaming={
                         status === "streaming" && index === messages.length - 1
@@ -173,8 +181,8 @@ export function WorkspaceAssistantClient({
                       message={message}
                     />
                   </div>
-                )}
-              />
+                ))}
+              </ConversationContent>
               <ConversationScrollButton />
             </Conversation>
           </div>
