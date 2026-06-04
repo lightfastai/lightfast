@@ -547,13 +547,10 @@ async function defaultDependencies(
   }
 
   if (contractPath === "signals.create") {
-    const [appSignalIntake, mcpOauth] = await Promise.all([
-      import("./app-signal-intake"),
-      import("@api/app/mcp-oauth"),
-    ]);
+    const appSignalIntake = await import("./app-signal-intake");
     return {
       ...base,
-      assertOrgAccess: mcpOauth.assertHostedMcpOrgAccess,
+      assertOrgAccess: signalOrgAccessHandledDownstream,
       callProviderRoutine: unavailableCallProviderRoutine,
       createSignalForActor: appSignalIntake.createSignalForActorViaApp,
       findProviderRoutines: unavailableFindProviderRoutines,
@@ -562,10 +559,9 @@ async function defaultDependencies(
   }
 
   if (contractPath === "signals.get") {
-    const mcpOauth = await import("@api/app/mcp-oauth");
     return {
       ...base,
-      assertOrgAccess: mcpOauth.assertHostedMcpOrgAccess,
+      assertOrgAccess: signalOrgAccessHandledDownstream,
       callProviderRoutine: unavailableCallProviderRoutine,
       createSignalForActor: unavailableCreateSignalForActor,
       findProviderRoutines: unavailableFindProviderRoutines,
@@ -600,6 +596,10 @@ async function defaultDependencies(
 
 async function unavailableAssertOrgAccess(): Promise<void> {
   throw unavailableDependencyError();
+}
+
+async function signalOrgAccessHandledDownstream(): Promise<void> {
+  return;
 }
 
 async function unavailableCreateSignalForActor(): Promise<never> {

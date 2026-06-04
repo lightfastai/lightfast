@@ -13,6 +13,10 @@
       "types": "./src/mcp-oauth/index.ts",
       "default": "./src/mcp-oauth/index.ts"
     },
+    "./mcp-oauth/resource-access": {
+      "types": "./src/mcp-oauth/resource-access.ts",
+      "default": "./src/mcp-oauth/resource-access.ts"
+    },
     "./env": {
       "types": "./src/env.ts",
       "default": "./src/env.ts"

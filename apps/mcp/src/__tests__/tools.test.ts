@@ -452,8 +452,7 @@ describe("hosted MCP tools", () => {
     );
   });
 
-  it("does not load app signal service or provider routine defaults for signal creation", async () => {
-    const assertHostedMcpOrgAccess = vi.fn().mockResolvedValue(undefined);
+  it("does not load app signal service, OAuth, or provider routine defaults for signal creation", async () => {
     const createSignalForActor = vi.fn().mockResolvedValue({
       id: signalId,
       status: "queued",
@@ -466,9 +465,9 @@ describe("hosted MCP tools", () => {
       getVisibleSignalByPublicId: vi.fn(),
       recordMcpAuditEvent,
     }));
-    vi.doMock("@api/app/mcp-oauth", () => ({
-      assertHostedMcpOrgAccess,
-    }));
+    vi.doMock("@api/app/mcp-oauth", () => {
+      throw new Error("mcp-oauth should not load for signal creation");
+    });
     vi.doMock("@api/app/signals/service", () => {
       throw new Error("signal service should not load for signal creation");
     });
@@ -491,10 +490,6 @@ describe("hosted MCP tools", () => {
       visibilityScope: "user",
     });
 
-    expect(assertHostedMcpOrgAccess).toHaveBeenCalledWith(db, {
-      orgId: "org_test",
-      userId: "user_test",
-    });
     expect(createSignalForActor).toHaveBeenCalledWith(db, {
       actor: {
         clientId: "mcp_client_test",
@@ -504,6 +499,43 @@ describe("hosted MCP tools", () => {
         userId: "user_test",
       },
       input: "Remember this production MCP test",
+    });
+  });
+
+  it("does not load OAuth defaults for signal get", async () => {
+    const getVisibleSignalByPublicId = vi.fn().mockResolvedValue(signal());
+    const recordMcpAuditEvent = vi.fn().mockResolvedValue(undefined);
+
+    vi.doMock("@db/app", () => ({
+      db,
+      getVisibleSignalByPublicId,
+      recordMcpAuditEvent,
+    }));
+    vi.doMock("@api/app/mcp-oauth", () => {
+      throw new Error("mcp-oauth should not load for signal get");
+    });
+    vi.doMock("@api/app/signals/service", () => {
+      throw new Error("signal service should not load for signal get");
+    });
+    vi.doMock("@repo/provider-routines", () => {
+      throw new Error("provider routines should not load for signal get");
+    });
+
+    await expect(
+      executeHostedMcpTool({
+        context: context(),
+        contractPath: "signals.get",
+        rawInput: { id: signalId },
+      })
+    ).resolves.toMatchObject({
+      id: signalId,
+      status: "queued",
+    });
+
+    expect(getVisibleSignalByPublicId).toHaveBeenCalledWith(db, {
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+      publicId: signalId,
     });
   });
 });
