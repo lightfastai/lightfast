@@ -63,11 +63,7 @@ export function resolveConnectorAppOrigin(input: { appUrl?: string } = {}) {
 }
 
 export function getLinearConnectorConfig(
-  input: {
-    appOrigin?: string;
-    appUrl?: string;
-    nodeEnv?: string;
-  } = {}
+  input: { appOrigin?: string; appUrl?: string; nodeEnv?: string } = {}
 ): LinearConnectorConfig {
   const parseInput: Parameters<typeof parseLinearConnectorConfig>[0] = {
     env: runtimeEnv,
