@@ -18,7 +18,10 @@ const envMock = {
   CONNECTOR_MCP_AUTH_SECRET: "mcp_auth_secret_12345678901234567890",
   ENCRYPTION_KEY:
     "0000000000000000000000000000000000000000000000000000000000000000",
+  NEXT_PUBLIC_APP_URL: "https://app.lightfast.localhost",
   VERCEL_ENV: "test",
+  X_CLIENT_ID: "x_client_test",
+  X_CLIENT_SECRET: "x_secret_test",
 };
 
 vi.mock("@db/app/client", () => ({ db: {} }));
@@ -109,6 +112,7 @@ function connection(
 
 describe("loadConnectorRuntimeTools", () => {
   beforeEach(() => {
+    process.env.NEXT_PUBLIC_APP_URL = envMock.NEXT_PUBLIC_APP_URL;
     listCurrentOrgConnectorConnectionsMock.mockReset();
     getCurrentOrgConnectorConnectionMock.mockReset();
     markCurrentOrgConnectorConnectionErrorMock.mockReset();
@@ -526,6 +530,7 @@ describe("loadConnectorRuntimeTools", () => {
     expect(result).toEqual({ content: [{ text: "x ok" }] });
     expect(getFreshLinearConnectorAccessTokenMock).not.toHaveBeenCalled();
     expect(callXBridgeMcpToolMock).toHaveBeenCalledWith({
+      allowedEndpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
       endpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
       input: { username: "lightfast" },
       mcpToken: expect.stringMatching(/^lfmcp_v1\./),

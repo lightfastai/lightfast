@@ -19,6 +19,7 @@ import { callLinearMcpTool, LinearAppNodeError } from "@repo/linear-app-node";
 import { callXBridgeMcpTool, XAppNodeError } from "@repo/x-app-node";
 import { log } from "@vendor/observability/log/next";
 
+import { requireXConnectorConfig } from "./config";
 import { getFreshLinearConnectorAccessToken } from "./linear-flow";
 import { issueConnectorMcpToken } from "./mcp-auth";
 
@@ -344,7 +345,9 @@ async function callXRuntimeTool(
       logContext
     );
   }
+  const config = requireXConnectorConfig();
   return await callXBridgeMcpTool({
+    allowedEndpoint: config.endpoints.mcpEndpoint,
     endpoint: connection.mcpEndpoint,
     input: normalizeMcpToolInput(input),
     mcpToken,
