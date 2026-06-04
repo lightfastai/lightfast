@@ -1,4 +1,8 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+const appRoot = resolve(import.meta.dirname, "../..");
 
 describe("app-tanstack health route", () => {
   afterEach(() => {
@@ -6,9 +10,19 @@ describe("app-tanstack health route", () => {
     vi.unstubAllEnvs();
   });
 
+  it("keeps the file route wrapper browser-safe", () => {
+    const routeSource = readFileSync(
+      resolve(appRoot, "src/routes/api/health.ts"),
+      "utf8"
+    );
+
+    expect(routeSource).not.toContain('from "~/env"');
+    expect(routeSource).toContain('import("~/server/health")');
+  });
+
   it("returns an unauthenticated health payload when no token is configured", async () => {
     vi.stubEnv("HEALTH_CHECK_AUTH_TOKEN", "");
-    const { getHealth } = await import("../routes/api/health");
+    const { getHealth } = await import("../server/health");
 
     const response = getHealth(new Request("https://app.test/api/health"));
 
@@ -28,7 +42,7 @@ describe("app-tanstack health route", () => {
       "HEALTH_CHECK_AUTH_TOKEN",
       "test-health-token-test-health-token"
     );
-    const { getHealth } = await import("../routes/api/health");
+    const { getHealth } = await import("../server/health");
 
     const response = getHealth(new Request("https://app.test/api/health"));
 
@@ -43,7 +57,7 @@ describe("app-tanstack health route", () => {
       "HEALTH_CHECK_AUTH_TOKEN",
       "test-health-token-test-health-token"
     );
-    const { getHealth } = await import("../routes/api/health");
+    const { getHealth } = await import("../server/health");
 
     const response = getHealth(
       new Request("https://app.test/api/health", {
@@ -60,7 +74,7 @@ describe("app-tanstack health route", () => {
       "HEALTH_CHECK_AUTH_TOKEN",
       "test-health-token-test-health-token"
     );
-    const { getHealth } = await import("../routes/api/health");
+    const { getHealth } = await import("../server/health");
 
     const response = getHealth(
       new Request("https://app.test/api/health", {
