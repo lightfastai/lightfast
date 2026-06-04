@@ -37,8 +37,8 @@ export const env = createEnv({
       ? z.string().min(32)
       : z.string().min(32).optional(),
     LINEAR_API_ORIGIN: z.string().url().optional(),
-    LINEAR_CLIENT_ID: z.string().min(1),
-    LINEAR_CLIENT_SECRET: z.string().min(1),
+    LINEAR_CLIENT_ID: z.string().min(1).optional(),
+    LINEAR_CLIENT_SECRET: z.string().min(1).optional(),
     LINEAR_MCP_ENDPOINT: z.string().url().optional(),
     VERCEL_ENV: z
       .enum(["development", "preview", "production"])

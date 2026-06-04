@@ -87,21 +87,12 @@ describe("api app env", () => {
     "development",
     "preview",
     "production",
-  ] as const)("requires Linear env during %s env module evaluation", async (vercelEnv) => {
-    const consoleErrorSpy = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => undefined);
+  ] as const)("allows Linear env to be absent during %s env module evaluation", async (vercelEnv) => {
     setValidBaseEnv(vercelEnv);
     unsetLinearEnv();
     vi.resetModules();
 
-    await expect(import("../env")).rejects.toThrow(
-      "Invalid environment variables"
-    );
-    const loggedErrors = JSON.stringify(consoleErrorSpy.mock.calls);
-    for (const key of LINEAR_ENV_KEYS) {
-      expect(loggedErrors).toContain(key);
-    }
+    await expect(import("../env")).resolves.toHaveProperty("env");
   });
 });
 
@@ -117,6 +108,13 @@ function setValidBaseEnv(vercelEnv: "development" | "preview" | "production") {
   process.env.CLERK_SECRET_KEY = "sk_test_fake-secret-key-for-tests";
   process.env.CONNECTOR_MCP_AUTH_SECRET = "x".repeat(32);
   process.env.ENCRYPTION_KEY = "0".repeat(64);
+  process.env.GITHUB_APP_CLIENT_ID = "github_client_test";
+  process.env.GITHUB_APP_CLIENT_SECRET = "github_secret_test";
+  process.env.GITHUB_APP_ID = "123456";
+  process.env.GITHUB_APP_PRIVATE_KEY =
+    "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----";
+  process.env.GITHUB_APP_SLUG = "lightfast-test";
+  process.env.GITHUB_APP_WEBHOOK_SECRET = "github_webhook_secret_test";
   process.env.INNGEST_APP_NAME = "lightfast-test";
   process.env.LINEAR_CLIENT_ID = "linear_client_test";
   process.env.LINEAR_CLIENT_SECRET = "linear_secret_test";
