@@ -160,6 +160,14 @@ vi.mock("@repo/ui/components/ui/popover", () => ({
 
 const { AppSidebar } = await import("~/components/app-sidebar");
 
+function renderSidebar(input: { developerConnectionsEnabled?: boolean } = {}) {
+  render(
+    <AppSidebar
+      developerConnectionsEnabled={input.developerConnectionsEnabled ?? false}
+    />
+  );
+}
+
 beforeEach(() => {
   pathname = "/acme/signals";
   isMobile = false;
@@ -184,7 +192,7 @@ beforeEach(() => {
 
 describe("AppSidebar", () => {
   it("renders workspace links separately from manage links", () => {
-    render(<AppSidebar />);
+    renderSidebar();
 
     expect(screen.getByRole("link", { name: /signals/i })).toHaveAttribute(
       "href",
@@ -211,8 +219,8 @@ describe("AppSidebar", () => {
       "/acme/connectors"
     );
     expect(
-      screen.getByRole("link", { name: /developer connections/i })
-    ).toHaveAttribute("href", "/acme/developer-connections");
+      screen.queryByRole("link", { name: /developer connections/i })
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole("region", { name: "Workspace" })
     ).toBeInTheDocument();
@@ -221,7 +229,7 @@ describe("AppSidebar", () => {
 
   it("marks connectors active by route section", () => {
     pathname = "/acme/connectors";
-    render(<AppSidebar />);
+    renderSidebar();
 
     const connectorsLink = screen.getByRole("link", { name: /connectors/i });
     expect(connectorsLink.closest("[data-active]")).toHaveAttribute(
@@ -232,7 +240,7 @@ describe("AppSidebar", () => {
 
   it("marks developer connections active by route section", () => {
     pathname = "/acme/developer-connections";
-    render(<AppSidebar />);
+    renderSidebar({ developerConnectionsEnabled: true });
 
     const link = screen.getByRole("link", {
       name: /developer connections/i,
@@ -243,8 +251,16 @@ describe("AppSidebar", () => {
     );
   });
 
+  it("shows developer connections when the feature flag is enabled", () => {
+    renderSidebar({ developerConnectionsEnabled: true });
+
+    expect(
+      screen.getByRole("link", { name: /developer connections/i })
+    ).toHaveAttribute("href", "/acme/developer-connections");
+  });
+
   it("exposes workspace and manage navigation landmarks", () => {
-    render(<AppSidebar />);
+    renderSidebar();
 
     expect(
       screen.getByRole("navigation", { name: "Workspace" })
@@ -255,7 +271,7 @@ describe("AppSidebar", () => {
   });
 
   it("renders the workspace navigation links in order", () => {
-    render(<AppSidebar />);
+    renderSidebar();
 
     const workspaceLinks = screen
       .getByRole("region", { name: "Workspace" })
@@ -269,7 +285,7 @@ describe("AppSidebar", () => {
 
   it("marks the active nav link with aria-current", () => {
     pathname = "/acme/people";
-    render(<AppSidebar />);
+    renderSidebar();
 
     expect(screen.getByRole("link", { current: "page" })).toHaveAccessibleName(
       "People"
@@ -277,7 +293,7 @@ describe("AppSidebar", () => {
   });
 
   it("renders existing chats in a sidebar container below settings", () => {
-    render(<AppSidebar />);
+    renderSidebar();
 
     const manageLinks = screen
       .getByRole("region", { name: "Manage" })
@@ -307,7 +323,7 @@ describe("AppSidebar", () => {
   });
 
   it("renders a new chat button in the header", () => {
-    render(<AppSidebar />);
+    renderSidebar();
 
     expect(screen.getByRole("link", { name: "New chat" })).toHaveAttribute(
       "href",
@@ -317,7 +333,7 @@ describe("AppSidebar", () => {
 
   it("hides the chats group when there are no conversations", () => {
     conversationsData = { items: [], nextCursor: null };
-    render(<AppSidebar />);
+    renderSidebar();
 
     expect(
       screen.queryByRole("region", { name: "Chats" })
@@ -326,7 +342,7 @@ describe("AppSidebar", () => {
 
   it("marks the active existing chat in the chat history", () => {
     pathname = "/acme/chat/conv_recent";
-    render(<AppSidebar />);
+    renderSidebar();
 
     expect(
       screen
@@ -337,7 +353,7 @@ describe("AppSidebar", () => {
 
   it("does not mark settings active for similar path prefixes", () => {
     pathname = "/acme/settings-archive";
-    render(<AppSidebar />);
+    renderSidebar();
 
     const settingsLink = screen.getByRole("link", { name: /settings/i });
     expect(settingsLink.closest("[data-active]")).toHaveAttribute(
@@ -349,7 +365,7 @@ describe("AppSidebar", () => {
 
   it("closes the mobile sidebar when navigating", () => {
     isMobile = true;
-    render(<AppSidebar />);
+    renderSidebar();
 
     fireEvent.click(screen.getByRole("link", { name: /signals/i }));
 
@@ -358,7 +374,7 @@ describe("AppSidebar", () => {
 
   it("shows a mobile close control", () => {
     isMobile = true;
-    render(<AppSidebar />);
+    renderSidebar();
 
     fireEvent.click(screen.getByRole("button", { name: /close sidebar/i }));
 
@@ -367,7 +383,7 @@ describe("AppSidebar", () => {
 
   it("marks people active by route section", () => {
     pathname = "/acme/people";
-    render(<AppSidebar />);
+    renderSidebar();
 
     const peopleLink = screen.getByRole("link", { name: /people/i });
     expect(peopleLink.closest("[data-active]")).toHaveAttribute(

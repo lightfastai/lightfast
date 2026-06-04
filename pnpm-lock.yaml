@@ -579,6 +579,12 @@ importers:
       '@vendor/upstash':
         specifier: workspace:*
         version: link:../../vendor/upstash
+      '@vendor/vercel-flags':
+        specifier: workspace:*
+        version: link:../../vendor/vercel-flags
+      '@vercel/flags-core':
+        specifier: ^1.1.0
+        version: 1.1.0(flags@4.0.3(@opentelemetry/api@1.9.1)(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))
       '@vercel/related-projects':
         specifier: 'catalog:'
         version: 1.1.0

@@ -29,16 +29,22 @@ export interface SentryAuthBoxClient {
   }): Promise<SentryAuthBoxStartResult>;
 }
 
+export function isDeveloperAuthBoxConfigured() {
+  return Boolean(env.DEVELOPER_AUTH_BOX_ORIGIN && env.DEVELOPER_AUTH_BOX_TOKEN);
+}
+
 function authBoxConfig() {
-  if (!(env.DEVELOPER_AUTH_BOX_ORIGIN && env.DEVELOPER_AUTH_BOX_TOKEN)) {
+  const origin = env.DEVELOPER_AUTH_BOX_ORIGIN;
+  const token = env.DEVELOPER_AUTH_BOX_TOKEN;
+  if (!(origin && token)) {
     throw new TRPCError({
       code: "PRECONDITION_FAILED",
       message: "Developer auth box is not configured.",
     });
   }
   return {
-    origin: env.DEVELOPER_AUTH_BOX_ORIGIN.replace(/\/$/, ""),
-    token: env.DEVELOPER_AUTH_BOX_TOKEN,
+    origin: origin.replace(/\/$/, ""),
+    token,
   };
 }
 

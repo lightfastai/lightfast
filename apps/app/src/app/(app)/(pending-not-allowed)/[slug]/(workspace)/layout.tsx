@@ -1,3 +1,4 @@
+import { isDeveloperConnectionsEnabled } from "@api/app/feature-flags";
 import {
   SidebarInset,
   SidebarProvider,
@@ -9,16 +10,18 @@ import { AppSidebar } from "~/components/app-sidebar";
 import { AuthenticatedTopbar } from "~/components/authenticated-topbar";
 import { WorkspaceCommandMenu } from "~/components/workspace-command-menu";
 
-export default function WorkspaceLayout({
+export default async function WorkspaceLayout({
   actions,
   children,
 }: {
   actions: React.ReactNode;
   children: React.ReactNode;
 }) {
+  const developerConnectionsEnabled = await isDeveloperConnectionsEnabled();
+
   return (
     <SidebarProvider className="!h-full !min-h-0 overflow-hidden bg-background">
-      <AppSidebar />
+      <AppSidebar developerConnectionsEnabled={developerConnectionsEnabled} />
       <SidebarInset className="min-h-0 overflow-hidden">
         <AuthenticatedTopbar
           actions={actions}

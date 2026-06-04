@@ -5,6 +5,8 @@ import {
   developerConnectionSetSandboxEnabledInputSchema,
   developerConnectionStartAuthInputSchema,
 } from "@repo/developer-connection-contract";
+import { TRPCError } from "@trpc/server";
+import { isDeveloperConnectionsEnabled } from "../../feature-flags";
 import {
   completeSentryDeveloperConnectionAuth,
   connectDeveloperConnection,
@@ -19,29 +21,54 @@ import {
   createTRPCRouter,
 } from "../../trpc";
 
+function developerConnectionsNotFoundError() {
+  return new TRPCError({
+    code: "NOT_FOUND",
+    message: "Developer connections not found",
+  });
+}
+
+const developerConnectionsProcedure = boundOrgProcedure.use(
+  async ({ next }) => {
+    if (!(await isDeveloperConnectionsEnabled())) {
+      throw developerConnectionsNotFoundError();
+    }
+    return next();
+  }
+);
+
+const developerConnectionsAdminProcedure = boundOrgAdminProcedure.use(
+  async ({ next }) => {
+    if (!(await isDeveloperConnectionsEnabled())) {
+      throw developerConnectionsNotFoundError();
+    }
+    return next();
+  }
+);
+
 export const developerConnectionsRouter = createTRPCRouter({
-  list: boundOrgProcedure.query(async ({ ctx }) =>
+  list: developerConnectionsProcedure.query(async ({ ctx }) =>
     listDeveloperConnectionsForOrg(ctx)
   ),
-  connect: boundOrgAdminProcedure
+  connect: developerConnectionsAdminProcedure
     .input(developerConnectionConnectInputSchema)
     .mutation(async ({ ctx, input }) => connectDeveloperConnection(ctx, input)),
-  startSentryAuth: boundOrgAdminProcedure
+  startSentryAuth: developerConnectionsAdminProcedure
     .input(developerConnectionStartAuthInputSchema)
     .mutation(async ({ ctx, input }) =>
       startSentryDeveloperConnectionAuth(ctx, input)
     ),
-  completeSentryAuth: boundOrgAdminProcedure
+  completeSentryAuth: developerConnectionsAdminProcedure
     .input(developerConnectionCompleteAuthInputSchema)
     .mutation(async ({ ctx, input }) =>
       completeSentryDeveloperConnectionAuth(ctx, input)
     ),
-  setSandboxEnabled: boundOrgAdminProcedure
+  setSandboxEnabled: developerConnectionsAdminProcedure
     .input(developerConnectionSetSandboxEnabledInputSchema)
     .mutation(async ({ ctx, input }) =>
       setDeveloperConnectionSandboxEnabled(ctx, input)
     ),
-  disconnect: boundOrgAdminProcedure
+  disconnect: developerConnectionsAdminProcedure
     .input(developerConnectionProviderInputSchema)
     .mutation(async ({ ctx, input }) =>
       disconnectDeveloperConnection(ctx, input)

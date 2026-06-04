@@ -12,6 +12,7 @@ const replaceCurrentDeveloperConnectionMock = vi.fn();
 const setCurrentDeveloperConnectionSandboxEnabledMock = vi.fn();
 const revokeCurrentDeveloperConnectionMock = vi.fn();
 const issueDeveloperConnectionLeaseMock = vi.fn();
+const isDeveloperAuthBoxConfiguredMock = vi.fn(() => true);
 const sentryAuthBoxStartMock = vi.fn();
 const sentryAuthBoxCompleteMock = vi.fn();
 
@@ -43,6 +44,7 @@ vi.mock("@db/app", () => ({
 }));
 
 vi.mock("../services/developer-connections/auth-box", () => ({
+  isDeveloperAuthBoxConfigured: isDeveloperAuthBoxConfiguredMock,
   sentryAuthBoxClient: {
     start: sentryAuthBoxStartMock,
     complete: sentryAuthBoxCompleteMock,
@@ -89,6 +91,7 @@ function ctx(input: { isAdmin?: boolean } = {}) {
 describe("developer connection services", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    isDeveloperAuthBoxConfiguredMock.mockReturnValue(true);
     listCurrentDeveloperConnectionsMock.mockResolvedValue([]);
     listDeveloperConnectionLeasesForSandboxRunMock.mockResolvedValue([]);
     replaceCurrentDeveloperConnectionMock.mockImplementation(
@@ -156,9 +159,23 @@ describe("developer connection services", () => {
     await expect(listDeveloperConnectionsForOrg(ctx())).resolves.toEqual([
       expect.objectContaining({ provider: "pscale", canManage: true }),
       expect.objectContaining({ provider: "upstash", canManage: true }),
-      expect.objectContaining({ provider: "sentry", canManage: true }),
+      expect.objectContaining({
+        provider: "sentry",
+        canManage: true,
+        sentryBrowserOAuthAvailable: true,
+      }),
       expect.objectContaining({ provider: "clerk", canManage: true }),
     ]);
+  });
+
+  it("marks Sentry browser OAuth unavailable when the auth box is not configured", async () => {
+    isDeveloperAuthBoxConfiguredMock.mockReturnValue(false);
+
+    const rows = await listDeveloperConnectionsForOrg(ctx());
+
+    expect(rows.find((row) => row.provider === "sentry")).toEqual(
+      expect.objectContaining({ sentryBrowserOAuthAvailable: false })
+    );
   });
 
   it("encrypts manual PlanetScale credentials and stores a current org connection", async () => {

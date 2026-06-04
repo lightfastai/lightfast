@@ -1,3 +1,5 @@
+import { isDeveloperConnectionsEnabled } from "@api/app/feature-flags";
+import { notFound } from "next/navigation";
 import { getQueryClient, HydrateClient, trpc } from "~/trpc/server";
 import { DeveloperConnectionsClient } from "./_components/developer-connections-client";
 
@@ -15,6 +17,10 @@ export default async function DeveloperConnectionsPage({
     error?: string | string[];
   }>;
 }) {
+  if (!(await isDeveloperConnectionsEnabled())) {
+    notFound();
+  }
+
   const params = await searchParams;
 
   await getQueryClient().fetchQuery(

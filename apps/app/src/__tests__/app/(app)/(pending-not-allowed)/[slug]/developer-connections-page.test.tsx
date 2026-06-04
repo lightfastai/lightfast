@@ -22,6 +22,7 @@ interface DeveloperConnectionRow {
   description: string;
   displayName: string;
   provider: "pscale" | "upstash" | "sentry" | "clerk";
+  sentryBrowserOAuthAvailable: boolean;
 }
 
 const completeSentryAuthMutateMock = vi.fn();
@@ -36,6 +37,10 @@ const listQueryOptions = {
   queryKey: ["org", "workspace", "developerConnections", "list"],
 };
 const listQueryOptionsMock = vi.fn(() => listQueryOptions);
+const isDeveloperConnectionsEnabledMock = vi.fn();
+const notFoundMock = vi.fn(() => {
+  throw new Error("NEXT_NOT_FOUND");
+});
 const setSandboxEnabledMutateMock = vi.fn();
 const startSentryAuthMutateMock = vi.fn();
 const useMutationMock = vi.fn();
@@ -71,6 +76,14 @@ vi.mock("~/trpc/server", () => ({
       },
     },
   },
+}));
+
+vi.mock("@api/app/feature-flags", () => ({
+  isDeveloperConnectionsEnabled: isDeveloperConnectionsEnabledMock,
+}));
+
+vi.mock("next/navigation", () => ({
+  notFound: notFoundMock,
 }));
 
 vi.mock("~/trpc/react", () => ({
@@ -277,6 +290,7 @@ function baseRow(
     description: "Inspect Sentry issues and manage release artifacts.",
     displayName: "Sentry",
     provider: "sentry",
+    sentryBrowserOAuthAvailable: false,
     ...overrides,
   };
 }
@@ -298,8 +312,8 @@ function connectedSentry(
   });
 }
 
-function availableSentry() {
-  return baseRow();
+function availableSentry(overrides: Partial<DeveloperConnectionRow> = {}) {
+  return baseRow({ sentryBrowserOAuthAvailable: true, ...overrides });
 }
 
 function availablePscale() {
@@ -324,6 +338,8 @@ beforeEach(() => {
     delete capturedMutationOptions[key];
   }
   fetchQueryMock.mockResolvedValue([]);
+  isDeveloperConnectionsEnabledMock.mockResolvedValue(true);
+  notFoundMock.mockClear();
   useSuspenseQueryMock.mockReturnValue({ data: [] });
   useMutationMock.mockImplementation(
     (options: {
@@ -352,6 +368,19 @@ beforeEach(() => {
 });
 
 describe("DeveloperConnectionsPage", () => {
+  it("renders not found when the developer connections flag is disabled", async () => {
+    isDeveloperConnectionsEnabledMock.mockResolvedValue(false);
+
+    await expect(
+      DeveloperConnectionsPage({
+        searchParams: Promise.resolve({}),
+      })
+    ).rejects.toThrow("NEXT_NOT_FOUND");
+
+    expect(notFoundMock).toHaveBeenCalledOnce();
+    expect(fetchQueryMock).not.toHaveBeenCalled();
+  });
+
   it("fetches developer connections before rendering hydrated client UI", async () => {
     fetchQueryMock.mockResolvedValue([connectedSentry()]);
     useSuspenseQueryMock.mockReturnValue({ data: [connectedSentry()] });
@@ -442,6 +471,15 @@ describe("DeveloperConnectionsPage", () => {
       provider: "sentry",
       attemptId: "auth_attempt_1",
     });
+  });
+
+  it("hides Sentry browser OAuth when the auth box is unavailable", () => {
+    renderClient([availableSentry({ sentryBrowserOAuthAvailable: false })]);
+
+    fireEvent.click(screen.getByRole("button", { name: /^connect$/i }));
+
+    expect(screen.queryByRole("button", { name: /browser oauth/i })).toBeNull();
+    expect(screen.getByLabelText(/sentry token/i)).toBeVisible();
   });
 
   it("disables management controls for non-admin members", () => {
