@@ -1,14 +1,24 @@
 import { getActiveNamespaceByHandle } from "@db/app";
 import { db } from "@db/app/client";
+import {
+  type OrgSetupGate,
+  pathForSetupRequirement,
+} from "@repo/app-setup-contract";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { headers } from "next/headers";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { OrgPageErrorBoundary } from "~/components/errors/org-page-error-boundary";
 import { ShellDataBoundary } from "~/components/shell-data-boundary";
 import { getQueryClient, trpc } from "~/trpc/server";
 
 const LIGHTFAST_PATHNAME_HEADER = "x-lightfast-pathname";
+const ORG_SETUP_EXEMPT_PATH_SUFFIXES = [
+  "/settings",
+  "/tasks/bind",
+  "/tasks/github/lightfast-repo",
+  "/tasks/connectors/x",
+] as const;
 
 interface OrgLayoutProps {
   children: React.ReactNode;
@@ -48,8 +58,9 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
     );
   }
 
+  let orgAccess: OrgSetupGate;
   try {
-    await getQueryClient().fetchQuery(
+    orgAccess = await getQueryClient().fetchQuery(
       trpc.viewer.organization.getBySlug.queryOptions({
         slug: orgSlug,
       })
@@ -60,6 +71,16 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
       slug: orgSlug,
     });
     notFound();
+  }
+
+  const requestPathname = await getRequestPathname(orgSlug);
+  const setupRedirectPath = getSetupRedirectPath({
+    gate: orgAccess,
+    orgSlug,
+    pathname: requestPathname,
+  });
+  if (setupRedirectPath) {
+    redirect(setupRedirectPath);
   }
 
   return (
@@ -88,6 +109,32 @@ async function getRequestPathname(handle: string) {
 
 function isNamespaceRootPath(pathname: string, handle: string) {
   return pathname === `/${handle}` || pathname === `/${handle}/`;
+}
+
+function isSetupExemptOrgPath(pathname: string, orgSlug: string) {
+  const orgRoot = `/${orgSlug}`;
+  return ORG_SETUP_EXEMPT_PATH_SUFFIXES.some((suffix) => {
+    const path = `${orgRoot}${suffix}`;
+    return pathname === path || pathname.startsWith(`${path}/`);
+  });
+}
+
+function getSetupRedirectPath(input: {
+  gate: OrgSetupGate;
+  orgSlug: string;
+  pathname: string;
+}) {
+  if (
+    input.gate.bindingStatus === "bound" ||
+    isSetupExemptOrgPath(input.pathname, input.orgSlug)
+  ) {
+    return null;
+  }
+
+  return pathForSetupRequirement({
+    orgSlug: input.orgSlug,
+    requirement: input.gate.nextSetupRequirement,
+  });
 }
 
 function UserNamespaceRoot({ handle }: { handle: string }) {
