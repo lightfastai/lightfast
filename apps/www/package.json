@@ -43,7 +43,7 @@
     "@vercel/microfrontends": "^2.3.2",
     "@vercel/related-projects": "catalog:",
     "@vercel/toolbar": "^0.2.2",
-    "feed": "^5.2.0",
+    "feed": "catalog:",
     "framer-motion": "^11.18.2",
     "fumadocs-core": "16.6.10",
     "fumadocs-mdx": "14.2.9",

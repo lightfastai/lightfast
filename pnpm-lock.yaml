@@ -36,6 +36,9 @@ catalogs:
     '@modelcontextprotocol/sdk':
       specifier: ^1.29.0
       version: 1.29.0
+    '@paper-design/shaders-react':
+      specifier: ^0.0.76
+      version: 0.0.76
     '@radix-ui/react-accordion':
       specifier: ^1.2.11
       version: 1.2.12
@@ -246,6 +249,9 @@ catalogs:
     emulate:
       specifier: 0.6.0
       version: 0.6.0
+    feed:
+      specifier: ^5.2.0
+      version: 5.2.0
     geist:
       specifier: ^1.7.0
       version: 1.7.0
@@ -374,6 +380,9 @@ catalogs:
     '@tailwindcss/typography':
       specifier: ^0.5.16
       version: 0.5.19
+    '@tailwindcss/vite':
+      specifier: 4.2.2
+      version: 4.2.2
     postcss:
       specifier: 8.5.11
       version: 8.5.11
@@ -1316,7 +1325,7 @@ importers:
         specifier: ^0.2.2
         version: 0.2.2(@vercel/analytics@2.0.1(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6))(@vercel/speed-insights@2.0.0(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6))(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vite@8.0.16(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       feed:
-        specifier: ^5.2.0
+        specifier: 'catalog:'
         version: 5.2.0
       framer-motion:
         specifier: ^11.18.2
@@ -1433,6 +1442,97 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@24.9.1)(@vitest/coverage-v8@4.1.4)(happy-dom@20.9.0)(vite@8.0.16(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+
+  apps/www-start:
+    dependencies:
+      '@paper-design/shaders-react':
+        specifier: 'catalog:'
+        version: 0.0.76(@types/react@19.2.15)(react@19.2.6)
+      '@repo/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@t3-oss/env-core':
+        specifier: 'catalog:'
+        version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
+      '@tanstack/react-router':
+        specifier: 'catalog:'
+        version: 1.170.11(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@tanstack/react-start':
+        specifier: 'catalog:'
+        version: 1.168.19(crossws@0.4.5(srvx@0.11.16))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vite@8.0.16(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(webpack@5.105.4(esbuild@0.28.0))
+      '@vendor/aeo':
+        specifier: workspace:*
+        version: link:../../vendor/aeo
+      feed:
+        specifier: 'catalog:'
+        version: 5.2.0
+      lucide-react:
+        specifier: 'catalog:'
+        version: 1.8.0(react@19.2.6)
+      react:
+        specifier: ^19.2.6
+        version: 19.2.6
+      react-dom:
+        specifier: ^19.2.6
+        version: 19.2.6(react@19.2.6)
+      react-markdown:
+        specifier: 'catalog:'
+        version: 10.1.0(@types/react@19.2.15)(react@19.2.6)
+      remark-gfm:
+        specifier: 'catalog:'
+        version: 4.0.1
+      tw-animate-css:
+        specifier: 'catalog:'
+        version: 1.4.0
+      yaml:
+        specifier: 'catalog:'
+        version: 2.8.3
+      zod:
+        specifier: 'catalog:'
+        version: 4.3.6
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@repo/vitest-config':
+        specifier: workspace:*
+        version: link:../../internal/vitest-config
+      '@tailwindcss/typography':
+        specifier: catalog:tailwind4
+        version: 0.5.19(tailwindcss@4.2.2)
+      '@tailwindcss/vite':
+        specifier: catalog:tailwind4
+        version: 4.2.2(vite@8.0.16(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      '@tanstack/router-plugin':
+        specifier: 'catalog:'
+        version: 1.168.14(@tanstack/react-router@1.170.11(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(vite@8.0.16(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(webpack@5.105.4(esbuild@0.28.0))
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.9.1
+      '@types/react':
+        specifier: ^19.2.15
+        version: 19.2.15
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.15)
+      '@vitejs/plugin-react':
+        specifier: 'catalog:'
+        version: 6.0.1(babel-plugin-react-compiler@1.0.0)(vite@8.0.16(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      dotenv-cli:
+        specifier: 'catalog:'
+        version: 11.0.0
+      tailwindcss:
+        specifier: catalog:tailwind4
+        version: 4.2.2
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vite:
+        specifier: 'catalog:'
+        version: 8.0.16(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@24.9.1)(@vitest/coverage-v8@4.1.4)(happy-dom@20.9.0)(vite@8.0.16(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   core/cli:
     devDependencies:
@@ -8284,6 +8384,11 @@ packages:
     resolution: {integrity: sha512-w31dd8HOx3k9vPtcQh5QHP9GwKcgbMp87j58qi6xgiBnFFtKEAgCWnDw4qUT8aHwkCp8bKvb/KGKWWHedP0AAg==}
     peerDependencies:
       tailwindcss: '>=3.0.0 || insiders || >=4.0.0-alpha.20 || >=4.0.0-beta.1'
+
+  '@tailwindcss/vite@4.2.2':
+    resolution: {integrity: sha512-mEiF5HO1QqCLXoNEfXVA1Tzo+cYsrqV7w9Juj2wdUFyW07JRenqMG225MvPwr3ZD9N1bFQj46X7r33iHxLUW0w==}
+    peerDependencies:
+      vite: ^5.2.0 || ^6 || ^7 || ^8
 
   '@tanstack/history@1.162.0':
     resolution: {integrity: sha512-79pf/RkhteYZTRgcR4F9kbk84P2N8rugQJswxfIqovlbRiT3yI7eBE+5QorIrZaOKktsgzRlXh1l/du/xpl4iA==}
@@ -20384,7 +20489,7 @@ snapshots:
     dependencies:
       '@jridgewell/remapping': 2.3.5
       enhanced-resolve: 5.20.1
-      jiti: 2.6.1
+      jiti: 2.7.0
       lightningcss: 1.32.0
       magic-string: 0.30.21
       source-map-js: 1.2.1
@@ -20453,6 +20558,13 @@ snapshots:
     dependencies:
       postcss-selector-parser: 6.0.10
       tailwindcss: 4.2.2
+
+  '@tailwindcss/vite@4.2.2(vite@8.0.16(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))':
+    dependencies:
+      '@tailwindcss/node': 4.2.2
+      '@tailwindcss/oxide': 4.2.2
+      tailwindcss: 4.2.2
+      vite: 8.0.16(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
 
   '@tanstack/history@1.162.0': {}
 
@@ -22254,12 +22366,12 @@ snapshots:
 
   css-loader@7.1.4(@rspack/core@1.7.6(@swc/helpers@0.5.15))(webpack@5.105.4):
     dependencies:
-      icss-utils: 5.1.0(postcss@8.5.11)
-      postcss: 8.5.11
-      postcss-modules-extract-imports: 3.1.0(postcss@8.5.11)
-      postcss-modules-local-by-default: 4.2.0(postcss@8.5.11)
-      postcss-modules-scope: 3.2.1(postcss@8.5.11)
-      postcss-modules-values: 4.0.0(postcss@8.5.11)
+      icss-utils: 5.1.0(postcss@8.5.15)
+      postcss: 8.5.15
+      postcss-modules-extract-imports: 3.1.0(postcss@8.5.15)
+      postcss-modules-local-by-default: 4.2.0(postcss@8.5.15)
+      postcss-modules-scope: 3.2.1(postcss@8.5.15)
+      postcss-modules-values: 4.0.0(postcss@8.5.15)
       postcss-value-parser: 4.2.0
       semver: 7.7.4
     optionalDependencies:
@@ -24080,9 +24192,9 @@ snapshots:
     dependencies:
       safer-buffer: 2.1.2
 
-  icss-utils@5.1.0(postcss@8.5.11):
+  icss-utils@5.1.0(postcss@8.5.15):
     dependencies:
-      postcss: 8.5.11
+      postcss: 8.5.15
 
   ieee754@1.2.1: {}
 
@@ -25900,26 +26012,26 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  postcss-modules-extract-imports@3.1.0(postcss@8.5.11):
+  postcss-modules-extract-imports@3.1.0(postcss@8.5.15):
     dependencies:
-      postcss: 8.5.11
+      postcss: 8.5.15
 
-  postcss-modules-local-by-default@4.2.0(postcss@8.5.11):
+  postcss-modules-local-by-default@4.2.0(postcss@8.5.15):
     dependencies:
-      icss-utils: 5.1.0(postcss@8.5.11)
-      postcss: 8.5.11
+      icss-utils: 5.1.0(postcss@8.5.15)
+      postcss: 8.5.15
       postcss-selector-parser: 7.1.1
       postcss-value-parser: 4.2.0
 
-  postcss-modules-scope@3.2.1(postcss@8.5.11):
+  postcss-modules-scope@3.2.1(postcss@8.5.15):
     dependencies:
-      postcss: 8.5.11
+      postcss: 8.5.15
       postcss-selector-parser: 7.1.1
 
-  postcss-modules-values@4.0.0(postcss@8.5.11):
+  postcss-modules-values@4.0.0(postcss@8.5.15):
     dependencies:
-      icss-utils: 5.1.0(postcss@8.5.11)
-      postcss: 8.5.11
+      icss-utils: 5.1.0(postcss@8.5.15)
+      postcss: 8.5.15
 
   postcss-selector-parser@6.0.10:
     dependencies:

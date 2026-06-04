@@ -7,6 +7,52 @@
         "fallback": "https://lightfast.ai"
       }
     },
+    "lightfast-www-start": {
+      "packageName": "@lightfast/www-start",
+      "development": {
+        "fallback": "https://lightfast.ai"
+      },
+      "routing": [
+        {
+          "group": "marketing-start",
+          "paths": [
+            "/",
+            "/pricing",
+            "/use-cases/:path*",
+            "/legal/:path*",
+            "/search",
+            "/blog",
+            "/blog/:path*",
+            "/changelog",
+            "/changelog/:path*",
+            "/company",
+            "/company/:path*",
+            "/careers",
+            "/careers/:path",
+            "/docs",
+            "/docs/get-started/overview",
+            "/sitemap.xml",
+            "/robots.txt",
+            "/llms.txt",
+            "/favicon.svg",
+            "/favicon.ico",
+            "/favicon-16x16.png",
+            "/favicon-32x32.png",
+            "/favicon-48x48.png",
+            "/android-chrome-192x192.png",
+            "/android-chrome-512x512.png",
+            "/apple-touch-icon.png",
+            "/manifest.json",
+            "/src/:path*",
+            "/@id/:path*",
+            "/@vite/:path*",
+            "/@react-refresh",
+            "/@tanstack-start/:path*",
+            "/node_modules/:path*"
+          ]
+        }
+      ]
+    },
     "lightfast-www": {
       "packageName": "@lightfast/www",
       "development": {
@@ -16,41 +62,21 @@
         {
           "group": "marketing",
           "paths": [
-            "/",
             "/opengraph-image-:hash",
-            "/pricing",
-            "/changelog",
-            "/changelog/:path*",
-            "/blog",
-            "/blog/:path*",
-            "/use-cases/:path*",
-            "/legal/:path*",
-            "/search",
             "/pitch-deck",
-            "/company",
-            "/company/:path*",
             "/integrations",
             "/integrations/:path*",
-            "/careers",
-            "/careers/:path",
             "/api/health",
             "/api/search",
             "/images/:path*",
             "/fonts/:path*",
-            "/favicon.ico",
-            "/favicon-16x16.png",
-            "/favicon-32x32.png",
-            "/favicon-48x48.png",
-            "/android-chrome-192x192.png",
-            "/android-chrome-512x512.png",
-            "/apple-touch-icon.png",
-            "/docs",
-            "/docs/:path*",
-            "/sitemap.xml",
-            "/robots.txt",
-            "/manifest.webmanifest",
-            "/manifest.json",
-            "/llms.txt"
+            "/docs/get-started/quickstart",
+            "/docs/integrate",
+            "/docs/integrate/:path*",
+            "/docs/api",
+            "/docs/api-reference",
+            "/docs/api-reference/:path*",
+            "/manifest.webmanifest"
           ]
         }
       ]

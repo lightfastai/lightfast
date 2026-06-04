@@ -1,0 +1,29 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "extends": ["//"],
+  "tags": ["app"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "env": ["NEXT_PUBLIC_*", "VITE_*", "VERCEL_ENV"],
+      "passThroughEnv": ["HOST", "PORT", "PORTLESS_URL"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "../app/.vercel/.env*",
+        "../www/.vercel/.env*",
+        ".vercel/.env*"
+      ],
+      "outputs": [".output/**", "dist/**", "src/routeTree.gen.ts"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "passThroughEnv": ["HOST", "PORT", "PORTLESS_URL"]
+    },
+    "dev:next": {
+      "cache": false,
+      "persistent": true
+    },
+    "transit": {}
+  }
+}
