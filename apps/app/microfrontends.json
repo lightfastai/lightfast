@@ -63,8 +63,6 @@
           "group": "marketing",
           "paths": [
             "/opengraph-image-:hash",
-            "/integrations",
-            "/integrations/:path*",
             "/api/health",
             "/api/search",
             "/images/:path*",

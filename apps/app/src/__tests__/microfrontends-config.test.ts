@@ -87,6 +87,8 @@ describe("microfrontends config", () => {
       ])
     );
     expect(oldWwwPaths.has("/pitch-deck")).toBe(false);
+    expect(oldWwwPaths.has("/integrations")).toBe(false);
+    expect(oldWwwPaths.has("/integrations/:path*")).toBe(false);
 
     for (const route of startPaths) {
       expect(oldWwwPaths.has(route)).toBe(false);
