@@ -7,6 +7,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import "~/styles/globals.css";
+import { TRPCReactProvider } from "~/trpc/react";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -70,8 +71,10 @@ function RootComponent() {
           signInFallbackRedirectUrl="/"
           signUpFallbackRedirectUrl="/"
         >
-          <Outlet />
-          <Toaster />
+          <TRPCReactProvider>
+            <Outlet />
+            <Toaster />
+          </TRPCReactProvider>
         </ClerkProvider>
         <Scripts />
       </body>

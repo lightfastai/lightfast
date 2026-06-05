@@ -11,9 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as AuthenticatedSlugRouteImport } from './routes/_authenticated/$slug'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api/trpc.$'
+import { Route as AuthenticatedAccountTeamsNewRouteImport } from './routes/_authenticated/account/teams/new'
 
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
@@ -23,6 +26,10 @@ const SignUpRoute = SignUpRouteImport.update({
 const SignInRoute = SignInRouteImport.update({
   id: '/sign-in',
   path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -35,44 +42,86 @@ const ApiHealthRoute = ApiHealthRouteImport.update({
   path: '/api/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedSlugRoute = AuthenticatedSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
   id: '/api/trpc/$',
   path: '/api/trpc/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAccountTeamsNewRoute =
+  AuthenticatedAccountTeamsNewRouteImport.update({
+    id: '/account/teams/new',
+    path: '/account/teams/new',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/$slug': typeof AuthenticatedSlugRoute
   '/api/health': typeof ApiHealthRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/account/teams/new': typeof AuthenticatedAccountTeamsNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/$slug': typeof AuthenticatedSlugRoute
   '/api/health': typeof ApiHealthRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/account/teams/new': typeof AuthenticatedAccountTeamsNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/_authenticated/$slug': typeof AuthenticatedSlugRoute
   '/api/health': typeof ApiHealthRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/_authenticated/account/teams/new': typeof AuthenticatedAccountTeamsNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/sign-in' | '/sign-up' | '/api/health' | '/api/trpc/$'
+  fullPaths:
+    | '/'
+    | '/sign-in'
+    | '/sign-up'
+    | '/$slug'
+    | '/api/health'
+    | '/api/trpc/$'
+    | '/account/teams/new'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/sign-in' | '/sign-up' | '/api/health' | '/api/trpc/$'
-  id: '__root__' | '/' | '/sign-in' | '/sign-up' | '/api/health' | '/api/trpc/$'
+  to:
+    | '/'
+    | '/sign-in'
+    | '/sign-up'
+    | '/$slug'
+    | '/api/health'
+    | '/api/trpc/$'
+    | '/account/teams/new'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/sign-in'
+    | '/sign-up'
+    | '/_authenticated/$slug'
+    | '/api/health'
+    | '/api/trpc/$'
+    | '/_authenticated/account/teams/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
   ApiHealthRoute: typeof ApiHealthRoute
@@ -95,6 +144,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignInRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -109,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/$slug': {
+      id: '/_authenticated/$slug'
+      path: '/$slug'
+      fullPath: '/$slug'
+      preLoaderRoute: typeof AuthenticatedSlugRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/api/trpc/$': {
       id: '/api/trpc/$'
       path: '/api/trpc/$'
@@ -116,11 +179,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTrpcSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/account/teams/new': {
+      id: '/_authenticated/account/teams/new'
+      path: '/account/teams/new'
+      fullPath: '/account/teams/new'
+      preLoaderRoute: typeof AuthenticatedAccountTeamsNewRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
+interface AuthenticatedRouteChildren {
+  AuthenticatedSlugRoute: typeof AuthenticatedSlugRoute
+  AuthenticatedAccountTeamsNewRoute: typeof AuthenticatedAccountTeamsNewRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedSlugRoute: AuthenticatedSlugRoute,
+  AuthenticatedAccountTeamsNewRoute: AuthenticatedAccountTeamsNewRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
   ApiHealthRoute: ApiHealthRoute,

@@ -1,0 +1,23 @@
+import { describe, expect, it, vi } from "vitest";
+import { createTeamIdempotencyKey, normalizeTeamSlug } from "./team-name";
+
+describe("team name helpers", () => {
+  it("normalizes team names to Clerk-compatible slugs", () => {
+    expect(normalizeTeamSlug(" Acme Inc! ")).toBe("acmeinc");
+    expect(normalizeTeamSlug("---Acme---Inc")).toBe("acme---inc");
+    expect(normalizeTeamSlug("Team_123")).toBe("team123");
+  });
+
+  it("prefers crypto UUIDs for idempotency keys", () => {
+    const randomUUID = vi
+      .spyOn(crypto, "randomUUID")
+      .mockReturnValue("00000000-0000-4000-8000-000000000000");
+
+    expect(createTeamIdempotencyKey()).toBe(
+      "00000000-0000-4000-8000-000000000000"
+    );
+    expect(randomUUID).toHaveBeenCalledOnce();
+
+    randomUUID.mockRestore();
+  });
+});
