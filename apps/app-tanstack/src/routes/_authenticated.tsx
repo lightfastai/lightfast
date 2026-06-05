@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { AuthenticatedTopbar } from "~/components/authenticated-topbar";
+import { usesRouteOwnedAuthenticatedShell } from "~/components/authenticated-layout-model";
 import { TeamSwitcher } from "~/components/team-switcher";
 
 const AUTH_ROUTE_PATHS = new Set(["/sign-in", "/sign-up"]);
@@ -39,6 +40,10 @@ function AuthenticatedLayout() {
 
   if (!(isLoaded && isSignedIn)) {
     return <AuthenticatedShellSkeleton />;
+  }
+
+  if (usesRouteOwnedAuthenticatedShell(location.pathname)) {
+    return <Outlet />;
   }
 
   return (

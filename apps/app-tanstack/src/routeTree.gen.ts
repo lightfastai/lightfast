@@ -16,9 +16,18 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedSlugRouteImport } from './routes/_authenticated/$slug'
+import { Route as AuthenticatedSlugIndexRouteImport } from './routes/_authenticated/$slug/index'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api/trpc.$'
 import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated/account/settings'
 import { Route as AuthenticatedAccountMcpRouteImport } from './routes/_authenticated/account/mcp'
+import { Route as AuthenticatedSlugSkillsRouteImport } from './routes/_authenticated/$slug/skills'
+import { Route as AuthenticatedSlugSignalsRouteImport } from './routes/_authenticated/$slug/signals'
+import { Route as AuthenticatedSlugSettingsRouteImport } from './routes/_authenticated/$slug/settings'
+import { Route as AuthenticatedSlugPeopleRouteImport } from './routes/_authenticated/$slug/people'
+import { Route as AuthenticatedSlugDecisionsRouteImport } from './routes/_authenticated/$slug/decisions'
+import { Route as AuthenticatedSlugConnectorsRouteImport } from './routes/_authenticated/$slug/connectors'
+import { Route as AuthenticatedSlugChatRouteImport } from './routes/_authenticated/$slug/chat'
+import { Route as AuthenticatedSlugAutomationsRouteImport } from './routes/_authenticated/$slug/automations'
 import { Route as AuthenticatedAccountSettingsIndexRouteImport } from './routes/_authenticated/account/settings/index'
 import { Route as AuthenticatedAccountsTeamsNewRouteImport } from './routes/_authenticated/accounts/teams/new'
 import { Route as AuthenticatedAccountTeamsNewRouteImport } from './routes/_authenticated/account/teams/new'
@@ -62,6 +71,11 @@ const AuthenticatedSlugRoute = AuthenticatedSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedSlugIndexRoute = AuthenticatedSlugIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedSlugRoute,
+} as any)
 const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
   id: '/api/trpc/$',
   path: '/api/trpc/$',
@@ -78,6 +92,51 @@ const AuthenticatedAccountMcpRoute = AuthenticatedAccountMcpRouteImport.update({
   path: '/mcp',
   getParentRoute: () => AuthenticatedAccountRoute,
 } as any)
+const AuthenticatedSlugSkillsRoute = AuthenticatedSlugSkillsRouteImport.update({
+  id: '/skills',
+  path: '/skills',
+  getParentRoute: () => AuthenticatedSlugRoute,
+} as any)
+const AuthenticatedSlugSignalsRoute =
+  AuthenticatedSlugSignalsRouteImport.update({
+    id: '/signals',
+    path: '/signals',
+    getParentRoute: () => AuthenticatedSlugRoute,
+  } as any)
+const AuthenticatedSlugSettingsRoute =
+  AuthenticatedSlugSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedSlugRoute,
+  } as any)
+const AuthenticatedSlugPeopleRoute = AuthenticatedSlugPeopleRouteImport.update({
+  id: '/people',
+  path: '/people',
+  getParentRoute: () => AuthenticatedSlugRoute,
+} as any)
+const AuthenticatedSlugDecisionsRoute =
+  AuthenticatedSlugDecisionsRouteImport.update({
+    id: '/decisions',
+    path: '/decisions',
+    getParentRoute: () => AuthenticatedSlugRoute,
+  } as any)
+const AuthenticatedSlugConnectorsRoute =
+  AuthenticatedSlugConnectorsRouteImport.update({
+    id: '/connectors',
+    path: '/connectors',
+    getParentRoute: () => AuthenticatedSlugRoute,
+  } as any)
+const AuthenticatedSlugChatRoute = AuthenticatedSlugChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => AuthenticatedSlugRoute,
+} as any)
+const AuthenticatedSlugAutomationsRoute =
+  AuthenticatedSlugAutomationsRouteImport.update({
+    id: '/automations',
+    path: '/automations',
+    getParentRoute: () => AuthenticatedSlugRoute,
+  } as any)
 const AuthenticatedAccountSettingsIndexRoute =
   AuthenticatedAccountSettingsIndexRouteImport.update({
     id: '/',
@@ -131,12 +190,21 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
-  '/$slug': typeof AuthenticatedSlugRoute
+  '/$slug': typeof AuthenticatedSlugRouteWithChildren
   '/account': typeof AuthenticatedAccountRouteWithChildren
   '/api/health': typeof ApiHealthRoute
+  '/$slug/automations': typeof AuthenticatedSlugAutomationsRoute
+  '/$slug/chat': typeof AuthenticatedSlugChatRoute
+  '/$slug/connectors': typeof AuthenticatedSlugConnectorsRoute
+  '/$slug/decisions': typeof AuthenticatedSlugDecisionsRoute
+  '/$slug/people': typeof AuthenticatedSlugPeopleRoute
+  '/$slug/settings': typeof AuthenticatedSlugSettingsRoute
+  '/$slug/signals': typeof AuthenticatedSlugSignalsRoute
+  '/$slug/skills': typeof AuthenticatedSlugSkillsRoute
   '/account/mcp': typeof AuthenticatedAccountMcpRoute
   '/account/settings': typeof AuthenticatedAccountSettingsRouteWithChildren
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/$slug/': typeof AuthenticatedSlugIndexRoute
   '/account/settings/general': typeof AuthenticatedAccountSettingsGeneralRoute
   '/account/settings/source-control': typeof AuthenticatedAccountSettingsSourceControlRoute
   '/account/tasks/github': typeof AuthenticatedAccountTasksGithubRouteWithChildren
@@ -150,11 +218,19 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
-  '/$slug': typeof AuthenticatedSlugRoute
   '/account': typeof AuthenticatedAccountRouteWithChildren
   '/api/health': typeof ApiHealthRoute
+  '/$slug/automations': typeof AuthenticatedSlugAutomationsRoute
+  '/$slug/chat': typeof AuthenticatedSlugChatRoute
+  '/$slug/connectors': typeof AuthenticatedSlugConnectorsRoute
+  '/$slug/decisions': typeof AuthenticatedSlugDecisionsRoute
+  '/$slug/people': typeof AuthenticatedSlugPeopleRoute
+  '/$slug/settings': typeof AuthenticatedSlugSettingsRoute
+  '/$slug/signals': typeof AuthenticatedSlugSignalsRoute
+  '/$slug/skills': typeof AuthenticatedSlugSkillsRoute
   '/account/mcp': typeof AuthenticatedAccountMcpRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/$slug': typeof AuthenticatedSlugIndexRoute
   '/account/settings/general': typeof AuthenticatedAccountSettingsGeneralRoute
   '/account/settings/source-control': typeof AuthenticatedAccountSettingsSourceControlRoute
   '/account/tasks/github': typeof AuthenticatedAccountTasksGithubRouteWithChildren
@@ -170,12 +246,21 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
-  '/_authenticated/$slug': typeof AuthenticatedSlugRoute
+  '/_authenticated/$slug': typeof AuthenticatedSlugRouteWithChildren
   '/_authenticated/account': typeof AuthenticatedAccountRouteWithChildren
   '/api/health': typeof ApiHealthRoute
+  '/_authenticated/$slug/automations': typeof AuthenticatedSlugAutomationsRoute
+  '/_authenticated/$slug/chat': typeof AuthenticatedSlugChatRoute
+  '/_authenticated/$slug/connectors': typeof AuthenticatedSlugConnectorsRoute
+  '/_authenticated/$slug/decisions': typeof AuthenticatedSlugDecisionsRoute
+  '/_authenticated/$slug/people': typeof AuthenticatedSlugPeopleRoute
+  '/_authenticated/$slug/settings': typeof AuthenticatedSlugSettingsRoute
+  '/_authenticated/$slug/signals': typeof AuthenticatedSlugSignalsRoute
+  '/_authenticated/$slug/skills': typeof AuthenticatedSlugSkillsRoute
   '/_authenticated/account/mcp': typeof AuthenticatedAccountMcpRoute
   '/_authenticated/account/settings': typeof AuthenticatedAccountSettingsRouteWithChildren
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/_authenticated/$slug/': typeof AuthenticatedSlugIndexRoute
   '/_authenticated/account/settings/general': typeof AuthenticatedAccountSettingsGeneralRoute
   '/_authenticated/account/settings/source-control': typeof AuthenticatedAccountSettingsSourceControlRoute
   '/_authenticated/account/tasks/github': typeof AuthenticatedAccountTasksGithubRouteWithChildren
@@ -194,9 +279,18 @@ export interface FileRouteTypes {
     | '/$slug'
     | '/account'
     | '/api/health'
+    | '/$slug/automations'
+    | '/$slug/chat'
+    | '/$slug/connectors'
+    | '/$slug/decisions'
+    | '/$slug/people'
+    | '/$slug/settings'
+    | '/$slug/signals'
+    | '/$slug/skills'
     | '/account/mcp'
     | '/account/settings'
     | '/api/trpc/$'
+    | '/$slug/'
     | '/account/settings/general'
     | '/account/settings/source-control'
     | '/account/tasks/github'
@@ -210,11 +304,19 @@ export interface FileRouteTypes {
     | '/'
     | '/sign-in'
     | '/sign-up'
-    | '/$slug'
     | '/account'
     | '/api/health'
+    | '/$slug/automations'
+    | '/$slug/chat'
+    | '/$slug/connectors'
+    | '/$slug/decisions'
+    | '/$slug/people'
+    | '/$slug/settings'
+    | '/$slug/signals'
+    | '/$slug/skills'
     | '/account/mcp'
     | '/api/trpc/$'
+    | '/$slug'
     | '/account/settings/general'
     | '/account/settings/source-control'
     | '/account/tasks/github'
@@ -232,9 +334,18 @@ export interface FileRouteTypes {
     | '/_authenticated/$slug'
     | '/_authenticated/account'
     | '/api/health'
+    | '/_authenticated/$slug/automations'
+    | '/_authenticated/$slug/chat'
+    | '/_authenticated/$slug/connectors'
+    | '/_authenticated/$slug/decisions'
+    | '/_authenticated/$slug/people'
+    | '/_authenticated/$slug/settings'
+    | '/_authenticated/$slug/signals'
+    | '/_authenticated/$slug/skills'
     | '/_authenticated/account/mcp'
     | '/_authenticated/account/settings'
     | '/api/trpc/$'
+    | '/_authenticated/$slug/'
     | '/_authenticated/account/settings/general'
     | '/_authenticated/account/settings/source-control'
     | '/_authenticated/account/tasks/github'
@@ -305,6 +416,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSlugRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/$slug/': {
+      id: '/_authenticated/$slug/'
+      path: '/'
+      fullPath: '/$slug/'
+      preLoaderRoute: typeof AuthenticatedSlugIndexRouteImport
+      parentRoute: typeof AuthenticatedSlugRoute
+    }
     '/api/trpc/$': {
       id: '/api/trpc/$'
       path: '/api/trpc/$'
@@ -325,6 +443,62 @@ declare module '@tanstack/react-router' {
       fullPath: '/account/mcp'
       preLoaderRoute: typeof AuthenticatedAccountMcpRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
+    }
+    '/_authenticated/$slug/skills': {
+      id: '/_authenticated/$slug/skills'
+      path: '/skills'
+      fullPath: '/$slug/skills'
+      preLoaderRoute: typeof AuthenticatedSlugSkillsRouteImport
+      parentRoute: typeof AuthenticatedSlugRoute
+    }
+    '/_authenticated/$slug/signals': {
+      id: '/_authenticated/$slug/signals'
+      path: '/signals'
+      fullPath: '/$slug/signals'
+      preLoaderRoute: typeof AuthenticatedSlugSignalsRouteImport
+      parentRoute: typeof AuthenticatedSlugRoute
+    }
+    '/_authenticated/$slug/settings': {
+      id: '/_authenticated/$slug/settings'
+      path: '/settings'
+      fullPath: '/$slug/settings'
+      preLoaderRoute: typeof AuthenticatedSlugSettingsRouteImport
+      parentRoute: typeof AuthenticatedSlugRoute
+    }
+    '/_authenticated/$slug/people': {
+      id: '/_authenticated/$slug/people'
+      path: '/people'
+      fullPath: '/$slug/people'
+      preLoaderRoute: typeof AuthenticatedSlugPeopleRouteImport
+      parentRoute: typeof AuthenticatedSlugRoute
+    }
+    '/_authenticated/$slug/decisions': {
+      id: '/_authenticated/$slug/decisions'
+      path: '/decisions'
+      fullPath: '/$slug/decisions'
+      preLoaderRoute: typeof AuthenticatedSlugDecisionsRouteImport
+      parentRoute: typeof AuthenticatedSlugRoute
+    }
+    '/_authenticated/$slug/connectors': {
+      id: '/_authenticated/$slug/connectors'
+      path: '/connectors'
+      fullPath: '/$slug/connectors'
+      preLoaderRoute: typeof AuthenticatedSlugConnectorsRouteImport
+      parentRoute: typeof AuthenticatedSlugRoute
+    }
+    '/_authenticated/$slug/chat': {
+      id: '/_authenticated/$slug/chat'
+      path: '/chat'
+      fullPath: '/$slug/chat'
+      preLoaderRoute: typeof AuthenticatedSlugChatRouteImport
+      parentRoute: typeof AuthenticatedSlugRoute
+    }
+    '/_authenticated/$slug/automations': {
+      id: '/_authenticated/$slug/automations'
+      path: '/automations'
+      fullPath: '/$slug/automations'
+      preLoaderRoute: typeof AuthenticatedSlugAutomationsRouteImport
+      parentRoute: typeof AuthenticatedSlugRoute
     }
     '/_authenticated/account/settings/': {
       id: '/_authenticated/account/settings/'
@@ -385,6 +559,33 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedSlugRouteChildren {
+  AuthenticatedSlugAutomationsRoute: typeof AuthenticatedSlugAutomationsRoute
+  AuthenticatedSlugChatRoute: typeof AuthenticatedSlugChatRoute
+  AuthenticatedSlugConnectorsRoute: typeof AuthenticatedSlugConnectorsRoute
+  AuthenticatedSlugDecisionsRoute: typeof AuthenticatedSlugDecisionsRoute
+  AuthenticatedSlugPeopleRoute: typeof AuthenticatedSlugPeopleRoute
+  AuthenticatedSlugSettingsRoute: typeof AuthenticatedSlugSettingsRoute
+  AuthenticatedSlugSignalsRoute: typeof AuthenticatedSlugSignalsRoute
+  AuthenticatedSlugSkillsRoute: typeof AuthenticatedSlugSkillsRoute
+  AuthenticatedSlugIndexRoute: typeof AuthenticatedSlugIndexRoute
+}
+
+const AuthenticatedSlugRouteChildren: AuthenticatedSlugRouteChildren = {
+  AuthenticatedSlugAutomationsRoute: AuthenticatedSlugAutomationsRoute,
+  AuthenticatedSlugChatRoute: AuthenticatedSlugChatRoute,
+  AuthenticatedSlugConnectorsRoute: AuthenticatedSlugConnectorsRoute,
+  AuthenticatedSlugDecisionsRoute: AuthenticatedSlugDecisionsRoute,
+  AuthenticatedSlugPeopleRoute: AuthenticatedSlugPeopleRoute,
+  AuthenticatedSlugSettingsRoute: AuthenticatedSlugSettingsRoute,
+  AuthenticatedSlugSignalsRoute: AuthenticatedSlugSignalsRoute,
+  AuthenticatedSlugSkillsRoute: AuthenticatedSlugSkillsRoute,
+  AuthenticatedSlugIndexRoute: AuthenticatedSlugIndexRoute,
+}
+
+const AuthenticatedSlugRouteWithChildren =
+  AuthenticatedSlugRoute._addFileChildren(AuthenticatedSlugRouteChildren)
+
 interface AuthenticatedAccountSettingsRouteChildren {
   AuthenticatedAccountSettingsGeneralRoute: typeof AuthenticatedAccountSettingsGeneralRoute
   AuthenticatedAccountSettingsSourceControlRoute: typeof AuthenticatedAccountSettingsSourceControlRoute
@@ -444,13 +645,13 @@ const AuthenticatedAccountRouteWithChildren =
   AuthenticatedAccountRoute._addFileChildren(AuthenticatedAccountRouteChildren)
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedSlugRoute: typeof AuthenticatedSlugRoute
+  AuthenticatedSlugRoute: typeof AuthenticatedSlugRouteWithChildren
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRouteWithChildren
   AuthenticatedAccountsTeamsNewRoute: typeof AuthenticatedAccountsTeamsNewRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedSlugRoute: AuthenticatedSlugRoute,
+  AuthenticatedSlugRoute: AuthenticatedSlugRouteWithChildren,
   AuthenticatedAccountRoute: AuthenticatedAccountRouteWithChildren,
   AuthenticatedAccountsTeamsNewRoute: AuthenticatedAccountsTeamsNewRoute,
 }

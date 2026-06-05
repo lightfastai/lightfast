@@ -1,8 +1,14 @@
-import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@repo/ui/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
+import { AppSidebar } from "~/components/app-sidebar";
+import { AuthenticatedTopbar } from "~/components/authenticated-topbar";
 import { useTRPC } from "~/trpc/react";
 
 export const Route = createFileRoute("/_authenticated/$slug")({
@@ -40,26 +46,17 @@ function OrganizationHomePage() {
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center px-4 pb-24">
-      <section className="w-full max-w-lg space-y-6">
-        <div className="w-fit rounded-sm bg-card p-3">
-          <Icons.logoShort className="h-5 w-5 text-foreground" />
+    <SidebarProvider className="!h-full !min-h-0 overflow-hidden bg-background">
+      <AppSidebar orgSlug={slug} />
+      <SidebarInset className="min-h-0 overflow-hidden">
+        <AuthenticatedTopbar
+          left={<SidebarTrigger className="size-11 rounded-xl lg:hidden" />}
+        />
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <Outlet />
         </div>
-        <div className="space-y-3">
-          <p className="font-mono text-muted-foreground text-sm">/{slug}</p>
-          <h1 className="font-medium font-pp text-2xl text-foreground">
-            {orgAccess.org.name}
-          </h1>
-          <p className="max-w-md text-muted-foreground text-sm leading-6">
-            Team creation now lands in the TanStack app. Workspace pages will
-            migrate behind this route next.
-          </p>
-        </div>
-        <Button asChild variant="outline">
-          <Link to="/account/teams/new">Create another team</Link>
-        </Button>
-      </section>
-    </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
 
