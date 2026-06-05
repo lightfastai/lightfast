@@ -65,7 +65,7 @@ function RootComponent() {
       <head>
         <HeadContent />
       </head>
-      <body className="min-h-screen bg-background font-sans text-foreground antialiased">
+      <body className="dark min-h-screen bg-background font-sans text-foreground antialiased">
         <ClerkProvider
           publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}
           signInFallbackRedirectUrl="/"

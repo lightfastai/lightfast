@@ -24,7 +24,10 @@
     "@api/app": "workspace:*",
     "@clerk/tanstack-react-start": "catalog:",
     "@db/app": "workspace:*",
+    "@hookform/resolvers": "catalog:",
     "@repo/ai": "workspace:*",
+    "@repo/app-validation": "workspace:*",
+    "@repo/github-app-contract": "workspace:*",
     "@repo/ui": "workspace:*",
     "@sentry/tanstackstart-react": "catalog:",
     "@t3-oss/env-core": "catalog:",
@@ -41,6 +44,7 @@
     "lucide-react": "catalog:",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
+    "react-hook-form": "catalog:",
     "superjson": "catalog:",
     "tw-animate-css": "catalog:",
     "zod": "catalog:"

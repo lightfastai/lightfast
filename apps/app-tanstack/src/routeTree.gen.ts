@@ -14,9 +14,19 @@ import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedSlugRouteImport } from './routes/_authenticated/$slug'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api/trpc.$'
+import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated/account/settings'
+import { Route as AuthenticatedAccountMcpRouteImport } from './routes/_authenticated/account/mcp'
+import { Route as AuthenticatedAccountSettingsIndexRouteImport } from './routes/_authenticated/account/settings/index'
+import { Route as AuthenticatedAccountsTeamsNewRouteImport } from './routes/_authenticated/accounts/teams/new'
 import { Route as AuthenticatedAccountTeamsNewRouteImport } from './routes/_authenticated/account/teams/new'
+import { Route as AuthenticatedAccountTasksUsernameRouteImport } from './routes/_authenticated/account/tasks/username'
+import { Route as AuthenticatedAccountTasksGithubRouteImport } from './routes/_authenticated/account/tasks/github'
+import { Route as AuthenticatedAccountSettingsSourceControlRouteImport } from './routes/_authenticated/account/settings/source-control'
+import { Route as AuthenticatedAccountSettingsGeneralRouteImport } from './routes/_authenticated/account/settings/general'
+import { Route as AuthenticatedAccountTasksGithubCompleteRouteImport } from './routes/_authenticated/account/tasks/github/complete'
 
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
@@ -42,6 +52,11 @@ const ApiHealthRoute = ApiHealthRouteImport.update({
   path: '/api/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedSlugRoute = AuthenticatedSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -52,11 +67,64 @@ const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
   path: '/api/trpc/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAccountSettingsRoute =
+  AuthenticatedAccountSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
+const AuthenticatedAccountMcpRoute = AuthenticatedAccountMcpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => AuthenticatedAccountRoute,
+} as any)
+const AuthenticatedAccountSettingsIndexRoute =
+  AuthenticatedAccountSettingsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAccountSettingsRoute,
+  } as any)
+const AuthenticatedAccountsTeamsNewRoute =
+  AuthenticatedAccountsTeamsNewRouteImport.update({
+    id: '/accounts/teams/new',
+    path: '/accounts/teams/new',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAccountTeamsNewRoute =
   AuthenticatedAccountTeamsNewRouteImport.update({
-    id: '/account/teams/new',
-    path: '/account/teams/new',
-    getParentRoute: () => AuthenticatedRoute,
+    id: '/teams/new',
+    path: '/teams/new',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
+const AuthenticatedAccountTasksUsernameRoute =
+  AuthenticatedAccountTasksUsernameRouteImport.update({
+    id: '/tasks/username',
+    path: '/tasks/username',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
+const AuthenticatedAccountTasksGithubRoute =
+  AuthenticatedAccountTasksGithubRouteImport.update({
+    id: '/tasks/github',
+    path: '/tasks/github',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
+const AuthenticatedAccountSettingsSourceControlRoute =
+  AuthenticatedAccountSettingsSourceControlRouteImport.update({
+    id: '/source-control',
+    path: '/source-control',
+    getParentRoute: () => AuthenticatedAccountSettingsRoute,
+  } as any)
+const AuthenticatedAccountSettingsGeneralRoute =
+  AuthenticatedAccountSettingsGeneralRouteImport.update({
+    id: '/general',
+    path: '/general',
+    getParentRoute: () => AuthenticatedAccountSettingsRoute,
+  } as any)
+const AuthenticatedAccountTasksGithubCompleteRoute =
+  AuthenticatedAccountTasksGithubCompleteRouteImport.update({
+    id: '/complete',
+    path: '/complete',
+    getParentRoute: () => AuthenticatedAccountTasksGithubRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -64,18 +132,37 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/$slug': typeof AuthenticatedSlugRoute
+  '/account': typeof AuthenticatedAccountRouteWithChildren
   '/api/health': typeof ApiHealthRoute
+  '/account/mcp': typeof AuthenticatedAccountMcpRoute
+  '/account/settings': typeof AuthenticatedAccountSettingsRouteWithChildren
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/account/settings/general': typeof AuthenticatedAccountSettingsGeneralRoute
+  '/account/settings/source-control': typeof AuthenticatedAccountSettingsSourceControlRoute
+  '/account/tasks/github': typeof AuthenticatedAccountTasksGithubRouteWithChildren
+  '/account/tasks/username': typeof AuthenticatedAccountTasksUsernameRoute
   '/account/teams/new': typeof AuthenticatedAccountTeamsNewRoute
+  '/accounts/teams/new': typeof AuthenticatedAccountsTeamsNewRoute
+  '/account/settings/': typeof AuthenticatedAccountSettingsIndexRoute
+  '/account/tasks/github/complete': typeof AuthenticatedAccountTasksGithubCompleteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/$slug': typeof AuthenticatedSlugRoute
+  '/account': typeof AuthenticatedAccountRouteWithChildren
   '/api/health': typeof ApiHealthRoute
+  '/account/mcp': typeof AuthenticatedAccountMcpRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/account/settings/general': typeof AuthenticatedAccountSettingsGeneralRoute
+  '/account/settings/source-control': typeof AuthenticatedAccountSettingsSourceControlRoute
+  '/account/tasks/github': typeof AuthenticatedAccountTasksGithubRouteWithChildren
+  '/account/tasks/username': typeof AuthenticatedAccountTasksUsernameRoute
   '/account/teams/new': typeof AuthenticatedAccountTeamsNewRoute
+  '/accounts/teams/new': typeof AuthenticatedAccountsTeamsNewRoute
+  '/account/settings': typeof AuthenticatedAccountSettingsIndexRoute
+  '/account/tasks/github/complete': typeof AuthenticatedAccountTasksGithubCompleteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -84,9 +171,19 @@ export interface FileRoutesById {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/_authenticated/$slug': typeof AuthenticatedSlugRoute
+  '/_authenticated/account': typeof AuthenticatedAccountRouteWithChildren
   '/api/health': typeof ApiHealthRoute
+  '/_authenticated/account/mcp': typeof AuthenticatedAccountMcpRoute
+  '/_authenticated/account/settings': typeof AuthenticatedAccountSettingsRouteWithChildren
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/_authenticated/account/settings/general': typeof AuthenticatedAccountSettingsGeneralRoute
+  '/_authenticated/account/settings/source-control': typeof AuthenticatedAccountSettingsSourceControlRoute
+  '/_authenticated/account/tasks/github': typeof AuthenticatedAccountTasksGithubRouteWithChildren
+  '/_authenticated/account/tasks/username': typeof AuthenticatedAccountTasksUsernameRoute
   '/_authenticated/account/teams/new': typeof AuthenticatedAccountTeamsNewRoute
+  '/_authenticated/accounts/teams/new': typeof AuthenticatedAccountsTeamsNewRoute
+  '/_authenticated/account/settings/': typeof AuthenticatedAccountSettingsIndexRoute
+  '/_authenticated/account/tasks/github/complete': typeof AuthenticatedAccountTasksGithubCompleteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -95,18 +192,37 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/$slug'
+    | '/account'
     | '/api/health'
+    | '/account/mcp'
+    | '/account/settings'
     | '/api/trpc/$'
+    | '/account/settings/general'
+    | '/account/settings/source-control'
+    | '/account/tasks/github'
+    | '/account/tasks/username'
     | '/account/teams/new'
+    | '/accounts/teams/new'
+    | '/account/settings/'
+    | '/account/tasks/github/complete'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/sign-in'
     | '/sign-up'
     | '/$slug'
+    | '/account'
     | '/api/health'
+    | '/account/mcp'
     | '/api/trpc/$'
+    | '/account/settings/general'
+    | '/account/settings/source-control'
+    | '/account/tasks/github'
+    | '/account/tasks/username'
     | '/account/teams/new'
+    | '/accounts/teams/new'
+    | '/account/settings'
+    | '/account/tasks/github/complete'
   id:
     | '__root__'
     | '/'
@@ -114,9 +230,19 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/_authenticated/$slug'
+    | '/_authenticated/account'
     | '/api/health'
+    | '/_authenticated/account/mcp'
+    | '/_authenticated/account/settings'
     | '/api/trpc/$'
+    | '/_authenticated/account/settings/general'
+    | '/_authenticated/account/settings/source-control'
+    | '/_authenticated/account/tasks/github'
+    | '/_authenticated/account/tasks/username'
     | '/_authenticated/account/teams/new'
+    | '/_authenticated/accounts/teams/new'
+    | '/_authenticated/account/settings/'
+    | '/_authenticated/account/tasks/github/complete'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -165,6 +291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/account': {
+      id: '/_authenticated/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthenticatedAccountRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/$slug': {
       id: '/_authenticated/$slug'
       path: '/$slug'
@@ -179,24 +312,147 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTrpcSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/account/settings': {
+      id: '/_authenticated/account/settings'
+      path: '/settings'
+      fullPath: '/account/settings'
+      preLoaderRoute: typeof AuthenticatedAccountSettingsRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
+    '/_authenticated/account/mcp': {
+      id: '/_authenticated/account/mcp'
+      path: '/mcp'
+      fullPath: '/account/mcp'
+      preLoaderRoute: typeof AuthenticatedAccountMcpRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
+    '/_authenticated/account/settings/': {
+      id: '/_authenticated/account/settings/'
+      path: '/'
+      fullPath: '/account/settings/'
+      preLoaderRoute: typeof AuthenticatedAccountSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedAccountSettingsRoute
+    }
+    '/_authenticated/accounts/teams/new': {
+      id: '/_authenticated/accounts/teams/new'
+      path: '/accounts/teams/new'
+      fullPath: '/accounts/teams/new'
+      preLoaderRoute: typeof AuthenticatedAccountsTeamsNewRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/account/teams/new': {
       id: '/_authenticated/account/teams/new'
-      path: '/account/teams/new'
+      path: '/teams/new'
       fullPath: '/account/teams/new'
       preLoaderRoute: typeof AuthenticatedAccountTeamsNewRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
+    '/_authenticated/account/tasks/username': {
+      id: '/_authenticated/account/tasks/username'
+      path: '/tasks/username'
+      fullPath: '/account/tasks/username'
+      preLoaderRoute: typeof AuthenticatedAccountTasksUsernameRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
+    '/_authenticated/account/tasks/github': {
+      id: '/_authenticated/account/tasks/github'
+      path: '/tasks/github'
+      fullPath: '/account/tasks/github'
+      preLoaderRoute: typeof AuthenticatedAccountTasksGithubRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
+    '/_authenticated/account/settings/source-control': {
+      id: '/_authenticated/account/settings/source-control'
+      path: '/source-control'
+      fullPath: '/account/settings/source-control'
+      preLoaderRoute: typeof AuthenticatedAccountSettingsSourceControlRouteImport
+      parentRoute: typeof AuthenticatedAccountSettingsRoute
+    }
+    '/_authenticated/account/settings/general': {
+      id: '/_authenticated/account/settings/general'
+      path: '/general'
+      fullPath: '/account/settings/general'
+      preLoaderRoute: typeof AuthenticatedAccountSettingsGeneralRouteImport
+      parentRoute: typeof AuthenticatedAccountSettingsRoute
+    }
+    '/_authenticated/account/tasks/github/complete': {
+      id: '/_authenticated/account/tasks/github/complete'
+      path: '/complete'
+      fullPath: '/account/tasks/github/complete'
+      preLoaderRoute: typeof AuthenticatedAccountTasksGithubCompleteRouteImport
+      parentRoute: typeof AuthenticatedAccountTasksGithubRoute
     }
   }
 }
 
+interface AuthenticatedAccountSettingsRouteChildren {
+  AuthenticatedAccountSettingsGeneralRoute: typeof AuthenticatedAccountSettingsGeneralRoute
+  AuthenticatedAccountSettingsSourceControlRoute: typeof AuthenticatedAccountSettingsSourceControlRoute
+  AuthenticatedAccountSettingsIndexRoute: typeof AuthenticatedAccountSettingsIndexRoute
+}
+
+const AuthenticatedAccountSettingsRouteChildren: AuthenticatedAccountSettingsRouteChildren =
+  {
+    AuthenticatedAccountSettingsGeneralRoute:
+      AuthenticatedAccountSettingsGeneralRoute,
+    AuthenticatedAccountSettingsSourceControlRoute:
+      AuthenticatedAccountSettingsSourceControlRoute,
+    AuthenticatedAccountSettingsIndexRoute:
+      AuthenticatedAccountSettingsIndexRoute,
+  }
+
+const AuthenticatedAccountSettingsRouteWithChildren =
+  AuthenticatedAccountSettingsRoute._addFileChildren(
+    AuthenticatedAccountSettingsRouteChildren,
+  )
+
+interface AuthenticatedAccountTasksGithubRouteChildren {
+  AuthenticatedAccountTasksGithubCompleteRoute: typeof AuthenticatedAccountTasksGithubCompleteRoute
+}
+
+const AuthenticatedAccountTasksGithubRouteChildren: AuthenticatedAccountTasksGithubRouteChildren =
+  {
+    AuthenticatedAccountTasksGithubCompleteRoute:
+      AuthenticatedAccountTasksGithubCompleteRoute,
+  }
+
+const AuthenticatedAccountTasksGithubRouteWithChildren =
+  AuthenticatedAccountTasksGithubRoute._addFileChildren(
+    AuthenticatedAccountTasksGithubRouteChildren,
+  )
+
+interface AuthenticatedAccountRouteChildren {
+  AuthenticatedAccountMcpRoute: typeof AuthenticatedAccountMcpRoute
+  AuthenticatedAccountSettingsRoute: typeof AuthenticatedAccountSettingsRouteWithChildren
+  AuthenticatedAccountTasksGithubRoute: typeof AuthenticatedAccountTasksGithubRouteWithChildren
+  AuthenticatedAccountTasksUsernameRoute: typeof AuthenticatedAccountTasksUsernameRoute
+  AuthenticatedAccountTeamsNewRoute: typeof AuthenticatedAccountTeamsNewRoute
+}
+
+const AuthenticatedAccountRouteChildren: AuthenticatedAccountRouteChildren = {
+  AuthenticatedAccountMcpRoute: AuthenticatedAccountMcpRoute,
+  AuthenticatedAccountSettingsRoute:
+    AuthenticatedAccountSettingsRouteWithChildren,
+  AuthenticatedAccountTasksGithubRoute:
+    AuthenticatedAccountTasksGithubRouteWithChildren,
+  AuthenticatedAccountTasksUsernameRoute:
+    AuthenticatedAccountTasksUsernameRoute,
+  AuthenticatedAccountTeamsNewRoute: AuthenticatedAccountTeamsNewRoute,
+}
+
+const AuthenticatedAccountRouteWithChildren =
+  AuthenticatedAccountRoute._addFileChildren(AuthenticatedAccountRouteChildren)
+
 interface AuthenticatedRouteChildren {
   AuthenticatedSlugRoute: typeof AuthenticatedSlugRoute
-  AuthenticatedAccountTeamsNewRoute: typeof AuthenticatedAccountTeamsNewRoute
+  AuthenticatedAccountRoute: typeof AuthenticatedAccountRouteWithChildren
+  AuthenticatedAccountsTeamsNewRoute: typeof AuthenticatedAccountsTeamsNewRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSlugRoute: AuthenticatedSlugRoute,
-  AuthenticatedAccountTeamsNewRoute: AuthenticatedAccountTeamsNewRoute,
+  AuthenticatedAccountRoute: AuthenticatedAccountRouteWithChildren,
+  AuthenticatedAccountsTeamsNewRoute: AuthenticatedAccountsTeamsNewRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

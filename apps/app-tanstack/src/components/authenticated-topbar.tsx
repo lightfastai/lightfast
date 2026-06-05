@@ -1,4 +1,5 @@
-import { UserButton } from "@clerk/tanstack-react-start";
+import { Suspense } from "react";
+import { UserMenu, UserMenuSkeleton } from "~/components/user-menu";
 
 interface AuthenticatedTopbarProps {
   actions?: React.ReactNode;
@@ -32,7 +33,9 @@ export function AuthenticatedTopbar({
             API Reference
           </a>
         </div>
-        <UserButton />
+        <Suspense fallback={<UserMenuSkeleton />}>
+          <UserMenu />
+        </Suspense>
       </div>
     </header>
   );

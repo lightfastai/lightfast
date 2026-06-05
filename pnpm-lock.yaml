@@ -927,9 +927,18 @@ importers:
       '@db/app':
         specifier: workspace:*
         version: link:../../db/app
+      '@hookform/resolvers':
+        specifier: 'catalog:'
+        version: 5.2.2(react-hook-form@7.72.1(react@19.2.6))(zod@4.3.6)
       '@repo/ai':
         specifier: workspace:*
         version: link:../../ai
+      '@repo/app-validation':
+        specifier: workspace:*
+        version: link:../../packages/app-validation
+      '@repo/github-app-contract':
+        specifier: workspace:*
+        version: link:../../packages/github-app-contract
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -978,6 +987,9 @@ importers:
       react-dom:
         specifier: ^19.2.6
         version: 19.2.6(react@19.2.6)
+      react-hook-form:
+        specifier: 'catalog:'
+        version: 7.72.1(react@19.2.6)
       superjson:
         specifier: 'catalog:'
         version: 2.2.6
