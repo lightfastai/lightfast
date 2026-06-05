@@ -555,6 +555,9 @@ importers:
       '@trpc/server':
         specifier: 'catalog:'
         version: 11.16.0(typescript@5.9.3)
+      '@vendor/braintrust':
+        specifier: workspace:*
+        version: link:../../vendor/braintrust
       '@vendor/clerk':
         specifier: workspace:*
         version: link:../../vendor/clerk

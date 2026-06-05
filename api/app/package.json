@@ -92,6 +92,7 @@
     "@repo/x-app-node": "workspace:*",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@trpc/server": "catalog:",
+    "@vendor/braintrust": "workspace:*",
     "@vendor/clerk": "workspace:*",
     "@vendor/inngest": "workspace:*",
     "@vendor/jose": "workspace:*",
