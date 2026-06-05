@@ -1521,6 +1521,9 @@ importers:
       dotenv-cli:
         specifier: 'catalog:'
         version: 11.0.0
+      nitro:
+        specifier: 'catalog:'
+        version: 3.0.260522-beta(@planetscale/database@1.20.1)(@upstash/redis@1.38.0)(@vercel/functions@3.4.3)(better-sqlite3@12.9.0)(chokidar@5.0.0)(dotenv@17.3.1)(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(@planetscale/database@1.20.1)(@types/better-sqlite3@7.6.13)(@types/pg@8.15.6)(@upstash/redis@1.38.0)(better-sqlite3@12.9.0))(jiti@2.7.0)(lru-cache@11.3.6)(vite@8.0.16(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       tailwindcss:
         specifier: catalog:tailwind4
         version: 4.2.2

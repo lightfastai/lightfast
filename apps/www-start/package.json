@@ -45,6 +45,7 @@
     "@types/react-dom": "catalog:react19",
     "@vitejs/plugin-react": "catalog:",
     "dotenv-cli": "catalog:",
+    "nitro": "catalog:",
     "tailwindcss": "catalog:tailwind4",
     "typescript": "catalog:",
     "vite": "catalog:",
