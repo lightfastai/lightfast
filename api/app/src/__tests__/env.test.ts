@@ -12,6 +12,7 @@ const GITHUB_APP_ENV_KEYS = [
 const LINEAR_ENV_KEYS = ["LINEAR_CLIENT_ID", "LINEAR_CLIENT_SECRET"] as const;
 
 const MUTATED_ENV_KEYS = [
+  "BRAINTRUST_API_KEY",
   "CLERK_SECRET_KEY",
   "CONNECTOR_MCP_AUTH_SECRET",
   "ENCRYPTION_KEY",
@@ -42,6 +43,7 @@ describe("api app env", () => {
     const consoleErrorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
+    process.env.BRAINTRUST_API_KEY = "bt_test_key";
     process.env.CLERK_SECRET_KEY = "sk_test_fake-secret-key-for-tests";
     process.env.INNGEST_APP_NAME = "lightfast-test";
     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY =
@@ -58,6 +60,24 @@ describe("api app env", () => {
     expect(
       consoleErrorSpy.mock.calls.some((call) =>
         JSON.stringify(call).includes("ENCRYPTION_KEY")
+      )
+    ).toBe(true);
+  });
+
+  it("requires BRAINTRUST_API_KEY during env module evaluation", async () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    setValidBaseEnv("production");
+    delete process.env.BRAINTRUST_API_KEY;
+    vi.resetModules();
+
+    await expect(import("../env")).rejects.toThrow(
+      "Invalid environment variables"
+    );
+    expect(
+      consoleErrorSpy.mock.calls.some((call) =>
+        JSON.stringify(call).includes("BRAINTRUST_API_KEY")
       )
     ).toBe(true);
   });
@@ -105,6 +125,7 @@ function restoreEnv(name: string, value: string | undefined) {
 }
 
 function setValidBaseEnv(vercelEnv: "development" | "preview" | "production") {
+  process.env.BRAINTRUST_API_KEY = "bt_test_key";
   process.env.CLERK_SECRET_KEY = "sk_test_fake-secret-key-for-tests";
   process.env.CONNECTOR_MCP_AUTH_SECRET = "x".repeat(32);
   process.env.ENCRYPTION_KEY = "0".repeat(64);
