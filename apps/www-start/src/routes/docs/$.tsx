@@ -1,10 +1,10 @@
 import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
-import DocsShell from "~/app/(app)/(content)/docs/docs-shell";
 import DeveloperPlatformLanding from "~/app/(app)/(content)/docs/(general)/[[...slug]]/_components/developer-platform-landing";
+import DocsShell from "~/app/(app)/(content)/docs/docs-shell";
 import {
   buildDocsHead,
-  buildDocsRootHead,
   buildDocsJsonLd,
+  buildDocsRootHead,
   getDocsPage,
 } from "~/lib/docs-content";
 

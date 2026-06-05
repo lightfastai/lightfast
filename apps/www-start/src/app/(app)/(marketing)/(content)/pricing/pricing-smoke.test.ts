@@ -30,11 +30,7 @@ describe("pricing page smoke", () => {
       ]);
 
     const html = renderToStaticMarkup(
-      createElement(
-        MarketingLayout,
-        null,
-        createElement(PricingPage)
-      )
+      createElement(MarketingLayout, null, createElement(PricingPage))
     );
 
     expect(html).toContain("Choose the plan that fits your team");

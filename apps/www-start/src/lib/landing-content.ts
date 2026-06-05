@@ -3,10 +3,10 @@ export const SITE_URL = "https://lightfast.ai";
 export type MarketingDestination = "app" | "self" | "www";
 
 export interface MarketingNavItem {
-  title: string;
-  href: string;
   destination?: MarketingDestination;
   external?: boolean;
+  href: string;
+  title: string;
 }
 
 export const marketingNav = {

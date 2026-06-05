@@ -4,22 +4,22 @@ import {
   buildOrganizationEntity,
   buildRobots,
   buildWebSiteEntity,
-  parseFrontmatter,
   type JsonLdGraph,
+  parseFrontmatter,
   type RouteHead,
 } from "~/lib/content-common";
 import {
-  ChangelogEntrySchema,
   type ChangelogEntryData,
+  ChangelogEntrySchema,
 } from "~/lib/content-schemas";
 import { SITE_URL } from "~/lib/landing-content";
 import engineeringIntelligenceSource from "../content/changelog/2026-03-26-lightfast-engineering-intelligence-shipped.mdx?raw";
 
 export interface ChangelogPage {
+  body: string;
+  data: ChangelogEntryData;
   slug: string;
   slugs: [string];
-  data: ChangelogEntryData;
-  body: string;
   url: `${typeof SITE_URL}/changelog/${string}`;
 }
 
@@ -186,9 +186,11 @@ export function buildChangelogEntryJsonLd(page: ChangelogPage): JsonLdGraph {
         image: page.data.featuredImage
           ? `${SITE_URL}${page.data.featuredImage}`
           : undefined,
-        keywords: [...page.data.keywords, page.data.version, page.data.type].join(
-          ", "
-        ),
+        keywords: [
+          ...page.data.keywords,
+          page.data.version,
+          page.data.type,
+        ].join(", "),
         articleSection: `Changelog / ${page.data.type}`,
         inLanguage: "en-US",
         isPartOf: { "@id": `${SITE_URL}/#website` },

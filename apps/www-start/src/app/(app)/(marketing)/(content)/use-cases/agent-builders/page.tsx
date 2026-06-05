@@ -27,7 +27,12 @@ export default function AgentBuildersPage() {
             {/* CTA - centered */}
             <div className="mt-8 flex flex-col justify-center gap-8 sm:flex-row">
               <Button asChild className="rounded-full" size="lg">
-                <NavLink className="group" href="/sign-up" microfrontend prefetch>
+                <NavLink
+                  className="group"
+                  href="/sign-up"
+                  microfrontend
+                  prefetch
+                >
                   <span>Get started</span>
                 </NavLink>
               </Button>

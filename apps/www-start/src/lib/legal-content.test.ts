@@ -10,10 +10,7 @@ describe("legal content", () => {
   it("loads the migrated legal documents from the copied MDX sources", () => {
     const pages = getLegalPages();
 
-    expect(pages.map((page) => page.slug).sort()).toEqual([
-      "privacy",
-      "terms",
-    ]);
+    expect(pages.map((page) => page.slug).sort()).toEqual(["privacy", "terms"]);
     expect(getLegalPage("privacy")?.data.title).toBe("Privacy Policy");
     expect(getLegalPage("terms")?.data.title).toBe("Terms of Service");
     expect(getLegalPage("privacy")?.body).toContain("# Privacy Policy");

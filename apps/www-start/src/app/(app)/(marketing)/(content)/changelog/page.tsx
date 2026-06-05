@@ -56,7 +56,9 @@ export default function ChangelogPage() {
                   className="h-auto p-0 font-medium font-pp text-2xl"
                   variant="link"
                 >
-                  <NavLink href={`/changelog/${page.slugs[0]}`}>{page.data.title}</NavLink>
+                  <NavLink href={`/changelog/${page.slugs[0]}`}>
+                    {page.data.title}
+                  </NavLink>
                 </Button>
               </h2>
 
@@ -65,8 +67,10 @@ export default function ChangelogPage() {
                   <img
                     alt={page.data.title}
                     className="h-full w-full object-cover"
+                    height={675}
                     loading="eager"
                     src={resolveContentAssetSrc(page.data.featuredImage)}
+                    width={1200}
                   />
                 </div>
               )}

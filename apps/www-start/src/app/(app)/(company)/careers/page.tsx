@@ -23,9 +23,7 @@ function decodeBase64Content(content: string) {
   }
 
   const binary = globalThis.atob(normalized);
-  const bytes = Uint8Array.from(binary, (character) =>
-    character.charCodeAt(0)
-  );
+  const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
 
   return new TextDecoder().decode(bytes);
 }
@@ -111,9 +109,7 @@ interface CareersPageProps {
   content?: string;
 }
 
-export default function CareersPage({
-  content,
-}: CareersPageProps = {}) {
+export default function CareersPage({ content }: CareersPageProps = {}) {
   const resolvedContent = content ?? FALLBACK_CAREERS_CONTENT;
   const lines = resolvedContent.split("\n");
 

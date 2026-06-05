@@ -10,11 +10,11 @@ export const useCaseSlugs = [
 export type UseCaseSlug = (typeof useCaseSlugs)[number];
 
 export interface UseCasePage {
-  url: string;
   data: {
     title: string;
     description: string;
   };
+  url: string;
 }
 
 const useCaseContent = {
@@ -27,7 +27,8 @@ const useCaseContent = {
       "Give your agents a single system to observe, reason, and act across every tool. REST API, MCP tools, and webhooks.",
   },
   "engineering-leaders": {
-    title: "Lightfast for Engineering Leaders - Superintelligence for Your Team",
+    title:
+      "Lightfast for Engineering Leaders - Superintelligence for Your Team",
     description:
       "See what's happening across your engineering org in real time. Events from every tool, surfaced and searchable - so your team operates as one.",
     openGraphTitle: "Lightfast for Engineering Leaders",
@@ -44,7 +45,8 @@ const useCaseContent = {
       "Connect your infrastructure tools through a single operating layer. Ingest events from GitHub, Vercel, Sentry, Linear, and more.",
   },
   "technical-founders": {
-    title: "Lightfast for Technical Founders - Superintelligence for Your Stack",
+    title:
+      "Lightfast for Technical Founders - Superintelligence for Your Stack",
     description:
       "Ship the operating layer between your agents and tools. One system for observing, remembering, and acting across your entire engineering stack.",
     openGraphTitle: "Lightfast for Technical Founders",

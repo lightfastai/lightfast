@@ -1,7 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import MarketingLayout from "~/app/(app)/(marketing)/layout";
-import BlogLayout from "~/app/(app)/(marketing)/(content)/blog/layout";
 import BlogPostPage from "~/app/(app)/(marketing)/(content)/blog/[slug]/page";
+import BlogLayout from "~/app/(app)/(marketing)/(content)/blog/layout";
+import MarketingLayout from "~/app/(app)/(marketing)/layout";
 import { buildBlogPostHead, getBlogPage } from "~/lib/blog-content";
 
 export const Route = createFileRoute("/blog/$slug")({

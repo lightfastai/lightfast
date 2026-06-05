@@ -9,7 +9,8 @@ const feedHeaders = {
 export const Route = createFileRoute("/blog/atom.xml")({
   server: {
     handlers: {
-      GET: () => new Response(generateBlogFeed().atom1(), { headers: feedHeaders }),
+      GET: () =>
+        new Response(generateBlogFeed().atom1(), { headers: feedHeaders }),
     },
   },
 });

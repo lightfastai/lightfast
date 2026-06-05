@@ -157,7 +157,9 @@ export default function DeveloperPlatformLanding() {
               <img
                 alt="Quickstart"
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                height={675}
                 src="/images/nascent_remix.webp"
+                width={1200}
               />
               <div className="absolute inset-0 flex flex-col justify-between p-8">
                 <div>

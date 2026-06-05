@@ -26,15 +26,15 @@ export type LegalSlug = keyof typeof legalSources;
 export type LegalPageData = z.infer<typeof legalPageDataSchema>;
 
 export interface LegalPage {
-  slug: LegalSlug;
-  data: LegalPageData;
   body: string;
+  data: LegalPageData;
+  slug: LegalSlug;
   url: `${typeof SITE_URL}/legal/${LegalSlug}`;
 }
 
 interface LegalHead {
-  meta: Array<Record<string, string>>;
   links: Array<{ rel: string; href: string }>;
+  meta: Record<string, string>[];
 }
 
 type LegalJsonLdEntity =

@@ -2,10 +2,7 @@ import { Separator } from "@repo/ui/components/ui/separator";
 import { SocialShare } from "~/app/(app)/_components/blog-social-share";
 import { ContentMarkdown } from "~/app/(app)/(marketing)/(content)/content-markdown";
 import { JsonLdScript } from "~/app/(app)/(marketing)/(content)/json-ld-script";
-import {
-  buildBlogPostJsonLd,
-  type BlogPage,
-} from "~/lib/blog-content";
+import { type BlogPage, buildBlogPostJsonLd } from "~/lib/blog-content";
 import { resolveContentAssetSrc } from "~/lib/content-assets";
 
 export default function BlogPostPage({ page }: { page: BlogPage }) {
@@ -49,8 +46,10 @@ export default function BlogPostPage({ page }: { page: BlogPage }) {
               <img
                 alt={title}
                 className="h-full w-full object-cover"
+                height={675}
                 loading="eager"
                 src={resolveContentAssetSrc(featuredImage)}
+                width={1200}
               />
             </div>
           )}

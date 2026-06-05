@@ -3,10 +3,10 @@ import {
   Outlet,
   useRouterState,
 } from "@tanstack/react-router";
-import MarketingLayout from "~/app/(app)/(marketing)/layout";
-import BlogLayout from "~/app/(app)/(marketing)/(content)/blog/layout";
 import BlogListingLayout from "~/app/(app)/(marketing)/(content)/blog/(listing)/layout";
 import BlogPage from "~/app/(app)/(marketing)/(content)/blog/(listing)/page";
+import BlogLayout from "~/app/(app)/(marketing)/(content)/blog/layout";
+import MarketingLayout from "~/app/(app)/(marketing)/layout";
 import { buildBlogIndexHead } from "~/lib/blog-content";
 
 export const Route = createFileRoute("/blog")({

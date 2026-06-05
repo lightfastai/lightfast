@@ -104,14 +104,26 @@ export function NavLink({
 
   if (props.external) {
     const { external: _, microfrontend: __, ...anchorProps } = props;
-    return <a {...anchorProps} href={href}>{children}</a>;
+    return (
+      <a {...anchorProps} href={href}>
+        {children}
+      </a>
+    );
   }
 
   if (props.microfrontend) {
     const { external: _, microfrontend: __, ...anchorProps } = props;
-    return <a {...anchorProps} href={href}>{children}</a>;
+    return (
+      <a {...anchorProps} href={href}>
+        {children}
+      </a>
+    );
   }
 
   const { external: _, microfrontend: __, ...linkProps } = props;
-  return <a {...linkProps} href={href}>{children}</a>;
+  return (
+    <a {...linkProps} href={href}>
+      {children}
+    </a>
+  );
 }

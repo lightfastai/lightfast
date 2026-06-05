@@ -22,7 +22,8 @@ export function buildSearchHead() {
       { name: "twitter:title", content: "Search - Lightfast" },
       {
         name: "twitter:description",
-        content: "Search across Lightfast documentation, guides, and resources.",
+        content:
+          "Search across Lightfast documentation, guides, and resources.",
       },
     ],
     links: [{ rel: "canonical", href: `${SITE_URL}/search` }],

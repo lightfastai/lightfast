@@ -25,11 +25,7 @@ describe("landing page smoke", () => {
       ]);
 
     const html = renderToStaticMarkup(
-      createElement(
-        MarketingLayout,
-        null,
-        createElement(HomePage)
-      )
+      createElement(MarketingLayout, null, createElement(HomePage))
     );
 
     expect(html).toContain("Building the");

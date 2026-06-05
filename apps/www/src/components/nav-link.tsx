@@ -97,5 +97,9 @@ export function NavLink({
   }
 
   const { external: _, microfrontend: __, href, ...linkProps } = props;
-  return <NextLink {...linkProps} href={href as Route}>{children}</NextLink>;
+  return (
+    <NextLink {...linkProps} href={href as Route}>
+      {children}
+    </NextLink>
+  );
 }

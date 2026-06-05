@@ -1,6 +1,6 @@
 import { Button } from "@repo/ui/components/ui/button";
-import { NavLink } from "~/components/nav-link";
 import { JsonLdScript } from "~/app/(app)/(marketing)/(content)/json-ld-script";
+import { NavLink } from "~/components/nav-link";
 import { buildBlogIndexJsonLd, getBlogPages } from "~/lib/blog-content";
 import { resolveContentAssetSrc } from "~/lib/content-assets";
 import { BlogListingHeader } from "./_components/blog-listing-header";
@@ -28,8 +28,10 @@ export default function BlogPage() {
             <img
               alt={featured.data.title}
               className="h-full w-full object-cover"
+              height={675}
               loading="eager"
               src={resolveContentAssetSrc(featured.data.featuredImage)}
+              width={1200}
             />
           </div>
           <h2 className="mt-6 font-medium font-pp text-2xl">
@@ -38,7 +40,9 @@ export default function BlogPage() {
               className="h-auto p-0 font-medium font-pp text-2xl"
               variant="link"
             >
-              <NavLink href={`/blog/${featured.slugs[0]}`}>{featured.data.title}</NavLink>
+              <NavLink href={`/blog/${featured.slugs[0]}`}>
+                {featured.data.title}
+              </NavLink>
             </Button>
           </h2>
           <p className="mt-2 text-muted-foreground text-sm">
@@ -68,10 +72,7 @@ export default function BlogPage() {
               className="rounded-xs bg-accent/40 p-4 transition-colors hover:bg-accent"
               key={page.slugs[0]}
             >
-              <NavLink
-                className="block"
-                href={`/blog/${page.slugs[0]}`}
-              >
+              <NavLink className="block" href={`/blog/${page.slugs[0]}`}>
                 <h2 className="mb-1 font-base text-base">{page.data.title}</h2>
                 <p className="mb-4 text-muted-foreground text-sm leading-relaxed">
                   {page.data.description}

@@ -1,8 +1,5 @@
-import { toLlmsTxt, type PageEntry } from "@vendor/aeo";
-import {
-  getBlogPages,
-  getBlogCategories,
-} from "~/lib/blog-content";
+import { type PageEntry, toLlmsTxt } from "@vendor/aeo";
+import { getBlogCategories, getBlogPages } from "~/lib/blog-content";
 import { getChangelogPages } from "~/lib/changelog-content";
 import { getDocsPages } from "~/lib/docs-content";
 import { SITE_URL } from "~/lib/landing-content";
@@ -19,10 +16,10 @@ type ChangeFrequency =
   | "never";
 
 export interface SitemapEntry {
-  url: string;
-  lastModified?: Date;
   changeFrequency: ChangeFrequency;
+  lastModified?: Date;
   priority: number;
+  url: string;
 }
 
 export type DeploymentEnv = "development" | "preview" | "production";
@@ -68,7 +65,7 @@ function toLastModified(value: string | undefined) {
 
 function readDeploymentEnv() {
   if (typeof process === "undefined") {
-    return undefined;
+    return;
   }
 
   return process.env.NEXT_PUBLIC_VERCEL_ENV ?? process.env.VERCEL_ENV;
@@ -77,7 +74,11 @@ function readDeploymentEnv() {
 export function getDeploymentEnv(): DeploymentEnv {
   const value = readDeploymentEnv();
 
-  if (value === "production" || value === "preview" || value === "development") {
+  if (
+    value === "production" ||
+    value === "preview" ||
+    value === "development"
+  ) {
     return value;
   }
 
@@ -108,11 +109,13 @@ export function getSitemapEntries(): SitemapEntry[] {
       changeFrequency: "weekly",
       priority: 0.9,
     },
-    ...useCasePages.map((page): SitemapEntry => ({
-      url: page.url,
-      changeFrequency: "monthly",
-      priority: 0.85,
-    })),
+    ...useCasePages.map(
+      (page): SitemapEntry => ({
+        url: page.url,
+        changeFrequency: "monthly",
+        priority: 0.85,
+      })
+    ),
     {
       url: `${SITE_URL}/docs`,
       changeFrequency: "weekly",
@@ -355,7 +358,8 @@ function getLlmsEntries(): PageEntry[] {
     {
       url: `${SITE_URL}/blog`,
       title: "Blog",
-      description: "Insights, guides, and product updates from the Lightfast team.",
+      description:
+        "Insights, guides, and product updates from the Lightfast team.",
       section: "Blog",
     },
     ...getBlogPages().map((page) => ({
@@ -367,7 +371,8 @@ function getLlmsEntries(): PageEntry[] {
     {
       url: `${SITE_URL}/changelog`,
       title: "Changelog",
-      description: "What's new in Lightfast - product updates and improvements.",
+      description:
+        "What's new in Lightfast - product updates and improvements.",
       section: "Changelog",
     },
     ...getChangelogPages().map((page) => ({

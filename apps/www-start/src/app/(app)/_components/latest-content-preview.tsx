@@ -31,8 +31,10 @@ function ImageOrFallback({
       <img
         alt={alt}
         className="h-full w-full object-cover"
+        height={675}
         loading="lazy"
         src={resolveContentAssetSrc(src)}
+        width={1200}
       />
     );
   }
@@ -78,11 +80,7 @@ function SquareCard({ item }: { item: FeedItem }) {
   return (
     <NavLink className="group block" href={hrefFor(item)}>
       <div className="relative hidden aspect-square w-full overflow-hidden rounded-md border border-border/50 bg-card lg:block">
-        <ImageOrFallback
-          alt={item.title}
-          iconSize="h-6 w-6"
-          src={item.image}
-        />
+        <ImageOrFallback alt={item.title} iconSize="h-6 w-6" src={item.image} />
       </div>
       <div className="flex min-w-0 flex-col lg:mt-3">
         <div className="flex items-center gap-2">

@@ -45,7 +45,9 @@ export function CategoryNav({ categories }: CategoryNavProps) {
             size="sm"
             variant="link"
           >
-            <NavLink href={`/blog/topic/${category.slug}`}>{category.title}</NavLink>
+            <NavLink href={`/blog/topic/${category.slug}`}>
+              {category.title}
+            </NavLink>
           </Button>
         ))}
       </nav>

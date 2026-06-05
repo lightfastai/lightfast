@@ -1,15 +1,15 @@
 import { Button } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChangelogImprovements } from "~/app/(app)/(marketing)/(content)/changelog/_components/changelog-improvements";
 import { ContentMarkdown } from "~/app/(app)/(marketing)/(content)/content-markdown";
 import { JsonLdScript } from "~/app/(app)/(marketing)/(content)/json-ld-script";
-import { ChangelogImprovements } from "~/app/(app)/(marketing)/(content)/changelog/_components/changelog-improvements";
+import { NavLink } from "~/components/nav-link";
 import {
   buildChangelogEntryJsonLd,
   type ChangelogPage,
   getChangelogPages,
 } from "~/lib/changelog-content";
-import { NavLink } from "~/components/nav-link";
 import { resolveContentAssetSrc } from "~/lib/content-assets";
 
 export default function ChangelogEntryPage({ page }: { page: ChangelogPage }) {
@@ -62,8 +62,10 @@ export default function ChangelogEntryPage({ page }: { page: ChangelogPage }) {
             <img
               alt={title}
               className="h-full w-full object-cover"
+              height={675}
               loading="eager"
               src={resolveContentAssetSrc(featuredImage)}
+              width={1200}
             />
           </div>
         )}

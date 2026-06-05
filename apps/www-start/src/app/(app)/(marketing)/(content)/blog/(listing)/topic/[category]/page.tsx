@@ -40,10 +40,7 @@ export default function BlogCategoryPage({
               className="rounded-xs bg-accent/40 p-4 transition-colors hover:bg-accent"
               key={page.slugs[0]}
             >
-              <NavLink
-                className="block"
-                href={`/blog/${page.slugs[0]}`}
-              >
+              <NavLink className="block" href={`/blog/${page.slugs[0]}`}>
                 <h2 className="mb-1 font-base text-base">{page.data.title}</h2>
                 <p className="mb-4 text-muted-foreground text-sm leading-relaxed">
                   {page.data.description}

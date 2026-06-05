@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import CompanyGroupLayout from "~/app/(app)/(company)/layout";
 import ManifestoLayout from "~/app/(app)/(company)/company/layout";
 import ManifestoPage, {
   getLatestCommit,
 } from "~/app/(app)/(company)/company/page";
+import CompanyGroupLayout from "~/app/(app)/(company)/layout";
 
 export const Route = createFileRoute("/company")({
   head: () => ({

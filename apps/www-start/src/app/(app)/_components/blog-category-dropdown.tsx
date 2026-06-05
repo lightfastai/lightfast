@@ -39,7 +39,9 @@ export function BlogCategoryDropdown({
         </DropdownMenuItem>
         {categories.map((category) => (
           <DropdownMenuItem asChild key={category.slug}>
-            <NavLink href={`/blog/topic/${category.slug}`}>{category.title}</NavLink>
+            <NavLink href={`/blog/topic/${category.slug}`}>
+              {category.title}
+            </NavLink>
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

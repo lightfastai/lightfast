@@ -6,7 +6,7 @@ import { buildLegalJsonLd } from "~/lib/legal-content";
 const markdownComponents = {
   h1: ({ children, ...props }) => (
     <h1
-      className="mt-0 mb-8 font-medium text-4xl tracking-normal text-foreground"
+      className="mt-0 mb-8 font-medium text-4xl text-foreground tracking-normal"
       {...props}
     >
       {children}
@@ -14,7 +14,7 @@ const markdownComponents = {
   ),
   h2: ({ children, ...props }) => (
     <h2
-      className="mt-12 mb-4 border-border border-b pb-2 font-medium text-2xl tracking-normal text-foreground"
+      className="mt-12 mb-4 border-border border-b pb-2 font-medium text-2xl text-foreground tracking-normal"
       {...props}
     >
       {children}
@@ -22,7 +22,7 @@ const markdownComponents = {
   ),
   h3: ({ children, ...props }) => (
     <h3
-      className="mt-8 mb-3 font-medium text-xl tracking-normal text-foreground"
+      className="mt-8 mb-3 font-medium text-foreground text-xl tracking-normal"
       {...props}
     >
       {children}
@@ -49,7 +49,10 @@ const markdownComponents = {
     );
   },
   ul: ({ children, ...props }) => (
-    <ul className="my-4 ml-6 list-disc space-y-2 text-muted-foreground" {...props}>
+    <ul
+      className="my-4 ml-6 list-disc space-y-2 text-muted-foreground"
+      {...props}
+    >
       {children}
     </ul>
   ),
@@ -62,7 +65,7 @@ const markdownComponents = {
     </ol>
   ),
   li: ({ children, ...props }) => (
-    <li className="leading-7 pl-1" {...props}>
+    <li className="pl-1 leading-7" {...props}>
       {children}
     </li>
   ),
@@ -79,7 +82,10 @@ const markdownComponents = {
   hr: (props) => <hr className="my-8 border-border" {...props} />,
   table: ({ children, ...props }) => (
     <div className="my-6 overflow-x-auto rounded-md border border-border">
-      <table className="w-full min-w-[720px] border-collapse text-sm" {...props}>
+      <table
+        className="w-full min-w-[720px] border-collapse text-sm"
+        {...props}
+      >
         {children}
       </table>
     </div>
@@ -93,7 +99,10 @@ const markdownComponents = {
     </th>
   ),
   td: ({ children, ...props }) => (
-    <td className="border-border border-t px-4 py-3 text-muted-foreground" {...props}>
+    <td
+      className="border-border border-t px-4 py-3 text-muted-foreground"
+      {...props}
+    >
       {children}
     </td>
   ),
@@ -130,7 +139,10 @@ export default function LegalPageView({ page }: { page: LegalPage }) {
         </div>
         <article className="space-y-8 md:col-span-8 md:col-start-3 lg:col-span-6 lg:col-start-4">
           <div className="max-w-none">
-            <ReactMarkdown components={markdownComponents} remarkPlugins={[remarkGfm]}>
+            <ReactMarkdown
+              components={markdownComponents}
+              remarkPlugins={[remarkGfm]}
+            >
               {page.body}
             </ReactMarkdown>
           </div>

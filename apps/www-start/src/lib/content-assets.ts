@@ -7,7 +7,7 @@ function joinUrl(baseUrl: string, path: string) {
 }
 
 export function resolveContentAssetSrc(src: string | undefined) {
-  if (!src || !src.startsWith("/images/")) {
+  if (!src?.startsWith("/images/")) {
     return src;
   }
 

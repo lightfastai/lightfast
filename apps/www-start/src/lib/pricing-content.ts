@@ -87,9 +87,10 @@ interface PricingFaqPageStructuredData {
 interface PricingSoftwareStructuredData {
   "@context": "https://schema.org";
   "@type": "SoftwareApplication";
-  name: "Lightfast";
-  url: typeof SITE_URL;
   applicationCategory: "DeveloperApplication";
+  isAccessibleForFree: true;
+  license: string;
+  name: "Lightfast";
   offers: Array<{
     "@type": "Offer";
     name: string;
@@ -98,8 +99,7 @@ interface PricingSoftwareStructuredData {
     availability: "https://schema.org/InStock";
     description: string;
   }>;
-  isAccessibleForFree: true;
-  license: string;
+  url: typeof SITE_URL;
 }
 
 export function buildPricingHead() {

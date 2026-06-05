@@ -6,8 +6,8 @@ const publicRoot = path.resolve(process.cwd(), "public");
 const manifestPath = path.join(publicRoot, "manifest.json");
 
 interface WebManifestIcon {
-  src: string;
   sizes: string;
+  src: string;
   type: string;
 }
 

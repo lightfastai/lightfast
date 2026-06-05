@@ -1,7 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import MarketingLayout from "~/app/(app)/(marketing)/layout";
-import ChangelogLayout from "~/app/(app)/(marketing)/(content)/changelog/layout";
 import ChangelogEntryPage from "~/app/(app)/(marketing)/(content)/changelog/[slug]/page";
+import ChangelogLayout from "~/app/(app)/(marketing)/(content)/changelog/layout";
+import MarketingLayout from "~/app/(app)/(marketing)/layout";
 import {
   buildChangelogEntryHead,
   getChangelogPage,

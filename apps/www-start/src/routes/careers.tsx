@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import CompanyGroupLayout from "~/app/(app)/(company)/layout";
 import CareersPage, {
   getCareersContent,
 } from "~/app/(app)/(company)/careers/page";
+import CompanyGroupLayout from "~/app/(app)/(company)/layout";
 
 export const Route = createFileRoute("/careers")({
   head: () => ({

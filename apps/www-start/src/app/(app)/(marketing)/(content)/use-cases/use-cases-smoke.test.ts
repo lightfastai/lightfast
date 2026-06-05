@@ -22,15 +22,13 @@ describe("use-case pages smoke", () => {
     const [{ default: MarketingLayout }, { default: AgentBuildersPage }] =
       await Promise.all([
         import("~/app/(app)/(marketing)/layout"),
-        import("~/app/(app)/(marketing)/(content)/use-cases/agent-builders/page"),
+        import(
+          "~/app/(app)/(marketing)/(content)/use-cases/agent-builders/page"
+        ),
       ]);
 
     const html = renderToStaticMarkup(
-      createElement(
-        MarketingLayout,
-        null,
-        createElement(AgentBuildersPage)
-      )
+      createElement(MarketingLayout, null, createElement(AgentBuildersPage))
     );
 
     expect(html).toContain("Agent Builders");

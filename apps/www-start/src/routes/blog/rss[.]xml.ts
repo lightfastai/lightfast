@@ -9,7 +9,8 @@ const feedHeaders = {
 export const Route = createFileRoute("/blog/rss.xml")({
   server: {
     handlers: {
-      GET: () => new Response(generateBlogFeed().rss2(), { headers: feedHeaders }),
+      GET: () =>
+        new Response(generateBlogFeed().rss2(), { headers: feedHeaders }),
     },
   },
 });

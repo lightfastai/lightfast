@@ -10,8 +10,7 @@ describe("buildRootHead", () => {
     });
     expect(head.meta).toContainEqual({
       name: "description",
-      content:
-        "Lightfast is the operating layer between your agents and apps.",
+      content: "Lightfast is the operating layer between your agents and apps.",
     });
     expect(head.links).toContainEqual({
       rel: "canonical",

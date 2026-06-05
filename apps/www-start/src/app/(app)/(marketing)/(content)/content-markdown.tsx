@@ -12,7 +12,7 @@ const markdownComponents = {
     </h2>
   ),
   h3: ({ children, ...props }) => (
-    <h3 className="mt-8 mb-3 font-medium text-xl text-foreground" {...props}>
+    <h3 className="mt-8 mb-3 font-medium text-foreground text-xl" {...props}>
       {children}
     </h3>
   ),
@@ -37,7 +37,10 @@ const markdownComponents = {
     );
   },
   ul: ({ children, ...props }) => (
-    <ul className="my-4 ml-6 list-disc space-y-2 text-muted-foreground text-sm" {...props}>
+    <ul
+      className="my-4 ml-6 list-disc space-y-2 text-muted-foreground text-sm"
+      {...props}
+    >
       {children}
     </ul>
   ),
@@ -68,8 +71,10 @@ const markdownComponents = {
     <img
       alt={alt ?? ""}
       className="my-8 w-full rounded-lg border border-border/50 object-cover"
+      height={675}
       loading="eager"
       src={resolveContentAssetSrc(src)}
+      width={1200}
       {...props}
     />
   ),

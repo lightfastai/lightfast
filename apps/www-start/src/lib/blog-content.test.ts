@@ -10,9 +10,7 @@ describe("blog content", () => {
     }
 
     const pages = contentModule.getBlogPages();
-    const page = contentModule.getBlogPage(
-      "2026-03-26-why-we-built-lightfast"
-    );
+    const page = contentModule.getBlogPage("2026-03-26-why-we-built-lightfast");
 
     expect(pages).toHaveLength(1);
     expect(page?.data.title).toBe("Why We Built Lightfast");

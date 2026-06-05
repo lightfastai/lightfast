@@ -1,9 +1,9 @@
 import { parse } from "yaml";
 import { z } from "zod";
-import docsMeta from "../content/docs/meta.json";
 import getStartedMeta from "../content/docs/get-started/meta.json";
-import integrateMeta from "../content/docs/integrate/meta.json";
 import overviewSource from "../content/docs/get-started/overview.mdx?raw";
+import integrateMeta from "../content/docs/integrate/meta.json";
+import docsMeta from "../content/docs/meta.json";
 import { SITE_URL } from "./landing-content";
 
 const docsPageDataSchema = z.object({
@@ -33,27 +33,27 @@ export type DocsPath = keyof typeof docsSources;
 export type DocsPageData = z.infer<typeof docsPageDataSchema>;
 
 export interface DocsPage {
-  slug: string[];
-  path: `/docs/${DocsPath}`;
-  data: DocsPageData;
   body: string;
+  data: DocsPageData;
+  path: `/docs/${DocsPath}`;
+  slug: string[];
   url: `${typeof SITE_URL}/docs/${DocsPath}`;
 }
 
 export interface DocsNavigationItem {
-  title: string;
   href: string;
   migrated: boolean;
+  title: string;
 }
 
 export interface DocsNavigationSection {
-  title: string;
   items: DocsNavigationItem[];
+  title: string;
 }
 
 interface DocsHead {
-  meta: Array<Record<string, string>>;
   links: Array<{ rel: string; href: string }>;
+  meta: Record<string, string>[];
 }
 
 type DocsJsonLdEntity =

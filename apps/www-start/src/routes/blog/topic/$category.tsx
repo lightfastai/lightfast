@@ -1,12 +1,9 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import MarketingLayout from "~/app/(app)/(marketing)/layout";
-import BlogLayout from "~/app/(app)/(marketing)/(content)/blog/layout";
 import BlogListingLayout from "~/app/(app)/(marketing)/(content)/blog/(listing)/layout";
 import BlogCategoryPage from "~/app/(app)/(marketing)/(content)/blog/(listing)/topic/[category]/page";
-import {
-  buildBlogCategoryHead,
-  isBlogCategory,
-} from "~/lib/blog-content";
+import BlogLayout from "~/app/(app)/(marketing)/(content)/blog/layout";
+import MarketingLayout from "~/app/(app)/(marketing)/layout";
+import { buildBlogCategoryHead, isBlogCategory } from "~/lib/blog-content";
 
 export const Route = createFileRoute("/blog/topic/$category")({
   loader: ({ params }) => {

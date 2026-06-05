@@ -4,8 +4,8 @@ import { SITE_URL } from "~/lib/landing-content";
 const frontmatterPattern = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
 
 export interface RouteHead {
-  meta: Array<Record<string, string>>;
-  links?: Array<Record<string, string>>;
+  links?: Record<string, string>[];
+  meta: Record<string, string>[];
 }
 
 export interface JsonLdGraph {

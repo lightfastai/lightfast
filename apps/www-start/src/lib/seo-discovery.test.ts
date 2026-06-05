@@ -37,7 +37,9 @@ describe("SEO discovery content", () => {
 
     const xml = seoModule.generateSitemapXml();
 
-    expect(xml).toContain('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
+    expect(xml).toContain(
+      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+    );
     expect(xml).toContain("<loc>https://lightfast.ai/blog</loc>");
     expect(xml).toContain(
       "<loc>https://lightfast.ai/changelog/2026-03-26-lightfast-engineering-intelligence-shipped</loc>"
@@ -58,7 +60,9 @@ describe("SEO discovery content", () => {
     expect(productionRobots).toContain("Allow: /llms.txt");
     expect(productionRobots).toContain("Disallow: /api/");
     expect(productionRobots).not.toContain("/pitch-deck");
-    expect(productionRobots).toContain("Sitemap: https://lightfast.ai/sitemap.xml");
+    expect(productionRobots).toContain(
+      "Sitemap: https://lightfast.ai/sitemap.xml"
+    );
   });
 
   it("generates llms.txt for the public marketing and content pages", async () => {
@@ -84,7 +88,9 @@ describe("SEO discovery content", () => {
     expect(llmsTxt).toContain(
       "- [Engineering Intelligence, Shipped](https://lightfast.ai/changelog/2026-03-26-lightfast-engineering-intelligence-shipped)"
     );
-    expect(llmsTxt).toContain("- [Privacy Policy](https://lightfast.ai/legal/privacy)");
+    expect(llmsTxt).toContain(
+      "- [Privacy Policy](https://lightfast.ai/legal/privacy)"
+    );
     expect(llmsTxt).toContain("## Contact & Support");
   });
 });

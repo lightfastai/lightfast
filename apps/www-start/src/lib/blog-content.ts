@@ -1,20 +1,20 @@
-import { SITE_URL } from "~/lib/landing-content";
 import {
   buildBreadcrumbList,
   buildFaqEntity,
   buildOrganizationEntity,
   buildRobots,
   buildWebSiteEntity,
-  parseFrontmatter,
   type JsonLdGraph,
+  parseFrontmatter,
   type RouteHead,
 } from "~/lib/content-common";
 import {
-  blogCategoryValues,
-  BlogPostSchema,
   type BlogCategory,
   type BlogPostData,
+  BlogPostSchema,
+  blogCategoryValues,
 } from "~/lib/content-schemas";
+import { SITE_URL } from "~/lib/landing-content";
 import whyWeBuiltLightfastSource from "../content/blog/2026-03-26-why-we-built-lightfast.mdx?raw";
 
 export interface BlogCategoryMeta {
@@ -29,10 +29,10 @@ export interface BlogCategoryMeta {
 }
 
 export interface BlogPage {
+  body: string;
+  data: BlogPostData;
   slug: string;
   slugs: [string];
-  data: BlogPostData;
-  body: string;
   url: `${typeof SITE_URL}/blog/${string}`;
 }
 
