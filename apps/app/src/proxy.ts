@@ -89,6 +89,7 @@ const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS]);
 const isApiRouteMatcher = createRouteMatcher([
   "/api/connectors/x/mcp(.*)",
   "/api/inngest(.*)",
+  "/api/internal/mcp/proxy(.*)",
   "/api/internal/mcp/signals(.*)",
   "/api/v1/(.*)",
 ]);
@@ -96,6 +97,7 @@ const isApiRouteMatcher = createRouteMatcher([
 const APP_OWNED_API_PREFIXES = [
   "/api/connectors/x/mcp",
   "/api/inngest",
+  "/api/internal/mcp/proxy",
   "/api/internal/mcp/signals",
   "/api/v1",
 ];
