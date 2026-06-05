@@ -33,6 +33,7 @@ catalog:
   '@opentelemetry/sdk-metrics': 2.7.1
   '@opentelemetry/sdk-node': 0.218.0
   '@opentelemetry/sdk-trace-base': 2.7.1
+  '@paper-design/shaders-react': ^0.0.76
   '@radix-ui/react-accordion': ^1.2.11
   '@radix-ui/react-alert-dialog': ^1.1.14
   '@radix-ui/react-aspect-ratio': ^1.1.8
@@ -100,6 +101,7 @@ catalog:
   drizzle-zod: ^0.8.3
   embla-carousel-react: ^8.6.0
   emulate: 0.6.0
+  feed: ^5.2.0
   '@shikijs/langs': ^4.0.2
   '@shikijs/themes': ^4.0.2
   '@tanstack/react-table': ^8.21.3
@@ -156,6 +158,7 @@ catalogs:
   tailwind4:
     '@tailwindcss/postcss': 4.2.2
     '@tailwindcss/typography': ^0.5.16
+    '@tailwindcss/vite': 4.2.2
     postcss: 8.5.11
     tailwindcss: 4.2.2
 

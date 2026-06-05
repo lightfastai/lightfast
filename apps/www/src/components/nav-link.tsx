@@ -1,6 +1,7 @@
 "use client";
 
 import { Link as MicrofrontendsLink } from "@vercel/microfrontends/next/client";
+import type { Route } from "next";
 import NextLink from "next/link";
 import type { ComponentPropsWithoutRef } from "react";
 import type { NavItem } from "~/types/nav";
@@ -35,6 +36,42 @@ type NavLinkProps = DistributiveOmit<NavItem, "title"> &
     title?: string;
   };
 
+const wwwStartRoutes = new Set([
+  "/",
+  "/blog",
+  "/careers",
+  "/changelog",
+  "/company",
+  "/docs",
+  "/docs/get-started/overview",
+  "/legal/privacy",
+  "/legal/terms",
+  "/pricing",
+  "/search",
+  "/use-cases/agent-builders",
+  "/use-cases/engineering-leaders",
+  "/use-cases/platform-engineers",
+  "/use-cases/technical-founders",
+]);
+
+function getPathname(href: string) {
+  const path = href.startsWith("/") ? href : `/${href}`;
+  return path.split(/[?#]/, 1)[0] ?? "/";
+}
+
+function isWwwStartPath(href: string) {
+  const pathname = getPathname(href);
+
+  return (
+    wwwStartRoutes.has(pathname) ||
+    pathname.startsWith("/blog/") ||
+    pathname.startsWith("/changelog/") ||
+    pathname.startsWith("/company/") ||
+    pathname.startsWith("/legal/") ||
+    pathname.startsWith("/use-cases/")
+  );
+}
+
 export function NavLink({
   // NavItem data fields — consumed here, not forwarded to the DOM
   title: _title,
@@ -54,6 +91,15 @@ export function NavLink({
     return <MicrofrontendsLink {...anchorProps}>{children}</MicrofrontendsLink>;
   }
 
-  const { external: _, microfrontend: __, ...linkProps } = props;
-  return <NextLink {...linkProps}>{children}</NextLink>;
+  if (isWwwStartPath(props.href)) {
+    const { external: _, microfrontend: __, ...anchorProps } = props;
+    return <MicrofrontendsLink {...anchorProps}>{children}</MicrofrontendsLink>;
+  }
+
+  const { external: _, microfrontend: __, href, ...linkProps } = props;
+  return (
+    <NextLink {...linkProps} href={href as Route}>
+      {children}
+    </NextLink>
+  );
 }

@@ -11,7 +11,7 @@
     "build:prod": "pnpm with-env next build",
     "clean": "git clean -xdf .cache .next .turbo .vercel node_modules",
     "dev:next": "portless run pnpm with-related-projects pnpm with-env next dev --turbo",
-    "mfe:proxy": "portless run --name lightfast sh -c 'pnpm exec microfrontends proxy ./microfrontends.json --port \"$PORT\" --local-apps lightfast-app lightfast-www --local-app-url lightfast-app=$(portless get app.lightfast) --local-app-url lightfast-www=$(portless get www.lightfast)'",
+    "mfe:proxy": "portless run --name lightfast sh -c 'pnpm exec microfrontends proxy ./microfrontends.json --port \"$PORT\" --local-apps lightfast-app lightfast-www-start lightfast-www --local-app-url lightfast-app=$(portless get app.lightfast) --local-app-url lightfast-www-start=$(portless get www-start.lightfast) --local-app-url lightfast-www=$(portless get www.lightfast)'",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ./.env.overrides.local -e ./.vercel/.env.development.local --",

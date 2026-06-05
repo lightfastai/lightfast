@@ -49,5 +49,27 @@
         "useAwait": "off"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["apps/www-start/**"],
+      "linter": {
+        "rules": {
+          "performance": {
+            "noImgElement": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/www-start/src/routes/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useFilenamingConvention": "off"
+          }
+        }
+      }
+    }
+  ]
 }

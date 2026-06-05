@@ -1,0 +1,66 @@
+/* Import the base UI globals */
+@import "@repo/ui/globals.css";
+
+@font-face {
+  font-display: swap;
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 100 900;
+  src: url("/fonts/geist/Geist-Variable.woff2") format("woff2");
+}
+
+@font-face {
+  font-display: swap;
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 100 900;
+  src: url("/fonts/geist/GeistMono-Variable.woff2") format("woff2");
+}
+
+@font-face {
+  font-display: swap;
+  font-family: "PP Neue Montreal";
+  font-style: normal;
+  font-weight: 400;
+  src: url("/fonts/pp-neue-montreal/PPNeueMontreal-Book.woff2") format("woff2");
+}
+
+@font-face {
+  font-display: swap;
+  font-family: "PP Neue Montreal";
+  font-style: normal;
+  font-weight: 500;
+  src: url("/fonts/pp-neue-montreal/PPNeueMontreal-Medium.woff2")
+    format("woff2");
+}
+
+:root {
+  --font-geist-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-geist-mono: "Geist Mono", ui-monospace, monospace;
+  --font-pp-neue-montreal: "PP Neue Montreal", var(--font-geist-sans);
+  --font-pp-letter-spacing: 0;
+  --font-pp-line-height: 1.1;
+}
+
+@layer utilities {
+  .font-pp {
+    font-family: var(--font-pp-neue-montreal);
+    line-height: var(--font-pp-line-height);
+    letter-spacing: var(--font-pp-letter-spacing);
+  }
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
