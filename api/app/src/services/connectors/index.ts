@@ -42,6 +42,12 @@ type ConnectorSetAgentEnabledInput = z.infer<
 >;
 
 export {
+  type ChatProviderRoutineContext,
+  ChatProviderRoutineError,
+  callChatProviderRoutine,
+  findChatProviderRoutines,
+} from "./chat-routines";
+export {
   completeLinearConnectorOAuth,
   disconnectLinearConnector,
   refreshLinearConnectorTools,
@@ -57,12 +63,6 @@ export {
   setXConnectorAutomationEnabled,
   startXConnectorOAuth,
 } from "./x-flow";
-export {
-  ChatProviderRoutineError,
-  callChatProviderRoutine,
-  findChatProviderRoutines,
-  type ChatProviderRoutineContext,
-} from "./chat-routines";
 export { handleXConnectorMcpRequest } from "./x-mcp-bridge";
 export { listConnectorsForOrg };
 
