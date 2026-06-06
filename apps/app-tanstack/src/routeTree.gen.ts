@@ -35,6 +35,7 @@ import { Route as AuthenticatedAccountSettingsIndexRouteImport } from './routes/
 import { Route as AuthenticatedSlugTasksIndexRouteImport } from './routes/_authenticated/$slug/tasks/index'
 import { Route as AuthenticatedSlugAutomationsIndexRouteImport } from './routes/_authenticated/$slug/automations/index'
 import { Route as ApiGithubOauthCallbackRouteImport } from './routes/api/github/oauth/callback'
+import { Route as ApiConnectorsXMcpRouteImport } from './routes/api/connectors/x/mcp'
 import { Route as AuthenticatedAccountsTeamsNewRouteImport } from './routes/_authenticated/accounts/teams/new'
 import { Route as AuthenticatedAccountTeamsNewRouteImport } from './routes/_authenticated/account/teams/new'
 import { Route as AuthenticatedAccountTasksUsernameRouteImport } from './routes/_authenticated/account/tasks/username'
@@ -49,6 +50,8 @@ import { Route as AuthenticatedSlugAutomationsAutomationRouteImport } from './ro
 import { Route as AuthenticatedAccountTasksGithubIndexRouteImport } from './routes/_authenticated/account/tasks/github/index'
 import { Route as AuthenticatedSlugTasksBindIndexRouteImport } from './routes/_authenticated/$slug/tasks/bind/index'
 import { Route as ApiGithubUserOauthCallbackRouteImport } from './routes/api/github/user/oauth/callback'
+import { Route as ApiConnectorsXOauthCallbackRouteImport } from './routes/api/connectors/x/oauth/callback'
+import { Route as ApiConnectorsLinearOauthCallbackRouteImport } from './routes/api/connectors/linear/oauth/callback'
 import { Route as AuthenticatedAccountTasksGithubCompleteRouteImport } from './routes/_authenticated/account/tasks/github/complete'
 import { Route as AuthenticatedSlugTasksGithubLightfastRepoRouteImport } from './routes/_authenticated/$slug/tasks/github/lightfast-repo'
 import { Route as AuthenticatedSlugTasksBindGithubCompleteRouteImport } from './routes/_authenticated/$slug/tasks/bind/github/complete'
@@ -191,6 +194,11 @@ const ApiGithubOauthCallbackRoute = ApiGithubOauthCallbackRouteImport.update({
   path: '/api/github/oauth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiConnectorsXMcpRoute = ApiConnectorsXMcpRouteImport.update({
+  id: '/api/connectors/x/mcp',
+  path: '/api/connectors/x/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAccountsTeamsNewRoute =
   AuthenticatedAccountsTeamsNewRouteImport.update({
     id: '/accounts/teams/new',
@@ -275,6 +283,18 @@ const ApiGithubUserOauthCallbackRoute =
     path: '/api/github/user/oauth/callback',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiConnectorsXOauthCallbackRoute =
+  ApiConnectorsXOauthCallbackRouteImport.update({
+    id: '/api/connectors/x/oauth/callback',
+    path: '/api/connectors/x/oauth/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiConnectorsLinearOauthCallbackRoute =
+  ApiConnectorsLinearOauthCallbackRouteImport.update({
+    id: '/api/connectors/linear/oauth/callback',
+    path: '/api/connectors/linear/oauth/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAccountTasksGithubCompleteRoute =
   AuthenticatedAccountTasksGithubCompleteRouteImport.update({
     id: '/complete',
@@ -327,12 +347,15 @@ export interface FileRoutesByFullPath {
   '/account/tasks/username': typeof AuthenticatedAccountTasksUsernameRoute
   '/account/teams/new': typeof AuthenticatedAccountTeamsNewRoute
   '/accounts/teams/new': typeof AuthenticatedAccountsTeamsNewRoute
+  '/api/connectors/x/mcp': typeof ApiConnectorsXMcpRoute
   '/api/github/oauth/callback': typeof ApiGithubOauthCallbackRoute
   '/$slug/automations/': typeof AuthenticatedSlugAutomationsIndexRoute
   '/$slug/tasks/': typeof AuthenticatedSlugTasksIndexRoute
   '/account/settings/': typeof AuthenticatedAccountSettingsIndexRoute
   '/$slug/tasks/github/lightfast-repo': typeof AuthenticatedSlugTasksGithubLightfastRepoRoute
   '/account/tasks/github/complete': typeof AuthenticatedAccountTasksGithubCompleteRoute
+  '/api/connectors/linear/oauth/callback': typeof ApiConnectorsLinearOauthCallbackRoute
+  '/api/connectors/x/oauth/callback': typeof ApiConnectorsXOauthCallbackRoute
   '/api/github/user/oauth/callback': typeof ApiGithubUserOauthCallbackRoute
   '/$slug/tasks/bind/': typeof AuthenticatedSlugTasksBindIndexRoute
   '/account/tasks/github/': typeof AuthenticatedAccountTasksGithubIndexRoute
@@ -365,12 +388,15 @@ export interface FileRoutesByTo {
   '/account/tasks/username': typeof AuthenticatedAccountTasksUsernameRoute
   '/account/teams/new': typeof AuthenticatedAccountTeamsNewRoute
   '/accounts/teams/new': typeof AuthenticatedAccountsTeamsNewRoute
+  '/api/connectors/x/mcp': typeof ApiConnectorsXMcpRoute
   '/api/github/oauth/callback': typeof ApiGithubOauthCallbackRoute
   '/$slug/automations': typeof AuthenticatedSlugAutomationsIndexRoute
   '/$slug/tasks': typeof AuthenticatedSlugTasksIndexRoute
   '/account/settings': typeof AuthenticatedAccountSettingsIndexRoute
   '/$slug/tasks/github/lightfast-repo': typeof AuthenticatedSlugTasksGithubLightfastRepoRoute
   '/account/tasks/github/complete': typeof AuthenticatedAccountTasksGithubCompleteRoute
+  '/api/connectors/linear/oauth/callback': typeof ApiConnectorsLinearOauthCallbackRoute
+  '/api/connectors/x/oauth/callback': typeof ApiConnectorsXOauthCallbackRoute
   '/api/github/user/oauth/callback': typeof ApiGithubUserOauthCallbackRoute
   '/$slug/tasks/bind': typeof AuthenticatedSlugTasksBindIndexRoute
   '/account/tasks/github': typeof AuthenticatedAccountTasksGithubIndexRoute
@@ -411,12 +437,15 @@ export interface FileRoutesById {
   '/_authenticated/account/tasks/username': typeof AuthenticatedAccountTasksUsernameRoute
   '/_authenticated/account/teams/new': typeof AuthenticatedAccountTeamsNewRoute
   '/_authenticated/accounts/teams/new': typeof AuthenticatedAccountsTeamsNewRoute
+  '/api/connectors/x/mcp': typeof ApiConnectorsXMcpRoute
   '/api/github/oauth/callback': typeof ApiGithubOauthCallbackRoute
   '/_authenticated/$slug/automations/': typeof AuthenticatedSlugAutomationsIndexRoute
   '/_authenticated/$slug/tasks/': typeof AuthenticatedSlugTasksIndexRoute
   '/_authenticated/account/settings/': typeof AuthenticatedAccountSettingsIndexRoute
   '/_authenticated/$slug/tasks/github/lightfast-repo': typeof AuthenticatedSlugTasksGithubLightfastRepoRoute
   '/_authenticated/account/tasks/github/complete': typeof AuthenticatedAccountTasksGithubCompleteRoute
+  '/api/connectors/linear/oauth/callback': typeof ApiConnectorsLinearOauthCallbackRoute
+  '/api/connectors/x/oauth/callback': typeof ApiConnectorsXOauthCallbackRoute
   '/api/github/user/oauth/callback': typeof ApiGithubUserOauthCallbackRoute
   '/_authenticated/$slug/tasks/bind/': typeof AuthenticatedSlugTasksBindIndexRoute
   '/_authenticated/account/tasks/github/': typeof AuthenticatedAccountTasksGithubIndexRoute
@@ -457,12 +486,15 @@ export interface FileRouteTypes {
     | '/account/tasks/username'
     | '/account/teams/new'
     | '/accounts/teams/new'
+    | '/api/connectors/x/mcp'
     | '/api/github/oauth/callback'
     | '/$slug/automations/'
     | '/$slug/tasks/'
     | '/account/settings/'
     | '/$slug/tasks/github/lightfast-repo'
     | '/account/tasks/github/complete'
+    | '/api/connectors/linear/oauth/callback'
+    | '/api/connectors/x/oauth/callback'
     | '/api/github/user/oauth/callback'
     | '/$slug/tasks/bind/'
     | '/account/tasks/github/'
@@ -495,12 +527,15 @@ export interface FileRouteTypes {
     | '/account/tasks/username'
     | '/account/teams/new'
     | '/accounts/teams/new'
+    | '/api/connectors/x/mcp'
     | '/api/github/oauth/callback'
     | '/$slug/automations'
     | '/$slug/tasks'
     | '/account/settings'
     | '/$slug/tasks/github/lightfast-repo'
     | '/account/tasks/github/complete'
+    | '/api/connectors/linear/oauth/callback'
+    | '/api/connectors/x/oauth/callback'
     | '/api/github/user/oauth/callback'
     | '/$slug/tasks/bind'
     | '/account/tasks/github'
@@ -540,12 +575,15 @@ export interface FileRouteTypes {
     | '/_authenticated/account/tasks/username'
     | '/_authenticated/account/teams/new'
     | '/_authenticated/accounts/teams/new'
+    | '/api/connectors/x/mcp'
     | '/api/github/oauth/callback'
     | '/_authenticated/$slug/automations/'
     | '/_authenticated/$slug/tasks/'
     | '/_authenticated/account/settings/'
     | '/_authenticated/$slug/tasks/github/lightfast-repo'
     | '/_authenticated/account/tasks/github/complete'
+    | '/api/connectors/linear/oauth/callback'
+    | '/api/connectors/x/oauth/callback'
     | '/api/github/user/oauth/callback'
     | '/_authenticated/$slug/tasks/bind/'
     | '/_authenticated/account/tasks/github/'
@@ -561,7 +599,10 @@ export interface RootRouteChildren {
   ApiInngestRoute: typeof ApiInngestRoute
   ApiGithubSetupRoute: typeof ApiGithubSetupRoute
   ApiTrpcSplatRoute: typeof ApiTrpcSplatRoute
+  ApiConnectorsXMcpRoute: typeof ApiConnectorsXMcpRoute
   ApiGithubOauthCallbackRoute: typeof ApiGithubOauthCallbackRoute
+  ApiConnectorsLinearOauthCallbackRoute: typeof ApiConnectorsLinearOauthCallbackRoute
+  ApiConnectorsXOauthCallbackRoute: typeof ApiConnectorsXOauthCallbackRoute
   ApiGithubUserOauthCallbackRoute: typeof ApiGithubUserOauthCallbackRoute
 }
 
@@ -749,6 +790,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiGithubOauthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/connectors/x/mcp': {
+      id: '/api/connectors/x/mcp'
+      path: '/api/connectors/x/mcp'
+      fullPath: '/api/connectors/x/mcp'
+      preLoaderRoute: typeof ApiConnectorsXMcpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/accounts/teams/new': {
       id: '/_authenticated/accounts/teams/new'
       path: '/accounts/teams/new'
@@ -845,6 +893,20 @@ declare module '@tanstack/react-router' {
       path: '/api/github/user/oauth/callback'
       fullPath: '/api/github/user/oauth/callback'
       preLoaderRoute: typeof ApiGithubUserOauthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/connectors/x/oauth/callback': {
+      id: '/api/connectors/x/oauth/callback'
+      path: '/api/connectors/x/oauth/callback'
+      fullPath: '/api/connectors/x/oauth/callback'
+      preLoaderRoute: typeof ApiConnectorsXOauthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/connectors/linear/oauth/callback': {
+      id: '/api/connectors/linear/oauth/callback'
+      path: '/api/connectors/linear/oauth/callback'
+      fullPath: '/api/connectors/linear/oauth/callback'
+      preLoaderRoute: typeof ApiConnectorsLinearOauthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/account/tasks/github/complete': {
@@ -1073,7 +1135,10 @@ const rootRouteChildren: RootRouteChildren = {
   ApiInngestRoute: ApiInngestRoute,
   ApiGithubSetupRoute: ApiGithubSetupRoute,
   ApiTrpcSplatRoute: ApiTrpcSplatRoute,
+  ApiConnectorsXMcpRoute: ApiConnectorsXMcpRoute,
   ApiGithubOauthCallbackRoute: ApiGithubOauthCallbackRoute,
+  ApiConnectorsLinearOauthCallbackRoute: ApiConnectorsLinearOauthCallbackRoute,
+  ApiConnectorsXOauthCallbackRoute: ApiConnectorsXOauthCallbackRoute,
   ApiGithubUserOauthCallbackRoute: ApiGithubUserOauthCallbackRoute,
 }
 export const routeTree = rootRouteImport

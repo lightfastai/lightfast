@@ -1,79 +1,52 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const mcpState = vi.hoisted(() => ({
-  callTool: vi.fn(async () => ({
-    content: [{ text: "done", type: "text" }],
-  })),
-  close: vi.fn(async () => undefined),
-  connect: vi.fn(async () => undefined),
-  listTools: vi.fn(async () => ({
-    tools: [
-      {
-        description: "Look up an X user by username",
-        inputSchema: {
-          properties: { username: { type: "string" } },
-          required: ["username"],
-          type: "object",
-        },
-        name: "getUsersByUsername",
-      },
-    ],
-  })),
-  transports: [] as Array<{
-    options: unknown;
-    url: string;
-  }>,
-}));
+const fetchMock = vi.fn();
 
-vi.mock("@vendor/mcp", () => ({
-  McpClient: class {
-    callTool = mcpState.callTool;
-    close = mcpState.close;
-    connect = mcpState.connect;
-    listTools = mcpState.listTools;
-  },
-  StreamableHTTPClientTransport: class {
-    constructor(url: URL, options?: unknown) {
-      mcpState.transports.push({ options, url: url.toString() });
-    }
-  },
-}));
+vi.stubGlobal("fetch", fetchMock);
 
 import { callXBridgeMcpTool, listXBridgeMcpTools } from "../mcp";
+
+function jsonResponse(body: unknown, init: ResponseInit = {}) {
+  return new Response(JSON.stringify(body), {
+    headers: { "content-type": "application/json" },
+    status: 200,
+    ...init,
+  });
+}
 
 describe("X bridge MCP client helpers", () => {
   afterEach(() => {
     vi.useRealTimers();
-    mcpState.callTool.mockReset();
-    mcpState.callTool.mockResolvedValue({
-      content: [{ text: "done", type: "text" }],
-    });
-    mcpState.close.mockReset();
-    mcpState.close.mockResolvedValue(undefined);
-    mcpState.connect.mockReset();
-    mcpState.connect.mockResolvedValue(undefined);
-    mcpState.listTools.mockReset();
-    mcpState.listTools.mockResolvedValue({
-      tools: [
-        {
-          description: "Look up an X user by username",
-          inputSchema: {
-            properties: { username: { type: "string" } },
-            required: ["username"],
-            type: "object",
-          },
-          name: "getUsersByUsername",
-        },
-      ],
-    });
-    mcpState.transports.length = 0;
+    fetchMock.mockReset();
   });
 
   it("lists tools with a Lightfast MCP bearer token", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        id: 1,
+        jsonrpc: "2.0",
+        result: {
+          tools: [
+            {
+              description: "Look up an X user by username",
+              inputSchema: {
+                properties: { username: { type: "string" } },
+                required: ["username"],
+                type: "object",
+              },
+              name: "getUsersByUsername",
+            },
+          ],
+        },
+      })
+    );
+
     await expect(
       listXBridgeMcpTools({
+        allowedEndpoint: "https://app.test/api/connectors/x/mcp",
         endpoint: "https://app.test/api/connectors/x/mcp",
         mcpToken: "lfmcp_v1.test.payload.signature",
+        nodeEnv: "production",
       })
     ).resolves.toEqual([
       {
@@ -87,21 +60,46 @@ describe("X bridge MCP client helpers", () => {
       },
     ]);
 
-    expect(mcpState.transports).toEqual([
-      {
-        options: {
-          requestInit: {
-            headers: {
-              authorization: "Bearer lfmcp_v1.test.payload.signature",
-            },
-          },
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://app.test/api/connectors/x/mcp",
+      expect.objectContaining({
+        body: JSON.stringify({
+          id: 1,
+          jsonrpc: "2.0",
+          method: "tools/list",
+          params: {},
+        }),
+        headers: {
+          accept: "application/json, text/event-stream",
+          authorization: "Bearer lfmcp_v1.test.payload.signature",
+          "content-type": "application/json",
         },
-        url: "https://app.test/api/connectors/x/mcp",
-      },
-    ]);
+        method: "POST",
+      })
+    );
   });
 
   it("allows the configured first-party MCP endpoint in production", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        id: 1,
+        jsonrpc: "2.0",
+        result: {
+          tools: [
+            {
+              description: "Look up an X user by username",
+              inputSchema: {
+                properties: { username: { type: "string" } },
+                required: ["username"],
+                type: "object",
+              },
+              name: "getUsersByUsername",
+            },
+          ],
+        },
+      })
+    );
+
     await expect(
       listXBridgeMcpTools({
         allowedEndpoint: "https://lightfast.ai/api/connectors/x/mcp",
@@ -133,32 +131,91 @@ describe("X bridge MCP client helpers", () => {
   });
 
   it("calls tools with a Lightfast MCP bearer token", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        id: 1,
+        jsonrpc: "2.0",
+        result: { content: [{ text: "done", type: "text" }] },
+      })
+    );
+
     await expect(
       callXBridgeMcpTool({
+        allowedEndpoint: "https://app.test/api/connectors/x/mcp",
         endpoint: "https://app.test/api/connectors/x/mcp",
         input: { username: "lightfast" },
         mcpToken: "lfmcp_v1.test.payload.signature",
         name: "getUsersByUsername",
+        nodeEnv: "production",
       })
     ).resolves.toEqual({ content: [{ text: "done", type: "text" }] });
 
-    expect(mcpState.callTool).toHaveBeenCalledWith({
-      arguments: { username: "lightfast" },
-      name: "getUsersByUsername",
-    });
-    expect(mcpState.transports[0]).toEqual({
-      options: {
-        requestInit: {
-          headers: {
-            authorization: "Bearer lfmcp_v1.test.payload.signature",
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://app.test/api/connectors/x/mcp",
+      expect.objectContaining({
+        body: JSON.stringify({
+          id: 1,
+          jsonrpc: "2.0",
+          method: "tools/call",
+          params: {
+            arguments: { username: "lightfast" },
+            name: "getUsersByUsername",
           },
+        }),
+        headers: {
+          accept: "application/json, text/event-stream",
+          authorization: "Bearer lfmcp_v1.test.payload.signature",
+          "content-type": "application/json",
         },
-      },
-      url: "https://app.test/api/connectors/x/mcp",
+        method: "POST",
+      })
+    );
+  });
+
+  it("rejects direct custom MCP endpoints outside the allowed bridge endpoint", async () => {
+    await expect(
+      listXBridgeMcpTools({
+        allowedEndpoint: "https://app.test/api/connectors/x/mcp",
+        endpoint: "https://evil.test/mcp",
+        mcpToken: "lfmcp_v1.test.payload.signature",
+        nodeEnv: "production",
+      })
+    ).rejects.toMatchObject({ code: "X_CUSTOM_ENDPOINT_FORBIDDEN" });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("wraps bridge response errors", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        error: { code: -32_000, message: "Bridge rejected request" },
+        id: 1,
+        jsonrpc: "2.0",
+      })
+    );
+
+    await expect(
+      listXBridgeMcpTools({
+        allowedEndpoint: "https://app.test/api/connectors/x/mcp",
+        endpoint: "https://app.test/api/connectors/x/mcp",
+        mcpToken: "lfmcp_v1.test.payload.signature",
+        nodeEnv: "production",
+      })
+    ).rejects.toMatchObject({
+      cause: { name: "object" },
+      code: "X_MCP_FAILED",
     });
   });
 
   it("calls tools against the configured first-party MCP endpoint in production", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        id: 1,
+        jsonrpc: "2.0",
+        result: { content: [{ text: "done", type: "text" }] },
+      })
+    );
+
     await expect(
       callXBridgeMcpTool({
         allowedEndpoint: "https://lightfast.ai/api/connectors/x/mcp",
@@ -169,5 +226,38 @@ describe("X bridge MCP client helpers", () => {
         nodeEnv: "production",
       })
     ).resolves.toEqual({ content: [{ text: "done", type: "text" }] });
+  });
+
+  it("times out stalled bridge requests", async () => {
+    vi.useFakeTimers();
+    fetchMock.mockImplementationOnce(
+      (_url, init: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          init.signal?.addEventListener(
+            "abort",
+            () =>
+              reject(
+                new DOMException("The operation was aborted.", "AbortError")
+              ),
+            { once: true }
+          );
+        })
+    );
+
+    const listPromise = listXBridgeMcpTools({
+      allowedEndpoint: "https://app.test/api/connectors/x/mcp",
+      endpoint: "https://app.test/api/connectors/x/mcp",
+      mcpToken: "lfmcp_v1.test.payload.signature",
+      nodeEnv: "production",
+      timeoutMs: 25,
+    });
+    const expectation = expect(listPromise).rejects.toMatchObject({
+      cause: { name: "AbortError" },
+      code: "X_MCP_FAILED",
+    });
+
+    await vi.advanceTimersByTimeAsync(25);
+
+    await expectation;
   });
 });

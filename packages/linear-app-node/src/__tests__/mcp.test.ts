@@ -101,6 +101,7 @@ describe("listLinearMcpTools", () => {
         options: {
           requestInit: {
             headers: {
+              accept: "application/json, text/event-stream",
               authorization: "Bearer lin_access",
             },
           },
