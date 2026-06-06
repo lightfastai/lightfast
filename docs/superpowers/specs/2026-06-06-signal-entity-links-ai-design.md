@@ -34,6 +34,10 @@ implementation slice to the AI extraction layer.
 - No inline Signal rendering requirement in this slice. Inline links can come
   later from optional render anchors.
 - No broad People UI redesign in this slice.
+- No backfill for already-classified historical signals in the first
+  implementation slice.
+- No replacement or consolidation of the existing people classifier in the
+  first implementation slice.
 
 ## Core Model
 
@@ -163,13 +167,47 @@ The capability receives:
 }
 ```
 
-The classifier returns model-only candidates:
+The entity-linking layer has two extractors:
+
+1. **Deterministic extractor**: real code extracts emails, recognized profile
+   URLs, and provider handles where provider context is obvious.
+2. **AI extractor**: model extracts explicit natural-language person references
+   such as `Jordi`, `Archer`, `Louie`, and `Mahesh`.
+
+Deterministic extraction runs first. Its candidates are passed into the AI
+prompt as authoritative context so the model can avoid duplicate work and can
+reuse local grouping keys. The model may add candidates but must not rewrite or
+invalidate deterministic candidates.
+
+Both extractors normalize into one internal candidate shape:
+
+```ts
+{
+  targetType: "person";
+  localEntityKey: `person_${number}`;
+  label: string;
+  mentionKind: "name" | "email" | "handle" | "profile_url";
+  anchorText: string;
+  anchorOccurrence: number;
+  extractionMethod: "deterministic" | "ai";
+  rationale: string;
+  confidence: number;
+}
+```
+
+`localEntityKey` is required, scoped only to one signal extraction result, and
+must match `/^person_[1-9][0-9]*$/`. It groups multiple mentions that refer to
+the same person inside a single signal. It is not a database id and must never
+merge global People records.
+
+The AI classifier returns model-only candidates:
 
 ```ts
 {
   schemaVersion: "signal.entity-links.v1";
   candidates: Array<{
     targetType: "person";
+    localEntityKey: `person_${number}`;
     label: string;
     mentionKind: "name" | "email" | "handle" | "profile_url";
     anchorText: string;
@@ -181,8 +219,15 @@ The classifier returns model-only candidates:
 ```
 
 The model must not emit `personPublicId`, `identityKey`, or any durable database
-id. It identifies text-level candidates only. Application code normalizes labels,
-dedupes candidates, creates or resolves people, and writes entity links.
+id. It identifies text-level candidates only. Application code validates anchors,
+normalizes labels, and dedupes candidates in the first slice. Later persistence
+code creates or resolves people and writes entity links.
+
+The current `@repo/ai/people-classifier` remains in place for now. It continues
+to handle durable identity extraction where the existing `routes.people` path
+runs. The new entity linker runs alongside it and covers name-only references.
+Consolidating the two classifiers is deferred until canonical People,
+identities, and entity links are persisted end to end.
 
 ### Prompt Rules
 
@@ -191,16 +236,30 @@ The system prompt should say:
 - Extract entity references from the raw signal input.
 - In v1, extract only person references.
 - Name-only person references are allowed.
+- Extract only explicit person references: names, emails, handles, and person
+  profile URLs.
 - Emails, handles, and profile URLs are allowed when they identify a person.
+- Do not extract role-only or coreference-only references such as "the
+  designer", "their CTO", "my manager", or "the person from Doccy".
+- Do not extract projects, companies, accounts, documents, or unsupported entity
+  types in v1.
 - Do not browse.
 - Do not infer identities that are not present in the signal.
+- Do not create a name candidate from inside an email address or URL unless that
+  name appears separately as human-readable text in the input.
 - Do not decide whether a person is confirmed.
 - Do not execute the requested action.
 - Return only references that a reasonable user would expect Lightfast to
   remember as people-related context.
 - Preserve uncertainty in `rationale` and `confidence`.
+- Every candidate must include a required `localEntityKey` matching
+  `/^person_[1-9][0-9]*$/`.
+- Use the same `localEntityKey` for multiple candidates that refer to the same
+  person inside this signal.
 - `anchorText` must be an exact substring from `input`.
 - `anchorOccurrence` is 1-based among exact `anchorText` matches in `input`.
+- Every candidate label and anchor must come from the raw signal input, not only
+  from the classification summary, title, rationale, or next action.
 - Return an empty array when no person reference is present.
 
 This prompt intentionally differs from the current people classifier. The
@@ -223,6 +282,7 @@ Output:
   "candidates": [
     {
       "targetType": "person",
+      "localEntityKey": "person_1",
       "label": "Louie",
       "mentionKind": "name",
       "anchorText": "Louie",
@@ -232,6 +292,7 @@ Output:
     },
     {
       "targetType": "person",
+      "localEntityKey": "person_2",
       "label": "Mahesh",
       "mentionKind": "name",
       "anchorText": "Mahesh",
@@ -257,6 +318,7 @@ Output:
   "candidates": [
     {
       "targetType": "person",
+      "localEntityKey": "person_1",
       "label": "Jordi",
       "mentionKind": "name",
       "anchorText": "Jordi",
@@ -266,6 +328,7 @@ Output:
     },
     {
       "targetType": "person",
+      "localEntityKey": "person_2",
       "label": "Archer",
       "mentionKind": "name",
       "anchorText": "Archer",
@@ -279,7 +342,8 @@ Output:
 
 ## Data Flow
 
-The first AI-only slice can be built and tested without changing UI:
+The first AI-only slice can be built and tested without changing UI or database
+schema. It should be wired into the live workflow, but it persists nothing:
 
 ```text
 signal.create
@@ -287,13 +351,23 @@ signal.create
 
 classify-signal
   -> stores classification as today
-  -> queues app/signal.entity-index.requested
+  -> queues app/signal.entity-index.requested for classified, non-needs-review
+     signals
 
 index-signal-entities
   -> loads the signal
-  -> calls @repo/ai/signal-entity-linker
-  -> returns candidates
+  -> runs deterministic extraction
+  -> calls @repo/ai/signal-entity-linker with deterministic candidates as context
+  -> merges and validates candidates
+  -> logs and returns candidate count
+  -> persists nothing
 ```
+
+Entity indexing runs after signal classification because classification owns
+visibility and review state. It does not require
+`classification.disposition === "actionable"`; `not_actionable` and
+`needs_context` signals may still contain useful entity evidence. It must skip
+signals whose effective visibility is `needs_review`.
 
 The next persistence slice will:
 
@@ -378,9 +452,11 @@ This keeps the link graph useful even if text rendering hints become stale.
 ## Error Handling
 
 - Missing signals return `missing`.
+- Signals that are not classified return `skipped`.
+- Needs-review signals return `skipped`.
 - Signals with no person references return `indexed` with zero candidates.
 - AI/provider failures bubble to Inngest for retry.
-- Invalid candidates are skipped by application validation.
+- Invalid candidates are skipped by application validation after extraction.
 - Anchor render failures do not fail the workflow. They only affect inline UI.
 - Needs-review or private visibility violations fail closed by not creating
   org-visible links.
@@ -391,11 +467,22 @@ AI-first tests:
 
 - Schema accepts person name, email, handle, and profile URL candidates.
 - Schema rejects unsupported target types in v1.
-- Prompt contains the name-only allowance and the no-inference rule.
+- Schema requires `localEntityKey` and rejects values outside the strict
+  `person_N` pattern.
+- Prompt contains the name-only allowance, explicit-reference limit,
+  raw-input-only rule, and no-inference rule.
+- Deterministic extractor finds email/profile URL/known handle candidates
+  without AI.
+- AI request builder passes deterministic candidates as context.
 - Request builder includes raw input and signal classification.
 - Classifier stamps `signal.entity-links.v1`.
 - Fixtures cover "Connect Louie with Mahesh" and "Talk to Jordi & Archer about
   their dev flow".
+- Workflow tests verify `classify-signal` queues
+  `app/signal.entity-index.requested` after successful classification and that
+  `index-signal-entities` extracts but does not persist candidates.
+- Workflow tests verify entity indexing skips needs-review signals and does not
+  require actionable disposition.
 - Telemetry follows the existing classifier privacy posture: metadata only,
   no prompt or output recording.
 
@@ -412,14 +499,34 @@ Persistence tests in the next slice:
 
 1. Add `@repo/ai/signal-entity-linker` schema, prompt, constants, errors, and
    request/classify functions.
-2. Add unit tests and fixtures for the new AI capability.
-3. Add `app/signal.entity-index.requested` event and an `index-signal-entities`
-   workflow that loads signals and calls the capability.
-4. Add persistence tables and DB helpers for canonical people, identities, and
+2. Add deterministic extraction helpers that emit the shared normalized
+   candidate schema.
+3. Add unit tests and fixtures for the new AI and deterministic extraction
+   capability.
+4. Add `app/signal.entity-index.requested` event and an `index-signal-entities`
+   workflow that loads signals, extracts candidates, validates them, and returns
+   counts without persistence.
+5. Wire `classify-signal` to enqueue entity indexing for newly classified,
+   non-needs-review signals.
+6. Add persistence tables and DB helpers for canonical people, identities, and
    signal entity links.
-5. Persist entity-link candidates and reconcile deterministic matches.
-6. Extend `signals.get` to return entity links.
-7. Add Signal detail UI rendering and People unresolved/confirmed UI.
+7. Persist entity-link candidates and reconcile deterministic matches.
+8. Extend `signals.get` to return entity links.
+9. Add Signal detail UI rendering and People unresolved/confirmed UI.
 
-The first implementation pass should stop after step 3 unless persistence is
-explicitly approved for the same branch.
+The first implementation pass should stop after live workflow extraction is
+integrated and verified. Persistence, backfill, UI, smarter clustering, project
+entities, and classifier consolidation are explicitly deferred.
+
+## Deferred Follow-Ups
+
+- Create a GitHub issue for smarter unresolved-person clustering beyond exact
+  normalized label. Future inputs should include source, project, conversation,
+  organization domain, and temporal proximity.
+- Create a GitHub issue for consolidating the existing people classifier into
+  the entity-link indexing pipeline after canonical People and identities are
+  persisted.
+- Create a GitHub issue for entity-link backfill over already-classified
+  signals with rate limits, replay controls, date filters, visibility filters,
+  and dry-run support.
+- Create a GitHub issue for adding `project` as the next `entityType`.
