@@ -63,6 +63,7 @@ export type SignalEntityLinkReconciliationPerson = Pick<
 >;
 
 const SIGNAL_ENTITY_LINK_RECONCILE_BATCH_SIZE = 500;
+type SignalEntityLinkResolutionDb = Pick<Database, "select">;
 
 export function buildSignalEntityLinkResolutionHints(
   candidate: Pick<
@@ -144,37 +145,41 @@ export async function replaceSignalEntityLinks(
   input: ReplaceSignalEntityLinksInput
 ): Promise<ReplaceSignalEntityLinksResult> {
   const now = new Date();
-  const values: InsertSignalEntityLink[] = [];
-
-  for (const candidate of input.candidates) {
-    const resolvedPerson = await resolveSignalEntityLinkCandidate(db, {
-      candidate,
-      clerkOrgId: input.clerkOrgId,
-    });
-    const hints = buildSignalEntityLinkResolutionHints(candidate);
-
-    values.push({
-      anchorOccurrence: candidate.anchorOccurrence,
-      anchorText: truncate(
-        candidate.anchorText,
-        SIGNAL_ENTITY_LINK_ANCHOR_TEXT_LENGTH
-      ),
-      clerkOrgId: input.clerkOrgId,
-      confidenceBasisPoints: toBasisPoints(candidate.confidence),
-      extractionMethod: candidate.extractionMethod,
-      label: truncate(candidate.label, SIGNAL_ENTITY_LINK_LABEL_LENGTH),
-      localEntityKey: candidate.localEntityKey,
-      mentionKind: candidate.mentionKind,
-      normalizedMentionValue: hints.normalizedMentionValue,
-      rationale: candidate.rationale,
-      resolvedAt: resolvedPerson ? now : null,
-      resolvedPersonId: resolvedPerson?.publicId ?? null,
-      signalId: input.signalId,
-      targetType: candidate.targetType,
-    });
-  }
+  const candidateHints = input.candidates.map((candidate) => ({
+    candidate,
+    hints: buildSignalEntityLinkResolutionHints(candidate),
+  }));
+  let values: InsertSignalEntityLink[] = [];
 
   await db.transaction(async (tx) => {
+    const lookup = await loadSignalEntityLinkResolutionLookup(tx, {
+      clerkOrgId: input.clerkOrgId,
+      hints: candidateHints.map(({ hints }) => hints),
+    });
+    values = candidateHints.map(({ candidate, hints }) => {
+      const resolvedPerson = resolveSignalEntityLinkHints(lookup, hints);
+
+      return {
+        anchorOccurrence: candidate.anchorOccurrence,
+        anchorText: truncate(
+          candidate.anchorText,
+          SIGNAL_ENTITY_LINK_ANCHOR_TEXT_LENGTH
+        ),
+        clerkOrgId: input.clerkOrgId,
+        confidenceBasisPoints: toBasisPoints(candidate.confidence),
+        extractionMethod: candidate.extractionMethod,
+        label: truncate(candidate.label, SIGNAL_ENTITY_LINK_LABEL_LENGTH),
+        localEntityKey: candidate.localEntityKey,
+        mentionKind: candidate.mentionKind,
+        normalizedMentionValue: hints.normalizedMentionValue,
+        rationale: candidate.rationale,
+        resolvedAt: resolvedPerson ? now : null,
+        resolvedPersonId: resolvedPerson?.publicId ?? null,
+        signalId: input.signalId,
+        targetType: candidate.targetType,
+      };
+    });
+
     await tx
       .delete(signalEntityLinks)
       .where(
@@ -243,12 +248,18 @@ export async function reconcileSignalEntityLinksForPeople(
       break;
     }
 
-    for (const link of unresolvedLinks) {
+    const linkHints = unresolvedLinks.map((link) => ({
+      hints: buildSignalEntityLinkResolutionHints(link),
+      link,
+    }));
+    const lookup = await loadSignalEntityLinkResolutionLookup(db, {
+      clerkOrgId: input.clerkOrgId,
+      hints: linkHints.map(({ hints }) => hints),
+    });
+
+    for (const { hints, link } of linkHints) {
       lastSeenLinkId = Math.max(lastSeenLinkId, link.id);
-      const resolvedPerson = await resolveSignalEntityLinkRecord(db, {
-        clerkOrgId: input.clerkOrgId,
-        link,
-      });
+      const resolvedPerson = resolveSignalEntityLinkHints(lookup, hints);
       if (!resolvedPerson) {
         continue;
       }
@@ -327,65 +338,113 @@ export async function listSignalEntityLinksForSignal(
   }));
 }
 
-async function resolveSignalEntityLinkCandidate(
-  db: Database,
-  input: { candidate: SignalEntityLinkCandidate; clerkOrgId: string }
-): Promise<Person | null> {
-  const hints = buildSignalEntityLinkResolutionHints(input.candidate);
-  return resolveSignalEntityLinkHints(db, {
-    clerkOrgId: input.clerkOrgId,
-    hints,
-  });
+interface SignalEntityLinkResolutionLookup {
+  peopleByDisplayName: Map<string, Person[]>;
+  peopleByIdentityKey: Map<string, Person>;
 }
 
-async function resolveSignalEntityLinkRecord(
-  db: Database,
-  input: { clerkOrgId: string; link: SignalEntityLink }
-): Promise<Person | null> {
-  return resolveSignalEntityLinkHints(db, {
-    clerkOrgId: input.clerkOrgId,
-    hints: buildSignalEntityLinkResolutionHints(input.link),
-  });
-}
+async function loadSignalEntityLinkResolutionLookup(
+  db: SignalEntityLinkResolutionDb,
+  input: { clerkOrgId: string; hints: SignalEntityLinkResolutionHints[] }
+): Promise<SignalEntityLinkResolutionLookup> {
+  const identityKeys = Array.from(
+    new Set(input.hints.flatMap((hints) => hints.identityKeys))
+  );
+  const displayNames = Array.from(
+    new Set(input.hints.map((hints) => hints.displayName).filter(isNonNullish))
+  );
+  const peopleByIdentityKey = new Map<string, Person>();
+  const peopleByDisplayName = new Map<string, Person[]>();
 
-async function resolveSignalEntityLinkHints(
-  db: Database,
-  input: { clerkOrgId: string; hints: SignalEntityLinkResolutionHints }
-): Promise<Person | null> {
-  if (input.hints.identityKeys.length > 0) {
-    const [person, secondPerson] = await db
+  if (identityKeys.length > 0) {
+    const matchedPeople = await db
       .select()
       .from(people)
       .where(
         and(
           eq(people.clerkOrgId, input.clerkOrgId),
-          inArray(people.identityKey, input.hints.identityKeys)
+          inArray(people.identityKey, identityKeys)
         )
-      )
-      .limit(2);
+      );
 
-    if (person && !secondPerson) {
-      return person;
+    for (const person of matchedPeople) {
+      peopleByIdentityKey.set(person.identityKey, person);
     }
   }
 
-  if (input.hints.displayName) {
-    const [person, secondPerson] = await db
+  if (displayNames.length > 0) {
+    const matchedPeople = await db
       .select()
       .from(people)
       .where(
         and(
           eq(people.clerkOrgId, input.clerkOrgId),
-          sql`LOWER(TRIM(${people.displayName})) = ${input.hints.displayName}`
+          inArray(sql`LOWER(TRIM(${people.displayName}))`, displayNames)
         )
-      )
-      .limit(2);
+      );
 
-    if (person && !secondPerson) {
-      return person;
+    for (const person of matchedPeople) {
+      if (person.displayName) {
+        addPersonToLookup(
+          peopleByDisplayName,
+          normalizeDisplayNameMention(person.displayName),
+          person
+        );
+      }
     }
   }
 
+  return { peopleByDisplayName, peopleByIdentityKey };
+}
+
+function resolveSignalEntityLinkHints(
+  lookup: SignalEntityLinkResolutionLookup,
+  hints: SignalEntityLinkResolutionHints
+): Person | null {
+  if (hints.identityKeys.length > 0) {
+    const matches = new Map<string, Person>();
+    for (const identityKey of hints.identityKeys) {
+      const person = lookup.peopleByIdentityKey.get(identityKey);
+      if (person) {
+        matches.set(person.publicId, person);
+      }
+    }
+
+    if (matches.size === 1) {
+      return firstMapValue(matches);
+    }
+  }
+
+  if (hints.displayName) {
+    const matches = lookup.peopleByDisplayName.get(hints.displayName) ?? [];
+    if (matches.length === 1) {
+      return matches[0] ?? null;
+    }
+  }
+
+  return null;
+}
+
+function addPersonToLookup(
+  lookup: Map<string, Person[]>,
+  key: string,
+  person: Person
+) {
+  const matches = lookup.get(key);
+  if (!matches) {
+    lookup.set(key, [person]);
+    return;
+  }
+
+  if (!matches.some((match) => match.publicId === person.publicId)) {
+    matches.push(person);
+  }
+}
+
+function firstMapValue<TKey, TValue>(map: Map<TKey, TValue>): TValue | null {
+  for (const value of map.values()) {
+    return value;
+  }
   return null;
 }
 
@@ -472,4 +531,8 @@ function truncate(value: string, maxLength: number): string {
 
 function isDefined<T>(value: T | undefined): value is T {
   return value !== undefined;
+}
+
+function isNonNullish<T>(value: T | null | undefined): value is T {
+  return value !== null && value !== undefined;
 }

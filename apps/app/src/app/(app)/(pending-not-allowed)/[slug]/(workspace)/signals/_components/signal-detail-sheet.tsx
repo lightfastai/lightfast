@@ -26,12 +26,12 @@ export function SignalDetailSheet({
   initialItem,
   onOpenChange,
   publicId,
-  slug = "",
+  slug,
 }: {
   initialItem?: SignalListItem | SignalRow;
   onOpenChange: (open: boolean) => void;
   publicId: string | null;
-  slug?: string;
+  slug: string;
 }) {
   const trpc = useTRPC();
   const open = publicId !== null;

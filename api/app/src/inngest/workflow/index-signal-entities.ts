@@ -25,8 +25,8 @@ function shouldIndexSignalEntities(signal: {
 
   return (
     signal.classification.schemaVersion === "signal.classification.v2" &&
-    signal.classification.routing.visibility.scope !== "needs_review" &&
-    signal.visibilityScope !== "needs_review"
+    signal.classification.routing.visibility.scope === "team" &&
+    signal.visibilityScope === "team"
   );
 }
 

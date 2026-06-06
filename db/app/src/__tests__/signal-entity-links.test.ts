@@ -168,13 +168,21 @@ function makeReplaceDb(selectResults: Person[][]) {
   const spies = {
     deleteWhere: vi.fn(),
     insertValues: vi.fn(),
+    peopleWhere: vi.fn(() => Promise.resolve(selectQueue.shift() ?? [])),
     transaction: vi.fn(),
   };
-  const query = {
-    limit: vi.fn(() => Promise.resolve(selectQueue.shift() ?? [])),
-    where: vi.fn(() => ({ limit: query.limit })),
-  };
   const tx = {
+    select: () => ({
+      from: (table: unknown) => {
+        if (table === peopleTable) {
+          return {
+            where: spies.peopleWhere,
+          };
+        }
+
+        throw new Error("Unexpected table in signal entity link test.");
+      },
+    }),
     delete: vi.fn(() => ({
       where: spies.deleteWhere,
     })),
@@ -183,11 +191,6 @@ function makeReplaceDb(selectResults: Person[][]) {
     })),
   };
   const db = {
-    select: () => ({
-      from: () => ({
-        where: query.where,
-      }),
-    }),
     transaction: async (fn: (transaction: typeof tx) => Promise<void>) => {
       spies.transaction();
       await fn(tx);
@@ -203,7 +206,7 @@ function makeReconcileDb(input: {
   const peopleQueue = [...input.peopleResults];
   const unresolvedQueue = [...input.unresolvedBatches];
   const spies = {
-    peopleLimit: vi.fn(() => Promise.resolve(peopleQueue.shift() ?? [])),
+    peopleWhere: vi.fn(() => Promise.resolve(peopleQueue.shift() ?? [])),
     signalLimit: vi.fn(() => Promise.resolve(unresolvedQueue.shift() ?? [])),
     signalOrderBy: vi.fn(() => ({ limit: spies.signalLimit })),
     updateSet: vi.fn(() => ({ where: spies.updateWhere })),
@@ -222,9 +225,7 @@ function makeReconcileDb(input: {
 
         if (table === peopleTable) {
           return {
-            where: () => ({
-              limit: spies.peopleLimit,
-            }),
+            where: spies.peopleWhere,
           };
         }
 
@@ -287,6 +288,7 @@ describe("replaceSignalEntityLinks", () => {
     ).resolves.toEqual({ links: 1, resolved: 1 });
 
     expect(spies.transaction).toHaveBeenCalledTimes(1);
+    expect(spies.peopleWhere).toHaveBeenCalledTimes(1);
     expect(spies.deleteWhere).toHaveBeenCalledTimes(1);
     expect(spies.insertValues).toHaveBeenCalledWith([
       expect.objectContaining({
@@ -348,7 +350,7 @@ describe("reconcileSignalEntityLinksForPeople", () => {
     });
     const person = makePerson();
     const { db, spies } = makeReconcileDb({
-      peopleResults: [...Array.from({ length: 500 }, () => []), [person]],
+      peopleResults: [[], [person]],
       unresolvedBatches: [unresolvedFirstBatch, [matchingLink]],
     });
 
@@ -366,6 +368,7 @@ describe("reconcileSignalEntityLinksForPeople", () => {
 
     expect(spies.signalLimit).toHaveBeenCalledTimes(2);
     expect(spies.signalOrderBy).toHaveBeenCalledTimes(2);
+    expect(spies.peopleWhere).toHaveBeenCalledTimes(2);
     expect(spies.updateSet).toHaveBeenCalledWith({
       resolvedAt: expect.any(Date),
       resolvedPersonId: person.publicId,

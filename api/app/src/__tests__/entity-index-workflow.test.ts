@@ -98,8 +98,8 @@ const classification = {
   confidence: 0.55,
   routing: {
     visibility: {
-      scope: "user",
-      rationale: "Creator-visible context.",
+      scope: "team",
+      rationale: "Shared team context.",
     },
     review: {
       required: false,
@@ -122,7 +122,7 @@ const signal = {
   input: "Talk to Jordi & Archer about their dev flow. See @archer.",
   status: "classified",
   classification,
-  visibilityScope: "user",
+  visibilityScope: "team",
 };
 const deterministicCandidate = {
   targetType: "person",
@@ -372,6 +372,46 @@ describe("indexSignalEntities", () => {
         },
       },
       visibilityScope: "needs_review",
+    });
+
+    await expect(runWorkflow(step)).resolves.toEqual({ status: "skipped" });
+
+    expect(extractDeterministicSignalEntityLinksMock).not.toHaveBeenCalled();
+    expect(step.ai.wrap).not.toHaveBeenCalled();
+    expect(mergeSignalEntityLinkCandidatesMock).not.toHaveBeenCalled();
+    expect(replaceSignalEntityLinksMock).not.toHaveBeenCalled();
+  });
+
+  it("skips signals whose classification visibility is user-scoped", async () => {
+    const step = createStep();
+    getSignalByPublicIdMock.mockResolvedValueOnce({
+      ...signal,
+      classification: {
+        ...classification,
+        routing: {
+          ...classification.routing,
+          visibility: {
+            scope: "user",
+            rationale: "Creator-visible context.",
+          },
+        },
+      },
+      visibilityScope: "user",
+    });
+
+    await expect(runWorkflow(step)).resolves.toEqual({ status: "skipped" });
+
+    expect(extractDeterministicSignalEntityLinksMock).not.toHaveBeenCalled();
+    expect(step.ai.wrap).not.toHaveBeenCalled();
+    expect(mergeSignalEntityLinkCandidatesMock).not.toHaveBeenCalled();
+    expect(replaceSignalEntityLinksMock).not.toHaveBeenCalled();
+  });
+
+  it("skips signals whose persisted visibility is user-scoped", async () => {
+    const step = createStep();
+    getSignalByPublicIdMock.mockResolvedValueOnce({
+      ...signal,
+      visibilityScope: "user",
     });
 
     await expect(runWorkflow(step)).resolves.toEqual({ status: "skipped" });
