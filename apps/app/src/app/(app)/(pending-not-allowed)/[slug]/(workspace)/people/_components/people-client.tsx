@@ -105,6 +105,14 @@ export function PeopleClient() {
           }
         }}
         onQueryChange={(value) => void setQuery(value)}
+        onToggleMemberStatus={(value) => {
+          void setSavedViewId(null);
+          void setMemberStatusState(
+            serializePersonValues(
+              togglePersonValue(filters.memberStatuses, value)
+            )
+          );
+        }}
         onToggleProvider={(value) => {
           void setSavedViewId(null);
           void setProviderState(
@@ -115,14 +123,6 @@ export function PeopleClient() {
           void setSavedViewId(null);
           void setSourceState(
             serializePersonValues(togglePersonValue(filters.sources, value))
-          );
-        }}
-        onToggleMemberStatus={(value) => {
-          void setSavedViewId(null);
-          void setMemberStatusState(
-            serializePersonValues(
-              togglePersonValue(filters.memberStatuses, value)
-            )
           );
         }}
         onToggleType={(value) => {

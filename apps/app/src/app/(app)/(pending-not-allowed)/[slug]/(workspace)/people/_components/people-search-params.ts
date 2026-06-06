@@ -60,9 +60,7 @@ export function parsePersonSources(value: string): PersonSource[] {
   );
 }
 
-export function parsePersonMemberStatuses(
-  value: string
-): PersonMemberStatus[] {
+export function parsePersonMemberStatuses(value: string): PersonMemberStatus[] {
   return parseValues(
     value,
     peopleMemberStatusOptions.map((option) => option.value)

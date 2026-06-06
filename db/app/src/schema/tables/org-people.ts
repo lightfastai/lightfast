@@ -89,9 +89,9 @@ export const orgPeople = mysqlTable(
       .default("signal")
       .notNull(),
 
-    memberStatus: varchar("member_status", { length: CODE_LENGTH }).$type<
-      PersonMemberStatus
-    >(),
+    memberStatus: varchar("member_status", {
+      length: CODE_LENGTH,
+    }).$type<PersonMemberStatus>(),
 
     clerkUserId: varchar("clerk_user_id", { length: CLERK_ID_LENGTH }),
 

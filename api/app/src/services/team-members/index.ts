@@ -1,7 +1,7 @@
 export {
-  listAcceptedOrgMemberships,
-  syncTeamMembersForOrg,
   type ClerkOrganizationMembership,
   type ClerkOrganizationMembershipListClient,
+  listAcceptedOrgMemberships,
   type SyncTeamMembersForOrgResult,
+  syncTeamMembersForOrg,
 } from "./people-sync";

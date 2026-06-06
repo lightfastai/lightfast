@@ -220,6 +220,7 @@ export {
   markDeveloperSandboxRunExpired,
   markDeveloperSandboxRunStopped,
 } from "./utils/developer-sandbox-runs";
+export { isDuplicateKeyError } from "./utils/drizzle-results";
 export {
   acquireIdentityIndexRefreshLock,
   createOrLoadIdentityIndexState,
@@ -249,8 +250,8 @@ export {
   getNamespaceByHandle,
   getNamespaceOperationById,
   getNamespaceOperationByIdempotencyKey,
-  listActiveOrgNamespaceClerkOrgIds,
   type ListActiveOrgNamespaceClerkOrgIdsInput,
+  listActiveOrgNamespaceClerkOrgIds,
   markNamespaceOperationClerkApplied,
   type NamespaceConflictCode,
   NamespaceConflictError,
@@ -309,9 +310,9 @@ export {
 } from "./utils/people";
 export {
   markFormerTeamMembersMissingFromSync,
-  syncOrgTeamMemberPeople,
   type SyncOrgTeamMemberPeopleInput,
   type SyncOrgTeamMemberPeopleResult,
+  syncOrgTeamMemberPeople,
   type TeamMemberPeopleCandidate,
 } from "./utils/people-team-members";
 export {
@@ -403,7 +404,6 @@ export {
   UserSourceControlAccountConflictError,
   updateObservedUserSourceControlAccountTokens,
 } from "./utils/user-source-control-account";
-export { isDuplicateKeyError } from "./utils/drizzle-results";
 export {
   type AppendWorkspaceAssistantMessageInput,
   appendWorkspaceAssistantMessage,

@@ -19,6 +19,7 @@ import type { ReactNode } from "react";
 import { useTRPC } from "~/trpc/react";
 import {
   formatPersonSignalRef,
+  getMemberStatusDetailLabel,
   getPersonName,
   getPersonProviderLabel,
   getPersonTypeLabel,
@@ -185,9 +186,7 @@ export function PeopleDetailContent({
               icon={<UserCheck className={iconClass} />}
               label="Member"
             >
-              {person.memberStatus === "active"
-                ? "Team member"
-                : "Former member"}
+              {getMemberStatusDetailLabel(person.memberStatus)}
             </PropertyRow>
           ) : null}
           {person.memberRole ? (

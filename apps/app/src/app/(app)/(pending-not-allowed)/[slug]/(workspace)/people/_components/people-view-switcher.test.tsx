@@ -103,6 +103,21 @@ describe("PeopleViewSwitcher", () => {
     expect(switcherProps.activeViewId).toBeNull();
   });
 
+  it("marks the built-in Team Members preset active for equivalent filter params", () => {
+    paramsState.memberStatus = "active";
+    paramsState.source = "mixed,team_member";
+    render(<PeopleViewSwitcher />);
+    expect(switcherProps.activePresetId).toBe("team_members");
+  });
+
+  it("does not mark Team Members active when extra filters are selected", () => {
+    paramsState.memberStatus = "active";
+    paramsState.provider = "email";
+    paramsState.source = "team_member,mixed";
+    render(<PeopleViewSwitcher />);
+    expect(switcherProps.activePresetId).toBeNull();
+  });
+
   it("stamps a view's filters and ?view atomically on select", () => {
     viewsData = [makeView()];
     render(<PeopleViewSwitcher />);

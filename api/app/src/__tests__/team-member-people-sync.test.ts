@@ -1,6 +1,6 @@
 import type { Database } from "@db/app";
-import type { ClerkOrganizationMembership } from "../services/team-members/people-sync";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { ClerkOrganizationMembership } from "../services/team-members/people-sync";
 
 const syncOrgTeamMemberPeopleMock = vi.fn();
 const markFormerTeamMembersMissingFromSyncMock = vi.fn();

@@ -84,6 +84,14 @@ export function getMemberStatusLabel(status: PersonMemberStatus) {
   );
 }
 
+export function getMemberStatusBadgeLabel(status: PersonMemberStatus) {
+  return status === "active" ? "Team member" : "Former";
+}
+
+export function getMemberStatusDetailLabel(status: PersonMemberStatus) {
+  return status === "active" ? "Team member" : "Former member";
+}
+
 /**
  * Short, display-only signal reference derived from a signal public id
  * (`signal_<uuid>` → `SIG-3F9A`). The full public id is still used for links;

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  getMemberStatusBadgeLabel,
+  getMemberStatusDetailLabel,
   getMemberStatusLabel,
   getPersonSourceLabel,
   peopleMemberStatusOptions,
@@ -23,5 +25,7 @@ describe("people team member model", () => {
   it("formats source and member status labels", () => {
     expect(getPersonSourceLabel("team_member")).toBe("Team member");
     expect(getMemberStatusLabel("former")).toBe("Former member");
+    expect(getMemberStatusBadgeLabel("former")).toBe("Former");
+    expect(getMemberStatusDetailLabel("active")).toBe("Team member");
   });
 });

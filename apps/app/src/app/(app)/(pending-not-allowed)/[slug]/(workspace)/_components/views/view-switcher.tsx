@@ -86,7 +86,7 @@ export function ViewSwitcher({
                 ? "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground"
                 : "border-border/70 bg-muted/60 text-foreground"
             )}
-            data-active={!activePresetId && !activeViewId}
+            data-active={!(activePresetId || activeViewId)}
             onClick={onSelectAll}
             type="button"
           >

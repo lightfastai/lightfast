@@ -96,7 +96,8 @@ export const teamMemberReconciler = inngest.createFunction(
           totals.orgsFailed += 1;
           log.warn("[people] team member sync failed", {
             clerkOrgId: org.clerkOrgId,
-            errorMessage: error instanceof Error ? error.message : String(error),
+            errorMessage:
+              error instanceof Error ? error.message : String(error),
           });
         }
       }

@@ -13,6 +13,7 @@ import {
 import { PeopleEmptyState } from "./people-empty-state";
 import {
   formatPersonSignalRef,
+  getMemberStatusBadgeLabel,
   getPersonName,
   getPersonSignals,
   getPersonTypeLabel,
@@ -198,7 +199,7 @@ function PeopleTableRow({
             className="shrink-0 text-muted-foreground"
             variant={person.memberStatus === "active" ? "secondary" : "outline"}
           >
-            {person.memberStatus === "active" ? "Team member" : "Former"}
+            {getMemberStatusBadgeLabel(person.memberStatus)}
           </Badge>
         ) : null}
       </span>

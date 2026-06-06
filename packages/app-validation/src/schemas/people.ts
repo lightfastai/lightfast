@@ -16,11 +16,7 @@ export const peopleIdentityTypeSchema = z.enum([
   "profile_url",
 ]);
 
-export const personSourceSchema = z.enum([
-  "signal",
-  "team_member",
-  "mixed",
-]);
+export const personSourceSchema = z.enum(["signal", "team_member", "mixed"]);
 
 export const personMemberStatusSchema = z.enum(["active", "former"]);
 

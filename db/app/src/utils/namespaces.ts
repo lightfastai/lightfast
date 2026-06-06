@@ -243,8 +243,8 @@ export interface ListActiveOrgNamespaceClerkOrgIdsInput {
 }
 
 export interface ActiveOrgNamespaceClerkOrgId {
-  id: number;
   clerkOrgId: string;
+  id: number;
 }
 
 export async function listActiveOrgNamespaceClerkOrgIds(

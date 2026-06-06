@@ -15,7 +15,10 @@ import {
 } from "./people-search-params";
 import {
   allPeopleParamValues,
+  isTeamMembersPresetFilters,
   selectionToConfig,
+  TEAM_MEMBERS_PRESET_ID,
+  teamMembersParamValues,
   viewConfigToParamValues,
 } from "./people-views-model";
 import {
@@ -43,17 +46,16 @@ export function PeopleViewSwitcher() {
   const views = viewsQuery.data ?? [];
   const activeViewId = params.view;
 
-  const currentConfig = selectionToConfig({
+  const currentFilters = {
     memberStatuses: parsePersonMemberStatuses(params.memberStatus),
     providers: parsePersonProviders(params.provider),
     sources: parsePersonSources(params.source),
     types: parsePersonTypes(params.type),
-  });
+  };
+  const currentConfig = selectionToConfig(currentFilters);
   const activePresetId =
-    params.source === "team_member,mixed" &&
-    params.memberStatus === "active" &&
-    !activeViewId
-      ? "team_members"
+    !activeViewId && isTeamMembersPresetFilters(currentFilters)
+      ? TEAM_MEMBERS_PRESET_ID
       : null;
 
   return (
@@ -84,14 +86,15 @@ export function PeopleViewSwitcher() {
         });
       }}
       onSelectPreset={(publicId) => {
-        if (publicId !== "team_members") {
+        if (publicId !== TEAM_MEMBERS_PRESET_ID) {
           return;
         }
+        const next = teamMembersParamValues();
         void setParams({
-          memberStatus: "active",
-          provider: "",
-          source: "team_member,mixed",
-          type: "",
+          memberStatus: next.memberStatus,
+          provider: next.provider,
+          source: next.source,
+          type: next.type,
           view: null,
         });
       }}
@@ -109,7 +112,7 @@ export function PeopleViewSwitcher() {
           view: publicId,
         });
       }}
-      presets={[{ name: "Team Members", publicId: "team_members" }]}
+      presets={[{ name: "Team Members", publicId: TEAM_MEMBERS_PRESET_ID }]}
       views={views}
     />
   );
