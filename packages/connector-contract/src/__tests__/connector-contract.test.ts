@@ -4,10 +4,14 @@ import {
   CONNECTABLE_CONNECTOR_PROVIDERS,
   CONNECTOR_CATALOG,
   CONNECTOR_PROVIDERS,
+  USER_CONNECTOR_PROVIDERS,
+  connectorOwnerTypeSchema,
   connectorRuntimeToolName,
   connectorRuntimeToolNameSchema,
   connectorToolNameSchema,
   parseConnectorRuntimeToolName,
+  userConnectorProviderSchema,
+  userConnectorStartConnectInputSchema,
 } from "../index";
 
 describe("connector catalog", () => {
@@ -46,6 +50,26 @@ describe("connector inputs", () => {
       enabled: true,
       provider: "linear",
     });
+  });
+});
+
+describe("connector ownership", () => {
+  it("keeps existing org connector providers stable", () => {
+    expect(CONNECTABLE_CONNECTOR_PROVIDERS).toEqual(["linear", "x"]);
+  });
+
+  it("adds Granola as a user connector provider", () => {
+    expect(USER_CONNECTOR_PROVIDERS).toEqual(["granola"]);
+    expect(userConnectorProviderSchema.parse("granola")).toBe("granola");
+    expect(userConnectorProviderSchema.safeParse("linear").success).toBe(false);
+  });
+
+  it("parses connector owner types and user start inputs", () => {
+    expect(connectorOwnerTypeSchema.parse("org")).toBe("org");
+    expect(connectorOwnerTypeSchema.parse("user")).toBe("user");
+    expect(
+      userConnectorStartConnectInputSchema.parse({ provider: "granola" })
+    ).toEqual({ provider: "granola" });
   });
 });
 
