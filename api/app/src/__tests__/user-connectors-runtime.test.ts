@@ -13,6 +13,7 @@ const decryptMock = vi.fn();
 const encryptMock = vi.fn();
 const callGranolaMcpToolMock = vi.fn();
 const granolaClientMetadataMock = vi.fn();
+const logWarnMock = vi.fn();
 
 const envMock = {
   ENCRYPTION_KEY:
@@ -92,6 +93,12 @@ vi.mock("@repo/granola-app-node", () => ({
   granolaClientMetadata: granolaClientMetadataMock,
 }));
 
+vi.mock("@vendor/observability/log/next", () => ({
+  log: {
+    warn: logWarnMock,
+  },
+}));
+
 vi.mock("../env", () => ({ env: envMock }));
 
 const { callUserConnectorTool, findUserConnectorTools } = await import(
@@ -149,6 +156,7 @@ describe("user connector chat runtime", () => {
         token_endpoint_auth_method: "none",
       })
     );
+    logWarnMock.mockReset();
   });
 
   afterEach(() => {
@@ -518,6 +526,93 @@ describe("user connector chat runtime", () => {
     expect(JSON.stringify(result)).not.toContain("rotated_refresh_token");
   });
 
+  it("returns tool success and logs safely when audit create fails", async () => {
+    const context = userConnectorChatContext();
+    getCurrentUserConnectorConnectionMock.mockResolvedValue(userConnection());
+    createUserConnectorToolCallMock.mockRejectedValue(new Error("db secret"));
+
+    await expect(
+      callUserConnectorTool(context, {
+        input: { query: "SOC2" },
+        routineId: "granola__search_notes",
+      })
+    ).resolves.toEqual({
+      provider: "granola",
+      providerToolName: "search_notes",
+      result: { content: [{ text: "meeting result", type: "text" }] },
+      routineId: "granola__search_notes",
+      status: "succeeded",
+    });
+
+    expect(logWarnMock).toHaveBeenCalledWith(
+      "[user-connectors] tool call audit create failed",
+      expect.objectContaining({
+        calledByUserId: "user_current",
+        clerkOrgId: "org_acme",
+        failure: {
+          name: "Error",
+          type: "object",
+        },
+        provider: "granola",
+        providerToolName: "search_notes",
+        routineId: "granola__search_notes",
+        sourceRef: "conv_123",
+        sourceSurface: "interactive_chat",
+        success: false,
+      })
+    );
+    expect(JSON.stringify(logWarnMock.mock.calls)).not.toContain("db secret");
+    expect(JSON.stringify(logWarnMock.mock.calls)).not.toContain("SOC2");
+    expect(JSON.stringify(logWarnMock.mock.calls)).not.toContain(
+      "access_token"
+    );
+  });
+
+  it("returns tool success and logs safely when audit success mark fails", async () => {
+    const context = userConnectorChatContext();
+    getCurrentUserConnectorConnectionMock.mockResolvedValue(userConnection());
+    markUserConnectorToolCallSucceededMock.mockRejectedValue(
+      new Error("db secret")
+    );
+
+    await expect(
+      callUserConnectorTool(context, {
+        input: { query: "SOC2" },
+        routineId: "granola__search_notes",
+      })
+    ).resolves.toEqual({
+      provider: "granola",
+      providerToolName: "search_notes",
+      result: { content: [{ text: "meeting result", type: "text" }] },
+      routineId: "granola__search_notes",
+      status: "succeeded",
+    });
+
+    expect(logWarnMock).toHaveBeenCalledWith(
+      "[user-connectors] tool call audit succeeded update failed",
+      expect.objectContaining({
+        auditPublicId: "user_connector_tool_call_123",
+        calledByUserId: "user_current",
+        clerkOrgId: "org_acme",
+        failure: {
+          name: "Error",
+          type: "object",
+        },
+        provider: "granola",
+        providerToolName: "search_notes",
+        routineId: "granola__search_notes",
+        sourceRef: "conv_123",
+        sourceSurface: "interactive_chat",
+        success: false,
+      })
+    );
+    expect(JSON.stringify(logWarnMock.mock.calls)).not.toContain("db secret");
+    expect(JSON.stringify(logWarnMock.mock.calls)).not.toContain("SOC2");
+    expect(JSON.stringify(logWarnMock.mock.calls)).not.toContain(
+      "meeting result"
+    );
+  });
+
   it("rejects missing and inactive user connector connections", async () => {
     const context = userConnectorChatContext();
 
@@ -663,6 +758,49 @@ describe("user connector chat runtime", () => {
     });
     expect(failedInput?.errorCode).toBeUndefined();
     expect(failedInput?.errorMessage).toBeUndefined();
+  });
+
+  it("rethrows provider errors and logs safely when audit failure mark fails", async () => {
+    const context = userConnectorChatContext();
+    const providerError = new MockGranolaAppNodeError(
+      "GRANOLA_MCP_FAILED",
+      "provider secret"
+    );
+    getCurrentUserConnectorConnectionMock.mockResolvedValue(userConnection());
+    callGranolaMcpToolMock.mockRejectedValue(providerError);
+    markUserConnectorToolCallFailedMock.mockRejectedValue(
+      new Error("db secret")
+    );
+
+    await expect(
+      callUserConnectorTool(context, {
+        input: { query: "SOC2" },
+        routineId: "granola__search_notes",
+      })
+    ).rejects.toBe(providerError);
+
+    expect(logWarnMock).toHaveBeenCalledWith(
+      "[user-connectors] tool call audit failed update failed",
+      expect.objectContaining({
+        auditPublicId: "user_connector_tool_call_123",
+        calledByUserId: "user_current",
+        clerkOrgId: "org_acme",
+        failure: {
+          name: "Error",
+          type: "object",
+        },
+        provider: "granola",
+        providerToolName: "search_notes",
+        routineId: "granola__search_notes",
+        sourceRef: "conv_123",
+        sourceSurface: "interactive_chat",
+        success: false,
+      })
+    );
+    const logged = JSON.stringify(logWarnMock.mock.calls);
+    expect(logged).not.toContain("db secret");
+    expect(logged).not.toContain("provider secret");
+    expect(logged).not.toContain("SOC2");
   });
 
   it("decrypts the refresh token only when one is present", async () => {

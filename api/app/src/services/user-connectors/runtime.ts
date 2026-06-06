@@ -34,6 +34,7 @@ import type {
   OAuthClientInformationMixed,
   OAuthTokens,
 } from "@vendor/mcp";
+import { log } from "@vendor/observability/log/next";
 import { env } from "../../env";
 
 const GRANOLA_OAUTH_CALLBACK_PATH =
@@ -52,6 +53,16 @@ export interface UserConnectorChatContext {
     conversationId: string;
     surface: "interactive_chat";
   };
+}
+
+interface UserConnectorToolCallAuditLogContext {
+  calledByUserId: string;
+  clerkOrgId: string | null;
+  provider: UserConnectorToolCall["provider"];
+  providerToolName: string;
+  routineId: string;
+  sourceRef: string | null;
+  sourceSurface: UserConnectorToolCall["sourceSurface"];
 }
 
 export async function findUserConnectorTools(
@@ -117,16 +128,25 @@ export async function callUserConnectorTool(
     throw new Error(`User connector routine ${parsed.routineId} was not found.`);
   }
 
-  const toolCallAudit = await safelyCreateUserConnectorToolCall(context, {
+  const auditLogContext = {
     calledByUserId: context.actor.userId,
     clerkOrgId: context.actor.orgId,
-    inputRedacted: redactedPresence(parsed.input),
     provider,
-    providerConnectionId: connection.id,
     providerToolName,
     routineId: parsed.routineId,
     sourceRef: context.source.conversationId,
     sourceSurface: context.source.surface,
+  } satisfies UserConnectorToolCallAuditLogContext;
+  const toolCallAudit = await safelyCreateUserConnectorToolCall(context, {
+    calledByUserId: auditLogContext.calledByUserId,
+    clerkOrgId: auditLogContext.clerkOrgId,
+    inputRedacted: redactedPresence(parsed.input),
+    provider: auditLogContext.provider,
+    providerConnectionId: connection.id,
+    providerToolName: auditLogContext.providerToolName,
+    routineId: auditLogContext.routineId,
+    sourceRef: auditLogContext.sourceRef,
+    sourceSurface: auditLogContext.sourceSurface,
     startedAt: context.now(),
   });
 
@@ -134,7 +154,8 @@ export async function callUserConnectorTool(
     const authState = await authProviderForConnection(connection);
     await safelyMarkUserConnectorToolCallProviderAttempted(
       context,
-      toolCallAudit
+      toolCallAudit,
+      auditLogContext
     );
     const result = await callGranolaMcpTool({
       authProvider: authState.authProvider,
@@ -147,6 +168,7 @@ export async function callUserConnectorTool(
     await safelyMarkUserConnectorToolCallSucceeded(
       context,
       toolCallAudit,
+      auditLogContext,
       redactedPresence(result)
     );
 
@@ -161,7 +183,12 @@ export async function callUserConnectorTool(
     if (isGranolaAuthRequired(error)) {
       await safelyMarkCurrentUserConnectorConnectionError(context, connection);
     }
-    await safelyMarkUserConnectorToolCallFailed(context, toolCallAudit, error);
+    await safelyMarkUserConnectorToolCallFailed(
+      context,
+      toolCallAudit,
+      auditLogContext,
+      error
+    );
     throw error;
   }
 }
@@ -238,43 +265,79 @@ async function safelyCreateUserConnectorToolCall(
   context: UserConnectorChatContext,
   input: Parameters<typeof createUserConnectorToolCall>[1]
 ) {
-  return await createUserConnectorToolCall(context.db, input).catch(() => null);
+  try {
+    return await createUserConnectorToolCall(context.db, input);
+  } catch (error) {
+    log.warn("[user-connectors] tool call audit create failed", {
+      calledByUserId: input.calledByUserId,
+      clerkOrgId: input.clerkOrgId ?? null,
+      failure: safeAuditFailureDetails(error),
+      provider: input.provider,
+      providerToolName: input.providerToolName,
+      routineId: input.routineId,
+      sourceRef: input.sourceRef ?? null,
+      sourceSurface: input.sourceSurface,
+      success: false,
+    });
+    return null;
+  }
 }
 
 async function safelyMarkUserConnectorToolCallProviderAttempted(
   context: UserConnectorChatContext,
-  toolCall: UserConnectorToolCall | null
+  toolCall: UserConnectorToolCall | null,
+  auditLogContext: UserConnectorToolCallAuditLogContext
 ) {
   if (!toolCall) {
     return;
   }
 
-  await markUserConnectorToolCallProviderAttempted(context.db, {
-    calledByUserId: context.actor.userId,
-    publicId: toolCall.publicId,
-  }).catch(() => false);
+  try {
+    await markUserConnectorToolCallProviderAttempted(context.db, {
+      calledByUserId: context.actor.userId,
+      publicId: toolCall.publicId,
+    });
+  } catch (error) {
+    log.warn("[user-connectors] tool call audit attempted update failed", {
+      ...auditLogContext,
+      auditPublicId: toolCall.publicId,
+      failure: safeAuditFailureDetails(error),
+      success: false,
+    });
+  }
 }
 
 async function safelyMarkUserConnectorToolCallSucceeded(
   context: UserConnectorChatContext,
   toolCall: UserConnectorToolCall | null,
+  auditLogContext: UserConnectorToolCallAuditLogContext,
   outputRedacted: UserConnectorToolCallRedactedPayload
 ) {
   if (!toolCall) {
     return;
   }
 
-  await markUserConnectorToolCallSucceeded(context.db, {
-    calledByUserId: context.actor.userId,
-    finishedAt: context.now(),
-    outputRedacted,
-    publicId: toolCall.publicId,
-  }).catch(() => false);
+  try {
+    await markUserConnectorToolCallSucceeded(context.db, {
+      calledByUserId: context.actor.userId,
+      finishedAt: context.now(),
+      outputRedacted,
+      publicId: toolCall.publicId,
+    });
+  } catch (error) {
+    log.warn("[user-connectors] tool call audit succeeded update failed", {
+      ...auditLogContext,
+      auditPublicId: toolCall.publicId,
+      failure: safeAuditFailureDetails(error),
+      success: false,
+    });
+  }
 }
 
 async function safelyMarkUserConnectorToolCallFailed(
   context: UserConnectorChatContext,
   toolCall: UserConnectorToolCall | null,
+  auditLogContext: UserConnectorToolCallAuditLogContext,
   error: unknown
 ) {
   if (!toolCall) {
@@ -283,13 +346,22 @@ async function safelyMarkUserConnectorToolCallFailed(
 
   const errorCode = userConnectorToolCallErrorCode(error);
   const errorMessage = safeUserConnectorToolCallErrorMessage(error);
-  await markUserConnectorToolCallFailed(context.db, {
-    calledByUserId: context.actor.userId,
-    finishedAt: context.now(),
-    ...(errorCode !== undefined ? { errorCode } : {}),
-    ...(errorMessage !== undefined ? { errorMessage } : {}),
-    publicId: toolCall.publicId,
-  }).catch(() => false);
+  try {
+    await markUserConnectorToolCallFailed(context.db, {
+      calledByUserId: context.actor.userId,
+      finishedAt: context.now(),
+      ...(errorCode !== undefined ? { errorCode } : {}),
+      ...(errorMessage !== undefined ? { errorMessage } : {}),
+      publicId: toolCall.publicId,
+    });
+  } catch (auditError) {
+    log.warn("[user-connectors] tool call audit failed update failed", {
+      ...auditLogContext,
+      auditPublicId: toolCall.publicId,
+      failure: safeAuditFailureDetails(auditError),
+      success: false,
+    });
+  }
 }
 
 async function persistRefreshedTokens(
@@ -399,6 +471,34 @@ function safeUserConnectorToolCallErrorMessage(error: unknown) {
     default:
       return undefined;
   }
+}
+
+function safeAuditFailureDetails(error: unknown) {
+  const details: {
+    code?: string;
+    message?: string;
+    name?: string;
+    type: string;
+  } = { type: typeof error };
+
+  if (error && typeof error === "object") {
+    const name = (error as { name?: unknown }).name;
+    if (typeof name === "string") {
+      details.name = name;
+    }
+  }
+
+  const code = userConnectorToolCallErrorCode(error);
+  if (code !== undefined) {
+    details.code = code;
+  }
+
+  const message = safeUserConnectorToolCallErrorMessage(error);
+  if (message !== undefined) {
+    details.message = message;
+  }
+
+  return details;
 }
 
 function oauthClientInformationFromMetadata(
