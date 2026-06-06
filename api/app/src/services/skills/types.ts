@@ -45,6 +45,14 @@ export interface SkillIndexFreshness {
   status: "fresh" | "refreshing" | "stale" | "unavailable";
 }
 
+export interface SkillIndexChangedEvent {
+  clerkOrgId: string;
+  indexedCommitSha: string | null;
+  lastRefreshStatus: SkillIndexState["lastRefreshStatus"];
+  snapshotVersion: string | null;
+  sourceControlRepositoryId: number;
+}
+
 export interface SkillIndexServiceDeps {
   acquireSkillIndexRefreshLock: (
     db: Database,
@@ -56,7 +64,7 @@ export interface SkillIndexServiceDeps {
   ) => Promise<SkillIndexState>;
   db: Database;
   enqueueRefresh?: (input: {
-    reason: "schedule";
+    reason: "read" | "schedule" | "setup" | "webhook";
     sourceControlRepositoryId: number;
     targetCommitSha?: string;
   }) => Promise<void>;
@@ -90,7 +98,22 @@ export interface SkillIndexServiceDeps {
       stateId: number;
     }
   ) => Promise<void>;
+  markSkillIndexRefreshFresh: (
+    db: Database,
+    input: {
+      lockToken: string;
+      stateId: number;
+    }
+  ) => Promise<void>;
+  markSkillIndexRefreshStale: (
+    db: Database,
+    input: {
+      lockToken: string;
+      stateId: number;
+    }
+  ) => Promise<void>;
   now: () => Date;
+  publishSkillIndexChanged: (event: SkillIndexChangedEvent) => Promise<void>;
   randomToken: () => string;
   readSkillRepositoryBlob: (input: {
     fullName: string;

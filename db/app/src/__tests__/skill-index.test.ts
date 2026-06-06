@@ -18,6 +18,8 @@ import {
   listSkillIndexEntries,
   markSkillIndexKnownStale,
   markSkillIndexRefreshFailed,
+  markSkillIndexRefreshFresh,
+  markSkillIndexRefreshStale,
   releaseSkillIndexRefreshLock,
   replaceSkillIndexEntries,
   SkillIndexRefreshLockLostError,
@@ -292,6 +294,85 @@ describe("skill index helpers", () => {
         errorCode: "github-error",
         errorMessage: "lost",
         failedAt: new Date("2026-06-01T00:02:00.000Z"),
+        lockToken: "stale-token",
+        stateId: 12,
+      })
+    ).rejects.toBeInstanceOf(SkillIndexRefreshLockLostError);
+  });
+
+  it("marks refresh fresh metadata without deleting entries", async () => {
+    const where = vi.fn((_: SQL) => ({ affectedRows: 1 }));
+    const set = vi.fn(() => ({ where }));
+    const db = {
+      delete: vi.fn(),
+      update: vi.fn(() => ({ set })),
+    } as unknown as Database;
+
+    await markSkillIndexRefreshFresh(db, {
+      lockToken: "token-1",
+      stateId: 12,
+    });
+
+    expect(db.delete).not.toHaveBeenCalled();
+    expect(set).toHaveBeenCalledWith({
+      lastRefreshErrorCode: null,
+      lastRefreshErrorMessage: null,
+      lastRefreshFailedAt: null,
+      lastRefreshStatus: "fresh",
+    });
+    const query = renderSql(where.mock.calls[0]?.[0]);
+    expect(query.sql).toContain("`id` = ?");
+    expect(query.sql).toContain("`refresh_lock_token` = ?");
+    expect(query.params).toEqual(expect.arrayContaining([12, "token-1"]));
+  });
+
+  it("throws when marking refresh fresh after losing the refresh lock", async () => {
+    const where = vi.fn((_condition: SQL) => ({ affectedRows: 0 }));
+    const set = vi.fn(() => ({ where }));
+    const db = {
+      update: vi.fn(() => ({ set })),
+    } as unknown as Database;
+
+    await expect(
+      markSkillIndexRefreshFresh(db, {
+        lockToken: "stale-token",
+        stateId: 12,
+      })
+    ).rejects.toBeInstanceOf(SkillIndexRefreshLockLostError);
+  });
+
+  it("marks refresh stale metadata without deleting entries", async () => {
+    const where = vi.fn((_: SQL) => ({ affectedRows: 1 }));
+    const set = vi.fn(() => ({ where }));
+    const db = {
+      delete: vi.fn(),
+      update: vi.fn(() => ({ set })),
+    } as unknown as Database;
+
+    await markSkillIndexRefreshStale(db, {
+      lockToken: "token-1",
+      stateId: 12,
+    });
+
+    expect(db.delete).not.toHaveBeenCalled();
+    expect(set).toHaveBeenCalledWith({
+      lastRefreshStatus: "stale",
+    });
+    const query = renderSql(where.mock.calls[0]?.[0]);
+    expect(query.sql).toContain("`id` = ?");
+    expect(query.sql).toContain("`refresh_lock_token` = ?");
+    expect(query.params).toEqual(expect.arrayContaining([12, "token-1"]));
+  });
+
+  it("throws when marking refresh stale after losing the refresh lock", async () => {
+    const where = vi.fn((_condition: SQL) => ({ affectedRows: 0 }));
+    const set = vi.fn(() => ({ where }));
+    const db = {
+      update: vi.fn(() => ({ set })),
+    } as unknown as Database;
+
+    await expect(
+      markSkillIndexRefreshStale(db, {
         lockToken: "stale-token",
         stateId: 12,
       })
