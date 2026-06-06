@@ -311,9 +311,10 @@ Update `PeopleViewConfig`:
 ```ts
 export interface PeopleViewConfig {
   filters: {
-    memberStatuses: PersonMemberStatus[];
+    // Optional because existing saved-view JSON was written before these filters.
+    memberStatuses?: PersonMemberStatus[];
     providers: PersonIdentityProvider[];
-    sources: PersonSource[];
+    sources?: PersonSource[];
     types: PersonIdentityType[];
   };
 }
