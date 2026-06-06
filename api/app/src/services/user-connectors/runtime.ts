@@ -4,8 +4,9 @@ import {
   markCurrentUserConnectorConnectionError,
   type Database,
   type UserConnectorConnection,
+  updateObservedUserConnectorTokens,
 } from "@db/app";
-import { decrypt } from "@repo/app-encryption";
+import { decrypt, encrypt } from "@repo/app-encryption";
 import {
   callGranolaMcpTool,
   GranolaAppNodeError,
@@ -23,6 +24,10 @@ import {
   userConnectorRoutineId,
   type UserConnectorRoutineSummary,
 } from "@repo/user-connector-contract";
+import type {
+  OAuthClientInformationMixed,
+  OAuthTokens,
+} from "@vendor/mcp";
 import { env } from "../../env";
 
 const GRANOLA_OAUTH_CALLBACK_PATH =
@@ -106,13 +111,17 @@ export async function callUserConnectorTool(
     throw new Error(`User connector routine ${parsed.routineId} was not found.`);
   }
 
+  const authState = await authProviderForConnection(connection);
+
   try {
     const result = await callGranolaMcpTool({
-      authProvider: await authProviderForConnection(connection),
+      authProvider: authState.authProvider,
       endpoint: connection.mcpEndpoint,
       input: parsed.input,
       name: providerToolName,
     });
+
+    await persistRefreshedTokens(context, connection, authState);
 
     return {
       provider,
@@ -164,21 +173,24 @@ async function authProviderForConnection(connection: UserConnectorConnection) {
     ? await decrypt(connection.encryptedRefreshToken, env.ENCRYPTION_KEY)
     : undefined;
   const redirectUrl = granolaRedirectUrl();
+  const originalTokens = accessToken
+    ? {
+        access_token: accessToken,
+        ...(refreshToken ? { refresh_token: refreshToken } : {}),
+        token_type: "Bearer",
+      }
+    : undefined;
 
-  return new GranolaOAuthClientProvider({
-    clientInformation: undefined,
+  const authProvider = new GranolaOAuthClientProvider({
+    clientInformation: oauthClientInformationFromMetadata(connection.metadata),
     clientMetadata: granolaClientMetadata({ redirectUrl }),
     codeVerifier: undefined,
     onAuthorizationUrl: () => undefined,
     redirectUrl,
-    tokens: accessToken
-      ? {
-          access_token: accessToken,
-          ...(refreshToken ? { refresh_token: refreshToken } : {}),
-          token_type: "Bearer",
-        }
-      : undefined,
+    tokens: originalTokens,
   });
+
+  return { authProvider, originalTokens };
 }
 
 async function safelyMarkCurrentUserConnectorConnectionError(
@@ -192,6 +204,60 @@ async function safelyMarkCurrentUserConnectorConnectionError(
     observedEncryptedRefreshToken: connection.encryptedRefreshToken ?? null,
     provider: connection.provider,
   }).catch(() => undefined);
+}
+
+async function persistRefreshedTokens(
+  context: UserConnectorChatContext,
+  connection: UserConnectorConnection,
+  authState: {
+    authProvider: GranolaOAuthClientProvider;
+    originalTokens: OAuthTokens | undefined;
+  }
+) {
+  const snapshotTokens = authState.authProvider.snapshot().tokens;
+  if (!isOAuthTokens(snapshotTokens)) {
+    return;
+  }
+
+  const now = context.now();
+  const accessTokenExpiresAt = snapshotTokens.expires_in
+    ? new Date(now.getTime() + snapshotTokens.expires_in * 1000)
+    : connection.accessTokenExpiresAt;
+  const refreshTokenExpiresAt = connection.refreshTokenExpiresAt;
+  const shouldPersist =
+    tokensChanged(snapshotTokens, authState.originalTokens) ||
+    !sameDate(accessTokenExpiresAt, connection.accessTokenExpiresAt);
+
+  if (!shouldPersist) {
+    return;
+  }
+
+  const encryptedAccessToken =
+    snapshotTokens.access_token === authState.originalTokens?.access_token &&
+    connection.encryptedAccessToken
+      ? connection.encryptedAccessToken
+      : await encrypt(snapshotTokens.access_token, env.ENCRYPTION_KEY);
+  const refreshToken =
+    snapshotTokens.refresh_token ?? authState.originalTokens?.refresh_token;
+  const encryptedRefreshToken =
+    refreshToken === undefined
+      ? null
+      : refreshToken === authState.originalTokens?.refresh_token &&
+          connection.encryptedRefreshToken
+        ? connection.encryptedRefreshToken
+        : await encrypt(refreshToken, env.ENCRYPTION_KEY);
+
+  await updateObservedUserConnectorTokens(context.db, {
+    accessTokenExpiresAt,
+    clerkUserId: context.actor.userId,
+    encryptedAccessToken,
+    encryptedRefreshToken,
+    id: connection.id,
+    observedEncryptedAccessToken: connection.encryptedAccessToken ?? null,
+    observedEncryptedRefreshToken: connection.encryptedRefreshToken ?? null,
+    refreshTokenExpiresAt,
+    updatedAt: now,
+  }).catch(() => false);
 }
 
 function searchableRoutineText(routine: UserConnectorRoutineSummary) {
@@ -220,6 +286,61 @@ function isGranolaAuthRequired(error: unknown) {
     error instanceof GranolaAppNodeError &&
     error.code === "GRANOLA_MCP_AUTH_REQUIRED"
   );
+}
+
+function oauthClientInformationFromMetadata(
+  metadata: Record<string, unknown>
+): OAuthClientInformationMixed | undefined {
+  const clientInformation = metadata.oauthClientInformation;
+  if (!clientInformation || typeof clientInformation !== "object") {
+    return;
+  }
+
+  const record = clientInformation as Record<string, unknown>;
+  if (typeof record.client_id !== "string" || record.client_id.length === 0) {
+    return;
+  }
+
+  return {
+    client_id: record.client_id,
+    ...(typeof record.client_id_issued_at === "number"
+      ? { client_id_issued_at: record.client_id_issued_at }
+      : {}),
+    ...(typeof record.client_secret_expires_at === "number"
+      ? { client_secret_expires_at: record.client_secret_expires_at }
+      : {}),
+  };
+}
+
+function isOAuthTokens(tokens: unknown): tokens is OAuthTokens {
+  return (
+    !!tokens &&
+    typeof tokens === "object" &&
+    "access_token" in tokens &&
+    "token_type" in tokens &&
+    typeof tokens.access_token === "string" &&
+    typeof tokens.token_type === "string"
+  );
+}
+
+function tokensChanged(
+  nextTokens: OAuthTokens,
+  originalTokens: OAuthTokens | undefined
+) {
+  if (!originalTokens) {
+    return true;
+  }
+
+  return (
+    nextTokens.access_token !== originalTokens.access_token ||
+    nextTokens.token_type !== originalTokens.token_type ||
+    (nextTokens.refresh_token !== undefined &&
+      nextTokens.refresh_token !== originalTokens.refresh_token)
+  );
+}
+
+function sameDate(left: Date | null, right: Date | null) {
+  return (left?.getTime() ?? null) === (right?.getTime() ?? null);
 }
 
 function granolaRedirectUrl() {

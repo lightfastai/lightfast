@@ -172,6 +172,27 @@ function isTokenRecord(tokens: unknown): tokens is OAuthTokens {
   );
 }
 
+function safeOAuthClientInformation(clientInformation: unknown) {
+  if (!clientInformation || typeof clientInformation !== "object") {
+    return;
+  }
+
+  const record = clientInformation as Record<string, unknown>;
+  if (typeof record.client_id !== "string" || record.client_id.length === 0) {
+    return;
+  }
+
+  return {
+    client_id: record.client_id,
+    ...(typeof record.client_id_issued_at === "number"
+      ? { client_id_issued_at: record.client_id_issued_at }
+      : {}),
+    ...(typeof record.client_secret_expires_at === "number"
+      ? { client_secret_expires_at: record.client_secret_expires_at }
+      : {}),
+  };
+}
+
 function createGranolaOAuthProvider(input: {
   clientInformation?: unknown;
   codeVerifier?: string;
@@ -287,6 +308,9 @@ async function finalizeGranolaConnection(input: {
     authProvider: provider,
     endpoint: DEFAULT_GRANOLA_MCP_ENDPOINT,
   });
+  const oauthClientInformation = safeOAuthClientInformation(
+    provider.snapshot().clientInformation
+  );
   const previousCurrent = await getCurrentUserConnectorConnection(appDb, {
     clerkUserId: input.attempt.clerkUserId,
     provider: "granola",
@@ -304,6 +328,7 @@ async function finalizeGranolaConnection(input: {
     metadata: {
       hasRefreshToken: !!tokens.refresh_token,
       mode: previousCurrent ? "reconnect" : "connect",
+      ...(oauthClientInformation ? { oauthClientInformation } : {}),
       tokenType: tokens.token_type,
     },
     observedCurrentConnectionId: previousCurrent?.id ?? null,

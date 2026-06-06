@@ -440,7 +440,13 @@ describe("Granola user connector OAuth flow", () => {
   it("completes OAuth for the same Clerk user and finalizes encrypted Granola tokens", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-06-06T12:00:00.000Z"));
-    const attempt = oauthAttempt();
+    const attempt = oauthAttempt({
+      clientInformation: {
+        client_id: "granola_client",
+        client_id_issued_at: 1_774_093_200,
+        client_secret: "granola_client_secret",
+      },
+    });
     redisGetMock.mockResolvedValue(attempt);
     redisGetdelMock.mockResolvedValue(attempt);
     getCurrentUserConnectorConnectionMock.mockResolvedValue(userConnection());
@@ -489,6 +495,17 @@ describe("Granola user connector OAuth flow", () => {
     );
     const finalizeInput =
       finalizeCurrentUserConnectorConnectionMock.mock.calls[0]?.[1];
+    expect(finalizeInput.metadata).toEqual(
+      expect.objectContaining({
+        oauthClientInformation: {
+          client_id: "granola_client",
+          client_id_issued_at: 1_774_093_200,
+        },
+      })
+    );
+    expect(JSON.stringify(finalizeInput.metadata)).not.toContain(
+      "granola_client_secret"
+    );
     expect(JSON.stringify(finalizeInput.metadata)).not.toContain(
       "granola_access"
     );

@@ -4,7 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const getCurrentUserConnectorConnectionMock = vi.fn();
 const listCurrentUserConnectorConnectionsMock = vi.fn();
 const markCurrentUserConnectorConnectionErrorMock = vi.fn();
+const updateObservedUserConnectorTokensMock = vi.fn();
 const decryptMock = vi.fn();
+const encryptMock = vi.fn();
 const callGranolaMcpToolMock = vi.fn();
 const granolaClientMetadataMock = vi.fn();
 
@@ -28,7 +30,8 @@ class MockGranolaAppNodeError extends Error {
 class MockGranolaOAuthClientProvider {
   readonly clientMetadata: unknown;
   readonly redirectUrl: string | URL;
-  private readonly oauthTokens: unknown;
+  private clientInfo?: unknown;
+  private oauthTokens: unknown;
 
   constructor(input: {
     clientInformation?: unknown;
@@ -38,13 +41,19 @@ class MockGranolaOAuthClientProvider {
     redirectUrl: string | URL;
     tokens?: unknown;
   }) {
+    this.clientInfo = input.clientInformation;
     this.clientMetadata = input.clientMetadata;
     this.oauthTokens = input.tokens;
     this.redirectUrl = input.redirectUrl;
   }
 
+  saveTokens(tokens: unknown) {
+    this.oauthTokens = tokens;
+  }
+
   snapshot() {
     return {
+      clientInformation: this.clientInfo,
       tokens: this.oauthTokens,
     };
   }
@@ -59,10 +68,12 @@ vi.mock("@db/app", () => ({
   listCurrentUserConnectorConnections: listCurrentUserConnectorConnectionsMock,
   markCurrentUserConnectorConnectionError:
     markCurrentUserConnectorConnectionErrorMock,
+  updateObservedUserConnectorTokens: updateObservedUserConnectorTokensMock,
 }));
 
 vi.mock("@repo/app-encryption", () => ({
   decrypt: decryptMock,
+  encrypt: encryptMock,
 }));
 
 vi.mock("@repo/granola-app-node", () => ({
@@ -89,6 +100,8 @@ describe("user connector chat runtime", () => {
     listCurrentUserConnectorConnectionsMock.mockResolvedValue([]);
     markCurrentUserConnectorConnectionErrorMock.mockReset();
     markCurrentUserConnectorConnectionErrorMock.mockResolvedValue(undefined);
+    updateObservedUserConnectorTokensMock.mockReset();
+    updateObservedUserConnectorTokensMock.mockResolvedValue(true);
     decryptMock.mockReset();
     decryptMock.mockImplementation(async (ciphertext: string) => {
       const tokens: Record<string, string> = {
@@ -96,6 +109,14 @@ describe("user connector chat runtime", () => {
         encrypted_refresh: "refresh_token",
       };
       return tokens[ciphertext] ?? `decrypted:${ciphertext}`;
+    });
+    encryptMock.mockReset();
+    encryptMock.mockImplementation(async (plaintext: string) => {
+      const tokens: Record<string, string> = {
+        rotated_access_token: "encrypted_rotated_access",
+        rotated_refresh_token: "encrypted_rotated_refresh",
+      };
+      return tokens[plaintext] ?? `encrypted:${plaintext}`;
     });
     callGranolaMcpToolMock.mockReset();
     callGranolaMcpToolMock.mockResolvedValue({
@@ -300,12 +321,136 @@ describe("user connector chat runtime", () => {
       "https://chat.lightfast.test/api/connectors/granola/oauth/callback"
     );
     expect(mcpCall.authProvider.snapshot()).toEqual({
+      clientInformation: undefined,
       tokens: {
         access_token: "access_token",
         refresh_token: "refresh_token",
         token_type: "Bearer",
       },
     });
+  });
+
+  it("reconstructs the Granola OAuth provider with persisted client information", async () => {
+    const context = userConnectorChatContext();
+    getCurrentUserConnectorConnectionMock.mockResolvedValue(
+      userConnection({
+        metadata: {
+          oauthClientInformation: {
+            client_id: "granola_client",
+            client_id_issued_at: 1_774_093_200,
+          },
+        },
+      })
+    );
+
+    await callUserConnectorTool(context, {
+      input: { query: "SOC2" },
+      routineId: "granola__search_notes",
+    });
+
+    const mcpCall = callGranolaMcpToolMock.mock.calls[0]?.[0] as {
+      authProvider: MockGranolaOAuthClientProvider;
+    };
+    expect(mcpCall.authProvider.snapshot()).toEqual({
+      clientInformation: {
+        client_id: "granola_client",
+        client_id_issued_at: 1_774_093_200,
+      },
+      tokens: {
+        access_token: "access_token",
+        refresh_token: "refresh_token",
+        token_type: "Bearer",
+      },
+    });
+  });
+
+  it("persists rotated Granola tokens with observed guards after a successful tool call", async () => {
+    const context = userConnectorChatContext();
+    getCurrentUserConnectorConnectionMock.mockResolvedValue(userConnection());
+    callGranolaMcpToolMock.mockImplementation(
+      async ({
+        authProvider,
+      }: {
+        authProvider: MockGranolaOAuthClientProvider;
+      }) => {
+        authProvider.saveTokens({
+          access_token: "rotated_access_token",
+          expires_in: 7200,
+          refresh_token: "rotated_refresh_token",
+          token_type: "Bearer",
+        });
+        return { content: [{ text: "meeting result", type: "text" }] };
+      }
+    );
+
+    await expect(
+      callUserConnectorTool(context, {
+        input: { query: "SOC2" },
+        routineId: "granola__search_notes",
+      })
+    ).resolves.toMatchObject({
+      provider: "granola",
+      status: "succeeded",
+    });
+
+    expect(encryptMock).toHaveBeenCalledWith(
+      "rotated_access_token",
+      envMock.ENCRYPTION_KEY
+    );
+    expect(encryptMock).toHaveBeenCalledWith(
+      "rotated_refresh_token",
+      envMock.ENCRYPTION_KEY
+    );
+    expect(updateObservedUserConnectorTokensMock).toHaveBeenCalledWith(
+      context.db,
+      {
+        accessTokenExpiresAt: new Date("2026-06-06T02:00:00.000Z"),
+        clerkUserId: "user_current",
+        encryptedAccessToken: "encrypted_rotated_access",
+        encryptedRefreshToken: "encrypted_rotated_refresh",
+        id: 1,
+        observedEncryptedAccessToken: "encrypted_access",
+        observedEncryptedRefreshToken: "encrypted_refresh",
+        refreshTokenExpiresAt: new Date("2099-12-01T00:00:00.000Z"),
+        updatedAt: new Date("2026-06-06T00:00:00.000Z"),
+      }
+    );
+  });
+
+  it("returns tool success without leaking tokens when refreshed token persistence loses the race", async () => {
+    const context = userConnectorChatContext();
+    getCurrentUserConnectorConnectionMock.mockResolvedValue(userConnection());
+    updateObservedUserConnectorTokensMock.mockResolvedValue(false);
+    callGranolaMcpToolMock.mockImplementation(
+      async ({
+        authProvider,
+      }: {
+        authProvider: MockGranolaOAuthClientProvider;
+      }) => {
+        authProvider.saveTokens({
+          access_token: "rotated_access_token",
+          refresh_token: "rotated_refresh_token",
+          token_type: "Bearer",
+        });
+        return { content: [{ text: "meeting result", type: "text" }] };
+      }
+    );
+
+    const result = await callUserConnectorTool(context, {
+      input: { query: "SOC2" },
+      routineId: "granola__search_notes",
+    });
+
+    expect(result).toEqual({
+      provider: "granola",
+      providerToolName: "search_notes",
+      result: { content: [{ text: "meeting result", type: "text" }] },
+      routineId: "granola__search_notes",
+      status: "succeeded",
+    });
+    expect(updateObservedUserConnectorTokensMock).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(result)).not.toContain("rotated_access_token");
+    expect(JSON.stringify(result)).not.toContain("rotated_refresh_token");
   });
 
   it("rejects missing and inactive user connector connections", async () => {
@@ -419,6 +564,7 @@ describe("user connector chat runtime", () => {
       authProvider: MockGranolaOAuthClientProvider;
     };
     expect(mcpCall.authProvider.snapshot()).toEqual({
+      clientInformation: undefined,
       tokens: {
         access_token: "access_token",
         token_type: "Bearer",
