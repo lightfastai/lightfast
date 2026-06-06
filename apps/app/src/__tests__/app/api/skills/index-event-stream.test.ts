@@ -97,6 +97,27 @@ describe("skill index event stream", () => {
     ]);
     expect(redisMock.removeAllListenersMock).toHaveBeenCalledOnce();
   });
+
+  it("creates a fresh subscription when a new reader opens during cleanup", async () => {
+    const unsubscribe = createDeferred<undefined>();
+    redisMock.unsubscribeMock.mockReturnValueOnce(unsubscribe.promise);
+    const first = createSkillIndexEventStream({ clerkOrgId: "org_123" });
+    const firstReader = first.getReader();
+
+    const firstCancel = firstReader.cancel();
+    await Promise.resolve();
+    expect(redisMock.unsubscribeMock).toHaveBeenCalledOnce();
+
+    const second = createSkillIndexEventStream({ clerkOrgId: "org_123" });
+    const secondReader = second.getReader();
+
+    expect(redisMock.subscribeMock).toHaveBeenCalledTimes(2);
+
+    unsubscribe.resolve(undefined);
+    await firstCancel;
+    await secondReader.cancel();
+    expect(redisMock.unsubscribeMock).toHaveBeenCalledTimes(2);
+  });
 });
 
 function emitSkillIndexMessage(clerkOrgId: string, message: unknown) {
@@ -109,4 +130,14 @@ function emitSkillIndexMessage(clerkOrgId: string, message: unknown) {
 function decode(value: Uint8Array | undefined) {
   expect(value).toBeDefined();
   return new TextDecoder().decode(value);
+}
+
+function createDeferred<T>() {
+  let resolve: (value: T | PromiseLike<T>) => void = () => undefined;
+  let reject: (reason?: unknown) => void = () => undefined;
+  const promise = new Promise<T>((nextResolve, nextReject) => {
+    resolve = nextResolve;
+    reject = nextReject;
+  });
+  return { promise, reject, resolve };
 }

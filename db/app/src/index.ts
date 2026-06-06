@@ -350,6 +350,7 @@ export {
   markSkillIndexKnownStale,
   markSkillIndexRefreshFresh,
   markSkillIndexRefreshFailed,
+  markSkillIndexRefreshStale,
   type ReplaceSkillIndexEntriesInput,
   type ReplaceSkillIndexEntryInput,
   releaseSkillIndexRefreshLock,

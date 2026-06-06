@@ -120,11 +120,11 @@ async function unsubscribeChannel(
     return;
   }
 
+  subscribers.delete(channel);
   try {
     await record.subscription.unsubscribe([channel]);
   } finally {
     record.subscription.removeAllListeners();
-    subscribers.delete(channel);
   }
 }
 

@@ -139,6 +139,16 @@ export async function refreshSkillIndexSource(input: {
     return { status: "stale" };
   }
 
+  let publishAfterRelease:
+    | { clerkOrgId: string; sourceControlRepositoryId: number }
+    | undefined;
+  const queueTerminalPublish = () => {
+    publishAfterRelease = {
+      clerkOrgId: candidate.binding.clerkOrgId,
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+    };
+  };
+
   try {
     input.signal?.throwIfAborted();
     const ref = await deps.readSkillRepositoryMainRef({
@@ -159,17 +169,20 @@ export async function refreshSkillIndexSource(input: {
         input.targetCommitSha &&
         state.lastCheckedCommitSha !== input.targetCommitSha
       ) {
+        await markStaleTargetRefreshTerminal({
+          currentCommitSha: state.lastCheckedCommitSha,
+          deps,
+          lockToken,
+          state,
+        });
+        queueTerminalPublish();
         return { status: "stale" };
       }
       await deps.markSkillIndexRefreshFresh(deps.db, {
         lockToken,
         stateId: state.id,
       });
-      await publishCurrentSkillIndexState({
-        clerkOrgId: candidate.binding.clerkOrgId,
-        deps,
-        sourceControlRepositoryId: input.sourceControlRepositoryId,
-      });
+      queueTerminalPublish();
       return { status: "fresh" };
     }
     if (ref.status === "missing") {
@@ -186,11 +199,7 @@ export async function refreshSkillIndexSource(input: {
         lockToken,
         stateId: state.id,
       });
-      await publishCurrentSkillIndexState({
-        clerkOrgId: candidate.binding.clerkOrgId,
-        deps,
-        sourceControlRepositoryId: input.sourceControlRepositoryId,
-      });
+      queueTerminalPublish();
       return { status: "missing" };
     }
 
@@ -201,6 +210,13 @@ export async function refreshSkillIndexSource(input: {
       sourceControlRepositoryId: input.sourceControlRepositoryId,
     });
     if (input.targetCommitSha && ref.sha !== input.targetCommitSha) {
+      await markStaleTargetRefreshTerminal({
+        currentCommitSha: ref.sha,
+        deps,
+        lockToken,
+        state,
+      });
+      queueTerminalPublish();
       return { status: "stale" };
     }
 
@@ -237,11 +253,7 @@ export async function refreshSkillIndexSource(input: {
       lockToken,
       stateId: state.id,
     });
-    await publishCurrentSkillIndexState({
-      clerkOrgId: candidate.binding.clerkOrgId,
-      deps,
-      sourceControlRepositoryId: input.sourceControlRepositoryId,
-    });
+    queueTerminalPublish();
     return { status: "fresh" };
   } catch (error) {
     const code = getRefreshFailureCode(error);
@@ -252,18 +264,44 @@ export async function refreshSkillIndexSource(input: {
       lockToken,
       stateId: state.id,
     });
-    await publishCurrentSkillIndexState({
-      clerkOrgId: candidate.binding.clerkOrgId,
-      deps,
-      sourceControlRepositoryId: input.sourceControlRepositoryId,
-    });
+    queueTerminalPublish();
     return { status: "failed" };
   } finally {
     await deps.releaseSkillIndexRefreshLock(deps.db, {
       lockToken,
       stateId: state.id,
     });
+    if (publishAfterRelease) {
+      await publishCurrentSkillIndexState({
+        clerkOrgId: publishAfterRelease.clerkOrgId,
+        deps,
+        sourceControlRepositoryId: publishAfterRelease.sourceControlRepositoryId,
+      });
+    }
   }
+}
+
+async function markStaleTargetRefreshTerminal(input: {
+  currentCommitSha: string | null;
+  deps: SkillIndexServiceDeps;
+  lockToken: string;
+  state: { id: number; indexedCommitSha: string | null };
+}) {
+  if (
+    input.currentCommitSha &&
+    input.state.indexedCommitSha === input.currentCommitSha
+  ) {
+    await input.deps.markSkillIndexRefreshFresh(input.deps.db, {
+      lockToken: input.lockToken,
+      stateId: input.state.id,
+    });
+    return;
+  }
+
+  await input.deps.markSkillIndexRefreshStale(input.deps.db, {
+    lockToken: input.lockToken,
+    stateId: input.state.id,
+  });
 }
 
 async function publishCurrentSkillIndexState(input: {

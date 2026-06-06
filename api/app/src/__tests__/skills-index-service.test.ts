@@ -140,10 +140,18 @@ describe("skills index refresh/read service", () => {
   });
 
   it("skips a refresh job when its target commit is no longer current", async () => {
+    const staleIndexedState = staleState({
+      indexedCommitSha: "old-index",
+      lastCheckedCommitSha: "current-main",
+      lastRefreshStatus: "stale",
+    });
     const deps = createDeps({
       refSha: "current-main",
-      targetState: staleState({ indexedCommitSha: "old-index" }),
+      targetState: staleIndexedState,
     });
+    deps.getSkillIndexStateBySourceControlRepositoryId.mockResolvedValueOnce(
+      staleIndexedState
+    );
 
     const result = await refreshSkillIndexSource({
       deps,
@@ -153,8 +161,65 @@ describe("skills index refresh/read service", () => {
     });
 
     expect(result.status).toBe("stale");
+    expect(deps.markSkillIndexRefreshStale).toHaveBeenCalledWith(deps.db, {
+      lockToken: "lock-token",
+      stateId: 100,
+    });
+    expect(deps.markSkillIndexRefreshFresh).not.toHaveBeenCalled();
+    expect(deps.publishSkillIndexChanged).toHaveBeenCalledWith({
+      clerkOrgId: "org_123",
+      indexedCommitSha: "old-index",
+      lastRefreshStatus: "stale",
+      snapshotVersion: `${staleIndexedState.id}:${staleIndexedState.updatedAt.getTime()}:old-index:stale`,
+      sourceControlRepositoryId: 1,
+    });
     expect(deps.readSkillRepositoryTree).not.toHaveBeenCalled();
     expect(deps.replaceSkillIndexEntries).not.toHaveBeenCalled();
+    expect(
+      deps.releaseSkillIndexRefreshLock.mock.invocationCallOrder[0]
+    ).toBeLessThan(
+      deps.publishSkillIndexChanged.mock.invocationCallOrder[0] ?? 0
+    );
+  });
+
+  it("restores fresh state when an old target commit job is already indexed", async () => {
+    const freshIndexedState = staleState({
+      githubRefEtag: "etag-current",
+      indexedCommitSha: "current-main",
+      lastCheckedCommitSha: "current-main",
+      lastRefreshStatus: "fresh",
+    });
+    const deps = createDeps({
+      targetState: freshIndexedState,
+    });
+    deps.readSkillRepositoryMainRef.mockResolvedValueOnce({
+      status: "not_modified",
+    });
+    deps.getSkillIndexStateBySourceControlRepositoryId.mockResolvedValueOnce(
+      freshIndexedState
+    );
+
+    const result = await refreshSkillIndexSource({
+      deps,
+      reason: "webhook",
+      sourceControlRepositoryId: 1,
+      targetCommitSha: "old-webhook-sha",
+    });
+
+    expect(result.status).toBe("stale");
+    expect(deps.markSkillIndexRefreshFresh).toHaveBeenCalledWith(deps.db, {
+      lockToken: "lock-token",
+      stateId: 100,
+    });
+    expect(deps.markSkillIndexRefreshStale).not.toHaveBeenCalled();
+    expect(deps.publishSkillIndexChanged).toHaveBeenCalledWith({
+      clerkOrgId: "org_123",
+      indexedCommitSha: "current-main",
+      lastRefreshStatus: "fresh",
+      snapshotVersion: `${freshIndexedState.id}:${freshIndexedState.updatedAt.getTime()}:current-main:fresh`,
+      sourceControlRepositoryId: 1,
+    });
+    expect(deps.readSkillRepositoryTree).not.toHaveBeenCalled();
   });
 
   it("refreshes when the target commit still matches current main", async () => {
@@ -247,6 +312,11 @@ describe("skills index refresh/read service", () => {
     });
     expect(
       deps.markSkillIndexRefreshFresh.mock.invocationCallOrder[0]
+    ).toBeLessThan(
+      deps.publishSkillIndexChanged.mock.invocationCallOrder[0] ?? 0
+    );
+    expect(
+      deps.releaseSkillIndexRefreshLock.mock.invocationCallOrder[0]
     ).toBeLessThan(
       deps.publishSkillIndexChanged.mock.invocationCallOrder[0] ?? 0
     );
@@ -1255,6 +1325,7 @@ function createDeps(
     ]),
     markSkillIndexRefreshFresh: vi.fn(async () => undefined),
     markSkillIndexRefreshFailed: vi.fn(async () => undefined),
+    markSkillIndexRefreshStale: vi.fn(async () => undefined),
     now: vi.fn(() => now),
     publishSkillIndexChanged: vi.fn(async () => undefined),
     randomToken: vi.fn(() => "lock-token"),
