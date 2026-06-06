@@ -3,10 +3,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthIdentity } from "../auth/identity";
 
 const listProviderRoutineCallsMock = vi.fn();
+const getUserListMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({
   listProviderRoutineCalls: listProviderRoutineCallsMock,
+}));
+vi.mock("@vendor/clerk/server", () => ({
+  clerkClient: async () => ({
+    users: { getUserList: getUserListMock },
+  }),
 }));
 vi.mock("@vendor/clerk/env", () => ({
   clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
@@ -75,16 +81,21 @@ describe("decisionsRouter", () => {
   beforeEach(() => {
     listProviderRoutineCallsMock.mockReset();
     listProviderRoutineCallsMock.mockResolvedValue(page);
+    getUserListMock.mockReset();
+    getUserListMock.mockResolvedValue({ data: [] });
   });
 
-  it("forwards cursor, limit, and search and returns the page unchanged", async () => {
+  it("forwards cursor, limit, and search and returns the enriched page", async () => {
     await expect(
       caller().decisions.list({
         cursor: { createdAt: new Date("2026-06-02T03:20:11.419Z"), id: 1 },
         limit: 25,
         search: "create_issue",
       })
-    ).resolves.toEqual(page);
+    ).resolves.toEqual({
+      items: [{ ...decision, calledByUsername: null }],
+      nextCursor: null,
+    });
 
     expect(listProviderRoutineCallsMock).toHaveBeenCalledWith(
       expect.anything(),
@@ -97,6 +108,7 @@ describe("decisionsRouter", () => {
         statuses: undefined,
       }
     );
+    expect(getUserListMock).not.toHaveBeenCalled();
   });
 
   it("forwards provider and status filters", async () => {
@@ -116,6 +128,30 @@ describe("decisionsRouter", () => {
         statuses: ["failed", "succeeded"],
       }
     );
+  });
+
+  it("adds Clerk usernames for user callers", async () => {
+    const userDecision = {
+      ...decision,
+      calledByKind: "user",
+      calledById: "user_ada",
+      calledByUserId: "user_ada",
+      sourceSurface: "chat",
+    } satisfies ProviderRoutineCall;
+    listProviderRoutineCallsMock.mockResolvedValue({
+      items: [userDecision],
+      nextCursor: null,
+    });
+    getUserListMock.mockResolvedValue({
+      data: [{ id: "user_ada", username: "ada-dev" }],
+    });
+
+    await expect(caller().decisions.list({})).resolves.toEqual({
+      items: [{ ...userDecision, calledByUsername: "ada-dev" }],
+      nextCursor: null,
+    });
+
+    expect(getUserListMock).toHaveBeenCalledWith({ userId: ["user_ada"] });
   });
 
   it("coerces empty filter arrays and blank search to undefined", async () => {
