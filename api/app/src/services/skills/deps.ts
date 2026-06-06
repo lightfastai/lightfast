@@ -13,6 +13,7 @@ import {
   replaceSkillIndexEntries,
   updateSkillIndexRefCheck,
 } from "@db/app";
+import { redis } from "@vendor/upstash";
 
 import {
   readSkillRepositoryBlob,
@@ -20,7 +21,7 @@ import {
   readSkillRepositoryTree,
 } from "./github";
 import { enqueueSkillIndexRefresh } from "./refresh-request";
-import type { SkillIndexServiceDeps } from "./types";
+import type { SkillIndexChangedEvent, SkillIndexServiceDeps } from "./types";
 
 export function resolveSkillIndexServiceDeps(
   deps?: Partial<SkillIndexServiceDeps>
@@ -29,6 +30,17 @@ export function resolveSkillIndexServiceDeps(
     ...defaultSkillIndexServiceDeps,
     ...deps,
   };
+}
+
+async function publishSkillIndexChanged(event: SkillIndexChangedEvent) {
+  await redis.publish(
+    `lightfast:org:${event.clerkOrgId}:skills:index`,
+    JSON.stringify({
+      type: "skill_index.changed",
+      ...event,
+      occurredAt: new Date().toISOString(),
+    })
+  );
 }
 
 const defaultSkillIndexServiceDeps: SkillIndexServiceDeps = {
@@ -43,6 +55,7 @@ const defaultSkillIndexServiceDeps: SkillIndexServiceDeps = {
   listSkillIndexEntries,
   markSkillIndexRefreshFailed,
   now: () => new Date(),
+  publishSkillIndexChanged,
   randomToken: () => randomUUID(),
   readSkillRepositoryBlob,
   readSkillRepositoryMainRef,

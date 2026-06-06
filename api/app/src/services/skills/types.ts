@@ -45,6 +45,14 @@ export interface SkillIndexFreshness {
   status: "fresh" | "refreshing" | "stale" | "unavailable";
 }
 
+export interface SkillIndexChangedEvent {
+  clerkOrgId: string;
+  indexedCommitSha: string | null;
+  lastRefreshStatus: SkillIndexState["lastRefreshStatus"];
+  snapshotVersion: string | null;
+  sourceControlRepositoryId: number;
+}
+
 export interface SkillIndexServiceDeps {
   acquireSkillIndexRefreshLock: (
     db: Database,
@@ -91,6 +99,7 @@ export interface SkillIndexServiceDeps {
     }
   ) => Promise<void>;
   now: () => Date;
+  publishSkillIndexChanged: (event: SkillIndexChangedEvent) => Promise<void>;
   randomToken: () => string;
   readSkillRepositoryBlob: (input: {
     fullName: string;

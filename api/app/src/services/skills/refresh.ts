@@ -176,6 +176,11 @@ export async function refreshSkillIndexSource(input: {
         lockToken,
         stateId: state.id,
       });
+      await publishCurrentSkillIndexState({
+        candidate,
+        deps,
+        sourceControlRepositoryId: input.sourceControlRepositoryId,
+      }).catch(() => undefined);
       return { status: "missing" };
     }
 
@@ -222,6 +227,11 @@ export async function refreshSkillIndexSource(input: {
       lockToken,
       stateId: state.id,
     });
+    await publishCurrentSkillIndexState({
+      candidate,
+      deps,
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+    }).catch(() => undefined);
     return { status: "fresh" };
   } catch (error) {
     const code = getRefreshFailureCode(error);
@@ -232,6 +242,11 @@ export async function refreshSkillIndexSource(input: {
       lockToken,
       stateId: state.id,
     });
+    await publishCurrentSkillIndexState({
+      candidate,
+      deps,
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+    }).catch(() => undefined);
     return { status: "failed" };
   } finally {
     await deps.releaseSkillIndexRefreshLock(deps.db, {
@@ -239,6 +254,34 @@ export async function refreshSkillIndexSource(input: {
       stateId: state.id,
     });
   }
+}
+
+async function publishCurrentSkillIndexState(input: {
+  candidate: SkillIndexableSourceControlRepositoryCandidate;
+  deps: SkillIndexServiceDeps;
+  sourceControlRepositoryId: number;
+}) {
+  const state = await input.deps.getSkillIndexStateBySourceControlRepositoryId(
+    input.deps.db,
+    {
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+    }
+  );
+  if (!state) {
+    return;
+  }
+  await input.deps.publishSkillIndexChanged({
+    clerkOrgId: input.candidate.binding.clerkOrgId,
+    indexedCommitSha: state.indexedCommitSha,
+    lastRefreshStatus: state.lastRefreshStatus,
+    snapshotVersion: [
+      state.id,
+      state.updatedAt.getTime(),
+      state.indexedCommitSha ?? "",
+      state.lastRefreshStatus,
+    ].join(":"),
+    sourceControlRepositoryId: input.sourceControlRepositoryId,
+  });
 }
 
 async function readSkillBlobs(input: {
