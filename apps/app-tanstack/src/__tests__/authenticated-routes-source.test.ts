@@ -188,6 +188,145 @@ describe("app-tanstack authenticated route migration", () => {
     }
   });
 
+  it("ports secondary workspace product routes without Next.js assumptions", () => {
+    const decisionsRouteSource = source(
+      "src/routes/_authenticated/$slug/decisions.tsx"
+    );
+    const decisionsClientSource = source("src/decisions/decisions-client.tsx");
+    const decisionsDetailSource = source("src/decisions/decisions-detail.tsx");
+    const decisionsSearchSource = source(
+      "src/decisions/decisions-search-params.ts"
+    );
+    const decisionsQuerySource = source(
+      "src/decisions/use-decisions-list-query.ts"
+    );
+    const skillsRouteSource = source(
+      "src/routes/_authenticated/$slug/skills.tsx"
+    );
+    const skillsClientSource = source("src/skills/skills-client.tsx");
+    const skillsSearchSource = source("src/skills/skills-search-params.ts");
+    const skillsQuerySource = source("src/skills/use-skills-list-query.ts");
+    const connectorsRouteSource = source(
+      "src/routes/_authenticated/$slug/connectors.tsx"
+    );
+    const connectorsClientSource = source(
+      "src/connectors/connectors-client.tsx"
+    );
+    const connectorsSearchSource = source(
+      "src/connectors/connectors-search-params.ts"
+    );
+    const automationsRouteSource = source(
+      "src/routes/_authenticated/$slug/automations.tsx"
+    );
+    const automationsIndexRouteSource = source(
+      "src/routes/_authenticated/$slug/automations/index.tsx"
+    );
+    const automationsNewRouteSource = source(
+      "src/routes/_authenticated/$slug/automations/new.tsx"
+    );
+    const automationDetailRouteSource = source(
+      "src/routes/_authenticated/$slug/automations/$automation.tsx"
+    );
+    const automationsClientSource = source(
+      "src/automations/automations-client.tsx"
+    );
+    const automationsCreateSource = source(
+      "src/automations/automation-create-form.tsx"
+    );
+    const automationsPromptSource = source(
+      "src/automations/automation-prompt-editor.tsx"
+    );
+    const automationsDetailSource = source(
+      "src/automations/automation-detail-client.tsx"
+    );
+    const automationsQuerySource = source(
+      "src/automations/use-automations-list-query.ts"
+    );
+
+    expect(decisionsRouteSource).toContain("validateDecisionsSearch");
+    expect(decisionsRouteSource).toContain("setSearchParams");
+    expect(decisionsClientSource).toContain("DecisionsToolbar");
+    expect(decisionsClientSource).toContain("DecisionsTableView");
+    expect(decisionsSearchSource).toContain("parseDecisionProviders");
+    expect(decisionsQuerySource).toContain(
+      "decisions.list.infiniteQueryOptions"
+    );
+    expect(decisionsQuerySource).toContain(
+      'enabled: typeof window !== "undefined"'
+    );
+
+    expect(skillsRouteSource).toContain("validateSkillsSearch");
+    expect(skillsRouteSource).toContain("setSearchParams");
+    expect(skillsClientSource).toContain("SkillGrid");
+    expect(skillsClientSource).toContain("SkillDialog");
+    expect(skillsSearchSource).toContain("validateSkillsSearch");
+    expect(skillsQuerySource).toContain("skills.list.queryOptions");
+    expect(skillsQuerySource).toContain(
+      'enabled: typeof window !== "undefined"'
+    );
+
+    expect(connectorsRouteSource).toContain("validateConnectorsSearch");
+    expect(connectorsRouteSource).toContain("setSearchParams");
+    expect(connectorsClientSource).toContain("connectors.list.queryOptions");
+    expect(connectorsClientSource).toContain("startConnect.mutationOptions");
+    expect(connectorsClientSource).toContain("window.location.assign");
+    expect(connectorsClientSource).toContain("ConnectorDetailSheet");
+    expect(connectorsClientSource).toContain(
+      'enabled: typeof window !== "undefined"'
+    );
+    expect(connectorsSearchSource).toContain("validateConnectorsSearch");
+
+    expect(automationsRouteSource).toContain("component: Outlet");
+    expect(automationsIndexRouteSource).toContain("AutomationsClient");
+    expect(automationsNewRouteSource).toContain("AutomationCreateForm");
+    expect(automationDetailRouteSource).toContain("AutomationDetailClient");
+    expect(automationDetailRouteSource).toContain(
+      "validateAutomationDetailSearch"
+    );
+    expect(automationsClientSource).toContain(
+      'to="/$slug/automations/$automation"'
+    );
+    expect(automationsCreateSource).toContain(
+      "automations.create.mutationOptions"
+    );
+    expect(automationsDetailSource).toContain("automations.get.queryOptions");
+    expect(automationsQuerySource).toContain("automations.list.queryOptions");
+    expect(automationsQuerySource).toContain(
+      'enabled: typeof window !== "undefined"'
+    );
+
+    for (const routeFile of [
+      decisionsRouteSource,
+      decisionsClientSource,
+      decisionsDetailSource,
+      decisionsSearchSource,
+      skillsRouteSource,
+      skillsClientSource,
+      skillsSearchSource,
+      connectorsRouteSource,
+      connectorsClientSource,
+      connectorsSearchSource,
+      automationsRouteSource,
+      automationsIndexRouteSource,
+      automationsNewRouteSource,
+      automationDetailRouteSource,
+      automationsClientSource,
+      automationsCreateSource,
+      automationsPromptSource,
+      automationsDetailSource,
+    ]) {
+      expect(routeFile).not.toContain("next/");
+      expect(routeFile).not.toContain("nuqs");
+      expect(routeFile).not.toContain("@vercel/microfrontends/next");
+      expect(routeFile).not.toContain(
+        'from "@repo/ui/components/ai-elements/code-block"'
+      );
+      expect(routeFile).not.toContain('from "@repo/ui/components/markdown"');
+      expect(routeFile).not.toContain('"use client"');
+      expect(routeFile).not.toContain('"use server"');
+    }
+  });
+
   it("ports org setup routes and GitHub callbacks", () => {
     const orgRouteSource = source("src/routes/_authenticated/$slug.tsx");
     const accountGithubRouteSource = source(

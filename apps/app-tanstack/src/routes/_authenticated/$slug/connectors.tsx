@@ -1,7 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { WorkspacePage } from "~/components/workspace-page";
+import { useCallback, useMemo } from "react";
+import { ConnectorsClient } from "~/connectors/connectors-client";
+import {
+  type NormalizedConnectorsSearch,
+  normalizeConnectorsSearch,
+  validateConnectorsSearch,
+} from "~/connectors/connectors-search-params";
 
 export const Route = createFileRoute("/_authenticated/$slug/connectors")({
+  validateSearch: validateConnectorsSearch,
   head: ({ params }) => ({
     meta: [{ title: `Connectors - ${params.slug} - Lightfast` }],
   }),
@@ -9,12 +16,30 @@ export const Route = createFileRoute("/_authenticated/$slug/connectors")({
 });
 
 function ConnectorsPage() {
-  const { slug } = Route.useParams();
-  return (
-    <WorkspacePage
-      description="Connector navigation now resolves inside the TanStack workspace shell. The connector list and callback handling can move next."
-      eyebrow={`/${slug}/connectors`}
-      title="Connectors"
-    />
+  const routeSearch = Route.useSearch();
+  const search = useMemo(
+    () => normalizeConnectorsSearch(routeSearch),
+    [routeSearch]
   );
+  const navigate = Route.useNavigate();
+  const setSearchParams = useCallback(
+    (updates: Partial<NormalizedConnectorsSearch>) => {
+      void navigate({
+        replace: true,
+        search: (previous) => {
+          const next = { ...previous };
+          if ("connector" in updates) {
+            next.connector = updates.connector || undefined;
+          }
+          if ("error" in updates) {
+            next.error = updates.error || undefined;
+          }
+          return next;
+        },
+      });
+    },
+    [navigate]
+  );
+
+  return <ConnectorsClient search={search} setSearchParams={setSearchParams} />;
 }

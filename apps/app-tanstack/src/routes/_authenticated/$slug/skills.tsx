@@ -1,7 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { WorkspacePage } from "~/components/workspace-page";
+import { useCallback, useMemo } from "react";
+import { SkillsClient } from "~/skills/skills-client";
+import {
+  type NormalizedSkillsSearch,
+  normalizeSkillsSearch,
+  validateSkillsSearch,
+} from "~/skills/skills-search-params";
 
 export const Route = createFileRoute("/_authenticated/$slug/skills")({
+  validateSearch: validateSkillsSearch,
   head: ({ params }) => ({
     meta: [{ title: `Skills - ${params.slug} - Lightfast` }],
   }),
@@ -9,12 +16,27 @@ export const Route = createFileRoute("/_authenticated/$slug/skills")({
 });
 
 function SkillsPage() {
-  const { slug } = Route.useParams();
-  return (
-    <WorkspacePage
-      description="Skill routes are mounted in the TanStack workspace shell. The skills list and detail flows can be migrated behind this page."
-      eyebrow={`/${slug}/skills`}
-      title="Skills"
-    />
+  const routeSearch = Route.useSearch();
+  const search = useMemo(
+    () => normalizeSkillsSearch(routeSearch),
+    [routeSearch]
   );
+  const navigate = Route.useNavigate();
+  const setSearchParams = useCallback(
+    (updates: Partial<NormalizedSkillsSearch>) => {
+      void navigate({
+        replace: true,
+        search: (previous) => {
+          const next = { ...previous };
+          if ("skill" in updates) {
+            next.skill = updates.skill ?? undefined;
+          }
+          return next;
+        },
+      });
+    },
+    [navigate]
+  );
+
+  return <SkillsClient search={search} setSearchParams={setSearchParams} />;
 }
