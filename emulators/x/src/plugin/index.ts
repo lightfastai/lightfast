@@ -4,6 +4,7 @@ import { X_EMULATOR_POSTS, X_EMULATOR_USERS } from "../fixtures";
 import { registerFailures, seedFailures } from "./failures";
 import { registerOAuth } from "./oauth";
 import { registerPosts, type XPostRow } from "./posts";
+import { registerSocialWrites } from "./social-writes";
 import { registerUsers, type XUserRow } from "./users";
 
 export const xPlugin: ServicePlugin = {
@@ -12,6 +13,7 @@ export const xPlugin: ServicePlugin = {
     registerOAuth(app, store);
     registerUsers(app, store);
     registerPosts(app, store);
+    registerSocialWrites(app, store);
     registerFailures(app, store);
   },
   seed(store) {

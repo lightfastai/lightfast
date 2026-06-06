@@ -55,6 +55,22 @@ async function getAuthed(path: string) {
   });
 }
 
+async function writeJsonAuthed(
+  method: "DELETE" | "POST" | "PUT",
+  path: string,
+  body: Record<string, unknown> = {}
+) {
+  const active = emulator ?? (await start());
+  return await fetch(`${active.url}${path}`, {
+    body: JSON.stringify(body),
+    headers: {
+      authorization: `Bearer ${X_EMULATOR_FIXTURES.accessToken}`,
+      "content-type": "application/json",
+    },
+    method,
+  });
+}
+
 afterEach(async () => {
   await emulator?.close();
   emulator = undefined;
@@ -248,6 +264,102 @@ describe("@repo/x-emulator", () => {
     const active = await start();
     const res = await fetch(`${active.url}/2/tweets/tweet_1`);
     expect(res.status).toBe(401);
+  });
+
+  it("serves authenticated X social write endpoints", async () => {
+    const createPostRes = await writeJsonAuthed("POST", "/2/tweets", {
+      text: "ship it",
+    });
+    expect(createPostRes.status).toBe(200);
+    await expect(createPostRes.json()).resolves.toMatchObject({
+      data: { id: expect.stringMatching(/^tweet_/), text: "ship it" },
+    });
+
+    const deletePostRes = await writeJsonAuthed(
+      "DELETE",
+      "/2/tweets/tweet_1"
+    );
+    expect(deletePostRes.status).toBe(200);
+    await expect(deletePostRes.json()).resolves.toMatchObject({
+      data: { deleted: true },
+    });
+
+    const likeRes = await writeJsonAuthed("POST", "/2/users/x_user_1/likes", {
+      tweet_id: "tweet_1",
+    });
+    expect(likeRes.status).toBe(200);
+    await expect(likeRes.json()).resolves.toMatchObject({
+      data: { liked: true },
+    });
+
+    const unlikeRes = await writeJsonAuthed(
+      "DELETE",
+      "/2/users/x_user_1/likes/tweet_1"
+    );
+    expect(unlikeRes.status).toBe(200);
+    await expect(unlikeRes.json()).resolves.toMatchObject({
+      data: { liked: false },
+    });
+
+    const followRes = await writeJsonAuthed(
+      "POST",
+      "/2/users/x_user_1/following",
+      { target_user_id: "x_user_2" }
+    );
+    expect(followRes.status).toBe(200);
+    await expect(followRes.json()).resolves.toMatchObject({
+      data: { following: true },
+    });
+
+    const listRes = await writeJsonAuthed("POST", "/2/lists", {
+      name: "Launch list",
+    });
+    expect(listRes.status).toBe(200);
+    await expect(listRes.json()).resolves.toMatchObject({
+      data: { id: expect.stringMatching(/^list_/), name: "Launch list" },
+    });
+
+    const dmRes = await writeJsonAuthed(
+      "POST",
+      "/2/dm_conversations/with/x_user_2/messages",
+      { text: "hello" }
+    );
+    expect(dmRes.status).toBe(200);
+    await expect(dmRes.json()).resolves.toMatchObject({
+      data: { dm_event_id: expect.stringMatching(/^dm_event_/) },
+    });
+
+    const noteRes = await writeJsonAuthed("POST", "/2/notes", {
+      text: "context",
+    });
+    expect(noteRes.status).toBe(200);
+    await expect(noteRes.json()).resolves.toMatchObject({
+      data: { id: expect.stringMatching(/^note_/) },
+    });
+  });
+
+  it("rejects missing bearer tokens on social write endpoints", async () => {
+    const active = await start();
+    const res = await fetch(`${active.url}/2/tweets`, {
+      body: JSON.stringify({ text: "ship it" }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("supports the socialWrite failure switch", async () => {
+    const active = await start();
+    await fetch(`${active.url}/failures`, {
+      body: JSON.stringify({ socialWrite: true }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    });
+
+    const res = await writeJsonAuthed("POST", "/2/tweets", {
+      text: "blocked",
+    });
+    expect(res.status).toBe(500);
   });
 
   it("emits the app-hosted X MCP endpoint in its manifest", () => {
