@@ -4,6 +4,32 @@ import { createListData } from "./fixtures";
 
 type MutationOptions = { onSuccess?: () => void };
 
+class MockEventSource {
+  static instances: MockEventSource[] = [];
+  closed = false;
+  listeners = new Map<string, (event: MessageEvent) => void>();
+  url: string;
+
+  constructor(url: string) {
+    this.url = url;
+    MockEventSource.instances.push(this);
+  }
+
+  addEventListener(type: string, listener: (event: MessageEvent) => void) {
+    this.listeners.set(type, listener);
+  }
+
+  close() {
+    this.closed = true;
+  }
+
+  emit(type: string, data: unknown) {
+    this.listeners.get(type)?.(
+      new MessageEvent(type, { data: JSON.stringify(data) })
+    );
+  }
+}
+
 const invalidateQueriesMock = vi.fn();
 const listQueryFilterMock = vi.fn(() => ({
   queryKey: ["org", "workspace", "skills", "list"],
@@ -41,6 +67,11 @@ vi.mock("~/trpc/react", () => ({
   }),
 }));
 
+Object.defineProperty(globalThis, "EventSource", {
+  configurable: true,
+  value: MockEventSource,
+});
+
 const { useSkillIndexRefreshController } = await import(
   "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/_components/use-skill-index-refresh-controller"
 );
@@ -48,6 +79,7 @@ const { useSkillIndexRefreshController } = await import(
 beforeEach(() => {
   invalidateQueriesMock.mockReset();
   listQueryFilterMock.mockClear();
+  MockEventSource.instances = [];
   requestMutationOptionsMock.mockClear();
   mutateMock.mockReset();
   latestMutationOptions = undefined;
@@ -144,5 +176,29 @@ describe("useSkillIndexRefreshController", () => {
     expect(invalidateQueriesMock).toHaveBeenCalledWith({
       queryKey: ["org", "workspace", "skills", "list"],
     });
+  });
+
+  it("invalidates the skills list when a skill-index event arrives", async () => {
+    const { unmount } = renderHook(() =>
+      useSkillIndexRefreshController(createListData({ snapshotVersion: "v1" }))
+    );
+
+    expect(MockEventSource.instances[0]?.url).toBe(
+      "/api/skills/index/events"
+    );
+
+    MockEventSource.instances[0]?.emit("skill-index", {
+      snapshotVersion: "v2",
+      type: "skill_index.changed",
+    });
+
+    await waitFor(() =>
+      expect(invalidateQueriesMock).toHaveBeenCalledWith({
+        queryKey: ["org", "workspace", "skills", "list"],
+      })
+    );
+
+    unmount();
+    expect(MockEventSource.instances[0]?.closed).toBe(true);
   });
 });

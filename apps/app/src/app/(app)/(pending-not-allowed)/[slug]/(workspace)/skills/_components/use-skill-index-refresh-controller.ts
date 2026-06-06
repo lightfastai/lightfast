@@ -43,4 +43,23 @@ export function useSkillIndexRefreshController(snapshot: SkillsListResult) {
     snapshot.freshness.status,
     snapshot.snapshotVersion,
   ]);
+
+  useEffect(() => {
+    if (typeof EventSource === "undefined") {
+      return;
+    }
+
+    const source = new EventSource("/api/skills/index/events");
+    const onSkillIndex = () => {
+      void queryClient.invalidateQueries(
+        trpc.org.workspace.skills.list.queryFilter()
+      );
+    };
+
+    source.addEventListener("skill-index", onSkillIndex);
+
+    return () => {
+      source.close();
+    };
+  }, [queryClient, trpc]);
 }
