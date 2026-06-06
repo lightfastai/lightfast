@@ -11,12 +11,9 @@ vi.mock("@db/app/client", () => ({
   db: { kind: "mock-db" },
 }));
 
-vi.mock(
-  "~/app/(api)/api/skills/index/events/skill-index-event-stream",
-  () => ({
-    createSkillIndexEventStream: createSkillIndexEventStreamMock,
-  })
-);
+vi.mock("~/app/(api)/api/skills/index/events/skill-index-event-stream", () => ({
+  createSkillIndexEventStream: createSkillIndexEventStreamMock,
+}));
 
 const { GET } = await import("~/app/(api)/api/skills/index/events/route");
 

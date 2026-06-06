@@ -624,7 +624,7 @@ async function resolveConversation(input: {
       });
     } catch (error) {
       if (isDuplicateKeyError(error)) {
-        return undefined;
+        return;
       }
       throw error;
     }

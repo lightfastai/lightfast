@@ -6,7 +6,7 @@ const redisMock = vi.hoisted(() => {
   const listeners = new Map<string, MessageListener>();
   const removeAllListenersMock = vi.fn();
   const unsubscribeMock = vi.fn(async () => undefined);
-  const subscribeMock = vi.fn((channel: string) => {
+  const subscribeMock = vi.fn((_channel: string) => {
     const subscription = {
       on: vi.fn((event: string, listener: MessageListener) => {
         listeners.set(event, listener);

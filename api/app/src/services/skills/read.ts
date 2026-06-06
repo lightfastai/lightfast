@@ -73,7 +73,10 @@ export async function getSkillIndexSnapshot(input: {
   }
 
   return {
-    freshness: toFreshness(snapshot.state, deriveSnapshotStatus(snapshot.state)),
+    freshness: toFreshness(
+      snapshot.state,
+      deriveSnapshotStatus(snapshot.state)
+    ),
     indexDiagnostics: snapshot.state.indexDiagnostics,
     repositoryUrl,
     skills: snapshot.entries,

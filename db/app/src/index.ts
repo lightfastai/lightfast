@@ -218,6 +218,7 @@ export {
   markDeveloperSandboxRunExpired,
   markDeveloperSandboxRunStopped,
 } from "./utils/developer-sandbox-runs";
+export { isDuplicateKeyError } from "./utils/drizzle-results";
 export {
   acquireIdentityIndexRefreshLock,
   createOrLoadIdentityIndexState,
@@ -348,8 +349,8 @@ export {
   listSkillIndexableSourceControlRepositoryCandidates,
   listSkillIndexEntries,
   markSkillIndexKnownStale,
-  markSkillIndexRefreshFresh,
   markSkillIndexRefreshFailed,
+  markSkillIndexRefreshFresh,
   markSkillIndexRefreshStale,
   type ReplaceSkillIndexEntriesInput,
   type ReplaceSkillIndexEntryInput,
@@ -393,7 +394,6 @@ export {
   UserSourceControlAccountConflictError,
   updateObservedUserSourceControlAccountTokens,
 } from "./utils/user-source-control-account";
-export { isDuplicateKeyError } from "./utils/drizzle-results";
 export {
   type AppendWorkspaceAssistantMessageInput,
   appendWorkspaceAssistantMessage,

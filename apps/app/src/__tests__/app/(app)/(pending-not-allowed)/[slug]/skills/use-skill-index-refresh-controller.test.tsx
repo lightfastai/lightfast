@@ -2,7 +2,9 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createListData } from "./fixtures";
 
-type MutationOptions = { onSuccess?: () => void };
+interface MutationOptions {
+  onSuccess?: () => void;
+}
 
 class MockEventSource {
   static instances: MockEventSource[] = [];
@@ -183,9 +185,7 @@ describe("useSkillIndexRefreshController", () => {
       useSkillIndexRefreshController(createListData({ snapshotVersion: "v1" }))
     );
 
-    expect(MockEventSource.instances[0]?.url).toBe(
-      "/api/skills/index/events"
-    );
+    expect(MockEventSource.instances[0]?.url).toBe("/api/skills/index/events");
 
     MockEventSource.instances[0]?.emit("skill-index", {
       snapshotVersion: "v2",

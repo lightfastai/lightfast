@@ -13,10 +13,6 @@ export {
   getSkillIndexSnapshot,
 } from "./read";
 export {
-  enqueueSkillIndexRefresh,
-  requestSkillIndexRefresh,
-} from "./refresh-request";
-export {
   findChangedSkillIndexSources,
   reconcileSkillIndexSources,
 } from "./reconcile";
@@ -24,6 +20,10 @@ export {
   checkSkillIndexSourceRef,
   refreshSkillIndexSource,
 } from "./refresh";
+export {
+  enqueueSkillIndexRefresh,
+  requestSkillIndexRefresh,
+} from "./refresh-request";
 export type {
   BuiltSkillIndex,
   SkillIndexFreshness,

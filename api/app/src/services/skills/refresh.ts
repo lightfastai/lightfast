@@ -279,7 +279,8 @@ export async function refreshSkillIndexSource(input: {
       await publishCurrentSkillIndexState({
         clerkOrgId: publishAfterRelease.clerkOrgId,
         deps,
-        sourceControlRepositoryId: publishAfterRelease.sourceControlRepositoryId,
+        sourceControlRepositoryId:
+          publishAfterRelease.sourceControlRepositoryId,
       });
     }
   }

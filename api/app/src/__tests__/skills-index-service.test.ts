@@ -347,12 +347,14 @@ describe("skills index refresh/read service", () => {
       status: "not_modified",
     });
     deps.getSkillIndexStateBySourceControlRepositoryId
-      .mockResolvedValueOnce(staleState({
-        githubRefEtag: "etag-current",
-        indexedCommitSha: "current-main",
-        lastCheckedCommitSha: "current-main",
-        lastRefreshStatus: "refreshing",
-      }))
+      .mockResolvedValueOnce(
+        staleState({
+          githubRefEtag: "etag-current",
+          indexedCommitSha: "current-main",
+          lastCheckedCommitSha: "current-main",
+          lastRefreshStatus: "refreshing",
+        })
+      )
       .mockResolvedValueOnce(freshState);
     deps.publishSkillIndexChanged.mockRejectedValueOnce(
       new Error("publish failed")
@@ -606,18 +608,14 @@ describe("skills index refresh/read service", () => {
     expect(
       deps.getSkillIndexStateBySourceControlRepositoryId
     ).toHaveBeenCalledTimes(2);
-    expect(
-      deps.listSkillIndexEntries.mock.invocationCallOrder[0]
-    ).toBeLessThan(
+    expect(deps.listSkillIndexEntries.mock.invocationCallOrder[0]).toBeLessThan(
       deps.getSkillIndexStateBySourceControlRepositoryId.mock
         .invocationCallOrder[0] ?? 0
     );
     expect(
       deps.getSkillIndexStateBySourceControlRepositoryId.mock
         .invocationCallOrder[0]
-    ).toBeLessThan(
-      deps.listSkillIndexEntries.mock.invocationCallOrder[1] ?? 0
-    );
+    ).toBeLessThan(deps.listSkillIndexEntries.mock.invocationCallOrder[1] ?? 0);
   });
 
   it("returns stale read data when refresh fails but previous entries exist", async () => {
