@@ -60,7 +60,7 @@ export type AutomationRunAiUsage = Record<string, unknown>;
 
 export interface AutomationRunAiOutput {
   automationId: string;
-  connectorProvider: ConnectableConnectorProvider;
+  connectorProvider: ConnectableConnectorProvider | null;
   finalText: string;
   finishedAt: string;
   finishReason: string;
@@ -75,7 +75,7 @@ export interface AutomationRunAiOutput {
 
 export interface BuildAutomationRunOutputInput {
   automation: {
-    connectorProvider: ConnectableConnectorProvider;
+    connectorProvider: ConnectableConnectorProvider | null;
     name: string;
     prompt: string;
     publicId: string;

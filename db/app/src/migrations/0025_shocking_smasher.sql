@@ -1,0 +1,1 @@
+ALTER TABLE `lightfast_org_automations` MODIFY COLUMN `connector_provider` varchar(32);

@@ -164,7 +164,7 @@ export function calculateNextRunAt(input: {
 
 export interface CreateAutomationInput {
   clerkOrgId: string;
-  connectorProvider: ConnectableConnectorProvider;
+  connectorProvider?: ConnectableConnectorProvider | null;
   createdByUserId: string;
   name: string;
   prompt: string;
@@ -185,7 +185,7 @@ export async function createAutomation(
   await db.insert(automations).values({
     publicId,
     clerkOrgId: input.clerkOrgId,
-    connectorProvider: input.connectorProvider,
+    connectorProvider: input.connectorProvider ?? null,
     createdByUserId: input.createdByUserId,
     name: input.name,
     prompt: input.prompt,

@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const hasMock = vi.fn();
@@ -9,6 +10,7 @@ const redirectMock = vi.fn((url: string) => {
 const automationCreateFormMock = vi.fn(({ slug }: { slug: string }) => (
   <div data-testid="automation-create-form">{slug}</div>
 ));
+const fetchQueryMock = vi.fn();
 
 vi.mock("@vendor/clerk/server", () => ({
   auth: authMock,
@@ -16,6 +18,26 @@ vi.mock("@vendor/clerk/server", () => ({
 
 vi.mock("next/navigation", () => ({
   redirect: redirectMock,
+}));
+
+vi.mock("~/trpc/server", () => ({
+  getQueryClient: () => ({
+    fetchQuery: fetchQueryMock,
+  }),
+  HydrateClient: ({ children }: { children: ReactNode }) => (
+    <div data-testid="hydrate-client">{children}</div>
+  ),
+  trpc: {
+    org: {
+      workspace: {
+        connectors: {
+          list: {
+            queryOptions: () => ({ queryKey: ["connectors", "list"] }),
+          },
+        },
+      },
+    },
+  },
 }));
 
 vi.mock(
@@ -40,6 +62,8 @@ beforeEach(() => {
   authMock.mockClear();
   redirectMock.mockClear();
   automationCreateFormMock.mockClear();
+  fetchQueryMock.mockReset();
+  fetchQueryMock.mockResolvedValue([]);
 });
 
 describe("new automation page", () => {
@@ -50,6 +74,10 @@ describe("new automation page", () => {
     render(element);
 
     expect(hasMock).toHaveBeenCalledWith({ role: "org:admin" });
+    expect(fetchQueryMock).toHaveBeenCalledWith({
+      queryKey: ["connectors", "list"],
+    });
+    expect(screen.getByTestId("hydrate-client")).toBeInTheDocument();
     expect(screen.getByTestId("automation-create-form")).toHaveTextContent(
       "acme"
     );
