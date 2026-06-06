@@ -2,6 +2,7 @@
 
 import { Button } from "@repo/ui/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { useCallback, useDeferredValue, useMemo } from "react";
 import { useWorkspaceCommands } from "~/components/workspace-command-menu";
@@ -31,6 +32,8 @@ import { useSignalsWorkspaceData } from "./use-signals-workspace-data";
 export function SignalsClient() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const params = useParams<{ slug: string }>();
+  const slug = params.slug;
   const { openCreateSignal } = useWorkspaceCommands();
   const [dispositionState, setDispositionState] = useQueryState(
     "disposition",
@@ -188,6 +191,7 @@ export function SignalsClient() {
           }
         }}
         publicId={selectedSignalId}
+        slug={slug}
       />
     </WorkspaceSurface>
   );

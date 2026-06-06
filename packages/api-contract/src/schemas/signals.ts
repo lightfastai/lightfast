@@ -50,6 +50,40 @@ export const signalReviewReasonSchema = z.enum([
   "other",
 ]);
 
+export const signalEntityTargetTypeSchema = z.enum(["person"]);
+export const signalEntityMentionKindSchema = z.enum([
+  "name",
+  "email",
+  "handle",
+  "profile_url",
+]);
+export const signalEntityExtractionMethodSchema = z.enum([
+  "deterministic",
+  "ai",
+]);
+export const signalEntityLocalEntityKeySchema = z
+  .string()
+  .regex(/^person_[1-9][0-9]*$/, "Invalid local entity key");
+export const signalEntityResolvedPersonSchema = z.object({
+  id: z.string().min(1),
+  displayName: z.string().min(1).nullable(),
+  identityProvider: z.enum(["email", "x", "linkedin", "github", "website"]),
+  identityType: z.enum(["email", "handle", "profile_url"]),
+  identityValue: z.string().min(1),
+});
+export const signalEntityLinkSchema = z.object({
+  targetType: signalEntityTargetTypeSchema,
+  localEntityKey: signalEntityLocalEntityKeySchema,
+  label: z.string().trim().min(1).max(160),
+  mentionKind: signalEntityMentionKindSchema,
+  anchorText: z.string().trim().min(1).max(240),
+  anchorOccurrence: z.number().int().positive().max(100),
+  extractionMethod: signalEntityExtractionMethodSchema,
+  rationale: z.string().trim().min(1),
+  confidence: z.number().min(0).max(1),
+  resolvedPerson: signalEntityResolvedPersonSchema.nullable(),
+});
+
 export const signalClassificationRouteDecisionSchema = z.object({
   shouldRun: z.boolean(),
   confidence: z.number().min(0).max(1),
@@ -318,6 +352,7 @@ export const getSignalOutput = z.object({
   input: z.string(),
   status: signalStatusSchema,
   classification: signalClassificationSchema.nullable(),
+  entityLinks: z.array(signalEntityLinkSchema),
   visibilityScope: signalVisibilityScopeSchema,
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -339,6 +374,10 @@ export type SignalClassificationRouting = z.infer<
   typeof signalClassificationRoutingSchema
 >;
 export type SignalStatus = z.infer<typeof signalStatusSchema>;
+export type SignalEntityLink = z.infer<typeof signalEntityLinkSchema>;
+export type SignalEntityResolvedPerson = z.infer<
+  typeof signalEntityResolvedPersonSchema
+>;
 export type CreateSignalInput = z.infer<typeof createSignalInput>;
 export type CreateMcpSignalCommandInput = z.infer<
   typeof createMcpSignalCommandInput

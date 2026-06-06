@@ -4,10 +4,12 @@ import type { ClerkOrganizationMembership } from "../services/team-members/peopl
 
 const syncOrgTeamMemberPeopleMock = vi.fn();
 const markFormerTeamMembersMissingFromSyncMock = vi.fn();
+const reconcileSignalEntityLinksForPeopleMock = vi.fn();
 
 vi.mock("@db/app", () => ({
   markFormerTeamMembersMissingFromSync:
     markFormerTeamMembersMissingFromSyncMock,
+  reconcileSignalEntityLinksForPeople: reconcileSignalEntityLinksForPeopleMock,
   syncOrgTeamMemberPeople: syncOrgTeamMemberPeopleMock,
 }));
 
@@ -67,6 +69,9 @@ beforeEach(() => {
     people: [],
   });
   markFormerTeamMembersMissingFromSyncMock.mockReset().mockResolvedValue(0);
+  reconcileSignalEntityLinksForPeopleMock.mockReset().mockResolvedValue({
+    resolved: 0,
+  });
 });
 
 describe("listAcceptedOrgMemberships", () => {
@@ -97,6 +102,14 @@ describe("syncTeamMembersForOrg", () => {
     const db = {} as Database;
     const syncedAt = new Date("2026-06-06T02:00:00.000Z");
     const clerk = clerkWithPages([[membership()]]);
+    const syncedPeople = [{ publicId: "person_ada" }];
+    syncOrgTeamMemberPeopleMock.mockResolvedValueOnce({
+      activeIdentityKeys: ["identity_ada"],
+      membersSeen: 1,
+      membersSkippedNoEmail: 0,
+      membersUpserted: 1,
+      people: syncedPeople,
+    });
 
     await expect(
       syncTeamMembersForOrg({
@@ -125,6 +138,10 @@ describe("syncTeamMembersForOrg", () => {
         },
       ],
       syncedAt,
+    });
+    expect(reconcileSignalEntityLinksForPeopleMock).toHaveBeenCalledWith(db, {
+      clerkOrgId: "org_test",
+      people: syncedPeople,
     });
     expect(markFormerTeamMembersMissingFromSyncMock).toHaveBeenCalledWith(db, {
       activeIdentityKeys: ["identity_ada"],

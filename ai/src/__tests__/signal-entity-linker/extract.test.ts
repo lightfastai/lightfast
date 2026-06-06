@@ -150,7 +150,7 @@ describe("signal entity linker extraction", () => {
     });
     const jordiCandidate: SignalEntityLinkCandidate = {
       targetType: "person",
-      localEntityKey: "person_2",
+      localEntityKey: "person_1",
       label: "Jordi",
       mentionKind: "name",
       anchorText: "Jordi",
@@ -181,7 +181,13 @@ describe("signal entity linker extraction", () => {
           deterministicCandidates[0],
         ],
       })
-    ).toEqual([deterministicCandidates[0], jordiCandidate]);
+    ).toEqual([
+      deterministicCandidates[0],
+      {
+        ...jordiCandidate,
+        localEntityKey: "person_2",
+      },
+    ]);
   });
 
   it("caps merged candidates at ten", () => {
@@ -221,5 +227,19 @@ describe("signal entity linker extraction", () => {
     expect(mergedCandidates).toHaveLength(10);
     expect(mergedCandidates.slice(0, 8)).toEqual(deterministicCandidates);
     expect(mergedCandidates.at(-1)).toEqual(aiCandidates[1]);
+    expect(
+      mergedCandidates.map((candidate) => candidate.localEntityKey)
+    ).toEqual([
+      "person_1",
+      "person_2",
+      "person_3",
+      "person_4",
+      "person_5",
+      "person_6",
+      "person_7",
+      "person_8",
+      "person_9",
+      "person_10",
+    ]);
   });
 });

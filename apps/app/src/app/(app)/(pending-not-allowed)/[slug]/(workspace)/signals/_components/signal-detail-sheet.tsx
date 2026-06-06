@@ -26,10 +26,12 @@ export function SignalDetailSheet({
   initialItem,
   onOpenChange,
   publicId,
+  slug,
 }: {
   initialItem?: SignalListItem | SignalRow;
   onOpenChange: (open: boolean) => void;
   publicId: string | null;
+  slug: string;
 }) {
   const trpc = useTRPC();
   const open = publicId !== null;
@@ -50,7 +52,10 @@ export function SignalDetailSheet({
   const headerItem: SignalListItem | undefined = seededItem ?? query.data;
   // Body: the full row if seeded, else the fetched row.
   const detail: SignalDetailRow | undefined = hasBody
-    ? (seededItem as SignalRow)
+    ? ({
+        ...(seededItem as SignalRow),
+        entityLinks: [],
+      } as SignalDetailRow)
     : query.data;
   const bodyLoading = !detail && query.isLoading;
 
@@ -111,6 +116,7 @@ export function SignalDetailSheet({
             detail={detail}
             item={headerItem}
             onCopyLink={handleCopyLink}
+            slug={slug}
           />
         ) : query.isError ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-1 p-8 text-center">
