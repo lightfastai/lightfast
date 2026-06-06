@@ -44,10 +44,16 @@ describe("provider routine policy", () => {
     );
   });
 
-  it("classifies known X routines with read/write prefixes", () => {
+  it("classifies known X reads, known X writes, and unknown X names", () => {
     expect(classifyXRoutine("getUsersMe")).toBe("read");
-    expect(classifyXRoutine("list_users")).toBe("read");
-    expect(classifyXRoutine("post_status_update")).toBe("write");
-    expect(classifyXRoutine("some_future_tool")).toBe("read");
+    expect(classifyXRoutine("searchPostsRecent")).toBe("read");
+    expect(classifyXRoutine("createPost")).toBe("write");
+    expect(classifyXRoutine("deletePost")).toBe("write");
+    expect(classifyXRoutine("followUser")).toBe("write");
+    expect(classifyXRoutine("sendDmByConversation")).toBe("write");
+    expect(classifyXRoutine("createCommunityNote")).toBe("write");
+    expect(classifyXRoutine("someFutureXTool")).toBe(
+      "unknown_write_default"
+    );
   });
 });

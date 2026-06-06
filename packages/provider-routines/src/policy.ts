@@ -30,25 +30,75 @@ const LINEAR_WRITE_ROUTINES = new Set([
   "update_project",
 ]);
 
-function providerToolNameIs(pattern: string, providerToolName: string) {
-  return new RegExp(`^${pattern}(_|[A-Z]|$)`).test(providerToolName);
-}
+const X_READ_ROUTINES = new Set([
+  "getUsersMe",
+  "getUsersByUsername",
+  "getUsersByUsernames",
+  "getUsersById",
+  "getUsersByIds",
+  "getPostsById",
+  "getPostsByIds",
+  "searchPostsRecent",
+  "getPostsCountsRecent",
+]);
+
+const X_WRITE_ROUTINES = new Set([
+  "createPost",
+  "deletePost",
+  "repostPost",
+  "unrepostPost",
+  "hideReply",
+  "likePost",
+  "unlikePost",
+  "createBookmark",
+  "deleteBookmark",
+  "followUser",
+  "unfollowUser",
+  "muteUser",
+  "unmuteUser",
+  "blockUser",
+  "unblockUser",
+  "blockDms",
+  "unblockDms",
+  "createList",
+  "updateList",
+  "deleteList",
+  "addListMember",
+  "removeListMember",
+  "followList",
+  "unfollowList",
+  "pinList",
+  "unpinList",
+  "createDmConversation",
+  "sendDmByParticipant",
+  "sendDmByConversation",
+  "deleteDmEvent",
+  "createChatConversation",
+  "initializeChatGroup",
+  "initializeChatConversationKeys",
+  "addChatGroupMembers",
+  "sendChatMessage",
+  "markChatConversationRead",
+  "sendChatTypingIndicator",
+  "addUserPublicKey",
+  "createMediaMetadata",
+  "createMediaSubtitles",
+  "deleteMediaSubtitles",
+  "createCommunityNote",
+  "deleteCommunityNote",
+  "evaluateCommunityNote",
+]);
 
 export function classifyXRoutine(
   providerToolName: string
 ): ProviderRoutineClassification {
-  if (providerToolNameIs("get|list|search|viewer", providerToolName)) {
+  if (X_READ_ROUTINES.has(providerToolName)) {
     return "read";
   }
-  if (
-    providerToolNameIs(
-      "archive|assign|create|delete|move|remove|set|update|post",
-      providerToolName
-    )
-  ) {
+  if (X_WRITE_ROUTINES.has(providerToolName)) {
     return "write";
   }
-  return "read";
+  return "unknown_write_default";
 }
 
 export function hasRoutineScope(input: {
