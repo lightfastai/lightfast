@@ -28,7 +28,7 @@ import {
   UserRoundX,
   Users,
 } from "lucide-react";
-import { memo, useMemo } from "react";
+import { memo, type ReactNode, useMemo } from "react";
 import { useTRPC } from "~/trpc/react";
 import {
   isOptimisticInvitation,
@@ -50,6 +50,78 @@ function initials(name: string) {
 
 function roleLabel(role: string) {
   return role === "org:admin" ? "Admin" : "Member";
+}
+
+function IconTile({ children }: { children: ReactNode }) {
+  return (
+    <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-[9px] border border-border bg-transparent text-foreground">
+      {children}
+    </span>
+  );
+}
+
+function RoleBadge({ role }: { role: string }) {
+  const isAdmin = role === "org:admin";
+
+  return (
+    <Badge
+      className={cn(
+        "shrink-0 gap-1.5",
+        isAdmin
+          ? "border-blue-500/20 bg-blue-500/10 text-blue-700 dark:text-blue-300"
+          : "border-border bg-muted/40 text-muted-foreground"
+      )}
+      variant="outline"
+    >
+      <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
+      {roleLabel(role)}
+    </Badge>
+  );
+}
+
+function CurrentUserBadge() {
+  return (
+    <Badge
+      className="shrink-0 rounded-[7px] px-1.5 py-0 text-[10px] text-muted-foreground"
+      variant="outline"
+    >
+      You
+    </Badge>
+  );
+}
+
+function PendingInvitationBadge() {
+  return (
+    <Badge
+      className="shrink-0 gap-1.5 border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+      variant="outline"
+    >
+      <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
+      Pending
+    </Badge>
+  );
+}
+
+function EmptyState({
+  children,
+  icon,
+  title,
+}: {
+  children: ReactNode;
+  icon: ReactNode;
+  title: string;
+}) {
+  return (
+    <div className="rounded-[12px] border border-border bg-background p-4">
+      <div className="flex items-start gap-3">
+        <IconTile>{icon}</IconTile>
+        <div className="space-y-1">
+          <p className="font-medium text-foreground text-sm">{title}</p>
+          <p className="text-muted-foreground text-sm">{children}</p>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function OrgMemberList({ searchQuery = "" }: { searchQuery?: string }) {
@@ -104,34 +176,32 @@ export function OrgMemberList({ searchQuery = "" }: { searchQuery?: string }) {
 
   if (hasNoRows) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border border-border/60 py-16 text-center">
-        <div className="mb-4 rounded-full bg-muted/20 p-3">
-          <Users className="h-6 w-6 text-muted-foreground" />
-        </div>
-        <p className="font-semibold text-sm">No members yet</p>
-        <p className="mt-1 max-w-sm text-muted-foreground text-sm">
-          Invite teammates to collaborate in this organization.
-        </p>
-      </div>
+      <EmptyState
+        icon={
+          <Users aria-hidden="true" className="size-4 text-muted-foreground" />
+        }
+        title="No members yet"
+      >
+        Invite teammates to collaborate in this organization.
+      </EmptyState>
     );
   }
 
   if (hasNoMatches) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border border-border/60 py-16 text-center">
-        <div className="mb-4 rounded-full bg-muted/20 p-3">
-          <Search className="h-6 w-6 text-muted-foreground" />
-        </div>
-        <p className="font-semibold text-sm">No members found</p>
-        <p className="mt-1 max-w-sm text-muted-foreground text-sm">
-          No members or invitations match your search.
-        </p>
-      </div>
+      <EmptyState
+        icon={
+          <Search aria-hidden="true" className="size-4 text-muted-foreground" />
+        }
+        title="No members found"
+      >
+        No members or invitations match your search.
+      </EmptyState>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border/60">
+    <div className="divide-y divide-border rounded-[12px] border border-border bg-background">
       {visibleMembers.map((member) => (
         <MemberRow
           canManageMembers={canManageMembers}
@@ -174,25 +244,25 @@ const MemberRow = memo(function MemberRow({
   const canManage = canManageMembers && !member.isCurrentUser;
 
   return (
-    <div className="flex items-center justify-between gap-4 border-border/60 border-b px-4 py-3 last:border-b-0">
-      <div className="flex min-w-0 items-center gap-3">
-        <Avatar className="size-9">
-          <AvatarFallback className="bg-foreground text-background text-xs">
+    <div className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <Avatar className="size-9 rounded-[9px] border border-border">
+          <AvatarFallback className="rounded-[9px] bg-transparent font-medium text-foreground text-xs">
             {initials(member.name)}
           </AvatarFallback>
         </Avatar>
-        <div className="min-w-0 space-y-1">
-          <div className="flex items-center gap-2">
-            <p className="truncate font-medium text-sm">{member.name}</p>
-            {member.isCurrentUser && <Badge variant="secondary">You</Badge>}
+        <div className="min-w-0">
+          <div className="flex min-w-0 items-center gap-2">
+            <p className="truncate text-foreground text-sm">{member.name}</p>
+            {member.isCurrentUser ? <CurrentUserBadge /> : null}
           </div>
-          <p className="truncate text-muted-foreground text-sm">
+          <p className="truncate text-muted-foreground text-xs">
             {member.emailAddress}
           </p>
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2 self-start sm:self-center">
         {canManage ? (
           <Select
             disabled={isPending}
@@ -201,7 +271,12 @@ const MemberRow = memo(function MemberRow({
             }
             value={member.role}
           >
-            <SelectTrigger size="sm">
+            <SelectTrigger
+              aria-label={`Role for ${member.name}`}
+              className="w-28"
+              size="sm"
+              variant="lf"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -210,38 +285,38 @@ const MemberRow = memo(function MemberRow({
             </SelectContent>
           </Select>
         ) : (
-          <span className="text-muted-foreground text-sm">
-            {roleLabel(member.role)}
-          </span>
+          <RoleBadge role={member.role} />
         )}
 
         {canManage ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                className="text-muted-foreground hover:text-foreground"
+                aria-label={`Member actions for ${member.name}`}
+                className="size-7 rounded-[9px]"
                 disabled={isPending}
-                size="icon-sm"
+                size="sm"
+                type="button"
                 variant="ghost"
               >
-                <MoreHorizontal className="size-3.5" />
-                <span className="sr-only">Member actions</span>
+                <MoreHorizontal
+                  aria-hidden="true"
+                  className="size-3.5 text-muted-foreground"
+                />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="space-y-1">
+            <DropdownMenuContent align="end">
               <DropdownMenuItem
-                className="cursor-pointer rounded-xl px-2"
+                className="gap-2"
                 onClick={() => onRemove(member.userId)}
                 variant="destructive"
               >
-                <UserRoundX />
+                <UserRoundX aria-hidden="true" className="size-4" />
                 Remove member
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        ) : (
-          <div className="size-6" />
-        )}
+        ) : null}
       </div>
     </div>
   );
@@ -264,16 +339,16 @@ const InvitationRow = memo(function InvitationRow({
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-4 border-border/60 border-b px-4 py-3 last:border-b-0",
+        "flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between",
         isOptimistic && "opacity-60"
       )}
     >
-      <div className="flex min-w-0 items-center gap-3">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted/40">
-          <Mail className="size-4 text-muted-foreground" />
-        </div>
-        <div className="min-w-0 space-y-0.5">
-          <p className="truncate font-medium text-sm">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <IconTile>
+          <Mail aria-hidden="true" className="size-4 text-muted-foreground" />
+        </IconTile>
+        <div className="min-w-0">
+          <p className="truncate text-foreground text-sm">
             {invitation.emailAddress}
           </p>
           <p className="truncate text-muted-foreground text-xs">
@@ -283,39 +358,39 @@ const InvitationRow = memo(function InvitationRow({
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-2">
-        <span className="text-muted-foreground text-sm">
-          {roleLabel(invitation.role)}
-        </span>
-        <Badge variant="secondary">Pending</Badge>
+      <div className="flex shrink-0 items-center gap-2 self-start sm:self-center">
+        <RoleBadge role={invitation.role} />
+        <PendingInvitationBadge />
 
         {canManage ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                className="text-muted-foreground hover:text-foreground"
+                aria-label={`Invitation actions for ${invitation.emailAddress}`}
+                className="size-7 rounded-[9px]"
                 disabled={isPending}
-                size="icon-sm"
+                size="sm"
+                type="button"
                 variant="ghost"
               >
-                <MoreHorizontal className="size-3.5" />
-                <span className="sr-only">Invitation actions</span>
+                <MoreHorizontal
+                  aria-hidden="true"
+                  className="size-3.5 text-muted-foreground"
+                />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="space-y-1">
+            <DropdownMenuContent align="end">
               <DropdownMenuItem
-                className="cursor-pointer rounded-xl px-2"
+                className="gap-2"
                 onClick={() => onRevoke(invitation.id)}
                 variant="destructive"
               >
-                <Trash2 />
+                <Trash2 aria-hidden="true" className="size-4" />
                 Revoke invitation
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        ) : (
-          <div className="size-6" />
-        )}
+        ) : null}
       </div>
     </div>
   );
