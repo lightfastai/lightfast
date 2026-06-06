@@ -4,7 +4,9 @@ import {
   mcpProviderRoutineFindCommandInputSchema,
   parseProviderRoutineId,
   providerRoutineCallInputSchema,
+  providerRoutineErrorCodeSchema,
   providerRoutineFindInputSchema,
+  providerRoutineFindOutputSchema,
   providerRoutineId,
   providerRoutineIdSchema,
   providerRoutineSourceSurfaceSchema,
@@ -85,6 +87,40 @@ describe("proxy schemas", () => {
         routineId: "linear__create_issue",
       })
     ).toThrow();
+  });
+
+  it("parses reconnect-required find warnings", () => {
+    expect(
+      providerRoutineFindOutputSchema.parse({
+        routines: [],
+        warnings: [
+          {
+            code: "PROVIDER_ROUTINE_RECONNECT_REQUIRED",
+            message: "Reconnect Linear to enable write access.",
+            provider: "linear",
+            requiredScopes: ["write"],
+          },
+        ],
+      })
+    ).toEqual({
+      routines: [],
+      warnings: [
+        {
+          code: "PROVIDER_ROUTINE_RECONNECT_REQUIRED",
+          message: "Reconnect Linear to enable write access.",
+          provider: "linear",
+          requiredScopes: ["write"],
+        },
+      ],
+    });
+  });
+
+  it("includes reconnect-required as a provider routine error code", () => {
+    expect(
+      providerRoutineErrorCodeSchema.parse(
+        "PROVIDER_ROUTINE_RECONNECT_REQUIRED"
+      )
+    ).toBe("PROVIDER_ROUTINE_RECONNECT_REQUIRED");
   });
 
   it("parses MCP provider routine proxy commands with actor and scope context", () => {
