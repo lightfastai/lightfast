@@ -47,7 +47,7 @@ function errorLogFields(error: TRPCError): Record<string, unknown> {
  * Create a tRPC observability middleware that consolidates:
  * - Sentry isolation scope + span creation (replaces trpcMiddleware)
  * - Error classification via HTTP status derivation (no constants needed)
- * - Selective Sentry capture (server errors only, with tags)
+ * - Sentry capture for all tRPC errors, with tags for later filtering
  * - Structured logging with trace ID correlation
  */
 export function createObservabilityMiddleware<TCtx>(
@@ -58,13 +58,12 @@ export function createObservabilityMiddleware<TCtx>(
     path,
     ctx,
     type,
-    getRawInput,
   }: {
     next: () => Promise<TResult>;
     path: string;
     ctx: TCtx;
     type: string;
-    getRawInput: () => Promise<unknown>;
+    getRawInput?: () => Promise<unknown>;
   }): Promise<TResult> => {
     if (opts.isDev) {
       const waitMs = Math.floor(Math.random() * 400) + 100;
@@ -79,15 +78,6 @@ export function createObservabilityMiddleware<TCtx>(
         procedure_path: path,
         procedure_type: type,
       };
-
-      try {
-        const rawInput = await getRawInput();
-        if (rawInput !== undefined) {
-          trpcContext.input = rawInput;
-        }
-      } catch {
-        // getRawInput can throw if input parsing failed — safe to ignore
-      }
 
       scope.setContext("trpc", trpcContext);
 
@@ -130,27 +120,26 @@ export function createObservabilityMiddleware<TCtx>(
             log.info("[trpc] ok", meta);
           } else if (result.error) {
             const httpStatus = getHTTPStatusCodeFromError(result.error);
+            const reportedError =
+              result.error.code === "INTERNAL_SERVER_ERROR" &&
+              result.error.cause instanceof Error
+                ? result.error.cause
+                : result.error;
 
+            Sentry.captureException(reportedError, {
+              extra: {
+                durationMs,
+                httpStatus,
+                requestId,
+              },
+              tags: {
+                "trpc.error_code": result.error.code,
+                "trpc.http_status": String(httpStatus),
+                "trpc.path": path,
+                "trpc.type": type,
+              },
+            });
             if (httpStatus >= 500) {
-              // Send the original error for better Sentry grouping and titles.
-              // TRPCError wraps raw Errors with a generic message; the cause has the real info.
-              const reportedError =
-                result.error.code === "INTERNAL_SERVER_ERROR" &&
-                result.error.cause instanceof Error
-                  ? result.error.cause
-                  : result.error;
-
-              Sentry.captureException(reportedError, {
-                extra: {
-                  durationMs,
-                  requestId,
-                },
-                tags: {
-                  "trpc.error_code": result.error.code,
-                  "trpc.path": path,
-                  "trpc.type": type,
-                },
-              });
               log.error("[trpc] server error", meta);
             } else {
               log.info("[trpc] client error", meta);
