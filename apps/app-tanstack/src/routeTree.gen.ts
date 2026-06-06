@@ -41,6 +41,7 @@ import { Route as AuthenticatedAccountTasksGithubRouteImport } from './routes/_a
 import { Route as AuthenticatedAccountSettingsSourceControlRouteImport } from './routes/_authenticated/account/settings/source-control'
 import { Route as AuthenticatedAccountSettingsGeneralRouteImport } from './routes/_authenticated/account/settings/general'
 import { Route as AuthenticatedSlugTasksBindRouteImport } from './routes/_authenticated/$slug/tasks/bind'
+import { Route as AuthenticatedSlugSettingsSourceControlRouteImport } from './routes/_authenticated/$slug/settings/source-control'
 import { Route as AuthenticatedSlugChatConversationIdRouteImport } from './routes/_authenticated/$slug/chat/$conversationId'
 import { Route as AuthenticatedAccountTasksGithubIndexRouteImport } from './routes/_authenticated/account/tasks/github/index'
 import { Route as AuthenticatedSlugTasksBindIndexRouteImport } from './routes/_authenticated/$slug/tasks/bind/index'
@@ -223,6 +224,12 @@ const AuthenticatedSlugTasksBindRoute =
     path: '/bind',
     getParentRoute: () => AuthenticatedSlugTasksRoute,
   } as any)
+const AuthenticatedSlugSettingsSourceControlRoute =
+  AuthenticatedSlugSettingsSourceControlRouteImport.update({
+    id: '/source-control',
+    path: '/source-control',
+    getParentRoute: () => AuthenticatedSlugSettingsRoute,
+  } as any)
 const AuthenticatedSlugChatConversationIdRoute =
   AuthenticatedSlugChatConversationIdRouteImport.update({
     id: '/$conversationId',
@@ -279,7 +286,7 @@ export interface FileRoutesByFullPath {
   '/$slug/connectors': typeof AuthenticatedSlugConnectorsRoute
   '/$slug/decisions': typeof AuthenticatedSlugDecisionsRoute
   '/$slug/people': typeof AuthenticatedSlugPeopleRoute
-  '/$slug/settings': typeof AuthenticatedSlugSettingsRoute
+  '/$slug/settings': typeof AuthenticatedSlugSettingsRouteWithChildren
   '/$slug/signals': typeof AuthenticatedSlugSignalsRoute
   '/$slug/skills': typeof AuthenticatedSlugSkillsRoute
   '/$slug/tasks': typeof AuthenticatedSlugTasksRouteWithChildren
@@ -289,6 +296,7 @@ export interface FileRoutesByFullPath {
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/$slug/': typeof AuthenticatedSlugIndexRoute
   '/$slug/chat/$conversationId': typeof AuthenticatedSlugChatConversationIdRoute
+  '/$slug/settings/source-control': typeof AuthenticatedSlugSettingsSourceControlRoute
   '/$slug/tasks/bind': typeof AuthenticatedSlugTasksBindRouteWithChildren
   '/account/settings/general': typeof AuthenticatedAccountSettingsGeneralRoute
   '/account/settings/source-control': typeof AuthenticatedAccountSettingsSourceControlRoute
@@ -318,7 +326,7 @@ export interface FileRoutesByTo {
   '/$slug/connectors': typeof AuthenticatedSlugConnectorsRoute
   '/$slug/decisions': typeof AuthenticatedSlugDecisionsRoute
   '/$slug/people': typeof AuthenticatedSlugPeopleRoute
-  '/$slug/settings': typeof AuthenticatedSlugSettingsRoute
+  '/$slug/settings': typeof AuthenticatedSlugSettingsRouteWithChildren
   '/$slug/signals': typeof AuthenticatedSlugSignalsRoute
   '/$slug/skills': typeof AuthenticatedSlugSkillsRoute
   '/account/mcp': typeof AuthenticatedAccountMcpRoute
@@ -326,6 +334,7 @@ export interface FileRoutesByTo {
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/$slug': typeof AuthenticatedSlugIndexRoute
   '/$slug/chat/$conversationId': typeof AuthenticatedSlugChatConversationIdRoute
+  '/$slug/settings/source-control': typeof AuthenticatedSlugSettingsSourceControlRoute
   '/account/settings/general': typeof AuthenticatedAccountSettingsGeneralRoute
   '/account/settings/source-control': typeof AuthenticatedAccountSettingsSourceControlRoute
   '/account/tasks/username': typeof AuthenticatedAccountTasksUsernameRoute
@@ -356,7 +365,7 @@ export interface FileRoutesById {
   '/_authenticated/$slug/connectors': typeof AuthenticatedSlugConnectorsRoute
   '/_authenticated/$slug/decisions': typeof AuthenticatedSlugDecisionsRoute
   '/_authenticated/$slug/people': typeof AuthenticatedSlugPeopleRoute
-  '/_authenticated/$slug/settings': typeof AuthenticatedSlugSettingsRoute
+  '/_authenticated/$slug/settings': typeof AuthenticatedSlugSettingsRouteWithChildren
   '/_authenticated/$slug/signals': typeof AuthenticatedSlugSignalsRoute
   '/_authenticated/$slug/skills': typeof AuthenticatedSlugSkillsRoute
   '/_authenticated/$slug/tasks': typeof AuthenticatedSlugTasksRouteWithChildren
@@ -366,6 +375,7 @@ export interface FileRoutesById {
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/_authenticated/$slug/': typeof AuthenticatedSlugIndexRoute
   '/_authenticated/$slug/chat/$conversationId': typeof AuthenticatedSlugChatConversationIdRoute
+  '/_authenticated/$slug/settings/source-control': typeof AuthenticatedSlugSettingsSourceControlRoute
   '/_authenticated/$slug/tasks/bind': typeof AuthenticatedSlugTasksBindRouteWithChildren
   '/_authenticated/account/settings/general': typeof AuthenticatedAccountSettingsGeneralRoute
   '/_authenticated/account/settings/source-control': typeof AuthenticatedAccountSettingsSourceControlRoute
@@ -408,6 +418,7 @@ export interface FileRouteTypes {
     | '/api/trpc/$'
     | '/$slug/'
     | '/$slug/chat/$conversationId'
+    | '/$slug/settings/source-control'
     | '/$slug/tasks/bind'
     | '/account/settings/general'
     | '/account/settings/source-control'
@@ -445,6 +456,7 @@ export interface FileRouteTypes {
     | '/api/trpc/$'
     | '/$slug'
     | '/$slug/chat/$conversationId'
+    | '/$slug/settings/source-control'
     | '/account/settings/general'
     | '/account/settings/source-control'
     | '/account/tasks/username'
@@ -484,6 +496,7 @@ export interface FileRouteTypes {
     | '/api/trpc/$'
     | '/_authenticated/$slug/'
     | '/_authenticated/$slug/chat/$conversationId'
+    | '/_authenticated/$slug/settings/source-control'
     | '/_authenticated/$slug/tasks/bind'
     | '/_authenticated/account/settings/general'
     | '/_authenticated/account/settings/source-control'
@@ -741,6 +754,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSlugTasksBindRouteImport
       parentRoute: typeof AuthenticatedSlugTasksRoute
     }
+    '/_authenticated/$slug/settings/source-control': {
+      id: '/_authenticated/$slug/settings/source-control'
+      path: '/source-control'
+      fullPath: '/$slug/settings/source-control'
+      preLoaderRoute: typeof AuthenticatedSlugSettingsSourceControlRouteImport
+      parentRoute: typeof AuthenticatedSlugSettingsRoute
+    }
     '/_authenticated/$slug/chat/$conversationId': {
       id: '/_authenticated/$slug/chat/$conversationId'
       path: '/$conversationId'
@@ -807,6 +827,21 @@ const AuthenticatedSlugChatRouteWithChildren =
     AuthenticatedSlugChatRouteChildren,
   )
 
+interface AuthenticatedSlugSettingsRouteChildren {
+  AuthenticatedSlugSettingsSourceControlRoute: typeof AuthenticatedSlugSettingsSourceControlRoute
+}
+
+const AuthenticatedSlugSettingsRouteChildren: AuthenticatedSlugSettingsRouteChildren =
+  {
+    AuthenticatedSlugSettingsSourceControlRoute:
+      AuthenticatedSlugSettingsSourceControlRoute,
+  }
+
+const AuthenticatedSlugSettingsRouteWithChildren =
+  AuthenticatedSlugSettingsRoute._addFileChildren(
+    AuthenticatedSlugSettingsRouteChildren,
+  )
+
 interface AuthenticatedSlugTasksBindRouteChildren {
   AuthenticatedSlugTasksBindIndexRoute: typeof AuthenticatedSlugTasksBindIndexRoute
   AuthenticatedSlugTasksBindGithubCompleteRoute: typeof AuthenticatedSlugTasksBindGithubCompleteRoute
@@ -850,7 +885,7 @@ interface AuthenticatedSlugRouteChildren {
   AuthenticatedSlugConnectorsRoute: typeof AuthenticatedSlugConnectorsRoute
   AuthenticatedSlugDecisionsRoute: typeof AuthenticatedSlugDecisionsRoute
   AuthenticatedSlugPeopleRoute: typeof AuthenticatedSlugPeopleRoute
-  AuthenticatedSlugSettingsRoute: typeof AuthenticatedSlugSettingsRoute
+  AuthenticatedSlugSettingsRoute: typeof AuthenticatedSlugSettingsRouteWithChildren
   AuthenticatedSlugSignalsRoute: typeof AuthenticatedSlugSignalsRoute
   AuthenticatedSlugSkillsRoute: typeof AuthenticatedSlugSkillsRoute
   AuthenticatedSlugTasksRoute: typeof AuthenticatedSlugTasksRouteWithChildren
@@ -863,7 +898,7 @@ const AuthenticatedSlugRouteChildren: AuthenticatedSlugRouteChildren = {
   AuthenticatedSlugConnectorsRoute: AuthenticatedSlugConnectorsRoute,
   AuthenticatedSlugDecisionsRoute: AuthenticatedSlugDecisionsRoute,
   AuthenticatedSlugPeopleRoute: AuthenticatedSlugPeopleRoute,
-  AuthenticatedSlugSettingsRoute: AuthenticatedSlugSettingsRoute,
+  AuthenticatedSlugSettingsRoute: AuthenticatedSlugSettingsRouteWithChildren,
   AuthenticatedSlugSignalsRoute: AuthenticatedSlugSignalsRoute,
   AuthenticatedSlugSkillsRoute: AuthenticatedSlugSkillsRoute,
   AuthenticatedSlugTasksRoute: AuthenticatedSlugTasksRouteWithChildren,

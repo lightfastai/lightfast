@@ -1,20 +1,56 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { WorkspacePage } from "~/components/workspace-page";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { SettingsSidebar } from "~/components/settings-sidebar";
 
 export const Route = createFileRoute("/_authenticated/$slug/settings")({
+  beforeLoad: ({ location, params }) => {
+    if (location.pathname === `/${params.slug}/settings`) {
+      throw redirect({
+        params: { slug: params.slug },
+        to: "/$slug/settings/source-control",
+      });
+    }
+  },
   head: ({ params }) => ({
-    meta: [{ title: `Settings - ${params.slug} - Lightfast` }],
+    meta: [
+      { title: `Settings - ${params.slug} - Lightfast` },
+      {
+        name: "description",
+        content: "Manage your Lightfast workspace settings.",
+      },
+    ],
   }),
-  component: WorkspaceSettingsPage,
+  component: WorkspaceSettingsLayout,
 });
 
-function WorkspaceSettingsPage() {
+function WorkspaceSettingsLayout() {
   const { slug } = Route.useParams();
+
   return (
-    <WorkspacePage
-      description="Workspace settings now have a TanStack route target. Team profile, members, and integration settings can be migrated into this shell."
-      eyebrow={`/${slug}/settings`}
-      title="Settings"
-    />
+    <div className="flex w-full flex-col">
+      <div className="mx-auto w-full max-w-7xl pr-6 pb-16 pl-3 lg:px-8">
+        <div className="pt-2 pb-8">
+          <h1 className="pl-3 font-medium font-pp text-3xl text-foreground tracking-tight">
+            Settings
+          </h1>
+        </div>
+
+        <div className="flex flex-col gap-8 md:flex-row md:gap-12">
+          <SettingsSidebar
+            items={[
+              {
+                activePath: `/${slug}/settings/source-control`,
+                name: "Source Control & Git",
+                params: { slug },
+                to: "/$slug/settings/source-control",
+              },
+            ]}
+          />
+
+          <div className="min-w-0 max-w-4xl flex-1">
+            <Outlet />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

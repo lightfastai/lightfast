@@ -1,10 +1,23 @@
 import { Button } from "@repo/ui/components/ui/button";
 import { Link, useLocation } from "@tanstack/react-router";
 
-interface SettingsSidebarItem {
+interface AccountSettingsSidebarItem {
+  activePath?: string;
   name: string;
+  params?: never;
   to: "/account/settings/general" | "/account/settings/source-control";
 }
+
+interface WorkspaceSettingsSidebarItem {
+  activePath: string;
+  name: string;
+  params: { slug: string };
+  to: "/$slug/settings/source-control";
+}
+
+type SettingsSidebarItem =
+  | AccountSettingsSidebarItem
+  | WorkspaceSettingsSidebarItem;
 
 export function SettingsSidebar({ items }: { items: SettingsSidebarItem[] }) {
   const location = useLocation();
@@ -13,7 +26,7 @@ export function SettingsSidebar({ items }: { items: SettingsSidebarItem[] }) {
     <aside className="w-full flex-shrink-0 md:w-48">
       <nav className="grid grid-cols-2 gap-1 sm:grid-cols-4 md:block md:space-y-1">
         {items.map((item) => {
-          const isActive = location.pathname === item.to;
+          const isActive = location.pathname === (item.activePath ?? item.to);
 
           return (
             <Button
@@ -24,9 +37,15 @@ export function SettingsSidebar({ items }: { items: SettingsSidebarItem[] }) {
               size="sm"
               variant="none"
             >
-              <Link preload="intent" to={item.to}>
-                {item.name}
-              </Link>
+              {item.params ? (
+                <Link params={item.params} preload="intent" to={item.to}>
+                  {item.name}
+                </Link>
+              ) : (
+                <Link preload="intent" to={item.to}>
+                  {item.name}
+                </Link>
+              )}
             </Button>
           );
         })}

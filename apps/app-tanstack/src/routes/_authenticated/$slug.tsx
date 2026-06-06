@@ -128,7 +128,13 @@ function OrganizationHomePage() {
 
   return (
     <SidebarProvider className="!h-full !min-h-0 overflow-hidden bg-background">
-      <AppSidebar orgSlug={slug} />
+      <AppSidebar
+        orgSlug={slug}
+        showChatHistory={
+          orgAccess.bindingStatus === "bound" &&
+          !orgSettingsPath(slug, location.pathname)
+        }
+      />
       <SidebarInset className="min-h-0 overflow-hidden">
         <AuthenticatedTopbar
           left={<SidebarTrigger className="size-11 rounded-xl lg:hidden" />}

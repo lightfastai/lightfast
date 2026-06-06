@@ -72,9 +72,16 @@ describe("app-tanstack authenticated route migration", () => {
     expect(teamSwitcherSource).not.toContain("next/link");
     expect(appSidebarSource).toContain("listConversations.queryOptions");
     expect(appSidebarSource).toContain('to="/$slug/chat/$conversationId"');
+    expect(appSidebarSource).toContain("showChatHistory = true");
+    expect(appSidebarSource).toContain("showChatHistory ? (");
     expect(orgRouteSource).toContain("getBySlug.queryOptions({ slug })");
     expect(orgRouteSource).toContain("orgSetupExemptPath");
     expect(orgRouteSource).toContain("SetupRequirementNavigate");
+    expect(orgRouteSource).toContain("showChatHistory={");
+    expect(orgRouteSource).toContain('orgAccess.bindingStatus === "bound"');
+    expect(orgRouteSource).toContain(
+      "!orgSettingsPath(slug, location.pathname)"
+    );
     expect(orgRouteSource).toContain("Team not found");
     expect(orgRouteSource).not.toContain("organization?.name ?? slug");
     expect(conversationRouteSource).toContain("createFileRoute");
@@ -233,6 +240,95 @@ describe("app-tanstack authenticated route migration", () => {
       accountGithubIndexRouteSource,
     ]) {
       expect(routeFile).not.toContain("next/");
+    }
+  });
+
+  it("ports org source-control settings without Next.js route imports", () => {
+    const settingsLayoutSource = source(
+      "src/routes/_authenticated/$slug/settings.tsx"
+    );
+    const sourceControlRouteSource = source(
+      "src/routes/_authenticated/$slug/settings/source-control.tsx"
+    );
+    const sidebarSource = source("src/components/settings-sidebar.tsx");
+    const settingsClientSource = source(
+      "src/org/settings/source-control/source-control-settings-client.tsx"
+    );
+    const connectionCardSource = source(
+      "src/org/settings/source-control/source-control-connection-card.tsx"
+    );
+    const repositoryListSource = source(
+      "src/org/settings/source-control/repository-list.tsx"
+    );
+    const addRepositoryDialogSource = source(
+      "src/org/settings/source-control/add-repository-dialog.tsx"
+    );
+    const repositoryCardSource = source(
+      "src/org/settings/source-control/repository-card.tsx"
+    );
+    const formatSource = source(
+      "src/org/settings/source-control/source-control-format.ts"
+    );
+    const lfSelectSource = source("src/components/lf-select.tsx");
+
+    expect(settingsLayoutSource).toContain(
+      'createFileRoute("/_authenticated/$slug/settings")'
+    );
+    expect(settingsLayoutSource).toContain(
+      "component: WorkspaceSettingsLayout"
+    );
+    expect(settingsLayoutSource).toContain(
+      'to: "/$slug/settings/source-control"'
+    );
+    expect(settingsLayoutSource).toContain("<Outlet />");
+    expect(settingsLayoutSource).toContain("SettingsSidebar");
+    expect(sourceControlRouteSource).toContain("createFileRoute");
+    expect(sourceControlRouteSource).toContain(
+      '"/_authenticated/$slug/settings/source-control"'
+    );
+    expect(sourceControlRouteSource).toContain("SourceControlSettingsClient");
+    expect(sidebarSource).toContain("params");
+    expect(settingsClientSource).toContain(
+      "org.settings.sourceControl.get.queryOptions"
+    );
+    expect(settingsClientSource).toContain(
+      "org.settings.sourceControl.listRepositories.queryOptions"
+    );
+    expect(settingsClientSource).toContain(
+      'enabled: typeof window !== "undefined"'
+    );
+    expect(settingsClientSource).toContain("SourceControlConnectionCard");
+    expect(settingsClientSource).toContain("RepositoryList");
+    expect(settingsClientSource).toContain('to="/$slug/tasks/bind"');
+    expect(connectionCardSource).toContain(
+      'to="/$slug/tasks/github/lightfast-repo"'
+    );
+    expect(repositoryListSource).toContain("useAuth");
+    expect(repositoryListSource).toContain("AddRepositoryDialog");
+    expect(repositoryListSource).toContain("RepositoryCard");
+    expect(repositoryListSource).toContain("LfSelect");
+    expect(addRepositoryDialogSource).toContain(
+      "sourceControl.importRepository.mutationOptions"
+    );
+    expect(addRepositoryDialogSource).toContain("setQueryData");
+    expect(addRepositoryDialogSource).toContain("LIGHTFAST_REPOSITORY_NAME");
+    expect(repositoryCardSource).toContain("Open on GitHub");
+    expect(formatSource).toContain("formatStatusSubtitle");
+    expect(lfSelectSource).toContain("function LfSelect");
+
+    for (const routeFile of [
+      settingsLayoutSource,
+      sourceControlRouteSource,
+      settingsClientSource,
+      connectionCardSource,
+      repositoryListSource,
+      addRepositoryDialogSource,
+      repositoryCardSource,
+      formatSource,
+      lfSelectSource,
+    ]) {
+      expect(routeFile).not.toContain("next/");
+      expect(routeFile).not.toContain("@vendor/clerk");
     }
   });
 });
