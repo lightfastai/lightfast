@@ -2,13 +2,18 @@ import { describe, expect, it } from "vitest";
 import {
   matchesAnyWatchedPath,
   matchesWatchedPath,
+  normalizeWatchedWebhookEvents,
+  SOURCE_CONTROL_PR_WEBHOOK_EVENTS,
   SOURCE_CONTROL_ALL_PATHS_GLOB,
   SOURCE_CONTROL_REPOSITORY_SYNC_STATUSES,
   SOURCE_CONTROL_WEBHOOK_DELIVERY_STATUSES,
+  sourceControlPrWebhookEventSchema,
   sourceControlRepositoryPushEventSchema,
   sourceControlRepositorySyncStatusSchema,
   splitRepositoryFullName,
   watchedPathGlobsSchema,
+  watchedWebhookEventsSchema,
+  watchesWebhookEvent,
 } from "../index";
 
 describe("@repo/source-control-contract", () => {
@@ -33,6 +38,51 @@ describe("@repo/source-control-contract", () => {
     expect(sourceControlRepositorySyncStatusSchema.parse("disabled")).toBe(
       "disabled"
     );
+  });
+
+  it("defines PR webhook event families", () => {
+    expect(SOURCE_CONTROL_PR_WEBHOOK_EVENTS).toEqual([
+      "pull_request",
+      "pull_request_review",
+      "pull_request_review_comment",
+      "pull_request_review_thread",
+      "issue_comment",
+    ]);
+    expect(sourceControlPrWebhookEventSchema.parse("pull_request")).toBe(
+      "pull_request"
+    );
+    expect(
+      sourceControlPrWebhookEventSchema.parse("pull_request_review_thread")
+    ).toBe("pull_request_review_thread");
+    expect(sourceControlPrWebhookEventSchema.safeParse("push").success).toBe(
+      false
+    );
+  });
+
+  it("validates watched webhook event lists with empty default support", () => {
+    expect(watchedWebhookEventsSchema.parse([])).toEqual([]);
+    expect(
+      watchedWebhookEventsSchema.parse([
+        "pull_request",
+        "pull_request_review_comment",
+      ])
+    ).toEqual(["pull_request", "pull_request_review_comment"]);
+    expect(watchedWebhookEventsSchema.safeParse(["push"]).success).toBe(false);
+  });
+
+  it("normalizes nullable watched webhook events", () => {
+    expect(normalizeWatchedWebhookEvents(null)).toEqual([]);
+    expect(normalizeWatchedWebhookEvents(undefined)).toEqual([]);
+    expect(
+      normalizeWatchedWebhookEvents(["pull_request", "issue_comment"])
+    ).toEqual(["pull_request", "issue_comment"]);
+  });
+
+  it("checks whether a repository watches a webhook event family", () => {
+    expect(watchesWebhookEvent(["pull_request"], "pull_request")).toBe(true);
+    expect(watchesWebhookEvent(["pull_request"], "issue_comment")).toBe(false);
+    expect(watchesWebhookEvent(null, "pull_request")).toBe(false);
+    expect(watchesWebhookEvent([], "push")).toBe(false);
   });
 
   it("validates watched path globs as supported non-empty patterns", () => {
