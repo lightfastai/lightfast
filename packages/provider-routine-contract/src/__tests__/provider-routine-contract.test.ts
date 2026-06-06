@@ -22,6 +22,17 @@ describe("provider routine ids", () => {
     expect(providerRoutineIdSchema.parse(routineId)).toBe(routineId);
   });
 
+  it("accepts case-preserving X provider routine ids", () => {
+    const routineId = providerRoutineId("x", "getUsersByUsername");
+
+    expect(routineId).toBe("x__getUsersByUsername");
+    expect(parseProviderRoutineId(routineId)).toEqual({
+      provider: "x",
+      providerToolName: "getUsersByUsername",
+    });
+    expect(providerRoutineIdSchema.parse(routineId)).toBe(routineId);
+  });
+
   it("preserves provider tool names containing double underscores", () => {
     expect(parseProviderRoutineId("linear__foo__bar")).toEqual({
       provider: "linear",
