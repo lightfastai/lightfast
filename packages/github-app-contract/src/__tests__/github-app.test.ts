@@ -2,17 +2,21 @@ import { describe, expect, it } from "vitest";
 import {
   GITHUB_BIND_ERROR_CODES,
   GITHUB_OAUTH_CALLBACK_PATH,
+  GITHUB_PR_WEBHOOK_EVENTS,
   GITHUB_SETUP_PATH,
   GITHUB_USER_ACCOUNT_OAUTH_CALLBACK_PATH,
   GITHUB_USER_ACCOUNT_RETURN_TO_MAX_LENGTH,
   githubBindStartOutputSchema,
   githubInstallationMetadataSchema,
   githubNormalizedInstallationSchema,
+  githubPrWebhookEventSchema,
+  githubPrWebhookPayloadSchema,
   githubPushWebhookPayloadSchema,
   githubUserAccountBindErrorCodeSchema,
   githubUserAccountReturnToSchema,
   githubWebhookHeadersSchema,
   isGitHubUserAccountReturnTo,
+  normalizeGitHubPrWebhookPayload,
   normalizeGitHubPushWebhookPayload,
   normalizeGitHubUserAccountReturnTo,
 } from "../github-app";
@@ -151,6 +155,19 @@ describe("@repo/github-app-contract", () => {
   });
 });
 
+const prInstallation = { id: 1001 };
+const prRepository = {
+  full_name: "lightfast-emulated/workspace",
+  id: 2002,
+  name: "workspace",
+  owner: { login: "lightfast-emulated" },
+};
+const prObject = {
+  id: 3003,
+  number: 42,
+  html_url: "https://github.example.test/lightfast-emulated/workspace/pull/42",
+};
+
 describe("GitHub webhook schemas", () => {
   it("validates webhook headers", () => {
     expect(
@@ -194,6 +211,174 @@ describe("GitHub webhook schemas", () => {
         signature256: `sha1=${"a".repeat(40)}`,
       }).success
     ).toBe(false);
+  });
+
+  it("defines GitHub PR webhook event families", () => {
+    expect(GITHUB_PR_WEBHOOK_EVENTS).toEqual([
+      "pull_request",
+      "pull_request_review",
+      "pull_request_review_comment",
+      "pull_request_review_thread",
+      "issue_comment",
+    ]);
+    expect(githubPrWebhookEventSchema.parse("pull_request_review")).toBe(
+      "pull_request_review"
+    );
+    expect(githubPrWebhookEventSchema.safeParse("push").success).toBe(false);
+  });
+
+  it("normalizes pull_request webhook routing fields", () => {
+    const payload = githubPrWebhookPayloadSchema.parse({
+      action: "synchronize",
+      installation: prInstallation,
+      pull_request: prObject,
+      repository: prRepository,
+    });
+
+    expect(
+      normalizeGitHubPrWebhookPayload({
+        event: "pull_request",
+        payload,
+      })
+    ).toEqual({
+      action: "synchronize",
+      event: "pull_request",
+      providerInstallationId: "1001",
+      providerPullRequestId: "3003",
+      providerRepositoryId: "2002",
+      pullRequestNumber: 42,
+    });
+  });
+
+  it("normalizes pull_request_review webhook routing fields", () => {
+    const payload = githubPrWebhookPayloadSchema.parse({
+      action: "submitted",
+      installation: prInstallation,
+      pull_request: prObject,
+      repository: prRepository,
+      review: { id: 4004, state: "approved" },
+    });
+
+    expect(
+      normalizeGitHubPrWebhookPayload({
+        event: "pull_request_review",
+        payload,
+      })
+    ).toMatchObject({
+      action: "submitted",
+      event: "pull_request_review",
+      providerPullRequestId: "3003",
+      pullRequestNumber: 42,
+    });
+  });
+
+  it("normalizes review comment payloads without requiring a PR id", () => {
+    const payload = githubPrWebhookPayloadSchema.parse({
+      action: "created",
+      comment: {
+        id: 5005,
+        pull_request_url:
+          "https://api.github.example.test/repos/lightfast-emulated/workspace/pulls/42",
+      },
+      installation: prInstallation,
+      repository: prRepository,
+    });
+
+    expect(
+      normalizeGitHubPrWebhookPayload({
+        event: "pull_request_review_comment",
+        payload,
+      })
+    ).toEqual({
+      action: "created",
+      event: "pull_request_review_comment",
+      providerInstallationId: "1001",
+      providerPullRequestId: null,
+      providerRepositoryId: "2002",
+      pullRequestNumber: 42,
+    });
+  });
+
+  it("normalizes review thread payloads from the pull_request object", () => {
+    const payload = githubPrWebhookPayloadSchema.parse({
+      action: "resolved",
+      installation: prInstallation,
+      pull_request: prObject,
+      repository: prRepository,
+      thread: { id: 6006 },
+    });
+
+    expect(
+      normalizeGitHubPrWebhookPayload({
+        event: "pull_request_review_thread",
+        payload,
+      })
+    ).toMatchObject({
+      action: "resolved",
+      event: "pull_request_review_thread",
+      providerPullRequestId: "3003",
+      pullRequestNumber: 42,
+    });
+  });
+
+  it("normalizes PR-attached issue comments and leaves PR id nullable", () => {
+    const payload = githubPrWebhookPayloadSchema.parse({
+      action: "edited",
+      comment: { id: 7007, body: "Updated" },
+      installation: prInstallation,
+      issue: {
+        number: 42,
+        pull_request: {
+          url: "https://api.github.example.test/repos/lightfast-emulated/workspace/pulls/42",
+        },
+      },
+      repository: prRepository,
+    });
+
+    expect(
+      normalizeGitHubPrWebhookPayload({
+        event: "issue_comment",
+        payload,
+      })
+    ).toEqual({
+      action: "edited",
+      event: "issue_comment",
+      providerInstallationId: "1001",
+      providerPullRequestId: null,
+      providerRepositoryId: "2002",
+      pullRequestNumber: 42,
+    });
+  });
+
+  it("returns null for issue comments that are not attached to PRs", () => {
+    const payload = githubPrWebhookPayloadSchema.parse({
+      action: "created",
+      comment: { id: 7007, body: "Issue comment" },
+      installation: prInstallation,
+      issue: { number: 42 },
+      repository: prRepository,
+    });
+
+    expect(
+      normalizeGitHubPrWebhookPayload({
+        event: "issue_comment",
+        payload,
+      })
+    ).toBeNull();
+  });
+
+  it("rejects PR-family payloads without a pull request number", () => {
+    expect(() =>
+      normalizeGitHubPrWebhookPayload({
+        event: "pull_request",
+        payload: githubPrWebhookPayloadSchema.parse({
+          action: "opened",
+          installation: prInstallation,
+          pull_request: { id: 3003 },
+          repository: prRepository,
+        }),
+      })
+    ).toThrow(/pull request number/i);
   });
 
   it("normalizes push payload routing fields", () => {
