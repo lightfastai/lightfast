@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { resolveAuthContextFromClerk } from "@api/app/auth/identity";
+import { loadConnectorRuntimeTools } from "@api/app/services/connectors/runtime";
 import {
   getSkillIndexSnapshot,
   getVerifiedLightfastSkillSourceRepositoryId,
@@ -90,7 +91,7 @@ const baseSystemPrompt = [
   "When asked about skills, explain what the listed skills can do and suggest the next concrete action.",
   "When connector tools are useful, first find connected provider routines, then call the selected routine by routineId.",
   "Only call provider routines for the active workspace.",
-  "Connected provider routines in chat are read-only; do not use them to create, update, delete, post, assign, archive, or move external records.",
+  "Connected provider routines may read and write when their connector is enabled for agents. Only call routines that are useful for the user's request, and summarize any external action you took.",
 ].join(" ");
 
 export const maxDuration = 30;
@@ -503,7 +504,7 @@ function createWorkspaceAssistantProviderRoutineTools(input: {
   return {
     callProviderRoutine: tool({
       description:
-        "Call one read-only connected provider routine by routineId using this workspace's enabled connector. Use routineIds returned by findProviderRoutines.",
+        "Call one connected provider routine by routineId using this workspace's agent-enabled connector. Use routineIds returned by findProviderRoutines.",
       inputSchema: providerRoutineCallInputSchema,
       outputSchema: providerRoutineCallSuccessSchema,
       execute: async (toolInput) =>
@@ -511,14 +512,11 @@ function createWorkspaceAssistantProviderRoutineTools(input: {
     }),
     findProviderRoutines: tool({
       description:
-        "Find read-only connected provider routines available to this workspace through enabled connectors. Use this before calling callProviderRoutine.",
+        "Find connected provider routines available to this workspace through agent-enabled connectors. Use this before calling callProviderRoutine.",
       inputSchema: providerRoutineFindInputSchema,
       outputSchema: providerRoutineFindOutputSchema,
       execute: async (toolInput) =>
-        findProviderRoutines(providerRoutineContext(input), {
-          ...toolInput,
-          readOnly: true,
-        }),
+        findProviderRoutines(providerRoutineContext(input), toolInput),
     }),
   };
 }
@@ -533,12 +531,25 @@ function providerRoutineContext(input: {
       orgId: input.orgId,
       userId: input.userId,
     },
+    adapters: {
+      connectors: {
+        loadTools: async () =>
+          loadConnectorRuntimeTools({
+            calledByUserId: input.userId,
+            clerkOrgId: input.orgId,
+            enabledFor: "agents",
+            sourceClientId: null,
+            sourceRef: input.conversation.publicId,
+            sourceSurface: "chat",
+          }),
+      },
+    },
     db,
     log,
     now: () => new Date(),
     scopes: {
       providerRoutineRead: true,
-      providerRoutineWrite: false,
+      providerRoutineWrite: true,
     },
     source: {
       clientId: null,

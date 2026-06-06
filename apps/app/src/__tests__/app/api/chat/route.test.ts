@@ -13,6 +13,7 @@ const getWorkspaceAssistantConversationByPublicIdMock = vi.fn();
 const getVerifiedLightfastSkillSourceRepositoryIdMock = vi.fn();
 const isDuplicateKeyErrorMock = vi.fn();
 const listWorkspaceAssistantMessagesMock = vi.fn();
+const loadConnectorRuntimeToolsMock = vi.fn();
 const logErrorMock = vi.fn();
 const logInfoMock = vi.fn();
 const logWarnMock = vi.fn();
@@ -41,6 +42,10 @@ vi.mock("@api/app/services/skills", () => ({
   getSkillIndexSnapshot: getSkillIndexSnapshotMock,
   getVerifiedLightfastSkillSourceRepositoryId:
     getVerifiedLightfastSkillSourceRepositoryIdMock,
+}));
+
+vi.mock("@api/app/services/connectors/runtime", () => ({
+  loadConnectorRuntimeTools: loadConnectorRuntimeToolsMock,
 }));
 
 vi.mock("@db/app", () => ({
@@ -122,6 +127,7 @@ beforeEach(() => {
   getVerifiedLightfastSkillSourceRepositoryIdMock.mockReset();
   isDuplicateKeyErrorMock.mockReset();
   listWorkspaceAssistantMessagesMock.mockReset();
+  loadConnectorRuntimeToolsMock.mockReset();
   logErrorMock.mockReset();
   logInfoMock.mockReset();
   logWarnMock.mockReset();
@@ -574,7 +580,7 @@ describe("chat route", () => {
     vi.doUnmock("~/app/(chat)/api/chat/resumable-stream-config");
   });
 
-  it("exposes read-only connector provider routines to the workspace assistant as server tools", async () => {
+  it("exposes read-write connector provider routines to the workspace assistant as server tools", async () => {
     const uiMessages = [
       {
         id: "client-message-1",
@@ -602,18 +608,19 @@ describe("chat route", () => {
     );
 
     const streamOptions = streamTextMock.mock.calls[0]?.[0];
+    expect(streamOptions.system).not.toContain("read-only");
     expect(streamOptions).toEqual(
       expect.objectContaining({
         stopWhen: { count: 5, kind: "step-count" },
         tools: {
           callProviderRoutine: expect.objectContaining({
             description: expect.stringContaining(
-              "Call one read-only connected"
+              "Call one connected provider routine"
             ),
             execute: expect.any(Function),
           }),
           findProviderRoutines: expect.objectContaining({
-            description: expect.stringContaining("Find read-only connected"),
+            description: expect.stringContaining("agent-enabled connectors"),
             execute: expect.any(Function),
           }),
         },
@@ -628,10 +635,13 @@ describe("chat route", () => {
     expect(findProviderRoutinesMock).toHaveBeenCalledWith(
       expect.objectContaining({
         actor: { orgId: "org_123", userId: "user_123" },
+        adapters: {
+          connectors: { loadTools: expect.any(Function) },
+        },
         db: { kind: "mock-db" },
         scopes: {
           providerRoutineRead: true,
-          providerRoutineWrite: false,
+          providerRoutineWrite: true,
         },
         source: {
           clientId: null,
@@ -642,9 +652,18 @@ describe("chat route", () => {
       {
         includeSchema: true,
         query: "issue",
-        readOnly: true,
       }
     );
+    const findContext = findProviderRoutinesMock.mock.calls[0]?.[0];
+    await findContext.adapters.connectors.loadTools();
+    expect(loadConnectorRuntimeToolsMock).toHaveBeenCalledWith({
+      calledByUserId: "user_123",
+      clerkOrgId: "org_123",
+      enabledFor: "agents",
+      sourceClientId: null,
+      sourceRef: "conv_123",
+      sourceSurface: "chat",
+    });
 
     await streamOptions.tools.callProviderRoutine.execute({
       input: { id: "issue_123" },
@@ -658,10 +677,13 @@ describe("chat route", () => {
           info: expect.any(Function),
           warn: expect.any(Function),
         }),
+        adapters: {
+          connectors: { loadTools: expect.any(Function) },
+        },
         now: expect.any(Function),
         scopes: {
           providerRoutineRead: true,
-          providerRoutineWrite: false,
+          providerRoutineWrite: true,
         },
         source: {
           clientId: null,
