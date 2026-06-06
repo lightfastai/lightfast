@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const updateDomainsMutateMock = vi.fn();
 const useAuthMock = vi.fn();
+let domainsEnabled = true;
 const domainsQueryOptions = {
   queryKey: ["org", "settings", "organization", "listDomains", "acme"],
 };
@@ -57,10 +58,15 @@ vi.mock("@tanstack/react-query", () => ({
   useSuspenseQuery: vi.fn((options: { queryKey: string[] }) => {
     if (options.queryKey === domainsQueryOptions.queryKey) {
       return {
-        data: [
-          { id: "orgdmn_1", name: "jeevanpillay.com" },
-          { id: "orgdmn_2", name: "lightfast.ai" },
-        ],
+        data: {
+          domains: domainsEnabled
+            ? [
+                { id: "orgdmn_1", name: "jeevanpillay.com" },
+                { id: "orgdmn_2", name: "lightfast.ai" },
+              ]
+            : [],
+          enabled: domainsEnabled,
+        },
       };
     }
     return {
@@ -93,6 +99,7 @@ beforeEach(() => {
   updateDomainsMutateMock.mockClear();
   updateDomainsMutationOptionsMock.mockClear();
   updateNameMutationOptionsMock.mockClear();
+  domainsEnabled = true;
   useAuthMock.mockReset();
   useAuthMock.mockReturnValue({
     has: ({ role }: { role?: string }) => role === "org:admin",
@@ -125,6 +132,16 @@ describe("TeamGeneralSettingsClient", () => {
     expect(listDomainsQueryOptionsMock).toHaveBeenCalledWith({
       slug: "acme",
     });
+  });
+
+  it("hides the Domains controls when Clerk domains are unavailable", () => {
+    domainsEnabled = false;
+
+    render(<TeamGeneralSettingsClient slug="acme" />);
+
+    expect(screen.getByRole("heading", { name: "Profile" })).toBeVisible();
+    expect(screen.queryByText("Domains")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Add domain")).not.toBeInTheDocument();
   });
 
   it("disables the Domains controls for non-admin members", () => {

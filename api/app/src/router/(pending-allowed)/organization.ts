@@ -14,7 +14,10 @@ import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
 
-import { isClerkConflictError } from "../../auth/clerk-errors";
+import {
+  isClerkConflictError,
+  isClerkOrganizationDomainsNotEnabled,
+} from "../../auth/clerk-errors";
 import { listUserOrganizationMemberships } from "../../auth/clerk-org-membership";
 import {
   getOrgAccessBySlug,
@@ -117,6 +120,35 @@ async function listOrganizationDomains(
     organizationId,
   });
   return result.data;
+}
+
+function organizationDomainsUnavailableError(error: unknown) {
+  return new TRPCError({
+    code: "PRECONDITION_FAILED",
+    message: "Organization domains are not enabled for this Clerk instance.",
+    cause: error,
+  });
+}
+
+async function listOrganizationDomainsWithAvailability(
+  clerk: ClerkClient,
+  organizationId: string
+) {
+  try {
+    return {
+      domains: await listOrganizationDomains(clerk, organizationId),
+      enabled: true,
+    };
+  } catch (error) {
+    if (isClerkOrganizationDomainsNotEnabled(error)) {
+      log.warn("[organization] domains unavailable", {
+        organizationId,
+        error: parseError(error),
+      });
+      return { domains: [], enabled: false };
+    }
+    throw error;
+  }
 }
 
 async function getOrganizationAccessBySlugOrThrow(input: {
@@ -376,9 +408,15 @@ export const orgSettingsOrganizationRouter = {
         userId: ctx.auth.identity.userId,
       });
       const clerk = await clerkClient();
-      const domains = await listOrganizationDomains(clerk, access.org.id);
+      const domainResult = await listOrganizationDomainsWithAvailability(
+        clerk,
+        access.org.id
+      );
 
-      return sortDomainResponses(domains.map(domainResponse));
+      return {
+        domains: sortDomainResponses(domainResult.domains.map(domainResponse)),
+        enabled: domainResult.enabled,
+      };
     }),
 
   updateDomains: orgAdminProcedure
@@ -398,59 +436,66 @@ export const orgSettingsOrganizationRouter = {
       }
 
       const clerk = await clerkClient();
-      const existingDomains = await listOrganizationDomains(
-        clerk,
-        access.org.id
-      );
-      const nextDomainNames = new Set(input.domains);
-      const existingByName = new Map(
-        existingDomains.map((domain) => [domain.name.toLowerCase(), domain])
-      );
-      const domainsToDelete = existingDomains.filter(
-        (domain) => !nextDomainNames.has(domain.name.toLowerCase())
-      );
+      try {
+        const existingDomains = await listOrganizationDomains(
+          clerk,
+          access.org.id
+        );
+        const nextDomainNames = new Set(input.domains);
+        const existingByName = new Map(
+          existingDomains.map((domain) => [domain.name.toLowerCase(), domain])
+        );
+        const domainsToDelete = existingDomains.filter(
+          (domain) => !nextDomainNames.has(domain.name.toLowerCase())
+        );
 
-      await Promise.all(
-        input.domains.map((name) => {
-          const existingDomain = existingByName.get(name);
-          if (!existingDomain) {
-            return clerk.organizations.createOrganizationDomain({
-              enrollmentMode: AUTO_JOIN_DOMAIN_ENROLLMENT_MODE,
-              name,
-              organizationId: access.org.id,
-              verified: true,
-            });
-          }
+        await Promise.all(
+          input.domains.map((name) => {
+            const existingDomain = existingByName.get(name);
+            if (!existingDomain) {
+              return clerk.organizations.createOrganizationDomain({
+                enrollmentMode: AUTO_JOIN_DOMAIN_ENROLLMENT_MODE,
+                name,
+                organizationId: access.org.id,
+                verified: true,
+              });
+            }
 
-          if (
-            domainEnrollmentMode(existingDomain) !==
-              AUTO_JOIN_DOMAIN_ENROLLMENT_MODE ||
-            domainVerificationStatus(existingDomain) !== "verified"
-          ) {
-            return clerk.organizations.updateOrganizationDomain({
-              domainId: existingDomain.id,
-              enrollmentMode: AUTO_JOIN_DOMAIN_ENROLLMENT_MODE,
-              organizationId: access.org.id,
-              verified: true,
-            });
-          }
+            if (
+              domainEnrollmentMode(existingDomain) !==
+                AUTO_JOIN_DOMAIN_ENROLLMENT_MODE ||
+              domainVerificationStatus(existingDomain) !== "verified"
+            ) {
+              return clerk.organizations.updateOrganizationDomain({
+                domainId: existingDomain.id,
+                enrollmentMode: AUTO_JOIN_DOMAIN_ENROLLMENT_MODE,
+                organizationId: access.org.id,
+                verified: true,
+              });
+            }
 
-          return Promise.resolve(existingDomain);
-        })
-      );
-
-      await Promise.all(
-        domainsToDelete.map((domain) =>
-          clerk.organizations.deleteOrganizationDomain({
-            domainId: domain.id,
-            organizationId: access.org.id,
+            return Promise.resolve(existingDomain);
           })
-        )
-      );
+        );
 
-      const domains = await listOrganizationDomains(clerk, access.org.id);
+        await Promise.all(
+          domainsToDelete.map((domain) =>
+            clerk.organizations.deleteOrganizationDomain({
+              domainId: domain.id,
+              organizationId: access.org.id,
+            })
+          )
+        );
 
-      return sortDomainResponses(domains.map(domainResponse));
+        const domains = await listOrganizationDomains(clerk, access.org.id);
+
+        return sortDomainResponses(domains.map(domainResponse));
+      } catch (error) {
+        if (isClerkOrganizationDomainsNotEnabled(error)) {
+          throw organizationDomainsUnavailableError(error);
+        }
+        throw error;
+      }
     }),
 
   /**
