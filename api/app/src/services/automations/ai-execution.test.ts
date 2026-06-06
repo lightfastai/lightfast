@@ -218,6 +218,32 @@ describe("executeAutomationRun", () => {
     );
   });
 
+  it("preserves non-enumerable model result fields in the persisted output", async () => {
+    const result = {
+      text: "Posted the launch update.",
+      totalUsage: { inputTokens: 10, outputTokens: 12, totalTokens: 22 },
+    };
+    Object.defineProperty(result, "finishReason", {
+      enumerable: false,
+      value: "stop",
+    });
+    generateTextMock.mockResolvedValue(result);
+
+    const output = await executeAutomationRun({
+      automation,
+      deploymentEnvironment: "preview",
+      now: () => new Date("2026-06-06T00:00:00.000Z"),
+      run,
+    });
+
+    expect(output.finishReason).toBe("stop");
+    expect(output.usage).toEqual({
+      inputTokens: 10,
+      outputTokens: 12,
+      totalTokens: 22,
+    });
+  });
+
   it("fails with connector-not-enabled when no selected-provider runtime tools exist", async () => {
     findAutomationProviderRoutinesMock.mockResolvedValue({
       reason: "no_enabled_providers",

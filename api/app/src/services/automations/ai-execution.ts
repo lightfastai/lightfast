@@ -151,7 +151,12 @@ export async function executeAutomationRun(
       automation: input.automation,
       finishedAt: now(),
       model: AUTOMATION_RUN_MODEL,
-      result: { ...result, text: finalText },
+      result: {
+        finishReason: result.finishReason,
+        text: finalText,
+        totalUsage: result.totalUsage,
+        usage: result.usage,
+      },
       run: input.run,
       startedAt,
       transcriptEvents: recorder.events(),
