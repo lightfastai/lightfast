@@ -33,6 +33,7 @@ import { Route as AuthenticatedSlugChatRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedSlugAutomationsRouteImport } from './routes/_authenticated/$slug/automations'
 import { Route as AuthenticatedAccountSettingsIndexRouteImport } from './routes/_authenticated/account/settings/index'
 import { Route as AuthenticatedSlugTasksIndexRouteImport } from './routes/_authenticated/$slug/tasks/index'
+import { Route as AuthenticatedSlugSettingsIndexRouteImport } from './routes/_authenticated/$slug/settings/index'
 import { Route as AuthenticatedSlugAutomationsIndexRouteImport } from './routes/_authenticated/$slug/automations/index'
 import { Route as ApiGithubOauthCallbackRouteImport } from './routes/api/github/oauth/callback'
 import { Route as ApiConnectorsXMcpRouteImport } from './routes/api/connectors/x/mcp'
@@ -46,6 +47,8 @@ import { Route as AuthenticatedSlugTasksBindRouteImport } from './routes/_authen
 import { Route as AuthenticatedSlugSettingsSourceControlRouteImport } from './routes/_authenticated/$slug/settings/source-control'
 import { Route as AuthenticatedSlugSettingsMembersRouteImport } from './routes/_authenticated/$slug/settings/members'
 import { Route as AuthenticatedSlugSettingsMcpRouteImport } from './routes/_authenticated/$slug/settings/mcp'
+import { Route as AuthenticatedSlugSettingsGeneralRouteImport } from './routes/_authenticated/$slug/settings/general'
+import { Route as AuthenticatedSlugSettingsBillingRouteImport } from './routes/_authenticated/$slug/settings/billing'
 import { Route as AuthenticatedSlugSettingsApiKeysRouteImport } from './routes/_authenticated/$slug/settings/api-keys'
 import { Route as AuthenticatedSlugChatConversationIdRouteImport } from './routes/_authenticated/$slug/chat/$conversationId'
 import { Route as AuthenticatedSlugAutomationsNewRouteImport } from './routes/_authenticated/$slug/automations/new'
@@ -186,6 +189,12 @@ const AuthenticatedSlugTasksIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedSlugTasksRoute,
   } as any)
+const AuthenticatedSlugSettingsIndexRoute =
+  AuthenticatedSlugSettingsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSlugSettingsRoute,
+  } as any)
 const AuthenticatedSlugAutomationsIndexRoute =
   AuthenticatedSlugAutomationsIndexRouteImport.update({
     id: '/',
@@ -260,6 +269,18 @@ const AuthenticatedSlugSettingsMcpRoute =
   AuthenticatedSlugSettingsMcpRouteImport.update({
     id: '/mcp',
     path: '/mcp',
+    getParentRoute: () => AuthenticatedSlugSettingsRoute,
+  } as any)
+const AuthenticatedSlugSettingsGeneralRoute =
+  AuthenticatedSlugSettingsGeneralRouteImport.update({
+    id: '/general',
+    path: '/general',
+    getParentRoute: () => AuthenticatedSlugSettingsRoute,
+  } as any)
+const AuthenticatedSlugSettingsBillingRoute =
+  AuthenticatedSlugSettingsBillingRouteImport.update({
+    id: '/billing',
+    path: '/billing',
     getParentRoute: () => AuthenticatedSlugSettingsRoute,
   } as any)
 const AuthenticatedSlugSettingsApiKeysRoute =
@@ -361,6 +382,8 @@ export interface FileRoutesByFullPath {
   '/$slug/automations/new': typeof AuthenticatedSlugAutomationsNewRoute
   '/$slug/chat/$conversationId': typeof AuthenticatedSlugChatConversationIdRoute
   '/$slug/settings/api-keys': typeof AuthenticatedSlugSettingsApiKeysRoute
+  '/$slug/settings/billing': typeof AuthenticatedSlugSettingsBillingRoute
+  '/$slug/settings/general': typeof AuthenticatedSlugSettingsGeneralRoute
   '/$slug/settings/mcp': typeof AuthenticatedSlugSettingsMcpRoute
   '/$slug/settings/members': typeof AuthenticatedSlugSettingsMembersRoute
   '/$slug/settings/source-control': typeof AuthenticatedSlugSettingsSourceControlRoute
@@ -374,6 +397,7 @@ export interface FileRoutesByFullPath {
   '/api/connectors/x/mcp': typeof ApiConnectorsXMcpRoute
   '/api/github/oauth/callback': typeof ApiGithubOauthCallbackRoute
   '/$slug/automations/': typeof AuthenticatedSlugAutomationsIndexRoute
+  '/$slug/settings/': typeof AuthenticatedSlugSettingsIndexRoute
   '/$slug/tasks/': typeof AuthenticatedSlugTasksIndexRoute
   '/account/settings/': typeof AuthenticatedAccountSettingsIndexRoute
   '/$slug/tasks/github/lightfast-repo': typeof AuthenticatedSlugTasksGithubLightfastRepoRoute
@@ -396,7 +420,6 @@ export interface FileRoutesByTo {
   '/$slug/connectors': typeof AuthenticatedSlugConnectorsRoute
   '/$slug/decisions': typeof AuthenticatedSlugDecisionsRoute
   '/$slug/people': typeof AuthenticatedSlugPeopleRoute
-  '/$slug/settings': typeof AuthenticatedSlugSettingsRouteWithChildren
   '/$slug/signals': typeof AuthenticatedSlugSignalsRoute
   '/$slug/skills': typeof AuthenticatedSlugSkillsRoute
   '/account/mcp': typeof AuthenticatedAccountMcpRoute
@@ -407,6 +430,8 @@ export interface FileRoutesByTo {
   '/$slug/automations/new': typeof AuthenticatedSlugAutomationsNewRoute
   '/$slug/chat/$conversationId': typeof AuthenticatedSlugChatConversationIdRoute
   '/$slug/settings/api-keys': typeof AuthenticatedSlugSettingsApiKeysRoute
+  '/$slug/settings/billing': typeof AuthenticatedSlugSettingsBillingRoute
+  '/$slug/settings/general': typeof AuthenticatedSlugSettingsGeneralRoute
   '/$slug/settings/mcp': typeof AuthenticatedSlugSettingsMcpRoute
   '/$slug/settings/members': typeof AuthenticatedSlugSettingsMembersRoute
   '/$slug/settings/source-control': typeof AuthenticatedSlugSettingsSourceControlRoute
@@ -418,6 +443,7 @@ export interface FileRoutesByTo {
   '/api/connectors/x/mcp': typeof ApiConnectorsXMcpRoute
   '/api/github/oauth/callback': typeof ApiGithubOauthCallbackRoute
   '/$slug/automations': typeof AuthenticatedSlugAutomationsIndexRoute
+  '/$slug/settings': typeof AuthenticatedSlugSettingsIndexRoute
   '/$slug/tasks': typeof AuthenticatedSlugTasksIndexRoute
   '/account/settings': typeof AuthenticatedAccountSettingsIndexRoute
   '/$slug/tasks/github/lightfast-repo': typeof AuthenticatedSlugTasksGithubLightfastRepoRoute
@@ -457,6 +483,8 @@ export interface FileRoutesById {
   '/_authenticated/$slug/automations/new': typeof AuthenticatedSlugAutomationsNewRoute
   '/_authenticated/$slug/chat/$conversationId': typeof AuthenticatedSlugChatConversationIdRoute
   '/_authenticated/$slug/settings/api-keys': typeof AuthenticatedSlugSettingsApiKeysRoute
+  '/_authenticated/$slug/settings/billing': typeof AuthenticatedSlugSettingsBillingRoute
+  '/_authenticated/$slug/settings/general': typeof AuthenticatedSlugSettingsGeneralRoute
   '/_authenticated/$slug/settings/mcp': typeof AuthenticatedSlugSettingsMcpRoute
   '/_authenticated/$slug/settings/members': typeof AuthenticatedSlugSettingsMembersRoute
   '/_authenticated/$slug/settings/source-control': typeof AuthenticatedSlugSettingsSourceControlRoute
@@ -470,6 +498,7 @@ export interface FileRoutesById {
   '/api/connectors/x/mcp': typeof ApiConnectorsXMcpRoute
   '/api/github/oauth/callback': typeof ApiGithubOauthCallbackRoute
   '/_authenticated/$slug/automations/': typeof AuthenticatedSlugAutomationsIndexRoute
+  '/_authenticated/$slug/settings/': typeof AuthenticatedSlugSettingsIndexRoute
   '/_authenticated/$slug/tasks/': typeof AuthenticatedSlugTasksIndexRoute
   '/_authenticated/account/settings/': typeof AuthenticatedAccountSettingsIndexRoute
   '/_authenticated/$slug/tasks/github/lightfast-repo': typeof AuthenticatedSlugTasksGithubLightfastRepoRoute
@@ -509,6 +538,8 @@ export interface FileRouteTypes {
     | '/$slug/automations/new'
     | '/$slug/chat/$conversationId'
     | '/$slug/settings/api-keys'
+    | '/$slug/settings/billing'
+    | '/$slug/settings/general'
     | '/$slug/settings/mcp'
     | '/$slug/settings/members'
     | '/$slug/settings/source-control'
@@ -522,6 +553,7 @@ export interface FileRouteTypes {
     | '/api/connectors/x/mcp'
     | '/api/github/oauth/callback'
     | '/$slug/automations/'
+    | '/$slug/settings/'
     | '/$slug/tasks/'
     | '/account/settings/'
     | '/$slug/tasks/github/lightfast-repo'
@@ -544,7 +576,6 @@ export interface FileRouteTypes {
     | '/$slug/connectors'
     | '/$slug/decisions'
     | '/$slug/people'
-    | '/$slug/settings'
     | '/$slug/signals'
     | '/$slug/skills'
     | '/account/mcp'
@@ -555,6 +586,8 @@ export interface FileRouteTypes {
     | '/$slug/automations/new'
     | '/$slug/chat/$conversationId'
     | '/$slug/settings/api-keys'
+    | '/$slug/settings/billing'
+    | '/$slug/settings/general'
     | '/$slug/settings/mcp'
     | '/$slug/settings/members'
     | '/$slug/settings/source-control'
@@ -566,6 +599,7 @@ export interface FileRouteTypes {
     | '/api/connectors/x/mcp'
     | '/api/github/oauth/callback'
     | '/$slug/automations'
+    | '/$slug/settings'
     | '/$slug/tasks'
     | '/account/settings'
     | '/$slug/tasks/github/lightfast-repo'
@@ -604,6 +638,8 @@ export interface FileRouteTypes {
     | '/_authenticated/$slug/automations/new'
     | '/_authenticated/$slug/chat/$conversationId'
     | '/_authenticated/$slug/settings/api-keys'
+    | '/_authenticated/$slug/settings/billing'
+    | '/_authenticated/$slug/settings/general'
     | '/_authenticated/$slug/settings/mcp'
     | '/_authenticated/$slug/settings/members'
     | '/_authenticated/$slug/settings/source-control'
@@ -617,6 +653,7 @@ export interface FileRouteTypes {
     | '/api/connectors/x/mcp'
     | '/api/github/oauth/callback'
     | '/_authenticated/$slug/automations/'
+    | '/_authenticated/$slug/settings/'
     | '/_authenticated/$slug/tasks/'
     | '/_authenticated/account/settings/'
     | '/_authenticated/$slug/tasks/github/lightfast-repo'
@@ -815,6 +852,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSlugTasksIndexRouteImport
       parentRoute: typeof AuthenticatedSlugTasksRoute
     }
+    '/_authenticated/$slug/settings/': {
+      id: '/_authenticated/$slug/settings/'
+      path: '/'
+      fullPath: '/$slug/settings/'
+      preLoaderRoute: typeof AuthenticatedSlugSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedSlugSettingsRoute
+    }
     '/_authenticated/$slug/automations/': {
       id: '/_authenticated/$slug/automations/'
       path: '/'
@@ -904,6 +948,20 @@ declare module '@tanstack/react-router' {
       path: '/mcp'
       fullPath: '/$slug/settings/mcp'
       preLoaderRoute: typeof AuthenticatedSlugSettingsMcpRouteImport
+      parentRoute: typeof AuthenticatedSlugSettingsRoute
+    }
+    '/_authenticated/$slug/settings/general': {
+      id: '/_authenticated/$slug/settings/general'
+      path: '/general'
+      fullPath: '/$slug/settings/general'
+      preLoaderRoute: typeof AuthenticatedSlugSettingsGeneralRouteImport
+      parentRoute: typeof AuthenticatedSlugSettingsRoute
+    }
+    '/_authenticated/$slug/settings/billing': {
+      id: '/_authenticated/$slug/settings/billing'
+      path: '/billing'
+      fullPath: '/$slug/settings/billing'
+      preLoaderRoute: typeof AuthenticatedSlugSettingsBillingRouteImport
       parentRoute: typeof AuthenticatedSlugSettingsRoute
     }
     '/_authenticated/$slug/settings/api-keys': {
@@ -1029,20 +1087,28 @@ const AuthenticatedSlugChatRouteWithChildren =
 
 interface AuthenticatedSlugSettingsRouteChildren {
   AuthenticatedSlugSettingsApiKeysRoute: typeof AuthenticatedSlugSettingsApiKeysRoute
+  AuthenticatedSlugSettingsBillingRoute: typeof AuthenticatedSlugSettingsBillingRoute
+  AuthenticatedSlugSettingsGeneralRoute: typeof AuthenticatedSlugSettingsGeneralRoute
   AuthenticatedSlugSettingsMcpRoute: typeof AuthenticatedSlugSettingsMcpRoute
   AuthenticatedSlugSettingsMembersRoute: typeof AuthenticatedSlugSettingsMembersRoute
   AuthenticatedSlugSettingsSourceControlRoute: typeof AuthenticatedSlugSettingsSourceControlRoute
+  AuthenticatedSlugSettingsIndexRoute: typeof AuthenticatedSlugSettingsIndexRoute
 }
 
 const AuthenticatedSlugSettingsRouteChildren: AuthenticatedSlugSettingsRouteChildren =
   {
     AuthenticatedSlugSettingsApiKeysRoute:
       AuthenticatedSlugSettingsApiKeysRoute,
+    AuthenticatedSlugSettingsBillingRoute:
+      AuthenticatedSlugSettingsBillingRoute,
+    AuthenticatedSlugSettingsGeneralRoute:
+      AuthenticatedSlugSettingsGeneralRoute,
     AuthenticatedSlugSettingsMcpRoute: AuthenticatedSlugSettingsMcpRoute,
     AuthenticatedSlugSettingsMembersRoute:
       AuthenticatedSlugSettingsMembersRoute,
     AuthenticatedSlugSettingsSourceControlRoute:
       AuthenticatedSlugSettingsSourceControlRoute,
+    AuthenticatedSlugSettingsIndexRoute: AuthenticatedSlugSettingsIndexRoute,
   }
 
 const AuthenticatedSlugSettingsRouteWithChildren =

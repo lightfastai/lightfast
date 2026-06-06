@@ -13,7 +13,9 @@ interface WorkspaceSettingsSidebarItem {
   name: string;
   params: { slug: string };
   to:
+    | "/$slug/settings/general"
     | "/$slug/settings/members"
+    | "/$slug/settings/billing"
     | "/$slug/settings/api-keys"
     | "/$slug/settings/mcp"
     | "/$slug/settings/source-control";

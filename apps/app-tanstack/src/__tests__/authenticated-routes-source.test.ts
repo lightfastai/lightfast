@@ -664,4 +664,142 @@ describe("app-tanstack authenticated route migration", () => {
       expect(routeFile).not.toContain('"use server"');
     }
   });
+
+  it("ports org general and billing settings routes without Next.js route imports", () => {
+    const packageSource = source("package.json");
+    const settingsLayoutSource = source(
+      "src/routes/_authenticated/$slug/settings.tsx"
+    );
+    const generalRouteSource = source(
+      "src/routes/_authenticated/$slug/settings/general.tsx"
+    );
+    const billingRouteSource = source(
+      "src/routes/_authenticated/$slug/settings/billing.tsx"
+    );
+    const sidebarSource = source("src/components/settings-sidebar.tsx");
+    const teamGeneralClientSource = source(
+      "src/org/settings/general/team-general-settings-client.tsx"
+    );
+    const teamGeneralActionsSource = source(
+      "src/org/settings/general/team-general-settings-actions.ts"
+    );
+    const identityCardSource = source(
+      "src/org/settings/general/identity-soul-card.tsx"
+    );
+    const identitySectionSource = source(
+      "src/org/settings/general/identity-soul-section.tsx"
+    );
+    const billingClientSource = source(
+      "src/org/settings/billing/billing-settings-client.tsx"
+    );
+    const billingActionsSource = source(
+      "src/org/settings/billing/billing-overview-actions.ts"
+    );
+    const billingCancellationSource = source(
+      "src/org/settings/billing/billing-cancellation-mutation.ts"
+    );
+    const billingViewModelSource = source(
+      "src/org/settings/billing/billing-view-model.ts"
+    );
+    const billingSectionsSource = source(
+      "src/org/settings/billing/billing-sections.tsx"
+    );
+    const paymentDialogSource = source(
+      "src/org/settings/billing/payment-method-dialog.tsx"
+    );
+    const newPaymentMethodSource = source(
+      "src/org/settings/billing/new-payment-method-form.tsx"
+    );
+    const checkoutDialogSource = source(
+      "src/org/settings/billing/billing-checkout-dialog.tsx"
+    );
+    const newCheckoutSource = source(
+      "src/org/settings/billing/new-payment-checkout.tsx"
+    );
+    const savedCheckoutSource = source(
+      "src/org/settings/billing/saved-payment-checkout.tsx"
+    );
+
+    expect(packageSource).toContain('"@repo/app-billing": "workspace:*"');
+    expect(settingsLayoutSource).toContain('to: "/$slug/settings/general"');
+    expect(settingsLayoutSource).toContain('to: "/$slug/settings/billing"');
+    expect(settingsLayoutSource).toContain('to: "/$slug/settings/general"');
+    expect(sidebarSource).toContain('"/$slug/settings/general"');
+    expect(sidebarSource).toContain('"/$slug/settings/billing"');
+
+    expect(generalRouteSource).toContain(
+      '"/_authenticated/$slug/settings/general"'
+    );
+    expect(generalRouteSource).toContain("TeamGeneralSettingsClient");
+    expect(generalRouteSource).toContain("IdentitySoulCard");
+    expect(billingRouteSource).toContain(
+      '"/_authenticated/$slug/settings/billing"'
+    );
+    expect(billingRouteSource).toContain("BillingSettingsClient");
+
+    expect(teamGeneralClientSource).toContain(
+      "listUserOrganizations.queryOptions"
+    );
+    expect(teamGeneralClientSource).toContain("listDomains.queryOptions");
+    expect(teamGeneralClientSource).toContain(
+      'enabled: typeof window !== "undefined"'
+    );
+    expect(teamGeneralClientSource).toContain("useNavigate");
+    expect(teamGeneralActionsSource).toContain(
+      "organization.updateName.mutationOptions"
+    );
+    expect(teamGeneralActionsSource).toContain(
+      "organization.updateDomains.mutationOptions"
+    );
+    expect(identityCardSource).toContain("identity.get.queryOptions");
+    expect(identityCardSource).toContain(
+      'enabled: typeof window !== "undefined"'
+    );
+    expect(identitySectionSource).toContain(
+      'to="/$slug/settings/source-control"'
+    );
+
+    expect(billingClientSource).toContain("orgBilling.overview.queryOptions");
+    expect(billingClientSource).toContain(
+      'enabled: typeof window !== "undefined"'
+    );
+    expect(billingClientSource).toContain("usePaymentMethods");
+    expect(billingClientSource).toContain("useStatements");
+    expect(billingClientSource).toContain("BillingCheckoutDialog");
+    expect(billingActionsSource).toContain("orgBilling.overview.queryFilter");
+    expect(billingCancellationSource).toContain(
+      "orgBilling.cancelSubscriptionItem.mutationOptions"
+    );
+    expect(billingViewModelSource).toContain("deriveBillingViewModel");
+    expect(billingSectionsSource).toContain("PlanSection");
+    expect(paymentDialogSource).toContain("NewPaymentMethodForm");
+    expect(newPaymentMethodSource).toContain("PaymentElementProvider");
+    expect(checkoutDialogSource).toContain("CheckoutProvider");
+    expect(newCheckoutSource).toContain("window.history.replaceState");
+    expect(savedCheckoutSource).toContain("window.history.replaceState");
+
+    for (const routeFile of [
+      settingsLayoutSource,
+      generalRouteSource,
+      billingRouteSource,
+      teamGeneralClientSource,
+      teamGeneralActionsSource,
+      identityCardSource,
+      identitySectionSource,
+      billingClientSource,
+      billingActionsSource,
+      billingCancellationSource,
+      billingViewModelSource,
+      billingSectionsSource,
+      paymentDialogSource,
+      newPaymentMethodSource,
+      checkoutDialogSource,
+      newCheckoutSource,
+      savedCheckoutSource,
+    ]) {
+      expect(routeFile).not.toContain("next/");
+      expect(routeFile).not.toContain('"use client"');
+      expect(routeFile).not.toContain('"use server"');
+    }
+  });
 });

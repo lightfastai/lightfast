@@ -936,6 +936,9 @@ importers:
       '@repo/api-contract':
         specifier: workspace:*
         version: link:../../packages/api-contract
+      '@repo/app-billing':
+        specifier: workspace:*
+        version: link:../../packages/app-billing
       '@repo/app-setup-contract':
         specifier: workspace:*
         version: link:../../packages/app-setup-contract
