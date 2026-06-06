@@ -48,6 +48,7 @@ describe("ChatComposer", () => {
     });
     expect(screen.getByPlaceholderText("Ask Lightfield")).toHaveValue("");
     expect(screen.getByRole("button", { name: "Send message" })).toBeDisabled();
+    expect(screen.getByRole("status", { name: "Loading" })).toBeVisible();
 
     resolveSubmit?.();
   });
@@ -83,6 +84,7 @@ describe("ChatComposer", () => {
     });
     expect(screen.getByPlaceholderText("Ask Lightfield")).toHaveValue("");
     expect(screen.getByRole("button", { name: "Send message" })).toBeDisabled();
+    expect(screen.getByRole("status", { name: "Loading" })).toBeVisible();
 
     resolveSubmit?.();
   });
