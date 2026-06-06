@@ -11,6 +11,70 @@ import {
 import { getVerifiedCandidateByRepositoryId } from "./repository";
 import type { SkillIndexFreshness, SkillIndexServiceDeps } from "./types";
 
+export async function getSkillIndexSnapshot(input: {
+  clerkOrgId: string;
+  deps?: SkillIndexServiceDeps;
+  sourceControlRepositoryId: number;
+  slug?: string;
+}): Promise<{
+  freshness: SkillIndexFreshness;
+  indexDiagnostics: SkillDiagnostic[];
+  repositoryUrl: string;
+  skills: SkillIndexEntry[];
+  snapshotVersion: string | null;
+}> {
+  const deps = resolveSkillIndexServiceDeps(input.deps);
+  const candidate = await getVerifiedCandidateByRepositoryId(deps, {
+    clerkOrgId: input.clerkOrgId,
+    sourceControlRepositoryId: input.sourceControlRepositoryId,
+  });
+  if (!candidate) {
+    return {
+      freshness: toFreshness(null, "unavailable"),
+      indexDiagnostics: [],
+      repositoryUrl: "",
+      skills: [],
+      snapshotVersion: null,
+    };
+  }
+
+  const repositoryUrl = getRepositoryUrl(candidate.repository.fullName);
+  const state =
+    candidate.state ??
+    (await deps.getSkillIndexStateBySourceControlRepositoryId(deps.db, {
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+    }));
+
+  if (!state) {
+    return {
+      freshness: toFreshness(null, "unavailable"),
+      indexDiagnostics: [],
+      repositoryUrl,
+      skills: [],
+      snapshotVersion: null,
+    };
+  }
+
+  const entries = await readEntries(deps, {
+    slug: input.slug,
+    stateId: state.id,
+  });
+
+  return {
+    freshness: toFreshness(
+      state,
+      deriveSnapshotStatus({
+        entries,
+        state,
+      })
+    ),
+    indexDiagnostics: state.indexDiagnostics,
+    repositoryUrl,
+    skills: entries,
+    snapshotVersion: toSkillIndexSnapshotVersion(state),
+  };
+}
+
 export async function ensureFreshSkillIndexForRead(input: {
   clerkOrgId: string;
   deps?: SkillIndexServiceDeps;
@@ -154,6 +218,41 @@ function deriveReadStatus(input: {
     return "refreshing";
   }
   return input.entries.length > 0 ? "stale" : "unavailable";
+}
+
+function deriveSnapshotStatus(input: {
+  entries: SkillIndexEntry[];
+  state: {
+    indexedCommitSha: string | null;
+    lastCheckedCommitSha: string | null;
+    lastRefreshStatus: string;
+  };
+}): SkillIndexFreshness["status"] {
+  if (
+    input.state.indexedCommitSha &&
+    input.state.lastCheckedCommitSha &&
+    input.state.indexedCommitSha === input.state.lastCheckedCommitSha
+  ) {
+    return "fresh";
+  }
+  if (input.state.lastRefreshStatus === "refreshing") {
+    return "refreshing";
+  }
+  return input.entries.length > 0 ? "stale" : "unavailable";
+}
+
+function toSkillIndexSnapshotVersion(state: {
+  id: number;
+  indexedCommitSha: string | null;
+  lastRefreshStatus: string;
+  updatedAt: Date;
+}): string {
+  return [
+    state.id,
+    state.updatedAt.getTime(),
+    state.indexedCommitSha ?? "",
+    state.lastRefreshStatus,
+  ].join(":");
 }
 
 function toFreshness(

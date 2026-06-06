@@ -8,7 +8,10 @@ export {
   readSkillRepositoryMainRef,
   readSkillRepositoryTree,
 } from "./github";
-export { ensureFreshSkillIndexForRead } from "./read";
+export {
+  ensureFreshSkillIndexForRead,
+  getSkillIndexSnapshot,
+} from "./read";
 export {
   findChangedSkillIndexSources,
   reconcileSkillIndexSources,

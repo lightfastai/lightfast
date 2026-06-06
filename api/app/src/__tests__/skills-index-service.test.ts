@@ -4,6 +4,7 @@ import {
   checkSkillIndexSourceRef,
   ensureFreshSkillIndexForRead,
   findChangedSkillIndexSources,
+  getSkillIndexSnapshot,
   reconcileSkillIndexSources,
   refreshSkillIndexSource,
 } from "../services/skills";
@@ -159,6 +160,93 @@ describe("skills index refresh/read service", () => {
     expect(deps.readSkillRepositoryTree).toHaveBeenCalledWith(
       expect.objectContaining({ commitSha: "current-main" })
     );
+  });
+
+  it("returns a database snapshot without checking GitHub", async () => {
+    const skill = entry({ indexedCommitSha: "current-main", slug: "snapshot" });
+    const deps = createDeps({
+      targetEntries: [skill],
+      targetState: staleState({
+        id: 100,
+        indexedCommitSha: "current-main",
+        lastCheckedCommitSha: "current-main",
+        lastRefreshStatus: "fresh",
+        updatedAt: now,
+      }),
+    });
+
+    const result = await getSkillIndexSnapshot({
+      clerkOrgId: "org_123",
+      deps,
+      sourceControlRepositoryId: 1,
+    });
+
+    expect(result).toMatchObject({
+      repositoryUrl: "https://github.com/acme/lightfast-skills",
+      skills: [skill],
+      snapshotVersion: `100:${now.getTime()}:current-main:fresh`,
+      freshness: {
+        indexedCommitSha: "current-main",
+        status: "fresh",
+      },
+    });
+    expect(deps.readSkillRepositoryMainRef).not.toHaveBeenCalled();
+    expect(deps.readSkillRepositoryTree).not.toHaveBeenCalled();
+    expect(deps.acquireSkillIndexRefreshLock).not.toHaveBeenCalled();
+    expect(deps.sleep).not.toHaveBeenCalled();
+  });
+
+  it("returns unavailable immediately when no verified candidate exists", async () => {
+    const deps = createDeps({
+      candidate: null,
+      targetState: staleState({ indexedCommitSha: "private-index" }),
+    });
+
+    const result = await getSkillIndexSnapshot({
+      clerkOrgId: "org_123",
+      deps,
+      sourceControlRepositoryId: 1,
+    });
+
+    expect(result).toMatchObject({
+      repositoryUrl: "",
+      skills: [],
+      snapshotVersion: null,
+      freshness: {
+        indexedCommitSha: null,
+        status: "unavailable",
+      },
+    });
+    expect(
+      deps.getSkillIndexStateBySourceControlRepositoryId
+    ).not.toHaveBeenCalled();
+    expect(deps.readSkillRepositoryMainRef).not.toHaveBeenCalled();
+  });
+
+  it("uses exact slug lookup for snapshot detail reads", async () => {
+    const skill = entry({ indexedCommitSha: "current-main", slug: "selected" });
+    const deps = createDeps({
+      targetEntries: [skill],
+      targetState: staleState({
+        indexedCommitSha: "current-main",
+        lastRefreshStatus: "fresh",
+      }),
+    });
+
+    const result = await getSkillIndexSnapshot({
+      clerkOrgId: "org_123",
+      deps,
+      slug: "selected",
+      sourceControlRepositoryId: 1,
+    });
+
+    expect(result.skills).toEqual([skill]);
+    expect(deps.getSkillIndexEntryBySlug).toHaveBeenCalledWith(deps.db, {
+      slug: "selected",
+      stateId: 100,
+    });
+    expect(deps.listSkillIndexEntries).not.toHaveBeenCalled();
+    expect(deps.readSkillRepositoryMainRef).not.toHaveBeenCalled();
   });
 
   it("returns stale read data when refresh fails but previous entries exist", async () => {
