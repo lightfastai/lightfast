@@ -73,7 +73,7 @@ const pushPayload = {
 
 const pullRequestPayload = {
   action: "opened",
-  installation: { id: 1001 },
+  installation: { id: 1001, node_id: "MDIzOkludGVncmF0aW9uMTAwMQ==" },
   pull_request: {
     id: 3003,
     number: 42,
@@ -85,6 +85,7 @@ const pullRequestPayload = {
     id: 2002,
     name: "workspace",
     owner: { login: "lightfast-emulated" },
+    visibility: "private",
   },
 };
 

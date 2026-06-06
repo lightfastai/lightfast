@@ -53,6 +53,7 @@ async function handleGitHubPrWebhook(input: {
   if (!parsedPayload.success) {
     return response(400, { ok: false });
   }
+  const rawPayload = input.json as Record<string, unknown>;
 
   let normalized;
   try {
@@ -98,7 +99,7 @@ async function handleGitHubPrWebhook(input: {
     providerPullRequestId: normalized.providerPullRequestId,
     providerRepositoryId: normalized.providerRepositoryId,
     pullRequestNumber: normalized.pullRequestNumber,
-    rawPayload: parsedPayload.data,
+    rawPayload,
     sourceControlRepositoryId: watch.id,
   });
 
