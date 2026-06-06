@@ -1,5 +1,17 @@
 import { SKILL_FILE_MAX_BYTES } from "@repo/skills-contract";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+const logWarnMock = vi.hoisted(() => vi.fn());
+
+vi.mock("@vendor/observability/log/next", () => ({
+  log: {
+    debug: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: logWarnMock,
+  },
+}));
+
 import {
   checkSkillIndexSourceRef,
   ensureFreshSkillIndexForRead,
@@ -99,6 +111,7 @@ describe("buildSkillIndexEntriesFromTree", () => {
 
 describe("skills index refresh/read service", () => {
   afterEach(() => {
+    logWarnMock.mockReset();
     vi.useRealTimers();
   });
 
@@ -193,16 +206,25 @@ describe("skills index refresh/read service", () => {
   });
 
   it("publishes a skill index change after an unchanged refresh", async () => {
-    const unchangedState = staleState({
+    const refreshingState = staleState({
+      githubRefEtag: "etag-current",
+      indexedCommitSha: "current-main",
+      lastCheckedCommitSha: "current-main",
+      lastRefreshStatus: "refreshing",
+    });
+    const freshState = staleState({
       githubRefEtag: "etag-current",
       indexedCommitSha: "current-main",
       lastCheckedCommitSha: "current-main",
       lastRefreshStatus: "fresh",
     });
-    const deps = createDeps({ targetState: unchangedState });
+    const deps = createDeps({ targetState: refreshingState });
     deps.readSkillRepositoryMainRef.mockResolvedValueOnce({
       status: "not_modified",
     });
+    deps.getSkillIndexStateBySourceControlRepositoryId.mockResolvedValueOnce(
+      freshState
+    );
 
     await expect(
       refreshSkillIndexSource({
@@ -212,27 +234,45 @@ describe("skills index refresh/read service", () => {
       })
     ).resolves.toEqual({ status: "fresh" });
 
+    expect(deps.markSkillIndexRefreshFresh).toHaveBeenCalledWith(deps.db, {
+      lockToken: "lock-token",
+      stateId: 100,
+    });
     expect(deps.publishSkillIndexChanged).toHaveBeenCalledWith({
       clerkOrgId: "org_123",
       indexedCommitSha: "current-main",
       lastRefreshStatus: "fresh",
-      snapshotVersion: `${unchangedState.id}:${unchangedState.updatedAt.getTime()}:current-main:fresh`,
+      snapshotVersion: `${freshState.id}:${freshState.updatedAt.getTime()}:current-main:fresh`,
       sourceControlRepositoryId: 1,
     });
+    expect(
+      deps.markSkillIndexRefreshFresh.mock.invocationCallOrder[0]
+    ).toBeLessThan(
+      deps.publishSkillIndexChanged.mock.invocationCallOrder[0] ?? 0
+    );
   });
 
   it("does not fail an unchanged refresh when publishing fails", async () => {
+    const freshState = staleState({
+      githubRefEtag: "etag-current",
+      indexedCommitSha: "current-main",
+      lastCheckedCommitSha: "current-main",
+      lastRefreshStatus: "fresh",
+    });
     const deps = createDeps({
       targetState: staleState({
         githubRefEtag: "etag-current",
         indexedCommitSha: "current-main",
         lastCheckedCommitSha: "current-main",
-        lastRefreshStatus: "fresh",
+        lastRefreshStatus: "refreshing",
       }),
     });
     deps.readSkillRepositoryMainRef.mockResolvedValueOnce({
       status: "not_modified",
     });
+    deps.getSkillIndexStateBySourceControlRepositoryId.mockResolvedValueOnce(
+      freshState
+    );
     deps.publishSkillIndexChanged.mockRejectedValueOnce(
       new Error("publish failed")
     );
@@ -246,6 +286,17 @@ describe("skills index refresh/read service", () => {
     ).resolves.toEqual({ status: "fresh" });
 
     expect(deps.publishSkillIndexChanged).toHaveBeenCalled();
+    expect(logWarnMock).toHaveBeenCalledWith(
+      "[skills] skill index change publish failed",
+      expect.objectContaining({
+        clerkOrgId: "org_123",
+        error: expect.any(Error),
+        indexedCommitSha: "current-main",
+        lastRefreshStatus: "fresh",
+        snapshotVersion: `${freshState.id}:${freshState.updatedAt.getTime()}:current-main:fresh`,
+        sourceControlRepositoryId: 1,
+      })
+    );
   });
 
   it("does not fail refresh when publishing a skill index change fails", async () => {
@@ -1202,6 +1253,7 @@ function createDeps(
     listSkillIndexableSourceControlRepositoryCandidates: vi.fn(async () => [
       candidate,
     ]),
+    markSkillIndexRefreshFresh: vi.fn(async () => undefined),
     markSkillIndexRefreshFailed: vi.fn(async () => undefined),
     now: vi.fn(() => now),
     publishSkillIndexChanged: vi.fn(async () => undefined),

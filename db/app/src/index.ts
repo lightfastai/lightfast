@@ -348,6 +348,7 @@ export {
   listSkillIndexableSourceControlRepositoryCandidates,
   listSkillIndexEntries,
   markSkillIndexKnownStale,
+  markSkillIndexRefreshFresh,
   markSkillIndexRefreshFailed,
   type ReplaceSkillIndexEntriesInput,
   type ReplaceSkillIndexEntryInput,

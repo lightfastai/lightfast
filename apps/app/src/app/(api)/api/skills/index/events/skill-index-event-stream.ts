@@ -4,17 +4,24 @@ import { redis } from "@vendor/upstash";
 
 type UpstashSubscription = ReturnType<typeof redis.subscribe<string>>;
 
+interface SubscriberRecord {
+  callbacks: Set<(message: unknown) => void>;
+  subscription: UpstashSubscription;
+}
+
+const subscribers = new Map<string, SubscriberRecord>();
+
 export function createSkillIndexEventStream(input: {
   clerkOrgId: string;
   signal?: AbortSignal;
 }) {
   const channel = `lightfast:org:${input.clerkOrgId}:skills:index`;
   const encoder = new TextEncoder();
-  const subscription = redis.subscribe<string>(channel);
   let cleanupPromise: Promise<void> | undefined;
   let closed = false;
   let keepalive: ReturnType<typeof setInterval> | undefined;
   let abortHandler: (() => void) | undefined;
+  let onMessage: ((message: unknown) => void) | undefined;
 
   const cleanup = async () => {
     if (keepalive) {
@@ -25,10 +32,13 @@ export function createSkillIndexEventStream(input: {
       input.signal?.removeEventListener("abort", abortHandler);
       abortHandler = undefined;
     }
-    cleanupPromise ??= cleanupSubscription(subscription, channel).catch(
-      () => undefined
-    );
-    await cleanupPromise;
+    if (onMessage) {
+      cleanupPromise ??= unsubscribeChannel(channel, onMessage).catch(
+        () => undefined
+      );
+      await cleanupPromise;
+      onMessage = undefined;
+    }
   };
 
   return new ReadableStream<Uint8Array>({
@@ -50,14 +60,14 @@ export function createSkillIndexEventStream(input: {
           // The stream can already be closing when abort and cancel race.
         }
       };
-      const onMessage = ({ message }: { message: string }) => {
-        send(`event: skill-index\ndata: ${message}\n\n`);
+      onMessage = (message: unknown) => {
+        send(`event: skill-index\ndata: ${serializeMessage(message)}\n\n`);
       };
 
       keepalive = setInterval(() => {
         send(": keepalive\n\n");
       }, 25_000);
-      subscription.on(`message:${channel}`, onMessage);
+      subscribeChannel(channel, onMessage);
 
       abortHandler = close;
       if (input.signal?.aborted) {
@@ -73,13 +83,59 @@ export function createSkillIndexEventStream(input: {
   });
 }
 
-async function cleanupSubscription(
-  subscription: UpstashSubscription,
-  channel: string
+function subscribeChannel(
+  channel: string,
+  callback: (message: unknown) => void
 ) {
+  let record = subscribers.get(channel);
+  if (!record) {
+    const subscription = redis.subscribe<string>(channel);
+    const callbacks = new Set<(message: unknown) => void>();
+    subscription.on(
+      `message:${channel}`,
+      ({ message }: { message: unknown }) => {
+        for (const next of callbacks) {
+          next(message);
+        }
+      }
+    );
+    record = { callbacks, subscription };
+    subscribers.set(channel, record);
+  }
+
+  record.callbacks.add(callback);
+}
+
+async function unsubscribeChannel(
+  channel: string,
+  callback: (message: unknown) => void
+) {
+  const record = subscribers.get(channel);
+  if (!record) {
+    return;
+  }
+
+  record.callbacks.delete(callback);
+  if (record.callbacks.size > 0) {
+    return;
+  }
+
   try {
-    await subscription.unsubscribe([channel]);
+    await record.subscription.unsubscribe([channel]);
   } finally {
-    subscription.removeAllListeners();
+    record.subscription.removeAllListeners();
+    subscribers.delete(channel);
+  }
+}
+
+function serializeMessage(message: unknown) {
+  if (typeof message === "string") {
+    return message;
+  }
+
+  try {
+    return JSON.stringify(message) ?? String(message);
+  } catch {
+    return String(message);
   }
 }

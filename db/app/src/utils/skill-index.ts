@@ -239,6 +239,32 @@ export async function markSkillIndexRefreshFailed(
   }
 }
 
+export async function markSkillIndexRefreshFresh(
+  db: Database,
+  input: {
+    lockToken: string;
+    stateId: number;
+  }
+): Promise<void> {
+  const result = await db
+    .update(skillIndexStates)
+    .set({
+      lastRefreshErrorCode: null,
+      lastRefreshErrorMessage: null,
+      lastRefreshFailedAt: null,
+      lastRefreshStatus: "fresh",
+    })
+    .where(
+      and(
+        eq(skillIndexStates.id, input.stateId),
+        eq(skillIndexStates.refreshLockToken, input.lockToken)
+      )
+    );
+  if (getRowsAffected(result) !== 1) {
+    throw new SkillIndexRefreshLockLostError(input.stateId);
+  }
+}
+
 export async function updateSkillIndexRefCheck(
   db: Database,
   input: {

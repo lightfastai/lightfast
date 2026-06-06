@@ -32,8 +32,10 @@ export async function GET(req: Request) {
     }),
     {
       headers: {
-        "cache-control": "no-store",
+        "cache-control": "no-store, no-cache, no-transform",
+        connection: "keep-alive",
         "content-type": "text/event-stream",
+        "x-accel-buffering": "no",
       },
     }
   );

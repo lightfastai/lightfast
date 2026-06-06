@@ -42,6 +42,11 @@ describe("skill index events route", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("text/event-stream");
+    expect(response.headers.get("cache-control")).toBe(
+      "no-store, no-cache, no-transform"
+    );
+    expect(response.headers.get("connection")).toBe("keep-alive");
+    expect(response.headers.get("x-accel-buffering")).toBe("no");
     expect(createSkillIndexEventStreamMock).toHaveBeenCalledWith({
       clerkOrgId: "org_123",
       signal: expect.any(AbortSignal),

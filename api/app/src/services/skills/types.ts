@@ -98,6 +98,13 @@ export interface SkillIndexServiceDeps {
       stateId: number;
     }
   ) => Promise<void>;
+  markSkillIndexRefreshFresh: (
+    db: Database,
+    input: {
+      lockToken: string;
+      stateId: number;
+    }
+  ) => Promise<void>;
   now: () => Date;
   publishSkillIndexChanged: (event: SkillIndexChangedEvent) => Promise<void>;
   randomToken: () => string;

@@ -1,10 +1,11 @@
 import type { SkillIndexableSourceControlRepositoryCandidate } from "@db/app";
 import { SKILL_FILE_MAX_BYTES } from "@repo/skills-contract";
+import { log } from "@vendor/observability/log/next";
 
 import { buildSkillIndexEntriesFromTree } from "./build";
 import { resolveSkillIndexServiceDeps } from "./deps";
 import { getVerifiedCandidateByRepositoryId } from "./repository";
-import type { SkillIndexServiceDeps } from "./types";
+import type { SkillIndexChangedEvent, SkillIndexServiceDeps } from "./types";
 
 const LOCK_TTL_SECONDS = 60;
 
@@ -160,11 +161,15 @@ export async function refreshSkillIndexSource(input: {
       ) {
         return { status: "stale" };
       }
+      await deps.markSkillIndexRefreshFresh(deps.db, {
+        lockToken,
+        stateId: state.id,
+      });
       await publishCurrentSkillIndexState({
         clerkOrgId: candidate.binding.clerkOrgId,
         deps,
         sourceControlRepositoryId: input.sourceControlRepositoryId,
-      }).catch(() => undefined);
+      });
       return { status: "fresh" };
     }
     if (ref.status === "missing") {
@@ -185,7 +190,7 @@ export async function refreshSkillIndexSource(input: {
         clerkOrgId: candidate.binding.clerkOrgId,
         deps,
         sourceControlRepositoryId: input.sourceControlRepositoryId,
-      }).catch(() => undefined);
+      });
       return { status: "missing" };
     }
 
@@ -236,7 +241,7 @@ export async function refreshSkillIndexSource(input: {
       clerkOrgId: candidate.binding.clerkOrgId,
       deps,
       sourceControlRepositoryId: input.sourceControlRepositoryId,
-    }).catch(() => undefined);
+    });
     return { status: "fresh" };
   } catch (error) {
     const code = getRefreshFailureCode(error);
@@ -251,7 +256,7 @@ export async function refreshSkillIndexSource(input: {
       clerkOrgId: candidate.binding.clerkOrgId,
       deps,
       sourceControlRepositoryId: input.sourceControlRepositoryId,
-    }).catch(() => undefined);
+    });
     return { status: "failed" };
   } finally {
     await deps.releaseSkillIndexRefreshLock(deps.db, {
@@ -266,27 +271,41 @@ async function publishCurrentSkillIndexState(input: {
   deps: SkillIndexServiceDeps;
   sourceControlRepositoryId: number;
 }) {
-  const state = await input.deps.getSkillIndexStateBySourceControlRepositoryId(
-    input.deps.db,
-    {
-      sourceControlRepositoryId: input.sourceControlRepositoryId,
+  let event: SkillIndexChangedEvent | undefined;
+  try {
+    const state =
+      await input.deps.getSkillIndexStateBySourceControlRepositoryId(
+        input.deps.db,
+        {
+          sourceControlRepositoryId: input.sourceControlRepositoryId,
+        }
+      );
+    if (!state) {
+      return;
     }
-  );
-  if (!state) {
-    return;
+    event = {
+      clerkOrgId: input.clerkOrgId,
+      indexedCommitSha: state.indexedCommitSha,
+      lastRefreshStatus: state.lastRefreshStatus,
+      snapshotVersion: [
+        state.id,
+        state.updatedAt.getTime(),
+        state.indexedCommitSha ?? "",
+        state.lastRefreshStatus,
+      ].join(":"),
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+    };
+    await input.deps.publishSkillIndexChanged(event);
+  } catch (error) {
+    log.warn("[skills] skill index change publish failed", {
+      clerkOrgId: input.clerkOrgId,
+      error,
+      indexedCommitSha: event?.indexedCommitSha,
+      lastRefreshStatus: event?.lastRefreshStatus,
+      snapshotVersion: event?.snapshotVersion,
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+    });
   }
-  await input.deps.publishSkillIndexChanged({
-    clerkOrgId: input.clerkOrgId,
-    indexedCommitSha: state.indexedCommitSha,
-    lastRefreshStatus: state.lastRefreshStatus,
-    snapshotVersion: [
-      state.id,
-      state.updatedAt.getTime(),
-      state.indexedCommitSha ?? "",
-      state.lastRefreshStatus,
-    ].join(":"),
-    sourceControlRepositoryId: input.sourceControlRepositoryId,
-  });
 }
 
 async function readSkillBlobs(input: {
