@@ -20,8 +20,10 @@ function connectedRow(
       lastToolRefreshAt: new Date("2026-06-01T00:00:00.000Z"),
       lastToolRefreshErrorAt: null,
       lastToolRefreshErrorCode: null,
+      missingScopes: [],
       providerActorName: "Lightfast App",
       providerWorkspaceName: "Acme Linear",
+      scopeStatus: "complete",
       status: "active",
       tools: [
         {
@@ -117,6 +119,25 @@ describe("ConnectorDetailContent", () => {
 
     expect(screen.getAllByText("Tools stale").length).toBeGreaterThan(0);
     expect(screen.getByText("linear_unavailable")).toBeInTheDocument();
+  });
+
+  it("shows an X reconnect warning when requested scopes are missing", () => {
+    render(
+      <ConnectorDetailContent
+        onCopyLink={vi.fn()}
+        row={{
+          ...connectedRow({
+            missingScopes: ["tweet.write", "dm.write"],
+            scopeStatus: "missing_requested_scopes",
+          }),
+          displayName: "X",
+          provider: "x",
+        }}
+      />
+    );
+
+    expect(screen.getByText(/Reconnect X/i)).toBeInTheDocument();
+    expect(screen.getByText(/tweet.write, dm.write/i)).toBeInTheDocument();
   });
 
   it("invokes onCopyLink when the copy-link button is clicked", () => {

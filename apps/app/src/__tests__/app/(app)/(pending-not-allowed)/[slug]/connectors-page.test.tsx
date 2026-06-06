@@ -22,8 +22,10 @@ interface ConnectorRow {
     lastToolRefreshAt: Date | null;
     lastToolRefreshErrorAt: Date | null;
     lastToolRefreshErrorCode: string | null;
+    missingScopes: string[];
     providerActorName: string | null;
     providerWorkspaceName: string | null;
+    scopeStatus: "complete" | "missing_requested_scopes";
     status: "active" | "error" | "revoked";
     tools: Array<{
       availableForAgents: boolean;
@@ -359,8 +361,10 @@ function connectedLinear(
       lastToolRefreshAt: new Date("2026-06-01T00:00:00.000Z"),
       lastToolRefreshErrorAt: null,
       lastToolRefreshErrorCode: null,
+      missingScopes: [],
       providerActorName: "Lightfast App",
       providerWorkspaceName: "Acme Linear",
+      scopeStatus: "complete",
       status: "active",
       tools: [
         {
@@ -384,7 +388,8 @@ function connectedLinear(
 function xRow(overrides: Partial<ConnectorRow> = {}): ConnectorRow {
   return row({
     category: "Social",
-    description: "Search posts and look up X accounts from Lightfast.",
+    description:
+      "Search posts, manage engagement, send messages, and publish through X from Lightfast agents and automations.",
     displayName: "X",
     provider: "x",
     ...overrides,
@@ -403,8 +408,10 @@ function connectedX(
       lastToolRefreshAt: new Date("2026-06-01T00:00:00.000Z"),
       lastToolRefreshErrorAt: null,
       lastToolRefreshErrorCode: null,
+      missingScopes: [],
       providerActorName: "@lightfast",
       providerWorkspaceName: "X",
+      scopeStatus: "complete",
       status: "active",
       tools: [
         {
@@ -508,7 +515,17 @@ describe("connectors page", () => {
     expect(screen.getByText("create_issue")).toBeVisible();
     expect(screen.getByText("search_issues")).toBeVisible();
     expect(screen.getByText("Use in automations")).toBeVisible();
+    expect(
+      screen.getByText(
+        /allow automations to read and write through linear tools/i
+      )
+    ).toBeVisible();
     expect(screen.getByText("Use in agents")).toBeVisible();
+    expect(
+      screen.getByText(
+        /allow agent surfaces to discover and call read\/write tools from linear/i
+      )
+    ).toBeVisible();
   });
 
   it("renders the connect card for an available Linear connector", () => {
@@ -525,7 +542,7 @@ describe("connectors page", () => {
 
     expect(screen.getByRole("heading", { name: "X" })).toBeVisible();
     expect(
-      screen.getByText(/search posts and look up x accounts/i)
+      screen.getByText(/search posts, manage engagement, send messages/i)
     ).toBeVisible();
     expect(screen.getByRole("button", { name: /^connect$/i })).toBeVisible();
   });
