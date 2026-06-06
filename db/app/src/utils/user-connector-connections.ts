@@ -187,10 +187,14 @@ export async function markCurrentUserConnectorConnectionRevoked(
 
 export async function markCurrentUserConnectorConnectionError(
   db: Database,
-  input: GetCurrentUserConnectorConnectionInput
+  input: ObservedCurrentUserConnectorConnectionInput
 ): Promise<UserConnectorConnection | undefined> {
   const current = await getCurrentUserConnectorConnection(db, input);
   if (!current) {
+    return;
+  }
+
+  if (!matchesObservedCurrentConnection(input, current)) {
     return;
   }
 
@@ -202,9 +206,8 @@ export async function markCurrentUserConnectorConnectionError(
     })
     .where(
       and(
-        eq(userConnectorConnections.id, current.id),
         currentConnectorWhere(input),
-        eq(userConnectorConnections.status, current.status)
+        observedCurrentConnectorMutationWhere(input, current)
       )
     );
 
@@ -216,7 +219,7 @@ export async function markCurrentUserConnectorConnectionError(
 }
 
 export interface UpdateUserConnectorToolManifestInput
-  extends GetCurrentUserConnectorConnectionInput {
+  extends ObservedCurrentUserConnectorConnectionInput {
   lastToolRefreshAt: Date;
   toolManifest: FullConnectorToolManifest;
 }
@@ -225,6 +228,15 @@ export async function updateUserConnectorToolManifest(
   db: Database,
   input: UpdateUserConnectorToolManifestInput
 ): Promise<boolean> {
+  const current = await getCurrentUserConnectorConnection(db, input);
+  if (!current || current.status !== "active") {
+    return false;
+  }
+
+  if (!matchesObservedCurrentConnection(input, current)) {
+    return false;
+  }
+
   const result = await db
     .update(userConnectorConnections)
     .set({
@@ -234,13 +246,18 @@ export async function updateUserConnectorToolManifest(
       toolManifest: input.toolManifest,
       updatedAt: input.lastToolRefreshAt,
     })
-    .where(activeCurrentConnectorWhere(input));
+    .where(
+      and(
+        activeCurrentConnectorWhere(input),
+        observedCurrentConnectorMutationWhere(input, current)
+      )
+    );
 
   return getRowsAffected(result) > 0;
 }
 
 export interface RecordUserConnectorToolRefreshErrorInput
-  extends GetCurrentUserConnectorConnectionInput {
+  extends ObservedCurrentUserConnectorConnectionInput {
   lastToolRefreshErrorAt: Date;
   lastToolRefreshErrorCode: string;
 }
@@ -249,6 +266,15 @@ export async function recordUserConnectorToolRefreshError(
   db: Database,
   input: RecordUserConnectorToolRefreshErrorInput
 ): Promise<boolean> {
+  const current = await getCurrentUserConnectorConnection(db, input);
+  if (!current || current.status !== "active") {
+    return false;
+  }
+
+  if (!matchesObservedCurrentConnection(input, current)) {
+    return false;
+  }
+
   const result = await db
     .update(userConnectorConnections)
     .set({
@@ -256,7 +282,60 @@ export async function recordUserConnectorToolRefreshError(
       lastToolRefreshErrorCode: input.lastToolRefreshErrorCode,
       updatedAt: input.lastToolRefreshErrorAt,
     })
-    .where(activeCurrentConnectorWhere(input));
+    .where(
+      and(
+        activeCurrentConnectorWhere(input),
+        observedCurrentConnectorMutationWhere(input, current)
+      )
+    );
+
+  return getRowsAffected(result) > 0;
+}
+
+export interface UpdateObservedUserConnectorTokensInput {
+  accessTokenExpiresAt: Date | null;
+  clerkUserId: string;
+  encryptedAccessToken: string;
+  encryptedRefreshToken: string | null;
+  id: number;
+  observedEncryptedAccessToken: string | null;
+  observedEncryptedRefreshToken: string | null;
+  refreshTokenExpiresAt: Date | null;
+  updatedAt: Date;
+}
+
+export async function updateObservedUserConnectorTokens(
+  db: Database,
+  input: UpdateObservedUserConnectorTokensInput
+): Promise<boolean> {
+  const result = await db
+    .update(userConnectorConnections)
+    .set({
+      accessTokenExpiresAt: input.accessTokenExpiresAt,
+      encryptedAccessToken: input.encryptedAccessToken,
+      encryptedRefreshToken: input.encryptedRefreshToken,
+      refreshTokenExpiresAt: input.refreshTokenExpiresAt,
+      updatedAt: input.updatedAt,
+    })
+    .where(
+      and(
+        eq(userConnectorConnections.id, input.id),
+        eq(userConnectorConnections.clerkUserId, input.clerkUserId),
+        input.observedEncryptedAccessToken === null
+          ? isNull(userConnectorConnections.encryptedAccessToken)
+          : eq(
+              userConnectorConnections.encryptedAccessToken,
+              input.observedEncryptedAccessToken
+            ),
+        input.observedEncryptedRefreshToken === null
+          ? isNull(userConnectorConnections.encryptedRefreshToken)
+          : eq(
+              userConnectorConnections.encryptedRefreshToken,
+              input.observedEncryptedRefreshToken
+            ),
+        eq(userConnectorConnections.status, "active")
+      )
+    );
 
   return getRowsAffected(result) > 0;
 }

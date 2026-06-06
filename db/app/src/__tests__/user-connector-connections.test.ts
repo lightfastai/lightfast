@@ -7,6 +7,7 @@ import {
   markCurrentUserConnectorConnectionError,
   markCurrentUserConnectorConnectionRevoked,
   recordUserConnectorToolRefreshError,
+  updateObservedUserConnectorTokens,
   updateUserConnectorToolManifest,
 } from "../utils/user-connector-connections";
 
@@ -339,7 +340,27 @@ describe("user connector connection helpers", () => {
     expect(columnNames).toContain("status");
   });
 
+  it("does not mark user connector connection errors when the observed row changed", async () => {
+    const active = connection({ id: 1 });
+    const update = vi.fn(() => ({
+      set: () => ({ where: () => Promise.resolve({ affectedRows: 1 }) }),
+    }));
+    const select = vi.fn().mockReturnValueOnce(selectRows([active]));
+    const db = { select, update } as unknown as Database;
+
+    await expect(
+      markCurrentUserConnectorConnectionError(db, {
+        clerkUserId: "user_123",
+        observedCurrentConnectionId: 99,
+        provider: "granola",
+      })
+    ).resolves.toBeUndefined();
+
+    expect(update).not.toHaveBeenCalled();
+  });
+
   it("updates user connector tool manifests and clears refresh error fields on success", async () => {
+    const active = connection();
     const refreshedAt = new Date("2026-06-01T01:00:00.000Z");
     const nextManifest = [{ name: "summarize_notes" }];
     const updateWhere = vi.fn((_condition: unknown) =>
@@ -349,7 +370,8 @@ describe("user connector connection helpers", () => {
       where: updateWhere,
     }));
     const update = vi.fn(() => ({ set }));
-    const db = { update } as unknown as Database;
+    const select = vi.fn().mockReturnValueOnce(selectRows([active]));
+    const db = { select, update } as unknown as Database;
 
     await expect(
       updateUserConnectorToolManifest(db, {
@@ -372,7 +394,29 @@ describe("user connector connection helpers", () => {
     expect(columnNames).toContain("status");
   });
 
+  it("does not update user connector tool manifests when the observed row changed", async () => {
+    const active = connection({ id: 1 });
+    const update = vi.fn(() => ({
+      set: () => ({ where: () => Promise.resolve({ affectedRows: 1 }) }),
+    }));
+    const select = vi.fn().mockReturnValueOnce(selectRows([active]));
+    const db = { select, update } as unknown as Database;
+
+    await expect(
+      updateUserConnectorToolManifest(db, {
+        clerkUserId: "user_123",
+        lastToolRefreshAt: new Date("2026-06-01T01:00:00.000Z"),
+        observedCurrentConnectionId: 99,
+        provider: "granola",
+        toolManifest: [{ name: "summarize_notes" }],
+      })
+    ).resolves.toBe(false);
+
+    expect(update).not.toHaveBeenCalled();
+  });
+
   it("records user connector tool refresh errors without replacing the existing manifest", async () => {
+    const active = connection();
     const erroredAt = new Date("2026-06-01T01:00:00.000Z");
     const updateWhere = vi.fn((_condition: unknown) =>
       Promise.resolve({ affectedRows: 1 })
@@ -381,7 +425,8 @@ describe("user connector connection helpers", () => {
       where: updateWhere,
     }));
     const update = vi.fn(() => ({ set }));
-    const db = { update } as unknown as Database;
+    const select = vi.fn().mockReturnValueOnce(selectRows([active]));
+    const db = { select, update } as unknown as Database;
 
     await expect(
       recordUserConnectorToolRefreshError(db, {
@@ -400,5 +445,93 @@ describe("user connector connection helpers", () => {
     const columnNames = collectColumnNames(updateWhere.mock.calls[0]?.[0]);
     expect(columnNames).toContain("current_user_provider_key");
     expect(columnNames).toContain("status");
+  });
+
+  it("does not record user connector tool refresh errors when the observed row changed", async () => {
+    const active = connection({ id: 1 });
+    const update = vi.fn(() => ({
+      set: () => ({ where: () => Promise.resolve({ affectedRows: 1 }) }),
+    }));
+    const select = vi.fn().mockReturnValueOnce(selectRows([active]));
+    const db = { select, update } as unknown as Database;
+
+    await expect(
+      recordUserConnectorToolRefreshError(db, {
+        clerkUserId: "user_123",
+        lastToolRefreshErrorAt: new Date("2026-06-01T01:00:00.000Z"),
+        lastToolRefreshErrorCode: "MCP_UNAVAILABLE",
+        observedCurrentConnectionId: 99,
+        provider: "granola",
+      })
+    ).resolves.toBe(false);
+
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("updates observed user connector tokens only when row, user, tokens, and active status match", async () => {
+    const updateWhere = vi.fn((_condition: unknown) =>
+      Promise.resolve({ affectedRows: 1 })
+    );
+    const set = vi.fn(() => ({
+      where: updateWhere,
+    }));
+    const update = vi.fn(() => ({ set }));
+    const db = { update } as unknown as Database;
+    const accessTokenExpiresAt = new Date("2026-06-01T08:00:00.000Z");
+    const refreshTokenExpiresAt = new Date("2026-12-01T00:00:00.000Z");
+    const updatedAt = new Date("2026-06-01T01:00:00.000Z");
+
+    await expect(
+      updateObservedUserConnectorTokens(db, {
+        accessTokenExpiresAt,
+        clerkUserId: "user_123",
+        encryptedAccessToken: "encrypted_access_next",
+        encryptedRefreshToken: "encrypted_refresh_next",
+        id: 1,
+        observedEncryptedAccessToken: "encrypted_access",
+        observedEncryptedRefreshToken: "encrypted_refresh",
+        refreshTokenExpiresAt,
+        updatedAt,
+      })
+    ).resolves.toBe(true);
+
+    expect(set).toHaveBeenCalledWith({
+      accessTokenExpiresAt,
+      encryptedAccessToken: "encrypted_access_next",
+      encryptedRefreshToken: "encrypted_refresh_next",
+      refreshTokenExpiresAt,
+      updatedAt,
+    });
+    const columnNames = collectColumnNames(updateWhere.mock.calls[0]?.[0]);
+    expect(columnNames).toContain("id");
+    expect(columnNames).toContain("clerk_user_id");
+    expect(columnNames).toContain("encrypted_access_token");
+    expect(columnNames).toContain("encrypted_refresh_token");
+    expect(columnNames).toContain("status");
+  });
+
+  it("returns false when observed user connector token refresh CAS does not match", async () => {
+    const updateWhere = vi.fn((_condition: unknown) =>
+      Promise.resolve({ affectedRows: 0 })
+    );
+    const set = vi.fn(() => ({
+      where: updateWhere,
+    }));
+    const update = vi.fn(() => ({ set }));
+    const db = { update } as unknown as Database;
+
+    await expect(
+      updateObservedUserConnectorTokens(db, {
+        accessTokenExpiresAt: new Date("2026-06-01T08:00:00.000Z"),
+        clerkUserId: "user_123",
+        encryptedAccessToken: "encrypted_access_next",
+        encryptedRefreshToken: null,
+        id: 1,
+        observedEncryptedAccessToken: "encrypted_access",
+        observedEncryptedRefreshToken: "encrypted_refresh",
+        refreshTokenExpiresAt: null,
+        updatedAt: new Date("2026-06-01T01:00:00.000Z"),
+      })
+    ).resolves.toBe(false);
   });
 });

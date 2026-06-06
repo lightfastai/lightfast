@@ -323,6 +323,8 @@ export {
   type ObservedCurrentUserConnectorConnectionInput,
   type RecordUserConnectorToolRefreshErrorInput,
   recordUserConnectorToolRefreshError,
+  type UpdateObservedUserConnectorTokensInput,
+  updateObservedUserConnectorTokens,
   type UpdateUserConnectorToolManifestInput,
   updateUserConnectorToolManifest,
 } from "./utils/user-connector-connections";
