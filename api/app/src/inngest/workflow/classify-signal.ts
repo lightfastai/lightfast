@@ -54,6 +54,25 @@ function shouldClassifyPeople(
   );
 }
 
+function shouldIndexSignalEntities(
+  classification: SignalClassification | null
+): boolean {
+  return (
+    classification?.schemaVersion === "signal.classification.v2" &&
+    classification.routing.visibility.scope !== "needs_review"
+  );
+}
+
+async function queueSignalEntityIndexing(input: {
+  clerkOrgId: string;
+  signalId: string;
+}) {
+  await inngest.send({
+    name: "app/signal.entity-index.requested",
+    data: input,
+  });
+}
+
 function classifiedResult(
   classification: SignalClassification,
   routedPeople: boolean
@@ -117,9 +136,19 @@ export const classifySignal = inngest.createFunction(
             },
           })
         );
+        if (shouldIndexSignalEntities(signal.classification)) {
+          await step.run("queue signal entity indexing", () =>
+            queueSignalEntityIndexing({ clerkOrgId, signalId })
+          );
+        }
         return classifiedResult(signal.classification, true);
       }
 
+      if (shouldIndexSignalEntities(signal.classification)) {
+        await step.run("queue signal entity indexing", () =>
+          queueSignalEntityIndexing({ clerkOrgId, signalId })
+        );
+      }
       return classifiedResult(signal.classification, false);
     }
 
@@ -186,7 +215,19 @@ export const classifySignal = inngest.createFunction(
         })
       );
 
+      if (shouldIndexSignalEntities(classification)) {
+        await step.run("queue signal entity indexing", () =>
+          queueSignalEntityIndexing({ clerkOrgId, signalId })
+        );
+      }
+
       return classifiedResult(classification, true);
+    }
+
+    if (shouldIndexSignalEntities(classification)) {
+      await step.run("queue signal entity indexing", () =>
+        queueSignalEntityIndexing({ clerkOrgId, signalId })
+      );
     }
 
     return classifiedResult(classification, false);

@@ -159,6 +159,17 @@ const userClassification = {
     },
   },
 };
+const notActionableClassification = {
+  ...userClassification,
+  disposition: "not_actionable",
+  title: "FYI from Jordi",
+  summary: "The input mentions Jordi but does not require action.",
+  kind: "other",
+  nextAction: "No action required.",
+  priority: "low",
+  rationale: "The signal is informational.",
+  confidence: 0.64,
+};
 const identityContext = {
   provenance: {
     surface: "signal" as const,
@@ -396,8 +407,16 @@ describe("classifySignal", () => {
         publicId: signalId,
       })
     );
-    expect(sendMock).toHaveBeenCalledWith({
+    expect(sendMock).toHaveBeenCalledTimes(2);
+    expect(sendMock).toHaveBeenNthCalledWith(1, {
       name: "app/people.classification.requested",
+      data: {
+        clerkOrgId: "org_test",
+        signalId,
+      },
+    });
+    expect(sendMock).toHaveBeenNthCalledWith(2, {
+      name: "app/signal.entity-index.requested",
       data: {
         clerkOrgId: "org_test",
         signalId,
@@ -406,7 +425,7 @@ describe("classifySignal", () => {
     expect(markSignalFailedMock).not.toHaveBeenCalled();
   });
 
-  it("does not queue people classification for user-visible signals", async () => {
+  it("queues only entity indexing for user-visible signals", async () => {
     const step = createStep();
     classifySignalInputMock.mockResolvedValueOnce(userClassification);
 
@@ -417,7 +436,35 @@ describe("classifySignal", () => {
       routedPeople: false,
     });
 
-    expect(sendMock).not.toHaveBeenCalled();
+    expect(sendMock).toHaveBeenCalledTimes(1);
+    expect(sendMock).toHaveBeenCalledWith({
+      name: "app/signal.entity-index.requested",
+      data: {
+        clerkOrgId: "org_test",
+        signalId,
+      },
+    });
+  });
+
+  it("queues entity indexing for non-actionable visible signals", async () => {
+    const step = createStep();
+    classifySignalInputMock.mockResolvedValueOnce(notActionableClassification);
+
+    await expect(runWorkflow(step)).resolves.toEqual({
+      status: "classified",
+      visibilityScope: "user",
+      reviewRequired: false,
+      routedPeople: false,
+    });
+
+    expect(sendMock).toHaveBeenCalledTimes(1);
+    expect(sendMock).toHaveBeenCalledWith({
+      name: "app/signal.entity-index.requested",
+      data: {
+        clerkOrgId: "org_test",
+        signalId,
+      },
+    });
   });
 
   it("does not queue people classification when v2 routing requires review", async () => {
@@ -458,8 +505,16 @@ describe("classifySignal", () => {
     });
 
     expect(claimSignalForClassificationMock).not.toHaveBeenCalled();
-    expect(sendMock).toHaveBeenCalledWith({
+    expect(sendMock).toHaveBeenCalledTimes(2);
+    expect(sendMock).toHaveBeenNthCalledWith(1, {
       name: "app/people.classification.requested",
+      data: {
+        clerkOrgId: "org_test",
+        signalId,
+      },
+    });
+    expect(sendMock).toHaveBeenNthCalledWith(2, {
+      name: "app/signal.entity-index.requested",
       data: {
         clerkOrgId: "org_test",
         signalId,
