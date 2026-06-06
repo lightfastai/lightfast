@@ -57,6 +57,12 @@ export {
   setXConnectorAutomationEnabled,
   startXConnectorOAuth,
 } from "./x-flow";
+export {
+  ChatProviderRoutineError,
+  callChatProviderRoutine,
+  findChatProviderRoutines,
+  type ChatProviderRoutineContext,
+} from "./chat-routines";
 export { handleXConnectorMcpRequest } from "./x-mcp-bridge";
 export { listConnectorsForOrg };
 

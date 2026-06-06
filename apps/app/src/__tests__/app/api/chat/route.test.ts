@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const appendWorkspaceAssistantMessageMock = vi.fn();
-const callProviderRoutineMock = vi.fn();
+const callChatProviderRoutineMock = vi.fn();
 const createNewResumableStreamMock = vi.fn();
 const createWorkspaceAssistantGenerationMock = vi.fn();
 const createWorkspaceAssistantConversationMock = vi.fn();
 const convertToModelMessagesMock = vi.fn();
 const getSkillIndexSnapshotMock = vi.fn();
-const findProviderRoutinesMock = vi.fn();
+const findChatProviderRoutinesMock = vi.fn();
 const gatewayMock = vi.fn();
 const getWorkspaceAssistantConversationByPublicIdMock = vi.fn();
 const getVerifiedLightfastSkillSourceRepositoryIdMock = vi.fn();
@@ -79,9 +79,9 @@ vi.mock("@vendor/ai", () => ({
   tool: toolMock,
 }));
 
-vi.mock("@repo/provider-routines", () => ({
-  callProviderRoutine: callProviderRoutineMock,
-  findProviderRoutines: findProviderRoutinesMock,
+vi.mock("@api/app/services/connectors", () => ({
+  callChatProviderRoutine: callChatProviderRoutineMock,
+  findChatProviderRoutines: findChatProviderRoutinesMock,
 }));
 
 vi.mock("@repo/ai/workspace-assistant", () => ({
@@ -110,13 +110,13 @@ const { POST } = await import("~/app/(chat)/api/chat/route");
 
 beforeEach(() => {
   appendWorkspaceAssistantMessageMock.mockReset();
-  callProviderRoutineMock.mockReset();
+  callChatProviderRoutineMock.mockReset();
   createNewResumableStreamMock.mockReset();
   createWorkspaceAssistantGenerationMock.mockReset();
   createWorkspaceAssistantConversationMock.mockReset();
   convertToModelMessagesMock.mockReset();
   getSkillIndexSnapshotMock.mockReset();
-  findProviderRoutinesMock.mockReset();
+  findChatProviderRoutinesMock.mockReset();
   gatewayMock.mockReset();
   getWorkspaceAssistantConversationByPublicIdMock.mockReset();
   getVerifiedLightfastSkillSourceRepositoryIdMock.mockReset();
@@ -205,7 +205,7 @@ beforeEach(() => {
     ],
   });
   createNewResumableStreamMock.mockResolvedValue(new ReadableStream<string>());
-  callProviderRoutineMock.mockResolvedValue({
+  callChatProviderRoutineMock.mockResolvedValue({
     provider: "linear",
     providerRoutineCallId: "prc_123",
     providerToolName: "create_issue",
@@ -213,7 +213,7 @@ beforeEach(() => {
     routineId: "linear__create_issue",
     status: "succeeded",
   });
-  findProviderRoutinesMock.mockResolvedValue({ routines: [] });
+  findChatProviderRoutinesMock.mockResolvedValue({ routines: [] });
   smoothStreamMock.mockReturnValue("smooth-stream-transform");
   stepCountIsMock.mockImplementation((count) => ({
     count,
@@ -608,12 +608,14 @@ describe("chat route", () => {
         tools: {
           callProviderRoutine: expect.objectContaining({
             description: expect.stringContaining(
-              "Call one read-only connected"
+              "Call one connected provider routine"
             ),
             execute: expect.any(Function),
           }),
           findProviderRoutines: expect.objectContaining({
-            description: expect.stringContaining("Find read-only connected"),
+            description: expect.stringContaining(
+              "Find connected provider routines"
+            ),
             execute: expect.any(Function),
           }),
         },
@@ -625,24 +627,16 @@ describe("chat route", () => {
       includeSchema: true,
       query: "issue",
     });
-    expect(findProviderRoutinesMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        actor: { orgId: "org_123", userId: "user_123" },
-        db: { kind: "mock-db" },
-        scopes: {
-          providerRoutineRead: true,
-          providerRoutineWrite: false,
-        },
-        source: {
-          clientId: null,
-          ref: "conv_123",
-          surface: "chat",
-        },
-      }),
+    expect(findChatProviderRoutinesMock).toHaveBeenCalledWith(
+      {
+        clerkOrgId: "org_123",
+        conversationId: "conv_123",
+        userId: "user_123",
+        writeMode: false,
+      },
       {
         includeSchema: true,
         query: "issue",
-        readOnly: true,
       }
     );
 
@@ -650,31 +644,60 @@ describe("chat route", () => {
       input: { id: "issue_123" },
       routineId: "linear__get_issue",
     });
-    expect(callProviderRoutineMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        actor: { orgId: "org_123", userId: "user_123" },
-        log: expect.objectContaining({
-          error: expect.any(Function),
-          info: expect.any(Function),
-          warn: expect.any(Function),
-        }),
-        now: expect.any(Function),
-        scopes: {
-          providerRoutineRead: true,
-          providerRoutineWrite: false,
-        },
-        source: {
-          clientId: null,
-          ref: "conv_123",
-          surface: "chat",
-        },
-      }),
+    expect(callChatProviderRoutineMock).toHaveBeenCalledWith(
+      {
+        clerkOrgId: "org_123",
+        conversationId: "conv_123",
+        userId: "user_123",
+        writeMode: false,
+      },
       {
         input: { id: "issue_123" },
         routineId: "linear__get_issue",
       }
     );
     expect(response).toBe(streamResponse);
+  });
+
+  it("passes provider routine write mode into chat routine tools", async () => {
+    const uiMessages = [
+      {
+        id: "client-message-1",
+        parts: [{ text: "Create a Linear issue", type: "text" }],
+        role: "user",
+      },
+    ];
+    const streamResponse = new Response("stream");
+
+    convertToModelMessagesMock.mockResolvedValue([
+      { content: "Create a Linear issue", role: "user" },
+    ]);
+    gatewayMock.mockReturnValue("gateway:anthropic/claude-sonnet-4.6");
+    streamTextMock.mockReturnValue({
+      toUIMessageStreamResponse: toUIMessageStreamResponseMock,
+    });
+    toUIMessageStreamResponseMock.mockReturnValue(streamResponse);
+
+    await POST(
+      createJsonRequest({
+        idempotencyKey: "idem_user_1",
+        messages: uiMessages,
+        conversationId: "conv_123",
+        providerRoutineWriteMode: true,
+      })
+    );
+
+    const streamOptions = streamTextMock.mock.calls[0]?.[0];
+    await streamOptions.tools.findProviderRoutines.execute({
+      query: "create",
+    });
+    expect(findChatProviderRoutinesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: "conv_123",
+        writeMode: true,
+      }),
+      { query: "create" }
+    );
   });
 
   it("marks the assistant turn failed when the model produces no content", async () => {
