@@ -407,6 +407,12 @@ describe("classifySignal", () => {
         publicId: signalId,
       })
     );
+    const stepRunNames = step.run.mock.calls.map(([name]) => name);
+    expect(stepRunNames).toContain("persist signal classification");
+    expect(stepRunNames).toContain("queue classified signal downstream workflows");
+    expect(stepRunNames.indexOf("persist signal classification")).toBeLessThan(
+      stepRunNames.indexOf("queue classified signal downstream workflows")
+    );
     expect(sendMock).toHaveBeenCalledTimes(2);
     expect(sendMock).toHaveBeenNthCalledWith(1, {
       name: "app/people.classification.requested",

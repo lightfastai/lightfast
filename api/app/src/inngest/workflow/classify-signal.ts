@@ -30,6 +30,16 @@ import {
 import { inngest } from "../client";
 import { appEvents } from "../schemas/app";
 
+type ClassifiedSignalDownstreamEvent = {
+  name:
+    | "app/people.classification.requested"
+    | "app/signal.entity-index.requested";
+  data: {
+    clerkOrgId: string;
+    signalId: string;
+  };
+};
+
 function getVisibilityScope(
   classification: SignalClassification
 ): SignalVisibilityScope {
@@ -63,14 +73,46 @@ function shouldIndexSignalEntities(
   );
 }
 
-async function queueSignalEntityIndexing(input: {
+function getClassifiedSignalDownstreamEvents(input: {
+  classification: SignalClassification;
   clerkOrgId: string;
   signalId: string;
-}) {
-  await inngest.send({
-    name: "app/signal.entity-index.requested",
-    data: input,
-  });
+}): {
+  routedPeople: boolean;
+  events: ClassifiedSignalDownstreamEvent[];
+} {
+  const routedPeople = shouldClassifyPeople(input.classification);
+  const events: ClassifiedSignalDownstreamEvent[] = [];
+
+  if (routedPeople) {
+    events.push({
+      name: "app/people.classification.requested",
+      data: {
+        clerkOrgId: input.clerkOrgId,
+        signalId: input.signalId,
+      },
+    });
+  }
+
+  if (shouldIndexSignalEntities(input.classification)) {
+    events.push({
+      name: "app/signal.entity-index.requested",
+      data: {
+        clerkOrgId: input.clerkOrgId,
+        signalId: input.signalId,
+      },
+    });
+  }
+
+  return { events, routedPeople };
+}
+
+async function queueClassifiedSignalDownstreamEvents(
+  events: ClassifiedSignalDownstreamEvent[]
+) {
+  for (const event of events) {
+    await inngest.send(event);
+  }
 }
 
 function classifiedResult(
@@ -126,30 +168,19 @@ export const classifySignal = inngest.createFunction(
     }
 
     if (signal.status === "classified" && signal.classification) {
-      if (shouldClassifyPeople(signal.classification)) {
-        await step.run("queue people classification", () =>
-          inngest.send({
-            name: "app/people.classification.requested",
-            data: {
-              clerkOrgId,
-              signalId,
-            },
-          })
+      const { events, routedPeople } = getClassifiedSignalDownstreamEvents({
+        classification: signal.classification,
+        clerkOrgId,
+        signalId,
+      });
+
+      if (events.length > 0) {
+        await step.run("queue classified signal downstream workflows", () =>
+          queueClassifiedSignalDownstreamEvents(events)
         );
-        if (shouldIndexSignalEntities(signal.classification)) {
-          await step.run("queue signal entity indexing", () =>
-            queueSignalEntityIndexing({ clerkOrgId, signalId })
-          );
-        }
-        return classifiedResult(signal.classification, true);
       }
 
-      if (shouldIndexSignalEntities(signal.classification)) {
-        await step.run("queue signal entity indexing", () =>
-          queueSignalEntityIndexing({ clerkOrgId, signalId })
-        );
-      }
-      return classifiedResult(signal.classification, false);
+      return classifiedResult(signal.classification, routedPeople);
     }
 
     const claimed = await step.run("claim signal", () =>
@@ -204,33 +235,19 @@ export const classifySignal = inngest.createFunction(
       return { status: "skipped" };
     }
 
-    if (shouldClassifyPeople(classification)) {
-      await step.run("queue people classification", () =>
-        inngest.send({
-          name: "app/people.classification.requested",
-          data: {
-            clerkOrgId,
-            signalId,
-          },
-        })
-      );
+    const { events, routedPeople } = getClassifiedSignalDownstreamEvents({
+      classification,
+      clerkOrgId,
+      signalId,
+    });
 
-      if (shouldIndexSignalEntities(classification)) {
-        await step.run("queue signal entity indexing", () =>
-          queueSignalEntityIndexing({ clerkOrgId, signalId })
-        );
-      }
-
-      return classifiedResult(classification, true);
-    }
-
-    if (shouldIndexSignalEntities(classification)) {
-      await step.run("queue signal entity indexing", () =>
-        queueSignalEntityIndexing({ clerkOrgId, signalId })
+    if (events.length > 0) {
+      await step.run("queue classified signal downstream workflows", () =>
+        queueClassifiedSignalDownstreamEvents(events)
       );
     }
 
-    return classifiedResult(classification, false);
+    return classifiedResult(classification, routedPeople);
   }
 );
 
