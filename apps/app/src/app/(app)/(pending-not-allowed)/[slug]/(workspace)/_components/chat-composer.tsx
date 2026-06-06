@@ -41,17 +41,19 @@ export const ChatComposer = memo(function ChatComposer({
 
   const effectiveStatus: ChatStatus =
     status === "ready" && isSubmitPending ? "submitted" : status;
-  const isGenerating =
+  const isBusy =
     effectiveStatus === "submitted" || effectiveStatus === "streaming";
+  const isStreaming = effectiveStatus === "streaming";
+  const submitStatus: ChatStatus =
+    effectiveStatus === "submitted" ? "ready" : effectiveStatus;
   const submitDisabled =
-    effectiveStatus === "submitted" ||
-    (!isGenerating && text.trim().length === 0);
+    effectiveStatus === "submitted" || (!isBusy && text.trim().length === 0);
 
   // Keep the textarea editable while a response streams so the next message
   // can be drafted. The button acts as Stop during generation, and Enter is
   // ignored until the stream finishes to avoid sending mid-response.
   const handleSubmit = (message: PromptInputMessage) => {
-    if (isGenerating) {
+    if (isBusy) {
       return;
     }
 
@@ -75,13 +77,13 @@ export const ChatComposer = memo(function ChatComposer({
 
   const submit = (
     <PromptInputSubmit
-      aria-label={isGenerating ? "Stop generating" : "Send message"}
+      aria-label={isStreaming ? "Stop generating" : "Send message"}
       className={cn("size-8 rounded-full", compact && "mr-2 mb-2 shrink-0")}
       disabled={submitDisabled}
       onStop={stop}
-      status={effectiveStatus}
+      status={submitStatus}
     >
-      {effectiveStatus === "ready" ? <ArrowUp className="size-4" /> : undefined}
+      {submitStatus === "ready" ? <ArrowUp className="size-4" /> : undefined}
     </PromptInputSubmit>
   );
 

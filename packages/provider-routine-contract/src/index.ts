@@ -7,7 +7,7 @@ import { z } from "zod";
 export const providerToolNameSchema = z
   .string()
   .min(1)
-  .regex(/^[a-z0-9_.-]+$/, "Unsupported provider tool name");
+  .regex(/^[A-Za-z0-9_.-]+$/, "Unsupported provider tool name");
 export type ProviderToolName = z.infer<typeof providerToolNameSchema>;
 
 export const providerRoutineIdSchema = z.string().refine((routineId) => {

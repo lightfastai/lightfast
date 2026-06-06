@@ -1,3 +1,13 @@
+const DIRECT_SERVICE_HOST_PREFIXES = new Set([
+  "app",
+  "db",
+  "inngest",
+  "mcp",
+  "platform",
+  "qstash",
+  "www",
+]);
+
 function localHostFromUrl(value: string): string | null {
   try {
     const url = new URL(value);
@@ -10,16 +20,50 @@ function localHostFromUrl(value: string): string | null {
 }
 
 function aggregateHostFromAppHost(host: string): string | null {
-  if (host === "app.lightfast.localhost") {
-    return "lightfast.localhost";
+  const { hostname, portSuffix } = splitPortlessHost(host);
+
+  if (hostname === "app.lightfast.localhost") {
+    return `lightfast.localhost${portSuffix}`;
   }
 
   const suffix = ".app.lightfast.localhost";
-  if (!host.endsWith(suffix)) {
+  if (!hostname.endsWith(suffix)) {
     return null;
   }
 
-  return `${host.slice(0, -suffix.length)}.lightfast.localhost`;
+  return `${hostname.slice(0, -suffix.length)}.lightfast.localhost${portSuffix}`;
+}
+
+function appHostFromAggregateHost(host: string): string | null {
+  const { hostname, portSuffix } = splitPortlessHost(host);
+
+  if (hostname === "lightfast.localhost") {
+    return `app.lightfast.localhost${portSuffix}`;
+  }
+
+  const suffix = ".lightfast.localhost";
+  if (!hostname.endsWith(suffix)) {
+    return null;
+  }
+
+  const prefix = hostname.slice(0, -suffix.length);
+  if (
+    !prefix ||
+    prefix.includes(".") ||
+    DIRECT_SERVICE_HOST_PREFIXES.has(prefix)
+  ) {
+    return null;
+  }
+
+  return `${prefix}.app.lightfast.localhost${portSuffix}`;
+}
+
+function splitPortlessHost(host: string) {
+  const [hostname = host, port] = host.split(":", 2);
+  return {
+    hostname,
+    portSuffix: port ? `:${port}` : "",
+  };
 }
 
 export function localServerActionHosts(values: readonly string[]): string[] {
@@ -47,6 +91,11 @@ export function localAllowedDevOrigins(values: readonly string[]): string[] {
     const aggregateHost = aggregateHostFromAppHost(host);
     if (aggregateHost) {
       hosts.add(aggregateHost);
+    }
+
+    const appHost = appHostFromAggregateHost(host);
+    if (appHost) {
+      hosts.add(appHost);
     }
   }
 

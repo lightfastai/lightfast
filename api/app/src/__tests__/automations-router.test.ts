@@ -218,6 +218,7 @@ describe("automationsRouter", () => {
   it("creates an automation for org admins", async () => {
     await expect(
       caller().automations.create({
+        connectorProvider: "linear",
         name: "Morning check",
         prompt: "Check the workspace",
         schedule: {
@@ -230,6 +231,7 @@ describe("automationsRouter", () => {
 
     expect(createAutomationMock).toHaveBeenCalledWith(expect.anything(), {
       clerkOrgId: "org_acme",
+      connectorProvider: "linear",
       createdByUserId: "user_current",
       name: "Morning check",
       prompt: "Check the workspace",
@@ -244,6 +246,7 @@ describe("automationsRouter", () => {
   it("rejects create for non-admin org members", async () => {
     await expect(
       caller(nonAdminAccess()).automations.create({
+        connectorProvider: "linear",
         name: "Morning check",
         prompt: "Check the workspace",
         schedule: {
@@ -259,6 +262,7 @@ describe("automationsRouter", () => {
   it("rejects create when the auth identity is unauthenticated", async () => {
     await expect(
       callerWithIdentity(unauthenticatedIdentity).automations.create({
+        connectorProvider: "linear",
         name: "Morning check",
         prompt: "Check the workspace",
         schedule: { kind: "hourly", config: { intervalHours: 1 } },
@@ -271,6 +275,7 @@ describe("automationsRouter", () => {
   it("rejects create when Clerk session access belongs to another org", async () => {
     await expect(
       caller(adminAccessForOrg("org_other")).automations.create({
+        connectorProvider: "linear",
         name: "Morning check",
         prompt: "Check the workspace",
         schedule: { kind: "hourly", config: { intervalHours: 1 } },

@@ -6,6 +6,10 @@ import {
   AUTOMATION_PROMPT_MAX_LENGTH,
   type AutomationScheduleInput,
 } from "@repo/app-validation/schemas";
+import {
+  CONNECTOR_CATALOG,
+  connectableConnectorProviderSchema,
+} from "@repo/connector-contract";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -21,12 +25,10 @@ import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { Textarea } from "@repo/ui/components/ui/textarea";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@vendor/clerk";
 import { Loader2 } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { z } from "zod";
 import { useTRPC } from "~/trpc/react";
 import { LfSelect } from "../../../_components/lf-select";
@@ -40,6 +42,7 @@ import {
 } from "../../_components/schedule-options";
 
 const formSchema = z.object({
+  connectorProvider: connectableConnectorProviderSchema,
   name: z
     .string()
     .trim()
@@ -84,22 +87,15 @@ function buildSchedule(values: FormValues): AutomationScheduleInput {
 
 export function AutomationCreateForm({ slug }: { slug: string }) {
   const router = useRouter();
-  const { has, isLoaded } = useAuth();
-  const canManageAutomations = isLoaded && !!has?.({ role: "org:admin" });
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
   const listHref = `/${slug}/automations` as Route;
 
-  useEffect(() => {
-    if (isLoaded && !canManageAutomations) {
-      router.replace(listHref);
-    }
-  }, [canManageAutomations, isLoaded, listHref, router]);
-
   const form = useFormCompat<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      connectorProvider: "linear",
       name: "",
       prompt: "",
       scheduleKind: "daily",
@@ -112,6 +108,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
   });
 
   const scheduleKind = form.watch("scheduleKind") as ScheduleKind;
+  const connectorProvider = form.watch("connectorProvider");
   const dayOfWeek = form.watch("dayOfWeek");
   const timezone = form.watch("timezone");
   const promptValue = form.watch("prompt");
@@ -137,6 +134,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
 
   const onSubmit = (values: FormValues) => {
     createMutation.mutate({
+      connectorProvider: values.connectorProvider,
       name: values.name,
       prompt: values.prompt,
       schedule: buildSchedule(values),
@@ -145,10 +143,6 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
   };
 
   const isSubmitting = createMutation.isPending;
-
-  if (!(isLoaded && canManageAutomations)) {
-    return null;
-  }
 
   return (
     <div className="min-h-full bg-background text-foreground">
@@ -213,6 +207,28 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
                 </FormItem>
               )}
             />
+
+            <div className="space-y-2">
+              <FormLabel className="font-normal text-muted-foreground text-sm">
+                Connector
+              </FormLabel>
+              <LfSelect
+                aria-label="Connector"
+                className="w-full"
+                onValueChange={(value) =>
+                  form.setValue(
+                    "connectorProvider",
+                    connectableConnectorProviderSchema.parse(value),
+                    { shouldValidate: true }
+                  )
+                }
+                options={CONNECTOR_CATALOG.map((connector) => ({
+                  label: connector.displayName,
+                  value: connector.provider,
+                }))}
+                value={connectorProvider}
+              />
+            </div>
 
             <div className="space-y-2">
               <FormLabel className="font-normal text-muted-foreground text-sm">

@@ -504,7 +504,7 @@ describe("WorkspaceAssistantClient", () => {
     render(<WorkspaceAssistantClient conversationId="conv_new" />);
 
     expect(
-      screen.getByRole("button", { name: "Stop generating" })
+      screen.getByRole("button", { name: "Send message" })
     ).toBeDisabled();
   });
 
