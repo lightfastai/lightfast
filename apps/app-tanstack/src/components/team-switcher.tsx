@@ -12,7 +12,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useTRPC } from "~/trpc/react";
 
 const RESERVED_ROUTES = new Set([
@@ -22,6 +22,14 @@ const RESERVED_ROUTES = new Set([
   "sign-in",
   "sign-up",
 ]);
+
+export function TeamSwitcherSlot() {
+  return (
+    <Suspense fallback={<TeamSwitcherSkeleton />}>
+      <TeamSwitcher />
+    </Suspense>
+  );
+}
 
 export function TeamSwitcher() {
   const trpc = useTRPC();

@@ -7,6 +7,7 @@ import {
 } from "@db/app";
 import { LIGHTFAST_REPOSITORY_NAME } from "@repo/app-setup-contract";
 import {
+  buildGitHubNewRepositoryUrl,
   createGitHubAppJwt,
   createGitHubInstallationToken,
   getGitHubAppInstallation,
@@ -64,13 +65,22 @@ function assertActiveGitHubBinding(
 
 function bindingResponse(input: {
   binding: ActiveGitHubBinding;
+  githubWebBaseUrl: string;
   importedRepositoryCount: number;
 }) {
+  const accountLogin =
+    input.binding.providerAccountLogin ?? input.binding.providerAccountId;
+
   return {
-    accountLogin: input.binding.providerAccountLogin,
+    accountLogin,
     connectedAt: input.binding.connectedAt,
     importedRepositoryCount: input.importedRepositoryCount,
     lightfastRepository: getMatchingGitHubLightfastRepository(input.binding),
+    newLightfastRepositoryUrl: buildGitHubNewRepositoryUrl({
+      accountLogin,
+      name: LIGHTFAST_REPOSITORY_NAME,
+      webBaseUrl: input.githubWebBaseUrl,
+    }),
     provider: input.binding.provider,
     providerLabel: providerLabel(input.binding.provider),
   };
@@ -111,6 +121,7 @@ export const orgSourceControlRouter = {
       };
     }
 
+    const config = getGitHubAppConfig();
     const watchedRepositories = await listWatchedSourceControlRepositories(
       ctx.db,
       {
@@ -121,6 +132,7 @@ export const orgSourceControlRouter = {
     return {
       binding: bindingResponse({
         binding,
+        githubWebBaseUrl: config.endpoints.webBaseUrl,
         importedRepositoryCount: countNormalImportedRepositories({
           binding,
           watchedRepositories,
@@ -155,6 +167,7 @@ export const orgSourceControlRouter = {
     );
     const bindingSummary = bindingResponse({
       binding,
+      githubWebBaseUrl: config.endpoints.webBaseUrl,
       importedRepositoryCount: countNormalImportedRepositories({
         binding,
         watchedRepositories,
@@ -338,6 +351,7 @@ export const orgSourceControlRouter = {
       );
       const bindingSummary = bindingResponse({
         binding,
+        githubWebBaseUrl: config.endpoints.webBaseUrl,
         importedRepositoryCount: countNormalImportedRepositories({
           binding,
           watchedRepositories,

@@ -933,6 +933,12 @@ importers:
       '@repo/ai':
         specifier: workspace:*
         version: link:../../ai
+      '@repo/api-contract':
+        specifier: workspace:*
+        version: link:../../packages/api-contract
+      '@repo/app-setup-contract':
+        specifier: workspace:*
+        version: link:../../packages/app-setup-contract
       '@repo/app-validation':
         specifier: workspace:*
         version: link:../../packages/app-validation
@@ -957,6 +963,9 @@ importers:
       '@tanstack/react-start':
         specifier: 'catalog:'
         version: 1.168.19(crossws@0.4.5(srvx@0.11.16))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vite@8.0.16(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(webpack@5.105.4(esbuild@0.28.0))
+      '@tanstack/react-virtual':
+        specifier: 'catalog:'
+        version: 3.13.26(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@trpc/client':
         specifier: 'catalog:'
         version: 11.16.0(@trpc/server@11.16.0(typescript@5.9.3))(typescript@5.9.3)
@@ -969,6 +978,9 @@ importers:
       '@vendor/braintrust':
         specifier: workspace:*
         version: link:../../vendor/braintrust
+      '@vendor/lib':
+        specifier: workspace:*
+        version: link:../../vendor/lib
       '@vendor/unkey':
         specifier: workspace:*
         version: link:../../vendor/unkey
@@ -999,6 +1011,9 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 4.3.6
+      zustand:
+        specifier: 'catalog:'
+        version: 5.0.12(@types/react@19.2.15)(react@19.2.6)(use-sync-external-store@1.6.0(react@19.2.6))
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -1015,6 +1030,9 @@ importers:
       '@tanstack/router-plugin':
         specifier: 'catalog:'
         version: 1.168.14(@tanstack/react-router@1.170.11(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(vite@8.0.16(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(webpack@5.105.4(esbuild@0.28.0))
+      '@testing-library/react':
+        specifier: 'catalog:'
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@types/node':
         specifier: 'catalog:'
         version: 24.9.1
@@ -1030,6 +1048,9 @@ importers:
       dotenv-cli:
         specifier: 'catalog:'
         version: 11.0.0
+      happy-dom:
+        specifier: 'catalog:'
+        version: 20.9.0
       nitro:
         specifier: 'catalog:'
         version: 3.0.260522-beta(@planetscale/database@1.20.1)(@upstash/redis@1.38.0)(@vercel/functions@3.4.3)(better-sqlite3@12.9.0)(chokidar@5.0.0)(dotenv@17.3.1)(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(@planetscale/database@1.20.1)(@types/better-sqlite3@7.6.13)(@types/pg@8.15.6)(@upstash/redis@1.38.0)(better-sqlite3@12.9.0))(jiti@2.7.0)(lru-cache@11.3.6)(vite@8.0.16(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))

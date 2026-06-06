@@ -9,6 +9,7 @@ const scopeSetContextMock = vi.fn();
 vi.mock("server-only", () => ({}));
 
 vi.mock("@sentry/core", () => ({
+  captureException: captureExceptionMock,
   getActiveSpan: () => ({
     spanContext: () => ({ traceId: "trace_1" }),
   }),
@@ -28,10 +29,6 @@ vi.mock("@sentry/core", () => ({
       setExtra: vi.fn(),
       setTag: vi.fn(),
     }),
-}));
-
-vi.mock("@sentry/nextjs", () => ({
-  captureException: captureExceptionMock,
 }));
 
 vi.mock("@vendor/lib", () => ({

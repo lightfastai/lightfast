@@ -6,9 +6,9 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { AuthenticatedTopbar } from "~/components/authenticated-topbar";
 import { usesRouteOwnedAuthenticatedShell } from "~/components/authenticated-layout-model";
-import { TeamSwitcher } from "~/components/team-switcher";
+import { AuthenticatedTopbar } from "~/components/authenticated-topbar";
+import { TeamSwitcherSlot } from "~/components/team-switcher";
 
 const AUTH_ROUTE_PATHS = new Set(["/sign-in", "/sign-up"]);
 
@@ -48,7 +48,7 @@ function AuthenticatedLayout() {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background">
-      <AuthenticatedTopbar left={<TeamSwitcher />} />
+      <AuthenticatedTopbar left={<TeamSwitcherSlot />} />
       <div className="relative flex flex-1 flex-col overflow-y-auto bg-background">
         <Outlet />
       </div>

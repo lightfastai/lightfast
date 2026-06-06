@@ -1,14 +1,22 @@
+import type { OrgSetupRequirement } from "@repo/app-setup-contract";
 import { Button } from "@repo/ui/components/ui/button";
-import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@repo/ui/components/ui/sidebar";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  Navigate,
+  Outlet,
+  useLocation,
+} from "@tanstack/react-router";
 import { AppSidebar } from "~/components/app-sidebar";
 import { AuthenticatedTopbar } from "~/components/authenticated-topbar";
+import { TeamSwitcherSlot } from "~/components/team-switcher";
 import { useTRPC } from "~/trpc/react";
 
 export const Route = createFileRoute("/_authenticated/$slug")({
@@ -24,8 +32,47 @@ export const Route = createFileRoute("/_authenticated/$slug")({
   component: OrganizationHomePage,
 });
 
+function orgSetupPath(slug: string, pathname: string) {
+  const setupRoot = `/${slug}/tasks/`;
+  return pathname.startsWith(setupRoot);
+}
+
+function orgSetupCompletePath(slug: string, pathname: string) {
+  return pathname === `/${slug}/tasks/bind/github/complete`;
+}
+
+function orgSettingsPath(slug: string, pathname: string) {
+  const settingsRoot = `/${slug}/settings`;
+  return pathname === settingsRoot || pathname.startsWith(`${settingsRoot}/`);
+}
+
+function orgSetupExemptPath(slug: string, pathname: string) {
+  return orgSetupPath(slug, pathname) || orgSettingsPath(slug, pathname);
+}
+
+function SetupRequirementNavigate({
+  requirement,
+  slug,
+}: {
+  requirement: OrgSetupRequirement;
+  slug: string;
+}) {
+  if (requirement === "github_lightfast_repo") {
+    return (
+      <Navigate
+        params={{ slug }}
+        replace
+        to="/$slug/tasks/github/lightfast-repo"
+      />
+    );
+  }
+
+  return <Navigate params={{ slug }} replace to="/$slug/tasks/bind" />;
+}
+
 function OrganizationHomePage() {
   const { slug } = Route.useParams();
+  const location = useLocation();
   const trpc = useTRPC();
   const {
     data: orgAccess,
@@ -43,6 +90,37 @@ function OrganizationHomePage() {
 
   if (error || !orgAccess) {
     return <OrganizationNotFound slug={slug} />;
+  }
+
+  if (
+    orgAccess.bindingStatus !== "bound" &&
+    !orgSetupExemptPath(slug, location.pathname)
+  ) {
+    return (
+      <SetupRequirementNavigate
+        requirement={orgAccess.nextSetupRequirement}
+        slug={slug}
+      />
+    );
+  }
+
+  if (
+    orgAccess.bindingStatus === "bound" &&
+    orgSetupPath(slug, location.pathname) &&
+    !orgSetupCompletePath(slug, location.pathname)
+  ) {
+    return <Navigate params={{ slug }} replace to="/$slug" />;
+  }
+
+  if (orgSetupPath(slug, location.pathname)) {
+    return (
+      <div className="flex h-screen flex-col overflow-hidden bg-background">
+        <AuthenticatedTopbar left={<TeamSwitcherSlot />} />
+        <main className="min-h-0 flex-1 overflow-y-auto">
+          <Outlet />
+        </main>
+      </div>
+    );
   }
 
   return (

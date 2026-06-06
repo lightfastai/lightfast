@@ -1,13 +1,13 @@
 import "server-only";
 
 import {
+  captureException,
   getActiveSpan,
   SEMANTIC_ATTRIBUTE_SENTRY_ORIGIN,
   SEMANTIC_ATTRIBUTE_SENTRY_SOURCE,
   startSpan,
   withIsolationScope,
 } from "@sentry/core";
-import * as Sentry from "@sentry/nextjs";
 import type { TRPCError } from "@trpc/server";
 import { getHTTPStatusCodeFromError } from "@trpc/server/http";
 import { nanoid } from "@vendor/lib";
@@ -126,7 +126,7 @@ export function createObservabilityMiddleware<TCtx>(
                 ? result.error.cause
                 : result.error;
 
-            Sentry.captureException(reportedError, {
+            captureException(reportedError, {
               extra: {
                 durationMs,
                 httpStatus,
