@@ -3,6 +3,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
 
 import { boundOrgProcedure } from "../../trpc";
+import { workspaceDecisionViewsRouter } from "./workspace-decision-views";
 import {
   workspaceListCursorInput,
   workspaceListLimitInput,
@@ -46,4 +47,5 @@ export const decisionsRouter = {
       statuses: input.statuses?.length ? input.statuses : undefined,
     })
   ),
+  views: workspaceDecisionViewsRouter,
 } satisfies TRPCRouterRecord;
