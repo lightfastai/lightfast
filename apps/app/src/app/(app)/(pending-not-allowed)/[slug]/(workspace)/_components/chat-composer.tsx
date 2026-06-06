@@ -12,7 +12,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 import type { ChatStatus } from "@vendor/ai";
 import { ArrowUp } from "lucide-react";
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
 
 export const ChatComposer = memo(function ChatComposer({
   compact,
@@ -31,8 +31,21 @@ export const ChatComposer = memo(function ChatComposer({
   stop: () => void;
   text: string;
 }) {
-  const isGenerating = status === "submitted" || status === "streaming";
-  const submitDisabled = !isGenerating && text.trim().length === 0;
+  const [isSubmitPending, setIsSubmitPending] = useState(false);
+
+  useEffect(() => {
+    if (status !== "ready") {
+      setIsSubmitPending(false);
+    }
+  }, [status]);
+
+  const effectiveStatus: ChatStatus =
+    status === "ready" && isSubmitPending ? "submitted" : status;
+  const isGenerating =
+    effectiveStatus === "submitted" || effectiveStatus === "streaming";
+  const submitDisabled =
+    effectiveStatus === "submitted" ||
+    (!isGenerating && text.trim().length === 0);
 
   // Keep the textarea editable while a response streams so the next message
   // can be drafted. The button acts as Stop during generation, and Enter is
@@ -41,7 +54,23 @@ export const ChatComposer = memo(function ChatComposer({
     if (isGenerating) {
       return;
     }
-    return onSubmit(message);
+
+    const submittedText = message.text.trim() ? message.text : text;
+    if (!submittedText.trim()) {
+      return;
+    }
+
+    onTextChange("");
+    setIsSubmitPending(true);
+
+    try {
+      return onSubmit({ ...message, text: submittedText }).finally(() => {
+        setIsSubmitPending(false);
+      });
+    } catch (error) {
+      setIsSubmitPending(false);
+      throw error;
+    }
   };
 
   const submit = (
@@ -50,9 +79,9 @@ export const ChatComposer = memo(function ChatComposer({
       className={cn("size-8 rounded-full", compact && "mr-2 mb-2 shrink-0")}
       disabled={submitDisabled}
       onStop={stop}
-      status={status}
+      status={effectiveStatus}
     >
-      {status === "ready" ? <ArrowUp className="size-4" /> : undefined}
+      {effectiveStatus === "ready" ? <ArrowUp className="size-4" /> : undefined}
     </PromptInputSubmit>
   );
 
