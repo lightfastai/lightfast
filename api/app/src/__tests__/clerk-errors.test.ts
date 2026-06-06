@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   isClerkConflictError,
+  isClerkOrganizationDomainsNotEnabled,
   isClerkResourceNotFound,
 } from "../auth/clerk-errors";
 
@@ -46,5 +47,17 @@ describe("Clerk error helpers", () => {
         clerkError(422, "form_param_format_invalid", "slug is taken")
       )
     ).toBe(false);
+  });
+
+  it("recognizes Clerk organization-domain feature responses", () => {
+    expect(
+      isClerkOrganizationDomainsNotEnabled(
+        clerkError(
+          403,
+          "organization_domains_not_enabled",
+          "organization domains not enabled"
+        )
+      )
+    ).toBe(true);
   });
 });

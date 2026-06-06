@@ -13,19 +13,33 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Input } from "@repo/ui/components/ui/input";
-import { AtSign, ListFilter, Search, Tag, X } from "lucide-react";
+import {
+  AtSign,
+  ListFilter,
+  Search,
+  Tag,
+  UserCheck,
+  UsersRound,
+  X,
+} from "lucide-react";
 import type { ComponentType } from "react";
 import {
+  getMemberStatusLabel,
   getPersonProviderLabel,
+  getPersonSourceLabel,
   getPersonTypeLabel,
   type PeopleClassificationFilters,
+  type PersonMemberStatus,
   type PersonProvider,
+  type PersonSource,
   type PersonType,
+  peopleMemberStatusOptions,
   peopleProviderOptions,
+  peopleSourceOptions,
   peopleTypeOptions,
 } from "./people-model";
 
-type FilterGroupId = "provider" | "type";
+type FilterGroupId = "provider" | "type" | "source" | "memberStatus";
 type IconComponent = ComponentType<{ className?: string }>;
 
 interface FilterGroup {
@@ -38,15 +52,19 @@ interface FilterGroup {
 export function PeopleToolbar({
   filters,
   onClearFilterGroup,
+  onToggleMemberStatus,
   onQueryChange,
   onToggleProvider,
+  onToggleSource,
   onToggleType,
   query,
 }: {
   filters: PeopleClassificationFilters;
   onClearFilterGroup: (group: FilterGroupId) => void;
+  onToggleMemberStatus: (value: PersonMemberStatus) => void;
   onQueryChange: (value: string) => void;
   onToggleProvider: (value: PersonProvider) => void;
+  onToggleSource: (value: PersonSource) => void;
   onToggleType: (value: PersonType) => void;
   query: string;
 }) {
@@ -63,8 +81,24 @@ export function PeopleToolbar({
       icon: Tag,
       label: "Type",
     },
+    {
+      count: filters.sources.length,
+      id: "source",
+      icon: UsersRound,
+      label: "Source",
+    },
+    {
+      count: filters.memberStatuses.length,
+      id: "memberStatus",
+      icon: UserCheck,
+      label: "Member Status",
+    },
   ];
-  const activeFilterCount = filters.providers.length + filters.types.length;
+  const activeFilterCount =
+    filters.providers.length +
+    filters.types.length +
+    filters.sources.length +
+    filters.memberStatuses.length;
 
   return (
     <div
@@ -107,7 +141,9 @@ export function PeopleToolbar({
                 filters={filters}
                 group={group}
                 key={group.id}
+                onToggleMemberStatus={onToggleMemberStatus}
                 onToggleProvider={onToggleProvider}
+                onToggleSource={onToggleSource}
                 onToggleType={onToggleType}
               />
             ))}
@@ -130,6 +166,24 @@ export function PeopleToolbar({
           onClear={() => onClearFilterGroup("type")}
           value={formatChipValue(
             filters.types.map((value) => getPersonTypeLabel(value))
+          )}
+        />
+        <PeopleFilterChip
+          count={filters.sources.length}
+          icon={UsersRound}
+          label="Source"
+          onClear={() => onClearFilterGroup("source")}
+          value={formatChipValue(
+            filters.sources.map((value) => getPersonSourceLabel(value))
+          )}
+        />
+        <PeopleFilterChip
+          count={filters.memberStatuses.length}
+          icon={UserCheck}
+          label="Member Status"
+          onClear={() => onClearFilterGroup("memberStatus")}
+          value={formatChipValue(
+            filters.memberStatuses.map((value) => getMemberStatusLabel(value))
           )}
         />
       </div>
@@ -159,29 +213,27 @@ export function PeopleToolbar({
 function PeopleFilterSubMenu({
   filters,
   group,
+  onToggleMemberStatus,
   onToggleProvider,
+  onToggleSource,
   onToggleType,
 }: {
   filters: PeopleClassificationFilters;
   group: FilterGroup;
+  onToggleMemberStatus: (value: PersonMemberStatus) => void;
   onToggleProvider: (value: PersonProvider) => void;
+  onToggleSource: (value: PersonSource) => void;
   onToggleType: (value: PersonType) => void;
 }) {
   const Icon = group.icon;
-  const options =
-    group.id === "provider"
-      ? peopleProviderOptions.map((option) => ({
-          checked: filters.providers.includes(option.value),
-          label: option.label,
-          onToggle: () => onToggleProvider(option.value),
-          value: option.value as string,
-        }))
-      : peopleTypeOptions.map((option) => ({
-          checked: filters.types.includes(option.value),
-          label: option.label,
-          onToggle: () => onToggleType(option.value),
-          value: option.value as string,
-        }));
+  const options = getFilterOptions({
+    filters,
+    groupId: group.id,
+    onToggleMemberStatus,
+    onToggleProvider,
+    onToggleSource,
+    onToggleType,
+  });
 
   return (
     <DropdownMenuSub>
@@ -214,6 +266,58 @@ function PeopleFilterSubMenu({
       </DropdownMenuSubContent>
     </DropdownMenuSub>
   );
+}
+
+function getFilterOptions({
+  filters,
+  groupId,
+  onToggleMemberStatus,
+  onToggleProvider,
+  onToggleSource,
+  onToggleType,
+}: {
+  filters: PeopleClassificationFilters;
+  groupId: FilterGroupId;
+  onToggleMemberStatus: (value: PersonMemberStatus) => void;
+  onToggleProvider: (value: PersonProvider) => void;
+  onToggleSource: (value: PersonSource) => void;
+  onToggleType: (value: PersonType) => void;
+}): {
+  checked: boolean;
+  label: string;
+  onToggle: () => void;
+  value: string;
+}[] {
+  if (groupId === "provider") {
+    return peopleProviderOptions.map((option) => ({
+      checked: filters.providers.includes(option.value),
+      label: option.label,
+      onToggle: () => onToggleProvider(option.value),
+      value: option.value,
+    }));
+  }
+  if (groupId === "type") {
+    return peopleTypeOptions.map((option) => ({
+      checked: filters.types.includes(option.value),
+      label: option.label,
+      onToggle: () => onToggleType(option.value),
+      value: option.value,
+    }));
+  }
+  if (groupId === "source") {
+    return peopleSourceOptions.map((option) => ({
+      checked: filters.sources.includes(option.value),
+      label: option.label,
+      onToggle: () => onToggleSource(option.value),
+      value: option.value,
+    }));
+  }
+  return peopleMemberStatusOptions.map((option) => ({
+    checked: filters.memberStatuses.includes(option.value),
+    label: option.label,
+    onToggle: () => onToggleMemberStatus(option.value),
+    value: option.value,
+  }));
 }
 
 function PeopleFilterChip({

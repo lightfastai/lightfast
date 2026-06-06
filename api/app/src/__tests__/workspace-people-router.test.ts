@@ -63,6 +63,11 @@ const personRow: Person = {
   lastSeenSignalId: "signal_last",
   seenCount: 3,
   metadata: {},
+  personSource: "signal",
+  memberStatus: null,
+  clerkUserId: null,
+  memberRole: null,
+  memberSyncedAt: null,
   createdAt: new Date("2026-05-27T01:00:00.000Z"),
   updatedAt: new Date("2026-05-27T01:01:00.000Z"),
 };
@@ -110,6 +115,8 @@ describe("workspacePeopleRouter.list", () => {
       cursor: { createdAt: new Date("2026-05-27T01:00:00.000Z"), id: 7 },
       limit: 25,
       providers: undefined,
+      sources: undefined,
+      memberStatuses: undefined,
       search: "jeevan",
       types: undefined,
     });
@@ -127,6 +134,8 @@ describe("workspacePeopleRouter.list", () => {
       cursor: undefined,
       limit: undefined,
       providers: undefined,
+      sources: undefined,
+      memberStatuses: undefined,
       search: undefined,
       types: undefined,
     });
@@ -194,6 +203,8 @@ describe("workspacePeopleRouter.list", () => {
       cursor: undefined,
       limit: undefined,
       providers: undefined,
+      sources: undefined,
+      memberStatuses: undefined,
       search: undefined,
       types: undefined,
     });
@@ -209,8 +220,43 @@ describe("workspacePeopleRouter.list filters", () => {
       cursor: undefined,
       limit: undefined,
       providers: ["x"],
+      sources: undefined,
+      memberStatuses: undefined,
       search: undefined,
       types: ["handle"],
+    });
+  });
+
+  it("forwards non-empty source and member status filters to the db helper", async () => {
+    await caller().people.list({
+      sources: ["team_member", "mixed"],
+      memberStatuses: ["active"],
+    });
+
+    expect(listPeopleMock).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_test",
+      cursor: undefined,
+      limit: undefined,
+      providers: undefined,
+      sources: ["team_member", "mixed"],
+      memberStatuses: ["active"],
+      search: undefined,
+      types: undefined,
+    });
+  });
+
+  it("normalizes empty source and member status filters to undefined", async () => {
+    await caller().people.list({ sources: [], memberStatuses: [] });
+
+    expect(listPeopleMock).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_test",
+      cursor: undefined,
+      limit: undefined,
+      providers: undefined,
+      sources: undefined,
+      memberStatuses: undefined,
+      search: undefined,
+      types: undefined,
     });
   });
 
@@ -218,6 +264,26 @@ describe("workspacePeopleRouter.list filters", () => {
     await expect(
       caller().people.list({
         providers: ["telegram" as unknown as "x"],
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(listPeopleMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects unknown source values", async () => {
+    await expect(
+      caller().people.list({
+        sources: ["invitation" as unknown as "signal"],
+        memberStatuses: ["active"],
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(listPeopleMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects unknown member status values", async () => {
+    await expect(
+      caller().people.list({
+        sources: ["signal"],
+        memberStatuses: ["pending" as unknown as "active"],
       })
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
     expect(listPeopleMock).not.toHaveBeenCalled();

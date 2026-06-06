@@ -21,7 +21,7 @@ import {
   useSidebar,
 } from "@repo/ui/components/ui/sidebar";
 import { cn } from "@repo/ui/lib/utils";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   Aperture,
   Blocks,
@@ -175,14 +175,14 @@ function ChatHistory({
   pathname: string;
 }) {
   const trpc = useTRPC();
-  const { data } = useSuspenseQuery(
+  const { data, isError } = useQuery(
     trpc.org.workspace.assistant.listConversations.queryOptions(
       { limit: 20 },
       { staleTime: 0 }
     )
   );
 
-  if (data.items.length === 0) {
+  if (isError || !data || data.items.length === 0) {
     return null;
   }
 
@@ -284,7 +284,7 @@ export function AppSidebar() {
                     setOpenMobile(false);
                   }
                 }}
-                prefetch
+                prefetch={false}
               >
                 <MessageCirclePlus className="size-3.5" />
               </Link>

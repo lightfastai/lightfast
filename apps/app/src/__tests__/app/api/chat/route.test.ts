@@ -796,9 +796,9 @@ describe("chat route", () => {
     });
     const streamResponse = new Response("stream");
 
-    getWorkspaceAssistantConversationByPublicIdMock.mockResolvedValueOnce(
-      undefined
-    );
+    getWorkspaceAssistantConversationByPublicIdMock
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined);
     createWorkspaceAssistantConversationMock.mockResolvedValueOnce(
       createdConversation
     );
@@ -836,6 +836,58 @@ describe("chat route", () => {
           publicId: "conv_client_generated",
         }),
       })
+    );
+    expect(response).toBe(streamResponse);
+  });
+
+  it("recovers a same-scope duplicate supplied conversation id create race", async () => {
+    const duplicatePublicIdError = Object.assign(
+      new Error("Duplicate entry for key"),
+      { code: "ER_DUP_ENTRY" }
+    );
+    const racedConversation = makeConversation({
+      publicId: "conv_raced",
+      title: "Start a raced workspace plan",
+    });
+    const streamResponse = new Response("stream");
+
+    getWorkspaceAssistantConversationByPublicIdMock
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(racedConversation);
+    createWorkspaceAssistantConversationMock.mockRejectedValueOnce(
+      duplicatePublicIdError
+    );
+    isDuplicateKeyErrorMock.mockReturnValueOnce(true);
+    listWorkspaceAssistantMessagesMock.mockResolvedValue([]);
+    convertToModelMessagesMock.mockResolvedValue([
+      { content: "Start a raced workspace plan", role: "user" },
+    ]);
+    gatewayMock.mockReturnValue("gateway:anthropic/claude-sonnet-4.6");
+    streamTextMock.mockReturnValue({
+      toUIMessageStreamResponse: toUIMessageStreamResponseMock,
+    });
+    toUIMessageStreamResponseMock.mockReturnValue(streamResponse);
+
+    const response = await POST(
+      createJsonRequest({
+        idempotencyKey: "idem_user_1",
+        messages: [
+          {
+            id: "client-message-1",
+            parts: [{ text: "Start a raced workspace plan", type: "text" }],
+            role: "user",
+          },
+        ],
+        conversationId: "conv_raced",
+      })
+    );
+
+    expect(
+      getWorkspaceAssistantConversationByPublicIdMock
+    ).toHaveBeenCalledTimes(2);
+    expect(listWorkspaceAssistantMessagesMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ conversation: racedConversation })
     );
     expect(response).toBe(streamResponse);
   });
@@ -890,9 +942,9 @@ describe("chat route", () => {
       new Error("Duplicate entry for key"),
       { code: "ER_DUP_ENTRY" }
     );
-    getWorkspaceAssistantConversationByPublicIdMock.mockResolvedValueOnce(
-      undefined
-    );
+    getWorkspaceAssistantConversationByPublicIdMock
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined);
     createWorkspaceAssistantConversationMock.mockRejectedValueOnce(
       duplicatePublicIdError
     );

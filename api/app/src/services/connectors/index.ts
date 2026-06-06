@@ -19,6 +19,7 @@ import {
 import {
   disconnectXConnector,
   refreshXConnectorTools,
+  setXConnectorAgentEnabled,
   setXConnectorAutomationEnabled,
   startXConnectorOAuth,
 } from "./x-flow";
@@ -52,6 +53,7 @@ export {
   completeXConnectorOAuth,
   disconnectXConnector,
   refreshXConnectorTools,
+  setXConnectorAgentEnabled,
   setXConnectorAutomationEnabled,
   startXConnectorOAuth,
 } from "./x-flow";
@@ -114,6 +116,8 @@ export async function setConnectorAgentEnabled(
   switch (input.provider) {
     case "linear":
       return await setLinearConnectorAgentEnabled(ctx, input);
+    case "x":
+      return await setXConnectorAgentEnabled(ctx, input);
     default:
       return unsupportedProvider(input.provider);
   }

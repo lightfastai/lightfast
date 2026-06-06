@@ -30,6 +30,16 @@ import {
 import { inngest } from "../client";
 import { appEvents } from "../schemas/app";
 
+interface ClassifiedSignalDownstreamEvent {
+  data: {
+    clerkOrgId: string;
+    signalId: string;
+  };
+  name:
+    | "app/people.classification.requested"
+    | "app/signal.entity-index.requested";
+}
+
 function getVisibilityScope(
   classification: SignalClassification
 ): SignalVisibilityScope {
@@ -52,6 +62,49 @@ function shouldClassifyPeople(
     classification.routing.visibility.scope === "team" &&
     classification.routing.routes.people.shouldRun === true
   );
+}
+
+function shouldIndexSignalEntities(
+  classification: SignalClassification | null
+): boolean {
+  return (
+    classification?.schemaVersion === "signal.classification.v2" &&
+    classification.routing.visibility.scope !== "needs_review"
+  );
+}
+
+function getClassifiedSignalDownstreamEvents(input: {
+  classification: SignalClassification;
+  clerkOrgId: string;
+  signalId: string;
+}): {
+  routedPeople: boolean;
+  events: ClassifiedSignalDownstreamEvent[];
+} {
+  const routedPeople = shouldClassifyPeople(input.classification);
+  const events: ClassifiedSignalDownstreamEvent[] = [];
+
+  if (routedPeople) {
+    events.push({
+      name: "app/people.classification.requested",
+      data: {
+        clerkOrgId: input.clerkOrgId,
+        signalId: input.signalId,
+      },
+    });
+  }
+
+  if (shouldIndexSignalEntities(input.classification)) {
+    events.push({
+      name: "app/signal.entity-index.requested",
+      data: {
+        clerkOrgId: input.clerkOrgId,
+        signalId: input.signalId,
+      },
+    });
+  }
+
+  return { events, routedPeople };
 }
 
 function classifiedResult(
@@ -107,20 +160,20 @@ export const classifySignal = inngest.createFunction(
     }
 
     if (signal.status === "classified" && signal.classification) {
-      if (shouldClassifyPeople(signal.classification)) {
-        await step.run("queue people classification", () =>
-          inngest.send({
-            name: "app/people.classification.requested",
-            data: {
-              clerkOrgId,
-              signalId,
-            },
-          })
+      const { events, routedPeople } = getClassifiedSignalDownstreamEvents({
+        classification: signal.classification,
+        clerkOrgId,
+        signalId,
+      });
+
+      if (events.length > 0) {
+        await step.sendEvent(
+          "queue classified signal downstream workflows",
+          events
         );
-        return classifiedResult(signal.classification, true);
       }
 
-      return classifiedResult(signal.classification, false);
+      return classifiedResult(signal.classification, routedPeople);
     }
 
     const claimed = await step.run("claim signal", () =>
@@ -175,21 +228,20 @@ export const classifySignal = inngest.createFunction(
       return { status: "skipped" };
     }
 
-    if (shouldClassifyPeople(classification)) {
-      await step.run("queue people classification", () =>
-        inngest.send({
-          name: "app/people.classification.requested",
-          data: {
-            clerkOrgId,
-            signalId,
-          },
-        })
-      );
+    const { events, routedPeople } = getClassifiedSignalDownstreamEvents({
+      classification,
+      clerkOrgId,
+      signalId,
+    });
 
-      return classifiedResult(classification, true);
+    if (events.length > 0) {
+      await step.sendEvent(
+        "queue classified signal downstream workflows",
+        events
+      );
     }
 
-    return classifiedResult(classification, false);
+    return classifiedResult(classification, routedPeople);
   }
 );
 

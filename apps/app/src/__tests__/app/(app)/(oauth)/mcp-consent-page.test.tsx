@@ -218,6 +218,7 @@ describe("/oauth/authorize MCP consent", () => {
         clerkUserId: "user_test",
       })
     );
+    expect(authMock).toHaveBeenCalledWith({ treatPendingAsSignedOut: false });
   });
 
   it("rejects forged organization ids before issuing an authorization code", async () => {

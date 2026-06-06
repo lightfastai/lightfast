@@ -5,6 +5,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const identityGetQueryOptionsMock = vi.fn(() => ({
   queryKey: ["org", "settings", "identity", "get"],
 }));
+const listDomainsQueryOptionsMock = vi.fn((input: { slug: string }) => ({
+  input,
+  queryKey: ["org", "settings", "organization", "listDomains", input.slug],
+}));
 const listUserOrganizationsQueryOptionsMock = vi.fn(() => ({
   queryKey: ["viewer", "organization", "listUserOrganizations"],
 }));
@@ -21,6 +25,11 @@ vi.mock("~/trpc/server", () => ({
         identity: {
           get: {
             queryOptions: identityGetQueryOptionsMock,
+          },
+        },
+        organization: {
+          listDomains: {
+            queryOptions: listDomainsQueryOptionsMock,
           },
         },
       },
@@ -59,6 +68,7 @@ const { default: SettingsPage } = await import(
 
 beforeEach(() => {
   identityGetQueryOptionsMock.mockClear();
+  listDomainsQueryOptionsMock.mockClear();
   listUserOrganizationsQueryOptionsMock.mockClear();
   prefetchMock.mockClear();
 });
@@ -71,9 +81,16 @@ describe("general settings page", () => {
     render(element);
 
     expect(identityGetQueryOptionsMock).toHaveBeenCalledOnce();
+    expect(listDomainsQueryOptionsMock).toHaveBeenCalledWith({
+      slug: "acme",
+    });
     expect(listUserOrganizationsQueryOptionsMock).toHaveBeenCalledOnce();
     expect(prefetchMock).toHaveBeenCalledWith({
       queryKey: ["org", "settings", "identity", "get"],
+    });
+    expect(prefetchMock).toHaveBeenCalledWith({
+      input: { slug: "acme" },
+      queryKey: ["org", "settings", "organization", "listDomains", "acme"],
     });
     expect(prefetchMock).toHaveBeenCalledWith({
       queryKey: ["viewer", "organization", "listUserOrganizations"],

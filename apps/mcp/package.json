@@ -25,7 +25,6 @@
     "@repo/api-contract": "workspace:*",
     "@repo/mcp-tools": "workspace:*",
     "@repo/provider-routine-contract": "workspace:*",
-    "@repo/provider-routines": "workspace:*",
     "@sentry/tanstackstart-react": "catalog:",
     "@t3-oss/env-core": "catalog:",
     "@tanstack/react-router": "catalog:",

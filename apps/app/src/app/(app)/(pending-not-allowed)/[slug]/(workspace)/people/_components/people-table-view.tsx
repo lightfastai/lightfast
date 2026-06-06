@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 import {
@@ -12,6 +13,7 @@ import {
 import { PeopleEmptyState } from "./people-empty-state";
 import {
   formatPersonSignalRef,
+  getMemberStatusBadgeLabel,
   getPersonName,
   getPersonSignals,
   getPersonTypeLabel,
@@ -192,6 +194,14 @@ function PeopleTableRow({
         >
           {name}
         </span>
+        {person.memberStatus ? (
+          <Badge
+            className="shrink-0 text-muted-foreground"
+            variant={person.memberStatus === "active" ? "secondary" : "outline"}
+          >
+            {getMemberStatusBadgeLabel(person.memberStatus)}
+          </Badge>
+        ) : null}
       </span>
 
       <span className="flex min-w-0 items-center gap-2.5">

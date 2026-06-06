@@ -7,6 +7,7 @@ import {
   failUnreservedNamespaceOperation,
   finalizeNamespaceOperation,
   getActiveNamespaceByHandle,
+  listActiveOrgNamespaceClerkOrgIds,
   markNamespaceOperationClerkApplied,
   type NamespaceConflictError,
   NamespaceOperationConcurrencyError,
@@ -697,5 +698,108 @@ describe("namespace repository", () => {
       })
     );
     expect(deleteFrom).toHaveBeenCalledOnce();
+  });
+});
+
+describe("listActiveOrgNamespaceClerkOrgIds", () => {
+  it("returns active org namespace clerk ids with cursor pagination", async () => {
+    const rows = [
+      { id: 1, clerkOrgId: "org_one" },
+      { id: 2, clerkOrgId: "org_two" },
+    ];
+    const spies = {
+      limit: vi.fn(() => Promise.resolve(rows)),
+      orderBy: vi.fn(),
+      where: vi.fn(),
+    };
+    const db = {
+      select: () => ({
+        from: () => ({
+          where: (condition: unknown) => {
+            spies.where(condition);
+            return {
+              orderBy: (...order: unknown[]) => {
+                spies.orderBy(...order);
+                return { limit: spies.limit };
+              },
+            };
+          },
+        }),
+      }),
+    } as unknown as Database;
+
+    await expect(
+      listActiveOrgNamespaceClerkOrgIds(db, { limit: 1 })
+    ).resolves.toEqual({
+      items: [{ id: 1, clerkOrgId: "org_one" }],
+      nextCursor: 1,
+    });
+
+    expect(spies.limit).toHaveBeenCalledWith(2);
+    expect(spies.where).toHaveBeenCalledOnce();
+  });
+
+  it("defaults non-finite limits to the first page size", async () => {
+    const spies = {
+      limit: vi.fn(() => Promise.resolve([])),
+      orderBy: vi.fn(),
+      where: vi.fn(),
+    };
+    const db = {
+      select: () => ({
+        from: () => ({
+          where: (condition: unknown) => {
+            spies.where(condition);
+            return {
+              orderBy: (...order: unknown[]) => {
+                spies.orderBy(...order);
+                return { limit: spies.limit };
+              },
+            };
+          },
+        }),
+      }),
+    } as unknown as Database;
+
+    await expect(
+      listActiveOrgNamespaceClerkOrgIds(db, { limit: Number.NaN })
+    ).resolves.toEqual({
+      items: [],
+      nextCursor: null,
+    });
+
+    expect(spies.limit).toHaveBeenCalledWith(51);
+  });
+
+  it("applies cursor for subsequent pages", async () => {
+    const rows = [{ id: 3, clerkOrgId: "org_three" }];
+    const spies = {
+      limit: vi.fn(() => Promise.resolve(rows)),
+      orderBy: vi.fn(),
+      where: vi.fn(),
+    };
+    const db = {
+      select: () => ({
+        from: () => ({
+          where: (condition: unknown) => {
+            spies.where(condition);
+            return {
+              orderBy: (...order: unknown[]) => {
+                spies.orderBy(...order);
+                return { limit: spies.limit };
+              },
+            };
+          },
+        }),
+      }),
+    } as unknown as Database;
+
+    await expect(
+      listActiveOrgNamespaceClerkOrgIds(db, { cursor: 2, limit: 10 })
+    ).resolves.toEqual({ items: rows, nextCursor: null });
+
+    expect(spies.where).toHaveBeenCalledOnce();
+    expect(spies.orderBy).toHaveBeenCalledOnce();
+    expect(spies.limit).toHaveBeenCalledWith(11);
   });
 });

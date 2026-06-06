@@ -12,7 +12,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 import type { ChatStatus } from "@vendor/ai";
 import { ArrowUp } from "lucide-react";
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
 
 export const ChatComposer = memo(function ChatComposer({
   compact,
@@ -31,31 +31,57 @@ export const ChatComposer = memo(function ChatComposer({
   stop: () => void;
   text: string;
 }) {
-  const isGenerating = status === "submitted" || status === "streaming";
+  const [isSubmitPending, setIsSubmitPending] = useState(false);
+
+  useEffect(() => {
+    if (status !== "ready") {
+      setIsSubmitPending(false);
+    }
+  }, [status]);
+
+  const effectiveStatus: ChatStatus =
+    status === "ready" && isSubmitPending ? "submitted" : status;
+  const isBusy =
+    effectiveStatus === "submitted" || effectiveStatus === "streaming";
+  const isStreaming = effectiveStatus === "streaming";
   const submitDisabled =
-    status === "submitted" || (!isGenerating && text.trim().length === 0);
+    effectiveStatus === "submitted" || (!isBusy && text.trim().length === 0);
 
   // Keep the textarea editable while a response streams so the next message
   // can be drafted. The button acts as Stop during generation, and Enter is
   // ignored until the stream finishes to avoid sending mid-response.
   const handleSubmit = (message: PromptInputMessage) => {
-    if (isGenerating) {
+    if (isBusy) {
       return;
     }
 
     const submittedText = message.text.trim() ? message.text : text;
-    return onSubmit({ ...message, text: submittedText });
+    if (!submittedText.trim()) {
+      return;
+    }
+
+    onTextChange("");
+    setIsSubmitPending(true);
+
+    try {
+      return onSubmit({ ...message, text: submittedText }).finally(() => {
+        setIsSubmitPending(false);
+      });
+    } catch (error) {
+      setIsSubmitPending(false);
+      throw error;
+    }
   };
 
   const submit = (
     <PromptInputSubmit
-      aria-label={isGenerating ? "Stop generating" : "Send message"}
+      aria-label={isStreaming ? "Stop generating" : "Send message"}
       className={cn("size-8 rounded-full", compact && "mr-2 mb-2 shrink-0")}
       disabled={submitDisabled}
       onStop={stop}
-      status={status}
+      status={effectiveStatus}
     >
-      {status === "ready" ? <ArrowUp className="size-4" /> : undefined}
+      {effectiveStatus === "ready" ? <ArrowUp className="size-4" /> : undefined}
     </PromptInputSubmit>
   );
 
@@ -78,6 +104,7 @@ export const ChatComposer = memo(function ChatComposer({
               compact ? "min-h-0 py-3 pr-2 pl-5" : "min-h-9 px-5 py-3"
             )}
             onChange={(event) => onTextChange(event.target.value)}
+            onInput={(event) => onTextChange(event.currentTarget.value)}
             placeholder="Ask Lightfield"
             rows={compact ? 1 : undefined}
             value={text}

@@ -31,6 +31,16 @@ describe("agent graph metadata", () => {
           upstreamNodeIds: ["signal-classifier"],
           workflow: "classify-people",
         },
+        signalEntityLinker: {
+          feature: "entity-links",
+          id: "signal-entity-linker",
+          kind: "llm",
+          promptId: "signal-entity-linker",
+          role: "extractor",
+          schemaVersion: "signal.entity-links.v1",
+          upstreamNodeIds: ["signal-classifier"],
+          workflow: "index-signal-entities",
+        },
       },
     });
 
@@ -81,6 +91,31 @@ describe("agent graph metadata", () => {
       schemaVersion: "people.classification.v1",
       upstreamNodeId: "signal-classifier",
       workflow: "classify-people",
+    });
+
+    expect(
+      createAgentNodeMetadata(graph, graph.nodes.signalEntityLinker, {
+        agentRunId: "sig_123",
+        clerkOrgId: "org_test",
+        deploymentEnvironment: "production",
+        inputLength: 42,
+      })
+    ).toEqual({
+      agentGraphId: "signal-intake",
+      agentGraphVersion: "v1",
+      agentRunId: "sig_123",
+      clerkOrgId: "org_test",
+      deploymentEnvironment: "production",
+      feature: "entity-links",
+      inputLength: 42,
+      nodeId: "signal-entity-linker",
+      nodeKind: "llm",
+      nodeRole: "extractor",
+      promptId: "signal-entity-linker",
+      routerId: "signals",
+      schemaVersion: "signal.entity-links.v1",
+      upstreamNodeId: "signal-classifier",
+      workflow: "index-signal-entities",
     });
   });
 });

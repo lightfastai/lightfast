@@ -1,4 +1,10 @@
 import type { Database, PeopleView } from "@db/app";
+import type {
+  PersonIdentityProvider,
+  PersonIdentityType,
+  PersonMemberStatus,
+  PersonSource,
+} from "@repo/app-validation/schemas";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthIdentity } from "../auth/identity";
 
@@ -47,18 +53,29 @@ const activeIdentity: ActiveAuthIdentity = {
 const pendingIdentity: AuthIdentity = { type: "pending", userId: "user_test" };
 const unauthenticatedIdentity: AuthIdentity = { type: "unauthenticated" };
 
+const viewConfigInput = {
+  filters: {
+    providers: ["x"],
+    sources: ["team_member"],
+    memberStatuses: ["active"],
+    types: ["handle"],
+  },
+} satisfies {
+  filters: {
+    providers: PersonIdentityProvider[];
+    sources: PersonSource[];
+    memberStatuses: PersonMemberStatus[];
+    types: PersonIdentityType[];
+  };
+};
+
 const viewRow: PeopleView = {
   id: 3,
   publicId: "peoview_123e4567-e89b-12d3-a456-426614174000",
   clerkOrgId: "org_test",
   createdByUserId: "user_test",
   name: "X handles",
-  config: {
-    filters: {
-      providers: ["x"],
-      types: ["handle"],
-    },
-  },
+  config: viewConfigInput,
   createdAt: new Date("2026-05-31T01:00:00.000Z"),
   updatedAt: new Date("2026-05-31T01:00:00.000Z"),
 };
@@ -119,7 +136,7 @@ describe("workspacePeopleRouter.views.create", () => {
     await expect(
       caller().people.views.create({
         name: "  X handles  ",
-        config: viewRow.config,
+        config: viewConfigInput,
       })
     ).resolves.toEqual(viewRow);
 
@@ -127,13 +144,13 @@ describe("workspacePeopleRouter.views.create", () => {
       clerkOrgId: "org_test",
       createdByUserId: "user_test",
       name: "X handles",
-      config: viewRow.config,
+      config: viewConfigInput,
     });
   });
 
   it("rejects an empty name", async () => {
     await expect(
-      caller().people.views.create({ name: "   ", config: viewRow.config })
+      caller().people.views.create({ name: "   ", config: viewConfigInput })
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
     expect(createPeopleViewMock).not.toHaveBeenCalled();
   });
@@ -145,6 +162,69 @@ describe("workspacePeopleRouter.views.create", () => {
         config: {
           filters: {
             providers: ["telegram" as unknown as "x"],
+            sources: [],
+            memberStatuses: [],
+            types: [],
+          },
+        },
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(createPeopleViewMock).not.toHaveBeenCalled();
+  });
+
+  it("defaults legacy config without source and member status filters", async () => {
+    await expect(
+      caller().people.views.create({
+        name: "Legacy",
+        config: {
+          filters: {
+            providers: [],
+            types: [],
+          },
+        } as unknown as typeof viewConfigInput,
+      })
+    ).resolves.toEqual(viewRow);
+    expect(createPeopleViewMock).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+      name: "Legacy",
+      config: {
+        filters: {
+          providers: [],
+          sources: [],
+          memberStatuses: [],
+          types: [],
+        },
+      },
+    });
+  });
+
+  it("rejects unknown source values in config", async () => {
+    await expect(
+      caller().people.views.create({
+        name: "Bad",
+        config: {
+          filters: {
+            providers: [],
+            sources: ["invitation" as unknown as "signal"],
+            memberStatuses: ["active"],
+            types: [],
+          },
+        },
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(createPeopleViewMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects unknown member status values in config", async () => {
+    await expect(
+      caller().people.views.create({
+        name: "Bad",
+        config: {
+          filters: {
+            providers: [],
+            sources: ["signal"],
+            memberStatuses: ["pending" as unknown as "active"],
             types: [],
           },
         },

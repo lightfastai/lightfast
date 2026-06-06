@@ -6,6 +6,7 @@ import {
   markCurrentOrgConnectorConnectionRevoked,
   type OrgConnectorConnection,
   recordConnectorToolRefreshError,
+  setConnectorAgentEnabled as setConnectorAgentEnabledInDb,
   setConnectorAutomationEnabled as setConnectorAutomationEnabledInDb,
   updateConnectorToolManifestAndAutomationState,
   updateObservedConnectorTokens,
@@ -736,6 +737,25 @@ export async function setXConnectorAutomationEnabled(
 ) {
   const identity = activeIdentity(ctx);
   const updated = await setConnectorAutomationEnabledInDb(ctx.db, {
+    clerkOrgId: identity.orgId,
+    enabled: input.enabled,
+    provider: "x",
+  });
+  if (!updated) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "X connector is not connected.",
+    });
+  }
+  return { enabled: input.enabled };
+}
+
+export async function setXConnectorAgentEnabled(
+  ctx: ConnectorServiceContext,
+  input: { enabled: boolean }
+) {
+  const identity = activeIdentity(ctx);
+  const updated = await setConnectorAgentEnabledInDb(ctx.db, {
     clerkOrgId: identity.orgId,
     enabled: input.enabled,
     provider: "x",

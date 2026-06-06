@@ -5,7 +5,6 @@ import {
   httpClientIntegration,
   init as initSentry,
 } from "@sentry/nextjs";
-import { TRPCClientError } from "@trpc/client";
 
 import { env } from "~/env";
 
@@ -21,16 +20,7 @@ initSentry({
   tracesSampleRate: env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.2 : 1.0,
   debug: false,
   enableLogs: true,
-  beforeSend(event, hint) {
-    // Drop tRPC client errors (4xx) — server owns tRPC error observability.
-    const err = hint?.originalException;
-    if (
-      err instanceof TRPCClientError &&
-      err.data?.httpStatus != null &&
-      err.data.httpStatus < 500
-    ) {
-      return null;
-    }
+  beforeSend(event) {
     return event;
   },
   beforeBreadcrumb(breadcrumb) {

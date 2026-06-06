@@ -25,14 +25,55 @@ import { issueConnectorMcpToken } from "./mcp-auth";
 
 export interface ConnectorRuntimeToolSource {
   call(input: unknown): Promise<unknown>;
+  callWithMetadata(input: unknown): Promise<ConnectorRuntimeToolCallResult>;
   description?: string;
+  inputSchema?: unknown;
   provider: ConnectableConnectorProvider;
   providerToolName: string;
   runtimeToolName: string;
 }
 
+export interface ConnectorRuntimeToolCallResult {
+  provider: ConnectableConnectorProvider;
+  providerRoutineCallId: string | null;
+  providerToolName: string;
+  result: unknown;
+  routineId: string;
+  runtimeToolName: string;
+}
+
+export class ConnectorRuntimeToolCallError extends Error {
+  readonly code: string | undefined;
+  readonly provider: ConnectableConnectorProvider;
+  readonly providerRoutineCallId: string | null;
+  readonly providerToolName: string;
+  readonly routineId: string;
+  readonly runtimeToolName: string;
+
+  constructor(input: {
+    cause: unknown;
+    code: string | undefined;
+    message: string;
+    provider: ConnectableConnectorProvider;
+    providerRoutineCallId: string | null;
+    providerToolName: string;
+    routineId: string;
+    runtimeToolName: string;
+  }) {
+    super(input.message, { cause: input.cause });
+    this.name = "ConnectorRuntimeToolCallError";
+    this.code = input.code;
+    this.provider = input.provider;
+    this.providerRoutineCallId = input.providerRoutineCallId;
+    this.providerToolName = input.providerToolName;
+    this.routineId = input.routineId;
+    this.runtimeToolName = input.runtimeToolName;
+  }
+}
+
 interface RuntimeToolCallContext {
   automationPublicId?: string;
+  calledByUserId?: string | null;
   clerkOrgId: string;
   provider: ConnectableConnectorProvider;
   providerToolName: string;
@@ -43,6 +84,7 @@ interface RuntimeToolCallContext {
 export async function loadConnectorRuntimeTools(input: {
   clerkOrgId: string;
   automationPublicId?: string;
+  calledByUserId?: string | null;
   runPublicId?: string;
 }): Promise<ConnectorRuntimeToolSource[]> {
   const connections = await listCurrentOrgConnectorConnections(appDb, {
@@ -63,18 +105,24 @@ export async function loadConnectorRuntimeTools(input: {
         return [];
       }
 
+      const callWithMetadata = (toolInput: unknown) =>
+        callConnectorRuntimeTool(toolInput, {
+          automationPublicId: input.automationPublicId,
+          calledByUserId: input.calledByUserId,
+          clerkOrgId: input.clerkOrgId,
+          provider: connection.provider,
+          providerToolName: tool.name,
+          runPublicId: input.runPublicId,
+          runtimeToolName,
+        });
+
       return [
         {
-          call: (toolInput: unknown) =>
-            callConnectorRuntimeTool(toolInput, {
-              automationPublicId: input.automationPublicId,
-              clerkOrgId: input.clerkOrgId,
-              provider: connection.provider,
-              providerToolName: tool.name,
-              runPublicId: input.runPublicId,
-              runtimeToolName,
-            }),
+          call: async (toolInput: unknown) =>
+            (await callWithMetadata(toolInput)).result,
+          callWithMetadata,
           description: tool.description,
+          inputSchema: tool.inputSchema,
           provider: connection.provider,
           providerToolName: tool.name,
           runtimeToolName,
@@ -87,7 +135,7 @@ export async function loadConnectorRuntimeTools(input: {
 async function callConnectorRuntimeTool(
   input: unknown,
   context: RuntimeToolCallContext
-): Promise<unknown> {
+): Promise<ConnectorRuntimeToolCallResult> {
   const logContext = {
     automationPublicId: context.automationPublicId,
     clerkOrgId: context.clerkOrgId,
@@ -134,6 +182,19 @@ async function callConnectorRuntimeTool(
         caller.calledByKind === "automation" ? "automation" : "system",
     });
 
+    if (!providerRoutineCall && caller.calledByKind === "automation") {
+      throw new ConnectorRuntimeToolCallError({
+        cause: new Error("Provider routine call ledger row was not created."),
+        code: "PROVIDER_ROUTINE_LEDGER_FAILED",
+        message: "Provider routine call could not be recorded.",
+        provider: context.provider,
+        providerRoutineCallId: null,
+        providerToolName: context.providerToolName,
+        routineId: context.runtimeToolName,
+        runtimeToolName: context.runtimeToolName,
+      });
+    }
+
     const result = await callProviderRuntimeTool(
       input,
       connection,
@@ -157,7 +218,14 @@ async function callConnectorRuntimeTool(
       ...logContext,
       success: true,
     });
-    return result;
+    return {
+      provider: context.provider,
+      providerRoutineCallId: providerRoutineCall?.publicId ?? null,
+      providerToolName: context.providerToolName,
+      result,
+      routineId: context.runtimeToolName,
+      runtimeToolName: context.runtimeToolName,
+    };
   } catch (error) {
     if (providerRoutineCall) {
       await safelyMarkProviderRoutineCallFailed(
@@ -172,10 +240,13 @@ async function callConnectorRuntimeTool(
     }
 
     if (isTerminalConnectorAuthError(context.provider, error)) {
-      await markCurrentOrgConnectorConnectionError(appDb, {
-        clerkOrgId: context.clerkOrgId,
-        provider: context.provider,
-      });
+      await safelyMarkCurrentOrgConnectorConnectionError(
+        {
+          clerkOrgId: context.clerkOrgId,
+          provider: context.provider,
+        },
+        logContext
+      );
     }
 
     log.warn("[connectors] runtime tool call failed", {
@@ -183,7 +254,20 @@ async function callConnectorRuntimeTool(
       failure: safeErrorDetails(error),
       success: false,
     });
-    throw error;
+    if (error instanceof ConnectorRuntimeToolCallError) {
+      throw error;
+    }
+
+    throw new ConnectorRuntimeToolCallError({
+      cause: error,
+      code: getErrorCode(error),
+      message: runtimeToolCallErrorMessage(error),
+      provider: context.provider,
+      providerRoutineCallId: providerRoutineCall?.publicId ?? null,
+      providerToolName: context.providerToolName,
+      routineId: context.runtimeToolName,
+      runtimeToolName: context.runtimeToolName,
+    });
   }
 }
 
@@ -192,7 +276,7 @@ function calledByContext(context: RuntimeToolCallContext) {
     return {
       calledById: context.runPublicId,
       calledByKind: "automation" as const,
-      calledByUserId: null,
+      calledByUserId: context.calledByUserId ?? null,
     };
   }
 
@@ -201,6 +285,24 @@ function calledByContext(context: RuntimeToolCallContext) {
     calledByKind: "system" as const,
     calledByUserId: null,
   };
+}
+
+async function safelyMarkCurrentOrgConnectorConnectionError(
+  input: {
+    clerkOrgId: string;
+    provider: ConnectableConnectorProvider;
+  },
+  logContext: Record<string, unknown>
+) {
+  try {
+    await markCurrentOrgConnectorConnectionError(appDb, input);
+  } catch (error) {
+    log.warn("[connectors] connector connection error mark failed", {
+      ...logContext,
+      failure: safeErrorDetails(error),
+      success: false,
+    });
+  }
 }
 
 async function safelyCreateProviderRoutineCall(input: {
@@ -497,6 +599,13 @@ function safeProviderRoutineCallErrorMessage(error: unknown) {
     return safeXErrorMessage(error);
   }
   return;
+}
+
+function runtimeToolCallErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return "Connector runtime tool failed.";
 }
 
 function safeErrorDetails(error: unknown) {

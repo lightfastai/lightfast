@@ -12,15 +12,17 @@ import {
   ConversationScrollButton,
 } from "@repo/ui/components/ai-elements/conversation";
 import type { PromptInputMessage } from "@repo/ui/components/ai-elements/prompt-input";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   type ChatStatus,
   DefaultChatTransport,
   type UIMessage,
 } from "@vendor/ai";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import type { CSSProperties } from "react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { isResumableStreamEnabled } from "~/app/(chat)/api/chat/resumable-stream-config";
+import { useTRPC } from "~/trpc/react";
 import { ChatComposer } from "./chat-composer";
 import { ChatMessage } from "./chat-message";
 
@@ -46,15 +48,27 @@ export function WorkspaceAssistantClient({
   initialConversation,
 }: WorkspaceAssistantClientProps) {
   const params = useParams<{ slug: string }>();
+  const router = useRouter();
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const createConversation = useMutation(
+    trpc.org.workspace.assistant.createConversation.mutationOptions()
+  );
+  const listConversationsQueryFilter = useMemo(
+    () => trpc.org.workspace.assistant.listConversations.queryFilter(),
+    [trpc]
+  );
   const initialMessages = useMemo(
     () => initialConversation?.messages.map(toUIMessage) ?? [],
     [initialConversation]
   );
   const [text, setText] = useState("");
+  const [creationError, setCreationError] = useState<Error | undefined>();
+  const [optimisticFirstMessage, setOptimisticFirstMessage] =
+    useState<UIMessage | null>(null);
   // Existing conversations are already persisted; new chats create lazily on the
-  // first message through /api/chat. We only need to reflect the generated id
-  // in the URL once.
-  const conversationAddressedRef = useRef(Boolean(initialConversation));
+  // first message. We never recreate, so a ref (not state) is enough.
+  const conversationCreatedRef = useRef(Boolean(initialConversation));
 
   const transport = useMemo(
     () =>
@@ -84,8 +98,18 @@ export function WorkspaceAssistantClient({
     transport,
   });
 
-  const hasMessages = messages.length > 0;
-  const composerStatus: ChatStatus = status;
+  const displayMessages =
+    optimisticFirstMessage && messages.length === 0
+      ? [optimisticFirstMessage]
+      : messages;
+  const hasMessages = displayMessages.length > 0;
+  const displayError = creationError ?? error;
+  const isPreparingFirstMessage =
+    Boolean(optimisticFirstMessage) && status === "ready";
+  const composerStatus: ChatStatus =
+    createConversation.isPending || isPreparingFirstMessage
+      ? "submitted"
+      : status;
 
   const handleSubmit = useCallback(
     async (message: PromptInputMessage) => {
@@ -96,32 +120,65 @@ export function WorkspaceAssistantClient({
       }
 
       clearError();
-      setText("");
 
-      if (!conversationAddressedRef.current) {
-        // Reflect the conversation in the URL right away without a navigation,
-        // so the stable Chat instance (and its live stream) stays mounted.
+      if (!conversationCreatedRef.current) {
+        setCreationError(undefined);
+        setOptimisticFirstMessage(createOptimisticUserMessage(nextText));
         replaceBrowserChatUrl(params.slug, conversationId);
-        conversationAddressedRef.current = true;
+        try {
+          await createConversation.mutateAsync({
+            publicId: conversationId,
+            title: nextText,
+          });
+          conversationCreatedRef.current = true;
+          void queryClient.invalidateQueries(listConversationsQueryFilter);
+        } catch (error) {
+          replaceBrowserChatUrl(params.slug);
+          setOptimisticFirstMessage(null);
+          setCreationError(
+            error instanceof Error
+              ? error
+              : new Error("Unable to create conversation.")
+          );
+          return;
+        }
       }
 
-      await sendMessage(
-        { text: nextText },
-        {
-          body: {
-            idempotencyKey: createWorkspaceAssistantIdempotencyKey(),
-            conversationId,
-          },
-        }
-      );
+      try {
+        await sendMessage(
+          { text: nextText },
+          {
+            body: {
+              idempotencyKey: createWorkspaceAssistantIdempotencyKey(),
+              conversationId,
+            },
+          }
+        );
+      } finally {
+        setOptimisticFirstMessage(null);
+      }
+      setText("");
+      if (!initialConversation) {
+        router.refresh();
+      }
     },
-    [params.slug, conversationId, sendMessage, clearError]
+    [
+      conversationId,
+      createConversation.mutateAsync,
+      initialConversation,
+      listConversationsQueryFilter,
+      params.slug,
+      queryClient,
+      router,
+      sendMessage,
+      clearError,
+    ]
   );
 
   const renderComposer = (compact: boolean) => (
     <ChatComposer
       compact={compact}
-      error={error}
+      error={displayError}
       onSubmit={handleSubmit}
       onTextChange={setText}
       status={composerStatus}
@@ -137,7 +194,7 @@ export function WorkspaceAssistantClient({
           <div className="relative min-h-0 flex-1">
             <Conversation className="h-full">
               <ConversationContent className="gap-0 p-0 pb-8">
-                {messages.map((message, index) => (
+                {displayMessages.map((message, index) => (
                   <div
                     className="mx-auto w-full max-w-3xl px-5 pt-8 md:px-10"
                     key={message.id}
@@ -145,7 +202,8 @@ export function WorkspaceAssistantClient({
                   >
                     <ChatMessage
                       isStreaming={
-                        status === "streaming" && index === messages.length - 1
+                        status === "streaming" &&
+                        index === displayMessages.length - 1
                       }
                       message={message}
                     />
@@ -172,6 +230,14 @@ function createWorkspaceAssistantIdempotencyKey() {
   return `idem_${createUuid()}`;
 }
 
+function createOptimisticUserMessage(text: string): UIMessage {
+  return {
+    id: `optimistic_${createUuid()}`,
+    parts: [{ text, type: "text" }],
+    role: "user",
+  };
+}
+
 function createUuid() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
@@ -186,7 +252,7 @@ function replaceBrowserChatUrl(orgSlug: string, conversationId?: string) {
   const nextPath = conversationId
     ? `/${orgSlug}/chat/${conversationId}`
     : `/${orgSlug}/chat`;
-  window.history.replaceState(null, "", nextPath);
+  window.history.replaceState({}, "", nextPath);
 }
 
 function EmptyChatState({ composer }: { composer: React.ReactNode }) {

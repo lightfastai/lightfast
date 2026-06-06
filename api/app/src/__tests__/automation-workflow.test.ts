@@ -2,7 +2,9 @@ import type { Automation, AutomationRun, Database } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const claimDueAutomationRunsMock = vi.fn();
+const executeAutomationRunMock = vi.fn();
 const getAutomationByPublicIdMock = vi.fn();
+const getAutomationExecutionFailureMock = vi.fn();
 const getAutomationRunByPublicIdMock = vi.fn();
 const markAutomationRunCompletedMock = vi.fn();
 const markAutomationRunFailedMock = vi.fn();
@@ -70,6 +72,14 @@ vi.mock("@db/app", () => ({
 
 vi.mock("@db/app/client", () => ({ db }));
 
+vi.mock("../services/automations/ai-execution", () => ({
+  executeAutomationRun: executeAutomationRunMock,
+}));
+
+vi.mock("../services/automations/errors", () => ({
+  getAutomationExecutionFailure: getAutomationExecutionFailureMock,
+}));
+
 vi.mock("../inngest/client", () => ({
   inngest: {
     createFunction: createFunctionMock,
@@ -80,6 +90,7 @@ const automation: Automation = {
   id: 1,
   publicId: "automation_123e4567-e89b-12d3-a456-426614174000",
   clerkOrgId: "org_test",
+  connectorProvider: "linear",
   createdByUserId: "user_test",
   name: "Morning check",
   prompt: "Check the workspace",
@@ -119,8 +130,26 @@ const { automationScheduler } = await import(
 );
 const { runAutomation } = await import("../inngest/workflow/run-automation");
 
-function createStep() {
+function createStep(options: { retryRejectedAiWrap?: boolean } = {}) {
   return {
+    ai: {
+      wrap: vi.fn(
+        async <TRequest, TResult>(
+          _name: string,
+          fn: (request: TRequest) => TResult | Promise<TResult>,
+          request: TRequest
+        ) => {
+          if (!options.retryRejectedAiWrap) {
+            return await fn(request);
+          }
+          try {
+            return await fn(request);
+          } catch {
+            return await fn(request);
+          }
+        }
+      ),
+    },
     run: vi.fn(<T>(_name: string, fn: () => T | Promise<T>) => fn()),
     sendEvent: vi.fn((_name: string, event: unknown) =>
       Promise.resolve({ ids: ["event_test"], event })
@@ -174,7 +203,9 @@ function runFailure(step: Step, error: Error) {
 
 beforeEach(() => {
   claimDueAutomationRunsMock.mockReset();
+  executeAutomationRunMock.mockReset();
   getAutomationByPublicIdMock.mockReset();
+  getAutomationExecutionFailureMock.mockReset();
   getAutomationRunByPublicIdMock.mockReset();
   markAutomationRunCompletedMock.mockReset();
   markAutomationRunFailedMock.mockReset();
@@ -182,7 +213,25 @@ beforeEach(() => {
   markAutomationRunSkippedMock.mockReset();
 
   claimDueAutomationRunsMock.mockResolvedValue([{ automation, run }]);
+  executeAutomationRunMock.mockResolvedValue({
+    automationId: automation.publicId,
+    connectorProvider: "linear",
+    finalText: "Checked the workspace.",
+    finishedAt: "2026-05-27T09:00:05.000Z",
+    finishReason: "stop",
+    model: "anthropic/claude-sonnet-4.6",
+    providerRoutineCallIds: [],
+    runId: run.publicId,
+    schemaVersion: "automation.run.ai.v1",
+    startedAt: "2026-05-27T09:00:00.000Z",
+    transcript: [],
+    usage: {},
+  });
   getAutomationByPublicIdMock.mockResolvedValue(automation);
+  getAutomationExecutionFailureMock.mockReturnValue({
+    errorCode: "AUTOMATION_CONNECTOR_NOT_ENABLED",
+    errorMessage: "The selected connector is not enabled for automations.",
+  });
   getAutomationRunByPublicIdMock.mockResolvedValue(run);
   markAutomationRunCompletedMock.mockResolvedValue(true);
   markAutomationRunFailedMock.mockResolvedValue(true);
@@ -236,7 +285,7 @@ describe("automation Inngest workflows", () => {
     });
   });
 
-  it("marks a pending run completed with scaffold output", async () => {
+  it("marks a pending run completed with ai execution output", async () => {
     const step = createStep();
 
     await expect(runExecutor(step)).resolves.toEqual({
@@ -247,17 +296,54 @@ describe("automation Inngest workflows", () => {
       clerkOrgId: "org_test",
       publicId: run.publicId,
     });
+    expect(step.ai.wrap).toHaveBeenCalledWith(
+      "execute automation",
+      expect.any(Function),
+      {
+        automation,
+        deploymentEnvironment: "development",
+        run,
+      }
+    );
     expect(markAutomationRunCompletedMock).toHaveBeenCalledWith(db, {
       clerkOrgId: "org_test",
       publicId: run.publicId,
-      output: {
-        automationId: automation.publicId,
-        message: "Automation scaffold executed. AI execution is not enabled.",
-        promptPreview: "Check the workspace",
-        runId: run.publicId,
-        schemaVersion: "automation.run.scaffold.v1",
-      },
+      output: expect.objectContaining({
+        connectorProvider: "linear",
+        finalText: "Checked the workspace.",
+        schemaVersion: "automation.run.ai.v1",
+      }),
     });
+  });
+
+  it("marks expected automation execution failures as failed runs", async () => {
+    const step = createStep({ retryRejectedAiWrap: true });
+    executeAutomationRunMock.mockRejectedValue(new Error("disabled connector"));
+
+    await expect(runExecutor(step)).resolves.toEqual({ status: "failed" });
+
+    expect(executeAutomationRunMock).toHaveBeenCalledTimes(1);
+    expect(getAutomationExecutionFailureMock).toHaveBeenCalledWith(
+      expect.any(Error)
+    );
+    expect(markAutomationRunFailedMock).toHaveBeenCalledWith(db, {
+      clerkOrgId: "org_test",
+      errorCode: "AUTOMATION_CONNECTOR_NOT_ENABLED",
+      errorMessage: "The selected connector is not enabled for automations.",
+      publicId: run.publicId,
+    });
+    expect(markAutomationRunCompletedMock).not.toHaveBeenCalled();
+  });
+
+  it("does not map completion persistence failures as automation execution failures", async () => {
+    const step = createStep();
+    const completionError = new Error("database unavailable");
+    markAutomationRunCompletedMock.mockRejectedValue(completionError);
+
+    await expect(runExecutor(step)).rejects.toBe(completionError);
+
+    expect(getAutomationExecutionFailureMock).not.toHaveBeenCalled();
+    expect(markAutomationRunFailedMock).not.toHaveBeenCalled();
   });
 
   it("skips stale events when the automation schedule version has changed", async () => {

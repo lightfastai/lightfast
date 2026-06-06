@@ -16,6 +16,10 @@ import {
   Zap,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import {
+  AutomationRunAiOutputView,
+  isAutomationRunAiOutput,
+} from "./automation-run-ai-output";
 
 type AutomationRun =
   AppRouterOutputs["org"]["workspace"]["automations"]["getRun"];
@@ -177,9 +181,13 @@ export function AutomationRunDetailContent({
               Output
             </h3>
             {hasOutput ? (
-              <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-md border border-border/60 bg-muted/30 px-3 py-2.5 font-mono text-foreground text-xs leading-relaxed">
-                {JSON.stringify(run.output, null, 2)}
-              </pre>
+              isAutomationRunAiOutput(run.output) ? (
+                <AutomationRunAiOutputView output={run.output} />
+              ) : (
+                <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-md border border-border/60 bg-muted/30 px-3 py-2.5 font-mono text-foreground text-xs leading-relaxed">
+                  {JSON.stringify(run.output, null, 2)}
+                </pre>
+              )
             ) : (
               <p className="text-muted-foreground text-sm">
                 No output captured.

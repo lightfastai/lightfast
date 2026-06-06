@@ -1,0 +1,1 @@
+ALTER TABLE `lightfast_org_automations` ADD `connector_provider` varchar(32) DEFAULT 'linear' NOT NULL;
