@@ -47,9 +47,42 @@ describe("ChatComposer", () => {
       });
     });
     expect(screen.getByPlaceholderText("Ask Lightfield")).toHaveValue("");
-    expect(
-      screen.getByRole("button", { name: "Stop generating" })
-    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Send message" })).toBeDisabled();
+
+    resolveSubmit?.();
+  });
+
+  it("clears the prompt immediately when submitted with Enter", async () => {
+    function Harness() {
+      const [text, setText] = useState("Summarize my workspace");
+
+      return (
+        <ChatComposer
+          compact={false}
+          error={undefined}
+          onSubmit={onSubmit}
+          onTextChange={setText}
+          status="ready"
+          stop={stop}
+          text={text}
+        />
+      );
+    }
+
+    render(<Harness />);
+
+    fireEvent.keyDown(screen.getByPlaceholderText("Ask Lightfield"), {
+      key: "Enter",
+    });
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith({
+        files: [],
+        text: "Summarize my workspace",
+      });
+    });
+    expect(screen.getByPlaceholderText("Ask Lightfield")).toHaveValue("");
+    expect(screen.getByRole("button", { name: "Send message" })).toBeDisabled();
 
     resolveSubmit?.();
   });
