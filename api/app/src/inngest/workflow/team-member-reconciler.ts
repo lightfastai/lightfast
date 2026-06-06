@@ -31,6 +31,7 @@ function getReconcileSyncedAtIso(data: unknown): string | undefined {
 export const teamMemberReconciler = inngest.createFunction(
   {
     id: "team-member-reconciler",
+    idempotency: "event.id",
     retries: 1,
     timeouts: {
       finish: "10m",

@@ -8,7 +8,6 @@ import {
   orgPeople as people,
 } from "../schema";
 import { getRowsAffected } from "./drizzle-results";
-import { getPersonByIdentityKey } from "./people";
 import {
   createPersonIdentityKey,
   normalizePersonIdentityCandidate,
@@ -48,7 +47,6 @@ export async function syncOrgTeamMemberPeople(
   db: Database,
   input: SyncOrgTeamMemberPeopleInput
 ): Promise<SyncOrgTeamMemberPeopleResult> {
-  const peopleRows: Person[] = [];
   const activeIdentityKeys: string[] = [];
   const seenIdentityKeys = new Set<string>();
   let membersSkippedNoEmail = 0;
@@ -111,15 +109,27 @@ export async function syncOrgTeamMemberPeople(
           memberSyncedAt: input.syncedAt,
         },
       });
-
-    const row = await getPersonByIdentityKey(db, {
-      clerkOrgId: input.clerkOrgId,
-      identityKey,
-    });
-    if (row) {
-      peopleRows.push(row);
-    }
   }
+
+  const rows =
+    activeIdentityKeys.length === 0
+      ? []
+      : await db
+          .select()
+          .from(people)
+          .where(
+            and(
+              eq(people.clerkOrgId, input.clerkOrgId),
+              inArray(people.identityKey, activeIdentityKeys)
+            )
+          )
+          .limit(activeIdentityKeys.length);
+  const rowByIdentityKey = new Map(
+    rows.map((row) => [row.identityKey, row] as const)
+  );
+  const peopleRows = activeIdentityKeys
+    .map((identityKey) => rowByIdentityKey.get(identityKey))
+    .filter(isDefined);
 
   return {
     activeIdentityKeys,

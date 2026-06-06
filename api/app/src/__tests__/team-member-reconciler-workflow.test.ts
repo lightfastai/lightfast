@@ -88,6 +88,7 @@ describe("teamMemberReconciler", () => {
     expect(createFunctionMock).toHaveBeenCalledWith(
       expect.objectContaining({
         id: "team-member-reconciler",
+        idempotency: "event.id",
         retries: 1,
         timeouts: { finish: "10m", start: "2m" },
         triggers: expect.arrayContaining([

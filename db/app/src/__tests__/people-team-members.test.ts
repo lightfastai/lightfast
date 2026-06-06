@@ -42,6 +42,7 @@ function makeSyncDb(selectRows: Person[][], updateRowsAffected = 1) {
   const spies = {
     duplicateSet: vi.fn(),
     insertValues: vi.fn(),
+    selectLimit: vi.fn(() => Promise.resolve(selectQueue.shift() ?? [])),
     updateSet: vi.fn(),
     updateWhere: vi.fn(async () => ({ rowsAffected: updateRowsAffected })),
   };
@@ -60,7 +61,7 @@ function makeSyncDb(selectRows: Person[][], updateRowsAffected = 1) {
     select: () => ({
       from: () => ({
         where: () => ({
-          limit: () => Promise.resolve(selectQueue.shift() ?? []),
+          limit: spies.selectLimit,
         }),
       }),
     }),
@@ -193,6 +194,52 @@ describe("syncOrgTeamMemberPeople", () => {
     expect(spies.insertValues).toHaveBeenCalledOnce();
   });
 
+  it("fetches synced people once after upserting unique members", async () => {
+    const ada = makePerson();
+    const grace = makePerson({
+      id: 2,
+      publicId: "person_123e4567-e89b-12d3-a456-426614174001",
+      displayName: "Grace Hopper",
+      identityValue: "grace@example.com",
+      normalizedIdentityValue: "grace@example.com",
+      identityKey: createPersonIdentityKey({
+        identityProvider: "email",
+        identityType: "email",
+        normalizedIdentityValue: "grace@example.com",
+      }),
+    });
+    const { db, spies } = makeSyncDb([[ada, grace]]);
+
+    await expect(
+      syncOrgTeamMemberPeople(db, {
+        clerkOrgId: "org_test",
+        members: [
+          {
+            clerkUserId: "user_ada",
+            displayName: "Ada Lovelace",
+            emailAddress: "ada@example.com",
+            role: "org:member",
+          },
+          {
+            clerkUserId: "user_grace",
+            displayName: "Grace Hopper",
+            emailAddress: "grace@example.com",
+            role: "org:admin",
+          },
+        ],
+        syncedAt: new Date("2026-06-06T01:00:00.000Z"),
+      })
+    ).resolves.toMatchObject({
+      membersSeen: 2,
+      membersSkippedNoEmail: 0,
+      membersUpserted: 2,
+      people: [ada, grace],
+    });
+
+    expect(spies.insertValues).toHaveBeenCalledTimes(2);
+    expect(spies.selectLimit).toHaveBeenCalledOnce();
+  });
+
   it("skips members without usable emails", async () => {
     const { db, spies } = makeSyncDb([]);
 
@@ -232,6 +279,27 @@ describe("markFormerTeamMembersMissingFromSync", () => {
         syncedAt,
       })
     ).resolves.toBe(2);
+
+    expect(spies.updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        memberStatus: "former",
+        memberSyncedAt: syncedAt,
+      })
+    );
+    expect(spies.updateWhere).toHaveBeenCalledOnce();
+  });
+
+  it("marks all active team-member rows former when active identity keys are empty", async () => {
+    const syncedAt = new Date("2026-06-06T01:00:00.000Z");
+    const { db, spies } = makeSyncDb([], 5);
+
+    await expect(
+      markFormerTeamMembersMissingFromSync(db, {
+        activeIdentityKeys: [],
+        clerkOrgId: "org_test",
+        syncedAt,
+      })
+    ).resolves.toBe(5);
 
     expect(spies.updateSet).toHaveBeenCalledWith(
       expect.objectContaining({

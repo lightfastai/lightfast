@@ -27,11 +27,12 @@ function hasSameValues<T extends string>(
   actual: readonly T[],
   expected: readonly T[]
 ) {
-  if (actual.length !== expected.length) {
+  const actualValues = new Set(actual);
+  const expectedValues = new Set(expected);
+  if (actualValues.size !== expectedValues.size) {
     return false;
   }
-  const expectedValues = new Set(expected);
-  return actual.every((value) => expectedValues.has(value));
+  return [...actualValues].every((value) => expectedValues.has(value));
 }
 
 /** Serialize a saved view's config into the URL param values the page reads. */

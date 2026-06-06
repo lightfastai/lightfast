@@ -624,7 +624,11 @@ async function resolveConversation(input: {
       });
     } catch (error) {
       if (isDuplicateKeyError(error)) {
-        return;
+        return getWorkspaceAssistantConversationByPublicId(db, {
+          clerkOrgId: input.orgId,
+          createdByUserId: input.createdByUserId,
+          publicId: input.conversationId,
+        });
       }
       throw error;
     }
