@@ -9,6 +9,15 @@ const URL_PATTERN = /\bhttps?:\/\/[^\s<>"')]+/gi;
 
 const MAX_SIGNAL_ENTITY_LINK_CANDIDATES = 10;
 const TRAILING_LABEL_PUNCTUATION_PATTERN = /[.,;:!?]+$/g;
+const RESERVED_X_TWITTER_PATH_SEGMENTS = new Set([
+  "home",
+  "i",
+  "intent",
+  "messages",
+  "notifications",
+  "search",
+  "share",
+]);
 
 type DeterministicMentionKind = Extract<
   SignalEntityMentionKind,
@@ -29,22 +38,31 @@ interface TextRange {
   end: number;
 }
 
+interface UrlMatch extends TextRange {
+  label: string;
+}
+
 export function extractDeterministicSignalEntityLinks(input: {
   input: string;
 }): SignalEntityLinkCandidate[] {
+  const emailMatches = findEmailMatches(input.input);
+  const urlMatches = findUrlMatches(input.input);
   const deterministicMatches = [
-    ...findEmailMatches(input.input),
-    ...findRecognizedProfileUrlMatches(input.input),
+    ...emailMatches,
+    ...findRecognizedProfileUrlMatches(urlMatches),
   ];
-  const occupiedRanges = deterministicMatches.map(({ start, end }) => ({
-    start,
-    end,
-  }));
+  const occupiedRanges = [...emailMatches, ...urlMatches].map(
+    ({ start, end }) => ({
+      start,
+      end,
+    })
+  );
 
   deterministicMatches.push(...findHandleMatches(input.input, occupiedRanges));
 
   return deterministicMatches
     .sort((left, right) => left.start - right.start)
+    .slice(0, MAX_SIGNAL_ENTITY_LINK_CANDIDATES)
     .map((match, index) => ({
       targetType: "person",
       localEntityKey: `person_${index + 1}`,
@@ -127,25 +145,40 @@ function findEmailMatches(input: string): DeterministicMatch[] {
   return matches;
 }
 
-function findRecognizedProfileUrlMatches(input: string): DeterministicMatch[] {
-  const matches: DeterministicMatch[] = [];
+function findUrlMatches(input: string): UrlMatch[] {
+  const matches: UrlMatch[] = [];
 
   for (const match of input.matchAll(URL_PATTERN)) {
     const rawLabel = match[0];
     const label = stripTrailingLabelPunctuation(rawLabel);
-
-    if (!isRecognizedPersonProfileUrl(label)) {
-      continue;
-    }
-
     const start = match.index ?? 0;
 
     matches.push({
-      mentionKind: "profile_url",
       label,
-      anchorText: label,
       start,
       end: start + label.length,
+    });
+  }
+
+  return matches;
+}
+
+function findRecognizedProfileUrlMatches(
+  urlMatches: UrlMatch[]
+): DeterministicMatch[] {
+  const matches: DeterministicMatch[] = [];
+
+  for (const urlMatch of urlMatches) {
+    if (!isRecognizedPersonProfileUrl(urlMatch.label)) {
+      continue;
+    }
+
+    matches.push({
+      mentionKind: "profile_url",
+      label: urlMatch.label,
+      anchorText: urlMatch.label,
+      start: urlMatch.start,
+      end: urlMatch.end,
       rationale: "Profile URL matched deterministic extractor.",
     });
   }
@@ -201,18 +234,32 @@ function isRecognizedPersonProfileUrl(label: string): boolean {
 
   if (hostname === "linkedin.com") {
     return (
+      pathSegments.length === 2 &&
       pathSegments[0]?.toLowerCase() === "in" &&
       typeof pathSegments[1] === "string" &&
       pathSegments[1].length > 0
     );
   }
 
-  if (
-    hostname === "x.com" ||
-    hostname === "twitter.com" ||
-    hostname === "github.com"
-  ) {
-    return pathSegments.length > 0;
+  if (hostname === "github.com") {
+    const profilePathSegment = pathSegments[0];
+
+    return (
+      pathSegments.length === 1 &&
+      typeof profilePathSegment === "string" &&
+      profilePathSegment.length > 0
+    );
+  }
+
+  if (hostname === "x.com" || hostname === "twitter.com") {
+    const profilePathSegment = pathSegments[0]?.toLowerCase();
+
+    return (
+      pathSegments.length === 1 &&
+      typeof profilePathSegment === "string" &&
+      profilePathSegment.length > 0 &&
+      !RESERVED_X_TWITTER_PATH_SEGMENTS.has(profilePathSegment)
+    );
   }
 
   return false;

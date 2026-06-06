@@ -74,6 +74,44 @@ describe("signal entity linker extraction", () => {
       ]);
   });
 
+  it("caps deterministic candidates at ten by input position", () => {
+    const input = Array.from(
+      { length: 12 },
+      (_, index) => `person${index + 1}@doccy.com`
+    ).join(" ");
+
+    const candidates = extractDeterministicSignalEntityLinks({ input });
+
+    expect(candidates).toHaveLength(10);
+    expect(candidates.map((candidate) => candidate.localEntityKey)).toEqual([
+      "person_1",
+      "person_2",
+      "person_3",
+      "person_4",
+      "person_5",
+      "person_6",
+      "person_7",
+      "person_8",
+      "person_9",
+      "person_10",
+    ]);
+    expect(candidates.at(-1)).toEqual(
+      expect.objectContaining({
+        label: "person10@doccy.com",
+        anchorText: "person10@doccy.com",
+      })
+    );
+  });
+
+  it("rejects repository, reserved social routes, and handles inside unsupported URLs", () => {
+    expect(
+      extractDeterministicSignalEntityLinks({
+        input:
+          "Skip https://github.com/org/repo, https://x.com/i/status/123, https://twitter.com/search, and https://example.com/@jordi.",
+      })
+    ).toEqual([]);
+  });
+
   it("keeps deterministic candidates first, filters invalid anchors, and dedupes", () => {
     const input = "Email Jordi at jordi@doccy.com.au.";
     const deterministicCandidates = extractDeterministicSignalEntityLinks({
