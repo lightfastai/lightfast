@@ -2,6 +2,8 @@ import { getPersonByPublicId, listPeople } from "@db/app";
 import {
   peopleIdentityProviderSchema,
   peopleIdentityTypeSchema,
+  personMemberStatusSchema,
+  personSourceSchema,
 } from "@repo/app-validation/schemas";
 import { TRPCError, type TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
@@ -18,6 +20,8 @@ const listPeopleInput = z.object({
   cursor: workspaceListCursorInput,
   limit: workspaceListLimitInput,
   providers: z.array(peopleIdentityProviderSchema).max(5).optional(),
+  sources: z.array(personSourceSchema).max(3).optional(),
+  memberStatuses: z.array(personMemberStatusSchema).max(2).optional(),
   search: workspaceListSearchInput,
   types: z.array(peopleIdentityTypeSchema).max(3).optional(),
 });
@@ -29,6 +33,10 @@ export const workspacePeopleRouter = {
       cursor: input.cursor,
       limit: input.limit,
       providers: input.providers?.length ? input.providers : undefined,
+      sources: input.sources?.length ? input.sources : undefined,
+      memberStatuses: input.memberStatuses?.length
+        ? input.memberStatuses
+        : undefined,
       search: input.search,
       types: input.types?.length ? input.types : undefined,
     })
