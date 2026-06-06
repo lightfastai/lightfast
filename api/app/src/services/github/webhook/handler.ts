@@ -2,19 +2,24 @@ import {
   getOrgBindingByProviderInstallation,
   getWatchedSourceControlRepository,
   markSourceControlWebhookDeliveryStatus,
+  recordSourceControlPrWebhookDelivery,
   recordSourceControlWebhookDeliveryReceived,
 } from "@db/app";
 import { db } from "@db/app/client";
 import {
   githubPingWebhookPayloadSchema,
+  githubPrWebhookEventSchema,
+  githubPrWebhookPayloadSchema,
   githubPushWebhookPayloadSchema,
   githubWebhookHeadersSchema,
+  normalizeGitHubPrWebhookPayload,
   normalizeGitHubPushWebhookPayload,
 } from "@repo/github-app-contract";
 import { verifyGitHubWebhookSignature } from "@repo/github-app-node";
 import {
   matchesAnyWatchedPath,
   sourceControlRepositoryPushEventSchema,
+  watchesWebhookEvent,
 } from "@repo/source-control-contract";
 
 import { env } from "../../../env";
@@ -32,6 +37,72 @@ function readHeaders(request: Request) {
     event: request.headers.get("x-github-event"),
     signature256: request.headers.get("x-hub-signature-256"),
   });
+}
+
+async function handleGitHubPrWebhook(input: {
+  deliveryId: string;
+  event: string;
+  json: unknown;
+}): Promise<Response> {
+  const parsedEvent = githubPrWebhookEventSchema.safeParse(input.event);
+  if (!parsedEvent.success) {
+    return response(202, { ok: true, ignored: true });
+  }
+
+  const parsedPayload = githubPrWebhookPayloadSchema.safeParse(input.json);
+  if (!parsedPayload.success) {
+    return response(400, { ok: false });
+  }
+
+  let normalized;
+  try {
+    normalized = normalizeGitHubPrWebhookPayload({
+      event: parsedEvent.data,
+      payload: parsedPayload.data,
+    });
+  } catch {
+    return response(400, { ok: false });
+  }
+
+  if (!normalized) {
+    return response(202, { ok: true, ignored: true });
+  }
+
+  const binding = await getOrgBindingByProviderInstallation(db, {
+    provider: "github",
+    providerInstallationId: normalized.providerInstallationId,
+  });
+  if (!binding || binding.status !== "active") {
+    return response(202, { ok: true, ignored: true });
+  }
+
+  const watch = await getWatchedSourceControlRepository(db, {
+    orgSourceControlBindingId: binding.id,
+    providerRepositoryId: normalized.providerRepositoryId,
+  });
+  if (!watch) {
+    return response(202, { ok: true, ignored: true });
+  }
+
+  if (!watchesWebhookEvent(watch.watchedWebhookEvents, normalized.event)) {
+    return response(202, { ok: true, ignored: true });
+  }
+
+  await recordSourceControlPrWebhookDelivery(db, {
+    action: normalized.action,
+    clerkOrgId: binding.clerkOrgId,
+    deliveryId: input.deliveryId,
+    event: normalized.event,
+    orgSourceControlBindingId: binding.id,
+    providerInstallationId: normalized.providerInstallationId,
+    providerPullRequestId: normalized.providerPullRequestId,
+    providerRepositoryId: normalized.providerRepositoryId,
+    pullRequestNumber: normalized.pullRequestNumber,
+    rawPayload: parsedPayload.data,
+    sourceControlRepositoryId: watch.id,
+  });
+
+  return response(202, { ok: true });
 }
 
 export async function handleGitHubWebhook(input: {
@@ -63,7 +134,10 @@ export async function handleGitHubWebhook(input: {
     return response(401, { ok: false });
   }
 
-  if (headers.event !== "ping" && headers.event !== "push") {
+  const isPrWebhookEvent = githubPrWebhookEventSchema.safeParse(
+    headers.event
+  ).success;
+  if (headers.event !== "ping" && headers.event !== "push" && !isPrWebhookEvent) {
     return response(202, { ok: true, ignored: true });
   }
 
@@ -79,6 +153,14 @@ export async function handleGitHubWebhook(input: {
     return parsedPing.success
       ? response(202, { ok: true })
       : response(400, { ok: false });
+  }
+
+  if (isPrWebhookEvent) {
+    return await handleGitHubPrWebhook({
+      deliveryId: headers.deliveryId,
+      event: headers.event,
+      json,
+    });
   }
 
   const parsedPush = githubPushWebhookPayloadSchema.safeParse(json);

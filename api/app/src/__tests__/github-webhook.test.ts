@@ -5,6 +5,7 @@ const getBindingMock = vi.fn();
 const getWatchMock = vi.fn();
 const markDeliveryMock = vi.fn();
 const recordDeliveryMock = vi.fn();
+const recordPrDeliveryMock = vi.fn();
 const inngestSendMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
@@ -13,6 +14,7 @@ vi.mock("@db/app", () => ({
   getOrgBindingByProviderInstallation: getBindingMock,
   getWatchedSourceControlRepository: getWatchMock,
   markSourceControlWebhookDeliveryStatus: markDeliveryMock,
+  recordSourceControlPrWebhookDelivery: recordPrDeliveryMock,
   recordSourceControlWebhookDeliveryReceived: recordDeliveryMock,
 }));
 
@@ -69,12 +71,48 @@ const pushPayload = {
   },
 };
 
+const pullRequestPayload = {
+  action: "opened",
+  installation: { id: 1001 },
+  pull_request: {
+    id: 3003,
+    number: 42,
+    html_url:
+      "https://github.lightfast.test/lightfast-emulated/workspace/pull/42",
+  },
+  repository: {
+    full_name: "lightfast-emulated/workspace",
+    id: 2002,
+    name: "workspace",
+    owner: { login: "lightfast-emulated" },
+  },
+};
+
+const issueCommentPayload = {
+  action: "created",
+  comment: { id: 7007, body: "Looks good" },
+  installation: { id: 1001 },
+  issue: {
+    number: 42,
+    pull_request: {
+      url: "https://api.github.test/repos/lightfast-emulated/workspace/pulls/42",
+    },
+  },
+  repository: {
+    full_name: "lightfast-emulated/workspace",
+    id: 2002,
+    name: "workspace",
+    owner: { login: "lightfast-emulated" },
+  },
+};
+
 describe("handleGitHubWebhook", () => {
   beforeEach(() => {
     getBindingMock.mockReset();
     getWatchMock.mockReset();
     markDeliveryMock.mockReset();
     recordDeliveryMock.mockReset();
+    recordPrDeliveryMock.mockReset();
     inngestSendMock.mockReset();
   });
 
@@ -471,6 +509,163 @@ describe("handleGitHubWebhook", () => {
       }
     );
     expect(inngestSendMock).not.toHaveBeenCalled();
+  });
+
+  it("ignores PR events when the repository does not watch the event family", async () => {
+    const { handleGitHubWebhook } = await import("../services/github/webhook");
+    getBindingMock.mockResolvedValue({
+      clerkOrgId: "org_123",
+      id: 7,
+      providerInstallationId: "1001",
+      status: "active",
+    });
+    getWatchMock.mockResolvedValue({
+      fullName: "lightfast-emulated/workspace",
+      id: 9,
+      providerRepositoryId: "2002",
+      syncStatus: "enabled",
+      watchedPathGlobs: ["skills/**"],
+      watchedWebhookEvents: [],
+    });
+
+    const res = await handleGitHubWebhook({
+      request: signedRequest(
+        pullRequestPayload,
+        "delivery-pr-unwatched",
+        "pull_request"
+      ),
+    });
+
+    expect(res.status).toBe(202);
+    expect(recordPrDeliveryMock).not.toHaveBeenCalled();
+    expect(recordDeliveryMock).not.toHaveBeenCalled();
+    expect(inngestSendMock).not.toHaveBeenCalled();
+  });
+
+  it("stores watched PR event raw payloads without checking sync status or path globs", async () => {
+    const { handleGitHubWebhook } = await import("../services/github/webhook");
+    getBindingMock.mockResolvedValue({
+      clerkOrgId: "org_123",
+      id: 7,
+      providerInstallationId: "1001",
+      status: "active",
+    });
+    getWatchMock.mockResolvedValue({
+      fullName: "lightfast-emulated/workspace",
+      id: 9,
+      providerRepositoryId: "2002",
+      syncStatus: "disabled",
+      watchedPathGlobs: null,
+      watchedWebhookEvents: ["pull_request"],
+    });
+    recordPrDeliveryMock.mockResolvedValue({
+      created: true,
+      delivery: { deliveryId: "delivery-pr-1" },
+    });
+
+    const res = await handleGitHubWebhook({
+      request: signedRequest(
+        pullRequestPayload,
+        "delivery-pr-1",
+        "pull_request"
+      ),
+    });
+
+    expect(res.status).toBe(202);
+    expect(recordPrDeliveryMock).toHaveBeenCalledWith(
+      {},
+      {
+        action: "opened",
+        clerkOrgId: "org_123",
+        deliveryId: "delivery-pr-1",
+        event: "pull_request",
+        orgSourceControlBindingId: 7,
+        providerInstallationId: "1001",
+        providerPullRequestId: "3003",
+        providerRepositoryId: "2002",
+        pullRequestNumber: 42,
+        rawPayload: pullRequestPayload,
+        sourceControlRepositoryId: 9,
+      }
+    );
+    expect(recordDeliveryMock).not.toHaveBeenCalled();
+    expect(inngestSendMock).not.toHaveBeenCalled();
+  });
+
+  it("stores watched PR-attached issue comments with nullable PR id", async () => {
+    const { handleGitHubWebhook } = await import("../services/github/webhook");
+    getBindingMock.mockResolvedValue({
+      clerkOrgId: "org_123",
+      id: 7,
+      providerInstallationId: "1001",
+      status: "active",
+    });
+    getWatchMock.mockResolvedValue({
+      id: 9,
+      providerRepositoryId: "2002",
+      syncStatus: "enabled",
+      watchedPathGlobs: ["**"],
+      watchedWebhookEvents: ["issue_comment"],
+    });
+    recordPrDeliveryMock.mockResolvedValue({
+      created: true,
+      delivery: { deliveryId: "delivery-issue-comment-1" },
+    });
+
+    const res = await handleGitHubWebhook({
+      request: signedRequest(
+        issueCommentPayload,
+        "delivery-issue-comment-1",
+        "issue_comment"
+      ),
+    });
+
+    expect(res.status).toBe(202);
+    expect(recordPrDeliveryMock).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({
+        event: "issue_comment",
+        providerPullRequestId: null,
+        pullRequestNumber: 42,
+        rawPayload: issueCommentPayload,
+      })
+    );
+  });
+
+  it("ignores issue comments that are not attached to PRs", async () => {
+    const { handleGitHubWebhook } = await import("../services/github/webhook");
+    const res = await handleGitHubWebhook({
+      request: signedRequest(
+        {
+          ...issueCommentPayload,
+          issue: { number: 42 },
+        },
+        "delivery-issue-comment-non-pr",
+        "issue_comment"
+      ),
+    });
+
+    expect(res.status).toBe(202);
+    expect(getBindingMock).not.toHaveBeenCalled();
+    expect(recordPrDeliveryMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for malformed signed PR payloads before persistence", async () => {
+    const { handleGitHubWebhook } = await import("../services/github/webhook");
+    const res = await handleGitHubWebhook({
+      request: signedRequest(
+        {
+          ...pullRequestPayload,
+          pull_request: { id: 3003 },
+        },
+        "delivery-pr-malformed",
+        "pull_request"
+      ),
+    });
+
+    expect(res.status).toBe(400);
+    expect(getBindingMock).not.toHaveBeenCalled();
+    expect(recordPrDeliveryMock).not.toHaveBeenCalled();
   });
 
   it("does not mark queued when enqueue fails", async () => {
