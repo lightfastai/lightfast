@@ -192,6 +192,62 @@ describe("skills index refresh/read service", () => {
     });
   });
 
+  it("publishes a skill index change after an unchanged refresh", async () => {
+    const unchangedState = staleState({
+      githubRefEtag: "etag-current",
+      indexedCommitSha: "current-main",
+      lastCheckedCommitSha: "current-main",
+      lastRefreshStatus: "fresh",
+    });
+    const deps = createDeps({ targetState: unchangedState });
+    deps.readSkillRepositoryMainRef.mockResolvedValueOnce({
+      status: "not_modified",
+    });
+
+    await expect(
+      refreshSkillIndexSource({
+        deps,
+        reason: "read",
+        sourceControlRepositoryId: 1,
+      })
+    ).resolves.toEqual({ status: "fresh" });
+
+    expect(deps.publishSkillIndexChanged).toHaveBeenCalledWith({
+      clerkOrgId: "org_123",
+      indexedCommitSha: "current-main",
+      lastRefreshStatus: "fresh",
+      snapshotVersion: `${unchangedState.id}:${unchangedState.updatedAt.getTime()}:current-main:fresh`,
+      sourceControlRepositoryId: 1,
+    });
+  });
+
+  it("does not fail an unchanged refresh when publishing fails", async () => {
+    const deps = createDeps({
+      targetState: staleState({
+        githubRefEtag: "etag-current",
+        indexedCommitSha: "current-main",
+        lastCheckedCommitSha: "current-main",
+        lastRefreshStatus: "fresh",
+      }),
+    });
+    deps.readSkillRepositoryMainRef.mockResolvedValueOnce({
+      status: "not_modified",
+    });
+    deps.publishSkillIndexChanged.mockRejectedValueOnce(
+      new Error("publish failed")
+    );
+
+    await expect(
+      refreshSkillIndexSource({
+        deps,
+        reason: "read",
+        sourceControlRepositoryId: 1,
+      })
+    ).resolves.toEqual({ status: "fresh" });
+
+    expect(deps.publishSkillIndexChanged).toHaveBeenCalled();
+  });
+
   it("does not fail refresh when publishing a skill index change fails", async () => {
     const deps = createDeps({
       refSha: "current-main",

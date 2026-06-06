@@ -160,6 +160,11 @@ export async function refreshSkillIndexSource(input: {
       ) {
         return { status: "stale" };
       }
+      await publishCurrentSkillIndexState({
+        clerkOrgId: candidate.binding.clerkOrgId,
+        deps,
+        sourceControlRepositoryId: input.sourceControlRepositoryId,
+      }).catch(() => undefined);
       return { status: "fresh" };
     }
     if (ref.status === "missing") {
@@ -177,7 +182,7 @@ export async function refreshSkillIndexSource(input: {
         stateId: state.id,
       });
       await publishCurrentSkillIndexState({
-        candidate,
+        clerkOrgId: candidate.binding.clerkOrgId,
         deps,
         sourceControlRepositoryId: input.sourceControlRepositoryId,
       }).catch(() => undefined);
@@ -228,7 +233,7 @@ export async function refreshSkillIndexSource(input: {
       stateId: state.id,
     });
     await publishCurrentSkillIndexState({
-      candidate,
+      clerkOrgId: candidate.binding.clerkOrgId,
       deps,
       sourceControlRepositoryId: input.sourceControlRepositoryId,
     }).catch(() => undefined);
@@ -243,7 +248,7 @@ export async function refreshSkillIndexSource(input: {
       stateId: state.id,
     });
     await publishCurrentSkillIndexState({
-      candidate,
+      clerkOrgId: candidate.binding.clerkOrgId,
       deps,
       sourceControlRepositoryId: input.sourceControlRepositoryId,
     }).catch(() => undefined);
@@ -257,7 +262,7 @@ export async function refreshSkillIndexSource(input: {
 }
 
 async function publishCurrentSkillIndexState(input: {
-  candidate: SkillIndexableSourceControlRepositoryCandidate;
+  clerkOrgId: string;
   deps: SkillIndexServiceDeps;
   sourceControlRepositoryId: number;
 }) {
@@ -271,7 +276,7 @@ async function publishCurrentSkillIndexState(input: {
     return;
   }
   await input.deps.publishSkillIndexChanged({
-    clerkOrgId: input.candidate.binding.clerkOrgId,
+    clerkOrgId: input.clerkOrgId,
     indexedCommitSha: state.indexedCommitSha,
     lastRefreshStatus: state.lastRefreshStatus,
     snapshotVersion: [
