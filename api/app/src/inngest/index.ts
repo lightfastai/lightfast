@@ -18,11 +18,15 @@ import { teamMemberReconciler } from "./workflow/team-member-reconciler";
 
 export { inngest };
 
+function getProductionOnlyFunctions() {
+  return env.VERCEL_ENV === "production" ? [systemHealth] : [];
+}
+
 export function createInngestRouteContext() {
   return serve({
     client: inngest,
     functions: [
-      systemHealth,
+      ...getProductionOnlyFunctions(),
       classifySignal,
       indexSignalEntities,
       backfillSignalEntityLinks,
