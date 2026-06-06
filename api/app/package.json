@@ -41,6 +41,10 @@
       "types": "./src/services/connectors/runtime.ts",
       "default": "./src/services/connectors/runtime.ts"
     },
+    "./services/user-connectors": {
+      "types": "./src/services/user-connectors/index.ts",
+      "default": "./src/services/user-connectors/index.ts"
+    },
     "./signals/service": {
       "types": "./src/signals/service.ts",
       "default": "./src/signals/service.ts"
@@ -83,6 +87,7 @@
     "@repo/developer-connection-contract": "workspace:*",
     "@repo/github-app-contract": "workspace:*",
     "@repo/github-app-node": "workspace:*",
+    "@repo/granola-app-node": "workspace:*",
     "@repo/identity-contract": "workspace:*",
     "@repo/linear-app-node": "workspace:*",
     "@repo/native-auth-contract": "workspace:*",

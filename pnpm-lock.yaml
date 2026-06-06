@@ -528,6 +528,9 @@ importers:
       '@repo/github-app-node':
         specifier: workspace:*
         version: link:../../packages/github-app-node
+      '@repo/granola-app-node':
+        specifier: workspace:*
+        version: link:../../packages/granola-app-node
       '@repo/identity-contract':
         specifier: workspace:*
         version: link:../../packages/identity-contract
