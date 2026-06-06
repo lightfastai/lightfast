@@ -13,6 +13,10 @@ export {
   getSkillIndexSnapshot,
 } from "./read";
 export {
+  enqueueSkillIndexRefresh,
+  requestSkillIndexRefresh,
+} from "./refresh-request";
+export {
   findChangedSkillIndexSources,
   reconcileSkillIndexSources,
 } from "./reconcile";

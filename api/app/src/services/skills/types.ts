@@ -56,7 +56,7 @@ export interface SkillIndexServiceDeps {
   ) => Promise<SkillIndexState>;
   db: Database;
   enqueueRefresh?: (input: {
-    reason: "schedule";
+    reason: "read" | "schedule" | "setup" | "webhook";
     sourceControlRepositoryId: number;
     targetCommitSha?: string;
   }) => Promise<void>;

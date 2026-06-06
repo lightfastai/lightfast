@@ -19,6 +19,7 @@ import {
   readSkillRepositoryMainRef,
   readSkillRepositoryTree,
 } from "./github";
+import { enqueueSkillIndexRefresh } from "./refresh-request";
 import type { SkillIndexServiceDeps } from "./types";
 
 export function resolveSkillIndexServiceDeps(
@@ -34,6 +35,7 @@ const defaultSkillIndexServiceDeps: SkillIndexServiceDeps = {
   acquireSkillIndexRefreshLock,
   createOrLoadSkillIndexState,
   db,
+  enqueueRefresh: enqueueSkillIndexRefresh,
   getSkillIndexStateBySourceControlRepositoryId,
   getSkillIndexableSourceControlRepositoryCandidateById,
   getSkillIndexEntryBySlug,

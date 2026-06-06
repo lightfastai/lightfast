@@ -7,6 +7,7 @@ import {
   getSkillIndexSnapshot,
   reconcileSkillIndexSources,
   refreshSkillIndexSource,
+  requestSkillIndexRefresh,
 } from "../services/skills";
 import { buildSkillIndexEntriesFromTree } from "../services/skills/build";
 import type { SkillIndexServiceDeps } from "../services/skills/types";
@@ -658,6 +659,52 @@ describe("skills index refresh/read service", () => {
     expect(
       deps.getSkillIndexableSourceControlRepositoryCandidateById
     ).not.toHaveBeenCalled();
+  });
+
+  it("requests a refresh for a verified repository without running GitHub refresh inline", async () => {
+    const deps = createDeps({
+      targetState: staleState({ indexedCommitSha: "old-index" }),
+    });
+    deps.enqueueRefresh = vi.fn(async () => undefined);
+
+    await expect(
+      requestSkillIndexRefresh({
+        clerkOrgId: "org_123",
+        deps,
+        reason: "read",
+        sourceControlRepositoryId: 1,
+      })
+    ).resolves.toEqual({
+      enqueued: true,
+      sourceControlRepositoryId: 1,
+    });
+
+    expect(deps.enqueueRefresh).toHaveBeenCalledWith({
+      reason: "read",
+      sourceControlRepositoryId: 1,
+      targetCommitSha: undefined,
+    });
+    expect(deps.readSkillRepositoryMainRef).not.toHaveBeenCalled();
+    expect(deps.readSkillRepositoryTree).not.toHaveBeenCalled();
+  });
+
+  it("does not enqueue a refresh when repository access is not verified", async () => {
+    const deps = createDeps({ candidate: null });
+    deps.enqueueRefresh = vi.fn(async () => undefined);
+
+    await expect(
+      requestSkillIndexRefresh({
+        clerkOrgId: "org_123",
+        deps,
+        reason: "read",
+        sourceControlRepositoryId: 1,
+      })
+    ).resolves.toEqual({
+      enqueued: false,
+      sourceControlRepositoryId: 1,
+    });
+
+    expect(deps.enqueueRefresh).not.toHaveBeenCalled();
   });
 
   it("finds changed sources without enqueueing refresh events", async () => {
