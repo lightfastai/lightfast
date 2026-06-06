@@ -1,5 +1,5 @@
 import { lightfastHandleSchema } from "@repo/app-validation";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq, gt, isNotNull } from "drizzle-orm";
 import { createMachine, transition } from "xstate";
 
 import type { Database } from "../client";
@@ -235,6 +235,56 @@ export async function getActiveNamespaceByHandle(
     )
     .limit(1);
   return row;
+}
+
+export interface ListActiveOrgNamespaceClerkOrgIdsInput {
+  cursor?: number | null;
+  limit: number;
+}
+
+export interface ActiveOrgNamespaceClerkOrgId {
+  id: number;
+  clerkOrgId: string;
+}
+
+export async function listActiveOrgNamespaceClerkOrgIds(
+  db: Database,
+  input: ListActiveOrgNamespaceClerkOrgIdsInput
+): Promise<{
+  items: ActiveOrgNamespaceClerkOrgId[];
+  nextCursor: number | null;
+}> {
+  const limit =
+    typeof input.limit === "number" && Number.isFinite(input.limit)
+      ? Math.max(1, Math.min(Math.trunc(input.limit), 100))
+      : 50;
+  const rows = await db
+    .select({
+      id: namespaces.id,
+      clerkOrgId: namespaces.clerkOrgId,
+    })
+    .from(namespaces)
+    .where(
+      and(
+        eq(namespaces.kind, "org"),
+        eq(namespaces.status, "active"),
+        isNotNull(namespaces.clerkOrgId),
+        input.cursor ? gt(namespaces.id, input.cursor) : undefined
+      )
+    )
+    .orderBy(asc(namespaces.id))
+    .limit(limit + 1);
+
+  const items = rows.slice(0, limit).map((row) => ({
+    id: row.id,
+    clerkOrgId: row.clerkOrgId as string,
+  }));
+  const last = items.at(-1);
+
+  return {
+    items,
+    nextCursor: rows.length > limit && last ? last.id : null,
+  };
 }
 
 export async function getClaimedNamespaceForOwner(

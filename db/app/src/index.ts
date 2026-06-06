@@ -240,6 +240,7 @@ export {
 // MCP OAuth, connector, and provider-routine DB helpers
 export * from "./utils/mcp-oauth";
 export {
+  type ActiveOrgNamespaceClerkOrgId,
   deletePreClerkNamespaceReservation,
   failUnreservedNamespaceOperation,
   finalizeNamespaceOperation,
@@ -248,6 +249,8 @@ export {
   getNamespaceByHandle,
   getNamespaceOperationById,
   getNamespaceOperationByIdempotencyKey,
+  listActiveOrgNamespaceClerkOrgIds,
+  type ListActiveOrgNamespaceClerkOrgIdsInput,
   markNamespaceOperationClerkApplied,
   type NamespaceConflictCode,
   NamespaceConflictError,
@@ -304,6 +307,13 @@ export {
   type UpsertPeopleFromCandidatesInput,
   upsertPeopleFromCandidates,
 } from "./utils/people";
+export {
+  markFormerTeamMembersMissingFromSync,
+  syncOrgTeamMemberPeople,
+  type SyncOrgTeamMemberPeopleInput,
+  type SyncOrgTeamMemberPeopleResult,
+  type TeamMemberPeopleCandidate,
+} from "./utils/people-team-members";
 export {
   type CreatePeopleViewParams,
   createPeopleView,
