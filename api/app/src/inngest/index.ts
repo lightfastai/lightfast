@@ -12,6 +12,7 @@ import { refreshIdentityIndex } from "./workflow/refresh-identity-index";
 import { refreshSkillIndex } from "./workflow/refresh-skill-index";
 import { runAutomation } from "./workflow/run-automation";
 import { systemHealth } from "./workflow/system-health";
+import { teamMemberReconciler } from "./workflow/team-member-reconciler";
 
 export { inngest };
 
@@ -29,6 +30,7 @@ export function createInngestRouteContext() {
       refreshIdentityIndex,
       reconcileSkillIndexes,
       reconcileIdentityIndexes,
+      teamMemberReconciler,
       queueLightfastIndexRefreshesFromSourceControl,
     ],
     serveOrigin: env.INNGEST_SERVE_ORIGIN,

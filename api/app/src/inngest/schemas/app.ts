@@ -25,6 +25,15 @@ export const appEvents = {
       }),
     }
   ),
+  "app/team-members.reconcile.requested": eventType(
+    "app/team-members.reconcile.requested",
+    {
+      schema: z.object({
+        cursor: z.number().int().positive().nullable(),
+        syncedAtIso: z.string().datetime(),
+      }),
+    }
+  ),
   "app/signal.created": eventType("app/signal.created", {
     schema: z.object({
       signalId: signalIdSchema,
