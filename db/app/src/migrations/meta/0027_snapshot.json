@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "172bea1a-24ca-42bf-a0a0-6fe0164e305a",
-  "prevId": "86fc3f39-4cab-4ab5-a735-6794d3d682de",
+  "id": "7080a553-e7a9-436f-94bf-93006e63f13e",
+  "prevId": "172bea1a-24ca-42bf-a0a0-6fe0164e305a",
   "tables": {
     "lightfast_org_automation_runs": {
       "name": "lightfast_org_automation_runs",
@@ -3199,6 +3199,160 @@
       "uniqueConstraints": {},
       "checkConstraint": {}
     },
+    "lightfast_org_source_control_pr_webhook_deliveries": {
+      "name": "lightfast_org_source_control_pr_webhook_deliveries",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "delivery_id": {
+          "name": "delivery_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "clerk_org_id": {
+          "name": "clerk_org_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "org_source_control_binding_id": {
+          "name": "org_source_control_binding_id",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "source_control_repository_id": {
+          "name": "source_control_repository_id",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "provider_installation_id": {
+          "name": "provider_installation_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "provider_repository_id": {
+          "name": "provider_repository_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "event": {
+          "name": "event",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "action": {
+          "name": "action",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "provider_pull_request_id": {
+          "name": "provider_pull_request_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "pull_request_number": {
+          "name": "pull_request_number",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "raw_payload": {
+          "name": "raw_payload",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {
+        "org_source_control_pr_webhook_deliveries_delivery_uq": {
+          "name": "org_source_control_pr_webhook_deliveries_delivery_uq",
+          "columns": [
+            "delivery_id"
+          ],
+          "isUnique": true
+        },
+        "org_source_control_pr_webhook_deliveries_org_created_idx": {
+          "name": "org_source_control_pr_webhook_deliveries_org_created_idx",
+          "columns": [
+            "clerk_org_id",
+            "created_at",
+            "id"
+          ],
+          "isUnique": false
+        },
+        "org_source_control_pr_webhook_deliveries_repo_pr_idx": {
+          "name": "org_source_control_pr_webhook_deliveries_repo_pr_idx",
+          "columns": [
+            "source_control_repository_id",
+            "pull_request_number",
+            "created_at",
+            "id"
+          ],
+          "isUnique": false
+        },
+        "org_source_control_pr_webhook_deliveries_provider_repo_idx": {
+          "name": "org_source_control_pr_webhook_deliveries_provider_repo_idx",
+          "columns": [
+            "provider_installation_id",
+            "provider_repository_id",
+            "created_at",
+            "id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "lightfast_org_source_control_pr_webhook_deliveries_id": {
+          "name": "lightfast_org_source_control_pr_webhook_deliveries_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
     "lightfast_org_source_control_repositories": {
       "name": "lightfast_org_source_control_repositories",
       "columns": {
@@ -3232,6 +3386,13 @@
         },
         "watched_path_globs": {
           "name": "watched_path_globs",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "watched_webhook_events": {
+          "name": "watched_webhook_events",
           "type": "json",
           "primaryKey": false,
           "notNull": false,

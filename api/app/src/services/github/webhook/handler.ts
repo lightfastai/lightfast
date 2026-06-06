@@ -138,7 +138,11 @@ export async function handleGitHubWebhook(input: {
   const isPrWebhookEvent = githubPrWebhookEventSchema.safeParse(
     headers.event
   ).success;
-  if (headers.event !== "ping" && headers.event !== "push" && !isPrWebhookEvent) {
+  if (
+    headers.event !== "ping" &&
+    headers.event !== "push" &&
+    !isPrWebhookEvent
+  ) {
     return response(202, { ok: true, ignored: true });
   }
 

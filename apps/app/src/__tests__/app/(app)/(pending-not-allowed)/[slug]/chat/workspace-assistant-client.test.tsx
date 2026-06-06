@@ -574,6 +574,61 @@ describe("WorkspaceAssistantClient", () => {
     });
   });
 
+  it("sends write mode for one submitted turn and resets it", async () => {
+    render(
+      <WorkspaceAssistantClient
+        conversationId="conv_existing"
+        initialConversation={{
+          messages: [
+            makeWorkspaceAssistantMessage({
+              parts: [{ text: "Previous", type: "text" }],
+              publicId: "msg_user",
+              role: "user",
+            }),
+          ],
+          conversation: makeWorkspaceAssistantConversation(),
+        }}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Write mode" }));
+    fireEvent.change(screen.getByPlaceholderText("Ask Lightfield"), {
+      target: { value: "Create a Linear issue" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => {
+      expect(sendMessageMock).toHaveBeenCalledWith(
+        { text: "Create a Linear issue" },
+        {
+          body: {
+            idempotencyKey: expect.stringMatching(/^idem_/),
+            conversationId: "conv_existing",
+            providerRoutineWriteMode: true,
+          },
+        }
+      );
+    });
+
+    expect(screen.getByRole("button", { name: "Write mode" })).toHaveAttribute(
+      "aria-pressed",
+      "false"
+    );
+
+    fireEvent.change(screen.getByPlaceholderText("Ask Lightfield"), {
+      target: { value: "List my Linear issues" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => expect(sendMessageMock).toHaveBeenCalledTimes(2));
+    expect(sendMessageMock.mock.calls[1]?.[1]).toEqual({
+      body: {
+        idempotencyKey: expect.stringMatching(/^idem_/),
+        conversationId: "conv_existing",
+      },
+    });
+  });
+
   it("uses tokenized composer styling", () => {
     const { container } = render(
       <WorkspaceAssistantClient conversationId="conv_new" />

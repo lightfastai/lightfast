@@ -2,6 +2,7 @@ import type { Database } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getSignalByPublicIdMock = vi.fn();
+const reconcileSignalEntityLinksForPeopleMock = vi.fn();
 const upsertPeopleFromCandidatesMock = vi.fn();
 const buildPeopleClassificationRequestMock = vi.fn();
 const classifyPeopleFromSignalMock = vi.fn();
@@ -48,6 +49,7 @@ const createFunctionMock = vi.fn(
 
 vi.mock("@db/app", () => ({
   getSignalByPublicId: getSignalByPublicIdMock,
+  reconcileSignalEntityLinksForPeople: reconcileSignalEntityLinksForPeopleMock,
   upsertPeopleFromCandidates: upsertPeopleFromCandidatesMock,
 }));
 
@@ -189,6 +191,7 @@ function runWorkflow(step: ReturnType<typeof createStep>) {
 
 beforeEach(() => {
   getSignalByPublicIdMock.mockReset();
+  reconcileSignalEntityLinksForPeopleMock.mockReset();
   upsertPeopleFromCandidatesMock.mockReset();
   buildPeopleClassificationRequestMock.mockReset();
   classifyPeopleFromSignalMock.mockReset();
@@ -197,6 +200,7 @@ beforeEach(() => {
 
   getSignalByPublicIdMock.mockResolvedValue(signal);
   upsertPeopleFromCandidatesMock.mockResolvedValue([{ publicId: "person_1" }]);
+  reconcileSignalEntityLinksForPeopleMock.mockResolvedValue({ resolved: 1 });
   buildPeopleClassificationRequestMock.mockReturnValue({
     clerkOrgId: "org_test",
     deploymentEnvironment: "development",
@@ -235,6 +239,7 @@ describe("classifyPeople", () => {
     const step = createStep();
 
     await expect(runWorkflow(step)).resolves.toEqual({
+      entityLinksResolved: 1,
       people: 1,
       status: "classified",
     });
@@ -270,6 +275,10 @@ describe("classifyPeople", () => {
         },
       ],
       sourceSignalId: signalId,
+    });
+    expect(reconcileSignalEntityLinksForPeopleMock).toHaveBeenCalledWith(db, {
+      clerkOrgId: "org_test",
+      people: [{ publicId: "person_1" }],
     });
   });
 

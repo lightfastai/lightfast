@@ -43,9 +43,9 @@ export const orgSourceControlRepositories = mysqlTable(
       "watched_path_globs"
     ).$type<WatchedPathGlobs | null>(),
 
-    watchedWebhookEvents: json(
-      "watched_webhook_events"
-    ).$type<SourceControlPrWebhookEvent[] | null>(),
+    watchedWebhookEvents: json("watched_webhook_events").$type<
+      SourceControlPrWebhookEvent[] | null
+    >(),
 
     syncStatus: varchar("sync_status", { length: CODE_LENGTH })
       .$type<SourceControlRepositorySyncStatus>()
@@ -164,9 +164,7 @@ export const orgSourceControlPrWebhookDeliveries = mysqlTable(
       unsigned: true,
     }).notNull(),
 
-    rawPayload: json("raw_payload")
-      .$type<Record<string, unknown>>()
-      .notNull(),
+    rawPayload: json("raw_payload").$type<Record<string, unknown>>().notNull(),
 
     createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)

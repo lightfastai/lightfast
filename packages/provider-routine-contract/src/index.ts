@@ -91,6 +91,23 @@ export type ProviderRoutineSearchReason = z.infer<
   typeof providerRoutineSearchReasonSchema
 >;
 
+export const providerRoutineFindWarningCodeSchema = z.enum([
+  "PROVIDER_ROUTINE_RECONNECT_REQUIRED",
+]);
+export type ProviderRoutineFindWarningCode = z.infer<
+  typeof providerRoutineFindWarningCodeSchema
+>;
+
+export const providerRoutineFindWarningSchema = z.object({
+  code: providerRoutineFindWarningCodeSchema,
+  message: z.string().min(1),
+  provider: connectableConnectorProviderSchema,
+  requiredScopes: z.array(z.string().min(1)),
+});
+export type ProviderRoutineFindWarning = z.infer<
+  typeof providerRoutineFindWarningSchema
+>;
+
 export const providerRoutineSummarySchema = z.object({
   classification: providerRoutineClassificationSchema,
   description: z.string().optional(),
@@ -116,6 +133,7 @@ export type ProviderRoutineSummary = z.infer<
 export const providerRoutineFindOutputSchema = z.object({
   reason: providerRoutineSearchReasonSchema.optional(),
   routines: z.array(providerRoutineSummarySchema),
+  warnings: z.array(providerRoutineFindWarningSchema).optional(),
 });
 export type ProviderRoutineFindOutput = z.infer<
   typeof providerRoutineFindOutputSchema
@@ -186,6 +204,7 @@ export const providerRoutineErrorCodeSchema = z.enum([
   "PROVIDER_ROUTINE_NOT_ENABLED",
   "PROVIDER_ROUTINE_CONNECTION_REQUIRED",
   "PROVIDER_ROUTINE_INSUFFICIENT_SCOPE",
+  "PROVIDER_ROUTINE_RECONNECT_REQUIRED",
   "PROVIDER_ROUTINE_INVALID_INPUT",
   "PROVIDER_ROUTINE_AUTH_REQUIRED",
   "PROVIDER_ROUTINE_PROVIDER_FAILED",

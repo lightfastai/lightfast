@@ -98,6 +98,14 @@ export {
   type ProviderRoutineCallStatus,
 } from "./org-provider-routine-calls";
 export {
+  type InsertSignalEntityLink,
+  orgSignalEntityLinks,
+  SIGNAL_ENTITY_LINK_ANCHOR_TEXT_LENGTH,
+  SIGNAL_ENTITY_LINK_LABEL_LENGTH,
+  SIGNAL_ENTITY_LINK_NORMALIZED_MENTION_VALUE_LENGTH,
+  type SignalEntityLink,
+} from "./org-signal-entity-links";
+export {
   createSignalViewId,
   type InsertSignalView,
   orgSignalViews,

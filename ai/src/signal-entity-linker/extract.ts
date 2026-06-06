@@ -130,7 +130,10 @@ export function mergeSignalEntityLinkCandidates(input: {
     }
   }
 
-  return mergedCandidates;
+  return mergedCandidates.map((candidate, index) => ({
+    ...candidate,
+    localEntityKey: `person_${index + 1}`,
+  }));
 }
 
 function findEmailMatches(input: string): DeterministicMatch[] {
