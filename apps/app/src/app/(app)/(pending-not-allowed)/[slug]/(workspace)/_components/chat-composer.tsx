@@ -44,8 +44,6 @@ export const ChatComposer = memo(function ChatComposer({
   const isBusy =
     effectiveStatus === "submitted" || effectiveStatus === "streaming";
   const isStreaming = effectiveStatus === "streaming";
-  const submitStatus: ChatStatus =
-    effectiveStatus === "submitted" ? "ready" : effectiveStatus;
   const submitDisabled =
     effectiveStatus === "submitted" || (!isBusy && text.trim().length === 0);
 
@@ -81,9 +79,9 @@ export const ChatComposer = memo(function ChatComposer({
       className={cn("size-8 rounded-full", compact && "mr-2 mb-2 shrink-0")}
       disabled={submitDisabled}
       onStop={stop}
-      status={submitStatus}
+      status={effectiveStatus}
     >
-      {submitStatus === "ready" ? <ArrowUp className="size-4" /> : undefined}
+      {effectiveStatus === "ready" ? <ArrowUp className="size-4" /> : undefined}
     </PromptInputSubmit>
   );
 

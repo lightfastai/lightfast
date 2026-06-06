@@ -177,11 +177,18 @@ vi.mock("@repo/ui/components/ai-elements/prompt-input", () => ({
   PromptInputSubmit: ({
     "aria-label": ariaLabel,
     disabled,
+    status,
   }: {
     "aria-label"?: string;
     disabled?: boolean;
+    status?: string;
   }) => (
-    <button aria-label={ariaLabel} disabled={disabled} type="submit">
+    <button
+      aria-label={ariaLabel}
+      data-status={status}
+      disabled={disabled}
+      type="submit"
+    >
       Send
     </button>
   ),
@@ -409,6 +416,10 @@ describe("WorkspaceAssistantClient", () => {
     });
     expect(sendMessageMock).not.toHaveBeenCalled();
     expect(refreshMock).not.toHaveBeenCalled();
+    expect(screen.getByText("Summarize my active opportunities")).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Send message" })
+    ).toHaveAttribute("data-status", "submitted");
 
     resolveCreate?.({
       publicId: "conv_new",
