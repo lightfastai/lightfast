@@ -36,6 +36,7 @@ import { Route as AuthenticatedSlugAutomationsRouteImport } from './routes/_auth
 import { Route as AuthenticatedAccountSettingsIndexRouteImport } from './routes/_authenticated/account/settings/index'
 import { Route as AuthenticatedSlugTasksIndexRouteImport } from './routes/_authenticated/$slug/tasks/index'
 import { Route as AuthenticatedSlugSettingsIndexRouteImport } from './routes/_authenticated/$slug/settings/index'
+import { Route as AuthenticatedSlugChatIndexRouteImport } from './routes/_authenticated/$slug/chat/index'
 import { Route as AuthenticatedSlugAutomationsIndexRouteImport } from './routes/_authenticated/$slug/automations/index'
 import { Route as ApiSkillsIndexEventsRouteImport } from './routes/api/skills/index/events'
 import { Route as ApiNativeProxyRoutinesRouteImport } from './routes/api/native/proxy/routines'
@@ -215,6 +216,12 @@ const AuthenticatedSlugSettingsIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedSlugSettingsRoute,
+  } as any)
+const AuthenticatedSlugChatIndexRoute =
+  AuthenticatedSlugChatIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSlugChatRoute,
   } as any)
 const AuthenticatedSlugAutomationsIndexRoute =
   AuthenticatedSlugAutomationsIndexRouteImport.update({
@@ -472,6 +479,7 @@ export interface FileRoutesByFullPath {
   '/api/native/proxy/routines': typeof ApiNativeProxyRoutinesRoute
   '/api/skills/index/events': typeof ApiSkillsIndexEventsRoute
   '/$slug/automations/': typeof AuthenticatedSlugAutomationsIndexRoute
+  '/$slug/chat/': typeof AuthenticatedSlugChatIndexRoute
   '/$slug/settings/': typeof AuthenticatedSlugSettingsIndexRoute
   '/$slug/tasks/': typeof AuthenticatedSlugTasksIndexRoute
   '/account/settings/': typeof AuthenticatedAccountSettingsIndexRoute
@@ -496,7 +504,6 @@ export interface FileRoutesByTo {
   '/account': typeof AuthenticatedAccountRouteWithChildren
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
-  '/$slug/chat': typeof AuthenticatedSlugChatRouteWithChildren
   '/$slug/connectors': typeof AuthenticatedSlugConnectorsRoute
   '/$slug/decisions': typeof AuthenticatedSlugDecisionsRoute
   '/$slug/people': typeof AuthenticatedSlugPeopleRoute
@@ -529,6 +536,7 @@ export interface FileRoutesByTo {
   '/api/native/proxy/routines': typeof ApiNativeProxyRoutinesRoute
   '/api/skills/index/events': typeof ApiSkillsIndexEventsRoute
   '/$slug/automations': typeof AuthenticatedSlugAutomationsIndexRoute
+  '/$slug/chat': typeof AuthenticatedSlugChatIndexRoute
   '/$slug/settings': typeof AuthenticatedSlugSettingsIndexRoute
   '/$slug/tasks': typeof AuthenticatedSlugTasksIndexRoute
   '/account/settings': typeof AuthenticatedAccountSettingsIndexRoute
@@ -595,6 +603,7 @@ export interface FileRoutesById {
   '/api/native/proxy/routines': typeof ApiNativeProxyRoutinesRoute
   '/api/skills/index/events': typeof ApiSkillsIndexEventsRoute
   '/_authenticated/$slug/automations/': typeof AuthenticatedSlugAutomationsIndexRoute
+  '/_authenticated/$slug/chat/': typeof AuthenticatedSlugChatIndexRoute
   '/_authenticated/$slug/settings/': typeof AuthenticatedSlugSettingsIndexRoute
   '/_authenticated/$slug/tasks/': typeof AuthenticatedSlugTasksIndexRoute
   '/_authenticated/account/settings/': typeof AuthenticatedAccountSettingsIndexRoute
@@ -661,6 +670,7 @@ export interface FileRouteTypes {
     | '/api/native/proxy/routines'
     | '/api/skills/index/events'
     | '/$slug/automations/'
+    | '/$slug/chat/'
     | '/$slug/settings/'
     | '/$slug/tasks/'
     | '/account/settings/'
@@ -685,7 +695,6 @@ export interface FileRouteTypes {
     | '/account'
     | '/api/health'
     | '/api/inngest'
-    | '/$slug/chat'
     | '/$slug/connectors'
     | '/$slug/decisions'
     | '/$slug/people'
@@ -718,6 +727,7 @@ export interface FileRouteTypes {
     | '/api/native/proxy/routines'
     | '/api/skills/index/events'
     | '/$slug/automations'
+    | '/$slug/chat'
     | '/$slug/settings'
     | '/$slug/tasks'
     | '/account/settings'
@@ -783,6 +793,7 @@ export interface FileRouteTypes {
     | '/api/native/proxy/routines'
     | '/api/skills/index/events'
     | '/_authenticated/$slug/automations/'
+    | '/_authenticated/$slug/chat/'
     | '/_authenticated/$slug/settings/'
     | '/_authenticated/$slug/tasks/'
     | '/_authenticated/account/settings/'
@@ -1015,6 +1026,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/$slug/settings/'
       preLoaderRoute: typeof AuthenticatedSlugSettingsIndexRouteImport
       parentRoute: typeof AuthenticatedSlugSettingsRoute
+    }
+    '/_authenticated/$slug/chat/': {
+      id: '/_authenticated/$slug/chat/'
+      path: '/'
+      fullPath: '/$slug/chat/'
+      preLoaderRoute: typeof AuthenticatedSlugChatIndexRouteImport
+      parentRoute: typeof AuthenticatedSlugChatRoute
     }
     '/_authenticated/$slug/automations/': {
       id: '/_authenticated/$slug/automations/'
@@ -1293,11 +1311,13 @@ const AuthenticatedSlugAutomationsRouteWithChildren =
 
 interface AuthenticatedSlugChatRouteChildren {
   AuthenticatedSlugChatConversationIdRoute: typeof AuthenticatedSlugChatConversationIdRoute
+  AuthenticatedSlugChatIndexRoute: typeof AuthenticatedSlugChatIndexRoute
 }
 
 const AuthenticatedSlugChatRouteChildren: AuthenticatedSlugChatRouteChildren = {
   AuthenticatedSlugChatConversationIdRoute:
     AuthenticatedSlugChatConversationIdRoute,
+  AuthenticatedSlugChatIndexRoute: AuthenticatedSlugChatIndexRoute,
 }
 
 const AuthenticatedSlugChatRouteWithChildren =

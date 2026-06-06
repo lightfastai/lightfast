@@ -327,6 +327,77 @@ describe("app-tanstack authenticated route migration", () => {
     }
   });
 
+  it("ports workspace assistant chat routes without Next.js assumptions", () => {
+    const packageSource = source("package.json");
+    const chatRouteSource = source("src/routes/_authenticated/$slug/chat.tsx");
+    const chatIndexRouteSource = source(
+      "src/routes/_authenticated/$slug/chat/index.tsx"
+    );
+    const conversationRouteSource = source(
+      "src/routes/_authenticated/$slug/chat/$conversationId.tsx"
+    );
+    const assistantClientSource = source(
+      "src/chat/workspace-assistant-client.tsx"
+    );
+    const composerSource = source("src/chat/chat-composer.tsx");
+    const messageSource = source("src/chat/chat-message.tsx");
+    const messagePartSource = source("src/chat/message-part.tsx");
+    const copyButtonSource = source("src/chat/message-copy-button.tsx");
+    const resumableConfigSource = source("src/chat/resumable-stream-config.ts");
+
+    expect(packageSource).toContain('"@ai-sdk/react": "catalog:"');
+    expect(packageSource).toContain('"@vendor/ai": "workspace:*"');
+    expect(chatRouteSource).toContain("component: Outlet");
+    expect(chatIndexRouteSource).toContain(
+      'createFileRoute("/_authenticated/$slug/chat/")'
+    );
+    expect(chatIndexRouteSource).toContain(
+      "createWorkspaceAssistantConversationId"
+    );
+    expect(chatIndexRouteSource).toContain("WorkspaceAssistantClient");
+    expect(chatIndexRouteSource).toContain("key={conversationId}");
+    expect(chatRouteSource).not.toContain("WorkspacePage");
+    expect(conversationRouteSource).toContain(
+      "assistant.getConversation.queryOptions"
+    );
+    expect(conversationRouteSource).toContain("WorkspaceAssistantClient");
+    expect(conversationRouteSource).toContain("isPreallocatedConversationId");
+    expect(conversationRouteSource).toContain("notFound()");
+    expect(assistantClientSource).toContain("useChat");
+    expect(assistantClientSource).toContain("DefaultChatTransport");
+    expect(assistantClientSource).toContain("useParams({ strict: false })");
+    expect(assistantClientSource).toContain("useRouter");
+    expect(assistantClientSource).toContain("router.invalidate()");
+    expect(assistantClientSource).toContain(
+      "createConversation.mutationOptions"
+    );
+    expect(assistantClientSource).toContain("listConversations.queryFilter");
+    expect(composerSource).toContain("PromptInput");
+    expect(composerSource).toContain("PromptInputSubmit");
+    expect(messageSource).toContain("ChatMessage");
+    expect(messagePartSource).toContain("WorkspaceAssistantMessagePart");
+    expect(copyButtonSource).toContain("extractMessageText");
+    expect(resumableConfigSource).toContain("isResumableStreamEnabled");
+    expect(resumableConfigSource).toContain("VITE_VERCEL_ENV");
+
+    for (const routeFile of [
+      chatRouteSource,
+      chatIndexRouteSource,
+      conversationRouteSource,
+      assistantClientSource,
+      composerSource,
+      messageSource,
+      messagePartSource,
+      copyButtonSource,
+      resumableConfigSource,
+    ]) {
+      expect(routeFile).not.toContain("next/");
+      expect(routeFile).not.toContain("nuqs");
+      expect(routeFile).not.toContain('"use client"');
+      expect(routeFile).not.toContain('"use server"');
+    }
+  });
+
   it("ports org setup routes and GitHub callbacks", () => {
     const orgRouteSource = source("src/routes/_authenticated/$slug.tsx");
     const accountGithubRouteSource = source(
