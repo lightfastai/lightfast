@@ -155,6 +155,20 @@
       "when": 1780488498633,
       "tag": "0021_great_loners",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "5",
+      "when": 1780746482875,
+      "tag": "0022_polite_shaman",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1780748361309,
+      "tag": "0023_curvy_sprite",
+      "breakpoints": true
     }
   ]
 }

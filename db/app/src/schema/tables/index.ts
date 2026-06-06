@@ -48,6 +48,7 @@ export {
   orgDeveloperSandboxCommands,
   orgDeveloperSandboxRuns,
 } from "./org-developer-sandbox-runs";
+export * from "./org-entity-graph";
 export {
   type IdentityIndexFile,
   type IdentityIndexState,

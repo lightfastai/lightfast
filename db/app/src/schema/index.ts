@@ -2,6 +2,15 @@
 export {
   identityIndexFilesRelations,
   identityIndexStatesRelations,
+  orgEntityAccountsRelations,
+  orgEntityEvidenceItemsRelations,
+  orgEntityLinksRelations,
+  orgEntityObservationsRelations,
+  orgEntityPeopleRelations,
+  orgEntityPersonAccountAffiliationsRelations,
+  orgEntityResolutionCandidateGroupsRelations,
+  orgEntityResolutionCandidateVersionsRelations,
+  orgEntitySourceIdentitiesRelations,
   skillIndexEntriesRelations,
   skillIndexStatesRelations,
   sourceControlRepositoriesRelations,
@@ -194,3 +203,4 @@ export {
   type WorkspaceAssistantToolCallStatus,
   type WorkspaceAssistantToolPayload,
 } from "./tables";
+export * from "./tables/org-entity-graph";
