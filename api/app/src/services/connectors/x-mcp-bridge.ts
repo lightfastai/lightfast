@@ -8,7 +8,7 @@ import { db as appDb } from "@db/app/client";
 import { decrypt, encrypt } from "@repo/app-encryption";
 import {
   executeXApiTool,
-  getXToolDefinitions,
+  getXToolDefinitionsForScopes,
   refreshXOAuthToken,
   XAppNodeError,
 } from "@repo/x-app-node";
@@ -95,12 +95,22 @@ function registerXTools(
     connection: OrgConnectorConnection | null;
   }
 ) {
-  for (const definition of getXToolDefinitions()) {
+  const definitions = input.connection
+    ? getXToolDefinitionsForScopes(input.connection.scopes)
+    : [];
+
+  for (const definition of definitions) {
     const handleToolCall = async (args: XToolArgs) => {
       if (!input.connection) {
         throw new XAppNodeError(
           "X_TOKEN_REFRESH_FAILED",
           "X connector connection is not available."
+        );
+      }
+      if (!hasManifestTool(input.connection, definition.name)) {
+        throw new XAppNodeError(
+          "X_TOOL_CALL_FAILED",
+          "X connector tool is not available on the current connection."
         );
       }
 
@@ -115,6 +125,7 @@ function registerXTools(
         const result = await executeXApiTool({
           accessToken,
           apiOrigin: config.endpoints.apiOrigin,
+          connectedActorId: input.connection.providerActorId,
           input: args,
           name: definition.name,
         });
@@ -142,6 +153,10 @@ function registerXTools(
       handleToolCall as never
     );
   }
+}
+
+function hasManifestTool(connection: OrgConnectorConnection, toolName: string) {
+  return connection.toolManifest.some((tool) => tool.name === toolName);
 }
 
 async function getFreshXBridgeAccessToken(input: {

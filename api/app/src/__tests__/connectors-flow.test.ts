@@ -132,7 +132,7 @@ vi.mock("@vendor/upstash", () => ({
 vi.mock("../env", () => ({ env: envMock }));
 
 const { LinearAppNodeError } = await import("@repo/linear-app-node");
-const { XAppNodeError } = await import("@repo/x-app-node");
+const { XAppNodeError, X_OAUTH_SCOPE } = await import("@repo/x-app-node");
 const { assertCurrentSessionCanFinalizeConnectorOAuth } = await import(
   "../services/connectors/auth"
 );
@@ -308,6 +308,27 @@ describe("connector catalog services", () => {
         reason: "missing_config",
         status: "unavailable",
       },
+    });
+  });
+
+  it("marks X connections with missing requested scopes for reconnect", async () => {
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([
+      connection({
+        mcpEndpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
+        provider: "x",
+        providerWorkspaceId: null,
+        providerWorkspaceName: "X",
+        scopes: ["tweet.read", "users.read", "offline.access"],
+        toolManifest: [{ description: "Look up account", name: "getUsersMe" }],
+      }),
+    ]);
+
+    const rows = await listConnectorsForOrg(ctx());
+    const xRow = rows.find((row) => row.provider === "x");
+
+    expect(xRow?.connection).toMatchObject({
+      missingScopes: expect.arrayContaining(["tweet.write", "dm.write"]),
+      scopeStatus: "missing_requested_scopes",
     });
   });
 });
@@ -1337,9 +1358,7 @@ describe("X connector flow", () => {
     expect(connectUrl.searchParams.get("redirect_uri")).toBe(
       "https://app.lightfast.localhost/api/connectors/x/oauth/callback"
     );
-    expect(connectUrl.searchParams.get("scope")).toBe(
-      "tweet.read users.read offline.access"
-    );
+    expect(connectUrl.searchParams.get("scope")).toBe(X_OAUTH_SCOPE);
 
     getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(
       connection({ provider: "x" })
