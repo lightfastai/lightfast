@@ -19,6 +19,7 @@ export {
   refreshXOAuthToken,
   revokeXOAuthToken,
   X_OAUTH_SCOPE,
+  X_OAUTH_SCOPES,
   type XPkcePair,
   type XTokenSet,
 } from "./oauth";
