@@ -9,6 +9,7 @@ const serveMock = vi.fn(() => routeHandlers);
 const inngestClient = { id: "app-inngest-client" };
 const systemHealth = { id: "system-health" };
 const classifySignal = { id: "classify-signal" };
+const indexSignalEntities = { id: "index-signal-entities" };
 const classifyPeople = { id: "classify-people" };
 const cleanupDeveloperSandboxRuns = { id: "cleanup-developer-sandbox-runs" };
 const automationScheduler = { id: "automation-scheduler" };
@@ -42,6 +43,10 @@ vi.mock("../inngest/workflow/system-health", () => ({
 
 vi.mock("../inngest/workflow/classify-signal", () => ({
   classifySignal,
+}));
+
+vi.mock("../inngest/workflow/index-signal-entities", () => ({
+  indexSignalEntities,
 }));
 
 vi.mock("../inngest/workflow/classify-people", () => ({
@@ -97,6 +102,7 @@ describe("createInngestRouteContext", () => {
       functions: [
         systemHealth,
         classifySignal,
+        indexSignalEntities,
         classifyPeople,
         cleanupDeveloperSandboxRuns,
         automationScheduler,

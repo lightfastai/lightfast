@@ -24,5 +24,15 @@ export const signalIntakeAgentGraph = defineAgentGraph({
       upstreamNodeIds: ["signal-classifier"],
       workflow: "classify-people",
     },
+    signalEntityLinker: {
+      feature: "entity-links",
+      id: "signal-entity-linker",
+      kind: "llm",
+      promptId: "signal-entity-linker",
+      role: "extractor",
+      schemaVersion: "signal.entity-links.v1",
+      upstreamNodeIds: ["signal-classifier"],
+      workflow: "index-signal-entities",
+    },
   },
 });

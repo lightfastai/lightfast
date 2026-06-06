@@ -5,6 +5,7 @@ import { automationScheduler } from "./workflow/automation-scheduler";
 import { classifyPeople } from "./workflow/classify-people";
 import { classifySignal } from "./workflow/classify-signal";
 import { cleanupDeveloperSandboxRuns } from "./workflow/cleanup-developer-sandbox-runs";
+import { indexSignalEntities } from "./workflow/index-signal-entities";
 import { queueLightfastIndexRefreshesFromSourceControl } from "./workflow/queue-skill-refresh-from-source-control";
 import { reconcileIdentityIndexes } from "./workflow/reconcile-identity-indexes";
 import { reconcileSkillIndexes } from "./workflow/reconcile-skill-indexes";
@@ -22,6 +23,7 @@ export function createInngestRouteContext() {
     functions: [
       systemHealth,
       classifySignal,
+      indexSignalEntities,
       classifyPeople,
       cleanupDeveloperSandboxRuns,
       automationScheduler,

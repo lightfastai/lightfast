@@ -42,6 +42,15 @@ export const appEvents = {
       clerkOrgId: z.string().min(1),
     }),
   }),
+  "app/signal.entity-index.requested": eventType(
+    "app/signal.entity-index.requested",
+    {
+      schema: z.object({
+        signalId: signalIdSchema,
+        clerkOrgId: z.string().min(1),
+      }),
+    }
+  ),
   "app/github.repository.push.received": eventType(
     "app/github.repository.push.received",
     {
