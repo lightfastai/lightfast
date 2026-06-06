@@ -13,9 +13,15 @@ import {
   Lock,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { ConnectorIcon } from "~/connectors/connector-icons";
 import { useTRPC } from "~/trpc/react";
 
 type SetupTaskStatus = "complete" | "current" | "locked";
+const SETUP_REQUIREMENT_ORDER: OrgSetupRequirement[] = [
+  "github_org",
+  "github_lightfast_repo",
+  "x_connector",
+];
 
 export const Route = createFileRoute("/_authenticated/$slug/tasks/")({
   head: ({ params }) => ({
@@ -32,8 +38,8 @@ function setupTaskStatus(input: {
     return "current";
   }
   if (
-    input.nextRequirement === "github_lightfast_repo" &&
-    input.requirement === "github_org"
+    SETUP_REQUIREMENT_ORDER.indexOf(input.requirement) <
+    SETUP_REQUIREMENT_ORDER.indexOf(input.nextRequirement)
   ) {
     return "complete";
   }
@@ -70,6 +76,10 @@ function SetupTasksPage() {
   const lightfastRepoStatus = setupTaskStatus({
     nextRequirement,
     requirement: "github_lightfast_repo",
+  });
+  const xConnectorStatus = setupTaskStatus({
+    nextRequirement,
+    requirement: "x_connector",
   });
   const accountLogin = sourceControl?.binding?.accountLogin;
 
@@ -114,6 +124,15 @@ function SetupTasksPage() {
           }
           title="Verify .lightfast repository"
         />
+        <SetupTaskCard
+          description="Connect X so Lightfast can unlock the social signal source."
+          href="/$slug/tasks/connectors/x"
+          icon={<ConnectorIcon className="size-8" provider="x" />}
+          params={{ slug }}
+          status={xConnectorStatus}
+          subtitle="Required after source control setup"
+          title="Connect X"
+        />
       </div>
     </main>
   );
@@ -129,7 +148,10 @@ function SetupTaskCard({
   title,
 }: {
   description: string;
-  href: "/$slug/tasks/bind" | "/$slug/tasks/github/lightfast-repo";
+  href:
+    | "/$slug/tasks/bind"
+    | "/$slug/tasks/connectors/x"
+    | "/$slug/tasks/github/lightfast-repo";
   icon: ReactNode;
   params: { slug: string };
   status: SetupTaskStatus;

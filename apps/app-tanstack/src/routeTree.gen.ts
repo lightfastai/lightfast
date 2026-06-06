@@ -18,7 +18,9 @@ import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedSlugRouteImport } from './routes/_authenticated/$slug'
 import { Route as AuthenticatedSlugIndexRouteImport } from './routes/_authenticated/$slug/index'
+import { Route as ApiV1SplatRouteImport } from './routes/api/v1/$'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api/trpc.$'
+import { Route as ApiGithubWebhookRouteImport } from './routes/api/github/webhook'
 import { Route as ApiGithubSetupRouteImport } from './routes/api/github/setup'
 import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated/account/settings'
 import { Route as AuthenticatedAccountMcpRouteImport } from './routes/_authenticated/account/mcp'
@@ -35,6 +37,10 @@ import { Route as AuthenticatedAccountSettingsIndexRouteImport } from './routes/
 import { Route as AuthenticatedSlugTasksIndexRouteImport } from './routes/_authenticated/$slug/tasks/index'
 import { Route as AuthenticatedSlugSettingsIndexRouteImport } from './routes/_authenticated/$slug/settings/index'
 import { Route as AuthenticatedSlugAutomationsIndexRouteImport } from './routes/_authenticated/$slug/automations/index'
+import { Route as ApiSkillsIndexEventsRouteImport } from './routes/api/skills/index/events'
+import { Route as ApiNativeProxyRoutinesRouteImport } from './routes/api/native/proxy/routines'
+import { Route as ApiNativeProxyCallRouteImport } from './routes/api/native/proxy/call'
+import { Route as ApiInternalMcpSignalsRouteImport } from './routes/api/internal/mcp/signals'
 import { Route as ApiGithubOauthCallbackRouteImport } from './routes/api/github/oauth/callback'
 import { Route as ApiConnectorsXMcpRouteImport } from './routes/api/connectors/x/mcp'
 import { Route as AuthenticatedAccountsTeamsNewRouteImport } from './routes/_authenticated/accounts/teams/new'
@@ -55,11 +61,16 @@ import { Route as AuthenticatedSlugAutomationsNewRouteImport } from './routes/_a
 import { Route as AuthenticatedSlugAutomationsAutomationRouteImport } from './routes/_authenticated/$slug/automations/$automation'
 import { Route as AuthenticatedAccountTasksGithubIndexRouteImport } from './routes/_authenticated/account/tasks/github/index'
 import { Route as AuthenticatedSlugTasksBindIndexRouteImport } from './routes/_authenticated/$slug/tasks/bind/index'
+import { Route as ApiInternalMcpSignalsGetRouteImport } from './routes/api/internal/mcp/signals/get'
+import { Route as ApiInternalMcpProxyFindRouteImport } from './routes/api/internal/mcp/proxy/find'
+import { Route as ApiInternalMcpProxyCallRouteImport } from './routes/api/internal/mcp/proxy/call'
 import { Route as ApiGithubUserOauthCallbackRouteImport } from './routes/api/github/user/oauth/callback'
 import { Route as ApiConnectorsXOauthCallbackRouteImport } from './routes/api/connectors/x/oauth/callback'
 import { Route as ApiConnectorsLinearOauthCallbackRouteImport } from './routes/api/connectors/linear/oauth/callback'
 import { Route as AuthenticatedAccountTasksGithubCompleteRouteImport } from './routes/_authenticated/account/tasks/github/complete'
 import { Route as AuthenticatedSlugTasksGithubLightfastRepoRouteImport } from './routes/_authenticated/$slug/tasks/github/lightfast-repo'
+import { Route as AuthenticatedSlugTasksConnectorsXRouteImport } from './routes/_authenticated/$slug/tasks/connectors/x'
+import { Route as AuthenticatedSlugTasksConnectorsXCompleteRouteImport } from './routes/_authenticated/$slug/tasks/connectors/x/complete'
 import { Route as AuthenticatedSlugTasksBindGithubCompleteRouteImport } from './routes/_authenticated/$slug/tasks/bind/github/complete'
 
 const SignUpRoute = SignUpRouteImport.update({
@@ -106,9 +117,19 @@ const AuthenticatedSlugIndexRoute = AuthenticatedSlugIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedSlugRoute,
 } as any)
+const ApiV1SplatRoute = ApiV1SplatRouteImport.update({
+  id: '/api/v1/$',
+  path: '/api/v1/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
   id: '/api/trpc/$',
   path: '/api/trpc/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGithubWebhookRoute = ApiGithubWebhookRouteImport.update({
+  id: '/api/github/webhook',
+  path: '/api/github/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiGithubSetupRoute = ApiGithubSetupRouteImport.update({
@@ -201,6 +222,26 @@ const AuthenticatedSlugAutomationsIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedSlugAutomationsRoute,
   } as any)
+const ApiSkillsIndexEventsRoute = ApiSkillsIndexEventsRouteImport.update({
+  id: '/api/skills/index/events',
+  path: '/api/skills/index/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiNativeProxyRoutinesRoute = ApiNativeProxyRoutinesRouteImport.update({
+  id: '/api/native/proxy/routines',
+  path: '/api/native/proxy/routines',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiNativeProxyCallRoute = ApiNativeProxyCallRouteImport.update({
+  id: '/api/native/proxy/call',
+  path: '/api/native/proxy/call',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiInternalMcpSignalsRoute = ApiInternalMcpSignalsRouteImport.update({
+  id: '/api/internal/mcp/signals',
+  path: '/api/internal/mcp/signals',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiGithubOauthCallbackRoute = ApiGithubOauthCallbackRouteImport.update({
   id: '/api/github/oauth/callback',
   path: '/api/github/oauth/callback',
@@ -319,6 +360,22 @@ const AuthenticatedSlugTasksBindIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedSlugTasksBindRoute,
   } as any)
+const ApiInternalMcpSignalsGetRoute =
+  ApiInternalMcpSignalsGetRouteImport.update({
+    id: '/get',
+    path: '/get',
+    getParentRoute: () => ApiInternalMcpSignalsRoute,
+  } as any)
+const ApiInternalMcpProxyFindRoute = ApiInternalMcpProxyFindRouteImport.update({
+  id: '/api/internal/mcp/proxy/find',
+  path: '/api/internal/mcp/proxy/find',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiInternalMcpProxyCallRoute = ApiInternalMcpProxyCallRouteImport.update({
+  id: '/api/internal/mcp/proxy/call',
+  path: '/api/internal/mcp/proxy/call',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiGithubUserOauthCallbackRoute =
   ApiGithubUserOauthCallbackRouteImport.update({
     id: '/api/github/user/oauth/callback',
@@ -349,6 +406,18 @@ const AuthenticatedSlugTasksGithubLightfastRepoRoute =
     path: '/github/lightfast-repo',
     getParentRoute: () => AuthenticatedSlugTasksRoute,
   } as any)
+const AuthenticatedSlugTasksConnectorsXRoute =
+  AuthenticatedSlugTasksConnectorsXRouteImport.update({
+    id: '/connectors/x',
+    path: '/connectors/x',
+    getParentRoute: () => AuthenticatedSlugTasksRoute,
+  } as any)
+const AuthenticatedSlugTasksConnectorsXCompleteRoute =
+  AuthenticatedSlugTasksConnectorsXCompleteRouteImport.update({
+    id: '/complete',
+    path: '/complete',
+    getParentRoute: () => AuthenticatedSlugTasksConnectorsXRoute,
+  } as any)
 const AuthenticatedSlugTasksBindGithubCompleteRoute =
   AuthenticatedSlugTasksBindGithubCompleteRouteImport.update({
     id: '/github/complete',
@@ -376,7 +445,9 @@ export interface FileRoutesByFullPath {
   '/account/mcp': typeof AuthenticatedAccountMcpRoute
   '/account/settings': typeof AuthenticatedAccountSettingsRouteWithChildren
   '/api/github/setup': typeof ApiGithubSetupRoute
+  '/api/github/webhook': typeof ApiGithubWebhookRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/api/v1/$': typeof ApiV1SplatRoute
   '/$slug/': typeof AuthenticatedSlugIndexRoute
   '/$slug/automations/$automation': typeof AuthenticatedSlugAutomationsAutomationRoute
   '/$slug/automations/new': typeof AuthenticatedSlugAutomationsNewRoute
@@ -396,18 +467,27 @@ export interface FileRoutesByFullPath {
   '/accounts/teams/new': typeof AuthenticatedAccountsTeamsNewRoute
   '/api/connectors/x/mcp': typeof ApiConnectorsXMcpRoute
   '/api/github/oauth/callback': typeof ApiGithubOauthCallbackRoute
+  '/api/internal/mcp/signals': typeof ApiInternalMcpSignalsRouteWithChildren
+  '/api/native/proxy/call': typeof ApiNativeProxyCallRoute
+  '/api/native/proxy/routines': typeof ApiNativeProxyRoutinesRoute
+  '/api/skills/index/events': typeof ApiSkillsIndexEventsRoute
   '/$slug/automations/': typeof AuthenticatedSlugAutomationsIndexRoute
   '/$slug/settings/': typeof AuthenticatedSlugSettingsIndexRoute
   '/$slug/tasks/': typeof AuthenticatedSlugTasksIndexRoute
   '/account/settings/': typeof AuthenticatedAccountSettingsIndexRoute
+  '/$slug/tasks/connectors/x': typeof AuthenticatedSlugTasksConnectorsXRouteWithChildren
   '/$slug/tasks/github/lightfast-repo': typeof AuthenticatedSlugTasksGithubLightfastRepoRoute
   '/account/tasks/github/complete': typeof AuthenticatedAccountTasksGithubCompleteRoute
   '/api/connectors/linear/oauth/callback': typeof ApiConnectorsLinearOauthCallbackRoute
   '/api/connectors/x/oauth/callback': typeof ApiConnectorsXOauthCallbackRoute
   '/api/github/user/oauth/callback': typeof ApiGithubUserOauthCallbackRoute
+  '/api/internal/mcp/proxy/call': typeof ApiInternalMcpProxyCallRoute
+  '/api/internal/mcp/proxy/find': typeof ApiInternalMcpProxyFindRoute
+  '/api/internal/mcp/signals/get': typeof ApiInternalMcpSignalsGetRoute
   '/$slug/tasks/bind/': typeof AuthenticatedSlugTasksBindIndexRoute
   '/account/tasks/github/': typeof AuthenticatedAccountTasksGithubIndexRoute
   '/$slug/tasks/bind/github/complete': typeof AuthenticatedSlugTasksBindGithubCompleteRoute
+  '/$slug/tasks/connectors/x/complete': typeof AuthenticatedSlugTasksConnectorsXCompleteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -424,7 +504,9 @@ export interface FileRoutesByTo {
   '/$slug/skills': typeof AuthenticatedSlugSkillsRoute
   '/account/mcp': typeof AuthenticatedAccountMcpRoute
   '/api/github/setup': typeof ApiGithubSetupRoute
+  '/api/github/webhook': typeof ApiGithubWebhookRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/api/v1/$': typeof ApiV1SplatRoute
   '/$slug': typeof AuthenticatedSlugIndexRoute
   '/$slug/automations/$automation': typeof AuthenticatedSlugAutomationsAutomationRoute
   '/$slug/automations/new': typeof AuthenticatedSlugAutomationsNewRoute
@@ -442,18 +524,27 @@ export interface FileRoutesByTo {
   '/accounts/teams/new': typeof AuthenticatedAccountsTeamsNewRoute
   '/api/connectors/x/mcp': typeof ApiConnectorsXMcpRoute
   '/api/github/oauth/callback': typeof ApiGithubOauthCallbackRoute
+  '/api/internal/mcp/signals': typeof ApiInternalMcpSignalsRouteWithChildren
+  '/api/native/proxy/call': typeof ApiNativeProxyCallRoute
+  '/api/native/proxy/routines': typeof ApiNativeProxyRoutinesRoute
+  '/api/skills/index/events': typeof ApiSkillsIndexEventsRoute
   '/$slug/automations': typeof AuthenticatedSlugAutomationsIndexRoute
   '/$slug/settings': typeof AuthenticatedSlugSettingsIndexRoute
   '/$slug/tasks': typeof AuthenticatedSlugTasksIndexRoute
   '/account/settings': typeof AuthenticatedAccountSettingsIndexRoute
+  '/$slug/tasks/connectors/x': typeof AuthenticatedSlugTasksConnectorsXRouteWithChildren
   '/$slug/tasks/github/lightfast-repo': typeof AuthenticatedSlugTasksGithubLightfastRepoRoute
   '/account/tasks/github/complete': typeof AuthenticatedAccountTasksGithubCompleteRoute
   '/api/connectors/linear/oauth/callback': typeof ApiConnectorsLinearOauthCallbackRoute
   '/api/connectors/x/oauth/callback': typeof ApiConnectorsXOauthCallbackRoute
   '/api/github/user/oauth/callback': typeof ApiGithubUserOauthCallbackRoute
+  '/api/internal/mcp/proxy/call': typeof ApiInternalMcpProxyCallRoute
+  '/api/internal/mcp/proxy/find': typeof ApiInternalMcpProxyFindRoute
+  '/api/internal/mcp/signals/get': typeof ApiInternalMcpSignalsGetRoute
   '/$slug/tasks/bind': typeof AuthenticatedSlugTasksBindIndexRoute
   '/account/tasks/github': typeof AuthenticatedAccountTasksGithubIndexRoute
   '/$slug/tasks/bind/github/complete': typeof AuthenticatedSlugTasksBindGithubCompleteRoute
+  '/$slug/tasks/connectors/x/complete': typeof AuthenticatedSlugTasksConnectorsXCompleteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -477,7 +568,9 @@ export interface FileRoutesById {
   '/_authenticated/account/mcp': typeof AuthenticatedAccountMcpRoute
   '/_authenticated/account/settings': typeof AuthenticatedAccountSettingsRouteWithChildren
   '/api/github/setup': typeof ApiGithubSetupRoute
+  '/api/github/webhook': typeof ApiGithubWebhookRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/api/v1/$': typeof ApiV1SplatRoute
   '/_authenticated/$slug/': typeof AuthenticatedSlugIndexRoute
   '/_authenticated/$slug/automations/$automation': typeof AuthenticatedSlugAutomationsAutomationRoute
   '/_authenticated/$slug/automations/new': typeof AuthenticatedSlugAutomationsNewRoute
@@ -497,18 +590,27 @@ export interface FileRoutesById {
   '/_authenticated/accounts/teams/new': typeof AuthenticatedAccountsTeamsNewRoute
   '/api/connectors/x/mcp': typeof ApiConnectorsXMcpRoute
   '/api/github/oauth/callback': typeof ApiGithubOauthCallbackRoute
+  '/api/internal/mcp/signals': typeof ApiInternalMcpSignalsRouteWithChildren
+  '/api/native/proxy/call': typeof ApiNativeProxyCallRoute
+  '/api/native/proxy/routines': typeof ApiNativeProxyRoutinesRoute
+  '/api/skills/index/events': typeof ApiSkillsIndexEventsRoute
   '/_authenticated/$slug/automations/': typeof AuthenticatedSlugAutomationsIndexRoute
   '/_authenticated/$slug/settings/': typeof AuthenticatedSlugSettingsIndexRoute
   '/_authenticated/$slug/tasks/': typeof AuthenticatedSlugTasksIndexRoute
   '/_authenticated/account/settings/': typeof AuthenticatedAccountSettingsIndexRoute
+  '/_authenticated/$slug/tasks/connectors/x': typeof AuthenticatedSlugTasksConnectorsXRouteWithChildren
   '/_authenticated/$slug/tasks/github/lightfast-repo': typeof AuthenticatedSlugTasksGithubLightfastRepoRoute
   '/_authenticated/account/tasks/github/complete': typeof AuthenticatedAccountTasksGithubCompleteRoute
   '/api/connectors/linear/oauth/callback': typeof ApiConnectorsLinearOauthCallbackRoute
   '/api/connectors/x/oauth/callback': typeof ApiConnectorsXOauthCallbackRoute
   '/api/github/user/oauth/callback': typeof ApiGithubUserOauthCallbackRoute
+  '/api/internal/mcp/proxy/call': typeof ApiInternalMcpProxyCallRoute
+  '/api/internal/mcp/proxy/find': typeof ApiInternalMcpProxyFindRoute
+  '/api/internal/mcp/signals/get': typeof ApiInternalMcpSignalsGetRoute
   '/_authenticated/$slug/tasks/bind/': typeof AuthenticatedSlugTasksBindIndexRoute
   '/_authenticated/account/tasks/github/': typeof AuthenticatedAccountTasksGithubIndexRoute
   '/_authenticated/$slug/tasks/bind/github/complete': typeof AuthenticatedSlugTasksBindGithubCompleteRoute
+  '/_authenticated/$slug/tasks/connectors/x/complete': typeof AuthenticatedSlugTasksConnectorsXCompleteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -532,7 +634,9 @@ export interface FileRouteTypes {
     | '/account/mcp'
     | '/account/settings'
     | '/api/github/setup'
+    | '/api/github/webhook'
     | '/api/trpc/$'
+    | '/api/v1/$'
     | '/$slug/'
     | '/$slug/automations/$automation'
     | '/$slug/automations/new'
@@ -552,18 +656,27 @@ export interface FileRouteTypes {
     | '/accounts/teams/new'
     | '/api/connectors/x/mcp'
     | '/api/github/oauth/callback'
+    | '/api/internal/mcp/signals'
+    | '/api/native/proxy/call'
+    | '/api/native/proxy/routines'
+    | '/api/skills/index/events'
     | '/$slug/automations/'
     | '/$slug/settings/'
     | '/$slug/tasks/'
     | '/account/settings/'
+    | '/$slug/tasks/connectors/x'
     | '/$slug/tasks/github/lightfast-repo'
     | '/account/tasks/github/complete'
     | '/api/connectors/linear/oauth/callback'
     | '/api/connectors/x/oauth/callback'
     | '/api/github/user/oauth/callback'
+    | '/api/internal/mcp/proxy/call'
+    | '/api/internal/mcp/proxy/find'
+    | '/api/internal/mcp/signals/get'
     | '/$slug/tasks/bind/'
     | '/account/tasks/github/'
     | '/$slug/tasks/bind/github/complete'
+    | '/$slug/tasks/connectors/x/complete'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -580,7 +693,9 @@ export interface FileRouteTypes {
     | '/$slug/skills'
     | '/account/mcp'
     | '/api/github/setup'
+    | '/api/github/webhook'
     | '/api/trpc/$'
+    | '/api/v1/$'
     | '/$slug'
     | '/$slug/automations/$automation'
     | '/$slug/automations/new'
@@ -598,18 +713,27 @@ export interface FileRouteTypes {
     | '/accounts/teams/new'
     | '/api/connectors/x/mcp'
     | '/api/github/oauth/callback'
+    | '/api/internal/mcp/signals'
+    | '/api/native/proxy/call'
+    | '/api/native/proxy/routines'
+    | '/api/skills/index/events'
     | '/$slug/automations'
     | '/$slug/settings'
     | '/$slug/tasks'
     | '/account/settings'
+    | '/$slug/tasks/connectors/x'
     | '/$slug/tasks/github/lightfast-repo'
     | '/account/tasks/github/complete'
     | '/api/connectors/linear/oauth/callback'
     | '/api/connectors/x/oauth/callback'
     | '/api/github/user/oauth/callback'
+    | '/api/internal/mcp/proxy/call'
+    | '/api/internal/mcp/proxy/find'
+    | '/api/internal/mcp/signals/get'
     | '/$slug/tasks/bind'
     | '/account/tasks/github'
     | '/$slug/tasks/bind/github/complete'
+    | '/$slug/tasks/connectors/x/complete'
   id:
     | '__root__'
     | '/'
@@ -632,7 +756,9 @@ export interface FileRouteTypes {
     | '/_authenticated/account/mcp'
     | '/_authenticated/account/settings'
     | '/api/github/setup'
+    | '/api/github/webhook'
     | '/api/trpc/$'
+    | '/api/v1/$'
     | '/_authenticated/$slug/'
     | '/_authenticated/$slug/automations/$automation'
     | '/_authenticated/$slug/automations/new'
@@ -652,18 +778,27 @@ export interface FileRouteTypes {
     | '/_authenticated/accounts/teams/new'
     | '/api/connectors/x/mcp'
     | '/api/github/oauth/callback'
+    | '/api/internal/mcp/signals'
+    | '/api/native/proxy/call'
+    | '/api/native/proxy/routines'
+    | '/api/skills/index/events'
     | '/_authenticated/$slug/automations/'
     | '/_authenticated/$slug/settings/'
     | '/_authenticated/$slug/tasks/'
     | '/_authenticated/account/settings/'
+    | '/_authenticated/$slug/tasks/connectors/x'
     | '/_authenticated/$slug/tasks/github/lightfast-repo'
     | '/_authenticated/account/tasks/github/complete'
     | '/api/connectors/linear/oauth/callback'
     | '/api/connectors/x/oauth/callback'
     | '/api/github/user/oauth/callback'
+    | '/api/internal/mcp/proxy/call'
+    | '/api/internal/mcp/proxy/find'
+    | '/api/internal/mcp/signals/get'
     | '/_authenticated/$slug/tasks/bind/'
     | '/_authenticated/account/tasks/github/'
     | '/_authenticated/$slug/tasks/bind/github/complete'
+    | '/_authenticated/$slug/tasks/connectors/x/complete'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -674,12 +809,20 @@ export interface RootRouteChildren {
   ApiHealthRoute: typeof ApiHealthRoute
   ApiInngestRoute: typeof ApiInngestRoute
   ApiGithubSetupRoute: typeof ApiGithubSetupRoute
+  ApiGithubWebhookRoute: typeof ApiGithubWebhookRoute
   ApiTrpcSplatRoute: typeof ApiTrpcSplatRoute
+  ApiV1SplatRoute: typeof ApiV1SplatRoute
   ApiConnectorsXMcpRoute: typeof ApiConnectorsXMcpRoute
   ApiGithubOauthCallbackRoute: typeof ApiGithubOauthCallbackRoute
+  ApiInternalMcpSignalsRoute: typeof ApiInternalMcpSignalsRouteWithChildren
+  ApiNativeProxyCallRoute: typeof ApiNativeProxyCallRoute
+  ApiNativeProxyRoutinesRoute: typeof ApiNativeProxyRoutinesRoute
+  ApiSkillsIndexEventsRoute: typeof ApiSkillsIndexEventsRoute
   ApiConnectorsLinearOauthCallbackRoute: typeof ApiConnectorsLinearOauthCallbackRoute
   ApiConnectorsXOauthCallbackRoute: typeof ApiConnectorsXOauthCallbackRoute
   ApiGithubUserOauthCallbackRoute: typeof ApiGithubUserOauthCallbackRoute
+  ApiInternalMcpProxyCallRoute: typeof ApiInternalMcpProxyCallRoute
+  ApiInternalMcpProxyFindRoute: typeof ApiInternalMcpProxyFindRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -747,11 +890,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSlugIndexRouteImport
       parentRoute: typeof AuthenticatedSlugRoute
     }
+    '/api/v1/$': {
+      id: '/api/v1/$'
+      path: '/api/v1/$'
+      fullPath: '/api/v1/$'
+      preLoaderRoute: typeof ApiV1SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/trpc/$': {
       id: '/api/trpc/$'
       path: '/api/trpc/$'
       fullPath: '/api/trpc/$'
       preLoaderRoute: typeof ApiTrpcSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/github/webhook': {
+      id: '/api/github/webhook'
+      path: '/api/github/webhook'
+      fullPath: '/api/github/webhook'
+      preLoaderRoute: typeof ApiGithubWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/github/setup': {
@@ -865,6 +1022,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/$slug/automations/'
       preLoaderRoute: typeof AuthenticatedSlugAutomationsIndexRouteImport
       parentRoute: typeof AuthenticatedSlugAutomationsRoute
+    }
+    '/api/skills/index/events': {
+      id: '/api/skills/index/events'
+      path: '/api/skills/index/events'
+      fullPath: '/api/skills/index/events'
+      preLoaderRoute: typeof ApiSkillsIndexEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/native/proxy/routines': {
+      id: '/api/native/proxy/routines'
+      path: '/api/native/proxy/routines'
+      fullPath: '/api/native/proxy/routines'
+      preLoaderRoute: typeof ApiNativeProxyRoutinesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/native/proxy/call': {
+      id: '/api/native/proxy/call'
+      path: '/api/native/proxy/call'
+      fullPath: '/api/native/proxy/call'
+      preLoaderRoute: typeof ApiNativeProxyCallRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/internal/mcp/signals': {
+      id: '/api/internal/mcp/signals'
+      path: '/api/internal/mcp/signals'
+      fullPath: '/api/internal/mcp/signals'
+      preLoaderRoute: typeof ApiInternalMcpSignalsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/github/oauth/callback': {
       id: '/api/github/oauth/callback'
@@ -1006,6 +1191,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSlugTasksBindIndexRouteImport
       parentRoute: typeof AuthenticatedSlugTasksBindRoute
     }
+    '/api/internal/mcp/signals/get': {
+      id: '/api/internal/mcp/signals/get'
+      path: '/get'
+      fullPath: '/api/internal/mcp/signals/get'
+      preLoaderRoute: typeof ApiInternalMcpSignalsGetRouteImport
+      parentRoute: typeof ApiInternalMcpSignalsRoute
+    }
+    '/api/internal/mcp/proxy/find': {
+      id: '/api/internal/mcp/proxy/find'
+      path: '/api/internal/mcp/proxy/find'
+      fullPath: '/api/internal/mcp/proxy/find'
+      preLoaderRoute: typeof ApiInternalMcpProxyFindRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/internal/mcp/proxy/call': {
+      id: '/api/internal/mcp/proxy/call'
+      path: '/api/internal/mcp/proxy/call'
+      fullPath: '/api/internal/mcp/proxy/call'
+      preLoaderRoute: typeof ApiInternalMcpProxyCallRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/github/user/oauth/callback': {
       id: '/api/github/user/oauth/callback'
       path: '/api/github/user/oauth/callback'
@@ -1040,6 +1246,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/$slug/tasks/github/lightfast-repo'
       preLoaderRoute: typeof AuthenticatedSlugTasksGithubLightfastRepoRouteImport
       parentRoute: typeof AuthenticatedSlugTasksRoute
+    }
+    '/_authenticated/$slug/tasks/connectors/x': {
+      id: '/_authenticated/$slug/tasks/connectors/x'
+      path: '/connectors/x'
+      fullPath: '/$slug/tasks/connectors/x'
+      preLoaderRoute: typeof AuthenticatedSlugTasksConnectorsXRouteImport
+      parentRoute: typeof AuthenticatedSlugTasksRoute
+    }
+    '/_authenticated/$slug/tasks/connectors/x/complete': {
+      id: '/_authenticated/$slug/tasks/connectors/x/complete'
+      path: '/complete'
+      fullPath: '/$slug/tasks/connectors/x/complete'
+      preLoaderRoute: typeof AuthenticatedSlugTasksConnectorsXCompleteRouteImport
+      parentRoute: typeof AuthenticatedSlugTasksConnectorsXRoute
     }
     '/_authenticated/$slug/tasks/bind/github/complete': {
       id: '/_authenticated/$slug/tasks/bind/github/complete'
@@ -1133,9 +1353,25 @@ const AuthenticatedSlugTasksBindRouteWithChildren =
     AuthenticatedSlugTasksBindRouteChildren,
   )
 
+interface AuthenticatedSlugTasksConnectorsXRouteChildren {
+  AuthenticatedSlugTasksConnectorsXCompleteRoute: typeof AuthenticatedSlugTasksConnectorsXCompleteRoute
+}
+
+const AuthenticatedSlugTasksConnectorsXRouteChildren: AuthenticatedSlugTasksConnectorsXRouteChildren =
+  {
+    AuthenticatedSlugTasksConnectorsXCompleteRoute:
+      AuthenticatedSlugTasksConnectorsXCompleteRoute,
+  }
+
+const AuthenticatedSlugTasksConnectorsXRouteWithChildren =
+  AuthenticatedSlugTasksConnectorsXRoute._addFileChildren(
+    AuthenticatedSlugTasksConnectorsXRouteChildren,
+  )
+
 interface AuthenticatedSlugTasksRouteChildren {
   AuthenticatedSlugTasksBindRoute: typeof AuthenticatedSlugTasksBindRouteWithChildren
   AuthenticatedSlugTasksIndexRoute: typeof AuthenticatedSlugTasksIndexRoute
+  AuthenticatedSlugTasksConnectorsXRoute: typeof AuthenticatedSlugTasksConnectorsXRouteWithChildren
   AuthenticatedSlugTasksGithubLightfastRepoRoute: typeof AuthenticatedSlugTasksGithubLightfastRepoRoute
 }
 
@@ -1144,6 +1380,8 @@ const AuthenticatedSlugTasksRouteChildren: AuthenticatedSlugTasksRouteChildren =
     AuthenticatedSlugTasksBindRoute:
       AuthenticatedSlugTasksBindRouteWithChildren,
     AuthenticatedSlugTasksIndexRoute: AuthenticatedSlugTasksIndexRoute,
+    AuthenticatedSlugTasksConnectorsXRoute:
+      AuthenticatedSlugTasksConnectorsXRouteWithChildren,
     AuthenticatedSlugTasksGithubLightfastRepoRoute:
       AuthenticatedSlugTasksGithubLightfastRepoRoute,
   }
@@ -1260,6 +1498,19 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface ApiInternalMcpSignalsRouteChildren {
+  ApiInternalMcpSignalsGetRoute: typeof ApiInternalMcpSignalsGetRoute
+}
+
+const ApiInternalMcpSignalsRouteChildren: ApiInternalMcpSignalsRouteChildren = {
+  ApiInternalMcpSignalsGetRoute: ApiInternalMcpSignalsGetRoute,
+}
+
+const ApiInternalMcpSignalsRouteWithChildren =
+  ApiInternalMcpSignalsRoute._addFileChildren(
+    ApiInternalMcpSignalsRouteChildren,
+  )
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
@@ -1268,12 +1519,20 @@ const rootRouteChildren: RootRouteChildren = {
   ApiHealthRoute: ApiHealthRoute,
   ApiInngestRoute: ApiInngestRoute,
   ApiGithubSetupRoute: ApiGithubSetupRoute,
+  ApiGithubWebhookRoute: ApiGithubWebhookRoute,
   ApiTrpcSplatRoute: ApiTrpcSplatRoute,
+  ApiV1SplatRoute: ApiV1SplatRoute,
   ApiConnectorsXMcpRoute: ApiConnectorsXMcpRoute,
   ApiGithubOauthCallbackRoute: ApiGithubOauthCallbackRoute,
+  ApiInternalMcpSignalsRoute: ApiInternalMcpSignalsRouteWithChildren,
+  ApiNativeProxyCallRoute: ApiNativeProxyCallRoute,
+  ApiNativeProxyRoutinesRoute: ApiNativeProxyRoutinesRoute,
+  ApiSkillsIndexEventsRoute: ApiSkillsIndexEventsRoute,
   ApiConnectorsLinearOauthCallbackRoute: ApiConnectorsLinearOauthCallbackRoute,
   ApiConnectorsXOauthCallbackRoute: ApiConnectorsXOauthCallbackRoute,
   ApiGithubUserOauthCallbackRoute: ApiGithubUserOauthCallbackRoute,
+  ApiInternalMcpProxyCallRoute: ApiInternalMcpProxyCallRoute,
+  ApiInternalMcpProxyFindRoute: ApiInternalMcpProxyFindRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

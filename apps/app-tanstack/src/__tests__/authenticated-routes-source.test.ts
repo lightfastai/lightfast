@@ -802,4 +802,159 @@ describe("app-tanstack authenticated route migration", () => {
       expect(routeFile).not.toContain('"use server"');
     }
   });
+
+  it("ports X connector setup and non-OAuth backend parity routes", () => {
+    const xSetupRouteSource = source(
+      "src/routes/_authenticated/$slug/tasks/connectors/x.tsx"
+    );
+    const xCompleteRouteSource = source(
+      "src/routes/_authenticated/$slug/tasks/connectors/x/complete.tsx"
+    );
+    const xSetupClientSource = source(
+      "src/org/setup/x-connector-setup-client.tsx"
+    );
+    const xCompleteClientSource = source(
+      "src/org/setup/x-connector-setup-complete-client.tsx"
+    );
+    const githubWebhookRouteSource = source("src/routes/api/github/webhook.ts");
+    const openApiRouteSource = source("src/routes/api/v1/$.ts");
+    const skillsIndexEventsRouteSource = source(
+      "src/routes/api/skills/index/events.ts"
+    );
+    const skillsIndexEventStreamSource = source(
+      "src/server/skills/skill-index-event-stream.ts"
+    );
+    const nativeProxyServerSource = source("src/server/native-proxy.ts");
+    const nativeProxyCallRouteSource = source(
+      "src/routes/api/native/proxy/call.ts"
+    );
+    const nativeProxyRoutinesRouteSource = source(
+      "src/routes/api/native/proxy/routines.ts"
+    );
+    const mcpServiceAuthSource = source("src/server/mcp-service-auth.ts");
+    const mcpProxyServerSource = source("src/server/mcp-proxy.ts");
+    const mcpProxyCallRouteSource = source(
+      "src/routes/api/internal/mcp/proxy/call.ts"
+    );
+    const mcpProxyFindRouteSource = source(
+      "src/routes/api/internal/mcp/proxy/find.ts"
+    );
+    const mcpSignalsRouteSource = source(
+      "src/routes/api/internal/mcp/signals.ts"
+    );
+    const mcpSignalsGetRouteSource = source(
+      "src/routes/api/internal/mcp/signals/get.ts"
+    );
+
+    expect(xSetupRouteSource).toContain(
+      '"/_authenticated/$slug/tasks/connectors/x"'
+    );
+    expect(xSetupRouteSource).toContain("pathForSetupRequirement");
+    expect(xSetupRouteSource).toContain("XConnectorSetupClient");
+    expect(xCompleteRouteSource).toContain(
+      '"/_authenticated/$slug/tasks/connectors/x/complete"'
+    );
+    expect(xCompleteRouteSource).toContain("XConnectorSetupCompleteClient");
+    expect(xSetupClientSource).toContain("connectors.list.queryOptions");
+    expect(xSetupClientSource).toContain(
+      'enabled: typeof window !== "undefined"'
+    );
+    expect(xSetupClientSource).toContain("ConnectorIcon");
+    expect(xSetupClientSource).toContain("startConnect.mutationOptions");
+    expect(xSetupClientSource).toContain("window.location.assign");
+    expect(xCompleteClientSource).toContain("useSession");
+    expect(xCompleteClientSource).toContain("useNavigate");
+    expect(xCompleteClientSource).toContain("syncBindingClaim.mutationOptions");
+    expect(xCompleteClientSource).toContain("pathForSetupRequirement");
+
+    expect(githubWebhookRouteSource).toContain(
+      'createFileRoute("/api/github/webhook")'
+    );
+    expect(githubWebhookRouteSource).toContain("handleGitHubWebhook");
+    expect(openApiRouteSource).toContain('createFileRoute("/api/v1/$")');
+    expect(openApiRouteSource).toContain("OpenAPIHandler");
+    expect(openApiRouteSource).toContain("orpcRouter");
+    expect(openApiRouteSource).toContain("setCorsHeaders");
+    expect(skillsIndexEventsRouteSource).toContain(
+      'createFileRoute("/api/skills/index/events")'
+    );
+    expect(skillsIndexEventsRouteSource).toContain(
+      "createSkillIndexEventStream"
+    );
+    expect(skillsIndexEventStreamSource).toContain(
+      "createSkillIndexEventStream"
+    );
+    expect(nativeProxyServerSource).toContain(
+      "createNativeProviderRoutineContext"
+    );
+    expect(nativeProxyCallRouteSource).toContain(
+      'createFileRoute("/api/native/proxy/call")'
+    );
+    expect(nativeProxyCallRouteSource).toContain(
+      "providerRoutineCallInputSchema"
+    );
+    expect(nativeProxyRoutinesRouteSource).toContain(
+      'createFileRoute("/api/native/proxy/routines")'
+    );
+    expect(nativeProxyRoutinesRouteSource).toContain(
+      "providerRoutineFindInputSchema"
+    );
+    expect(mcpServiceAuthSource).toContain("verifyMcpServiceRequest");
+    expect(mcpProxyServerSource).toContain("handleMcpProxyFindRequest");
+    expect(mcpProxyServerSource).toContain("handleMcpProxyCallRequest");
+    expect(mcpProxyCallRouteSource).toContain(
+      'createFileRoute("/api/internal/mcp/proxy/call")'
+    );
+    expect(mcpProxyFindRouteSource).toContain(
+      'createFileRoute("/api/internal/mcp/proxy/find")'
+    );
+    expect(mcpSignalsRouteSource).toContain(
+      'createFileRoute("/api/internal/mcp/signals")'
+    );
+    expect(mcpSignalsRouteSource).toContain("createSignalForActor");
+    expect(mcpSignalsGetRouteSource).toContain(
+      'createFileRoute("/api/internal/mcp/signals/get")'
+    );
+    expect(mcpSignalsGetRouteSource).toContain("getVisibleSignalByPublicId");
+
+    for (const startupSensitiveFile of [
+      openApiRouteSource,
+      skillsIndexEventsRouteSource,
+      nativeProxyServerSource,
+      mcpServiceAuthSource,
+      mcpProxyServerSource,
+      mcpSignalsRouteSource,
+      mcpSignalsGetRouteSource,
+    ]) {
+      expect(startupSensitiveFile).not.toContain('from "@api/app');
+    }
+    expect(mcpProxyServerSource).not.toContain(
+      'from "@repo/provider-routines"'
+    );
+
+    for (const routeFile of [
+      xSetupRouteSource,
+      xCompleteRouteSource,
+      xSetupClientSource,
+      xCompleteClientSource,
+      githubWebhookRouteSource,
+      openApiRouteSource,
+      skillsIndexEventsRouteSource,
+      skillsIndexEventStreamSource,
+      nativeProxyServerSource,
+      nativeProxyCallRouteSource,
+      nativeProxyRoutinesRouteSource,
+      mcpServiceAuthSource,
+      mcpProxyServerSource,
+      mcpProxyCallRouteSource,
+      mcpProxyFindRouteSource,
+      mcpSignalsRouteSource,
+      mcpSignalsGetRouteSource,
+    ]) {
+      expect(routeFile).not.toContain("next/");
+      expect(routeFile).not.toContain("nuqs");
+      expect(routeFile).not.toContain('"use client"');
+      expect(routeFile).not.toContain('"use server"');
+    }
+  });
 });

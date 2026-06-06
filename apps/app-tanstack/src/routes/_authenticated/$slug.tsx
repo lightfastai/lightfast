@@ -41,7 +41,10 @@ function orgSetupPath(slug: string, pathname: string) {
 }
 
 function orgSetupCompletePath(slug: string, pathname: string) {
-  return pathname === `/${slug}/tasks/bind/github/complete`;
+  return (
+    pathname === `/${slug}/tasks/bind/github/complete` ||
+    pathname === `/${slug}/tasks/connectors/x/complete`
+  );
 }
 
 function orgSettingsPath(slug: string, pathname: string) {
@@ -60,17 +63,22 @@ function SetupRequirementNavigate({
   requirement: OrgSetupRequirement;
   slug: string;
 }) {
-  if (requirement === "github_lightfast_repo") {
-    return (
-      <Navigate
-        params={{ slug }}
-        replace
-        to="/$slug/tasks/github/lightfast-repo"
-      />
-    );
+  switch (requirement) {
+    case "github_lightfast_repo":
+      return (
+        <Navigate
+          params={{ slug }}
+          replace
+          to="/$slug/tasks/github/lightfast-repo"
+        />
+      );
+    case "x_connector":
+      return (
+        <Navigate params={{ slug }} replace to="/$slug/tasks/connectors/x" />
+      );
+    default:
+      return <Navigate params={{ slug }} replace to="/$slug/tasks/bind" />;
   }
-
-  return <Navigate params={{ slug }} replace to="/$slug/tasks/bind" />;
 }
 
 function OrganizationHomePage() {
