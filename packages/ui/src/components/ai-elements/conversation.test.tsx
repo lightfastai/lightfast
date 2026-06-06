@@ -93,6 +93,20 @@ describe("Conversation scroll button", () => {
 
     expect(stickToBottomMock.scrollToBottom).toHaveBeenCalledTimes(1);
   });
+
+  it("uses smooth bottom sticking for initial render and content growth", () => {
+    render(
+      <Conversation>
+        <ConversationContent>
+          <div>Message 1</div>
+        </ConversationContent>
+      </Conversation>
+    );
+
+    const log = screen.getByRole("log", { name: "Conversation" });
+    expect(log.getAttribute("data-initial")).toBe("smooth");
+    expect(log.getAttribute("data-resize")).toBe("smooth");
+  });
 });
 
 describe("ConversationContent", () => {

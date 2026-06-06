@@ -14,6 +14,7 @@ export {
   type AutomationStatus,
   createAutomationId,
   createAutomationRunId,
+  createDecisionViewId,
   createDeveloperConnectionId,
   createDeveloperConnectionLeaseId,
   createDeveloperSandboxCommandId,
@@ -31,10 +32,13 @@ export {
   createWorkspaceAssistantMessageId,
   createWorkspaceAssistantStreamId,
   createWorkspaceAssistantToolCallId,
+  DECISION_VIEW_ID_PREFIX,
   DEVELOPER_CONNECTION_ID_PREFIX,
   DEVELOPER_CONNECTION_LEASE_ID_PREFIX,
   DEVELOPER_SANDBOX_COMMAND_ID_PREFIX,
   DEVELOPER_SANDBOX_RUN_ID_PREFIX,
+  type DecisionView,
+  type DecisionViewConfig,
   type DeveloperConnection,
   type DeveloperConnectionLease,
   type DeveloperSandboxCommand,
@@ -47,6 +51,7 @@ export {
   type IdentityIndexState,
   type InsertAutomation,
   type InsertAutomationRun,
+  type InsertDecisionView,
   type InsertDeveloperConnection,
   type InsertDeveloperConnectionLease,
   type InsertDeveloperSandboxCommand,
@@ -90,6 +95,7 @@ export {
   type OrgSourceControlBindingStatus,
   orgAutomationRuns,
   orgAutomations,
+  orgDecisionViews,
   orgDeveloperConnectionLeases,
   orgDeveloperConnections,
   orgDeveloperSandboxCommands,
@@ -119,6 +125,8 @@ export {
   type Person,
   type PersonIdentityProvider,
   type PersonIdentityType,
+  type PersonMemberStatus,
+  type PersonSource,
   type ProviderRoutineCall,
   type ProviderRoutineCallRedactedPayload,
   type ResourcesTruncatedFlag,
@@ -186,6 +194,14 @@ export {
   type UpdateAutomationInput,
   updateAutomation,
 } from "./utils/automations";
+export {
+  type CreateDecisionViewParams,
+  createDecisionView,
+  type DeleteDecisionViewParams,
+  deleteDecisionView,
+  type ListDecisionViewsParams,
+  listDecisionViews,
+} from "./utils/decision-views";
 export {
   currentDeveloperConnectionKey,
   developerConnectionLeaseExpiresAt,
@@ -279,6 +295,7 @@ export {
 // MCP OAuth, connector, and provider-routine DB helpers
 export * from "./utils/mcp-oauth";
 export {
+  type ActiveOrgNamespaceClerkOrgId,
   deletePreClerkNamespaceReservation,
   failUnreservedNamespaceOperation,
   finalizeNamespaceOperation,
@@ -287,6 +304,8 @@ export {
   getNamespaceByHandle,
   getNamespaceOperationById,
   getNamespaceOperationByIdempotencyKey,
+  type ListActiveOrgNamespaceClerkOrgIdsInput,
+  listActiveOrgNamespaceClerkOrgIds,
   markNamespaceOperationClerkApplied,
   type NamespaceConflictCode,
   NamespaceConflictError,
@@ -344,6 +363,13 @@ export {
   upsertPeopleFromCandidates,
 } from "./utils/people";
 export {
+  markFormerTeamMembersMissingFromSync,
+  type SyncOrgTeamMemberPeopleInput,
+  type SyncOrgTeamMemberPeopleResult,
+  syncOrgTeamMemberPeople,
+  type TeamMemberPeopleCandidate,
+} from "./utils/people-team-members";
+export {
   type CreatePeopleViewParams,
   createPeopleView,
   type DeletePeopleViewParams,
@@ -352,6 +378,18 @@ export {
   listPeopleViews,
 } from "./utils/people-views";
 export * from "./utils/provider-routine-calls";
+export {
+  buildSignalEntityLinkResolutionHints,
+  listSignalEntityLinksForSignal,
+  type ReplaceSignalEntityLinksInput,
+  type ReplaceSignalEntityLinksResult,
+  reconcileSignalEntityLinksForPeople,
+  replaceSignalEntityLinks,
+  type SignalEntityLinkDetail,
+  type SignalEntityLinkReconciliationPerson,
+  type SignalEntityLinkResolutionHints,
+  type SignalEntityLinkResolvedPerson,
+} from "./utils/signal-entity-links";
 export {
   type CreateSignalViewParams,
   createSignalView,
@@ -390,6 +428,8 @@ export {
   listSkillIndexEntries,
   markSkillIndexKnownStale,
   markSkillIndexRefreshFailed,
+  markSkillIndexRefreshFresh,
+  markSkillIndexRefreshStale,
   type ReplaceSkillIndexEntriesInput,
   type ReplaceSkillIndexEntryInput,
   releaseSkillIndexRefreshLock,

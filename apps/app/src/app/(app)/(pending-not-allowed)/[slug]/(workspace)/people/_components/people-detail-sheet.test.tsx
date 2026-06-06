@@ -43,8 +43,13 @@ const personRow = {
   identityType: "handle",
   identityValue: "@jeevanp",
   lastSeenSignalId: null,
+  clerkUserId: null,
+  memberRole: null,
+  memberStatus: null,
+  memberSyncedAt: null,
   metadata: {},
   normalizedIdentityValue: "jeevanp",
+  personSource: "signal",
   publicId: "person_123e4567-e89b-12d3-a456-426614174000",
   seenCount: 1,
   updatedAt: new Date("2026-05-27T01:01:00.000Z"),
@@ -88,5 +93,49 @@ describe("PeopleDetailSheet", () => {
       expect(toastMocks.error).toHaveBeenCalledWith("Unable to copy link")
     );
     expect(toastMocks.success).not.toHaveBeenCalled();
+  });
+
+  it("renders team member metadata", () => {
+    render(
+      <PeopleDetailSheet
+        initialPerson={{
+          ...personRow,
+          memberRole: "org:member",
+          memberStatus: "active",
+          memberSyncedAt: new Date("2026-05-27T01:02:00.000Z"),
+          personSource: "mixed",
+        }}
+        onOpenChange={vi.fn()}
+        publicId={personRow.publicId}
+        slug="acme"
+      />
+    );
+
+    expect(screen.getByText("Team member")).toBeInTheDocument();
+    expect(screen.getByText("Role")).toBeInTheDocument();
+    expect(screen.getAllByText("Member")).toHaveLength(2);
+    expect(screen.getByText("Synced from Clerk")).toBeInTheDocument();
+  });
+
+  it("renders former team member metadata", () => {
+    render(
+      <PeopleDetailSheet
+        initialPerson={{
+          ...personRow,
+          memberRole: "org:admin",
+          memberStatus: "former",
+          memberSyncedAt: new Date("2026-05-27T01:02:00.000Z"),
+          personSource: "team_member",
+        }}
+        onOpenChange={vi.fn()}
+        publicId={personRow.publicId}
+        slug="acme"
+      />
+    );
+
+    expect(screen.getByText("Former team member")).toBeInTheDocument();
+    expect(screen.getByText("Role")).toBeInTheDocument();
+    expect(screen.getByText("Admin")).toBeInTheDocument();
+    expect(screen.getByText("Synced from Clerk")).toBeInTheDocument();
   });
 });

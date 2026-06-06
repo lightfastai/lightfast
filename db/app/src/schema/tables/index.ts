@@ -22,6 +22,14 @@ export {
   orgConnectorConnections,
 } from "./org-connectors";
 export {
+  createDecisionViewId,
+  DECISION_VIEW_ID_PREFIX,
+  type DecisionView,
+  type DecisionViewConfig,
+  type InsertDecisionView,
+  orgDecisionViews,
+} from "./org-decision-views";
+export {
   createDeveloperConnectionId,
   createDeveloperConnectionLeaseId,
   DEVELOPER_CONNECTION_ID_PREFIX,
@@ -67,6 +75,8 @@ export {
   type Person,
   type PersonIdentityProvider,
   type PersonIdentityType,
+  type PersonMemberStatus,
+  type PersonSource,
 } from "./org-people";
 export {
   createPeopleViewId,
@@ -88,6 +98,14 @@ export {
   type ProviderRoutineCallSourceSurface,
   type ProviderRoutineCallStatus,
 } from "./org-provider-routine-calls";
+export {
+  type InsertSignalEntityLink,
+  orgSignalEntityLinks,
+  SIGNAL_ENTITY_LINK_ANCHOR_TEXT_LENGTH,
+  SIGNAL_ENTITY_LINK_LABEL_LENGTH,
+  SIGNAL_ENTITY_LINK_NORMALIZED_MENTION_VALUE_LENGTH,
+  type SignalEntityLink,
+} from "./org-signal-entity-links";
 export {
   createSignalViewId,
   type InsertSignalView,

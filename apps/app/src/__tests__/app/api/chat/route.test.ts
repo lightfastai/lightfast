@@ -6,7 +6,7 @@ const createNewResumableStreamMock = vi.fn();
 const createWorkspaceAssistantGenerationMock = vi.fn();
 const createWorkspaceAssistantConversationMock = vi.fn();
 const convertToModelMessagesMock = vi.fn();
-const ensureFreshSkillIndexForReadMock = vi.fn();
+const getSkillIndexSnapshotMock = vi.fn();
 const findProviderRoutinesMock = vi.fn();
 const gatewayMock = vi.fn();
 const getWorkspaceAssistantConversationByPublicIdMock = vi.fn();
@@ -38,7 +38,7 @@ vi.mock("@api/app/auth/identity", () => ({
 }));
 
 vi.mock("@api/app/services/skills", () => ({
-  ensureFreshSkillIndexForRead: ensureFreshSkillIndexForReadMock,
+  getSkillIndexSnapshot: getSkillIndexSnapshotMock,
   getVerifiedLightfastSkillSourceRepositoryId:
     getVerifiedLightfastSkillSourceRepositoryIdMock,
 }));
@@ -115,7 +115,7 @@ beforeEach(() => {
   createWorkspaceAssistantGenerationMock.mockReset();
   createWorkspaceAssistantConversationMock.mockReset();
   convertToModelMessagesMock.mockReset();
-  ensureFreshSkillIndexForReadMock.mockReset();
+  getSkillIndexSnapshotMock.mockReset();
   findProviderRoutinesMock.mockReset();
   gatewayMock.mockReset();
   getWorkspaceAssistantConversationByPublicIdMock.mockReset();
@@ -182,7 +182,19 @@ beforeEach(() => {
     publicId: "gen_123",
   });
   getVerifiedLightfastSkillSourceRepositoryIdMock.mockResolvedValue(42);
-  ensureFreshSkillIndexForReadMock.mockResolvedValue({
+  getSkillIndexSnapshotMock.mockResolvedValue({
+    freshness: {
+      checkedAt: new Date("2026-06-01T00:00:00.000Z"),
+      errorCode: null,
+      errorMessage: null,
+      githubCommitSha: "a".repeat(40),
+      indexedAt: new Date("2026-06-01T00:00:00.000Z"),
+      indexedCommitSha: "a".repeat(40),
+      status: "fresh",
+    },
+    indexDiagnostics: [],
+    repositoryUrl: "https://github.com/acme/.lightfast",
+    snapshotVersion: "100:1780272000000:aaaaaaaa:fresh",
     skills: [
       {
         description: "Create new skills, modify existing skills.",
@@ -424,6 +436,10 @@ describe("chat route", () => {
     expect(smoothStreamMock).toHaveBeenCalledWith({
       chunking: "word",
       delayInMs: 20,
+    });
+    expect(getSkillIndexSnapshotMock).toHaveBeenCalledWith({
+      clerkOrgId: "org_123",
+      sourceControlRepositoryId: 42,
     });
     expect(streamTextMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -780,9 +796,9 @@ describe("chat route", () => {
     });
     const streamResponse = new Response("stream");
 
-    getWorkspaceAssistantConversationByPublicIdMock.mockResolvedValueOnce(
-      undefined
-    );
+    getWorkspaceAssistantConversationByPublicIdMock
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined);
     createWorkspaceAssistantConversationMock.mockResolvedValueOnce(
       createdConversation
     );
@@ -820,6 +836,58 @@ describe("chat route", () => {
           publicId: "conv_client_generated",
         }),
       })
+    );
+    expect(response).toBe(streamResponse);
+  });
+
+  it("recovers a same-scope duplicate supplied conversation id create race", async () => {
+    const duplicatePublicIdError = Object.assign(
+      new Error("Duplicate entry for key"),
+      { code: "ER_DUP_ENTRY" }
+    );
+    const racedConversation = makeConversation({
+      publicId: "conv_raced",
+      title: "Start a raced workspace plan",
+    });
+    const streamResponse = new Response("stream");
+
+    getWorkspaceAssistantConversationByPublicIdMock
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(racedConversation);
+    createWorkspaceAssistantConversationMock.mockRejectedValueOnce(
+      duplicatePublicIdError
+    );
+    isDuplicateKeyErrorMock.mockReturnValueOnce(true);
+    listWorkspaceAssistantMessagesMock.mockResolvedValue([]);
+    convertToModelMessagesMock.mockResolvedValue([
+      { content: "Start a raced workspace plan", role: "user" },
+    ]);
+    gatewayMock.mockReturnValue("gateway:anthropic/claude-sonnet-4.6");
+    streamTextMock.mockReturnValue({
+      toUIMessageStreamResponse: toUIMessageStreamResponseMock,
+    });
+    toUIMessageStreamResponseMock.mockReturnValue(streamResponse);
+
+    const response = await POST(
+      createJsonRequest({
+        idempotencyKey: "idem_user_1",
+        messages: [
+          {
+            id: "client-message-1",
+            parts: [{ text: "Start a raced workspace plan", type: "text" }],
+            role: "user",
+          },
+        ],
+        conversationId: "conv_raced",
+      })
+    );
+
+    expect(
+      getWorkspaceAssistantConversationByPublicIdMock
+    ).toHaveBeenCalledTimes(2);
+    expect(listWorkspaceAssistantMessagesMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ conversation: racedConversation })
     );
     expect(response).toBe(streamResponse);
   });
@@ -874,9 +942,9 @@ describe("chat route", () => {
       new Error("Duplicate entry for key"),
       { code: "ER_DUP_ENTRY" }
     );
-    getWorkspaceAssistantConversationByPublicIdMock.mockResolvedValueOnce(
-      undefined
-    );
+    getWorkspaceAssistantConversationByPublicIdMock
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined);
     createWorkspaceAssistantConversationMock.mockRejectedValueOnce(
       duplicatePublicIdError
     );

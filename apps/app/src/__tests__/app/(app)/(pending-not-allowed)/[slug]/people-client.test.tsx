@@ -9,15 +9,19 @@ const infiniteQueryOptionsMock = vi.fn((input: unknown) => ({
 const getQueryOptionsMock = vi.fn();
 
 const queryStates: Record<string, string | null> = {
+  memberStatus: "",
   peopleQuery: "",
   person: null,
   provider: "",
+  source: "",
   type: "",
 };
 const setQuery = vi.fn((value: string | null) => {
   queryStates.peopleQuery = value;
 });
 const setProvider = vi.fn();
+const setSource = vi.fn();
+const setMemberStatus = vi.fn();
 const setType = vi.fn();
 const setPerson = vi.fn();
 
@@ -63,9 +67,11 @@ vi.mock("nuqs", () => ({
   parseAsString: { withDefault: () => "parser" },
   useQueryState: (key: string) => {
     const setters: Record<string, (value: string | null) => void> = {
+      memberStatus: setMemberStatus,
       peopleQuery: setQuery,
       person: setPerson,
       provider: setProvider,
+      source: setSource,
       type: setType,
     };
     return [queryStates[key] ?? null, setters[key] ?? vi.fn()];
@@ -83,8 +89,13 @@ const personRow = {
   identityType: "handle",
   identityValue: "@jeevanp",
   lastSeenSignalId: "signal_3f9a0000-0000-0000-0000-000000000000",
+  clerkUserId: null,
+  memberRole: null,
+  memberStatus: null,
+  memberSyncedAt: null,
   metadata: {},
   normalizedIdentityValue: "jeevanp",
+  personSource: "signal",
   publicId: "person_123e4567-e89b-12d3-a456-426614174000",
   seenCount: 3,
   updatedAt: new Date("2026-05-27T01:01:00.000Z"),
@@ -103,12 +114,16 @@ function mockRows(items: unknown[]) {
 }
 
 beforeEach(() => {
+  queryStates.memberStatus = "";
   queryStates.peopleQuery = "";
   queryStates.provider = "";
+  queryStates.source = "";
   queryStates.type = "";
   queryStates.person = null;
+  setMemberStatus.mockClear();
   setQuery.mockClear();
   setProvider.mockClear();
+  setSource.mockClear();
   setType.mockClear();
   setPerson.mockClear();
   infiniteQueryOptionsMock.mockClear();
@@ -151,8 +166,10 @@ describe("PeopleClient", () => {
     expect(infiniteQueryOptionsMock).toHaveBeenCalledWith(
       {
         limit: 50,
+        memberStatuses: undefined,
         providers: undefined,
         search: "jeevan",
+        sources: undefined,
         types: undefined,
       },
       expect.anything()
@@ -176,5 +193,52 @@ describe("PeopleClient", () => {
     render(<PeopleClient />);
 
     expect(screen.getByText("No matching people")).toBeInTheDocument();
+  });
+
+  it("passes source and member status filters into the people list query", () => {
+    queryStates.source = "team_member,mixed";
+    queryStates.memberStatus = "active";
+
+    render(<PeopleClient />);
+
+    expect(infiniteQueryOptionsMock).toHaveBeenCalledWith(
+      {
+        limit: 50,
+        memberStatuses: ["active"],
+        providers: undefined,
+        search: undefined,
+        sources: ["team_member", "mixed"],
+        types: undefined,
+      },
+      expect.anything()
+    );
+  });
+
+  it("renders team member badges in rows", () => {
+    mockRows([
+      {
+        ...personRow,
+        memberStatus: "active",
+        personSource: "mixed",
+      },
+    ]);
+
+    render(<PeopleClient />);
+
+    expect(screen.getByText("Team member")).toBeInTheDocument();
+  });
+
+  it("renders former team member badges in rows", () => {
+    mockRows([
+      {
+        ...personRow,
+        memberStatus: "former",
+        personSource: "team_member",
+      },
+    ]);
+
+    render(<PeopleClient />);
+
+    expect(screen.getByText("Former team member")).toBeInTheDocument();
   });
 });

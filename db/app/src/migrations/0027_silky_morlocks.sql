@@ -1,6 +1,7 @@
 CREATE TABLE `lightfast_org_entity_accounts` (
 	`id` bigint unsigned AUTO_INCREMENT NOT NULL,
 	`public_id` varchar(80) NOT NULL,
+	`canonical_key` varchar(512) NOT NULL,
 	`clerk_org_id` varchar(64) NOT NULL,
 	`display_name` varchar(256) NOT NULL,
 	`normalized_name` varchar(256) NOT NULL,
@@ -16,7 +17,8 @@ CREATE TABLE `lightfast_org_entity_accounts` (
 	`created_at` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 	`updated_at` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 	CONSTRAINT `lightfast_org_entity_accounts_id` PRIMARY KEY(`id`),
-	CONSTRAINT `org_entity_accounts_public_id_uq` UNIQUE(`public_id`)
+	CONSTRAINT `org_entity_accounts_public_id_uq` UNIQUE(`public_id`),
+	CONSTRAINT `org_entity_accounts_canonical_key_uq` UNIQUE(`clerk_org_id`,`canonical_key`)
 );
 --> statement-breakpoint
 CREATE TABLE `lightfast_org_entity_evidence_items` (
@@ -85,6 +87,7 @@ CREATE TABLE `lightfast_org_entity_observations` (
 CREATE TABLE `lightfast_org_entity_people` (
 	`id` bigint unsigned AUTO_INCREMENT NOT NULL,
 	`public_id` varchar(80) NOT NULL,
+	`canonical_key` varchar(512) NOT NULL,
 	`clerk_org_id` varchar(64) NOT NULL,
 	`display_name` varchar(256) NOT NULL,
 	`status` varchar(64) NOT NULL,
@@ -98,12 +101,14 @@ CREATE TABLE `lightfast_org_entity_people` (
 	`created_at` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 	`updated_at` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 	CONSTRAINT `lightfast_org_entity_people_id` PRIMARY KEY(`id`),
-	CONSTRAINT `org_entity_people_public_id_uq` UNIQUE(`public_id`)
+	CONSTRAINT `org_entity_people_public_id_uq` UNIQUE(`public_id`),
+	CONSTRAINT `org_entity_people_canonical_key_uq` UNIQUE(`clerk_org_id`,`canonical_key`)
 );
 --> statement-breakpoint
 CREATE TABLE `lightfast_org_entity_person_account_affiliations` (
 	`id` bigint unsigned AUTO_INCREMENT NOT NULL,
 	`public_id` varchar(80) NOT NULL,
+	`canonical_key` varchar(512) NOT NULL,
 	`clerk_org_id` varchar(64) NOT NULL,
 	`person_id` bigint unsigned NOT NULL,
 	`account_id` bigint unsigned NOT NULL,
@@ -123,6 +128,7 @@ CREATE TABLE `lightfast_org_entity_person_account_affiliations` (
 	`updated_at` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 	CONSTRAINT `lightfast_org_entity_person_account_affiliations_id` PRIMARY KEY(`id`),
 	CONSTRAINT `org_entity_affiliations_public_id_uq` UNIQUE(`public_id`),
+	CONSTRAINT `org_entity_affiliations_canonical_key_uq` UNIQUE(`clerk_org_id`,`canonical_key`),
 	CONSTRAINT `org_entity_affiliations_person_account_rel_uq` UNIQUE(`clerk_org_id`,`person_id`,`account_id`,`relationship`)
 );
 --> statement-breakpoint

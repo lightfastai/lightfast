@@ -1,5 +1,5 @@
 import type { Database, Signal } from "@db/app";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { HostedMcpContext } from "../context";
 import {
@@ -78,6 +78,7 @@ function dependencies(
       ],
     }),
     getVisibleSignalByPublicId: vi.fn().mockResolvedValue(signal()),
+    listSignalEntityLinksForSignal: vi.fn().mockResolvedValue([]),
     now: vi.fn(() => new Date("2026-06-01T00:00:00.000Z")),
     recordMcpAuditEvent: vi.fn().mockResolvedValue(undefined),
     version: "0.1.0-test",
@@ -86,6 +87,15 @@ function dependencies(
 }
 
 describe("hosted MCP tools", () => {
+  afterEach(() => {
+    vi.doUnmock("@api/app/mcp-oauth");
+    vi.doUnmock("@api/app/signals/service");
+    vi.doUnmock("@db/app");
+    vi.doUnmock("@repo/provider-routines");
+    vi.doUnmock("../tools/app-proxy-intake");
+    vi.doUnmock("../tools/app-signal-intake");
+  });
+
   it("lists policy-derived tools for an authenticated MCP request", () => {
     expect(listHostedMcpTools(context())).toEqual([
       expect.objectContaining({
@@ -161,6 +171,7 @@ describe("hosted MCP tools", () => {
     ).resolves.toEqual({
       classification: null,
       createdAt: "2026-06-01T00:00:00.000Z",
+      entityLinks: [],
       id: signalId,
       input: "Review this profile",
       status: "queued",
@@ -172,6 +183,10 @@ describe("hosted MCP tools", () => {
       clerkOrgId: "org_test",
       createdByUserId: "user_test",
       publicId: signalId,
+    });
+    expect(deps.listSignalEntityLinksForSignal).toHaveBeenCalledWith(db, {
+      clerkOrgId: "org_test",
+      signalId,
     });
   });
 
@@ -401,5 +416,217 @@ describe("hosted MCP tools", () => {
       code: "insufficient_scope",
       status: 403,
     });
+  });
+
+  it("does not load unrelated default dependencies for system health", async () => {
+    const recordMcpAuditEvent = vi.fn().mockResolvedValue(undefined);
+
+    vi.doMock("@db/app", () => ({
+      db,
+      getVisibleSignalByPublicId: vi.fn(),
+      listSignalEntityLinksForSignal: vi.fn(),
+      recordMcpAuditEvent,
+    }));
+    vi.doMock("@api/app/mcp-oauth", () => {
+      throw new Error("mcp-oauth should not load for system health");
+    });
+    vi.doMock("@api/app/signals/service", () => {
+      throw new Error("signal service should not load for system health");
+    });
+    vi.doMock("../tools/app-signal-intake", () => {
+      throw new Error("app signal intake should not load for system health");
+    });
+    vi.doMock("@repo/provider-routines", () => {
+      throw new Error("provider routines should not load for system health");
+    });
+
+    await expect(
+      executeHostedMcpTool({
+        context: context({ scopes: ["mcp:system:read"] }),
+        contractPath: "system.health",
+        rawInput: undefined,
+      })
+    ).resolves.toMatchObject({
+      status: "ok",
+      version: "0.1.0",
+    });
+
+    expect(recordMcpAuditEvent).toHaveBeenCalledWith(
+      db,
+      expect.objectContaining({
+        eventName: "mcp.system.health",
+        outcome: "success",
+      })
+    );
+  });
+
+  it("does not load app signal service, OAuth, or provider routine defaults for signal creation", async () => {
+    const createSignalForActor = vi.fn().mockResolvedValue({
+      id: signalId,
+      status: "queued",
+      visibilityScope: "user",
+    });
+    const recordMcpAuditEvent = vi.fn().mockResolvedValue(undefined);
+
+    vi.doMock("@db/app", () => ({
+      db,
+      getVisibleSignalByPublicId: vi.fn(),
+      listSignalEntityLinksForSignal: vi.fn(),
+      recordMcpAuditEvent,
+    }));
+    vi.doMock("@api/app/mcp-oauth", () => {
+      throw new Error("mcp-oauth should not load for signal creation");
+    });
+    vi.doMock("@api/app/signals/service", () => {
+      throw new Error("signal service should not load for signal creation");
+    });
+    vi.doMock("../tools/app-signal-intake", () => ({
+      createSignalForActorViaApp: createSignalForActor,
+    }));
+    vi.doMock("@repo/provider-routines", () => {
+      throw new Error("provider routines should not load for signal creation");
+    });
+
+    await expect(
+      executeHostedMcpTool({
+        context: context(),
+        contractPath: "signals.create",
+        rawInput: { input: "Remember this production MCP test" },
+      })
+    ).resolves.toEqual({
+      id: signalId,
+      status: "queued",
+      visibilityScope: "user",
+    });
+
+    expect(createSignalForActor).toHaveBeenCalledWith(db, {
+      actor: {
+        clientId: "mcp_client_test",
+        grantId: "mcp_grant_test",
+        kind: "mcp",
+        orgId: "org_test",
+        userId: "user_test",
+      },
+      input: "Remember this production MCP test",
+    });
+  });
+
+  it("does not load OAuth defaults for signal get", async () => {
+    const getSignalForActor = vi.fn().mockResolvedValue({
+      classification: null,
+      createdAt: "2026-06-01T00:00:00.000Z",
+      entityLinks: [],
+      id: signalId,
+      input: "Review this profile",
+      status: "queued",
+      updatedAt: "2026-06-01T00:01:00.000Z",
+      visibilityScope: "user",
+    });
+    const recordMcpAuditEvent = vi.fn().mockResolvedValue(undefined);
+
+    vi.doMock("@db/app", () => ({
+      db,
+      getVisibleSignalByPublicId: vi.fn(),
+      listSignalEntityLinksForSignal: vi.fn(),
+      recordMcpAuditEvent,
+    }));
+    vi.doMock("@api/app/mcp-oauth", () => {
+      throw new Error("mcp-oauth should not load for signal get");
+    });
+    vi.doMock("@api/app/signals/service", () => {
+      throw new Error("signal service should not load for signal get");
+    });
+    vi.doMock("../tools/app-signal-intake", () => ({
+      getSignalForActorViaApp: getSignalForActor,
+    }));
+    vi.doMock("@repo/provider-routines", () => {
+      throw new Error("provider routines should not load for signal get");
+    });
+
+    await expect(
+      executeHostedMcpTool({
+        context: context(),
+        contractPath: "signals.get",
+        rawInput: { id: signalId },
+      })
+    ).resolves.toMatchObject({
+      id: signalId,
+      status: "queued",
+    });
+
+    expect(getSignalForActor).toHaveBeenCalledWith(db, {
+      actor: {
+        clientId: "mcp_client_test",
+        grantId: "mcp_grant_test",
+        kind: "mcp",
+        orgId: "org_test",
+        userId: "user_test",
+      },
+      id: signalId,
+    });
+  });
+
+  it("does not load app OAuth or provider routine defaults for proxy calls", async () => {
+    const callProviderRoutine = vi.fn().mockResolvedValue({
+      provider: "linear",
+      providerRoutineCallId,
+      providerToolName: "list_issues",
+      result: { content: [{ text: "ok" }] },
+      routineId: "linear__list_issues",
+      status: "succeeded",
+    });
+    const findProviderRoutines = vi.fn();
+    const recordMcpAuditEvent = vi.fn().mockResolvedValue(undefined);
+
+    vi.doMock("@db/app", () => ({
+      db,
+      getVisibleSignalByPublicId: vi.fn(),
+      listSignalEntityLinksForSignal: vi.fn(),
+      recordMcpAuditEvent,
+    }));
+    vi.doMock("@api/app/mcp-oauth", () => {
+      throw new Error("mcp-oauth should not load for proxy calls");
+    });
+    vi.doMock("@api/app/signals/service", () => {
+      throw new Error("signal service should not load for proxy calls");
+    });
+    vi.doMock("../tools/app-signal-intake", () => {
+      throw new Error("app signal intake should not load for proxy calls");
+    });
+    vi.doMock("../tools/app-proxy-intake", () => ({
+      callProviderRoutineViaApp: callProviderRoutine,
+      findProviderRoutinesViaApp: findProviderRoutines,
+    }));
+    vi.doMock("@repo/provider-routines", () => {
+      throw new Error("provider routines should not load for proxy calls");
+    });
+
+    await expect(
+      executeHostedMcpTool({
+        context: context({ scopes: ["mcp:provider_routines:read"] }),
+        contractPath: "proxy.call",
+        rawInput: {
+          input: { query: "ABC" },
+          routineId: "linear__list_issues",
+        },
+      })
+    ).resolves.toMatchObject({
+      providerRoutineCallId,
+      status: "succeeded",
+    });
+
+    expect(callProviderRoutine).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actor: { orgId: "org_test", userId: "user_test" },
+        scopes: {
+          providerRoutineRead: true,
+          providerRoutineWrite: false,
+        },
+      }),
+      {
+        input: { query: "ABC" },
+        routineId: "linear__list_issues",
+      }
+    );
   });
 });

@@ -20,6 +20,11 @@ const entityGraphPersistedSummarySchema = z.object({
   sourceIdentities: z.number().int().nonnegative(),
 });
 
+export const appTeamMembersReconcileRequestedEventSchema = z.object({
+  cursor: z.number().int().positive().nullable().optional(),
+  syncedAtIso: z.string().datetime().optional(),
+});
+
 export const appEvents = {
   "app/automation.run.requested": eventType("app/automation.run.requested", {
     schema: z.object({
@@ -36,6 +41,12 @@ export const appEvents = {
         signalId: signalIdSchema,
         clerkOrgId: z.string().min(1),
       }),
+    }
+  ),
+  "app/team-members.reconcile.requested": eventType(
+    "app/team-members.reconcile.requested",
+    {
+      schema: appTeamMembersReconcileRequestedEventSchema,
     }
   ),
   "app/signal.created": eventType("app/signal.created", {
@@ -62,6 +73,15 @@ export const appEvents = {
       resolverVersion: z.string().min(1),
     }),
   }),
+  "app/signal.entity-index.requested": eventType(
+    "app/signal.entity-index.requested",
+    {
+      schema: z.object({
+        signalId: signalIdSchema,
+        clerkOrgId: z.string().min(1),
+      }),
+    }
+  ),
   "app/github.repository.push.received": eventType(
     "app/github.repository.push.received",
     {

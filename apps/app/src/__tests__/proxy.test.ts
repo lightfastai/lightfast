@@ -539,6 +539,24 @@ describe("proxy pending-session route handling", () => {
     expect(authMock).not.toHaveBeenCalled();
     expect(runMicrofrontendsMiddlewareMock).not.toHaveBeenCalled();
   });
+
+  it("leaves the internal MCP signal intake route to service auth", async () => {
+    const { response } = await invoke("/api/internal/mcp/signals");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+    expect(authMock).not.toHaveBeenCalled();
+    expect(runMicrofrontendsMiddlewareMock).not.toHaveBeenCalled();
+  });
+
+  it("leaves the internal MCP proxy route to service auth", async () => {
+    const { response } = await invoke("/api/internal/mcp/proxy/find");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+    expect(authMock).not.toHaveBeenCalled();
+    expect(runMicrofrontendsMiddlewareMock).not.toHaveBeenCalled();
+  });
 });
 
 describe("proxy bound org product route gate", () => {

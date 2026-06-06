@@ -543,6 +543,12 @@ importers:
       '@repo/native-auth-contract':
         specifier: workspace:*
         version: link:../../packages/native-auth-contract
+      '@repo/provider-routine-contract':
+        specifier: workspace:*
+        version: link:../../packages/provider-routine-contract
+      '@repo/provider-routines':
+        specifier: workspace:*
+        version: link:../../packages/provider-routines
       '@repo/sandbox-runtime':
         specifier: workspace:*
         version: link:../../packages/sandbox-runtime
@@ -561,6 +567,12 @@ importers:
       '@trpc/server':
         specifier: 'catalog:'
         version: 11.16.0(typescript@5.9.3)
+      '@vendor/ai':
+        specifier: workspace:*
+        version: link:../../vendor/ai
+      '@vendor/braintrust':
+        specifier: workspace:*
+        version: link:../../vendor/braintrust
       '@vendor/clerk':
         specifier: workspace:*
         version: link:../../vendor/clerk
@@ -710,6 +722,9 @@ importers:
       '@repo/app-validation':
         specifier: workspace:*
         version: link:../../packages/app-validation
+      '@repo/connector-contract':
+        specifier: workspace:*
+        version: link:../../packages/connector-contract
       '@repo/github-app-contract':
         specifier: workspace:*
         version: link:../../packages/github-app-contract
@@ -1072,9 +1087,6 @@ importers:
       '@repo/provider-routine-contract':
         specifier: workspace:*
         version: link:../../packages/provider-routine-contract
-      '@repo/provider-routines':
-        specifier: workspace:*
-        version: link:../../packages/provider-routines
       '@sentry/tanstackstart-react':
         specifier: 'catalog:'
         version: 10.56.0(@opentelemetry/exporter-trace-otlp-http@0.218.0(@opentelemetry/api@1.9.1))(react@19.2.6)
@@ -2002,6 +2014,9 @@ importers:
       '@repo/app-reserved-names':
         specifier: workspace:^
         version: link:../app-reserved-names
+      '@repo/connector-contract':
+        specifier: workspace:*
+        version: link:../connector-contract
       zod:
         specifier: 'catalog:'
         version: 4.3.6

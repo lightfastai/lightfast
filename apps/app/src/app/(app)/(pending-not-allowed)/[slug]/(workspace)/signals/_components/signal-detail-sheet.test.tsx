@@ -100,6 +100,7 @@ describe("SignalDetailSheet", () => {
         initialItem={classifiedItem}
         onOpenChange={vi.fn()}
         publicId="signal_follow_up"
+        slug="acme"
       />
     );
 
@@ -124,6 +125,7 @@ describe("SignalDetailSheet", () => {
         initialItem={processingRow}
         onOpenChange={vi.fn()}
         publicId="signal_proc"
+        slug="acme"
       />
     );
 
@@ -146,6 +148,7 @@ describe("SignalDetailSheet", () => {
         initialItem={classifiedItem}
         onOpenChange={vi.fn()}
         publicId="signal_follow_up"
+        slug="acme"
       />
     );
 

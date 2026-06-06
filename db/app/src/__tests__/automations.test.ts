@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { Database } from "../client";
 import {
   calculateNextRunAt,
+  createAutomation,
   markAutomationRunFailed,
 } from "../utils/automations";
 
@@ -119,6 +120,129 @@ describe("calculateNextRunAt", () => {
     });
 
     expect(next?.toISOString()).toBe("2026-05-27T09:00:00.000Z");
+  });
+});
+
+describe("createAutomation", () => {
+  it("persists the selected connector provider", async () => {
+    let insertedPublicId = "";
+    const valuesMock = vi.fn((values: { publicId: string }) => {
+      insertedPublicId = values.publicId;
+      return Promise.resolve();
+    });
+    const limitMock = vi.fn(async () => [
+      {
+        id: 1,
+        publicId: insertedPublicId,
+        clerkOrgId: "org_test",
+        connectorProvider: "linear",
+        createdByUserId: "user_test",
+        name: "Linear triage",
+        prompt: "Create follow-up issues.",
+        scheduleKind: "manual",
+        scheduleConfig: {},
+        timezone: "UTC",
+        status: "active",
+        nextRunAt: null,
+        lastRunAt: null,
+        scheduleVersion: 1,
+        createdAt: new Date("2026-05-27T00:00:00.000Z"),
+        updatedAt: new Date("2026-05-27T00:00:00.000Z"),
+      },
+    ]);
+    const db = {
+      insert: vi.fn(() => ({ values: valuesMock })),
+      select: vi.fn(() => ({
+        from: () => ({
+          where: () => ({
+            limit: limitMock,
+          }),
+        }),
+      })),
+    } as unknown as Database;
+
+    await expect(
+      createAutomation(
+        db,
+        {
+          clerkOrgId: "org_test",
+          connectorProvider: "linear",
+          createdByUserId: "user_test",
+          name: "Linear triage",
+          prompt: "Create follow-up issues.",
+          schedule: { kind: "manual", config: {} },
+        },
+        { now: new Date("2026-05-27T00:00:00.000Z") }
+      )
+    ).resolves.toMatchObject({
+      connectorProvider: "linear",
+    });
+
+    expect(valuesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connectorProvider: "linear",
+      })
+    );
+  });
+
+  it("persists no connector provider when the automation has no connector", async () => {
+    let insertedPublicId = "";
+    const valuesMock = vi.fn((values: { publicId: string }) => {
+      insertedPublicId = values.publicId;
+      return Promise.resolve();
+    });
+    const limitMock = vi.fn(async () => [
+      {
+        id: 1,
+        publicId: insertedPublicId,
+        clerkOrgId: "org_test",
+        connectorProvider: null,
+        createdByUserId: "user_test",
+        name: "Daily summary",
+        prompt: "Summarize the workspace.",
+        scheduleKind: "manual",
+        scheduleConfig: {},
+        timezone: "UTC",
+        status: "active",
+        nextRunAt: null,
+        lastRunAt: null,
+        scheduleVersion: 1,
+        createdAt: new Date("2026-05-27T00:00:00.000Z"),
+        updatedAt: new Date("2026-05-27T00:00:00.000Z"),
+      },
+    ]);
+    const db = {
+      insert: vi.fn(() => ({ values: valuesMock })),
+      select: vi.fn(() => ({
+        from: () => ({
+          where: () => ({
+            limit: limitMock,
+          }),
+        }),
+      })),
+    } as unknown as Database;
+
+    await expect(
+      createAutomation(
+        db,
+        {
+          clerkOrgId: "org_test",
+          createdByUserId: "user_test",
+          name: "Daily summary",
+          prompt: "Summarize the workspace.",
+          schedule: { kind: "manual", config: {} },
+        },
+        { now: new Date("2026-05-27T00:00:00.000Z") }
+      )
+    ).resolves.toMatchObject({
+      connectorProvider: null,
+    });
+
+    expect(valuesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connectorProvider: null,
+      })
+    );
   });
 });
 

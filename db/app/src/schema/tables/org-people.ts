@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import type {
   PersonIdentityProvider,
   PersonIdentityType,
+  PersonMemberStatus,
+  PersonSource,
 } from "@repo/app-validation/schemas";
 import { sql } from "drizzle-orm";
 import {
@@ -24,7 +26,12 @@ const IDENTITY_KEY_LENGTH = 64;
 export const PERSON_ID_PREFIX = "person_";
 export const PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH = 512;
 export const PERSON_DISPLAY_NAME_LENGTH = 160;
-export type { PersonIdentityProvider, PersonIdentityType };
+export type {
+  PersonIdentityProvider,
+  PersonIdentityType,
+  PersonMemberStatus,
+  PersonSource,
+};
 
 export function createPersonId() {
   return `${PERSON_ID_PREFIX}${randomUUID()}`;
@@ -77,6 +84,23 @@ export const orgPeople = mysqlTable(
 
     metadata: json("metadata").$type<Record<string, unknown>>().notNull(),
 
+    personSource: varchar("person_source", { length: CODE_LENGTH })
+      .$type<PersonSource>()
+      .default("signal")
+      .notNull(),
+
+    memberStatus: varchar("member_status", {
+      length: CODE_LENGTH,
+    }).$type<PersonMemberStatus>(),
+
+    clerkUserId: varchar("clerk_user_id", { length: CLERK_ID_LENGTH }),
+
+    memberRole: varchar("member_role", { length: CODE_LENGTH }).$type<
+      "org:admin" | "org:member"
+    >(),
+
+    memberSyncedAt: datetime("member_synced_at", { mode: "date", fsp: 3 }),
+
     createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
@@ -95,6 +119,16 @@ export const orgPeople = mysqlTable(
     orgCreatedIdx: index("org_people_org_created_idx").on(
       table.clerkOrgId,
       table.createdAt,
+      table.id
+    ),
+    orgPersonSourceIdx: index("org_people_org_person_source_idx").on(
+      table.clerkOrgId,
+      table.personSource,
+      table.id
+    ),
+    orgMemberStatusIdx: index("org_people_org_member_status_idx").on(
+      table.clerkOrgId,
+      table.memberStatus,
       table.id
     ),
   })

@@ -8,7 +8,7 @@ import type { Route } from "next";
 import { redirect } from "next/navigation";
 
 export async function approveMcpAuthorizationAction(formData: FormData) {
-  const authState = await auth();
+  const authState = await auth({ treatPendingAsSignedOut: false });
   if (!authState.userId) {
     throw new McpOAuthError("access_denied", "Authentication required.", 401);
   }
@@ -63,7 +63,7 @@ async function requireUserOrgMembership(input: {
 }
 
 export async function denyMcpAuthorizationAction(formData: FormData) {
-  const authState = await auth();
+  const authState = await auth({ treatPendingAsSignedOut: false });
   if (!authState.userId) {
     throw new McpOAuthError("access_denied", "Authentication required.", 401);
   }

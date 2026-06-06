@@ -184,6 +184,7 @@ describe("automation schemas", () => {
   it("accepts a valid IANA timezone when creating an automation", () => {
     expect(
       createAutomationSchema.parse({
+        connectorProvider: "linear",
         name: "Daily summary",
         prompt: "Summarize my day",
         schedule: {
@@ -195,6 +196,64 @@ describe("automation schemas", () => {
     ).toMatchObject({
       timezone: "Australia/Melbourne",
     });
+  });
+
+  it("accepts an optional supported connector provider when creating an automation", () => {
+    expect(
+      createAutomationSchema.parse({
+        connectorProvider: "x",
+        name: "Daily summary",
+        prompt: "Summarize my day",
+        schedule: {
+          kind: "daily",
+          config: { time: "09:00" },
+        },
+      })
+    ).toMatchObject({
+      connectorProvider: "x",
+      timezone: "UTC",
+    });
+
+    expect(
+      createAutomationSchema.parse({
+        name: "Daily summary",
+        prompt: "Summarize my day",
+        schedule: {
+          kind: "daily",
+          config: { time: "09:00" },
+        },
+      })
+    ).toMatchObject({
+      connectorProvider: null,
+      timezone: "UTC",
+    });
+
+    expect(
+      createAutomationSchema.parse({
+        connectorProvider: null,
+        name: "Daily summary",
+        prompt: "Summarize my day",
+        schedule: {
+          kind: "daily",
+          config: { time: "09:00" },
+        },
+      })
+    ).toMatchObject({
+      connectorProvider: null,
+      timezone: "UTC",
+    });
+
+    expect(() =>
+      createAutomationSchema.parse({
+        connectorProvider: "github",
+        name: "Daily summary",
+        prompt: "Summarize my day",
+        schedule: {
+          kind: "daily",
+          config: { time: "09:00" },
+        },
+      })
+    ).toThrow();
   });
 
   it("rejects an invalid IANA timezone when updating an automation", () => {

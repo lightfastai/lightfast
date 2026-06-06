@@ -10,7 +10,7 @@ export default function MembersPage() {
 
   return (
     <HydrateClient>
-      <div className="space-y-8">
+      <div className="space-y-10">
         <div>
           <h2 className="font-medium font-pp text-2xl text-foreground">
             Members

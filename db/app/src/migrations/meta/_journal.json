@@ -159,15 +159,43 @@
     {
       "idx": 22,
       "version": "5",
-      "when": 1780746482875,
-      "tag": "0022_polite_shaman",
+      "when": 1780725332692,
+      "tag": "0022_quick_katie_power",
       "breakpoints": true
     },
     {
       "idx": 23,
       "version": "5",
-      "when": 1780748361309,
-      "tag": "0023_curvy_sprite",
+      "when": 1780735996171,
+      "tag": "0023_magenta_falcon",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1780737690542,
+      "tag": "0024_hesitant_midnight",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1780742442925,
+      "tag": "0025_shocking_smasher",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1780748986542,
+      "tag": "0026_luxuriant_wasp",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1780752910700,
+      "tag": "0027_silky_morlocks",
       "breakpoints": true
     }
   ]

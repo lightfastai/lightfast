@@ -43,6 +43,14 @@ const { OrgMembersClient } = await import(
 );
 
 describe("members settings client performance boundaries", () => {
+  it("renders the members toolbar with a section heading and invite action", () => {
+    render(<OrgMembersClient />);
+
+    expect(screen.getByRole("heading", { name: "Team members" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Invite" })).toBeVisible();
+    expect(screen.getByLabelText("Search members")).toBeVisible();
+  });
+
   it("passes deferred search input to the member list", () => {
     render(<OrgMembersClient />);
 

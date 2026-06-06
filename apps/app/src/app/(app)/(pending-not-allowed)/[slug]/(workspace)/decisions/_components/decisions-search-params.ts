@@ -9,6 +9,8 @@ import {
 export const decisionProviderParser = parseAsString.withDefault("");
 export const decisionStatusParser = parseAsString.withDefault("");
 export const decisionQueryParser = parseAsString.withDefault("");
+// "view" holds the active saved-view publicId (null when on All decisions).
+export const decisionSavedViewParser = parseAsString;
 // "decision" holds the expanded row publicId (null when collapsed).
 export const decisionParser = parseAsString;
 

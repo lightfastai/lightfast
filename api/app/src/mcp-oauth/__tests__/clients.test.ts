@@ -72,6 +72,169 @@ describe("registerMcpOAuthClient", () => {
     expect(persisted).not.toHaveProperty("registrationAccessToken");
   });
 
+  it("accepts exact loopback redirect uris for native public clients", async () => {
+    createMcpOauthClientMock.mockResolvedValueOnce({
+      clientName: "Claude Code",
+      clientUri: null,
+      logoUri: null,
+      publicClientId: "mcp_client_test",
+      redirectUris: ["http://127.0.0.1:38427/callback"],
+    });
+
+    await expect(
+      registerMcpOAuthClient(db, {
+        client_name: "Claude Code",
+        redirect_uris: ["http://127.0.0.1:38427/callback"],
+        token_endpoint_auth_method: "none",
+      })
+    ).resolves.toMatchObject({
+      client_id: "mcp_client_test",
+      redirect_uris: ["http://127.0.0.1:38427/callback"],
+      token_endpoint_auth_method: "none",
+    });
+
+    expect(createMcpOauthClientMock).toHaveBeenCalledWith(
+      db,
+      expect.objectContaining({
+        clientName: "Claude Code",
+        redirectUris: ["http://127.0.0.1:38427/callback"],
+      })
+    );
+  });
+
+  it("accepts IPv6 loopback redirect uris for native public clients", async () => {
+    createMcpOauthClientMock.mockResolvedValueOnce({
+      clientName: "Claude Code",
+      clientUri: null,
+      logoUri: null,
+      publicClientId: "mcp_client_test",
+      redirectUris: ["http://[::1]:38427/callback"],
+    });
+
+    await expect(
+      registerMcpOAuthClient(db, {
+        client_name: "Claude Code",
+        redirect_uris: ["http://[::1]:38427/callback"],
+        token_endpoint_auth_method: "none",
+      })
+    ).resolves.toMatchObject({
+      client_id: "mcp_client_test",
+      redirect_uris: ["http://[::1]:38427/callback"],
+      token_endpoint_auth_method: "none",
+    });
+
+    expect(createMcpOauthClientMock).toHaveBeenCalledWith(
+      db,
+      expect.objectContaining({
+        clientName: "Claude Code",
+        redirectUris: ["http://[::1]:38427/callback"],
+      })
+    );
+  });
+
+  it("accepts loopback redirect uris with an explicit default http port", async () => {
+    createMcpOauthClientMock.mockResolvedValueOnce({
+      clientName: "Claude Code",
+      clientUri: null,
+      logoUri: null,
+      publicClientId: "mcp_client_test",
+      redirectUris: ["http://127.0.0.1:80/callback"],
+    });
+
+    await expect(
+      registerMcpOAuthClient(db, {
+        client_name: "Claude Code",
+        redirect_uris: ["http://127.0.0.1:80/callback"],
+        token_endpoint_auth_method: "none",
+      })
+    ).resolves.toMatchObject({
+      client_id: "mcp_client_test",
+      redirect_uris: ["http://127.0.0.1:80/callback"],
+      token_endpoint_auth_method: "none",
+    });
+  });
+
+  it("rejects non-loopback http redirect uris", async () => {
+    await expect(
+      registerMcpOAuthClient(db, {
+        client_name: "Untrusted",
+        redirect_uris: ["http://example.com/callback"],
+        token_endpoint_auth_method: "none",
+      })
+    ).rejects.toEqual(
+      new McpOAuthError(
+        "invalid_request",
+        "Redirect URIs must be exact HTTPS URLs or loopback HTTP URLs with explicit ports and no fragments."
+      )
+    );
+
+    expect(createMcpOauthClientMock).not.toHaveBeenCalled();
+  });
+
+  it("accepts localhost redirect uris for native public clients", async () => {
+    createMcpOauthClientMock.mockResolvedValueOnce({
+      clientName: "Claude Code",
+      clientUri: null,
+      logoUri: null,
+      publicClientId: "mcp_client_test",
+      redirectUris: ["http://localhost:49152/callback"],
+    });
+
+    await expect(
+      registerMcpOAuthClient(db, {
+        client_name: "Claude Code",
+        redirect_uris: ["http://localhost:49152/callback"],
+        token_endpoint_auth_method: "none",
+      })
+    ).resolves.toMatchObject({
+      client_id: "mcp_client_test",
+      redirect_uris: ["http://localhost:49152/callback"],
+      token_endpoint_auth_method: "none",
+    });
+
+    expect(createMcpOauthClientMock).toHaveBeenCalledWith(
+      db,
+      expect.objectContaining({
+        clientName: "Claude Code",
+        redirectUris: ["http://localhost:49152/callback"],
+      })
+    );
+  });
+
+  it("rejects localhost-like http redirect uris", async () => {
+    await expect(
+      registerMcpOAuthClient(db, {
+        client_name: "Untrusted",
+        redirect_uris: ["http://app.localhost:49152/callback"],
+        token_endpoint_auth_method: "none",
+      })
+    ).rejects.toEqual(
+      new McpOAuthError(
+        "invalid_request",
+        "Redirect URIs must be exact HTTPS URLs or loopback HTTP URLs with explicit ports and no fragments."
+      )
+    );
+
+    expect(createMcpOauthClientMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects loopback http redirect uris without an explicit port", async () => {
+    await expect(
+      registerMcpOAuthClient(db, {
+        client_name: "Untrusted",
+        redirect_uris: ["http://127.0.0.1/callback"],
+        token_endpoint_auth_method: "none",
+      })
+    ).rejects.toEqual(
+      new McpOAuthError(
+        "invalid_request",
+        "Redirect URIs must be exact HTTPS URLs or loopback HTTP URLs with explicit ports and no fragments."
+      )
+    );
+
+    expect(createMcpOauthClientMock).not.toHaveBeenCalled();
+  });
+
   it("rejects wildcard redirect uris", async () => {
     await expect(
       registerMcpOAuthClient(db, {

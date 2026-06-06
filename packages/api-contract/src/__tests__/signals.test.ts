@@ -113,12 +113,14 @@ describe("signal schemas", () => {
         input: "Review this profile",
         status: "queued",
         classification: null,
+        entityLinks: [],
         visibilityScope: "user",
         createdAt: "2026-05-30T00:00:00.000Z",
         updatedAt: "2026-05-30T00:00:00.000Z",
       })
     ).toMatchObject({
       classification: null,
+      entityLinks: [],
       visibilityScope: "user",
     });
   });
@@ -516,6 +518,26 @@ describe("signal schemas", () => {
           ...baseClassification,
           routing: teamPeopleRouting,
         },
+        entityLinks: [
+          {
+            targetType: "person",
+            localEntityKey: "person_1",
+            label: "Jordi",
+            mentionKind: "name",
+            anchorText: "Jordi",
+            anchorOccurrence: 1,
+            extractionMethod: "ai",
+            rationale: "Jordi is explicitly named.",
+            confidence: 0.73,
+            resolvedPerson: {
+              id: "person_123e4567-e89b-12d3-a456-426614174000",
+              displayName: "Jordi",
+              identityProvider: "email",
+              identityType: "email",
+              identityValue: "jordi@doccy.com.au",
+            },
+          },
+        ],
         visibilityScope: "team",
         createdAt: "2026-05-30T00:00:00.000Z",
         updatedAt: "2026-05-30T00:00:00.000Z",
@@ -525,6 +547,14 @@ describe("signal schemas", () => {
         disposition: "actionable",
         routing: { visibility: { scope: "team" } },
       },
+      entityLinks: [
+        expect.objectContaining({
+          label: "Jordi",
+          resolvedPerson: expect.objectContaining({
+            id: "person_123e4567-e89b-12d3-a456-426614174000",
+          }),
+        }),
+      ],
       visibilityScope: "team",
     });
   });

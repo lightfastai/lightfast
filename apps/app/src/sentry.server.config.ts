@@ -1,7 +1,5 @@
 import { LIGHTFAST_AGENT_RUNTIME_BRAINTRUST_PARENT } from "@repo/ai/telemetry";
 import * as Sentry from "@sentry/nextjs";
-import { TRPCError } from "@trpc/server";
-import { getHTTPStatusCodeFromError } from "@trpc/server/http";
 import { registerBraintrustOTel } from "@vendor/braintrust/otel";
 import { NonRetriableError } from "@vendor/inngest";
 
@@ -13,9 +11,6 @@ const beforeSend: NonNullable<
   Parameters<typeof Sentry.init>[0]["beforeSend"]
 > = (event, hint) => {
   const err = hint?.originalException;
-  if (err instanceof TRPCError && getHTTPStatusCodeFromError(err) < 500) {
-    return null;
-  }
   if (err instanceof NonRetriableError) {
     return null;
   }

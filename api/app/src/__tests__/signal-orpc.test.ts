@@ -6,6 +6,7 @@ const getActiveOrgBindingMock = vi.fn();
 const getCurrentOrgConnectorConnectionMock = vi.fn();
 const createSignalForActorMock = vi.fn();
 const getVisibleSignalByPublicIdMock = vi.fn();
+const listSignalEntityLinksForSignalMock = vi.fn();
 
 vi.mock("@vendor/unkey/server", () => ({
   getUnkeyClient: () => ({
@@ -18,6 +19,7 @@ vi.mock("@db/app", () => ({
   getActiveOrgBinding: getActiveOrgBindingMock,
   getCurrentOrgConnectorConnection: getCurrentOrgConnectorConnectionMock,
   getVisibleSignalByPublicId: getVisibleSignalByPublicIdMock,
+  listSignalEntityLinksForSignal: listSignalEntityLinksForSignalMock,
 }));
 
 vi.mock("../signals/service", () => ({
@@ -56,6 +58,7 @@ beforeEach(() => {
   getCurrentOrgConnectorConnectionMock.mockReset();
   createSignalForActorMock.mockReset();
   getVisibleSignalByPublicIdMock.mockReset();
+  listSignalEntityLinksForSignalMock.mockReset().mockResolvedValue([]);
 
   verifyMock.mockResolvedValue(verifyResult());
   getCurrentOrgConnectorConnectionMock.mockResolvedValue({
@@ -205,9 +208,17 @@ describe("orpcRouter.signals", () => {
       status: "classified",
       visibilityScope: "team",
       classification: { kind: "review" },
+      entityLinks: [],
       createdAt: "2026-05-21T00:00:00.000Z",
       updatedAt: "2026-05-21T00:01:00.000Z",
     });
+    expect(listSignalEntityLinksForSignalMock).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        clerkOrgId: "org_test",
+        signalId: "signal_123e4567-e89b-12d3-a456-426614174000",
+      }
+    );
   });
 
   it("returns NOT_FOUND for missing or wrong-org signals", async () => {

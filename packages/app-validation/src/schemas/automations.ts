@@ -1,3 +1,4 @@
+import { connectableConnectorProviderSchema } from "@repo/connector-contract";
 import { z } from "zod";
 
 export const AUTOMATION_NAME_MAX_LENGTH = 120;
@@ -85,6 +86,9 @@ export const automationScheduleSchema = z.discriminatedUnion("kind", [
 ]);
 
 export const createAutomationSchema = z.object({
+  connectorProvider: connectableConnectorProviderSchema
+    .nullable()
+    .default(null),
   name: z.string().trim().min(1).max(AUTOMATION_NAME_MAX_LENGTH),
   prompt: z.string().trim().min(1).max(AUTOMATION_PROMPT_MAX_LENGTH),
   schedule: automationScheduleSchema,

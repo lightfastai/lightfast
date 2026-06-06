@@ -9,6 +9,7 @@ const serveMock = vi.fn(() => routeHandlers);
 const inngestClient = { id: "app-inngest-client" };
 const systemHealth = { id: "system-health" };
 const classifySignal = { id: "classify-signal" };
+const indexSignalEntities = { id: "index-signal-entities" };
 const classifyPeople = { id: "classify-people" };
 const cleanupDeveloperSandboxRuns = { id: "cleanup-developer-sandbox-runs" };
 const automationScheduler = { id: "automation-scheduler" };
@@ -18,6 +19,7 @@ const refreshSkillIndex = { id: "refresh-skill-index" };
 const refreshIdentityIndex = { id: "refresh-identity-index" };
 const reconcileSkillIndexes = { id: "reconcile-skill-indexes" };
 const reconcileIdentityIndexes = { id: "reconcile-identity-indexes" };
+const teamMemberReconciler = { id: "team-member-reconciler" };
 const queueLightfastIndexRefreshesFromSourceControl = {
   id: "queue-lightfast-index-refreshes-from-source-control",
 };
@@ -42,6 +44,10 @@ vi.mock("../inngest/workflow/system-health", () => ({
 
 vi.mock("../inngest/workflow/classify-signal", () => ({
   classifySignal,
+}));
+
+vi.mock("../inngest/workflow/index-signal-entities", () => ({
+  indexSignalEntities,
 }));
 
 vi.mock("../inngest/workflow/classify-people", () => ({
@@ -80,6 +86,10 @@ vi.mock("../inngest/workflow/reconcile-identity-indexes", () => ({
   reconcileIdentityIndexes,
 }));
 
+vi.mock("../inngest/workflow/team-member-reconciler", () => ({
+  teamMemberReconciler,
+}));
+
 vi.mock("../inngest/workflow/queue-skill-refresh-from-source-control", () => ({
   queueLightfastIndexRefreshesFromSourceControl,
 }));
@@ -97,6 +107,7 @@ describe("createInngestRouteContext", () => {
       functions: [
         systemHealth,
         classifySignal,
+        indexSignalEntities,
         classifyPeople,
         cleanupDeveloperSandboxRuns,
         automationScheduler,
@@ -106,6 +117,7 @@ describe("createInngestRouteContext", () => {
         refreshIdentityIndex,
         reconcileSkillIndexes,
         reconcileIdentityIndexes,
+        teamMemberReconciler,
         queueLightfastIndexRefreshesFromSourceControl,
       ],
       serveOrigin: "https://lightfast.localhost",

@@ -45,11 +45,23 @@ describe("formatCaller", () => {
       "Automation run_1"
     );
     expect(
-      formatCaller(makeRow({ calledByKind: "user", calledByUserId: "user_42" }))
-    ).toBe("User user_42");
+      formatCaller(
+        makeRow({
+          calledByKind: "user",
+          calledByUserId: "user_42",
+          calledByUsername: "ada-dev",
+        })
+      )
+    ).toBe("ada-dev");
     expect(formatCaller(makeRow({ calledByKind: "system" }))).toBe(
       "System run_1"
     );
+  });
+
+  it("falls back to the stable user id when Clerk username enrichment is unavailable", () => {
+    expect(
+      formatCaller(makeRow({ calledByKind: "user", calledByUserId: "user_42" }))
+    ).toBe("user_42");
   });
 });
 

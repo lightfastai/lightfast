@@ -12,6 +12,7 @@ const GITHUB_APP_ENV_KEYS = [
 const LINEAR_ENV_KEYS = ["LINEAR_CLIENT_ID", "LINEAR_CLIENT_SECRET"] as const;
 
 const MUTATED_ENV_KEYS = [
+  "BRAINTRUST_API_KEY",
   "CLERK_SECRET_KEY",
   "CONNECTOR_MCP_AUTH_SECRET",
   "ENCRYPTION_KEY",
@@ -42,6 +43,7 @@ describe("api app env", () => {
     const consoleErrorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
+    process.env.BRAINTRUST_API_KEY = "bt_test_key";
     process.env.CLERK_SECRET_KEY = "sk_test_fake-secret-key-for-tests";
     process.env.INNGEST_APP_NAME = "lightfast-test";
     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY =
@@ -58,6 +60,24 @@ describe("api app env", () => {
     expect(
       consoleErrorSpy.mock.calls.some((call) =>
         JSON.stringify(call).includes("ENCRYPTION_KEY")
+      )
+    ).toBe(true);
+  });
+
+  it("requires BRAINTRUST_API_KEY during env module evaluation", async () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    setValidBaseEnv("production");
+    delete process.env.BRAINTRUST_API_KEY;
+    vi.resetModules();
+
+    await expect(import("../env")).rejects.toThrow(
+      "Invalid environment variables"
+    );
+    expect(
+      consoleErrorSpy.mock.calls.some((call) =>
+        JSON.stringify(call).includes("BRAINTRUST_API_KEY")
       )
     ).toBe(true);
   });
@@ -87,21 +107,12 @@ describe("api app env", () => {
     "development",
     "preview",
     "production",
-  ] as const)("requires Linear env during %s env module evaluation", async (vercelEnv) => {
-    const consoleErrorSpy = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => undefined);
+  ] as const)("allows Linear env to be absent during %s env module evaluation", async (vercelEnv) => {
     setValidBaseEnv(vercelEnv);
     unsetLinearEnv();
     vi.resetModules();
 
-    await expect(import("../env")).rejects.toThrow(
-      "Invalid environment variables"
-    );
-    const loggedErrors = JSON.stringify(consoleErrorSpy.mock.calls);
-    for (const key of LINEAR_ENV_KEYS) {
-      expect(loggedErrors).toContain(key);
-    }
+    await expect(import("../env")).resolves.toHaveProperty("env");
   });
 });
 
@@ -114,9 +125,17 @@ function restoreEnv(name: string, value: string | undefined) {
 }
 
 function setValidBaseEnv(vercelEnv: "development" | "preview" | "production") {
+  process.env.BRAINTRUST_API_KEY = "bt_test_key";
   process.env.CLERK_SECRET_KEY = "sk_test_fake-secret-key-for-tests";
   process.env.CONNECTOR_MCP_AUTH_SECRET = "x".repeat(32);
   process.env.ENCRYPTION_KEY = "0".repeat(64);
+  process.env.GITHUB_APP_CLIENT_ID = "github_client_test";
+  process.env.GITHUB_APP_CLIENT_SECRET = "github_secret_test";
+  process.env.GITHUB_APP_ID = "123456";
+  process.env.GITHUB_APP_PRIVATE_KEY =
+    "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----";
+  process.env.GITHUB_APP_SLUG = "lightfast-test";
+  process.env.GITHUB_APP_WEBHOOK_SECRET = "github_webhook_secret_test";
   process.env.INNGEST_APP_NAME = "lightfast-test";
   process.env.LINEAR_CLIENT_ID = "linear_client_test";
   process.env.LINEAR_CLIENT_SECRET = "linear_secret_test";

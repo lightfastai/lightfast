@@ -13,6 +13,7 @@ import {
   Tag,
   Users,
 } from "lucide-react";
+import Link from "next/link";
 import type { ReactNode } from "react";
 import {
   formatSignalConfidence,
@@ -66,6 +67,69 @@ function BodySection({
   );
 }
 
+function EntityLinksSection({
+  links,
+  slug,
+}: {
+  links: NonNullable<SignalDetailRow["entityLinks"]>;
+  slug: string;
+}) {
+  if (links.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
+        Linked people
+      </h3>
+      <div className="flex flex-col gap-2">
+        {links.map((link) => {
+          const content = (
+            <>
+              <span className="min-w-0 flex-1 truncate text-foreground text-sm">
+                {link.resolvedPerson?.displayName ?? link.label}
+              </span>
+              <span className="shrink-0 font-mono text-muted-foreground text-xs">
+                {link.mentionKind}
+              </span>
+              {link.resolvedPerson ? null : (
+                <Badge
+                  className="shrink-0 text-muted-foreground"
+                  variant="outline"
+                >
+                  Unresolved
+                </Badge>
+              )}
+            </>
+          );
+
+          if (link.resolvedPerson) {
+            return (
+              <Link
+                className="flex min-h-9 items-center gap-2 rounded-md border border-border/60 px-3 py-2 hover:bg-muted/30"
+                href={`/${slug}/people?person=${link.resolvedPerson.id}`}
+                key={link.localEntityKey}
+              >
+                {content}
+              </Link>
+            );
+          }
+
+          return (
+            <div
+              className="flex min-h-9 items-center gap-2 rounded-md border border-border/60 px-3 py-2"
+              key={link.localEntityKey}
+            >
+              {content}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /**
  * The header seeds instantly from the cached projection (`item`); the body
  * (`input`, `nextAction`, `rationale`, error fields, `updatedAt`) comes from the
@@ -77,12 +141,14 @@ export function SignalDetailContent({
   detail,
   item,
   onCopyLink,
+  slug,
 }: {
   bodyLoading: boolean;
   closeSlot?: ReactNode;
   detail?: SignalDetailRow;
   item: SignalListItem;
   onCopyLink: () => void;
+  slug: string;
 }) {
   const classification = detail?.classification ?? item.classification;
   const title = classification?.title ?? getSignalTitle(item);
@@ -175,6 +241,9 @@ export function SignalDetailContent({
         {detail ? (
           <div className="flex flex-col gap-5">
             <BodySection label="Input">{detail.input}</BodySection>
+            {detail.entityLinks?.length ? (
+              <EntityLinksSection links={detail.entityLinks} slug={slug} />
+            ) : null}
             {summary ? (
               <BodySection label="Summary">{summary}</BodySection>
             ) : null}

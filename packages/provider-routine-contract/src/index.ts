@@ -7,7 +7,7 @@ import { z } from "zod";
 export const providerToolNameSchema = z
   .string()
   .min(1)
-  .regex(/^[a-z0-9_.-]+$/, "Unsupported provider tool name");
+  .regex(/^[A-Za-z0-9_.-]+$/, "Unsupported provider tool name");
 export type ProviderToolName = z.infer<typeof providerToolNameSchema>;
 
 export const providerRoutineIdSchema = z.string().refine((routineId) => {
@@ -129,6 +129,51 @@ export const providerRoutineCallInputSchema = z
   .strict();
 export type ProviderRoutineCallInput = z.infer<
   typeof providerRoutineCallInputSchema
+>;
+
+export const mcpProviderRoutineActorSchema = z
+  .object({
+    clientId: z.string().min(1),
+    grantId: z.string().min(1),
+    kind: z.literal("mcp"),
+    orgId: z.string().min(1),
+    userId: z.string().min(1),
+  })
+  .strict();
+export type McpProviderRoutineActor = z.infer<
+  typeof mcpProviderRoutineActorSchema
+>;
+
+export const providerRoutineScopeContextSchema = z
+  .object({
+    providerRoutineRead: z.boolean(),
+    providerRoutineWrite: z.boolean(),
+  })
+  .strict();
+export type ProviderRoutineScopeContext = z.infer<
+  typeof providerRoutineScopeContextSchema
+>;
+
+export const mcpProviderRoutineFindCommandInputSchema = z
+  .object({
+    actor: mcpProviderRoutineActorSchema,
+    input: providerRoutineFindInputSchema,
+    scopes: providerRoutineScopeContextSchema,
+  })
+  .strict();
+export type McpProviderRoutineFindCommandInput = z.infer<
+  typeof mcpProviderRoutineFindCommandInputSchema
+>;
+
+export const mcpProviderRoutineCallCommandInputSchema = z
+  .object({
+    actor: mcpProviderRoutineActorSchema,
+    input: providerRoutineCallInputSchema,
+    scopes: providerRoutineScopeContextSchema,
+  })
+  .strict();
+export type McpProviderRoutineCallCommandInput = z.infer<
+  typeof mcpProviderRoutineCallCommandInputSchema
 >;
 
 export const providerRoutineCallStatusSchema = z.enum(["succeeded", "failed"]);
