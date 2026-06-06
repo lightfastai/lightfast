@@ -18,10 +18,10 @@ compliance jobs, stream rules, account-activity subscriptions, activity
 subscriptions, and connection termination belong to a separate developer
 platform connector or a later design.
 
-Write routines will be exposed through the automation provider-routine path,
-which already grants automation contexts `providerRoutineWrite`. Chat and
-agent-facing provider routines stay read-only unless a separate design expands
-those surfaces.
+Write routines will be exposed through the same connector policy as read
+routines. **Use in agents** grants full read/write access to agent surfaces, and
+**Use in automations** grants full read/write access to automations. This is a
+generic connector policy for the product, not an X-only exception.
 
 ## Current context
 
@@ -35,18 +35,20 @@ The X connector already exists as a Lightfast-hosted MCP bridge:
   bearer tokens, loads the current connector row, refreshes X OAuth tokens, and
   calls X API tools.
 - `api/app/src/services/connectors/runtime.ts` exposes connector MCP tools as
-  automation runtime tools and records provider routine calls.
+  runtime tools and records provider routine calls.
 - `api/app/src/services/automations/provider-routines.ts` already allows
   automation routines with write classification and has tests for an X
   `postTweet` write routine shape.
-- `packages/provider-routines` and the chat route remain agent/chat oriented.
-  Chat explicitly describes connected provider routines as read-only.
+- `packages/provider-routines` and the chat route are currently agent/chat
+  oriented. Chat explicitly describes connected provider routines as read-only
+  today; this design changes that policy when the connector is enabled for
+  agents.
 - `emulators/x` covers OAuth, user lookup, and read-only post endpoints.
 
 The previous X connector design intentionally scoped X to read-only tools
 because the connector only had coarse org-level enablement. That changed with
-the automation AI execution direction: automations are explicitly allowed to
-use write-capable provider routines when the automation prompt requires them.
+the new connector policy: agents and automations are explicitly allowed to use
+write-capable provider routines when the relevant connector toggle is enabled.
 
 Official X sources checked for this design:
 
@@ -65,16 +67,17 @@ Official X sources checked for this design:
 ## Goals
 
 - Add all social/account user-context X write routines that are useful for
-  Lightfast automations.
+  Lightfast agents and automations.
 - Keep existing X read routines available.
 - Request all OAuth scopes needed for the social/account read-write surface.
 - Preserve one org-scoped X connection per Lightfast org.
 - Keep raw X OAuth tokens server-side in the existing encrypted connector row.
 - Keep Lightfast MCP bearer tokens as the app-hosted bridge auth boundary.
-- Present write routines through automation provider routines, with routine
-  classification set to `write`.
-- Keep chat and agent surfaces read-only unless they are separately designed.
-- Store provider routine ledger rows for every write attempt with redacted
+- Present write routines through provider routines for both agent and automation
+  callers, with routine classification set to `write`.
+- Treat `enabledForAgents` and `enabledForAutomations` as the current access
+  boundaries for full read/write connector use.
+- Store provider routine ledger rows for every connector call with redacted
   provider inputs and outputs.
 - Make the tool implementation data-driven enough that adding or removing X
   operations is a registry edit, not a giant switch statement.
@@ -91,10 +94,16 @@ Official X sources checked for this design:
   - X activity subscriptions;
   - compliance jobs;
   - connection termination.
-- No public third-party MCP client write surface.
-- No raw provider payload persistence in automation run output.
+- No anonymous, unscoped, or raw-provider-token MCP write surface. Hosted MCP
+  and native/client agent surfaces may write only through existing Lightfast
+  auth, provider-routine scopes, and connector enablement.
+- No raw provider payload persistence in automation run outputs or agent
+  transcript artifacts.
 - No per-tool UI toggles in the Connectors page.
-- No interactive approval checkpoint before automation write routines.
+- No interactive approval checkpoint before agent or automation write routines.
+- No security upgrade beyond the existing connector toggles in this pass. Later
+  safeguards should be tracked as GitHub issues: per-tool toggles, approval
+  gates, high-risk action warnings, and optional read-only modes.
 - No automatic migration of already-connected X rows to broader scopes without
   admin reconnection.
 - No manual SQL migration files. If implementation discovers a concrete schema
@@ -260,8 +269,9 @@ auth/token failure.
 - `sendChatTypingIndicator`
 - `addUserPublicKey`
 
-DM and chat tools are included because they are account/social actions. They
-should remain automation-only in this pass.
+DM and chat tools are included because they are account/social actions. They are
+available to agents when **Use in agents** is enabled and to automations when
+**Use in automations** is enabled.
 
 ### Media
 
@@ -373,11 +383,15 @@ wording, for example:
 
 ```text
 Search posts, manage engagement, send messages, and publish through X from
-Lightfast automations.
+Lightfast agents and automations.
 ```
 
 The connector detail sheet can keep the same tool list. It should not need
-per-tool toggles for this pass.
+per-tool toggles for this pass. The connect/reconnect copy and both connector
+toggles should make the full read/write implication clear:
+
+- **Use in agents** lets enabled agent surfaces read and write through X.
+- **Use in automations** lets automations read and write through X.
 
 ### Provider routine policy
 
@@ -386,9 +400,10 @@ names explicitly. Unknown X routines should default to
 `unknown_write_default`, not read. The current `classifyXRoutine` default to
 `read` is unsafe once X has broad writes.
 
-Automation provider routines already allow write scope. Chat and generic agent
-provider routines should continue to pass read-only scopes or request
-`readOnly: true` so write tools are not exposed.
+Agent and automation provider routines should grant write scope when the
+corresponding connector toggle is enabled. Generic agent/chat provider routines
+should delegate to the connector runtime for all connectable providers instead
+of staying Linear-only with provider-specific adapters.
 
 ### Runtime and ledgers
 
@@ -397,12 +412,14 @@ call rows and redacts inputs/outputs. The implementation should keep that path.
 
 Requirements:
 
-- Every automation write call must create a provider routine call row before
-  provider execution.
+- Every agent and automation connector call must create a provider routine call
+  row before provider execution.
 - `providerAttempted` is set before the X bridge call.
 - Success stores only redacted output presence.
 - Failure stores safe error code/message.
 - Provider input and output bodies are never logged or stored raw.
+- `sourceSurface` records the caller surface, including `chat`, `hosted_mcp`,
+  `native_cli`, or `automation`.
 
 ## Emulator
 
@@ -458,8 +475,15 @@ Focused test targets:
   - discovery filters partial granted scopes.
 - `api/app/src/__tests__/connectors-runtime.test.ts`
   - write routines are callable by automations through provider routine ledger;
-  - chat/system calls without automation context do not get accidental write
-    exposure.
+  - write routines are callable by agent/chat contexts when enabled for agents;
+  - source surfaces and caller attribution are recorded for both agent and
+    automation calls.
+- `packages/provider-routines/src/__tests__/find.test.ts`
+  - agent routine discovery includes all active tools for connectors enabled
+    for agents, including write-classified tools.
+- `packages/provider-routines/src/__tests__/call.test.ts`
+  - agent routine calls delegate to the connector runtime for all connectable
+    providers and record provider routine ledger rows.
 - `packages/provider-routines/src/__tests__/policy.test.ts`
   - known X writes classify as `write`;
   - unknown X routines default to `unknown_write_default`.
@@ -484,11 +508,15 @@ pnpm --filter @repo/x-emulator test
   stored read scopes.
 - Admins must reconnect X to grant write scopes.
 - Tool refresh after reconnect discovers the expanded social/account tool set.
-- Automations using X can find and call write routines only when X is active,
-  enabled for automations, and the relevant tool is present in the current
+- Automations using X can find and call read/write routines only when X is
+  active, enabled for automations, and the relevant tool is present in the
+  current manifest.
+- Agent surfaces using X can find and call read/write routines only when X is
+  active, enabled for agents, and the relevant tool is present in the current
   manifest.
-- Chat keeps using read-only instructions and should not see write routines in
-  this pass.
+- Workspace chat should remove its current read-only provider-routine
+  instruction and grant write routine scope when connectors are enabled for
+  agents.
 
 ## Open implementation notes
 
