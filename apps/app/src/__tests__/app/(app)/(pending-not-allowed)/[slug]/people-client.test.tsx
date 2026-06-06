@@ -227,4 +227,18 @@ describe("PeopleClient", () => {
 
     expect(screen.getByText("Team member")).toBeInTheDocument();
   });
+
+  it("renders former team member badges in rows", () => {
+    mockRows([
+      {
+        ...personRow,
+        memberStatus: "former",
+        personSource: "team_member",
+      },
+    ]);
+
+    render(<PeopleClient />);
+
+    expect(screen.getByText("Former team member")).toBeInTheDocument();
+  });
 });

@@ -114,6 +114,28 @@ describe("PeopleDetailSheet", () => {
     expect(screen.getByText("Team member")).toBeInTheDocument();
     expect(screen.getByText("Role")).toBeInTheDocument();
     expect(screen.getAllByText("Member")).toHaveLength(2);
-    expect(screen.getByText("Synced")).toBeInTheDocument();
+    expect(screen.getByText("Synced from Clerk")).toBeInTheDocument();
+  });
+
+  it("renders former team member metadata", () => {
+    render(
+      <PeopleDetailSheet
+        initialPerson={{
+          ...personRow,
+          memberRole: "org:admin",
+          memberStatus: "former",
+          memberSyncedAt: new Date("2026-05-27T01:02:00.000Z"),
+          personSource: "team_member",
+        }}
+        onOpenChange={vi.fn()}
+        publicId={personRow.publicId}
+        slug="acme"
+      />
+    );
+
+    expect(screen.getByText("Former team member")).toBeInTheDocument();
+    expect(screen.getByText("Role")).toBeInTheDocument();
+    expect(screen.getByText("Admin")).toBeInTheDocument();
+    expect(screen.getByText("Synced from Clerk")).toBeInTheDocument();
   });
 });

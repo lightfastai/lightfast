@@ -85,11 +85,11 @@ export function getMemberStatusLabel(status: PersonMemberStatus) {
 }
 
 export function getMemberStatusBadgeLabel(status: PersonMemberStatus) {
-  return status === "active" ? "Team member" : "Former";
+  return status === "active" ? "Team member" : "Former team member";
 }
 
 export function getMemberStatusDetailLabel(status: PersonMemberStatus) {
-  return status === "active" ? "Team member" : "Former member";
+  return status === "active" ? "Team member" : "Former team member";
 }
 
 /**

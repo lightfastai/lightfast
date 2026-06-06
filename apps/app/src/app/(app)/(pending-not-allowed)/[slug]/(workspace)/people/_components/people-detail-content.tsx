@@ -195,7 +195,10 @@ export function PeopleDetailContent({
             </PropertyRow>
           ) : null}
           {person.memberSyncedAt ? (
-            <PropertyRow icon={<Clock3 className={iconClass} />} label="Synced">
+            <PropertyRow
+              icon={<Clock3 className={iconClass} />}
+              label="Synced from Clerk"
+            >
               {formatRelativeTimeToNow(new Date(person.memberSyncedAt), {
                 addSuffix: true,
               })}

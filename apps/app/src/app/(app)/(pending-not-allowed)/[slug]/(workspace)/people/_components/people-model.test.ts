@@ -25,7 +25,8 @@ describe("people team member model", () => {
   it("formats source and member status labels", () => {
     expect(getPersonSourceLabel("team_member")).toBe("Team member");
     expect(getMemberStatusLabel("former")).toBe("Former member");
-    expect(getMemberStatusBadgeLabel("former")).toBe("Former");
+    expect(getMemberStatusBadgeLabel("former")).toBe("Former team member");
     expect(getMemberStatusDetailLabel("active")).toBe("Team member");
+    expect(getMemberStatusDetailLabel("former")).toBe("Former team member");
   });
 });
