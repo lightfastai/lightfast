@@ -8,10 +8,11 @@ import {
 } from "@db/app";
 import { db } from "@db/app/client";
 
+import { env } from "../../env";
+import { executeAutomationRun } from "../../services/automations/ai-execution";
+import { getAutomationExecutionFailure } from "../../services/automations/errors";
 import { inngest } from "../client";
 import { appEvents } from "../schemas/app";
-
-const SCAFFOLD_SCHEMA_VERSION = "automation.run.scaffold.v1";
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -97,19 +98,45 @@ export const runAutomation = inngest.createFunction(
       return { status: "skipped" };
     }
 
-    const output = {
-      automationId: automation.publicId,
-      message: "Automation scaffold executed. AI execution is not enabled.",
-      promptPreview: automation.prompt.slice(0, 160),
-      runId,
-      schemaVersion: SCAFFOLD_SCHEMA_VERSION,
-    };
+    const execution = await step.ai.wrap(
+      "execute automation",
+      async (request) => {
+        try {
+          return {
+            output: await executeAutomationRun(request),
+            status: "completed" as const,
+          };
+        } catch (error) {
+          return {
+            failure: getAutomationExecutionFailure(error),
+            status: "failed" as const,
+          };
+        }
+      },
+      {
+        automation,
+        deploymentEnvironment: env.VERCEL_ENV,
+        run,
+      }
+    );
+
+    if (execution.status === "failed") {
+      await step.run("mark automation run failed", () =>
+        markAutomationRunFailed(db, {
+          clerkOrgId,
+          errorCode: execution.failure.errorCode,
+          errorMessage: execution.failure.errorMessage,
+          publicId: runId,
+        })
+      );
+      return { status: "failed" };
+    }
 
     await step.run("mark automation run completed", () =>
       markAutomationRunCompleted(db, {
         clerkOrgId,
         publicId: runId,
-        output,
+        output: execution.output,
       })
     );
 
