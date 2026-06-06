@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const assertHostedMcpOrgAccessMock = vi.fn();
 const createSignalForActorMock = vi.fn();
 const getVisibleSignalByPublicIdMock = vi.fn();
+const listSignalEntityLinksForSignalMock = vi.fn();
 
 vi.mock("@api/app/mcp-oauth/resource-access", () => ({
   assertHostedMcpOrgAccess: assertHostedMcpOrgAccessMock,
@@ -15,6 +16,7 @@ vi.mock("@api/app/signals/service", () => ({
 
 vi.mock("@db/app", () => ({
   getVisibleSignalByPublicId: getVisibleSignalByPublicIdMock,
+  listSignalEntityLinksForSignal: listSignalEntityLinksForSignalMock,
 }));
 
 vi.mock("@db/app/client", () => ({
@@ -70,6 +72,7 @@ describe("internal MCP signal route", () => {
     assertHostedMcpOrgAccessMock.mockResolvedValue(undefined);
     createSignalForActorMock.mockReset();
     getVisibleSignalByPublicIdMock.mockReset();
+    listSignalEntityLinksForSignalMock.mockReset().mockResolvedValue([]);
   });
 
   it("rejects missing service bearer tokens", async () => {
@@ -279,6 +282,7 @@ describe("internal MCP signal route", () => {
     await expect(res.json()).resolves.toEqual({
       classification: null,
       createdAt: "2026-06-01T00:00:00.000Z",
+      entityLinks: [],
       id: "signal_123e4567-e89b-12d3-a456-426614174000",
       input: "Production smoke signal",
       status: "queued",
@@ -298,6 +302,13 @@ describe("internal MCP signal route", () => {
         clerkOrgId: "org_test",
         createdByUserId: "user_test",
         publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
+      }
+    );
+    expect(listSignalEntityLinksForSignalMock).toHaveBeenCalledWith(
+      { kind: "mock-db" },
+      {
+        clerkOrgId: "org_test",
+        signalId: "signal_123e4567-e89b-12d3-a456-426614174000",
       }
     );
   });

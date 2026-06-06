@@ -339,6 +339,18 @@ export {
 } from "./utils/people-views";
 export * from "./utils/provider-routine-calls";
 export {
+  buildSignalEntityLinkResolutionHints,
+  listSignalEntityLinksForSignal,
+  type ReplaceSignalEntityLinksInput,
+  type ReplaceSignalEntityLinksResult,
+  reconcileSignalEntityLinksForPeople,
+  replaceSignalEntityLinks,
+  type SignalEntityLinkDetail,
+  type SignalEntityLinkReconciliationPerson,
+  type SignalEntityLinkResolutionHints,
+  type SignalEntityLinkResolvedPerson,
+} from "./utils/signal-entity-links";
+export {
   type CreateSignalViewParams,
   createSignalView,
   type DeleteSignalViewParams,

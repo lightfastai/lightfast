@@ -88,7 +88,7 @@ vi.mock("@tanstack/react-virtual", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/lightfast/signals",
+  useParams: () => ({ slug: "lightfast" }),
 }));
 
 const openCreateSignalMock = vi.fn();

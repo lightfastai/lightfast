@@ -5,6 +5,7 @@ import type {
 } from "@db/app";
 import {
   markFormerTeamMembersMissingFromSync,
+  reconcileSignalEntityLinksForPeople,
   syncOrgTeamMemberPeople,
 } from "@db/app";
 import type { clerkClient, OrganizationMembership } from "@vendor/clerk/server";
@@ -122,6 +123,11 @@ export async function syncTeamMembersForOrg(input: {
       syncedAt: input.syncedAt,
     }
   );
+
+  await reconcileSignalEntityLinksForPeople(input.db, {
+    clerkOrgId: input.clerkOrgId,
+    people: synced.people,
+  });
 
   const membersMarkedFormer = await markFormerTeamMembersMissingFromSync(
     input.db,

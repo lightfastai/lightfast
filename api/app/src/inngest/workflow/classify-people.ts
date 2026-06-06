@@ -1,4 +1,8 @@
-import { getSignalByPublicId, upsertPeopleFromCandidates } from "@db/app";
+import {
+  getSignalByPublicId,
+  reconcileSignalEntityLinksForPeople,
+  upsertPeopleFromCandidates,
+} from "@db/app";
 import { db } from "@db/app/client";
 import {
   buildPeopleClassificationRequest,
@@ -102,6 +106,17 @@ export const classifyPeople = inngest.createFunction(
       })
     );
 
-    return { people: people.length, status: "classified" };
+    const reconciled = await step.run("reconcile signal entity links", () =>
+      reconcileSignalEntityLinksForPeople(db, {
+        clerkOrgId,
+        people,
+      })
+    );
+
+    return {
+      entityLinksResolved: reconciled.resolved,
+      people: people.length,
+      status: "classified",
+    };
   }
 );

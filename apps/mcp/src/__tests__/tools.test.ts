@@ -78,6 +78,7 @@ function dependencies(
       ],
     }),
     getVisibleSignalByPublicId: vi.fn().mockResolvedValue(signal()),
+    listSignalEntityLinksForSignal: vi.fn().mockResolvedValue([]),
     now: vi.fn(() => new Date("2026-06-01T00:00:00.000Z")),
     recordMcpAuditEvent: vi.fn().mockResolvedValue(undefined),
     version: "0.1.0-test",
@@ -170,6 +171,7 @@ describe("hosted MCP tools", () => {
     ).resolves.toEqual({
       classification: null,
       createdAt: "2026-06-01T00:00:00.000Z",
+      entityLinks: [],
       id: signalId,
       input: "Review this profile",
       status: "queued",
@@ -181,6 +183,10 @@ describe("hosted MCP tools", () => {
       clerkOrgId: "org_test",
       createdByUserId: "user_test",
       publicId: signalId,
+    });
+    expect(deps.listSignalEntityLinksForSignal).toHaveBeenCalledWith(db, {
+      clerkOrgId: "org_test",
+      signalId,
     });
   });
 
@@ -418,6 +424,7 @@ describe("hosted MCP tools", () => {
     vi.doMock("@db/app", () => ({
       db,
       getVisibleSignalByPublicId: vi.fn(),
+      listSignalEntityLinksForSignal: vi.fn(),
       recordMcpAuditEvent,
     }));
     vi.doMock("@api/app/mcp-oauth", () => {
@@ -464,6 +471,7 @@ describe("hosted MCP tools", () => {
     vi.doMock("@db/app", () => ({
       db,
       getVisibleSignalByPublicId: vi.fn(),
+      listSignalEntityLinksForSignal: vi.fn(),
       recordMcpAuditEvent,
     }));
     vi.doMock("@api/app/mcp-oauth", () => {
@@ -507,6 +515,7 @@ describe("hosted MCP tools", () => {
     const getSignalForActor = vi.fn().mockResolvedValue({
       classification: null,
       createdAt: "2026-06-01T00:00:00.000Z",
+      entityLinks: [],
       id: signalId,
       input: "Review this profile",
       status: "queued",
@@ -518,6 +527,7 @@ describe("hosted MCP tools", () => {
     vi.doMock("@db/app", () => ({
       db,
       getVisibleSignalByPublicId: vi.fn(),
+      listSignalEntityLinksForSignal: vi.fn(),
       recordMcpAuditEvent,
     }));
     vi.doMock("@api/app/mcp-oauth", () => {
@@ -571,6 +581,7 @@ describe("hosted MCP tools", () => {
     vi.doMock("@db/app", () => ({
       db,
       getVisibleSignalByPublicId: vi.fn(),
+      listSignalEntityLinksForSignal: vi.fn(),
       recordMcpAuditEvent,
     }));
     vi.doMock("@api/app/mcp-oauth", () => {

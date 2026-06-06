@@ -176,6 +176,13 @@
       "when": 1780737690542,
       "tag": "0024_hesitant_midnight",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1780745478317,
+      "tag": "0025_whole_mac_gargan",
+      "breakpoints": true
     }
   ]
 }

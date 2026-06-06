@@ -1,4 +1,4 @@
-import { getSignalByPublicId } from "@db/app";
+import { getSignalByPublicId, replaceSignalEntityLinks } from "@db/app";
 import { db } from "@db/app/client";
 import {
   buildSignalEntityLinkingRequest,
@@ -101,11 +101,21 @@ export const indexSignalEntities = inngest.createFunction(
       })
     );
 
+    const persisted = await step.run("persist entity links", () =>
+      replaceSignalEntityLinks(db, {
+        candidates,
+        clerkOrgId,
+        signalId,
+      })
+    );
+
     return {
       status: "indexed",
       deterministicCandidates: deterministicCandidates.length,
       aiCandidates: aiResult.candidates.length,
       candidates: candidates.length,
+      persistedLinks: persisted.links,
+      resolvedLinks: persisted.resolved,
     };
   }
 );

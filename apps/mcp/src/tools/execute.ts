@@ -105,6 +105,10 @@ export interface ExecuteHostedMcpToolDependencies {
       publicId: string;
     }
   ) => Promise<Signal | undefined>;
+  listSignalEntityLinksForSignal: (
+    db: Database,
+    input: { clerkOrgId: string; signalId: string }
+  ) => Promise<GetSignalOutput["entityLinks"]>;
   now: () => Date;
   providerRoutineLog?: ProviderRoutineServiceLog;
   recordMcpAuditEvent: (
@@ -351,11 +355,20 @@ async function executeParsedTool(input: {
       if (!signal) {
         throw new HostedMcpToolError("not_found", "Signal not found.", 404);
       }
+      const entityLinks =
+        await input.dependencies.listSignalEntityLinksForSignal(
+          input.dependencies.db,
+          {
+            clerkOrgId: input.context.orgId,
+            signalId: signal.publicId,
+          }
+        );
       return {
         id: signal.publicId,
         input: signal.input,
         status: signal.status,
         classification: signal.classification,
+        entityLinks,
         visibilityScope: signal.visibilityScope,
         createdAt: signal.createdAt.toISOString(),
         updatedAt: signal.updatedAt.toISOString(),
@@ -572,6 +585,7 @@ async function defaultDependencies(
       createSignalForActor: unavailableCreateSignalForActor,
       findProviderRoutines: unavailableFindProviderRoutines,
       getVisibleSignalByPublicId: dbApp.getVisibleSignalByPublicId,
+      listSignalEntityLinksForSignal: dbApp.listSignalEntityLinksForSignal,
     };
   }
 
@@ -584,6 +598,7 @@ async function defaultDependencies(
       createSignalForActor: appSignalIntake.createSignalForActorViaApp,
       findProviderRoutines: unavailableFindProviderRoutines,
       getVisibleSignalByPublicId: dbApp.getVisibleSignalByPublicId,
+      listSignalEntityLinksForSignal: dbApp.listSignalEntityLinksForSignal,
     };
   }
 
@@ -597,6 +612,7 @@ async function defaultDependencies(
       findProviderRoutines: unavailableFindProviderRoutines,
       getSignalForActor: appSignalIntake.getSignalForActorViaApp,
       getVisibleSignalByPublicId: dbApp.getVisibleSignalByPublicId,
+      listSignalEntityLinksForSignal: dbApp.listSignalEntityLinksForSignal,
     };
   }
 
@@ -609,6 +625,7 @@ async function defaultDependencies(
       createSignalForActor: unavailableCreateSignalForActor,
       findProviderRoutines: appProxyIntake.findProviderRoutinesViaApp,
       getVisibleSignalByPublicId: dbApp.getVisibleSignalByPublicId,
+      listSignalEntityLinksForSignal: dbApp.listSignalEntityLinksForSignal,
     };
   }
 
@@ -619,6 +636,7 @@ async function defaultDependencies(
     createSignalForActor: unavailableCreateSignalForActor,
     findProviderRoutines: unavailableFindProviderRoutines,
     getVisibleSignalByPublicId: dbApp.getVisibleSignalByPublicId,
+    listSignalEntityLinksForSignal: dbApp.listSignalEntityLinksForSignal,
   };
 }
 

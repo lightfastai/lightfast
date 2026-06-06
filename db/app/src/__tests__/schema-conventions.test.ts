@@ -109,6 +109,7 @@ describe("schema conventions", () => {
       "org-people-views.ts",
       "org-people.ts",
       "org-provider-routine-calls.ts",
+      "org-signal-entity-links.ts",
       "org-signal-views.ts",
       "org-signals.ts",
       "org-skill-index.ts",
