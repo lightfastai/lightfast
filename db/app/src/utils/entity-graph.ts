@@ -686,6 +686,23 @@ export async function listEntityPeople(
     .limit(normalizeLimit(input.limit));
 }
 
+export async function getEntityPersonByPublicId(
+  db: Database,
+  input: { clerkOrgId: string; publicId: string }
+): Promise<EntityPerson | undefined> {
+  const [row] = await db
+    .select()
+    .from(orgEntityPeople)
+    .where(
+      and(
+        eq(orgEntityPeople.clerkOrgId, input.clerkOrgId),
+        eq(orgEntityPeople.publicId, input.publicId)
+      )
+    )
+    .limit(1);
+  return row;
+}
+
 export interface ListEntityAccountsInput {
   clerkOrgId: string;
   limit?: number;
@@ -707,6 +724,23 @@ export async function listEntityAccounts(
     .where(and(...conditions))
     .orderBy(desc(orgEntityAccounts.updatedAt), desc(orgEntityAccounts.id))
     .limit(normalizeLimit(input.limit));
+}
+
+export async function getEntityAccountByPublicId(
+  db: Database,
+  input: { clerkOrgId: string; publicId: string }
+): Promise<EntityAccount | undefined> {
+  const [row] = await db
+    .select()
+    .from(orgEntityAccounts)
+    .where(
+      and(
+        eq(orgEntityAccounts.clerkOrgId, input.clerkOrgId),
+        eq(orgEntityAccounts.publicId, input.publicId)
+      )
+    )
+    .limit(1);
+  return row;
 }
 
 export interface ListEntityPersonAccountAffiliationsInput {

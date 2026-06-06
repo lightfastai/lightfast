@@ -73,6 +73,8 @@
     "@repo/app-validation": "workspace:^",
     "@repo/connector-contract": "workspace:*",
     "@repo/developer-connection-contract": "workspace:*",
+    "@repo/entity-graph-contract": "workspace:*",
+    "@repo/entity-resolution": "workspace:*",
     "@repo/github-app-contract": "workspace:*",
     "@repo/github-app-node": "workspace:*",
     "@repo/identity-contract": "workspace:*",

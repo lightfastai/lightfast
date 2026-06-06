@@ -13,7 +13,9 @@ import type {
 import {
   appendEntityObservation,
   appendResolutionCandidateVersionIfChanged,
+  getEntityAccountByPublicId,
   getEntityAccountEvidenceTrail,
+  getEntityPersonByPublicId,
   getEntityPersonEvidenceTrail,
   ingestEntityObservations,
   listEntityAccounts,
@@ -620,6 +622,25 @@ describe("entity graph utilities", () => {
     });
 
     expect(spies.limit).toHaveBeenCalledWith(10);
+  });
+
+  it("loads canonical people and accounts by org-scoped public ids", async () => {
+    const person = makeEntityPerson();
+    const account = makeEntityAccount();
+    const { db } = makeEntityGraphDb([[person], [account]]);
+
+    await expect(
+      getEntityPersonByPublicId(db, {
+        clerkOrgId: "org_test",
+        publicId: person.publicId,
+      })
+    ).resolves.toEqual(person);
+    await expect(
+      getEntityAccountByPublicId(db, {
+        clerkOrgId: "org_test",
+        publicId: account.publicId,
+      })
+    ).resolves.toEqual(account);
   });
 });
 
