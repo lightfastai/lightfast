@@ -53,8 +53,9 @@ export function createListData(
     indexDiagnostics: input.indexDiagnostics ?? [],
     repositoryUrl: input.repositoryUrl ?? "https://github.com/acme/.lightfast",
     snapshotVersion:
-      input.snapshotVersion ??
-      "100:1780272000000:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:fresh",
+      input.snapshotVersion === undefined
+        ? "100:1780272000000:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:fresh"
+        : input.snapshotVersion,
     skills: input.skills ?? [createSkill()],
   };
 }

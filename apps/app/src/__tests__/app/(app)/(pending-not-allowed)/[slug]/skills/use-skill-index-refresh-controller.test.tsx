@@ -2,15 +2,23 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createListData } from "./fixtures";
 
+type MutationOptions = { onSuccess?: () => void };
+
 const invalidateQueriesMock = vi.fn();
-const requestMutationOptionsMock = vi.fn((options: unknown) => options);
+const listQueryFilterMock = vi.fn(() => ({
+  queryKey: ["org", "workspace", "skills", "list"],
+}));
+const requestMutationOptionsMock = vi.fn((options: MutationOptions) => options);
 const mutateMock = vi.fn();
+let latestMutationOptions: MutationOptions | undefined;
 
 vi.mock("@tanstack/react-query", () => ({
-  useMutation: (options: unknown) => ({
-    mutate: mutateMock,
-    options,
-  }),
+  useMutation: (options: MutationOptions) => {
+    latestMutationOptions = options;
+    return {
+      mutate: mutateMock,
+    };
+  },
   useQueryClient: () => ({
     invalidateQueries: invalidateQueriesMock,
   }),
@@ -22,9 +30,7 @@ vi.mock("~/trpc/react", () => ({
       workspace: {
         skills: {
           list: {
-            queryFilter: () => ({
-              queryKey: ["org", "workspace", "skills", "list"],
-            }),
+            queryFilter: listQueryFilterMock,
           },
           requestRefresh: {
             mutationOptions: requestMutationOptionsMock,
@@ -41,8 +47,10 @@ const { useSkillIndexRefreshController } = await import(
 
 beforeEach(() => {
   invalidateQueriesMock.mockReset();
+  listQueryFilterMock.mockClear();
   requestMutationOptionsMock.mockClear();
   mutateMock.mockReset();
+  latestMutationOptions = undefined;
 });
 
 describe("useSkillIndexRefreshController", () => {
@@ -74,6 +82,36 @@ describe("useSkillIndexRefreshController", () => {
     expect(mutateMock).toHaveBeenCalledTimes(1);
   });
 
+  it("does not request refresh for a stale snapshot with a terminal refresh error", () => {
+    const stale = createListData({
+      snapshotVersion: "v-stale-failed",
+    });
+    stale.freshness.status = "stale";
+    stale.freshness.errorCode = "refresh_failed";
+
+    renderHook(() => useSkillIndexRefreshController(stale));
+
+    expect(mutateMock).not.toHaveBeenCalled();
+  });
+
+  it("requests one refresh for an unavailable snapshot without a version", async () => {
+    const unavailable = createListData({
+      snapshotVersion: null,
+    });
+    unavailable.freshness.status = "unavailable";
+
+    expect(unavailable.snapshotVersion).toBeNull();
+
+    const { rerender } = renderHook(
+      ({ snapshot }) => useSkillIndexRefreshController(snapshot),
+      { initialProps: { snapshot: unavailable } }
+    );
+
+    await waitFor(() => expect(mutateMock).toHaveBeenCalledTimes(1));
+    rerender({ snapshot: unavailable });
+    expect(mutateMock).toHaveBeenCalledTimes(1);
+  });
+
   it("requests refresh again when the stale snapshot version changes", async () => {
     const staleA = createListData({ snapshotVersion: "v-stale-a" });
     staleA.freshness.status = "stale";
@@ -88,5 +126,23 @@ describe("useSkillIndexRefreshController", () => {
     await waitFor(() => expect(mutateMock).toHaveBeenCalledTimes(1));
     rerender({ snapshot: staleB });
     await waitFor(() => expect(mutateMock).toHaveBeenCalledTimes(2));
+  });
+
+  it("invalidates the skills list query after a successful refresh request", async () => {
+    const stale = createListData({
+      snapshotVersion: "v-success",
+    });
+    stale.freshness.status = "stale";
+
+    renderHook(() => useSkillIndexRefreshController(stale));
+
+    await waitFor(() => expect(mutateMock).toHaveBeenCalledTimes(1));
+
+    latestMutationOptions?.onSuccess?.();
+
+    expect(listQueryFilterMock).toHaveBeenCalledTimes(1);
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: ["org", "workspace", "skills", "list"],
+    });
   });
 });

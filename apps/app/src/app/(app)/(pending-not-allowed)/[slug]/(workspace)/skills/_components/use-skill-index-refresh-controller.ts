@@ -11,6 +11,9 @@ export function useSkillIndexRefreshController(snapshot: SkillsListResult) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const requestedVersions = useRef(new Set<string>());
+  const hasTerminalRefreshError = Boolean(
+    snapshot.freshness.errorCode || snapshot.freshness.errorMessage
+  );
   const { mutate } = useMutation(
     trpc.org.workspace.skills.requestRefresh.mutationOptions({
       onSuccess: () => {
@@ -26,10 +29,18 @@ export function useSkillIndexRefreshController(snapshot: SkillsListResult) {
     if (!REFRESHABLE_STATUSES.has(snapshot.freshness.status)) {
       return;
     }
+    if (hasTerminalRefreshError) {
+      return;
+    }
     if (requestedVersions.current.has(version)) {
       return;
     }
     requestedVersions.current.add(version);
     mutate({});
-  }, [mutate, snapshot.freshness.status, snapshot.snapshotVersion]);
+  }, [
+    hasTerminalRefreshError,
+    mutate,
+    snapshot.freshness.status,
+    snapshot.snapshotVersion,
+  ]);
 }
