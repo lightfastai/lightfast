@@ -8,6 +8,16 @@ const mcpState = vi.hoisted(() => {
     }
   }
 
+  class MockStreamableHTTPError extends Error {
+    constructor(
+      readonly code: number | undefined,
+      message?: string
+    ) {
+      super(message);
+      this.name = "StreamableHTTPError";
+    }
+  }
+
   return {
     callTool: vi.fn(async () => ({
       content: [{ text: "done", type: "text" }],
@@ -31,6 +41,7 @@ const mcpState = vi.hoisted(() => {
       options: { authProvider?: unknown } | undefined;
       url: string;
     }>,
+    StreamableHTTPError: MockStreamableHTTPError,
     UnauthorizedError: MockUnauthorizedError,
   };
 });
@@ -47,6 +58,7 @@ vi.mock("@vendor/mcp", () => ({
       mcpState.transports.push({ options, url: url.toString() });
     }
   },
+  StreamableHTTPError: mcpState.StreamableHTTPError,
   UnauthorizedError: mcpState.UnauthorizedError,
 }));
 
@@ -156,6 +168,52 @@ describe("Granola MCP client helpers", () => {
       })
     ).rejects.toMatchObject({
       code: "GRANOLA_MCP_AUTH_REQUIRED",
+      name: "GranolaAppNodeError",
+    });
+  });
+
+  it("maps streamable HTTP 401 failures to auth required errors", async () => {
+    mcpState.callTool.mockRejectedValueOnce(
+      new mcpState.StreamableHTTPError(
+        401,
+        "Server returned 401 after successful authentication"
+      )
+    );
+
+    await expect(
+      callGranolaMcpTool({
+        authProvider,
+        endpoint: "https://mcp.granola.ai/mcp",
+        input: { query: "roadmap" },
+        name: "search_meetings",
+      })
+    ).rejects.toMatchObject({
+      code: "GRANOLA_MCP_AUTH_REQUIRED",
+      name: "GranolaAppNodeError",
+    });
+  });
+
+  it("maps malformed listing endpoints to generic MCP errors", async () => {
+    await expect(
+      listGranolaMcpTools({
+        authProvider,
+        endpoint: "not a url",
+      })
+    ).rejects.toMatchObject({
+      code: "GRANOLA_MCP_FAILED",
+      name: "GranolaAppNodeError",
+    });
+  });
+
+  it("maps malformed tool call endpoints to generic MCP errors", async () => {
+    await expect(
+      callGranolaMcpTool({
+        authProvider,
+        endpoint: "not a url",
+        name: "search_meetings",
+      })
+    ).rejects.toMatchObject({
+      code: "GRANOLA_MCP_FAILED",
       name: "GranolaAppNodeError",
     });
   });

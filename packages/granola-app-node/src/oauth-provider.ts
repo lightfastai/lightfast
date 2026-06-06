@@ -78,6 +78,35 @@ export class GranolaOAuthClientProvider implements OAuthClientProvider {
     return this.#codeVerifier;
   }
 
+  invalidateCredentials(
+    scope: "all" | "client" | "tokens" | "verifier" | "discovery"
+  ): void {
+    switch (scope) {
+      case "all":
+        this.#clientInformation = undefined;
+        this.#codeVerifier = undefined;
+        this.#tokens = undefined;
+        break;
+      case "client":
+        this.#clientInformation = undefined;
+        break;
+      case "tokens":
+        this.#tokens = undefined;
+        break;
+      case "verifier":
+        this.#codeVerifier = undefined;
+        break;
+      case "discovery":
+        break;
+      default: {
+        const unreachable: never = scope;
+        throw new Error(
+          `Unsupported credential invalidation scope: ${unreachable}`
+        );
+      }
+    }
+  }
+
   snapshot(): GranolaOAuthClientProviderSnapshot {
     return {
       clientInformation: this.#clientInformation,

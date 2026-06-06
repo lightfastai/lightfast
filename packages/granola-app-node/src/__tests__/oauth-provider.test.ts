@@ -13,9 +13,25 @@ import {
 import { GranolaOAuthClientProvider } from "../oauth-provider";
 
 describe("Granola OAuth client provider", () => {
-  it("builds Lightfast browser OAuth metadata for dynamic client registration", () => {
-    const redirectUrl = "https://app.lightfast.ai/api/connectors/granola/oauth/callback";
+  const redirectUrl =
+    "https://app.lightfast.ai/api/connectors/granola/oauth/callback";
+  const clientMetadata: OAuthClientMetadata = {
+    client_name: "Lightfast",
+    grant_types: ["authorization_code", "refresh_token"],
+    redirect_uris: [redirectUrl],
+    response_types: ["code"],
+    token_endpoint_auth_method: "none",
+  };
+  const clientInformation: OAuthClientInformationMixed = {
+    client_id: "granola-client-id",
+  };
+  const tokens: OAuthTokens = {
+    access_token: "granola-access-token",
+    refresh_token: "granola-refresh-token",
+    token_type: "Bearer",
+  };
 
+  it("builds Lightfast browser OAuth metadata for dynamic client registration", () => {
     expect(DEFAULT_GRANOLA_MCP_ENDPOINT).toBe("https://mcp.granola.ai/mcp");
     expect(granolaClientMetadata({ redirectUrl })).toEqual({
       client_name: "Lightfast",
@@ -27,14 +43,6 @@ describe("Granola OAuth client provider", () => {
   });
 
   it("captures authorization URLs and stores client information, verifier, and tokens", async () => {
-    const redirectUrl = "https://app.lightfast.ai/api/connectors/granola/oauth/callback";
-    const clientMetadata: OAuthClientMetadata = {
-      client_name: "Lightfast",
-      grant_types: ["authorization_code", "refresh_token"],
-      redirect_uris: [redirectUrl],
-      response_types: ["code"],
-      token_endpoint_auth_method: "none",
-    };
     const initialClientInformation: OAuthClientInformationMixed = {
       client_id: "granola-client-initial",
     };
@@ -87,6 +95,60 @@ describe("Granola OAuth client provider", () => {
       clientInformation: nextClientInformation,
       codeVerifier: "next-code-verifier",
       tokens: nextTokens,
+    });
+  });
+
+  it("invalidates stored credentials by SDK scope while preserving snapshots", async () => {
+    const newProvider = () =>
+      new GranolaOAuthClientProvider({
+        clientInformation,
+        clientMetadata,
+        codeVerifier: "granola-code-verifier",
+        redirectUrl,
+        tokens,
+      });
+
+    const tokenInvalidatedProvider = newProvider();
+    await tokenInvalidatedProvider.invalidateCredentials("tokens");
+    expect(tokenInvalidatedProvider.snapshot()).toEqual({
+      clientInformation,
+      codeVerifier: "granola-code-verifier",
+      tokens: undefined,
+    });
+
+    const clientInvalidatedProvider = newProvider();
+    await clientInvalidatedProvider.invalidateCredentials("client");
+    expect(clientInvalidatedProvider.snapshot()).toEqual({
+      clientInformation: undefined,
+      codeVerifier: "granola-code-verifier",
+      tokens,
+    });
+
+    const verifierInvalidatedProvider = newProvider();
+    await verifierInvalidatedProvider.invalidateCredentials("verifier");
+    expect(verifierInvalidatedProvider.snapshot()).toEqual({
+      clientInformation,
+      codeVerifier: undefined,
+      tokens,
+    });
+    expect(() => verifierInvalidatedProvider.codeVerifier()).toThrow(
+      "No code verifier saved."
+    );
+
+    const discoveryInvalidatedProvider = newProvider();
+    await discoveryInvalidatedProvider.invalidateCredentials("discovery");
+    expect(discoveryInvalidatedProvider.snapshot()).toEqual({
+      clientInformation,
+      codeVerifier: "granola-code-verifier",
+      tokens,
+    });
+
+    const allInvalidatedProvider = newProvider();
+    await allInvalidatedProvider.invalidateCredentials("all");
+    expect(allInvalidatedProvider.snapshot()).toEqual({
+      clientInformation: undefined,
+      codeVerifier: undefined,
+      tokens: undefined,
     });
   });
 });

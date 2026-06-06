@@ -6,6 +6,7 @@ import {
   McpClient,
   type OAuthClientProvider,
   StreamableHTTPClientTransport,
+  StreamableHTTPError,
   type Tool,
   UnauthorizedError,
 } from "@vendor/mcp";
@@ -20,20 +21,24 @@ export async function listGranolaMcpTools(input: {
   endpoint: string;
   timeoutMs?: number;
 }): Promise<FullConnectorToolManifest> {
-  const client = new McpClient({
-    name: "lightfast-granola-app-node",
-    version: "0.1.0",
-  });
-  const transport = new StreamableHTTPClientTransport(new URL(input.endpoint), {
-    authProvider: input.authProvider,
-  });
   const abortController = new AbortController();
   const timeout = setTimeout(
     () => abortController.abort(),
     input.timeoutMs ?? DEFAULT_GRANOLA_MCP_TIMEOUT_MS
   );
+  let client: InstanceType<typeof McpClient> | undefined;
 
   try {
+    client = new McpClient({
+      name: "lightfast-granola-app-node",
+      version: "0.1.0",
+    });
+    const transport = new StreamableHTTPClientTransport(
+      new URL(input.endpoint),
+      {
+        authProvider: input.authProvider,
+      }
+    );
     await withAbort(client.connect(transport), abortController.signal);
     const { tools } = await withAbort(
       client.listTools(),
@@ -48,7 +53,9 @@ export async function listGranolaMcpTools(input: {
     );
   } finally {
     clearTimeout(timeout);
-    await closeMcpClient(client).catch(() => undefined);
+    if (client) {
+      await closeMcpClient(client).catch(() => undefined);
+    }
   }
 }
 
@@ -59,20 +66,24 @@ export async function callGranolaMcpTool(input: {
   name: string;
   timeoutMs?: number;
 }): Promise<unknown> {
-  const client = new McpClient({
-    name: "lightfast-granola-app-node",
-    version: "0.1.0",
-  });
-  const transport = new StreamableHTTPClientTransport(new URL(input.endpoint), {
-    authProvider: input.authProvider,
-  });
   const abortController = new AbortController();
   const timeout = setTimeout(
     () => abortController.abort(),
     input.timeoutMs ?? DEFAULT_GRANOLA_MCP_TIMEOUT_MS
   );
+  let client: InstanceType<typeof McpClient> | undefined;
 
   try {
+    client = new McpClient({
+      name: "lightfast-granola-app-node",
+      version: "0.1.0",
+    });
+    const transport = new StreamableHTTPClientTransport(
+      new URL(input.endpoint),
+      {
+        authProvider: input.authProvider,
+      }
+    );
     await withAbort(client.connect(transport), abortController.signal);
     return await withAbort(
       client.callTool({
@@ -89,7 +100,9 @@ export async function callGranolaMcpTool(input: {
     );
   } finally {
     clearTimeout(timeout);
-    await closeMcpClient(client).catch(() => undefined);
+    if (client) {
+      await closeMcpClient(client).catch(() => undefined);
+    }
   }
 }
 
@@ -139,7 +152,18 @@ function mapGranolaMcpError(
 function isUnauthorizedError(error: unknown): boolean {
   return (
     error instanceof UnauthorizedError ||
+    (error instanceof StreamableHTTPError && error.code === 401) ||
+    isStreamableHttp401Error(error) ||
     (error instanceof Error && error.name === "UnauthorizedError")
+  );
+}
+
+function isStreamableHttp401Error(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    error.name === "StreamableHTTPError" &&
+    "code" in error &&
+    error.code === 401
   );
 }
 
