@@ -22,6 +22,14 @@ export {
   orgConnectorConnections,
 } from "./org-connectors";
 export {
+  createDecisionViewId,
+  DECISION_VIEW_ID_PREFIX,
+  type DecisionView,
+  type DecisionViewConfig,
+  type InsertDecisionView,
+  orgDecisionViews,
+} from "./org-decision-views";
+export {
   createDeveloperConnectionId,
   createDeveloperConnectionLeaseId,
   DEVELOPER_CONNECTION_ID_PREFIX,
