@@ -1,3 +1,4 @@
+import type { AppRouterOutputs } from "@api/app";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -18,6 +19,7 @@ import {
   useSidebar,
 } from "@repo/ui/components/ui/sidebar";
 import { cn } from "@repo/ui/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "@tanstack/react-router";
 import {
   Aperture,
@@ -26,6 +28,7 @@ import {
   HelpCircle,
   ListChecks,
   Mail,
+  MessageCircle,
   MessageCirclePlus,
   Network,
   Scroll,
@@ -35,6 +38,7 @@ import {
 } from "lucide-react";
 import type { ComponentType } from "react";
 import { Suspense } from "react";
+import { useTRPC } from "~/trpc/react";
 import {
   getWorkspaceNavSections,
   isWorkspacePathActive,
@@ -42,6 +46,11 @@ import {
   type WorkspaceNavTitle,
 } from "./app-sidebar-model";
 import { TeamSwitcher, TeamSwitcherSkeleton } from "./team-switcher";
+
+type WorkspaceAssistantConversationList =
+  AppRouterOutputs["org"]["workspace"]["assistant"]["listConversations"];
+type WorkspaceAssistantConversationListItem =
+  WorkspaceAssistantConversationList["items"][number];
 
 const navIcons: Record<
   WorkspaceNavTitle,
@@ -124,6 +133,7 @@ export function AppSidebar({ orgSlug }: { orgSlug: string }) {
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
+        <ChatHistory orgSlug={orgSlug} pathname={pathname} />
       </SidebarContent>
       <SidebarFooter>
         <DropdownMenu>
@@ -159,6 +169,99 @@ export function AppSidebar({ orgSlug }: { orgSlug: string }) {
       </SidebarFooter>
     </Sidebar>
   );
+}
+
+function ChatHistory({
+  orgSlug,
+  pathname,
+}: {
+  orgSlug: string;
+  pathname: string;
+}) {
+  const trpc = useTRPC();
+  const { data, error, isPending } = useQuery({
+    ...trpc.org.workspace.assistant.listConversations.queryOptions(
+      { limit: 20 },
+      { staleTime: 0 }
+    ),
+    enabled: typeof window !== "undefined" && Boolean(orgSlug),
+  });
+
+  if (isPending || error || !data?.items.length) {
+    return null;
+  }
+
+  return (
+    <SidebarGroup collapsible defaultOpen label="Chats">
+      <SidebarGroupContent>
+        <nav aria-label="Chats">
+          <SidebarMenu>
+            {data.items.map((conversation) => (
+              <ChatHistoryItem
+                conversation={conversation}
+                key={conversation.publicId}
+                orgSlug={orgSlug}
+                pathname={pathname}
+              />
+            ))}
+          </SidebarMenu>
+        </nav>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  );
+}
+
+function ChatHistoryItem({
+  conversation,
+  orgSlug,
+  pathname,
+}: {
+  conversation: WorkspaceAssistantConversationListItem;
+  orgSlug: string;
+  pathname: string;
+}) {
+  const { isMobile, setOpenMobile } = useSidebar();
+  const href = `/${orgSlug}/chat/${conversation.publicId}`;
+  const isActive = pathname === href;
+  const title = getConversationSidebarTitle(conversation);
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        asChild
+        className={cn(
+          "h-11 rounded-xl lg:h-7 [&>svg]:size-3.5",
+          isActive
+            ? "text-foreground data-[active=true]:text-foreground"
+            : "text-muted-foreground"
+        )}
+        isActive={isActive}
+        size="sm"
+      >
+        <Link
+          aria-current={isActive ? "page" : undefined}
+          onClick={() => {
+            if (isMobile) {
+              setOpenMobile(false);
+            }
+          }}
+          params={{ conversationId: conversation.publicId, slug: orgSlug }}
+          preload="intent"
+          to="/$slug/chat/$conversationId"
+        >
+          <MessageCircle className="size-3.5" />
+          <span>{title}</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
+
+function getConversationSidebarTitle(
+  conversation: WorkspaceAssistantConversationListItem
+) {
+  const title = conversation.title?.trim();
+  return title || "Untitled chat";
 }
 
 function NavItems({

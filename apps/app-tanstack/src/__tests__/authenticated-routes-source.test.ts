@@ -47,7 +47,11 @@ describe("app-tanstack authenticated route migration", () => {
   it("uses a pathless authenticated shell for account and org routes", () => {
     const shellSource = source("src/routes/_authenticated.tsx");
     const teamSwitcherSource = source("src/components/team-switcher.tsx");
+    const appSidebarSource = source("src/components/app-sidebar.tsx");
     const orgRouteSource = source("src/routes/_authenticated/$slug.tsx");
+    const conversationRouteSource = source(
+      "src/routes/_authenticated/$slug/chat/$conversationId.tsx"
+    );
 
     expect(shellSource).toContain('createFileRoute("/_authenticated")');
     expect(shellSource).toContain('to: "/sign-in"');
@@ -61,8 +65,24 @@ describe("app-tanstack authenticated route migration", () => {
     expect(teamSwitcherSource).toContain('to="/$slug"');
     expect(teamSwitcherSource).not.toContain("next/navigation");
     expect(teamSwitcherSource).not.toContain("next/link");
+    expect(appSidebarSource).toContain("listConversations.queryOptions");
+    expect(appSidebarSource).toContain('to="/$slug/chat/$conversationId"');
     expect(orgRouteSource).toContain("getBySlug.queryOptions({ slug })");
     expect(orgRouteSource).toContain("Team not found");
     expect(orgRouteSource).not.toContain("organization?.name ?? slug");
+    expect(conversationRouteSource).toContain("createFileRoute");
+    expect(conversationRouteSource).toContain(
+      '"/_authenticated/$slug/chat/$conversationId"'
+    );
+  });
+
+  it("serves app fonts from a proxy-safe TanStack path", () => {
+    const globalCss = source("src/styles/globals.css");
+
+    expect(globalCss).toContain("/app-tanstack/fonts/geist/Geist-Variable");
+    expect(globalCss).toContain(
+      "/app-tanstack/fonts/pp-neue-montreal/PPNeueMontreal-Medium"
+    );
+    expect(globalCss).not.toContain('url("/fonts/');
   });
 });
