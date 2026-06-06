@@ -183,6 +183,13 @@
       "when": 1780742442925,
       "tag": "0025_shocking_smasher",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1780752170446,
+      "tag": "0026_cooing_deathbird",
+      "breakpoints": true
     }
   ]
 }
