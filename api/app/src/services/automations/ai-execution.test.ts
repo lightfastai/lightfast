@@ -97,6 +97,46 @@ beforeEach(() => {
 });
 
 describe("executeAutomationRun", () => {
+  it("runs without connector tools when no connector is selected", async () => {
+    const automationWithoutConnector = {
+      ...automation,
+      connectorProvider: null,
+      name: "Daily summary",
+      prompt: "Summarize the workspace.",
+    } as Automation;
+
+    const output = await executeAutomationRun({
+      automation: automationWithoutConnector,
+      deploymentEnvironment: "preview",
+      now: () => new Date("2026-06-06T00:00:00.000Z"),
+      run,
+    });
+
+    expect(output).toMatchObject({
+      automationId: "automation_123",
+      connectorProvider: null,
+      finalText: "Posted the launch update.",
+      providerRoutineCallIds: [],
+      runId: "automation_run_123",
+    });
+    expect(findAutomationProviderRoutinesMock).not.toHaveBeenCalled();
+    expect(toolMock).not.toHaveBeenCalled();
+    expect(generateTextMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tools: undefined,
+      })
+    );
+    expect(generateTextMock.mock.calls[0]?.[0].system).toEqual(
+      expect.stringContaining("No connector selected")
+    );
+    expect(generateTextMock.mock.calls[0]?.[0].system).not.toEqual(
+      expect.stringContaining("Use only routines from the selected connector.")
+    );
+    expect(
+      generateTextMock.mock.calls[0]?.[0].providerOptions.gateway.tags
+    ).toEqual(expect.arrayContaining(["connector:none"]));
+  });
+
   it("preflights the selected connector routines and runs the model with automation-scoped tools", async () => {
     const output = await executeAutomationRun({
       automation,

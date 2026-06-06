@@ -87,6 +87,46 @@ describe("AutomationRunDetailContent", () => {
     expect(screen.queryByText(/schemaVersion/)).not.toBeInTheDocument();
   });
 
+  it("renders automation ai output without a connector", () => {
+    render(
+      <AutomationRunDetailContent
+        onCopyLink={vi.fn()}
+        run={run({
+          output: {
+            automationId: "automation_123",
+            connectorProvider: null,
+            finalText: "Summarized the workspace.",
+            finishedAt: "2026-06-06T00:00:10.000Z",
+            finishReason: "stop",
+            model: "anthropic/claude-sonnet-4.6",
+            providerRoutineCallIds: [],
+            runId: "automation_run_123",
+            schemaVersion: "automation.run.ai.v1",
+            startedAt: "2026-06-06T00:00:00.000Z",
+            transcript: [
+              {
+                content: "Summarize the workspace.",
+                contentHash: "sha256:abc",
+                contentLength: 24,
+                kind: "user",
+                timestamp: "2026-06-06T00:00:00.000Z",
+              },
+            ],
+            usage: { totalTokens: 22 },
+          },
+        })}
+      />
+    );
+
+    expect(screen.getByText("Summarized the workspace.")).toBeInTheDocument();
+    expect(screen.getByText("Connector").parentElement).toHaveTextContent(
+      "Connector—"
+    );
+    expect(
+      screen.queryByText("Provider routine calls")
+    ).not.toBeInTheDocument();
+  });
+
   it("keeps JSON fallback for unknown output schemas", () => {
     render(
       <AutomationRunDetailContent

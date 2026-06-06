@@ -86,7 +86,9 @@ export const automationScheduleSchema = z.discriminatedUnion("kind", [
 ]);
 
 export const createAutomationSchema = z.object({
-  connectorProvider: connectableConnectorProviderSchema,
+  connectorProvider: connectableConnectorProviderSchema
+    .nullable()
+    .default(null),
   name: z.string().trim().min(1).max(AUTOMATION_NAME_MAX_LENGTH),
   prompt: z.string().trim().min(1).max(AUTOMATION_PROMPT_MAX_LENGTH),
   schedule: automationScheduleSchema,
