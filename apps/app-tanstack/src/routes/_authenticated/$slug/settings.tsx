@@ -6,7 +6,7 @@ export const Route = createFileRoute("/_authenticated/$slug/settings")({
     if (location.pathname === `/${params.slug}/settings`) {
       throw redirect({
         params: { slug: params.slug },
-        to: "/$slug/settings/source-control",
+        to: "/$slug/settings/members",
       });
     }
   },
@@ -37,6 +37,24 @@ function WorkspaceSettingsLayout() {
         <div className="flex flex-col gap-8 md:flex-row md:gap-12">
           <SettingsSidebar
             items={[
+              {
+                activePath: `/${slug}/settings/members`,
+                name: "Members",
+                params: { slug },
+                to: "/$slug/settings/members",
+              },
+              {
+                activePath: `/${slug}/settings/api-keys`,
+                name: "API Keys",
+                params: { slug },
+                to: "/$slug/settings/api-keys",
+              },
+              {
+                activePath: `/${slug}/settings/mcp`,
+                name: "MCP",
+                params: { slug },
+                to: "/$slug/settings/mcp",
+              },
               {
                 activePath: `/${slug}/settings/source-control`,
                 name: "Source Control & Git",

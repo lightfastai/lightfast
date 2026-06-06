@@ -44,6 +44,9 @@ import { Route as AuthenticatedAccountSettingsSourceControlRouteImport } from '.
 import { Route as AuthenticatedAccountSettingsGeneralRouteImport } from './routes/_authenticated/account/settings/general'
 import { Route as AuthenticatedSlugTasksBindRouteImport } from './routes/_authenticated/$slug/tasks/bind'
 import { Route as AuthenticatedSlugSettingsSourceControlRouteImport } from './routes/_authenticated/$slug/settings/source-control'
+import { Route as AuthenticatedSlugSettingsMembersRouteImport } from './routes/_authenticated/$slug/settings/members'
+import { Route as AuthenticatedSlugSettingsMcpRouteImport } from './routes/_authenticated/$slug/settings/mcp'
+import { Route as AuthenticatedSlugSettingsApiKeysRouteImport } from './routes/_authenticated/$slug/settings/api-keys'
 import { Route as AuthenticatedSlugChatConversationIdRouteImport } from './routes/_authenticated/$slug/chat/$conversationId'
 import { Route as AuthenticatedSlugAutomationsNewRouteImport } from './routes/_authenticated/$slug/automations/new'
 import { Route as AuthenticatedSlugAutomationsAutomationRouteImport } from './routes/_authenticated/$slug/automations/$automation'
@@ -247,6 +250,24 @@ const AuthenticatedSlugSettingsSourceControlRoute =
     path: '/source-control',
     getParentRoute: () => AuthenticatedSlugSettingsRoute,
   } as any)
+const AuthenticatedSlugSettingsMembersRoute =
+  AuthenticatedSlugSettingsMembersRouteImport.update({
+    id: '/members',
+    path: '/members',
+    getParentRoute: () => AuthenticatedSlugSettingsRoute,
+  } as any)
+const AuthenticatedSlugSettingsMcpRoute =
+  AuthenticatedSlugSettingsMcpRouteImport.update({
+    id: '/mcp',
+    path: '/mcp',
+    getParentRoute: () => AuthenticatedSlugSettingsRoute,
+  } as any)
+const AuthenticatedSlugSettingsApiKeysRoute =
+  AuthenticatedSlugSettingsApiKeysRouteImport.update({
+    id: '/api-keys',
+    path: '/api-keys',
+    getParentRoute: () => AuthenticatedSlugSettingsRoute,
+  } as any)
 const AuthenticatedSlugChatConversationIdRoute =
   AuthenticatedSlugChatConversationIdRouteImport.update({
     id: '/$conversationId',
@@ -339,6 +360,9 @@ export interface FileRoutesByFullPath {
   '/$slug/automations/$automation': typeof AuthenticatedSlugAutomationsAutomationRoute
   '/$slug/automations/new': typeof AuthenticatedSlugAutomationsNewRoute
   '/$slug/chat/$conversationId': typeof AuthenticatedSlugChatConversationIdRoute
+  '/$slug/settings/api-keys': typeof AuthenticatedSlugSettingsApiKeysRoute
+  '/$slug/settings/mcp': typeof AuthenticatedSlugSettingsMcpRoute
+  '/$slug/settings/members': typeof AuthenticatedSlugSettingsMembersRoute
   '/$slug/settings/source-control': typeof AuthenticatedSlugSettingsSourceControlRoute
   '/$slug/tasks/bind': typeof AuthenticatedSlugTasksBindRouteWithChildren
   '/account/settings/general': typeof AuthenticatedAccountSettingsGeneralRoute
@@ -382,6 +406,9 @@ export interface FileRoutesByTo {
   '/$slug/automations/$automation': typeof AuthenticatedSlugAutomationsAutomationRoute
   '/$slug/automations/new': typeof AuthenticatedSlugAutomationsNewRoute
   '/$slug/chat/$conversationId': typeof AuthenticatedSlugChatConversationIdRoute
+  '/$slug/settings/api-keys': typeof AuthenticatedSlugSettingsApiKeysRoute
+  '/$slug/settings/mcp': typeof AuthenticatedSlugSettingsMcpRoute
+  '/$slug/settings/members': typeof AuthenticatedSlugSettingsMembersRoute
   '/$slug/settings/source-control': typeof AuthenticatedSlugSettingsSourceControlRoute
   '/account/settings/general': typeof AuthenticatedAccountSettingsGeneralRoute
   '/account/settings/source-control': typeof AuthenticatedAccountSettingsSourceControlRoute
@@ -429,6 +456,9 @@ export interface FileRoutesById {
   '/_authenticated/$slug/automations/$automation': typeof AuthenticatedSlugAutomationsAutomationRoute
   '/_authenticated/$slug/automations/new': typeof AuthenticatedSlugAutomationsNewRoute
   '/_authenticated/$slug/chat/$conversationId': typeof AuthenticatedSlugChatConversationIdRoute
+  '/_authenticated/$slug/settings/api-keys': typeof AuthenticatedSlugSettingsApiKeysRoute
+  '/_authenticated/$slug/settings/mcp': typeof AuthenticatedSlugSettingsMcpRoute
+  '/_authenticated/$slug/settings/members': typeof AuthenticatedSlugSettingsMembersRoute
   '/_authenticated/$slug/settings/source-control': typeof AuthenticatedSlugSettingsSourceControlRoute
   '/_authenticated/$slug/tasks/bind': typeof AuthenticatedSlugTasksBindRouteWithChildren
   '/_authenticated/account/settings/general': typeof AuthenticatedAccountSettingsGeneralRoute
@@ -478,6 +508,9 @@ export interface FileRouteTypes {
     | '/$slug/automations/$automation'
     | '/$slug/automations/new'
     | '/$slug/chat/$conversationId'
+    | '/$slug/settings/api-keys'
+    | '/$slug/settings/mcp'
+    | '/$slug/settings/members'
     | '/$slug/settings/source-control'
     | '/$slug/tasks/bind'
     | '/account/settings/general'
@@ -521,6 +554,9 @@ export interface FileRouteTypes {
     | '/$slug/automations/$automation'
     | '/$slug/automations/new'
     | '/$slug/chat/$conversationId'
+    | '/$slug/settings/api-keys'
+    | '/$slug/settings/mcp'
+    | '/$slug/settings/members'
     | '/$slug/settings/source-control'
     | '/account/settings/general'
     | '/account/settings/source-control'
@@ -567,6 +603,9 @@ export interface FileRouteTypes {
     | '/_authenticated/$slug/automations/$automation'
     | '/_authenticated/$slug/automations/new'
     | '/_authenticated/$slug/chat/$conversationId'
+    | '/_authenticated/$slug/settings/api-keys'
+    | '/_authenticated/$slug/settings/mcp'
+    | '/_authenticated/$slug/settings/members'
     | '/_authenticated/$slug/settings/source-control'
     | '/_authenticated/$slug/tasks/bind'
     | '/_authenticated/account/settings/general'
@@ -853,6 +892,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSlugSettingsSourceControlRouteImport
       parentRoute: typeof AuthenticatedSlugSettingsRoute
     }
+    '/_authenticated/$slug/settings/members': {
+      id: '/_authenticated/$slug/settings/members'
+      path: '/members'
+      fullPath: '/$slug/settings/members'
+      preLoaderRoute: typeof AuthenticatedSlugSettingsMembersRouteImport
+      parentRoute: typeof AuthenticatedSlugSettingsRoute
+    }
+    '/_authenticated/$slug/settings/mcp': {
+      id: '/_authenticated/$slug/settings/mcp'
+      path: '/mcp'
+      fullPath: '/$slug/settings/mcp'
+      preLoaderRoute: typeof AuthenticatedSlugSettingsMcpRouteImport
+      parentRoute: typeof AuthenticatedSlugSettingsRoute
+    }
+    '/_authenticated/$slug/settings/api-keys': {
+      id: '/_authenticated/$slug/settings/api-keys'
+      path: '/api-keys'
+      fullPath: '/$slug/settings/api-keys'
+      preLoaderRoute: typeof AuthenticatedSlugSettingsApiKeysRouteImport
+      parentRoute: typeof AuthenticatedSlugSettingsRoute
+    }
     '/_authenticated/$slug/chat/$conversationId': {
       id: '/_authenticated/$slug/chat/$conversationId'
       path: '/$conversationId'
@@ -968,11 +1028,19 @@ const AuthenticatedSlugChatRouteWithChildren =
   )
 
 interface AuthenticatedSlugSettingsRouteChildren {
+  AuthenticatedSlugSettingsApiKeysRoute: typeof AuthenticatedSlugSettingsApiKeysRoute
+  AuthenticatedSlugSettingsMcpRoute: typeof AuthenticatedSlugSettingsMcpRoute
+  AuthenticatedSlugSettingsMembersRoute: typeof AuthenticatedSlugSettingsMembersRoute
   AuthenticatedSlugSettingsSourceControlRoute: typeof AuthenticatedSlugSettingsSourceControlRoute
 }
 
 const AuthenticatedSlugSettingsRouteChildren: AuthenticatedSlugSettingsRouteChildren =
   {
+    AuthenticatedSlugSettingsApiKeysRoute:
+      AuthenticatedSlugSettingsApiKeysRoute,
+    AuthenticatedSlugSettingsMcpRoute: AuthenticatedSlugSettingsMcpRoute,
+    AuthenticatedSlugSettingsMembersRoute:
+      AuthenticatedSlugSettingsMembersRoute,
     AuthenticatedSlugSettingsSourceControlRoute:
       AuthenticatedSlugSettingsSourceControlRoute,
   }

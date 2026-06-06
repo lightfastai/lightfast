@@ -517,4 +517,151 @@ describe("app-tanstack authenticated route migration", () => {
       expect(routeFile).not.toContain("@vendor/clerk");
     }
   });
+
+  it("ports org admin settings routes without Next.js assumptions", () => {
+    const settingsLayoutSource = source(
+      "src/routes/_authenticated/$slug/settings.tsx"
+    );
+    const membersRouteSource = source(
+      "src/routes/_authenticated/$slug/settings/members.tsx"
+    );
+    const apiKeysRouteSource = source(
+      "src/routes/_authenticated/$slug/settings/api-keys.tsx"
+    );
+    const mcpRouteSource = source(
+      "src/routes/_authenticated/$slug/settings/mcp.tsx"
+    );
+    const sidebarSource = source("src/components/settings-sidebar.tsx");
+    const membersClientSource = source(
+      "src/org/settings/members/org-members-client.tsx"
+    );
+    const memberListSource = source(
+      "src/org/settings/members/org-member-list.tsx"
+    );
+    const memberInviteSource = source(
+      "src/org/settings/members/org-member-invite.tsx"
+    );
+    const memberInviteActionsSource = source(
+      "src/org/settings/members/org-member-invite-actions.ts"
+    );
+    const memberListActionsSource = source(
+      "src/org/settings/members/org-member-list-actions.ts"
+    );
+    const memberCacheSource = source(
+      "src/org/settings/members/org-member-cache.ts"
+    );
+    const apiKeyCreateSource = source(
+      "src/org/settings/api-keys/org-api-key-create.tsx"
+    );
+    const apiKeyCreateActionsSource = source(
+      "src/org/settings/api-keys/org-api-key-create-action.ts"
+    );
+    const apiKeyListSource = source(
+      "src/org/settings/api-keys/org-api-key-list.tsx"
+    );
+    const apiKeyListActionsSource = source(
+      "src/org/settings/api-keys/org-api-key-list-actions.ts"
+    );
+    const apiKeyCacheSource = source(
+      "src/org/settings/api-keys/org-api-key-cache.ts"
+    );
+    const mcpClientSource = source(
+      "src/org/settings/mcp/mcp-connections-client.tsx"
+    );
+
+    expect(settingsLayoutSource).toContain('to: "/$slug/settings/members"');
+    expect(settingsLayoutSource).toContain('to: "/$slug/settings/api-keys"');
+    expect(settingsLayoutSource).toContain('to: "/$slug/settings/mcp"');
+    expect(settingsLayoutSource).toContain(
+      'to: "/$slug/settings/source-control"'
+    );
+    expect(sidebarSource).toContain('"/$slug/settings/members"');
+    expect(sidebarSource).toContain('"/$slug/settings/api-keys"');
+    expect(sidebarSource).toContain('"/$slug/settings/mcp"');
+
+    expect(membersRouteSource).toContain(
+      '"/_authenticated/$slug/settings/members"'
+    );
+    expect(membersRouteSource).toContain("OrgMembersClient");
+    expect(apiKeysRouteSource).toContain(
+      '"/_authenticated/$slug/settings/api-keys"'
+    );
+    expect(apiKeysRouteSource).toContain("OrgApiKeyCreate");
+    expect(apiKeysRouteSource).toContain("OrgApiKeyList");
+    expect(mcpRouteSource).toContain('"/_authenticated/$slug/settings/mcp"');
+    expect(mcpRouteSource).toContain("McpConnectionsClient");
+
+    expect(membersClientSource).toContain("OrgMemberInvite");
+    expect(membersClientSource).toContain("OrgMemberList");
+    expect(memberListSource).toContain("orgMembers.list.queryOptions");
+    expect(memberListSource).toContain(
+      'enabled: typeof window !== "undefined"'
+    );
+    expect(memberListSource).toContain('from "@clerk/tanstack-react-start"');
+    expect(memberInviteSource).toContain("useOrgMemberInviteAction");
+    expect(memberInviteActionsSource).toContain(
+      "orgMembers.invite.mutationOptions"
+    );
+    expect(memberListActionsSource).toContain(
+      "orgMembers.updateRole.mutationOptions"
+    );
+    expect(memberListActionsSource).toContain(
+      "orgMembers.revokeInvitation.mutationOptions"
+    );
+    expect(memberListActionsSource).toContain(
+      "orgMembers.remove.mutationOptions"
+    );
+    expect(memberCacheSource).toContain(
+      'AppRouterOutputs["org"]["settings"]["orgMembers"]["list"]'
+    );
+
+    expect(apiKeyListSource).toContain("orgApiKeys.list.queryOptions");
+    expect(apiKeyListSource).toContain(
+      'enabled: typeof window !== "undefined"'
+    );
+    expect(apiKeyListSource).toContain('from "@clerk/tanstack-react-start"');
+    expect(apiKeyCreateSource).toContain("useOrgApiKeyCreateAction");
+    expect(apiKeyCreateActionsSource).toContain(
+      "orgApiKeys.create.mutationOptions"
+    );
+    expect(apiKeyListActionsSource).toContain(
+      "orgApiKeys.revoke.mutationOptions"
+    );
+    expect(apiKeyListActionsSource).toContain(
+      "orgApiKeys.delete.mutationOptions"
+    );
+    expect(apiKeyCacheSource).toContain(
+      'AppRouterOutputs["org"]["settings"]["orgApiKeys"]["list"]'
+    );
+
+    expect(mcpClientSource).toContain("mcpConnections.list.queryOptions");
+    expect(mcpClientSource).toContain("mcpConnections.revoke.mutationOptions");
+    expect(mcpClientSource).toContain('enabled: typeof window !== "undefined"');
+    expect(mcpClientSource).toContain("showConnectedUser");
+
+    for (const routeFile of [
+      settingsLayoutSource,
+      membersRouteSource,
+      apiKeysRouteSource,
+      mcpRouteSource,
+      sidebarSource,
+      membersClientSource,
+      memberListSource,
+      memberInviteSource,
+      memberInviteActionsSource,
+      memberListActionsSource,
+      memberCacheSource,
+      apiKeyCreateSource,
+      apiKeyCreateActionsSource,
+      apiKeyListSource,
+      apiKeyListActionsSource,
+      apiKeyCacheSource,
+      mcpClientSource,
+    ]) {
+      expect(routeFile).not.toContain("next/");
+      expect(routeFile).not.toContain("@vendor/clerk");
+      expect(routeFile).not.toContain('"use client"');
+      expect(routeFile).not.toContain('"use server"');
+    }
+  });
 });

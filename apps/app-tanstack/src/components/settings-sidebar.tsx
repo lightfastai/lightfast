@@ -12,7 +12,11 @@ interface WorkspaceSettingsSidebarItem {
   activePath: string;
   name: string;
   params: { slug: string };
-  to: "/$slug/settings/source-control";
+  to:
+    | "/$slug/settings/members"
+    | "/$slug/settings/api-keys"
+    | "/$slug/settings/mcp"
+    | "/$slug/settings/source-control";
 }
 
 type SettingsSidebarItem =
