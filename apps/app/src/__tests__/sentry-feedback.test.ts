@@ -1,15 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const captureFeedbackMock = vi.hoisted(() => vi.fn(() => "feedback_event"));
+const flushMock = vi.hoisted(() => vi.fn(() => Promise.resolve(true)));
 
 vi.mock("@sentry/nextjs", () => ({
   captureFeedback: captureFeedbackMock,
+  flush: flushMock,
 }));
 
 const { submitSentryFeedback } = await import("../sentry-feedback");
 
 beforeEach(() => {
   captureFeedbackMock.mockClear();
+  flushMock.mockClear();
+  flushMock.mockResolvedValue(true);
 });
 
 describe("submitSentryFeedback", () => {
@@ -35,6 +39,7 @@ describe("submitSentryFeedback", () => {
       },
       { includeReplay: true }
     );
+    expect(flushMock).toHaveBeenCalledWith(5000);
   });
 
   it("omits optional contact fields when they are blank", async () => {
@@ -51,5 +56,16 @@ describe("submitSentryFeedback", () => {
       }),
       { includeReplay: true }
     );
+    expect(flushMock).toHaveBeenCalledWith(5000);
+  });
+
+  it("throws when Sentry does not flush feedback before the timeout", async () => {
+    flushMock.mockResolvedValue(false);
+
+    await expect(
+      submitSentryFeedback({
+        message: "This should report a send failure.",
+      })
+    ).rejects.toThrow("Unable to send feedback");
   });
 });

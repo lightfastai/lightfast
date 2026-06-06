@@ -1,6 +1,8 @@
 export const FEEDBACK_MESSAGE_PLACEHOLDER =
   "Tell us what happened, what you expected, and any useful context.";
 
+const FEEDBACK_FLUSH_TIMEOUT_MS = 5000;
+
 export interface SubmitSentryFeedbackInput {
   email?: string;
   message: string;
@@ -26,7 +28,7 @@ export async function submitSentryFeedback(input: SubmitSentryFeedbackInput) {
   const name = input.name?.trim();
   const email = input.email?.trim();
 
-  return Sentry.captureFeedback(
+  const eventId = Sentry.captureFeedback(
     {
       ...payload,
       ...(name ? { name } : {}),
@@ -34,4 +36,12 @@ export async function submitSentryFeedback(input: SubmitSentryFeedbackInput) {
     },
     { includeReplay: true }
   );
+
+  const didFlush = await Sentry.flush(FEEDBACK_FLUSH_TIMEOUT_MS);
+
+  if (!didFlush) {
+    throw new Error("Unable to send feedback");
+  }
+
+  return eventId;
 }
