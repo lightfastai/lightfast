@@ -167,6 +167,7 @@ const {
 const {
   disconnectConnector,
   refreshConnectorTools,
+  setConnectorAgentEnabled,
   setConnectorAutomationEnabled,
   startConnectorOAuth,
 } = await import("../services/connectors");
@@ -1666,6 +1667,7 @@ describe("X connector flow", () => {
     listXBridgeMcpToolsMock.mockResolvedValue([{ name: "getUsersMe" }]);
     updateConnectorToolManifestAndAutomationStateMock.mockResolvedValue(true);
     setConnectorAutomationEnabledDbMock.mockResolvedValue(true);
+    setConnectorAgentEnabledDbMock.mockResolvedValue(true);
 
     await expect(
       startConnectorOAuth(ctx(), { provider: "x" })
@@ -1677,9 +1679,21 @@ describe("X connector flow", () => {
       setConnectorAutomationEnabled(ctx(), { enabled: true, provider: "x" })
     ).resolves.toEqual({ enabled: true });
     await expect(
+      setConnectorAgentEnabled(ctx(), { enabled: true, provider: "x" })
+    ).resolves.toEqual({ enabled: true });
+    await expect(
       disconnectConnector(ctx(), { provider: "x" })
     ).resolves.toEqual({
       disconnected: true,
     });
+
+    expect(setConnectorAgentEnabledDbMock).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        clerkOrgId: "org_acme",
+        enabled: true,
+        provider: "x",
+      }
+    );
   });
 });
