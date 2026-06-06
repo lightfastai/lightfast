@@ -12,7 +12,6 @@ import { SIMULATED_ENTITY_SCENARIOS } from "@repo/entity-resolution";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { inngest } from "../../inngest/client";
 import { boundOrgProcedure, createTRPCRouter } from "../../trpc";
 import { workspaceListLimitInput } from "./workspace-list-input";
 
@@ -120,6 +119,7 @@ export const workspaceEntityGraphRouter = createTRPCRouter({
       );
       const ingestionId = `simulated-${Date.now()}`;
       const resolverVersion = "local-simulated-v1";
+      const { inngest } = await import("../../inngest/client");
 
       await inngest.send({
         id: `entity-graph-simulated-${ctx.auth.identity.orgId}-${ingestionId}`,
