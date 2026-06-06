@@ -11,12 +11,16 @@ import {
   type PersonRow,
 } from "./people-model";
 import {
+  parsePersonMemberStatuses,
   parsePersonProviders,
+  parsePersonSources,
   parsePersonTypes,
   peopleSavedViewParser,
+  personMemberStatusParser,
   personParser,
   personProviderParser,
   personQueryParser,
+  personSourceParser,
   personTypeParser,
   serializePersonValues,
   togglePersonValue,
@@ -36,6 +40,14 @@ export function PeopleClient() {
     "provider",
     personProviderParser
   );
+  const [sourceState, setSourceState] = useQueryState(
+    "source",
+    personSourceParser
+  );
+  const [memberStatusState, setMemberStatusState] = useQueryState(
+    "memberStatus",
+    personMemberStatusParser
+  );
   const [typeState, setTypeState] = useQueryState("type", personTypeParser);
   // Editing any filter in the toolbar drops the active saved view — you are now
   // on an ad-hoc selection. The switcher writes `view` + filter params together
@@ -48,14 +60,18 @@ export function PeopleClient() {
 
   const filters = useMemo<PeopleClassificationFilters>(
     () => ({
+      memberStatuses: parsePersonMemberStatuses(memberStatusState),
       providers: parsePersonProviders(providerState),
+      sources: parsePersonSources(sourceState),
       types: parsePersonTypes(typeState),
     }),
-    [providerState, typeState]
+    [memberStatusState, providerState, sourceState, typeState]
   );
   const hasActiveFilters =
     search.length > 0 ||
+    filters.memberStatuses.length > 0 ||
     filters.providers.length > 0 ||
+    filters.sources.length > 0 ||
     filters.types.length > 0;
 
   const { query: peopleQuery } = usePeopleListQuery({ filters, search });
@@ -80,8 +96,12 @@ export function PeopleClient() {
           void setSavedViewId(null);
           if (group === "provider") {
             void setProviderState("");
-          } else {
+          } else if (group === "type") {
             void setTypeState("");
+          } else if (group === "source") {
+            void setSourceState("");
+          } else {
+            void setMemberStatusState("");
           }
         }}
         onQueryChange={(value) => void setQuery(value)}
@@ -89,6 +109,20 @@ export function PeopleClient() {
           void setSavedViewId(null);
           void setProviderState(
             serializePersonValues(togglePersonValue(filters.providers, value))
+          );
+        }}
+        onToggleSource={(value) => {
+          void setSavedViewId(null);
+          void setSourceState(
+            serializePersonValues(togglePersonValue(filters.sources, value))
+          );
+        }}
+        onToggleMemberStatus={(value) => {
+          void setSavedViewId(null);
+          void setMemberStatusState(
+            serializePersonValues(
+              togglePersonValue(filters.memberStatuses, value)
+            )
           );
         }}
         onToggleType={(value) => {

@@ -4,7 +4,9 @@ import type { ViewSwitcherProps } from "../../_components/views/view-switcher";
 import type { PeopleViewRow } from "./people-views-model";
 
 interface Params {
+  memberStatus: string;
   provider: string;
+  source: string;
   type: string;
   view: string | null;
 }
@@ -38,6 +40,12 @@ vi.mock("../../_components/views/view-switcher", () => ({
         <button onClick={props.onSelectAll} type="button">
           all
         </button>
+        <button
+          onClick={() => props.onSelectPreset?.("team_members")}
+          type="button"
+        >
+          team members
+        </button>
         <button onClick={() => props.onSelectView("peoview_1")} type="button">
           select
         </button>
@@ -57,7 +65,14 @@ const { PeopleViewSwitcher } = await import("./people-view-switcher");
 function makeView(overrides: Partial<PeopleViewRow> = {}): PeopleViewRow {
   return {
     clerkOrgId: "org_test",
-    config: { filters: { providers: ["x"], types: ["handle"] } },
+    config: {
+      filters: {
+        memberStatuses: [],
+        providers: ["x"],
+        sources: [],
+        types: ["handle"],
+      },
+    },
     createdAt: new Date("2026-05-31T00:00:00.000Z"),
     createdByUserId: "user_test",
     id: 1,
@@ -69,7 +84,13 @@ function makeView(overrides: Partial<PeopleViewRow> = {}): PeopleViewRow {
 }
 
 beforeEach(() => {
-  paramsState = { provider: "", type: "", view: null };
+  paramsState = {
+    memberStatus: "",
+    provider: "",
+    source: "",
+    type: "",
+    view: null,
+  };
   viewsData = [];
   createAsync.mockReset().mockResolvedValue({ publicId: "peoview_new" });
   deleteAsync.mockReset().mockResolvedValue(undefined);
@@ -89,6 +110,7 @@ describe("PeopleViewSwitcher", () => {
     expect(setParamsMock).toHaveBeenCalledWith(
       expect.objectContaining({
         provider: "x",
+        source: "",
         type: "handle",
         view: "peoview_1",
       })
@@ -100,7 +122,27 @@ describe("PeopleViewSwitcher", () => {
     render(<PeopleViewSwitcher />);
     fireEvent.click(screen.getByRole("button", { name: "all" }));
     expect(setParamsMock).toHaveBeenCalledWith(
-      expect.objectContaining({ provider: "", type: "", view: null })
+      expect.objectContaining({
+        memberStatus: "",
+        provider: "",
+        source: "",
+        type: "",
+        view: null,
+      })
+    );
+  });
+
+  it("applies the built-in Team Members preset", () => {
+    render(<PeopleViewSwitcher />);
+    fireEvent.click(screen.getByRole("button", { name: "team members" }));
+    expect(setParamsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        memberStatus: "active",
+        provider: "",
+        source: "team_member,mixed",
+        type: "",
+        view: null,
+      })
     );
   });
 

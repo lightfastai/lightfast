@@ -6,11 +6,13 @@ import { useQuery } from "@tanstack/react-query";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import {
   AtSign,
+  Clock3,
   Hash,
   Link2,
   Signal as SignalIcon,
   Sparkles,
   Tag,
+  UserCheck,
 } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -178,6 +180,28 @@ export function PeopleDetailContent({
               </span>
             </PropertyRow>
           )}
+          {person.memberStatus ? (
+            <PropertyRow
+              icon={<UserCheck className={iconClass} />}
+              label="Member"
+            >
+              {person.memberStatus === "active"
+                ? "Team member"
+                : "Former member"}
+            </PropertyRow>
+          ) : null}
+          {person.memberRole ? (
+            <PropertyRow icon={<Tag className={iconClass} />} label="Role">
+              {person.memberRole === "org:admin" ? "Admin" : "Member"}
+            </PropertyRow>
+          ) : null}
+          {person.memberSyncedAt ? (
+            <PropertyRow icon={<Clock3 className={iconClass} />} label="Synced">
+              {formatRelativeTimeToNow(new Date(person.memberSyncedAt), {
+                addSuffix: true,
+              })}
+            </PropertyRow>
+          ) : null}
           <PropertyRow icon={<SignalIcon className={iconClass} />} label="Seen">
             {person.seenCount} {person.seenCount === 1 ? "signal" : "signals"}
           </PropertyRow>

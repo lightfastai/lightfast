@@ -1,12 +1,18 @@
 import { parseAsString } from "nuqs";
 import {
+  type PersonMemberStatus,
   type PersonProvider,
+  type PersonSource,
   type PersonType,
+  peopleMemberStatusOptions,
   peopleProviderOptions,
+  peopleSourceOptions,
   peopleTypeOptions,
 } from "./people-model";
 
+export const personMemberStatusParser = parseAsString.withDefault("");
 export const personProviderParser = parseAsString.withDefault("");
+export const personSourceParser = parseAsString.withDefault("");
 export const personTypeParser = parseAsString.withDefault("");
 export const personParser = parseAsString;
 export const personQueryParser = parseAsString.withDefault("");
@@ -44,6 +50,22 @@ export function parsePersonTypes(value: string): PersonType[] {
   return parseValues(
     value,
     peopleTypeOptions.map((option) => option.value)
+  );
+}
+
+export function parsePersonSources(value: string): PersonSource[] {
+  return parseValues(
+    value,
+    peopleSourceOptions.map((option) => option.value)
+  );
+}
+
+export function parsePersonMemberStatuses(
+  value: string
+): PersonMemberStatus[] {
+  return parseValues(
+    value,
+    peopleMemberStatusOptions.map((option) => option.value)
   );
 }
 

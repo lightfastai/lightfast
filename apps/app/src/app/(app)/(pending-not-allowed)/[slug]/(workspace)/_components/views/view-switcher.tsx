@@ -21,12 +21,20 @@ import { ViewDeleteDialog } from "./view-delete-dialog";
 
 export type { ViewSwitcherItem } from "./partition-views";
 
+export interface ViewSwitcherPreset {
+  name: string;
+  publicId: string;
+}
+
 export interface ViewSwitcherProps {
+  activePresetId?: string | null;
   activeViewId: string | null;
   onCreate: (name: string) => Promise<unknown>;
   onDelete: (publicId: string) => Promise<unknown>;
   onSelectAll: () => void;
+  onSelectPreset?: (publicId: string) => void;
   onSelectView: (publicId: string) => void;
+  presets?: ViewSwitcherPreset[];
   views: ViewSwitcherItem[];
 }
 
@@ -44,11 +52,14 @@ export interface ViewSwitcherProps {
  * people.
  */
 export function ViewSwitcher({
+  activePresetId = null,
   activeViewId,
   onCreate,
   onDelete,
   onSelectAll,
+  onSelectPreset,
   onSelectView,
+  presets = [],
   views,
 }: ViewSwitcherProps) {
   const [isCreateOpen, setCreateOpen] = useState(false);
@@ -71,11 +82,11 @@ export function ViewSwitcher({
           <button
             className={cn(
               "inline-flex h-6 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border px-2.5 text-sm transition-colors",
-              activeViewId
+              activePresetId || activeViewId
                 ? "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground"
                 : "border-border/70 bg-muted/60 text-foreground"
             )}
-            data-active={!activeViewId}
+            data-active={!activePresetId && !activeViewId}
             onClick={onSelectAll}
             type="button"
           >
@@ -85,6 +96,35 @@ export function ViewSwitcher({
             />
             <span>All</span>
           </button>
+
+          {presets.map((preset) => {
+            const isActive = activePresetId === preset.publicId;
+            return (
+              <Fragment key={preset.publicId}>
+                <div
+                  aria-hidden="true"
+                  className="mx-1.5 h-3.5 w-px shrink-0 bg-border"
+                />
+                <button
+                  className={cn(
+                    "inline-flex h-6 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border px-2.5 text-sm transition-colors",
+                    isActive
+                      ? "border-border/70 bg-muted/60 text-foreground"
+                      : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+                  )}
+                  data-active={isActive}
+                  onClick={() => onSelectPreset?.(preset.publicId)}
+                  type="button"
+                >
+                  <AlignJustify
+                    aria-hidden="true"
+                    className="size-3.5 rotate-90 text-muted-foreground"
+                  />
+                  <span>{preset.name}</span>
+                </button>
+              </Fragment>
+            );
+          })}
 
           {visible.map((view) => {
             const isActive = activeViewId === view.publicId;

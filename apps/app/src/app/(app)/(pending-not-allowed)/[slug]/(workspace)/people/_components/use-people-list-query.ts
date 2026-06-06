@@ -18,8 +18,12 @@ export function usePeopleListQuery({
   const normalizedSearch = search.trim() || undefined;
   const input = {
     limit: PEOPLE_PAGE_SIZE,
+    memberStatuses: filters.memberStatuses.length
+      ? filters.memberStatuses
+      : undefined,
     providers: filters.providers.length ? filters.providers : undefined,
     search: normalizedSearch,
+    sources: filters.sources.length ? filters.sources : undefined,
     types: filters.types.length ? filters.types : undefined,
   };
 

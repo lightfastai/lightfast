@@ -3,7 +3,9 @@ import type { AppRouterOutputs } from "@api/app";
 export type PeopleList = AppRouterOutputs["org"]["workspace"]["people"]["list"];
 export type PersonRow = PeopleList["items"][number];
 export type PersonProvider = PersonRow["identityProvider"];
+export type PersonSource = PersonRow["personSource"];
 export type PersonType = PersonRow["identityType"];
+export type PersonMemberStatus = NonNullable<PersonRow["memberStatus"]>;
 
 export const PEOPLE_PAGE_SIZE = 50;
 
@@ -27,8 +29,27 @@ export const peopleTypeOptions: {
   { label: "Profile URL", value: "profile_url" },
 ];
 
+export const peopleSourceOptions: {
+  label: string;
+  value: PersonSource;
+}[] = [
+  { label: "Signal-discovered", value: "signal" },
+  { label: "Team member", value: "team_member" },
+  { label: "Mixed", value: "mixed" },
+];
+
+export const peopleMemberStatusOptions: {
+  label: string;
+  value: PersonMemberStatus;
+}[] = [
+  { label: "Active member", value: "active" },
+  { label: "Former member", value: "former" },
+];
+
 export interface PeopleClassificationFilters {
+  memberStatuses: PersonMemberStatus[];
   providers: PersonProvider[];
+  sources: PersonSource[];
   types: PersonType[];
 }
 
@@ -46,6 +67,20 @@ export function getPersonProviderLabel(provider: PersonProvider) {
 export function getPersonTypeLabel(type: PersonType) {
   return (
     peopleTypeOptions.find((option) => option.value === type)?.label ?? type
+  );
+}
+
+export function getPersonSourceLabel(source: PersonSource) {
+  return (
+    peopleSourceOptions.find((option) => option.value === source)?.label ??
+    source
+  );
+}
+
+export function getMemberStatusLabel(status: PersonMemberStatus) {
+  return (
+    peopleMemberStatusOptions.find((option) => option.value === status)
+      ?.label ?? status
   );
 }
 

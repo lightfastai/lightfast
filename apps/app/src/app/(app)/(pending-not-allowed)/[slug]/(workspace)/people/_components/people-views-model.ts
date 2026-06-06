@@ -8,7 +8,9 @@ export type PeopleViewRow = PeopleViewList[number];
 export type PeopleViewConfig = PeopleViewRow["config"];
 
 export interface PeopleViewParamValues {
+  memberStatus: string;
   provider: string;
+  source: string;
   type: string;
 }
 
@@ -16,15 +18,18 @@ export interface PeopleViewParamValues {
 export function viewConfigToParamValues(
   config: PeopleViewConfig
 ): PeopleViewParamValues {
+  const filters = config.filters;
   return {
-    provider: serializePersonValues(config.filters.providers),
-    type: serializePersonValues(config.filters.types),
+    memberStatus: serializePersonValues(filters.memberStatuses ?? []),
+    provider: serializePersonValues(filters.providers ?? []),
+    source: serializePersonValues(filters.sources ?? []),
+    type: serializePersonValues(filters.types ?? []),
   };
 }
 
 /** Empty param values — selecting "All people" clears all filters. */
 export function allPeopleParamValues(): PeopleViewParamValues {
-  return { provider: "", type: "" };
+  return { memberStatus: "", provider: "", source: "", type: "" };
 }
 
 /** Snapshot the current toolbar selection into a view config for create. */
@@ -33,7 +38,9 @@ export function selectionToConfig(
 ): PeopleViewConfig {
   return {
     filters: {
+      memberStatuses: filters.memberStatuses,
       providers: filters.providers,
+      sources: filters.sources,
       types: filters.types,
     },
   };
