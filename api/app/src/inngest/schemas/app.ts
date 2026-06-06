@@ -7,6 +7,11 @@ import { sourceControlRepositoryPushEventSchema } from "@repo/source-control-con
 import { eventType } from "@vendor/inngest";
 import { z } from "zod";
 
+export const appTeamMembersReconcileRequestedEventSchema = z.object({
+  cursor: z.number().int().positive().nullable().optional(),
+  syncedAtIso: z.string().datetime().optional(),
+});
+
 export const appEvents = {
   "app/automation.run.requested": eventType("app/automation.run.requested", {
     schema: z.object({
@@ -23,6 +28,12 @@ export const appEvents = {
         signalId: signalIdSchema,
         clerkOrgId: z.string().min(1),
       }),
+    }
+  ),
+  "app/team-members.reconcile.requested": eventType(
+    "app/team-members.reconcile.requested",
+    {
+      schema: appTeamMembersReconcileRequestedEventSchema,
     }
   ),
   "app/signal.created": eventType("app/signal.created", {

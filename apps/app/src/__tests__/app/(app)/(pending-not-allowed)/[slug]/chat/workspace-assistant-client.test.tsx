@@ -509,6 +509,14 @@ describe("WorkspaceAssistantClient", () => {
     ).toBeEnabled();
   });
 
+  it("disables the submit control while a prompt is submitted", () => {
+    chatStatus = "submitted";
+
+    render(<WorkspaceAssistantClient conversationId="conv_new" />);
+
+    expect(screen.getByRole("button", { name: "Send message" })).toBeDisabled();
+  });
+
   it("renders persisted chat messages and sends follow-ups to the existing conversation", async () => {
     render(
       <WorkspaceAssistantClient

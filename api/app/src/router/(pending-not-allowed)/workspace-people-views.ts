@@ -2,6 +2,8 @@ import { createPeopleView, deletePeopleView, listPeopleViews } from "@db/app";
 import {
   peopleIdentityProviderSchema,
   peopleIdentityTypeSchema,
+  personMemberStatusSchema,
+  personSourceSchema,
 } from "@repo/app-validation/schemas";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
@@ -12,6 +14,8 @@ import { boundOrgProcedure } from "../../trpc";
 const peopleViewConfigSchema = z.object({
   filters: z.object({
     providers: z.array(peopleIdentityProviderSchema).max(5),
+    sources: z.array(personSourceSchema).max(3).default([]),
+    memberStatuses: z.array(personMemberStatusSchema).max(2).default([]),
     types: z.array(peopleIdentityTypeSchema).max(3),
   }),
 });

@@ -16,7 +16,13 @@ export const peopleIdentityTypeSchema = z.enum([
   "profile_url",
 ]);
 
+export const personSourceSchema = z.enum(["signal", "team_member", "mixed"]);
+
+export const personMemberStatusSchema = z.enum(["active", "former"]);
+
 export type PersonIdentityProvider = z.infer<
   typeof peopleIdentityProviderSchema
 >;
 export type PersonIdentityType = z.infer<typeof peopleIdentityTypeSchema>;
+export type PersonSource = z.infer<typeof personSourceSchema>;
+export type PersonMemberStatus = z.infer<typeof personMemberStatusSchema>;

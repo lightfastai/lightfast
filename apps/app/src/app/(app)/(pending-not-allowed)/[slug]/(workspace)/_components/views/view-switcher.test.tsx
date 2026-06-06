@@ -117,6 +117,30 @@ describe("ViewSwitcher", () => {
     expect(props.onSelectAll).toHaveBeenCalledTimes(1);
   });
 
+  it("renders built-in presets and calls onSelectPreset", () => {
+    props.onSelectPreset = vi.fn();
+    render(
+      <ViewSwitcher
+        {...props}
+        presets={[{ name: "Team Members", publicId: "team_members" }]}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Team Members" }));
+    expect(props.onSelectPreset).toHaveBeenCalledWith("team_members");
+  });
+
+  it("does not render a delete button for built-in presets", () => {
+    render(
+      <ViewSwitcher
+        {...props}
+        presets={[{ name: "Team Members", publicId: "team_members" }]}
+      />
+    );
+    expect(
+      screen.queryByRole("button", { name: "Delete Team Members" })
+    ).not.toBeInTheDocument();
+  });
+
   it("opens the create dialog from the + button", () => {
     render(<ViewSwitcher {...props} />);
     expect(screen.queryByRole("heading", { name: "Save view" })).toBeNull();

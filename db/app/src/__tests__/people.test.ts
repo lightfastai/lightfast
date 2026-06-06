@@ -146,6 +146,11 @@ function makePerson(overrides: Partial<Person> = {}): Person {
     lastSeenSignalId: "signal_first",
     seenCount: 1,
     metadata: {},
+    personSource: "signal",
+    memberStatus: null,
+    clerkUserId: null,
+    memberRole: null,
+    memberSyncedAt: null,
     createdAt: new Date("2026-05-22T00:00:00.000Z"),
     updatedAt: new Date("2026-05-22T00:00:00.000Z"),
     ...overrides,
@@ -213,11 +218,13 @@ describe("upsertPeopleFromCandidates", () => {
         firstSeenSignalId: "signal_source",
         lastSeenSignalId: "signal_source",
         seenCount: 1,
+        personSource: "signal",
       })
     );
     expect(spies.duplicateSet).toHaveBeenCalledWith(
       expect.objectContaining({
         lastSeenSignalId: "signal_source",
+        personSource: expect.anything(),
       })
     );
   });
@@ -473,6 +480,49 @@ describe("listPeople filters", () => {
       limit: 10,
     });
 
+    expect(spies.where).toHaveBeenCalledOnce();
+  });
+
+  it("passes source and member status filters through without throwing", async () => {
+    const person = makePerson({
+      personSource: "team_member",
+      memberStatus: "active",
+    });
+    const { db, spies } = makePeopleListDb([person]);
+
+    await expect(
+      listPeople(db, {
+        clerkOrgId: "org_test",
+        limit: 10,
+        memberStatuses: ["active"],
+        sources: ["team_member", "mixed"],
+      })
+    ).resolves.toEqual({ items: [person], nextCursor: null });
+
+    const condition = spies.where.mock.calls[0]?.[0];
+    const query = new MySqlDialect().sqlToQuery(condition);
+
+    expect(query.sql).toContain("person_source");
+    expect(query.sql).toContain("member_status");
+    expect(spies.where).toHaveBeenCalledOnce();
+    expect(spies.limit).toHaveBeenCalledWith(11);
+  });
+
+  it("ignores empty source and member status arrays", async () => {
+    const { db, spies } = makePeopleListDb([]);
+
+    await listPeople(db, {
+      clerkOrgId: "org_test",
+      limit: 10,
+      memberStatuses: [],
+      sources: [],
+    });
+
+    const condition = spies.where.mock.calls[0]?.[0];
+    const query = new MySqlDialect().sqlToQuery(condition);
+
+    expect(query.sql).not.toContain("person_source");
+    expect(query.sql).not.toContain("member_status");
     expect(spies.where).toHaveBeenCalledOnce();
   });
 });

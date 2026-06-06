@@ -3,15 +3,22 @@
 import { useQueryStates } from "nuqs";
 import { ViewSwitcher } from "../../_components/views/view-switcher";
 import {
+  parsePersonMemberStatuses,
   parsePersonProviders,
+  parsePersonSources,
   parsePersonTypes,
   peopleSavedViewParser,
+  personMemberStatusParser,
   personProviderParser,
+  personSourceParser,
   personTypeParser,
 } from "./people-search-params";
 import {
   allPeopleParamValues,
+  isTeamMembersPresetFilters,
   selectionToConfig,
+  TEAM_MEMBERS_PRESET_ID,
+  teamMembersParamValues,
   viewConfigToParamValues,
 } from "./people-views-model";
 import {
@@ -26,7 +33,9 @@ import {
  */
 export function PeopleViewSwitcher() {
   const [params, setParams] = useQueryStates({
+    memberStatus: personMemberStatusParser,
     provider: personProviderParser,
+    source: personSourceParser,
     type: personTypeParser,
     view: peopleSavedViewParser,
   });
@@ -37,13 +46,21 @@ export function PeopleViewSwitcher() {
   const views = viewsQuery.data ?? [];
   const activeViewId = params.view;
 
-  const currentConfig = selectionToConfig({
+  const currentFilters = {
+    memberStatuses: parsePersonMemberStatuses(params.memberStatus),
     providers: parsePersonProviders(params.provider),
+    sources: parsePersonSources(params.source),
     types: parsePersonTypes(params.type),
-  });
+  };
+  const currentConfig = selectionToConfig(currentFilters);
+  const activePresetId =
+    !activeViewId && isTeamMembersPresetFilters(currentFilters)
+      ? TEAM_MEMBERS_PRESET_ID
+      : null;
 
   return (
     <ViewSwitcher
+      activePresetId={activePresetId}
       activeViewId={activeViewId}
       onCreate={async (name) => {
         const view = await createView.mutateAsync({
@@ -61,7 +78,22 @@ export function PeopleViewSwitcher() {
       onSelectAll={() => {
         const next = allPeopleParamValues();
         void setParams({
+          memberStatus: next.memberStatus,
           provider: next.provider,
+          source: next.source,
+          type: next.type,
+          view: null,
+        });
+      }}
+      onSelectPreset={(publicId) => {
+        if (publicId !== TEAM_MEMBERS_PRESET_ID) {
+          return;
+        }
+        const next = teamMembersParamValues();
+        void setParams({
+          memberStatus: next.memberStatus,
+          provider: next.provider,
+          source: next.source,
           type: next.type,
           view: null,
         });
@@ -73,11 +105,14 @@ export function PeopleViewSwitcher() {
         }
         const next = viewConfigToParamValues(view.config);
         void setParams({
+          memberStatus: next.memberStatus,
           provider: next.provider,
+          source: next.source,
           type: next.type,
           view: publicId,
         });
       }}
+      presets={[{ name: "Team Members", publicId: TEAM_MEMBERS_PRESET_ID }]}
       views={views}
     />
   );
