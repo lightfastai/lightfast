@@ -18,6 +18,7 @@ export default async function SettingsPage({
   // organization list is also prefetched by the ancestor ShellDataBoundary;
   // repeating it here keeps this route self-documenting and is a no-op dedupe.
   prefetch(trpc.org.settings.identity.get.queryOptions());
+  prefetch(trpc.org.settings.organization.listDomains.queryOptions({ slug }));
   prefetch(trpc.viewer.organization.listUserOrganizations.queryOptions());
 
   return (
