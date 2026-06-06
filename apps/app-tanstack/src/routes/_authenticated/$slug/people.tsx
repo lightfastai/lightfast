@@ -1,7 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { WorkspacePage } from "~/components/workspace-page";
+import { useCallback, useMemo } from "react";
+import { PeopleClient } from "~/people/people-client";
+import {
+  type NormalizedPeopleSearch,
+  normalizePeopleSearch,
+  validatePeopleSearch,
+} from "~/people/people-search-params";
 
 export const Route = createFileRoute("/_authenticated/$slug/people")({
+  validateSearch: validatePeopleSearch,
   head: ({ params }) => ({
     meta: [{ title: `People - ${params.slug} - Lightfast` }],
   }),
@@ -10,11 +17,45 @@ export const Route = createFileRoute("/_authenticated/$slug/people")({
 
 function PeoplePage() {
   const { slug } = Route.useParams();
+  const routeSearch = Route.useSearch();
+  const search = useMemo(
+    () => normalizePeopleSearch(routeSearch),
+    [routeSearch]
+  );
+  const navigate = Route.useNavigate();
+  const setSearchParams = useCallback(
+    (updates: Partial<NormalizedPeopleSearch>) => {
+      void navigate({
+        replace: true,
+        search: (previous) => {
+          const next = { ...previous };
+          if ("peopleQuery" in updates) {
+            next.peopleQuery = updates.peopleQuery || undefined;
+          }
+          if ("provider" in updates) {
+            next.provider = updates.provider || undefined;
+          }
+          if ("type" in updates) {
+            next.type = updates.type || undefined;
+          }
+          if ("person" in updates) {
+            next.person = updates.person || undefined;
+          }
+          if ("view" in updates) {
+            next.view = updates.view || undefined;
+          }
+          return next;
+        },
+      });
+    },
+    [navigate]
+  );
+
   return (
-    <WorkspacePage
-      description="People routes are mounted in the TanStack workspace shell. The member directory and invite workflows can move next."
-      eyebrow={`/${slug}/people`}
-      title="People"
+    <PeopleClient
+      search={search}
+      setSearchParams={setSearchParams}
+      slug={slug}
     />
   );
 }

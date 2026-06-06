@@ -141,6 +141,53 @@ describe("app-tanstack authenticated route migration", () => {
     }
   });
 
+  it("ports People without Next.js search or link assumptions", () => {
+    const routeSource = source("src/routes/_authenticated/$slug/people.tsx");
+    const clientSource = source("src/people/people-client.tsx");
+    const searchSource = source("src/people/people-search-params.ts");
+    const querySource = source("src/people/use-people-list-query.ts");
+    const viewsSource = source("src/people/people-view-switcher.tsx");
+    const viewQuerySource = source("src/people/use-people-views-query.ts");
+    const toolbarSource = source("src/people/people-toolbar.tsx");
+    const tableSource = source("src/people/people-table-view.tsx");
+    const detailSource = source("src/people/people-detail-content.tsx");
+    const emptySource = source("src/people/people-empty-state.tsx");
+
+    expect(routeSource).toContain("validatePeopleSearch");
+    expect(routeSource).toContain("createFileRoute");
+    expect(routeSource).toContain("setSearchParams");
+    expect(clientSource).toContain("PeopleToolbar");
+    expect(clientSource).toContain("PeopleViewSwitcher");
+    expect(clientSource).toContain("PeopleTableView");
+    expect(clientSource).toContain("PeopleDetailSheet");
+    expect(clientSource).toContain("usePeopleListQuery");
+    expect(searchSource).toContain("validatePeopleSearch");
+    expect(searchSource).toContain("parsePersonProviders");
+    expect(querySource).toContain("people.list.infiniteQueryOptions");
+    expect(querySource).toContain('enabled: typeof window !== "undefined"');
+    expect(viewsSource).toContain("viewConfigToParamValues");
+    expect(viewQuerySource).toContain("people.views.list.queryOptions");
+    expect(toolbarSource).toContain("viewsSlot");
+    expect(tableSource).toContain("PeopleEmptyState");
+    expect(detailSource).toContain('to="/$slug/signals"');
+    expect(emptySource).toContain('href="/docs/get-started/overview"');
+
+    for (const routeFile of [
+      routeSource,
+      clientSource,
+      searchSource,
+      viewsSource,
+      toolbarSource,
+      tableSource,
+      detailSource,
+      emptySource,
+    ]) {
+      expect(routeFile).not.toContain("next/");
+      expect(routeFile).not.toContain("nuqs");
+      expect(routeFile).not.toContain("@vercel/microfrontends/next");
+    }
+  });
+
   it("ports org setup routes and GitHub callbacks", () => {
     const orgRouteSource = source("src/routes/_authenticated/$slug.tsx");
     const accountGithubRouteSource = source(
