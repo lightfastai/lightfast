@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
+const mocks = vi.hoisted(() => ({
+  vercelEnv: "production",
+}));
+
 const routeHandlers = {
   GET: vi.fn(),
   POST: vi.fn(),
@@ -31,6 +35,9 @@ vi.mock("inngest/next", () => ({
 vi.mock("../env", () => ({
   env: {
     INNGEST_SERVE_ORIGIN: "https://lightfast.localhost",
+    get VERCEL_ENV() {
+      return mocks.vercelEnv;
+    },
   },
 }));
 
@@ -97,7 +104,9 @@ vi.mock("../inngest/workflow/queue-skill-refresh-from-source-control", () => ({
 const { createInngestRouteContext, inngest } = await import("../inngest");
 
 describe("createInngestRouteContext", () => {
-  it("serves the app Inngest client with automation and health workflows", () => {
+  it("serves the app Inngest client with automation and production health workflows", () => {
+    mocks.vercelEnv = "production";
+
     const handlers = createInngestRouteContext();
 
     expect(inngest).toBe(inngestClient);
@@ -106,6 +115,33 @@ describe("createInngestRouteContext", () => {
       client: inngestClient,
       functions: [
         systemHealth,
+        classifySignal,
+        indexSignalEntities,
+        backfillSignalEntityLinks,
+        classifyPeople,
+        cleanupDeveloperSandboxRuns,
+        automationScheduler,
+        runAutomation,
+        refreshSkillIndex,
+        refreshIdentityIndex,
+        reconcileSkillIndexes,
+        reconcileIdentityIndexes,
+        teamMemberReconciler,
+        queueLightfastIndexRefreshesFromSourceControl,
+      ],
+      serveOrigin: "https://lightfast.localhost",
+      servePath: "/api/inngest",
+    });
+  });
+
+  it("omits cron health workflows outside production", () => {
+    mocks.vercelEnv = "preview";
+
+    createInngestRouteContext();
+
+    expect(serveMock).toHaveBeenLastCalledWith({
+      client: inngestClient,
+      functions: [
         classifySignal,
         indexSignalEntities,
         backfillSignalEntityLinks,
