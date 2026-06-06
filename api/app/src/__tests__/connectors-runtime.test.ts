@@ -67,8 +67,11 @@ vi.mock("@vendor/observability/log/next", () => ({
   },
 }));
 
-const { ConnectorRuntimeToolCallError, loadConnectorRuntimeTools } =
-  await import("../services/connectors/runtime");
+const {
+  ConnectorRuntimeToolCallError,
+  loadChatConnectorRuntimeTools,
+  loadConnectorRuntimeTools,
+} = await import("../services/connectors/runtime");
 const { LinearAppNodeError } = await import("@repo/linear-app-node");
 const { XAppNodeError } = await import("@repo/x-app-node");
 
@@ -192,6 +195,95 @@ describe("loadConnectorRuntimeTools", () => {
     expect(listCurrentOrgConnectorConnectionsMock).toHaveBeenCalledWith(
       {},
       { clerkOrgId: "org_acme" }
+    );
+  });
+
+  it("loads active agent-enabled tools for chat without requiring automation access", async () => {
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([
+      connection({
+        enabledForAgents: true,
+        enabledForAutomations: false,
+        toolManifest: [{ description: "List issues", name: "list_issues" }],
+      }),
+      connection({
+        enabledForAgents: true,
+        enabledForAutomations: false,
+        id: 42,
+        mcpEndpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
+        provider: "x",
+        providerWorkspaceId: null,
+        providerWorkspaceName: "X",
+        scopes: ["tweet.read", "users.read", "offline.access"],
+        toolManifest: [
+          { description: "Look up account", name: "getUsersByUsername" },
+        ],
+      }),
+    ]);
+
+    const tools = await loadChatConnectorRuntimeTools({
+      calledByUserId: "user_current",
+      clerkOrgId: "org_acme",
+      conversationId: "conv_123",
+    });
+
+    expect(tools).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          provider: "linear",
+          providerToolName: "list_issues",
+          runtimeToolName: "linear__list_issues",
+        }),
+        expect.objectContaining({
+          provider: "x",
+          providerToolName: "getUsersByUsername",
+          runtimeToolName: "x__getUsersByUsername",
+        }),
+      ])
+    );
+  });
+
+  it("records chat runtime calls with user caller and chat source metadata", async () => {
+    const chatConnection = connection({
+      enabledForAgents: true,
+      enabledForAutomations: false,
+      toolManifest: [{ name: "list_issues" }],
+    });
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([chatConnection]);
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(chatConnection);
+    callLinearMcpToolMock.mockResolvedValue({
+      content: [{ text: "issue list" }],
+    });
+
+    const [tool] = await loadChatConnectorRuntimeTools({
+      calledByUserId: "user_current",
+      clerkOrgId: "org_acme",
+      conversationId: "conv_123",
+    });
+
+    await expect(tool?.callWithMetadata({ query: "bug" })).resolves.toEqual({
+      provider: "linear",
+      providerRoutineCallId: "provider_routine_call_123",
+      providerToolName: "list_issues",
+      result: { content: [{ text: "issue list" }] },
+      routineId: "linear__list_issues",
+      runtimeToolName: "linear__list_issues",
+    });
+
+    expect(createProviderRoutineCallMock).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({
+        calledById: "user_current",
+        calledByKind: "user",
+        calledByUserId: "user_current",
+        clerkOrgId: "org_acme",
+        provider: "linear",
+        providerConnectionId: 1,
+        providerToolName: "list_issues",
+        routineId: "linear__list_issues",
+        sourceClientId: null,
+        sourceRef: "conv_123",
+        sourceSurface: "chat",
+      })
     );
   });
 

@@ -131,6 +131,7 @@ export {
   type PersonSource,
   type ProviderRoutineCall,
   type ProviderRoutineCallRedactedPayload,
+  type ProviderRoutineCallSourceSurface,
   type ResourcesTruncatedFlag,
   SIGNAL_VIEW_ID_PREFIX,
   type Signal,
