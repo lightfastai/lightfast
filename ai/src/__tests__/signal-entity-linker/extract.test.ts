@@ -30,10 +30,10 @@ describe("signal entity linker extraction", () => {
   it("extracts recognized person profile URLs", () => {
     const candidates = extractDeterministicSignalEntityLinks({
       input:
-        "Review https://www.linkedin.com/in/JordiExample and https://x.com/archer.",
+        "Review https://www.linkedin.com/in/JordiExample, https://github.com/jordi, https://x.com/archer, and https://twitter.com/jordi.",
     });
 
-    expect(candidates).toHaveLength(2);
+    expect(candidates).toHaveLength(4);
     expect(candidates).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -45,11 +45,40 @@ describe("signal entity linker extraction", () => {
         expect.objectContaining({
           targetType: "person",
           localEntityKey: "person_2",
+          label: "https://github.com/jordi",
+          mentionKind: "profile_url",
+        }),
+        expect.objectContaining({
+          targetType: "person",
+          localEntityKey: "person_3",
           label: "https://x.com/archer",
+          mentionKind: "profile_url",
+        }),
+        expect.objectContaining({
+          targetType: "person",
+          localEntityKey: "person_4",
+          label: "https://twitter.com/jordi",
           mentionKind: "profile_url",
         }),
       ])
     );
+  });
+
+  it("strips trailing bracket and parenthesis punctuation from profile URLs", () => {
+    const candidates = extractDeterministicSignalEntityLinks({
+      input: "Review [https://github.com/jordi] and (https://x.com/archer).",
+    });
+
+    expect(candidates).toEqual([
+      expect.objectContaining({
+        label: "https://github.com/jordi",
+        anchorText: "https://github.com/jordi",
+      }),
+      expect.objectContaining({
+        label: "https://x.com/archer",
+        anchorText: "https://x.com/archer",
+      }),
+    ]);
   });
 
   it("extracts provider-obvious handles without treating emails as handles", () => {
@@ -107,7 +136,7 @@ describe("signal entity linker extraction", () => {
     expect(
       extractDeterministicSignalEntityLinks({
         input:
-          "Skip https://github.com/org/repo, https://x.com/i/status/123, https://twitter.com/search, and https://example.com/@jordi.",
+          "Skip https://github.com/org/repo, https://x.com/i/status/123, https://x.com/explore, https://twitter.com/search, https://twitter.com/settings, and https://example.com/@jordi.",
       })
     ).toEqual([]);
   });
@@ -151,5 +180,44 @@ describe("signal entity linker extraction", () => {
         ],
       })
     ).toEqual([deterministicCandidates[0], jordiCandidate]);
+  });
+
+  it("caps merged candidates at ten", () => {
+    const deterministicInput = Array.from(
+      { length: 8 },
+      (_, index) => `person${index + 1}@doccy.com`
+    ).join(" ");
+    const aiInput = Array.from(
+      { length: 5 },
+      (_, index) => `Name${index + 1}`
+    ).join(" ");
+    const input = `${deterministicInput} ${aiInput}`;
+    const deterministicCandidates = extractDeterministicSignalEntityLinks({
+      input,
+    });
+    const aiCandidates: SignalEntityLinkCandidate[] = Array.from(
+      { length: 5 },
+      (_, index) => ({
+        targetType: "person",
+        localEntityKey: `person_${index + 9}`,
+        label: `Name${index + 1}`,
+        mentionKind: "name",
+        anchorText: `Name${index + 1}`,
+        anchorOccurrence: 1,
+        extractionMethod: "ai",
+        rationale: "The text names a person.",
+        confidence: 0.8,
+      })
+    );
+
+    const mergedCandidates = mergeSignalEntityLinkCandidates({
+      input,
+      deterministicCandidates,
+      aiCandidates,
+    });
+
+    expect(mergedCandidates).toHaveLength(10);
+    expect(mergedCandidates.slice(0, 8)).toEqual(deterministicCandidates);
+    expect(mergedCandidates.at(-1)).toEqual(aiCandidates[1]);
   });
 });

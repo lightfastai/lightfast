@@ -8,15 +8,24 @@ const HANDLE_PATTERN = /(^|[^\w@.])@[A-Z0-9_]{1,30}\b/gi;
 const URL_PATTERN = /\bhttps?:\/\/[^\s<>"')]+/gi;
 
 const MAX_SIGNAL_ENTITY_LINK_CANDIDATES = 10;
-const TRAILING_LABEL_PUNCTUATION_PATTERN = /[.,;:!?]+$/g;
+const TRAILING_LABEL_PUNCTUATION_PATTERN = /[.,;:!?\])]+$/g;
 const RESERVED_X_TWITTER_PATH_SEGMENTS = new Set([
+  "compose",
+  "download",
+  "explore",
   "home",
   "i",
   "intent",
+  "login",
+  "logout",
   "messages",
   "notifications",
+  "privacy",
   "search",
+  "settings",
   "share",
+  "signup",
+  "tos",
 ]);
 
 type DeterministicMentionKind = Extract<
