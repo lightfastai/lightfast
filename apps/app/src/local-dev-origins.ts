@@ -1,3 +1,13 @@
+const DIRECT_SERVICE_HOST_PREFIXES = new Set([
+  "app",
+  "db",
+  "inngest",
+  "mcp",
+  "platform",
+  "qstash",
+  "www",
+]);
+
 function localHostFromUrl(value: string): string | null {
   try {
     const url = new URL(value);
@@ -37,7 +47,11 @@ function appHostFromAggregateHost(host: string): string | null {
   }
 
   const prefix = hostname.slice(0, -suffix.length);
-  if (!prefix || prefix.includes(".")) {
+  if (
+    !prefix ||
+    prefix.includes(".") ||
+    DIRECT_SERVICE_HOST_PREFIXES.has(prefix)
+  ) {
     return null;
   }
 
