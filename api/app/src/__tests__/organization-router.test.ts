@@ -106,6 +106,17 @@ const unauthenticatedIdentity: AuthIdentity = {
   type: "unauthenticated",
 };
 
+function activeIdentity(
+  overrides: { orgId?: string; userId?: string } = {}
+): AuthIdentity {
+  return {
+    type: "active",
+    userId: overrides.userId ?? "user_test",
+    orgId: overrides.orgId ?? "org_acme",
+    orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
+  };
+}
+
 function adminAccess(overrides: { orgId?: string; userId?: string } = {}) {
   return {
     kind: "clerk-session" as const,
@@ -623,7 +634,10 @@ describe("organization domains", () => {
       });
 
     await expect(
-      caller().org.settings.organization.updateDomains({
+      caller(
+        activeIdentity(),
+        adminAccess()
+      ).org.settings.organization.updateDomains({
         domains: [" Lightfast.AI ", "new.com", "acme.com", "lightfast.ai"],
         slug: "acme",
       })
@@ -673,14 +687,42 @@ describe("organization domains", () => {
     });
   });
 
-  it("rejects domain updates without the admin role", async () => {
-    getOrganizationMembershipListMock.mockResolvedValueOnce({
-      data: [organizationMembership({ role: "org:member" })],
-      totalCount: 1,
-    });
-
+  it("rejects domain updates when the caller has no active organization", async () => {
     await expect(
       caller().org.settings.organization.updateDomains({
+        domains: ["acme.com"],
+        slug: "acme",
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    expect(getOrganizationDomainListMock).not.toHaveBeenCalled();
+    expect(createOrganizationDomainMock).not.toHaveBeenCalled();
+    expect(deleteOrganizationDomainMock).not.toHaveBeenCalled();
+    expect(updateOrganizationDomainMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects domain updates when the active organization differs from the requested slug", async () => {
+    await expect(
+      caller(
+        activeIdentity({ orgId: "org_other" }),
+        adminAccess({ orgId: "org_other" })
+      ).org.settings.organization.updateDomains({
+        domains: ["acme.com"],
+        slug: "acme",
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    expect(createOrganizationDomainMock).not.toHaveBeenCalled();
+    expect(deleteOrganizationDomainMock).not.toHaveBeenCalled();
+    expect(updateOrganizationDomainMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects domain updates without the admin role", async () => {
+    await expect(
+      caller(
+        activeIdentity(),
+        nonAdminAccess()
+      ).org.settings.organization.updateDomains({
         domains: ["acme.com"],
         slug: "acme",
       })

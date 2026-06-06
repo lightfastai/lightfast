@@ -16,7 +16,7 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useOrganizationList } from "@vendor/clerk";
+import { useAuth, useOrganizationList } from "@vendor/clerk";
 import { Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -46,7 +46,9 @@ export function TeamGeneralSettingsClient({
 }: TeamGeneralSettingsClientProps) {
   const router = useRouter();
   const trpc = useTRPC();
+  const { has, isLoaded } = useAuth();
   const { setActive } = useOrganizationList();
+  const canManageDomains = isLoaded && !!has?.({ role: "org:admin" });
 
   const { data: organizations } = useSuspenseQuery({
     ...trpc.viewer.organization.listUserOrganizations.queryOptions(),
@@ -114,6 +116,7 @@ export function TeamGeneralSettingsClient({
     },
     slug,
   });
+  const isDomainEditorDisabled = isUpdatingDomains || !canManageDomains;
 
   const onSubmit = useCallback(
     async (values: TeamSettingsFormValues) => {
@@ -143,6 +146,10 @@ export function TeamGeneralSettingsClient({
 
   const commitDomains = useCallback(
     (domains: string[]) => {
+      if (!canManageDomains) {
+        return;
+      }
+
       const nextDomains = normalizeTeamDomainList(domains);
       if (areDomainListsEqual(nextDomains, draftDomains)) {
         return;
@@ -151,7 +158,7 @@ export function TeamGeneralSettingsClient({
       setDraftDomains(nextDomains);
       updateTeamDomains(nextDomains);
     },
-    [draftDomains, updateTeamDomains]
+    [canManageDomains, draftDomains, updateTeamDomains]
   );
 
   const addDomainInput = useCallback(() => {
@@ -283,7 +290,7 @@ export function TeamGeneralSettingsClient({
                 <button
                   aria-label={`Remove ${domain}`}
                   className="inline-flex size-4 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
-                  disabled={isUpdatingDomains}
+                  disabled={isDomainEditorDisabled}
                   onClick={() => removeDomain(domain)}
                   type="button"
                 >
@@ -294,7 +301,7 @@ export function TeamGeneralSettingsClient({
             <input
               aria-label="Add domain"
               className="h-7 min-w-36 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground disabled:opacity-50"
-              disabled={isUpdatingDomains}
+              disabled={isDomainEditorDisabled}
               onBlur={addDomainInput}
               onChange={(event) => setDomainInput(event.target.value)}
               onKeyDown={handleDomainKeyDown}

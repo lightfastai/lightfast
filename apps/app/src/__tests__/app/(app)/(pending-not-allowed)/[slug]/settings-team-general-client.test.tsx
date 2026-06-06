@@ -1,6 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const updateDomainsMutateMock = vi.fn();
+const useAuthMock = vi.fn();
 const domainsQueryOptions = {
   queryKey: ["org", "settings", "organization", "listDomains", "acme"],
 };
@@ -44,7 +46,7 @@ vi.mock("~/trpc/react", () => ({
 vi.mock("@tanstack/react-query", () => ({
   useMutation: () => ({
     isPending: false,
-    mutate: vi.fn(),
+    mutate: updateDomainsMutateMock,
   }),
   useQueryClient: () => ({
     cancelQueries: vi.fn(),
@@ -68,6 +70,7 @@ vi.mock("@tanstack/react-query", () => ({
 }));
 
 vi.mock("@vendor/clerk", () => ({
+  useAuth: useAuthMock,
   useOrganizationList: () => ({
     setActive: vi.fn(),
   }),
@@ -87,8 +90,14 @@ const { TeamGeneralSettingsClient } = await import(
 beforeEach(() => {
   listDomainsQueryOptionsMock.mockClear();
   listUserOrganizationsQueryOptionsMock.mockClear();
+  updateDomainsMutateMock.mockClear();
   updateDomainsMutationOptionsMock.mockClear();
   updateNameMutationOptionsMock.mockClear();
+  useAuthMock.mockReset();
+  useAuthMock.mockReturnValue({
+    has: ({ role }: { role?: string }) => role === "org:admin",
+    isLoaded: true,
+  });
 });
 
 describe("TeamGeneralSettingsClient", () => {
@@ -112,9 +121,28 @@ describe("TeamGeneralSettingsClient", () => {
     ).toBeVisible();
     expect(screen.getByText("jeevanpillay.com")).toBeVisible();
     expect(screen.getByText("lightfast.ai")).toBeVisible();
-    expect(screen.getByLabelText("Add domain")).toBeVisible();
+    expect(screen.getByLabelText("Add domain")).toBeEnabled();
     expect(listDomainsQueryOptionsMock).toHaveBeenCalledWith({
       slug: "acme",
     });
+  });
+
+  it("disables the Domains controls for non-admin members", () => {
+    useAuthMock.mockReturnValue({
+      has: () => false,
+      isLoaded: true,
+    });
+
+    render(<TeamGeneralSettingsClient slug="acme" />);
+
+    const addDomainInput = screen.getByLabelText("Add domain");
+    expect(addDomainInput).toBeDisabled();
+    expect(screen.getByLabelText("Remove jeevanpillay.com")).toBeDisabled();
+    expect(screen.getByLabelText("Remove lightfast.ai")).toBeDisabled();
+
+    fireEvent.change(addDomainInput, { target: { value: "new.com" } });
+    fireEvent.blur(addDomainInput);
+
+    expect(updateDomainsMutateMock).not.toHaveBeenCalled();
   });
 });

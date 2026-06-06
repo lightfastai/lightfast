@@ -381,7 +381,7 @@ export const orgSettingsOrganizationRouter = {
       return sortDomainResponses(domains.map(domainResponse));
     }),
 
-  updateDomains: viewerProcedure
+  updateDomains: orgAdminProcedure
     .input(organizationDomainsUpdateInputSchema)
     .mutation(async ({ ctx, input }) => {
       const access = await getOrganizationAccessBySlugOrThrow({
@@ -390,7 +390,7 @@ export const orgSettingsOrganizationRouter = {
         userId: ctx.auth.identity.userId,
       });
 
-      if (access.role !== "org:admin") {
+      if (access.org.id !== ctx.auth.identity.orgId) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Only administrators can perform this action",
