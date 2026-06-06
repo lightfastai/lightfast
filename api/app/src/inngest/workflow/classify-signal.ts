@@ -107,14 +107,6 @@ function getClassifiedSignalDownstreamEvents(input: {
   return { events, routedPeople };
 }
 
-async function queueClassifiedSignalDownstreamEvents(
-  events: ClassifiedSignalDownstreamEvent[]
-) {
-  for (const event of events) {
-    await inngest.send(event);
-  }
-}
-
 function classifiedResult(
   classification: SignalClassification,
   routedPeople: boolean
@@ -175,8 +167,9 @@ export const classifySignal = inngest.createFunction(
       });
 
       if (events.length > 0) {
-        await step.run("queue classified signal downstream workflows", () =>
-          queueClassifiedSignalDownstreamEvents(events)
+        await step.sendEvent(
+          "queue classified signal downstream workflows",
+          events
         );
       }
 
@@ -242,8 +235,9 @@ export const classifySignal = inngest.createFunction(
     });
 
     if (events.length > 0) {
-      await step.run("queue classified signal downstream workflows", () =>
-        queueClassifiedSignalDownstreamEvents(events)
+      await step.sendEvent(
+        "queue classified signal downstream workflows",
+        events
       );
     }
 
