@@ -30,15 +30,15 @@ import {
 import { inngest } from "../client";
 import { appEvents } from "../schemas/app";
 
-type ClassifiedSignalDownstreamEvent = {
-  name:
-    | "app/people.classification.requested"
-    | "app/signal.entity-index.requested";
+interface ClassifiedSignalDownstreamEvent {
   data: {
     clerkOrgId: string;
     signalId: string;
   };
-};
+  name:
+    | "app/people.classification.requested"
+    | "app/signal.entity-index.requested";
+}
 
 function getVisibilityScope(
   classification: SignalClassification

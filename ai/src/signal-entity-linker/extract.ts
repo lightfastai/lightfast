@@ -34,17 +34,17 @@ type DeterministicMentionKind = Extract<
 >;
 
 interface DeterministicMatch {
-  mentionKind: DeterministicMentionKind;
-  label: string;
   anchorText: string;
-  start: number;
   end: number;
+  label: string;
+  mentionKind: DeterministicMentionKind;
   rationale: string;
+  start: number;
 }
 
 interface TextRange {
-  start: number;
   end: number;
+  start: number;
 }
 
 interface UrlMatch extends TextRange {

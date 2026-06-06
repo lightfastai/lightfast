@@ -29,8 +29,7 @@ const noopLogger: ObjectClassificationLogger = {
   warn: () => undefined,
 };
 
-const signalEntityLinkerNode =
-  signalIntakeAgentGraph.nodes.signalEntityLinker;
+const signalEntityLinkerNode = signalIntakeAgentGraph.nodes.signalEntityLinker;
 
 export type DeploymentEnvironment = "development" | "preview" | "production";
 

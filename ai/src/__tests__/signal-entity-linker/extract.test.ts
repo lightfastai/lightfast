@@ -87,20 +87,22 @@ describe("signal entity linker extraction", () => {
     });
 
     expect(candidates).toHaveLength(2);
-    expect(candidates.filter((candidate) => candidate.mentionKind === "email"))
-      .toEqual([
-        expect.objectContaining({
-          label: "jordi@doccy.com.au",
-          anchorText: "jordi@doccy.com.au",
-        }),
-      ]);
-    expect(candidates.filter((candidate) => candidate.mentionKind === "handle"))
-      .toEqual([
-        expect.objectContaining({
-          label: "@jordi",
-          anchorText: "@jordi",
-        }),
-      ]);
+    expect(
+      candidates.filter((candidate) => candidate.mentionKind === "email")
+    ).toEqual([
+      expect.objectContaining({
+        label: "jordi@doccy.com.au",
+        anchorText: "jordi@doccy.com.au",
+      }),
+    ]);
+    expect(
+      candidates.filter((candidate) => candidate.mentionKind === "handle")
+    ).toEqual([
+      expect.objectContaining({
+        label: "@jordi",
+        anchorText: "@jordi",
+      }),
+    ]);
   });
 
   it("caps deterministic candidates at ten by input position", () => {
