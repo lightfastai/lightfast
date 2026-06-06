@@ -195,6 +195,98 @@ describe("loadConnectorRuntimeTools", () => {
     );
   });
 
+  it("loads active agent-enabled connector tools when enabledFor is agents", async () => {
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([
+      connection({
+        enabledForAgents: true,
+        enabledForAutomations: false,
+        id: 8,
+        mcpEndpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
+        provider: "x",
+        providerActorId: "x_user_1",
+        providerWorkspaceId: null,
+        providerWorkspaceName: "X",
+        toolManifest: [{ description: "Create post", name: "createPost" }],
+      }),
+    ]);
+
+    await expect(
+      loadConnectorRuntimeTools({
+        clerkOrgId: "org_acme",
+        enabledFor: "agents",
+        sourceSurface: "chat",
+      })
+    ).resolves.toEqual([
+      expect.objectContaining({
+        provider: "x",
+        providerToolName: "createPost",
+        runtimeToolName: "x__createPost",
+      }),
+    ]);
+  });
+
+  it("does not load agent tools from connectors disabled for agents", async () => {
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([
+      connection({
+        enabledForAgents: false,
+        enabledForAutomations: true,
+        provider: "x",
+        toolManifest: [{ name: "createPost" }],
+      }),
+    ]);
+
+    await expect(
+      loadConnectorRuntimeTools({
+        clerkOrgId: "org_acme",
+        enabledFor: "agents",
+        sourceSurface: "chat",
+      })
+    ).resolves.toEqual([]);
+  });
+
+  it("records chat connector calls with chat source attribution", async () => {
+    const xConnection = connection({
+      enabledForAgents: true,
+      enabledForAutomations: false,
+      id: 8,
+      mcpEndpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
+      provider: "x",
+      providerActorId: "x_user_1",
+      providerWorkspaceId: null,
+      providerWorkspaceName: "X",
+      toolManifest: [{ description: "Create post", name: "createPost" }],
+    });
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([xConnection]);
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(xConnection);
+
+    const [tool] = await loadConnectorRuntimeTools({
+      calledByUserId: "user_agent",
+      clerkOrgId: "org_acme",
+      enabledFor: "agents",
+      sourceClientId: null,
+      sourceRef: "conv_123",
+      sourceSurface: "chat",
+    });
+
+    await tool?.call({ text: "ship it" });
+
+    expect(createProviderRoutineCallMock).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({
+        calledById: "conv_123",
+        calledByKind: "user",
+        calledByUserId: "user_agent",
+        provider: "x",
+        providerConnectionId: 8,
+        providerToolName: "createPost",
+        routineId: "x__createPost",
+        sourceClientId: null,
+        sourceRef: "conv_123",
+        sourceSurface: "chat",
+      })
+    );
+  });
+
   it("re-checks current active and enabled state before every call", async () => {
     listCurrentOrgConnectorConnectionsMock.mockResolvedValue([connection()]);
     getCurrentOrgConnectorConnectionMock.mockResolvedValue(
