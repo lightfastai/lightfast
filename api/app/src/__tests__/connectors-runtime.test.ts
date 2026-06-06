@@ -67,9 +67,8 @@ vi.mock("@vendor/observability/log/next", () => ({
   },
 }));
 
-const { loadConnectorRuntimeTools } = await import(
-  "../services/connectors/runtime"
-);
+const { ConnectorRuntimeToolCallError, loadConnectorRuntimeTools } =
+  await import("../services/connectors/runtime");
 const { LinearAppNodeError } = await import("@repo/linear-app-node");
 const { XAppNodeError } = await import("@repo/x-app-node");
 
@@ -108,6 +107,15 @@ function connection(
     updatedAt: new Date("2026-06-01T00:00:00.000Z"),
     ...overrides,
   };
+}
+
+async function catchRejection(promise: Promise<unknown>) {
+  try {
+    await promise;
+  } catch (error) {
+    return error;
+  }
+  throw new Error("Expected promise to reject.");
 }
 
 describe("loadConnectorRuntimeTools", () => {
@@ -279,6 +287,76 @@ describe("loadConnectorRuntimeTools", () => {
     expect(logged).not.toContain("mcp_result");
   });
 
+  it("returns provider routine call metadata for automation calls", async () => {
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([connection()]);
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(connection());
+    callLinearMcpToolMock.mockResolvedValue({
+      content: [{ text: "mcp_result" }],
+    });
+
+    const [tool] = await loadConnectorRuntimeTools({
+      automationPublicId: "aut_123",
+      calledByUserId: "user_owner",
+      clerkOrgId: "org_acme",
+      runPublicId: "run_123",
+    });
+
+    expect(tool?.inputSchema).toBeUndefined();
+
+    await expect(
+      tool?.callWithMetadata({ title: "secret-title" })
+    ).resolves.toEqual({
+      provider: "linear",
+      providerRoutineCallId: "provider_routine_call_123",
+      providerToolName: "create_issue",
+      result: { content: [{ text: "mcp_result" }] },
+      routineId: "linear__create_issue",
+      runtimeToolName: "linear__create_issue",
+    });
+
+    expect(createProviderRoutineCallMock).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({
+        calledById: "run_123",
+        calledByKind: "automation",
+        calledByUserId: "user_owner",
+        sourceRef: "run_123",
+        sourceSurface: "automation",
+      })
+    );
+  });
+
+  it("throws runtime errors with provider routine call metadata", async () => {
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([connection()]);
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(connection());
+    callLinearMcpToolMock.mockRejectedValue(
+      new LinearAppNodeError(
+        "LINEAR_MCP_FAILED",
+        "Linear MCP tool call failed."
+      )
+    );
+
+    const [tool] = await loadConnectorRuntimeTools({
+      automationPublicId: "aut_123",
+      calledByUserId: "user_owner",
+      clerkOrgId: "org_acme",
+      runPublicId: "run_123",
+    });
+
+    const error = await catchRejection(
+      tool!.callWithMetadata({ title: "secret-title" })
+    );
+
+    expect(error).toBeInstanceOf(ConnectorRuntimeToolCallError);
+    expect(error).toMatchObject({
+      code: "LINEAR_MCP_FAILED",
+      provider: "linear",
+      providerRoutineCallId: "provider_routine_call_123",
+      providerToolName: "create_issue",
+      routineId: "linear__create_issue",
+    });
+  });
+
   it("records system Linear MCP runtime calls when no automation run id is present", async () => {
     listCurrentOrgConnectorConnectionsMock.mockResolvedValue([connection()]);
     getCurrentOrgConnectorConnectionMock.mockResolvedValue(connection());
@@ -347,27 +425,39 @@ describe("loadConnectorRuntimeTools", () => {
     expect(logged).not.toContain("lin_access");
   });
 
-  it("continues the provider call when creating the ledger row fails", async () => {
+  it("does not call provider tools for automation runs when creating the ledger row fails", async () => {
     listCurrentOrgConnectorConnectionsMock.mockResolvedValue([connection()]);
     getCurrentOrgConnectorConnectionMock.mockResolvedValue(connection());
     createProviderRoutineCallMock.mockRejectedValue(
       new Error("ledger write secret")
     );
-    callLinearMcpToolMock.mockResolvedValue({
-      content: [{ text: "mcp_result" }],
-    });
 
     const [tool] = await loadConnectorRuntimeTools({
       automationPublicId: "aut_123",
+      calledByUserId: "user_owner",
       clerkOrgId: "org_acme",
       runPublicId: "run_123",
     });
-    await expect(tool?.call({ title: "secret-title" })).resolves.toEqual({
-      content: [{ text: "mcp_result" }],
-    });
 
-    expect(callLinearMcpToolMock).toHaveBeenCalledOnce();
-    expect(markProviderRoutineCallSucceededMock).not.toHaveBeenCalled();
+    const error = await catchRejection(
+      tool!.callWithMetadata({ title: "secret-title" })
+    );
+
+    expect(error).toBeInstanceOf(ConnectorRuntimeToolCallError);
+    expect(error).toMatchObject({
+      code: "PROVIDER_ROUTINE_LEDGER_FAILED",
+      provider: "linear",
+      providerRoutineCallId: null,
+      routineId: "linear__create_issue",
+    });
+    expect(error).toHaveProperty(
+      "cause",
+      expect.objectContaining({
+        message: "Provider routine call ledger row was not created.",
+      })
+    );
+
+    expect(callLinearMcpToolMock).not.toHaveBeenCalled();
     expect(logWarnMock).toHaveBeenCalledWith(
       "[connectors] provider routine call ledger create failed",
       expect.objectContaining({
@@ -381,6 +471,38 @@ describe("loadConnectorRuntimeTools", () => {
         success: false,
       })
     );
+    const logged = JSON.stringify(logWarnMock.mock.calls);
+    expect(logged).not.toContain("ledger write secret");
+    expect(logged).not.toContain("secret-title");
+  });
+
+  it("continues system provider calls when creating the ledger row fails", async () => {
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([connection()]);
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(connection());
+    createProviderRoutineCallMock.mockRejectedValue(
+      new Error("ledger write secret")
+    );
+    callLinearMcpToolMock.mockResolvedValue({
+      content: [{ text: "mcp_result" }],
+    });
+
+    const [tool] = await loadConnectorRuntimeTools({
+      clerkOrgId: "org_acme",
+    });
+
+    await expect(
+      tool?.callWithMetadata({ title: "secret-title" })
+    ).resolves.toEqual({
+      provider: "linear",
+      providerRoutineCallId: null,
+      providerToolName: "create_issue",
+      result: { content: [{ text: "mcp_result" }] },
+      routineId: "linear__create_issue",
+      runtimeToolName: "linear__create_issue",
+    });
+
+    expect(callLinearMcpToolMock).toHaveBeenCalledOnce();
+    expect(markProviderRoutineCallSucceededMock).not.toHaveBeenCalled();
     const logged = JSON.stringify(logWarnMock.mock.calls);
     expect(logged).not.toContain("ledger write secret");
     expect(logged).not.toContain("secret-title");
@@ -504,6 +626,62 @@ describe("loadConnectorRuntimeTools", () => {
     const logged = JSON.stringify(logWarnMock.mock.calls);
     expect(logged).not.toContain("secret-title");
     expect(logged).not.toContain("lin_access");
+    expect(logged).not.toContain("refresh token leaked raw details");
+  });
+
+  it("throws original provider metadata when marking the connector error fails", async () => {
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([connection()]);
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(connection());
+    getFreshLinearConnectorAccessTokenMock.mockRejectedValue(
+      new LinearAppNodeError(
+        "LINEAR_TOKEN_REFRESH_FAILED",
+        "refresh token leaked raw details"
+      )
+    );
+    markCurrentOrgConnectorConnectionErrorMock.mockRejectedValue(
+      new Error("mark connection secret")
+    );
+
+    const [tool] = await loadConnectorRuntimeTools({
+      automationPublicId: "aut_123",
+      clerkOrgId: "org_acme",
+      runPublicId: "run_123",
+    });
+
+    const error = await catchRejection(
+      tool!.callWithMetadata({ title: "secret-title" })
+    );
+
+    expect(error).toBeInstanceOf(ConnectorRuntimeToolCallError);
+    expect(error).toMatchObject({
+      code: "LINEAR_TOKEN_REFRESH_FAILED",
+      provider: "linear",
+      providerRoutineCallId: "provider_routine_call_123",
+      providerToolName: "create_issue",
+      routineId: "linear__create_issue",
+      runtimeToolName: "linear__create_issue",
+    });
+    expect(markCurrentOrgConnectorConnectionErrorMock).toHaveBeenCalledWith(
+      {},
+      {
+        clerkOrgId: "org_acme",
+        provider: "linear",
+      }
+    );
+    expect(logWarnMock).toHaveBeenCalledWith(
+      "[connectors] connector connection error mark failed",
+      expect.objectContaining({
+        failure: {
+          code: undefined,
+          message: undefined,
+          name: "Error",
+        },
+        provider: "linear",
+        success: false,
+      })
+    );
+    const logged = JSON.stringify(logWarnMock.mock.calls);
+    expect(logged).not.toContain("mark connection secret");
     expect(logged).not.toContain("refresh token leaked raw details");
   });
 

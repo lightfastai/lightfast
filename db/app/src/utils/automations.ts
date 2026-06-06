@@ -4,6 +4,7 @@ import {
   type NormalizedSchedule,
   normalizeAutomationSchedule,
 } from "@repo/app-validation/schemas";
+import type { ConnectableConnectorProvider } from "@repo/connector-contract";
 import { and, asc, desc, eq, inArray, lte, ne, sql } from "drizzle-orm";
 
 import type { Database } from "../client";
@@ -163,6 +164,7 @@ export function calculateNextRunAt(input: {
 
 export interface CreateAutomationInput {
   clerkOrgId: string;
+  connectorProvider: ConnectableConnectorProvider;
   createdByUserId: string;
   name: string;
   prompt: string;
@@ -183,6 +185,7 @@ export async function createAutomation(
   await db.insert(automations).values({
     publicId,
     clerkOrgId: input.clerkOrgId,
+    connectorProvider: input.connectorProvider,
     createdByUserId: input.createdByUserId,
     name: input.name,
     prompt: input.prompt,

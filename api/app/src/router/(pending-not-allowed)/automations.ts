@@ -60,6 +60,7 @@ export const automationsRouter = {
     .mutation(({ ctx, input }) =>
       createAutomation(ctx.db, {
         clerkOrgId: ctx.auth.identity.orgId,
+        connectorProvider: input.connectorProvider,
         createdByUserId: ctx.auth.identity.userId,
         name: input.name,
         prompt: input.prompt,

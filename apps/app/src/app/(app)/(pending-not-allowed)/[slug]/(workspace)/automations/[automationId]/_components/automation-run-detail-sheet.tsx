@@ -6,6 +6,7 @@ import {
   Sheet,
   SheetClose,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from "@repo/ui/components/ui/sheet";
@@ -77,6 +78,9 @@ export function AutomationRunDetailSheet({
       >
         <SheetHeader className="sr-only">
           <SheetTitle>Run details</SheetTitle>
+          <SheetDescription>
+            Inspect automation run status, output, and transcript.
+          </SheetDescription>
         </SheetHeader>
 
         {run ? (

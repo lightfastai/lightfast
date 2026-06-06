@@ -33,6 +33,7 @@
     "@repo/app-clerk-claim": "workspace:*",
     "@repo/app-setup-contract": "workspace:*",
     "@repo/app-validation": "workspace:*",
+    "@repo/connector-contract": "workspace:*",
     "@repo/github-app-contract": "workspace:*",
     "@repo/github-app-node": "workspace:*",
     "@repo/identity-contract": "workspace:*",
