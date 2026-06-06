@@ -1,6 +1,8 @@
 import { isClerkAPIResponseError } from "@vendor/clerk";
 
 const CLERK_RESOURCE_NOT_FOUND = "resource_not_found";
+const CLERK_ORGANIZATION_DOMAINS_NOT_ENABLED =
+  "organization_domains_not_enabled";
 const CLERK_CONFLICT_CODES = new Set([
   "duplicate_record",
   "form_identifier_exists",
@@ -31,4 +33,12 @@ export function isClerkResourceNotFound(error: unknown): boolean {
 
 export function isClerkConflictError(error: unknown): boolean {
   return hasClerkErrorCode(error, CLERK_CONFLICT_CODES);
+}
+
+export function isClerkOrganizationDomainsNotEnabled(error: unknown): boolean {
+  return (
+    isClerkAPIResponseError(error) &&
+    error.status === 403 &&
+    hasClerkErrorCode(error, [CLERK_ORGANIZATION_DOMAINS_NOT_ENABLED])
+  );
 }

@@ -1,4 +1,5 @@
 import type { Database } from "@db/app";
+import { ClerkAPIResponseError } from "@vendor/clerk";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AuthIdentity } from "../auth/identity";
@@ -66,7 +67,8 @@ vi.mock("@vendor/clerk/server", () => ({
     }),
 }));
 
-vi.mock("../auth/clerk-errors", () => ({
+vi.mock("../auth/clerk-errors", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../auth/clerk-errors")>()),
   isClerkConflictError: isClerkConflictErrorMock,
 }));
 
@@ -162,6 +164,22 @@ function organizationDomain(overrides: Record<string, unknown> = {}) {
     verification: { status: "verified" },
     ...overrides,
   };
+}
+
+function clerkOrganizationDomainsNotEnabledError() {
+  return new ClerkAPIResponseError("Forbidden", {
+    clerkTraceId: "trace_org_domains_disabled",
+    data: [
+      {
+        code: "organization_domains_not_enabled",
+        long_message:
+          "This instance does not have domains enabled for organizations.",
+        message: "organization domains not enabled",
+      },
+    ],
+    retryAfter: undefined,
+    status: 403,
+  });
 }
 
 function organizationMembership(overrides: Record<string, unknown> = {}) {
@@ -581,19 +599,52 @@ describe("organization domains", () => {
 
     await expect(
       caller().org.settings.organization.listDomains({ slug: "acme" })
-    ).resolves.toEqual([
-      {
-        enrollmentMode: "automatic_invitation",
-        id: "orgdmn_lightfast",
-        name: "lightfast.ai",
-        verificationStatus: "verified",
-      },
-    ]);
+    ).resolves.toEqual({
+      domains: [
+        {
+          enrollmentMode: "automatic_invitation",
+          id: "orgdmn_lightfast",
+          name: "lightfast.ai",
+          verificationStatus: "verified",
+        },
+      ],
+      enabled: true,
+    });
 
     expect(getOrganizationDomainListMock).toHaveBeenCalledWith({
       limit: 100,
       organizationId: "org_acme",
     });
+  });
+
+  it("returns an empty list when Clerk organization domains are unavailable", async () => {
+    getOrganizationDomainListMock.mockRejectedValue(
+      clerkOrganizationDomainsNotEnabledError()
+    );
+
+    await expect(
+      caller().org.settings.organization.listDomains({ slug: "acme" })
+    ).resolves.toEqual({ domains: [], enabled: false });
+  });
+
+  it("rejects domain updates when Clerk organization domains are unavailable", async () => {
+    getOrganizationDomainListMock.mockRejectedValue(
+      clerkOrganizationDomainsNotEnabledError()
+    );
+
+    await expect(
+      caller(
+        activeIdentity(),
+        adminAccess()
+      ).org.settings.organization.updateDomains({
+        domains: ["acme.com"],
+        slug: "acme",
+      })
+    ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+
+    expect(createOrganizationDomainMock).not.toHaveBeenCalled();
+    expect(deleteOrganizationDomainMock).not.toHaveBeenCalled();
+    expect(updateOrganizationDomainMock).not.toHaveBeenCalled();
   });
 
   it("reconciles auto-join domains for the requested admin organization slug", async () => {

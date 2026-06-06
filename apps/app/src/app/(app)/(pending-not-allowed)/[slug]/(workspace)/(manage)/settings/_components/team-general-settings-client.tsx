@@ -63,7 +63,7 @@ export function TeamGeneralSettingsClient({
     [organizations, slug]
   );
   const currentDomainNames = useMemo(
-    () => organizationDomains.map((domain) => domain.name),
+    () => organizationDomains.domains.map((domain) => domain.name),
     [organizationDomains]
   );
   const [draftDomains, setDraftDomains] = useState(currentDomainNames);
@@ -274,51 +274,53 @@ export function TeamGeneralSettingsClient({
         </Form>
       </SettingsGroup>
 
-      <SettingsGroup title="Domains">
-        <div className="space-y-3 py-4">
-          <p className="text-muted-foreground text-sm leading-relaxed">
-            People with matching email domains will automatically join this
-            team.
-          </p>
-          <div className="flex min-h-12 w-full flex-wrap items-center gap-2 rounded-[9px] border border-input bg-card px-2.5 py-2 shadow-none transition-[color,box-shadow,background-color] focus-within:bg-background focus-within:shadow-[inset_0_0_0_1px_var(--ring)]">
-            {draftDomains.map((domain) => (
-              <span
-                className="inline-flex h-7 max-w-full items-center gap-1.5 rounded-md bg-muted px-2.5 text-foreground text-sm"
-                key={domain}
-              >
-                <span className="truncate">{domain}</span>
-                <button
-                  aria-label={`Remove ${domain}`}
-                  className="inline-flex size-4 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
-                  disabled={isDomainEditorDisabled}
-                  onClick={() => removeDomain(domain)}
-                  type="button"
+      {organizationDomains.enabled ? (
+        <SettingsGroup title="Domains">
+          <div className="space-y-3 py-4">
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              People with matching email domains will automatically join this
+              team.
+            </p>
+            <div className="flex min-h-12 w-full flex-wrap items-center gap-2 rounded-[9px] border border-input bg-card px-2.5 py-2 shadow-none transition-[color,box-shadow,background-color] focus-within:bg-background focus-within:shadow-[inset_0_0_0_1px_var(--ring)]">
+              {draftDomains.map((domain) => (
+                <span
+                  className="inline-flex h-7 max-w-full items-center gap-1.5 rounded-md bg-muted px-2.5 text-foreground text-sm"
+                  key={domain}
                 >
-                  <X className="size-3.5" />
-                </button>
-              </span>
-            ))}
-            <input
-              aria-label="Add domain"
-              className="h-7 min-w-36 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground disabled:opacity-50"
-              disabled={isDomainEditorDisabled}
-              onBlur={addDomainInput}
-              onChange={(event) => setDomainInput(event.target.value)}
-              onKeyDown={handleDomainKeyDown}
-              onPaste={handleDomainPaste}
-              placeholder={draftDomains.length === 0 ? "lightfast.ai" : ""}
-              type="text"
-              value={domainInput}
-            />
-            {isUpdatingDomains ? (
-              <Loader2
-                aria-label="Saving domains"
-                className="size-3.5 animate-spin text-muted-foreground"
+                  <span className="truncate">{domain}</span>
+                  <button
+                    aria-label={`Remove ${domain}`}
+                    className="inline-flex size-4 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
+                    disabled={isDomainEditorDisabled}
+                    onClick={() => removeDomain(domain)}
+                    type="button"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </span>
+              ))}
+              <input
+                aria-label="Add domain"
+                className="h-7 min-w-36 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground disabled:opacity-50"
+                disabled={isDomainEditorDisabled}
+                onBlur={addDomainInput}
+                onChange={(event) => setDomainInput(event.target.value)}
+                onKeyDown={handleDomainKeyDown}
+                onPaste={handleDomainPaste}
+                placeholder={draftDomains.length === 0 ? "lightfast.ai" : ""}
+                type="text"
+                value={domainInput}
               />
-            ) : null}
+              {isUpdatingDomains ? (
+                <Loader2
+                  aria-label="Saving domains"
+                  className="size-3.5 animate-spin text-muted-foreground"
+                />
+              ) : null}
+            </div>
           </div>
-        </div>
-      </SettingsGroup>
+        </SettingsGroup>
+      ) : null}
     </div>
   );
 }
