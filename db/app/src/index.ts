@@ -121,6 +121,8 @@ export {
   type Person,
   type PersonIdentityProvider,
   type PersonIdentityType,
+  type PersonMemberStatus,
+  type PersonSource,
   type ProviderRoutineCall,
   type ProviderRoutineCallRedactedPayload,
   type ResourcesTruncatedFlag,

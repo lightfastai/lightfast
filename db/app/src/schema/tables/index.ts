@@ -66,6 +66,8 @@ export {
   type Person,
   type PersonIdentityProvider,
   type PersonIdentityType,
+  type PersonMemberStatus,
+  type PersonSource,
 } from "./org-people";
 export {
   createPeopleViewId,

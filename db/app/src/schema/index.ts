@@ -141,6 +141,8 @@ export {
   type Person,
   type PersonIdentityProvider,
   type PersonIdentityType,
+  type PersonMemberStatus,
+  type PersonSource,
   PROVIDER_ROUTINE_CALL_ID_PREFIX,
   type ProviderRoutineCall,
   type ProviderRoutineCallCalledByKind,

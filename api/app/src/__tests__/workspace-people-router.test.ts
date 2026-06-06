@@ -63,6 +63,11 @@ const personRow: Person = {
   lastSeenSignalId: "signal_last",
   seenCount: 3,
   metadata: {},
+  personSource: "signal",
+  memberStatus: null,
+  clerkUserId: null,
+  memberRole: null,
+  memberSyncedAt: null,
   createdAt: new Date("2026-05-27T01:00:00.000Z"),
   updatedAt: new Date("2026-05-27T01:01:00.000Z"),
 };

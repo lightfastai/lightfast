@@ -16,7 +16,9 @@ function makeView(overrides: Partial<PeopleView> = {}): PeopleView {
     name: "X handles",
     config: {
       filters: {
+        memberStatuses: [],
         providers: ["x"],
+        sources: [],
         types: ["handle"],
       },
     },
@@ -90,18 +92,27 @@ describe("listPeopleViews", () => {
 describe("createPeopleView", () => {
   it("inserts a view scoped to the org + user and returns it", async () => {
     const { db, spies } = makeCreateDb();
+    const config = {
+      filters: {
+        memberStatuses: ["active"],
+        providers: ["x"],
+        sources: ["team_member"],
+        types: ["handle"],
+      },
+    } satisfies PeopleView["config"];
 
     await expect(
       createPeopleView(db, {
         clerkOrgId: "org_test",
         createdByUserId: "user_test",
         name: "X handles",
-        config: makeView().config,
+        config,
       })
     ).resolves.toMatchObject({
       clerkOrgId: "org_test",
       createdByUserId: "user_test",
       name: "X handles",
+      config,
     });
 
     expect(spies.values).toHaveBeenCalledWith(
@@ -109,6 +120,7 @@ describe("createPeopleView", () => {
         clerkOrgId: "org_test",
         createdByUserId: "user_test",
         name: "X handles",
+        config,
       })
     );
   });

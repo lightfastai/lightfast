@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import type {
   PersonIdentityProvider,
   PersonIdentityType,
+  PersonMemberStatus,
+  PersonSource,
 } from "@repo/app-validation/schemas";
 import { sql } from "drizzle-orm";
 import {
@@ -26,7 +28,9 @@ export function createPeopleViewId() {
 
 export interface PeopleViewConfig {
   filters: {
+    memberStatuses?: PersonMemberStatus[];
     providers: PersonIdentityProvider[];
+    sources?: PersonSource[];
     types: PersonIdentityType[];
   };
 }
