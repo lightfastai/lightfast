@@ -106,6 +106,74 @@ describe("findProviderRoutines", () => {
     });
   });
 
+  it("finds connector runtime adapter tools without reading connector rows", async () => {
+    const loadConnectorToolsMock = vi.fn(async () => [
+      {
+        callWithMetadata: vi.fn(),
+        description: "Create an X post",
+        inputSchema: {
+          properties: { text: { type: "string" } },
+          required: ["text"],
+          type: "object",
+        },
+        provider: "x" as const,
+        providerToolName: "createPost",
+        runtimeToolName: "x__createPost",
+      },
+    ]);
+
+    await expect(
+      findProviderRoutines(
+        context({
+          adapters: { connectors: { loadTools: loadConnectorToolsMock } },
+          scopes: { providerRoutineRead: true, providerRoutineWrite: true },
+        }),
+        { query: "post", includeSchema: true }
+      )
+    ).resolves.toMatchObject({
+      routines: [
+        {
+          classification: "write",
+          inputSchema: {
+            properties: { text: { type: "string" } },
+            required: ["text"],
+            type: "object",
+          },
+          provider: "x",
+          providerToolName: "createPost",
+          routineId: "x__createPost",
+        },
+      ],
+    });
+    expect(loadConnectorToolsMock).toHaveBeenCalledOnce();
+    expect(listCurrentOrgConnectorConnectionsMock).not.toHaveBeenCalled();
+  });
+
+  it("filters connector runtime adapter writes out for read-only source scope", async () => {
+    const loadConnectorToolsMock = vi.fn(async () => [
+      {
+        callWithMetadata: vi.fn(),
+        description: "Create an X post",
+        inputSchema: { type: "object" },
+        provider: "x" as const,
+        providerToolName: "createPost",
+        runtimeToolName: "x__createPost",
+      },
+    ]);
+
+    await expect(
+      findProviderRoutines(
+        context({
+          adapters: { connectors: { loadTools: loadConnectorToolsMock } },
+          scopes: { providerRoutineRead: true, providerRoutineWrite: false },
+        }),
+        {}
+      )
+    ).resolves.toEqual({ reason: "no_matching_routines", routines: [] });
+    expect(loadConnectorToolsMock).toHaveBeenCalledOnce();
+    expect(listCurrentOrgConnectorConnectionsMock).not.toHaveBeenCalled();
+  });
+
   it("omits cached input schemas unless includeSchema is true", async () => {
     listCurrentOrgConnectorConnectionsMock.mockResolvedValue([connection()]);
 

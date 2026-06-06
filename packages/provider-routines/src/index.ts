@@ -1,5 +1,7 @@
 export { callProviderRoutine } from "./call";
 export type {
+  ConnectorProviderRoutineAdapter,
+  ConnectorProviderRoutineTool,
   LinearProviderRoutineAdapter,
   ProviderRoutineActor,
   ProviderRoutineServiceAdapters,
