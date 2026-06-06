@@ -1,8 +1,14 @@
 import {
+  createUserConnectorToolCall,
   getCurrentUserConnectorConnection,
   listCurrentUserConnectorConnections,
   markCurrentUserConnectorConnectionError,
+  markUserConnectorToolCallFailed,
+  markUserConnectorToolCallProviderAttempted,
+  markUserConnectorToolCallSucceeded,
   type Database,
+  type UserConnectorToolCall,
+  type UserConnectorToolCallRedactedPayload,
   type UserConnectorConnection,
   updateObservedUserConnectorTokens,
 } from "@db/app";
@@ -111,9 +117,25 @@ export async function callUserConnectorTool(
     throw new Error(`User connector routine ${parsed.routineId} was not found.`);
   }
 
+  const toolCallAudit = await safelyCreateUserConnectorToolCall(context, {
+    calledByUserId: context.actor.userId,
+    clerkOrgId: context.actor.orgId,
+    inputRedacted: redactedPresence(parsed.input),
+    provider,
+    providerConnectionId: connection.id,
+    providerToolName,
+    routineId: parsed.routineId,
+    sourceRef: context.source.conversationId,
+    sourceSurface: context.source.surface,
+    startedAt: context.now(),
+  });
   const authState = await authProviderForConnection(connection);
 
   try {
+    await safelyMarkUserConnectorToolCallProviderAttempted(
+      context,
+      toolCallAudit
+    );
     const result = await callGranolaMcpTool({
       authProvider: authState.authProvider,
       endpoint: connection.mcpEndpoint,
@@ -122,6 +144,11 @@ export async function callUserConnectorTool(
     });
 
     await persistRefreshedTokens(context, connection, authState);
+    await safelyMarkUserConnectorToolCallSucceeded(
+      context,
+      toolCallAudit,
+      redactedPresence(result)
+    );
 
     return {
       provider,
@@ -134,6 +161,7 @@ export async function callUserConnectorTool(
     if (isGranolaAuthRequired(error)) {
       await safelyMarkCurrentUserConnectorConnectionError(context, connection);
     }
+    await safelyMarkUserConnectorToolCallFailed(context, toolCallAudit, error);
     throw error;
   }
 }
@@ -204,6 +232,64 @@ async function safelyMarkCurrentUserConnectorConnectionError(
     observedEncryptedRefreshToken: connection.encryptedRefreshToken ?? null,
     provider: connection.provider,
   }).catch(() => undefined);
+}
+
+async function safelyCreateUserConnectorToolCall(
+  context: UserConnectorChatContext,
+  input: Parameters<typeof createUserConnectorToolCall>[1]
+) {
+  return await createUserConnectorToolCall(context.db, input).catch(() => null);
+}
+
+async function safelyMarkUserConnectorToolCallProviderAttempted(
+  context: UserConnectorChatContext,
+  toolCall: UserConnectorToolCall | null
+) {
+  if (!toolCall) {
+    return;
+  }
+
+  await markUserConnectorToolCallProviderAttempted(context.db, {
+    calledByUserId: context.actor.userId,
+    publicId: toolCall.publicId,
+  }).catch(() => false);
+}
+
+async function safelyMarkUserConnectorToolCallSucceeded(
+  context: UserConnectorChatContext,
+  toolCall: UserConnectorToolCall | null,
+  outputRedacted: UserConnectorToolCallRedactedPayload
+) {
+  if (!toolCall) {
+    return;
+  }
+
+  await markUserConnectorToolCallSucceeded(context.db, {
+    calledByUserId: context.actor.userId,
+    finishedAt: context.now(),
+    outputRedacted,
+    publicId: toolCall.publicId,
+  }).catch(() => false);
+}
+
+async function safelyMarkUserConnectorToolCallFailed(
+  context: UserConnectorChatContext,
+  toolCall: UserConnectorToolCall | null,
+  error: unknown
+) {
+  if (!toolCall) {
+    return;
+  }
+
+  const errorCode = userConnectorToolCallErrorCode(error);
+  const errorMessage = safeUserConnectorToolCallErrorMessage(error);
+  await markUserConnectorToolCallFailed(context.db, {
+    calledByUserId: context.actor.userId,
+    finishedAt: context.now(),
+    ...(errorCode !== undefined ? { errorCode } : {}),
+    ...(errorMessage !== undefined ? { errorMessage } : {}),
+    publicId: toolCall.publicId,
+  }).catch(() => false);
 }
 
 async function persistRefreshedTokens(
@@ -286,6 +372,33 @@ function isGranolaAuthRequired(error: unknown) {
     error instanceof GranolaAppNodeError &&
     error.code === "GRANOLA_MCP_AUTH_REQUIRED"
   );
+}
+
+function redactedPresence(
+  value: unknown
+): UserConnectorToolCallRedactedPayload {
+  return value === undefined ? null : { present: true };
+}
+
+function userConnectorToolCallErrorCode(error: unknown) {
+  return error instanceof GranolaAppNodeError ? error.code : undefined;
+}
+
+function safeUserConnectorToolCallErrorMessage(error: unknown) {
+  if (!(error instanceof GranolaAppNodeError)) {
+    return undefined;
+  }
+
+  switch (error.code) {
+    case "GRANOLA_MCP_AUTH_REQUIRED":
+      return "Granola authorization is required.";
+    case "GRANOLA_MCP_FAILED":
+      return "Granola MCP tool call failed.";
+    case "GRANOLA_TOKEN_REFRESH_FAILED":
+      return "Granola OAuth token refresh failed.";
+    default:
+      return undefined;
+  }
 }
 
 function oauthClientInformationFromMetadata(

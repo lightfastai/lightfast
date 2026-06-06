@@ -1,9 +1,13 @@
 import type { Database, UserConnectorConnection } from "@db/app";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const createUserConnectorToolCallMock = vi.fn();
 const getCurrentUserConnectorConnectionMock = vi.fn();
 const listCurrentUserConnectorConnectionsMock = vi.fn();
 const markCurrentUserConnectorConnectionErrorMock = vi.fn();
+const markUserConnectorToolCallFailedMock = vi.fn();
+const markUserConnectorToolCallProviderAttemptedMock = vi.fn();
+const markUserConnectorToolCallSucceededMock = vi.fn();
 const updateObservedUserConnectorTokensMock = vi.fn();
 const decryptMock = vi.fn();
 const encryptMock = vi.fn();
@@ -64,10 +68,15 @@ class MockGranolaOAuthClientProvider {
 }
 
 vi.mock("@db/app", () => ({
+  createUserConnectorToolCall: createUserConnectorToolCallMock,
   getCurrentUserConnectorConnection: getCurrentUserConnectorConnectionMock,
   listCurrentUserConnectorConnections: listCurrentUserConnectorConnectionsMock,
   markCurrentUserConnectorConnectionError:
     markCurrentUserConnectorConnectionErrorMock,
+  markUserConnectorToolCallFailed: markUserConnectorToolCallFailedMock,
+  markUserConnectorToolCallProviderAttempted:
+    markUserConnectorToolCallProviderAttemptedMock,
+  markUserConnectorToolCallSucceeded: markUserConnectorToolCallSucceededMock,
   updateObservedUserConnectorTokens: updateObservedUserConnectorTokensMock,
 }));
 
@@ -96,10 +105,20 @@ describe("user connector chat runtime", () => {
 
     getCurrentUserConnectorConnectionMock.mockReset();
     getCurrentUserConnectorConnectionMock.mockResolvedValue(undefined);
+    createUserConnectorToolCallMock.mockReset();
+    createUserConnectorToolCallMock.mockResolvedValue({
+      publicId: "user_connector_tool_call_123",
+    });
     listCurrentUserConnectorConnectionsMock.mockReset();
     listCurrentUserConnectorConnectionsMock.mockResolvedValue([]);
     markCurrentUserConnectorConnectionErrorMock.mockReset();
     markCurrentUserConnectorConnectionErrorMock.mockResolvedValue(undefined);
+    markUserConnectorToolCallFailedMock.mockReset();
+    markUserConnectorToolCallFailedMock.mockResolvedValue(true);
+    markUserConnectorToolCallProviderAttemptedMock.mockReset();
+    markUserConnectorToolCallProviderAttemptedMock.mockResolvedValue(true);
+    markUserConnectorToolCallSucceededMock.mockReset();
+    markUserConnectorToolCallSucceededMock.mockResolvedValue(true);
     updateObservedUserConnectorTokensMock.mockReset();
     updateObservedUserConnectorTokensMock.mockResolvedValue(true);
     decryptMock.mockReset();
@@ -328,6 +347,52 @@ describe("user connector chat runtime", () => {
         token_type: "Bearer",
       },
     });
+    expect(createUserConnectorToolCallMock).toHaveBeenCalledWith(
+      context.db,
+      expect.objectContaining({
+        calledByUserId: "user_current",
+        clerkOrgId: "org_acme",
+        inputRedacted: { present: true },
+        provider: "granola",
+        providerConnectionId: 1,
+        providerToolName: "search_notes",
+        routineId: "granola__search_notes",
+        sourceRef: "conv_123",
+        sourceSurface: "interactive_chat",
+        startedAt: new Date("2026-06-06T00:00:00.000Z"),
+      })
+    );
+    expect(markUserConnectorToolCallProviderAttemptedMock).toHaveBeenCalledWith(
+      context.db,
+      {
+        calledByUserId: "user_current",
+        publicId: "user_connector_tool_call_123",
+      }
+    );
+    expect(markUserConnectorToolCallSucceededMock).toHaveBeenCalledWith(
+      context.db,
+      expect.objectContaining({
+        calledByUserId: "user_current",
+        outputRedacted: { present: true },
+        publicId: "user_connector_tool_call_123",
+      })
+    );
+    const auditCreateOrder =
+      createUserConnectorToolCallMock.mock.invocationCallOrder[0];
+    const decryptOrder = decryptMock.mock.invocationCallOrder[0];
+    const attemptedOrder =
+      markUserConnectorToolCallProviderAttemptedMock.mock.invocationCallOrder[0];
+    const providerOrder = callGranolaMcpToolMock.mock.invocationCallOrder[0];
+    const succeededOrder =
+      markUserConnectorToolCallSucceededMock.mock.invocationCallOrder[0];
+    expect(typeof auditCreateOrder).toBe("number");
+    expect(typeof decryptOrder).toBe("number");
+    expect(typeof attemptedOrder).toBe("number");
+    expect(typeof providerOrder).toBe("number");
+    expect(typeof succeededOrder).toBe("number");
+    expect(auditCreateOrder!).toBeLessThan(decryptOrder!);
+    expect(attemptedOrder!).toBeLessThan(providerOrder!);
+    expect(succeededOrder!).toBeGreaterThan(providerOrder!);
   });
 
   it("reconstructs the Granola OAuth provider with persisted client information", async () => {
@@ -476,6 +541,8 @@ describe("user connector chat runtime", () => {
 
     expect(decryptMock).not.toHaveBeenCalled();
     expect(callGranolaMcpToolMock).not.toHaveBeenCalled();
+    expect(createUserConnectorToolCallMock).not.toHaveBeenCalled();
+    expect(markUserConnectorToolCallProviderAttemptedMock).not.toHaveBeenCalled();
   });
 
   it("rejects missing user connector tools", async () => {
@@ -497,6 +564,8 @@ describe("user connector chat runtime", () => {
 
     expect(decryptMock).not.toHaveBeenCalled();
     expect(callGranolaMcpToolMock).not.toHaveBeenCalled();
+    expect(createUserConnectorToolCallMock).not.toHaveBeenCalled();
+    expect(markUserConnectorToolCallProviderAttemptedMock).not.toHaveBeenCalled();
   });
 
   it("marks the current user connection error on Granola auth-required failures", async () => {
@@ -526,6 +595,15 @@ describe("user connector chat runtime", () => {
         provider: "granola",
       }
     );
+    expect(markUserConnectorToolCallFailedMock).toHaveBeenCalledWith(
+      context.db,
+      expect.objectContaining({
+        calledByUserId: "user_current",
+        errorCode: "GRANOLA_MCP_AUTH_REQUIRED",
+        errorMessage: "Granola authorization is required.",
+        publicId: "user_connector_tool_call_123",
+      })
+    );
   });
 
   it("does not mark the current user connection error on generic failures", async () => {
@@ -541,6 +619,15 @@ describe("user connector chat runtime", () => {
     ).rejects.toThrow("transient MCP failure");
 
     expect(markCurrentUserConnectorConnectionErrorMock).not.toHaveBeenCalled();
+    const failedInput = markUserConnectorToolCallFailedMock.mock.calls[0]?.[1] as
+      | Record<string, unknown>
+      | undefined;
+    expect(failedInput).toMatchObject({
+      calledByUserId: "user_current",
+      publicId: "user_connector_tool_call_123",
+    });
+    expect(failedInput?.errorCode).toBeUndefined();
+    expect(failedInput?.errorMessage).toBeUndefined();
   });
 
   it("decrypts the refresh token only when one is present", async () => {

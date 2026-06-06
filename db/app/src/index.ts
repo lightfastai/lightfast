@@ -28,6 +28,7 @@ export {
   createPersonId,
   createSignalId,
   createSignalViewId,
+  createUserConnectorToolCallId,
   createWorkspaceAssistantContextItemId,
   createWorkspaceAssistantConversationId,
   createWorkspaceAssistantGenerationId,
@@ -70,6 +71,7 @@ export {
   type InsertSourceControlRepository,
   type InsertSourceControlWebhookDelivery,
   type InsertUserConnectorConnection,
+  type InsertUserConnectorToolCall,
   type InsertUserSourceControlAccount,
   type InsertWorkspaceAssistantContextItem,
   type InsertWorkspaceAssistantConversation,
@@ -144,7 +146,13 @@ export {
   skillIndexStatesRelations,
   sourceControlRepositoriesRelations,
   type UserConnectorConnection,
+  type UserConnectorToolCall,
+  USER_CONNECTOR_TOOL_CALL_ID_PREFIX,
+  type UserConnectorToolCallRedactedPayload,
+  type UserConnectorToolCallSourceSurface,
+  type UserConnectorToolCallStatus,
   userConnectorConnections,
+  userConnectorToolCalls,
   type UserSourceControlAccount,
   type UserSourceControlAccountProvider,
   type UserSourceControlAccountStatus,
@@ -328,6 +336,7 @@ export {
   type UpdateUserConnectorToolManifestInput,
   updateUserConnectorToolManifest,
 } from "./utils/user-connector-connections";
+export * from "./utils/user-connector-tool-calls";
 export {
   getPersonByIdentityKey,
   getPersonByPublicId,
