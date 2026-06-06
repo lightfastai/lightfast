@@ -8,6 +8,7 @@ import {
   decisionParser,
   decisionProviderParser,
   decisionQueryParser,
+  decisionSavedViewParser,
   decisionStatusParser,
   parseDecisionProviders,
   parseDecisionStatuses,
@@ -30,6 +31,10 @@ export function DecisionsClient() {
     "status",
     decisionStatusParser
   );
+  // Editing any filter in the toolbar drops the active saved view — you are now
+  // on an ad-hoc selection. The switcher writes `view` + filter params together
+  // (see decisions-view-switcher), so view selection does not pass through here.
+  const [, setSavedViewId] = useQueryState("view", decisionSavedViewParser);
   const [expandedId, setExpandedId] = useQueryState("decision", decisionParser);
 
   const filters = useMemo<DecisionFilters>(
@@ -56,6 +61,7 @@ export function DecisionsClient() {
       <DecisionsToolbar
         filters={filters}
         onClearFilterGroup={(group) => {
+          void setSavedViewId(null);
           if (group === "provider") {
             void setProviderState("");
           } else {
@@ -63,20 +69,22 @@ export function DecisionsClient() {
           }
         }}
         onQueryChange={(value) => void setQuery(value)}
-        onToggleProvider={(value) =>
+        onToggleProvider={(value) => {
+          void setSavedViewId(null);
           void setProviderState(
             serializeDecisionValues(
               toggleDecisionValue(filters.providers, value)
             )
-          )
-        }
-        onToggleStatus={(value) =>
+          );
+        }}
+        onToggleStatus={(value) => {
+          void setSavedViewId(null);
           void setStatusState(
             serializeDecisionValues(
               toggleDecisionValue(filters.statuses, value)
             )
-          )
-        }
+          );
+        }}
         query={query}
       />
 

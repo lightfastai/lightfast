@@ -111,6 +111,7 @@ describe("getMcpConsentViewModel", () => {
 
     expect(notFoundMock).toHaveBeenCalledOnce();
     expect(getMcpOauthClientByClientIdMock).not.toHaveBeenCalled();
+    expect(authMock).toHaveBeenCalledWith({ treatPendingAsSignedOut: false });
   });
 
   it("routes users without organization memberships through notFound", async () => {
@@ -121,6 +122,15 @@ describe("getMcpConsentViewModel", () => {
     );
 
     expect(notFoundMock).toHaveBeenCalledOnce();
+  });
+
+  it("resolves consent models from pending signed-in sessions", async () => {
+    await expect(getMcpConsentViewModel(validRequest)).resolves.toMatchObject({
+      user: { id: "user_test" },
+      organizations: [{ id: "org_1" }],
+    });
+
+    expect(authMock).toHaveBeenCalledWith({ treatPendingAsSignedOut: false });
   });
 
   it("routes unsupported scopes through notFound", async () => {

@@ -1,4 +1,5 @@
 import { createEnv } from "@t3-oss/env-nextjs";
+import { braintrustEnv } from "@vendor/braintrust/env";
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { env as inngestEnv } from "@vendor/inngest/env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
@@ -11,7 +12,7 @@ const isConnectorMcpAuthSecretRequired =
     process.env.NODE_ENV === "production");
 
 export const env = createEnv({
-  extends: [clerkEnvBase, sentryEnv, inngestEnv, unkeyEnv],
+  extends: [clerkEnvBase, sentryEnv, inngestEnv, braintrustEnv, unkeyEnv],
   shared: {},
   server: {
     CLERK_CLI_OAUTH_CLIENT_ID: z.string().min(1).optional(),
@@ -37,8 +38,8 @@ export const env = createEnv({
       ? z.string().min(32)
       : z.string().min(32).optional(),
     LINEAR_API_ORIGIN: z.string().url().optional(),
-    LINEAR_CLIENT_ID: z.string().min(1),
-    LINEAR_CLIENT_SECRET: z.string().min(1),
+    LINEAR_CLIENT_ID: z.string().min(1).optional(),
+    LINEAR_CLIENT_SECRET: z.string().min(1).optional(),
     LINEAR_MCP_ENDPOINT: z.string().url().optional(),
     VERCEL_ENV: z
       .enum(["development", "preview", "production"])

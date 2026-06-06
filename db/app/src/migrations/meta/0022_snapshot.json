@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "0974fff0-bed5-4fdd-b987-e1653f74fc4f",
+  "id": "d546f7e0-11c8-4e65-8438-7c8f739430f2",
   "prevId": "dad66e83-b325-4ab0-9a0a-48abfc9e2a8a",
   "tables": {
     "lightfast_org_automation_runs": {
@@ -557,6 +557,99 @@
       "compositePrimaryKeys": {
         "lightfast_org_connector_connections_id": {
           "name": "lightfast_org_connector_connections_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lightfast_org_decision_views": {
+      "name": "lightfast_org_decision_views",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "public_id": {
+          "name": "public_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "clerk_org_id": {
+          "name": "clerk_org_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_by_user_id": {
+          "name": "created_by_user_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "config": {
+          "name": "config",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {
+        "org_decision_views_public_id_uq": {
+          "name": "org_decision_views_public_id_uq",
+          "columns": [
+            "public_id"
+          ],
+          "isUnique": true
+        },
+        "org_decision_views_org_user_created_idx": {
+          "name": "org_decision_views_org_user_created_idx",
+          "columns": [
+            "clerk_org_id",
+            "created_by_user_id",
+            "created_at",
+            "id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "lightfast_org_decision_views_id": {
+          "name": "lightfast_org_decision_views_id",
           "columns": [
             "id"
           ]
@@ -1687,42 +1780,6 @@
           "notNull": true,
           "autoincrement": false
         },
-        "person_source": {
-          "name": "person_source",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'signal'"
-        },
-        "member_status": {
-          "name": "member_status",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "clerk_user_id": {
-          "name": "clerk_user_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "member_role": {
-          "name": "member_role",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "member_synced_at": {
-          "name": "member_synced_at",
-          "type": "datetime(3)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "datetime(3)",
@@ -1761,24 +1818,6 @@
           "columns": [
             "clerk_org_id",
             "created_at",
-            "id"
-          ],
-          "isUnique": false
-        },
-        "org_people_org_person_source_idx": {
-          "name": "org_people_org_person_source_idx",
-          "columns": [
-            "clerk_org_id",
-            "person_source",
-            "id"
-          ],
-          "isUnique": false
-        },
-        "org_people_org_member_status_idx": {
-          "name": "org_people_org_member_status_idx",
-          "columns": [
-            "clerk_org_id",
-            "member_status",
             "id"
           ],
           "isUnique": false

@@ -1,7 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+let nextConversationId = 0;
 let receivedProps: { conversationId?: string } = {};
+
+vi.mock("@db/app", () => ({
+  createWorkspaceAssistantConversationId: () =>
+    `conv_test_${++nextConversationId}`,
+}));
 
 vi.mock(
   "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/_components/workspace-assistant-client",
@@ -18,17 +24,16 @@ const { default: ChatPage } = await import(
 );
 
 beforeEach(() => {
+  nextConversationId = 0;
   receivedProps = {};
 });
 
 describe("workspace chat page", () => {
-  it("renders the assistant with a fresh, addressable conversation id", () => {
+  it("renders the assistant with a fresh addressable conversation id", () => {
     render(ChatPage());
 
     expect(screen.getByText("Workspace assistant client")).toBeVisible();
-    // The route owns identity now: it hands the client a stable, addressable id
-    // up-front so useChat never has to flip from undefined to a real id mid-send.
-    expect(receivedProps.conversationId).toMatch(/^conv_/);
+    expect(receivedProps.conversationId).toBe("conv_test_1");
   });
 
   it("generates a distinct conversation id per request", () => {

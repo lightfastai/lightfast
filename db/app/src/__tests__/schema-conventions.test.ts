@@ -102,6 +102,7 @@ describe("schema conventions", () => {
       "index.ts",
       "org-automations.ts",
       "org-connectors.ts",
+      "org-decision-views.ts",
       "org-developer-connections.ts",
       "org-developer-sandbox-runs.ts",
       "org-identity-index.ts",

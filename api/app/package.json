@@ -13,9 +13,17 @@
       "types": "./src/mcp-oauth/index.ts",
       "default": "./src/mcp-oauth/index.ts"
     },
+    "./mcp-oauth/resource-access": {
+      "types": "./src/mcp-oauth/resource-access.ts",
+      "default": "./src/mcp-oauth/resource-access.ts"
+    },
     "./env": {
       "types": "./src/env.ts",
       "default": "./src/env.ts"
+    },
+    "./service-jwt": {
+      "types": "./src/service-jwt.ts",
+      "default": "./src/service-jwt.ts"
     },
     "./services/github": {
       "types": "./src/services/github/index.ts",
@@ -84,6 +92,7 @@
     "@repo/x-app-node": "workspace:*",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@trpc/server": "catalog:",
+    "@vendor/braintrust": "workspace:*",
     "@vendor/clerk": "workspace:*",
     "@vendor/inngest": "workspace:*",
     "@vendor/jose": "workspace:*",
