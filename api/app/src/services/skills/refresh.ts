@@ -118,7 +118,7 @@ export async function refreshSkillIndexSource(input: {
   targetCommitSha?: string;
 }): Promise<{ status: "failed" | "fresh" | "missing" | "stale" }> {
   const deps = resolveSkillIndexServiceDeps(input.deps);
-  const state = await deps.createOrLoadSkillIndexState(deps.db, {
+  let state = await deps.createOrLoadSkillIndexState(deps.db, {
     sourceControlRepositoryId: input.sourceControlRepositoryId,
   });
   const candidate = await getVerifiedCandidateByRepositoryId(deps, {
@@ -151,6 +151,10 @@ export async function refreshSkillIndexSource(input: {
 
   try {
     input.signal?.throwIfAborted();
+    state =
+      (await deps.getSkillIndexStateBySourceControlRepositoryId(deps.db, {
+        sourceControlRepositoryId: input.sourceControlRepositoryId,
+      })) ?? state;
     const ref = await deps.readSkillRepositoryMainRef({
       fullName: candidate.repository.fullName,
       installationId: candidate.binding.providerInstallationId,

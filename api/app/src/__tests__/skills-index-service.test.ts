@@ -183,6 +183,12 @@ describe("skills index refresh/read service", () => {
   });
 
   it("restores fresh state when an old target commit job is already indexed", async () => {
+    const staleBeforeLockState = staleState({
+      githubRefEtag: "etag-current",
+      indexedCommitSha: "old-index",
+      lastCheckedCommitSha: "current-main",
+      lastRefreshStatus: "stale",
+    });
     const freshIndexedState = staleState({
       githubRefEtag: "etag-current",
       indexedCommitSha: "current-main",
@@ -190,14 +196,12 @@ describe("skills index refresh/read service", () => {
       lastRefreshStatus: "fresh",
     });
     const deps = createDeps({
+      createdState: staleBeforeLockState,
       targetState: freshIndexedState,
     });
     deps.readSkillRepositoryMainRef.mockResolvedValueOnce({
       status: "not_modified",
     });
-    deps.getSkillIndexStateBySourceControlRepositoryId.mockResolvedValueOnce(
-      freshIndexedState
-    );
 
     const result = await refreshSkillIndexSource({
       deps,
@@ -242,16 +246,18 @@ describe("skills index refresh/read service", () => {
   });
 
   it("publishes a skill index change after a successful refresh", async () => {
+    const preRefreshState = staleState({ indexedCommitSha: "old-index" });
+    const terminalFreshState = staleState({
+      indexedCommitSha: "current-main",
+      lastRefreshStatus: "fresh",
+    });
     const deps = createDeps({
       refSha: "current-main",
-      targetState: staleState({ indexedCommitSha: "old-index" }),
+      targetState: preRefreshState,
     });
-    deps.getSkillIndexStateBySourceControlRepositoryId.mockResolvedValueOnce(
-      staleState({
-        indexedCommitSha: "current-main",
-        lastRefreshStatus: "fresh",
-      })
-    );
+    deps.getSkillIndexStateBySourceControlRepositoryId
+      .mockResolvedValueOnce(preRefreshState)
+      .mockResolvedValueOnce(terminalFreshState);
 
     await expect(
       refreshSkillIndexSource({
@@ -287,9 +293,9 @@ describe("skills index refresh/read service", () => {
     deps.readSkillRepositoryMainRef.mockResolvedValueOnce({
       status: "not_modified",
     });
-    deps.getSkillIndexStateBySourceControlRepositoryId.mockResolvedValueOnce(
-      freshState
-    );
+    deps.getSkillIndexStateBySourceControlRepositoryId
+      .mockResolvedValueOnce(refreshingState)
+      .mockResolvedValueOnce(freshState);
 
     await expect(
       refreshSkillIndexSource({
@@ -340,9 +346,14 @@ describe("skills index refresh/read service", () => {
     deps.readSkillRepositoryMainRef.mockResolvedValueOnce({
       status: "not_modified",
     });
-    deps.getSkillIndexStateBySourceControlRepositoryId.mockResolvedValueOnce(
-      freshState
-    );
+    deps.getSkillIndexStateBySourceControlRepositoryId
+      .mockResolvedValueOnce(staleState({
+        githubRefEtag: "etag-current",
+        indexedCommitSha: "current-main",
+        lastCheckedCommitSha: "current-main",
+        lastRefreshStatus: "refreshing",
+      }))
+      .mockResolvedValueOnce(freshState);
     deps.publishSkillIndexChanged.mockRejectedValueOnce(
       new Error("publish failed")
     );
@@ -370,16 +381,18 @@ describe("skills index refresh/read service", () => {
   });
 
   it("does not fail refresh when publishing a skill index change fails", async () => {
+    const preRefreshState = staleState({ indexedCommitSha: "old-index" });
+    const terminalFreshState = staleState({
+      indexedCommitSha: "current-main",
+      lastRefreshStatus: "fresh",
+    });
     const deps = createDeps({
       refSha: "current-main",
-      targetState: staleState({ indexedCommitSha: "old-index" }),
+      targetState: preRefreshState,
     });
-    deps.getSkillIndexStateBySourceControlRepositoryId.mockResolvedValueOnce(
-      staleState({
-        indexedCommitSha: "current-main",
-        lastRefreshStatus: "fresh",
-      })
-    );
+    deps.getSkillIndexStateBySourceControlRepositoryId
+      .mockResolvedValueOnce(preRefreshState)
+      .mockResolvedValueOnce(terminalFreshState);
     deps.publishSkillIndexChanged.mockRejectedValueOnce(
       new Error("publish failed")
     );
@@ -396,16 +409,18 @@ describe("skills index refresh/read service", () => {
   });
 
   it("publishes failed refresh state without failing when publishing fails", async () => {
+    const preRefreshState = staleState({ indexedCommitSha: "old-index" });
+    const terminalFailedState = staleState({
+      indexedCommitSha: "old-index",
+      lastRefreshStatus: "failed",
+    });
     const deps = createDeps({
       readTreeError: new Error("tree failed"),
-      targetState: staleState({ indexedCommitSha: "old-index" }),
+      targetState: preRefreshState,
     });
-    deps.getSkillIndexStateBySourceControlRepositoryId.mockResolvedValueOnce(
-      staleState({
-        indexedCommitSha: "old-index",
-        lastRefreshStatus: "failed",
-      })
-    );
+    deps.getSkillIndexStateBySourceControlRepositoryId
+      .mockResolvedValueOnce(preRefreshState)
+      .mockResolvedValueOnce(terminalFailedState);
     deps.publishSkillIndexChanged.mockRejectedValueOnce(
       new Error("publish failed")
     );
