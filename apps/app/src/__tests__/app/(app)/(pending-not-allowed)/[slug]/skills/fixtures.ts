@@ -36,6 +36,7 @@ export function createListData(
   input: {
     indexDiagnostics?: SkillsListResult["indexDiagnostics"];
     repositoryUrl?: string;
+    snapshotVersion?: SkillsListResult["snapshotVersion"];
     skills?: Skill[];
   } = {}
 ): SkillsListResult {
@@ -51,6 +52,9 @@ export function createListData(
     },
     indexDiagnostics: input.indexDiagnostics ?? [],
     repositoryUrl: input.repositoryUrl ?? "https://github.com/acme/.lightfast",
+    snapshotVersion:
+      input.snapshotVersion ??
+      "100:1780272000000:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:fresh",
     skills: input.skills ?? [createSkill()],
   };
 }
