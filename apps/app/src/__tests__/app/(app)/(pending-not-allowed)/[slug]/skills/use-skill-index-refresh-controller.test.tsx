@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createListData } from "./fixtures";
 
 interface MutationOptions {
@@ -79,12 +79,17 @@ const { useSkillIndexRefreshController } = await import(
 );
 
 beforeEach(() => {
+  vi.useRealTimers();
   invalidateQueriesMock.mockReset();
   listQueryFilterMock.mockClear();
   MockEventSource.instances = [];
   requestMutationOptionsMock.mockClear();
   mutateMock.mockReset();
   latestMutationOptions = undefined;
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("useSkillIndexRefreshController", () => {
@@ -178,6 +183,70 @@ describe("useSkillIndexRefreshController", () => {
     expect(invalidateQueriesMock).toHaveBeenCalledWith({
       queryKey: ["org", "workspace", "skills", "list"],
     });
+  });
+
+  it("polls the skills list while a snapshot is refreshing", async () => {
+    vi.useFakeTimers();
+    const refreshing = createListData({
+      snapshotVersion: "v-refreshing",
+    });
+    refreshing.freshness.status = "refreshing";
+
+    const { unmount } = renderHook(() =>
+      useSkillIndexRefreshController(refreshing)
+    );
+
+    expect(mutateMock).not.toHaveBeenCalled();
+    expect(invalidateQueriesMock).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(5000);
+
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: ["org", "workspace", "skills", "list"],
+    });
+
+    unmount();
+    invalidateQueriesMock.mockClear();
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(invalidateQueriesMock).not.toHaveBeenCalled();
+  });
+
+  it("stops polling when the snapshot becomes fresh", async () => {
+    vi.useFakeTimers();
+    const refreshing = createListData({
+      snapshotVersion: "v-refreshing",
+    });
+    refreshing.freshness.status = "refreshing";
+    const fresh = createListData({ snapshotVersion: "v-fresh" });
+
+    const { rerender } = renderHook(
+      ({ snapshot }) => useSkillIndexRefreshController(snapshot),
+      { initialProps: { snapshot: refreshing } }
+    );
+
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(invalidateQueriesMock).toHaveBeenCalledTimes(1);
+
+    rerender({ snapshot: fresh });
+    invalidateQueriesMock.mockClear();
+    await vi.advanceTimersByTimeAsync(5000);
+
+    expect(invalidateQueriesMock).not.toHaveBeenCalled();
+  });
+
+  it("does not poll snapshots with a terminal refresh error", async () => {
+    vi.useFakeTimers();
+    const stale = createListData({
+      snapshotVersion: "v-stale-failed",
+    });
+    stale.freshness.status = "stale";
+    stale.freshness.errorCode = "refresh_failed";
+
+    renderHook(() => useSkillIndexRefreshController(stale));
+
+    await vi.advanceTimersByTimeAsync(5000);
+
+    expect(invalidateQueriesMock).not.toHaveBeenCalled();
   });
 
   it("invalidates the skills list when a skill-index event arrives", async () => {

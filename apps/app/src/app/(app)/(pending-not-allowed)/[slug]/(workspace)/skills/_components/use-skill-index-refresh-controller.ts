@@ -6,6 +6,8 @@ import { useTRPC } from "~/trpc/react";
 import type { SkillsListResult } from "./skills-types";
 
 const REFRESHABLE_STATUSES = new Set(["stale", "unavailable"]);
+const POLLABLE_STATUSES = new Set(["refreshing", "stale", "unavailable"]);
+const REFRESH_POLL_INTERVAL_MS = 5000;
 
 export function useSkillIndexRefreshController(snapshot: SkillsListResult) {
   const trpc = useTRPC();
@@ -62,4 +64,23 @@ export function useSkillIndexRefreshController(snapshot: SkillsListResult) {
       source.close();
     };
   }, [queryClient, trpc]);
+
+  useEffect(() => {
+    if (!POLLABLE_STATUSES.has(snapshot.freshness.status)) {
+      return;
+    }
+    if (hasTerminalRefreshError) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      void queryClient.invalidateQueries(
+        trpc.org.workspace.skills.list.queryFilter()
+      );
+    }, REFRESH_POLL_INTERVAL_MS);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [hasTerminalRefreshError, queryClient, snapshot.freshness.status, trpc]);
 }
