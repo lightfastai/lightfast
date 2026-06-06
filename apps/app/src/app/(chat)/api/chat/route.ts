@@ -1,14 +1,14 @@
 import { createHash } from "node:crypto";
 import { resolveAuthContextFromClerk } from "@api/app/auth/identity";
 import {
+  type ChatProviderRoutineContext,
+  callChatProviderRoutine,
+  findChatProviderRoutines,
+} from "@api/app/services/connectors";
+import {
   getSkillIndexSnapshot,
   getVerifiedLightfastSkillSourceRepositoryId,
 } from "@api/app/services/skills";
-import {
-  callChatProviderRoutine,
-  findChatProviderRoutines,
-  type ChatProviderRoutineContext,
-} from "@api/app/services/connectors";
 import {
   appendWorkspaceAssistantMessage,
   createWorkspaceAssistantConversation,

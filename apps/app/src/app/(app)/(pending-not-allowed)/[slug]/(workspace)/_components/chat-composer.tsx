@@ -9,12 +9,12 @@ import {
   PromptInputTextarea,
   PromptInputTools,
 } from "@repo/ui/components/ai-elements/prompt-input";
+import { Toggle } from "@repo/ui/components/ui/toggle";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
-import { Toggle } from "@repo/ui/components/ui/toggle";
 import { cn } from "@repo/ui/lib/utils";
 import type { ChatStatus } from "@vendor/ai";
 import { ArrowUp, PencilLine } from "lucide-react";

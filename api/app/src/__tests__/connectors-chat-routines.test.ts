@@ -237,6 +237,32 @@ describe("chat provider routines", () => {
     });
   });
 
+  it("returns no routines when chat context has no active org", async () => {
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([]);
+
+    await expect(
+      findChatProviderRoutines(context({ clerkOrgId: "" }), {})
+    ).resolves.toEqual({
+      reason: "no_enabled_providers",
+      routines: [],
+    });
+    expect(listCurrentOrgConnectorConnectionsMock).toHaveBeenCalledWith(
+      {},
+      { clerkOrgId: "" }
+    );
+  });
+
+  it("ignores connector rows that do not belong to the chat context org", async () => {
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([
+      connection({ clerkOrgId: "org_other" }),
+    ]);
+
+    await expect(findChatProviderRoutines(context(), {})).resolves.toEqual({
+      reason: "no_enabled_providers",
+      routines: [],
+    });
+  });
+
   it("rejects direct Linear write calls when write mode is off", async () => {
     getCurrentOrgConnectorConnectionMock.mockResolvedValue(connection());
 
@@ -248,6 +274,23 @@ describe("chat provider routines", () => {
     ).rejects.toMatchObject({
       code: "PROVIDER_ROUTINE_INSUFFICIENT_SCOPE",
       routineId: "linear__create_issue",
+    });
+    expect(loadChatConnectorRuntimeToolsMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects direct calls when the current connector row belongs to another org", async () => {
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(
+      connection({ clerkOrgId: "org_other" })
+    );
+
+    await expect(
+      callChatProviderRoutine(context(), {
+        input: {},
+        routineId: "linear__list_issues",
+      })
+    ).rejects.toMatchObject({
+      code: "PROVIDER_ROUTINE_CONNECTION_REQUIRED",
+      routineId: "linear__list_issues",
     });
     expect(loadChatConnectorRuntimeToolsMock).not.toHaveBeenCalled();
   });
@@ -268,6 +311,32 @@ describe("chat provider routines", () => {
       routineId: "linear__create_issue",
     });
     expect(loadChatConnectorRuntimeToolsMock).not.toHaveBeenCalled();
+  });
+
+  it("maps expired provider auth failures to auth-required errors", async () => {
+    const linearTool = runtimeTool({
+      callWithMetadata: vi.fn().mockRejectedValue(
+        new TestConnectorRuntimeToolCallError({
+          code: "LINEAR_TOKEN_REFRESH_FAILED",
+          message: "Linear OAuth token refresh failed.",
+          providerRoutineCallId: "provider_routine_call_auth",
+        })
+      ),
+    });
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(connection());
+    loadChatConnectorRuntimeToolsMock.mockResolvedValue([linearTool]);
+
+    await expect(
+      callChatProviderRoutine(context(), {
+        input: {},
+        routineId: "linear__list_issues",
+      })
+    ).rejects.toMatchObject({
+      code: "PROVIDER_ROUTINE_AUTH_REQUIRED",
+      message: "Provider authorization is required.",
+      providerRoutineCallId: "provider_routine_call_auth",
+      routineId: "linear__list_issues",
+    });
   });
 
   it("calls Linear write routines when write mode and stored write scope are present", async () => {

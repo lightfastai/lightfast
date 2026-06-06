@@ -154,9 +154,7 @@ export function WorkspaceAssistantClient({
             body: {
               idempotencyKey: createWorkspaceAssistantIdempotencyKey(),
               conversationId,
-              ...(writeModeForTurn
-                ? { providerRoutineWriteMode: true }
-                : {}),
+              ...(writeModeForTurn ? { providerRoutineWriteMode: true } : {}),
             },
           }
         );

@@ -70,9 +70,11 @@ export async function findChatProviderRoutines(
   input: ProviderRoutineFindInput
 ): Promise<ProviderRoutineFindOutput> {
   const parsed = providerRoutineFindInputSchema.parse(input);
-  const connections = await listCurrentOrgConnectorConnections(appDb, {
-    clerkOrgId: context.clerkOrgId,
-  });
+  const connections = (
+    await listCurrentOrgConnectorConnections(appDb, {
+      clerkOrgId: context.clerkOrgId,
+    })
+  ).filter((connection) => isContextOrgConnection(connection, context));
   const enabledConnections = connections.filter(isActiveAgentConnection);
   const warnings = reconnectWarnings(enabledConnections, context);
 
@@ -129,7 +131,7 @@ export async function callChatProviderRoutine(
     provider,
   });
 
-  if (!connection) {
+  if (!(connection && isContextOrgConnection(connection, context))) {
     throw chatProviderRoutineError({
       code: "PROVIDER_ROUTINE_CONNECTION_REQUIRED",
       message: `${provider} connector is not connected.`,
@@ -277,13 +279,18 @@ function isActiveAgentConnection(connection: OrgConnectorConnection) {
   return connection.status === "active" && connection.enabledForAgents;
 }
 
+function isContextOrgConnection(
+  connection: OrgConnectorConnection,
+  context: ChatProviderRoutineContext
+) {
+  return connection.clerkOrgId === context.clerkOrgId;
+}
+
 function hasLinearWriteScope(connection: OrgConnectorConnection) {
   return connection.scopes.includes("write");
 }
 
-function isWriteClassification(
-  classification: ProviderRoutineClassification
-) {
+function isWriteClassification(classification: ProviderRoutineClassification) {
   return classification !== "read";
 }
 
