@@ -9,7 +9,7 @@ const CONNECTOR_LABELS = {
 type ConnectorProvider = keyof typeof CONNECTOR_LABELS;
 
 interface AutomationRunAiOutput {
-  connectorProvider: ConnectorProvider;
+  connectorProvider: ConnectorProvider | null;
   finalText: string;
   finishReason: string;
   model: string;
@@ -31,7 +31,8 @@ export function isAutomationRunAiOutput(
     typeof output.finalText === "string" &&
     typeof output.finishReason === "string" &&
     typeof output.model === "string" &&
-    isConnectorProvider(output.connectorProvider) &&
+    (output.connectorProvider === null ||
+      isConnectorProvider(output.connectorProvider)) &&
     Array.isArray(output.providerRoutineCallIds) &&
     output.providerRoutineCallIds.every((id) => typeof id === "string") &&
     Array.isArray(output.transcript) &&
@@ -58,7 +59,9 @@ export function AutomationRunAiOutputView({
 
       <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
         <OutputMeta label="Connector">
-          {CONNECTOR_LABELS[output.connectorProvider]}
+          {output.connectorProvider
+            ? CONNECTOR_LABELS[output.connectorProvider]
+            : "—"}
         </OutputMeta>
         <OutputMeta label="Finish">{output.finishReason}</OutputMeta>
         <OutputMeta label="Model">{output.model}</OutputMeta>

@@ -198,7 +198,7 @@ describe("automation schemas", () => {
     });
   });
 
-  it("requires a single supported connector provider when creating an automation", () => {
+  it("accepts an optional supported connector provider when creating an automation", () => {
     expect(
       createAutomationSchema.parse({
         connectorProvider: "x",
@@ -214,9 +214,8 @@ describe("automation schemas", () => {
       timezone: "UTC",
     });
 
-    expect(() =>
+    expect(
       createAutomationSchema.parse({
-        connectorProvider: "github",
         name: "Daily summary",
         prompt: "Summarize my day",
         schedule: {
@@ -224,10 +223,29 @@ describe("automation schemas", () => {
           config: { time: "09:00" },
         },
       })
-    ).toThrow();
+    ).toMatchObject({
+      connectorProvider: null,
+      timezone: "UTC",
+    });
+
+    expect(
+      createAutomationSchema.parse({
+        connectorProvider: null,
+        name: "Daily summary",
+        prompt: "Summarize my day",
+        schedule: {
+          kind: "daily",
+          config: { time: "09:00" },
+        },
+      })
+    ).toMatchObject({
+      connectorProvider: null,
+      timezone: "UTC",
+    });
 
     expect(() =>
       createAutomationSchema.parse({
+        connectorProvider: "github",
         name: "Daily summary",
         prompt: "Summarize my day",
         schedule: {

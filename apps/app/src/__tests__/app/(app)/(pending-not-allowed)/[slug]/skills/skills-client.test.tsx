@@ -5,6 +5,7 @@ import { createListData, createSkill } from "./fixtures";
 const listQueryOptionsMock = vi.fn(() => ({
   queryKey: ["org", "workspace", "skills", "list"],
 }));
+const refreshControllerMock = vi.fn();
 
 let listData = createListData();
 
@@ -30,6 +31,13 @@ vi.mock("~/trpc/react", () => ({
 vi.mock("@tanstack/react-query", () => ({
   useSuspenseQuery: () => ({ data: listData }),
 }));
+
+vi.mock(
+  "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/_components/use-skill-index-refresh-controller",
+  () => ({
+    useSkillIndexRefreshController: refreshControllerMock,
+  })
+);
 
 vi.mock(
   "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/_components/skill-markdown",
@@ -78,9 +86,16 @@ beforeEach(() => {
   skillParam = null;
   setSkillParamMock.mockClear();
   listQueryOptionsMock.mockClear();
+  refreshControllerMock.mockClear();
 });
 
 describe("SkillsClient", () => {
+  it("passes the shared skills snapshot to the refresh controller", () => {
+    render(<SkillsClient />);
+
+    expect(refreshControllerMock).toHaveBeenCalledWith(listData);
+  });
+
   it("renders the hero and a Team grid cell per skill", () => {
     render(<SkillsClient />);
 

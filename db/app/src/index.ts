@@ -388,6 +388,8 @@ export {
   listSkillIndexEntries,
   markSkillIndexKnownStale,
   markSkillIndexRefreshFailed,
+  markSkillIndexRefreshFresh,
+  markSkillIndexRefreshStale,
   type ReplaceSkillIndexEntriesInput,
   type ReplaceSkillIndexEntryInput,
   releaseSkillIndexRefreshLock,

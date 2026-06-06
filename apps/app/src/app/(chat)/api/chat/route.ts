@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { resolveAuthContextFromClerk } from "@api/app/auth/identity";
 import {
-  ensureFreshSkillIndexForRead,
+  getSkillIndexSnapshot,
   getVerifiedLightfastSkillSourceRepositoryId,
 } from "@api/app/services/skills";
 import {
@@ -698,7 +698,7 @@ async function getSkillContext(clerkOrgId: string) {
   try {
     const sourceControlRepositoryId =
       await getVerifiedLightfastSkillSourceRepositoryId(db, { clerkOrgId });
-    const result = await ensureFreshSkillIndexForRead({
+    const result = await getSkillIndexSnapshot({
       clerkOrgId,
       sourceControlRepositoryId,
     });

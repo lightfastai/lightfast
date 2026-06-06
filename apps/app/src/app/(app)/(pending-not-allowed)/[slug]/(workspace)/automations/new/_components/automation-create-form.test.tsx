@@ -4,6 +4,26 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mutateMock = vi.fn();
 const pushMock = vi.fn();
+let connectorRows: ConnectorRow[];
+
+interface ConnectorRow {
+  availableForAutomations: boolean;
+  connection: { enabledForAutomations: boolean } | null;
+  displayName: string;
+  provider: "linear" | "x";
+}
+
+function connectorRow(
+  provider: "linear" | "x",
+  enabledForAutomations: boolean
+): ConnectorRow {
+  return {
+    availableForAutomations: enabledForAutomations,
+    connection: { enabledForAutomations },
+    displayName: provider === "linear" ? "Linear" : "X",
+    provider,
+  };
+}
 
 vi.mock("~/trpc/react", () => ({
   useTRPC: () => ({
@@ -22,6 +42,13 @@ vi.mock("~/trpc/react", () => ({
             }),
           },
         },
+        connectors: {
+          list: {
+            queryOptions: () => ({
+              queryKey: ["connectors", "list"],
+            }),
+          },
+        },
       },
     },
   }),
@@ -32,6 +59,7 @@ vi.mock("@tanstack/react-query", () => ({
   useQueryClient: () => ({
     setQueryData: vi.fn(),
   }),
+  useSuspenseQuery: () => ({ data: connectorRows }),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -80,15 +108,44 @@ const { AutomationCreateForm } = await import("./automation-create-form");
 beforeEach(() => {
   mutateMock.mockReset();
   pushMock.mockReset();
+  connectorRows = [connectorRow("linear", true), connectorRow("x", true)];
 });
 
 describe("AutomationCreateForm", () => {
-  it("submits the selected connector provider with the new automation", async () => {
+  it("submits no connector by default", async () => {
     render(<AutomationCreateForm slug="acme" />);
 
     expect(
       screen.getByRole("combobox", { name: "Connector" })
-    ).toHaveDisplayValue("Linear");
+    ).toHaveDisplayValue("No connector");
+
+    fireEvent.change(screen.getByPlaceholderText("Daily code review"), {
+      target: { value: "Daily digest" },
+    });
+    fireEvent.change(
+      screen.getByPlaceholderText(
+        "Describe what the agent should do in each run."
+      ),
+      {
+        target: { value: "Summarize posts from the workspace." },
+      }
+    );
+
+    fireEvent.submit(screen.getByRole("button", { name: "Create" }));
+
+    await waitFor(() =>
+      expect(mutateMock).toHaveBeenCalledWith({
+        connectorProvider: null,
+        name: "Daily digest",
+        prompt: "Summarize posts from the workspace.",
+        schedule: { kind: "daily", config: { time: "09:00" } },
+        timezone: "UTC",
+      })
+    );
+  });
+
+  it("submits the selected enabled connector provider with the new automation", async () => {
+    render(<AutomationCreateForm slug="acme" />);
 
     fireEvent.change(screen.getByPlaceholderText("Daily code review"), {
       target: { value: "X daily digest" },
@@ -116,5 +173,19 @@ describe("AutomationCreateForm", () => {
         timezone: "UTC",
       })
     );
+  });
+
+  it("excludes connectors disabled for automations from the selector", () => {
+    connectorRows = [connectorRow("linear", false), connectorRow("x", false)];
+
+    render(<AutomationCreateForm slug="acme" />);
+
+    const connectorSelect = screen.getByRole("combobox", {
+      name: "Connector",
+    });
+
+    expect(connectorSelect).toHaveDisplayValue("No connector");
+    expect(screen.queryByRole("option", { name: "Linear" })).toBeNull();
+    expect(screen.queryByRole("option", { name: "X" })).toBeNull();
   });
 });

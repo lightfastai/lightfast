@@ -73,10 +73,9 @@ export const orgAutomations = mysqlTable(
       length: CLERK_ID_LENGTH,
     }).notNull(),
 
-    connectorProvider: varchar("connector_provider", { length: CODE_LENGTH })
-      .$type<ConnectableConnectorProvider>()
-      .default("linear")
-      .notNull(),
+    connectorProvider: varchar("connector_provider", {
+      length: CODE_LENGTH,
+    }).$type<ConnectableConnectorProvider>(),
 
     name: varchar("name", { length: NAME_LENGTH }).notNull(),
 

@@ -60,7 +60,7 @@ export type ExecuteAutomationRunAutomation = Pick<
   | "scheduleKind"
   | "timezone"
 > & {
-  connectorProvider: ConnectableConnectorProvider;
+  connectorProvider: ConnectableConnectorProvider | null;
   scheduleConfig: AutomationScheduleConfig;
   scheduleKind: AutomationScheduleKind;
 };
@@ -78,28 +78,34 @@ export async function executeAutomationRun(
   const now = input.now ?? (() => new Date());
   const startedAt = now();
   const currentTime = startedAt;
-  const context = providerRoutineContext(input);
+  const selectedProvider = input.automation.connectorProvider;
+  const context = selectedProvider
+    ? providerRoutineContext(input, selectedProvider)
+    : null;
   const metadata = automationRunTelemetryMetadata(input);
   const toolFailureState = createAutomationToolFailureState();
 
   try {
-    const preflight = await findAutomationProviderRoutines(context, {
-      includeSchema: true,
-      limit: 1,
-    });
+    if (context) {
+      const preflight = await findAutomationProviderRoutines(context, {
+        includeSchema: true,
+        limit: 1,
+      });
 
-    if (preflight.routines.length === 0) {
-      if (preflight.reason === "no_enabled_providers") {
+      if (preflight.routines.length === 0) {
+        if (preflight.reason === "no_enabled_providers") {
+          throw automationExecutionError({
+            code: "AUTOMATION_CONNECTOR_NOT_ENABLED",
+            message: "The selected connector is not enabled for automations.",
+          });
+        }
+
         throw automationExecutionError({
-          code: "AUTOMATION_CONNECTOR_NOT_ENABLED",
-          message: "The selected connector is not enabled for automations.",
+          code: "AUTOMATION_CONNECTOR_NO_TOOLS",
+          message:
+            "The selected connector has no automation routines available.",
         });
       }
-
-      throw automationExecutionError({
-        code: "AUTOMATION_CONNECTOR_NO_TOOLS",
-        message: "The selected connector has no automation routines available.",
-      });
     }
 
     const system = buildAutomationSystemPrompt(input);
@@ -126,13 +132,17 @@ export async function executeAutomationRun(
           user: input.automation.createdByUserId,
         },
       },
-      stopWhen: stepCountIs(AUTOMATION_RUN_MAX_TOOL_STEPS),
+      stopWhen: context
+        ? stepCountIs(AUTOMATION_RUN_MAX_TOOL_STEPS)
+        : undefined,
       system,
-      tools: createAutomationProviderRoutineTools({
-        context,
-        recorder,
-        toolFailureState,
-      }),
+      tools: context
+        ? createAutomationProviderRoutineTools({
+            context,
+            recorder,
+            toolFailureState,
+          })
+        : undefined,
     });
     throwCapturedToolFailure(toolFailureState);
 
@@ -283,28 +293,38 @@ function createAutomationProviderRoutineTools(input: {
 }
 
 function providerRoutineContext(
-  input: ExecuteAutomationRunInput
+  input: ExecuteAutomationRunInput,
+  selectedProvider: ConnectableConnectorProvider
 ): AutomationProviderRoutineContext {
   return {
     automationPublicId: input.automation.publicId,
     calledByUserId: input.automation.createdByUserId,
     clerkOrgId: input.automation.clerkOrgId,
     runPublicId: input.run.publicId,
-    selectedProvider: input.automation.connectorProvider,
+    selectedProvider,
   };
 }
 
 function buildAutomationSystemPrompt(input: ExecuteAutomationRunInput) {
+  const connectorInstructions = input.automation.connectorProvider
+    ? [
+        `Selected connector: ${input.automation.connectorProvider}`,
+        "Use only routines from the selected connector.",
+        "Do not use routines from any connector other than the selected connector.",
+        "Write-capable routines are allowed when needed to satisfy the automation prompt.",
+        "Use findProviderRoutines before callProviderRoutine unless a valid routine id is already known from this same run.",
+        "If required tools are unavailable, stop and explain the limitation.",
+      ]
+    : [
+        "No connector selected.",
+        "Provider routines are not available for this automation.",
+      ];
+
   return [
     "You are executing a scheduled Lightfast automation.",
     `Automation: ${input.automation.name}`,
     `Run ID: ${input.run.publicId}`,
-    `Selected connector: ${input.automation.connectorProvider}`,
-    "Use only routines from the selected connector.",
-    "Do not use routines from any connector other than the selected connector.",
-    "Write-capable routines are allowed when needed to satisfy the automation prompt.",
-    "Use findProviderRoutines before callProviderRoutine unless a valid routine id is already known from this same run.",
-    "If required tools are unavailable, stop and explain the limitation.",
+    ...connectorInstructions,
     "Return a concise final summary of what you did.",
   ].join("\n");
 }
@@ -329,7 +349,7 @@ function automationRunTelemetryMetadata(input: ExecuteAutomationRunInput) {
   return {
     automationId: input.automation.publicId,
     clerkOrgId: input.automation.clerkOrgId,
-    connectorProvider: input.automation.connectorProvider,
+    connectorProvider: input.automation.connectorProvider ?? "none",
     environment: input.deploymentEnvironment,
     model: AUTOMATION_RUN_MODEL,
     runId: input.run.publicId,
@@ -342,7 +362,7 @@ function automationRunGatewayTags(input: ExecuteAutomationRunInput) {
     `org:${input.automation.clerkOrgId}`,
     `automation:${input.automation.publicId}`,
     `run:${input.run.publicId}`,
-    `connector:${input.automation.connectorProvider}`,
+    `connector:${input.automation.connectorProvider ?? "none"}`,
     `env:${input.deploymentEnvironment}`,
   ];
 }

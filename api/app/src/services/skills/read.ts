@@ -1,4 +1,4 @@
-import type { SkillIndexEntry } from "@db/app";
+import type { SkillIndexEntry, SkillIndexState } from "@db/app";
 import { buildGitHubRepositoryUrl } from "@repo/github-app-node";
 import type { SkillDiagnostic } from "@repo/skills-contract";
 
@@ -10,6 +10,79 @@ import {
 } from "./refresh";
 import { getVerifiedCandidateByRepositoryId } from "./repository";
 import type { SkillIndexFreshness, SkillIndexServiceDeps } from "./types";
+
+const SNAPSHOT_READ_MAX_ATTEMPTS = 3;
+
+export async function getSkillIndexSnapshot(input: {
+  clerkOrgId: string;
+  deps?: SkillIndexServiceDeps;
+  sourceControlRepositoryId: number;
+  slug?: string;
+}): Promise<{
+  freshness: SkillIndexFreshness;
+  indexDiagnostics: SkillDiagnostic[];
+  repositoryUrl: string;
+  skills: SkillIndexEntry[];
+  snapshotVersion: string | null;
+}> {
+  const deps = resolveSkillIndexServiceDeps(input.deps);
+  const candidate = await getVerifiedCandidateByRepositoryId(deps, {
+    clerkOrgId: input.clerkOrgId,
+    sourceControlRepositoryId: input.sourceControlRepositoryId,
+  });
+  if (!candidate) {
+    return {
+      freshness: toFreshness(null, "unavailable"),
+      indexDiagnostics: [],
+      repositoryUrl: "",
+      skills: [],
+      snapshotVersion: null,
+    };
+  }
+
+  const repositoryUrl = getRepositoryUrl(candidate.repository.fullName);
+  const state =
+    candidate.state ??
+    (await deps.getSkillIndexStateBySourceControlRepositoryId(deps.db, {
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+    }));
+
+  if (!state) {
+    return {
+      freshness: toFreshness(null, "unavailable"),
+      indexDiagnostics: [],
+      repositoryUrl,
+      skills: [],
+      snapshotVersion: null,
+    };
+  }
+
+  const snapshot = await readConsistentSnapshot(deps, {
+    initialState: state,
+    slug: input.slug,
+    sourceControlRepositoryId: input.sourceControlRepositoryId,
+  });
+  if (!snapshot.state) {
+    return {
+      freshness: toFreshness(null, "unavailable"),
+      indexDiagnostics: [],
+      repositoryUrl,
+      skills: [],
+      snapshotVersion: null,
+    };
+  }
+
+  return {
+    freshness: toFreshness(
+      snapshot.state,
+      deriveSnapshotStatus(snapshot.state)
+    ),
+    indexDiagnostics: snapshot.state.indexDiagnostics,
+    repositoryUrl,
+    skills: snapshot.entries,
+    snapshotVersion: snapshot.snapshotVersion,
+  };
+}
 
 export async function ensureFreshSkillIndexForRead(input: {
   clerkOrgId: string;
@@ -154,6 +227,82 @@ function deriveReadStatus(input: {
     return "refreshing";
   }
   return input.entries.length > 0 ? "stale" : "unavailable";
+}
+
+async function readConsistentSnapshot(
+  deps: SkillIndexServiceDeps,
+  input: {
+    initialState: SkillIndexState;
+    slug?: string;
+    sourceControlRepositoryId: number;
+  }
+): Promise<{
+  entries: SkillIndexEntry[];
+  snapshotVersion: string | null;
+  state: SkillIndexState | null;
+}> {
+  let state = input.initialState;
+
+  for (let attempt = 0; attempt < SNAPSHOT_READ_MAX_ATTEMPTS; attempt++) {
+    const snapshotVersion = toSkillIndexSnapshotVersion(state);
+    const entries = await readEntries(deps, {
+      slug: input.slug,
+      stateId: state.id,
+    });
+    const latestState =
+      await deps.getSkillIndexStateBySourceControlRepositoryId(deps.db, {
+        sourceControlRepositoryId: input.sourceControlRepositoryId,
+      });
+
+    if (!latestState) {
+      return { entries: [], snapshotVersion: null, state: null };
+    }
+
+    const latestSnapshotVersion = toSkillIndexSnapshotVersion(latestState);
+    if (latestSnapshotVersion === snapshotVersion) {
+      return {
+        entries,
+        snapshotVersion: latestSnapshotVersion,
+        state: latestState,
+      };
+    }
+
+    state = latestState;
+  }
+
+  return { entries: [], snapshotVersion: null, state: null };
+}
+
+function deriveSnapshotStatus(state: {
+  indexedCommitSha: string | null;
+  lastCheckedCommitSha: string | null;
+  lastRefreshStatus: string;
+}): SkillIndexFreshness["status"] {
+  if (
+    state.indexedCommitSha &&
+    state.lastCheckedCommitSha &&
+    state.indexedCommitSha === state.lastCheckedCommitSha
+  ) {
+    return "fresh";
+  }
+  if (state.lastRefreshStatus === "refreshing") {
+    return "refreshing";
+  }
+  return state.indexedCommitSha ? "stale" : "unavailable";
+}
+
+function toSkillIndexSnapshotVersion(state: {
+  id: number;
+  indexedCommitSha: string | null;
+  lastRefreshStatus: string;
+  updatedAt: Date;
+}): string {
+  return [
+    state.id,
+    state.updatedAt.getTime(),
+    state.indexedCommitSha ?? "",
+    state.lastRefreshStatus,
+  ].join(":");
 }
 
 function toFreshness(

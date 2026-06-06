@@ -1,5 +1,5 @@
 export function createSkillRefreshDedupeKey(input: {
-  reason: "schedule" | "setup" | "webhook";
+  reason: "read" | "schedule" | "setup" | "webhook";
   sourceControlRepositoryId: number;
   targetCommitSha?: string;
 }) {

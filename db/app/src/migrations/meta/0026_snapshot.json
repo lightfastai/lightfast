@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "86fc3f39-4cab-4ab5-a735-6794d3d682de",
-  "prevId": "79bb0113-a47f-4337-914e-ac5bca6e7cdf",
+  "id": "172bea1a-24ca-42bf-a0a0-6fe0164e305a",
+  "prevId": "86fc3f39-4cab-4ab5-a735-6794d3d682de",
   "tables": {
     "lightfast_org_automation_runs": {
       "name": "lightfast_org_automation_runs",
@@ -2224,6 +2224,182 @@
       "compositePrimaryKeys": {
         "lightfast_org_provider_routine_calls_id": {
           "name": "lightfast_org_provider_routine_calls_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lightfast_org_signal_entity_links": {
+      "name": "lightfast_org_signal_entity_links",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "clerk_org_id": {
+          "name": "clerk_org_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "signal_id": {
+          "name": "signal_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "target_type": {
+          "name": "target_type",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "local_entity_key": {
+          "name": "local_entity_key",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "label": {
+          "name": "label",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "mention_kind": {
+          "name": "mention_kind",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "anchor_text": {
+          "name": "anchor_text",
+          "type": "varchar(240)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "anchor_occurrence": {
+          "name": "anchor_occurrence",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "extraction_method": {
+          "name": "extraction_method",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "confidence_basis_points": {
+          "name": "confidence_basis_points",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "rationale": {
+          "name": "rationale",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "normalized_mention_value": {
+          "name": "normalized_mention_value",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "resolved_person_id": {
+          "name": "resolved_person_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "resolved_at": {
+          "name": "resolved_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {
+        "org_signal_entity_links_org_signal_local_entity_uq": {
+          "name": "org_signal_entity_links_org_signal_local_entity_uq",
+          "columns": [
+            "clerk_org_id",
+            "signal_id",
+            "local_entity_key"
+          ],
+          "isUnique": true
+        },
+        "org_signal_entity_links_org_signal_idx": {
+          "name": "org_signal_entity_links_org_signal_idx",
+          "columns": [
+            "clerk_org_id",
+            "signal_id",
+            "id"
+          ],
+          "isUnique": false
+        },
+        "org_signal_entity_links_org_resolved_person_idx": {
+          "name": "org_signal_entity_links_org_resolved_person_idx",
+          "columns": [
+            "clerk_org_id",
+            "resolved_person_id",
+            "id"
+          ],
+          "isUnique": false
+        },
+        "org_signal_entity_links_org_mention_lookup_idx": {
+          "name": "org_signal_entity_links_org_mention_lookup_idx",
+          "columns": [
+            "clerk_org_id",
+            "target_type",
+            "mention_kind",
+            "normalized_mention_value"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "lightfast_org_signal_entity_links_id": {
+          "name": "lightfast_org_signal_entity_links_id",
           "columns": [
             "id"
           ]
