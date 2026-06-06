@@ -249,6 +249,96 @@ describe("skills index refresh/read service", () => {
     expect(deps.readSkillRepositoryMainRef).not.toHaveBeenCalled();
   });
 
+  it("reports stale snapshot freshness when a slug is missing from an indexed snapshot", async () => {
+    const deps = createDeps({
+      targetEntries: [],
+      targetState: staleState({
+        indexedCommitSha: "old-index",
+        lastCheckedCommitSha: "new-main",
+        lastRefreshStatus: "stale",
+      }),
+    });
+
+    const result = await getSkillIndexSnapshot({
+      clerkOrgId: "org_123",
+      deps,
+      slug: "missing",
+      sourceControlRepositoryId: 1,
+    });
+
+    expect(result.skills).toEqual([]);
+    expect(result.freshness).toMatchObject({
+      indexedCommitSha: "old-index",
+      status: "stale",
+    });
+    expect(deps.getSkillIndexEntryBySlug).toHaveBeenCalledWith(deps.db, {
+      slug: "missing",
+      stateId: 100,
+    });
+  });
+
+  it("retries snapshot reads when state changes between entries and version check", async () => {
+    const initialState = staleState({
+      indexedCommitSha: "old-index",
+      lastCheckedCommitSha: "new-main",
+      lastRefreshStatus: "stale",
+      updatedAt: now,
+    });
+    const latestUpdatedAt = new Date("2026-06-01T00:00:01.000Z");
+    const latestState = staleState({
+      indexedCommitSha: "current-main",
+      lastCheckedCommitSha: "current-main",
+      lastRefreshStatus: "fresh",
+      updatedAt: latestUpdatedAt,
+    });
+    const oldSkill = entry({ indexedCommitSha: "old-index", slug: "old" });
+    const latestSkill = entry({
+      indexedCommitSha: "current-main",
+      slug: "latest",
+    });
+    const deps = createDeps({
+      candidate: createCandidate({ state: initialState }),
+      targetState: latestState,
+    });
+    deps.listSkillIndexEntries
+      .mockResolvedValueOnce([oldSkill])
+      .mockResolvedValueOnce([latestSkill]);
+    deps.getSkillIndexStateBySourceControlRepositoryId.mockResolvedValue(
+      latestState
+    );
+
+    const result = await getSkillIndexSnapshot({
+      clerkOrgId: "org_123",
+      deps,
+      sourceControlRepositoryId: 1,
+    });
+
+    expect(result).toMatchObject({
+      skills: [latestSkill],
+      snapshotVersion: `100:${latestUpdatedAt.getTime()}:current-main:fresh`,
+      freshness: {
+        indexedCommitSha: "current-main",
+        status: "fresh",
+      },
+    });
+    expect(deps.listSkillIndexEntries).toHaveBeenCalledTimes(2);
+    expect(
+      deps.getSkillIndexStateBySourceControlRepositoryId
+    ).toHaveBeenCalledTimes(2);
+    expect(
+      deps.listSkillIndexEntries.mock.invocationCallOrder[0]
+    ).toBeLessThan(
+      deps.getSkillIndexStateBySourceControlRepositoryId.mock
+        .invocationCallOrder[0] ?? 0
+    );
+    expect(
+      deps.getSkillIndexStateBySourceControlRepositoryId.mock
+        .invocationCallOrder[0]
+    ).toBeLessThan(
+      deps.listSkillIndexEntries.mock.invocationCallOrder[1] ?? 0
+    );
+  });
+
   it("returns stale read data when refresh fails but previous entries exist", async () => {
     const deps = createDeps({
       readTreeError: new Error("tree failed"),

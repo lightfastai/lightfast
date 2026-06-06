@@ -1,4 +1,4 @@
-import type { SkillIndexEntry } from "@db/app";
+import type { SkillIndexEntry, SkillIndexState } from "@db/app";
 import { buildGitHubRepositoryUrl } from "@repo/github-app-node";
 import type { SkillDiagnostic } from "@repo/skills-contract";
 
@@ -10,6 +10,8 @@ import {
 } from "./refresh";
 import { getVerifiedCandidateByRepositoryId } from "./repository";
 import type { SkillIndexFreshness, SkillIndexServiceDeps } from "./types";
+
+const SNAPSHOT_READ_MAX_ATTEMPTS = 3;
 
 export async function getSkillIndexSnapshot(input: {
   clerkOrgId: string;
@@ -55,23 +57,27 @@ export async function getSkillIndexSnapshot(input: {
     };
   }
 
-  const entries = await readEntries(deps, {
+  const snapshot = await readConsistentSnapshot(deps, {
+    initialState: state,
     slug: input.slug,
-    stateId: state.id,
+    sourceControlRepositoryId: input.sourceControlRepositoryId,
   });
+  if (!snapshot.state) {
+    return {
+      freshness: toFreshness(null, "unavailable"),
+      indexDiagnostics: [],
+      repositoryUrl,
+      skills: [],
+      snapshotVersion: null,
+    };
+  }
 
   return {
-    freshness: toFreshness(
-      state,
-      deriveSnapshotStatus({
-        entries,
-        state,
-      })
-    ),
-    indexDiagnostics: state.indexDiagnostics,
+    freshness: toFreshness(snapshot.state, deriveSnapshotStatus(snapshot.state)),
+    indexDiagnostics: snapshot.state.indexDiagnostics,
     repositoryUrl,
-    skills: entries,
-    snapshotVersion: toSkillIndexSnapshotVersion(state),
+    skills: snapshot.entries,
+    snapshotVersion: snapshot.snapshotVersion,
   };
 }
 
@@ -220,25 +226,66 @@ function deriveReadStatus(input: {
   return input.entries.length > 0 ? "stale" : "unavailable";
 }
 
-function deriveSnapshotStatus(input: {
+async function readConsistentSnapshot(
+  deps: SkillIndexServiceDeps,
+  input: {
+    initialState: SkillIndexState;
+    slug?: string;
+    sourceControlRepositoryId: number;
+  }
+): Promise<{
   entries: SkillIndexEntry[];
-  state: {
-    indexedCommitSha: string | null;
-    lastCheckedCommitSha: string | null;
-    lastRefreshStatus: string;
-  };
+  snapshotVersion: string | null;
+  state: SkillIndexState | null;
+}> {
+  let state = input.initialState;
+
+  for (let attempt = 0; attempt < SNAPSHOT_READ_MAX_ATTEMPTS; attempt++) {
+    const snapshotVersion = toSkillIndexSnapshotVersion(state);
+    const entries = await readEntries(deps, {
+      slug: input.slug,
+      stateId: state.id,
+    });
+    const latestState =
+      await deps.getSkillIndexStateBySourceControlRepositoryId(deps.db, {
+        sourceControlRepositoryId: input.sourceControlRepositoryId,
+      });
+
+    if (!latestState) {
+      return { entries: [], snapshotVersion: null, state: null };
+    }
+
+    const latestSnapshotVersion = toSkillIndexSnapshotVersion(latestState);
+    if (latestSnapshotVersion === snapshotVersion) {
+      return {
+        entries,
+        snapshotVersion: latestSnapshotVersion,
+        state: latestState,
+      };
+    }
+
+    state = latestState;
+  }
+
+  return { entries: [], snapshotVersion: null, state: null };
+}
+
+function deriveSnapshotStatus(state: {
+  indexedCommitSha: string | null;
+  lastCheckedCommitSha: string | null;
+  lastRefreshStatus: string;
 }): SkillIndexFreshness["status"] {
   if (
-    input.state.indexedCommitSha &&
-    input.state.lastCheckedCommitSha &&
-    input.state.indexedCommitSha === input.state.lastCheckedCommitSha
+    state.indexedCommitSha &&
+    state.lastCheckedCommitSha &&
+    state.indexedCommitSha === state.lastCheckedCommitSha
   ) {
     return "fresh";
   }
-  if (input.state.lastRefreshStatus === "refreshing") {
+  if (state.lastRefreshStatus === "refreshing") {
     return "refreshing";
   }
-  return input.entries.length > 0 ? "stale" : "unavailable";
+  return state.indexedCommitSha ? "stale" : "unavailable";
 }
 
 function toSkillIndexSnapshotVersion(state: {
