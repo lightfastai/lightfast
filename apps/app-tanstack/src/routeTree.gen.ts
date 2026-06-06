@@ -22,6 +22,7 @@ import { Route as ApiTrpcSplatRouteImport } from './routes/api/trpc.$'
 import { Route as ApiGithubSetupRouteImport } from './routes/api/github/setup'
 import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated/account/settings'
 import { Route as AuthenticatedAccountMcpRouteImport } from './routes/_authenticated/account/mcp'
+import { Route as AuthenticatedSlugTasksRouteImport } from './routes/_authenticated/$slug/tasks'
 import { Route as AuthenticatedSlugSkillsRouteImport } from './routes/_authenticated/$slug/skills'
 import { Route as AuthenticatedSlugSignalsRouteImport } from './routes/_authenticated/$slug/signals'
 import { Route as AuthenticatedSlugSettingsRouteImport } from './routes/_authenticated/$slug/settings'
@@ -109,6 +110,11 @@ const AuthenticatedAccountMcpRoute = AuthenticatedAccountMcpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
   getParentRoute: () => AuthenticatedAccountRoute,
+} as any)
+const AuthenticatedSlugTasksRoute = AuthenticatedSlugTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => AuthenticatedSlugRoute,
 } as any)
 const AuthenticatedSlugSkillsRoute = AuthenticatedSlugSkillsRouteImport.update({
   id: '/skills',
@@ -204,9 +210,9 @@ const AuthenticatedAccountSettingsGeneralRoute =
   } as any)
 const AuthenticatedSlugTasksBindRoute =
   AuthenticatedSlugTasksBindRouteImport.update({
-    id: '/tasks/bind',
-    path: '/tasks/bind',
-    getParentRoute: () => AuthenticatedSlugRoute,
+    id: '/bind',
+    path: '/bind',
+    getParentRoute: () => AuthenticatedSlugTasksRoute,
   } as any)
 const AuthenticatedSlugChatConversationIdRoute =
   AuthenticatedSlugChatConversationIdRouteImport.update({
@@ -228,9 +234,9 @@ const AuthenticatedAccountTasksGithubCompleteRoute =
   } as any)
 const AuthenticatedSlugTasksGithubLightfastRepoRoute =
   AuthenticatedSlugTasksGithubLightfastRepoRouteImport.update({
-    id: '/tasks/github/lightfast-repo',
-    path: '/tasks/github/lightfast-repo',
-    getParentRoute: () => AuthenticatedSlugRoute,
+    id: '/github/lightfast-repo',
+    path: '/github/lightfast-repo',
+    getParentRoute: () => AuthenticatedSlugTasksRoute,
   } as any)
 const AuthenticatedSlugTasksBindGithubCompleteRoute =
   AuthenticatedSlugTasksBindGithubCompleteRouteImport.update({
@@ -255,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/$slug/settings': typeof AuthenticatedSlugSettingsRoute
   '/$slug/signals': typeof AuthenticatedSlugSignalsRoute
   '/$slug/skills': typeof AuthenticatedSlugSkillsRoute
+  '/$slug/tasks': typeof AuthenticatedSlugTasksRouteWithChildren
   '/account/mcp': typeof AuthenticatedAccountMcpRoute
   '/account/settings': typeof AuthenticatedAccountSettingsRouteWithChildren
   '/api/github/setup': typeof ApiGithubSetupRoute
@@ -290,6 +297,7 @@ export interface FileRoutesByTo {
   '/$slug/settings': typeof AuthenticatedSlugSettingsRoute
   '/$slug/signals': typeof AuthenticatedSlugSignalsRoute
   '/$slug/skills': typeof AuthenticatedSlugSkillsRoute
+  '/$slug/tasks': typeof AuthenticatedSlugTasksRouteWithChildren
   '/account/mcp': typeof AuthenticatedAccountMcpRoute
   '/api/github/setup': typeof ApiGithubSetupRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
@@ -327,6 +335,7 @@ export interface FileRoutesById {
   '/_authenticated/$slug/settings': typeof AuthenticatedSlugSettingsRoute
   '/_authenticated/$slug/signals': typeof AuthenticatedSlugSignalsRoute
   '/_authenticated/$slug/skills': typeof AuthenticatedSlugSkillsRoute
+  '/_authenticated/$slug/tasks': typeof AuthenticatedSlugTasksRouteWithChildren
   '/_authenticated/account/mcp': typeof AuthenticatedAccountMcpRoute
   '/_authenticated/account/settings': typeof AuthenticatedAccountSettingsRouteWithChildren
   '/api/github/setup': typeof ApiGithubSetupRoute
@@ -365,6 +374,7 @@ export interface FileRouteTypes {
     | '/$slug/settings'
     | '/$slug/signals'
     | '/$slug/skills'
+    | '/$slug/tasks'
     | '/account/mcp'
     | '/account/settings'
     | '/api/github/setup'
@@ -400,6 +410,7 @@ export interface FileRouteTypes {
     | '/$slug/settings'
     | '/$slug/signals'
     | '/$slug/skills'
+    | '/$slug/tasks'
     | '/account/mcp'
     | '/api/github/setup'
     | '/api/trpc/$'
@@ -436,6 +447,7 @@ export interface FileRouteTypes {
     | '/_authenticated/$slug/settings'
     | '/_authenticated/$slug/signals'
     | '/_authenticated/$slug/skills'
+    | '/_authenticated/$slug/tasks'
     | '/_authenticated/account/mcp'
     | '/_authenticated/account/settings'
     | '/api/github/setup'
@@ -563,6 +575,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountMcpRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
     }
+    '/_authenticated/$slug/tasks': {
+      id: '/_authenticated/$slug/tasks'
+      path: '/tasks'
+      fullPath: '/$slug/tasks'
+      preLoaderRoute: typeof AuthenticatedSlugTasksRouteImport
+      parentRoute: typeof AuthenticatedSlugRoute
+    }
     '/_authenticated/$slug/skills': {
       id: '/_authenticated/$slug/skills'
       path: '/skills'
@@ -677,10 +696,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/$slug/tasks/bind': {
       id: '/_authenticated/$slug/tasks/bind'
-      path: '/tasks/bind'
+      path: '/bind'
       fullPath: '/$slug/tasks/bind'
       preLoaderRoute: typeof AuthenticatedSlugTasksBindRouteImport
-      parentRoute: typeof AuthenticatedSlugRoute
+      parentRoute: typeof AuthenticatedSlugTasksRoute
     }
     '/_authenticated/$slug/chat/$conversationId': {
       id: '/_authenticated/$slug/chat/$conversationId'
@@ -705,10 +724,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/$slug/tasks/github/lightfast-repo': {
       id: '/_authenticated/$slug/tasks/github/lightfast-repo'
-      path: '/tasks/github/lightfast-repo'
+      path: '/github/lightfast-repo'
       fullPath: '/$slug/tasks/github/lightfast-repo'
       preLoaderRoute: typeof AuthenticatedSlugTasksGithubLightfastRepoRouteImport
-      parentRoute: typeof AuthenticatedSlugRoute
+      parentRoute: typeof AuthenticatedSlugTasksRoute
     }
     '/_authenticated/$slug/tasks/bind/github/complete': {
       id: '/_authenticated/$slug/tasks/bind/github/complete'
@@ -749,6 +768,24 @@ const AuthenticatedSlugTasksBindRouteWithChildren =
     AuthenticatedSlugTasksBindRouteChildren,
   )
 
+interface AuthenticatedSlugTasksRouteChildren {
+  AuthenticatedSlugTasksBindRoute: typeof AuthenticatedSlugTasksBindRouteWithChildren
+  AuthenticatedSlugTasksGithubLightfastRepoRoute: typeof AuthenticatedSlugTasksGithubLightfastRepoRoute
+}
+
+const AuthenticatedSlugTasksRouteChildren: AuthenticatedSlugTasksRouteChildren =
+  {
+    AuthenticatedSlugTasksBindRoute:
+      AuthenticatedSlugTasksBindRouteWithChildren,
+    AuthenticatedSlugTasksGithubLightfastRepoRoute:
+      AuthenticatedSlugTasksGithubLightfastRepoRoute,
+  }
+
+const AuthenticatedSlugTasksRouteWithChildren =
+  AuthenticatedSlugTasksRoute._addFileChildren(
+    AuthenticatedSlugTasksRouteChildren,
+  )
+
 interface AuthenticatedSlugRouteChildren {
   AuthenticatedSlugAutomationsRoute: typeof AuthenticatedSlugAutomationsRoute
   AuthenticatedSlugChatRoute: typeof AuthenticatedSlugChatRouteWithChildren
@@ -758,9 +795,8 @@ interface AuthenticatedSlugRouteChildren {
   AuthenticatedSlugSettingsRoute: typeof AuthenticatedSlugSettingsRoute
   AuthenticatedSlugSignalsRoute: typeof AuthenticatedSlugSignalsRoute
   AuthenticatedSlugSkillsRoute: typeof AuthenticatedSlugSkillsRoute
+  AuthenticatedSlugTasksRoute: typeof AuthenticatedSlugTasksRouteWithChildren
   AuthenticatedSlugIndexRoute: typeof AuthenticatedSlugIndexRoute
-  AuthenticatedSlugTasksBindRoute: typeof AuthenticatedSlugTasksBindRouteWithChildren
-  AuthenticatedSlugTasksGithubLightfastRepoRoute: typeof AuthenticatedSlugTasksGithubLightfastRepoRoute
 }
 
 const AuthenticatedSlugRouteChildren: AuthenticatedSlugRouteChildren = {
@@ -772,10 +808,8 @@ const AuthenticatedSlugRouteChildren: AuthenticatedSlugRouteChildren = {
   AuthenticatedSlugSettingsRoute: AuthenticatedSlugSettingsRoute,
   AuthenticatedSlugSignalsRoute: AuthenticatedSlugSignalsRoute,
   AuthenticatedSlugSkillsRoute: AuthenticatedSlugSkillsRoute,
+  AuthenticatedSlugTasksRoute: AuthenticatedSlugTasksRouteWithChildren,
   AuthenticatedSlugIndexRoute: AuthenticatedSlugIndexRoute,
-  AuthenticatedSlugTasksBindRoute: AuthenticatedSlugTasksBindRouteWithChildren,
-  AuthenticatedSlugTasksGithubLightfastRepoRoute:
-    AuthenticatedSlugTasksGithubLightfastRepoRoute,
 }
 
 const AuthenticatedSlugRouteWithChildren =

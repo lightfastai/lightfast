@@ -12,21 +12,21 @@ import {
   parseSignalDispositions,
   parseSignalKinds,
   parseSignalPriorities,
-  type SignalsSearchKey,
   serializeSignalValues,
   toggleSignalValue,
 } from "./signals-search-params";
 import { SignalsToolbar } from "./signals-toolbar";
 import { SignalsTruncationBanner } from "./signals-truncation-banner";
 import { useSignalsUiStore } from "./signals-ui-store";
+import { SignalsViewSwitcher } from "./signals-view-switcher";
 import { useSignalsWorkspaceData } from "./use-signals-workspace-data";
 
 export function SignalsClient({
   search,
-  setSearchParam,
+  setSearchParams,
 }: {
   search: NormalizedSignalsSearch;
-  setSearchParam: (key: SignalsSearchKey, value: string | null) => void;
+  setSearchParams: (updates: Partial<NormalizedSignalsSearch>) => void;
 }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -103,38 +103,48 @@ export function SignalsClient({
         onAddSignal={openCreateSignal}
         onClearFilterGroup={(group) => {
           if (group === "disposition") {
-            setSearchParam("disposition", null);
+            setSearchParams({ disposition: "", view: null });
           } else if (group === "kind") {
-            setSearchParam("kind", null);
+            setSearchParams({ kind: "", view: null });
           } else if (group === "people") {
-            setSearchParam("people", "all");
+            setSearchParams({ people: "all", view: null });
           } else {
-            setSearchParam("priority", null);
+            setSearchParams({ priority: "", view: null });
           }
         }}
         onPeopleRoutedChange={(value) => {
-          setSearchParam("people", value ? "routed" : "all");
+          setSearchParams({ people: value ? "routed" : "all", view: null });
         }}
         onToggleDisposition={(value) => {
-          setSearchParam(
-            "disposition",
-            serializeSignalValues(
+          setSearchParams({
+            disposition: serializeSignalValues(
               toggleSignalValue(filters.dispositions, value)
-            )
-          );
+            ),
+            view: null,
+          });
         }}
         onToggleKind={(value) => {
-          setSearchParam(
-            "kind",
-            serializeSignalValues(toggleSignalValue(filters.kinds, value))
-          );
+          setSearchParams({
+            kind: serializeSignalValues(
+              toggleSignalValue(filters.kinds, value)
+            ),
+            view: null,
+          });
         }}
         onTogglePriority={(value) => {
-          setSearchParam(
-            "priority",
-            serializeSignalValues(toggleSignalValue(filters.priorities, value))
-          );
+          setSearchParams({
+            priority: serializeSignalValues(
+              toggleSignalValue(filters.priorities, value)
+            ),
+            view: null,
+          });
         }}
+        viewsSlot={
+          <SignalsViewSwitcher
+            search={search}
+            setSearchParams={setSearchParams}
+          />
+        }
       />
 
       <SignalsTruncationBanner
@@ -149,7 +159,7 @@ export function SignalsClient({
         hasActiveSearch={hasActiveFilters}
         hasAnyRows={hasAnyRows}
         onPrefetchSignal={prefetchSignal}
-        onSelectSignal={(publicId) => setSearchParam("signal", publicId)}
+        onSelectSignal={(publicId) => setSearchParams({ signal: publicId })}
         onToggleGroup={toggleListGroup}
         sections={visibleListSections}
         selectedSignalId={search.signal}
@@ -161,7 +171,7 @@ export function SignalsClient({
         }
         onOpenChange={(open) => {
           if (!open) {
-            setSearchParam("signal", null);
+            setSearchParams({ signal: null });
           }
         }}
         publicId={search.signal}

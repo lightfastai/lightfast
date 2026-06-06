@@ -2,17 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 import { SignalsClient } from "~/signals/signals-client";
 import {
+  type NormalizedSignalsSearch,
   normalizeSignalsSearch,
-  type SignalsSearchKey,
   validateSignalsSearch,
 } from "~/signals/signals-search-params";
-
-const SIGNAL_FILTER_SEARCH_KEYS = new Set<SignalsSearchKey>([
-  "disposition",
-  "kind",
-  "people",
-  "priority",
-]);
 
 export const Route = createFileRoute("/_authenticated/$slug/signals")({
   validateSearch: validateSignalsSearch,
@@ -29,60 +22,30 @@ function SignalsPage() {
     [routeSearch]
   );
   const navigate = Route.useNavigate();
-  const setSearchParam = useCallback(
-    (key: SignalsSearchKey, value: string | null) => {
+  const setSearchParams = useCallback(
+    (updates: Partial<NormalizedSignalsSearch>) => {
       void navigate({
         replace: true,
         search: (previous) => {
           const next = { ...previous };
-          if (SIGNAL_FILTER_SEARCH_KEYS.has(key)) {
-            next.view = undefined;
+          if ("disposition" in updates) {
+            next.disposition = updates.disposition || undefined;
           }
-          switch (key) {
-            case "disposition":
-              if (value) {
-                next.disposition = value;
-              } else {
-                next.disposition = undefined;
-              }
-              break;
-            case "kind":
-              if (value) {
-                next.kind = value;
-              } else {
-                next.kind = undefined;
-              }
-              break;
-            case "people":
-              if (value === "routed") {
-                next.people = "routed";
-              } else {
-                next.people = undefined;
-              }
-              break;
-            case "priority":
-              if (value) {
-                next.priority = value;
-              } else {
-                next.priority = undefined;
-              }
-              break;
-            case "signal":
-              if (value) {
-                next.signal = value;
-              } else {
-                next.signal = undefined;
-              }
-              break;
-            case "view":
-              if (value) {
-                next.view = value;
-              } else {
-                next.view = undefined;
-              }
-              break;
-            default:
-              break;
+          if ("kind" in updates) {
+            next.kind = updates.kind || undefined;
+          }
+          if ("people" in updates) {
+            next.people =
+              updates.people === "routed" ? updates.people : undefined;
+          }
+          if ("priority" in updates) {
+            next.priority = updates.priority || undefined;
+          }
+          if ("signal" in updates) {
+            next.signal = updates.signal || undefined;
+          }
+          if ("view" in updates) {
+            next.view = updates.view || undefined;
           }
           return next;
         },
@@ -91,5 +54,5 @@ function SignalsPage() {
     [navigate]
   );
 
-  return <SignalsClient search={search} setSearchParam={setSearchParam} />;
+  return <SignalsClient search={search} setSearchParams={setSearchParams} />;
 }

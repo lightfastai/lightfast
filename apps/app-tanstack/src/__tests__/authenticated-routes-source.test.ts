@@ -99,11 +99,15 @@ describe("app-tanstack authenticated route migration", () => {
     const createDialogSource = source("src/signals/signal-create-dialog.tsx");
     const searchSource = source("src/signals/signals-search-params.ts");
     const querySource = source("src/signals/use-classified-signals-query.ts");
+    const viewsSource = source("src/signals/signals-view-switcher.tsx");
+    const viewQuerySource = source("src/signals/use-signal-views-query.ts");
+    const viewSwitcherSource = source("src/components/views/view-switcher.tsx");
 
     expect(routeSource).toContain("validateSignalsSearch");
     expect(routeSource).toContain("createFileRoute");
-    expect(routeSource).toContain("SIGNAL_FILTER_SEARCH_KEYS");
+    expect(routeSource).toContain("setSearchParams");
     expect(clientSource).toContain("SignalCreateDialog");
+    expect(clientSource).toContain("SignalsViewSwitcher");
     expect(clientSource).toContain("signals.get.queryOptions");
     expect(createDialogSource).toContain("signals.create.mutationOptions");
     expect(createDialogSource).toContain("listUserOrganizations.queryOptions");
@@ -112,12 +116,16 @@ describe("app-tanstack authenticated route migration", () => {
     expect(querySource).toContain("signals.workingSet.queryOptions");
     expect(querySource).toContain("signals.list.queryOptions");
     expect(querySource).toContain('enabled: typeof window !== "undefined"');
+    expect(viewQuerySource).toContain("signals.views.list.queryOptions");
+    expect(viewsSource).toContain("viewConfigToParamValues");
+    expect(viewSwitcherSource).toContain("partitionViews");
 
     for (const routeFile of [
       routeSource,
       clientSource,
       createDialogSource,
       searchSource,
+      viewsSource,
     ]) {
       expect(routeFile).not.toContain("next/");
       expect(routeFile).not.toContain("nuqs");
@@ -130,6 +138,9 @@ describe("app-tanstack authenticated route migration", () => {
     const orgRouteSource = source("src/routes/_authenticated/$slug.tsx");
     const bindRouteSource = source(
       "src/routes/_authenticated/$slug/tasks/bind.tsx"
+    );
+    const tasksRouteSource = source(
+      "src/routes/_authenticated/$slug/tasks.tsx"
     );
     const lightfastRepoRouteSource = source(
       "src/routes/_authenticated/$slug/tasks/github/lightfast-repo.tsx"
@@ -152,6 +163,18 @@ describe("app-tanstack authenticated route migration", () => {
     );
     expect(orgRouteSource).toContain('to="/$slug/tasks/bind"');
     expect(orgRouteSource).toContain('to="/$slug/tasks/github/lightfast-repo"');
+    expect(orgRouteSource).toContain(
+      ["pathname === `/", "$", "{slug}", "/tasks`"].join("")
+    );
+    expect(tasksRouteSource).toContain(
+      'createFileRoute("/_authenticated/$slug/tasks")'
+    );
+    expect(tasksRouteSource).toContain("Connect GitHub organization");
+    expect(tasksRouteSource).toContain("Verify .lightfast repository");
+    expect(tasksRouteSource).toContain('href="/$slug/tasks/bind"');
+    expect(tasksRouteSource).toContain(
+      'href="/$slug/tasks/github/lightfast-repo"'
+    );
     expect(bindRouteSource).toContain("githubBindErrorCodeSchema");
     expect(bindRouteSource).toContain("BindGithubCard");
     expect(bindCardSource).toContain("org.setup.github.start");
@@ -173,6 +196,7 @@ describe("app-tanstack authenticated route migration", () => {
       completeRouteSource,
       bindCardSource,
       repoClientSource,
+      tasksRouteSource,
     ]) {
       expect(routeFile).not.toContain("next/");
     }

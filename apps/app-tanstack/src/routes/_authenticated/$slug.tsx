@@ -33,6 +33,9 @@ export const Route = createFileRoute("/_authenticated/$slug")({
 });
 
 function orgSetupPath(slug: string, pathname: string) {
+  if (pathname === `/${slug}/tasks`) {
+    return true;
+  }
   const setupRoot = `/${slug}/tasks/`;
   return pathname.startsWith(setupRoot);
 }
