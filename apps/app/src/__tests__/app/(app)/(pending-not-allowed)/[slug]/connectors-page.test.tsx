@@ -1,8 +1,14 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-interface ConnectorRow {
+interface TeamConnectorRow {
   availableForAutomations: boolean;
   builder: "Lightfast";
   canManage: boolean;
@@ -34,7 +40,39 @@ interface ConnectorRow {
   } | null;
   description: string;
   displayName: string;
+  ownerType?: "org";
   provider: "linear" | "x";
+}
+
+interface UserConnectorRow {
+  builder: "Granola";
+  canManage: boolean;
+  catalogStatus: "available";
+  category: string;
+  connectAvailability: { status: "available" };
+  connection: {
+    availableForInteractiveChats: boolean;
+    connectedAt: Date;
+    lastToolRefreshAt: Date | null;
+    lastToolRefreshErrorAt: Date | null;
+    lastToolRefreshErrorCode: string | null;
+    providerAccountName: string | null;
+    status: "active" | "error" | "revoked";
+    tools: Array<{
+      availableForInteractiveChats: boolean;
+      description?: string;
+      name: string;
+    }>;
+  } | null;
+  description: string;
+  displayName: string;
+  ownerType: "user";
+  provider: "granola";
+}
+
+interface ConnectorSections {
+  teamConnectors: TeamConnectorRow[];
+  yourConnectors: UserConnectorRow[];
 }
 
 const disconnectMutateMock = vi.fn();
@@ -47,11 +85,20 @@ const listQueryOptions = {
   queryKey: ["org", "workspace", "connectors", "list"],
 };
 const listQueryOptionsMock = vi.fn(() => listQueryOptions);
+const listSectionsQueryFilterMock = vi.fn(() => ({
+  queryKey: ["org", "workspace", "connectors", "listSections"],
+}));
+const listSectionsQueryOptions = {
+  queryKey: ["org", "workspace", "connectors", "listSections"],
+};
+const listSectionsQueryOptionsMock = vi.fn(() => listSectionsQueryOptions);
 const refreshMutateMock = vi.fn();
 const replaceMock = vi.fn();
 const setAgentEnabledMutateMock = vi.fn();
 const setAutomationEnabledMutateMock = vi.fn();
 const startConnectMutateMock = vi.fn();
+const userDisconnectMutateMock = vi.fn();
+const userStartConnectMutateMock = vi.fn();
 const useMutationMock = vi.fn();
 const useSuspenseQueryMock = vi.fn();
 
@@ -83,6 +130,9 @@ vi.mock("~/trpc/server", () => ({
           list: {
             queryOptions: listQueryOptionsMock,
           },
+          listSections: {
+            queryOptions: listSectionsQueryOptionsMock,
+          },
         },
       },
     },
@@ -103,6 +153,10 @@ vi.mock("~/trpc/react", () => ({
           list: {
             queryFilter: listQueryFilterMock,
             queryOptions: listQueryOptionsMock,
+          },
+          listSections: {
+            queryFilter: listSectionsQueryFilterMock,
+            queryOptions: listSectionsQueryOptionsMock,
           },
           refreshTools: {
             mutationOptions: (options: unknown) => ({
@@ -126,6 +180,24 @@ vi.mock("~/trpc/react", () => ({
             mutationOptions: (options: unknown) => ({
               ...(options as object),
               mutationName: "startConnect",
+            }),
+          },
+        },
+      },
+    },
+    viewer: {
+      account: {
+        userConnectors: {
+          disconnect: {
+            mutationOptions: (options: unknown) => ({
+              ...(options as object),
+              mutationName: "userDisconnect",
+            }),
+          },
+          startConnect: {
+            mutationOptions: (options: unknown) => ({
+              ...(options as object),
+              mutationName: "userStartConnect",
             }),
           },
         },
@@ -331,7 +403,7 @@ const { default: ConnectorsPage } = await import(
   "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/connectors/page"
 );
 
-function row(overrides: Partial<ConnectorRow> = {}): ConnectorRow {
+function row(overrides: Partial<TeamConnectorRow> = {}): TeamConnectorRow {
   return {
     availableForAutomations: false,
     builder: "Lightfast",
@@ -348,8 +420,8 @@ function row(overrides: Partial<ConnectorRow> = {}): ConnectorRow {
 }
 
 function connectedLinear(
-  overrides: Partial<NonNullable<ConnectorRow["connection"]>> = {}
-): ConnectorRow {
+  overrides: Partial<NonNullable<TeamConnectorRow["connection"]>> = {}
+): TeamConnectorRow {
   return row({
     availableForAutomations: true,
     connection: {
@@ -381,7 +453,7 @@ function connectedLinear(
   });
 }
 
-function xRow(overrides: Partial<ConnectorRow> = {}): ConnectorRow {
+function xRow(overrides: Partial<TeamConnectorRow> = {}): TeamConnectorRow {
   return row({
     category: "Social",
     description: "Search posts and look up X accounts from Lightfast.",
@@ -392,8 +464,8 @@ function xRow(overrides: Partial<ConnectorRow> = {}): ConnectorRow {
 }
 
 function connectedX(
-  overrides: Partial<NonNullable<ConnectorRow["connection"]>> = {}
-): ConnectorRow {
+  overrides: Partial<NonNullable<TeamConnectorRow["connection"]>> = {}
+): TeamConnectorRow {
   return xRow({
     availableForAutomations: true,
     connection: {
@@ -419,8 +491,61 @@ function connectedX(
   });
 }
 
-function renderClient(rows: ConnectorRow[] = [connectedLinear()]) {
-  useSuspenseQueryMock.mockReturnValue({ data: rows });
+function granolaRow(
+  overrides: Partial<UserConnectorRow> = {}
+): UserConnectorRow {
+  return {
+    builder: "Granola",
+    canManage: true,
+    catalogStatus: "available",
+    category: "Meeting notes",
+    connectAvailability: { status: "available" },
+    connection: null,
+    description:
+      "Search and reference your private Granola meeting notes in Lightfast chats.",
+    displayName: "Granola",
+    ownerType: "user",
+    provider: "granola",
+    ...overrides,
+  };
+}
+
+function connectedGranola(
+  overrides: Partial<NonNullable<UserConnectorRow["connection"]>> = {}
+): UserConnectorRow {
+  return granolaRow({
+    connection: {
+      availableForInteractiveChats: true,
+      connectedAt: new Date("2026-06-01T00:00:00.000Z"),
+      lastToolRefreshAt: new Date("2026-06-01T00:00:00.000Z"),
+      lastToolRefreshErrorAt: null,
+      lastToolRefreshErrorCode: null,
+      providerAccountName: "jeevan@example.com",
+      status: "active",
+      tools: [
+        {
+          availableForInteractiveChats: true,
+          description: "Search private meeting notes",
+          name: "search_notes",
+        },
+      ],
+      ...overrides,
+    },
+  });
+}
+
+function sections(
+  overrides: Partial<ConnectorSections> = {}
+): ConnectorSections {
+  return {
+    teamConnectors: [connectedLinear()],
+    yourConnectors: [],
+    ...overrides,
+  };
+}
+
+function renderClient(data: ConnectorSections = sections()) {
+  useSuspenseQueryMock.mockReturnValue({ data });
   return render(<ConnectorsClient />);
 }
 
@@ -430,6 +555,8 @@ beforeEach(() => {
   invalidateQueriesMock.mockReset();
   listQueryFilterMock.mockClear();
   listQueryOptionsMock.mockClear();
+  listSectionsQueryFilterMock.mockClear();
+  listSectionsQueryOptionsMock.mockClear();
   pathname = "/acme/connectors";
   refreshMutateMock.mockReset();
   replaceMock.mockReset();
@@ -437,6 +564,8 @@ beforeEach(() => {
   setAgentEnabledMutateMock.mockReset();
   setAutomationEnabledMutateMock.mockReset();
   startConnectMutateMock.mockReset();
+  userDisconnectMutateMock.mockReset();
+  userStartConnectMutateMock.mockReset();
   useMutationMock.mockReset();
   useSuspenseQueryMock.mockReset();
   connectorState = null;
@@ -469,6 +598,10 @@ beforeEach(() => {
           };
         case "startConnect":
           return { isPending: false, mutate: startConnectMutateMock };
+        case "userDisconnect":
+          return { isPending: false, mutate: userDisconnectMutateMock };
+        case "userStartConnect":
+          return { isPending: false, mutate: userStartConnectMutateMock };
         default:
           return { isPending: false, mutate: vi.fn() };
       }
@@ -477,20 +610,104 @@ beforeEach(() => {
 });
 
 describe("connectors page", () => {
-  it("fetches the connector list before rendering hydrated client UI", async () => {
-    fetchQueryMock.mockResolvedValue([connectedLinear()]);
-    useSuspenseQueryMock.mockReturnValue({ data: [connectedLinear()] });
+  it("fetches the connector sections before rendering hydrated client UI", async () => {
+    const data = sections();
+    fetchQueryMock.mockResolvedValue(data);
+    useSuspenseQueryMock.mockReturnValue({ data });
 
     const element = await ConnectorsPage({
       searchParams: Promise.resolve({ connector: "linear" }),
     });
     render(element);
 
-    expect(listQueryOptionsMock).toHaveBeenCalled();
-    expect(fetchQueryMock).toHaveBeenCalledWith(listQueryOptions);
+    expect(listSectionsQueryOptionsMock).toHaveBeenCalled();
+    expect(fetchQueryMock).toHaveBeenCalledWith(listSectionsQueryOptions);
     expect(screen.getByTestId("hydrated-connectors")).toHaveTextContent(
       "Connectors"
     );
+  });
+
+  it("renders team and personal connector sections with owner badges", () => {
+    renderClient(
+      sections({
+        teamConnectors: [connectedLinear()],
+        yourConnectors: [granolaRow()],
+      })
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Team connectors" })
+    ).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "Your connectors" })
+    ).toBeVisible();
+    expect(screen.getByText("Team")).toBeVisible();
+    expect(screen.getByText("Only you")).toBeVisible();
+  });
+
+  it("renders user connector cards as private chat-only connectors", () => {
+    const { container } = renderClient(
+      sections({
+        teamConnectors: [connectedLinear()],
+        yourConnectors: [connectedGranola()],
+      })
+    );
+
+    const userCard = container.querySelector('[data-owner="user"]');
+    expect(userCard).not.toBeNull();
+    const userScope = within(userCard as HTMLElement);
+
+    expect(userScope.getByRole("heading", { name: "Granola" })).toBeVisible();
+    expect(userScope.getByText("Only you")).toBeVisible();
+    expect(
+      userScope.getByText(
+        "Available in your chats. Not visible to teammates."
+      )
+    ).toBeVisible();
+    expect(userScope.getByText("search_notes")).toBeVisible();
+    expect(userScope.queryByText("Use in automations")).toBeNull();
+    expect(userScope.queryByText("Use in agents")).toBeNull();
+    expect(
+      userScope.queryByText("Admin access required to manage connectors")
+    ).toBeNull();
+  });
+
+  it("shows a user connector empty tools state instead of a blank tool row", () => {
+    const { container } = renderClient(
+      sections({
+        teamConnectors: [],
+        yourConnectors: [connectedGranola({ tools: [] })],
+      })
+    );
+
+    const userCard = container.querySelector('[data-owner="user"]');
+    expect(userCard).not.toBeNull();
+    expect(
+      within(userCard as HTMLElement).getByText("No tools available yet.")
+    ).toBeVisible();
+  });
+
+  it("filters team and user connector sections independently", () => {
+    renderClient(
+      sections({
+        teamConnectors: [connectedLinear()],
+        yourConnectors: [connectedGranola()],
+      })
+    );
+
+    fireEvent.change(
+      screen.getByRole("textbox", { name: /search connectors/i }),
+      { target: { value: "granola" } }
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Team connectors" })
+    ).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "Your connectors" })
+    ).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Linear" })).toBeNull();
+    expect(screen.getByRole("heading", { name: "Granola" })).toBeVisible();
   });
 
   it("renders the connected Linear card with tools, automation, and agent toggles", () => {
@@ -512,7 +729,7 @@ describe("connectors page", () => {
   });
 
   it("renders the connect card for an available Linear connector", () => {
-    renderClient([row()]);
+    renderClient(sections({ teamConnectors: [row()] }));
 
     expect(screen.getByRole("heading", { name: "Linear" })).toBeVisible();
     expect(screen.getByRole("button", { name: /^connect$/i })).toBeVisible();
@@ -521,7 +738,7 @@ describe("connectors page", () => {
   });
 
   it("renders the X connector card", () => {
-    renderClient([xRow()]);
+    renderClient(sections({ teamConnectors: [xRow()] }));
 
     expect(screen.getByRole("heading", { name: "X" })).toBeVisible();
     expect(
@@ -564,15 +781,19 @@ describe("connectors page", () => {
   });
 
   it("uses provider-aware missing config copy for X", () => {
-    renderClient([
-      xRow({
-        connectAvailability: {
-          status: "unavailable",
-          reason: "missing_config",
-          missing: ["X_CLIENT_ID"],
-        },
-      }),
-    ]);
+    renderClient(
+      sections({
+        teamConnectors: [
+          xRow({
+            connectAvailability: {
+              status: "unavailable",
+              reason: "missing_config",
+              missing: ["X_CLIENT_ID"],
+            },
+          }),
+        ],
+      })
+    );
 
     expect(screen.getByRole("button", { name: /^connect$/i })).toBeDisabled();
     expect(
@@ -582,16 +803,20 @@ describe("connectors page", () => {
   });
 
   it("disables overflow actions and toggle for non-admin members", () => {
-    renderClient([
-      {
-        ...connectedLinear(),
-        canManage: false,
-        connectAvailability: {
-          status: "unavailable",
-          reason: "permission_required",
-        },
-      },
-    ]);
+    renderClient(
+      sections({
+        teamConnectors: [
+          {
+            ...connectedLinear(),
+            canManage: false,
+            connectAvailability: {
+              status: "unavailable",
+              reason: "permission_required",
+            },
+          },
+        ],
+      })
+    );
 
     expect(
       screen.getByRole("button", { name: /refresh tools/i })
@@ -618,16 +843,22 @@ describe("connectors page", () => {
   });
 
   it("renders tools stale and needs reconnect status labels", () => {
-    const { rerender } = renderClient([
-      connectedLinear({
-        lastToolRefreshErrorAt: new Date("2026-06-01T00:05:00.000Z"),
-        lastToolRefreshErrorCode: "linear_unavailable",
-      }),
-    ]);
+    const { rerender } = renderClient(
+      sections({
+        teamConnectors: [
+          connectedLinear({
+            lastToolRefreshErrorAt: new Date("2026-06-01T00:05:00.000Z"),
+            lastToolRefreshErrorCode: "linear_unavailable",
+          }),
+        ],
+      })
+    );
     expect(screen.getByText("Tools stale")).toBeVisible();
 
     useSuspenseQueryMock.mockReturnValue({
-      data: [connectedLinear({ status: "error" })],
+      data: sections({
+        teamConnectors: [connectedLinear({ status: "error" })],
+      }),
     });
     rerender(<ConnectorsClient />);
 
@@ -639,7 +870,7 @@ describe("connectors page", () => {
   it("renders callback errors inline and clears the callback params", async () => {
     connectorState = "linear";
     errorState = "access_denied";
-    useSuspenseQueryMock.mockReturnValue({ data: [connectedLinear()] });
+    useSuspenseQueryMock.mockReturnValue({ data: sections() });
 
     render(
       <ConnectorsClient
@@ -659,7 +890,7 @@ describe("connectors page", () => {
   it("does not open the detail sheet when a callback error is present", () => {
     connectorState = "linear";
     errorState = "access_denied";
-    useSuspenseQueryMock.mockReturnValue({ data: [connectedLinear()] });
+    useSuspenseQueryMock.mockReturnValue({ data: sections() });
 
     render(
       <ConnectorsClient
@@ -672,7 +903,9 @@ describe("connectors page", () => {
   });
 
   it("redirects same-tab after startConnect succeeds", () => {
-    useSuspenseQueryMock.mockReturnValue({ data: [row()] });
+    useSuspenseQueryMock.mockReturnValue({
+      data: sections({ teamConnectors: [row()] }),
+    });
 
     render(<ConnectorsClient />);
     fireEvent.click(screen.getByRole("button", { name: /^connect$/i }));
@@ -688,7 +921,9 @@ describe("connectors page", () => {
   });
 
   it("starts X connect with provider x", () => {
-    useSuspenseQueryMock.mockReturnValue({ data: [xRow()] });
+    useSuspenseQueryMock.mockReturnValue({
+      data: sections({ teamConnectors: [xRow()] }),
+    });
 
     render(<ConnectorsClient />);
     fireEvent.click(screen.getByRole("button", { name: /^connect$/i }));
@@ -696,8 +931,62 @@ describe("connectors page", () => {
     expect(startConnectMutateMock).toHaveBeenCalledWith({ provider: "x" });
   });
 
+  it("starts user connector connect through the viewer account mutation", () => {
+    const { container } = renderClient(
+      sections({ teamConnectors: [], yourConnectors: [granolaRow()] })
+    );
+    const userCard = container.querySelector('[data-owner="user"]');
+    expect(userCard).not.toBeNull();
+
+    fireEvent.click(
+      within(userCard as HTMLElement).getByRole("button", {
+        name: /^connect$/i,
+      })
+    );
+
+    expect(userStartConnectMutateMock).toHaveBeenCalledWith({
+      provider: "granola",
+    });
+    expect(startConnectMutateMock).not.toHaveBeenCalled();
+
+    capturedMutationOptions.userStartConnect?.onSuccess?.({
+      authorizationUrl: "https://granola.example/oauth",
+      mode: "connect",
+    });
+
+    expect(window.location.href).toBe("https://granola.example/oauth");
+  });
+
+  it("disconnects user connectors through the viewer account mutation", () => {
+    const { container } = renderClient(
+      sections({
+        teamConnectors: [],
+        yourConnectors: [connectedGranola()],
+      })
+    );
+    const userCard = container.querySelector('[data-owner="user"]');
+    expect(userCard).not.toBeNull();
+
+    fireEvent.click(
+      within(userCard as HTMLElement).getByRole("button", {
+        name: /disconnect/i,
+      })
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
+
+    expect(userDisconnectMutateMock).toHaveBeenCalledWith({
+      provider: "granola",
+    });
+    expect(disconnectMutateMock).not.toHaveBeenCalled();
+
+    capturedMutationOptions.userDisconnect?.onSuccess?.();
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: ["org", "workspace", "connectors", "listSections"],
+    });
+  });
+
   it("calls refresh, toggle, and disconnect mutations from the connected card", () => {
-    useSuspenseQueryMock.mockReturnValue({ data: [connectedLinear()] });
+    useSuspenseQueryMock.mockReturnValue({ data: sections() });
 
     render(<ConnectorsClient />);
 
@@ -705,7 +994,7 @@ describe("connectors page", () => {
     expect(refreshMutateMock).toHaveBeenCalledWith({ provider: "linear" });
     capturedMutationOptions.refreshTools?.onSuccess?.();
     expect(invalidateQueriesMock).toHaveBeenCalledWith({
-      queryKey: ["org", "workspace", "connectors", "list"],
+      queryKey: ["org", "workspace", "connectors", "listSections"],
     });
 
     fireEvent.click(
@@ -728,7 +1017,7 @@ describe("connectors page", () => {
   });
 
   it("opens the detail sheet from the View details action", () => {
-    renderClient([connectedLinear()]);
+    renderClient(sections({ teamConnectors: [connectedLinear()] }));
 
     fireEvent.click(screen.getByRole("button", { name: /view details/i }));
     expect(setConnectorMock).toHaveBeenCalledWith("linear");
@@ -736,7 +1025,7 @@ describe("connectors page", () => {
 
   it("opens the detail sheet for the connector in the URL param", () => {
     connectorState = "linear";
-    renderClient([connectedLinear()]);
+    renderClient(sections({ teamConnectors: [connectedLinear()] }));
 
     const sheet = screen.getByTestId("connector-detail-sheet");
     expect(sheet).toBeVisible();
@@ -745,23 +1034,37 @@ describe("connectors page", () => {
 
   it("opens the detail sheet for X in the URL param", () => {
     connectorState = "x";
-    renderClient([connectedX()]);
+    renderClient(sections({ teamConnectors: [connectedX()] }));
 
     const sheet = screen.getByTestId("connector-detail-sheet");
     expect(sheet).toBeVisible();
     expect(sheet).toHaveAttribute("data-provider", "x");
   });
 
+  it("opens the detail sheet for a user connector in the URL param", () => {
+    connectorState = "granola";
+    renderClient(
+      sections({
+        teamConnectors: [],
+        yourConnectors: [connectedGranola()],
+      })
+    );
+
+    const sheet = screen.getByTestId("connector-detail-sheet");
+    expect(sheet).toBeVisible();
+    expect(sheet).toHaveAttribute("data-provider", "granola");
+  });
+
   it("does not open the detail sheet for an unconnected provider", () => {
     connectorState = "linear";
-    renderClient([row()]);
+    renderClient(sections({ teamConnectors: [row()] }));
 
     expect(screen.queryByTestId("connector-detail-sheet")).toBeNull();
   });
 
   it("clears the connector param when the sheet is closed", () => {
     connectorState = "linear";
-    renderClient([connectedLinear()]);
+    renderClient(sections({ teamConnectors: [connectedLinear()] }));
 
     fireEvent.click(screen.getByRole("button", { name: "close-sheet" }));
     expect(setConnectorMock).toHaveBeenCalledWith(null);

@@ -1,9 +1,7 @@
-import type { AppRouterOutputs } from "@api/app";
+import { IntegrationIcons } from "@repo/ui/integration-icons";
 import { cn } from "@repo/ui/lib/utils";
 import type { FC } from "react";
-
-type ConnectorProvider =
-  AppRouterOutputs["org"]["workspace"]["connectors"]["list"][number]["provider"];
+import type { ConnectorProvider } from "./connectors-model";
 
 interface ConnectorIconProps {
   className?: string;
@@ -42,6 +40,7 @@ function XMark({ className }: { className?: string }) {
 }
 
 const marks: Record<ConnectorProvider, FC<{ className?: string }>> = {
+  granola: IntegrationIcons.granola,
   linear: LinearMark,
   x: XMark,
 };
