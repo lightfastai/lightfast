@@ -69,6 +69,7 @@ export {
   type InsertSkillIndexState,
   type InsertSourceControlRepository,
   type InsertSourceControlWebhookDelivery,
+  type InsertUserConnectorConnection,
   type InsertUserSourceControlAccount,
   type InsertWorkspaceAssistantContextItem,
   type InsertWorkspaceAssistantConversation,
@@ -142,6 +143,8 @@ export {
   skillIndexEntriesRelations,
   skillIndexStatesRelations,
   sourceControlRepositoriesRelations,
+  type UserConnectorConnection,
+  userConnectorConnections,
   type UserSourceControlAccount,
   type UserSourceControlAccountProvider,
   type UserSourceControlAccountStatus,
@@ -308,6 +311,21 @@ export {
   updateConnectorToolManifestAndAutomationState,
   updateObservedConnectorTokens,
 } from "./utils/org-connector-connections";
+export {
+  currentUserProviderKey,
+  type FinalizeCurrentUserConnectorConnectionInput,
+  finalizeCurrentUserConnectorConnection,
+  type GetCurrentUserConnectorConnectionInput,
+  getCurrentUserConnectorConnection,
+  listCurrentUserConnectorConnections,
+  markCurrentUserConnectorConnectionError,
+  markCurrentUserConnectorConnectionRevoked,
+  type ObservedCurrentUserConnectorConnectionInput,
+  type RecordUserConnectorToolRefreshErrorInput,
+  recordUserConnectorToolRefreshError,
+  type UpdateUserConnectorToolManifestInput,
+  updateUserConnectorToolManifest,
+} from "./utils/user-connector-connections";
 export {
   getPersonByIdentityKey,
   getPersonByPublicId,

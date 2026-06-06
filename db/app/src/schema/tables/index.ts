@@ -22,6 +22,11 @@ export {
   orgConnectorConnections,
 } from "./org-connectors";
 export {
+  type InsertUserConnectorConnection,
+  type UserConnectorConnection,
+  userConnectorConnections,
+} from "./user-connectors";
+export {
   createDecisionViewId,
   DECISION_VIEW_ID_PREFIX,
   type DecisionView,
