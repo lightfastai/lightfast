@@ -242,6 +242,65 @@ describe("workspaceSkillsRouter.get", () => {
 });
 
 describe("workspaceSkillsRouter.requestRefresh", () => {
+  it("rejects unauthenticated callers before enqueue", async () => {
+    await expect(
+      caller(unauthenticatedIdentity).skills.requestRefresh(undefined)
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+
+    expect(
+      getVerifiedLightfastSkillSourceRepositoryIdMock
+    ).not.toHaveBeenCalled();
+    expect(requestSkillIndexRefreshMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects callers without a bound organization before enqueue", async () => {
+    await expect(
+      caller({
+        ...activeIdentity,
+        orgGate: {
+          bindingStatus: "unbound",
+          nextSetupRequirement: "github_org",
+        },
+      }).skills.requestRefresh(undefined)
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    expect(
+      getVerifiedLightfastSkillSourceRepositoryIdMock
+    ).not.toHaveBeenCalled();
+    expect(requestSkillIndexRefreshMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects callers without an active org before enqueue", async () => {
+    await expect(
+      caller(pendingIdentity).skills.requestRefresh(undefined)
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    expect(
+      getVerifiedLightfastSkillSourceRepositoryIdMock
+    ).not.toHaveBeenCalled();
+    expect(requestSkillIndexRefreshMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects wrong-org repository access before enqueue", async () => {
+    getVerifiedLightfastSkillSourceRepositoryIdMock.mockRejectedValueOnce(
+      new TRPCError({
+        code: "FORBIDDEN",
+        message: "Repository is not available to this organization.",
+      })
+    );
+
+    await expect(
+      caller({ ...activeIdentity, orgId: "org_other" }).skills.requestRefresh(
+        undefined
+      )
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    expect(
+      getVerifiedLightfastSkillSourceRepositoryIdMock
+    ).toHaveBeenCalledWith(expect.anything(), { clerkOrgId: "org_other" });
+    expect(requestSkillIndexRefreshMock).not.toHaveBeenCalled();
+  });
+
   it("queues a refresh for the active org skill source", async () => {
     await expect(caller().skills.requestRefresh(undefined)).resolves.toEqual({
       enqueued: true,

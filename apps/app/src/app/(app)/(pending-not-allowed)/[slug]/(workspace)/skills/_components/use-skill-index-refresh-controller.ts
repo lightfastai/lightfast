@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTRPC } from "~/trpc/react";
 import type { SkillsListResult } from "./skills-types";
 
@@ -12,7 +12,10 @@ const REFRESH_POLL_INTERVAL_MS = 5000;
 export function useSkillIndexRefreshController(snapshot: SkillsListResult) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const attemptedRetryTicks = useRef(new Map<string, number>());
   const requestedVersions = useRef(new Set<string>());
+  const retryTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+  const [retryTick, setRetryTick] = useState(0);
   const hasTerminalRefreshError = Boolean(
     snapshot.freshness.errorCode || snapshot.freshness.errorMessage
   );
@@ -37,14 +40,43 @@ export function useSkillIndexRefreshController(snapshot: SkillsListResult) {
     if (requestedVersions.current.has(version)) {
       return;
     }
+    if (attemptedRetryTicks.current.get(version) === retryTick) {
+      return;
+    }
     requestedVersions.current.add(version);
-    mutate({});
+    attemptedRetryTicks.current.set(version, retryTick);
+    mutate(
+      {},
+      {
+        onError: () => {
+          requestedVersions.current.delete(version);
+          if (!retryTimers.current.has(version)) {
+            const timer = setTimeout(() => {
+              retryTimers.current.delete(version);
+              setRetryTick((current) => current + 1);
+            }, REFRESH_POLL_INTERVAL_MS);
+            retryTimers.current.set(version, timer);
+          }
+        },
+      }
+    );
   }, [
     hasTerminalRefreshError,
     mutate,
+    retryTick,
     snapshot.freshness.status,
     snapshot.snapshotVersion,
   ]);
+
+  useEffect(
+    () => () => {
+      for (const timer of retryTimers.current.values()) {
+        clearTimeout(timer);
+      }
+      retryTimers.current.clear();
+    },
+    []
+  );
 
   useEffect(() => {
     if (typeof EventSource === "undefined") {

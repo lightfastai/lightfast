@@ -8,6 +8,7 @@ import { getVerifiedCandidateByRepositoryId } from "./repository";
 import type { SkillIndexChangedEvent, SkillIndexServiceDeps } from "./types";
 
 const LOCK_TTL_SECONDS = 60;
+const PUBLISH_SKILL_INDEX_CHANGED_TIMEOUT_MS = 1500;
 
 class SkillIndexTreeTruncatedError extends Error {
   constructor() {
@@ -338,7 +339,11 @@ async function publishCurrentSkillIndexState(input: {
       ].join(":"),
       sourceControlRepositoryId: input.sourceControlRepositoryId,
     };
-    await input.deps.publishSkillIndexChanged(event);
+    await withTimeout(
+      input.deps.publishSkillIndexChanged(event),
+      PUBLISH_SKILL_INDEX_CHANGED_TIMEOUT_MS,
+      "skill_index_publish_timeout"
+    );
   } catch (error) {
     log.warn("[skills] skill index change publish failed", {
       clerkOrgId: input.clerkOrgId,
@@ -348,6 +353,28 @@ async function publishCurrentSkillIndexState(input: {
       snapshotVersion: event?.snapshotVersion,
       sourceControlRepositoryId: input.sourceControlRepositoryId,
     });
+  }
+}
+
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  message: string
+): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error(message));
+        }, timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
   }
 }
 

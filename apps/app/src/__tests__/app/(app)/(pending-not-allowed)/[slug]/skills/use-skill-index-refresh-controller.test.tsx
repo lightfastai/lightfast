@@ -1,8 +1,9 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createListData } from "./fixtures";
 
 interface MutationOptions {
+  onError?: () => void;
   onSuccess?: () => void;
 }
 
@@ -183,6 +184,30 @@ describe("useSkillIndexRefreshController", () => {
     expect(invalidateQueriesMock).toHaveBeenCalledWith({
       queryKey: ["org", "workspace", "skills", "list"],
     });
+  });
+
+  it("retries a stale snapshot version after a failed refresh request", async () => {
+    vi.useFakeTimers();
+    const stale = createListData({
+      snapshotVersion: "v-retry",
+    });
+    stale.freshness.status = "stale";
+
+    renderHook(() => useSkillIndexRefreshController(stale));
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(mutateMock).toHaveBeenCalledTimes(1);
+    const firstCallOptions = mutateMock.mock.calls[0]?.[1] as
+      | MutationOptions
+      | undefined;
+    expect(firstCallOptions?.onError).toEqual(expect.any(Function));
+
+    await act(async () => {
+      firstCallOptions?.onError?.();
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+
+    expect(mutateMock).toHaveBeenCalledTimes(2);
   });
 
   it("polls the skills list while a snapshot is refreshing", async () => {

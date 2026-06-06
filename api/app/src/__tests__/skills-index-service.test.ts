@@ -410,6 +410,49 @@ describe("skills index refresh/read service", () => {
     expect(deps.replaceSkillIndexEntries).toHaveBeenCalled();
   });
 
+  it("bounds the post-release publish wait when publishing stalls", async () => {
+    vi.useFakeTimers();
+    const preRefreshState = staleState({ indexedCommitSha: "old-index" });
+    const terminalFreshState = staleState({
+      indexedCommitSha: "current-main",
+      lastRefreshStatus: "fresh",
+    });
+    const deps = createDeps({
+      refSha: "current-main",
+      targetState: preRefreshState,
+    });
+    deps.getSkillIndexStateBySourceControlRepositoryId
+      .mockResolvedValueOnce(preRefreshState)
+      .mockResolvedValueOnce(terminalFreshState);
+    deps.publishSkillIndexChanged.mockImplementationOnce(
+      () => new Promise<undefined>(() => undefined)
+    );
+
+    const pending = refreshSkillIndexSource({
+      deps,
+      reason: "webhook",
+      sourceControlRepositoryId: 1,
+    });
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(deps.releaseSkillIndexRefreshLock).toHaveBeenCalled();
+    expect(deps.publishSkillIndexChanged).toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1500);
+
+    await expect(pending).resolves.toEqual({ status: "fresh" });
+    expect(logWarnMock).toHaveBeenCalledWith(
+      "[skills] skill index change publish failed",
+      expect.objectContaining({
+        clerkOrgId: "org_123",
+        error: expect.objectContaining({
+          message: "skill_index_publish_timeout",
+        }),
+        sourceControlRepositoryId: 1,
+      })
+    );
+  });
+
   it("publishes failed refresh state without failing when publishing fails", async () => {
     const preRefreshState = staleState({ indexedCommitSha: "old-index" });
     const terminalFailedState = staleState({
@@ -983,6 +1026,55 @@ describe("skills index refresh/read service", () => {
       sourceControlRepositoryId: 1,
     });
 
+    expect(deps.enqueueRefresh).not.toHaveBeenCalled();
+  });
+
+  it("does not enqueue a refresh when no org is provided", async () => {
+    const deps = createDeps();
+    deps.enqueueRefresh = vi.fn(async () => undefined);
+
+    await expect(
+      requestSkillIndexRefresh({
+        deps,
+        reason: "read",
+        sourceControlRepositoryId: 1,
+      })
+    ).resolves.toEqual({
+      enqueued: false,
+      sourceControlRepositoryId: 1,
+    });
+
+    expect(
+      deps.getSkillIndexableSourceControlRepositoryCandidateById
+    ).not.toHaveBeenCalled();
+    expect(deps.enqueueRefresh).not.toHaveBeenCalled();
+  });
+
+  it("does not enqueue a refresh when the repository belongs to another org", async () => {
+    const deps = createDeps();
+    deps.getSkillIndexableSourceControlRepositoryCandidateById.mockResolvedValueOnce(
+      null
+    );
+    deps.enqueueRefresh = vi.fn(async () => undefined);
+
+    await expect(
+      requestSkillIndexRefresh({
+        clerkOrgId: "org_other",
+        deps,
+        reason: "read",
+        sourceControlRepositoryId: 1,
+      })
+    ).resolves.toEqual({
+      enqueued: false,
+      sourceControlRepositoryId: 1,
+    });
+
+    expect(
+      deps.getSkillIndexableSourceControlRepositoryCandidateById
+    ).toHaveBeenCalledWith(deps.db, {
+      clerkOrgId: "org_other",
+      sourceControlRepositoryId: 1,
+    });
     expect(deps.enqueueRefresh).not.toHaveBeenCalled();
   });
 

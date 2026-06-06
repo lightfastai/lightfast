@@ -31,6 +31,13 @@ export async function requestSkillIndexRefresh(input: {
   sourceControlRepositoryId: number;
 }> {
   const deps = resolveSkillIndexServiceDeps(input.deps);
+  if (!input.clerkOrgId) {
+    return {
+      enqueued: false,
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+    };
+  }
+
   const candidate = await getVerifiedCandidateByRepositoryId(deps, {
     clerkOrgId: input.clerkOrgId,
     sourceControlRepositoryId: input.sourceControlRepositoryId,
