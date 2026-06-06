@@ -3,6 +3,7 @@ import {
   AUTOMATION_ID_PREFIX,
   AUTOMATION_RUN_ID_PREFIX,
 } from "@repo/app-validation/schemas";
+import type { ConnectableConnectorProvider } from "@repo/connector-contract";
 import { sql } from "drizzle-orm";
 import {
   bigint,
@@ -71,6 +72,11 @@ export const orgAutomations = mysqlTable(
     createdByUserId: varchar("created_by_user_id", {
       length: CLERK_ID_LENGTH,
     }).notNull(),
+
+    connectorProvider: varchar("connector_provider", { length: CODE_LENGTH })
+      .$type<ConnectableConnectorProvider>()
+      .default("linear")
+      .notNull(),
 
     name: varchar("name", { length: NAME_LENGTH }).notNull(),
 

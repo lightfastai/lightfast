@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@repo/app-reserved-names": "workspace:^",
+    "@repo/connector-contract": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {

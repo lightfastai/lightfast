@@ -21,6 +21,17 @@ describe("local dev origins", () => {
     ]);
   });
 
+  it("derives the direct app host from the aggregate MFE URL", () => {
+    expect(
+      localAllowedDevOrigins([
+        "https://debug-auth-local-infra.lightfast.localhost",
+      ])
+    ).toEqual([
+      "debug-auth-local-infra.lightfast.localhost",
+      "debug-auth-local-infra.app.lightfast.localhost",
+    ]);
+  });
+
   it("keeps server action hosts scoped to exact injected service hosts", () => {
     expect(
       localServerActionHosts([
