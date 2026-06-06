@@ -136,17 +136,32 @@ describe("app-tanstack authenticated route migration", () => {
 
   it("ports org setup routes and GitHub callbacks", () => {
     const orgRouteSource = source("src/routes/_authenticated/$slug.tsx");
+    const accountGithubRouteSource = source(
+      "src/routes/_authenticated/account/tasks/github.tsx"
+    );
+    const accountGithubIndexRouteSource = source(
+      "src/routes/_authenticated/account/tasks/github/index.tsx"
+    );
     const bindRouteSource = source(
       "src/routes/_authenticated/$slug/tasks/bind.tsx"
     );
+    const bindIndexRouteSource = source(
+      "src/routes/_authenticated/$slug/tasks/bind/index.tsx"
+    );
     const tasksRouteSource = source(
       "src/routes/_authenticated/$slug/tasks.tsx"
+    );
+    const tasksIndexRouteSource = source(
+      "src/routes/_authenticated/$slug/tasks/index.tsx"
     );
     const lightfastRepoRouteSource = source(
       "src/routes/_authenticated/$slug/tasks/github/lightfast-repo.tsx"
     );
     const completeRouteSource = source(
       "src/routes/_authenticated/$slug/tasks/bind/github/complete.tsx"
+    );
+    const completeClientSource = source(
+      "src/org/setup/github-bind-complete-client.tsx"
     );
     const bindCardSource = source("src/org/setup/bind-github-card.tsx");
     const repoClientSource = source(
@@ -166,17 +181,29 @@ describe("app-tanstack authenticated route migration", () => {
     expect(orgRouteSource).toContain(
       ["pathname === `/", "$", "{slug}", "/tasks`"].join("")
     );
+    expect(accountGithubRouteSource).toContain("component: Outlet");
+    expect(accountGithubIndexRouteSource).toContain(
+      'createFileRoute("/_authenticated/account/tasks/github/")'
+    );
+    expect(accountGithubIndexRouteSource).toContain("GithubAccountTaskClient");
     expect(tasksRouteSource).toContain(
       'createFileRoute("/_authenticated/$slug/tasks")'
     );
-    expect(tasksRouteSource).toContain("Connect GitHub organization");
-    expect(tasksRouteSource).toContain("Verify .lightfast repository");
-    expect(tasksRouteSource).toContain('href="/$slug/tasks/bind"');
-    expect(tasksRouteSource).toContain(
+    expect(tasksRouteSource).toContain("component: Outlet");
+    expect(tasksIndexRouteSource).toContain(
+      'createFileRoute("/_authenticated/$slug/tasks/")'
+    );
+    expect(tasksIndexRouteSource).toContain("Connect GitHub organization");
+    expect(tasksIndexRouteSource).toContain("Verify .lightfast repository");
+    expect(tasksIndexRouteSource).toContain('href="/$slug/tasks/bind"');
+    expect(tasksIndexRouteSource).toContain(
       'href="/$slug/tasks/github/lightfast-repo"'
     );
-    expect(bindRouteSource).toContain("githubBindErrorCodeSchema");
-    expect(bindRouteSource).toContain("BindGithubCard");
+    expect(bindRouteSource).toContain("component: Outlet");
+    expect(bindIndexRouteSource).toContain("githubBindErrorCodeSchema");
+    expect(bindIndexRouteSource).toContain("useSearch({ strict: false })");
+    expect(bindIndexRouteSource).not.toContain("useRouterState");
+    expect(bindIndexRouteSource).toContain("BindGithubCard");
     expect(bindCardSource).toContain("org.setup.github.start");
     expect(lightfastRepoRouteSource).toContain(
       "org.settings.sourceControl.get"
@@ -187,6 +214,8 @@ describe("app-tanstack authenticated route migration", () => {
     expect(repoClientSource).toContain("newRepositoryUrl");
     expect(repoClientSource).not.toContain("https://github.com");
     expect(completeRouteSource).toContain("GitHubBindCompleteClient");
+    expect(completeClientSource).toContain('result.bindingStatus !== "bound"');
+    expect(completeClientSource).toContain("setFailed(true)");
     expect(setupCallbackSource).toContain("completeGitHubInstallationSetup");
     expect(oauthCallbackSource).toContain("completeGitHubOAuthVerification");
 
@@ -194,9 +223,14 @@ describe("app-tanstack authenticated route migration", () => {
       bindRouteSource,
       lightfastRepoRouteSource,
       completeRouteSource,
+      completeClientSource,
       bindCardSource,
       repoClientSource,
       tasksRouteSource,
+      tasksIndexRouteSource,
+      bindIndexRouteSource,
+      accountGithubRouteSource,
+      accountGithubIndexRouteSource,
     ]) {
       expect(routeFile).not.toContain("next/");
     }

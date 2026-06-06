@@ -32,6 +32,7 @@ import { Route as AuthenticatedSlugConnectorsRouteImport } from './routes/_authe
 import { Route as AuthenticatedSlugChatRouteImport } from './routes/_authenticated/$slug/chat'
 import { Route as AuthenticatedSlugAutomationsRouteImport } from './routes/_authenticated/$slug/automations'
 import { Route as AuthenticatedAccountSettingsIndexRouteImport } from './routes/_authenticated/account/settings/index'
+import { Route as AuthenticatedSlugTasksIndexRouteImport } from './routes/_authenticated/$slug/tasks/index'
 import { Route as ApiGithubOauthCallbackRouteImport } from './routes/api/github/oauth/callback'
 import { Route as AuthenticatedAccountsTeamsNewRouteImport } from './routes/_authenticated/accounts/teams/new'
 import { Route as AuthenticatedAccountTeamsNewRouteImport } from './routes/_authenticated/account/teams/new'
@@ -41,6 +42,8 @@ import { Route as AuthenticatedAccountSettingsSourceControlRouteImport } from '.
 import { Route as AuthenticatedAccountSettingsGeneralRouteImport } from './routes/_authenticated/account/settings/general'
 import { Route as AuthenticatedSlugTasksBindRouteImport } from './routes/_authenticated/$slug/tasks/bind'
 import { Route as AuthenticatedSlugChatConversationIdRouteImport } from './routes/_authenticated/$slug/chat/$conversationId'
+import { Route as AuthenticatedAccountTasksGithubIndexRouteImport } from './routes/_authenticated/account/tasks/github/index'
+import { Route as AuthenticatedSlugTasksBindIndexRouteImport } from './routes/_authenticated/$slug/tasks/bind/index'
 import { Route as ApiGithubUserOauthCallbackRouteImport } from './routes/api/github/user/oauth/callback'
 import { Route as AuthenticatedAccountTasksGithubCompleteRouteImport } from './routes/_authenticated/account/tasks/github/complete'
 import { Route as AuthenticatedSlugTasksGithubLightfastRepoRouteImport } from './routes/_authenticated/$slug/tasks/github/lightfast-repo'
@@ -167,6 +170,12 @@ const AuthenticatedAccountSettingsIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedAccountSettingsRoute,
   } as any)
+const AuthenticatedSlugTasksIndexRoute =
+  AuthenticatedSlugTasksIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSlugTasksRoute,
+  } as any)
 const ApiGithubOauthCallbackRoute = ApiGithubOauthCallbackRouteImport.update({
   id: '/api/github/oauth/callback',
   path: '/api/github/oauth/callback',
@@ -219,6 +228,18 @@ const AuthenticatedSlugChatConversationIdRoute =
     id: '/$conversationId',
     path: '/$conversationId',
     getParentRoute: () => AuthenticatedSlugChatRoute,
+  } as any)
+const AuthenticatedAccountTasksGithubIndexRoute =
+  AuthenticatedAccountTasksGithubIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAccountTasksGithubRoute,
+  } as any)
+const AuthenticatedSlugTasksBindIndexRoute =
+  AuthenticatedSlugTasksBindIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSlugTasksBindRoute,
   } as any)
 const ApiGithubUserOauthCallbackRoute =
   ApiGithubUserOauthCallbackRouteImport.update({
@@ -276,10 +297,13 @@ export interface FileRoutesByFullPath {
   '/account/teams/new': typeof AuthenticatedAccountTeamsNewRoute
   '/accounts/teams/new': typeof AuthenticatedAccountsTeamsNewRoute
   '/api/github/oauth/callback': typeof ApiGithubOauthCallbackRoute
+  '/$slug/tasks/': typeof AuthenticatedSlugTasksIndexRoute
   '/account/settings/': typeof AuthenticatedAccountSettingsIndexRoute
   '/$slug/tasks/github/lightfast-repo': typeof AuthenticatedSlugTasksGithubLightfastRepoRoute
   '/account/tasks/github/complete': typeof AuthenticatedAccountTasksGithubCompleteRoute
   '/api/github/user/oauth/callback': typeof ApiGithubUserOauthCallbackRoute
+  '/$slug/tasks/bind/': typeof AuthenticatedSlugTasksBindIndexRoute
+  '/account/tasks/github/': typeof AuthenticatedAccountTasksGithubIndexRoute
   '/$slug/tasks/bind/github/complete': typeof AuthenticatedSlugTasksBindGithubCompleteRoute
 }
 export interface FileRoutesByTo {
@@ -297,24 +321,24 @@ export interface FileRoutesByTo {
   '/$slug/settings': typeof AuthenticatedSlugSettingsRoute
   '/$slug/signals': typeof AuthenticatedSlugSignalsRoute
   '/$slug/skills': typeof AuthenticatedSlugSkillsRoute
-  '/$slug/tasks': typeof AuthenticatedSlugTasksRouteWithChildren
   '/account/mcp': typeof AuthenticatedAccountMcpRoute
   '/api/github/setup': typeof ApiGithubSetupRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/$slug': typeof AuthenticatedSlugIndexRoute
   '/$slug/chat/$conversationId': typeof AuthenticatedSlugChatConversationIdRoute
-  '/$slug/tasks/bind': typeof AuthenticatedSlugTasksBindRouteWithChildren
   '/account/settings/general': typeof AuthenticatedAccountSettingsGeneralRoute
   '/account/settings/source-control': typeof AuthenticatedAccountSettingsSourceControlRoute
-  '/account/tasks/github': typeof AuthenticatedAccountTasksGithubRouteWithChildren
   '/account/tasks/username': typeof AuthenticatedAccountTasksUsernameRoute
   '/account/teams/new': typeof AuthenticatedAccountTeamsNewRoute
   '/accounts/teams/new': typeof AuthenticatedAccountsTeamsNewRoute
   '/api/github/oauth/callback': typeof ApiGithubOauthCallbackRoute
+  '/$slug/tasks': typeof AuthenticatedSlugTasksIndexRoute
   '/account/settings': typeof AuthenticatedAccountSettingsIndexRoute
   '/$slug/tasks/github/lightfast-repo': typeof AuthenticatedSlugTasksGithubLightfastRepoRoute
   '/account/tasks/github/complete': typeof AuthenticatedAccountTasksGithubCompleteRoute
   '/api/github/user/oauth/callback': typeof ApiGithubUserOauthCallbackRoute
+  '/$slug/tasks/bind': typeof AuthenticatedSlugTasksBindIndexRoute
+  '/account/tasks/github': typeof AuthenticatedAccountTasksGithubIndexRoute
   '/$slug/tasks/bind/github/complete': typeof AuthenticatedSlugTasksBindGithubCompleteRoute
 }
 export interface FileRoutesById {
@@ -350,10 +374,13 @@ export interface FileRoutesById {
   '/_authenticated/account/teams/new': typeof AuthenticatedAccountTeamsNewRoute
   '/_authenticated/accounts/teams/new': typeof AuthenticatedAccountsTeamsNewRoute
   '/api/github/oauth/callback': typeof ApiGithubOauthCallbackRoute
+  '/_authenticated/$slug/tasks/': typeof AuthenticatedSlugTasksIndexRoute
   '/_authenticated/account/settings/': typeof AuthenticatedAccountSettingsIndexRoute
   '/_authenticated/$slug/tasks/github/lightfast-repo': typeof AuthenticatedSlugTasksGithubLightfastRepoRoute
   '/_authenticated/account/tasks/github/complete': typeof AuthenticatedAccountTasksGithubCompleteRoute
   '/api/github/user/oauth/callback': typeof ApiGithubUserOauthCallbackRoute
+  '/_authenticated/$slug/tasks/bind/': typeof AuthenticatedSlugTasksBindIndexRoute
+  '/_authenticated/account/tasks/github/': typeof AuthenticatedAccountTasksGithubIndexRoute
   '/_authenticated/$slug/tasks/bind/github/complete': typeof AuthenticatedSlugTasksBindGithubCompleteRoute
 }
 export interface FileRouteTypes {
@@ -389,10 +416,13 @@ export interface FileRouteTypes {
     | '/account/teams/new'
     | '/accounts/teams/new'
     | '/api/github/oauth/callback'
+    | '/$slug/tasks/'
     | '/account/settings/'
     | '/$slug/tasks/github/lightfast-repo'
     | '/account/tasks/github/complete'
     | '/api/github/user/oauth/callback'
+    | '/$slug/tasks/bind/'
+    | '/account/tasks/github/'
     | '/$slug/tasks/bind/github/complete'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -410,24 +440,24 @@ export interface FileRouteTypes {
     | '/$slug/settings'
     | '/$slug/signals'
     | '/$slug/skills'
-    | '/$slug/tasks'
     | '/account/mcp'
     | '/api/github/setup'
     | '/api/trpc/$'
     | '/$slug'
     | '/$slug/chat/$conversationId'
-    | '/$slug/tasks/bind'
     | '/account/settings/general'
     | '/account/settings/source-control'
-    | '/account/tasks/github'
     | '/account/tasks/username'
     | '/account/teams/new'
     | '/accounts/teams/new'
     | '/api/github/oauth/callback'
+    | '/$slug/tasks'
     | '/account/settings'
     | '/$slug/tasks/github/lightfast-repo'
     | '/account/tasks/github/complete'
     | '/api/github/user/oauth/callback'
+    | '/$slug/tasks/bind'
+    | '/account/tasks/github'
     | '/$slug/tasks/bind/github/complete'
   id:
     | '__root__'
@@ -462,10 +492,13 @@ export interface FileRouteTypes {
     | '/_authenticated/account/teams/new'
     | '/_authenticated/accounts/teams/new'
     | '/api/github/oauth/callback'
+    | '/_authenticated/$slug/tasks/'
     | '/_authenticated/account/settings/'
     | '/_authenticated/$slug/tasks/github/lightfast-repo'
     | '/_authenticated/account/tasks/github/complete'
     | '/api/github/user/oauth/callback'
+    | '/_authenticated/$slug/tasks/bind/'
+    | '/_authenticated/account/tasks/github/'
     | '/_authenticated/$slug/tasks/bind/github/complete'
   fileRoutesById: FileRoutesById
 }
@@ -645,6 +678,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountSettingsIndexRouteImport
       parentRoute: typeof AuthenticatedAccountSettingsRoute
     }
+    '/_authenticated/$slug/tasks/': {
+      id: '/_authenticated/$slug/tasks/'
+      path: '/'
+      fullPath: '/$slug/tasks/'
+      preLoaderRoute: typeof AuthenticatedSlugTasksIndexRouteImport
+      parentRoute: typeof AuthenticatedSlugTasksRoute
+    }
     '/api/github/oauth/callback': {
       id: '/api/github/oauth/callback'
       path: '/api/github/oauth/callback'
@@ -708,6 +748,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSlugChatConversationIdRouteImport
       parentRoute: typeof AuthenticatedSlugChatRoute
     }
+    '/_authenticated/account/tasks/github/': {
+      id: '/_authenticated/account/tasks/github/'
+      path: '/'
+      fullPath: '/account/tasks/github/'
+      preLoaderRoute: typeof AuthenticatedAccountTasksGithubIndexRouteImport
+      parentRoute: typeof AuthenticatedAccountTasksGithubRoute
+    }
+    '/_authenticated/$slug/tasks/bind/': {
+      id: '/_authenticated/$slug/tasks/bind/'
+      path: '/'
+      fullPath: '/$slug/tasks/bind/'
+      preLoaderRoute: typeof AuthenticatedSlugTasksBindIndexRouteImport
+      parentRoute: typeof AuthenticatedSlugTasksBindRoute
+    }
     '/api/github/user/oauth/callback': {
       id: '/api/github/user/oauth/callback'
       path: '/api/github/user/oauth/callback'
@@ -754,11 +808,13 @@ const AuthenticatedSlugChatRouteWithChildren =
   )
 
 interface AuthenticatedSlugTasksBindRouteChildren {
+  AuthenticatedSlugTasksBindIndexRoute: typeof AuthenticatedSlugTasksBindIndexRoute
   AuthenticatedSlugTasksBindGithubCompleteRoute: typeof AuthenticatedSlugTasksBindGithubCompleteRoute
 }
 
 const AuthenticatedSlugTasksBindRouteChildren: AuthenticatedSlugTasksBindRouteChildren =
   {
+    AuthenticatedSlugTasksBindIndexRoute: AuthenticatedSlugTasksBindIndexRoute,
     AuthenticatedSlugTasksBindGithubCompleteRoute:
       AuthenticatedSlugTasksBindGithubCompleteRoute,
   }
@@ -770,6 +826,7 @@ const AuthenticatedSlugTasksBindRouteWithChildren =
 
 interface AuthenticatedSlugTasksRouteChildren {
   AuthenticatedSlugTasksBindRoute: typeof AuthenticatedSlugTasksBindRouteWithChildren
+  AuthenticatedSlugTasksIndexRoute: typeof AuthenticatedSlugTasksIndexRoute
   AuthenticatedSlugTasksGithubLightfastRepoRoute: typeof AuthenticatedSlugTasksGithubLightfastRepoRoute
 }
 
@@ -777,6 +834,7 @@ const AuthenticatedSlugTasksRouteChildren: AuthenticatedSlugTasksRouteChildren =
   {
     AuthenticatedSlugTasksBindRoute:
       AuthenticatedSlugTasksBindRouteWithChildren,
+    AuthenticatedSlugTasksIndexRoute: AuthenticatedSlugTasksIndexRoute,
     AuthenticatedSlugTasksGithubLightfastRepoRoute:
       AuthenticatedSlugTasksGithubLightfastRepoRoute,
   }
@@ -838,12 +896,15 @@ const AuthenticatedAccountSettingsRouteWithChildren =
 
 interface AuthenticatedAccountTasksGithubRouteChildren {
   AuthenticatedAccountTasksGithubCompleteRoute: typeof AuthenticatedAccountTasksGithubCompleteRoute
+  AuthenticatedAccountTasksGithubIndexRoute: typeof AuthenticatedAccountTasksGithubIndexRoute
 }
 
 const AuthenticatedAccountTasksGithubRouteChildren: AuthenticatedAccountTasksGithubRouteChildren =
   {
     AuthenticatedAccountTasksGithubCompleteRoute:
       AuthenticatedAccountTasksGithubCompleteRoute,
+    AuthenticatedAccountTasksGithubIndexRoute:
+      AuthenticatedAccountTasksGithubIndexRoute,
   }
 
 const AuthenticatedAccountTasksGithubRouteWithChildren =

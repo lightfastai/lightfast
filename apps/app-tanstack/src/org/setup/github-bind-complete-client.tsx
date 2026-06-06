@@ -35,6 +35,11 @@ export function GitHubBindCompleteClient({
 
     try {
       const result = await mutateAsync();
+      if (result.bindingStatus !== "bound" && !result.nextSetupRequirement) {
+        setFailed(true);
+        return;
+      }
+
       await session.reload();
 
       if (result.nextSetupRequirement) {
@@ -57,9 +62,14 @@ export function GitHubBindCompleteClient({
       return;
     }
 
+    if (!session) {
+      setFailed(true);
+      return;
+    }
+
     hasStartedRef.current = true;
     void finish();
-  }, [finish, isSessionLoaded]);
+  }, [finish, isSessionLoaded, session]);
 
   return (
     <div className="flex min-h-full flex-1 items-center justify-center px-4 pb-32">
