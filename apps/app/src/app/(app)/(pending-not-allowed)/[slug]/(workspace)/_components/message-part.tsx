@@ -38,6 +38,14 @@ export const WorkspaceAssistantMessagePart = memo(
       );
     }
 
+    if (isGranolaUserConnectorToolPart(part)) {
+      return (
+        <div className="inline-flex w-fit items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 text-muted-foreground text-xs">
+          Used Granola
+        </div>
+      );
+    }
+
     if (isToolPart(part)) {
       return (
         <Tool defaultOpen={part.state !== "output-available"}>
@@ -125,6 +133,23 @@ export const WorkspaceAssistantMessagePart = memo(
     );
   }
 );
+
+function isGranolaUserConnectorToolPart(part: UIMessage["parts"][number]) {
+  if (
+    !("state" in part) ||
+    part.type !== "tool-callUserConnectorTool" ||
+    part.state !== "output-available"
+  ) {
+    return false;
+  }
+  const output = (part as { output?: unknown }).output;
+  return (
+    output &&
+    typeof output === "object" &&
+    "provider" in output &&
+    (output as { provider?: unknown }).provider === "granola"
+  );
+}
 
 function isToolPart(part: UIMessage["parts"][number]): part is ToolPart {
   return (
