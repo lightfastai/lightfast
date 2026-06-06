@@ -24,6 +24,18 @@ export {
   type XTokenSet,
 } from "./oauth";
 export {
+  buildXOperationRequest,
+  getXOperationDefinition,
+  getXOperationDefinitions,
+  getXToolDefinitionsForScopes,
+  hasScopesForXOperation,
+  X_SOCIAL_WRITE_TOOL_NAMES,
+  type XOperationClassification,
+  type XOperationDefinition,
+  type XOperationMethod,
+  type XOperationRequest,
+} from "./operations";
+export {
   type ExecuteXApiToolInput,
   executeXApiTool,
   getXToolDefinitions,
