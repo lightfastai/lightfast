@@ -80,9 +80,9 @@ describe("AutomationRunDetailContent", () => {
 
     expect(screen.getByText("Posted the launch update.")).toBeInTheDocument();
     expect(screen.getByText("X")).toBeInTheDocument();
-    expect(screen.getAllByText("provider_routine_call_123").length).toBeGreaterThan(
-      0
-    );
+    expect(
+      screen.getAllByText("provider_routine_call_123").length
+    ).toBeGreaterThan(0);
     expect(screen.getAllByText("x__postTweet").length).toBeGreaterThan(0);
     expect(screen.queryByText(/schemaVersion/)).not.toBeInTheDocument();
   });

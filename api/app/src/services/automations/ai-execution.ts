@@ -18,18 +18,18 @@ import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
 import {
   AutomationExecutionError,
-  automationExecutionError,
   type AutomationExecutionErrorCode,
+  automationExecutionError,
 } from "./errors";
 import {
+  type AutomationRunAiOutput,
   buildAutomationRunOutput,
   createAutomationTranscriptRecorder,
-  type AutomationRunAiOutput,
 } from "./output";
 import {
+  type AutomationProviderRoutineContext,
   callAutomationProviderRoutine,
   findAutomationProviderRoutines,
-  type AutomationProviderRoutineContext,
 } from "./provider-routines";
 
 export const AUTOMATION_RUN_MODEL = "anthropic/claude-sonnet-4.6";
@@ -70,7 +70,7 @@ export type ExecuteAutomationRunRecord = Pick<
   "publicId" | "trigger"
 > & {
   trigger: AutomationRunTrigger;
-}
+};
 
 export async function executeAutomationRun(
   input: ExecuteAutomationRunInput
@@ -98,8 +98,7 @@ export async function executeAutomationRun(
 
       throw automationExecutionError({
         code: "AUTOMATION_CONNECTOR_NO_TOOLS",
-        message:
-          "The selected connector has no automation routines available.",
+        message: "The selected connector has no automation routines available.",
       });
     }
 
@@ -364,7 +363,7 @@ function routineIdFromToolInput(toolInput: unknown) {
     return toolInput.routineId;
   }
 
-  return undefined;
+  return;
 }
 
 interface AutomationToolFailureState {
@@ -375,10 +374,7 @@ function createAutomationToolFailureState(): AutomationToolFailureState {
   return { firstError: null };
 }
 
-function captureToolFailure(
-  state: AutomationToolFailureState,
-  cause: unknown
-) {
+function captureToolFailure(state: AutomationToolFailureState, cause: unknown) {
   const error = automationExecutionError({
     cause,
     code: "AUTOMATION_TOOL_FAILED",

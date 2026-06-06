@@ -1,22 +1,22 @@
 import type { ConnectableConnectorProvider } from "@repo/connector-contract";
 import {
-  parseProviderRoutineId,
-  providerRoutineCallInputSchema,
   type ProviderRoutineCallFailure,
   type ProviderRoutineCallInput,
   type ProviderRoutineCallSuccess,
   type ProviderRoutineErrorCode,
-  providerRoutineFindInputSchema,
   type ProviderRoutineFindInput,
   type ProviderRoutineFindOutput,
-  providerRoutineId,
   type ProviderRoutineSummary,
+  parseProviderRoutineId,
+  providerRoutineCallInputSchema,
+  providerRoutineFindInputSchema,
+  providerRoutineId,
 } from "@repo/provider-routine-contract";
 import { classifyRoutine, hasRoutineScope } from "@repo/provider-routines";
 import {
   ConnectorRuntimeToolCallError,
-  loadConnectorRuntimeTools,
   type ConnectorRuntimeToolSource,
+  loadConnectorRuntimeTools,
 } from "../connectors/runtime";
 
 const DEFAULT_FIND_LIMIT = 10;
@@ -68,7 +68,9 @@ export async function findAutomationProviderRoutines(
   }
 
   const routines = selectedTools
-    .flatMap((tool) => summarizeRuntimeTool(tool, parsed.includeSchema === true))
+    .flatMap((tool) =>
+      summarizeRuntimeTool(tool, parsed.includeSchema === true)
+    )
     .filter((routine) => matchesFindFilters(routine, parsed))
     .slice(0, parsed.limit ?? DEFAULT_FIND_LIMIT);
 
@@ -280,10 +282,7 @@ function validateJsonSchema(schema: unknown, value: unknown): boolean {
     return true;
   }
 
-  if (
-    schema.type !== undefined &&
-    !matchesJsonSchemaType(value, schema.type)
-  ) {
+  if (schema.type !== undefined && !matchesJsonSchemaType(value, schema.type)) {
     return false;
   }
 
@@ -395,7 +394,9 @@ function matchesNumericBounds(
   return true;
 }
 
-function mapRuntimeErrorCode(code: string | undefined): ProviderRoutineErrorCode {
+function mapRuntimeErrorCode(
+  code: string | undefined
+): ProviderRoutineErrorCode {
   switch (code) {
     case "LINEAR_TOKEN_REFRESH_FAILED":
     case "X_TOKEN_REFRESH_FAILED":

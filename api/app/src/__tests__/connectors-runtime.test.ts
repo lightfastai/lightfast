@@ -330,7 +330,10 @@ describe("loadConnectorRuntimeTools", () => {
     listCurrentOrgConnectorConnectionsMock.mockResolvedValue([connection()]);
     getCurrentOrgConnectorConnectionMock.mockResolvedValue(connection());
     callLinearMcpToolMock.mockRejectedValue(
-      new LinearAppNodeError("LINEAR_MCP_FAILED", "Linear MCP tool call failed.")
+      new LinearAppNodeError(
+        "LINEAR_MCP_FAILED",
+        "Linear MCP tool call failed."
+      )
     );
 
     const [tool] = await loadConnectorRuntimeTools({

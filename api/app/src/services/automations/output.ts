@@ -304,6 +304,10 @@ function sanitizeTranscriptEvent(
 
       return sanitized;
     }
+    default: {
+      const exhaustive: never = event;
+      return exhaustive;
+    }
   }
 }
 

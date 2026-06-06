@@ -50,8 +50,7 @@ vi.mock("./automation-status-chip", () => ({
 
 const { AutomationDetailClient } = await import("./automation-detail-client");
 
-type Automation =
-  AppRouterOutputs["org"]["workspace"]["automations"]["get"];
+type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
 
 const automation = {
   connectorProvider: "x",
