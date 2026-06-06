@@ -66,7 +66,10 @@ describe("AutomationDetailClient", () => {
 
     render(<AutomationDetailClient automationId="automation_123" />);
 
-    expect(screen.getByText("Connector")).toBeInTheDocument();
-    expect(screen.getByText("X")).toBeInTheDocument();
+    const connectorLabel = screen.getByText("Connector");
+    const connectorRow = connectorLabel.parentElement;
+
+    expect(connectorRow).toHaveTextContent("Connector");
+    expect(connectorRow).toHaveTextContent("X");
   });
 });
