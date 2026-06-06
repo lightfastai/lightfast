@@ -129,9 +129,9 @@ export async function callUserConnectorTool(
     sourceSurface: context.source.surface,
     startedAt: context.now(),
   });
-  const authState = await authProviderForConnection(connection);
 
   try {
+    const authState = await authProviderForConnection(connection);
     await safelyMarkUserConnectorToolCallProviderAttempted(
       context,
       toolCallAudit

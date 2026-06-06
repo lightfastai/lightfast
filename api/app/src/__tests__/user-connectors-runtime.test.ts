@@ -630,6 +630,41 @@ describe("user connector chat runtime", () => {
     expect(failedInput?.errorMessage).toBeUndefined();
   });
 
+  it("marks the audit row failed when auth setup fails after audit create", async () => {
+    const context = userConnectorChatContext();
+    const setupError = new Error("decrypt failed");
+    getCurrentUserConnectorConnectionMock.mockResolvedValue(userConnection());
+    decryptMock.mockRejectedValueOnce(setupError);
+
+    await expect(
+      callUserConnectorTool(context, {
+        input: { query: "SOC2" },
+        routineId: "granola__search_notes",
+      })
+    ).rejects.toBe(setupError);
+
+    expect(createUserConnectorToolCallMock).toHaveBeenCalledWith(
+      context.db,
+      expect.objectContaining({
+        calledByUserId: "user_current",
+        provider: "granola",
+        providerToolName: "search_notes",
+        routineId: "granola__search_notes",
+      })
+    );
+    expect(callGranolaMcpToolMock).not.toHaveBeenCalled();
+    expect(markUserConnectorToolCallProviderAttemptedMock).not.toHaveBeenCalled();
+    const failedInput = markUserConnectorToolCallFailedMock.mock.calls[0]?.[1] as
+      | Record<string, unknown>
+      | undefined;
+    expect(failedInput).toMatchObject({
+      calledByUserId: "user_current",
+      publicId: "user_connector_tool_call_123",
+    });
+    expect(failedInput?.errorCode).toBeUndefined();
+    expect(failedInput?.errorMessage).toBeUndefined();
+  });
+
   it("decrypts the refresh token only when one is present", async () => {
     const context = userConnectorChatContext();
     getCurrentUserConnectorConnectionMock.mockResolvedValue(
