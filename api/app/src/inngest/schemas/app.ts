@@ -12,6 +12,12 @@ export const appTeamMembersReconcileRequestedEventSchema = z.object({
   syncedAtIso: z.string().datetime().optional(),
 });
 
+export const appSignalEntityIndexBackfillRequestedEventSchema = z.object({
+  clerkOrgId: z.string().min(1),
+  confirm: z.literal("prod"),
+  cursor: z.number().int().positive().nullable().optional(),
+});
+
 export const appEvents = {
   "app/automation.run.requested": eventType("app/automation.run.requested", {
     schema: z.object({
@@ -49,6 +55,12 @@ export const appEvents = {
         signalId: signalIdSchema,
         clerkOrgId: z.string().min(1),
       }),
+    }
+  ),
+  "app/signal.entity-index.backfill.requested": eventType(
+    "app/signal.entity-index.backfill.requested",
+    {
+      schema: appSignalEntityIndexBackfillRequestedEventSchema,
     }
   ),
   "app/github.repository.push.received": eventType(
