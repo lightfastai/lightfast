@@ -41,6 +41,7 @@
     "@repo/app-validation": "workspace:*",
     "@repo/identity-contract": "workspace:*",
     "@repo/provider-routine-contract": "workspace:*",
+    "@repo/user-connector-contract": "workspace:*",
     "@vendor/ai": "workspace:*",
     "server-only": "catalog:",
     "zod": "catalog:"

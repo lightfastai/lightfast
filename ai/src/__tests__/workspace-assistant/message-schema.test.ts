@@ -97,4 +97,66 @@ describe("Lightfast workspace assistant message schema", () => {
 
     expect(invalidResult.success).toBe(false);
   });
+
+  it("validates persisted user connector tool parts", async () => {
+    const validResult = await safeValidateLightfastUIMessages({
+      messages: [
+        {
+          id: "msg_123",
+          parts: [
+            {
+              input: {
+                input: { query: "SOC2" },
+                routineId: "granola__search_notes",
+              },
+              output: {
+                provider: "granola",
+                providerToolName: "search_notes",
+                result: { content: [{ text: "result", type: "text" }] },
+                routineId: "granola__search_notes",
+                status: "succeeded",
+              },
+              state: "output-available",
+              toolCallId: "tool_call_123",
+              type: "tool-callUserConnectorTool",
+            },
+          ],
+          role: "assistant",
+        },
+      ],
+    });
+
+    expect(validResult.success).toBe(true);
+  });
+
+  it("rejects invalid user connector tool inputs", async () => {
+    const invalidResult = await safeValidateLightfastUIMessages({
+      messages: [
+        {
+          id: "msg_123",
+          parts: [
+            {
+              input: {
+                input: { query: "SOC2" },
+                routineId: "linear__search_notes",
+              },
+              output: {
+                provider: "granola",
+                providerToolName: "search_notes",
+                result: { content: [{ text: "result", type: "text" }] },
+                routineId: "granola__search_notes",
+                status: "succeeded",
+              },
+              state: "output-available",
+              toolCallId: "tool_call_123",
+              type: "tool-callUserConnectorTool",
+            },
+          ],
+          role: "assistant",
+        },
+      ],
+    });
+
+    expect(invalidResult.success).toBe(false);
+  });
 });

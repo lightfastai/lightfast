@@ -5,6 +5,11 @@ import {
   getVerifiedLightfastSkillSourceRepositoryId,
 } from "@api/app/services/skills";
 import {
+  callUserConnectorTool,
+  findUserConnectorTools,
+  type UserConnectorChatContext,
+} from "@api/app/services/user-connectors/runtime";
+import {
   appendWorkspaceAssistantMessage,
   createWorkspaceAssistantConversation,
   createWorkspaceAssistantGeneration,
@@ -36,6 +41,12 @@ import {
   providerRoutineFindInputSchema,
   providerRoutineFindOutputSchema,
 } from "@repo/provider-routine-contract";
+import {
+  userConnectorCallInputSchema,
+  userConnectorCallSuccessSchema,
+  userConnectorFindInputSchema,
+  userConnectorFindOutputSchema,
+} from "@repo/user-connector-contract";
 import {
   callProviderRoutine,
   findProviderRoutines,
@@ -84,6 +95,8 @@ const baseSystemPrompt = [
   "When connector tools are useful, first find connected provider routines, then call the selected routine by routineId.",
   "Only call provider routines for the active workspace.",
   "Connected provider routines in chat are read-only; do not use them to create, update, delete, post, assign, archive, or move external records.",
+  "When private user connectors such as Granola are useful, first find user connector tools, then call the selected routine by routineId.",
+  "Granola is private meeting context for the current user. Never describe Granola results as workspace or team knowledge.",
 ].join(" ");
 
 export const maxDuration = 30;
@@ -318,7 +331,7 @@ export async function POST(req: Request) {
     },
     stopWhen: stepCountIs(WORKSPACE_ASSISTANT_MAX_TOOL_STEPS),
     system,
-    tools: createWorkspaceAssistantProviderRoutineTools({
+    tools: createWorkspaceAssistantTools({
       conversation,
       orgId: identity.orgId,
       userId: identity.userId,
@@ -488,6 +501,32 @@ export async function POST(req: Request) {
   });
 }
 
+function createWorkspaceAssistantTools(input: {
+  conversation: WorkspaceAssistantConversation;
+  orgId: string;
+  userId: string;
+}) {
+  return {
+    ...createWorkspaceAssistantProviderRoutineTools(input),
+    callUserConnectorTool: tool({
+      description:
+        "Call one private user connector tool by routineId for the current user. Use routineIds returned by findUserConnectorTools.",
+      inputSchema: userConnectorCallInputSchema,
+      outputSchema: userConnectorCallSuccessSchema,
+      execute: async (toolInput) =>
+        callUserConnectorTool(userConnectorContext(input), toolInput),
+    }),
+    findUserConnectorTools: tool({
+      description:
+        "Find private user connector tools available to the current user, such as Granola meeting note tools. Use this before calling callUserConnectorTool.",
+      inputSchema: userConnectorFindInputSchema,
+      outputSchema: userConnectorFindOutputSchema,
+      execute: async (toolInput) =>
+        findUserConnectorTools(userConnectorContext(input), toolInput),
+    }),
+  };
+}
+
 function createWorkspaceAssistantProviderRoutineTools(input: {
   conversation: WorkspaceAssistantConversation;
   orgId: string;
@@ -513,6 +552,25 @@ function createWorkspaceAssistantProviderRoutineTools(input: {
           readOnly: true,
         }),
     }),
+  };
+}
+
+function userConnectorContext(input: {
+  conversation: WorkspaceAssistantConversation;
+  orgId: string;
+  userId: string;
+}): UserConnectorChatContext {
+  return {
+    actor: {
+      orgId: input.orgId,
+      userId: input.userId,
+    },
+    db,
+    now: () => new Date(),
+    source: {
+      conversationId: input.conversation.publicId,
+      surface: "interactive_chat",
+    },
   };
 }
 

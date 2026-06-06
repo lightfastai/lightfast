@@ -5,6 +5,12 @@ import {
   providerRoutineFindOutputSchema,
 } from "@repo/provider-routine-contract";
 import {
+  userConnectorCallInputSchema,
+  userConnectorCallSuccessSchema,
+  userConnectorFindInputSchema,
+  userConnectorFindOutputSchema,
+} from "@repo/user-connector-contract";
+import {
   type FlexibleSchema,
   type InferUITools,
   type SafeValidateUIMessagesResult,
@@ -71,11 +77,23 @@ export const lightfastWorkspaceAssistantTools = {
     inputSchema: providerRoutineCallInputSchema,
     outputSchema: providerRoutineCallSuccessSchema,
   }),
+  callUserConnectorTool: tool({
+    description:
+      "Call one private user connector tool by routineId for the current user.",
+    inputSchema: userConnectorCallInputSchema,
+    outputSchema: userConnectorCallSuccessSchema,
+  }),
   findProviderRoutines: tool({
     description:
       "Find connected provider routines available to this workspace through enabled connectors.",
     inputSchema: providerRoutineFindInputSchema,
     outputSchema: providerRoutineFindOutputSchema,
+  }),
+  findUserConnectorTools: tool({
+    description:
+      "Find private user connector tools available to the current user, such as Granola meeting note tools.",
+    inputSchema: userConnectorFindInputSchema,
+    outputSchema: userConnectorFindOutputSchema,
   }),
 };
 

@@ -41,6 +41,7 @@
     "@repo/provider-routine-contract": "workspace:*",
     "@repo/provider-routines": "workspace:*",
     "@repo/ui": "workspace:*",
+    "@repo/user-connector-contract": "workspace:*",
     "@rescale/nemo": "catalog:",
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "^0.12.0",
