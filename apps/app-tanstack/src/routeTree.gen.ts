@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiInngestRouteImport } from './routes/api/inngest'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedSlugRouteImport } from './routes/_authenticated/$slug'
 import { Route as AuthenticatedSlugIndexRouteImport } from './routes/_authenticated/$slug/index'
@@ -44,6 +45,7 @@ import { Route as ApiNativeProxyCallRouteImport } from './routes/api/native/prox
 import { Route as ApiInternalMcpSignalsRouteImport } from './routes/api/internal/mcp/signals'
 import { Route as ApiGithubOauthCallbackRouteImport } from './routes/api/github/oauth/callback'
 import { Route as ApiConnectorsXMcpRouteImport } from './routes/api/connectors/x/mcp'
+import { Route as ApiChatIdStreamRouteImport } from './routes/api/chat/$id/stream'
 import { Route as AuthenticatedAccountsTeamsNewRouteImport } from './routes/_authenticated/accounts/teams/new'
 import { Route as AuthenticatedAccountTeamsNewRouteImport } from './routes/_authenticated/account/teams/new'
 import { Route as AuthenticatedAccountTasksUsernameRouteImport } from './routes/_authenticated/account/tasks/username'
@@ -101,6 +103,11 @@ const ApiInngestRoute = ApiInngestRouteImport.update({
 const ApiHealthRoute = ApiHealthRouteImport.update({
   id: '/api/health',
   path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
@@ -258,6 +265,11 @@ const ApiConnectorsXMcpRoute = ApiConnectorsXMcpRouteImport.update({
   id: '/api/connectors/x/mcp',
   path: '/api/connectors/x/mcp',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ApiChatIdStreamRoute = ApiChatIdStreamRouteImport.update({
+  id: '/$id/stream',
+  path: '/$id/stream',
+  getParentRoute: () => ApiChatRoute,
 } as any)
 const AuthenticatedAccountsTeamsNewRoute =
   AuthenticatedAccountsTeamsNewRouteImport.update({
@@ -438,6 +450,7 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof SignUpRoute
   '/$slug': typeof AuthenticatedSlugRouteWithChildren
   '/account': typeof AuthenticatedAccountRouteWithChildren
+  '/api/chat': typeof ApiChatRouteWithChildren
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/$slug/automations': typeof AuthenticatedSlugAutomationsRouteWithChildren
@@ -472,6 +485,7 @@ export interface FileRoutesByFullPath {
   '/account/tasks/username': typeof AuthenticatedAccountTasksUsernameRoute
   '/account/teams/new': typeof AuthenticatedAccountTeamsNewRoute
   '/accounts/teams/new': typeof AuthenticatedAccountsTeamsNewRoute
+  '/api/chat/$id/stream': typeof ApiChatIdStreamRoute
   '/api/connectors/x/mcp': typeof ApiConnectorsXMcpRoute
   '/api/github/oauth/callback': typeof ApiGithubOauthCallbackRoute
   '/api/internal/mcp/signals': typeof ApiInternalMcpSignalsRouteWithChildren
@@ -502,6 +516,7 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/account': typeof AuthenticatedAccountRouteWithChildren
+  '/api/chat': typeof ApiChatRouteWithChildren
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/$slug/connectors': typeof AuthenticatedSlugConnectorsRoute
@@ -529,6 +544,7 @@ export interface FileRoutesByTo {
   '/account/tasks/username': typeof AuthenticatedAccountTasksUsernameRoute
   '/account/teams/new': typeof AuthenticatedAccountTeamsNewRoute
   '/accounts/teams/new': typeof AuthenticatedAccountsTeamsNewRoute
+  '/api/chat/$id/stream': typeof ApiChatIdStreamRoute
   '/api/connectors/x/mcp': typeof ApiConnectorsXMcpRoute
   '/api/github/oauth/callback': typeof ApiGithubOauthCallbackRoute
   '/api/internal/mcp/signals': typeof ApiInternalMcpSignalsRouteWithChildren
@@ -562,6 +578,7 @@ export interface FileRoutesById {
   '/sign-up': typeof SignUpRoute
   '/_authenticated/$slug': typeof AuthenticatedSlugRouteWithChildren
   '/_authenticated/account': typeof AuthenticatedAccountRouteWithChildren
+  '/api/chat': typeof ApiChatRouteWithChildren
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/_authenticated/$slug/automations': typeof AuthenticatedSlugAutomationsRouteWithChildren
@@ -596,6 +613,7 @@ export interface FileRoutesById {
   '/_authenticated/account/tasks/username': typeof AuthenticatedAccountTasksUsernameRoute
   '/_authenticated/account/teams/new': typeof AuthenticatedAccountTeamsNewRoute
   '/_authenticated/accounts/teams/new': typeof AuthenticatedAccountsTeamsNewRoute
+  '/api/chat/$id/stream': typeof ApiChatIdStreamRoute
   '/api/connectors/x/mcp': typeof ApiConnectorsXMcpRoute
   '/api/github/oauth/callback': typeof ApiGithubOauthCallbackRoute
   '/api/internal/mcp/signals': typeof ApiInternalMcpSignalsRouteWithChildren
@@ -629,6 +647,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/$slug'
     | '/account'
+    | '/api/chat'
     | '/api/health'
     | '/api/inngest'
     | '/$slug/automations'
@@ -663,6 +682,7 @@ export interface FileRouteTypes {
     | '/account/tasks/username'
     | '/account/teams/new'
     | '/accounts/teams/new'
+    | '/api/chat/$id/stream'
     | '/api/connectors/x/mcp'
     | '/api/github/oauth/callback'
     | '/api/internal/mcp/signals'
@@ -693,6 +713,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/account'
+    | '/api/chat'
     | '/api/health'
     | '/api/inngest'
     | '/$slug/connectors'
@@ -720,6 +741,7 @@ export interface FileRouteTypes {
     | '/account/tasks/username'
     | '/account/teams/new'
     | '/accounts/teams/new'
+    | '/api/chat/$id/stream'
     | '/api/connectors/x/mcp'
     | '/api/github/oauth/callback'
     | '/api/internal/mcp/signals'
@@ -752,6 +774,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/_authenticated/$slug'
     | '/_authenticated/account'
+    | '/api/chat'
     | '/api/health'
     | '/api/inngest'
     | '/_authenticated/$slug/automations'
@@ -786,6 +809,7 @@ export interface FileRouteTypes {
     | '/_authenticated/account/tasks/username'
     | '/_authenticated/account/teams/new'
     | '/_authenticated/accounts/teams/new'
+    | '/api/chat/$id/stream'
     | '/api/connectors/x/mcp'
     | '/api/github/oauth/callback'
     | '/api/internal/mcp/signals'
@@ -817,6 +841,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
+  ApiChatRoute: typeof ApiChatRouteWithChildren
   ApiHealthRoute: typeof ApiHealthRoute
   ApiInngestRoute: typeof ApiInngestRoute
   ApiGithubSetupRoute: typeof ApiGithubSetupRoute
@@ -878,6 +903,13 @@ declare module '@tanstack/react-router' {
       path: '/api/health'
       fullPath: '/api/health'
       preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/account': {
@@ -1082,6 +1114,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/connectors/x/mcp'
       preLoaderRoute: typeof ApiConnectorsXMcpRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/chat/$id/stream': {
+      id: '/api/chat/$id/stream'
+      path: '/$id/stream'
+      fullPath: '/api/chat/$id/stream'
+      preLoaderRoute: typeof ApiChatIdStreamRouteImport
+      parentRoute: typeof ApiChatRoute
     }
     '/_authenticated/accounts/teams/new': {
       id: '/_authenticated/accounts/teams/new'
@@ -1518,6 +1557,17 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface ApiChatRouteChildren {
+  ApiChatIdStreamRoute: typeof ApiChatIdStreamRoute
+}
+
+const ApiChatRouteChildren: ApiChatRouteChildren = {
+  ApiChatIdStreamRoute: ApiChatIdStreamRoute,
+}
+
+const ApiChatRouteWithChildren =
+  ApiChatRoute._addFileChildren(ApiChatRouteChildren)
+
 interface ApiInternalMcpSignalsRouteChildren {
   ApiInternalMcpSignalsGetRoute: typeof ApiInternalMcpSignalsGetRoute
 }
@@ -1536,6 +1586,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
+  ApiChatRoute: ApiChatRouteWithChildren,
   ApiHealthRoute: ApiHealthRoute,
   ApiInngestRoute: ApiInngestRoute,
   ApiGithubSetupRoute: ApiGithubSetupRoute,
