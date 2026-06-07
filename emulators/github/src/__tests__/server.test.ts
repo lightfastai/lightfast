@@ -90,6 +90,16 @@ describe("@repo/github-emulator", () => {
     expect(app?.webhook_secret).toBe(
       GITHUB_EMULATOR_FIXTURES.githubWebhookSecret
     );
+    expect(app?.events).toEqual(
+      expect.arrayContaining([
+        "issue_comment",
+        "pull_request",
+        "pull_request_review",
+        "pull_request_review_comment",
+        "pull_request_review_thread",
+        "push",
+      ])
+    );
   });
 
   it("seeds the OAuth user as a member of the GitHub org", async () => {

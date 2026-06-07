@@ -200,6 +200,118 @@ export type NormalizedGitHubPushWebhook = z.infer<
   typeof normalizedGitHubPushWebhookSchema
 >;
 
+export const GITHUB_PR_WEBHOOK_EVENTS = [
+  "pull_request",
+  "pull_request_review",
+  "pull_request_review_comment",
+  "pull_request_review_thread",
+  "issue_comment",
+] as const;
+
+export const githubPrWebhookEventSchema = z.enum(GITHUB_PR_WEBHOOK_EVENTS);
+export type GitHubPrWebhookEvent = z.infer<typeof githubPrWebhookEventSchema>;
+
+const githubWebhookActionSchema = z.string().min(1);
+
+const githubWebhookPullRequestRefSchema = z
+  .object({
+    id: githubWebhookProviderIdSchema.optional(),
+    number: z.number().int().positive().optional(),
+  })
+  .passthrough();
+
+const githubWebhookIssueSchema = z
+  .object({
+    number: z.number().int().positive().optional(),
+    pull_request: z.object({}).passthrough().optional(),
+  })
+  .passthrough();
+
+const githubWebhookCommentSchema = z
+  .object({
+    pull_request_url: z.string().url().optional(),
+  })
+  .passthrough();
+
+export const githubPrWebhookPayloadSchema = z
+  .object({
+    action: githubWebhookActionSchema,
+    comment: githubWebhookCommentSchema.optional(),
+    installation: githubWebhookInstallationSchema,
+    issue: githubWebhookIssueSchema.optional(),
+    pull_request: githubWebhookPullRequestRefSchema.optional(),
+    repository: githubWebhookRepositorySchema,
+  })
+  .passthrough();
+export type GitHubPrWebhookPayload = z.infer<
+  typeof githubPrWebhookPayloadSchema
+>;
+
+export const normalizedGitHubPrWebhookSchema = z.object({
+  action: githubWebhookActionSchema,
+  event: githubPrWebhookEventSchema,
+  providerInstallationId: z.string().min(1),
+  providerPullRequestId: z.string().min(1).nullable(),
+  providerRepositoryId: z.string().min(1),
+  pullRequestNumber: z.number().int().positive(),
+});
+export type NormalizedGitHubPrWebhook = z.infer<
+  typeof normalizedGitHubPrWebhookSchema
+>;
+
+function parsePullRequestNumberFromUrl(
+  value: string | undefined
+): number | null {
+  if (!value) {
+    return null;
+  }
+  const match = /\/pulls?\/([1-9][0-9]*)(?:$|[/?#])/.exec(value);
+  return match ? Number(match[1]) : null;
+}
+
+function requirePullRequestNumber(
+  event: GitHubPrWebhookEvent,
+  payload: GitHubPrWebhookPayload
+): number {
+  const number =
+    payload.pull_request?.number ??
+    payload.issue?.number ??
+    parsePullRequestNumberFromUrl(payload.comment?.pull_request_url);
+
+  if (!number) {
+    throw new Error(
+      `GitHub ${event} webhook payload is missing a pull request number.`
+    );
+  }
+  return number;
+}
+
+function getProviderPullRequestId(
+  payload: GitHubPrWebhookPayload
+): string | null {
+  return payload.pull_request?.id === undefined
+    ? null
+    : String(payload.pull_request.id);
+}
+
+export function normalizeGitHubPrWebhookPayload(input: {
+  event: GitHubPrWebhookEvent;
+  payload: GitHubPrWebhookPayload;
+}): NormalizedGitHubPrWebhook | null {
+  if (input.event === "issue_comment" && !input.payload.issue?.pull_request) {
+    return null;
+  }
+
+  return normalizedGitHubPrWebhookSchema.parse({
+    action: input.payload.action,
+    event: input.event,
+    providerInstallationId: String(input.payload.installation.id),
+    providerPullRequestId: getProviderPullRequestId(input.payload),
+    providerRepositoryId: String(input.payload.repository.id),
+    pullRequestNumber: requirePullRequestNumber(input.event, input.payload),
+  });
+}
+
 export function normalizeGitHubPushWebhookPayload(
   payload: GitHubPushWebhookPayload
 ): NormalizedGitHubPushWebhook {
