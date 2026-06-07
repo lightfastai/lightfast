@@ -23,6 +23,7 @@ export interface XApiToolResult {
 }
 
 const objectSchema = z.record(z.string(), z.unknown()).optional();
+const X_USER_FIELDS = "id,name,username,description,location,url";
 
 export const X_TOOL_DEFINITIONS = [
   tool("getUsersMe", "Look up the connected X account.", {}),
@@ -139,18 +140,28 @@ function xApiToolUrl(input: {
   const apiOrigin = input.apiOrigin.replace(/\/+$/, "");
   switch (input.name) {
     case "getUsersMe":
-      return `${apiOrigin}/2/users/me`;
+      return withQuery(`${apiOrigin}/2/users/me`, {
+        "user.fields": X_USER_FIELDS,
+      });
     case "getUsersByUsername":
-      return `${apiOrigin}/2/users/by/username/${encodePath(stringArg(input.input, "username"))}`;
+      return withQuery(
+        `${apiOrigin}/2/users/by/username/${encodePath(stringArg(input.input, "username"))}`,
+        { "user.fields": X_USER_FIELDS }
+      );
     case "getUsersByUsernames":
       return withQuery(`${apiOrigin}/2/users/by`, {
+        "user.fields": X_USER_FIELDS,
         usernames: listArg(input.input, "usernames").join(","),
       });
     case "getUsersById":
-      return `${apiOrigin}/2/users/${encodePath(stringArg(input.input, "id"))}`;
+      return withQuery(
+        `${apiOrigin}/2/users/${encodePath(stringArg(input.input, "id"))}`,
+        { "user.fields": X_USER_FIELDS }
+      );
     case "getUsersByIds":
       return withQuery(`${apiOrigin}/2/users`, {
         ids: listArg(input.input, "ids").join(","),
+        "user.fields": X_USER_FIELDS,
       });
     case "getPostsById":
       return `${apiOrigin}/2/tweets/${encodePath(stringArg(input.input, "id"))}`;

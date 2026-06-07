@@ -14,13 +14,19 @@ export const X_EMULATOR_SCOPE = "tweet.read users.read offline.access";
 
 export const X_EMULATOR_USERS = [
   {
+    description: "Builds local emulators for signal enrichment.",
     id: "x_user_1",
+    location: "Melbourne, Australia",
     name: "Emulator User",
+    url: "https://lightfast.ai",
     username: "emulator",
   },
   {
+    description: "Runs agent workflow tests.",
     id: "x_user_2",
+    location: "San Francisco, CA",
     name: "Agent",
+    url: "https://agent.lightfast.ai",
     username: "agent",
   },
 ] as const;

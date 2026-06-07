@@ -172,7 +172,10 @@ describe("@repo/x-emulator", () => {
     expect(meRes.status).toBe(200);
     await expect(meRes.json()).resolves.toMatchObject({
       data: {
+        description: "Builds local emulators for signal enrichment.",
         id: X_EMULATOR_FIXTURES.userId,
+        location: "Melbourne, Australia",
+        url: "https://lightfast.ai",
         username: X_EMULATOR_FIXTURES.username,
       },
     });
@@ -188,7 +191,13 @@ describe("@repo/x-emulator", () => {
     const byUsernameRes = await getAuthed("/2/users/by/username/emulator");
     expect(byUsernameRes.status).toBe(200);
     await expect(byUsernameRes.json()).resolves.toMatchObject({
-      data: { id: "x_user_1", username: "emulator" },
+      data: {
+        description: "Builds local emulators for signal enrichment.",
+        id: "x_user_1",
+        location: "Melbourne, Australia",
+        url: "https://lightfast.ai",
+        username: "emulator",
+      },
     });
 
     const byUsernamesRes = await getAuthed(
@@ -197,23 +206,53 @@ describe("@repo/x-emulator", () => {
     expect(byUsernamesRes.status).toBe(200);
     await expect(byUsernamesRes.json()).resolves.toMatchObject({
       data: [
-        { id: "x_user_1", username: "emulator" },
-        { id: "x_user_2", username: "agent" },
+        {
+          description: "Builds local emulators for signal enrichment.",
+          id: "x_user_1",
+          location: "Melbourne, Australia",
+          url: "https://lightfast.ai",
+          username: "emulator",
+        },
+        {
+          description: "Runs agent workflow tests.",
+          id: "x_user_2",
+          location: "San Francisco, CA",
+          url: "https://agent.lightfast.ai",
+          username: "agent",
+        },
       ],
     });
 
     const byIdRes = await getAuthed("/2/users/x_user_1");
     expect(byIdRes.status).toBe(200);
     await expect(byIdRes.json()).resolves.toMatchObject({
-      data: { id: "x_user_1", username: "emulator" },
+      data: {
+        description: "Builds local emulators for signal enrichment.",
+        id: "x_user_1",
+        location: "Melbourne, Australia",
+        url: "https://lightfast.ai",
+        username: "emulator",
+      },
     });
 
     const byIdsRes = await getAuthed("/2/users?ids=x_user_1,x_user_2");
     expect(byIdsRes.status).toBe(200);
     await expect(byIdsRes.json()).resolves.toMatchObject({
       data: [
-        { id: "x_user_1", username: "emulator" },
-        { id: "x_user_2", username: "agent" },
+        {
+          description: "Builds local emulators for signal enrichment.",
+          id: "x_user_1",
+          location: "Melbourne, Australia",
+          url: "https://lightfast.ai",
+          username: "emulator",
+        },
+        {
+          description: "Runs agent workflow tests.",
+          id: "x_user_2",
+          location: "San Francisco, CA",
+          url: "https://agent.lightfast.ai",
+          username: "agent",
+        },
       ],
     });
   });
