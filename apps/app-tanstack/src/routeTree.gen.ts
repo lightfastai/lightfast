@@ -13,6 +13,7 @@ import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SignUpAcceptInvitationRouteImport } from './routes/sign-up_.accept-invitation'
 import { Route as ApiInngestRouteImport } from './routes/api/inngest'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
@@ -93,6 +94,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignUpAcceptInvitationRoute = SignUpAcceptInvitationRouteImport.update({
+  id: '/sign-up_/accept-invitation',
+  path: '/sign-up/accept-invitation',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiInngestRoute = ApiInngestRouteImport.update({
@@ -453,6 +459,7 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRouteWithChildren
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
+  '/sign-up/accept-invitation': typeof SignUpAcceptInvitationRoute
   '/$slug/automations': typeof AuthenticatedSlugAutomationsRouteWithChildren
   '/$slug/chat': typeof AuthenticatedSlugChatRouteWithChildren
   '/$slug/connectors': typeof AuthenticatedSlugConnectorsRoute
@@ -519,6 +526,7 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRouteWithChildren
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
+  '/sign-up/accept-invitation': typeof SignUpAcceptInvitationRoute
   '/$slug/connectors': typeof AuthenticatedSlugConnectorsRoute
   '/$slug/decisions': typeof AuthenticatedSlugDecisionsRoute
   '/$slug/people': typeof AuthenticatedSlugPeopleRoute
@@ -581,6 +589,7 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRouteWithChildren
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
+  '/sign-up_/accept-invitation': typeof SignUpAcceptInvitationRoute
   '/_authenticated/$slug/automations': typeof AuthenticatedSlugAutomationsRouteWithChildren
   '/_authenticated/$slug/chat': typeof AuthenticatedSlugChatRouteWithChildren
   '/_authenticated/$slug/connectors': typeof AuthenticatedSlugConnectorsRoute
@@ -650,6 +659,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/health'
     | '/api/inngest'
+    | '/sign-up/accept-invitation'
     | '/$slug/automations'
     | '/$slug/chat'
     | '/$slug/connectors'
@@ -716,6 +726,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/health'
     | '/api/inngest'
+    | '/sign-up/accept-invitation'
     | '/$slug/connectors'
     | '/$slug/decisions'
     | '/$slug/people'
@@ -777,6 +788,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/health'
     | '/api/inngest'
+    | '/sign-up_/accept-invitation'
     | '/_authenticated/$slug/automations'
     | '/_authenticated/$slug/chat'
     | '/_authenticated/$slug/connectors'
@@ -844,6 +856,7 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRouteWithChildren
   ApiHealthRoute: typeof ApiHealthRoute
   ApiInngestRoute: typeof ApiInngestRoute
+  SignUpAcceptInvitationRoute: typeof SignUpAcceptInvitationRoute
   ApiGithubSetupRoute: typeof ApiGithubSetupRoute
   ApiGithubWebhookRoute: typeof ApiGithubWebhookRoute
   ApiTrpcSplatRoute: typeof ApiTrpcSplatRoute
@@ -889,6 +902,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-up_/accept-invitation': {
+      id: '/sign-up_/accept-invitation'
+      path: '/sign-up/accept-invitation'
+      fullPath: '/sign-up/accept-invitation'
+      preLoaderRoute: typeof SignUpAcceptInvitationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/inngest': {
@@ -1589,6 +1609,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRouteWithChildren,
   ApiHealthRoute: ApiHealthRoute,
   ApiInngestRoute: ApiInngestRoute,
+  SignUpAcceptInvitationRoute: SignUpAcceptInvitationRoute,
   ApiGithubSetupRoute: ApiGithubSetupRoute,
   ApiGithubWebhookRoute: ApiGithubWebhookRoute,
   ApiTrpcSplatRoute: ApiTrpcSplatRoute,

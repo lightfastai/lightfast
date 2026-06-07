@@ -44,6 +44,25 @@ describe("app-tanstack authenticated route migration", () => {
     expect(routeSource).not.toContain("next/link");
   });
 
+  it("ports invitation acceptance without Next.js auth route imports", () => {
+    const routeSource = source("src/routes/sign-up_.accept-invitation.tsx");
+
+    expect(routeSource).toContain(
+      'createFileRoute("/sign-up_/accept-invitation")'
+    );
+    expect(routeSource).toContain("/sign-up/accept-invitation?");
+    expect(routeSource).toContain("validateAcceptInvitationSearch");
+    expect(routeSource).toContain("__clerk_ticket");
+    expect(routeSource).toContain('strategy: "ticket"');
+    expect(routeSource).toContain("legalAccepted: true");
+    expect(routeSource).toContain("makeFinalizeNavigate");
+    expect(routeSource).toContain("ErrorBanner");
+    expect(routeSource).toContain("clerk-captcha");
+    expect(routeSource).not.toContain("next/");
+    expect(routeSource).not.toContain("@vercel/microfrontends/next");
+    expect(routeSource).not.toContain('"use client"');
+  });
+
   it("uses a pathless authenticated shell for account and org routes", () => {
     const shellSource = source("src/routes/_authenticated.tsx");
     const teamSwitcherSource = source("src/components/team-switcher.tsx");
