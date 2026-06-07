@@ -127,6 +127,7 @@ describe("createInngestRouteContext", () => {
         cleanupDeveloperSandboxRuns,
         automationScheduler,
         runAutomation,
+        runEntityResolution,
         refreshSkillIndex,
         refreshIdentityIndex,
         reconcileSkillIndexes,
