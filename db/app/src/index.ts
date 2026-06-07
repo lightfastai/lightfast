@@ -384,11 +384,15 @@ export {
 export * from "./utils/provider-routine-calls";
 export {
   buildSignalEntityLinkResolutionHints,
+  listSignalEntityEnrichmentTargets,
   listSignalEntityLinksForSignal,
   type ReplaceSignalEntityLinksInput,
   type ReplaceSignalEntityLinksResult,
   reconcileSignalEntityLinksForPeople,
   replaceSignalEntityLinks,
+  type SignalEntityEnrichmentSkippedTarget,
+  type SignalEntityEnrichmentTarget,
+  type SignalEntityEnrichmentTargetsResult,
   type SignalEntityLinkDetail,
   type SignalEntityLinkReconciliationPerson,
   type SignalEntityLinkResolutionHints,

@@ -63,7 +63,51 @@ export type SignalEntityLinkReconciliationPerson = Pick<
 >;
 
 const SIGNAL_ENTITY_LINK_RECONCILE_BATCH_SIZE = 500;
+const MAX_ENRICHMENT_TARGETS_PER_PROVIDER = 10;
+const RESERVED_X_TWITTER_PATH_SEGMENTS = new Set([
+  "compose",
+  "download",
+  "explore",
+  "home",
+  "i",
+  "intent",
+  "login",
+  "logout",
+  "messages",
+  "notifications",
+  "privacy",
+  "search",
+  "settings",
+  "share",
+  "signup",
+  "tos",
+]);
 type SignalEntityLinkResolutionDb = Pick<Database, "select">;
+
+export interface SignalEntityEnrichmentTarget {
+  linkIds: number[];
+  normalizedValue: string;
+  provider: "x" | "github";
+  value: string;
+}
+
+export interface SignalEntityEnrichmentSkippedTarget {
+  anchorText: string;
+  linkId: number;
+  mentionKind: SignalEntityLink["mentionKind"];
+  reason:
+    | "already_resolved"
+    | "unsupported_mention_kind"
+    | "unsupported_profile_url"
+    | "ambiguous_handle"
+    | "over_cap";
+}
+
+export interface SignalEntityEnrichmentTargetsResult {
+  github: SignalEntityEnrichmentTarget[];
+  skipped: SignalEntityEnrichmentSkippedTarget[];
+  x: SignalEntityEnrichmentTarget[];
+}
 
 export function buildSignalEntityLinkResolutionHints(
   candidate: Pick<
@@ -287,6 +331,71 @@ export async function reconcileSignalEntityLinksForPeople(
   return { resolved };
 }
 
+export async function listSignalEntityEnrichmentTargets(
+  db: Database,
+  input: { clerkOrgId: string; signalId: string }
+): Promise<SignalEntityEnrichmentTargetsResult> {
+  const rows = await db
+    .select()
+    .from(signalEntityLinks)
+    .where(
+      and(
+        eq(signalEntityLinks.clerkOrgId, input.clerkOrgId),
+        eq(signalEntityLinks.signalId, input.signalId)
+      )
+    )
+    .orderBy(asc(signalEntityLinks.id));
+
+  const targetsByKey = new Map<string, SignalEntityEnrichmentTarget>();
+  const skipped: SignalEntityEnrichmentSkippedTarget[] = [];
+
+  for (const link of rows) {
+    const parsed = enrichmentTargetFromLink(link);
+    if ("reason" in parsed) {
+      skipped.push(skippedTarget(link, parsed.reason));
+      continue;
+    }
+
+    const normalizedValue = parsed.value.trim().toLowerCase();
+    if (!normalizedValue) {
+      skipped.push(skippedTarget(link, "unsupported_profile_url"));
+      continue;
+    }
+
+    const targetKey = `${parsed.provider}:${normalizedValue}`;
+    const existingTarget = targetsByKey.get(targetKey);
+    if (existingTarget) {
+      existingTarget.linkIds.push(link.id);
+      continue;
+    }
+
+    targetsByKey.set(targetKey, {
+      linkIds: [link.id],
+      normalizedValue,
+      provider: parsed.provider,
+      value: normalizedValue,
+    });
+  }
+
+  const x: SignalEntityEnrichmentTarget[] = [];
+  const github: SignalEntityEnrichmentTarget[] = [];
+  for (const target of targetsByKey.values()) {
+    const providerTargets = target.provider === "x" ? x : github;
+    if (providerTargets.length >= MAX_ENRICHMENT_TARGETS_PER_PROVIDER) {
+      for (const linkId of target.linkIds) {
+        const link = rows.find((row) => row.id === linkId);
+        if (link) {
+          skipped.push(skippedTarget(link, "over_cap"));
+        }
+      }
+      continue;
+    }
+    providerTargets.push(target);
+  }
+
+  return { github, skipped, x };
+}
+
 export async function listSignalEntityLinksForSignal(
   db: Database,
   input: { clerkOrgId: string; signalId: string }
@@ -472,6 +581,79 @@ function inferProfileUrlProvider(
     return "website";
   }
   return;
+}
+
+function enrichmentTargetFromLink(
+  link: SignalEntityLink
+):
+  | { provider: "x" | "github"; value: string }
+  | { reason: SignalEntityEnrichmentSkippedTarget["reason"] } {
+  if (link.resolvedPersonId) {
+    return { reason: "already_resolved" };
+  }
+
+  if (link.mentionKind === "handle") {
+    const trimmed = link.anchorText.trim();
+    return trimmed.startsWith("@")
+      ? { provider: "x", value: trimmed.replace(/^@/, "") }
+      : { reason: "ambiguous_handle" };
+  }
+
+  if (link.mentionKind !== "profile_url") {
+    return { reason: "unsupported_mention_kind" };
+  }
+
+  return profileEnrichmentTargetFromUrl(link.anchorText) ?? {
+    reason: "unsupported_profile_url",
+  };
+}
+
+function profileEnrichmentTargetFromUrl(
+  value: string
+): { provider: "x" | "github"; value: string } | undefined {
+  let url: URL;
+  try {
+    url = new URL(value.trim());
+  } catch {
+    return;
+  }
+
+  if (!(url.protocol === "https:" || url.protocol === "http:")) {
+    return;
+  }
+
+  const host = url.hostname.toLowerCase().replace(/^www\./, "");
+  const pathSegments = url.pathname.split("/").filter(Boolean);
+  const profilePathSegment = pathSegments[0];
+  if (pathSegments.length !== 1 || !profilePathSegment) {
+    return;
+  }
+
+  if (host === "x.com" || host === "twitter.com") {
+    const normalizedSegment = profilePathSegment.toLowerCase();
+    if (RESERVED_X_TWITTER_PATH_SEGMENTS.has(normalizedSegment)) {
+      return;
+    }
+    return { provider: "x", value: profilePathSegment };
+  }
+
+  if (host === "github.com") {
+    return { provider: "github", value: profilePathSegment };
+  }
+
+  return;
+}
+
+function skippedTarget(
+  link: SignalEntityLink,
+  reason: SignalEntityEnrichmentSkippedTarget["reason"]
+): SignalEntityEnrichmentSkippedTarget {
+  return {
+    anchorText: link.anchorText,
+    linkId: link.id,
+    mentionKind: link.mentionKind,
+    reason,
+  };
 }
 
 function toResolvedPerson(row: {

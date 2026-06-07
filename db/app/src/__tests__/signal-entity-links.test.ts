@@ -10,6 +10,7 @@ import {
 import { createPersonIdentityKey } from "../utils/people-identities";
 import {
   buildSignalEntityLinkResolutionHints,
+  listSignalEntityEnrichmentTargets,
   listSignalEntityLinksForSignal,
   reconcileSignalEntityLinksForPeople,
   replaceSignalEntityLinks,
@@ -274,6 +275,28 @@ function makeListDb(rows: SignalEntityLinkListRow[]) {
   return { db: db as unknown as Database, spies };
 }
 
+function makeTargetDb(rows: SignalEntityLink[]) {
+  const spies = {
+    orderBy: vi.fn(() => Promise.resolve(rows)),
+    where: vi.fn(() => ({ orderBy: spies.orderBy })),
+  };
+  const db = {
+    select: () => ({
+      from: (table: unknown) => {
+        if (table !== signalEntityLinksTable) {
+          throw new Error("Unexpected table in signal enrichment target test.");
+        }
+
+        return {
+          where: spies.where,
+        };
+      },
+    }),
+  };
+
+  return { db: db as unknown as Database, spies };
+}
+
 describe("replaceSignalEntityLinks", () => {
   it("replaces links idempotently and resolves an unambiguous name", async () => {
     const person = makePerson();
@@ -373,6 +396,88 @@ describe("reconcileSignalEntityLinksForPeople", () => {
       resolvedAt: expect.any(Date),
       resolvedPersonId: person.publicId,
     });
+  });
+});
+
+describe("listSignalEntityEnrichmentTargets", () => {
+  it("derives capped provider targets from unresolved persisted links", async () => {
+    const { db, spies } = makeTargetDb([
+      makeLink({
+        id: 1,
+        anchorText: "@ava_ai",
+        mentionKind: "handle",
+        normalizedMentionValue: "ava_ai",
+      }),
+      makeLink({
+        id: 2,
+        anchorText: "https://x.com/ava_ai",
+        mentionKind: "profile_url",
+        normalizedMentionValue: "ava_ai",
+      }),
+      makeLink({
+        id: 3,
+        anchorText: "https://github.com/avachen",
+        mentionKind: "profile_url",
+        normalizedMentionValue: "avachen",
+      }),
+      makeLink({
+        id: 4,
+        anchorText: "Ava Chen",
+        mentionKind: "name",
+        normalizedMentionValue: "ava chen",
+      }),
+      makeLink({
+        id: 5,
+        anchorText: "ava@example.com",
+        mentionKind: "email",
+        normalizedMentionValue: "ava@example.com",
+      }),
+      makeLink({
+        id: 6,
+        anchorText: "https://linkedin.com/in/ava",
+        mentionKind: "profile_url",
+        normalizedMentionValue: "ava",
+      }),
+      makeLink({
+        id: 7,
+        anchorText: "ava_ai",
+        mentionKind: "handle",
+        normalizedMentionValue: "ava_ai",
+      }),
+    ]);
+
+    await expect(
+      listSignalEntityEnrichmentTargets(db, {
+        clerkOrgId: "org_test",
+        signalId,
+      })
+    ).resolves.toMatchObject({
+      github: [
+        {
+          linkIds: [3],
+          normalizedValue: "avachen",
+          provider: "github",
+          value: "avachen",
+        },
+      ],
+      skipped: expect.arrayContaining([
+        expect.objectContaining({ linkId: 4, reason: "unsupported_mention_kind" }),
+        expect.objectContaining({ linkId: 5, reason: "unsupported_mention_kind" }),
+        expect.objectContaining({ linkId: 6, reason: "unsupported_profile_url" }),
+        expect.objectContaining({ linkId: 7, reason: "ambiguous_handle" }),
+      ]),
+      x: [
+        {
+          linkIds: [1, 2],
+          normalizedValue: "ava_ai",
+          provider: "x",
+          value: "ava_ai",
+        },
+      ],
+    });
+
+    expect(spies.where).toHaveBeenCalledTimes(1);
+    expect(spies.orderBy).toHaveBeenCalledTimes(1);
   });
 });
 
