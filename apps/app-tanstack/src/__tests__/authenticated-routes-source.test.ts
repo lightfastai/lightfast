@@ -523,6 +523,9 @@ describe("app-tanstack authenticated route migration", () => {
     expect(assistantClientSource).toContain("DefaultChatTransport");
     expect(assistantClientSource).toContain("useParams({ strict: false })");
     expect(assistantClientSource).toContain("useRouter");
+    expect(assistantClientSource).toContain(
+      'to: "/$slug/chat/$conversationId"'
+    );
     expect(assistantClientSource).toContain("router.invalidate()");
     expect(assistantClientSource).toContain(
       "createConversation.mutationOptions"

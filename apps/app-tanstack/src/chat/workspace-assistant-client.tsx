@@ -42,6 +42,7 @@ export function WorkspaceAssistantClient({
   initialConversation,
 }: WorkspaceAssistantClientProps) {
   const params = useParams({ strict: false });
+  const orgSlug = typeof params.slug === "string" ? params.slug : undefined;
   const router = useRouter();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -116,6 +117,7 @@ export function WorkspaceAssistantClient({
       if (!conversationCreatedRef.current) {
         setCreationError(undefined);
         setOptimisticFirstMessage(createOptimisticUserMessage(nextText));
+        replaceBrowserChatUrl(orgSlug, conversationId);
         try {
           await createConversation.mutateAsync({
             publicId: conversationId,
@@ -124,7 +126,7 @@ export function WorkspaceAssistantClient({
           conversationCreatedRef.current = true;
           void queryClient.invalidateQueries(listConversationsQueryFilter);
         } catch (error) {
-          replaceBrowserChatUrl(params.slug);
+          replaceBrowserChatUrl(orgSlug);
           setOptimisticFirstMessage(null);
           setCreationError(
             error instanceof Error
@@ -150,8 +152,15 @@ export function WorkspaceAssistantClient({
       }
       setText("");
       if (!initialConversation) {
-        replaceBrowserChatUrl(params.slug, conversationId);
-        await router.invalidate();
+        if (orgSlug) {
+          await router.navigate({
+            params: { conversationId, slug: orgSlug },
+            replace: true,
+            to: "/$slug/chat/$conversationId",
+          });
+        } else {
+          await router.invalidate();
+        }
       }
     },
     [
@@ -159,7 +168,7 @@ export function WorkspaceAssistantClient({
       createConversation.mutateAsync,
       initialConversation,
       listConversationsQueryFilter,
-      params.slug,
+      orgSlug,
       queryClient,
       router,
       sendMessage,
@@ -247,7 +256,12 @@ function replaceBrowserChatUrl(
   const nextPath = conversationId
     ? `/${orgSlug}/chat/${conversationId}`
     : `/${orgSlug}/chat`;
-  window.history.replaceState({}, "", nextPath);
+  History.prototype.replaceState.call(
+    window.history,
+    window.history.state,
+    "",
+    nextPath
+  );
 }
 
 function EmptyChatState({ composer }: { composer: React.ReactNode }) {

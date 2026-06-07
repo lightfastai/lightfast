@@ -9,19 +9,19 @@ function source(path: string) {
 }
 
 describe("workspace assistant client", () => {
-  it("creates a conversation before navigating to its detail URL", () => {
+  it("writes the preallocated detail URL before creating the first conversation", () => {
     const clientSource = source("src/chat/workspace-assistant-client.tsx");
+    const detailUrlIndex = clientSource.indexOf(
+      "replaceBrowserChatUrl(orgSlug, conversationId)"
+    );
     const createConversationIndex = clientSource.indexOf(
       "await createConversation.mutateAsync"
     );
-    const detailUrlIndex = clientSource.indexOf(
-      "replaceBrowserChatUrl(params.slug, conversationId)"
-    );
     const sendMessageIndex = clientSource.indexOf("await sendMessage");
 
+    expect(detailUrlIndex).toBeGreaterThan(-1);
     expect(createConversationIndex).toBeGreaterThan(-1);
-    expect(detailUrlIndex).toBeGreaterThan(createConversationIndex);
+    expect(detailUrlIndex).toBeLessThan(createConversationIndex);
     expect(sendMessageIndex).toBeGreaterThan(createConversationIndex);
-    expect(detailUrlIndex).toBeGreaterThan(sendMessageIndex);
   });
 });
