@@ -14,7 +14,8 @@ export const Route = createFileRoute(
     ],
   }),
   validateSearch: (search) => ({
-    return_to: typeof search.return_to === "string" ? search.return_to : undefined,
+    return_to:
+      typeof search.return_to === "string" ? search.return_to : undefined,
   }),
   component: GithubAccountCompletePage,
 });

@@ -9,7 +9,8 @@ const isDev =
   env.NEXT_PUBLIC_VERCEL_ENV === undefined ||
   env.NEXT_PUBLIC_VERCEL_ENV === "development";
 
-const isBuildPhase = process.env.npm_lifecycle_event?.includes("build") ?? false;
+const isBuildPhase =
+  process.env.npm_lifecycle_event?.includes("build") ?? false;
 
 function originFromUrl(value: string | undefined) {
   if (!value) {

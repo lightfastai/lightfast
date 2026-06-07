@@ -24,7 +24,8 @@ const toUIMessageStreamResponseMock = vi.fn();
 const toolMock = vi.fn();
 
 vi.mock("~/server/chat/auth", () => ({
-  resolveWorkspaceAssistantAuthContext: resolveWorkspaceAssistantAuthContextMock,
+  resolveWorkspaceAssistantAuthContext:
+    resolveWorkspaceAssistantAuthContextMock,
 }));
 
 vi.mock("@api/app/services/skills", () => ({
@@ -265,14 +266,13 @@ describe("workspace assistant chat server route", () => {
       metadataSchema: { kind: "metadata-schema" },
       tools: expect.any(Object),
     });
-    expect(getWorkspaceAssistantConversationByPublicIdMock).toHaveBeenCalledWith(
-      expect.anything(),
-      {
-        clerkOrgId: "org_123",
-        createdByUserId: "user_123",
-        publicId: "conv_123",
-      }
-    );
+    expect(
+      getWorkspaceAssistantConversationByPublicIdMock
+    ).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_123",
+      createdByUserId: "user_123",
+      publicId: "conv_123",
+    });
     expect(appendWorkspaceAssistantMessageMock).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({

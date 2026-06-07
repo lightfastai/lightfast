@@ -43,9 +43,7 @@ export const approveMcpAuthorization = createServerFn({ method: "POST" })
     const { approveMcpAuthorizationRequest } = await import(
       "./mcp-consent.server"
     );
-    return approveMcpAuthorizationRequest(
-      data satisfies McpAuthorizationInput
-    );
+    return approveMcpAuthorizationRequest(data satisfies McpAuthorizationInput);
   });
 
 export const denyMcpAuthorization = createServerFn({ method: "POST" })
@@ -54,9 +52,7 @@ export const denyMcpAuthorization = createServerFn({ method: "POST" })
     const { denyMcpAuthorizationRequest } = await import(
       "./mcp-consent.server"
     );
-    return denyMcpAuthorizationRequest(
-      data satisfies McpAuthorizationInput
-    );
+    return denyMcpAuthorizationRequest(data satisfies McpAuthorizationInput);
   });
 
 function validateMcpAuthorizeSearchInput(input: unknown) {

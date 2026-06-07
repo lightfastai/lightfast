@@ -6,7 +6,8 @@ const resumeExistingStreamMock = vi.fn();
 const setWorkspaceAssistantConversationActiveStreamMock = vi.fn();
 
 vi.mock("~/server/chat/auth", () => ({
-  resolveWorkspaceAssistantAuthContext: resolveWorkspaceAssistantAuthContextMock,
+  resolveWorkspaceAssistantAuthContext:
+    resolveWorkspaceAssistantAuthContextMock,
 }));
 
 vi.mock("@db/app", () => ({
@@ -74,7 +75,9 @@ describe("workspace assistant stream resume route", () => {
     const response = await disabledHandler(createRequest(), "conv_123");
 
     expect(response.status).toBe(204);
-    expect(getWorkspaceAssistantConversationByPublicIdMock).not.toHaveBeenCalled();
+    expect(
+      getWorkspaceAssistantConversationByPublicIdMock
+    ).not.toHaveBeenCalled();
     expect(resumeExistingStreamMock).not.toHaveBeenCalled();
 
     vi.doUnmock("~/chat/resumable-stream-config");
@@ -92,14 +95,13 @@ describe("workspace assistant stream resume route", () => {
 
     const response = await enabledHandler(createRequest(), "conv_123");
 
-    expect(getWorkspaceAssistantConversationByPublicIdMock).toHaveBeenCalledWith(
-      expect.anything(),
-      {
-        clerkOrgId: "org_123",
-        createdByUserId: "user_123",
-        publicId: "conv_123",
-      }
-    );
+    expect(
+      getWorkspaceAssistantConversationByPublicIdMock
+    ).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_123",
+      createdByUserId: "user_123",
+      publicId: "conv_123",
+    });
     expect(resumeExistingStreamMock).toHaveBeenCalledWith("stream_123");
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("text/event-stream");

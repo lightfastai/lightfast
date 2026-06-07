@@ -1,5 +1,5 @@
-import { Link, useRouterState } from "@tanstack/react-router";
 import { Button } from "@repo/ui/components/ui/button";
+import { Link, useRouterState } from "@tanstack/react-router";
 
 export function AuthHeaderCta() {
   const { pathname, redirectUrl } = useRouterState({

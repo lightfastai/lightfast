@@ -13,9 +13,11 @@ describe("mapOtpClerkError", () => {
   });
 
   it("maps known Clerk OTP states to stable control-flow results", () => {
-    expect(mapOtpClerkError({ code: "verification_already_verified" })).toEqual({
-      kind: "success",
-    });
+    expect(mapOtpClerkError({ code: "verification_already_verified" })).toEqual(
+      {
+        kind: "success",
+      }
+    );
     expect(mapOtpClerkError({ code: "session_exists" })).toEqual({
       kind: "redirect",
       target: "/",

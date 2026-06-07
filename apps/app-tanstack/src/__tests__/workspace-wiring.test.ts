@@ -67,9 +67,7 @@ describe("app-tanstack workspace wiring", () => {
       "utf8"
     );
 
-    expect(setupScript).toContain(
-      "LIGHTFAST_VERCEL_PROJECT_ID_APP_TANSTACK"
-    );
+    expect(setupScript).toContain("LIGHTFAST_VERCEL_PROJECT_ID_APP_TANSTACK");
     expect(setupScript).toContain(
       "apps/app-tanstack|lightfast-app-tanstack|LIGHTFAST_VERCEL_PROJECT_ID_APP_TANSTACK"
     );

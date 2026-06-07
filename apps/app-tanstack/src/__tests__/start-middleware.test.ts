@@ -14,10 +14,12 @@ describe("app-tanstack start middleware", () => {
     const startSource = source("src/start.ts");
 
     expect(startSource).toContain("createCsrfMiddleware");
-    expect(startSource).toContain("ctx.handlerType === \"serverFn\"");
+    expect(startSource).toContain('ctx.handlerType === "serverFn"');
     expect(startSource).toContain("csrfMiddleware");
     expect(startSource).toContain("requestMiddleware: [");
-    expect(startSource).toContain("sentryGlobalRequestMiddleware,\n    csrfMiddleware,");
+    expect(startSource).toContain(
+      "sentryGlobalRequestMiddleware,\n    csrfMiddleware,"
+    );
   });
 
   it("classifies app-owned API routes that handle their own auth", () => {

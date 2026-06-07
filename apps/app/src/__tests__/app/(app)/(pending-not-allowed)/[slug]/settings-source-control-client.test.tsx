@@ -83,6 +83,8 @@ const boundBinding = {
   connectedAt: new Date("2026-05-29T01:02:03.000Z"),
   importedRepositoryCount: 2,
   lightfastRepository: null,
+  newLightfastRepositoryUrl:
+    "https://github.com/new?name=.lightfast&owner=acme-live",
   provider: "github" as const,
   providerLabel: "GitHub",
 };

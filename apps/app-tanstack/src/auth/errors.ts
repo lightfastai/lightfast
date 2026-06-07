@@ -9,16 +9,16 @@ export type MappedAuthError =
 
 const SUCCESS_REDIRECT = "/";
 
-type ClerkApiErrorShape = {
+interface ClerkApiErrorShape {
   code?: string;
   longMessage?: string;
   message?: string;
-};
+}
 
-type ClerkApiResponseErrorShape = {
+interface ClerkApiResponseErrorShape {
   errors: ClerkApiErrorShape[];
   retryAfter?: number;
-};
+}
 
 function asClerkAPIError(err: unknown): ClerkApiErrorShape | null {
   if (!err) {

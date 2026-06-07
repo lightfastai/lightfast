@@ -10,9 +10,9 @@ import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import * as React from "react";
+import { AuthShell } from "~/auth/components/auth-shell";
 import { CodeVerificationUI } from "~/auth/components/code-verification-ui";
 import { ErrorBanner } from "~/auth/components/error-banner";
-import { AuthShell } from "~/auth/components/auth-shell";
 import { authErrorMessage, mapOtpClerkError } from "~/auth/errors";
 import { makeFinalizeNavigate } from "~/auth/navigate";
 import { parseSafeAuthRedirectTarget } from "~/auth/redirect";
@@ -90,11 +90,7 @@ function SignInPage() {
 }
 
 function SignInView() {
-  const {
-    isLoaded: isSignInLoaded,
-    setActive,
-    signIn,
-  } = useSignIn();
+  const { isLoaded: isSignInLoaded, setActive, signIn } = useSignIn();
   const { isLoaded: isUserLoaded, isSignedIn } = useUser();
   const search = Route.useSearch();
   const redirectUrl = search.redirect_url;
@@ -235,7 +231,10 @@ function SignInView() {
               code: codeValue,
             })
         );
-        if (signInAttempt.status === "complete" && signInAttempt.createdSessionId) {
+        if (
+          signInAttempt.status === "complete" &&
+          signInAttempt.createdSessionId
+        ) {
           authBreadcrumb("OTP verified", "info", { mode: "sign-in" });
           setIsRedirecting(true);
           await setActive({
@@ -354,8 +353,8 @@ function SignInView() {
         {!hasError && view === "email" && (
           <form className="space-y-4" onSubmit={onSubmit}>
             <Input
-              autoComplete="email"
               aria-label="Email Address"
+              autoComplete="email"
               className="bg-background dark:bg-background"
               disabled={submitting || !authReady}
               name="email"

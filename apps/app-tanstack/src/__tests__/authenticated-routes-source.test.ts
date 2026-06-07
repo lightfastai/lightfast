@@ -306,9 +306,7 @@ describe("app-tanstack authenticated route migration", () => {
     expect(routeSource).toContain("createFileRoute");
     expect(routeSource).toContain("setSearchParams");
     expect(routeSource).toContain("developerConnections");
-    expect(clientSource).toContain(
-      "developerConnections.list.queryOptions"
-    );
+    expect(clientSource).toContain("developerConnections.list.queryOptions");
     expect(clientSource).toContain(
       "developerConnections.connect.mutationOptions"
     );

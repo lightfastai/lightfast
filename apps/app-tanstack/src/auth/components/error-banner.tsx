@@ -1,5 +1,5 @@
-import { Link } from "@tanstack/react-router";
 import { Button } from "@repo/ui/components/ui/button";
+import { Link } from "@tanstack/react-router";
 import { AUTH_ERROR_MESSAGES, type AuthErrorCode } from "../search-params";
 
 interface ErrorBannerProps {

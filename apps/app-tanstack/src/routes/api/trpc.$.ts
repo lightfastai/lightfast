@@ -1,13 +1,18 @@
+// biome-ignore-all lint/style/useFilenamingConvention: TanStack splat route files use $.ts.
 import { createFileRoute } from "@tanstack/react-router";
 
 const handleTrpcRequest = async (request: Request) => {
-  const [{ appRouter }, { fetchRequestHandler }, { createTanStackTRPCContext }, cors] =
-    await Promise.all([
-      import("@api/app"),
-      import("@trpc/server/adapters/fetch"),
-      import("~/trpc/context"),
-      import("~/cors"),
-    ]);
+  const [
+    { appRouter },
+    { fetchRequestHandler },
+    { createTanStackTRPCContext },
+    cors,
+  ] = await Promise.all([
+    import("@api/app"),
+    import("@trpc/server/adapters/fetch"),
+    import("~/trpc/context"),
+    import("~/cors"),
+  ]);
 
   const response = await fetchRequestHandler({
     endpoint: "/api/trpc",

@@ -51,7 +51,9 @@ export function CodeVerificationUI({
       <div className="space-y-4">
         <div className="flex flex-col items-center space-y-4">
           <InputOTP
-            aria-describedby={inlineError ? "verification-code-error" : undefined}
+            aria-describedby={
+              inlineError ? "verification-code-error" : undefined
+            }
             aria-invalid={!!inlineError}
             aria-label="Verification code"
             containerClassName="gap-2"

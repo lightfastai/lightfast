@@ -42,7 +42,9 @@ vi.mock("@repo/ai/workspace-assistant", () => ({
 }));
 
 vi.mock("@repo/ui/components/ai-elements/conversation", () => ({
-  Conversation: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  Conversation: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
   ConversationContent: ({ children }: { children?: ReactNode }) => (
     <div>{children}</div>
   ),

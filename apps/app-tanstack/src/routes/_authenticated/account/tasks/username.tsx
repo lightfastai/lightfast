@@ -12,7 +12,8 @@ export const Route = createFileRoute("/_authenticated/account/tasks/username")({
     ],
   }),
   validateSearch: (search) => ({
-    return_to: typeof search.return_to === "string" ? search.return_to : undefined,
+    return_to:
+      typeof search.return_to === "string" ? search.return_to : undefined,
   }),
   component: UsernameAccountTaskPage,
 });

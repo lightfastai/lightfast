@@ -47,7 +47,7 @@ describe("app-tanstack environment validation wiring", () => {
     expect(viteConfigSource).toContain("sentryClientDsn");
     expect(viteConfigSource).toContain("sentryServerDsn");
     expect(viteConfigSource).toContain("process.env.PORTLESS_URL");
-    expect(viteConfigSource).toContain("protocol: \"wss\"");
+    expect(viteConfigSource).toContain('protocol: "wss"');
     expect(viteConfigSource).toContain("env.VITE_CLERK_PUBLISHABLE_KEY");
     expect(viteConfigSource).toContain("env.VITE_VERCEL_ENV");
     expect(viteConfigSource).not.toContain(

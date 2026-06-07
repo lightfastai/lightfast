@@ -27,7 +27,9 @@ describe("app-tanstack CORS", () => {
     const { isAllowedWebOrigin } = await importCors();
 
     expect(
-      isAllowedWebOrigin("https://app-tanstack.app-tanstack.lightfast.localhost")
+      isAllowedWebOrigin(
+        "https://app-tanstack.app-tanstack.lightfast.localhost"
+      )
     ).toBe(true);
   });
 
