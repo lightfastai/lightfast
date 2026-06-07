@@ -378,8 +378,12 @@ function makeProjectionDb(input: {
   graphPeople: EntityPerson[];
   projectedPeople: Person[];
   sourceIdentities: EntitySourceIdentity[];
+  sourceIdentityResults?: EntitySourceIdentity[][];
 }) {
   const peopleQueue = [...input.projectedPeople];
+  const sourceIdentityQueue = [
+    ...(input.sourceIdentityResults ?? [input.sourceIdentities]),
+  ];
   const spies = {
     duplicateSet: vi.fn(),
     graphPeopleLimit: vi.fn(() => Promise.resolve(input.graphPeople)),
@@ -388,7 +392,12 @@ function makeProjectionDb(input: {
     peopleLimit: vi.fn(() =>
       Promise.resolve([peopleQueue.shift()].filter(Boolean))
     ),
-    sourceIdentityLimit: vi.fn(() => Promise.resolve(input.sourceIdentities)),
+    sourceIdentityLimit: vi.fn(
+      () =>
+        Promise.resolve(
+          sourceIdentityQueue.shift() ?? input.sourceIdentities
+        ) as Promise<EntitySourceIdentity[]>
+    ),
   };
   const db = {
     insert: () => ({
@@ -573,6 +582,66 @@ describe("projectEntityGraphPeopleToOrgPeople", () => {
       ])
     );
     expect(query.params).not.toContain("%x:handle:ava%");
+  });
+
+  it("hydrates canonical graph aliases before choosing the bridge identity", async () => {
+    const xSource = makeSourceIdentity();
+    const githubSource = makeSourceIdentity({
+      id: 2,
+      publicId: "sid_223e4567-e89b-12d3-a456-426614174000",
+      provider: "github",
+      identityKey: "github:handle:avachen",
+      identityValue: "avachen",
+      normalizedValue: "avachen",
+    });
+    const graphPerson = makeEntityPerson({
+      primarySourceIdentityId: githubSource.id,
+    });
+    const githubRow = makePerson({
+      displayName: "Ava Chen",
+      identityProvider: "github",
+      identityType: "handle",
+      identityValue: "avachen",
+      normalizedIdentityValue: "avachen",
+      identityKey: createPersonIdentityKey({
+        identityProvider: "github",
+        identityType: "handle",
+        normalizedIdentityValue: "avachen",
+      }),
+      metadata: {
+        entityGraph: expect.any(Object),
+      },
+      personSource: "entity_graph",
+    });
+    const { db, spies } = makeProjectionDb({
+      graphPeople: [graphPerson],
+      projectedPeople: [githubRow],
+      sourceIdentities: [xSource, githubSource],
+      sourceIdentityResults: [[xSource], [xSource, githubSource]],
+    });
+
+    await expect(
+      projectEntityGraphPeopleToOrgPeople(db, {
+        clerkOrgId: "org_test",
+        resolverVersion: "signal-entity-enrichment-v1",
+        sourceIdentityKeys: [xSource.identityKey],
+      })
+    ).resolves.toEqual([githubRow]);
+
+    expect(spies.sourceIdentityLimit).toHaveBeenCalledTimes(2);
+    expect(spies.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        identityProvider: "github",
+        identityType: "handle",
+        identityValue: "avachen",
+        metadata: {
+          entityGraph: expect.objectContaining({
+            sourceIdentityKey: githubSource.identityKey,
+            sourceIdentityKeys: [xSource.identityKey, githubSource.identityKey],
+          }),
+        },
+      })
+    );
   });
 });
 

@@ -244,11 +244,17 @@ export async function projectEntityGraphPeopleToOrgPeople(
     clerkOrgId: input.clerkOrgId,
     sourceIdentities: bridgeableSourceIdentities,
   });
+  const canonicalSourceIdentities =
+    await loadCanonicalSourceIdentitiesForGraphPeople(db, {
+      clerkOrgId: input.clerkOrgId,
+      graphPeople,
+      sourceIdentities: bridgeableSourceIdentities,
+    });
   const projectedPeople: Person[] = [];
   const seenBridgeIdentityKeys = new Set<string>();
 
   for (const graphPerson of graphPeople) {
-    const graphPersonSourceIdentities = bridgeableSourceIdentities.filter(
+    const graphPersonSourceIdentities = canonicalSourceIdentities.filter(
       (sourceIdentity) =>
         graphPersonContainsSourceIdentity(graphPerson, sourceIdentity)
     );
@@ -395,6 +401,50 @@ async function loadGraphPeopleForSourceIdentities(
       )
     )
     .limit(100);
+}
+
+async function loadCanonicalSourceIdentitiesForGraphPeople(
+  db: Database,
+  input: {
+    clerkOrgId: string;
+    graphPeople: EntityPerson[];
+    sourceIdentities: BridgeableGraphSourceIdentity[];
+  }
+): Promise<BridgeableGraphSourceIdentity[]> {
+  const sourceIdentityKeys = Array.from(
+    new Set(
+      input.graphPeople.flatMap((graphPerson) =>
+        canonicalPersonKeyMembers(graphPerson.canonicalKey)
+      )
+    )
+  );
+  const sourceIdentitiesById = new Map(
+    input.sourceIdentities.map((sourceIdentity) => [
+      sourceIdentity.id,
+      sourceIdentity,
+    ])
+  );
+
+  if (sourceIdentityKeys.length > 0) {
+    const rows = await db
+      .select()
+      .from(orgEntitySourceIdentities)
+      .where(
+        and(
+          eq(orgEntitySourceIdentities.clerkOrgId, input.clerkOrgId),
+          inArray(orgEntitySourceIdentities.identityKey, sourceIdentityKeys)
+        )
+      )
+      .limit(sourceIdentityKeys.length);
+
+    for (const sourceIdentity of rows) {
+      if (isBridgeableGraphSourceIdentity(sourceIdentity)) {
+        sourceIdentitiesById.set(sourceIdentity.id, sourceIdentity);
+      }
+    }
+  }
+
+  return [...sourceIdentitiesById.values()];
 }
 
 function graphPersonContainsSourceIdentity(

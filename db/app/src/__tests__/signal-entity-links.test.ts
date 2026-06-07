@@ -454,6 +454,69 @@ describe("reconcileSignalEntityLinksForPeople", () => {
       resolvedPersonId: projectedPerson.publicId,
     });
   });
+
+  it("moves stale resolved aliases onto the canonical graph-projected People row", async () => {
+    const projectedPerson = makePerson({
+      displayName: "Ava Chen",
+      identityProvider: "github",
+      identityType: "handle",
+      identityValue: "avachen",
+      normalizedIdentityValue: "avachen",
+      identityKey: createPersonIdentityKey({
+        identityProvider: "github",
+        identityType: "handle",
+        normalizedIdentityValue: "avachen",
+      }),
+      metadata: {
+        entityGraph: {
+          sourceIdentities: [
+            {
+              identityKey: "x:handle:ava_ai",
+              identityType: "handle",
+              identityValue: "ava_ai",
+              normalizedValue: "ava_ai",
+              provider: "x",
+              publicId: "sid_x",
+            },
+            {
+              identityKey: "github:handle:avachen",
+              identityType: "handle",
+              identityValue: "avachen",
+              normalizedValue: "avachen",
+              provider: "github",
+              publicId: "sid_github",
+            },
+          ],
+        },
+      },
+      personSource: "entity_graph",
+      publicId: "person_canonical",
+    });
+    const staleLink = makeLink({
+      anchorText: "@ava_ai",
+      label: "@ava_ai",
+      mentionKind: "handle",
+      normalizedMentionValue: "ava_ai",
+      resolvedAt: new Date("2026-06-06T01:00:00.000Z"),
+      resolvedPersonId: "person_duplicate",
+    });
+    const { db, spies } = makeReconcileDb({
+      peopleResults: [[]],
+      unresolvedBatches: [[staleLink]],
+    });
+
+    await expect(
+      reconcileSignalEntityLinksForPeople(db, {
+        clerkOrgId: "org_test",
+        people: [projectedPerson],
+      })
+    ).resolves.toEqual({ resolved: 1 });
+
+    expect(spies.updateSet).toHaveBeenCalledWith({
+      resolvedAt: expect.any(Date),
+      resolvedPersonId: projectedPerson.publicId,
+    });
+  });
 });
 
 describe("listSignalEntityEnrichmentTargets", () => {

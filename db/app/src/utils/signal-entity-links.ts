@@ -1,5 +1,5 @@
 import type { SignalEntityLinkCandidate } from "@repo/ai/signal-entity-linker";
-import { and, asc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, sql } from "drizzle-orm";
 
 import type { Database } from "../client";
 import {
@@ -275,13 +275,12 @@ export async function reconcileSignalEntityLinksForPeople(
   let lastSeenLinkId = 0;
 
   while (true) {
-    const unresolvedLinks = await db
+    const matchingLinks = await db
       .select()
       .from(signalEntityLinks)
       .where(
         and(
           eq(signalEntityLinks.clerkOrgId, input.clerkOrgId),
-          isNull(signalEntityLinks.resolvedPersonId),
           inArray(signalEntityLinks.normalizedMentionValue, normalizedValues),
           gt(signalEntityLinks.id, lastSeenLinkId)
         )
@@ -289,11 +288,11 @@ export async function reconcileSignalEntityLinksForPeople(
       .orderBy(asc(signalEntityLinks.id))
       .limit(SIGNAL_ENTITY_LINK_RECONCILE_BATCH_SIZE);
 
-    if (unresolvedLinks.length === 0) {
+    if (matchingLinks.length === 0) {
       break;
     }
 
-    const linkHints = unresolvedLinks.map((link) => ({
+    const linkHints = matchingLinks.map((link) => ({
       hints: buildSignalEntityLinkResolutionHints(link),
       link,
     }));
@@ -309,6 +308,9 @@ export async function reconcileSignalEntityLinksForPeople(
       if (!resolvedPerson) {
         continue;
       }
+      if (link.resolvedPersonId === resolvedPerson.publicId) {
+        continue;
+      }
 
       const result = await db
         .update(signalEntityLinks)
@@ -318,14 +320,14 @@ export async function reconcileSignalEntityLinksForPeople(
         })
         .where(
           and(
-            eq(signalEntityLinks.id, link.id),
-            isNull(signalEntityLinks.resolvedPersonId)
+            eq(signalEntityLinks.clerkOrgId, input.clerkOrgId),
+            eq(signalEntityLinks.id, link.id)
           )
         );
       resolved += getRowsAffected(result);
     }
 
-    if (unresolvedLinks.length < SIGNAL_ENTITY_LINK_RECONCILE_BATCH_SIZE) {
+    if (matchingLinks.length < SIGNAL_ENTITY_LINK_RECONCILE_BATCH_SIZE) {
       break;
     }
   }
