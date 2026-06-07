@@ -41,6 +41,8 @@
         "GITHUB_APP_WEBHOOK_SECRET",
         "LINEAR_CLIENT_ID",
         "LINEAR_CLIENT_SECRET",
+        "X_CLIENT_ID",
+        "X_CLIENT_SECRET",
         "DATABASE_HOST",
         "DATABASE_USERNAME",
         "DATABASE_PASSWORD",

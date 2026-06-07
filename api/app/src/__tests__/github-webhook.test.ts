@@ -7,6 +7,8 @@ const markDeliveryMock = vi.fn();
 const recordDeliveryMock = vi.fn();
 const recordPrDeliveryMock = vi.fn();
 const inngestSendMock = vi.fn();
+const logErrorMock = vi.fn();
+const logWarnMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 
@@ -27,6 +29,13 @@ vi.mock("../env", () => ({
 vi.mock("../inngest/client", () => ({
   inngest: {
     send: inngestSendMock,
+  },
+}));
+
+vi.mock("@vendor/observability/log/next", () => ({
+  log: {
+    error: logErrorMock,
+    warn: logWarnMock,
   },
 }));
 
@@ -115,6 +124,42 @@ describe("handleGitHubWebhook", () => {
     recordDeliveryMock.mockReset();
     recordPrDeliveryMock.mockReset();
     inngestSendMock.mockReset();
+    logErrorMock.mockReset();
+    logWarnMock.mockReset();
+  });
+
+  it("logs missing webhook secret as a configuration rejection", async () => {
+    const { env } = await import("../env");
+    const originalSecret = env.GITHUB_APP_WEBHOOK_SECRET;
+    (
+      env as {
+        GITHUB_APP_WEBHOOK_SECRET?: string;
+      }
+    ).GITHUB_APP_WEBHOOK_SECRET = "";
+
+    try {
+      const { handleGitHubWebhook } = await import(
+        "../services/github/webhook"
+      );
+      const res = await handleGitHubWebhook({
+        request: signedRequest(pushPayload),
+      });
+
+      expect(res.status).toBe(500);
+      expect(recordDeliveryMock).not.toHaveBeenCalled();
+      expect(logErrorMock).toHaveBeenCalledWith("[github-webhook] rejected", {
+        deliveryId: "delivery-1",
+        event: "push",
+        reason: "missing_webhook_secret",
+        status: 500,
+      });
+    } finally {
+      (
+        env as {
+          GITHUB_APP_WEBHOOK_SECRET?: string;
+        }
+      ).GITHUB_APP_WEBHOOK_SECRET = originalSecret;
+    }
   });
 
   it("rejects invalid signatures before durable work", async () => {
@@ -136,6 +181,12 @@ describe("handleGitHubWebhook", () => {
 
     expect(res.status).toBe(401);
     expect(recordDeliveryMock).not.toHaveBeenCalled();
+    expect(logWarnMock).toHaveBeenCalledWith("[github-webhook] rejected", {
+      deliveryId: "delivery-1",
+      event: "push",
+      reason: "invalid_signature",
+      status: 401,
+    });
   });
 
   it("rejects missing signatures as unauthorized before durable work", async () => {
@@ -156,6 +207,12 @@ describe("handleGitHubWebhook", () => {
 
     expect(res.status).toBe(401);
     expect(recordDeliveryMock).not.toHaveBeenCalled();
+    expect(logWarnMock).toHaveBeenCalledWith("[github-webhook] rejected", {
+      deliveryId: "delivery-1",
+      event: "push",
+      reason: "missing_signature",
+      status: 401,
+    });
   });
 
   it("returns 400 for signed malformed JSON", async () => {
@@ -182,6 +239,12 @@ describe("handleGitHubWebhook", () => {
 
     expect(res.status).toBe(400);
     expect(recordDeliveryMock).not.toHaveBeenCalled();
+    expect(logWarnMock).toHaveBeenCalledWith("[github-webhook] rejected", {
+      deliveryId: "delivery-1",
+      event: "push",
+      reason: "malformed_json",
+      status: 400,
+    });
   });
 
   it("rejects signed push payloads with malformed routing fields before durable work", async () => {

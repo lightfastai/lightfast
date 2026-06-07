@@ -114,4 +114,14 @@ describe("local env overrides", () => {
       ])
     );
   });
+
+  it("passes X connector server env through the app production build", () => {
+    const appTurbo = readJson<{
+      tasks: { build: { passThroughEnv: string[] } };
+    }>("apps/app/turbo.json");
+
+    expect(appTurbo.tasks.build.passThroughEnv).toEqual(
+      expect.arrayContaining(["X_CLIENT_ID", "X_CLIENT_SECRET"])
+    );
+  });
 });
