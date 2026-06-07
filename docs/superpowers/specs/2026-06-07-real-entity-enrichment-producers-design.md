@@ -10,6 +10,8 @@ The first real-life system should enrich every external X/GitHub profile that Li
 
 Exa/web enrichment and a full migration of signal entity links to canonical `orgEntityPeople` are out of scope for this slice and should be tracked as follow-up GitHub issues.
 
+The `orgPeople` projection is a temporary compatibility bridge. The long-term People product should be backed by canonical graph people, not by one compatibility row per identity.
+
 ## Goals
 
 - Convert observed X and GitHub profile payloads into the existing `EntityObservation` contract.
@@ -23,6 +25,7 @@ Exa/web enrichment and a full migration of signal entity links to canonical `org
 
 - Do not add Exa/web search enrichment in this slice.
 - Do not migrate `orgSignalEntityLinks.resolvedPersonId` to `orgEntityPeople` in this slice.
+- Do not migrate the `/people` product surface from `orgPeople` to `orgEntityPeople` in this slice.
 - Do not build automated lead discovery, crawling, or "find similar people" features in this slice.
 - Do not require Gmail ingestion for this slice.
 - Do not depend on live X/GitHub APIs for the local reliability harness.
@@ -42,7 +45,7 @@ flowchart LR
 
 Provider clients and emulators only know provider payloads. The entity graph only knows normalized `EntityObservation` records. A new app service sits between them and owns normalization, event emission, idempotency, diagnostics, and compatibility projection.
 
-The graph remains canonical for enriched profile knowledge. `orgPeople` remains a compatibility table for existing signal links and People surfaces until the later migration is designed.
+The graph remains canonical for enriched profile knowledge. `orgPeople` remains a compatibility table for existing signal links and People surfaces until the later migration is designed. New product work should treat this bridge as transitional rather than expanding `orgPeople` as the permanent People model.
 
 ## Components
 
@@ -196,6 +199,7 @@ Create these issues after the design is accepted:
 
 1. Migrate signal entity links from `orgPeople` compatibility resolution to canonical `orgEntityPeople`.
 2. Add Exa/web enrichment as another observation producer behind the same adapter/emitter boundary.
+3. Migrate the `/people` product surface to canonical graph people, showing one graph person with multiple identities instead of one compatibility row per identity.
 
 ## Acceptance Criteria
 
@@ -205,4 +209,4 @@ Create these issues after the design is accepted:
 - Existing PR #839 signal entity links can resolve after projected people are created.
 - Repeated runs with the same input are idempotent and do not create noisy candidate versions.
 - No Exa key is required.
-- Deferred Exa and signal-link migration work is tracked separately.
+- Deferred Exa, signal-link migration, and People surface migration work is tracked separately.
