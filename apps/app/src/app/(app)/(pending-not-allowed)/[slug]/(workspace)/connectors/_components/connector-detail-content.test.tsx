@@ -1,11 +1,14 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ConnectorDetailContent } from "./connector-detail-content";
-import type { ConnectorCatalogRow } from "./connectors-model";
+import type {
+  ConnectorCatalogRow,
+  TeamConnectorCatalogRow,
+} from "./connectors-model";
 
 function connectedRow(
-  overrides: Partial<NonNullable<ConnectorCatalogRow["connection"]>> = {}
-): ConnectorCatalogRow {
+  overrides: Partial<NonNullable<TeamConnectorCatalogRow["connection"]>> = {}
+): TeamConnectorCatalogRow {
   return {
     availableForAutomations: true,
     builder: "Lightfast",
@@ -44,7 +47,7 @@ function connectedRow(
     description: "Find, create, and manage issues, projects in Linear.",
     displayName: "Linear",
     provider: "linear",
-  } as ConnectorCatalogRow;
+  } as TeamConnectorCatalogRow;
 }
 
 function connectedUserRow(): ConnectorCatalogRow {
