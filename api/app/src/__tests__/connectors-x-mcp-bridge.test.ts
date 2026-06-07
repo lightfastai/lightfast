@@ -50,7 +50,10 @@ vi.mock("../env", () => ({ env: envMock }));
 const { issueConnectorMcpToken } = await import(
   "../services/connectors/mcp-auth"
 );
-const { handleXConnectorMcpRequest } = await import(
+const {
+  getFreshXConnectorAccessToken,
+  handleXConnectorMcpRequest,
+} = await import(
   "../services/connectors/x-mcp-bridge"
 );
 
@@ -222,6 +225,30 @@ describe("X MCP bridge service", () => {
         input: {},
         name: "getUsersMe",
       })
+    );
+  });
+
+  it("exposes the shared fresh access-token helper", async () => {
+    await expect(
+      getFreshXConnectorAccessToken({
+        config: {
+          clientId: "x_client_test",
+          clientSecret: "x_secret_test",
+          endpoints: {
+            apiOrigin: "https://x.test",
+            mcpEndpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
+            oauthAuthorizeUrl: "https://x.test/i/oauth2/authorize",
+            oauthRevokeUrl: "https://x.test/2/oauth2/revoke",
+            oauthTokenUrl: "https://x.test/2/oauth2/token",
+          },
+        },
+        connection: connection(),
+      })
+    ).resolves.toBe("x_access_token");
+
+    expect(decryptMock).toHaveBeenCalledWith(
+      "encrypted_x_access",
+      envMock.ENCRYPTION_KEY
     );
   });
 

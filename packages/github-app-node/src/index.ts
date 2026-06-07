@@ -35,6 +35,8 @@ export {
 } from "./urls";
 export {
   type GitHubAuthenticatedUser,
+  type GitHubUserProfile,
   getGitHubAuthenticatedUser,
+  getGitHubUserByLogin,
 } from "./user";
 export { verifyGitHubWebhookSignature } from "./webhooks";
