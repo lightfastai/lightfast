@@ -101,11 +101,15 @@ const useSuspenseQueryMock = vi.fn();
 
 let connectorState: string | null = null;
 let errorState: string | null = null;
+let ownerScopeState: "team" | "personal" = "team";
 const setConnectorMock = vi.fn((value: string | null) => {
   connectorState = value;
 });
 const setErrorMock = vi.fn((value: string | null) => {
   errorState = value;
+});
+const setOwnerScopeMock = vi.fn((value: "team" | "personal") => {
+  ownerScopeState = value;
 });
 
 const capturedMutationOptions: Record<
@@ -189,9 +193,13 @@ vi.mock("@tanstack/react-query", () => ({
 }));
 
 vi.mock("nuqs", () => ({
+  parseAsStringLiteral: () => ({ withDefault: () => "mock-parser" }),
   useQueryState: (key: string) => {
     if (key === "error") {
       return [errorState, setErrorMock];
+    }
+    if (key === "scope") {
+      return [ownerScopeState, setOwnerScopeMock];
     }
     return [connectorState, setConnectorMock];
   },
@@ -531,8 +539,10 @@ beforeEach(() => {
   useSuspenseQueryMock.mockReset();
   connectorState = null;
   errorState = null;
+  ownerScopeState = "team";
   setConnectorMock.mockClear();
   setErrorMock.mockClear();
+  setOwnerScopeMock.mockClear();
   for (const key of Object.keys(capturedMutationOptions)) {
     delete capturedMutationOptions[key];
   }
@@ -571,7 +581,7 @@ beforeEach(() => {
 });
 
 describe("ConnectorsClient", () => {
-  it("renders team and personal connector sections with owner badges", () => {
+  it("renders the team section by default without an in-page ownership switcher", () => {
     renderClient(
       sections({
         teamConnectors: [connectedLinear()],
@@ -580,16 +590,38 @@ describe("ConnectorsClient", () => {
     );
 
     expect(
+      screen.queryByRole("tablist", { name: /connector ownership/i })
+    ).toBeNull();
+    expect(
       screen.getByRole("heading", { name: "Team connectors" })
     ).toBeVisible();
     expect(
-      screen.getByRole("heading", { name: "Your connectors" })
+      screen.getByText("Team", { selector: "[data-slot='badge']" })
     ).toBeVisible();
-    expect(screen.getByText("Team")).toBeVisible();
+    expect(screen.queryByText("Only you")).toBeNull();
+  });
+
+  it("renders the personal section from the shared ownership scope param", () => {
+    ownerScopeState = "personal";
+    renderClient(
+      sections({
+        teamConnectors: [connectedLinear()],
+        yourConnectors: [granolaRow()],
+      })
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Personal connectors" })
+    ).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Linear" })).toBeNull();
+    expect(
+      screen.queryByText("Team", { selector: "[data-slot='badge']" })
+    ).toBeNull();
     expect(screen.getByText("Only you")).toBeVisible();
   });
 
   it("renders user connector cards as private chat-only connectors", () => {
+    ownerScopeState = "personal";
     const { container } = renderClient(
       sections({
         teamConnectors: [connectedLinear()],
@@ -615,6 +647,7 @@ describe("ConnectorsClient", () => {
   });
 
   it("shows a user connector empty tools state instead of a blank tool row", () => {
+    ownerScopeState = "personal";
     const { container } = renderClient(
       sections({
         teamConnectors: [],
@@ -629,8 +662,8 @@ describe("ConnectorsClient", () => {
     ).toBeVisible();
   });
 
-  it("filters team and user connector sections independently", () => {
-    renderClient(
+  it("filters the active ownership view independently", () => {
+    const { rerender } = renderClient(
       sections({
         teamConnectors: [connectedLinear()],
         yourConnectors: [connectedGranola()],
@@ -645,11 +678,42 @@ describe("ConnectorsClient", () => {
     expect(
       screen.getByRole("heading", { name: "Team connectors" })
     ).toBeVisible();
-    expect(
-      screen.getByRole("heading", { name: "Your connectors" })
-    ).toBeVisible();
     expect(screen.queryByRole("heading", { name: "Linear" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Granola" })).toBeNull();
+    expect(
+      screen.getByText(/no connectors match these filters/i)
+    ).toBeVisible();
+
+    ownerScopeState = "personal";
+    useSuspenseQueryMock.mockReturnValue({
+      data: sections({
+        teamConnectors: [connectedLinear()],
+        yourConnectors: [connectedGranola()],
+      }),
+    });
+    rerender(<ConnectorsClient />);
+
+    expect(
+      screen.getByRole("heading", { name: "Personal connectors" })
+    ).toBeVisible();
     expect(screen.getByRole("heading", { name: "Granola" })).toBeVisible();
+  });
+
+  it("switches the shared scope to personal for a Granola callback", async () => {
+    useSuspenseQueryMock.mockReturnValue({
+      data: sections({
+        teamConnectors: [connectedLinear()],
+        yourConnectors: [connectedGranola()],
+      }),
+    });
+
+    render(
+      <ConnectorsClient callbackConnector="granola" callbackError={undefined} />
+    );
+
+    await waitFor(() => {
+      expect(setOwnerScopeMock).toHaveBeenCalledWith("personal");
+    });
   });
 
   it("renders the connected Linear card with tools, automation, and agent toggles", () => {
@@ -853,6 +917,7 @@ describe("ConnectorsClient", () => {
   });
 
   it("starts user connector connect through the viewer account mutation", () => {
+    ownerScopeState = "personal";
     const { container } = renderClient(
       sections({ teamConnectors: [], yourConnectors: [granolaRow()] })
     );
@@ -879,6 +944,7 @@ describe("ConnectorsClient", () => {
   });
 
   it("disconnects user connectors through the viewer account mutation", () => {
+    ownerScopeState = "personal";
     const { container } = renderClient(
       sections({
         teamConnectors: [],

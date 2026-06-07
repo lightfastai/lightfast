@@ -55,6 +55,7 @@ import {
   type UserConnectorCatalogRow,
   userConnectionStatus,
 } from "./connectors-model";
+import { connectorOwnerScopeParser } from "./connectors-search-params";
 
 type StatusFilter = "all" | "connected" | "available" | "needs_reconnect";
 
@@ -144,6 +145,10 @@ export function ConnectorsClient({
   });
   const teamConnectors = connectorSections.teamConnectors;
   const yourConnectors = connectorSections.yourConnectors;
+  const [ownerScope, setOwnerScope] = useQueryState(
+    "scope",
+    connectorOwnerScopeParser
+  );
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [callbackState] = useState(() => ({
@@ -206,6 +211,16 @@ export function ConnectorsClient({
     void setErrorParam(null);
   }, [callbackState.error, setErrorParam, setSelectedProvider]);
 
+  const shouldUsePersonalScope =
+    callbackConnector === "granola" || selectedProvider === "granola";
+
+  useEffect(() => {
+    if (shouldUsePersonalScope && ownerScope !== "personal") {
+      void setOwnerScope("personal");
+    }
+  }, [ownerScope, setOwnerScope, shouldUsePersonalScope]);
+
+  const ownerView = shouldUsePersonalScope ? "personal" : ownerScope;
   const normalizedQuery = query.trim().toLowerCase();
   const filteredTeamConnectors = useMemo(
     () =>
@@ -225,8 +240,27 @@ export function ConnectorsClient({
       ),
     [yourConnectors, normalizedQuery, statusFilter]
   );
-  const hasFilteredConnectors =
-    filteredTeamConnectors.length > 0 || filteredYourConnectors.length > 0;
+  const activeFilteredConnectors =
+    ownerView === "team" ? filteredTeamConnectors : filteredYourConnectors;
+  const activeConnectors =
+    ownerView === "team" ? teamConnectors : yourConnectors;
+  const activeSection =
+    ownerView === "team"
+      ? {
+          description: "Shared workspace connectors managed by admins.",
+          emptyLabel: "No team connectors are available yet.",
+          owner: "team" as const,
+          panelId: "team-connectors-panel",
+          title: "Team connectors",
+        }
+      : {
+          description:
+            "Private connectors connected to your account and available in your chats.",
+          emptyLabel: "No personal connectors are available yet.",
+          owner: "user" as const,
+          panelId: "personal-connectors-panel",
+          title: "Personal connectors",
+        };
 
   function connect(row: TeamConnectorCatalogRow) {
     if (isConnectableProvider(row.provider)) {
@@ -311,6 +345,7 @@ export function ConnectorsClient({
           <p className="mt-1 text-destructive/85">{callbackState.error}</p>
         </div>
       )}
+
       <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -339,14 +374,15 @@ export function ConnectorsClient({
         />
       </div>
 
-      {hasFilteredConnectors ? (
-        <div className="mt-6 flex flex-col gap-7">
-          <ConnectorSection
-            description="Shared workspace connectors managed by admins."
-            owner="team"
-            title="Team connectors"
-          >
-            {filteredTeamConnectors.length > 0 ? (
+      <div className="mt-6">
+        <ConnectorSection
+          description={activeSection.description}
+          owner={activeSection.owner}
+          panelId={activeSection.panelId}
+          title={activeSection.title}
+        >
+          {activeFilteredConnectors.length > 0 ? (
+            ownerView === "team" ? (
               filteredTeamConnectors.map((row) =>
                 row.connection ? (
                   <TeamConnectedConnectorCard
@@ -374,16 +410,6 @@ export function ConnectorsClient({
                 )
               )
             ) : (
-              <SectionEmptyState />
-            )}
-          </ConnectorSection>
-
-          <ConnectorSection
-            description="Private connectors only you can use in chats."
-            owner="user"
-            title="Your connectors"
-          >
-            {filteredYourConnectors.length > 0 ? (
               filteredYourConnectors.map((row) =>
                 row.connection ? (
                   <UserConnectedConnectorCard
@@ -403,16 +429,15 @@ export function ConnectorsClient({
                   />
                 )
               )
-            ) : (
-              <SectionEmptyState />
-            )}
-          </ConnectorSection>
-        </div>
-      ) : (
-        <p className="mt-6 text-muted-foreground text-sm">
-          No connectors match these filters.
-        </p>
-      )}
+            )
+          ) : (
+            <SectionEmptyState
+              emptyLabel={activeSection.emptyLabel}
+              hasCatalogConnectors={activeConnectors.length > 0}
+            />
+          )}
+        </ConnectorSection>
+      </div>
 
       <ConnectorDetailSheet
         onOpenChange={(open) => {
@@ -430,15 +455,25 @@ function ConnectorSection({
   children,
   description,
   owner,
+  panelId,
   title,
 }: {
   children: ReactNode;
   description: string;
   owner: "team" | "user";
+  panelId: string;
   title: string;
 }) {
+  const labelledBy =
+    owner === "team" ? "team-connectors-tab" : "personal-connectors-tab";
+
   return (
-    <section data-owner={owner}>
+    <section
+      aria-labelledby={labelledBy}
+      data-owner={owner}
+      id={panelId}
+      role="tabpanel"
+    >
       <h2 className="font-medium text-foreground text-sm">{title}</h2>
       <p className="mt-1 text-muted-foreground text-xs leading-relaxed">
         {description}
@@ -448,10 +483,16 @@ function ConnectorSection({
   );
 }
 
-function SectionEmptyState() {
+function SectionEmptyState({
+  emptyLabel,
+  hasCatalogConnectors,
+}: {
+  emptyLabel: string;
+  hasCatalogConnectors: boolean;
+}) {
   return (
     <p className="text-muted-foreground text-sm">
-      No connectors match these filters.
+      {hasCatalogConnectors ? "No connectors match these filters." : emptyLabel}
     </p>
   );
 }
