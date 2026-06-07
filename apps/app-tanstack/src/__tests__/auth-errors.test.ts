@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { authErrorMessage, mapOtpClerkError } from "./errors";
+import { authErrorMessage, mapOtpClerkError } from "~/auth/errors";
 
 describe("mapOtpClerkError", () => {
   it("maps account lookup failures to the stable account-not-found message", () => {

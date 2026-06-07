@@ -35,7 +35,7 @@ vi.mock("@vendor/lib", () => ({
   nanoid: () => "request_1",
 }));
 
-vi.mock("./log/next", () => ({
+vi.mock("../log/next", () => ({
   log: {
     debug: vi.fn(),
     error: logErrorMock,
@@ -44,7 +44,7 @@ vi.mock("./log/next", () => ({
   },
 }));
 
-const { createObservabilityMiddleware } = await import("./trpc");
+const { createObservabilityMiddleware } = await import("../trpc");
 
 describe("createObservabilityMiddleware", () => {
   beforeEach(() => {

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   isClerkOAuthContinuationUrl,
   parseSafeAuthRedirectTarget,
-} from "./redirect";
+} from "~/auth/redirect";
 
 describe("parseSafeAuthRedirectTarget", () => {
   it("accepts local app paths", () => {

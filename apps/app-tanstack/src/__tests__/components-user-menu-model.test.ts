@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { getUserMenuIdentity, SETTINGS_HREF } from "./user-menu-model";
+import { getUserMenuIdentity, SETTINGS_HREF } from "~/components/user-menu-model";
 
 const appRoot = resolve(import.meta.dirname, "../..");
 

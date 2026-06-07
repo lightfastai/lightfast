@@ -41,7 +41,7 @@ vi.mock("~/server/log", () => ({
 }));
 
 const { handleWorkspaceAssistantStreamRequest } = await import(
-  "./workspace-assistant-stream-route"
+  "~/server/chat/workspace-assistant-stream-route"
 );
 
 beforeEach(() => {
@@ -70,7 +70,7 @@ describe("workspace assistant stream resume route", () => {
       isResumableStreamEnabled: false,
     }));
     const { handleWorkspaceAssistantStreamRequest: disabledHandler } =
-      await import("./workspace-assistant-stream-route");
+      await import("~/server/chat/workspace-assistant-stream-route");
 
     const response = await disabledHandler(createRequest(), "conv_123");
 
@@ -89,7 +89,7 @@ describe("workspace assistant stream resume route", () => {
       isResumableStreamEnabled: true,
     }));
     const { handleWorkspaceAssistantStreamRequest: enabledHandler } =
-      await import("./workspace-assistant-stream-route");
+      await import("~/server/chat/workspace-assistant-stream-route");
     const stream = new ReadableStream<string>();
     resumeExistingStreamMock.mockResolvedValue(stream);
 
@@ -118,7 +118,7 @@ describe("workspace assistant stream resume route", () => {
       isResumableStreamEnabled: true,
     }));
     const { handleWorkspaceAssistantStreamRequest: enabledHandler } =
-      await import("./workspace-assistant-stream-route");
+      await import("~/server/chat/workspace-assistant-stream-route");
     resumeExistingStreamMock.mockResolvedValue(null);
 
     const response = await enabledHandler(createRequest(), "conv_123");

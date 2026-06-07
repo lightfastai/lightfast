@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   normalizeConnectorsSearch,
   validateConnectorsSearch,
-} from "./connectors-search-params";
+} from "~/connectors/connectors-search-params";
 
 describe("connectors search params", () => {
   it("preserves connector and error strings", () => {

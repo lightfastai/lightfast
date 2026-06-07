@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseAuthErrorCode, parseAuthErrorMessage } from "./search-params";
+import { parseAuthErrorCode, parseAuthErrorMessage } from "~/auth/search-params";
 
 describe("auth search param parsing", () => {
   it("preserves valid auth error codes and ignores unknown values", () => {

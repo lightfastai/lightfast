@@ -95,7 +95,7 @@ vi.mock("~/trpc/react", () => ({
   }),
 }));
 
-vi.mock("./chat-composer", () => ({
+vi.mock("~/chat/chat-composer", () => ({
   ChatComposer: ({
     error,
     onSubmit,
@@ -128,7 +128,7 @@ vi.mock("./chat-composer", () => ({
   ),
 }));
 
-vi.mock("./chat-message", () => ({
+vi.mock("~/chat/chat-message", () => ({
   ChatMessage: ({
     message,
   }: {
@@ -137,7 +137,7 @@ vi.mock("./chat-message", () => ({
 }));
 
 const { WorkspaceAssistantClient } = await import(
-  "./workspace-assistant-client"
+  "~/chat/workspace-assistant-client"
 );
 
 beforeEach(() => {

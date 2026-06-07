@@ -18,14 +18,14 @@ vi.mock("@vendor/inngest", () => ({
   NonRetriableError: class NonRetriableError extends Error {},
 }));
 
-vi.mock("./log/next", () => ({
+vi.mock("../log/next", () => ({
   log: {
     error: logErrorMock,
     info: vi.fn(),
   },
 }));
 
-const { createInngestObservabilityMiddleware } = await import("./inngest");
+const { createInngestObservabilityMiddleware } = await import("../inngest");
 
 describe("createInngestObservabilityMiddleware", () => {
   beforeEach(() => {

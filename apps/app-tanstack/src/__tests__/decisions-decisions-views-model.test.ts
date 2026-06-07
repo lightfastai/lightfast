@@ -1,44 +1,44 @@
 import { describe, expect, it } from "vitest";
 import {
-  allPeopleParamValues,
-  type PeopleViewConfig,
+  allDecisionsParamValues,
+  type DecisionViewConfig,
   selectionToConfig,
   viewConfigToParamValues,
-} from "./people-views-model";
+} from "~/decisions/decisions-views-model";
 
-describe("people views model", () => {
+describe("decisions views model", () => {
   it("serializes a saved view config into search param values", () => {
-    const config: PeopleViewConfig = {
+    const config: DecisionViewConfig = {
       filters: {
-        providers: ["github", "email"],
-        types: ["handle"],
+        providers: ["linear", "x"],
+        statuses: ["failed"],
       },
     };
 
     expect(viewConfigToParamValues(config)).toEqual({
-      provider: "github,email",
-      type: "handle",
+      provider: "linear,x",
+      status: "failed",
     });
   });
 
   it("captures the current filter selection as a saved view config", () => {
     expect(
       selectionToConfig({
-        providers: ["linkedin"],
-        types: ["profile_url", "email"],
+        providers: ["linear"],
+        statuses: ["running", "failed"],
       })
     ).toEqual({
       filters: {
-        providers: ["linkedin"],
-        types: ["profile_url", "email"],
+        providers: ["linear"],
+        statuses: ["running", "failed"],
       },
     });
   });
 
   it("clears all saved view params", () => {
-    expect(allPeopleParamValues()).toEqual({
+    expect(allDecisionsParamValues()).toEqual({
       provider: "",
-      type: "",
+      status: "",
     });
   });
 });

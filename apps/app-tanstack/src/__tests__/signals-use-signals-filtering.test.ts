@@ -5,8 +5,8 @@ import { describe, expect, it } from "vitest";
 import type {
   SignalClassificationFilters,
   SignalListItem,
-} from "./signals-model";
-import { useSignalsFiltering } from "./use-signals-filtering";
+} from "~/signals/signals-model";
+import { useSignalsFiltering } from "~/signals/use-signals-filtering";
 
 const NO_FILTERS: SignalClassificationFilters = {
   dispositions: [],

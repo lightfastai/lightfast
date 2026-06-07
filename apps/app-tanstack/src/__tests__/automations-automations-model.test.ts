@@ -3,7 +3,7 @@ import {
   type AutomationListItem,
   getAutomationSections,
   hasAutomations,
-} from "./automations-model";
+} from "~/automations/automations-model";
 
 function automation(
   overrides: Partial<AutomationListItem> = {}

@@ -4,7 +4,7 @@ import {
   type SignalViewConfig,
   selectionToConfig,
   viewConfigToParamValues,
-} from "./signals-views-model";
+} from "~/signals/signals-views-model";
 
 describe("signals views model", () => {
   it("serializes a saved view config into search param values", () => {

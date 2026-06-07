@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createTeamIdempotencyKey, normalizeTeamSlug } from "./team-name";
+import { createTeamIdempotencyKey, normalizeTeamSlug } from "~/account/team-name";
 
 describe("team name helpers", () => {
   it("normalizes team names to Clerk-compatible slugs", () => {

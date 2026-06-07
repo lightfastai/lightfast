@@ -112,7 +112,7 @@ vi.mock("~/server/log", () => ({
 }));
 
 const { handleWorkspaceAssistantChatRequest } = await import(
-  "./workspace-assistant-route"
+  "~/server/chat/workspace-assistant-route"
 );
 
 beforeEach(() => {

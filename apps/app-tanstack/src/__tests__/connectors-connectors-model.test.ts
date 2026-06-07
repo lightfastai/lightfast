@@ -7,7 +7,7 @@ import {
   isConnectDisabled,
   missingConfigFallback,
   missingConfigMessage,
-} from "./connectors-model";
+} from "~/connectors/connectors-model";
 
 function connector(
   overrides: Partial<ConnectorCatalogRow> = {}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { localAllowedDevOrigins } from "./local-dev-origins";
+import { localAllowedDevOrigins } from "~/local-dev-origins";
 
 describe("www local dev origins", () => {
   it("allows env-injected local aggregate and direct service hosts", () => {

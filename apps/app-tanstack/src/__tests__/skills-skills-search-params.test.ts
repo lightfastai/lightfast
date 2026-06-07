@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   normalizeSkillsSearch,
   validateSkillsSearch,
-} from "./skills-search-params";
+} from "~/skills/skills-search-params";
 
 describe("skills search params", () => {
   it("normalizes the selected skill into a nullable string", () => {

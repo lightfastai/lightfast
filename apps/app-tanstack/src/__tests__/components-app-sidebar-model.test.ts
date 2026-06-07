@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   getWorkspaceNavSections,
   isWorkspacePathActive,
-} from "./app-sidebar-model";
-import { usesRouteOwnedAuthenticatedShell } from "./authenticated-layout-model";
+} from "~/components/app-sidebar-model";
+import { usesRouteOwnedAuthenticatedShell } from "~/components/authenticated-layout-model";
 
 describe("workspace sidebar model", () => {
   it("builds the workspace navigation groups from the active slug", () => {

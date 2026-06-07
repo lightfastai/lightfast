@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { partitionViews, type ViewSwitcherItem } from "./partition-views";
+import { partitionViews, type ViewSwitcherItem } from "~/components/views/partition-views";
 
 function views(count: number): ViewSwitcherItem[] {
   return Array.from({ length: count }, (_, index) => ({

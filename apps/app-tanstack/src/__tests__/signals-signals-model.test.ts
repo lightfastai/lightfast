@@ -12,7 +12,7 @@ import {
   type SignalListItem,
   type SignalRow,
   signalMatchesFilters,
-} from "./signals-model";
+} from "~/signals/signals-model";
 
 const NO_FILTERS: SignalClassificationFilters = {
   dispositions: [],

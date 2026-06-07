@@ -6,7 +6,7 @@ import {
   serializeDecisionValues,
   toggleDecisionValue,
   validateDecisionsSearch,
-} from "./decisions-search-params";
+} from "~/decisions/decisions-search-params";
 
 describe("decisions search params", () => {
   it("normalizes route search values for the Decisions route", () => {

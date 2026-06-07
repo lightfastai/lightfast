@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { getRepositoryBlobUrl, getVisibleSkills } from "./skills-model";
-import type { Skill } from "./skills-types";
+import { getRepositoryBlobUrl, getVisibleSkills } from "~/skills/skills-model";
+import type { Skill } from "~/skills/skills-types";
 
 describe("skills model", () => {
   it("filters skills by validation status and case-insensitive query", () => {
