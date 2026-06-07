@@ -189,6 +189,7 @@ export function registerOAuth(app: Hono<AppEnv>, store: Store): void {
       ) {
         return c.json({ error: "invalid_grant" }, 400);
       }
+      store.setData(`pkce:${code}`, "");
       return c.json(tokenResponse(), 200);
     }
 

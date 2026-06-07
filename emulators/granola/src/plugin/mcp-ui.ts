@@ -5,7 +5,12 @@ import {
 } from "../fixtures";
 
 export function renderGranolaMcpPage(mcpEndpoint: string): string {
-  const remoteCommand = `npx mcp-remote ${mcpEndpoint}`;
+  const accountName = escapeHtml(GRANOLA_EMULATOR_FIXTURES.accountName);
+  const endpoint = escapeHtml(mcpEndpoint);
+  const remoteCommand = escapeHtml(`npx mcp-remote ${mcpEndpoint}`);
+  const toolNames = GRANOLA_EMULATOR_TOOLS.map((tool) =>
+    escapeHtml(tool.name)
+  ).join(", ");
 
   return `<!doctype html>
 <html lang="en">
@@ -26,11 +31,20 @@ export function renderGranolaMcpPage(mcpEndpoint: string): string {
     <main>
       <p class="meta">Local emulator</p>
       <h1>Granola MCP</h1>
-      <p>${GRANOLA_EMULATOR_FIXTURES.accountName} exposes ${GRANOLA_EMULATOR_TOOLS.length} tools over MCP with ${GRANOLA_EMULATOR_NOTES.length} deterministic notes.</p>
+      <p>${accountName} exposes ${GRANOLA_EMULATOR_TOOLS.length} tools over MCP with ${GRANOLA_EMULATOR_NOTES.length} deterministic notes.</p>
       <pre>${remoteCommand}</pre>
-      <p class="meta">Endpoint: <code>${mcpEndpoint}</code></p>
-      <p class="meta">Tools: ${GRANOLA_EMULATOR_TOOLS.map((tool) => tool.name).join(", ")}</p>
+      <p class="meta">Endpoint: <code>${endpoint}</code></p>
+      <p class="meta">Tools: ${toolNames}</p>
     </main>
   </body>
 </html>`;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }

@@ -8,6 +8,7 @@ import {
 import { StreamableHTTPClientTransport } from "@vendor/mcp";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { renderGranolaMcpPage } from "../plugin/mcp-ui";
 import { type StartedGranolaEmulator, startGranolaEmulator } from "../server";
 
 const CALLBACK_URL =
@@ -116,6 +117,16 @@ afterEach(async () => {
 });
 
 describe("@repo/granola-emulator", () => {
+  it("escapes dynamic values in the MCP setup page", () => {
+    const html = renderGranolaMcpPage(
+      'https://granola.example.test/mcp?next=<script>&quote="value"'
+    );
+
+    expect(html).toContain("&lt;script&gt;");
+    expect(html).toContain("&amp;quote=&quot;value&quot;");
+    expect(html).not.toContain("<script>");
+  });
+
   it("registers a public OAuth client and completes the authorization code flow", async () => {
     const active = await start();
 
@@ -158,6 +169,34 @@ describe("@repo/granola-emulator", () => {
       refresh_token: GRANOLA_REFRESH_TOKEN,
       scope: "notes:read meetings:read",
       token_type: "Bearer",
+    });
+  });
+
+  it("rejects authorization code replay after a successful token exchange", async () => {
+    const active = await start();
+    await registerClient();
+
+    const authorizeUrl = new URL("/oauth/authorize", active.url);
+    authorizeUrl.searchParams.set("client_id", GRANOLA_CLIENT_ID);
+    authorizeUrl.searchParams.set(
+      "code_challenge",
+      pkceChallengeFromVerifier("verifier")
+    );
+    authorizeUrl.searchParams.set("code_challenge_method", "S256");
+    authorizeUrl.searchParams.set("redirect_uri", CALLBACK_URL);
+    authorizeUrl.searchParams.set("response_type", "code");
+
+    const authorizeRes = await fetch(authorizeUrl, { redirect: "manual" });
+    const redirectUrl = new URL(authorizeRes.headers.get("location") ?? "");
+    const code = redirectUrl.searchParams.get("code") ?? "";
+
+    const tokenRes = await exchangeCode(code);
+    expect(tokenRes.status).toBe(200);
+
+    const replayRes = await exchangeCode(code);
+    expect(replayRes.status).toBe(400);
+    await expect(replayRes.json()).resolves.toMatchObject({
+      error: "invalid_grant",
     });
   });
 
@@ -211,6 +250,20 @@ describe("@repo/granola-emulator", () => {
       "invalid-token"
     );
     expect(invalidRes.status).toBe(401);
+
+    await fetch(`${active.url}/failures`, {
+      body: JSON.stringify({ accessTokenExpired: true }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    });
+
+    const expiredRes = await postJson("/mcp", {
+      id: 1,
+      jsonrpc: "2.0",
+      method: "tools/list",
+    });
+    expect(expiredRes.status).toBe(401);
+    expect(expiredRes.headers.get("www-authenticate")).toContain("Bearer");
   });
 
   it("lists deterministic MCP tools for a valid bearer token", async () => {

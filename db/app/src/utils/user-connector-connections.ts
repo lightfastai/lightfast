@@ -6,7 +6,7 @@ import { and, eq, getTableColumns, isNotNull, isNull } from "drizzle-orm";
 import type { Database } from "../client";
 import type { UserConnectorConnection } from "../schema";
 import { userConnectorConnections } from "../schema";
-import { getRowsAffected } from "./drizzle-results";
+import { getRowsAffected, isDuplicateKeyError } from "./drizzle-results";
 
 const {
   currentUserProviderKey: _currentUserProviderKey,
@@ -89,68 +89,79 @@ export async function finalizeCurrentUserConnectorConnection(
   db: Database,
   input: FinalizeCurrentUserConnectorConnectionInput
 ): Promise<UserConnectorConnection> {
-  const inserted = await db.transaction(async (tx) => {
-    const current = await getCurrentUserConnectorConnection(tx, input);
-    const now = new Date();
+  let inserted: UserConnectorConnection | undefined;
+  try {
+    inserted = await db.transaction(async (tx) => {
+      const current = await getCurrentUserConnectorConnection(tx, input);
+      const now = new Date();
 
-    if (!matchesObservedCurrentConnection(input, current)) {
-      throw currentConnectorConnectionChangedError(input);
-    }
+      if (!matchesObservedCurrentConnection(input, current)) {
+        throw currentConnectorConnectionChangedError(input);
+      }
 
-    if (current) {
-      const result = await tx
-        .update(userConnectorConnections)
-        .set(revokedUserConnectorConnectionValues(now))
-        .where(observedCurrentConnectorMutationWhere(input, current));
+      if (current) {
+        const result = await tx
+          .update(userConnectorConnections)
+          .set(revokedUserConnectorConnectionValues(now))
+          .where(observedCurrentConnectorMutationWhere(input, current));
 
-      if (getRowsAffected(result) === 0) {
+        if (getRowsAffected(result) === 0) {
+          throw new Error(
+            `Failed to revoke current user connector connection ${current.id}`
+          );
+        }
+      }
+
+      const [row] = await tx
+        .insert(userConnectorConnections)
+        .values({
+          accessTokenExpiresAt: input.accessTokenExpiresAt,
+          clerkUserId: input.clerkUserId,
+          currentUserProviderKey: currentUserProviderKey(
+            input.clerkUserId,
+            input.provider
+          ),
+          encryptedAccessToken: input.encryptedAccessToken,
+          encryptedRefreshToken: input.encryptedRefreshToken,
+          lastToolRefreshAt: input.lastToolRefreshAt ?? null,
+          lastToolRefreshErrorAt: input.lastToolRefreshErrorAt ?? null,
+          lastToolRefreshErrorCode: input.lastToolRefreshErrorCode ?? null,
+          mcpEndpoint: input.mcpEndpoint,
+          metadata: input.metadata,
+          provider: input.provider,
+          providerAccountId: input.providerAccountId,
+          providerAccountName: input.providerAccountName,
+          refreshTokenExpiresAt: input.refreshTokenExpiresAt,
+          revokedAt: null,
+          scopes: input.scopes,
+          status: "active",
+          toolManifest: input.toolManifest,
+        })
+        .$returningId();
+
+      if (!row?.id) {
         throw new Error(
-          `Failed to revoke current user connector connection ${current.id}`
+          `Failed to insert user connector connection for user ${input.clerkUserId}`
         );
       }
-    }
 
-    const [row] = await tx
-      .insert(userConnectorConnections)
-      .values({
-        accessTokenExpiresAt: input.accessTokenExpiresAt,
-        clerkUserId: input.clerkUserId,
-        currentUserProviderKey: currentUserProviderKey(
-          input.clerkUserId,
-          input.provider
-        ),
-        encryptedAccessToken: input.encryptedAccessToken,
-        encryptedRefreshToken: input.encryptedRefreshToken,
-        lastToolRefreshAt: input.lastToolRefreshAt ?? null,
-        lastToolRefreshErrorAt: input.lastToolRefreshErrorAt ?? null,
-        lastToolRefreshErrorCode: input.lastToolRefreshErrorCode ?? null,
-        mcpEndpoint: input.mcpEndpoint,
-        metadata: input.metadata,
-        provider: input.provider,
-        providerAccountId: input.providerAccountId,
-        providerAccountName: input.providerAccountName,
-        refreshTokenExpiresAt: input.refreshTokenExpiresAt,
-        revokedAt: null,
-        scopes: input.scopes,
-        status: "active",
-        toolManifest: input.toolManifest,
-      })
-      .$returningId();
-
-    if (!row?.id) {
-      throw new Error(
-        `Failed to insert user connector connection for user ${input.clerkUserId}`
+      const insertedConnection = await getUserConnectorConnectionById(
+        tx,
+        row.id
       );
+      if (!insertedConnection) {
+        throw new Error(
+          `Failed to insert user connector connection for user ${input.clerkUserId}`
+        );
+      }
+      return insertedConnection;
+    });
+  } catch (error) {
+    if (isDuplicateKeyError(error)) {
+      throw currentConnectorConnectionChangedError(input);
     }
-
-    const insertedConnection = await getUserConnectorConnectionById(tx, row.id);
-    if (!insertedConnection) {
-      throw new Error(
-        `Failed to insert user connector connection for user ${input.clerkUserId}`
-      );
-    }
-    return insertedConnection;
-  });
+    throw error;
+  }
 
   if (!inserted) {
     throw new Error(

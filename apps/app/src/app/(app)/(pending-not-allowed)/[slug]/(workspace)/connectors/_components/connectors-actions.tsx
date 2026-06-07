@@ -4,7 +4,10 @@ import { cn } from "@repo/ui/lib/utils";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useQueryState } from "nuqs";
 import { useTRPC } from "~/trpc/react";
-import { connectorOwnerScopeParser } from "./connectors-search-params";
+import {
+  type ConnectorOwnerScope,
+  connectorOwnerScopeParser,
+} from "./connectors-search-params";
 
 export function ConnectorsActions() {
   const trpc = useTRPC();
@@ -13,6 +16,9 @@ export function ConnectorsActions() {
     staleTime: 30_000,
   });
   const [scope, setScope] = useQueryState("scope", connectorOwnerScopeParser);
+  const [selectedProvider] = useQueryState("connector");
+  const activeScope: ConnectorOwnerScope =
+    selectedProvider === "granola" ? "personal" : scope;
 
   return (
     <div
@@ -24,7 +30,7 @@ export function ConnectorsActions() {
         controlsId="team-connectors-panel"
         count={connectorSections.teamConnectors.length}
         id="team-connectors-tab"
-        isActive={scope === "team"}
+        isActive={activeScope === "team"}
         label="Team"
         onSelect={() => void setScope("team")}
       />
@@ -32,7 +38,7 @@ export function ConnectorsActions() {
         controlsId="personal-connectors-panel"
         count={connectorSections.yourConnectors.length}
         id="personal-connectors-tab"
-        isActive={scope === "personal"}
+        isActive={activeScope === "personal"}
         label="Personal"
         onSelect={() => void setScope("personal")}
       />

@@ -7,20 +7,18 @@ export default async function AccountSettingsIndexPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const target = new URL(
-    "/account/settings/general",
-    "https://lightfast.localhost"
-  );
+  const search = new URLSearchParams();
 
   for (const [key, value] of Object.entries(params)) {
     if (Array.isArray(value)) {
       for (const item of value) {
-        target.searchParams.append(key, item);
+        search.append(key, item);
       }
     } else if (typeof value === "string") {
-      target.searchParams.set(key, value);
+      search.set(key, value);
     }
   }
 
-  redirect(`${target.pathname}${target.search}` as Route);
+  const query = search.toString();
+  redirect(`/account/settings/general${query ? `?${query}` : ""}` as Route);
 }

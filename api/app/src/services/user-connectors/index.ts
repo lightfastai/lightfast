@@ -11,7 +11,7 @@ import {
   startGranolaUserConnectorOAuth,
 } from "./granola-flow";
 
-interface UserConnectorServiceContext {
+interface UserConnectorOAuthServiceContext {
   auth: AuthContext;
   db: Database;
   headers: Headers;
@@ -39,7 +39,7 @@ function unsupportedProvider(provider: string): never {
 }
 
 export async function startUserConnectorOAuth(
-  ctx: UserConnectorServiceContext,
+  ctx: UserConnectorOAuthServiceContext,
   input: UserConnectorStartConnectInput
 ) {
   switch (input.provider) {
@@ -51,7 +51,7 @@ export async function startUserConnectorOAuth(
 }
 
 export async function disconnectUserConnector(
-  ctx: UserConnectorServiceContext,
+  ctx: UserConnectorOAuthServiceContext,
   input: UserConnectorProviderInput
 ) {
   switch (input.provider) {

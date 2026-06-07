@@ -30,7 +30,7 @@ import {
 export const GRANOLA_OAUTH_CALLBACK_PATH =
   "/api/connectors/granola/oauth/callback";
 
-interface UserConnectorServiceContext {
+interface GranolaUserConnectorServiceContext {
   auth: AuthContext;
   db: Database;
   headers: Headers;
@@ -40,7 +40,7 @@ export interface GranolaRedirectResult {
   redirectUrl: string;
 }
 
-function signedInIdentity(ctx: UserConnectorServiceContext) {
+function signedInIdentity(ctx: GranolaUserConnectorServiceContext) {
   const identity = ctx.auth.identity;
   if (identity.type === "unauthenticated") {
     throw new TRPCError({
@@ -215,7 +215,7 @@ function createGranolaOAuthProvider(input: {
 }
 
 export async function startGranolaUserConnectorOAuth(
-  ctx: UserConnectorServiceContext
+  ctx: GranolaUserConnectorServiceContext
 ): Promise<{ authorizationUrl: string; mode: "connect" | "reconnect" }> {
   const identity = signedInIdentity(ctx);
   const appOrigin = resolveUserConnectorAppOrigin();
@@ -416,7 +416,7 @@ export async function completeGranolaUserConnectorOAuth(input: {
 }
 
 export async function disconnectGranolaUserConnector(
-  ctx: UserConnectorServiceContext
+  ctx: GranolaUserConnectorServiceContext
 ): Promise<{ disconnected: boolean }> {
   const identity = signedInIdentity(ctx);
 

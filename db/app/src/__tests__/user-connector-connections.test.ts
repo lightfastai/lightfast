@@ -80,6 +80,12 @@ function selectRows<T>(rows: T[]) {
   };
 }
 
+function duplicateKeyError() {
+  return Object.assign(new Error("Duplicate entry for key"), {
+    code: "ER_DUP_ENTRY",
+  });
+}
+
 function collectColumnNames(value: unknown, seen = new WeakSet<object>()) {
   if (value === null || typeof value !== "object") {
     return [];
@@ -229,6 +235,18 @@ describe("user connector connection helpers", () => {
 
     expect(tx.update).not.toHaveBeenCalled();
     expect(tx.insert).not.toHaveBeenCalled();
+  });
+
+  it("reports duplicate finalize races as changed current user connector connections", async () => {
+    const db = {
+      transaction: vi.fn(async () => {
+        throw duplicateKeyError();
+      }),
+    } as unknown as Database;
+
+    await expect(
+      finalizeCurrentUserConnectorConnection(db, finalizeInput())
+    ).rejects.toThrow("Current user connector connection changed");
   });
 
   it("revokes current user connector connections by clearing current key, tokens, and manifest", async () => {

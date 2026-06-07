@@ -4,11 +4,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const setScopeMock = vi.fn();
 const useSuspenseQueryMock = vi.fn();
 
+let connectorState: string | null = null;
 let scopeState: "team" | "personal" = "team";
 
 vi.mock("nuqs", () => ({
   parseAsStringLiteral: () => ({ withDefault: () => "mock-parser" }),
-  useQueryState: () => [scopeState, setScopeMock] as const,
+  useQueryState: (key: string) =>
+    key === "connector"
+      ? ([connectorState, vi.fn()] as const)
+      : ([scopeState, setScopeMock] as const),
 }));
 
 vi.mock("~/trpc/react", () => ({
@@ -34,6 +38,7 @@ vi.mock("@tanstack/react-query", () => ({
 const { ConnectorsActions } = await import("./connectors-actions");
 
 beforeEach(() => {
+  connectorState = null;
   scopeState = "team";
   setScopeMock.mockReset();
   useSuspenseQueryMock.mockReset();
@@ -70,5 +75,20 @@ describe("ConnectorsActions", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Personal" }));
 
     expect(setScopeMock).toHaveBeenCalledWith("personal");
+  });
+
+  it("shows Personal as active while a personal connector is selected", () => {
+    connectorState = "granola";
+
+    render(<ConnectorsActions />);
+
+    expect(screen.getByRole("tab", { name: "Team" })).toHaveAttribute(
+      "aria-selected",
+      "false"
+    );
+    expect(screen.getByRole("tab", { name: "Personal" })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
   });
 });
