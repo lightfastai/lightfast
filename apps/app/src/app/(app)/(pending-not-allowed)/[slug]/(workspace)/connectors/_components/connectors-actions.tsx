@@ -1,20 +1,13 @@
 "use client";
 
 import { cn } from "@repo/ui/lib/utils";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { useQueryState } from "nuqs";
-import { useTRPC } from "~/trpc/react";
 import {
   type ConnectorOwnerScope,
   connectorOwnerScopeParser,
 } from "./connectors-search-params";
 
 export function ConnectorsActions() {
-  const trpc = useTRPC();
-  const { data: connectorSections } = useSuspenseQuery({
-    ...trpc.org.workspace.connectors.listSections.queryOptions(),
-    staleTime: 30_000,
-  });
   const [scope, setScope] = useQueryState("scope", connectorOwnerScopeParser);
   const [selectedProvider] = useQueryState("connector");
   const activeScope: ConnectorOwnerScope =
@@ -23,12 +16,11 @@ export function ConnectorsActions() {
   return (
     <div
       aria-label="Connector ownership"
-      className="grid w-full max-w-[320px] grid-cols-2 rounded-[10px] border border-border/60 bg-muted/40 p-1 text-muted-foreground sm:w-[320px]"
+      className="grid h-7 w-fit min-w-[184px] max-w-full grid-cols-2 rounded-[9px] border border-input bg-card p-0.5 text-muted-foreground"
       role="tablist"
     >
       <OwnerScopeTrigger
         controlsId="team-connectors-panel"
-        count={connectorSections.teamConnectors.length}
         id="team-connectors-tab"
         isActive={activeScope === "team"}
         label="Team"
@@ -36,7 +28,6 @@ export function ConnectorsActions() {
       />
       <OwnerScopeTrigger
         controlsId="personal-connectors-panel"
-        count={connectorSections.yourConnectors.length}
         id="personal-connectors-tab"
         isActive={activeScope === "personal"}
         label="Personal"
@@ -48,14 +39,12 @@ export function ConnectorsActions() {
 
 function OwnerScopeTrigger({
   controlsId,
-  count,
   id,
   isActive,
   label,
   onSelect,
 }: {
   controlsId: string;
-  count: number;
   id: string;
   isActive: boolean;
   label: string;
@@ -66,10 +55,10 @@ function OwnerScopeTrigger({
       aria-controls={controlsId}
       aria-selected={isActive}
       className={cn(
-        "inline-flex h-7 items-center justify-center whitespace-nowrap rounded-md px-2.5 font-medium text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "inline-flex h-6 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 font-medium text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         isActive
-          ? "bg-background text-foreground shadow-sm"
-          : "text-muted-foreground hover:text-foreground"
+          ? "bg-muted/60 text-foreground"
+          : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
       )}
       id={id}
       onClick={onSelect}
@@ -77,12 +66,6 @@ function OwnerScopeTrigger({
       type="button"
     >
       {label}
-      <span
-        aria-hidden="true"
-        className="ml-2 rounded-full bg-muted px-1.5 py-0.5 font-normal text-[11px] text-muted-foreground"
-      >
-        {count}
-      </span>
     </button>
   );
 }

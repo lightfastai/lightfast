@@ -65,8 +65,23 @@ describe("ConnectorsActions", () => {
       "aria-selected",
       "false"
     );
-    expect(screen.getByText("2")).toBeVisible();
-    expect(screen.getByText("1")).toBeVisible();
+    expect(screen.queryByText("2")).not.toBeInTheDocument();
+    expect(screen.queryByText("1")).not.toBeInTheDocument();
+    expect(useSuspenseQueryMock).not.toHaveBeenCalled();
+  });
+
+  it("uses compact action-slot tab sizing", () => {
+    render(<ConnectorsActions />);
+
+    const tablist = screen.getByRole("tablist", {
+      name: "Connector ownership",
+    });
+
+    expect(tablist).toHaveClass("h-7", "w-fit", "rounded-[9px]", "p-0.5");
+    expect(screen.getByRole("tab", { name: "Team" })).toHaveClass(
+      "h-6",
+      "px-2.5"
+    );
   });
 
   it("writes the selected ownership scope to the shared URL param", () => {
