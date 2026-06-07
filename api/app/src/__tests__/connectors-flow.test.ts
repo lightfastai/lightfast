@@ -1424,7 +1424,7 @@ describe("X connector flow", () => {
       })
     ).resolves.toEqual({
       redirectUrl:
-        "https://app.lightfast.localhost/acme/connectors?connector=x",
+        "https://app.lightfast.localhost/acme/tasks/connectors/x/complete",
     });
 
     expect(finalizeCurrentOrgConnectorConnectionMock).toHaveBeenCalledWith(
@@ -1464,6 +1464,60 @@ describe("X connector flow", () => {
         toolManifest: [{ name: "getUsersMe" }],
       })
     );
+  });
+
+  it("returns reconnects to the X connector catalog after OAuth completion", async () => {
+    const issued = await issueConnectorOAuthAttempt({
+      clerkOrgId: "org_acme",
+      codeVerifier: "x_verifier_123",
+      lightfastUserId: "user_current",
+      mode: "reconnect",
+      orgSlug: "acme",
+      provider: "x",
+    });
+    const attemptRecord = redisSetMock.mock.calls[0]?.[1];
+    redisGetMock
+      .mockResolvedValueOnce(attemptRecord)
+      .mockResolvedValueOnce(attemptRecord);
+    redisGetdelMock.mockResolvedValueOnce(attemptRecord);
+    authMock.mockResolvedValue({ orgId: "org_acme", userId: "user_current" });
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(
+      connection({ provider: "x" })
+    );
+    exchangeXOAuthCodeMock.mockResolvedValue({
+      accessToken: "x_access_token",
+      accessTokenExpiresIn: 3600,
+      refreshToken: "x_refresh_token",
+      refreshTokenExpiresIn: 86_400,
+      scopes: ["tweet.read", "users.read", "offline.access"],
+      tokenType: "Bearer",
+    });
+    getXViewerMetadataMock.mockResolvedValue({
+      actorId: "x_user_1",
+      actorName: "@lightfast",
+      name: "Lightfast",
+      username: "lightfast",
+    });
+    finalizeCurrentOrgConnectorConnectionMock.mockResolvedValue(
+      connection({
+        id: 42,
+        mcpEndpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
+        provider: "x",
+        toolManifest: [],
+      })
+    );
+    listXBridgeMcpToolsMock.mockResolvedValue([{ name: "getUsersMe" }]);
+    updateConnectorToolManifestAndAutomationStateMock.mockResolvedValue(true);
+
+    await expect(
+      completeXConnectorOAuth({
+        appOrigin: "https://app.lightfast.localhost",
+        requestUrl: `https://app.lightfast.localhost/api/connectors/x/oauth/callback?code=code_123&state=${issued.state}`,
+      })
+    ).resolves.toEqual({
+      redirectUrl:
+        "https://app.lightfast.localhost/acme/connectors?connector=x",
+    });
   });
 
   it("records tool discovery failure after persisting X and keeps automations disabled", async () => {

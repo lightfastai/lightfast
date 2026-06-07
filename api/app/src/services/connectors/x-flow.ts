@@ -96,6 +96,16 @@ function connectorPageUrl(input: {
   return url.toString();
 }
 
+function connectorSetupCompleteUrl(input: {
+  appOrigin: string;
+  orgSlug: string;
+}) {
+  return new URL(
+    `/${input.orgSlug}/tasks/connectors/x/complete`,
+    input.appOrigin
+  ).toString();
+}
+
 function missingAttemptRedirect(input: { appOrigin: string }): XRedirectResult {
   const url = new URL("/account/teams", input.appOrigin);
   url.searchParams.set("connector", "x");
@@ -621,7 +631,13 @@ export async function completeXConnectorOAuth(input: {
       code: parsed.code,
     });
     return {
-      redirectUrl: connectorPageUrl({ appOrigin, orgSlug: attempt.orgSlug }),
+      redirectUrl:
+        attempt.mode === "reconnect"
+          ? connectorPageUrl({ appOrigin, orgSlug: attempt.orgSlug })
+          : connectorSetupCompleteUrl({
+              appOrigin,
+              orgSlug: attempt.orgSlug,
+            }),
     };
   } catch (error) {
     return errorRedirect({
