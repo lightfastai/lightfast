@@ -1,3 +1,4 @@
+import { waitFor } from "@testing-library/react";
 import { TRPCClientError } from "@trpc/client";
 import { TRPCError } from "@trpc/server";
 import { describe, expect, it, vi } from "vitest";
@@ -8,6 +9,7 @@ const sentryMocks = vi.hoisted(() => ({
   consoleLoggingIntegration: vi.fn(() => ({ name: "console-logging" })),
   extraErrorDataIntegration: vi.fn(() => ({ name: "extra-error-data" })),
   feedbackIntegration: vi.fn(() => ({ name: "feedback" })),
+  getFeedback: vi.fn(() => undefined),
   httpClientIntegration: vi.fn(() => ({ name: "http-client" })),
   init: vi.fn(),
   replayIntegration: vi.fn(() => ({ name: "replay" })),
@@ -19,6 +21,7 @@ vi.mock("@sentry/nextjs", () => ({
   consoleLoggingIntegration: sentryMocks.consoleLoggingIntegration,
   extraErrorDataIntegration: sentryMocks.extraErrorDataIntegration,
   feedbackIntegration: sentryMocks.feedbackIntegration,
+  getFeedback: sentryMocks.getFeedback,
   httpClientIntegration: sentryMocks.httpClientIntegration,
   init: sentryMocks.init,
   replayIntegration: sentryMocks.replayIntegration,
@@ -84,5 +87,23 @@ describe("Sentry config", () => {
     expect(options?.beforeSend?.(event, { originalException: error })).toBe(
       event
     );
+  });
+
+  it("lazy-loads replay without installing Sentry's feedback widget", async () => {
+    vi.resetModules();
+    vi.clearAllMocks();
+
+    await import("../instrumentation-client");
+    window.dispatchEvent(new Event("load"));
+
+    await waitFor(() => {
+      expect(sentryMocks.replayIntegration).toHaveBeenCalledWith(
+        expect.objectContaining({
+          blockAllMedia: true,
+          maskAllText: true,
+        })
+      );
+    });
+    expect(sentryMocks.feedbackIntegration).not.toHaveBeenCalled();
   });
 });

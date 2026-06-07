@@ -1,6 +1,11 @@
 import { createHash } from "node:crypto";
 import { resolveAuthContextFromClerk } from "@api/app/auth/identity";
 import {
+  type ChatProviderRoutineContext,
+  callChatProviderRoutine,
+  findChatProviderRoutines,
+} from "@api/app/services/connectors";
+import {
   getSkillIndexSnapshot,
   getVerifiedLightfastSkillSourceRepositoryId,
 } from "@api/app/services/skills";
@@ -37,11 +42,6 @@ import {
   providerRoutineFindInputSchema,
   providerRoutineFindOutputSchema,
 } from "@repo/provider-routine-contract";
-import {
-  callProviderRoutine,
-  findProviderRoutines,
-  type ProviderRoutineServiceContext,
-} from "@repo/provider-routines";
 import {
   convertToModelMessages,
   gateway,
@@ -81,6 +81,7 @@ const chatRequestSchema = z
       .max(80)
       .regex(/^conv_[A-Za-z0-9_-]+$/)
       .optional(),
+    providerRoutineWriteMode: z.boolean().optional(),
   })
   .passthrough();
 
@@ -90,7 +91,7 @@ const baseSystemPrompt = [
   "When asked about skills, explain what the listed skills can do and suggest the next concrete action.",
   "When connector tools are useful, first find connected provider routines, then call the selected routine by routineId.",
   "Only call provider routines for the active workspace.",
-  "Connected provider routines in chat are read-only; do not use them to create, update, delete, post, assign, archive, or move external records.",
+  "Connected provider routines in chat can read from enabled Linear and X connectors. Linear write routines are available only for a turn where write mode is enabled. If Linear write access is unavailable, tell the user to reconnect Linear to enable write access. X write routines are not available.",
 ].join(" ");
 
 export const maxDuration = 30;
@@ -141,6 +142,8 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
+  const providerRoutineWriteMode =
+    parsed.data.providerRoutineWriteMode === true;
 
   const conversation = await resolveConversation({
     createdByUserId: identity.userId,
@@ -242,6 +245,7 @@ export async function POST(req: Request) {
     model: WORKSPACE_ASSISTANT_MODEL,
     streamId,
     conversationId: conversation.publicId,
+    providerRoutineWriteMode,
     userId: identity.userId,
   };
 
@@ -329,6 +333,7 @@ export async function POST(req: Request) {
       conversation,
       orgId: identity.orgId,
       userId: identity.userId,
+      writeMode: providerRoutineWriteMode,
     }),
   });
 
@@ -499,26 +504,24 @@ function createWorkspaceAssistantProviderRoutineTools(input: {
   conversation: WorkspaceAssistantConversation;
   orgId: string;
   userId: string;
+  writeMode: boolean;
 }) {
   return {
     callProviderRoutine: tool({
       description:
-        "Call one read-only connected provider routine by routineId using this workspace's enabled connector. Use routineIds returned by findProviderRoutines.",
+        "Call one connected provider routine by routineId using this workspace's enabled connector. Linear write routines require write mode for this turn. X write routines are unavailable.",
       inputSchema: providerRoutineCallInputSchema,
       outputSchema: providerRoutineCallSuccessSchema,
       execute: async (toolInput) =>
-        callProviderRoutine(providerRoutineContext(input), toolInput),
+        callChatProviderRoutine(providerRoutineContext(input), toolInput),
     }),
     findProviderRoutines: tool({
       description:
-        "Find read-only connected provider routines available to this workspace through enabled connectors. Use this before calling callProviderRoutine.",
+        "Find connected provider routines available to this workspace through enabled connectors. Returns Linear and X read routines, and Linear write routines only when write mode is enabled for this turn.",
       inputSchema: providerRoutineFindInputSchema,
       outputSchema: providerRoutineFindOutputSchema,
       execute: async (toolInput) =>
-        findProviderRoutines(providerRoutineContext(input), {
-          ...toolInput,
-          readOnly: true,
-        }),
+        findChatProviderRoutines(providerRoutineContext(input), toolInput),
     }),
   };
 }
@@ -527,24 +530,13 @@ function providerRoutineContext(input: {
   conversation: WorkspaceAssistantConversation;
   orgId: string;
   userId: string;
-}): ProviderRoutineServiceContext {
+  writeMode: boolean;
+}): ChatProviderRoutineContext {
   return {
-    actor: {
-      orgId: input.orgId,
-      userId: input.userId,
-    },
-    db,
-    log,
-    now: () => new Date(),
-    scopes: {
-      providerRoutineRead: true,
-      providerRoutineWrite: false,
-    },
-    source: {
-      clientId: null,
-      ref: input.conversation.publicId,
-      surface: "chat",
-    },
+    clerkOrgId: input.orgId,
+    conversationId: input.conversation.publicId,
+    userId: input.userId,
+    writeMode: input.writeMode,
   };
 }
 

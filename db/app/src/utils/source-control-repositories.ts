@@ -1,4 +1,5 @@
 import type {
+  SourceControlPrWebhookEvent,
   SourceControlRepositorySyncStatus,
   SourceControlWebhookDeliveryStatus,
   WatchedPathGlobs,
@@ -7,11 +8,13 @@ import { and, asc, eq, getTableColumns } from "drizzle-orm";
 
 import type { Database } from "../client";
 import type {
+  SourceControlPrWebhookDelivery,
   SourceControlRepository,
   SourceControlWebhookDelivery,
 } from "../schema";
 import {
   orgSourceControlBindings,
+  orgSourceControlPrWebhookDeliveries as sourceControlPrWebhookDeliveries,
   orgSourceControlRepositories as sourceControlRepositories,
   orgSourceControlWebhookDeliveries as sourceControlWebhookDeliveries,
 } from "../schema";
@@ -19,6 +22,7 @@ import { getRowsAffected, isDuplicateKeyError } from "./drizzle-results";
 
 const repositorySelection = getTableColumns(sourceControlRepositories);
 const deliverySelection = getTableColumns(sourceControlWebhookDeliveries);
+const prDeliverySelection = getTableColumns(sourceControlPrWebhookDeliveries);
 
 export interface UpsertWatchedSourceControlRepositoryInput {
   fullName: string;
@@ -26,6 +30,7 @@ export interface UpsertWatchedSourceControlRepositoryInput {
   providerRepositoryId: string;
   syncStatus?: SourceControlRepositorySyncStatus;
   watchedPathGlobs: WatchedPathGlobs | null;
+  watchedWebhookEvents?: SourceControlPrWebhookEvent[] | null;
 }
 
 export interface CompleteWatchedSourceControlRepositorySetupInput
@@ -36,6 +41,25 @@ export interface CompleteWatchedSourceControlRepositorySetupInput
 export interface RecordSourceControlWebhookDeliveryReceivedResult {
   created: boolean;
   delivery: SourceControlWebhookDelivery;
+}
+
+export interface RecordSourceControlPrWebhookDeliveryInput {
+  action: string;
+  clerkOrgId: string;
+  deliveryId: string;
+  event: SourceControlPrWebhookEvent;
+  orgSourceControlBindingId: number;
+  providerInstallationId: string;
+  providerPullRequestId: string | null;
+  providerRepositoryId: string;
+  pullRequestNumber: number;
+  rawPayload: Record<string, unknown>;
+  sourceControlRepositoryId: number;
+}
+
+export interface RecordSourceControlPrWebhookDeliveryResult {
+  created: boolean;
+  delivery: SourceControlPrWebhookDelivery;
 }
 
 export async function getWatchedSourceControlRepository(
@@ -105,6 +129,7 @@ export async function insertWatchedSourceControlRepository(
       providerRepositoryId: input.providerRepositoryId,
       syncStatus: input.syncStatus ?? "enabled",
       watchedPathGlobs: input.watchedPathGlobs,
+      watchedWebhookEvents: input.watchedWebhookEvents ?? [],
     })
     .catch((error: unknown) => {
       if (!isDuplicateKeyError(error)) {
@@ -140,12 +165,14 @@ export async function upsertWatchedSourceControlRepository(
       providerRepositoryId: input.providerRepositoryId,
       syncStatus: input.syncStatus ?? "enabled",
       watchedPathGlobs: input.watchedPathGlobs,
+      watchedWebhookEvents: input.watchedWebhookEvents ?? [],
     })
     .onDuplicateKeyUpdate({
       set: {
         fullName: input.fullName,
         syncStatus: input.syncStatus ?? "enabled",
         watchedPathGlobs: input.watchedPathGlobs,
+        watchedWebhookEvents: input.watchedWebhookEvents ?? [],
       },
     });
 
@@ -186,6 +213,7 @@ export async function completeWatchedSourceControlRepositorySetup(
       orgSourceControlBindingId: input.orgSourceControlBindingId,
       providerRepositoryId: input.providerRepositoryId,
       watchedPathGlobs: input.watchedPathGlobs,
+      watchedWebhookEvents: input.watchedWebhookEvents,
     });
   });
 }
@@ -243,6 +271,64 @@ export async function recordSourceControlWebhookDeliveryReceived(
       throw duplicateError;
     }
     throw new Error(`Failed to create webhook delivery ${input.deliveryId}`);
+  }
+  return { delivery: inserted, created: duplicateError === undefined };
+}
+
+export async function getSourceControlPrWebhookDeliveryByDeliveryId(
+  db: Database,
+  input: { deliveryId: string }
+): Promise<SourceControlPrWebhookDelivery | undefined> {
+  const [row] = await db
+    .select(prDeliverySelection)
+    .from(sourceControlPrWebhookDeliveries)
+    .where(eq(sourceControlPrWebhookDeliveries.deliveryId, input.deliveryId))
+    .limit(1);
+  return row;
+}
+
+export async function recordSourceControlPrWebhookDelivery(
+  db: Database,
+  input: RecordSourceControlPrWebhookDeliveryInput
+): Promise<RecordSourceControlPrWebhookDeliveryResult> {
+  const existing = await getSourceControlPrWebhookDeliveryByDeliveryId(db, {
+    deliveryId: input.deliveryId,
+  });
+  if (existing) {
+    return { delivery: existing, created: false };
+  }
+
+  let duplicateError: unknown;
+  await db
+    .insert(sourceControlPrWebhookDeliveries)
+    .values({
+      action: input.action,
+      clerkOrgId: input.clerkOrgId,
+      deliveryId: input.deliveryId,
+      event: input.event,
+      orgSourceControlBindingId: input.orgSourceControlBindingId,
+      providerInstallationId: input.providerInstallationId,
+      providerPullRequestId: input.providerPullRequestId,
+      providerRepositoryId: input.providerRepositoryId,
+      pullRequestNumber: input.pullRequestNumber,
+      rawPayload: input.rawPayload,
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+    })
+    .catch((error: unknown) => {
+      if (!isDuplicateKeyError(error)) {
+        throw error;
+      }
+      duplicateError = error;
+    });
+
+  const inserted = await getSourceControlPrWebhookDeliveryByDeliveryId(db, {
+    deliveryId: input.deliveryId,
+  });
+  if (!inserted) {
+    if (duplicateError) {
+      throw duplicateError;
+    }
+    throw new Error(`Failed to create PR webhook delivery ${input.deliveryId}`);
   }
   return { delivery: inserted, created: duplicateError === undefined };
 }

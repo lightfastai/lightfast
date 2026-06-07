@@ -1,4 +1,5 @@
 import type {
+  SourceControlPrWebhookEvent,
   SourceControlRepositorySyncStatus,
   SourceControlWebhookDeliveryStatus,
   WatchedPathGlobs,
@@ -41,6 +42,10 @@ export const orgSourceControlRepositories = mysqlTable(
     watchedPathGlobs: json(
       "watched_path_globs"
     ).$type<WatchedPathGlobs | null>(),
+
+    watchedWebhookEvents: json("watched_webhook_events").$type<
+      SourceControlPrWebhookEvent[] | null
+    >(),
 
     syncStatus: varchar("sync_status", { length: CODE_LENGTH })
       .$type<SourceControlRepositorySyncStatus>()
@@ -113,6 +118,87 @@ export const orgSourceControlWebhookDeliveries = mysqlTable(
   })
 );
 
+export const orgSourceControlPrWebhookDeliveries = mysqlTable(
+  "lightfast_org_source_control_pr_webhook_deliveries",
+  {
+    id: bigint("id", { mode: "number", unsigned: true })
+      .primaryKey()
+      .autoincrement(),
+
+    deliveryId: varchar("delivery_id", {
+      length: PROVIDER_REF_LENGTH,
+    }).notNull(),
+
+    clerkOrgId: varchar("clerk_org_id", { length: 64 }).notNull(),
+
+    orgSourceControlBindingId: bigint("org_source_control_binding_id", {
+      mode: "number",
+      unsigned: true,
+    }).notNull(),
+
+    sourceControlRepositoryId: bigint("source_control_repository_id", {
+      mode: "number",
+      unsigned: true,
+    }).notNull(),
+
+    providerInstallationId: varchar("provider_installation_id", {
+      length: PROVIDER_REF_LENGTH,
+    }).notNull(),
+
+    providerRepositoryId: varchar("provider_repository_id", {
+      length: PROVIDER_REF_LENGTH,
+    }).notNull(),
+
+    event: varchar("event", { length: CODE_LENGTH })
+      .$type<SourceControlPrWebhookEvent>()
+      .notNull(),
+
+    action: varchar("action", { length: CODE_LENGTH }).notNull(),
+
+    providerPullRequestId: varchar("provider_pull_request_id", {
+      length: PROVIDER_REF_LENGTH,
+    }),
+
+    pullRequestNumber: bigint("pull_request_number", {
+      mode: "number",
+      unsigned: true,
+    }).notNull(),
+
+    rawPayload: json("raw_payload").$type<Record<string, unknown>>().notNull(),
+
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
+      .default(sql`CURRENT_TIMESTAMP(3)`)
+      .notNull(),
+
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
+      .default(sql`CURRENT_TIMESTAMP(3)`)
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => ({
+    deliveryUq: uniqueIndex(
+      "org_source_control_pr_webhook_deliveries_delivery_uq"
+    ).on(table.deliveryId),
+    orgCreatedIdx: index(
+      "org_source_control_pr_webhook_deliveries_org_created_idx"
+    ).on(table.clerkOrgId, table.createdAt, table.id),
+    repoPrIdx: index("org_source_control_pr_webhook_deliveries_repo_pr_idx").on(
+      table.sourceControlRepositoryId,
+      table.pullRequestNumber,
+      table.createdAt,
+      table.id
+    ),
+    providerRepoIdx: index(
+      "org_source_control_pr_webhook_deliveries_provider_repo_idx"
+    ).on(
+      table.providerInstallationId,
+      table.providerRepositoryId,
+      table.createdAt,
+      table.id
+    ),
+  })
+);
+
 export type SourceControlRepository =
   typeof orgSourceControlRepositories.$inferSelect;
 export type InsertSourceControlRepository =
@@ -122,3 +208,8 @@ export type SourceControlWebhookDelivery =
   typeof orgSourceControlWebhookDeliveries.$inferSelect;
 export type InsertSourceControlWebhookDelivery =
   typeof orgSourceControlWebhookDeliveries.$inferInsert;
+
+export type SourceControlPrWebhookDelivery =
+  typeof orgSourceControlPrWebhookDeliveries.$inferSelect;
+export type InsertSourceControlPrWebhookDelivery =
+  typeof orgSourceControlPrWebhookDeliveries.$inferInsert;

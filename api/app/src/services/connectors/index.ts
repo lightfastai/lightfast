@@ -42,6 +42,12 @@ type ConnectorSetAgentEnabledInput = z.infer<
 >;
 
 export {
+  type ChatProviderRoutineContext,
+  ChatProviderRoutineError,
+  callChatProviderRoutine,
+  findChatProviderRoutines,
+} from "./chat-routines";
+export {
   completeLinearConnectorOAuth,
   disconnectLinearConnector,
   refreshLinearConnectorTools,

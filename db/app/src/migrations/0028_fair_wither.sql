@@ -200,5 +200,6 @@ CREATE INDEX `org_entity_people_primary_source_idx` ON `lightfast_org_entity_peo
 CREATE INDEX `org_entity_affiliations_person_status_idx` ON `lightfast_org_entity_person_account_affiliations` (`person_id`,`status`,`updated_at`,`id`);--> statement-breakpoint
 CREATE INDEX `org_entity_affiliations_account_status_idx` ON `lightfast_org_entity_person_account_affiliations` (`account_id`,`status`,`updated_at`,`id`);--> statement-breakpoint
 CREATE INDEX `org_entity_cand_groups_status_idx` ON `lightfast_org_entity_resolution_candidate_groups` (`clerk_org_id`,`status`,`updated_at`,`id`);--> statement-breakpoint
+CREATE INDEX `org_entity_cand_groups_current_ver_idx` ON `lightfast_org_entity_resolution_candidate_groups` (`current_candidate_version_id`);--> statement-breakpoint
 CREATE INDEX `org_entity_cand_versions_group_created_idx` ON `lightfast_org_entity_resolution_candidate_versions` (`candidate_group_id`,`created_at`,`id`);--> statement-breakpoint
 CREATE INDEX `org_entity_sources_provider_idx` ON `lightfast_org_entity_source_identities` (`clerk_org_id`,`provider`,`identity_type`);
