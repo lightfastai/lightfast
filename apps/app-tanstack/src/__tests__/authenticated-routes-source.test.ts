@@ -84,9 +84,16 @@ describe("app-tanstack authenticated route migration", () => {
     expect(consentCardSource).toContain("useServerFn");
     expect(consentCardSource).toContain("approveMcpAuthorization");
     expect(consentCardSource).toContain("denyMcpAuthorization");
+    expect(consentCardSource).toContain("window.location.assign(redirectUrl)");
     expect(consentFunctionsSource).toContain("createServerFn");
     expect(consentFunctionsSource).toContain("redirectToSignInForOAuth");
-    expect(consentFunctionsSource).toContain("redirect({ href: redirectUrl");
+    expect(consentFunctionsSource).toContain(
+      "return approveMcpAuthorizationRequest("
+    );
+    expect(consentFunctionsSource).toContain(
+      "return denyMcpAuthorizationRequest("
+    );
+    expect(consentFunctionsSource).not.toContain("redirect({ href:");
     expect(consentServerSource).toContain(
       'import "@tanstack/react-start/server-only"'
     );

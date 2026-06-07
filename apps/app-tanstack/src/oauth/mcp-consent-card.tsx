@@ -89,11 +89,11 @@ export function McpConsentCard({ model }: { model: McpConsentViewModel }) {
 
     try {
       const data = mcpAuthorizationInputFromForm(formRef.current);
-      if (action === "approve") {
-        await approveAuthorization({ data });
-      } else {
-        await denyAuthorization({ data });
-      }
+      const redirectUrl =
+        action === "approve"
+          ? await approveAuthorization({ data })
+          : await denyAuthorization({ data });
+      window.location.assign(redirectUrl);
     } catch (error) {
       setErrorMessage(
         error instanceof Error

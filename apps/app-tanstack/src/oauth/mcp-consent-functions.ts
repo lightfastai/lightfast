@@ -1,4 +1,3 @@
-import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { McpAuthorizationInput } from "./mcp-consent-types";
@@ -44,10 +43,9 @@ export const approveMcpAuthorization = createServerFn({ method: "POST" })
     const { approveMcpAuthorizationRequest } = await import(
       "./mcp-consent.server"
     );
-    const redirectUrl = await approveMcpAuthorizationRequest(
+    return approveMcpAuthorizationRequest(
       data satisfies McpAuthorizationInput
     );
-    throw redirect({ href: redirectUrl, throw: true });
   });
 
 export const denyMcpAuthorization = createServerFn({ method: "POST" })
@@ -56,10 +54,9 @@ export const denyMcpAuthorization = createServerFn({ method: "POST" })
     const { denyMcpAuthorizationRequest } = await import(
       "./mcp-consent.server"
     );
-    const redirectUrl = await denyMcpAuthorizationRequest(
+    return denyMcpAuthorizationRequest(
       data satisfies McpAuthorizationInput
     );
-    throw redirect({ href: redirectUrl, throw: true });
   });
 
 function validateMcpAuthorizeSearchInput(input: unknown) {
