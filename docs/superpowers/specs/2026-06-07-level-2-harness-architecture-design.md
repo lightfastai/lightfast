@@ -26,7 +26,7 @@ The core architectural thesis:
 > systems collaborate around durable Objectives.
 
 This document describes the target end-to-end architecture. It is not an
-implementation plan and does not freeze the final Objective Page UI.
+implementation plan and does not freeze the final Mission Control UI.
 
 ## Context
 
@@ -57,12 +57,15 @@ policy-aware state transitions, and explainable history.
 - Users describe intent; Lightfast carries structured state.
 - Objectives are B2B work objects, not single-user chat tasks.
 - Collaboration flows through Decisions assigned to users, teams, or roles.
+- Users join team workspaces. Mission Control is the adaptive workspace home;
+  Objectives are the durable work homes.
+- Personas affect prioritization and presentation, not authorization.
 - Agents may propose transitions, but typed state, policy, capability checks,
   and Decisions govern what advances.
 - The source of truth is an append-only event log with materialized current
   state for fast reads and UI rendering.
-- The Objective Page is a generated state surface. It expresses current state,
-  but it does not invent or own truth.
+- Mission Control surfaces are generated state surfaces. They express current
+  state, but they do not invent or own truth.
 - Day-one scaffolding can be simple, but the architecture should allow
   Objectives to span days or weeks, multiple Runs, multiple branches, multiple
   PRs, deployments, post-merge verification, and follow-up work.
@@ -145,9 +148,9 @@ A Task is a dynamic unit inside a Run's task graph. Tasks are runtime state, not
 necessarily a rigid user-facing checklist.
 
 Tasks can represent prerequisites, implementation steps, verification work,
-handoffs, external setup, or follow-up actions. The Objective Page may render
-them as a timeline, checklist, generated card, grouped section, or not at all,
-depending on the current Objective state.
+handoffs, external setup, or follow-up actions. Objective Mission Control may
+render them as a timeline, checklist, generated card, grouped section, or not at
+all, depending on the current Objective state.
 
 Representative statuses:
 
@@ -261,6 +264,48 @@ Actions are not free-floating. They should be linked to the Run and, when
 possible, to the Task and Decision that caused them. Actions emit Events and
 Evidence.
 
+### User Persona
+
+A User Persona is an explicit onboarding choice that shapes Mission Control and
+Objective presentation.
+
+Personas are not permission roles. Permissions answer "what is this user allowed
+to do?" Persona answers "what should Lightfast put in front of this user first?"
+
+Representative personas:
+
+- founder or operator;
+- engineering lead;
+- engineer;
+- product lead;
+- marketing lead;
+- support or success;
+- admin or ops;
+- generalist or small-team member.
+
+The persona taxonomy should stay small until real user conversations show more
+specific needs. Users should be able to adjust persona later.
+
+### Team Context
+
+Team Context is the lightweight collaboration model the Objective runtime can
+read when deciding how to ask for help or route attention.
+
+It can include:
+
+- workspace member count;
+- selected user personas;
+- connected capabilities;
+- users who connected or recently used a capability;
+- explicit roles or policies when present;
+- prior Decision responders;
+- common unblockers for similar Objectives;
+- workspace preference for open versus assigned Decisions;
+- whether the team appears small and informal or structured and policy-heavy.
+
+Team Context lets the harness adapt without forcing every team to configure a
+full org chart on day one.
+
 ## Event Log And Materialized State
 
 The source of truth should be append-only events. Current Objective, Run, Task,
@@ -298,6 +343,8 @@ action.executed
 action.failed
 evidence.attached
 ui.surface.generated
+attention.projected
+persona.selected
 ```
 
 Each event should record:
@@ -335,6 +382,7 @@ Materialized projections should support:
 - evidence lookup;
 - notification and assignment surfaces;
 - future replay/debug tooling.
+- persona-aware attention surfaces.
 
 ## Runtime Loop
 
@@ -349,7 +397,7 @@ The Level 2 Harness runtime is a supervised loop around an Objective and Run.
 6. Execute Or Request Decision
 7. Attach Evidence
 8. Materialize State
-9. Render Objective UI
+9. Render Objective Mission Control
 10. Repeat
 ```
 
@@ -358,7 +406,7 @@ The Level 2 Harness runtime is a supervised loop around an Objective and Run.
 The harness receives input from:
 
 - user messages;
-- Objective Page interactions;
+- Objective Mission Control interactions;
 - Decision answers;
 - connector events;
 - source control events;
@@ -445,9 +493,9 @@ The event log is projected into current state for fast reads and UI rendering.
 Projection code should resolve superseded Decisions, stale proposals, completed
 tasks, current blockers, and next actions.
 
-### 9. Render Objective UI
+### 9. Render Objective Mission Control
 
-The Objective Page renders the current projection into dynamic UI blocks:
+Objective Mission Control renders the current projection into dynamic UI blocks:
 
 - intent summary;
 - current Run status;
@@ -530,6 +578,14 @@ The target autonomy posture is supervised execution:
 Lightfast is a B2B product for teams and orgs. Level 2 collaboration should be
 native to the harness.
 
+The core collaboration posture should start lightweight:
+
+- everyone with workspace access can see the Objective;
+- the harness makes the next useful team action obvious;
+- Decisions can begin open to the workspace;
+- users can claim, answer, assign, or delegate Decisions;
+- larger teams can add role, team, and policy structure over time.
+
 ### Org Visibility
 
 Objectives belong to an org/workspace. Authorized members can inspect current
@@ -542,6 +598,7 @@ on Decision ownership.
 
 Decisions can be routed to:
 
+- open workspace attention;
 - user;
 - team;
 - role;
@@ -549,6 +606,71 @@ Decisions can be routed to:
 
 The harness can continue when Decisions are answered and should supersede stale
 Decisions when Objective state changes.
+
+### Progressive Collaboration Model
+
+The collaboration model should support increasing structure without making small
+teams feel heavy.
+
+1. Open Decisions
+
+   A Decision is visible to the workspace and anyone with access can answer or
+   claim it.
+
+2. Lightweight Assignment
+
+   A Decision is assigned to a person. Assignment is a prioritization and
+   accountability nudge, not automatically a hard permission boundary.
+
+3. Role Or Team Routing
+
+   A Decision targets a role or team, such as `infra_owner`, `admin`, `product`,
+   or "someone with Vercel access."
+
+4. Policy-Governed Approval
+
+   A Decision can require a specific role, permission, or capability before the
+   Objective can advance.
+
+The same Objective may use different collaboration modes for different
+Decisions.
+
+### Collaboration Modes
+
+The runtime can choose a collaboration mode per Decision based on Team Context,
+policy, and current Objective state:
+
+- `open`: anyone with workspace access can unblock;
+- `suggested_owner`: the harness suggests a person or role;
+- `assigned`: the Decision is assigned to a specific owner target;
+- `policy_required`: policy requires a specific role, permission, or capability;
+- `broadcast`: the team should be aware, but no single owner exists yet.
+
+These modes are presentation and routing hints unless policy says otherwise.
+
+### Team-Aware Runtime Behavior
+
+The Objective runtime should adapt how it asks for help based on Team Context.
+
+For a tiny team, it might say:
+
+> "I need someone to confirm whether Sentry is the right provider."
+
+For a slightly structured team, it might say:
+
+> "This likely needs someone with Vercel access."
+
+For a larger org, it might say:
+
+> "Env upload requires `infra_owner` approval."
+
+For a known pattern, it might say:
+
+> "Assigning this to Maya because she approved the last two Vercel env
+> Decisions."
+
+This behavior should be driven by explicit state and evidence where possible,
+not only by prompt intuition.
 
 ### Mixed Human And System Decisions
 
@@ -580,16 +702,171 @@ Multiple users, agents, webhooks, and connectors may contribute to the same
 Objective. The event log serializes changes. Materialized state should resolve
 stale proposals and superseded Decisions explicitly.
 
-## Generative Objective Page
+## Workspace And Mission Control Surfaces
 
-The Objective Page is the dedicated product surface for Level 2 work.
+Users join team workspaces, similar to a Slack workspace mental model. The
+workspace is the container for Objectives, Decisions, capabilities, activity,
+and team context.
 
-It should feel like an AI-native work item: part Linear issue, part runbook,
-part approval queue, part execution log, and part agent workspace.
+The primary platform surfaces are:
+
+- Workspace Mission Control;
+- Objective Mission Control;
+- Objective creation flow;
+- Objectives Index;
+- Capabilities;
+- Activity and audit lenses.
+
+### Workspace Mission Control
+
+Workspace Mission Control is the adaptive home inside a workspace. It is the
+attention layer over org Objectives.
+
+It answers:
+
+- What needs my attention?
+- Where am I blocking progress?
+- What changed since I last checked?
+- What did agents do while I was away?
+- What can I claim, answer, approve, reject, or delegate?
+- Which Objectives are blocked, stale, risky, or waiting on someone?
+
+Mission Control should be persona-aware. A founder, marketing lead, engineer,
+and admin may all see the same underlying Objective state, but the page should
+prioritize different sections and language for each user.
+
+Mission Control may include:
+
+- Decisions assigned to the current user;
+- Decisions open to the workspace;
+- blocked Objectives;
+- stale Objectives;
+- recent agent activity;
+- active Objectives relevant to the user's persona;
+- capability gaps blocking work;
+- suggested setup actions;
+- team-wide risks or momentum summaries.
+
+The exact ranking can evolve. The stable contract is that Mission Control
+presents attention-worthy state from the event log and materialized projections.
+
+### Objective Mission Control
+
+Objective Mission Control is the durable page for one Objective. It is the
+context and execution layer for a specific piece of work.
+
+It answers:
+
+- What are we trying to accomplish?
+- What has Lightfast understood?
+- What Run is active?
+- What Decisions or blockers exist?
+- What evidence and artifacts exist?
+- What happens next for this Objective?
+
+Objective Mission Control should be organized around the Objective as a whole,
+with the current Run prominent inside it. This keeps room for multi-run
+Objectives without making later Runs feel bolted on.
+
+### Objective Creation Flow
+
+Objective creation should be a separate surface, reachable from the workspace
+navigation or global workspace actions.
+
+Initial flow:
+
+```text
+Workspace Mission Control
+-> New Objective
+-> describe intent
+-> Objective created
+-> initial Run starts
+-> Objective Mission Control
+```
+
+The first creation flow can be simple: describe the intent and let Lightfast
+create the Objective plus initial Run. Later versions may add templates, imported
+signals, external artifacts, or "start from Linear/GitHub/Sentry."
+
+### Objectives Index
+
+The Objectives Index is inventory: searchable, filterable durable work across
+the workspace. It is important, but it is not the primary emotional center of
+the product.
+
+It should answer:
+
+- What Objectives exist?
+- Which are active, blocked, waiting, verifying, completed, or superseded?
+- Which area, owner, capability, or external artifact are they linked to?
+- Which Objectives should I inspect in detail?
+
+### Capabilities
+
+Capability surfaces include connectors, skills, developer access, policies, and
+setup state. They are supporting surfaces unless a capability gap is blocking
+work.
+
+When a capability gap blocks an Objective, it should appear both in the relevant
+Capability surface and as a Decision or blocker in Mission Control and Objective
+Mission Control.
+
+### Activity And Audit
+
+Activity and audit can exist as dedicated lenses, but most activity should also
+appear contextually inside Mission Control and Objective Mission Control.
+
+Activity answers:
+
+- What happened recently?
+- Which agents, users, connectors, policies, or webhooks caused changes?
+- What external systems were touched?
+- What evidence was attached?
+
+## Attention Model
+
+Mission Control depends on an Attention Model: a projection that decides which
+events, Decisions, Objectives, blockers, and capability gaps deserve a user's or
+team's attention.
+
+Attention-worthy items may include:
+
+- Decisions assigned to the current user;
+- open Decisions anyone can answer;
+- policy-required approvals;
+- blocked Runs;
+- stale Objectives;
+- failed actions;
+- failed or disconnected capabilities;
+- agent activity since the user last checked;
+- Objectives relevant to the user's persona;
+- risky or customer-impacting work;
+- external artifacts awaiting review;
+- setup actions that would unlock active Objectives.
+
+The Attention Model should separate data from presentation:
+
+- Attention data: the ranked, scoped items that matter.
+- Mission Control presentation: the generated or structured view tailored to the
+  user's persona and workspace state.
+
+This keeps Mission Control adaptive without making its UI the source of truth.
+
+## Generative UI Contract
+
+Lightfast should support generative UI for Mission Control and Objective Mission
+Control. The stable part is the state contract; the flexible part is how the UI
+presents that state.
+
+### Objective Mission Control
+
+Objective Mission Control should feel like an AI-native work item: part Linear
+issue, part runbook, part approval queue, part execution log, and part agent
+workspace.
 
 The spec intentionally does not freeze exact UI components. The platform should
-support a generative UI model where current state can render different blocks
-depending on the Objective:
+support a generative UI model where current Objective state can render different
+blocks depending on the Objective:
 
 - overview and current status;
 - "what Lightfast understands";
@@ -604,17 +881,40 @@ depending on the Objective:
 - next possible actions;
 - generated forms for required responses.
 
+### Workspace Mission Control
+
+Workspace Mission Control should feel like an adaptive attention surface for a
+person inside a team workspace.
+
+Possible generated or structured blocks:
+
+- "needs you";
+- open team Decisions;
+- blocked Objectives;
+- recent agent activity;
+- relevant active Objectives;
+- capability gaps;
+- suggested next actions;
+- team momentum or risk summary;
+- onboarding/setup actions for new workspaces.
+
+### Stable UI Contract
+
 Important UI contract:
 
-- the Objective Page renders materialized state;
+- Mission Control and Objective Mission Control render materialized state;
 - generated UI blocks are presentation artifacts;
 - user interactions append events;
 - answered Decisions advance or unblock Runs;
 - historical evidence remains inspectable;
-- the UI should expose what the harness needs next and who owns it.
+- the UI should expose what the harness needs next and who owns it;
+- persona changes can alter ranking and presentation without changing
+  permissions;
+- capability gaps should appear where they block work, not only on setup pages.
 
 The UX should be refined over time through product exploration. The architecture
-only requires that the UI is driven by typed Objective state and events.
+only requires that the UI is driven by typed workspace, Objective, Decision, and
+event state.
 
 ## Relationship To Signal Intake And Triage
 
@@ -680,6 +980,12 @@ architecture remains the same.
 ## Target Guarantees
 
 - Every Objective is org-scoped and inspectable by authorized members.
+- Every workspace user can have a persona that affects presentation and
+  prioritization without changing permissions.
+- Workspace Mission Control presents attention-worthy Objective, Decision,
+  blocker, activity, and capability state for the current user/workspace.
+- Objective Mission Control presents the full context and execution state for a
+  single Objective.
 - Every important state change is represented by an event.
 - Every state-changing action is preceded by policy and capability checks.
 - Every human-required gate is represented by a Decision.
@@ -687,12 +993,15 @@ architecture remains the same.
   evidence-backed event.
 - Every external provider action produces evidence.
 - Materialized state can be rebuilt from the event log.
-- The Objective Page renders state and appends events; it does not own truth.
+- Mission Control surfaces render state and append events; they do not own
+  truth.
 
 ## Non-Goals
 
 - This spec does not define a complete day-one implementation plan.
-- This spec does not finalize the Objective Page visual design.
+- This spec does not finalize Workspace Mission Control or Objective Mission
+  Control visual design.
+- This spec does not finalize the persona taxonomy or attention ranking model.
 - This spec does not define the full policy matrix for every action type.
 - This spec does not require Objective membership before Decision ownership.
 - This spec does not require full autonomy.
@@ -705,10 +1014,14 @@ architecture remains the same.
 
 These areas should remain open for future specs and implementation planning:
 
-- Objective Page interaction model and visual language.
+- Objective Mission Control interaction model and visual language.
+- Workspace Mission Control interaction model and visual language.
+- Persona taxonomy and onboarding copy.
+- Attention Model ranking rules.
 - Event schema versioning and projection architecture.
 - Decision answer types and forms.
 - Role/team ownership model.
+- Team Context inference and edit controls.
 - Capability registry schema.
 - Policy matrix and autonomy levels.
 - Migration path from current Decisions audit rows.
