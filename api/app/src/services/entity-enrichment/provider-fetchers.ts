@@ -62,7 +62,7 @@ async function fetchXProfiles(
   }
 
   const config = requireXConnectorConfig({
-    appUrl: env.NEXT_PUBLIC_APP_URL,
+    appUrl: process.env.NEXT_PUBLIC_APP_URL,
   });
   const accessToken = await getFreshXConnectorAccessToken({
     config,

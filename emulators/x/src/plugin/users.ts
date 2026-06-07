@@ -20,9 +20,9 @@ function userResponse(store: Store) {
   }
   return {
     data: {
-      id: user?.x_id ?? X_EMULATOR_FIXTURES.userId,
-      name: user?.name ?? X_EMULATOR_FIXTURES.userName,
-      username: user?.username ?? X_EMULATOR_FIXTURES.username,
+      id: X_EMULATOR_FIXTURES.userId,
+      name: X_EMULATOR_FIXTURES.userName,
+      username: X_EMULATOR_FIXTURES.username,
     },
   };
 }

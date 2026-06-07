@@ -1,6 +1,6 @@
 import type { SignalEntityEnrichmentTargetsResult } from "@db/app";
 import type { Database } from "@db/app";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const executeXApiToolMock = vi.fn();
 const getActiveOrgBindingMock = vi.fn();
@@ -86,6 +86,7 @@ function targets(): SignalEntityEnrichmentTargetsResult {
 }
 
 beforeEach(() => {
+  vi.stubEnv("NEXT_PUBLIC_APP_URL", envMock.NEXT_PUBLIC_APP_URL);
   executeXApiToolMock.mockReset();
   executeXApiToolMock.mockResolvedValue({
     content: [{ text: "ok", type: "text" }],
@@ -124,6 +125,10 @@ beforeEach(() => {
     twitterUsername: "ava_ai",
     type: "User",
   });
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 describe("fetchSignalEntityProfiles", () => {

@@ -232,6 +232,7 @@ describe("X MCP bridge service", () => {
     await expect(
       getFreshXConnectorAccessToken({
         config: {
+          appOrigin: "https://app.lightfast.localhost",
           clientId: "x_client_test",
           clientSecret: "x_secret_test",
           endpoints: {
@@ -240,6 +241,7 @@ describe("X MCP bridge service", () => {
             oauthAuthorizeUrl: "https://x.test/i/oauth2/authorize",
             oauthRevokeUrl: "https://x.test/2/oauth2/revoke",
             oauthTokenUrl: "https://x.test/2/oauth2/token",
+            viewerUrl: "https://x.test/2/users/me",
           },
         },
         connection: connection(),
