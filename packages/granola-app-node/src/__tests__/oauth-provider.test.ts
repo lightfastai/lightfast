@@ -1,15 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
-
 import type {
   OAuthClientInformationMixed,
   OAuthClientMetadata,
   OAuthTokens,
 } from "@vendor/mcp";
+import { describe, expect, it, vi } from "vitest";
 
-import {
-  DEFAULT_GRANOLA_MCP_ENDPOINT,
-  granolaClientMetadata,
-} from "../config";
+import { DEFAULT_GRANOLA_MCP_ENDPOINT, granolaClientMetadata } from "../config";
 import { GranolaOAuthClientProvider } from "../oauth-provider";
 
 describe("Granola OAuth client provider", () => {
@@ -63,7 +59,9 @@ describe("Granola OAuth client provider", () => {
 
     expect(provider.redirectUrl).toBe(redirectUrl);
     expect(provider.clientMetadata).toEqual(clientMetadata);
-    expect(await provider.clientInformation()).toEqual(initialClientInformation);
+    expect(await provider.clientInformation()).toEqual(
+      initialClientInformation
+    );
     expect(await provider.codeVerifier()).toBe("initial-code-verifier");
     expect(await provider.tokens()).toEqual(initialTokens);
 
@@ -82,11 +80,15 @@ describe("Granola OAuth client provider", () => {
     await provider.saveCodeVerifier("next-code-verifier");
     await provider.saveTokens(nextTokens);
     await provider.redirectToAuthorization(
-      new URL("https://granola.ai/oauth/authorize?client_id=granola-client-next")
+      new URL(
+        "https://granola.ai/oauth/authorize?client_id=granola-client-next"
+      )
     );
 
     expect(onAuthorizationUrl).toHaveBeenCalledWith(
-      new URL("https://granola.ai/oauth/authorize?client_id=granola-client-next")
+      new URL(
+        "https://granola.ai/oauth/authorize?client_id=granola-client-next"
+      )
     );
     expect(await provider.clientInformation()).toEqual(nextClientInformation);
     expect(await provider.codeVerifier()).toBe("next-code-verifier");

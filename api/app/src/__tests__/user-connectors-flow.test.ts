@@ -19,6 +19,7 @@ const streamableHTTPClientTransportMock = vi.fn();
 const envMock = {
   ENCRYPTION_KEY:
     "0000000000000000000000000000000000000000000000000000000000000000",
+  GRANOLA_MCP_ENDPOINT: "https://granola.test/mcp",
   NEXT_PUBLIC_APP_URL: "https://app.lightfast.localhost",
 };
 
@@ -288,7 +289,7 @@ describe("user connector catalog services", () => {
     ]);
     expect(JSON.stringify(rows[0])).not.toContain("enabledForAutomations");
     expect(JSON.stringify(rows[0])).not.toContain("enabledForAgents");
-    expect(JSON.stringify(rows[0])).not.toContain("ownerType\":\"org");
+    expect(JSON.stringify(rows[0])).not.toContain('ownerType":"org');
   });
 });
 
@@ -314,7 +315,9 @@ describe("Granola user connector OAuth flow", () => {
       userConnection({ status: "revoked" })
     );
     encryptMock.mockReset();
-    encryptMock.mockImplementation(async (value: string) => `encrypted:${value}`);
+    encryptMock.mockImplementation(
+      async (value: string) => `encrypted:${value}`
+    );
     granolaClientMetadataMock.mockReset();
     granolaClientMetadataMock.mockImplementation(
       ({ redirectUrl }: { redirectUrl: string | URL }) => ({
@@ -373,7 +376,8 @@ describe("Granola user connector OAuth flow", () => {
         })
       )
     ).resolves.toEqual({
-      authorizationUrl: "https://granola.test/oauth/authorize?state=provider_state",
+      authorizationUrl:
+        "https://granola.test/oauth/authorize?state=provider_state",
       mode: "connect",
     });
 
@@ -393,7 +397,7 @@ describe("Granola user connector OAuth flow", () => {
     );
     expect(listGranolaMcpToolsMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        endpoint: "https://mcp.granola.ai/mcp",
+        endpoint: "https://granola.test/mcp",
       })
     );
   });
@@ -474,6 +478,15 @@ describe("Granola user connector OAuth flow", () => {
     );
     expect(authMock).toHaveBeenCalledWith({ treatPendingAsSignedOut: false });
     expect(finishAuthMock).toHaveBeenCalledWith("oauth_code");
+    expect(streamableHTTPClientTransportMock).toHaveBeenCalledWith(
+      new URL("https://granola.test/mcp"),
+      expect.anything()
+    );
+    expect(listGranolaMcpToolsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        endpoint: "https://granola.test/mcp",
+      })
+    );
     expect(finalizeCurrentUserConnectorConnectionMock).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
@@ -481,7 +494,7 @@ describe("Granola user connector OAuth flow", () => {
         clerkUserId: "user_current",
         encryptedAccessToken: "encrypted:granola_access",
         encryptedRefreshToken: "encrypted:granola_refresh",
-        mcpEndpoint: "https://mcp.granola.ai/mcp",
+        mcpEndpoint: "https://granola.test/mcp",
         observedCurrentConnectionId: 1,
         observedEncryptedAccessToken: "encrypted_access",
         observedEncryptedRefreshToken: "encrypted_refresh",

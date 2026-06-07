@@ -15,11 +15,8 @@ import {
 } from "@repo/granola-app-node";
 import { TRPCError } from "@trpc/server";
 import { auth } from "@vendor/clerk/server";
+import type { OAuthClientInformationMixed, OAuthTokens } from "@vendor/mcp";
 import { StreamableHTTPClientTransport } from "@vendor/mcp";
-import type {
-  OAuthClientInformationMixed,
-  OAuthTokens,
-} from "@vendor/mcp";
 import { log } from "@vendor/observability/log/next";
 import { env } from "../../env";
 import type { AuthContext } from "../../trpc";
@@ -107,7 +104,10 @@ function safeReturnTo(input: { appOrigin: string; headers: Headers }) {
   }
 }
 
-function redirectUrlForReturnTo(input: { appOrigin: string; returnTo: string }) {
+function redirectUrlForReturnTo(input: {
+  appOrigin: string;
+  returnTo: string;
+}) {
   try {
     const url = new URL(input.returnTo, input.appOrigin);
     if (url.origin !== input.appOrigin) {
@@ -128,6 +128,10 @@ function expiresAtFromSeconds(seconds: number | undefined) {
 
 function scopesFromTokenScope(scope: string | undefined) {
   return scope?.split(/\s+/).filter(Boolean) ?? [];
+}
+
+function granolaMcpEndpoint() {
+  return env.GRANOLA_MCP_ENDPOINT ?? DEFAULT_GRANOLA_MCP_ENDPOINT;
 }
 
 async function encryptedToken(plaintext: string) {
@@ -234,9 +238,10 @@ export async function startGranolaUserConnectorOAuth(
   });
 
   try {
+    const mcpEndpoint = granolaMcpEndpoint();
     await listGranolaMcpTools({
       authProvider: provider,
-      endpoint: DEFAULT_GRANOLA_MCP_ENDPOINT,
+      endpoint: mcpEndpoint,
     });
   } catch (error) {
     if (!isGranolaAuthRequired(error)) {
@@ -284,15 +289,15 @@ async function finalizeGranolaConnection(input: {
   attempt: UserConnectorOAuthAttemptRecord;
   code: string;
 }) {
+  const mcpEndpoint = granolaMcpEndpoint();
   const provider = createGranolaOAuthProvider({
     clientInformation: input.attempt.clientInformation,
     codeVerifier: input.attempt.codeVerifier,
     redirectUrl: input.attempt.redirectUrl,
   });
-  const transport = new StreamableHTTPClientTransport(
-    new URL(DEFAULT_GRANOLA_MCP_ENDPOINT),
-    { authProvider: provider }
-  );
+  const transport = new StreamableHTTPClientTransport(new URL(mcpEndpoint), {
+    authProvider: provider,
+  });
 
   await transport.finishAuth(input.code);
 
@@ -306,7 +311,7 @@ async function finalizeGranolaConnection(input: {
 
   const toolManifest = await listGranolaMcpTools({
     authProvider: provider,
-    endpoint: DEFAULT_GRANOLA_MCP_ENDPOINT,
+    endpoint: mcpEndpoint,
   });
   const oauthClientInformation = safeOAuthClientInformation(
     provider.snapshot().clientInformation
@@ -324,7 +329,7 @@ async function finalizeGranolaConnection(input: {
       ? await encryptedToken(tokens.refresh_token)
       : null,
     lastToolRefreshAt: new Date(),
-    mcpEndpoint: DEFAULT_GRANOLA_MCP_ENDPOINT,
+    mcpEndpoint,
     metadata: {
       hasRefreshToken: !!tokens.refresh_token,
       mode: previousCurrent ? "reconnect" : "connect",

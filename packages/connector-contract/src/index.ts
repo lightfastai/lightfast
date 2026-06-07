@@ -14,9 +14,7 @@ export type ConnectableConnectorProvider = z.infer<
 
 export const USER_CONNECTOR_PROVIDERS = ["granola"] as const;
 export const userConnectorProviderSchema = z.enum(USER_CONNECTOR_PROVIDERS);
-export type UserConnectorProvider = z.infer<
-  typeof userConnectorProviderSchema
->;
+export type UserConnectorProvider = z.infer<typeof userConnectorProviderSchema>;
 
 export const connectorOwnerTypeSchema = z.enum(["org", "user"]);
 export type ConnectorOwnerType = z.infer<typeof connectorOwnerTypeSchema>;

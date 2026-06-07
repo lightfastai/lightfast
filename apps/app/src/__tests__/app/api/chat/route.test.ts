@@ -33,7 +33,9 @@ const workspaceAssistantToolsMock = {
   callProviderRoutine: { inputSchema: { kind: "call-input" } },
   callUserConnectorTool: { inputSchema: { kind: "user-connector-call-input" } },
   findProviderRoutines: { inputSchema: { kind: "find-input" } },
-  findUserConnectorTools: { inputSchema: { kind: "user-connector-find-input" } },
+  findUserConnectorTools: {
+    inputSchema: { kind: "user-connector-find-input" },
+  },
 };
 
 vi.mock("@api/app/auth/identity", () => ({
@@ -559,7 +561,10 @@ describe("chat route", () => {
       {
         id: "client-message-1",
         parts: [
-          { text: "Summarize my Linear issues and Granola notes", type: "text" },
+          {
+            text: "Summarize my Linear issues and Granola notes",
+            type: "text",
+          },
         ],
         role: "user",
       },

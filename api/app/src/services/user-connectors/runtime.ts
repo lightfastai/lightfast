@@ -1,15 +1,15 @@
 import {
   createUserConnectorToolCall,
+  type Database,
   getCurrentUserConnectorConnection,
   listCurrentUserConnectorConnections,
   markCurrentUserConnectorConnectionError,
   markUserConnectorToolCallFailed,
   markUserConnectorToolCallProviderAttempted,
   markUserConnectorToolCallSucceeded,
-  type Database,
+  type UserConnectorConnection,
   type UserConnectorToolCall,
   type UserConnectorToolCallRedactedPayload,
-  type UserConnectorConnection,
   updateObservedUserConnectorTokens,
 } from "@db/app";
 import { decrypt, encrypt } from "@repo/app-encryption";
@@ -23,22 +23,18 @@ import {
   parseUserConnectorRoutineId,
   type UserConnectorCallInput,
   type UserConnectorCallSuccess,
-  userConnectorCallInputSchema,
   type UserConnectorFindInput,
   type UserConnectorFindOutput,
+  type UserConnectorRoutineSummary,
+  userConnectorCallInputSchema,
   userConnectorFindInputSchema,
   userConnectorRoutineId,
-  type UserConnectorRoutineSummary,
 } from "@repo/user-connector-contract";
-import type {
-  OAuthClientInformationMixed,
-  OAuthTokens,
-} from "@vendor/mcp";
+import type { OAuthClientInformationMixed, OAuthTokens } from "@vendor/mcp";
 import { log } from "@vendor/observability/log/next";
 import { env } from "../../env";
 
-const GRANOLA_OAUTH_CALLBACK_PATH =
-  "/api/connectors/granola/oauth/callback";
+const GRANOLA_OAUTH_CALLBACK_PATH = "/api/connectors/granola/oauth/callback";
 const LOCAL_GRANOLA_CALLBACK_URL =
   "https://app.lightfast.localhost/api/connectors/granola/oauth/callback";
 
@@ -118,14 +114,16 @@ export async function callUserConnectorTool(
     provider,
   });
 
-  if (!connection || !isActiveConnection(connection)) {
+  if (!(connection && isActiveConnection(connection))) {
     throw new Error(
       `${userConnectorProviderDisplayName(provider)} connector is not connected for this user.`
     );
   }
 
   if (!hasProviderTool(connection, providerToolName)) {
-    throw new Error(`User connector routine ${parsed.routineId} was not found.`);
+    throw new Error(
+      `User connector routine ${parsed.routineId} was not found.`
+    );
   }
 
   const auditLogContext = {
@@ -202,9 +200,9 @@ function summarizeConnectionTools(
       const routineId = userConnectorRoutineId(connection.provider, tool.name);
       return [
         {
-          ...(tool.description !== undefined
-            ? { description: tool.description }
-            : {}),
+          ...(tool.description === undefined
+            ? {}
+            : { description: tool.description }),
           ...(input.includeSchema && tool.inputSchema !== undefined
             ? { inputSchema: tool.inputSchema }
             : {}),
@@ -350,8 +348,8 @@ async function safelyMarkUserConnectorToolCallFailed(
     await markUserConnectorToolCallFailed(context.db, {
       calledByUserId: context.actor.userId,
       finishedAt: context.now(),
-      ...(errorCode !== undefined ? { errorCode } : {}),
-      ...(errorMessage !== undefined ? { errorMessage } : {}),
+      ...(errorCode === undefined ? {} : { errorCode }),
+      ...(errorMessage === undefined ? {} : { errorMessage }),
       publicId: toolCall.publicId,
     });
   } catch (auditError) {
@@ -458,7 +456,7 @@ function userConnectorToolCallErrorCode(error: unknown) {
 
 function safeUserConnectorToolCallErrorMessage(error: unknown) {
   if (!(error instanceof GranolaAppNodeError)) {
-    return undefined;
+    return;
   }
 
   switch (error.code) {
@@ -469,7 +467,7 @@ function safeUserConnectorToolCallErrorMessage(error: unknown) {
     case "GRANOLA_TOKEN_REFRESH_FAILED":
       return "Granola OAuth token refresh failed.";
     default:
-      return undefined;
+      return;
   }
 }
 
@@ -563,8 +561,10 @@ function granolaRedirectUrl() {
   }
 
   try {
-    return new URL(GRANOLA_OAUTH_CALLBACK_PATH, new URL(appUrl).origin)
-      .toString();
+    return new URL(
+      GRANOLA_OAUTH_CALLBACK_PATH,
+      new URL(appUrl).origin
+    ).toString();
   } catch {
     return LOCAL_GRANOLA_CALLBACK_URL;
   }

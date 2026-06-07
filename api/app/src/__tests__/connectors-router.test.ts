@@ -145,7 +145,9 @@ describe("connectorsRouter", () => {
   });
 
   it("returns workspace connector sections with team and user connectors", async () => {
-    await expect(caller(nonAdminAccess()).connectors.listSections()).resolves.toEqual({
+    await expect(
+      caller(nonAdminAccess()).connectors.listSections()
+    ).resolves.toEqual({
       teamConnectors: [
         expect.objectContaining({
           canManage: false,

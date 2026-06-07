@@ -18,8 +18,7 @@ const finishedAt = new Date("2026-06-06T00:01:00.000Z");
 function makeToolCall(overrides: Record<string, unknown> = {}) {
   return {
     id: 1,
-    publicId:
-      "user_connector_tool_call_123e4567-e89b-12d3-a456-426614174000",
+    publicId: "user_connector_tool_call_123e4567-e89b-12d3-a456-426614174000",
     calledByUserId: "user_123",
     clerkOrgId: "org_123",
     provider: "granola",

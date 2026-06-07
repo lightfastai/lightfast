@@ -71,16 +71,22 @@ describe("Granola MCP client helpers", () => {
   const authProvider = {
     clientMetadata: {
       client_name: "Lightfast",
-      redirect_uris: ["https://app.lightfast.ai/api/connectors/granola/oauth/callback"],
+      redirect_uris: [
+        "https://app.lightfast.ai/api/connectors/granola/oauth/callback",
+      ],
       token_endpoint_auth_method: "none",
     },
     clientInformation: () => ({ client_id: "granola-client-id" }),
     codeVerifier: () => "code-verifier",
     redirectToAuthorization: vi.fn(),
-    redirectUrl: "https://app.lightfast.ai/api/connectors/granola/oauth/callback",
+    redirectUrl:
+      "https://app.lightfast.ai/api/connectors/granola/oauth/callback",
     saveCodeVerifier: vi.fn(),
     saveTokens: vi.fn(),
-    tokens: () => ({ access_token: "granola-access-token", token_type: "Bearer" }),
+    tokens: () => ({
+      access_token: "granola-access-token",
+      token_type: "Bearer",
+    }),
   } satisfies OAuthClientProvider;
 
   afterEach(() => {

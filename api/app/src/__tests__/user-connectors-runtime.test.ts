@@ -35,7 +35,7 @@ class MockGranolaAppNodeError extends Error {
 class MockGranolaOAuthClientProvider {
   readonly clientMetadata: unknown;
   readonly redirectUrl: string | URL;
-  private clientInfo?: unknown;
+  private readonly clientInfo?: unknown;
   private oauthTokens: unknown;
 
   constructor(input: {
@@ -209,7 +209,9 @@ describe("user connector chat runtime", () => {
       context.db,
       { clerkUserId: "user_current" }
     );
-    const output = await findUserConnectorTools(context, { provider: "granola" });
+    const output = await findUserConnectorTools(context, {
+      provider: "granola",
+    });
     expect(output.routines.map((routine) => routine.providerToolName)).toEqual([
       "search_notes",
     ]);
@@ -341,9 +343,7 @@ describe("user connector chat runtime", () => {
       input: { query: "SOC2" },
       name: "search_notes",
     });
-    expect(mcpCall.authProvider).toBeInstanceOf(
-      MockGranolaOAuthClientProvider
-    );
+    expect(mcpCall.authProvider).toBeInstanceOf(MockGranolaOAuthClientProvider);
     expect(mcpCall.authProvider.redirectUrl).toBe(
       "https://chat.lightfast.test/api/connectors/granola/oauth/callback"
     );
@@ -389,7 +389,8 @@ describe("user connector chat runtime", () => {
       createUserConnectorToolCallMock.mock.invocationCallOrder[0];
     const decryptOrder = decryptMock.mock.invocationCallOrder[0];
     const attemptedOrder =
-      markUserConnectorToolCallProviderAttemptedMock.mock.invocationCallOrder[0];
+      markUserConnectorToolCallProviderAttemptedMock.mock
+        .invocationCallOrder[0];
     const providerOrder = callGranolaMcpToolMock.mock.invocationCallOrder[0];
     const succeededOrder =
       markUserConnectorToolCallSucceededMock.mock.invocationCallOrder[0];
@@ -637,7 +638,9 @@ describe("user connector chat runtime", () => {
     expect(decryptMock).not.toHaveBeenCalled();
     expect(callGranolaMcpToolMock).not.toHaveBeenCalled();
     expect(createUserConnectorToolCallMock).not.toHaveBeenCalled();
-    expect(markUserConnectorToolCallProviderAttemptedMock).not.toHaveBeenCalled();
+    expect(
+      markUserConnectorToolCallProviderAttemptedMock
+    ).not.toHaveBeenCalled();
   });
 
   it("rejects missing user connector tools", async () => {
@@ -660,7 +663,9 @@ describe("user connector chat runtime", () => {
     expect(decryptMock).not.toHaveBeenCalled();
     expect(callGranolaMcpToolMock).not.toHaveBeenCalled();
     expect(createUserConnectorToolCallMock).not.toHaveBeenCalled();
-    expect(markUserConnectorToolCallProviderAttemptedMock).not.toHaveBeenCalled();
+    expect(
+      markUserConnectorToolCallProviderAttemptedMock
+    ).not.toHaveBeenCalled();
   });
 
   it("marks the current user connection error on Granola auth-required failures", async () => {
@@ -704,7 +709,9 @@ describe("user connector chat runtime", () => {
   it("does not mark the current user connection error on generic failures", async () => {
     const context = userConnectorChatContext();
     getCurrentUserConnectorConnectionMock.mockResolvedValue(userConnection());
-    callGranolaMcpToolMock.mockRejectedValue(new Error("transient MCP failure"));
+    callGranolaMcpToolMock.mockRejectedValue(
+      new Error("transient MCP failure")
+    );
 
     await expect(
       callUserConnectorTool(context, {
@@ -714,9 +721,8 @@ describe("user connector chat runtime", () => {
     ).rejects.toThrow("transient MCP failure");
 
     expect(markCurrentUserConnectorConnectionErrorMock).not.toHaveBeenCalled();
-    const failedInput = markUserConnectorToolCallFailedMock.mock.calls[0]?.[1] as
-      | Record<string, unknown>
-      | undefined;
+    const failedInput = markUserConnectorToolCallFailedMock.mock
+      .calls[0]?.[1] as Record<string, unknown> | undefined;
     expect(failedInput).toMatchObject({
       calledByUserId: "user_current",
       publicId: "user_connector_tool_call_123",
@@ -748,10 +754,11 @@ describe("user connector chat runtime", () => {
       })
     );
     expect(callGranolaMcpToolMock).not.toHaveBeenCalled();
-    expect(markUserConnectorToolCallProviderAttemptedMock).not.toHaveBeenCalled();
-    const failedInput = markUserConnectorToolCallFailedMock.mock.calls[0]?.[1] as
-      | Record<string, unknown>
-      | undefined;
+    expect(
+      markUserConnectorToolCallProviderAttemptedMock
+    ).not.toHaveBeenCalled();
+    const failedInput = markUserConnectorToolCallFailedMock.mock
+      .calls[0]?.[1] as Record<string, unknown> | undefined;
     expect(failedInput).toMatchObject({
       calledByUserId: "user_current",
       publicId: "user_connector_tool_call_123",
@@ -834,11 +841,7 @@ describe("user connector chat runtime", () => {
 });
 
 function userConnectorChatContext(
-  overrides: {
-    conversationId?: string;
-    orgId?: string;
-    userId?: string;
-  } = {}
+  overrides: { conversationId?: string; orgId?: string; userId?: string } = {}
 ) {
   return {
     actor: {

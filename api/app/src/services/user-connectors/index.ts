@@ -6,9 +6,7 @@ import type {
 import { TRPCError } from "@trpc/server";
 import type { z } from "zod";
 import type { AuthContext } from "../../trpc";
-import { listUserConnectorsForViewer } from "./catalog";
 import {
-  completeGranolaUserConnectorOAuth,
   disconnectGranolaUserConnector,
   startGranolaUserConnectorOAuth,
 } from "./granola-flow";
@@ -26,12 +24,12 @@ type UserConnectorStartConnectInput = z.infer<
   typeof userConnectorStartConnectInputSchema
 >;
 
+export { listUserConnectorsForViewer } from "./catalog";
 export {
   completeGranolaUserConnectorOAuth,
   disconnectGranolaUserConnector,
   startGranolaUserConnectorOAuth,
 } from "./granola-flow";
-export { listUserConnectorsForViewer } from "./catalog";
 
 function unsupportedProvider(provider: string): never {
   throw new TRPCError({

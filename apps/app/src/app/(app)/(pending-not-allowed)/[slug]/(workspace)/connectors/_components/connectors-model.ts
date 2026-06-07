@@ -5,8 +5,10 @@ export type ConnectorCatalogRow =
   | UserConnectorCatalogRow;
 export type ConnectorSections =
   AppRouterOutputs["org"]["workspace"]["connectors"]["listSections"];
-export type TeamConnectorCatalogRow = ConnectorSections["teamConnectors"][number];
-export type UserConnectorCatalogRow = ConnectorSections["yourConnectors"][number];
+export type TeamConnectorCatalogRow =
+  ConnectorSections["teamConnectors"][number];
+export type UserConnectorCatalogRow =
+  ConnectorSections["yourConnectors"][number];
 export type ConnectorProvider = ConnectorCatalogRow["provider"];
 export type TeamConnectorConnection = NonNullable<
   TeamConnectorCatalogRow["connection"]

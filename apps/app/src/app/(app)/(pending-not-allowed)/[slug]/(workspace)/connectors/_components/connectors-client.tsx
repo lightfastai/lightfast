@@ -49,10 +49,10 @@ import { ConnectorIcon } from "./connector-icons";
 import {
   type ConnectorCatalogRow,
   type ConnectorProvider,
-  type TeamConnectorCatalogRow,
-  type UserConnectorCatalogRow,
   connectionStatus,
   displayProviderName,
+  type TeamConnectorCatalogRow,
+  type UserConnectorCatalogRow,
   userConnectionStatus,
 } from "./connectors-model";
 
@@ -110,10 +110,7 @@ function isTeamMutationDisabled(
   return pending || !row.canManage || !isConnectableProvider(row.provider);
 }
 
-function isTeamConnectDisabled(
-  row: TeamConnectorCatalogRow,
-  pending: boolean
-) {
+function isTeamConnectDisabled(row: TeamConnectorCatalogRow, pending: boolean) {
   return (
     isTeamMutationDisabled(row, pending) ||
     row.connectAvailability.status !== "available"
@@ -247,7 +244,10 @@ export function ConnectorsClient({
     }
   }
 
-  function setAutomationEnabled(row: TeamConnectorCatalogRow, enabled: boolean) {
+  function setAutomationEnabled(
+    row: TeamConnectorCatalogRow,
+    enabled: boolean
+  ) {
     if (isConnectableProvider(row.provider)) {
       setAutomationEnabledMutation.mutate({ enabled, provider: row.provider });
     }
@@ -339,11 +339,7 @@ export function ConnectorsClient({
         />
       </div>
 
-      {!hasFilteredConnectors ? (
-        <p className="mt-6 text-muted-foreground text-sm">
-          No connectors match these filters.
-        </p>
-      ) : (
+      {hasFilteredConnectors ? (
         <div className="mt-6 flex flex-col gap-7">
           <ConnectorSection
             description="Shared workspace connectors managed by admins."
@@ -412,6 +408,10 @@ export function ConnectorsClient({
             )}
           </ConnectorSection>
         </div>
+      ) : (
+        <p className="mt-6 text-muted-foreground text-sm">
+          No connectors match these filters.
+        </p>
       )}
 
       <ConnectorDetailSheet
@@ -862,7 +862,7 @@ function UserConnectedConnectorCard({
             ))}
           </div>
         ) : (
-          <p className="mt-3 rounded-[8px] border border-dashed border-border px-3 py-2 text-muted-foreground text-sm">
+          <p className="mt-3 rounded-[8px] border border-border border-dashed px-3 py-2 text-muted-foreground text-sm">
             No tools available yet.
           </p>
         )}

@@ -14,9 +14,9 @@ describe("user connector contract", () => {
     expect(userConnectorRoutineIdSchema.parse("granola__search_notes")).toBe(
       "granola__search_notes"
     );
-    expect(userConnectorRoutineIdSchema.safeParse("linear__viewer").success).toBe(
-      false
-    );
+    expect(
+      userConnectorRoutineIdSchema.safeParse("linear__viewer").success
+    ).toBe(false);
   });
 
   it("parses find and call inputs", () => {

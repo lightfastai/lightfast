@@ -13,8 +13,7 @@ import {
   varchar,
 } from "drizzle-orm/mysql-core";
 
-export const USER_CONNECTOR_TOOL_CALL_ID_PREFIX =
-  "user_connector_tool_call_";
+export const USER_CONNECTOR_TOOL_CALL_ID_PREFIX = "user_connector_tool_call_";
 
 const PUBLIC_ID_LENGTH = 80;
 const CLERK_ID_LENGTH = 64;
@@ -25,8 +24,10 @@ const SOURCE_REF_LENGTH = 128;
 
 export type UserConnectorToolCallSourceSurface = "interactive_chat";
 export type UserConnectorToolCallStatus = "failed" | "running" | "succeeded";
-export type UserConnectorToolCallRedactedPayload =
-  Record<string, unknown> | null;
+export type UserConnectorToolCallRedactedPayload = Record<
+  string,
+  unknown
+> | null;
 
 export function createUserConnectorToolCallId() {
   return `${USER_CONNECTOR_TOOL_CALL_ID_PREFIX}${randomUUID()}`;
@@ -125,7 +126,6 @@ export const userConnectorToolCalls = mysqlTable(
   })
 );
 
-export type UserConnectorToolCall =
-  typeof userConnectorToolCalls.$inferSelect;
+export type UserConnectorToolCall = typeof userConnectorToolCalls.$inferSelect;
 export type InsertUserConnectorToolCall =
   typeof userConnectorToolCalls.$inferInsert;

@@ -604,9 +604,7 @@ describe("ConnectorsClient", () => {
     expect(userScope.getByRole("heading", { name: "Granola" })).toBeVisible();
     expect(userScope.getByText("Only you")).toBeVisible();
     expect(
-      userScope.getByText(
-        "Available in your chats. Not visible to teammates."
-      )
+      userScope.getByText("Available in your chats. Not visible to teammates.")
     ).toBeVisible();
     expect(userScope.getByText("search_notes")).toBeVisible();
     expect(userScope.queryByText("Use in automations")).toBeNull();

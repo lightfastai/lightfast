@@ -99,8 +99,7 @@ export const userConnectorConnections = mysqlTable(
   })
 );
 
-type UserConnectorConnectionRow =
-  typeof userConnectorConnections.$inferSelect;
+type UserConnectorConnectionRow = typeof userConnectorConnections.$inferSelect;
 export type UserConnectorConnection = Omit<
   UserConnectorConnectionRow,
   "currentUserProviderKey"

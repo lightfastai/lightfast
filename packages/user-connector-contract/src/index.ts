@@ -8,9 +8,7 @@ export const userConnectorToolNameSchema = z
   .string()
   .min(1)
   .regex(/^[A-Za-z0-9_.-]+$/, "Unsupported user connector tool name");
-export type UserConnectorToolName = z.infer<
-  typeof userConnectorToolNameSchema
->;
+export type UserConnectorToolName = z.infer<typeof userConnectorToolNameSchema>;
 
 export const userConnectorRoutineIdSchema = z.string().refine((routineId) => {
   const separatorIndex = routineId.indexOf("__");

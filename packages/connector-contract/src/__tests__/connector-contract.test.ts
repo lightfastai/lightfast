@@ -4,12 +4,12 @@ import {
   CONNECTABLE_CONNECTOR_PROVIDERS,
   CONNECTOR_CATALOG,
   CONNECTOR_PROVIDERS,
-  USER_CONNECTOR_PROVIDERS,
   connectorOwnerTypeSchema,
   connectorRuntimeToolName,
   connectorRuntimeToolNameSchema,
   connectorToolNameSchema,
   parseConnectorRuntimeToolName,
+  USER_CONNECTOR_PROVIDERS,
   userConnectorProviderSchema,
   userConnectorStartConnectInputSchema,
 } from "../index";
