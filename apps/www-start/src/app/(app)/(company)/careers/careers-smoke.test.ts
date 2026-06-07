@@ -1,6 +1,6 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const env = {
   VITE_LIGHTFAST_APP_URL: "https://app.lightfast.localhost",
@@ -15,6 +15,12 @@ describe("careers page smoke", () => {
     for (const [key, value] of Object.entries(env)) {
       vi.stubEnv(key, value);
     }
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it("renders the migrated careers terminal surface", async () => {
@@ -36,5 +42,53 @@ describe("careers page smoke", () => {
     expect(html).toContain("OPEN POSITIONS: None for now.");
     expect(html).toContain("https://github.com/lightfastai/lightfast");
     expect(html).toContain("https://github.com/lightfastai/.lightfast");
+  });
+
+  it("aborts stalled remote careers content requests and falls back", async () => {
+    vi.useFakeTimers();
+
+    const { FALLBACK_CAREERS_CONTENT, getCareersContent } = await import(
+      "~/app/(app)/(company)/careers/page"
+    );
+
+    let capturedSignal: AbortSignal | undefined;
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+        capturedSignal = init?.signal ?? undefined;
+
+        return new Promise((_resolve, reject) => {
+          capturedSignal?.addEventListener("abort", () => {
+            reject(new DOMException("Aborted", "AbortError"));
+          });
+        });
+      })
+    );
+
+    const contentPromise = getCareersContent();
+
+    expect(capturedSignal).toBeInstanceOf(AbortSignal);
+
+    await vi.advanceTimersByTimeAsync(10_000);
+    await expect(contentPromise).resolves.toBe(FALLBACK_CAREERS_CONTENT);
+  });
+
+  it("renders unsafe remote markdown links as non-clickable text", async () => {
+    const { default: CareersPage } = await import(
+      "~/app/(app)/(company)/careers/page"
+    );
+
+    const page = await CareersPage({
+      content:
+        "[Unsafe](javascript:alert) [ProtocolRelative](//example.com) [Safe](https://lightfast.ai)",
+    });
+    const html = renderToStaticMarkup(page);
+
+    expect(html).toContain("[Unsafe](javascript:alert)");
+    expect(html).not.toContain('href="javascript:alert"');
+    expect(html).toContain("[ProtocolRelative](//example.com)");
+    expect(html).not.toContain('href="//example.com"');
+    expect(html).toContain('href="https://lightfast.ai"');
   });
 });

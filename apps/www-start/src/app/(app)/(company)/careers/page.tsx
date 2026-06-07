@@ -15,6 +15,8 @@ LINKS:
  - [Lightfast](https://github.com/lightfastai/lightfast)
  - [Program Specification](https://github.com/lightfastai/.lightfast)`;
 
+const CAREERS_FETCH_TIMEOUT_MS = 5000;
+
 function decodeBase64Content(content: string) {
   const normalized = content.replace(/\n/g, "");
 
@@ -48,12 +50,19 @@ function readCareersContent(data: unknown) {
 }
 
 export async function getCareersContent(): Promise<string> {
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort(),
+    CAREERS_FETCH_TIMEOUT_MS
+  );
+
   try {
     const res = await fetch(
       "https://api.github.com/repos/lightfastai/careers/contents/README.md",
       {
         cache: "force-cache",
         headers: { Accept: "application/vnd.github.v3+json" },
+        signal: controller.signal,
       }
     );
 
@@ -64,7 +73,21 @@ export async function getCareersContent(): Promise<string> {
     return readCareersContent(await res.json());
   } catch {
     return FALLBACK_CAREERS_CONTENT;
+  } finally {
+    clearTimeout(timeout);
   }
+}
+
+function getSafeMarkdownHref(href: string) {
+  const normalized = href.trim();
+
+  if (/^https?:\/\//i.test(normalized)) {
+    return normalized;
+  }
+
+  return normalized.startsWith("/") && !normalized.startsWith("//")
+    ? normalized
+    : undefined;
 }
 
 function MarkdownLine({ line }: { line: string }): ReactNode {
@@ -82,19 +105,26 @@ function MarkdownLine({ line }: { line: string }): ReactNode {
     const fullMatch = match[0];
     const text = match[1] ?? "";
     const href = match[2] ?? "";
+    const safeHref = getSafeMarkdownHref(href);
 
     parts.push(`[${text}]`);
-    parts.push(
-      <a
-        className="text-blue-400 underline underline-offset-2 transition-opacity hover:opacity-80"
-        href={href}
-        key={key++}
-        rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
-        target={href.startsWith("http") ? "_blank" : undefined}
-      >
-        ({href})
-      </a>
-    );
+    if (safeHref) {
+      const isExternal = /^https?:\/\//i.test(safeHref);
+
+      parts.push(
+        <a
+          className="text-blue-400 underline underline-offset-2 transition-opacity hover:opacity-80"
+          href={safeHref}
+          key={key++}
+          rel={isExternal ? "noopener noreferrer" : undefined}
+          target={isExternal ? "_blank" : undefined}
+        >
+          ({safeHref})
+        </a>
+      );
+    } else {
+      parts.push(`(${href})`);
+    }
     lastIndex = match.index + fullMatch.length;
   }
 

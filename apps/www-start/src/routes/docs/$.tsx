@@ -7,6 +7,7 @@ import {
   buildDocsRootHead,
   getDocsPage,
 } from "~/lib/docs-content";
+import { serializeJsonLd } from "~/lib/json-ld";
 
 export const Route = createFileRoute("/docs/$")({
   loader: ({ params }) => {
@@ -45,7 +46,7 @@ function DocsRoute() {
       <script
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is generated from local typed content.
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(buildDocsJsonLd(page)),
+          __html: serializeJsonLd(buildDocsJsonLd(page)),
         }}
         type="application/ld+json"
       />

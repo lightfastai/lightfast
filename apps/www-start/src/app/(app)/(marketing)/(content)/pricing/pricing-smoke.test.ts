@@ -38,6 +38,9 @@ describe("pricing page smoke", () => {
     expect(html).toContain("Team");
     expect(html).toContain("Business");
     expect(html).toContain("What makes Lightfast worth $20/user?");
+    expect(html).toContain('href="https://app.lightfast.localhost/sign-up"');
+    expect(html).toContain("Start Free");
+    expect(html).toContain("Start Trial");
     expect(html).toContain('href="mailto:sales@lightfast.ai"');
     expect(html).toContain("pt-28");
     expect(html).toContain("md:pt-32");

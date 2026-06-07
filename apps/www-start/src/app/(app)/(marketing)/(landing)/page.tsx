@@ -4,6 +4,7 @@ import { GetStartedCTA } from "~/app/(app)/_components/get-started-cta";
 import { HeroChangelogBadge } from "~/app/(app)/_components/hero-changelog-badge";
 import { LatestContentPreview } from "~/app/(app)/_components/latest-content-preview";
 import { NavLink } from "~/components/nav-link";
+import { serializeJsonLd } from "~/lib/json-ld";
 import { buildLandingStructuredData } from "~/lib/landing-content";
 import {
   HAIRLINE_BOTTOM_X_PCT,
@@ -20,7 +21,7 @@ export default function HomePage() {
       {/* Structured data for SEO */}
       <script
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is generated from static local data.
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(structuredData) }}
         type="application/ld+json"
       />
 

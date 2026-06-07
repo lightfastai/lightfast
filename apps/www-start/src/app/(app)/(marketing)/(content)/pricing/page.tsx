@@ -14,6 +14,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { ArrowRight, ArrowUpRight, Check, HelpCircle } from "lucide-react";
 import type { ReactNode } from "react";
 import { NavLink } from "~/components/nav-link";
+import { serializeJsonLd } from "~/lib/json-ld";
 import {
   buildPricingFaqStructuredData,
   buildPricingSoftwareStructuredData,
@@ -176,12 +177,12 @@ export default function PricingPage() {
     <>
       <script
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is generated from static local data.
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(softwareSchema) }}
         type="application/ld+json"
       />
       <script
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is generated from static local data.
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(faqSchema) }}
         type="application/ld+json"
       />
       <div className="flex w-full flex-col gap-20 overflow-x-clip pt-28 pb-32 md:px-10 md:pt-32">
@@ -225,6 +226,7 @@ export default function PricingPage() {
             <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-4 lg:grid-cols-3">
               {pricingPlans.map((plan) => {
                 const price = plan.monthlyPrice;
+                const isSalesPlan = plan.plan === "business";
 
                 return (
                   <div
@@ -311,7 +313,18 @@ export default function PricingPage() {
                             className="rounded-full"
                             variant={plan.highlighted ? "default" : "outline"}
                           >
-                            <NavLink external href="mailto:sales@lightfast.ai">
+                            <NavLink
+                              {...(isSalesPlan
+                                ? {
+                                    external: true,
+                                    href: "mailto:sales@lightfast.ai",
+                                  }
+                                : {
+                                    href: "/sign-up",
+                                    microfrontend: true,
+                                    prefetch: true,
+                                  })}
+                            >
                               {plan.buttonText}
                               <ArrowUpRight className="ml-2 h-4 w-4" />
                             </NavLink>

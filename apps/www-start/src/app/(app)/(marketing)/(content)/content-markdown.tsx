@@ -71,8 +71,9 @@ const markdownComponents = {
     <img
       alt={alt ?? ""}
       className="my-8 w-full rounded-lg border border-border/50 object-cover"
+      decoding="async"
       height={675}
-      loading="eager"
+      loading="lazy"
       src={resolveContentAssetSrc(src)}
       width={1200}
       {...props}

@@ -16,7 +16,14 @@ describe("changelog content", () => {
       "2026-03-26-lightfast-engineering-intelligence-shipped"
     );
 
-    expect(pages).toHaveLength(1);
+    expect(pages.length).toBeGreaterThan(0);
+    expect(
+      pages.some(
+        (candidate) =>
+          candidate.slugs[0] ===
+          "2026-03-26-lightfast-engineering-intelligence-shipped"
+      )
+    ).toBe(true);
     expect(page?.data.title).toBe("Engineering Intelligence, Shipped");
     expect(page?.data.version).toBe("v0.1.0");
     expect(page?.data.type).toBe("feature");

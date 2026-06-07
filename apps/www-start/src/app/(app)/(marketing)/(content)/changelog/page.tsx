@@ -43,7 +43,7 @@ export default function ChangelogPage() {
             </p>
           </div>
         ) : (
-          sortedPages.map((page) => (
+          sortedPages.map((page, index) => (
             <article className="space-y-3" key={page.slugs[0]}>
               <p className="text-muted-foreground text-sm">
                 Changelog
@@ -68,7 +68,7 @@ export default function ChangelogPage() {
                     alt={page.data.title}
                     className="h-full w-full object-cover"
                     height={675}
-                    loading="eager"
+                    loading={index === 0 ? "eager" : "lazy"}
                     src={resolveContentAssetSrc(page.data.featuredImage)}
                     width={1200}
                   />

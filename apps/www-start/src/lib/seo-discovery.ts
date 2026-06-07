@@ -59,8 +59,14 @@ function xmlEscape(value: string): string {
     .replace(/'/g, "&apos;");
 }
 
-function toLastModified(value: string | undefined) {
-  return value ? new Date(value) : undefined;
+function toLastModified(value: string | undefined): Date | undefined {
+  if (!value) {
+    return;
+  }
+
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime()) ? undefined : date;
 }
 
 function readDeploymentEnv() {
@@ -133,11 +139,6 @@ export function getSitemapEntries(): SitemapEntry[] {
       priority: 0.7,
     },
     {
-      url: `${SITE_URL}/docs/get-started/config`,
-      changeFrequency: "weekly",
-      priority: 0.7,
-    },
-    {
       url: `${SITE_URL}/docs/api-reference`,
       changeFrequency: "weekly",
       priority: 0.7,
@@ -150,7 +151,9 @@ export function getSitemapEntries(): SitemapEntry[] {
     },
     ...blogPosts.map((page) => ({
       url: page.url,
-      lastModified: new Date(page.data.updatedAt ?? page.data.publishedAt),
+      lastModified: toLastModified(
+        page.data.updatedAt ?? page.data.publishedAt
+      ),
       changeFrequency: "weekly" as const,
       priority: getCategoryPriority(page.data.category),
     })),
@@ -178,7 +181,9 @@ export function getSitemapEntries(): SitemapEntry[] {
     },
     ...changelogEntries.map((page) => ({
       url: page.url,
-      lastModified: new Date(page.data.updatedAt ?? page.data.publishedAt),
+      lastModified: toLastModified(
+        page.data.updatedAt ?? page.data.publishedAt
+      ),
       changeFrequency: "weekly" as const,
       priority: 0.7,
     })),
@@ -225,7 +230,7 @@ export function getSitemapEntries(): SitemapEntry[] {
     },
     ...legalPages.map((page) => ({
       url: page.url,
-      lastModified: new Date(page.data.updatedAt),
+      lastModified: toLastModified(page.data.updatedAt),
       changeFrequency: "monthly" as const,
       priority: 0.5,
     })),
@@ -245,7 +250,10 @@ export function getSitemapEntries(): SitemapEntry[] {
 export function generateSitemapXml(entries = getSitemapEntries()): string {
   const body = entries
     .map((entry) => {
-      const lastModified = entry.lastModified?.toISOString();
+      const lastModified =
+        entry.lastModified && !Number.isNaN(entry.lastModified.getTime())
+          ? entry.lastModified.toISOString()
+          : undefined;
 
       return [
         "  <url>",

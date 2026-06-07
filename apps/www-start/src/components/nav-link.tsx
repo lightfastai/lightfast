@@ -67,7 +67,7 @@ function joinUrl(baseUrl: string, href: string) {
 
 function getPathname(href: string) {
   const path = href.startsWith("/") ? href : `/${href}`;
-  return path.split(/[?#]/, 1)[0] ?? "/";
+  return path.split(/[?#]/, 1)[0] || "/";
 }
 
 function resolveHref(props: NavLinkProps) {

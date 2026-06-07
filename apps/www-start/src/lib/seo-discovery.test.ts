@@ -25,6 +25,7 @@ describe("SEO discovery content", () => {
       ])
     );
     expect(urls).not.toContain("https://lightfast.ai/early-access");
+    expect(urls).not.toContain("https://lightfast.ai/docs/get-started/config");
   });
 
   it("serializes sitemap XML with expected public URLs", async () => {
@@ -44,6 +45,27 @@ describe("SEO discovery content", () => {
     expect(xml).toContain(
       "<loc>https://lightfast.ai/changelog/2026-03-26-lightfast-engineering-intelligence-shipped</loc>"
     );
+  });
+
+  it("omits invalid sitemap lastmod values instead of throwing", async () => {
+    const seoModule = await import("~/lib/seo-discovery").catch(() => null);
+
+    expect(seoModule).not.toBeNull();
+    if (!seoModule) {
+      return;
+    }
+
+    const xml = seoModule.generateSitemapXml([
+      {
+        url: "https://lightfast.ai/example",
+        lastModified: new Date("not-a-date"),
+        changeFrequency: "weekly",
+        priority: 0.5,
+      },
+    ]);
+
+    expect(xml).toContain("<loc>https://lightfast.ai/example</loc>");
+    expect(xml).not.toContain("<lastmod>");
   });
 
   it("generates production and non-production robots.txt", async () => {

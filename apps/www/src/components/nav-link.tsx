@@ -56,7 +56,7 @@ const wwwStartRoutes = new Set([
 
 function getPathname(href: string) {
   const path = href.startsWith("/") ? href : `/${href}`;
-  return path.split(/[?#]/, 1)[0] ?? "/";
+  return path.split(/[?#]/, 1)[0] || "/";
 }
 
 function isWwwStartPath(href: string) {

@@ -8,6 +8,13 @@ import {
 import type { BlogCategory } from "~/lib/content-schemas";
 import { BlogListingHeader } from "../../_components/blog-listing-header";
 
+const PUBLISHED_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+});
+
 export default function BlogCategoryPage({
   category,
 }: {
@@ -49,9 +56,8 @@ export default function BlogCategoryPage({
                   <span className="capitalize">{page.data.category}</span>
                   <span>·</span>
                   <time dateTime={page.data.publishedAt}>
-                    {new Date(page.data.publishedAt).toLocaleDateString(
-                      "en-US",
-                      { year: "numeric", month: "short", day: "numeric" }
+                    {PUBLISHED_DATE_FORMATTER.format(
+                      new Date(page.data.publishedAt)
                     )}
                   </time>
                 </div>

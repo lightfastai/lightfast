@@ -1,5 +1,6 @@
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { serializeJsonLd } from "~/lib/json-ld";
 import type { LegalPage } from "~/lib/legal-content";
 import { buildLegalJsonLd } from "~/lib/legal-content";
 
@@ -122,7 +123,7 @@ export default function LegalPageView({ page }: { page: LegalPage }) {
       <script
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is generated from local typed content.
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(buildLegalJsonLd(page)),
+          __html: serializeJsonLd(buildLegalJsonLd(page)),
         }}
         type="application/ld+json"
       />

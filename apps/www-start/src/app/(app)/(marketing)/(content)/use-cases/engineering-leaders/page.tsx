@@ -18,7 +18,7 @@ export default function EngineeringLeadersPage() {
 
             {/* Description */}
             <div className="mt-4 w-full px-4">
-              <p className="whitespace-nowrap text-base text-muted-foreground md:whitespace-normal lg:whitespace-nowrap">
+              <p className="text-base text-muted-foreground lg:whitespace-nowrap">
                 Optimize team health, velocity, and culture with AI-powered
                 engineering intelligence.
               </p>
