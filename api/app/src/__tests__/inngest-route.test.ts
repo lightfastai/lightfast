@@ -14,6 +14,7 @@ const inngestClient = { id: "app-inngest-client" };
 const systemHealth = { id: "system-health" };
 const classifySignal = { id: "classify-signal" };
 const indexSignalEntities = { id: "index-signal-entities" };
+const enrichSignalEntities = { id: "enrich-signal-entities" };
 const backfillSignalEntityLinks = { id: "backfill-signal-entity-links" };
 const classifyPeople = { id: "classify-people" };
 const cleanupDeveloperSandboxRuns = { id: "cleanup-developer-sandbox-runs" };
@@ -56,6 +57,10 @@ vi.mock("../inngest/workflow/classify-signal", () => ({
 
 vi.mock("../inngest/workflow/index-signal-entities", () => ({
   indexSignalEntities,
+}));
+
+vi.mock("../inngest/workflow/enrich-signal-entities", () => ({
+  enrichSignalEntities,
 }));
 
 vi.mock("../inngest/workflow/backfill-signal-entity-links", () => ({
@@ -122,6 +127,7 @@ describe("createInngestRouteContext", () => {
         systemHealth,
         classifySignal,
         indexSignalEntities,
+        enrichSignalEntities,
         backfillSignalEntityLinks,
         classifyPeople,
         cleanupDeveloperSandboxRuns,
@@ -150,6 +156,7 @@ describe("createInngestRouteContext", () => {
       functions: [
         classifySignal,
         indexSignalEntities,
+        enrichSignalEntities,
         backfillSignalEntityLinks,
         classifyPeople,
         cleanupDeveloperSandboxRuns,
