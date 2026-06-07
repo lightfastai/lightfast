@@ -19,6 +19,7 @@ const classifyPeople = { id: "classify-people" };
 const cleanupDeveloperSandboxRuns = { id: "cleanup-developer-sandbox-runs" };
 const automationScheduler = { id: "automation-scheduler" };
 const runAutomation = { id: "run-automation" };
+const runEntityResolution = { id: "run-entity-resolution" };
 const refreshSkillIndex = { id: "refresh-skill-index" };
 const refreshIdentityIndex = { id: "refresh-identity-index" };
 const reconcileSkillIndexes = { id: "reconcile-skill-indexes" };
@@ -77,6 +78,10 @@ vi.mock("../inngest/workflow/run-automation", () => ({
   runAutomation,
 }));
 
+vi.mock("../inngest/workflow/run-entity-resolution", () => ({
+  runEntityResolution,
+}));
+
 vi.mock("../inngest/workflow/refresh-skill-index", () => ({
   refreshSkillIndex,
 }));
@@ -122,6 +127,7 @@ describe("createInngestRouteContext", () => {
         cleanupDeveloperSandboxRuns,
         automationScheduler,
         runAutomation,
+        runEntityResolution,
         refreshSkillIndex,
         refreshIdentityIndex,
         reconcileSkillIndexes,
@@ -149,6 +155,7 @@ describe("createInngestRouteContext", () => {
         cleanupDeveloperSandboxRuns,
         automationScheduler,
         runAutomation,
+        runEntityResolution,
         refreshSkillIndex,
         refreshIdentityIndex,
         reconcileSkillIndexes,

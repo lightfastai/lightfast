@@ -13,6 +13,7 @@ import { reconcileSkillIndexes } from "./workflow/reconcile-skill-indexes";
 import { refreshIdentityIndex } from "./workflow/refresh-identity-index";
 import { refreshSkillIndex } from "./workflow/refresh-skill-index";
 import { runAutomation } from "./workflow/run-automation";
+import { runEntityResolution } from "./workflow/run-entity-resolution";
 import { systemHealth } from "./workflow/system-health";
 import { teamMemberReconciler } from "./workflow/team-member-reconciler";
 
@@ -34,6 +35,7 @@ export function createInngestRouteContext() {
       cleanupDeveloperSandboxRuns,
       automationScheduler,
       runAutomation,
+      runEntityResolution,
       refreshSkillIndex,
       refreshIdentityIndex,
       reconcileSkillIndexes,

@@ -197,6 +197,13 @@
       "when": 1780754411508,
       "tag": "0027_slimy_dragon_lord",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "5",
+      "when": 1780800519505,
+      "tag": "0028_fair_wither",
+      "breakpoints": true
     }
   ]
 }

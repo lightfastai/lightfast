@@ -2,8 +2,6 @@
 
 // Client
 export { type Database, db, getClient } from "./client";
-
-// Re-exported schema definitions
 export {
   AUTOMATION_ID_PREFIX,
   AUTOMATION_RUN_ID_PREFIX,
@@ -175,6 +173,8 @@ export {
   type WorkspaceAssistantToolCallStatus,
   type WorkspaceAssistantToolPayload,
 } from "./schema";
+// Re-exported schema definitions
+export * from "./schema/tables/org-entity-graph";
 export {
   type ClaimedAutomationRun,
   type CreateAutomationInput,
@@ -239,6 +239,46 @@ export {
   markDeveloperSandboxRunStopped,
 } from "./utils/developer-sandbox-runs";
 export { isDuplicateKeyError } from "./utils/drizzle-results";
+export {
+  type AppendEntityObservationInput,
+  type AppendResolutionCandidateVersionInput,
+  type AppendResolutionCandidateVersionResult,
+  appendEntityObservation,
+  appendResolutionCandidateVersionIfChanged,
+  type EntityAccountEvidenceTrail,
+  type EntityPersonEvidenceTrail,
+  type EntityResolutionPersistenceBatchInput,
+  type EntityResolutionPersistenceCandidateGroupInput,
+  type EntityResolutionPersistenceSourceIdentityInput,
+  type GetEntityAccountEvidenceTrailInput,
+  type GetEntityPersonEvidenceTrailInput,
+  getEntityAccountByPublicId,
+  getEntityAccountEvidenceTrail,
+  getEntityPersonByPublicId,
+  getEntityPersonEvidenceTrail,
+  type IngestEntityObservationsInput,
+  type IngestEntityObservationsResult,
+  ingestEntityObservations,
+  type ListEntityAccountsInput,
+  type ListEntityPeopleInput,
+  type ListEntityPersonAccountAffiliationsInput,
+  listEntityAccounts,
+  listEntityPeople,
+  listEntityPersonAccountAffiliations,
+  type PersistEntityResolutionBatchInput,
+  type PersistEntityResolutionBatchResult,
+  persistEntityResolutionBatch,
+  type UpsertEntityAccountInput,
+  type UpsertEntityPersonInput,
+  type UpsertPersonAccountAffiliationInput,
+  type UpsertResolutionCandidateGroupInput,
+  type UpsertSourceIdentityInput,
+  upsertEntityAccount,
+  upsertEntityPerson,
+  upsertPersonAccountAffiliation,
+  upsertResolutionCandidateGroup,
+  upsertSourceIdentity,
+} from "./utils/entity-graph";
 export {
   acquireIdentityIndexRefreshLock,
   createOrLoadIdentityIndexState,
