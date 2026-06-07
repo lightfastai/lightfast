@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, lt, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, like, lt, or, sql } from "drizzle-orm";
 
 import type { Database } from "../client";
 import {
@@ -380,9 +380,8 @@ async function loadGraphPeopleForSourceIdentities(
   );
   const matchConditions = [
     inArray(orgEntityPeople.primarySourceIdentityId, sourceIdentityIds),
-    ...input.sourceIdentities.map(
-      (identity) =>
-        sql`${orgEntityPeople.canonicalKey} like ${`%${escapeLikePattern(identity.identityKey)}%`} escape '\\\\'`
+    ...input.sourceIdentities.map((identity) =>
+      canonicalPersonKeyContainsIdentity(identity.identityKey)
     ),
   ];
 
@@ -404,8 +403,28 @@ function graphPersonContainsSourceIdentity(
 ): boolean {
   return (
     graphPerson.primarySourceIdentityId === sourceIdentity.id ||
-    graphPerson.canonicalKey.includes(sourceIdentity.identityKey)
+    canonicalPersonKeyMembers(graphPerson.canonicalKey).includes(
+      sourceIdentity.identityKey
+    )
   );
+}
+
+function canonicalPersonKeyContainsIdentity(identityKey: string) {
+  const escapedIdentityKey = escapeLikePattern(identityKey);
+  return or(
+    eq(orgEntityPeople.canonicalKey, `person:${identityKey}`),
+    like(orgEntityPeople.canonicalKey, `person:${escapedIdentityKey}|%`),
+    like(orgEntityPeople.canonicalKey, `%|${escapedIdentityKey}|%`),
+    like(orgEntityPeople.canonicalKey, `%|${escapedIdentityKey}`)
+  );
+}
+
+function canonicalPersonKeyMembers(canonicalKey: string): string[] {
+  const prefix = "person:";
+  if (!canonicalKey.startsWith(prefix)) {
+    return [];
+  }
+  return canonicalKey.slice(prefix.length).split("|").filter(Boolean);
 }
 
 function selectPrimaryBridgeSourceIdentity(

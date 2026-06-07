@@ -41,15 +41,17 @@ export const enrichSignalEntities = inngest.createFunction(
         targets,
       })
     );
-    const observedAt = new Date();
-    const observations = [
-      ...fetched.xPayloads.map((payload) =>
-        xUserPayloadToObservation(payload, observedAt)
-      ),
-      ...fetched.githubPayloads.map((payload) =>
-        githubUserPayloadToObservation(payload, observedAt)
-      ),
-    ].filter(isNonNullish);
+    const observations = await step.run("convert observations", () => {
+      const observedAt = new Date();
+      return [
+        ...fetched.xPayloads.map((payload) =>
+          xUserPayloadToObservation(payload, observedAt)
+        ),
+        ...fetched.githubPayloads.map((payload) =>
+          githubUserPayloadToObservation(payload, observedAt)
+        ),
+      ].filter(isNonNullish);
+    });
 
     if (observations.length === 0) {
       return {

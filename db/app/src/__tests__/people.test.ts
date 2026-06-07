@@ -383,6 +383,7 @@ function makeProjectionDb(input: {
   const spies = {
     duplicateSet: vi.fn(),
     graphPeopleLimit: vi.fn(() => Promise.resolve(input.graphPeople)),
+    graphPeopleWhere: vi.fn(),
     insertValues: vi.fn(),
     peopleLimit: vi.fn(() =>
       Promise.resolve([peopleQueue.shift()].filter(Boolean))
@@ -403,11 +404,12 @@ function makeProjectionDb(input: {
     }),
     select: () => ({
       from: (table: unknown) => ({
-        where: () => {
+        where: (condition: unknown) => {
           if (table === orgEntitySourceIdentities) {
             return { limit: spies.sourceIdentityLimit };
           }
           if (table === orgEntityPeople) {
+            spies.graphPeopleWhere(condition);
             return { limit: spies.graphPeopleLimit };
           }
           if (table === orgPeople) {
@@ -531,6 +533,46 @@ describe("projectEntityGraphPeopleToOrgPeople", () => {
     expect(query.sql).toContain("person_source");
     expect(query.sql).toContain("entity_graph");
     expect(query.sql).toContain("mixed");
+  });
+
+  it("does not project graph people from source identity prefix matches", async () => {
+    const requestedSource = makeSourceIdentity({
+      id: 10,
+      identityKey: "x:handle:ava",
+      identityValue: "ava",
+      normalizedValue: "ava",
+      publicId: "sid_333e4567-e89b-12d3-a456-426614174000",
+    });
+    const wrongGraphPerson = makeEntityPerson({
+      canonicalKey: "person:x:handle:ava_ai",
+      primarySourceIdentityId: 99,
+    });
+    const { db, spies } = makeProjectionDb({
+      graphPeople: [wrongGraphPerson],
+      projectedPeople: [makePerson()],
+      sourceIdentities: [requestedSource],
+    });
+
+    await expect(
+      projectEntityGraphPeopleToOrgPeople(db, {
+        clerkOrgId: "org_test",
+        resolverVersion: "signal-entity-enrichment-v1",
+        sourceIdentityKeys: [requestedSource.identityKey],
+      })
+    ).resolves.toEqual([]);
+
+    expect(spies.insertValues).not.toHaveBeenCalled();
+    const condition = spies.graphPeopleWhere.mock.calls[0]?.[0];
+    const query = new MySqlDialect().sqlToQuery(condition);
+    expect(query.params).toEqual(
+      expect.arrayContaining([
+        "person:x:handle:ava",
+        "person:x:handle:ava|%",
+        "%|x:handle:ava|%",
+        "%|x:handle:ava",
+      ])
+    );
+    expect(query.params).not.toContain("%x:handle:ava%");
   });
 });
 
