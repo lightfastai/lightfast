@@ -58,4 +58,25 @@ describe("workspace page-owned actions", () => {
       'enabled: typeof window !== "undefined"'
     );
   });
+
+  it("lets automation child routes own document titles", () => {
+    const layoutRouteSource = source(
+      "src/routes/_authenticated/$slug/automations.tsx"
+    );
+    const indexRouteSource = source(
+      "src/routes/_authenticated/$slug/automations/index.tsx"
+    );
+    const newRouteSource = source(
+      "src/routes/_authenticated/$slug/automations/new.tsx"
+    );
+    const detailRouteSource = source(
+      "src/routes/_authenticated/$slug/automations/$automation.tsx"
+    );
+
+    expect(layoutRouteSource).toContain("component: Outlet");
+    expect(layoutRouteSource).not.toContain("head:");
+    expect(indexRouteSource).toContain("Automations -");
+    expect(newRouteSource).toContain("New automation -");
+    expect(detailRouteSource).toContain("Automation -");
+  });
 });
