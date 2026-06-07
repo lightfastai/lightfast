@@ -6,9 +6,14 @@ import {
   normalizeDecisionsSearch,
   validateDecisionsSearch,
 } from "~/decisions/decisions-search-params";
+import {
+  loadRoutePrefetch,
+  RoutePrefetchBoundary,
+} from "~/trpc/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/$slug/decisions")({
   validateSearch: validateDecisionsSearch,
+  loader: () => loadRoutePrefetch({ data: { route: "decisions" } }),
   head: ({ params }) => ({
     meta: [{ title: `Decisions - ${params.slug} - Lightfast` }],
   }),
@@ -16,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/$slug/decisions")({
 });
 
 function DecisionsPage() {
+  const prefetchState = Route.useLoaderData();
   const routeSearch = Route.useSearch();
   const search = useMemo(
     () => normalizeDecisionsSearch(routeSearch),
@@ -47,5 +53,9 @@ function DecisionsPage() {
     [navigate]
   );
 
-  return <DecisionsClient search={search} setSearchParams={setSearchParams} />;
+  return (
+    <RoutePrefetchBoundary state={prefetchState}>
+      <DecisionsClient search={search} setSearchParams={setSearchParams} />
+    </RoutePrefetchBoundary>
+  );
 }

@@ -6,9 +6,14 @@ import {
   normalizePeopleSearch,
   validatePeopleSearch,
 } from "~/people/people-search-params";
+import {
+  loadRoutePrefetch,
+  RoutePrefetchBoundary,
+} from "~/trpc/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/$slug/people")({
   validateSearch: validatePeopleSearch,
+  loader: () => loadRoutePrefetch({ data: { route: "people" } }),
   head: ({ params }) => ({
     meta: [{ title: `People - ${params.slug} - Lightfast` }],
   }),
@@ -16,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/$slug/people")({
 });
 
 function PeoplePage() {
+  const prefetchState = Route.useLoaderData();
   const { slug } = Route.useParams();
   const routeSearch = Route.useSearch();
   const search = useMemo(
@@ -52,10 +58,12 @@ function PeoplePage() {
   );
 
   return (
-    <PeopleClient
-      search={search}
-      setSearchParams={setSearchParams}
-      slug={slug}
-    />
+    <RoutePrefetchBoundary state={prefetchState}>
+      <PeopleClient
+        search={search}
+        setSearchParams={setSearchParams}
+        slug={slug}
+      />
+    </RoutePrefetchBoundary>
   );
 }

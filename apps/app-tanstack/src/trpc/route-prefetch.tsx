@@ -2,6 +2,8 @@ import { type DehydratedState, HydrationBoundary } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import type { ReactNode } from "react";
 import { AUTOMATION_RUNS_PAGE_LIMIT } from "~/automations/automations-cache";
+import { DECISIONS_PAGE_SIZE } from "~/decisions/decisions-model";
+import { PEOPLE_PAGE_SIZE } from "~/people/people-model";
 import {
   PROCESSING_SIGNALS_LIMIT,
   signalProcessingStatuses,
@@ -12,8 +14,12 @@ type RoutePrefetchInput =
   | { route: "automations.detail"; automationId: string }
   | { route: "automations.list" }
   | { route: "automations.new" }
+  | { route: "connectors" }
+  | { route: "decisions" }
   | { route: "org.mcp" }
+  | { route: "people" }
   | { route: "signals" }
+  | { route: "skills" }
   | { route: "tasks.bind"; slug: string }
   | { route: "tasks.index"; slug: string }
   | { route: "tasks.lightfastRepo"; slug: string }
@@ -32,8 +38,12 @@ const ROUTES = new Set<RoutePrefetchRoute>([
   "automations.detail",
   "automations.list",
   "automations.new",
+  "connectors",
+  "decisions",
   "org.mcp",
+  "people",
   "signals",
+  "skills",
   "tasks.bind",
   "tasks.index",
   "tasks.lightfastRepo",
@@ -152,9 +162,36 @@ export const loadRoutePrefetch = createServerFn({ method: "GET" })
           trpc.org.workspace.connectors.list.queryOptions()
         );
         break;
+      case "connectors":
+        await queryClient.fetchQuery(
+          trpc.org.workspace.connectors.list.queryOptions()
+        );
+        break;
+      case "decisions":
+        await queryClient.fetchInfiniteQuery(
+          trpc.org.workspace.decisions.list.infiniteQueryOptions(
+            { limit: DECISIONS_PAGE_SIZE },
+            {
+              getNextPageParam: (lastPage) => lastPage.nextCursor,
+              staleTime: 60_000,
+            }
+          )
+        );
+        break;
       case "org.mcp":
         await queryClient.fetchQuery(
           trpc.org.settings.mcpConnections.list.queryOptions()
+        );
+        break;
+      case "people":
+        await queryClient.fetchInfiniteQuery(
+          trpc.org.workspace.people.list.infiniteQueryOptions(
+            { limit: PEOPLE_PAGE_SIZE },
+            {
+              getNextPageParam: (lastPage) => lastPage.nextCursor,
+              staleTime: 60_000,
+            }
+          )
         );
         break;
       case "signals":
@@ -175,6 +212,13 @@ export const loadRoutePrefetch = createServerFn({ method: "GET" })
             staleTime: 60_000,
           }),
         ]);
+        break;
+      case "skills":
+        await queryClient.fetchQuery(
+          trpc.org.workspace.skills.list.queryOptions(undefined, {
+            staleTime: 0,
+          })
+        );
         break;
       case "tasks.bind":
         await queryClient.fetchQuery(
