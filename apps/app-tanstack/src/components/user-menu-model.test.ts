@@ -17,9 +17,13 @@ describe("TanStack user menu", () => {
     expect(topbarSource).toContain('from "~/components/user-menu"');
     expect(topbarSource).toContain("<UserMenu />");
     expect(topbarSource).not.toContain("UserButton");
-    expect(menuSource).toContain('useClerk } from "@clerk/tanstack-react-start"');
+    expect(menuSource).toContain(
+      'useClerk } from "@clerk/tanstack-react-start"'
+    );
     expect(menuSource).toContain("viewer.account.get.queryOptions()");
-    expect(menuSource).toContain(`to={SETTINGS_HREF}`);
+    expect(menuSource).toContain('enabled: typeof window !== "undefined"');
+    expect(menuSource).not.toContain("useSuspenseQuery");
+    expect(menuSource).toContain("to={SETTINGS_HREF}");
     expect(menuSource).toContain('signOut({ redirectUrl: "/sign-in" })');
   });
 

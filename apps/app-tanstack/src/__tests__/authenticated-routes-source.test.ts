@@ -124,6 +124,7 @@ describe("app-tanstack authenticated route migration", () => {
     expect(querySource).toContain("signals.list.queryOptions");
     expect(querySource).toContain('enabled: typeof window !== "undefined"');
     expect(viewQuerySource).toContain("signals.views.list.queryOptions");
+    expect(viewQuerySource).toContain('enabled: typeof window !== "undefined"');
     expect(viewsSource).toContain("viewConfigToParamValues");
     expect(viewSwitcherSource).toContain("partitionViews");
 

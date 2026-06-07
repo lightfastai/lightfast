@@ -5,6 +5,7 @@ export function useSignalViewsQuery() {
   const trpc = useTRPC();
   return useQuery({
     ...trpc.org.workspace.signals.views.list.queryOptions(),
+    enabled: typeof window !== "undefined",
     staleTime: 60_000,
   });
 }

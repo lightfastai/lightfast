@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Settings } from "lucide-react";
 import { useTRPC } from "~/trpc/react";
@@ -19,10 +19,15 @@ export function UserMenu() {
   const trpc = useTRPC();
   const { signOut } = useClerk();
 
-  const { data: profile } = useSuspenseQuery({
+  const { data: profile, isPending } = useQuery({
     ...trpc.viewer.account.get.queryOptions(),
+    enabled: typeof window !== "undefined",
     staleTime: 5 * 60 * 1000,
   });
+
+  if (isPending || !profile) {
+    return <UserMenuSkeleton />;
+  }
 
   const { primaryIdentity, secondaryIdentity } = getUserMenuIdentity(profile);
 
