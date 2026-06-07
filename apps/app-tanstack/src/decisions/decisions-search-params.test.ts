@@ -16,12 +16,14 @@ describe("decisions search params", () => {
         provider: "linear,x",
         q: "incident",
         status: "failed",
+        view: "decview_123",
       })
     ).toEqual({
       decision: "decision_123",
       provider: "linear,x",
       q: "incident",
       status: "failed",
+      view: "decview_123",
     });
 
     expect(
@@ -30,12 +32,14 @@ describe("decisions search params", () => {
         provider: ["linear"],
         q: 42,
         status: null,
+        view: "",
       })
     ).toEqual({
       decision: null,
       provider: "",
       q: "",
       status: "",
+      view: null,
     });
   });
 
@@ -46,6 +50,7 @@ describe("decisions search params", () => {
         provider: "",
         q: "",
         status: "",
+        view: "",
       })
     ).toEqual({});
 
@@ -55,12 +60,14 @@ describe("decisions search params", () => {
         provider: "linear",
         q: "incident",
         status: "failed",
+        view: "decview_123",
       })
     ).toEqual({
       decision: "decision_123",
       provider: "linear",
       q: "incident",
       status: "failed",
+      view: "decview_123",
     });
   });
 

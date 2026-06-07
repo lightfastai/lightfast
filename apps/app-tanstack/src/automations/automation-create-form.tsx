@@ -25,6 +25,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { z } from "zod";
+import { BackButton } from "~/components/back-button";
 import { LfSelect } from "~/components/lf-select";
 import { useTRPC } from "~/trpc/react";
 import { upsertInList } from "./automations-cache";
@@ -190,6 +191,13 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
   return (
     <div className="min-h-full bg-background text-foreground">
       <div className="mx-auto w-full max-w-xl px-6 py-12">
+        <div className="mb-6">
+          <BackButton
+            label="Automations"
+            params={{ slug }}
+            to="/$slug/automations"
+          />
+        </div>
         <h1 className="font-semibold text-2xl tracking-[-0.02em]">
           New automation
         </h1>

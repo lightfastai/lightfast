@@ -11,6 +11,7 @@ import {
 } from "./decisions-search-params";
 import { DecisionsTableView } from "./decisions-table-view";
 import { DecisionsToolbar } from "./decisions-toolbar";
+import { DecisionsViewSwitcher } from "./decisions-view-switcher";
 import { useDecisionsListQuery } from "./use-decisions-list-query";
 
 export function DecisionsClient({
@@ -62,9 +63,9 @@ export function DecisionsClient({
         filters={filters}
         onClearFilterGroup={(group) => {
           if (group === "provider") {
-            setSearchParams({ provider: "" });
+            setSearchParams({ provider: "", view: null });
           } else {
-            setSearchParams({ status: "" });
+            setSearchParams({ status: "", view: null });
           }
         }}
         onQueryChange={(value) => setSearchParams({ q: value })}
@@ -73,6 +74,7 @@ export function DecisionsClient({
             provider: serializeDecisionValues(
               toggleDecisionValue(filters.providers, value)
             ),
+            view: null,
           })
         }
         onToggleStatus={(value) =>
@@ -80,9 +82,16 @@ export function DecisionsClient({
             status: serializeDecisionValues(
               toggleDecisionValue(filters.statuses, value)
             ),
+            view: null,
           })
         }
         query={search.q}
+        viewsSlot={
+          <DecisionsViewSwitcher
+            search={search}
+            setSearchParams={setSearchParams}
+          />
+        }
       />
 
       <DecisionsTableView

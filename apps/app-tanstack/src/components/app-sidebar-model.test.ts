@@ -17,6 +17,10 @@ describe("workspace sidebar model", () => {
         items: [
           { href: "/acme/automations", title: "Automations" },
           { href: "/acme/connectors", title: "Connectors" },
+          {
+            href: "/acme/developer-connections",
+            title: "Developer Connections",
+          },
           { href: "/acme/skills", title: "Skills" },
           { href: "/acme/decisions", title: "Decisions" },
         ],

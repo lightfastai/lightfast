@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -34,12 +34,15 @@ describe("app-tanstack product route data prefetch", () => {
       "automations.get.queryOptions",
       "automations.listRuns.queryOptions",
       "decisions.list.infiniteQueryOptions",
+      "decisions.views.list.queryOptions",
       "people.list.infiniteQueryOptions",
+      "people.views.list.queryOptions",
       "skills.list.queryOptions",
       "viewer.organization.getBySlug.queryOptions",
       "sourceControl.get.queryOptions",
       "connectors.list.queryOptions",
       "mcpConnections.list.queryOptions",
+      "developerConnections.list.queryOptions",
       "viewer.account.mcpConnections.list.queryOptions",
     ]) {
       expect(prefetchSource).toContain(query);
@@ -54,6 +57,7 @@ describe("app-tanstack product route data prefetch", () => {
       "src/routes/_authenticated/$slug/automations/$automation.tsx",
       "src/routes/_authenticated/$slug/connectors.tsx",
       "src/routes/_authenticated/$slug/decisions.tsx",
+      "src/routes/_authenticated/$slug/developer-connections.tsx",
       "src/routes/_authenticated/$slug/people.tsx",
       "src/routes/_authenticated/$slug/skills.tsx",
       "src/routes/_authenticated/$slug/tasks/index.tsx",
@@ -65,6 +69,10 @@ describe("app-tanstack product route data prefetch", () => {
     ];
 
     for (const routeFile of routeFiles) {
+      expect(
+        existsSync(resolve(appRoot, routeFile)),
+        `${routeFile} should exist`
+      ).toBe(true);
       const routeSource = source(routeFile);
       expect(routeSource).toContain("loadRoutePrefetch");
       expect(routeSource).toContain("RoutePrefetchBoundary");

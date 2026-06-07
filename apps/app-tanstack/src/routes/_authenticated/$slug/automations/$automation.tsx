@@ -31,7 +31,7 @@ export const Route = createFileRoute(
 });
 
 function AutomationDetailPage() {
-  const { automation: automationId } = Route.useParams();
+  const { automation: automationId, slug } = Route.useParams();
   const prefetchState = Route.useLoaderData();
   const { run } = Route.useSearch();
   const navigate = Route.useNavigate();
@@ -54,6 +54,7 @@ function AutomationDetailPage() {
         automationId={automationId}
         selectedRunId={run}
         setSelectedRunId={setSelectedRunId}
+        slug={slug}
       />
     </RoutePrefetchBoundary>
   );

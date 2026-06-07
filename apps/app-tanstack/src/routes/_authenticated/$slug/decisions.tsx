@@ -46,6 +46,9 @@ function DecisionsPage() {
           if ("status" in updates) {
             next.status = updates.status || undefined;
           }
+          if ("view" in updates) {
+            next.view = updates.view || undefined;
+          }
           return next;
         },
       });

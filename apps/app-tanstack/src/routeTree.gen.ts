@@ -40,6 +40,7 @@ import { Route as AuthenticatedSlugSkillsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedSlugSignalsRouteImport } from './routes/_authenticated/$slug/signals'
 import { Route as AuthenticatedSlugSettingsRouteImport } from './routes/_authenticated/$slug/settings'
 import { Route as AuthenticatedSlugPeopleRouteImport } from './routes/_authenticated/$slug/people'
+import { Route as AuthenticatedSlugDeveloperConnectionsRouteImport } from './routes/_authenticated/$slug/developer-connections'
 import { Route as AuthenticatedSlugDecisionsRouteImport } from './routes/_authenticated/$slug/decisions'
 import { Route as AuthenticatedSlugConnectorsRouteImport } from './routes/_authenticated/$slug/connectors'
 import { Route as AuthenticatedSlugChatRouteImport } from './routes/_authenticated/$slug/chat'
@@ -245,6 +246,12 @@ const AuthenticatedSlugPeopleRoute = AuthenticatedSlugPeopleRouteImport.update({
   path: '/people',
   getParentRoute: () => AuthenticatedSlugRoute,
 } as any)
+const AuthenticatedSlugDeveloperConnectionsRoute =
+  AuthenticatedSlugDeveloperConnectionsRouteImport.update({
+    id: '/developer-connections',
+    path: '/developer-connections',
+    getParentRoute: () => AuthenticatedSlugRoute,
+  } as any)
 const AuthenticatedSlugDecisionsRoute =
   AuthenticatedSlugDecisionsRouteImport.update({
     id: '/decisions',
@@ -531,6 +538,7 @@ export interface FileRoutesByFullPath {
   '/$slug/chat': typeof AuthenticatedSlugChatRouteWithChildren
   '/$slug/connectors': typeof AuthenticatedSlugConnectorsRoute
   '/$slug/decisions': typeof AuthenticatedSlugDecisionsRoute
+  '/$slug/developer-connections': typeof AuthenticatedSlugDeveloperConnectionsRoute
   '/$slug/people': typeof AuthenticatedSlugPeopleRoute
   '/$slug/settings': typeof AuthenticatedSlugSettingsRouteWithChildren
   '/$slug/signals': typeof AuthenticatedSlugSignalsRoute
@@ -606,6 +614,7 @@ export interface FileRoutesByTo {
   '/sign-up/accept-invitation': typeof SignUpAcceptInvitationRoute
   '/$slug/connectors': typeof AuthenticatedSlugConnectorsRoute
   '/$slug/decisions': typeof AuthenticatedSlugDecisionsRoute
+  '/$slug/developer-connections': typeof AuthenticatedSlugDeveloperConnectionsRoute
   '/$slug/people': typeof AuthenticatedSlugPeopleRoute
   '/$slug/signals': typeof AuthenticatedSlugSignalsRoute
   '/$slug/skills': typeof AuthenticatedSlugSkillsRoute
@@ -681,6 +690,7 @@ export interface FileRoutesById {
   '/_authenticated/$slug/chat': typeof AuthenticatedSlugChatRouteWithChildren
   '/_authenticated/$slug/connectors': typeof AuthenticatedSlugConnectorsRoute
   '/_authenticated/$slug/decisions': typeof AuthenticatedSlugDecisionsRoute
+  '/_authenticated/$slug/developer-connections': typeof AuthenticatedSlugDeveloperConnectionsRoute
   '/_authenticated/$slug/people': typeof AuthenticatedSlugPeopleRoute
   '/_authenticated/$slug/settings': typeof AuthenticatedSlugSettingsRouteWithChildren
   '/_authenticated/$slug/signals': typeof AuthenticatedSlugSignalsRoute
@@ -761,6 +771,7 @@ export interface FileRouteTypes {
     | '/$slug/chat'
     | '/$slug/connectors'
     | '/$slug/decisions'
+    | '/$slug/developer-connections'
     | '/$slug/people'
     | '/$slug/settings'
     | '/$slug/signals'
@@ -836,6 +847,7 @@ export interface FileRouteTypes {
     | '/sign-up/accept-invitation'
     | '/$slug/connectors'
     | '/$slug/decisions'
+    | '/$slug/developer-connections'
     | '/$slug/people'
     | '/$slug/signals'
     | '/$slug/skills'
@@ -910,6 +922,7 @@ export interface FileRouteTypes {
     | '/_authenticated/$slug/chat'
     | '/_authenticated/$slug/connectors'
     | '/_authenticated/$slug/decisions'
+    | '/_authenticated/$slug/developer-connections'
     | '/_authenticated/$slug/people'
     | '/_authenticated/$slug/settings'
     | '/_authenticated/$slug/signals'
@@ -1221,6 +1234,13 @@ declare module '@tanstack/react-router' {
       path: '/people'
       fullPath: '/$slug/people'
       preLoaderRoute: typeof AuthenticatedSlugPeopleRouteImport
+      parentRoute: typeof AuthenticatedSlugRoute
+    }
+    '/_authenticated/$slug/developer-connections': {
+      id: '/_authenticated/$slug/developer-connections'
+      path: '/developer-connections'
+      fullPath: '/$slug/developer-connections'
+      preLoaderRoute: typeof AuthenticatedSlugDeveloperConnectionsRouteImport
       parentRoute: typeof AuthenticatedSlugRoute
     }
     '/_authenticated/$slug/decisions': {
@@ -1675,6 +1695,7 @@ interface AuthenticatedSlugRouteChildren {
   AuthenticatedSlugChatRoute: typeof AuthenticatedSlugChatRouteWithChildren
   AuthenticatedSlugConnectorsRoute: typeof AuthenticatedSlugConnectorsRoute
   AuthenticatedSlugDecisionsRoute: typeof AuthenticatedSlugDecisionsRoute
+  AuthenticatedSlugDeveloperConnectionsRoute: typeof AuthenticatedSlugDeveloperConnectionsRoute
   AuthenticatedSlugPeopleRoute: typeof AuthenticatedSlugPeopleRoute
   AuthenticatedSlugSettingsRoute: typeof AuthenticatedSlugSettingsRouteWithChildren
   AuthenticatedSlugSignalsRoute: typeof AuthenticatedSlugSignalsRoute
@@ -1689,6 +1710,8 @@ const AuthenticatedSlugRouteChildren: AuthenticatedSlugRouteChildren = {
   AuthenticatedSlugChatRoute: AuthenticatedSlugChatRouteWithChildren,
   AuthenticatedSlugConnectorsRoute: AuthenticatedSlugConnectorsRoute,
   AuthenticatedSlugDecisionsRoute: AuthenticatedSlugDecisionsRoute,
+  AuthenticatedSlugDeveloperConnectionsRoute:
+    AuthenticatedSlugDeveloperConnectionsRoute,
   AuthenticatedSlugPeopleRoute: AuthenticatedSlugPeopleRoute,
   AuthenticatedSlugSettingsRoute: AuthenticatedSlugSettingsRouteWithChildren,
   AuthenticatedSlugSignalsRoute: AuthenticatedSlugSignalsRoute,

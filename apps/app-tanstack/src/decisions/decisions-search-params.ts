@@ -10,6 +10,7 @@ export interface DecisionsSearch {
   provider?: string;
   q?: string;
   status?: string;
+  view?: string;
 }
 
 export interface NormalizedDecisionsSearch {
@@ -17,6 +18,7 @@ export interface NormalizedDecisionsSearch {
   provider: string;
   q: string;
   status: string;
+  view: string | null;
 }
 
 function stringSearchParam(value: unknown) {
@@ -35,6 +37,7 @@ export function normalizeDecisionsSearch(
     provider: stringSearchParam(search.provider),
     q: stringSearchParam(search.q),
     status: stringSearchParam(search.status),
+    view: nullableStringSearchParam(search.view),
   };
 }
 
@@ -47,6 +50,7 @@ export function validateDecisionsSearch(
     ...(normalized.provider ? { provider: normalized.provider } : {}),
     ...(normalized.q ? { q: normalized.q } : {}),
     ...(normalized.status ? { status: normalized.status } : {}),
+    ...(normalized.view ? { view: normalized.view } : {}),
   };
 }
 

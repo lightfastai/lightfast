@@ -3,6 +3,7 @@ export type WorkspaceRouteTo =
   | "/$slug/chat"
   | "/$slug/connectors"
   | "/$slug/decisions"
+  | "/$slug/developer-connections"
   | "/$slug/people"
   | "/$slug/settings"
   | "/$slug/signals"
@@ -12,6 +13,7 @@ export type WorkspaceNavTitle =
   | "Automations"
   | "Connectors"
   | "Decisions"
+  | "Developer Connections"
   | "People"
   | "Settings"
   | "Signals"
@@ -34,6 +36,11 @@ export function getWorkspaceNavSections(slug: string): WorkspaceNavSection[] {
       items: [
         workspaceItem(slug, "Automations", "/$slug/automations"),
         workspaceItem(slug, "Connectors", "/$slug/connectors"),
+        workspaceItem(
+          slug,
+          "Developer Connections",
+          "/$slug/developer-connections"
+        ),
         workspaceItem(slug, "Skills", "/$slug/skills"),
         workspaceItem(slug, "Decisions", "/$slug/decisions"),
       ],

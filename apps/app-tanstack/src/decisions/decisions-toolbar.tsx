@@ -12,7 +12,7 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Input } from "@repo/ui/components/ui/input";
 import { Activity, Boxes, ListFilter, Search, X } from "lucide-react";
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 import {
   type DecisionFilters,
   type DecisionProvider,
@@ -40,6 +40,7 @@ export function DecisionsToolbar({
   onToggleProvider,
   onToggleStatus,
   query,
+  viewsSlot,
 }: {
   filters: DecisionFilters;
   onClearFilterGroup: (group: FilterGroupId) => void;
@@ -47,6 +48,7 @@ export function DecisionsToolbar({
   onToggleProvider: (value: DecisionProvider) => void;
   onToggleStatus: (value: DecisionStatus) => void;
   query: string;
+  viewsSlot?: ReactNode;
 }) {
   const filterGroups: FilterGroup[] = [
     {
@@ -70,6 +72,11 @@ export function DecisionsToolbar({
       data-testid="decisions-toolbar"
     >
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
+        {viewsSlot ? (
+          <div className="flex min-w-[12rem] flex-1 basis-full items-center overflow-hidden lg:basis-auto">
+            {viewsSlot}
+          </div>
+        ) : null}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

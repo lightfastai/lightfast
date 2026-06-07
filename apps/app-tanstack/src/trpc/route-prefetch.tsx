@@ -16,6 +16,7 @@ type RoutePrefetchInput =
   | { route: "automations.new" }
   | { route: "connectors" }
   | { route: "decisions" }
+  | { route: "developerConnections" }
   | { route: "org.mcp" }
   | { route: "people" }
   | { route: "signals" }
@@ -40,6 +41,7 @@ const ROUTES = new Set<RoutePrefetchRoute>([
   "automations.new",
   "connectors",
   "decisions",
+  "developerConnections",
   "org.mcp",
   "people",
   "signals",
@@ -168,14 +170,25 @@ export const loadRoutePrefetch = createServerFn({ method: "GET" })
         );
         break;
       case "decisions":
-        await queryClient.fetchInfiniteQuery(
-          trpc.org.workspace.decisions.list.infiniteQueryOptions(
-            { limit: DECISIONS_PAGE_SIZE },
-            {
-              getNextPageParam: (lastPage) => lastPage.nextCursor,
-              staleTime: 60_000,
-            }
-          )
+        await Promise.all([
+          queryClient.fetchInfiniteQuery(
+            trpc.org.workspace.decisions.list.infiniteQueryOptions(
+              { limit: DECISIONS_PAGE_SIZE },
+              {
+                getNextPageParam: (lastPage) => lastPage.nextCursor,
+                staleTime: 60_000,
+              }
+            )
+          ),
+          queryClient.fetchQuery({
+            ...trpc.org.workspace.decisions.views.list.queryOptions(),
+            staleTime: 60_000,
+          }),
+        ]);
+        break;
+      case "developerConnections":
+        await queryClient.fetchQuery(
+          trpc.org.workspace.developerConnections.list.queryOptions()
         );
         break;
       case "org.mcp":
@@ -184,15 +197,21 @@ export const loadRoutePrefetch = createServerFn({ method: "GET" })
         );
         break;
       case "people":
-        await queryClient.fetchInfiniteQuery(
-          trpc.org.workspace.people.list.infiniteQueryOptions(
-            { limit: PEOPLE_PAGE_SIZE },
-            {
-              getNextPageParam: (lastPage) => lastPage.nextCursor,
-              staleTime: 60_000,
-            }
-          )
-        );
+        await Promise.all([
+          queryClient.fetchInfiniteQuery(
+            trpc.org.workspace.people.list.infiniteQueryOptions(
+              { limit: PEOPLE_PAGE_SIZE },
+              {
+                getNextPageParam: (lastPage) => lastPage.nextCursor,
+                staleTime: 60_000,
+              }
+            )
+          ),
+          queryClient.fetchQuery({
+            ...trpc.org.workspace.people.views.list.queryOptions(),
+            staleTime: 60_000,
+          }),
+        ]);
         break;
       case "signals":
         await Promise.all([

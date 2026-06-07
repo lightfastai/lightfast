@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -6,6 +6,11 @@ const appRoot = resolve(import.meta.dirname, "../..");
 
 function source(path: string) {
   return readFileSync(resolve(appRoot, path), "utf8");
+}
+
+function expectSource(path: string) {
+  expect(existsSync(resolve(appRoot, path)), `${path} should exist`).toBe(true);
+  return source(path);
 }
 
 describe("app-tanstack authenticated route migration", () => {
@@ -274,6 +279,68 @@ describe("app-tanstack authenticated route migration", () => {
       expect(routeFile).not.toContain("next/");
       expect(routeFile).not.toContain("nuqs");
       expect(routeFile).not.toContain("@vercel/microfrontends/next");
+    }
+  });
+
+  it("ports Developer Connections without Next.js search assumptions", () => {
+    const routeSource = expectSource(
+      "src/routes/_authenticated/$slug/developer-connections.tsx"
+    );
+    const clientSource = expectSource(
+      "src/developer-connections/developer-connections-client.tsx"
+    );
+    const searchSource = expectSource(
+      "src/developer-connections/developer-connections-search-params.ts"
+    );
+    const modelSource = expectSource(
+      "src/developer-connections/developer-connections-model.ts"
+    );
+    const iconsSource = expectSource(
+      "src/developer-connections/developer-connection-icons.tsx"
+    );
+    const detailSource = expectSource(
+      "src/developer-connections/developer-connection-detail-sheet.tsx"
+    );
+
+    expect(routeSource).toContain("validateDeveloperConnectionsSearch");
+    expect(routeSource).toContain("createFileRoute");
+    expect(routeSource).toContain("setSearchParams");
+    expect(routeSource).toContain("developerConnections");
+    expect(clientSource).toContain(
+      "developerConnections.list.queryOptions"
+    );
+    expect(clientSource).toContain(
+      "developerConnections.connect.mutationOptions"
+    );
+    expect(clientSource).toContain(
+      "developerConnections.startSentryAuth.mutationOptions"
+    );
+    expect(clientSource).toContain(
+      "developerConnections.completeSentryAuth.mutationOptions"
+    );
+    expect(clientSource).toContain(
+      "developerConnections.setSandboxEnabled.mutationOptions"
+    );
+    expect(clientSource).toContain(
+      "developerConnections.disconnect.mutationOptions"
+    );
+    expect(searchSource).toContain("validateDeveloperConnectionsSearch");
+    expect(modelSource).toContain("developerConnectionStatus");
+    expect(iconsSource).toContain("DeveloperConnectionIcon");
+    expect(detailSource).toContain("DeveloperConnectionDetailSheet");
+
+    for (const routeFile of [
+      routeSource,
+      clientSource,
+      searchSource,
+      modelSource,
+      iconsSource,
+      detailSource,
+    ]) {
+      expect(routeFile).not.toContain("next/");
+      expect(routeFile).not.toContain("nuqs");
+      expect(routeFile).not.toContain('"use client"');
+      expect(routeFile).not.toContain('"use server"');
     }
   });
 
