@@ -3,7 +3,11 @@ import {
   sentryGlobalFunctionMiddleware,
   sentryGlobalRequestMiddleware,
 } from "@sentry/tanstackstart-react";
-import { createMiddleware, createStart } from "@tanstack/react-start";
+import {
+  createCsrfMiddleware,
+  createMiddleware,
+  createStart,
+} from "@tanstack/react-start";
 import { applySecurityHeaders } from "~/security/headers";
 
 export const APP_OWNED_API_PREFIXES = [
@@ -29,6 +33,10 @@ const securityHeadersMiddleware = createMiddleware().server(
   }
 );
 
+const csrfMiddleware = createCsrfMiddleware({
+  filter: (ctx) => ctx.handlerType === "serverFn",
+});
+
 const clerkRequestMiddleware = clerkMiddleware({
   publishableKey: import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
   signInUrl: "/sign-in",
@@ -53,6 +61,7 @@ const clerkMiddlewareWithAppOwnedApiBypass = createMiddleware().server(
 export const startInstance = createStart(() => ({
   requestMiddleware: [
     sentryGlobalRequestMiddleware,
+    csrfMiddleware,
     clerkMiddlewareWithAppOwnedApiBypass,
     securityHeadersMiddleware,
   ],

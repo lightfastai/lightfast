@@ -1,7 +1,25 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { isAppOwnedApiRoute } from "../start";
 
+const appRoot = resolve(import.meta.dirname, "../..");
+
+function source(path: string) {
+  return readFileSync(resolve(appRoot, path), "utf8");
+}
+
 describe("app-tanstack start middleware", () => {
+  it("protects server function requests with TanStack CSRF middleware", () => {
+    const startSource = source("src/start.ts");
+
+    expect(startSource).toContain("createCsrfMiddleware");
+    expect(startSource).toContain("ctx.handlerType === \"serverFn\"");
+    expect(startSource).toContain("csrfMiddleware");
+    expect(startSource).toContain("requestMiddleware: [");
+    expect(startSource).toContain("sentryGlobalRequestMiddleware,\n    csrfMiddleware,");
+  });
+
   it("classifies app-owned API routes that handle their own auth", () => {
     expect(isAppOwnedApiRoute("/api/connectors/x/mcp")).toBe(true);
     expect(isAppOwnedApiRoute("/api/connectors/x/mcp/messages")).toBe(true);
