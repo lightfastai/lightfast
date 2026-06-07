@@ -9,9 +9,15 @@ import {
   PromptInputTextarea,
   PromptInputTools,
 } from "@repo/ui/components/ai-elements/prompt-input";
+import { Toggle } from "@repo/ui/components/ui/toggle";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 import { cn } from "@repo/ui/lib/utils";
 import type { ChatStatus } from "@vendor/ai";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, PencilLine } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 
 export const ChatComposer = memo(function ChatComposer({
@@ -19,17 +25,21 @@ export const ChatComposer = memo(function ChatComposer({
   error,
   onSubmit,
   onTextChange,
+  onWriteModeChange,
   status,
   stop,
   text,
+  writeModeEnabled,
 }: {
   compact: boolean;
   error: Error | undefined;
   onSubmit: (message: PromptInputMessage) => Promise<void>;
   onTextChange: (text: string) => void;
+  onWriteModeChange: (enabled: boolean) => void;
   status: ChatStatus;
   stop: () => void;
   text: string;
+  writeModeEnabled: boolean;
 }) {
   const [isSubmitPending, setIsSubmitPending] = useState(false);
 
@@ -44,8 +54,6 @@ export const ChatComposer = memo(function ChatComposer({
   const isBusy =
     effectiveStatus === "submitted" || effectiveStatus === "streaming";
   const isStreaming = effectiveStatus === "streaming";
-  const submitStatus: ChatStatus =
-    effectiveStatus === "submitted" ? "ready" : effectiveStatus;
   const submitDisabled =
     effectiveStatus === "submitted" || (!isBusy && text.trim().length === 0);
 
@@ -78,13 +86,32 @@ export const ChatComposer = memo(function ChatComposer({
   const submit = (
     <PromptInputSubmit
       aria-label={isStreaming ? "Stop generating" : "Send message"}
-      className={cn("size-8 rounded-full", compact && "mr-2 mb-2 shrink-0")}
+      className="size-8 shrink-0 rounded-full"
       disabled={submitDisabled}
       onStop={stop}
-      status={submitStatus}
+      status={effectiveStatus}
     >
-      {submitStatus === "ready" ? <ArrowUp className="size-4" /> : undefined}
+      {effectiveStatus === "ready" ? <ArrowUp className="size-4" /> : undefined}
     </PromptInputSubmit>
+  );
+  const writeModeToggle = (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Toggle
+          aria-label="Write mode"
+          className="h-8 gap-1.5 rounded-full px-2 text-muted-foreground text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+          disabled={isBusy}
+          onPressedChange={onWriteModeChange}
+          pressed={writeModeEnabled}
+          size="sm"
+          type="button"
+        >
+          <PencilLine className="size-3.5" />
+          <span>Write mode</span>
+        </Toggle>
+      </TooltipTrigger>
+      <TooltipContent>Allow Linear writes for this turn</TooltipContent>
+    </Tooltip>
   );
 
   return (
@@ -112,14 +139,10 @@ export const ChatComposer = memo(function ChatComposer({
             value={text}
           />
         </PromptInputBody>
-        {compact ? (
-          submit
-        ) : (
-          <PromptInputFooter className="px-2.5 pb-2.5">
-            <PromptInputTools />
-            {submit}
-          </PromptInputFooter>
-        )}
+        <PromptInputFooter className={cn("px-2.5 pb-2.5", compact && "pt-1")}>
+          <PromptInputTools>{writeModeToggle}</PromptInputTools>
+          {submit}
+        </PromptInputFooter>
       </PromptInput>
     </div>
   );

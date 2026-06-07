@@ -1,12 +1,14 @@
 import type { SkillIndexableSourceControlRepositoryCandidate } from "@db/app";
 import { SKILL_FILE_MAX_BYTES } from "@repo/skills-contract";
+import { log } from "@vendor/observability/log/next";
 
 import { buildSkillIndexEntriesFromTree } from "./build";
 import { resolveSkillIndexServiceDeps } from "./deps";
 import { getVerifiedCandidateByRepositoryId } from "./repository";
-import type { SkillIndexServiceDeps } from "./types";
+import type { SkillIndexChangedEvent, SkillIndexServiceDeps } from "./types";
 
 const LOCK_TTL_SECONDS = 60;
+const PUBLISH_SKILL_INDEX_CHANGED_TIMEOUT_MS = 1500;
 
 class SkillIndexTreeTruncatedError extends Error {
   constructor() {
@@ -117,7 +119,7 @@ export async function refreshSkillIndexSource(input: {
   targetCommitSha?: string;
 }): Promise<{ status: "failed" | "fresh" | "missing" | "stale" }> {
   const deps = resolveSkillIndexServiceDeps(input.deps);
-  const state = await deps.createOrLoadSkillIndexState(deps.db, {
+  let state = await deps.createOrLoadSkillIndexState(deps.db, {
     sourceControlRepositoryId: input.sourceControlRepositoryId,
   });
   const candidate = await getVerifiedCandidateByRepositoryId(deps, {
@@ -138,8 +140,22 @@ export async function refreshSkillIndexSource(input: {
     return { status: "stale" };
   }
 
+  let publishAfterRelease:
+    | { clerkOrgId: string; sourceControlRepositoryId: number }
+    | undefined;
+  const queueTerminalPublish = () => {
+    publishAfterRelease = {
+      clerkOrgId: candidate.binding.clerkOrgId,
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+    };
+  };
+
   try {
     input.signal?.throwIfAborted();
+    state =
+      (await deps.getSkillIndexStateBySourceControlRepositoryId(deps.db, {
+        sourceControlRepositoryId: input.sourceControlRepositoryId,
+      })) ?? state;
     const ref = await deps.readSkillRepositoryMainRef({
       fullName: candidate.repository.fullName,
       installationId: candidate.binding.providerInstallationId,
@@ -158,8 +174,20 @@ export async function refreshSkillIndexSource(input: {
         input.targetCommitSha &&
         state.lastCheckedCommitSha !== input.targetCommitSha
       ) {
+        await markStaleTargetRefreshTerminal({
+          currentCommitSha: state.lastCheckedCommitSha,
+          deps,
+          lockToken,
+          state,
+        });
+        queueTerminalPublish();
         return { status: "stale" };
       }
+      await deps.markSkillIndexRefreshFresh(deps.db, {
+        lockToken,
+        stateId: state.id,
+      });
+      queueTerminalPublish();
       return { status: "fresh" };
     }
     if (ref.status === "missing") {
@@ -176,6 +204,7 @@ export async function refreshSkillIndexSource(input: {
         lockToken,
         stateId: state.id,
       });
+      queueTerminalPublish();
       return { status: "missing" };
     }
 
@@ -186,6 +215,13 @@ export async function refreshSkillIndexSource(input: {
       sourceControlRepositoryId: input.sourceControlRepositoryId,
     });
     if (input.targetCommitSha && ref.sha !== input.targetCommitSha) {
+      await markStaleTargetRefreshTerminal({
+        currentCommitSha: ref.sha,
+        deps,
+        lockToken,
+        state,
+      });
+      queueTerminalPublish();
       return { status: "stale" };
     }
 
@@ -222,6 +258,7 @@ export async function refreshSkillIndexSource(input: {
       lockToken,
       stateId: state.id,
     });
+    queueTerminalPublish();
     return { status: "fresh" };
   } catch (error) {
     const code = getRefreshFailureCode(error);
@@ -232,12 +269,112 @@ export async function refreshSkillIndexSource(input: {
       lockToken,
       stateId: state.id,
     });
+    queueTerminalPublish();
     return { status: "failed" };
   } finally {
     await deps.releaseSkillIndexRefreshLock(deps.db, {
       lockToken,
       stateId: state.id,
     });
+    if (publishAfterRelease) {
+      await publishCurrentSkillIndexState({
+        clerkOrgId: publishAfterRelease.clerkOrgId,
+        deps,
+        sourceControlRepositoryId:
+          publishAfterRelease.sourceControlRepositoryId,
+      });
+    }
+  }
+}
+
+async function markStaleTargetRefreshTerminal(input: {
+  currentCommitSha: string | null;
+  deps: SkillIndexServiceDeps;
+  lockToken: string;
+  state: { id: number; indexedCommitSha: string | null };
+}) {
+  if (
+    input.currentCommitSha &&
+    input.state.indexedCommitSha === input.currentCommitSha
+  ) {
+    await input.deps.markSkillIndexRefreshFresh(input.deps.db, {
+      lockToken: input.lockToken,
+      stateId: input.state.id,
+    });
+    return;
+  }
+
+  await input.deps.markSkillIndexRefreshStale(input.deps.db, {
+    lockToken: input.lockToken,
+    stateId: input.state.id,
+  });
+}
+
+async function publishCurrentSkillIndexState(input: {
+  clerkOrgId: string;
+  deps: SkillIndexServiceDeps;
+  sourceControlRepositoryId: number;
+}) {
+  let event: SkillIndexChangedEvent | undefined;
+  try {
+    const state =
+      await input.deps.getSkillIndexStateBySourceControlRepositoryId(
+        input.deps.db,
+        {
+          sourceControlRepositoryId: input.sourceControlRepositoryId,
+        }
+      );
+    if (!state) {
+      return;
+    }
+    event = {
+      clerkOrgId: input.clerkOrgId,
+      indexedCommitSha: state.indexedCommitSha,
+      lastRefreshStatus: state.lastRefreshStatus,
+      snapshotVersion: [
+        state.id,
+        state.updatedAt.getTime(),
+        state.indexedCommitSha ?? "",
+        state.lastRefreshStatus,
+      ].join(":"),
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+    };
+    await withTimeout(
+      input.deps.publishSkillIndexChanged(event),
+      PUBLISH_SKILL_INDEX_CHANGED_TIMEOUT_MS,
+      "skill_index_publish_timeout"
+    );
+  } catch (error) {
+    log.warn("[skills] skill index change publish failed", {
+      clerkOrgId: input.clerkOrgId,
+      error,
+      indexedCommitSha: event?.indexedCommitSha,
+      lastRefreshStatus: event?.lastRefreshStatus,
+      snapshotVersion: event?.snapshotVersion,
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+    });
+  }
+}
+
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  message: string
+): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error(message));
+        }, timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
   }
 }
 

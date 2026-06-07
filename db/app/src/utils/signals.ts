@@ -5,7 +5,7 @@ import {
 } from "@repo/api-contract";
 import type { SignalClassificationMetadata } from "@repo/identity-contract";
 import type { SQL } from "drizzle-orm";
-import { and, desc, eq, gte, inArray, lt, or } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, inArray, lt, or } from "drizzle-orm";
 
 import type { Database } from "../client";
 import { createSignalId, type Signal, orgSignals as signals } from "../schema";
@@ -101,6 +101,22 @@ export interface ListSignalsParams {
   statuses?: Signal["status"][];
 }
 
+export interface SignalEntityIndexBackfillCandidate {
+  id: number;
+  publicId: string;
+}
+
+export interface ListSignalEntityIndexBackfillCandidatesParams {
+  clerkOrgId: string;
+  cursor?: number | null;
+  limit?: number;
+}
+
+export interface ListSignalEntityIndexBackfillCandidatesResult {
+  items: SignalEntityIndexBackfillCandidate[];
+  nextCursor: number | null;
+}
+
 export async function listSignals(
   db: Database,
   input: ListSignalsParams
@@ -154,6 +170,57 @@ export async function listSignals(
       visibleRows.length > limit && lastItem
         ? { createdAt: lastItem.createdAt, id: lastItem.id }
         : null,
+  };
+}
+
+function normalizeBackfillLimit(limit: number | undefined): number {
+  if (typeof limit !== "number" || !Number.isFinite(limit)) {
+    return 100;
+  }
+  return Math.max(1, Math.min(Math.trunc(limit), 500));
+}
+
+function isSignalEntityIndexBackfillEligible(signal: Signal): boolean {
+  return (
+    signal.status === "classified" &&
+    signal.visibilityScope === "team" &&
+    signal.classification?.schemaVersion === "signal.classification.v2" &&
+    signal.classification.routing.visibility.scope === "team"
+  );
+}
+
+export async function listSignalEntityIndexBackfillCandidates(
+  db: Database,
+  input: ListSignalEntityIndexBackfillCandidatesParams
+): Promise<ListSignalEntityIndexBackfillCandidatesResult> {
+  const limit = normalizeBackfillLimit(input.limit);
+  const rows = await db
+    .select()
+    .from(signals)
+    .where(
+      and(
+        eq(signals.clerkOrgId, input.clerkOrgId),
+        eq(signals.status, "classified"),
+        eq(signals.visibilityScope, "team"),
+        input.cursor ? gt(signals.id, input.cursor) : undefined
+      )
+    )
+    .orderBy(asc(signals.id))
+    .limit(limit);
+
+  const items = rows
+    .map(normalizeSignalRow)
+    .filter(isSignalEntityIndexBackfillEligible)
+    .map((signal) => ({
+      id: signal.id,
+      publicId: signal.publicId,
+    }));
+  const lastScannedRow = rows.at(-1);
+
+  return {
+    items,
+    nextCursor:
+      rows.length === limit && lastScannedRow ? lastScannedRow.id : null,
   };
 }
 

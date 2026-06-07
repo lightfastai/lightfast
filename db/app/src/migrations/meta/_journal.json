@@ -173,15 +173,43 @@
     {
       "idx": 24,
       "version": "5",
-      "when": 1780741042837,
-      "tag": "0024_sudden_ben_grimm",
+      "when": 1780737690542,
+      "tag": "0024_hesitant_midnight",
       "breakpoints": true
     },
     {
       "idx": 25,
       "version": "5",
-      "when": 1780755044089,
-      "tag": "0025_nice_baron_zemo",
+      "when": 1780742442925,
+      "tag": "0025_shocking_smasher",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1780748986542,
+      "tag": "0026_luxuriant_wasp",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1780754411508,
+      "tag": "0027_slimy_dragon_lord",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "5",
+      "when": 1780800519505,
+      "tag": "0028_fair_wither",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "5",
+      "when": 1780822486187,
+      "tag": "0029_parched_maximus",
       "breakpoints": true
     }
   ]

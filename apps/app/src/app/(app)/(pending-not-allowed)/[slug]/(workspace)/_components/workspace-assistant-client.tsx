@@ -64,6 +64,10 @@ export function WorkspaceAssistantClient({
   );
   const [text, setText] = useState("");
   const [creationError, setCreationError] = useState<Error | undefined>();
+  const [optimisticFirstMessage, setOptimisticFirstMessage] =
+    useState<UIMessage | null>(null);
+  const [providerRoutineWriteMode, setProviderRoutineWriteMode] =
+    useState(false);
   // Existing conversations are already persisted; new chats create lazily on the
   // first message. We never recreate, so a ref (not state) is enough.
   const conversationCreatedRef = useRef(Boolean(initialConversation));
@@ -96,11 +100,18 @@ export function WorkspaceAssistantClient({
     transport,
   });
 
-  const hasMessages = messages.length > 0;
+  const displayMessages =
+    optimisticFirstMessage && messages.length === 0
+      ? [optimisticFirstMessage]
+      : messages;
+  const hasMessages = displayMessages.length > 0;
   const displayError = creationError ?? error;
-  const composerStatus: ChatStatus = createConversation.isPending
-    ? "submitted"
-    : status;
+  const isPreparingFirstMessage =
+    Boolean(optimisticFirstMessage) && status === "ready";
+  const composerStatus: ChatStatus =
+    createConversation.isPending || isPreparingFirstMessage
+      ? "submitted"
+      : status;
 
   const handleSubmit = useCallback(
     async (message: PromptInputMessage) => {
@@ -114,6 +125,7 @@ export function WorkspaceAssistantClient({
 
       if (!conversationCreatedRef.current) {
         setCreationError(undefined);
+        setOptimisticFirstMessage(createOptimisticUserMessage(nextText));
         replaceBrowserChatUrl(params.slug, conversationId);
         try {
           await createConversation.mutateAsync({
@@ -124,6 +136,7 @@ export function WorkspaceAssistantClient({
           void queryClient.invalidateQueries(listConversationsQueryFilter);
         } catch (error) {
           replaceBrowserChatUrl(params.slug);
+          setOptimisticFirstMessage(null);
           setCreationError(
             error instanceof Error
               ? error
@@ -133,15 +146,22 @@ export function WorkspaceAssistantClient({
         }
       }
 
-      await sendMessage(
-        { text: nextText },
-        {
-          body: {
-            idempotencyKey: createWorkspaceAssistantIdempotencyKey(),
-            conversationId,
-          },
-        }
-      );
+      const writeModeForTurn = providerRoutineWriteMode;
+      try {
+        await sendMessage(
+          { text: nextText },
+          {
+            body: {
+              idempotencyKey: createWorkspaceAssistantIdempotencyKey(),
+              conversationId,
+              ...(writeModeForTurn ? { providerRoutineWriteMode: true } : {}),
+            },
+          }
+        );
+      } finally {
+        setOptimisticFirstMessage(null);
+        setProviderRoutineWriteMode(false);
+      }
       setText("");
       if (!initialConversation) {
         router.refresh();
@@ -157,6 +177,7 @@ export function WorkspaceAssistantClient({
       router,
       sendMessage,
       clearError,
+      providerRoutineWriteMode,
     ]
   );
 
@@ -166,9 +187,11 @@ export function WorkspaceAssistantClient({
       error={displayError}
       onSubmit={handleSubmit}
       onTextChange={setText}
+      onWriteModeChange={setProviderRoutineWriteMode}
       status={composerStatus}
       stop={stop}
       text={text}
+      writeModeEnabled={providerRoutineWriteMode}
     />
   );
 
@@ -179,7 +202,7 @@ export function WorkspaceAssistantClient({
           <div className="relative min-h-0 flex-1">
             <Conversation className="h-full">
               <ConversationContent className="gap-0 p-0 pb-8">
-                {messages.map((message, index) => (
+                {displayMessages.map((message, index) => (
                   <div
                     className="mx-auto w-full max-w-3xl px-5 pt-8 md:px-10"
                     key={message.id}
@@ -187,7 +210,8 @@ export function WorkspaceAssistantClient({
                   >
                     <ChatMessage
                       isStreaming={
-                        status === "streaming" && index === messages.length - 1
+                        status === "streaming" &&
+                        index === displayMessages.length - 1
                       }
                       message={message}
                     />
@@ -212,6 +236,14 @@ export function WorkspaceAssistantClient({
 
 function createWorkspaceAssistantIdempotencyKey() {
   return `idem_${createUuid()}`;
+}
+
+function createOptimisticUserMessage(text: string): UIMessage {
+  return {
+    id: `optimistic_${createUuid()}`,
+    parts: [{ text, type: "text" }],
+    role: "user",
+  };
 }
 
 function createUuid() {

@@ -29,9 +29,11 @@ describe("ChatComposer", () => {
           error={undefined}
           onSubmit={onSubmit}
           onTextChange={setText}
+          onWriteModeChange={vi.fn()}
           status="ready"
           stop={stop}
           text={text}
+          writeModeEnabled={false}
         />
       );
     }
@@ -48,6 +50,7 @@ describe("ChatComposer", () => {
     });
     expect(screen.getByPlaceholderText("Ask Lightfield")).toHaveValue("");
     expect(screen.getByRole("button", { name: "Send message" })).toBeDisabled();
+    expect(screen.getByRole("status", { name: "Loading" })).toBeVisible();
 
     resolveSubmit?.();
   });
@@ -62,9 +65,11 @@ describe("ChatComposer", () => {
           error={undefined}
           onSubmit={onSubmit}
           onTextChange={setText}
+          onWriteModeChange={vi.fn()}
           status="ready"
           stop={stop}
           text={text}
+          writeModeEnabled={false}
         />
       );
     }
@@ -83,7 +88,33 @@ describe("ChatComposer", () => {
     });
     expect(screen.getByPlaceholderText("Ask Lightfield")).toHaveValue("");
     expect(screen.getByRole("button", { name: "Send message" })).toBeDisabled();
+    expect(screen.getByRole("status", { name: "Loading" })).toBeVisible();
 
     resolveSubmit?.();
+  });
+
+  it("renders a write mode toggle and reports changes", () => {
+    const onWriteModeChange = vi.fn();
+
+    render(
+      <ChatComposer
+        compact={false}
+        error={undefined}
+        onSubmit={onSubmit}
+        onTextChange={vi.fn()}
+        onWriteModeChange={onWriteModeChange}
+        status="ready"
+        stop={stop}
+        text=""
+        writeModeEnabled={false}
+      />
+    );
+
+    const toggle = screen.getByRole("button", { name: "Write mode" });
+    expect(toggle).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(toggle);
+
+    expect(onWriteModeChange).toHaveBeenCalledWith(true);
   });
 });

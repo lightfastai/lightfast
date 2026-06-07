@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   peopleIdentityProviderSchema,
   peopleIdentityTypeSchema,
+  personMemberStatusSchema,
+  personSourceSchema,
 } from "../schemas/people";
 
 describe("person identity schemas", () => {
@@ -27,5 +29,24 @@ describe("person identity schemas", () => {
   it("rejects unsupported provider and type values", () => {
     expect(() => peopleIdentityProviderSchema.parse("discord")).toThrow();
     expect(() => peopleIdentityTypeSchema.parse("phone")).toThrow();
+  });
+});
+
+describe("person source schemas", () => {
+  it("accepts supported people row sources", () => {
+    expect(personSourceSchema.options).toEqual([
+      "signal",
+      "team_member",
+      "mixed",
+    ]);
+  });
+
+  it("accepts supported member statuses", () => {
+    expect(personMemberStatusSchema.options).toEqual(["active", "former"]);
+  });
+
+  it("rejects unsupported source and member status values", () => {
+    expect(() => personSourceSchema.parse("invitation")).toThrow();
+    expect(() => personMemberStatusSchema.parse("pending")).toThrow();
   });
 });

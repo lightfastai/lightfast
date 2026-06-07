@@ -7,6 +7,8 @@ import {
   type Person,
   type PersonIdentityProvider,
   type PersonIdentityType,
+  type PersonMemberStatus,
+  type PersonSource,
   orgPeople as people,
 } from "../schema";
 
@@ -39,8 +41,10 @@ export interface ListPeopleParams {
   clerkOrgId: string;
   cursor?: ListCursor | null;
   limit?: number;
+  memberStatuses?: PersonMemberStatus[];
   providers?: PersonIdentityProvider[];
   search?: string;
+  sources?: PersonSource[];
   types?: PersonIdentityType[];
 }
 
@@ -63,6 +67,12 @@ export async function listPeople(
       : undefined,
     input.providers?.length
       ? inArray(people.identityProvider, input.providers)
+      : undefined,
+    input.sources?.length
+      ? inArray(people.personSource, input.sources)
+      : undefined,
+    input.memberStatuses?.length
+      ? inArray(people.memberStatus, input.memberStatuses)
       : undefined,
     input.types?.length ? inArray(people.identityType, input.types) : undefined,
     input.cursor
@@ -155,11 +165,13 @@ export async function upsertPeopleFromCandidates(
         lastSeenSignalId: input.sourceSignalId,
         seenCount: 1,
         metadata,
+        personSource: "signal",
       })
       .onDuplicateKeyUpdate({
         set: {
           displayName: sql`COALESCE(${displayName}, ${people.displayName})`,
           metadata,
+          personSource: sql`CASE WHEN ${people.personSource} = 'team_member' THEN 'mixed' ELSE ${people.personSource} END`,
           // seenCount MUST be assigned before lastSeenSignalId. MySQL evaluates
           // ON DUPLICATE KEY UPDATE assignments left-to-right, so this CASE has
           // to read the *previous* lastSeenSignalId before the assignment below

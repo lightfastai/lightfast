@@ -177,11 +177,18 @@ vi.mock("@repo/ui/components/ai-elements/prompt-input", () => ({
   PromptInputSubmit: ({
     "aria-label": ariaLabel,
     disabled,
+    status,
   }: {
     "aria-label"?: string;
     disabled?: boolean;
+    status?: string;
   }) => (
-    <button aria-label={ariaLabel} disabled={disabled} type="submit">
+    <button
+      aria-label={ariaLabel}
+      data-status={status}
+      disabled={disabled}
+      type="submit"
+    >
       Send
     </button>
   ),
@@ -409,6 +416,10 @@ describe("WorkspaceAssistantClient", () => {
     });
     expect(sendMessageMock).not.toHaveBeenCalled();
     expect(refreshMock).not.toHaveBeenCalled();
+    expect(screen.getByText("Summarize my active opportunities")).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Send message" })
+    ).toHaveAttribute("data-status", "submitted");
 
     resolveCreate?.({
       publicId: "conv_new",
@@ -498,6 +509,14 @@ describe("WorkspaceAssistantClient", () => {
     ).toBeEnabled();
   });
 
+  it("disables the submit control while a prompt is submitted", () => {
+    chatStatus = "submitted";
+
+    render(<WorkspaceAssistantClient conversationId="conv_new" />);
+
+    expect(screen.getByRole("button", { name: "Send message" })).toBeDisabled();
+  });
+
   it("renders persisted chat messages and sends follow-ups to the existing conversation", async () => {
     render(
       <WorkspaceAssistantClient
@@ -552,6 +571,61 @@ describe("WorkspaceAssistantClient", () => {
       api: "/api/chat",
       prepareReconnectToStreamRequest: expect.any(Function),
       prepareSendMessagesRequest: expect.any(Function),
+    });
+  });
+
+  it("sends write mode for one submitted turn and resets it", async () => {
+    render(
+      <WorkspaceAssistantClient
+        conversationId="conv_existing"
+        initialConversation={{
+          messages: [
+            makeWorkspaceAssistantMessage({
+              parts: [{ text: "Previous", type: "text" }],
+              publicId: "msg_user",
+              role: "user",
+            }),
+          ],
+          conversation: makeWorkspaceAssistantConversation(),
+        }}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Write mode" }));
+    fireEvent.change(screen.getByPlaceholderText("Ask Lightfield"), {
+      target: { value: "Create a Linear issue" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => {
+      expect(sendMessageMock).toHaveBeenCalledWith(
+        { text: "Create a Linear issue" },
+        {
+          body: {
+            idempotencyKey: expect.stringMatching(/^idem_/),
+            conversationId: "conv_existing",
+            providerRoutineWriteMode: true,
+          },
+        }
+      );
+    });
+
+    expect(screen.getByRole("button", { name: "Write mode" })).toHaveAttribute(
+      "aria-pressed",
+      "false"
+    );
+
+    fireEvent.change(screen.getByPlaceholderText("Ask Lightfield"), {
+      target: { value: "List my Linear issues" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => expect(sendMessageMock).toHaveBeenCalledTimes(2));
+    expect(sendMessageMock.mock.calls[1]?.[1]).toEqual({
+      body: {
+        idempotencyKey: expect.stringMatching(/^idem_/),
+        conversationId: "conv_existing",
+      },
     });
   });
 

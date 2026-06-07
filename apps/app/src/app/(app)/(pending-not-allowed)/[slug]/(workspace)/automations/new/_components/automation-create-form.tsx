@@ -6,10 +6,7 @@ import {
   AUTOMATION_PROMPT_MAX_LENGTH,
   type AutomationScheduleInput,
 } from "@repo/app-validation/schemas";
-import {
-  CONNECTOR_CATALOG,
-  connectableConnectorProviderSchema,
-} from "@repo/connector-contract";
+import { connectableConnectorProviderSchema } from "@repo/connector-contract";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -24,11 +21,16 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { Textarea } from "@repo/ui/components/ui/textarea";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useMemo } from "react";
 import { z } from "zod";
 import { useTRPC } from "~/trpc/react";
 import { LfSelect } from "../../../_components/lf-select";
@@ -42,7 +44,7 @@ import {
 } from "../../_components/schedule-options";
 
 const formSchema = z.object({
-  connectorProvider: connectableConnectorProviderSchema,
+  connectorProvider: connectableConnectorProviderSchema.nullable(),
   name: z
     .string()
     .trim()
@@ -61,6 +63,8 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+const NO_CONNECTOR_VALUE = "__none__";
 
 function buildSchedule(values: FormValues): AutomationScheduleInput {
   switch (values.scheduleKind) {
@@ -89,13 +93,17 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
   const router = useRouter();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { data: connectors } = useSuspenseQuery({
+    ...trpc.org.workspace.connectors.list.queryOptions(),
+    staleTime: 30_000,
+  });
 
   const listHref = `/${slug}/automations` as Route;
 
   const form = useFormCompat<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      connectorProvider: "linear",
+      connectorProvider: null,
       name: "",
       prompt: "",
       scheduleKind: "daily",
@@ -112,6 +120,35 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
   const dayOfWeek = form.watch("dayOfWeek");
   const timezone = form.watch("timezone");
   const promptValue = form.watch("prompt");
+
+  const enabledConnectorOptions = useMemo(
+    () =>
+      connectors
+        .filter((connector) => connector.availableForAutomations)
+        .map((connector) => ({
+          label: connector.displayName,
+          value: connector.provider,
+        })),
+    [connectors]
+  );
+  const connectorOptions = useMemo(
+    () => [
+      { label: "No connector", value: NO_CONNECTOR_VALUE },
+      ...enabledConnectorOptions,
+    ],
+    [enabledConnectorOptions]
+  );
+
+  useEffect(() => {
+    if (
+      connectorProvider &&
+      !enabledConnectorOptions.some(
+        (option) => option.value === connectorProvider
+      )
+    ) {
+      form.setValue("connectorProvider", null, { shouldValidate: true });
+    }
+  }, [connectorProvider, enabledConnectorOptions, form]);
 
   const createMutation = useMutation(
     trpc.org.workspace.automations.create.mutationOptions({
@@ -134,7 +171,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
 
   const onSubmit = (values: FormValues) => {
     createMutation.mutate({
-      connectorProvider: values.connectorProvider,
+      connectorProvider: values.connectorProvider ?? null,
       name: values.name,
       prompt: values.prompt,
       schedule: buildSchedule(values),
@@ -207,28 +244,6 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
                 </FormItem>
               )}
             />
-
-            <div className="space-y-2">
-              <FormLabel className="font-normal text-muted-foreground text-sm">
-                Connector
-              </FormLabel>
-              <LfSelect
-                aria-label="Connector"
-                className="w-full"
-                onValueChange={(value) =>
-                  form.setValue(
-                    "connectorProvider",
-                    connectableConnectorProviderSchema.parse(value),
-                    { shouldValidate: true }
-                  )
-                }
-                options={CONNECTOR_CATALOG.map((connector) => ({
-                  label: connector.displayName,
-                  value: connector.provider,
-                }))}
-                value={connectorProvider}
-              />
-            </div>
 
             <div className="space-y-2">
               <FormLabel className="font-normal text-muted-foreground text-sm">
@@ -378,7 +393,28 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
               </div>
             )}
 
-            <div className="flex items-center justify-end gap-2.5 border-border border-t pt-5">
+            <div className="space-y-2">
+              <FormLabel className="font-normal text-muted-foreground text-sm">
+                Connector
+              </FormLabel>
+              <LfSelect
+                aria-label="Connector"
+                className="w-48"
+                onValueChange={(value) => {
+                  const nextProvider =
+                    value === NO_CONNECTOR_VALUE
+                      ? null
+                      : connectableConnectorProviderSchema.parse(value);
+                  form.setValue("connectorProvider", nextProvider, {
+                    shouldValidate: true,
+                  });
+                }}
+                options={connectorOptions}
+                value={connectorProvider ?? NO_CONNECTOR_VALUE}
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-5">
               <Button asChild size="lf" type="button" variant="ghost">
                 <Link href={listHref}>Cancel</Link>
               </Button>

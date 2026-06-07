@@ -6,8 +6,9 @@ import { TRPCError, type TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
 
 import {
-  ensureFreshSkillIndexForRead,
+  getSkillIndexSnapshot,
   getVerifiedLightfastSkillSourceRepositoryId,
+  requestSkillIndexRefresh,
 } from "../../services/skills";
 import { boundOrgProcedure } from "../../trpc";
 
@@ -26,7 +27,7 @@ export const workspaceSkillsRouter = {
         await getVerifiedLightfastSkillSourceRepositoryId(ctx.db, {
           clerkOrgId: ctx.auth.identity.orgId,
         });
-      const result = await ensureFreshSkillIndexForRead({
+      const result = await getSkillIndexSnapshot({
         clerkOrgId: ctx.auth.identity.orgId,
         sourceControlRepositoryId,
       });
@@ -47,7 +48,7 @@ export const workspaceSkillsRouter = {
         await getVerifiedLightfastSkillSourceRepositoryId(ctx.db, {
           clerkOrgId: ctx.auth.identity.orgId,
         });
-      const result = await ensureFreshSkillIndexForRead({
+      const result = await getSkillIndexSnapshot({
         clerkOrgId: ctx.auth.identity.orgId,
         slug: input.slug,
         sourceControlRepositoryId,
@@ -67,5 +68,20 @@ export const workspaceSkillsRouter = {
         repositoryUrl: result.repositoryUrl,
         skill,
       };
+    }),
+  requestRefresh: boundOrgProcedure
+    .input(z.object({}).strict().optional())
+    .mutation(async ({ ctx }) => {
+      const sourceControlRepositoryId =
+        await getVerifiedLightfastSkillSourceRepositoryId(ctx.db, {
+          clerkOrgId: ctx.auth.identity.orgId,
+        });
+      const result = await requestSkillIndexRefresh({
+        clerkOrgId: ctx.auth.identity.orgId,
+        reason: "read",
+        sourceControlRepositoryId,
+      });
+
+      return { enqueued: result.enqueued };
     }),
 } satisfies TRPCRouterRecord;

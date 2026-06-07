@@ -10,6 +10,10 @@
       "types": "./src/people-classifier/index.ts",
       "default": "./src/people-classifier/index.ts"
     },
+    "./signal-entity-linker": {
+      "types": "./src/signal-entity-linker/index.ts",
+      "default": "./src/signal-entity-linker/index.ts"
+    },
     "./signal-classifier": {
       "types": "./src/signal-classifier/index.ts",
       "default": "./src/signal-classifier/index.ts"

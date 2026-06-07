@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "d253fadc-460e-47cd-a915-ada7a2614f73",
-  "prevId": "15118fa7-e28c-4157-8a88-af43d09818da",
+  "id": "86fc3f39-4cab-4ab5-a735-6794d3d682de",
+  "prevId": "79bb0113-a47f-4337-914e-ac5bca6e7cdf",
   "tables": {
     "lightfast_org_automation_runs": {
       "name": "lightfast_org_automation_runs",
@@ -211,9 +211,8 @@
           "name": "connector_provider",
           "type": "varchar(32)",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'linear'"
+          "notNull": false,
+          "autoincrement": false
         },
         "name": {
           "name": "name",
@@ -1788,6 +1787,42 @@
           "notNull": true,
           "autoincrement": false
         },
+        "person_source": {
+          "name": "person_source",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'signal'"
+        },
+        "member_status": {
+          "name": "member_status",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "clerk_user_id": {
+          "name": "clerk_user_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "member_role": {
+          "name": "member_role",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "member_synced_at": {
+          "name": "member_synced_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "datetime(3)",
@@ -1826,6 +1861,24 @@
           "columns": [
             "clerk_org_id",
             "created_at",
+            "id"
+          ],
+          "isUnique": false
+        },
+        "org_people_org_person_source_idx": {
+          "name": "org_people_org_person_source_idx",
+          "columns": [
+            "clerk_org_id",
+            "person_source",
+            "id"
+          ],
+          "isUnique": false
+        },
+        "org_people_org_member_status_idx": {
+          "name": "org_people_org_member_status_idx",
+          "columns": [
+            "clerk_org_id",
+            "member_status",
             "id"
           ],
           "isUnique": false
@@ -5067,411 +5120,6 @@
       "compositePrimaryKeys": {
         "lightfast_system_namespaces_id": {
           "name": "lightfast_system_namespaces_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "lightfast_user_connector_connections": {
-      "name": "lightfast_user_connector_connections",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "clerk_user_id": {
-          "name": "clerk_user_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "current_user_provider_key": {
-          "name": "current_user_provider_key",
-          "type": "varchar(97)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "provider": {
-          "name": "provider",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "connected_at": {
-          "name": "connected_at",
-          "type": "datetime(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        },
-        "revoked_at": {
-          "name": "revoked_at",
-          "type": "datetime(3)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "provider_account_id": {
-          "name": "provider_account_id",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "provider_account_name": {
-          "name": "provider_account_name",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "encrypted_access_token": {
-          "name": "encrypted_access_token",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "encrypted_refresh_token": {
-          "name": "encrypted_refresh_token",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "access_token_expires_at": {
-          "name": "access_token_expires_at",
-          "type": "datetime(3)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "refresh_token_expires_at": {
-          "name": "refresh_token_expires_at",
-          "type": "datetime(3)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "scopes": {
-          "name": "scopes",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "mcp_endpoint": {
-          "name": "mcp_endpoint",
-          "type": "varchar(512)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "tool_manifest": {
-          "name": "tool_manifest",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "last_tool_refresh_at": {
-          "name": "last_tool_refresh_at",
-          "type": "datetime(3)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "last_tool_refresh_error_at": {
-          "name": "last_tool_refresh_error_at",
-          "type": "datetime(3)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "last_tool_refresh_error_code": {
-          "name": "last_tool_refresh_error_code",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "metadata": {
-          "name": "metadata",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "datetime(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "datetime(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        }
-      },
-      "indexes": {
-        "user_connector_connections_current_user_provider_uq": {
-          "name": "user_connector_connections_current_user_provider_uq",
-          "columns": [
-            "current_user_provider_key"
-          ],
-          "isUnique": true
-        },
-        "user_connector_connections_user_provider_status_idx": {
-          "name": "user_connector_connections_user_provider_status_idx",
-          "columns": [
-            "clerk_user_id",
-            "provider",
-            "status"
-          ],
-          "isUnique": false
-        },
-        "user_connector_connections_provider_account_idx": {
-          "name": "user_connector_connections_provider_account_idx",
-          "columns": [
-            "provider",
-            "provider_account_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "lightfast_user_connector_connections_id": {
-          "name": "lightfast_user_connector_connections_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "lightfast_user_connector_tool_calls": {
-      "name": "lightfast_user_connector_tool_calls",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "public_id": {
-          "name": "public_id",
-          "type": "varchar(80)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "called_by_user_id": {
-          "name": "called_by_user_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "clerk_org_id": {
-          "name": "clerk_org_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "provider": {
-          "name": "provider",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "routine_id": {
-          "name": "routine_id",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "provider_tool_name": {
-          "name": "provider_tool_name",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "provider_connection_id": {
-          "name": "provider_connection_id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "provider_attempted": {
-          "name": "provider_attempted",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
-        },
-        "source_surface": {
-          "name": "source_surface",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'interactive_chat'"
-        },
-        "source_ref": {
-          "name": "source_ref",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "input_redacted": {
-          "name": "input_redacted",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "output_redacted": {
-          "name": "output_redacted",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "error_code": {
-          "name": "error_code",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "error_message": {
-          "name": "error_message",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "started_at": {
-          "name": "started_at",
-          "type": "datetime(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "finished_at": {
-          "name": "finished_at",
-          "type": "datetime(3)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "datetime(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "datetime(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        }
-      },
-      "indexes": {
-        "user_connector_tool_calls_public_id_uq": {
-          "name": "user_connector_tool_calls_public_id_uq",
-          "columns": [
-            "public_id"
-          ],
-          "isUnique": true
-        },
-        "user_connector_tool_calls_user_created_idx": {
-          "name": "user_connector_tool_calls_user_created_idx",
-          "columns": [
-            "called_by_user_id",
-            "created_at",
-            "id"
-          ],
-          "isUnique": false
-        },
-        "user_connector_tool_calls_org_created_idx": {
-          "name": "user_connector_tool_calls_org_created_idx",
-          "columns": [
-            "clerk_org_id",
-            "created_at",
-            "id"
-          ],
-          "isUnique": false
-        },
-        "user_connector_tool_calls_connection_created_idx": {
-          "name": "user_connector_tool_calls_connection_created_idx",
-          "columns": [
-            "provider_connection_id",
-            "created_at",
-            "id"
-          ],
-          "isUnique": false
-        },
-        "user_connector_tool_calls_provider_routine_created_idx": {
-          "name": "user_connector_tool_calls_provider_routine_created_idx",
-          "columns": [
-            "provider",
-            "routine_id",
-            "created_at",
-            "id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "lightfast_user_connector_tool_calls_id": {
-          "name": "lightfast_user_connector_tool_calls_id",
           "columns": [
             "id"
           ]

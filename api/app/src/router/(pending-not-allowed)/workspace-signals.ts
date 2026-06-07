@@ -1,5 +1,6 @@
 import {
   getVisibleSignalByPublicId,
+  listSignalEntityLinksForSignal,
   listSignals,
   listWorkspaceSignals,
 } from "@db/app";
@@ -61,7 +62,15 @@ export const workspaceSignalsRouter = {
         });
       }
 
-      return signal;
+      const entityLinks = await listSignalEntityLinksForSignal(ctx.db, {
+        clerkOrgId: ctx.auth.identity.orgId,
+        signalId: signal.publicId,
+      });
+
+      return {
+        ...signal,
+        entityLinks,
+      };
     }),
   create: boundOrgProcedure
     .input(createSignalInput)

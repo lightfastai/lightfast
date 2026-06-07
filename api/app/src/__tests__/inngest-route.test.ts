@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
+const mocks = vi.hoisted(() => ({
+  vercelEnv: "production",
+}));
+
 const routeHandlers = {
   GET: vi.fn(),
   POST: vi.fn(),
@@ -9,14 +13,18 @@ const serveMock = vi.fn(() => routeHandlers);
 const inngestClient = { id: "app-inngest-client" };
 const systemHealth = { id: "system-health" };
 const classifySignal = { id: "classify-signal" };
+const indexSignalEntities = { id: "index-signal-entities" };
+const backfillSignalEntityLinks = { id: "backfill-signal-entity-links" };
 const classifyPeople = { id: "classify-people" };
 const cleanupDeveloperSandboxRuns = { id: "cleanup-developer-sandbox-runs" };
 const automationScheduler = { id: "automation-scheduler" };
 const runAutomation = { id: "run-automation" };
+const runEntityResolution = { id: "run-entity-resolution" };
 const refreshSkillIndex = { id: "refresh-skill-index" };
 const refreshIdentityIndex = { id: "refresh-identity-index" };
 const reconcileSkillIndexes = { id: "reconcile-skill-indexes" };
 const reconcileIdentityIndexes = { id: "reconcile-identity-indexes" };
+const teamMemberReconciler = { id: "team-member-reconciler" };
 const queueLightfastIndexRefreshesFromSourceControl = {
   id: "queue-lightfast-index-refreshes-from-source-control",
 };
@@ -28,6 +36,9 @@ vi.mock("inngest/next", () => ({
 vi.mock("../env", () => ({
   env: {
     INNGEST_SERVE_ORIGIN: "https://lightfast.localhost",
+    get VERCEL_ENV() {
+      return mocks.vercelEnv;
+    },
   },
 }));
 
@@ -41,6 +52,14 @@ vi.mock("../inngest/workflow/system-health", () => ({
 
 vi.mock("../inngest/workflow/classify-signal", () => ({
   classifySignal,
+}));
+
+vi.mock("../inngest/workflow/index-signal-entities", () => ({
+  indexSignalEntities,
+}));
+
+vi.mock("../inngest/workflow/backfill-signal-entity-links", () => ({
+  backfillSignalEntityLinks,
 }));
 
 vi.mock("../inngest/workflow/classify-people", () => ({
@@ -59,6 +78,10 @@ vi.mock("../inngest/workflow/run-automation", () => ({
   runAutomation,
 }));
 
+vi.mock("../inngest/workflow/run-entity-resolution", () => ({
+  runEntityResolution,
+}));
+
 vi.mock("../inngest/workflow/refresh-skill-index", () => ({
   refreshSkillIndex,
 }));
@@ -75,6 +98,10 @@ vi.mock("../inngest/workflow/reconcile-identity-indexes", () => ({
   reconcileIdentityIndexes,
 }));
 
+vi.mock("../inngest/workflow/team-member-reconciler", () => ({
+  teamMemberReconciler,
+}));
+
 vi.mock("../inngest/workflow/queue-skill-refresh-from-source-control", () => ({
   queueLightfastIndexRefreshesFromSourceControl,
 }));
@@ -82,7 +109,9 @@ vi.mock("../inngest/workflow/queue-skill-refresh-from-source-control", () => ({
 const { createInngestRouteContext, inngest } = await import("../inngest");
 
 describe("createInngestRouteContext", () => {
-  it("serves the app Inngest client with automation and health workflows", () => {
+  it("serves the app Inngest client with automation and production health workflows", () => {
+    mocks.vercelEnv = "production";
+
     const handlers = createInngestRouteContext();
 
     expect(inngest).toBe(inngestClient);
@@ -92,14 +121,46 @@ describe("createInngestRouteContext", () => {
       functions: [
         systemHealth,
         classifySignal,
+        indexSignalEntities,
+        backfillSignalEntityLinks,
         classifyPeople,
         cleanupDeveloperSandboxRuns,
         automationScheduler,
         runAutomation,
+        runEntityResolution,
         refreshSkillIndex,
         refreshIdentityIndex,
         reconcileSkillIndexes,
         reconcileIdentityIndexes,
+        teamMemberReconciler,
+        queueLightfastIndexRefreshesFromSourceControl,
+      ],
+      serveOrigin: "https://lightfast.localhost",
+      servePath: "/api/inngest",
+    });
+  });
+
+  it("omits cron health workflows outside production", () => {
+    mocks.vercelEnv = "preview";
+
+    createInngestRouteContext();
+
+    expect(serveMock).toHaveBeenLastCalledWith({
+      client: inngestClient,
+      functions: [
+        classifySignal,
+        indexSignalEntities,
+        backfillSignalEntityLinks,
+        classifyPeople,
+        cleanupDeveloperSandboxRuns,
+        automationScheduler,
+        runAutomation,
+        runEntityResolution,
+        refreshSkillIndex,
+        refreshIdentityIndex,
+        reconcileSkillIndexes,
+        reconcileIdentityIndexes,
+        teamMemberReconciler,
         queueLightfastIndexRefreshesFromSourceControl,
       ],
       serveOrigin: "https://lightfast.localhost",

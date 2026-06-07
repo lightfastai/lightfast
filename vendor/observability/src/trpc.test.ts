@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const captureExceptionMock = vi.fn();
 const logErrorMock = vi.fn();
 const logInfoMock = vi.fn();
+const scopeSetContextMock = vi.fn();
 
 vi.mock("server-only", () => ({}));
 
@@ -23,7 +24,7 @@ vi.mock("@sentry/core", () => ({
     }) => Promise<unknown>
   ) =>
     callback({
-      setContext: vi.fn(),
+      setContext: scopeSetContextMock,
       setExtra: vi.fn(),
       setTag: vi.fn(),
     }),
@@ -53,6 +54,7 @@ describe("createObservabilityMiddleware", () => {
     captureExceptionMock.mockClear();
     logErrorMock.mockClear();
     logInfoMock.mockClear();
+    scopeSetContextMock.mockClear();
   });
 
   it("omits the cause message from server error logs", async () => {
@@ -98,5 +100,75 @@ describe("createObservabilityMiddleware", () => {
     expect(captureExceptionMock.mock.invocationCallOrder[0]).toBeLessThan(
       logErrorMock.mock.invocationCallOrder[0] ?? Number.POSITIVE_INFINITY
     );
+  });
+
+  it("captures client tRPC errors for short-term visibility", async () => {
+    const error = new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Unsupported connector provider: x",
+    });
+    const middleware = createObservabilityMiddleware({
+      extractAuth: () => ({ orgId: "org_1", userId: "user_1" }),
+      isDev: false,
+    });
+
+    await middleware({
+      ctx: {},
+      getRawInput: async () => ({ provider: "x" }),
+      next: async () => ({ error, ok: false }),
+      path: "org.workspace.connectors.setAgentEnabled",
+      type: "mutation",
+    });
+
+    expect(captureExceptionMock).toHaveBeenCalledWith(
+      error,
+      expect.objectContaining({
+        extra: expect.objectContaining({
+          httpStatus: 400,
+          requestId: "request_1",
+        }),
+        tags: expect.objectContaining({
+          "trpc.error_code": "BAD_REQUEST",
+          "trpc.http_status": "400",
+          "trpc.path": "org.workspace.connectors.setAgentEnabled",
+          "trpc.type": "mutation",
+        }),
+      })
+    );
+    expect(logInfoMock).toHaveBeenCalledWith(
+      "[trpc] client error",
+      expect.objectContaining({
+        errorCode: "BAD_REQUEST",
+        errorMessage: "Unsupported connector provider: x",
+        path: "org.workspace.connectors.setAgentEnabled",
+      })
+    );
+  });
+
+  it("does not attach raw tRPC input to the Sentry scope", async () => {
+    const error = new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Invalid input",
+    });
+    const middleware = createObservabilityMiddleware({
+      extractAuth: () => ({}),
+      isDev: false,
+    });
+
+    await middleware({
+      ctx: {},
+      getRawInput: async () => ({
+        nested: { token: "secret" },
+        provider: "x",
+      }),
+      next: async () => ({ error, ok: false }),
+      path: "org.workspace.connectors.setAgentEnabled",
+      type: "mutation",
+    });
+
+    expect(scopeSetContextMock).toHaveBeenCalledWith("trpc", {
+      procedure_path: "org.workspace.connectors.setAgentEnabled",
+      procedure_type: "mutation",
+    });
   });
 });

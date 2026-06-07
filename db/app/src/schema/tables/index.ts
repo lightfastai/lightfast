@@ -56,6 +56,7 @@ export {
   orgDeveloperSandboxCommands,
   orgDeveloperSandboxRuns,
 } from "./org-developer-sandbox-runs";
+export * from "./org-entity-graph";
 export {
   type IdentityIndexFile,
   type IdentityIndexState,
@@ -74,6 +75,8 @@ export {
   type Person,
   type PersonIdentityProvider,
   type PersonIdentityType,
+  type PersonMemberStatus,
+  type PersonSource,
 } from "./org-people";
 export {
   createPeopleViewId,
@@ -95,6 +98,14 @@ export {
   type ProviderRoutineCallSourceSurface,
   type ProviderRoutineCallStatus,
 } from "./org-provider-routine-calls";
+export {
+  type InsertSignalEntityLink,
+  orgSignalEntityLinks,
+  SIGNAL_ENTITY_LINK_ANCHOR_TEXT_LENGTH,
+  SIGNAL_ENTITY_LINK_LABEL_LENGTH,
+  SIGNAL_ENTITY_LINK_NORMALIZED_MENTION_VALUE_LENGTH,
+  type SignalEntityLink,
+} from "./org-signal-entity-links";
 export {
   createSignalViewId,
   type InsertSignalView,
@@ -127,10 +138,13 @@ export {
   orgSourceControlBindings,
 } from "./org-source-control-bindings";
 export {
+  type InsertSourceControlPrWebhookDelivery,
   type InsertSourceControlRepository,
   type InsertSourceControlWebhookDelivery,
+  orgSourceControlPrWebhookDeliveries,
   orgSourceControlRepositories,
   orgSourceControlWebhookDeliveries,
+  type SourceControlPrWebhookDelivery,
   type SourceControlRepository,
   type SourceControlWebhookDelivery,
 } from "./org-source-control-repositories";

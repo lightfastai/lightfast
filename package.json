@@ -48,6 +48,7 @@
     "db:migrate": "pnpm --filter @db/app db:migrate",
     "db:studio": "pnpm --filter @db/app db:studio",
     "db:baseline": "pnpm --filter @db/app db:baseline",
+    "entity-graph:simulated": "pnpm --filter @db/app entity-graph:simulated",
     "knip": "knip"
   },
   "devDependencies": {

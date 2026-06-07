@@ -8,12 +8,14 @@ import { LfSelect } from "../../_components/lf-select";
 import { SkillDialog } from "./skill-dialog";
 import { SkillGrid } from "./skill-grid";
 import type { Skill } from "./skills-types";
+import { useSkillIndexRefreshController } from "./use-skill-index-refresh-controller";
 import { useSkillsList } from "./use-skills-list";
 
 type SkillFilter = "all" | "invalid" | "valid";
 
 export function SkillsClient() {
   const data = useSkillsList();
+  useSkillIndexRefreshController(data);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<SkillFilter>("all");
   const [skillParam, setSkillParam] = useQueryState("skill");

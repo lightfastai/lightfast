@@ -159,6 +159,17 @@ const userClassification = {
     },
   },
 };
+const notActionableClassification = {
+  ...userClassification,
+  disposition: "not_actionable",
+  title: "FYI from Jordi",
+  summary: "The input mentions Jordi but does not require action.",
+  kind: "other",
+  nextAction: "No action required.",
+  priority: "low",
+  rationale: "The signal is informational.",
+  confidence: 0.64,
+};
 const identityContext = {
   provenance: {
     surface: "signal" as const,
@@ -224,6 +235,9 @@ const { classifySignal } = await import("../inngest/workflow/classify-signal");
 function createStep() {
   const step = {
     run: vi.fn(<T>(_name: string, fn: () => T | Promise<T>) => fn()),
+    sendEvent: vi.fn((_name: string, event: unknown) =>
+      Promise.resolve({ ids: ["event_test"], event })
+    ),
     ai: {
       wrap: vi.fn(
         <T>(
@@ -396,17 +410,34 @@ describe("classifySignal", () => {
         publicId: signalId,
       })
     );
-    expect(sendMock).toHaveBeenCalledWith({
-      name: "app/people.classification.requested",
-      data: {
-        clerkOrgId: "org_test",
-        signalId,
-      },
-    });
+    expect(step.sendEvent).toHaveBeenCalledTimes(1);
+    expect(step.sendEvent).toHaveBeenCalledWith(
+      "queue classified signal downstream workflows",
+      [
+        {
+          name: "app/people.classification.requested",
+          data: {
+            clerkOrgId: "org_test",
+            signalId,
+          },
+        },
+        {
+          name: "app/signal.entity-index.requested",
+          data: {
+            clerkOrgId: "org_test",
+            signalId,
+          },
+        },
+      ]
+    );
+    expect(markSignalClassifiedMock.mock.invocationCallOrder[0]).toBeLessThan(
+      step.sendEvent.mock.invocationCallOrder[0] ?? 0
+    );
+    expect(sendMock).not.toHaveBeenCalled();
     expect(markSignalFailedMock).not.toHaveBeenCalled();
   });
 
-  it("does not queue people classification for user-visible signals", async () => {
+  it("queues only entity indexing for user-visible signals", async () => {
     const step = createStep();
     classifySignalInputMock.mockResolvedValueOnce(userClassification);
 
@@ -417,6 +448,46 @@ describe("classifySignal", () => {
       routedPeople: false,
     });
 
+    expect(step.sendEvent).toHaveBeenCalledTimes(1);
+    expect(step.sendEvent).toHaveBeenCalledWith(
+      "queue classified signal downstream workflows",
+      [
+        {
+          name: "app/signal.entity-index.requested",
+          data: {
+            clerkOrgId: "org_test",
+            signalId,
+          },
+        },
+      ]
+    );
+    expect(sendMock).not.toHaveBeenCalled();
+  });
+
+  it("queues entity indexing for non-actionable visible signals", async () => {
+    const step = createStep();
+    classifySignalInputMock.mockResolvedValueOnce(notActionableClassification);
+
+    await expect(runWorkflow(step)).resolves.toEqual({
+      status: "classified",
+      visibilityScope: "user",
+      reviewRequired: false,
+      routedPeople: false,
+    });
+
+    expect(step.sendEvent).toHaveBeenCalledTimes(1);
+    expect(step.sendEvent).toHaveBeenCalledWith(
+      "queue classified signal downstream workflows",
+      [
+        {
+          name: "app/signal.entity-index.requested",
+          data: {
+            clerkOrgId: "org_test",
+            signalId,
+          },
+        },
+      ]
+    );
     expect(sendMock).not.toHaveBeenCalled();
   });
 
@@ -439,6 +510,7 @@ describe("classifySignal", () => {
         publicId: signalId,
       })
     );
+    expect(step.sendEvent).not.toHaveBeenCalled();
     expect(sendMock).not.toHaveBeenCalled();
   });
 
@@ -458,13 +530,27 @@ describe("classifySignal", () => {
     });
 
     expect(claimSignalForClassificationMock).not.toHaveBeenCalled();
-    expect(sendMock).toHaveBeenCalledWith({
-      name: "app/people.classification.requested",
-      data: {
-        clerkOrgId: "org_test",
-        signalId,
-      },
-    });
+    expect(step.sendEvent).toHaveBeenCalledTimes(1);
+    expect(step.sendEvent).toHaveBeenCalledWith(
+      "queue classified signal downstream workflows",
+      [
+        {
+          name: "app/people.classification.requested",
+          data: {
+            clerkOrgId: "org_test",
+            signalId,
+          },
+        },
+        {
+          name: "app/signal.entity-index.requested",
+          data: {
+            clerkOrgId: "org_test",
+            signalId,
+          },
+        },
+      ]
+    );
+    expect(sendMock).not.toHaveBeenCalled();
   });
 
   it("does not claim or send when a retry sees an already classified review-required signal", async () => {
@@ -483,6 +569,7 @@ describe("classifySignal", () => {
     });
 
     expect(claimSignalForClassificationMock).not.toHaveBeenCalled();
+    expect(step.sendEvent).not.toHaveBeenCalled();
     expect(sendMock).not.toHaveBeenCalled();
   });
 
@@ -549,6 +636,8 @@ describe("classifySignal", () => {
 
     await expect(runWorkflow(step)).resolves.toEqual({ status: "skipped" });
 
+    expect(step.sendEvent).not.toHaveBeenCalled();
+    expect(sendMock).not.toHaveBeenCalled();
     expect(markSignalFailedMock).not.toHaveBeenCalled();
   });
 
@@ -561,6 +650,8 @@ describe("classifySignal", () => {
     expect(step.ai.wrap).not.toHaveBeenCalled();
     expect(classifySignalInputMock).not.toHaveBeenCalled();
     expect(markSignalClassifiedMock).not.toHaveBeenCalled();
+    expect(step.sendEvent).not.toHaveBeenCalled();
+    expect(sendMock).not.toHaveBeenCalled();
     expect(markSignalFailedMock).not.toHaveBeenCalled();
   });
 });

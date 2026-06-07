@@ -576,6 +576,7 @@ function mcpToolDependencies(): ExecuteHostedMcpToolDependencies {
     getVisibleSignalByPublicId: vi
       .fn()
       .mockResolvedValue(undefined as Signal | undefined),
+    listSignalEntityLinksForSignal: vi.fn().mockResolvedValue([]),
     now: vi.fn(() => now),
     recordMcpAuditEvent: vi
       .fn()

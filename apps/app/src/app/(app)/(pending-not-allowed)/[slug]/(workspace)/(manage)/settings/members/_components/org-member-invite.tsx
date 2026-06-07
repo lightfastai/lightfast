@@ -69,14 +69,14 @@ export function OrgMemberInvite() {
   return (
     <Dialog onOpenChange={setIsOpen} open={isOpen}>
       <DialogTrigger asChild>
-        <Button variant="secondary">
-          <UserPlus className="mr-1.5 h-4 w-4" />
+        <Button className="rounded-[9px]" size="lf" variant="secondary">
+          <UserPlus aria-hidden="true" className="size-3.5" />
           Invite
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Invite Member</DialogTitle>
+          <DialogTitle>Invite member</DialogTitle>
           <DialogDescription>
             Send an organization invitation by email.
           </DialogDescription>
@@ -93,14 +93,16 @@ export function OrgMemberInvite() {
               }
             }}
             placeholder="name@example.com"
+            size="lf"
             type="email"
             value={emailAddress}
+            variant="lf"
           />
           <Select
             onValueChange={(value) => setRole(value as OrgRole)}
             value={role}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full" size="sm" variant="lf">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -121,11 +123,11 @@ export function OrgMemberInvite() {
           >
             {inviteMutation.isPending ? (
               <>
-                <Loader2 className="animate-spin" />
-                Sending...
+                <Loader2 aria-hidden="true" className="animate-spin" />
+                Sending
               </>
             ) : (
-              "Send Invite"
+              "Send invite"
             )}
           </DialogActionButton>
         </DialogActions>

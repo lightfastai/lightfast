@@ -5,7 +5,6 @@ import {
   httpClientIntegration,
   init as initSentry,
 } from "@sentry/nextjs";
-import { TRPCClientError } from "@trpc/client";
 
 import { env } from "~/env";
 
@@ -21,16 +20,7 @@ initSentry({
   tracesSampleRate: env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.2 : 1.0,
   debug: false,
   enableLogs: true,
-  beforeSend(event, hint) {
-    // Drop tRPC client errors (4xx) — server owns tRPC error observability.
-    const err = hint?.originalException;
-    if (
-      err instanceof TRPCClientError &&
-      err.data?.httpStatus != null &&
-      err.data.httpStatus < 500
-    ) {
-      return null;
-    }
+  beforeSend(event) {
     return event;
   },
   beforeBreadcrumb(breadcrumb) {
@@ -56,13 +46,12 @@ initSentry({
     extraErrorDataIntegration({
       depth: 3,
     }),
-    // feedbackIntegration lazy-loaded below
   ],
 });
 
 export const onRouterTransitionStart = captureRouterTransitionStart;
 
-// Lazy-load replay and feedback after page is fully interactive
+// Lazy-load replay after page is fully interactive
 // This defers ~418KB of Sentry integrations from the initial bundle
 if (typeof window !== "undefined") {
   const loadLazySentryIntegrations = async () => {
@@ -72,14 +61,6 @@ if (typeof window !== "undefined") {
       Sentry.replayIntegration({
         maskAllText: true,
         blockAllMedia: true,
-      })
-    );
-
-    Sentry.addIntegration(
-      Sentry.feedbackIntegration({
-        colorScheme: "system",
-        showBranding: false,
-        enableScreenshot: true,
       })
     );
   };

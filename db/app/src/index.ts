@@ -2,8 +2,6 @@
 
 // Client
 export { type Database, db, getClient } from "./client";
-
-// Re-exported schema definitions
 export {
   AUTOMATION_ID_PREFIX,
   AUTOMATION_RUN_ID_PREFIX,
@@ -68,6 +66,7 @@ export {
   type InsertSignalView,
   type InsertSkillIndexEntry,
   type InsertSkillIndexState,
+  type InsertSourceControlPrWebhookDelivery,
   type InsertSourceControlRepository,
   type InsertSourceControlWebhookDelivery,
   type InsertUserConnectorConnection,
@@ -114,6 +113,7 @@ export {
   orgSkillIndexEntries,
   orgSkillIndexStates,
   orgSourceControlBindings,
+  orgSourceControlPrWebhookDeliveries,
   orgSourceControlRepositories,
   orgSourceControlWebhookDeliveries,
   orgWorkspaceAssistantContextItems,
@@ -130,8 +130,11 @@ export {
   type Person,
   type PersonIdentityProvider,
   type PersonIdentityType,
+  type PersonMemberStatus,
+  type PersonSource,
   type ProviderRoutineCall,
   type ProviderRoutineCallRedactedPayload,
+  type ProviderRoutineCallSourceSurface,
   type ResourcesTruncatedFlag,
   SIGNAL_VIEW_ID_PREFIX,
   type Signal,
@@ -140,6 +143,7 @@ export {
   type SkillIndexEntry,
   type SkillIndexEntryMetadata,
   type SkillIndexState,
+  type SourceControlPrWebhookDelivery,
   type SourceControlRepository,
   type SourceControlWebhookDelivery,
   skillIndexEntriesRelations,
@@ -180,6 +184,8 @@ export {
   type WorkspaceAssistantToolCallStatus,
   type WorkspaceAssistantToolPayload,
 } from "./schema";
+// Re-exported schema definitions
+export * from "./schema/tables/org-entity-graph";
 export {
   type ClaimedAutomationRun,
   type CreateAutomationInput,
@@ -245,6 +251,46 @@ export {
 } from "./utils/developer-sandbox-runs";
 export { isDuplicateKeyError } from "./utils/drizzle-results";
 export {
+  type AppendEntityObservationInput,
+  type AppendResolutionCandidateVersionInput,
+  type AppendResolutionCandidateVersionResult,
+  appendEntityObservation,
+  appendResolutionCandidateVersionIfChanged,
+  type EntityAccountEvidenceTrail,
+  type EntityPersonEvidenceTrail,
+  type EntityResolutionPersistenceBatchInput,
+  type EntityResolutionPersistenceCandidateGroupInput,
+  type EntityResolutionPersistenceSourceIdentityInput,
+  type GetEntityAccountEvidenceTrailInput,
+  type GetEntityPersonEvidenceTrailInput,
+  getEntityAccountByPublicId,
+  getEntityAccountEvidenceTrail,
+  getEntityPersonByPublicId,
+  getEntityPersonEvidenceTrail,
+  type IngestEntityObservationsInput,
+  type IngestEntityObservationsResult,
+  ingestEntityObservations,
+  type ListEntityAccountsInput,
+  type ListEntityPeopleInput,
+  type ListEntityPersonAccountAffiliationsInput,
+  listEntityAccounts,
+  listEntityPeople,
+  listEntityPersonAccountAffiliations,
+  type PersistEntityResolutionBatchInput,
+  type PersistEntityResolutionBatchResult,
+  persistEntityResolutionBatch,
+  type UpsertEntityAccountInput,
+  type UpsertEntityPersonInput,
+  type UpsertPersonAccountAffiliationInput,
+  type UpsertResolutionCandidateGroupInput,
+  type UpsertSourceIdentityInput,
+  upsertEntityAccount,
+  upsertEntityPerson,
+  upsertPersonAccountAffiliation,
+  upsertResolutionCandidateGroup,
+  upsertSourceIdentity,
+} from "./utils/entity-graph";
+export {
   acquireIdentityIndexRefreshLock,
   createOrLoadIdentityIndexState,
   getIdentityIndexRefreshCandidateById,
@@ -264,6 +310,7 @@ export {
 // MCP OAuth, connector, and provider-routine DB helpers
 export * from "./utils/mcp-oauth";
 export {
+  type ActiveOrgNamespaceClerkOrgId,
   deletePreClerkNamespaceReservation,
   failUnreservedNamespaceOperation,
   finalizeNamespaceOperation,
@@ -272,6 +319,8 @@ export {
   getNamespaceByHandle,
   getNamespaceOperationById,
   getNamespaceOperationByIdempotencyKey,
+  type ListActiveOrgNamespaceClerkOrgIdsInput,
+  listActiveOrgNamespaceClerkOrgIds,
   markNamespaceOperationClerkApplied,
   type NamespaceConflictCode,
   NamespaceConflictError,
@@ -329,6 +378,13 @@ export {
   upsertPeopleFromCandidates,
 } from "./utils/people";
 export {
+  markFormerTeamMembersMissingFromSync,
+  type SyncOrgTeamMemberPeopleInput,
+  type SyncOrgTeamMemberPeopleResult,
+  syncOrgTeamMemberPeople,
+  type TeamMemberPeopleCandidate,
+} from "./utils/people-team-members";
+export {
   type CreatePeopleViewParams,
   createPeopleView,
   type DeletePeopleViewParams,
@@ -337,6 +393,18 @@ export {
   listPeopleViews,
 } from "./utils/people-views";
 export * from "./utils/provider-routine-calls";
+export {
+  buildSignalEntityLinkResolutionHints,
+  listSignalEntityLinksForSignal,
+  type ReplaceSignalEntityLinksInput,
+  type ReplaceSignalEntityLinksResult,
+  reconcileSignalEntityLinksForPeople,
+  replaceSignalEntityLinks,
+  type SignalEntityLinkDetail,
+  type SignalEntityLinkReconciliationPerson,
+  type SignalEntityLinkResolutionHints,
+  type SignalEntityLinkResolvedPerson,
+} from "./utils/signal-entity-links";
 export {
   type CreateSignalViewParams,
   createSignalView,
@@ -354,14 +422,18 @@ export {
   type GetVisibleSignalByPublicIdParams,
   getSignalByPublicId,
   getVisibleSignalByPublicId,
+  type ListSignalEntityIndexBackfillCandidatesParams,
+  type ListSignalEntityIndexBackfillCandidatesResult,
   type ListSignalsParams,
   type ListWorkspaceSignalsParams,
+  listSignalEntityIndexBackfillCandidates,
   listSignals,
   listWorkspaceSignals,
   type MarkSignalClassifiedParams,
   type MarkSignalFailedParams,
   markSignalClassified,
   markSignalFailed,
+  type SignalEntityIndexBackfillCandidate,
   type WorkspaceSignalListItem,
   type WorkspaceSignalsResult,
 } from "./utils/signals";
@@ -375,6 +447,8 @@ export {
   listSkillIndexEntries,
   markSkillIndexKnownStale,
   markSkillIndexRefreshFailed,
+  markSkillIndexRefreshFresh,
+  markSkillIndexRefreshStale,
   type ReplaceSkillIndexEntriesInput,
   type ReplaceSkillIndexEntryInput,
   releaseSkillIndexRefreshLock,
@@ -386,13 +460,17 @@ export {
 export {
   type CompleteWatchedSourceControlRepositorySetupInput,
   completeWatchedSourceControlRepositorySetup,
+  getSourceControlPrWebhookDeliveryByDeliveryId,
   getSourceControlWebhookDeliveryByDeliveryId,
   getWatchedSourceControlRepository,
   getWatchedSourceControlRepositoryById,
   insertWatchedSourceControlRepository,
   listWatchedSourceControlRepositories,
   markSourceControlWebhookDeliveryStatus,
+  type RecordSourceControlPrWebhookDeliveryInput,
+  type RecordSourceControlPrWebhookDeliveryResult,
   type RecordSourceControlWebhookDeliveryReceivedResult,
+  recordSourceControlPrWebhookDelivery,
   recordSourceControlWebhookDeliveryReceived,
   type UpsertWatchedSourceControlRepositoryInput,
   upsertWatchedSourceControlRepository,

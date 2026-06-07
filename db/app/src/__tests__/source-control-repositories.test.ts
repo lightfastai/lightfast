@@ -4,14 +4,17 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { Database } from "../client";
 import type {
+  SourceControlPrWebhookDelivery,
   SourceControlRepository,
   SourceControlWebhookDelivery,
 } from "../schema";
 import {
   completeWatchedSourceControlRepositorySetup,
+  getSourceControlPrWebhookDeliveryByDeliveryId,
   insertWatchedSourceControlRepository,
   listWatchedSourceControlRepositories,
   markSourceControlWebhookDeliveryStatus,
+  recordSourceControlPrWebhookDelivery,
   recordSourceControlWebhookDeliveryReceived,
   upsertWatchedSourceControlRepository,
 } from "../utils/source-control-repositories";
@@ -56,6 +59,74 @@ describe("source-control repository helpers", () => {
     ).resolves.toEqual({ delivery, created: true });
   });
 
+  it("returns inserted PR webhook delivery with created true", async () => {
+    const delivery = createPrWebhookDelivery({
+      id: 101,
+      deliveryId: "delivery-pr-1",
+    });
+    const db = createSelectInsertDb({
+      selectResults: [[], [delivery]],
+    });
+
+    await expect(
+      recordSourceControlPrWebhookDelivery(db, {
+        action: "opened",
+        clerkOrgId: "org_123",
+        deliveryId: "delivery-pr-1",
+        event: "pull_request",
+        orgSourceControlBindingId: 7,
+        providerInstallationId: "1001",
+        providerPullRequestId: "3003",
+        providerRepositoryId: "2002",
+        pullRequestNumber: 42,
+        rawPayload: { action: "opened" },
+        sourceControlRepositoryId: 9,
+      })
+    ).resolves.toEqual({ delivery, created: true });
+  });
+
+  it("returns existing PR webhook delivery with created false after duplicate-key recovery", async () => {
+    const delivery = createPrWebhookDelivery({
+      id: 102,
+      deliveryId: "delivery-pr-2",
+    });
+    const db = createSelectInsertDb({
+      insertError: { code: "ER_DUP_ENTRY" },
+      selectResults: [[], [delivery]],
+    });
+
+    await expect(
+      recordSourceControlPrWebhookDelivery(db, {
+        action: "edited",
+        clerkOrgId: "org_123",
+        deliveryId: "delivery-pr-2",
+        event: "issue_comment",
+        orgSourceControlBindingId: 7,
+        providerInstallationId: "1001",
+        providerPullRequestId: null,
+        providerRepositoryId: "2002",
+        pullRequestNumber: 42,
+        rawPayload: { action: "edited" },
+        sourceControlRepositoryId: 9,
+      })
+    ).resolves.toEqual({ delivery, created: false });
+  });
+
+  it("gets PR webhook deliveries by delivery id", async () => {
+    const delivery = createPrWebhookDelivery({
+      deliveryId: "delivery-pr-3",
+    });
+    const db = createSelectInsertDb({
+      selectResults: [[delivery]],
+    });
+
+    await expect(
+      getSourceControlPrWebhookDeliveryByDeliveryId(db, {
+        deliveryId: "delivery-pr-3",
+      })
+    ).resolves.toBe(delivery);
+  });
+
   it("upserts watched repository and returns the stored row", async () => {
     const repository = createWatchedRepository({
       id: 30,
@@ -88,12 +159,14 @@ describe("source-control repository helpers", () => {
       providerRepositoryId: "repo-1",
       syncStatus: "enabled",
       watchedPathGlobs: ["src/**"],
+      watchedWebhookEvents: [],
     });
     expect(onDuplicateKeyUpdateMock).toHaveBeenCalledWith({
       set: {
         fullName: "acme/project",
         syncStatus: "enabled",
         watchedPathGlobs: ["src/**"],
+        watchedWebhookEvents: [],
       },
     });
   });
@@ -153,6 +226,53 @@ describe("source-control repository helpers", () => {
       providerRepositoryId: "repo-2",
       syncStatus: "disabled",
       watchedPathGlobs: null,
+      watchedWebhookEvents: [],
+    });
+  });
+
+  it("stores explicit watched webhook events on repository upsert", async () => {
+    const repository = createWatchedRepository({
+      id: 32,
+      providerRepositoryId: "repo-3",
+      watchedWebhookEvents: ["pull_request", "issue_comment"],
+    });
+    const limitMock = vi.fn(() => [repository]);
+    const selectWhereMock = vi.fn(() => ({ limit: limitMock }));
+    const fromMock = vi.fn(() => ({ where: selectWhereMock }));
+    const onDuplicateKeyUpdateMock = vi.fn(() => Promise.resolve());
+    const valuesMock = vi.fn(() => ({
+      onDuplicateKeyUpdate: onDuplicateKeyUpdateMock,
+    }));
+    const db = {
+      insert: vi.fn(() => ({ values: valuesMock })),
+      select: vi.fn(() => ({ from: fromMock })),
+    } as unknown as Database;
+
+    await expect(
+      upsertWatchedSourceControlRepository(db, {
+        fullName: "acme/project",
+        orgSourceControlBindingId: 10,
+        providerRepositoryId: "repo-3",
+        watchedPathGlobs: null,
+        watchedWebhookEvents: ["pull_request", "issue_comment"],
+      })
+    ).resolves.toBe(repository);
+
+    expect(valuesMock).toHaveBeenCalledWith({
+      fullName: "acme/project",
+      orgSourceControlBindingId: 10,
+      providerRepositoryId: "repo-3",
+      syncStatus: "enabled",
+      watchedPathGlobs: null,
+      watchedWebhookEvents: ["pull_request", "issue_comment"],
+    });
+    expect(onDuplicateKeyUpdateMock).toHaveBeenCalledWith({
+      set: {
+        fullName: "acme/project",
+        syncStatus: "enabled",
+        watchedPathGlobs: null,
+        watchedWebhookEvents: ["pull_request", "issue_comment"],
+      },
     });
   });
 
@@ -212,12 +332,14 @@ describe("source-control repository helpers", () => {
       providerRepositoryId: "987",
       syncStatus: "enabled",
       watchedPathGlobs: ["skills/**"],
+      watchedWebhookEvents: [],
     });
     expect(onDuplicateKeyUpdateMock).toHaveBeenCalledWith({
       set: {
         fullName: "acme/.lightfast",
         syncStatus: "enabled",
         watchedPathGlobs: ["skills/**"],
+        watchedWebhookEvents: [],
       },
     });
     const condition = bindingWhereMock.mock.calls[0]?.[0];
@@ -382,6 +504,29 @@ function createWebhookDelivery(
   };
 }
 
+function createPrWebhookDelivery(
+  overrides: Partial<SourceControlPrWebhookDelivery> = {}
+): SourceControlPrWebhookDelivery {
+  const now = new Date("2026-06-06T00:00:00.000Z");
+  return {
+    id: 1,
+    action: "opened",
+    clerkOrgId: "org_123",
+    deliveryId: "delivery-pr-1",
+    event: "pull_request",
+    orgSourceControlBindingId: 7,
+    providerInstallationId: "1001",
+    providerPullRequestId: "3003",
+    providerRepositoryId: "2002",
+    pullRequestNumber: 42,
+    rawPayload: { action: "opened" },
+    sourceControlRepositoryId: 9,
+    createdAt: now,
+    updatedAt: now,
+    ...overrides,
+  };
+}
+
 function createWatchedRepository(
   overrides: Partial<SourceControlRepository> = {}
 ): SourceControlRepository {
@@ -393,6 +538,7 @@ function createWatchedRepository(
     fullName: "acme/project",
     syncStatus: "enabled",
     watchedPathGlobs: ["src/**"],
+    watchedWebhookEvents: [],
     createdAt: now,
     updatedAt: now,
     ...overrides,
