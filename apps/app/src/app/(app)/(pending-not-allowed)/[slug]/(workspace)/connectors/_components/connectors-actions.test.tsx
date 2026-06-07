@@ -1,0 +1,109 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const setScopeMock = vi.fn();
+const useSuspenseQueryMock = vi.fn();
+
+let connectorState: string | null = null;
+let scopeState: "team" | "personal" = "team";
+
+vi.mock("nuqs", () => ({
+  parseAsStringLiteral: () => ({ withDefault: () => "mock-parser" }),
+  useQueryState: (key: string) =>
+    key === "connector"
+      ? ([connectorState, vi.fn()] as const)
+      : ([scopeState, setScopeMock] as const),
+}));
+
+vi.mock("~/trpc/react", () => ({
+  useTRPC: () => ({
+    org: {
+      workspace: {
+        connectors: {
+          listSections: {
+            queryOptions: () => ({
+              queryKey: ["org", "workspace", "connectors", "listSections"],
+            }),
+          },
+        },
+      },
+    },
+  }),
+}));
+
+vi.mock("@tanstack/react-query", () => ({
+  useSuspenseQuery: useSuspenseQueryMock,
+}));
+
+const { ConnectorsActions } = await import("./connectors-actions");
+
+beforeEach(() => {
+  connectorState = null;
+  scopeState = "team";
+  setScopeMock.mockReset();
+  useSuspenseQueryMock.mockReset();
+  useSuspenseQueryMock.mockReturnValue({
+    data: {
+      teamConnectors: [{ provider: "linear" }, { provider: "x" }],
+      yourConnectors: [{ provider: "granola" }],
+    },
+  });
+});
+
+describe("ConnectorsActions", () => {
+  it("renders the ownership switcher in the actions slot", () => {
+    render(<ConnectorsActions />);
+
+    expect(
+      screen.getByRole("tablist", { name: "Connector ownership" })
+    ).toBeVisible();
+    expect(screen.getByRole("tab", { name: "Team" })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+    expect(screen.getByRole("tab", { name: "Personal" })).toHaveAttribute(
+      "aria-selected",
+      "false"
+    );
+    expect(screen.queryByText("2")).not.toBeInTheDocument();
+    expect(screen.queryByText("1")).not.toBeInTheDocument();
+    expect(useSuspenseQueryMock).not.toHaveBeenCalled();
+  });
+
+  it("uses compact action-slot tab sizing", () => {
+    render(<ConnectorsActions />);
+
+    const tablist = screen.getByRole("tablist", {
+      name: "Connector ownership",
+    });
+
+    expect(tablist).toHaveClass("h-7", "w-fit", "rounded-[9px]", "p-0.5");
+    expect(screen.getByRole("tab", { name: "Team" })).toHaveClass(
+      "h-6",
+      "px-2.5"
+    );
+  });
+
+  it("writes the selected ownership scope to the shared URL param", () => {
+    render(<ConnectorsActions />);
+
+    fireEvent.click(screen.getByRole("tab", { name: "Personal" }));
+
+    expect(setScopeMock).toHaveBeenCalledWith("personal");
+  });
+
+  it("shows Personal as active while a personal connector is selected", () => {
+    connectorState = "granola";
+
+    render(<ConnectorsActions />);
+
+    expect(screen.getByRole("tab", { name: "Team" })).toHaveAttribute(
+      "aria-selected",
+      "false"
+    );
+    expect(screen.getByRole("tab", { name: "Personal" })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+  });
+});

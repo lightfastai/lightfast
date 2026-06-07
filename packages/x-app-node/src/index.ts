@@ -19,9 +19,23 @@ export {
   refreshXOAuthToken,
   revokeXOAuthToken,
   X_OAUTH_SCOPE,
+  X_OAUTH_SCOPES,
   type XPkcePair,
   type XTokenSet,
 } from "./oauth";
+export {
+  buildXOperationRequest,
+  getXOperationDefinition,
+  getXOperationDefinitions,
+  getXToolDefinitionsForScopes,
+  hasScopesForXOperation,
+  operationToolDefinition,
+  X_SOCIAL_WRITE_TOOL_NAMES,
+  type XOperationClassification,
+  type XOperationDefinition,
+  type XOperationMethod,
+  type XOperationRequest,
+} from "./operations";
 export {
   type ExecuteXApiToolInput,
   executeXApiTool,

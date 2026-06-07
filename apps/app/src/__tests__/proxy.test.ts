@@ -455,6 +455,7 @@ describe("proxy pending-session route handling", () => {
     "/api/github/webhook",
     "/api/connectors/linear/oauth/callback",
     "/api/native/proxy/routines",
+    "/api/connectors/granola/oauth/callback",
     "/api/connectors/x/oauth/callback",
   ])("runs Clerk middleware but does not enforce signed-in routing for %s", async (pathname) => {
     authMock.mockResolvedValue({
@@ -479,6 +480,7 @@ describe("proxy pending-session route handling", () => {
     "/api/github/user/oauth/callback",
     "/api/github/webhook",
     "/api/connectors/linear/oauth/callback",
+    "/api/connectors/granola/oauth/callback",
     "/api/connectors/x/oauth/callback",
     "/api/native/proxy/routines",
   ])("keeps callback and public routes public for expired tokens on %s", async (pathname) => {

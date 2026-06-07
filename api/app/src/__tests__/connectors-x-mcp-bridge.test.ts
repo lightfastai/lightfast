@@ -52,6 +52,7 @@ const { issueConnectorMcpToken } = await import(
 );
 const { getFreshXConnectorAccessToken, handleXConnectorMcpRequest } =
   await import("../services/connectors/x-mcp-bridge");
+const { X_OAUTH_SCOPES } = await import("@repo/x-app-node");
 
 function connection(
   overrides: Partial<OrgConnectorConnection> = {}
@@ -111,7 +112,7 @@ function malformedRequest() {
 }
 
 async function mcpToken(input: {
-  purpose: "call" | "list";
+  purpose: "call" | "discover" | "list";
   clerkOrgId?: string;
   toolName?: string;
   now?: Date;
@@ -181,15 +182,98 @@ describe("X MCP bridge service", () => {
 
     expect(response.status).toBe(200);
     expect(json.result.tools).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ name: "getUsersByUsername" }),
-      ])
+      expect.arrayContaining([expect.objectContaining({ name: "getUsersMe" })])
     );
     expect(getCurrentOrgConnectorConnectionMock).toHaveBeenCalledWith(
       {},
       { clerkOrgId: "org_acme", provider: "x" }
     );
     expect(decryptMock).not.toHaveBeenCalled();
+  });
+
+  it("filters listed X tools by stored connection scopes", async () => {
+    getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(
+      connection({ scopes: ["tweet.read", "users.read", "offline.access"] })
+    );
+
+    const readOnlyResponse = await handleXConnectorMcpRequest({
+      request: mcpRequest({
+        body: { id: 1, jsonrpc: "2.0", method: "tools/list" },
+        token: await mcpToken({ purpose: "list" }),
+      }),
+    });
+    const readOnlyJson = await readOnlyResponse.json();
+    expect(
+      readOnlyJson.result.tools.map((tool: { name: string }) => tool.name)
+    ).toContain("getUsersMe");
+    expect(
+      readOnlyJson.result.tools.map((tool: { name: string }) => tool.name)
+    ).not.toContain("createPost");
+
+    getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(
+      connection({
+        scopes: [...X_OAUTH_SCOPES],
+        toolManifest: [
+          { description: "Look up account", name: "getUsersMe" },
+          { description: "Create post", name: "createPost" },
+        ],
+      })
+    );
+
+    const writeResponse = await handleXConnectorMcpRequest({
+      request: mcpRequest({
+        body: { id: 2, jsonrpc: "2.0", method: "tools/list" },
+        token: await mcpToken({ purpose: "list" }),
+      }),
+    });
+    const writeJson = await writeResponse.json();
+    expect(
+      writeJson.result.tools.map((tool: { name: string }) => tool.name)
+    ).toContain("createPost");
+  });
+
+  it("filters listed X tools by the stored tool manifest", async () => {
+    getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(
+      connection({
+        scopes: [...X_OAUTH_SCOPES],
+        toolManifest: [{ description: "Look up account", name: "getUsersMe" }],
+      })
+    );
+
+    const response = await handleXConnectorMcpRequest({
+      request: mcpRequest({
+        body: { id: 1, jsonrpc: "2.0", method: "tools/list" },
+        token: await mcpToken({ purpose: "list" }),
+      }),
+    });
+    const json = await response.json();
+    const names = json.result.tools.map((tool: { name: string }) => tool.name);
+
+    expect(response.status).toBe(200);
+    expect(names).toContain("getUsersMe");
+    expect(names).not.toContain("createPost");
+  });
+
+  it("lets discovery list scoped tools that are missing from the stored manifest", async () => {
+    getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(
+      connection({
+        scopes: [...X_OAUTH_SCOPES],
+        toolManifest: [{ description: "Look up account", name: "getUsersMe" }],
+      })
+    );
+
+    const response = await handleXConnectorMcpRequest({
+      request: mcpRequest({
+        body: { id: 1, jsonrpc: "2.0", method: "tools/list" },
+        token: await mcpToken({ purpose: "discover" }),
+      }),
+    });
+    const json = await response.json();
+    const names = json.result.tools.map((tool: { name: string }) => tool.name);
+
+    expect(response.status).toBe(200);
+    expect(names).toContain("getUsersMe");
+    expect(names).toContain("createPost");
   });
 
   it("calls X tools with a matching purpose=call token", async () => {
@@ -218,6 +302,7 @@ describe("X MCP bridge service", () => {
       expect.objectContaining({
         accessToken: "x_access_token",
         apiOrigin: "https://x.test",
+        connectedActorId: "x_user_1",
         input: {},
         name: "getUsersMe",
       })
@@ -247,6 +332,88 @@ describe("X MCP bridge service", () => {
     expect(decryptMock).toHaveBeenCalledWith(
       "encrypted_x_access",
       envMock.ENCRYPTION_KEY
+    );
+  });
+
+  it("rejects write tool calls missing granted scopes", async () => {
+    getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(
+      connection({
+        scopes: ["tweet.read", "users.read", "offline.access"],
+        toolManifest: [{ name: "createPost" }],
+      })
+    );
+
+    const response = await handleXConnectorMcpRequest({
+      request: mcpRequest({
+        body: {
+          id: 1,
+          jsonrpc: "2.0",
+          method: "tools/call",
+          params: { arguments: { text: "ship it" }, name: "createPost" },
+        },
+        token: await mcpToken({ purpose: "call", toolName: "createPost" }),
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.result?.isError ?? Boolean(json.error)).toBe(true);
+    expect(executeXApiToolMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects write tool calls missing from the current manifest", async () => {
+    getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(
+      connection({
+        scopes: [...X_OAUTH_SCOPES],
+        toolManifest: [{ name: "getUsersMe" }],
+      })
+    );
+
+    const response = await handleXConnectorMcpRequest({
+      request: mcpRequest({
+        body: {
+          id: 1,
+          jsonrpc: "2.0",
+          method: "tools/call",
+          params: { arguments: { text: "ship it" }, name: "createPost" },
+        },
+        token: await mcpToken({ purpose: "call", toolName: "createPost" }),
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.result?.isError ?? Boolean(json.error)).toBe(true);
+    expect(executeXApiToolMock).not.toHaveBeenCalled();
+  });
+
+  it("passes connected actor id into write tool execution", async () => {
+    getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(
+      connection({
+        scopes: [...X_OAUTH_SCOPES],
+        toolManifest: [{ name: "likePost" }],
+      })
+    );
+
+    const response = await handleXConnectorMcpRequest({
+      request: mcpRequest({
+        body: {
+          id: 1,
+          jsonrpc: "2.0",
+          method: "tools/call",
+          params: { arguments: { tweet_id: "tweet_1" }, name: "likePost" },
+        },
+        token: await mcpToken({ purpose: "call", toolName: "likePost" }),
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(executeXApiToolMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connectedActorId: "x_user_1",
+        input: { tweet_id: "tweet_1" },
+        name: "likePost",
+      })
     );
   });
 

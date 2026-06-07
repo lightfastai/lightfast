@@ -13,6 +13,7 @@ import {
   setConnectorAutomationEnabled,
   startConnectorOAuth,
 } from "../../services/connectors";
+import { listUserConnectorsForViewer } from "../../services/user-connectors";
 import {
   boundOrgAdminProcedure,
   createTRPCRouter,
@@ -22,6 +23,10 @@ import {
 
 export const connectorsRouter = createTRPCRouter({
   list: setupProcedure.query(async ({ ctx }) => listConnectorsForOrg(ctx)),
+  listSections: setupProcedure.query(async ({ ctx }) => ({
+    teamConnectors: await listConnectorsForOrg(ctx),
+    yourConnectors: await listUserConnectorsForViewer(ctx),
+  })),
   startConnect: orgAdminProcedure
     .input(connectorStartConnectInputSchema)
     .mutation(async ({ ctx, input }) => startConnectorOAuth(ctx, input)),

@@ -69,6 +69,7 @@ vi.mock("@vendor/observability/log/next", () => ({
 
 const {
   ConnectorRuntimeToolCallError,
+  loadAgentConnectorRuntimeTools,
   loadChatConnectorRuntimeTools,
   loadConnectorRuntimeTools,
 } = await import("../services/connectors/runtime");
@@ -214,9 +215,7 @@ describe("loadConnectorRuntimeTools", () => {
         providerWorkspaceId: null,
         providerWorkspaceName: "X",
         scopes: ["tweet.read", "users.read", "offline.access"],
-        toolManifest: [
-          { description: "Look up account", name: "getUsersByUsername" },
-        ],
+        toolManifest: [{ description: "Create post", name: "createPost" }],
       }),
     ]);
 
@@ -235,11 +234,30 @@ describe("loadConnectorRuntimeTools", () => {
         }),
         expect.objectContaining({
           provider: "x",
-          providerToolName: "getUsersByUsername",
-          runtimeToolName: "x__getUsersByUsername",
+          providerToolName: "createPost",
+          runtimeToolName: "x__createPost",
         }),
       ])
     );
+  });
+
+  it("does not load agent tools from connectors disabled for agents", async () => {
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([
+      connection({
+        enabledForAgents: false,
+        enabledForAutomations: true,
+        provider: "x",
+        toolManifest: [{ name: "createPost" }],
+      }),
+    ]);
+
+    await expect(
+      loadChatConnectorRuntimeTools({
+        calledByUserId: "user_current",
+        clerkOrgId: "org_acme",
+        conversationId: "conv_123",
+      })
+    ).resolves.toEqual([]);
   });
 
   it("records chat runtime calls with user caller and chat source metadata", async () => {
@@ -283,6 +301,92 @@ describe("loadConnectorRuntimeTools", () => {
         sourceClientId: null,
         sourceRef: "conv_123",
         sourceSurface: "chat",
+      })
+    );
+  });
+
+  it("records hosted MCP runtime calls with client source attribution", async () => {
+    const mcpConnection = connection({
+      enabledForAgents: true,
+      enabledForAutomations: false,
+      toolManifest: [{ name: "list_issues" }],
+    });
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([mcpConnection]);
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(mcpConnection);
+    callLinearMcpToolMock.mockResolvedValue({
+      content: [{ text: "issue list" }],
+    });
+
+    const [tool] = await loadAgentConnectorRuntimeTools({
+      calledByUserId: "user_current",
+      clerkOrgId: "org_acme",
+      sourceClientId: "mcp_client_123",
+      sourceRef: "grant_123",
+      sourceSurface: "hosted_mcp",
+    });
+
+    await tool?.callWithMetadata({ query: "bug" });
+
+    expect(createProviderRoutineCallMock).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({
+        calledById: "user_current",
+        calledByKind: "user",
+        calledByUserId: "user_current",
+        clerkOrgId: "org_acme",
+        provider: "linear",
+        providerConnectionId: 1,
+        providerToolName: "list_issues",
+        routineId: "linear__list_issues",
+        sourceClientId: "mcp_client_123",
+        sourceRef: "grant_123",
+        sourceSurface: "hosted_mcp",
+      })
+    );
+  });
+
+  it("records X chat connector calls with chat source attribution", async () => {
+    const xConnection = connection({
+      enabledForAgents: true,
+      enabledForAutomations: false,
+      id: 8,
+      mcpEndpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
+      provider: "x",
+      providerActorId: "x_user_1",
+      providerWorkspaceId: null,
+      providerWorkspaceName: "X",
+      toolManifest: [{ description: "Create post", name: "createPost" }],
+    });
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([xConnection]);
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(xConnection);
+
+    const [tool] = await loadChatConnectorRuntimeTools({
+      calledByUserId: "user_agent",
+      clerkOrgId: "org_acme",
+      conversationId: "conv_123",
+    });
+
+    await tool?.call({ text: "ship it" });
+
+    expect(createProviderRoutineCallMock).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({
+        calledById: "user_agent",
+        calledByKind: "user",
+        calledByUserId: "user_agent",
+        provider: "x",
+        providerConnectionId: 8,
+        providerToolName: "createPost",
+        routineId: "x__createPost",
+        sourceClientId: null,
+        sourceRef: "conv_123",
+        sourceSurface: "chat",
+      })
+    );
+    expect(callXBridgeMcpToolMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: { text: "ship it" },
+        name: "createPost",
       })
     );
   });

@@ -1,4 +1,5 @@
 import { assertHostedMcpOrgAccess } from "@api/app/mcp-oauth/resource-access";
+import { loadAgentConnectorRuntimeTools } from "@api/app/services/connectors/runtime";
 import { db } from "@db/app/client";
 import {
   type McpProviderRoutineCallCommandInput,
@@ -100,6 +101,18 @@ function providerRoutineContext(
     actor: {
       orgId: command.actor.orgId,
       userId: command.actor.userId,
+    },
+    adapters: {
+      connectors: {
+        loadTools: async () =>
+          await loadAgentConnectorRuntimeTools({
+            calledByUserId: command.actor.userId,
+            clerkOrgId: command.actor.orgId,
+            sourceClientId: command.actor.clientId,
+            sourceRef: command.actor.grantId,
+            sourceSurface: "hosted_mcp",
+          }),
+      },
     },
     db,
     log: noopProviderRoutineLog,

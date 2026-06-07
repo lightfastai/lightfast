@@ -83,4 +83,36 @@ describe("ChatMessage memoization", () => {
 
     expect(messageResponseRenderCount).toBe(1);
   });
+
+  it("renders a quiet Granola usage indicator for user connector tool output", () => {
+    render(
+      <ChatMessage
+        isStreaming={false}
+        message={{
+          id: "msg_1",
+          role: "assistant",
+          parts: [
+            {
+              type: "tool-callUserConnectorTool",
+              state: "output-available",
+              toolCallId: "tool_1",
+              input: {
+                input: { query: "SOC2" },
+                routineId: "granola__search_notes",
+              },
+              output: {
+                provider: "granola",
+                providerToolName: "search_notes",
+                result: { content: [{ type: "text", text: "result" }] },
+                routineId: "granola__search_notes",
+                status: "succeeded",
+              },
+            },
+          ],
+        }}
+      />
+    );
+
+    expect(screen.getByText("Used Granola")).toBeInTheDocument();
+  });
 });

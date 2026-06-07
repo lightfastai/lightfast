@@ -12,6 +12,13 @@ export type ConnectableConnectorProvider = z.infer<
   typeof connectableConnectorProviderSchema
 >;
 
+export const USER_CONNECTOR_PROVIDERS = ["granola"] as const;
+export const userConnectorProviderSchema = z.enum(USER_CONNECTOR_PROVIDERS);
+export type UserConnectorProvider = z.infer<typeof userConnectorProviderSchema>;
+
+export const connectorOwnerTypeSchema = z.enum(["org", "user"]);
+export type ConnectorOwnerType = z.infer<typeof connectorOwnerTypeSchema>;
+
 export const connectorConnectionStatusSchema = z.enum([
   "active",
   "error",
@@ -20,6 +27,10 @@ export const connectorConnectionStatusSchema = z.enum([
 export type ConnectorConnectionStatus = z.infer<
   typeof connectorConnectionStatusSchema
 >;
+
+export const userConnectorConnectionStatusSchema =
+  connectorConnectionStatusSchema;
+export type UserConnectorConnectionStatus = ConnectorConnectionStatus;
 
 export const connectorCatalogStatusSchema = z.enum([
   "available",
@@ -127,7 +138,7 @@ export const CONNECTOR_CATALOG = [
     provider: "x",
     displayName: "X",
     description:
-      "Search posts and look up X accounts from Lightfast automations.",
+      "Search posts, manage engagement, send messages, and publish through X from Lightfast agents and automations.",
     builder: "Lightfast",
     category: "Social",
     catalogStatus: "available",
@@ -141,12 +152,39 @@ export const CONNECTOR_CATALOG = [
   catalogStatus: ConnectorCatalogStatus;
 }>;
 
+export const USER_CONNECTOR_CATALOG = [
+  {
+    provider: "granola",
+    displayName: "Granola",
+    description:
+      "Search and reference your private Granola meeting notes in Lightfast chats.",
+    builder: "Granola",
+    category: "Meeting notes",
+    catalogStatus: "available",
+  },
+] as const satisfies ReadonlyArray<{
+  provider: UserConnectorProvider;
+  displayName: string;
+  description: string;
+  builder: "Granola";
+  category: string;
+  catalogStatus: ConnectorCatalogStatus;
+}>;
+
 export const connectorStartConnectInputSchema = z.object({
   provider: connectableConnectorProviderSchema,
 });
 
 export const connectorProviderInputSchema = z.object({
   provider: connectableConnectorProviderSchema,
+});
+
+export const userConnectorStartConnectInputSchema = z.object({
+  provider: userConnectorProviderSchema,
+});
+
+export const userConnectorProviderInputSchema = z.object({
+  provider: userConnectorProviderSchema,
 });
 
 export const connectorSetAutomationEnabledInputSchema = z.object({

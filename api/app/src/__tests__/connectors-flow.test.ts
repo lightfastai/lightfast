@@ -132,7 +132,7 @@ vi.mock("@vendor/upstash", () => ({
 vi.mock("../env", () => ({ env: envMock }));
 
 const { LinearAppNodeError } = await import("@repo/linear-app-node");
-const { XAppNodeError } = await import("@repo/x-app-node");
+const { XAppNodeError, X_OAUTH_SCOPE } = await import("@repo/x-app-node");
 const { assertCurrentSessionCanFinalizeConnectorOAuth } = await import(
   "../services/connectors/auth"
 );
@@ -146,6 +146,9 @@ const {
   issueConnectorOAuthAttempt,
   lookupConnectorOAuthAttempt,
 } = await import("../services/connectors/attempts");
+const { verifyConnectorMcpToken } = await import(
+  "../services/connectors/mcp-auth"
+);
 const {
   completeLinearConnectorOAuth,
   disconnectLinearConnector,
@@ -246,6 +249,25 @@ function membership(role = "org:admin") {
   };
 }
 
+async function expectLastXBridgeListTokenPurpose(purpose: "discover" | "list") {
+  const call = listXBridgeMcpToolsMock.mock.calls.at(-1)?.[0] as
+    | { mcpToken: string }
+    | undefined;
+
+  expect(call).toEqual(
+    expect.objectContaining({
+      mcpToken: expect.stringMatching(/^lfmcp_v1\./),
+    })
+  );
+  await expect(
+    verifyConnectorMcpToken({
+      provider: "x",
+      purpose,
+      token: call?.mcpToken ?? "",
+    })
+  ).resolves.toMatchObject({ purpose });
+}
+
 describe("connector catalog services", () => {
   beforeEach(() => {
     envMock.LINEAR_CLIENT_ID = "linear_client_test";
@@ -308,6 +330,27 @@ describe("connector catalog services", () => {
         reason: "missing_config",
         status: "unavailable",
       },
+    });
+  });
+
+  it("marks X connections with missing requested scopes for reconnect", async () => {
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([
+      connection({
+        mcpEndpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
+        provider: "x",
+        providerWorkspaceId: null,
+        providerWorkspaceName: "X",
+        scopes: ["tweet.read", "users.read", "offline.access"],
+        toolManifest: [{ description: "Look up account", name: "getUsersMe" }],
+      }),
+    ]);
+
+    const rows = await listConnectorsForOrg(ctx());
+    const xRow = rows.find((row) => row.provider === "x");
+
+    expect(xRow?.connection).toMatchObject({
+      missingScopes: expect.arrayContaining(["tweet.write", "dm.write"]),
+      scopeStatus: "missing_requested_scopes",
     });
   });
 });
@@ -1337,9 +1380,7 @@ describe("X connector flow", () => {
     expect(connectUrl.searchParams.get("redirect_uri")).toBe(
       "https://app.lightfast.localhost/api/connectors/x/oauth/callback"
     );
-    expect(connectUrl.searchParams.get("scope")).toBe(
-      "tweet.read users.read offline.access"
-    );
+    expect(connectUrl.searchParams.get("scope")).toBe(X_OAUTH_SCOPE);
 
     getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(
       connection({ provider: "x" })
@@ -1405,7 +1446,7 @@ describe("X connector flow", () => {
       })
     ).resolves.toEqual({
       redirectUrl:
-        "https://app.lightfast.localhost/acme/connectors?connector=x",
+        "https://app.lightfast.localhost/acme/tasks/connectors/x/complete",
     });
 
     expect(finalizeCurrentOrgConnectorConnectionMock).toHaveBeenCalledWith(
@@ -1434,6 +1475,7 @@ describe("X connector flow", () => {
         mcpToken: expect.stringMatching(/^lfmcp_v1\./),
       })
     );
+    await expectLastXBridgeListTokenPurpose("discover");
     expect(
       updateConnectorToolManifestAndAutomationStateMock
     ).toHaveBeenCalledWith(
@@ -1445,6 +1487,61 @@ describe("X connector flow", () => {
         toolManifest: [{ name: "getUsersMe" }],
       })
     );
+  });
+
+  it("returns reconnects to the X connector catalog after OAuth completion", async () => {
+    const issued = await issueConnectorOAuthAttempt({
+      clerkOrgId: "org_acme",
+      codeVerifier: "x_verifier_123",
+      lightfastUserId: "user_current",
+      mode: "reconnect",
+      orgSlug: "acme",
+      provider: "x",
+    });
+    const attemptRecord = redisSetMock.mock.calls[0]?.[1];
+    redisGetMock
+      .mockResolvedValueOnce(attemptRecord)
+      .mockResolvedValueOnce(attemptRecord);
+    redisGetdelMock.mockResolvedValueOnce(attemptRecord);
+    authMock.mockResolvedValue({ orgId: "org_acme", userId: "user_current" });
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(
+      connection({ provider: "x" })
+    );
+    exchangeXOAuthCodeMock.mockResolvedValue({
+      accessToken: "x_access_token",
+      accessTokenExpiresIn: 3600,
+      refreshToken: "x_refresh_token",
+      refreshTokenExpiresIn: 86_400,
+      scopes: ["tweet.read", "users.read", "offline.access"],
+      tokenType: "Bearer",
+    });
+    getXViewerMetadataMock.mockResolvedValue({
+      actorId: "x_user_1",
+      actorName: "@lightfast",
+      name: "Lightfast",
+      username: "lightfast",
+    });
+    finalizeCurrentOrgConnectorConnectionMock.mockResolvedValue(
+      connection({
+        id: 42,
+        mcpEndpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
+        provider: "x",
+        toolManifest: [],
+      })
+    );
+    listXBridgeMcpToolsMock.mockResolvedValue([{ name: "getUsersMe" }]);
+    updateConnectorToolManifestAndAutomationStateMock.mockResolvedValue(true);
+
+    await expect(
+      completeXConnectorOAuth({
+        appOrigin: "https://app.lightfast.localhost",
+        requestUrl: `https://app.lightfast.localhost/api/connectors/x/oauth/callback?code=code_123&state=${issued.state}`,
+      })
+    ).resolves.toEqual({
+      redirectUrl:
+        "https://app.lightfast.localhost/acme/connectors?connector=x",
+    });
+    await expectLastXBridgeListTokenPurpose("discover");
   });
 
   it("records tool discovery failure after persisting X and keeps automations disabled", async () => {
@@ -1589,6 +1686,7 @@ describe("X connector flow", () => {
         mcpToken: expect.stringMatching(/^lfmcp_v1\./),
       })
     );
+    await expectLastXBridgeListTokenPurpose("discover");
     expect(
       updateConnectorToolManifestAndAutomationStateMock
     ).toHaveBeenCalledWith(

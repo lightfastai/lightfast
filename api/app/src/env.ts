@@ -34,6 +34,7 @@ export const env = createEnv({
     GITHUB_APP_SLUG: z.string().min(1),
     GITHUB_APP_WEBHOOK_SECRET: z.string().min(1),
     GITHUB_APP_ENDPOINT_ORIGIN: z.string().url().optional(),
+    GRANOLA_MCP_ENDPOINT: z.string().url().optional(),
     CONNECTOR_MCP_AUTH_SECRET: isConnectorMcpAuthSecretRequired
       ? z.string().min(32)
       : z.string().min(32).optional(),
@@ -65,6 +66,7 @@ export const env = createEnv({
     GITHUB_APP_SLUG: process.env.GITHUB_APP_SLUG,
     GITHUB_APP_WEBHOOK_SECRET: process.env.GITHUB_APP_WEBHOOK_SECRET,
     GITHUB_APP_ENDPOINT_ORIGIN: process.env.GITHUB_APP_ENDPOINT_ORIGIN,
+    GRANOLA_MCP_ENDPOINT: process.env.GRANOLA_MCP_ENDPOINT,
     CONNECTOR_MCP_AUTH_SECRET: process.env.CONNECTOR_MCP_AUTH_SECRET,
     LINEAR_API_ORIGIN: process.env.LINEAR_API_ORIGIN,
     LINEAR_CLIENT_ID: process.env.LINEAR_CLIENT_ID,

@@ -280,10 +280,10 @@ describe("automation provider routines", () => {
       callWithMetadata: vi.fn().mockResolvedValue({
         provider: "x",
         providerRoutineCallId: "provider_routine_call_789",
-        providerToolName: "postTweet",
+        providerToolName: "createPost",
         result: { content: [{ text: "posted" }] },
-        routineId: "x__postTweet",
-        runtimeToolName: "x__postTweet",
+        routineId: "x__createPost",
+        runtimeToolName: "x__createPost",
       }),
       description: "Publish a post on X",
       inputSchema: {
@@ -291,8 +291,8 @@ describe("automation provider routines", () => {
         required: ["text"],
         type: "object",
       },
-      providerToolName: "postTweet",
-      runtimeToolName: "x__postTweet",
+      providerToolName: "createPost",
+      runtimeToolName: "x__createPost",
     });
     loadConnectorRuntimeToolsMock.mockResolvedValue([tool]);
 
@@ -301,9 +301,9 @@ describe("automation provider routines", () => {
         expect.objectContaining({
           classification: "write",
           provider: "x",
-          providerToolName: "postTweet",
-          routineId: "x__postTweet",
-          title: "Post Tweet",
+          providerToolName: "createPost",
+          routineId: "x__createPost",
+          title: "Create Post",
         }),
       ],
     });
@@ -311,14 +311,14 @@ describe("automation provider routines", () => {
     await expect(
       callAutomationProviderRoutine(context, {
         input: { text: "ship it" },
-        routineId: providerRoutineId("x", "postTweet"),
+        routineId: providerRoutineId("x", "createPost"),
       })
     ).resolves.toEqual({
       provider: "x",
       providerRoutineCallId: "provider_routine_call_789",
-      providerToolName: "postTweet",
+      providerToolName: "createPost",
       result: { content: [{ text: "posted" }] },
-      routineId: "x__postTweet",
+      routineId: "x__createPost",
       status: "succeeded",
     });
   });
@@ -354,9 +354,9 @@ describe("automation provider routines", () => {
       message: "X MCP tool call failed.",
       provider: "x",
       providerRoutineCallId: null,
-      providerToolName: "postTweet",
-      routineId: "x__postTweet",
-      runtimeToolName: "x__postTweet",
+      providerToolName: "createPost",
+      routineId: "x__createPost",
+      runtimeToolName: "x__createPost",
     });
     const tool = runtimeTool({
       callWithMetadata: vi.fn().mockRejectedValue(runtimeError),
@@ -365,15 +365,15 @@ describe("automation provider routines", () => {
         required: ["text"],
         type: "object",
       },
-      providerToolName: "postTweet",
-      runtimeToolName: "x__postTweet",
+      providerToolName: "createPost",
+      runtimeToolName: "x__createPost",
     });
     loadConnectorRuntimeToolsMock.mockResolvedValue([tool]);
 
     await expect(
       callAutomationProviderRoutine(context, {
         input: { text: "ship it" },
-        routineId: providerRoutineId("x", "postTweet"),
+        routineId: providerRoutineId("x", "createPost"),
       })
     ).rejects.toBe(runtimeError);
   });
@@ -387,9 +387,9 @@ describe("automation provider routines", () => {
           message: "X MCP tool call failed.",
           provider: "x",
           providerRoutineCallId: "provider_routine_call_456",
-          providerToolName: "postTweet",
-          routineId: "x__postTweet",
-          runtimeToolName: "x__postTweet",
+          providerToolName: "createPost",
+          routineId: "x__createPost",
+          runtimeToolName: "x__createPost",
         })
       ),
       inputSchema: {
@@ -397,15 +397,15 @@ describe("automation provider routines", () => {
         required: ["text"],
         type: "object",
       },
-      providerToolName: "postTweet",
-      runtimeToolName: "x__postTweet",
+      providerToolName: "createPost",
+      runtimeToolName: "x__createPost",
     });
     loadConnectorRuntimeToolsMock.mockResolvedValue([tool]);
 
     await expect(
       callAutomationProviderRoutine(context, {
         input: { text: "ship it" },
-        routineId: providerRoutineId("x", "postTweet"),
+        routineId: providerRoutineId("x", "createPost"),
       })
     ).resolves.toEqual({
       error: {
@@ -413,7 +413,7 @@ describe("automation provider routines", () => {
         message: "Provider routine failed.",
       },
       providerRoutineCallId: "provider_routine_call_456",
-      routineId: "x__postTweet",
+      routineId: "x__createPost",
       status: "failed",
     });
   });

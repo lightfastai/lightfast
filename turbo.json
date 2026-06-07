@@ -43,6 +43,10 @@
       "cache": false,
       "persistent": true
     },
+    "//#_granola_emulator": {
+      "cache": false,
+      "persistent": true
+    },
     "//#_linear_emulator": {
       "cache": false,
       "persistent": true

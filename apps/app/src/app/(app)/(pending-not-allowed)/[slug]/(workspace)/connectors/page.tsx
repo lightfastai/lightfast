@@ -20,7 +20,7 @@ export default async function ConnectorsPage({
   const params = await searchParams;
 
   await getQueryClient().fetchQuery(
-    trpc.org.workspace.connectors.list.queryOptions()
+    trpc.org.workspace.connectors.listSections.queryOptions()
   );
 
   return (

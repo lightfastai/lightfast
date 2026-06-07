@@ -135,7 +135,7 @@ describe("chat provider routines", () => {
     logWarnMock.mockReset();
   });
 
-  it("discovers X read routines and hides X write routines", async () => {
+  it("discovers X read routines and hides X write routines without write mode", async () => {
     listCurrentOrgConnectorConnectionsMock.mockResolvedValue([
       connection({
         id: 2,
@@ -146,7 +146,7 @@ describe("chat provider routines", () => {
         scopes: ["tweet.read", "users.read", "offline.access"],
         toolManifest: [
           { description: "Find user", name: "getUsersByUsername" },
-          { description: "Post tweet", name: "postTweet" },
+          { description: "Create post", name: "createPost" },
         ],
       }),
     ]);
@@ -158,6 +158,38 @@ describe("chat provider routines", () => {
           provider: "x",
           providerToolName: "getUsersByUsername",
           routineId: "x__getUsersByUsername",
+        }),
+      ],
+    });
+  });
+
+  it("discovers X write routines when write mode is enabled", async () => {
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([
+      connection({
+        id: 2,
+        mcpEndpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
+        provider: "x",
+        providerWorkspaceId: null,
+        providerWorkspaceName: "X",
+        scopes: ["tweet.read", "tweet.write", "users.read", "offline.access"],
+        toolManifest: [
+          { description: "Find user", name: "getUsersByUsername" },
+          { description: "Create post", name: "createPost" },
+        ],
+      }),
+    ]);
+
+    await expect(
+      findChatProviderRoutines(context({ writeMode: true }), {
+        query: "create",
+      })
+    ).resolves.toEqual({
+      routines: [
+        expect.objectContaining({
+          classification: "write",
+          provider: "x",
+          providerToolName: "createPost",
+          routineId: "x__createPost",
         }),
       ],
     });
@@ -416,25 +448,66 @@ describe("chat provider routines", () => {
     });
   });
 
-  it("rejects X write routines in chat", async () => {
+  it("rejects X write routines when write mode is off", async () => {
     getCurrentOrgConnectorConnectionMock.mockResolvedValue(
       connection({
         provider: "x",
         scopes: ["tweet.read", "users.read", "offline.access"],
-        toolManifest: [{ name: "postTweet" }],
+        toolManifest: [{ name: "createPost" }],
       })
     );
 
     await expect(
-      callChatProviderRoutine(context({ writeMode: true }), {
+      callChatProviderRoutine(context(), {
         input: { text: "hello" },
-        routineId: "x__postTweet",
+        routineId: "x__createPost",
       })
     ).rejects.toMatchObject({
       code: "PROVIDER_ROUTINE_INSUFFICIENT_SCOPE",
-      routineId: "x__postTweet",
+      routineId: "x__createPost",
     });
     expect(loadChatConnectorRuntimeToolsMock).not.toHaveBeenCalled();
+  });
+
+  it("calls X write routines through the chat runtime when write mode is enabled", async () => {
+    const xConnection = connection({
+      id: 2,
+      mcpEndpoint: "https://app.lightfast.localhost/api/connectors/x/mcp",
+      provider: "x",
+      providerWorkspaceId: null,
+      providerWorkspaceName: "X",
+      scopes: ["tweet.read", "tweet.write", "users.read", "offline.access"],
+      toolManifest: [{ name: "createPost" }],
+    });
+    const xTool = runtimeTool({
+      callWithMetadata: vi.fn().mockResolvedValue({
+        provider: "x",
+        providerRoutineCallId: "provider_routine_call_x_write",
+        providerToolName: "createPost",
+        result: { content: [{ text: "posted" }] },
+        routineId: "x__createPost",
+        runtimeToolName: "x__createPost",
+      }),
+      provider: "x",
+      providerToolName: "createPost",
+      runtimeToolName: "x__createPost",
+    });
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(xConnection);
+    loadChatConnectorRuntimeToolsMock.mockResolvedValue([xTool]);
+
+    await expect(
+      callChatProviderRoutine(context({ writeMode: true }), {
+        input: { text: "hello" },
+        routineId: "x__createPost",
+      })
+    ).resolves.toEqual({
+      provider: "x",
+      providerRoutineCallId: "provider_routine_call_x_write",
+      providerToolName: "createPost",
+      result: { content: [{ text: "posted" }] },
+      routineId: "x__createPost",
+      status: "succeeded",
+    });
   });
 
   it("logs redacted routine call decisions", async () => {
