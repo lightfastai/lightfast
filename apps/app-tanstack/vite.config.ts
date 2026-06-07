@@ -11,37 +11,54 @@ const port = process.env.PORT ? Number(process.env.PORT) : undefined;
 const portlessUrl = process.env.PORTLESS_URL;
 const hmrHost = portlessUrl ? new URL(portlessUrl).hostname : undefined;
 
-const sentryBuildEnvKeys = [
-  "SENTRY_AUTH_TOKEN",
-  "SENTRY_ORG",
-  "SENTRY_PROJECT",
-] as const;
+type SentryBuildOptions = NonNullable<
+  Parameters<typeof sentryTanstackStart>[0]
+>;
 
-function requireSentryBuildEnv(command: "build" | "serve") {
+type SentryUploadEnv = Pick<
+  typeof env,
+  "SENTRY_AUTH_TOKEN" | "SENTRY_ORG" | "SENTRY_PROJECT"
+>;
+
+function hasSentrySourceMapUploadCredentials(sentryEnv: SentryUploadEnv) {
+  return Boolean(
+    sentryEnv.SENTRY_AUTH_TOKEN &&
+      sentryEnv.SENTRY_ORG &&
+      sentryEnv.SENTRY_PROJECT
+  );
+}
+
+export function createSentryBuildOptions(
+  command: "build" | "serve",
+  sentryEnv: SentryUploadEnv = env,
+  clientDsn = sentryClientDsn,
+  serverDsn = sentryServerDsn
+): SentryBuildOptions {
   if (command === "build") {
-    for (const key of sentryBuildEnvKeys) {
-      if (!env[key]) {
-        throw new Error(
-          `Missing required Sentry build environment variable: ${key}`
-        );
-      }
-    }
-    if (!sentryClientDsn) {
+    if (!clientDsn) {
       throw new Error(
         "Missing required public Sentry DSN environment variable: VITE_SENTRY_DSN or NEXT_PUBLIC_SENTRY_DSN"
       );
     }
-    if (!sentryServerDsn) {
+    if (!serverDsn) {
       throw new Error(
         "Missing required server Sentry DSN environment variable: SENTRY_DSN, VITE_SENTRY_DSN, or NEXT_PUBLIC_SENTRY_DSN"
       );
     }
   }
 
+  if (!hasSentrySourceMapUploadCredentials(sentryEnv)) {
+    return {
+      org: undefined,
+      project: undefined,
+      sourcemaps: { disable: "disable-upload" },
+    };
+  }
+
   return {
-    authToken: env.SENTRY_AUTH_TOKEN,
-    org: env.SENTRY_ORG,
-    project: env.SENTRY_PROJECT,
+    authToken: sentryEnv.SENTRY_AUTH_TOKEN,
+    org: sentryEnv.SENTRY_ORG,
+    project: sentryEnv.SENTRY_PROJECT,
   };
 }
 
@@ -50,7 +67,7 @@ export default defineConfig(({ command }) => ({
     ...tanstackStart(),
     nitro(),
     react(),
-    ...sentryTanstackStart(requireSentryBuildEnv(command)),
+    ...sentryTanstackStart(createSentryBuildOptions(command)),
   ],
   resolve: {
     alias: [

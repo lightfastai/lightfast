@@ -60,4 +60,18 @@ describe("app-tanstack workspace wiring", () => {
       "VITE_LIGHTFAST_APP_URL=$(portless get lightfast)"
     );
   });
+
+  it("is included in cloud Vercel project hydration", () => {
+    const setupScript = readFileSync(
+      resolve(repoRoot, "scripts/cloud/setup.sh"),
+      "utf8"
+    );
+
+    expect(setupScript).toContain(
+      "LIGHTFAST_VERCEL_PROJECT_ID_APP_TANSTACK"
+    );
+    expect(setupScript).toContain(
+      "apps/app-tanstack|lightfast-app-tanstack|LIGHTFAST_VERCEL_PROJECT_ID_APP_TANSTACK"
+    );
+  });
 });

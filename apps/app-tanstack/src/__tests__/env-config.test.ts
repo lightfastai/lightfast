@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { createSentryBuildOptions } from "../../vite.config";
 
 const appRoot = resolve(import.meta.dirname, "../..");
 
@@ -41,7 +42,7 @@ describe("app-tanstack environment validation wiring", () => {
 
     expect(viteConfigSource).toContain('from "./src/env"');
     expect(viteConfigSource).toContain("env.VITE_LIGHTFAST_APP_URL");
-    expect(viteConfigSource).toContain("env.SENTRY_AUTH_TOKEN");
+    expect(viteConfigSource).toContain("sentryEnv.SENTRY_AUTH_TOKEN");
     expect(viteConfigSource).toContain("sentryClientDsn");
     expect(viteConfigSource).toContain("sentryServerDsn");
     expect(viteConfigSource).toContain("process.env.PORTLESS_URL");
@@ -65,5 +66,24 @@ describe("app-tanstack environment validation wiring", () => {
     expect(viteConfigSource).toContain("nitro()");
     expect(viteConfigSource).toContain("react()");
     expect(viteConfigSource).toContain("sentryTanstackStart");
+  });
+
+  it("keeps production builds working without Sentry upload credentials", () => {
+    expect(
+      createSentryBuildOptions(
+        "build",
+        {
+          SENTRY_AUTH_TOKEN: undefined,
+          SENTRY_ORG: "lightfast",
+          SENTRY_PROJECT: "app",
+        },
+        "https://public@sentry.test/1",
+        "https://server@sentry.test/1"
+      )
+    ).toEqual({
+      org: undefined,
+      project: undefined,
+      sourcemaps: { disable: "disable-upload" },
+    });
   });
 });

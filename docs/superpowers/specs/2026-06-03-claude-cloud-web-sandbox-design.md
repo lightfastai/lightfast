@@ -53,7 +53,7 @@ The brainstorming decision was: keep ids out of committed setup scripts, and pur
 | Secrecy scope | ID-free script; scrub org id from tracked files; **purge org id from git history**; project ids stay in `vercel.json` (MFE-required) |
 | Linkage source | **Discrete env secrets** — `LIGHTFAST_VERCEL_ORG_ID` + one `LIGHTFAST_VERCEL_PROJECT_ID_*` per app; the script writes `.vercel/repo.json` from them |
 | Var namespacing | **`LIGHTFAST_VERCEL_*`, not the reserved `VERCEL_ORG_ID`/`VERCEL_PROJECT_ID`** — a bare `VERCEL_ORG_ID` poisons every `vercel` command (it then demands `VERCEL_PROJECT_ID`). Validated locally. |
-| App set | **Four** Vercel projects: `apps/{app,www,platform,mcp}` (mcp was missing from the original Codex script) |
+| App set | **Five** Vercel projects: `apps/{app,app-tanstack,www,platform,mcp}` (mcp was missing from the original Codex script; app-tanstack is the TanStack migration target) |
 | Scope resolution | `vercel pull <app>` resolves org/project/team from `repo.json` — no `--scope` needed even on a multi-team account (validated) |
 | Network mode | **Trusted** (default) — broad egress incl. package registries |
 | Vercel linkage | Setup writes `.vercel/repo.json` from env vars — not `vercel link`, not committed to git |
@@ -65,7 +65,7 @@ The brainstorming decision was: keep ids out of committed setup scripts, and pur
 |---|---|
 | `scripts/cloud/setup.sh` — shared setup (Claude + Codex) | **Setup script** field → `bash scripts/cloud/setup.sh` |
 | `scripts/cloud/dev.sh` — sandbox-tuned stack start | **Network**: Trusted |
-| Standardized local `.mcp.json` + `.codex/config.toml` | **Secrets (6)**: `VERCEL_TOKEN`, `LIGHTFAST_VERCEL_ORG_ID`, `LIGHTFAST_VERCEL_PROJECT_ID_{APP,WWW,PLATFORM,MCP}` |
+| Standardized local `.mcp.json` + `.codex/config.toml` | **Secrets (7)**: `VERCEL_TOKEN`, `LIGHTFAST_VERCEL_ORG_ID`, `LIGHTFAST_VERCEL_PROJECT_ID_{APP,APP_TANSTACK,WWW,PLATFORM,MCP}` |
 | AGENTS.md "Cloud sandbox" section + this spec | (all other env flows from `vercel pull`) |
 
 ## Components
@@ -75,12 +75,12 @@ The brainstorming decision was: keep ids out of committed setup scripts, and pur
 `set -eu` + `pipefail`, harness-agnostic, target < ~5 min:
 
 1. `cd` to repo root robustly: `${CODEX_WORKTREE_PATH:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}`.
-2. A single list-driven app table `"directory|name|projectIdVar"` for all four apps — the one place to maintain when an app is added/removed (the missing-mcp bug came from a hardcoded list).
-3. **Require all linkage vars by name** (`LIGHTFAST_VERCEL_ORG_ID` + the four project-id vars) — fail loudly with a named message, not a bare `set -u` abort.
+2. A single list-driven app table `"directory|name|projectIdVar"` for all five apps — the one place to maintain when an app is added/removed (the missing-mcp bug came from a hardcoded list).
+3. **Require all linkage vars by name** (`LIGHTFAST_VERCEL_ORG_ID` + the five project-id vars) — fail loudly with a named message, not a bare `set -u` abort.
 4. `corepack enable && corepack prepare pnpm@11.1.3 --activate`.
 5. **Build `.vercel/repo.json` from the env vars** (the values land in the JSON `id`/`orgId` fields; the *source* is env, never a committed literal). File stays gitignored. `LIGHTFAST_CLOUD_SETUP_LINK_ONLY=1` writes `repo.json` and exits — used for fast, non-destructive validation.
 6. `pnpm install --frozen-lockfile`.
-7. For each of the four apps: `pnpm dlx vercel@latest pull <app> --yes --non-interactive --environment=development`, skip-if-exists (`LIGHTFAST_FORCE_VERCEL_PULL=1` forces re-pull). `vercel` reads `VERCEL_TOKEN` from the env in cloud; an **empty** `VERCEL_TOKEN` is unset first so local runs fall back to the `vercel login` session. Scope is resolved from `repo.json` (no `--scope`).
+7. For each of the five apps: `pnpm dlx vercel@latest pull <app> --yes --non-interactive --environment=development`, skip-if-exists (`LIGHTFAST_FORCE_VERCEL_PULL=1` forces re-pull). `vercel` reads `VERCEL_TOKEN` from the env in cloud; an **empty** `VERCEL_TOKEN` is unset first so local runs fall back to the `vercel login` session. Scope is resolved from `repo.json` (no `--scope`).
 
 **Failure policy:** steps 1–7 are critical (fail loudly). No MCP secret step is needed — MCP is hosted/npx.
 
@@ -116,16 +116,16 @@ This redacts the literal across all history, leaving everything else intact.
 
 ### 5. Docs
 
-- New **"Cloud sandbox"** section in `AGENTS.md` (`CLAUDE.md` symlinks to it): setup-script path (`bash scripts/cloud/setup.sh`), Trusted network, the **6 secrets** (namespaced names), the Codex reconfiguration note, and how to start/validate the stack.
+- New **"Cloud sandbox"** section in `AGENTS.md` (`CLAUDE.md` symlinks to it): setup-script path (`bash scripts/cloud/setup.sh`), Trusted network, the **7 secrets** (namespaced names), the Codex reconfiguration note, and how to start/validate the stack.
 - This spec, committed (with the org id scrubbed to a placeholder).
 
 ## Data flow
 
 ```
 Environment creation (Claude cloud UI OR Codex cloud — both call the shared script):
-  6 environment secrets (VERCEL_TOKEN + LIGHTFAST_VERCEL_ORG_ID + 4× LIGHTFAST_VERCEL_PROJECT_ID_*)
-    → scripts/cloud/setup.sh → write .vercel/repo.json from env → pnpm install → vercel pull (×4 apps)
-      → apps/{app,www,platform,mcp}/.vercel/.env.development.local  (hydrated)
+  7 environment secrets (VERCEL_TOKEN + LIGHTFAST_VERCEL_ORG_ID + 5× LIGHTFAST_VERCEL_PROJECT_ID_*)
+    → scripts/cloud/setup.sh → write .vercel/repo.json from env → pnpm install → vercel pull (×5 apps)
+      → apps/{app,app-tanstack,www,platform,mcp}/.vercel/.env.development.local  (hydrated)
 
 Session start:
   dev.sh → portless proxy start → turbo dev:next + inngest + qstash + emulators
@@ -158,7 +158,7 @@ Honest expectation: the stack **runs and is programmatically reachable**; the br
 
 The core mechanism was proven on the local machine before any cloud config, with the linkage vars moved to `~/.zshrc`:
 
-- `setup.sh` in `LINK_ONLY` mode generates a `.vercel/repo.json` whose project set is **byte-identical** to the working one (all four apps).
+- `setup.sh` in `LINK_ONLY` mode generates a `.vercel/repo.json` whose project set is **byte-identical** to the working one (all five apps).
 - With `LIGHTFAST_VERCEL_*` set and no reserved `VERCEL_ORG_ID` present, `vercel` resolves `lightfast/lightfast-app` from `repo.json` (exit 0) on the multi-team account with no `--scope`.
 - The committed script contains **no** org/project id literals (asserted by grep).
 - Two bugs caught locally that would have broken the cloud: (1) `apps/mcp` was missing from the app set; (2) reserved-var poisoning from a bare `VERCEL_ORG_ID`.
@@ -171,11 +171,12 @@ The core mechanism was proven on the local machine before any cloud config, with
 
 ## Cloud configuration checklist (for the operator)
 
-**Both clouds** set the same **6 environment secrets** (the project-id values come from the working `.vercel/repo.json` / Vercel dashboard; the org-id value is the `team_…` team id):
+**Both clouds** set the same **7 environment secrets** (the project-id values come from the working `.vercel/repo.json` / Vercel dashboard; the org-id value is the `team_…` team id):
 
 - `VERCEL_TOKEN` (scoped to the lightfast team — the only true credential)
 - `LIGHTFAST_VERCEL_ORG_ID`
 - `LIGHTFAST_VERCEL_PROJECT_ID_APP`
+- `LIGHTFAST_VERCEL_PROJECT_ID_APP_TANSTACK`
 - `LIGHTFAST_VERCEL_PROJECT_ID_WWW`
 - `LIGHTFAST_VERCEL_PROJECT_ID_PLATFORM`
 - `LIGHTFAST_VERCEL_PROJECT_ID_MCP`
@@ -185,11 +186,11 @@ Add these in each cloud's **Secrets** section, *not* Environment variables. Code
 **Claude cloud** (environment `env_017JcTSzELtWsWzRmXzAKqCH`, or a new one):
 1. **Setup script** → `bash scripts/cloud/setup.sh`
 2. **Network** → Trusted
-3. **Secrets** → the 6 above
+3. **Secrets** → the 7 above
 
 **Codex cloud** (same repo):
 1. Reconfigure the environment's setup command → `bash scripts/cloud/setup.sh` (Codex regenerates `.codex/environments/environment.toml` as a shim).
-2. Set the same 6 environment secrets.
+2. Set the same 7 environment secrets.
 
 ## Open items (resolve during planning/implementation)
 
