@@ -206,10 +206,12 @@ describe("X MCP bridge service", () => {
       }),
     });
     const readOnlyJson = await readOnlyResponse.json();
-    expect(readOnlyJson.result.tools.map((tool: { name: string }) => tool.name))
-      .toContain("getUsersMe");
-    expect(readOnlyJson.result.tools.map((tool: { name: string }) => tool.name))
-      .not.toContain("createPost");
+    expect(
+      readOnlyJson.result.tools.map((tool: { name: string }) => tool.name)
+    ).toContain("getUsersMe");
+    expect(
+      readOnlyJson.result.tools.map((tool: { name: string }) => tool.name)
+    ).not.toContain("createPost");
 
     getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(
       connection({ scopes: [...X_OAUTH_SCOPES] })
@@ -222,8 +224,9 @@ describe("X MCP bridge service", () => {
       }),
     });
     const writeJson = await writeResponse.json();
-    expect(writeJson.result.tools.map((tool: { name: string }) => tool.name))
-      .toContain("createPost");
+    expect(
+      writeJson.result.tools.map((tool: { name: string }) => tool.name)
+    ).toContain("createPost");
   });
 
   it("calls X tools with a matching purpose=call token", async () => {

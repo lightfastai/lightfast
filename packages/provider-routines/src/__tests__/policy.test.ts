@@ -52,8 +52,6 @@ describe("provider routine policy", () => {
     expect(classifyXRoutine("followUser")).toBe("write");
     expect(classifyXRoutine("sendDmByConversation")).toBe("write");
     expect(classifyXRoutine("createCommunityNote")).toBe("write");
-    expect(classifyXRoutine("someFutureXTool")).toBe(
-      "unknown_write_default"
-    );
+    expect(classifyXRoutine("someFutureXTool")).toBe("unknown_write_default");
   });
 });

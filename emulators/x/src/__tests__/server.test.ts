@@ -275,10 +275,7 @@ describe("@repo/x-emulator", () => {
       data: { id: expect.stringMatching(/^tweet_/), text: "ship it" },
     });
 
-    const deletePostRes = await writeJsonAuthed(
-      "DELETE",
-      "/2/tweets/tweet_1"
-    );
+    const deletePostRes = await writeJsonAuthed("DELETE", "/2/tweets/tweet_1");
     expect(deletePostRes.status).toBe(200);
     await expect(deletePostRes.json()).resolves.toMatchObject({
       data: { deleted: true },

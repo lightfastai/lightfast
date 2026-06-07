@@ -1,5 +1,5 @@
-import type { XToolDefinition } from "./tools";
 import { XAppNodeError } from "./errors";
+import type { XToolDefinition } from "./tools";
 
 export type XOperationMethod = "DELETE" | "GET" | "POST" | "PUT";
 export type XOperationClassification = "read" | "write";
@@ -16,7 +16,9 @@ export interface XOperationDefinition {
     input: Record<string, unknown>,
     connectedActorId?: string | null
   ) => Record<string, string>;
-  query?: (input: Record<string, unknown>) => Record<string, string | undefined>;
+  query?: (
+    input: Record<string, unknown>
+  ) => Record<string, string | undefined>;
   requiredScopes: string[];
   sourceUserId?: "connected_actor";
 }
@@ -149,10 +151,9 @@ const readOperations: XOperationDefinition[] = [
   {
     classification: "read",
     description: "Look up multiple X accounts by id.",
-    inputSchema: schema(
-      { ids: { items: { type: "string" }, type: "array" } },
-      ["ids"]
-    ),
+    inputSchema: schema({ ids: { items: { type: "string" }, type: "array" } }, [
+      "ids",
+    ]),
     method: "GET",
     name: "getUsersByIds",
     path: "/2/users",
@@ -171,10 +172,9 @@ const readOperations: XOperationDefinition[] = [
   {
     classification: "read",
     description: "Look up multiple X posts by id.",
-    inputSchema: schema(
-      { ids: { items: { type: "string" }, type: "array" } },
-      ["ids"]
-    ),
+    inputSchema: schema({ ids: { items: { type: "string" }, type: "array" } }, [
+      "ids",
+    ]),
     method: "GET",
     name: "getPostsByIds",
     path: "/2/tweets",
@@ -215,23 +215,27 @@ const writeOperations: XOperationDefinition[] = [
     "tweet.write",
     "users.read",
   ]),
-  write("deletePost", "Delete an X post.", "/2/tweets/{id}", [
-    "tweet.read",
-    "tweet.write",
-    "users.read",
-  ], {
-    body: undefined,
-    inputSchema: schema({ id: { type: "string" } }, ["id"]),
-    method: "DELETE",
-  }),
-  sourceWrite("repostPost", "Repost an X post.", "/2/users/{source_user_id}/retweets", [
-    "tweet.read",
-    "tweet.write",
-    "users.read",
-  ], {
-    body: pickBody("tweet_id"),
-    inputSchema: schema({ tweet_id: { type: "string" } }, ["tweet_id"]),
-  }),
+  write(
+    "deletePost",
+    "Delete an X post.",
+    "/2/tweets/{id}",
+    ["tweet.read", "tweet.write", "users.read"],
+    {
+      body: undefined,
+      inputSchema: schema({ id: { type: "string" } }, ["id"]),
+      method: "DELETE",
+    }
+  ),
+  sourceWrite(
+    "repostPost",
+    "Repost an X post.",
+    "/2/users/{source_user_id}/retweets",
+    ["tweet.read", "tweet.write", "users.read"],
+    {
+      body: pickBody("tweet_id"),
+      inputSchema: schema({ tweet_id: { type: "string" } }, ["tweet_id"]),
+    }
+  ),
   sourceWrite(
     "unrepostPost",
     "Remove a repost.",
@@ -246,26 +250,30 @@ const writeOperations: XOperationDefinition[] = [
       }),
     }
   ),
-  write("hideReply", "Hide or unhide a reply.", "/2/tweets/{tweet_id}/hidden", [
-    "tweet.moderate.write",
-    "tweet.read",
-    "users.read",
-  ], {
-    body: hiddenReplyBody,
-    inputSchema: schema(
-      { hidden: { type: "boolean" }, tweet_id: { type: "string" } },
-      ["tweet_id"]
-    ),
-    method: "PUT",
-  }),
-  sourceWrite("likePost", "Like an X post.", "/2/users/{source_user_id}/likes", [
-    "like.write",
-    "tweet.read",
-    "users.read",
-  ], {
-    body: pickBody("tweet_id"),
-    inputSchema: schema({ tweet_id: { type: "string" } }, ["tweet_id"]),
-  }),
+  write(
+    "hideReply",
+    "Hide or unhide a reply.",
+    "/2/tweets/{tweet_id}/hidden",
+    ["tweet.moderate.write", "tweet.read", "users.read"],
+    {
+      body: hiddenReplyBody,
+      inputSchema: schema(
+        { hidden: { type: "boolean" }, tweet_id: { type: "string" } },
+        ["tweet_id"]
+      ),
+      method: "PUT",
+    }
+  ),
+  sourceWrite(
+    "likePost",
+    "Like an X post.",
+    "/2/users/{source_user_id}/likes",
+    ["like.write", "tweet.read", "users.read"],
+    {
+      body: pickBody("tweet_id"),
+      inputSchema: schema({ tweet_id: { type: "string" } }, ["tweet_id"]),
+    }
+  ),
   sourceWrite(
     "unlikePost",
     "Remove a like from an X post.",
@@ -276,14 +284,16 @@ const writeOperations: XOperationDefinition[] = [
       method: "DELETE",
     }
   ),
-  sourceWrite("createBookmark", "Bookmark an X post.", "/2/users/{source_user_id}/bookmarks", [
-    "bookmark.write",
-    "tweet.read",
-    "users.read",
-  ], {
-    body: pickBody("tweet_id"),
-    inputSchema: schema({ tweet_id: { type: "string" } }, ["tweet_id"]),
-  }),
+  sourceWrite(
+    "createBookmark",
+    "Bookmark an X post.",
+    "/2/users/{source_user_id}/bookmarks",
+    ["bookmark.write", "tweet.read", "users.read"],
+    {
+      body: pickBody("tweet_id"),
+      inputSchema: schema({ tweet_id: { type: "string" } }, ["tweet_id"]),
+    }
+  ),
   sourceWrite(
     "deleteBookmark",
     "Remove an X bookmark.",
@@ -294,128 +304,139 @@ const writeOperations: XOperationDefinition[] = [
       method: "DELETE",
     }
   ),
-  sourceWrite("followUser", "Follow an X user.", "/2/users/{source_user_id}/following", [
-    "follows.write",
-    "tweet.read",
-    "users.read",
-  ], {
-    body: pickBody("target_user_id"),
-    inputSchema: schema(
-      { target_user_id: { type: "string" } },
-      ["target_user_id"]
-    ),
-  }),
+  sourceWrite(
+    "followUser",
+    "Follow an X user.",
+    "/2/users/{source_user_id}/following",
+    ["follows.write", "tweet.read", "users.read"],
+    {
+      body: pickBody("target_user_id"),
+      inputSchema: schema({ target_user_id: { type: "string" } }, [
+        "target_user_id",
+      ]),
+    }
+  ),
   sourceWrite(
     "unfollowUser",
     "Unfollow an X user.",
     "/2/users/{source_user_id}/following/{target_user_id}",
     ["follows.write", "tweet.read", "users.read"],
     {
-      inputSchema: schema(
-        { target_user_id: { type: "string" } },
-        ["target_user_id"]
-      ),
+      inputSchema: schema({ target_user_id: { type: "string" } }, [
+        "target_user_id",
+      ]),
       method: "DELETE",
     }
   ),
-  sourceWrite("muteUser", "Mute an X user.", "/2/users/{source_user_id}/muting", [
-    "mute.write",
-    "tweet.read",
-    "users.read",
-  ], {
-    body: pickBody("target_user_id"),
-    inputSchema: schema(
-      { target_user_id: { type: "string" } },
-      ["target_user_id"]
-    ),
-  }),
+  sourceWrite(
+    "muteUser",
+    "Mute an X user.",
+    "/2/users/{source_user_id}/muting",
+    ["mute.write", "tweet.read", "users.read"],
+    {
+      body: pickBody("target_user_id"),
+      inputSchema: schema({ target_user_id: { type: "string" } }, [
+        "target_user_id",
+      ]),
+    }
+  ),
   sourceWrite(
     "unmuteUser",
     "Unmute an X user.",
     "/2/users/{source_user_id}/muting/{target_user_id}",
     ["mute.write", "tweet.read", "users.read"],
     {
-      inputSchema: schema(
-        { target_user_id: { type: "string" } },
-        ["target_user_id"]
-      ),
+      inputSchema: schema({ target_user_id: { type: "string" } }, [
+        "target_user_id",
+      ]),
       method: "DELETE",
     }
   ),
-  sourceWrite("blockUser", "Block an X user.", "/2/users/{source_user_id}/blocking", [
-    "block.write",
-    "users.read",
-  ], {
-    body: pickBody("target_user_id"),
-    inputSchema: schema(
-      { target_user_id: { type: "string" } },
-      ["target_user_id"]
-    ),
-  }),
+  sourceWrite(
+    "blockUser",
+    "Block an X user.",
+    "/2/users/{source_user_id}/blocking",
+    ["block.write", "users.read"],
+    {
+      body: pickBody("target_user_id"),
+      inputSchema: schema({ target_user_id: { type: "string" } }, [
+        "target_user_id",
+      ]),
+    }
+  ),
   sourceWrite(
     "unblockUser",
     "Unblock an X user.",
     "/2/users/{source_user_id}/blocking/{target_user_id}",
     ["block.write", "users.read"],
     {
-      inputSchema: schema(
-        { target_user_id: { type: "string" } },
-        ["target_user_id"]
-      ),
+      inputSchema: schema({ target_user_id: { type: "string" } }, [
+        "target_user_id",
+      ]),
       method: "DELETE",
     }
   ),
-  write("blockDms", "Block DMs from an X user.", "/2/users/{user_id}/dm/block", [
-    "dm.write",
-    "tweet.read",
-    "users.read",
-  ], {
-    body: undefined,
-    inputSchema: schema({ user_id: { type: "string" } }, ["user_id"]),
-  }),
-  write("unblockDms", "Unblock DMs from an X user.", "/2/users/{user_id}/dm/unblock", [
-    "dm.write",
-    "tweet.read",
-    "users.read",
-  ], {
-    body: undefined,
-    inputSchema: schema({ user_id: { type: "string" } }, ["user_id"]),
-  }),
+  write(
+    "blockDms",
+    "Block DMs from an X user.",
+    "/2/users/{user_id}/dm/block",
+    ["dm.write", "tweet.read", "users.read"],
+    {
+      body: undefined,
+      inputSchema: schema({ user_id: { type: "string" } }, ["user_id"]),
+    }
+  ),
+  write(
+    "unblockDms",
+    "Unblock DMs from an X user.",
+    "/2/users/{user_id}/dm/unblock",
+    ["dm.write", "tweet.read", "users.read"],
+    {
+      body: undefined,
+      inputSchema: schema({ user_id: { type: "string" } }, ["user_id"]),
+    }
+  ),
   write("createList", "Create an X list.", "/2/lists", [
     "list.read",
     "list.write",
     "tweet.read",
     "users.read",
   ]),
-  write("updateList", "Update an X list.", "/2/lists/{id}", [
-    "list.write",
-    "tweet.read",
-    "users.read",
-  ], {
-    body: omitBody("id"),
-    inputSchema: schema({ id: { type: "string" } }, ["id"]),
-    method: "PUT",
-  }),
-  write("deleteList", "Delete an X list.", "/2/lists/{id}", [
-    "list.write",
-    "tweet.read",
-    "users.read",
-  ], {
-    body: undefined,
-    inputSchema: schema({ id: { type: "string" } }, ["id"]),
-    method: "DELETE",
-  }),
-  write("addListMember", "Add a member to an X list.", "/2/lists/{id}/members", [
-    "list.write",
-    "tweet.read",
-    "users.read",
-  ], {
-    body: pickBody("user_id"),
-    inputSchema: schema(
-      { id: { type: "string" }, user_id: { type: "string" } },
-      ["id", "user_id"]
-    ),
-  }),
+  write(
+    "updateList",
+    "Update an X list.",
+    "/2/lists/{id}",
+    ["list.write", "tweet.read", "users.read"],
+    {
+      body: omitBody("id"),
+      inputSchema: schema({ id: { type: "string" } }, ["id"]),
+      method: "PUT",
+    }
+  ),
+  write(
+    "deleteList",
+    "Delete an X list.",
+    "/2/lists/{id}",
+    ["list.write", "tweet.read", "users.read"],
+    {
+      body: undefined,
+      inputSchema: schema({ id: { type: "string" } }, ["id"]),
+      method: "DELETE",
+    }
+  ),
+  write(
+    "addListMember",
+    "Add a member to an X list.",
+    "/2/lists/{id}/members",
+    ["list.write", "tweet.read", "users.read"],
+    {
+      body: pickBody("user_id"),
+      inputSchema: schema(
+        { id: { type: "string" }, user_id: { type: "string" } },
+        ["id", "user_id"]
+      ),
+    }
+  ),
   write(
     "removeListMember",
     "Remove a member from an X list.",
@@ -430,14 +451,16 @@ const writeOperations: XOperationDefinition[] = [
       method: "DELETE",
     }
   ),
-  sourceWrite("followList", "Follow an X list.", "/2/users/{source_user_id}/followed_lists", [
-    "list.write",
-    "tweet.read",
-    "users.read",
-  ], {
-    body: pickBody("list_id"),
-    inputSchema: schema({ list_id: { type: "string" } }, ["list_id"]),
-  }),
+  sourceWrite(
+    "followList",
+    "Follow an X list.",
+    "/2/users/{source_user_id}/followed_lists",
+    ["list.write", "tweet.read", "users.read"],
+    {
+      body: pickBody("list_id"),
+      inputSchema: schema({ list_id: { type: "string" } }, ["list_id"]),
+    }
+  ),
   sourceWrite(
     "unfollowList",
     "Unfollow an X list.",
@@ -448,14 +471,16 @@ const writeOperations: XOperationDefinition[] = [
       method: "DELETE",
     }
   ),
-  sourceWrite("pinList", "Pin an X list.", "/2/users/{source_user_id}/pinned_lists", [
-    "list.write",
-    "tweet.read",
-    "users.read",
-  ], {
-    body: pickBody("list_id"),
-    inputSchema: schema({ list_id: { type: "string" } }, ["list_id"]),
-  }),
+  sourceWrite(
+    "pinList",
+    "Pin an X list.",
+    "/2/users/{source_user_id}/pinned_lists",
+    ["list.write", "tweet.read", "users.read"],
+    {
+      body: pickBody("list_id"),
+      inputSchema: schema({ list_id: { type: "string" } }, ["list_id"]),
+    }
+  ),
   sourceWrite(
     "unpinList",
     "Unpin an X list.",
@@ -466,11 +491,12 @@ const writeOperations: XOperationDefinition[] = [
       method: "DELETE",
     }
   ),
-  write("createDmConversation", "Create an X DM conversation.", "/2/dm_conversations", [
-    "dm.write",
-    "tweet.read",
-    "users.read",
-  ]),
+  write(
+    "createDmConversation",
+    "Create an X DM conversation.",
+    "/2/dm_conversations",
+    ["dm.write", "tweet.read", "users.read"]
+  ),
   write(
     "sendDmByParticipant",
     "Send an X DM by participant id.",
@@ -478,10 +504,9 @@ const writeOperations: XOperationDefinition[] = [
     ["dm.write", "tweet.read", "users.read"],
     {
       body: omitBody("participant_id"),
-      inputSchema: schema(
-        { participant_id: { type: "string" } },
-        ["participant_id"]
-      ),
+      inputSchema: schema({ participant_id: { type: "string" } }, [
+        "participant_id",
+      ]),
     }
   ),
   write(
@@ -491,97 +516,131 @@ const writeOperations: XOperationDefinition[] = [
     ["dm.write", "tweet.read", "users.read"],
     {
       body: omitBody("dm_conversation_id"),
-      inputSchema: schema(
-        { dm_conversation_id: { type: "string" } },
-        ["dm_conversation_id"]
-      ),
+      inputSchema: schema({ dm_conversation_id: { type: "string" } }, [
+        "dm_conversation_id",
+      ]),
     }
   ),
-  write("deleteDmEvent", "Delete an X DM event.", "/2/dm_events/{event_id}", [
-    "dm.read",
-    "dm.write",
-  ], {
-    body: undefined,
-    inputSchema: schema({ event_id: { type: "string" } }, ["event_id"]),
-    method: "DELETE",
-  }),
-  write("createChatConversation", "Create an X chat group conversation.", "/2/chat/conversations/group", [
-    "dm.write",
-    "tweet.read",
-    "users.read",
-  ]),
-  write("initializeChatGroup", "Initialize an X chat group.", "/2/chat/conversations/group/initialize", [
-    "dm.write",
-  ]),
-  write("initializeChatConversationKeys", "Initialize X chat conversation keys.", "/2/chat/conversations/{id}/keys", [
-    "dm.write",
-    "tweet.read",
-    "users.read",
-  ], {
-    body: omitBody("id"),
-    inputSchema: schema({ id: { type: "string" } }, ["id"]),
-  }),
-  write("addChatGroupMembers", "Add members to an X chat group.", "/2/chat/conversations/{id}/members", [
-    "dm.write",
-    "tweet.read",
-    "users.read",
-  ], {
-    body: omitBody("id"),
-    inputSchema: schema({ id: { type: "string" } }, ["id"]),
-  }),
-  write("sendChatMessage", "Send an X chat message.", "/2/chat/conversations/{id}/messages", [
-    "dm.write",
-    "tweet.read",
-    "users.read",
-  ], {
-    body: omitBody("id"),
-    inputSchema: schema({ id: { type: "string" } }, ["id"]),
-  }),
-  write("markChatConversationRead", "Mark an X chat conversation read.", "/2/chat/conversations/{id}/read", [
-    "dm.write",
-    "tweet.read",
-    "users.read",
-  ], {
-    body: omitBody("id"),
-    inputSchema: schema({ id: { type: "string" } }, ["id"]),
-  }),
-  write("sendChatTypingIndicator", "Send an X chat typing indicator.", "/2/chat/conversations/{id}/typing", [
-    "dm.write",
-    "tweet.read",
-    "users.read",
-  ], {
-    body: omitBody("id"),
-    inputSchema: schema({ id: { type: "string" } }, ["id"]),
-  }),
-  sourceWrite("addUserPublicKey", "Add the connected user's X chat public key.", "/2/users/{source_user_id}/public_keys", [
-    "dm.write",
-    "tweet.read",
-    "users.read",
-  ]),
-  write("createMediaMetadata", "Create X media metadata.", "/2/media/metadata", [
-    "media.write",
-  ]),
-  write("createMediaSubtitles", "Create X media subtitles.", "/2/media/subtitles", [
-    "media.write",
-  ]),
-  write("deleteMediaSubtitles", "Delete X media subtitles.", "/2/media/subtitles", [
-    "media.write",
-  ], {
-    method: "DELETE",
-  }),
+  write(
+    "deleteDmEvent",
+    "Delete an X DM event.",
+    "/2/dm_events/{event_id}",
+    ["dm.read", "dm.write"],
+    {
+      body: undefined,
+      inputSchema: schema({ event_id: { type: "string" } }, ["event_id"]),
+      method: "DELETE",
+    }
+  ),
+  write(
+    "createChatConversation",
+    "Create an X chat group conversation.",
+    "/2/chat/conversations/group",
+    ["dm.write", "tweet.read", "users.read"]
+  ),
+  write(
+    "initializeChatGroup",
+    "Initialize an X chat group.",
+    "/2/chat/conversations/group/initialize",
+    ["dm.write"]
+  ),
+  write(
+    "initializeChatConversationKeys",
+    "Initialize X chat conversation keys.",
+    "/2/chat/conversations/{id}/keys",
+    ["dm.write", "tweet.read", "users.read"],
+    {
+      body: omitBody("id"),
+      inputSchema: schema({ id: { type: "string" } }, ["id"]),
+    }
+  ),
+  write(
+    "addChatGroupMembers",
+    "Add members to an X chat group.",
+    "/2/chat/conversations/{id}/members",
+    ["dm.write", "tweet.read", "users.read"],
+    {
+      body: omitBody("id"),
+      inputSchema: schema({ id: { type: "string" } }, ["id"]),
+    }
+  ),
+  write(
+    "sendChatMessage",
+    "Send an X chat message.",
+    "/2/chat/conversations/{id}/messages",
+    ["dm.write", "tweet.read", "users.read"],
+    {
+      body: omitBody("id"),
+      inputSchema: schema({ id: { type: "string" } }, ["id"]),
+    }
+  ),
+  write(
+    "markChatConversationRead",
+    "Mark an X chat conversation read.",
+    "/2/chat/conversations/{id}/read",
+    ["dm.write", "tweet.read", "users.read"],
+    {
+      body: omitBody("id"),
+      inputSchema: schema({ id: { type: "string" } }, ["id"]),
+    }
+  ),
+  write(
+    "sendChatTypingIndicator",
+    "Send an X chat typing indicator.",
+    "/2/chat/conversations/{id}/typing",
+    ["dm.write", "tweet.read", "users.read"],
+    {
+      body: omitBody("id"),
+      inputSchema: schema({ id: { type: "string" } }, ["id"]),
+    }
+  ),
+  sourceWrite(
+    "addUserPublicKey",
+    "Add the connected user's X chat public key.",
+    "/2/users/{source_user_id}/public_keys",
+    ["dm.write", "tweet.read", "users.read"]
+  ),
+  write(
+    "createMediaMetadata",
+    "Create X media metadata.",
+    "/2/media/metadata",
+    ["media.write"]
+  ),
+  write(
+    "createMediaSubtitles",
+    "Create X media subtitles.",
+    "/2/media/subtitles",
+    ["media.write"]
+  ),
+  write(
+    "deleteMediaSubtitles",
+    "Delete X media subtitles.",
+    "/2/media/subtitles",
+    ["media.write"],
+    {
+      method: "DELETE",
+    }
+  ),
   write("createCommunityNote", "Create an X Community Note.", "/2/notes", [
     "tweet.write",
   ]),
-  write("deleteCommunityNote", "Delete an X Community Note.", "/2/notes/{id}", [
-    "tweet.write",
-  ], {
-    body: undefined,
-    inputSchema: schema({ id: { type: "string" } }, ["id"]),
-    method: "DELETE",
-  }),
-  write("evaluateCommunityNote", "Evaluate an X Community Note.", "/2/evaluate_note", [
-    "tweet.write",
-  ]),
+  write(
+    "deleteCommunityNote",
+    "Delete an X Community Note.",
+    "/2/notes/{id}",
+    ["tweet.write"],
+    {
+      body: undefined,
+      inputSchema: schema({ id: { type: "string" } }, ["id"]),
+      method: "DELETE",
+    }
+  ),
+  write(
+    "evaluateCommunityNote",
+    "Evaluate an X Community Note.",
+    "/2/evaluate_note",
+    ["tweet.write"]
+  ),
 ];
 
 export const X_OPERATION_DEFINITIONS = [
@@ -635,7 +694,10 @@ export function buildXOperationRequest(input: {
   operation: XOperationDefinition;
   toolInput: Record<string, unknown>;
 }): XOperationRequest {
-  if (input.operation.sourceUserId === "connected_actor" && !input.connectedActorId) {
+  if (
+    input.operation.sourceUserId === "connected_actor" &&
+    !input.connectedActorId
+  ) {
     throw new XAppNodeError(
       "X_TOOL_CALL_FAILED",
       "Connected X actor id is required."
@@ -647,7 +709,10 @@ export function buildXOperationRequest(input: {
     input.operation.pathParams?.(input.toolInput, input.connectedActorId) ??
     standardPathParams(input.toolInput, input.connectedActorId);
   const path = applyPathParams(input.operation.path, params);
-  const url = withQuery(`${apiOrigin}${path}`, input.operation.query?.(input.toolInput));
+  const url = withQuery(
+    `${apiOrigin}${path}`,
+    input.operation.query?.(input.toolInput)
+  );
   const rawBody = input.operation.body?.(input.toolInput);
   const body = rawBody === undefined ? undefined : JSON.stringify(rawBody);
 

@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { X_OAUTH_SCOPES } from "../oauth";
 import {
   getXOperationDefinition,
   getXOperationDefinitions,
   getXToolDefinitionsForScopes,
   X_SOCIAL_WRITE_TOOL_NAMES,
 } from "../operations";
-import { X_OAUTH_SCOPES } from "../oauth";
 
 describe("X operation registry", () => {
   it("includes the expected social and account write tools", () => {
@@ -76,15 +76,16 @@ describe("X operation registry", () => {
       "getPostsCountsRecent",
     ]);
 
-    expect(getXToolDefinitionsForScopes(X_OAUTH_SCOPES).map((tool) => tool.name))
-      .toEqual(
-        expect.arrayContaining([
-          "createPost",
-          "likePost",
-          "sendDmByConversation",
-          "createCommunityNote",
-        ])
-      );
+    expect(
+      getXToolDefinitionsForScopes(X_OAUTH_SCOPES).map((tool) => tool.name)
+    ).toEqual(
+      expect.arrayContaining([
+        "createPost",
+        "likePost",
+        "sendDmByConversation",
+        "createCommunityNote",
+      ])
+    );
   });
 
   it("marks source-user operations for connected actor injection", () => {
@@ -96,7 +97,9 @@ describe("X operation registry", () => {
   });
 
   it("does not expose binary media upload operations", () => {
-    expect(getXOperationDefinitions().map((operation) => operation.name)).not.toEqual(
+    expect(
+      getXOperationDefinitions().map((operation) => operation.name)
+    ).not.toEqual(
       expect.arrayContaining([
         "mediaUpload",
         "initializeMediaUpload",
