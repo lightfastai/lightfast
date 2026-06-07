@@ -733,6 +733,9 @@ export const orgEntityResolutionCandidateGroups = mysqlTable(
       table.updatedAt,
       table.id
     ),
+    currentVersionIdx: index("org_entity_cand_groups_current_ver_idx").on(
+      table.currentCandidateVersionId
+    ),
   })
 );
 

@@ -460,7 +460,6 @@ interface BusinessClaim {
   domain?: string;
   evidence: EntityEvidence[];
   identities: SourceIdentity[];
-  provider: "x" | "github";
   relationship: AffiliationRelationship;
 }
 
@@ -1019,7 +1018,6 @@ function buildBusinessClaims(input: {
       domain: domainIdentity?.value,
       evidence: evidenceItems,
       identities,
-      provider: input.provider,
       relationship,
     },
   ];
@@ -1064,7 +1062,6 @@ function mergeBusinessClaims(
         domain: domainsFromIdentities(claim.identities)[0],
         evidence: uniqueEvidence(claim.evidence),
         identities: uniqueIdentities(claim.identities),
-        provider: "github",
         relationship: claim.relationship,
       });
     }

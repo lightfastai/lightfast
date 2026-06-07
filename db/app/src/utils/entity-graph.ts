@@ -173,7 +173,7 @@ export async function ingestEntityObservations(
       observedAt: observedAtForObservation(observation, input.observedAt),
       provider: observation.provider,
       rawExpiresAt: input.rawExpiresAt ?? null,
-      rawSnapshot: normalizedSnapshot,
+      rawSnapshot: null,
       sourceIdentityId: sourceIdentity.id,
     });
     observations += 1;
@@ -1124,6 +1124,7 @@ function sortJsonValue(value: unknown): unknown {
   if (value && typeof value === "object") {
     return Object.fromEntries(
       Object.entries(value)
+        .filter(([, item]) => item !== undefined)
         .sort(([left], [right]) => left.localeCompare(right))
         .map(([key, item]) => [key, sortJsonValue(item)])
     );

@@ -1,0 +1,1 @@
+CREATE INDEX `org_entity_cand_groups_current_ver_idx` ON `lightfast_org_entity_resolution_candidate_groups` (`current_candidate_version_id`);
