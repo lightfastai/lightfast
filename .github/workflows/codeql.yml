@@ -11,6 +11,7 @@ on:
 jobs:
   codeql-analyze:
     name: codeql-analyze-${{ matrix.language }}
+    if: ${{ github.event.repository.private == false || vars.CODEQL_ADVANCED_SECURITY_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
