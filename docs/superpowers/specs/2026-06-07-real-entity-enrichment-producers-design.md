@@ -13,6 +13,8 @@ This slice connects them through a tightly scoped signal enrichment path. Enrich
 
 This is not a general "every profile lookup becomes graph fuel" system. Generic X tool calls, GitHub account binding, public profile lookups, searches, posts, repo contributors, and discovery flows are out of scope unless they are part of the signal enrichment workflow.
 
+Enrichment inherits the existing signal entity-indexing visibility boundary. Only classified, team-visible signals that pass `indexSignalEntities` are eligible. Private/user-scoped signals should not create org graph people in this slice because the entity graph is org-scoped.
+
 The `orgPeople` projection is temporary. The long-term People product should be backed by canonical graph people, not by one compatibility row per identity.
 
 ## Goals
@@ -38,6 +40,7 @@ The `orgPeople` projection is temporary. The long-term People product should be 
 - Do not migrate the `/people` product surface from `orgPeople` to `orgEntityPeople` in this slice.
 - Do not require Gmail ingestion for this slice.
 - Do not add a new pending-enrichment queue table in this slice.
+- Do not enrich private/user-scoped signals in this slice.
 - Do not depend on live X/GitHub APIs for the local reliability harness.
 
 ## Architecture
@@ -76,7 +79,7 @@ Add `app/signal.entity-enrichment.requested`:
 }
 ```
 
-`indexSignalEntities` should emit this event after `replaceSignalEntityLinks` persists links. The event should not include target lists. The enrichment workflow reloads persisted links by `signalId` so retries and backfills use current DB state.
+`indexSignalEntities` should emit this event after `replaceSignalEntityLinks` persists links, but only for signals that already pass its classified/team-visible indexing guard. The event should not include target lists. The enrichment workflow reloads persisted links by `signalId` so retries and backfills use current DB state.
 
 ### Enrichment Target Extraction
 
@@ -309,6 +312,7 @@ Create these issues after the design is accepted:
 
 - Signal entity-link indexing emits `app/signal.entity-enrichment.requested`.
 - Enrichment derives targets only from persisted unresolved signal links.
+- Enrichment only runs for classified, team-visible signals that pass the existing signal entity-indexing guard.
 - X enrichment requires an active X connector.
 - GitHub enrichment requires the org GitHub App binding and uses its installation token.
 - `runEntityResolution` persists graph people/accounts from signal enrichment observations.
