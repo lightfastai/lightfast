@@ -14,16 +14,23 @@ import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SignUpAcceptInvitationRouteImport } from './routes/sign-up_.accept-invitation'
+import { Route as OauthTokenRouteImport } from './routes/oauth/token'
+import { Route as OauthRevokeRouteImport } from './routes/oauth/revoke'
+import { Route as OauthRegisterRouteImport } from './routes/oauth/register'
+import { Route as OauthJwksRouteImport } from './routes/oauth/jwks'
 import { Route as OauthAuthorizeRouteImport } from './routes/oauth/authorize'
 import { Route as ApiInngestRouteImport } from './routes/api/inngest'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedSlugRouteImport } from './routes/_authenticated/$slug'
+import { Route as DotwellKnownOauthAuthorizationServerRouteImport } from './routes/[.]well-known/oauth-authorization-server'
 import { Route as AuthenticatedSlugIndexRouteImport } from './routes/_authenticated/$slug/index'
+import { Route as OauthRegisterClientIdRouteImport } from './routes/oauth/register/$clientId'
 import { Route as OauthClientStartRouteImport } from './routes/oauth/$client/start'
 import { Route as ApiV1SplatRouteImport } from './routes/api/v1/$'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api/trpc.$'
+import { Route as ApiOauthFinalizeRouteImport } from './routes/api/oauth/finalize'
 import { Route as ApiGithubWebhookRouteImport } from './routes/api/github/webhook'
 import { Route as ApiGithubSetupRouteImport } from './routes/api/github/setup'
 import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated/account/settings'
@@ -43,6 +50,7 @@ import { Route as AuthenticatedSlugSettingsIndexRouteImport } from './routes/_au
 import { Route as AuthenticatedSlugChatIndexRouteImport } from './routes/_authenticated/$slug/chat/index'
 import { Route as AuthenticatedSlugAutomationsIndexRouteImport } from './routes/_authenticated/$slug/automations/index'
 import { Route as ApiSkillsIndexEventsRouteImport } from './routes/api/skills/index/events'
+import { Route as ApiOauthClientConfigRouteImport } from './routes/api/oauth/$client/config'
 import { Route as ApiNativeProxyRoutinesRouteImport } from './routes/api/native/proxy/routines'
 import { Route as ApiNativeProxyCallRouteImport } from './routes/api/native/proxy/call'
 import { Route as ApiInternalMcpSignalsRouteImport } from './routes/api/internal/mcp/signals'
@@ -103,6 +111,26 @@ const SignUpAcceptInvitationRoute = SignUpAcceptInvitationRouteImport.update({
   path: '/sign-up/accept-invitation',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OauthTokenRoute = OauthTokenRouteImport.update({
+  id: '/oauth/token',
+  path: '/oauth/token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OauthRevokeRoute = OauthRevokeRouteImport.update({
+  id: '/oauth/revoke',
+  path: '/oauth/revoke',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OauthRegisterRoute = OauthRegisterRouteImport.update({
+  id: '/oauth/register',
+  path: '/oauth/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OauthJwksRoute = OauthJwksRouteImport.update({
+  id: '/oauth/jwks',
+  path: '/oauth/jwks',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OauthAuthorizeRoute = OauthAuthorizeRouteImport.update({
   id: '/oauth/authorize',
   path: '/oauth/authorize',
@@ -133,10 +161,21 @@ const AuthenticatedSlugRoute = AuthenticatedSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const DotwellKnownOauthAuthorizationServerRoute =
+  DotwellKnownOauthAuthorizationServerRouteImport.update({
+    id: '/.well-known/oauth-authorization-server',
+    path: '/.well-known/oauth-authorization-server',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedSlugIndexRoute = AuthenticatedSlugIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedSlugRoute,
+} as any)
+const OauthRegisterClientIdRoute = OauthRegisterClientIdRouteImport.update({
+  id: '/$clientId',
+  path: '/$clientId',
+  getParentRoute: () => OauthRegisterRoute,
 } as any)
 const OauthClientStartRoute = OauthClientStartRouteImport.update({
   id: '/oauth/$client/start',
@@ -151,6 +190,11 @@ const ApiV1SplatRoute = ApiV1SplatRouteImport.update({
 const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
   id: '/api/trpc/$',
   path: '/api/trpc/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOauthFinalizeRoute = ApiOauthFinalizeRouteImport.update({
+  id: '/api/oauth/finalize',
+  path: '/api/oauth/finalize',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiGithubWebhookRoute = ApiGithubWebhookRouteImport.update({
@@ -257,6 +301,11 @@ const AuthenticatedSlugAutomationsIndexRoute =
 const ApiSkillsIndexEventsRoute = ApiSkillsIndexEventsRouteImport.update({
   id: '/api/skills/index/events',
   path: '/api/skills/index/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOauthClientConfigRoute = ApiOauthClientConfigRouteImport.update({
+  id: '/api/oauth/$client/config',
+  path: '/api/oauth/$client/config',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiNativeProxyRoutinesRoute = ApiNativeProxyRoutinesRouteImport.update({
@@ -466,12 +515,17 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/.well-known/oauth-authorization-server': typeof DotwellKnownOauthAuthorizationServerRoute
   '/$slug': typeof AuthenticatedSlugRouteWithChildren
   '/account': typeof AuthenticatedAccountRouteWithChildren
   '/api/chat': typeof ApiChatRouteWithChildren
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/oauth/authorize': typeof OauthAuthorizeRoute
+  '/oauth/jwks': typeof OauthJwksRoute
+  '/oauth/register': typeof OauthRegisterRouteWithChildren
+  '/oauth/revoke': typeof OauthRevokeRoute
+  '/oauth/token': typeof OauthTokenRoute
   '/sign-up/accept-invitation': typeof SignUpAcceptInvitationRoute
   '/$slug/automations': typeof AuthenticatedSlugAutomationsRouteWithChildren
   '/$slug/chat': typeof AuthenticatedSlugChatRouteWithChildren
@@ -486,9 +540,11 @@ export interface FileRoutesByFullPath {
   '/account/settings': typeof AuthenticatedAccountSettingsRouteWithChildren
   '/api/github/setup': typeof ApiGithubSetupRoute
   '/api/github/webhook': typeof ApiGithubWebhookRoute
+  '/api/oauth/finalize': typeof ApiOauthFinalizeRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
   '/oauth/$client/start': typeof OauthClientStartRoute
+  '/oauth/register/$clientId': typeof OauthRegisterClientIdRoute
   '/$slug/': typeof AuthenticatedSlugIndexRoute
   '/$slug/automations/$automation': typeof AuthenticatedSlugAutomationsAutomationRoute
   '/$slug/automations/new': typeof AuthenticatedSlugAutomationsNewRoute
@@ -512,6 +568,7 @@ export interface FileRoutesByFullPath {
   '/api/internal/mcp/signals': typeof ApiInternalMcpSignalsRouteWithChildren
   '/api/native/proxy/call': typeof ApiNativeProxyCallRoute
   '/api/native/proxy/routines': typeof ApiNativeProxyRoutinesRoute
+  '/api/oauth/$client/config': typeof ApiOauthClientConfigRoute
   '/api/skills/index/events': typeof ApiSkillsIndexEventsRoute
   '/$slug/automations/': typeof AuthenticatedSlugAutomationsIndexRoute
   '/$slug/chat/': typeof AuthenticatedSlugChatIndexRoute
@@ -536,11 +593,16 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/.well-known/oauth-authorization-server': typeof DotwellKnownOauthAuthorizationServerRoute
   '/account': typeof AuthenticatedAccountRouteWithChildren
   '/api/chat': typeof ApiChatRouteWithChildren
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/oauth/authorize': typeof OauthAuthorizeRoute
+  '/oauth/jwks': typeof OauthJwksRoute
+  '/oauth/register': typeof OauthRegisterRouteWithChildren
+  '/oauth/revoke': typeof OauthRevokeRoute
+  '/oauth/token': typeof OauthTokenRoute
   '/sign-up/accept-invitation': typeof SignUpAcceptInvitationRoute
   '/$slug/connectors': typeof AuthenticatedSlugConnectorsRoute
   '/$slug/decisions': typeof AuthenticatedSlugDecisionsRoute
@@ -550,9 +612,11 @@ export interface FileRoutesByTo {
   '/account/mcp': typeof AuthenticatedAccountMcpRoute
   '/api/github/setup': typeof ApiGithubSetupRoute
   '/api/github/webhook': typeof ApiGithubWebhookRoute
+  '/api/oauth/finalize': typeof ApiOauthFinalizeRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
   '/oauth/$client/start': typeof OauthClientStartRoute
+  '/oauth/register/$clientId': typeof OauthRegisterClientIdRoute
   '/$slug': typeof AuthenticatedSlugIndexRoute
   '/$slug/automations/$automation': typeof AuthenticatedSlugAutomationsAutomationRoute
   '/$slug/automations/new': typeof AuthenticatedSlugAutomationsNewRoute
@@ -574,6 +638,7 @@ export interface FileRoutesByTo {
   '/api/internal/mcp/signals': typeof ApiInternalMcpSignalsRouteWithChildren
   '/api/native/proxy/call': typeof ApiNativeProxyCallRoute
   '/api/native/proxy/routines': typeof ApiNativeProxyRoutinesRoute
+  '/api/oauth/$client/config': typeof ApiOauthClientConfigRoute
   '/api/skills/index/events': typeof ApiSkillsIndexEventsRoute
   '/$slug/automations': typeof AuthenticatedSlugAutomationsIndexRoute
   '/$slug/chat': typeof AuthenticatedSlugChatIndexRoute
@@ -600,12 +665,17 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/.well-known/oauth-authorization-server': typeof DotwellKnownOauthAuthorizationServerRoute
   '/_authenticated/$slug': typeof AuthenticatedSlugRouteWithChildren
   '/_authenticated/account': typeof AuthenticatedAccountRouteWithChildren
   '/api/chat': typeof ApiChatRouteWithChildren
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/oauth/authorize': typeof OauthAuthorizeRoute
+  '/oauth/jwks': typeof OauthJwksRoute
+  '/oauth/register': typeof OauthRegisterRouteWithChildren
+  '/oauth/revoke': typeof OauthRevokeRoute
+  '/oauth/token': typeof OauthTokenRoute
   '/sign-up_/accept-invitation': typeof SignUpAcceptInvitationRoute
   '/_authenticated/$slug/automations': typeof AuthenticatedSlugAutomationsRouteWithChildren
   '/_authenticated/$slug/chat': typeof AuthenticatedSlugChatRouteWithChildren
@@ -620,9 +690,11 @@ export interface FileRoutesById {
   '/_authenticated/account/settings': typeof AuthenticatedAccountSettingsRouteWithChildren
   '/api/github/setup': typeof ApiGithubSetupRoute
   '/api/github/webhook': typeof ApiGithubWebhookRoute
+  '/api/oauth/finalize': typeof ApiOauthFinalizeRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
   '/oauth/$client/start': typeof OauthClientStartRoute
+  '/oauth/register/$clientId': typeof OauthRegisterClientIdRoute
   '/_authenticated/$slug/': typeof AuthenticatedSlugIndexRoute
   '/_authenticated/$slug/automations/$automation': typeof AuthenticatedSlugAutomationsAutomationRoute
   '/_authenticated/$slug/automations/new': typeof AuthenticatedSlugAutomationsNewRoute
@@ -646,6 +718,7 @@ export interface FileRoutesById {
   '/api/internal/mcp/signals': typeof ApiInternalMcpSignalsRouteWithChildren
   '/api/native/proxy/call': typeof ApiNativeProxyCallRoute
   '/api/native/proxy/routines': typeof ApiNativeProxyRoutinesRoute
+  '/api/oauth/$client/config': typeof ApiOauthClientConfigRoute
   '/api/skills/index/events': typeof ApiSkillsIndexEventsRoute
   '/_authenticated/$slug/automations/': typeof AuthenticatedSlugAutomationsIndexRoute
   '/_authenticated/$slug/chat/': typeof AuthenticatedSlugChatIndexRoute
@@ -672,12 +745,17 @@ export interface FileRouteTypes {
     | '/'
     | '/sign-in'
     | '/sign-up'
+    | '/.well-known/oauth-authorization-server'
     | '/$slug'
     | '/account'
     | '/api/chat'
     | '/api/health'
     | '/api/inngest'
     | '/oauth/authorize'
+    | '/oauth/jwks'
+    | '/oauth/register'
+    | '/oauth/revoke'
+    | '/oauth/token'
     | '/sign-up/accept-invitation'
     | '/$slug/automations'
     | '/$slug/chat'
@@ -692,9 +770,11 @@ export interface FileRouteTypes {
     | '/account/settings'
     | '/api/github/setup'
     | '/api/github/webhook'
+    | '/api/oauth/finalize'
     | '/api/trpc/$'
     | '/api/v1/$'
     | '/oauth/$client/start'
+    | '/oauth/register/$clientId'
     | '/$slug/'
     | '/$slug/automations/$automation'
     | '/$slug/automations/new'
@@ -718,6 +798,7 @@ export interface FileRouteTypes {
     | '/api/internal/mcp/signals'
     | '/api/native/proxy/call'
     | '/api/native/proxy/routines'
+    | '/api/oauth/$client/config'
     | '/api/skills/index/events'
     | '/$slug/automations/'
     | '/$slug/chat/'
@@ -742,11 +823,16 @@ export interface FileRouteTypes {
     | '/'
     | '/sign-in'
     | '/sign-up'
+    | '/.well-known/oauth-authorization-server'
     | '/account'
     | '/api/chat'
     | '/api/health'
     | '/api/inngest'
     | '/oauth/authorize'
+    | '/oauth/jwks'
+    | '/oauth/register'
+    | '/oauth/revoke'
+    | '/oauth/token'
     | '/sign-up/accept-invitation'
     | '/$slug/connectors'
     | '/$slug/decisions'
@@ -756,9 +842,11 @@ export interface FileRouteTypes {
     | '/account/mcp'
     | '/api/github/setup'
     | '/api/github/webhook'
+    | '/api/oauth/finalize'
     | '/api/trpc/$'
     | '/api/v1/$'
     | '/oauth/$client/start'
+    | '/oauth/register/$clientId'
     | '/$slug'
     | '/$slug/automations/$automation'
     | '/$slug/automations/new'
@@ -780,6 +868,7 @@ export interface FileRouteTypes {
     | '/api/internal/mcp/signals'
     | '/api/native/proxy/call'
     | '/api/native/proxy/routines'
+    | '/api/oauth/$client/config'
     | '/api/skills/index/events'
     | '/$slug/automations'
     | '/$slug/chat'
@@ -805,12 +894,17 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/sign-in'
     | '/sign-up'
+    | '/.well-known/oauth-authorization-server'
     | '/_authenticated/$slug'
     | '/_authenticated/account'
     | '/api/chat'
     | '/api/health'
     | '/api/inngest'
     | '/oauth/authorize'
+    | '/oauth/jwks'
+    | '/oauth/register'
+    | '/oauth/revoke'
+    | '/oauth/token'
     | '/sign-up_/accept-invitation'
     | '/_authenticated/$slug/automations'
     | '/_authenticated/$slug/chat'
@@ -825,9 +919,11 @@ export interface FileRouteTypes {
     | '/_authenticated/account/settings'
     | '/api/github/setup'
     | '/api/github/webhook'
+    | '/api/oauth/finalize'
     | '/api/trpc/$'
     | '/api/v1/$'
     | '/oauth/$client/start'
+    | '/oauth/register/$clientId'
     | '/_authenticated/$slug/'
     | '/_authenticated/$slug/automations/$automation'
     | '/_authenticated/$slug/automations/new'
@@ -851,6 +947,7 @@ export interface FileRouteTypes {
     | '/api/internal/mcp/signals'
     | '/api/native/proxy/call'
     | '/api/native/proxy/routines'
+    | '/api/oauth/$client/config'
     | '/api/skills/index/events'
     | '/_authenticated/$slug/automations/'
     | '/_authenticated/$slug/chat/'
@@ -877,13 +974,19 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
+  DotwellKnownOauthAuthorizationServerRoute: typeof DotwellKnownOauthAuthorizationServerRoute
   ApiChatRoute: typeof ApiChatRouteWithChildren
   ApiHealthRoute: typeof ApiHealthRoute
   ApiInngestRoute: typeof ApiInngestRoute
   OauthAuthorizeRoute: typeof OauthAuthorizeRoute
+  OauthJwksRoute: typeof OauthJwksRoute
+  OauthRegisterRoute: typeof OauthRegisterRouteWithChildren
+  OauthRevokeRoute: typeof OauthRevokeRoute
+  OauthTokenRoute: typeof OauthTokenRoute
   SignUpAcceptInvitationRoute: typeof SignUpAcceptInvitationRoute
   ApiGithubSetupRoute: typeof ApiGithubSetupRoute
   ApiGithubWebhookRoute: typeof ApiGithubWebhookRoute
+  ApiOauthFinalizeRoute: typeof ApiOauthFinalizeRoute
   ApiTrpcSplatRoute: typeof ApiTrpcSplatRoute
   ApiV1SplatRoute: typeof ApiV1SplatRoute
   OauthClientStartRoute: typeof OauthClientStartRoute
@@ -892,6 +995,7 @@ export interface RootRouteChildren {
   ApiInternalMcpSignalsRoute: typeof ApiInternalMcpSignalsRouteWithChildren
   ApiNativeProxyCallRoute: typeof ApiNativeProxyCallRoute
   ApiNativeProxyRoutinesRoute: typeof ApiNativeProxyRoutinesRoute
+  ApiOauthClientConfigRoute: typeof ApiOauthClientConfigRoute
   ApiSkillsIndexEventsRoute: typeof ApiSkillsIndexEventsRoute
   ApiConnectorsLinearOauthCallbackRoute: typeof ApiConnectorsLinearOauthCallbackRoute
   ApiConnectorsXOauthCallbackRoute: typeof ApiConnectorsXOauthCallbackRoute
@@ -937,6 +1041,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignUpAcceptInvitationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/oauth/token': {
+      id: '/oauth/token'
+      path: '/oauth/token'
+      fullPath: '/oauth/token'
+      preLoaderRoute: typeof OauthTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/oauth/revoke': {
+      id: '/oauth/revoke'
+      path: '/oauth/revoke'
+      fullPath: '/oauth/revoke'
+      preLoaderRoute: typeof OauthRevokeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/oauth/register': {
+      id: '/oauth/register'
+      path: '/oauth/register'
+      fullPath: '/oauth/register'
+      preLoaderRoute: typeof OauthRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/oauth/jwks': {
+      id: '/oauth/jwks'
+      path: '/oauth/jwks'
+      fullPath: '/oauth/jwks'
+      preLoaderRoute: typeof OauthJwksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/oauth/authorize': {
       id: '/oauth/authorize'
       path: '/oauth/authorize'
@@ -979,12 +1111,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSlugRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/.well-known/oauth-authorization-server': {
+      id: '/.well-known/oauth-authorization-server'
+      path: '/.well-known/oauth-authorization-server'
+      fullPath: '/.well-known/oauth-authorization-server'
+      preLoaderRoute: typeof DotwellKnownOauthAuthorizationServerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/$slug/': {
       id: '/_authenticated/$slug/'
       path: '/'
       fullPath: '/$slug/'
       preLoaderRoute: typeof AuthenticatedSlugIndexRouteImport
       parentRoute: typeof AuthenticatedSlugRoute
+    }
+    '/oauth/register/$clientId': {
+      id: '/oauth/register/$clientId'
+      path: '/$clientId'
+      fullPath: '/oauth/register/$clientId'
+      preLoaderRoute: typeof OauthRegisterClientIdRouteImport
+      parentRoute: typeof OauthRegisterRoute
     }
     '/oauth/$client/start': {
       id: '/oauth/$client/start'
@@ -1005,6 +1151,13 @@ declare module '@tanstack/react-router' {
       path: '/api/trpc/$'
       fullPath: '/api/trpc/$'
       preLoaderRoute: typeof ApiTrpcSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/oauth/finalize': {
+      id: '/api/oauth/finalize'
+      path: '/api/oauth/finalize'
+      fullPath: '/api/oauth/finalize'
+      preLoaderRoute: typeof ApiOauthFinalizeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/github/webhook': {
@@ -1138,6 +1291,13 @@ declare module '@tanstack/react-router' {
       path: '/api/skills/index/events'
       fullPath: '/api/skills/index/events'
       preLoaderRoute: typeof ApiSkillsIndexEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/oauth/$client/config': {
+      id: '/api/oauth/$client/config'
+      path: '/api/oauth/$client/config'
+      fullPath: '/api/oauth/$client/config'
+      preLoaderRoute: typeof ApiOauthClientConfigRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/native/proxy/routines': {
@@ -1628,6 +1788,18 @@ const ApiChatRouteChildren: ApiChatRouteChildren = {
 const ApiChatRouteWithChildren =
   ApiChatRoute._addFileChildren(ApiChatRouteChildren)
 
+interface OauthRegisterRouteChildren {
+  OauthRegisterClientIdRoute: typeof OauthRegisterClientIdRoute
+}
+
+const OauthRegisterRouteChildren: OauthRegisterRouteChildren = {
+  OauthRegisterClientIdRoute: OauthRegisterClientIdRoute,
+}
+
+const OauthRegisterRouteWithChildren = OauthRegisterRoute._addFileChildren(
+  OauthRegisterRouteChildren,
+)
+
 interface ApiInternalMcpSignalsRouteChildren {
   ApiInternalMcpSignalsGetRoute: typeof ApiInternalMcpSignalsGetRoute
 }
@@ -1646,13 +1818,20 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
+  DotwellKnownOauthAuthorizationServerRoute:
+    DotwellKnownOauthAuthorizationServerRoute,
   ApiChatRoute: ApiChatRouteWithChildren,
   ApiHealthRoute: ApiHealthRoute,
   ApiInngestRoute: ApiInngestRoute,
   OauthAuthorizeRoute: OauthAuthorizeRoute,
+  OauthJwksRoute: OauthJwksRoute,
+  OauthRegisterRoute: OauthRegisterRouteWithChildren,
+  OauthRevokeRoute: OauthRevokeRoute,
+  OauthTokenRoute: OauthTokenRoute,
   SignUpAcceptInvitationRoute: SignUpAcceptInvitationRoute,
   ApiGithubSetupRoute: ApiGithubSetupRoute,
   ApiGithubWebhookRoute: ApiGithubWebhookRoute,
+  ApiOauthFinalizeRoute: ApiOauthFinalizeRoute,
   ApiTrpcSplatRoute: ApiTrpcSplatRoute,
   ApiV1SplatRoute: ApiV1SplatRoute,
   OauthClientStartRoute: OauthClientStartRoute,
@@ -1661,6 +1840,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiInternalMcpSignalsRoute: ApiInternalMcpSignalsRouteWithChildren,
   ApiNativeProxyCallRoute: ApiNativeProxyCallRoute,
   ApiNativeProxyRoutinesRoute: ApiNativeProxyRoutinesRoute,
+  ApiOauthClientConfigRoute: ApiOauthClientConfigRoute,
   ApiSkillsIndexEventsRoute: ApiSkillsIndexEventsRoute,
   ApiConnectorsLinearOauthCallbackRoute: ApiConnectorsLinearOauthCallbackRoute,
   ApiConnectorsXOauthCallbackRoute: ApiConnectorsXOauthCallbackRoute,
