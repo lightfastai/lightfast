@@ -643,6 +643,68 @@ describe("projectEntityGraphPeopleToOrgPeople", () => {
       })
     );
   });
+
+  it("uses canonical-key order for fallback bridge identity when primary is missing", async () => {
+    const xSource = makeSourceIdentity();
+    const githubSource = makeSourceIdentity({
+      id: 2,
+      publicId: "sid_223e4567-e89b-12d3-a456-426614174000",
+      provider: "github",
+      identityKey: "github:handle:avachen",
+      identityValue: "avachen",
+      normalizedValue: "avachen",
+    });
+    const graphPerson = makeEntityPerson({
+      primarySourceIdentityId: null,
+    });
+    const githubRow = makePerson({
+      displayName: "Ava Chen",
+      identityProvider: "github",
+      identityType: "handle",
+      identityValue: "avachen",
+      normalizedIdentityValue: "avachen",
+      identityKey: createPersonIdentityKey({
+        identityProvider: "github",
+        identityType: "handle",
+        normalizedIdentityValue: "avachen",
+      }),
+      metadata: {
+        entityGraph: expect.any(Object),
+      },
+      personSource: "entity_graph",
+    });
+    const { db, spies } = makeProjectionDb({
+      graphPeople: [graphPerson],
+      projectedPeople: [githubRow],
+      sourceIdentities: [xSource, githubSource],
+      sourceIdentityResults: [[xSource], [xSource, githubSource]],
+    });
+
+    await expect(
+      projectEntityGraphPeopleToOrgPeople(db, {
+        clerkOrgId: "org_test",
+        resolverVersion: "signal-entity-enrichment-v1",
+        sourceIdentityKeys: [xSource.identityKey],
+      })
+    ).resolves.toEqual([githubRow]);
+
+    expect(spies.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        identityProvider: "github",
+        identityType: "handle",
+        identityValue: "avachen",
+        metadata: {
+          entityGraph: expect.objectContaining({
+            sourceIdentityKey: githubSource.identityKey,
+            sourceIdentityKeys: expect.arrayContaining([
+              githubSource.identityKey,
+              xSource.identityKey,
+            ]),
+          }),
+        },
+      })
+    );
+  });
 });
 
 function makePeopleListDb(rows: Person[]) {

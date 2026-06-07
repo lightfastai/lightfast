@@ -481,12 +481,32 @@ function selectPrimaryBridgeSourceIdentity(
   graphPerson: EntityPerson,
   sourceIdentities: BridgeableGraphSourceIdentity[]
 ): BridgeableGraphSourceIdentity | undefined {
-  return (
-    sourceIdentities.find(
-      (sourceIdentity) =>
-        graphPerson.primarySourceIdentityId === sourceIdentity.id
-    ) ?? sourceIdentities[0]
+  const primary = sourceIdentities.find(
+    (sourceIdentity) =>
+      graphPerson.primarySourceIdentityId === sourceIdentity.id
   );
+  if (primary) {
+    return primary;
+  }
+
+  const sourceIdentitiesByKey = new Map(
+    sourceIdentities.map((sourceIdentity) => [
+      sourceIdentity.identityKey,
+      sourceIdentity,
+    ])
+  );
+  for (const identityKey of canonicalPersonKeyMembers(
+    graphPerson.canonicalKey
+  )) {
+    const sourceIdentity = sourceIdentitiesByKey.get(identityKey);
+    if (sourceIdentity) {
+      return sourceIdentity;
+    }
+  }
+
+  return [...sourceIdentities].sort((left, right) =>
+    left.identityKey.localeCompare(right.identityKey)
+  )[0];
 }
 
 function isBridgeableGraphSourceIdentity(
