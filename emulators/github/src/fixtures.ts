@@ -53,6 +53,11 @@ export function createGitHubEmulatorSeed(): GitHubSeedConfig {
         login: GITHUB_EMULATOR_FIXTURES.githubUserLogin,
         name: "Emulator Dev",
         email: GITHUB_EMULATOR_FIXTURES.githubUserEmail,
+        company: "Lightfast Labs",
+        blog: "https://lightfast.ai",
+        location: "Melbourne, Australia",
+        twitter_username: "lightfast_dev",
+        bio: "Builds local GitHub emulator fixtures for agent workflows.",
       },
     ],
     orgs: [

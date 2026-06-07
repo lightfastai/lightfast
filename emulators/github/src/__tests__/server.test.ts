@@ -116,6 +116,23 @@ describe("@repo/github-emulator", () => {
     );
   });
 
+  it("returns rich public user profiles by login", async () => {
+    const res = await fetch(`${emulator?.url}/users/emulator-dev`, {
+      headers: {
+        authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      login: "emulator-dev",
+      name: "Emulator Dev",
+      company: "Lightfast Labs",
+      blog: "https://lightfast.ai",
+      twitter_username: "lightfast_dev",
+    });
+  });
+
   it("accepts a valid GitHub App JWT after the local patch", async () => {
     const jwt = await createAppJwt();
     const res = await fetch(`${emulator?.url}/app`, {
