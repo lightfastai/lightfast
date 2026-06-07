@@ -1,15 +1,19 @@
-import type { Database, Person } from "@db/app";
+import type { Database, EntityPerson, EntitySourceIdentity, Person } from "@db/app";
 import { MySqlDialect } from "drizzle-orm/mysql-core";
 import { describe, expect, it, vi } from "vitest";
 
 import {
   PERSON_DISPLAY_NAME_LENGTH,
   PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH,
+  orgEntityPeople,
+  orgEntitySourceIdentities,
+  orgPeople,
 } from "../schema";
 import {
   escapeLikePattern,
   getPersonByPublicId,
   listPeople,
+  projectEntityGraphPeopleToOrgPeople,
   upsertPeopleFromCandidates,
 } from "../utils/people";
 import {
@@ -153,6 +157,47 @@ function makePerson(overrides: Partial<Person> = {}): Person {
     memberSyncedAt: null,
     createdAt: new Date("2026-05-22T00:00:00.000Z"),
     updatedAt: new Date("2026-05-22T00:00:00.000Z"),
+    ...overrides,
+  };
+}
+
+function makeSourceIdentity(
+  overrides: Partial<EntitySourceIdentity> = {}
+): EntitySourceIdentity {
+  return {
+    id: 1,
+    publicId: "sid_123e4567-e89b-12d3-a456-426614174000",
+    clerkOrgId: "org_test",
+    provider: "x",
+    identityType: "handle",
+    identityValue: "ava_ai",
+    normalizedValue: "ava_ai",
+    identityKey: "x:handle:ava_ai",
+    status: "likely",
+    metadata: {},
+    createdAt: new Date("2026-06-06T00:00:00.000Z"),
+    updatedAt: new Date("2026-06-06T00:00:00.000Z"),
+    ...overrides,
+  };
+}
+
+function makeEntityPerson(overrides: Partial<EntityPerson> = {}): EntityPerson {
+  return {
+    id: 21,
+    publicId: "person_123e4567-e89b-12d3-a456-426614174000",
+    canonicalKey: "person:github:handle:avachen|x:handle:ava_ai",
+    clerkOrgId: "org_test",
+    displayName: "Ava Chen",
+    status: "likely",
+    confidence: "0.9200",
+    primarySourceIdentityId: 1,
+    confirmedByType: null,
+    confirmedById: null,
+    confirmationPolicy: null,
+    confirmedAt: null,
+    metadata: {},
+    createdAt: new Date("2026-06-06T00:00:00.000Z"),
+    updatedAt: new Date("2026-06-06T00:00:00.000Z"),
     ...overrides,
   };
 }
@@ -321,6 +366,168 @@ describe("upsertPeopleFromCandidates", () => {
     ).resolves.toEqual([]);
 
     expect(spies.insertValues).not.toHaveBeenCalled();
+  });
+});
+
+function makeProjectionDb(input: {
+  graphPeople: EntityPerson[];
+  projectedPeople: Person[];
+  sourceIdentities: EntitySourceIdentity[];
+}) {
+  const peopleQueue = [...input.projectedPeople];
+  const spies = {
+    duplicateSet: vi.fn(),
+    graphPeopleLimit: vi.fn(() => Promise.resolve(input.graphPeople)),
+    insertValues: vi.fn(),
+    peopleLimit: vi.fn(() => Promise.resolve([peopleQueue.shift()].filter(Boolean))),
+    sourceIdentityLimit: vi.fn(() => Promise.resolve(input.sourceIdentities)),
+  };
+  const db = {
+    insert: () => ({
+      values: (values: unknown) => {
+        spies.insertValues(values);
+        return {
+          onDuplicateKeyUpdate: ({ set }: { set: Record<string, unknown> }) => {
+            spies.duplicateSet(set);
+            return Promise.resolve({ rowsAffected: 1 });
+          },
+        };
+      },
+    }),
+    select: () => ({
+      from: (table: unknown) => ({
+        where: () => {
+          if (table === orgEntitySourceIdentities) {
+            return { limit: spies.sourceIdentityLimit };
+          }
+          if (table === orgEntityPeople) {
+            return { limit: spies.graphPeopleLimit };
+          }
+          if (table === orgPeople) {
+            return { limit: spies.peopleLimit };
+          }
+          throw new Error("Unexpected projection table.");
+        },
+      }),
+    }),
+  };
+  return { db: db as unknown as Database, spies };
+}
+
+describe("projectEntityGraphPeopleToOrgPeople", () => {
+  it("projects exact graph X/GitHub handle identities into People bridge rows", async () => {
+    const graphPerson = makeEntityPerson();
+    const xSource = makeSourceIdentity();
+    const githubSource = makeSourceIdentity({
+      id: 2,
+      publicId: "sid_223e4567-e89b-12d3-a456-426614174000",
+      provider: "github",
+      identityKey: "github:handle:avachen",
+      identityValue: "avachen",
+      normalizedValue: "avachen",
+    });
+    const xRow = makePerson({
+      displayName: "Ava Chen",
+      identityProvider: "x",
+      identityType: "handle",
+      identityValue: "ava_ai",
+      normalizedIdentityValue: "ava_ai",
+      identityKey: createPersonIdentityKey({
+        identityProvider: "x",
+        identityType: "handle",
+        normalizedIdentityValue: "ava_ai",
+      }),
+      metadata: {
+        entityGraph: expect.any(Object),
+      },
+      personSource: "entity_graph",
+    });
+    const githubRow = makePerson({
+      id: 2,
+      publicId: "person_223e4567-e89b-12d3-a456-426614174000",
+      displayName: "Ava Chen",
+      identityProvider: "github",
+      identityType: "handle",
+      identityValue: "avachen",
+      normalizedIdentityValue: "avachen",
+      identityKey: createPersonIdentityKey({
+        identityProvider: "github",
+        identityType: "handle",
+        normalizedIdentityValue: "avachen",
+      }),
+      personSource: "mixed",
+    });
+    const { db, spies } = makeProjectionDb({
+      graphPeople: [graphPerson],
+      projectedPeople: [xRow, githubRow],
+      sourceIdentities: [xSource, githubSource],
+    });
+
+    await expect(
+      projectEntityGraphPeopleToOrgPeople(db, {
+        clerkOrgId: "org_test",
+        resolverVersion: "signal-entity-enrichment-v1",
+        source: {
+          kind: "signal_entity_enrichment",
+          reason: "signal_indexed",
+          signalId: "signal_123",
+        },
+        sourceIdentityKeys: ["x:handle:ava_ai", "github:handle:avachen"],
+      })
+    ).resolves.toEqual([xRow, githubRow]);
+
+    expect(spies.insertValues).toHaveBeenCalledTimes(2);
+    expect(spies.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clerkOrgId: "org_test",
+        displayName: "Ava Chen",
+        identityProvider: "x",
+        identityType: "handle",
+        identityValue: "ava_ai",
+        normalizedIdentityValue: "ava_ai",
+        personSource: "entity_graph",
+        metadata: {
+          entityGraph: {
+            personCanonicalKey: graphPerson.canonicalKey,
+            personConfidence: graphPerson.confidence,
+            personPublicId: graphPerson.publicId,
+            personStatus: graphPerson.status,
+            resolverVersion: "signal-entity-enrichment-v1",
+            source: {
+              kind: "signal_entity_enrichment",
+              reason: "signal_indexed",
+              signalId: "signal_123",
+            },
+            sourceIdentityKey: xSource.identityKey,
+            sourceIdentityPublicId: xSource.publicId,
+          },
+        },
+      })
+    );
+    expect(spies.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        identityProvider: "github",
+        identityType: "handle",
+        identityValue: "avachen",
+        normalizedIdentityValue: "avachen",
+        personSource: "entity_graph",
+      })
+    );
+
+    const duplicateSet = spies.duplicateSet.mock.calls[0]?.[0];
+    expect(duplicateSet).toEqual(
+      expect.objectContaining({
+        displayName: expect.anything(),
+        metadata: expect.any(Object),
+        personSource: expect.anything(),
+      })
+    );
+    const query = new MySqlDialect().sqlToQuery(
+      duplicateSet?.personSource as never
+    );
+    expect(query.sql).toContain("person_source");
+    expect(query.sql).toContain("entity_graph");
+    expect(query.sql).toContain("mixed");
   });
 });
 

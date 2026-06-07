@@ -362,6 +362,8 @@ export {
   getPersonByPublicId,
   type ListPeopleParams,
   listPeople,
+  type ProjectEntityGraphPeopleToOrgPeopleInput,
+  projectEntityGraphPeopleToOrgPeople,
   type UpsertPeopleCandidate,
   type UpsertPeopleFromCandidatesInput,
   upsertPeopleFromCandidates,

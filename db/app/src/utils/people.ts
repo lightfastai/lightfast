@@ -4,11 +4,16 @@ import type { Database } from "../client";
 import {
   PERSON_DISPLAY_NAME_LENGTH,
   PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH,
+  type EntityGraphMetadata,
+  type EntityPerson,
+  type EntitySourceIdentity,
   type Person,
   type PersonIdentityProvider,
   type PersonIdentityType,
   type PersonMemberStatus,
   type PersonSource,
+  orgEntityPeople,
+  orgEntitySourceIdentities,
   orgPeople as people,
 } from "../schema";
 
@@ -194,6 +199,121 @@ export async function upsertPeopleFromCandidates(
   return rows;
 }
 
+export interface ProjectEntityGraphPeopleToOrgPeopleInput {
+  clerkOrgId: string;
+  resolverVersion: string;
+  source?: Record<string, unknown>;
+  sourceIdentityKeys: string[];
+}
+
+export async function projectEntityGraphPeopleToOrgPeople(
+  db: Database,
+  input: ProjectEntityGraphPeopleToOrgPeopleInput
+): Promise<Person[]> {
+  const sourceIdentityKeys = Array.from(
+    new Set(input.sourceIdentityKeys.map((key) => key.trim()).filter(Boolean))
+  );
+  if (sourceIdentityKeys.length === 0) {
+    return [];
+  }
+
+  const sourceIdentities = await db
+    .select()
+    .from(orgEntitySourceIdentities)
+    .where(
+      and(
+        eq(orgEntitySourceIdentities.clerkOrgId, input.clerkOrgId),
+        inArray(orgEntitySourceIdentities.identityKey, sourceIdentityKeys)
+      )
+    )
+    .limit(sourceIdentityKeys.length);
+
+  const bridgeableSourceIdentities = sourceIdentities.filter(
+    isBridgeableGraphSourceIdentity
+  );
+  if (bridgeableSourceIdentities.length === 0) {
+    return [];
+  }
+
+  const graphPeople = await loadGraphPeopleForSourceIdentities(db, {
+    clerkOrgId: input.clerkOrgId,
+    sourceIdentities: bridgeableSourceIdentities,
+  });
+  const projectedPeople: Person[] = [];
+  const seenBridgeIdentityKeys = new Set<string>();
+
+  for (const graphPerson of graphPeople) {
+    for (const sourceIdentity of bridgeableSourceIdentities) {
+      if (!graphPersonContainsSourceIdentity(graphPerson, sourceIdentity)) {
+        continue;
+      }
+
+      const normalized = normalizePersonIdentityCandidate({
+        identityProvider: sourceIdentity.provider,
+        identityType: "handle",
+        identityValue: sourceIdentity.identityValue,
+      });
+      if (!normalized) {
+        continue;
+      }
+      if (
+        normalized.normalizedIdentityValue.length >
+        PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH
+      ) {
+        continue;
+      }
+
+      const identityKey = createPersonIdentityKey(normalized);
+      if (seenBridgeIdentityKeys.has(identityKey)) {
+        continue;
+      }
+      seenBridgeIdentityKeys.add(identityKey);
+
+      const metadata = entityGraphPeopleBridgeMetadata({
+        graphPerson,
+        resolverVersion: input.resolverVersion,
+        source: input.source,
+        sourceIdentity,
+      });
+      const displayName = normalizeDisplayName(graphPerson.displayName);
+
+      await db
+        .insert(people)
+        .values({
+          clerkOrgId: input.clerkOrgId,
+          displayName,
+          identityProvider: normalized.identityProvider,
+          identityType: normalized.identityType,
+          identityValue: sourceIdentity.identityValue,
+          normalizedIdentityValue: normalized.normalizedIdentityValue,
+          identityKey,
+          firstSeenSignalId: null,
+          lastSeenSignalId: null,
+          seenCount: 1,
+          metadata,
+          personSource: "entity_graph",
+        })
+        .onDuplicateKeyUpdate({
+          set: {
+            displayName: sql`COALESCE(${displayName}, ${people.displayName})`,
+            metadata,
+            personSource: sql`CASE WHEN ${people.personSource} = 'entity_graph' THEN 'entity_graph' ELSE 'mixed' END`,
+          },
+        });
+
+      const row = await getPersonByIdentityKey(db, {
+        clerkOrgId: input.clerkOrgId,
+        identityKey,
+      });
+      if (row) {
+        projectedPeople.push(row);
+      }
+    }
+  }
+
+  return projectedPeople;
+}
+
 export async function getPersonByIdentityKey(
   db: Database,
   input: { clerkOrgId: string; identityKey: string }
@@ -234,4 +354,74 @@ function normalizeDisplayName(value: string | undefined): string | null {
     return null;
   }
   return trimmed.slice(0, PERSON_DISPLAY_NAME_LENGTH);
+}
+
+async function loadGraphPeopleForSourceIdentities(
+  db: Database,
+  input: {
+    clerkOrgId: string;
+    sourceIdentities: EntitySourceIdentity[];
+  }
+): Promise<EntityPerson[]> {
+  const sourceIdentityIds = input.sourceIdentities.map((identity) => identity.id);
+  const matchConditions = [
+    inArray(orgEntityPeople.primarySourceIdentityId, sourceIdentityIds),
+    ...input.sourceIdentities.map(
+      (identity) =>
+        sql`${orgEntityPeople.canonicalKey} like ${`%${escapeLikePattern(identity.identityKey)}%`} escape '\\\\'`
+    ),
+  ];
+
+  return db
+    .select()
+    .from(orgEntityPeople)
+    .where(
+      and(
+        eq(orgEntityPeople.clerkOrgId, input.clerkOrgId),
+        or(...matchConditions)
+      )
+    )
+    .limit(100);
+}
+
+function graphPersonContainsSourceIdentity(
+  graphPerson: EntityPerson,
+  sourceIdentity: EntitySourceIdentity
+): boolean {
+  return (
+    graphPerson.primarySourceIdentityId === sourceIdentity.id ||
+    graphPerson.canonicalKey.includes(sourceIdentity.identityKey)
+  );
+}
+
+function isBridgeableGraphSourceIdentity(
+  sourceIdentity: EntitySourceIdentity
+): sourceIdentity is EntitySourceIdentity & {
+  identityType: "handle";
+  provider: Extract<PersonIdentityProvider, "github" | "x">;
+} {
+  return (
+    sourceIdentity.identityType === "handle" &&
+    (sourceIdentity.provider === "x" || sourceIdentity.provider === "github")
+  );
+}
+
+function entityGraphPeopleBridgeMetadata(input: {
+  graphPerson: EntityPerson;
+  resolverVersion: string;
+  source?: Record<string, unknown>;
+  sourceIdentity: EntitySourceIdentity;
+}): EntityGraphMetadata {
+  return {
+    entityGraph: {
+      personCanonicalKey: input.graphPerson.canonicalKey,
+      personConfidence: input.graphPerson.confidence,
+      personPublicId: input.graphPerson.publicId,
+      personStatus: input.graphPerson.status,
+      resolverVersion: input.resolverVersion,
+      source: input.source ?? null,
+      sourceIdentityKey: input.sourceIdentity.identityKey,
+      sourceIdentityPublicId: input.sourceIdentity.publicId,
+    },
+  };
 }
