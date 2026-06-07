@@ -204,6 +204,13 @@
       "when": 1780800519505,
       "tag": "0028_fair_wither",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "5",
+      "when": 1780822486187,
+      "tag": "0029_parched_maximus",
+      "breakpoints": true
     }
   ]
 }

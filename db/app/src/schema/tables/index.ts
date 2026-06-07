@@ -236,6 +236,21 @@ export {
   systemNamespaces,
 } from "./system-namespaces";
 export {
+  createUserConnectorToolCallId,
+  type InsertUserConnectorToolCall,
+  USER_CONNECTOR_TOOL_CALL_ID_PREFIX,
+  type UserConnectorToolCall,
+  type UserConnectorToolCallRedactedPayload,
+  type UserConnectorToolCallSourceSurface,
+  type UserConnectorToolCallStatus,
+  userConnectorToolCalls,
+} from "./user-connector-tool-calls";
+export {
+  type InsertUserConnectorConnection,
+  type UserConnectorConnection,
+  userConnectorConnections,
+} from "./user-connectors";
+export {
   type InsertUserSourceControlAccount,
   type UserSourceControlAccount,
   type UserSourceControlAccountProvider,

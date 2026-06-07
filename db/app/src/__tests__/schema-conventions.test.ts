@@ -119,6 +119,8 @@ describe("schema conventions", () => {
       "org-workspace-assistant.ts",
       "system-mcp-oauth.ts",
       "system-namespaces.ts",
+      "user-connector-tool-calls.ts",
+      "user-connectors.ts",
       "user-source-control.ts",
     ];
 

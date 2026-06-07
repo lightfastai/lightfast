@@ -10,13 +10,22 @@ import {
   Building2,
   CalendarDays,
   Link2,
+  MessageCircle,
   RefreshCcw,
   User,
   Workflow,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { ConnectorIcon } from "./connector-icons";
-import { type ConnectorCatalogRow, connectionStatus } from "./connectors-model";
+import {
+  type ConnectorCatalogRow,
+  connectionStatus,
+  isUserConnectorConnection,
+  userConnectionStatus,
+} from "./connectors-model";
+
+const USER_CONNECTOR_AVAILABILITY_COPY =
+  "Available in your chats. Not visible to teammates.";
 
 function PropertyRow({
   children,
@@ -38,6 +47,28 @@ function PropertyRow({
   );
 }
 
+function ToolRow({
+  tool,
+  trailing,
+}: {
+  tool: { description?: string; name: string };
+  trailing?: ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-3 border-border/60 border-t py-2.5 first:border-t-0">
+      <div className="min-w-0 flex-1">
+        <p className="font-mono text-foreground text-sm">{tool.name}</p>
+        {tool.description ? (
+          <p className="mt-0.5 text-muted-foreground text-xs leading-relaxed">
+            {tool.description}
+          </p>
+        ) : null}
+      </div>
+      {trailing}
+    </div>
+  );
+}
+
 export function ConnectorDetailContent({
   closeSlot,
   onCopyLink,
@@ -52,13 +83,16 @@ export function ConnectorDetailContent({
     return null;
   }
 
-  const status = connectionStatus(connection);
   const iconClass = "size-4 shrink-0";
   const connectedAt = new Date(connection.connectedAt);
   const lastRefreshAt = connection.lastToolRefreshAt
     ? new Date(connection.lastToolRefreshAt)
     : null;
   const hasRefreshError = Boolean(connection.lastToolRefreshErrorAt);
+  const isUserConnection = isUserConnectorConnection(connection);
+  const status = isUserConnection
+    ? userConnectionStatus(connection)
+    : connectionStatus(connection);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -95,19 +129,50 @@ export function ConnectorDetailContent({
               {status.label}
             </span>
           </PropertyRow>
-          {connection.providerWorkspaceName ? (
-            <PropertyRow
-              icon={<Building2 className={iconClass} />}
-              label="Workspace"
-            >
-              {connection.providerWorkspaceName}
-            </PropertyRow>
-          ) : null}
-          {connection.providerActorName ? (
-            <PropertyRow icon={<User className={iconClass} />} label="Account">
-              {connection.providerActorName}
-            </PropertyRow>
-          ) : null}
+          {isUserConnection ? (
+            <>
+              <PropertyRow
+                icon={<MessageCircle className={iconClass} />}
+                label="Availability"
+              >
+                <div className="flex flex-col items-start gap-1">
+                  <Badge className="text-muted-foreground" variant="outline">
+                    Only you
+                  </Badge>
+                  <p className="text-muted-foreground text-xs leading-relaxed">
+                    {USER_CONNECTOR_AVAILABILITY_COPY}
+                  </p>
+                </div>
+              </PropertyRow>
+              {connection.providerAccountName ? (
+                <PropertyRow
+                  icon={<User className={iconClass} />}
+                  label="Account"
+                >
+                  {connection.providerAccountName}
+                </PropertyRow>
+              ) : null}
+            </>
+          ) : (
+            <>
+              {connection.providerWorkspaceName ? (
+                <PropertyRow
+                  icon={<Building2 className={iconClass} />}
+                  label="Workspace"
+                >
+                  {connection.providerWorkspaceName}
+                </PropertyRow>
+              ) : null}
+              {connection.providerActorName ? (
+                <PropertyRow
+                  icon={<User className={iconClass} />}
+                  label="Account"
+                >
+                  {connection.providerActorName}
+                </PropertyRow>
+              ) : null}
+            </>
+          )}
           <PropertyRow
             icon={<CalendarDays className={iconClass} />}
             label="Connected"
@@ -116,19 +181,23 @@ export function ConnectorDetailContent({
               {formatRelativeTimeToNow(connectedAt, { addSuffix: true })}
             </span>
           </PropertyRow>
-          <PropertyRow
-            icon={<Workflow className={iconClass} />}
-            label="Automations"
-          >
-            <Badge className="text-muted-foreground" variant="outline">
-              {connection.enabledForAutomations ? "Enabled" : "Disabled"}
-            </Badge>
-          </PropertyRow>
-          <PropertyRow icon={<Bot className={iconClass} />} label="Agents">
-            <Badge className="text-muted-foreground" variant="outline">
-              {connection.enabledForAgents ? "Enabled" : "Disabled"}
-            </Badge>
-          </PropertyRow>
+          {isUserConnection ? null : (
+            <>
+              <PropertyRow
+                icon={<Workflow className={iconClass} />}
+                label="Automations"
+              >
+                <Badge className="text-muted-foreground" variant="outline">
+                  {connection.enabledForAutomations ? "Enabled" : "Disabled"}
+                </Badge>
+              </PropertyRow>
+              <PropertyRow icon={<Bot className={iconClass} />} label="Agents">
+                <Badge className="text-muted-foreground" variant="outline">
+                  {connection.enabledForAgents ? "Enabled" : "Disabled"}
+                </Badge>
+              </PropertyRow>
+            </>
+          )}
           {lastRefreshAt ? (
             <PropertyRow
               icon={<RefreshCcw className={iconClass} />}
@@ -155,39 +224,44 @@ export function ConnectorDetailContent({
             {connection.tools.length}
           </Badge>
         </div>
-        <div className="mt-2 flex flex-col">
-          {connection.tools.map((tool) => (
-            <div
-              className="flex items-start gap-3 border-border/60 border-t py-2.5 first:border-t-0"
-              key={tool.name}
-            >
-              <div className="min-w-0 flex-1">
-                <p className="font-mono text-foreground text-sm">{tool.name}</p>
-                {tool.description ? (
-                  <p className="mt-0.5 text-muted-foreground text-xs leading-relaxed">
-                    {tool.description}
-                  </p>
-                ) : null}
-              </div>
-              {tool.availableForAgents ? (
-                <span
-                  aria-label="Available for agents"
-                  className="mt-1.5 size-1.5 shrink-0 rounded-full bg-sky-500"
-                  role="img"
-                  title="Available for agents"
-                />
-              ) : null}
-              {tool.availableForAutomations ? (
-                <span
-                  aria-label="Available for automations"
-                  className="mt-1.5 size-1.5 shrink-0 rounded-full bg-emerald-500"
-                  role="img"
-                  title="Available for automations"
-                />
-              ) : null}
-            </div>
-          ))}
-        </div>
+        {connection.tools.length > 0 ? (
+          <div className="mt-2 flex flex-col">
+            {isUserConnection
+              ? connection.tools.map((tool) => (
+                  <ToolRow key={tool.name} tool={tool} />
+                ))
+              : connection.tools.map((tool) => (
+                  <ToolRow
+                    key={tool.name}
+                    tool={tool}
+                    trailing={
+                      <>
+                        {tool.availableForAgents ? (
+                          <span
+                            aria-label="Available for agents"
+                            className="mt-1.5 size-1.5 shrink-0 rounded-full bg-sky-500"
+                            role="img"
+                            title="Available for agents"
+                          />
+                        ) : null}
+                        {tool.availableForAutomations ? (
+                          <span
+                            aria-label="Available for automations"
+                            className="mt-1.5 size-1.5 shrink-0 rounded-full bg-emerald-500"
+                            role="img"
+                            title="Available for automations"
+                          />
+                        ) : null}
+                      </>
+                    }
+                  />
+                ))}
+          </div>
+        ) : (
+          <p className="mt-3 rounded-[8px] border border-border border-dashed px-3 py-2 text-muted-foreground text-sm">
+            No tools available yet.
+          </p>
+        )}
       </div>
 
       <div className="border-border/60 border-t px-5 py-3.5 text-muted-foreground text-xs">

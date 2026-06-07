@@ -41,7 +41,7 @@ import {
   Search,
 } from "lucide-react";
 import { useQueryState } from "nuqs";
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useTRPC } from "~/trpc/react";
 import { LfSelect } from "../../_components/lf-select";
 import { ConnectorDetailSheet } from "./connector-detail-sheet";
@@ -51,7 +51,11 @@ import {
   type ConnectorProvider,
   connectionStatus,
   displayProviderName,
+  type TeamConnectorCatalogRow,
+  type UserConnectorCatalogRow,
+  userConnectionStatus,
 } from "./connectors-model";
+import { connectorOwnerScopeParser } from "./connectors-search-params";
 
 type StatusFilter = "all" | "connected" | "available" | "needs_reconnect";
 
@@ -60,13 +64,22 @@ interface ConnectorsClientProps {
   callbackError?: string;
 }
 
-const CONNECTABLE_PROVIDERS = new Set<ConnectorProvider>(["linear", "x"]);
+const CONNECTABLE_PROVIDERS = new Set<TeamConnectorCatalogRow["provider"]>([
+  "linear",
+  "x",
+]);
 const ADMIN_REQUIRED_MESSAGE = "Admin access required to manage connectors";
 const DISCONNECT_UNAVAILABLE_MESSAGE =
   "Disconnecting isn't available right now.";
+const USER_CONNECTOR_AVAILABILITY_COPY =
+  "Available in your chats. Not visible to teammates.";
 
-function isConnectableProvider(provider: ConnectorProvider) {
-  return CONNECTABLE_PROVIDERS.has(provider);
+function isConnectableProvider(
+  provider: ConnectorProvider
+): provider is TeamConnectorCatalogRow["provider"] {
+  return CONNECTABLE_PROVIDERS.has(
+    provider as TeamConnectorCatalogRow["provider"]
+  );
 }
 
 function filterMatches(row: ConnectorCatalogRow, filter: StatusFilter) {
@@ -82,25 +95,37 @@ function filterMatches(row: ConnectorCatalogRow, filter: StatusFilter) {
   }
 }
 
-function isMutationDisabled(row: ConnectorCatalogRow, pending: boolean) {
+function searchMatches(row: ConnectorCatalogRow, normalizedQuery: string) {
+  return (
+    normalizedQuery.length === 0 ||
+    [row.displayName, row.description, row.category, row.provider].some(
+      (value) => value.toLowerCase().includes(normalizedQuery)
+    )
+  );
+}
+
+function isTeamMutationDisabled(
+  row: TeamConnectorCatalogRow,
+  pending: boolean
+) {
   return pending || !row.canManage || !isConnectableProvider(row.provider);
 }
 
-function isConnectDisabled(row: ConnectorCatalogRow, pending: boolean) {
+function isTeamConnectDisabled(row: TeamConnectorCatalogRow, pending: boolean) {
   return (
-    isMutationDisabled(row, pending) ||
+    isTeamMutationDisabled(row, pending) ||
     row.connectAvailability.status !== "available"
   );
 }
 
-function missingConfigMessage(row: ConnectorCatalogRow) {
+function missingConfigMessage(row: TeamConnectorCatalogRow) {
   if (row.provider === "x") {
     return "X OAuth credentials are not configured.";
   }
   return "Linear OAuth credentials are not configured.";
 }
 
-function missingConfigFallback(row: ConnectorCatalogRow) {
+function missingConfigFallback(row: TeamConnectorCatalogRow) {
   return row.provider === "x" ? "X OAuth" : "Linear OAuth";
 }
 
@@ -112,11 +137,18 @@ export function ConnectorsClient({
   const queryClient = useQueryClient();
   const [selectedProvider, setSelectedProvider] = useQueryState("connector");
   const [, setErrorParam] = useQueryState("error");
-  const listQueryOptions = trpc.org.workspace.connectors.list.queryOptions();
-  const { data: connectors } = useSuspenseQuery({
-    ...listQueryOptions,
+  const listSectionsQueryOptions =
+    trpc.org.workspace.connectors.listSections.queryOptions();
+  const { data: connectorSections } = useSuspenseQuery({
+    ...listSectionsQueryOptions,
     staleTime: 30_000,
   });
+  const teamConnectors = connectorSections.teamConnectors;
+  const yourConnectors = connectorSections.yourConnectors;
+  const [ownerScope, setOwnerScope] = useQueryState(
+    "scope",
+    connectorOwnerScopeParser
+  );
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [callbackState] = useState(() => ({
@@ -126,11 +158,18 @@ export function ConnectorsClient({
 
   const invalidateList = () =>
     queryClient.invalidateQueries(
-      trpc.org.workspace.connectors.list.queryFilter()
+      trpc.org.workspace.connectors.listSections.queryFilter()
     );
 
   const startConnectMutation = useMutation(
     trpc.org.workspace.connectors.startConnect.mutationOptions({
+      onSuccess: (result) => {
+        window.location.href = result.authorizationUrl;
+      },
+    })
+  );
+  const userStartConnectMutation = useMutation(
+    trpc.viewer.account.userConnectors.startConnect.mutationOptions({
       onSuccess: (result) => {
         window.location.href = result.authorizationUrl;
       },
@@ -156,6 +195,11 @@ export function ConnectorsClient({
       onSuccess: invalidateList,
     })
   );
+  const userDisconnectMutation = useMutation(
+    trpc.viewer.account.userConnectors.disconnect.mutationOptions({
+      onSuccess: invalidateList,
+    })
+  );
 
   useEffect(() => {
     if (!callbackState.error) {
@@ -167,48 +211,96 @@ export function ConnectorsClient({
     void setErrorParam(null);
   }, [callbackState.error, setErrorParam, setSelectedProvider]);
 
-  const normalizedQuery = query.trim().toLowerCase();
-  const filteredConnectors = useMemo(
-    () =>
-      connectors.filter((row) => {
-        const matchesQuery =
-          normalizedQuery.length === 0 ||
-          [row.displayName, row.description, row.category, row.provider].some(
-            (value) => value.toLowerCase().includes(normalizedQuery)
-          );
-        return matchesQuery && filterMatches(row, statusFilter);
-      }),
-    [connectors, normalizedQuery, statusFilter]
-  );
+  const shouldUsePersonalScope =
+    callbackConnector === "granola" || selectedProvider === "granola";
 
-  function connect(row: ConnectorCatalogRow) {
+  useEffect(() => {
+    if (shouldUsePersonalScope && ownerScope !== "personal") {
+      void setOwnerScope("personal");
+    }
+  }, [ownerScope, setOwnerScope, shouldUsePersonalScope]);
+
+  const ownerView = shouldUsePersonalScope ? "personal" : ownerScope;
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredTeamConnectors = useMemo(
+    () =>
+      teamConnectors.filter(
+        (row) =>
+          searchMatches(row, normalizedQuery) &&
+          filterMatches(row, statusFilter)
+      ),
+    [teamConnectors, normalizedQuery, statusFilter]
+  );
+  const filteredYourConnectors = useMemo(
+    () =>
+      yourConnectors.filter(
+        (row) =>
+          searchMatches(row, normalizedQuery) &&
+          filterMatches(row, statusFilter)
+      ),
+    [yourConnectors, normalizedQuery, statusFilter]
+  );
+  const activeFilteredConnectors =
+    ownerView === "team" ? filteredTeamConnectors : filteredYourConnectors;
+  const activeConnectors =
+    ownerView === "team" ? teamConnectors : yourConnectors;
+  const activeSection =
+    ownerView === "team"
+      ? {
+          description: "Shared workspace connectors managed by admins.",
+          emptyLabel: "No team connectors are available yet.",
+          owner: "team" as const,
+          panelId: "team-connectors-panel",
+          title: "Team connectors",
+        }
+      : {
+          description:
+            "Private connectors connected to your account and available in your chats.",
+          emptyLabel: "No personal connectors are available yet.",
+          owner: "user" as const,
+          panelId: "personal-connectors-panel",
+          title: "Personal connectors",
+        };
+
+  function connect(row: TeamConnectorCatalogRow) {
     if (isConnectableProvider(row.provider)) {
       startConnectMutation.mutate({ provider: row.provider });
     }
   }
 
-  function refreshTools(row: ConnectorCatalogRow) {
+  function connectUser(row: UserConnectorCatalogRow) {
+    userStartConnectMutation.mutate({ provider: row.provider });
+  }
+
+  function refreshTools(row: TeamConnectorCatalogRow) {
     if (isConnectableProvider(row.provider)) {
       refreshToolsMutation.mutate({ provider: row.provider });
     }
   }
 
-  function setAutomationEnabled(row: ConnectorCatalogRow, enabled: boolean) {
+  function setAutomationEnabled(
+    row: TeamConnectorCatalogRow,
+    enabled: boolean
+  ) {
     if (isConnectableProvider(row.provider)) {
       setAutomationEnabledMutation.mutate({ enabled, provider: row.provider });
     }
   }
 
-  function setAgentEnabled(row: ConnectorCatalogRow, enabled: boolean) {
+  function setAgentEnabled(row: TeamConnectorCatalogRow, enabled: boolean) {
     if (isConnectableProvider(row.provider)) {
       setAgentEnabledMutation.mutate({ enabled, provider: row.provider });
     }
   }
 
-  function disconnect(row: ConnectorCatalogRow) {
+  function disconnect(row: TeamConnectorCatalogRow) {
     if (isConnectableProvider(row.provider)) {
       disconnectMutation.mutate({ provider: row.provider });
     }
+  }
+
+  function disconnectUser(row: UserConnectorCatalogRow) {
+    userDisconnectMutation.mutate({ provider: row.provider });
   }
 
   function viewDetails(row: ConnectorCatalogRow) {
@@ -217,16 +309,21 @@ export function ConnectorsClient({
 
   // Never open the sheet on a failed callback (handled by the cleanup effect).
   const sheetProvider = callbackState.error ? null : selectedProvider;
+  const allConnectors = [...teamConnectors, ...yourConnectors];
   const sheetRow = sheetProvider
-    ? connectors.find((row) => row.provider === sheetProvider && row.connection)
+    ? allConnectors.find(
+        (row) => row.provider === sheetProvider && row.connection
+      )
     : undefined;
 
   const mutationPending =
     startConnectMutation.isPending ||
+    userStartConnectMutation.isPending ||
     refreshToolsMutation.isPending ||
     setAutomationEnabledMutation.isPending ||
     setAgentEnabledMutation.isPending ||
-    disconnectMutation.isPending;
+    disconnectMutation.isPending ||
+    userDisconnectMutation.isPending;
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-10">
@@ -248,6 +345,7 @@ export function ConnectorsClient({
           <p className="mt-1 text-destructive/85">{callbackState.error}</p>
         </div>
       )}
+
       <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -276,40 +374,70 @@ export function ConnectorsClient({
         />
       </div>
 
-      {filteredConnectors.length === 0 ? (
-        <p className="mt-6 text-muted-foreground text-sm">
-          No connectors match these filters.
-        </p>
-      ) : (
-        <div className="mt-6 flex flex-col gap-4">
-          {filteredConnectors.map((row) =>
-            row.connection ? (
-              <ConnectedConnectorCard
-                key={row.provider}
-                onConnect={connect}
-                onDisconnect={disconnect}
-                onRefreshTools={refreshTools}
-                onSetAgentEnabled={setAgentEnabled}
-                onSetAutomationEnabled={setAutomationEnabled}
-                onViewDetails={viewDetails}
-                pending={mutationPending}
-                refreshing={
-                  refreshToolsMutation.isPending &&
-                  refreshToolsMutation.variables?.provider === row.provider
-                }
-                row={row}
-              />
+      <div className="mt-6">
+        <ConnectorSection
+          description={activeSection.description}
+          owner={activeSection.owner}
+          panelId={activeSection.panelId}
+          title={activeSection.title}
+        >
+          {activeFilteredConnectors.length > 0 ? (
+            ownerView === "team" ? (
+              filteredTeamConnectors.map((row) =>
+                row.connection ? (
+                  <TeamConnectedConnectorCard
+                    key={row.provider}
+                    onConnect={connect}
+                    onDisconnect={disconnect}
+                    onRefreshTools={refreshTools}
+                    onSetAgentEnabled={setAgentEnabled}
+                    onSetAutomationEnabled={setAutomationEnabled}
+                    onViewDetails={viewDetails}
+                    pending={mutationPending}
+                    refreshing={
+                      refreshToolsMutation.isPending &&
+                      refreshToolsMutation.variables?.provider === row.provider
+                    }
+                    row={row}
+                  />
+                ) : (
+                  <TeamAvailableConnectorCard
+                    key={row.provider}
+                    onConnect={connect}
+                    pending={mutationPending}
+                    row={row}
+                  />
+                )
+              )
             ) : (
-              <AvailableConnectorCard
-                key={row.provider}
-                onConnect={connect}
-                pending={mutationPending}
-                row={row}
-              />
+              filteredYourConnectors.map((row) =>
+                row.connection ? (
+                  <UserConnectedConnectorCard
+                    key={row.provider}
+                    onConnect={connectUser}
+                    onDisconnect={disconnectUser}
+                    onViewDetails={viewDetails}
+                    pending={mutationPending}
+                    row={row}
+                  />
+                ) : (
+                  <UserAvailableConnectorCard
+                    key={row.provider}
+                    onConnect={connectUser}
+                    pending={mutationPending}
+                    row={row}
+                  />
+                )
+              )
             )
+          ) : (
+            <SectionEmptyState
+              emptyLabel={activeSection.emptyLabel}
+              hasCatalogConnectors={activeConnectors.length > 0}
+            />
           )}
-        </div>
-      )}
+        </ConnectorSection>
+      </div>
 
       <ConnectorDetailSheet
         onOpenChange={(open) => {
@@ -323,7 +451,53 @@ export function ConnectorsClient({
   );
 }
 
-function ConnectedConnectorCard({
+function ConnectorSection({
+  children,
+  description,
+  owner,
+  panelId,
+  title,
+}: {
+  children: ReactNode;
+  description: string;
+  owner: "team" | "user";
+  panelId: string;
+  title: string;
+}) {
+  const labelledBy =
+    owner === "team" ? "team-connectors-tab" : "personal-connectors-tab";
+
+  return (
+    <section
+      aria-labelledby={labelledBy}
+      data-owner={owner}
+      id={panelId}
+      role="tabpanel"
+    >
+      <h2 className="font-medium text-foreground text-sm">{title}</h2>
+      <p className="mt-1 text-muted-foreground text-xs leading-relaxed">
+        {description}
+      </p>
+      <div className="mt-3 flex flex-col gap-4">{children}</div>
+    </section>
+  );
+}
+
+function SectionEmptyState({
+  emptyLabel,
+  hasCatalogConnectors,
+}: {
+  emptyLabel: string;
+  hasCatalogConnectors: boolean;
+}) {
+  return (
+    <p className="text-muted-foreground text-sm">
+      {hasCatalogConnectors ? "No connectors match these filters." : emptyLabel}
+    </p>
+  );
+}
+
+function TeamConnectedConnectorCard({
   onConnect,
   onDisconnect,
   onRefreshTools,
@@ -334,15 +508,18 @@ function ConnectedConnectorCard({
   refreshing,
   row,
 }: {
-  onConnect: (row: ConnectorCatalogRow) => void;
-  onDisconnect: (row: ConnectorCatalogRow) => void;
-  onRefreshTools: (row: ConnectorCatalogRow) => void;
-  onSetAgentEnabled: (row: ConnectorCatalogRow, enabled: boolean) => void;
-  onSetAutomationEnabled: (row: ConnectorCatalogRow, enabled: boolean) => void;
+  onConnect: (row: TeamConnectorCatalogRow) => void;
+  onDisconnect: (row: TeamConnectorCatalogRow) => void;
+  onRefreshTools: (row: TeamConnectorCatalogRow) => void;
+  onSetAgentEnabled: (row: TeamConnectorCatalogRow, enabled: boolean) => void;
+  onSetAutomationEnabled: (
+    row: TeamConnectorCatalogRow,
+    enabled: boolean
+  ) => void;
   onViewDetails: (row: ConnectorCatalogRow) => void;
   pending: boolean;
   refreshing: boolean;
-  row: ConnectorCatalogRow;
+  row: TeamConnectorCatalogRow;
 }) {
   const connection = row.connection;
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -352,19 +529,28 @@ function ConnectedConnectorCard({
   }
 
   const status = connectionStatus(connection);
-  const actionDisabled = isMutationDisabled(row, pending);
-  const connectDisabled = isConnectDisabled(row, pending);
+  const actionDisabled = isTeamMutationDisabled(row, pending);
+  const connectDisabled = isTeamConnectDisabled(row, pending);
   const showAdminRequired =
     !row.canManage && isConnectableProvider(row.provider);
 
   return (
-    <section className="rounded-[12px] border border-border bg-background">
+    <section
+      className="rounded-[12px] border border-border bg-background"
+      data-owner="team"
+      data-provider={row.provider}
+    >
       <div className="flex items-center gap-3 p-3">
         <ConnectorIcon provider={row.provider} />
         <div className="min-w-0 flex-1">
-          <h2 className="font-medium text-base text-foreground">
-            {row.displayName}
-          </h2>
+          <div className="flex min-w-0 items-center gap-2">
+            <h3 className="font-medium text-base text-foreground">
+              {row.displayName}
+            </h3>
+            <Badge className="shrink-0" variant="outline">
+              Team
+            </Badge>
+          </div>
           <p className="mt-0.5 text-muted-foreground text-sm">
             {row.description}
           </p>
@@ -531,16 +717,16 @@ function ConnectedConnectorCard({
   );
 }
 
-function AvailableConnectorCard({
+function TeamAvailableConnectorCard({
   onConnect,
   pending,
   row,
 }: {
-  onConnect: (row: ConnectorCatalogRow) => void;
+  onConnect: (row: TeamConnectorCatalogRow) => void;
   pending: boolean;
-  row: ConnectorCatalogRow;
+  row: TeamConnectorCatalogRow;
 }) {
-  const connectDisabled = isConnectDisabled(row, pending);
+  const connectDisabled = isTeamConnectDisabled(row, pending);
   const showAdminRequired =
     !row.canManage && isConnectableProvider(row.provider);
   const missingConfig =
@@ -548,13 +734,22 @@ function AvailableConnectorCard({
     row.connectAvailability.reason === "missing_config";
 
   return (
-    <section className="rounded-[12px] border border-border bg-background">
+    <section
+      className="rounded-[12px] border border-border bg-background"
+      data-owner="team"
+      data-provider={row.provider}
+    >
       <div className="flex items-center gap-3 p-3">
         <ConnectorIcon provider={row.provider} />
         <div className="min-w-0 flex-1">
-          <h2 className="font-medium text-base text-foreground">
-            {row.displayName}
-          </h2>
+          <div className="flex min-w-0 items-center gap-2">
+            <h3 className="font-medium text-base text-foreground">
+              {row.displayName}
+            </h3>
+            <Badge className="shrink-0" variant="outline">
+              Team
+            </Badge>
+          </div>
           <p className="mt-0.5 text-muted-foreground text-sm">
             {row.description}
           </p>
@@ -590,6 +785,196 @@ function AvailableConnectorCard({
             </p>
           )}
         </div>
+      </div>
+    </section>
+  );
+}
+
+function UserConnectedConnectorCard({
+  onConnect,
+  onDisconnect,
+  onViewDetails,
+  pending,
+  row,
+}: {
+  onConnect: (row: UserConnectorCatalogRow) => void;
+  onDisconnect: (row: UserConnectorCatalogRow) => void;
+  onViewDetails: (row: ConnectorCatalogRow) => void;
+  pending: boolean;
+  row: UserConnectorCatalogRow;
+}) {
+  const connection = row.connection;
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  if (!connection) {
+    return null;
+  }
+
+  const status = userConnectionStatus(connection);
+  const actionDisabled = pending || !row.canManage;
+
+  return (
+    <section
+      className="rounded-[12px] border border-border bg-background"
+      data-owner="user"
+      data-provider={row.provider}
+    >
+      <div className="flex items-center gap-3 p-3">
+        <ConnectorIcon provider={row.provider} />
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-center gap-2">
+            <h3 className="font-medium text-base text-foreground">
+              {row.displayName}
+            </h3>
+            <Badge className="shrink-0" variant="secondary">
+              Only you
+            </Badge>
+          </div>
+          <p className="mt-0.5 text-muted-foreground text-sm">
+            {row.description}
+          </p>
+          <p className="mt-1 text-muted-foreground text-xs leading-relaxed">
+            {USER_CONNECTOR_AVAILABILITY_COPY}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <span className="inline-flex items-center gap-1.5 text-foreground text-sm">
+            <span className={cn("size-1.5 rounded-full", status.dotClass)} />
+            {status.label}
+          </span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                aria-label="Connector actions"
+                className="h-6 w-6 rounded-full"
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                <MoreHorizontal className="size-3.5 opacity-50" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => onViewDetails(row)}>
+                <PanelRight className="size-3.5" />
+                View details
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                disabled={actionDisabled}
+                onSelect={() => onConnect(row)}
+              >
+                <ArrowUpRight className="size-3.5" />
+                Reconnect
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                disabled={actionDisabled}
+                onSelect={() => setConfirmOpen(true)}
+                variant="destructive"
+              >
+                Disconnect
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      <div className="h-px bg-border" />
+
+      <div className="p-3">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-foreground text-sm">Tools</span>
+          <Badge className="px-1.5 text-muted-foreground" variant="secondary">
+            {connection.tools.length}
+          </Badge>
+        </div>
+        {connection.tools.length > 0 ? (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {connection.tools.map((tool) => (
+              <Badge
+                className="font-normal"
+                key={tool.name}
+                title={tool.description}
+                variant="secondary"
+              >
+                {tool.name}
+              </Badge>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-3 rounded-[8px] border border-border border-dashed px-3 py-2 text-muted-foreground text-sm">
+            No tools available yet.
+          </p>
+        )}
+      </div>
+
+      <AlertDialog onOpenChange={setConfirmOpen} open={confirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Disconnect {row.displayName}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Lightfast will stop making this connector available in your chats.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => onDisconnect(row)}>
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </section>
+  );
+}
+
+function UserAvailableConnectorCard({
+  onConnect,
+  pending,
+  row,
+}: {
+  onConnect: (row: UserConnectorCatalogRow) => void;
+  pending: boolean;
+  row: UserConnectorCatalogRow;
+}) {
+  const connectDisabled =
+    pending || !row.canManage || row.connectAvailability.status !== "available";
+
+  return (
+    <section
+      className="rounded-[12px] border border-border bg-background"
+      data-owner="user"
+      data-provider={row.provider}
+    >
+      <div className="flex items-center gap-3 p-3">
+        <ConnectorIcon provider={row.provider} />
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-center gap-2">
+            <h3 className="font-medium text-base text-foreground">
+              {row.displayName}
+            </h3>
+            <Badge className="shrink-0" variant="secondary">
+              Only you
+            </Badge>
+          </div>
+          <p className="mt-0.5 text-muted-foreground text-sm">
+            {row.description}
+          </p>
+          <p className="mt-1 text-muted-foreground text-xs leading-relaxed">
+            {USER_CONNECTOR_AVAILABILITY_COPY}
+          </p>
+        </div>
+        <Button
+          disabled={connectDisabled}
+          onClick={() => onConnect(row)}
+          size="lf"
+          type="button"
+          variant="outline"
+        >
+          Connect
+          <ArrowUpRight className="size-3.5" />
+        </Button>
       </div>
     </section>
   );
