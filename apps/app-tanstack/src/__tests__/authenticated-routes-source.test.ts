@@ -1031,8 +1031,11 @@ describe("app-tanstack authenticated route migration", () => {
   });
 
   it("ports X connector setup and non-OAuth backend parity routes", () => {
-    const xSetupRouteSource = source(
+    const xLayoutRouteSource = source(
       "src/routes/_authenticated/$slug/tasks/connectors/x.tsx"
+    );
+    const xSetupRouteSource = source(
+      "src/routes/_authenticated/$slug/tasks/connectors/x/index.tsx"
     );
     const xCompleteRouteSource = source(
       "src/routes/_authenticated/$slug/tasks/connectors/x/complete.tsx"
@@ -1073,8 +1076,12 @@ describe("app-tanstack authenticated route migration", () => {
       "src/routes/api/internal/mcp/signals/get.ts"
     );
 
-    expect(xSetupRouteSource).toContain(
+    expect(xLayoutRouteSource).toContain(
       '"/_authenticated/$slug/tasks/connectors/x"'
+    );
+    expect(xLayoutRouteSource).toContain("component: Outlet");
+    expect(xSetupRouteSource).toContain(
+      '"/_authenticated/$slug/tasks/connectors/x/"'
     );
     expect(xSetupRouteSource).toContain("pathForSetupRequirement");
     expect(xSetupRouteSource).toContain("XConnectorSetupClient");

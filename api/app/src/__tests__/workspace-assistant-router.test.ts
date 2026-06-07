@@ -185,6 +185,17 @@ describe("workspaceAssistantRouter", () => {
     ]);
   });
 
+  it("returns newly created conversations before messages are appended", async () => {
+    listWorkspaceAssistantMessagesMock.mockResolvedValueOnce([]);
+
+    await expect(
+      caller().assistant.getConversation({ id: "conv_123" })
+    ).resolves.toEqual({
+      messages: [],
+      conversation: makeConversation(),
+    });
+  });
+
   it("throws NOT_FOUND when a conversation is not in the active organization", async () => {
     getWorkspaceAssistantConversationByPublicIdMock.mockResolvedValueOnce(
       undefined

@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { ChatLoading } from "~/chat/chat-loading";
+import { isPreallocatedConversationId } from "~/chat/conversation-id";
 import { WorkspaceAssistantClient } from "~/chat/workspace-assistant-client";
 import { useTRPC } from "~/trpc/react";
 
@@ -56,12 +57,6 @@ function WorkspaceConversationPage() {
       initialConversation={conversationQuery.data}
       key={conversationId}
     />
-  );
-}
-
-function isPreallocatedConversationId(conversationId: string) {
-  return /^conv_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-    conversationId
   );
 }
 

@@ -63,7 +63,7 @@ describe("app-tanstack product route data prefetch", () => {
       "src/routes/_authenticated/$slug/tasks/index.tsx",
       "src/routes/_authenticated/$slug/tasks/bind/index.tsx",
       "src/routes/_authenticated/$slug/tasks/github/lightfast-repo.tsx",
-      "src/routes/_authenticated/$slug/tasks/connectors/x.tsx",
+      "src/routes/_authenticated/$slug/tasks/connectors/x/index.tsx",
       "src/routes/_authenticated/$slug/settings/mcp.tsx",
       "src/routes/_authenticated/account/mcp.tsx",
     ];

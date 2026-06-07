@@ -85,6 +85,7 @@ import { Route as ApiConnectorsLinearOauthCallbackRouteImport } from './routes/a
 import { Route as AuthenticatedAccountTasksGithubCompleteRouteImport } from './routes/_authenticated/account/tasks/github/complete'
 import { Route as AuthenticatedSlugTasksGithubLightfastRepoRouteImport } from './routes/_authenticated/$slug/tasks/github/lightfast-repo'
 import { Route as AuthenticatedSlugTasksConnectorsXRouteImport } from './routes/_authenticated/$slug/tasks/connectors/x'
+import { Route as AuthenticatedSlugTasksConnectorsXIndexRouteImport } from './routes/_authenticated/$slug/tasks/connectors/x/index'
 import { Route as AuthenticatedSlugTasksConnectorsXCompleteRouteImport } from './routes/_authenticated/$slug/tasks/connectors/x/complete'
 import { Route as AuthenticatedSlugTasksBindGithubCompleteRouteImport } from './routes/_authenticated/$slug/tasks/bind/github/complete'
 
@@ -505,6 +506,12 @@ const AuthenticatedSlugTasksConnectorsXRoute =
     path: '/connectors/x',
     getParentRoute: () => AuthenticatedSlugTasksRoute,
   } as any)
+const AuthenticatedSlugTasksConnectorsXIndexRoute =
+  AuthenticatedSlugTasksConnectorsXIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSlugTasksConnectorsXRoute,
+  } as any)
 const AuthenticatedSlugTasksConnectorsXCompleteRoute =
   AuthenticatedSlugTasksConnectorsXCompleteRouteImport.update({
     id: '/complete',
@@ -596,6 +603,7 @@ export interface FileRoutesByFullPath {
   '/account/tasks/github/': typeof AuthenticatedAccountTasksGithubIndexRoute
   '/$slug/tasks/bind/github/complete': typeof AuthenticatedSlugTasksBindGithubCompleteRoute
   '/$slug/tasks/connectors/x/complete': typeof AuthenticatedSlugTasksConnectorsXCompleteRoute
+  '/$slug/tasks/connectors/x/': typeof AuthenticatedSlugTasksConnectorsXIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -654,7 +662,6 @@ export interface FileRoutesByTo {
   '/$slug/settings': typeof AuthenticatedSlugSettingsIndexRoute
   '/$slug/tasks': typeof AuthenticatedSlugTasksIndexRoute
   '/account/settings': typeof AuthenticatedAccountSettingsIndexRoute
-  '/$slug/tasks/connectors/x': typeof AuthenticatedSlugTasksConnectorsXRouteWithChildren
   '/$slug/tasks/github/lightfast-repo': typeof AuthenticatedSlugTasksGithubLightfastRepoRoute
   '/account/tasks/github/complete': typeof AuthenticatedAccountTasksGithubCompleteRoute
   '/api/connectors/linear/oauth/callback': typeof ApiConnectorsLinearOauthCallbackRoute
@@ -667,6 +674,7 @@ export interface FileRoutesByTo {
   '/account/tasks/github': typeof AuthenticatedAccountTasksGithubIndexRoute
   '/$slug/tasks/bind/github/complete': typeof AuthenticatedSlugTasksBindGithubCompleteRoute
   '/$slug/tasks/connectors/x/complete': typeof AuthenticatedSlugTasksConnectorsXCompleteRoute
+  '/$slug/tasks/connectors/x': typeof AuthenticatedSlugTasksConnectorsXIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -748,6 +756,7 @@ export interface FileRoutesById {
   '/_authenticated/account/tasks/github/': typeof AuthenticatedAccountTasksGithubIndexRoute
   '/_authenticated/$slug/tasks/bind/github/complete': typeof AuthenticatedSlugTasksBindGithubCompleteRoute
   '/_authenticated/$slug/tasks/connectors/x/complete': typeof AuthenticatedSlugTasksConnectorsXCompleteRoute
+  '/_authenticated/$slug/tasks/connectors/x/': typeof AuthenticatedSlugTasksConnectorsXIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -829,6 +838,7 @@ export interface FileRouteTypes {
     | '/account/tasks/github/'
     | '/$slug/tasks/bind/github/complete'
     | '/$slug/tasks/connectors/x/complete'
+    | '/$slug/tasks/connectors/x/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -887,7 +897,6 @@ export interface FileRouteTypes {
     | '/$slug/settings'
     | '/$slug/tasks'
     | '/account/settings'
-    | '/$slug/tasks/connectors/x'
     | '/$slug/tasks/github/lightfast-repo'
     | '/account/tasks/github/complete'
     | '/api/connectors/linear/oauth/callback'
@@ -900,6 +909,7 @@ export interface FileRouteTypes {
     | '/account/tasks/github'
     | '/$slug/tasks/bind/github/complete'
     | '/$slug/tasks/connectors/x/complete'
+    | '/$slug/tasks/connectors/x'
   id:
     | '__root__'
     | '/'
@@ -980,6 +990,7 @@ export interface FileRouteTypes {
     | '/_authenticated/account/tasks/github/'
     | '/_authenticated/$slug/tasks/bind/github/complete'
     | '/_authenticated/$slug/tasks/connectors/x/complete'
+    | '/_authenticated/$slug/tasks/connectors/x/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1551,6 +1562,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSlugTasksConnectorsXRouteImport
       parentRoute: typeof AuthenticatedSlugTasksRoute
     }
+    '/_authenticated/$slug/tasks/connectors/x/': {
+      id: '/_authenticated/$slug/tasks/connectors/x/'
+      path: '/'
+      fullPath: '/$slug/tasks/connectors/x/'
+      preLoaderRoute: typeof AuthenticatedSlugTasksConnectorsXIndexRouteImport
+      parentRoute: typeof AuthenticatedSlugTasksConnectorsXRoute
+    }
     '/_authenticated/$slug/tasks/connectors/x/complete': {
       id: '/_authenticated/$slug/tasks/connectors/x/complete'
       path: '/complete'
@@ -1654,12 +1672,15 @@ const AuthenticatedSlugTasksBindRouteWithChildren =
 
 interface AuthenticatedSlugTasksConnectorsXRouteChildren {
   AuthenticatedSlugTasksConnectorsXCompleteRoute: typeof AuthenticatedSlugTasksConnectorsXCompleteRoute
+  AuthenticatedSlugTasksConnectorsXIndexRoute: typeof AuthenticatedSlugTasksConnectorsXIndexRoute
 }
 
 const AuthenticatedSlugTasksConnectorsXRouteChildren: AuthenticatedSlugTasksConnectorsXRouteChildren =
   {
     AuthenticatedSlugTasksConnectorsXCompleteRoute:
       AuthenticatedSlugTasksConnectorsXCompleteRoute,
+    AuthenticatedSlugTasksConnectorsXIndexRoute:
+      AuthenticatedSlugTasksConnectorsXIndexRoute,
   }
 
 const AuthenticatedSlugTasksConnectorsXRouteWithChildren =

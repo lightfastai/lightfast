@@ -91,6 +91,10 @@ export const workspaceAssistantRouter = {
       const renderableMessages = messages.filter(
         (message) => message.parts.length > 0
       );
+      if (renderableMessages.length === 0) {
+        return { messages: [], conversation };
+      }
+
       const validated = await safeValidateLightfastUIMessages({
         messages: renderableMessages.map((message) => ({
           id: message.publicId,

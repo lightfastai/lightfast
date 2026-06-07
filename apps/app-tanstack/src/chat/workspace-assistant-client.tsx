@@ -116,7 +116,6 @@ export function WorkspaceAssistantClient({
       if (!conversationCreatedRef.current) {
         setCreationError(undefined);
         setOptimisticFirstMessage(createOptimisticUserMessage(nextText));
-        replaceBrowserChatUrl(params.slug, conversationId);
         try {
           await createConversation.mutateAsync({
             publicId: conversationId,
@@ -151,6 +150,7 @@ export function WorkspaceAssistantClient({
       }
       setText("");
       if (!initialConversation) {
+        replaceBrowserChatUrl(params.slug, conversationId);
         await router.invalidate();
       }
     },
