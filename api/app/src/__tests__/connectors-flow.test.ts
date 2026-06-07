@@ -146,6 +146,9 @@ const {
   issueConnectorOAuthAttempt,
   lookupConnectorOAuthAttempt,
 } = await import("../services/connectors/attempts");
+const { verifyConnectorMcpToken } = await import(
+  "../services/connectors/mcp-auth"
+);
 const {
   completeLinearConnectorOAuth,
   disconnectLinearConnector,
@@ -244,6 +247,25 @@ function membership(role = "org:admin") {
     },
     role,
   };
+}
+
+async function expectLastXBridgeListTokenPurpose(purpose: "discover" | "list") {
+  const call = listXBridgeMcpToolsMock.mock.calls.at(-1)?.[0] as
+    | { mcpToken: string }
+    | undefined;
+
+  expect(call).toEqual(
+    expect.objectContaining({
+      mcpToken: expect.stringMatching(/^lfmcp_v1\./),
+    })
+  );
+  await expect(
+    verifyConnectorMcpToken({
+      provider: "x",
+      purpose,
+      token: call?.mcpToken ?? "",
+    })
+  ).resolves.toMatchObject({ purpose });
 }
 
 describe("connector catalog services", () => {
@@ -1453,6 +1475,7 @@ describe("X connector flow", () => {
         mcpToken: expect.stringMatching(/^lfmcp_v1\./),
       })
     );
+    await expectLastXBridgeListTokenPurpose("discover");
     expect(
       updateConnectorToolManifestAndAutomationStateMock
     ).toHaveBeenCalledWith(
@@ -1518,6 +1541,7 @@ describe("X connector flow", () => {
       redirectUrl:
         "https://app.lightfast.localhost/acme/connectors?connector=x",
     });
+    await expectLastXBridgeListTokenPurpose("discover");
   });
 
   it("records tool discovery failure after persisting X and keeps automations disabled", async () => {
@@ -1662,6 +1686,7 @@ describe("X connector flow", () => {
         mcpToken: expect.stringMatching(/^lfmcp_v1\./),
       })
     );
+    await expectLastXBridgeListTokenPurpose("discover");
     expect(
       updateConnectorToolManifestAndAutomationStateMock
     ).toHaveBeenCalledWith(

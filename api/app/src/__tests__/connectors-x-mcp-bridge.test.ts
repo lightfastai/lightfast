@@ -113,7 +113,7 @@ function malformedRequest() {
 }
 
 async function mcpToken(input: {
-  purpose: "call" | "list";
+  purpose: "call" | "discover" | "list";
   clerkOrgId?: string;
   toolName?: string;
   now?: Date;
@@ -253,6 +253,28 @@ describe("X MCP bridge service", () => {
     expect(response.status).toBe(200);
     expect(names).toContain("getUsersMe");
     expect(names).not.toContain("createPost");
+  });
+
+  it("lets discovery list scoped tools that are missing from the stored manifest", async () => {
+    getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(
+      connection({
+        scopes: [...X_OAUTH_SCOPES],
+        toolManifest: [{ description: "Look up account", name: "getUsersMe" }],
+      })
+    );
+
+    const response = await handleXConnectorMcpRequest({
+      request: mcpRequest({
+        body: { id: 1, jsonrpc: "2.0", method: "tools/list" },
+        token: await mcpToken({ purpose: "discover" }),
+      }),
+    });
+    const json = await response.json();
+    const names = json.result.tools.map((tool: { name: string }) => tool.name);
+
+    expect(response.status).toBe(200);
+    expect(names).toContain("getUsersMe");
+    expect(names).toContain("createPost");
   });
 
   it("calls X tools with a matching purpose=call token", async () => {

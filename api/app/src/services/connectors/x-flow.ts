@@ -696,7 +696,7 @@ async function discoverXConnectorTools(input: {
     clerkOrgId: input.clerkOrgId,
     connectionId: input.connection.id,
     provider: "x",
-    purpose: "list",
+    purpose: "discover",
   });
   const toolManifest = await listXBridgeMcpTools({
     allowedEndpoint: input.allowedEndpoint,

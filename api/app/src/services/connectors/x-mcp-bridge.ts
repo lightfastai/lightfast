@@ -98,7 +98,11 @@ function registerXTools(
   const connection = input.connection;
   const definitions = connection
     ? getXToolDefinitionsForScopes(connection.scopes).filter((definition) =>
-        hasManifestTool(connection, definition.name)
+        shouldRegisterTool({
+          claims: input.claims,
+          connection,
+          toolName: definition.name,
+        })
       )
     : [];
 
@@ -160,6 +164,17 @@ function registerXTools(
 
 function hasManifestTool(connection: OrgConnectorConnection, toolName: string) {
   return connection.toolManifest.some((tool) => tool.name === toolName);
+}
+
+function shouldRegisterTool(input: {
+  claims: ConnectorMcpTokenClaims;
+  connection: OrgConnectorConnection;
+  toolName: string;
+}) {
+  if (input.claims.purpose === "discover") {
+    return true;
+  }
+  return hasManifestTool(input.connection, input.toolName);
 }
 
 async function getFreshXBridgeAccessToken(input: {
@@ -244,8 +259,10 @@ async function verifyXBridgeToken(input: {
 }): Promise<ConnectorMcpTokenClaims | null> {
   const purposes: ConnectorMcpTokenPurpose[] =
     input.requestKind.purpose === null
-      ? ["list", "call"]
-      : [input.requestKind.purpose];
+      ? ["list", "discover", "call"]
+      : input.requestKind.purpose === "list"
+        ? ["list", "discover"]
+        : ["call"];
 
   for (const purpose of purposes) {
     try {
