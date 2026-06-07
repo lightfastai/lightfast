@@ -1,7 +1,9 @@
-import type { Database, IngestEntityObservationsResult } from "@db/app";
+import type { Database, IngestEntityObservationsResult, Person } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const ingestEntityObservationsMock = vi.fn();
+const projectEntityGraphPeopleToOrgPeopleMock = vi.fn();
+const reconcileSignalEntityLinksForPeopleMock = vi.fn();
 const db = { kind: "mock-db" } as unknown as Database;
 
 type Step = ReturnType<typeof createStep>;
@@ -21,6 +23,11 @@ type WorkflowCallback = (input: {
         },
       ];
       resolverVersion?: string;
+      source?: {
+        kind: "signal_entity_enrichment";
+        reason: "signal_indexed" | "manual_retry" | "backfill";
+        signalId: string;
+      };
     };
   };
   step: Step;
@@ -36,6 +43,8 @@ const createFunctionMock = vi.fn(
 
 vi.mock("@db/app", () => ({
   ingestEntityObservations: ingestEntityObservationsMock,
+  projectEntityGraphPeopleToOrgPeople: projectEntityGraphPeopleToOrgPeopleMock,
+  reconcileSignalEntityLinksForPeople: reconcileSignalEntityLinksForPeopleMock,
 }));
 vi.mock("@db/app/client", () => ({ db }));
 vi.mock("../inngest/client", () => ({
@@ -98,9 +107,43 @@ function runWorkflow(step: Step) {
   });
 }
 
+function runSignalEnrichmentWorkflow(step: Step) {
+  if (!workflowCallback) {
+    throw new Error("workflow callback was not registered");
+  }
+
+  return workflowCallback({
+    event: {
+      data: {
+        clerkOrgId: "org_test",
+        ingestionId: "signal:signal_123:hash",
+        observations: [observation],
+        resolverVersion: "signal-entity-enrichment-v1",
+        source: {
+          kind: "signal_entity_enrichment",
+          reason: "signal_indexed",
+          signalId: "signal_123e4567-e89b-12d3-a456-426614174000",
+        },
+      },
+    },
+    step,
+  });
+}
+
+const projectedPeople = [
+  {
+    displayName: "Ava Chen",
+    normalizedIdentityValue: "avachen",
+  },
+] as Person[];
+
 beforeEach(() => {
   ingestEntityObservationsMock.mockReset();
   ingestEntityObservationsMock.mockResolvedValue(summary);
+  projectEntityGraphPeopleToOrgPeopleMock.mockReset();
+  projectEntityGraphPeopleToOrgPeopleMock.mockResolvedValue(projectedPeople);
+  reconcileSignalEntityLinksForPeopleMock.mockReset();
+  reconcileSignalEntityLinksForPeopleMock.mockResolvedValue({ resolved: 1 });
 });
 
 describe("runEntityResolution", () => {
@@ -148,6 +191,8 @@ describe("runEntityResolution", () => {
 
     await expect(runWorkflow(step)).resolves.toEqual({
       ...summary,
+      entityLinksResolved: 0,
+      projectedPeople: 0,
       status: "persisted",
     });
 
@@ -161,8 +206,49 @@ describe("runEntityResolution", () => {
       data: {
         ...summary,
         clerkOrgId: "org_test",
+        entityLinksResolved: 0,
         ingestionId: "ingestion_1",
+        projectedPeople: 0,
         resolverVersion: "connector-test-v1",
+      },
+    });
+    expect(projectEntityGraphPeopleToOrgPeopleMock).not.toHaveBeenCalled();
+    expect(reconcileSignalEntityLinksForPeopleMock).not.toHaveBeenCalled();
+  });
+
+  it("projects signal enrichment graph people and reconciles signal links", async () => {
+    const step = createStep();
+
+    await expect(runSignalEnrichmentWorkflow(step)).resolves.toEqual({
+      ...summary,
+      entityLinksResolved: 1,
+      projectedPeople: 1,
+      status: "persisted",
+    });
+
+    expect(projectEntityGraphPeopleToOrgPeopleMock).toHaveBeenCalledWith(db, {
+      clerkOrgId: "org_test",
+      resolverVersion: "signal-entity-enrichment-v1",
+      source: {
+        kind: "signal_entity_enrichment",
+        reason: "signal_indexed",
+        signalId: "signal_123e4567-e89b-12d3-a456-426614174000",
+      },
+      sourceIdentityKeys: ["github:handle:avachen"],
+    });
+    expect(reconcileSignalEntityLinksForPeopleMock).toHaveBeenCalledWith(db, {
+      clerkOrgId: "org_test",
+      people: projectedPeople,
+    });
+    expect(step.sendEvent).toHaveBeenCalledWith("emit entity graph persisted", {
+      name: "app/entity.graph.persisted",
+      data: {
+        ...summary,
+        clerkOrgId: "org_test",
+        entityLinksResolved: 1,
+        ingestionId: "signal:signal_123:hash",
+        projectedPeople: 1,
+        resolverVersion: "signal-entity-enrichment-v1",
       },
     });
   });

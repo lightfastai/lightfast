@@ -15,7 +15,9 @@ const entityGraphPersistedSummarySchema = z.object({
   candidateGroups: z.number().int().nonnegative(),
   candidateVersionsAppended: z.number().int().nonnegative(),
   candidateVersionsUnchanged: z.number().int().nonnegative(),
+  entityLinksResolved: z.number().int().nonnegative(),
   observations: z.number().int().nonnegative(),
+  projectedPeople: z.number().int().nonnegative(),
   skippedCanonicalCandidates: z.number().int().nonnegative(),
   sourceIdentities: z.number().int().nonnegative(),
 });
