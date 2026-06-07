@@ -21,6 +21,7 @@ import {
   sourceControlRepositoryPushEventSchema,
   watchesWebhookEvent,
 } from "@repo/source-control-contract";
+import { log } from "@vendor/observability/log/next";
 
 import { env } from "../../../env";
 import { inngest } from "../../../inngest/client";
@@ -39,6 +40,41 @@ function readHeaders(request: Request) {
   });
 }
 
+function readWebhookLogHeaders(request: Request) {
+  return {
+    deliveryId: request.headers.get("x-github-delivery"),
+    event: request.headers.get("x-github-event"),
+  };
+}
+
+function webhookRejectionMeta(input: {
+  deliveryId?: string | null;
+  event?: string | null;
+  reason: string;
+  status: number;
+}) {
+  const meta: Record<string, unknown> = {
+    reason: input.reason,
+    status: input.status,
+  };
+  if (input.deliveryId) {
+    meta.deliveryId = input.deliveryId;
+  }
+  if (input.event) {
+    meta.event = input.event;
+  }
+  return meta;
+}
+
+function logWebhookRejection(input: {
+  deliveryId?: string | null;
+  event?: string | null;
+  reason: string;
+  status: number;
+}) {
+  log.warn("[github-webhook] rejected", webhookRejectionMeta(input));
+}
+
 async function handleGitHubPrWebhook(input: {
   deliveryId: string;
   event: string;
@@ -51,6 +87,12 @@ async function handleGitHubPrWebhook(input: {
 
   const parsedPayload = githubPrWebhookPayloadSchema.safeParse(input.json);
   if (!parsedPayload.success) {
+    logWebhookRejection({
+      deliveryId: input.deliveryId,
+      event: input.event,
+      reason: "invalid_pr_payload",
+      status: 400,
+    });
     return response(400, { ok: false });
   }
   const rawPayload = input.json as Record<string, unknown>;
@@ -62,6 +104,12 @@ async function handleGitHubPrWebhook(input: {
       payload: parsedPayload.data,
     });
   } catch {
+    logWebhookRejection({
+      deliveryId: input.deliveryId,
+      event: input.event,
+      reason: "invalid_pr_payload_normalization",
+      status: 400,
+    });
     return response(400, { ok: false });
   }
 
@@ -111,17 +159,35 @@ export async function handleGitHubWebhook(input: {
 }): Promise<Response> {
   const secret = env.GITHUB_APP_WEBHOOK_SECRET;
   if (!secret) {
+    log.error(
+      "[github-webhook] rejected",
+      webhookRejectionMeta({
+        ...readWebhookLogHeaders(input.request),
+        reason: "missing_webhook_secret",
+        status: 500,
+      })
+    );
     return response(500, { ok: false });
   }
 
   const body = await input.request.text();
   const signature256 = input.request.headers.get("x-hub-signature-256");
   if (!signature256) {
+    logWebhookRejection({
+      ...readWebhookLogHeaders(input.request),
+      reason: "missing_signature",
+      status: 401,
+    });
     return response(401, { ok: false });
   }
 
   const parsedHeaders = readHeaders(input.request);
   if (!parsedHeaders.success) {
+    logWebhookRejection({
+      ...readWebhookLogHeaders(input.request),
+      reason: "invalid_headers",
+      status: 400,
+    });
     return response(400, { ok: false });
   }
 
@@ -132,6 +198,12 @@ export async function handleGitHubWebhook(input: {
     signature256: headers.signature256,
   });
   if (!signatureOk) {
+    logWebhookRejection({
+      deliveryId: headers.deliveryId,
+      event: headers.event,
+      reason: "invalid_signature",
+      status: 401,
+    });
     return response(401, { ok: false });
   }
 
@@ -150,14 +222,27 @@ export async function handleGitHubWebhook(input: {
   try {
     json = JSON.parse(body);
   } catch {
+    logWebhookRejection({
+      deliveryId: headers.deliveryId,
+      event: headers.event,
+      reason: "malformed_json",
+      status: 400,
+    });
     return response(400, { ok: false });
   }
 
   if (headers.event === "ping") {
     const parsedPing = githubPingWebhookPayloadSchema.safeParse(json);
-    return parsedPing.success
-      ? response(202, { ok: true })
-      : response(400, { ok: false });
+    if (!parsedPing.success) {
+      logWebhookRejection({
+        deliveryId: headers.deliveryId,
+        event: headers.event,
+        reason: "invalid_ping_payload",
+        status: 400,
+      });
+      return response(400, { ok: false });
+    }
+    return response(202, { ok: true });
   }
 
   if (isPrWebhookEvent) {
@@ -170,6 +255,12 @@ export async function handleGitHubWebhook(input: {
 
   const parsedPush = githubPushWebhookPayloadSchema.safeParse(json);
   if (!parsedPush.success) {
+    logWebhookRejection({
+      deliveryId: headers.deliveryId,
+      event: headers.event,
+      reason: "invalid_push_payload",
+      status: 400,
+    });
     return response(400, { ok: false });
   }
 
