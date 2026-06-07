@@ -57,10 +57,16 @@ export interface SignalEntityLinkDetail {
   targetType: SignalEntityLink["targetType"];
 }
 
-export type SignalEntityLinkReconciliationPerson = Pick<
+type SignalEntityLinkResolutionPerson = Pick<
   Person,
-  "displayName" | "normalizedIdentityValue"
+  | "displayName"
+  | "identityKey"
+  | "metadata"
+  | "normalizedIdentityValue"
+  | "publicId"
 >;
+export type SignalEntityLinkReconciliationPerson =
+  SignalEntityLinkResolutionPerson;
 
 const SIGNAL_ENTITY_LINK_RECONCILE_BATCH_SIZE = 500;
 const MAX_ENRICHMENT_TARGETS_PER_PROVIDER = 10;
@@ -254,12 +260,7 @@ export async function reconcileSignalEntityLinksForPeople(
   const normalizedValues = Array.from(
     new Set(
       input.people
-        .flatMap((person) => [
-          person.normalizedIdentityValue,
-          person.displayName
-            ? normalizeDisplayNameMention(person.displayName)
-            : undefined,
-        ])
+        .flatMap(normalizedMentionValuesForReconciliationPerson)
         .filter(isDefined)
         .filter((value) => value.length > 0)
     )
@@ -300,6 +301,7 @@ export async function reconcileSignalEntityLinksForPeople(
       clerkOrgId: input.clerkOrgId,
       hints: linkHints.map(({ hints }) => hints),
     });
+    addReconciliationPeopleToLookup(lookup, input.people);
 
     for (const { hints, link } of linkHints) {
       lastSeenLinkId = Math.max(lastSeenLinkId, link.id);
@@ -448,8 +450,8 @@ export async function listSignalEntityLinksForSignal(
 }
 
 interface SignalEntityLinkResolutionLookup {
-  peopleByDisplayName: Map<string, Person[]>;
-  peopleByIdentityKey: Map<string, Person>;
+  peopleByDisplayName: Map<string, SignalEntityLinkResolutionPerson[]>;
+  peopleByIdentityKey: Map<string, SignalEntityLinkResolutionPerson>;
 }
 
 async function loadSignalEntityLinkResolutionLookup(
@@ -506,12 +508,105 @@ async function loadSignalEntityLinkResolutionLookup(
   return { peopleByDisplayName, peopleByIdentityKey };
 }
 
+function addReconciliationPeopleToLookup(
+  lookup: SignalEntityLinkResolutionLookup,
+  people: SignalEntityLinkResolutionPerson[]
+) {
+  for (const person of people) {
+    for (const identityKey of identityKeysForReconciliationPerson(person)) {
+      lookup.peopleByIdentityKey.set(identityKey, person);
+    }
+
+    if (person.displayName) {
+      addPersonToLookup(
+        lookup.peopleByDisplayName,
+        normalizeDisplayNameMention(person.displayName),
+        person
+      );
+    }
+  }
+}
+
+function normalizedMentionValuesForReconciliationPerson(
+  person: SignalEntityLinkResolutionPerson
+): string[] {
+  return [
+    person.normalizedIdentityValue,
+    person.displayName
+      ? normalizeDisplayNameMention(person.displayName)
+      : undefined,
+    ...entityGraphSourceIdentityAliases(person.metadata).map(
+      (alias) => alias.normalizedValue
+    ),
+  ].filter(isDefined);
+}
+
+function identityKeysForReconciliationPerson(
+  person: SignalEntityLinkResolutionPerson
+): string[] {
+  return [
+    person.identityKey,
+    ...entityGraphSourceIdentityAliases(person.metadata)
+      .map((alias) =>
+        normalizePersonIdentityCandidate({
+          identityProvider: alias.provider,
+          identityType: "handle",
+          identityValue: alias.normalizedValue,
+        })
+      )
+      .filter(isDefined)
+      .map(createPersonIdentityKey),
+  ];
+}
+
+interface EntityGraphSourceIdentityAlias {
+  normalizedValue: string;
+  provider: Extract<PersonIdentityProvider, "github" | "x">;
+}
+
+function entityGraphSourceIdentityAliases(
+  metadata: Record<string, unknown>
+): EntityGraphSourceIdentityAlias[] {
+  const entityGraph = readRecord(metadata.entityGraph);
+  const sourceIdentities = Array.isArray(entityGraph?.sourceIdentities)
+    ? entityGraph.sourceIdentities
+    : [];
+
+  return sourceIdentities
+    .map((sourceIdentity) => {
+      const record = readRecord(sourceIdentity);
+      const provider = readString(record?.provider);
+      const identityType = readString(record?.identityType);
+      const normalizedValue = readString(record?.normalizedValue);
+
+      if (
+        !isXOrGitHubProvider(provider) ||
+        identityType !== "handle" ||
+        !normalizedValue
+      ) {
+        return null;
+      }
+
+      return {
+        normalizedValue,
+        provider,
+      };
+    })
+    .filter(isNonNullish);
+}
+
+function isXOrGitHubProvider(
+  value: string | null
+): value is Extract<PersonIdentityProvider, "github" | "x"> {
+  return value === "github" || value === "x";
+}
+
 function resolveSignalEntityLinkHints(
   lookup: SignalEntityLinkResolutionLookup,
   hints: SignalEntityLinkResolutionHints
-): Person | null {
+): SignalEntityLinkResolutionPerson | null {
   if (hints.identityKeys.length > 0) {
-    const matches = new Map<string, Person>();
+    const matches = new Map<string, SignalEntityLinkResolutionPerson>();
     for (const identityKey of hints.identityKeys) {
       const person = lookup.peopleByIdentityKey.get(identityKey);
       if (person) {
@@ -535,9 +630,9 @@ function resolveSignalEntityLinkHints(
 }
 
 function addPersonToLookup(
-  lookup: Map<string, Person[]>,
+  lookup: Map<string, SignalEntityLinkResolutionPerson[]>,
   key: string,
-  person: Person
+  person: SignalEntityLinkResolutionPerson
 ) {
   const matches = lookup.get(key);
   if (!matches) {
@@ -555,6 +650,16 @@ function firstMapValue<TKey, TValue>(map: Map<TKey, TValue>): TValue | null {
     return value;
   }
   return null;
+}
+
+function readRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function readString(value: unknown): string | null {
+  return typeof value === "string" ? value : null;
 }
 
 function inferProfileUrlProvider(
@@ -603,9 +708,11 @@ function enrichmentTargetFromLink(
     return { reason: "unsupported_mention_kind" };
   }
 
-  return profileEnrichmentTargetFromUrl(link.anchorText) ?? {
-    reason: "unsupported_profile_url",
-  };
+  return (
+    profileEnrichmentTargetFromUrl(link.anchorText) ?? {
+      reason: "unsupported_profile_url",
+    }
+  );
 }
 
 function profileEnrichmentTargetFromUrl(

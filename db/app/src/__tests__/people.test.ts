@@ -1,13 +1,18 @@
-import type { Database, EntityPerson, EntitySourceIdentity, Person } from "@db/app";
+import type {
+  Database,
+  EntityPerson,
+  EntitySourceIdentity,
+  Person,
+} from "@db/app";
 import { MySqlDialect } from "drizzle-orm/mysql-core";
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  PERSON_DISPLAY_NAME_LENGTH,
-  PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH,
   orgEntityPeople,
   orgEntitySourceIdentities,
   orgPeople,
+  PERSON_DISPLAY_NAME_LENGTH,
+  PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH,
 } from "../schema";
 import {
   escapeLikePattern,
@@ -379,7 +384,9 @@ function makeProjectionDb(input: {
     duplicateSet: vi.fn(),
     graphPeopleLimit: vi.fn(() => Promise.resolve(input.graphPeople)),
     insertValues: vi.fn(),
-    peopleLimit: vi.fn(() => Promise.resolve([peopleQueue.shift()].filter(Boolean))),
+    peopleLimit: vi.fn(() =>
+      Promise.resolve([peopleQueue.shift()].filter(Boolean))
+    ),
     sourceIdentityLimit: vi.fn(() => Promise.resolve(input.sourceIdentities)),
   };
   const db = {
@@ -415,7 +422,7 @@ function makeProjectionDb(input: {
 }
 
 describe("projectEntityGraphPeopleToOrgPeople", () => {
-  it("projects exact graph X/GitHub handle identities into People bridge rows", async () => {
+  it("projects one People row per graph person with source identity aliases", async () => {
     const graphPerson = makeEntityPerson();
     const xSource = makeSourceIdentity();
     const githubSource = makeSourceIdentity({
@@ -442,24 +449,9 @@ describe("projectEntityGraphPeopleToOrgPeople", () => {
       },
       personSource: "entity_graph",
     });
-    const githubRow = makePerson({
-      id: 2,
-      publicId: "person_223e4567-e89b-12d3-a456-426614174000",
-      displayName: "Ava Chen",
-      identityProvider: "github",
-      identityType: "handle",
-      identityValue: "avachen",
-      normalizedIdentityValue: "avachen",
-      identityKey: createPersonIdentityKey({
-        identityProvider: "github",
-        identityType: "handle",
-        normalizedIdentityValue: "avachen",
-      }),
-      personSource: "mixed",
-    });
     const { db, spies } = makeProjectionDb({
       graphPeople: [graphPerson],
-      projectedPeople: [xRow, githubRow],
+      projectedPeople: [xRow],
       sourceIdentities: [xSource, githubSource],
     });
 
@@ -474,9 +466,9 @@ describe("projectEntityGraphPeopleToOrgPeople", () => {
         },
         sourceIdentityKeys: ["x:handle:ava_ai", "github:handle:avachen"],
       })
-    ).resolves.toEqual([xRow, githubRow]);
+    ).resolves.toEqual([xRow]);
 
-    expect(spies.insertValues).toHaveBeenCalledTimes(2);
+    expect(spies.insertValues).toHaveBeenCalledTimes(1);
     expect(spies.insertValues).toHaveBeenCalledWith(
       expect.objectContaining({
         clerkOrgId: "org_test",
@@ -499,18 +491,29 @@ describe("projectEntityGraphPeopleToOrgPeople", () => {
               signalId: "signal_123",
             },
             sourceIdentityKey: xSource.identityKey,
+            sourceIdentityKeys: [xSource.identityKey, githubSource.identityKey],
             sourceIdentityPublicId: xSource.publicId,
+            sourceIdentityPublicIds: [xSource.publicId, githubSource.publicId],
+            sourceIdentities: [
+              {
+                identityKey: xSource.identityKey,
+                identityType: xSource.identityType,
+                identityValue: xSource.identityValue,
+                normalizedValue: xSource.normalizedValue,
+                provider: xSource.provider,
+                publicId: xSource.publicId,
+              },
+              {
+                identityKey: githubSource.identityKey,
+                identityType: githubSource.identityType,
+                identityValue: githubSource.identityValue,
+                normalizedValue: githubSource.normalizedValue,
+                provider: githubSource.provider,
+                publicId: githubSource.publicId,
+              },
+            ],
           },
         },
-      })
-    );
-    expect(spies.insertValues).toHaveBeenCalledWith(
-      expect.objectContaining({
-        identityProvider: "github",
-        identityType: "handle",
-        identityValue: "avachen",
-        normalizedIdentityValue: "avachen",
-        personSource: "entity_graph",
       })
     );
 

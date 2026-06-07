@@ -4,7 +4,7 @@ export {
 } from "./adapters";
 export { signalProfileObservationIds } from "./ids";
 export {
-  fetchSignalEntityProfiles,
   type FetchSignalEntityProfilesInput,
   type FetchSignalEntityProfilesResult,
+  fetchSignalEntityProfiles,
 } from "./provider-fetchers";

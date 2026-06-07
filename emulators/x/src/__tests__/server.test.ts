@@ -201,7 +201,7 @@ describe("@repo/x-emulator", () => {
     });
 
     const byUsernamesRes = await getAuthed(
-      "/2/users/by?usernames=emulator,agent"
+      "/2/users/by?usernames=emulator,agent,ava_ai"
     );
     expect(byUsernamesRes.status).toBe(200);
     await expect(byUsernamesRes.json()).resolves.toMatchObject({
@@ -219,6 +219,14 @@ describe("@repo/x-emulator", () => {
           location: "San Francisco, CA",
           url: "https://agent.lightfast.ai",
           username: "agent",
+        },
+        {
+          description: "Researches open-source identity systems.",
+          id: "x_user_3",
+          location: "New York, NY",
+          name: "Ava Chen",
+          url: "https://ava.example.test",
+          username: "ava_ai",
         },
       ],
     });

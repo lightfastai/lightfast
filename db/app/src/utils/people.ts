@@ -2,18 +2,18 @@ import { and, desc, eq, inArray, lt, or, sql } from "drizzle-orm";
 
 import type { Database } from "../client";
 import {
-  PERSON_DISPLAY_NAME_LENGTH,
-  PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH,
   type EntityGraphMetadata,
   type EntityPerson,
   type EntitySourceIdentity,
+  orgEntityPeople,
+  orgEntitySourceIdentities,
+  PERSON_DISPLAY_NAME_LENGTH,
+  PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH,
   type Person,
   type PersonIdentityProvider,
   type PersonIdentityType,
   type PersonMemberStatus,
   type PersonSource,
-  orgEntityPeople,
-  orgEntitySourceIdentities,
   orgPeople as people,
 } from "../schema";
 
@@ -113,6 +113,11 @@ import {
   createPersonIdentityKey,
   normalizePersonIdentityCandidate,
 } from "./people-identities";
+
+type BridgeableGraphSourceIdentity = EntitySourceIdentity & {
+  identityType: "handle";
+  provider: Extract<PersonIdentityProvider, "github" | "x">;
+};
 
 export interface UpsertPeopleCandidate {
   displayName?: string;
@@ -243,71 +248,78 @@ export async function projectEntityGraphPeopleToOrgPeople(
   const seenBridgeIdentityKeys = new Set<string>();
 
   for (const graphPerson of graphPeople) {
-    for (const sourceIdentity of bridgeableSourceIdentities) {
-      if (!graphPersonContainsSourceIdentity(graphPerson, sourceIdentity)) {
-        continue;
-      }
+    const graphPersonSourceIdentities = bridgeableSourceIdentities.filter(
+      (sourceIdentity) =>
+        graphPersonContainsSourceIdentity(graphPerson, sourceIdentity)
+    );
+    const sourceIdentity = selectPrimaryBridgeSourceIdentity(
+      graphPerson,
+      graphPersonSourceIdentities
+    );
+    if (!sourceIdentity) {
+      continue;
+    }
 
-      const normalized = normalizePersonIdentityCandidate({
-        identityProvider: sourceIdentity.provider,
-        identityType: "handle",
-        identityValue: sourceIdentity.identityValue,
-      });
-      if (!normalized) {
-        continue;
-      }
-      if (
-        normalized.normalizedIdentityValue.length >
-        PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH
-      ) {
-        continue;
-      }
+    const normalized = normalizePersonIdentityCandidate({
+      identityProvider: sourceIdentity.provider,
+      identityType: "handle",
+      identityValue: sourceIdentity.identityValue,
+    });
+    if (!normalized) {
+      continue;
+    }
+    if (
+      normalized.normalizedIdentityValue.length >
+      PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH
+    ) {
+      continue;
+    }
 
-      const identityKey = createPersonIdentityKey(normalized);
-      if (seenBridgeIdentityKeys.has(identityKey)) {
-        continue;
-      }
-      seenBridgeIdentityKeys.add(identityKey);
+    const identityKey = createPersonIdentityKey(normalized);
+    if (seenBridgeIdentityKeys.has(identityKey)) {
+      continue;
+    }
+    seenBridgeIdentityKeys.add(identityKey);
 
-      const metadata = entityGraphPeopleBridgeMetadata({
-        graphPerson,
-        resolverVersion: input.resolverVersion,
-        source: input.source,
-        sourceIdentity,
-      });
-      const displayName = normalizeDisplayName(graphPerson.displayName);
+    const metadata = entityGraphPeopleBridgeMetadata({
+      graphPerson,
+      resolverVersion: input.resolverVersion,
+      source: input.source,
+      sourceIdentities: graphPersonSourceIdentities,
+      sourceIdentity,
+    });
+    const displayName = normalizeDisplayName(graphPerson.displayName);
 
-      await db
-        .insert(people)
-        .values({
-          clerkOrgId: input.clerkOrgId,
-          displayName,
-          identityProvider: normalized.identityProvider,
-          identityType: normalized.identityType,
-          identityValue: sourceIdentity.identityValue,
-          normalizedIdentityValue: normalized.normalizedIdentityValue,
-          identityKey,
-          firstSeenSignalId: null,
-          lastSeenSignalId: null,
-          seenCount: 1,
-          metadata,
-          personSource: "entity_graph",
-        })
-        .onDuplicateKeyUpdate({
-          set: {
-            displayName: sql`COALESCE(${displayName}, ${people.displayName})`,
-            metadata,
-            personSource: sql`CASE WHEN ${people.personSource} = 'entity_graph' THEN 'entity_graph' ELSE 'mixed' END`,
-          },
-        });
-
-      const row = await getPersonByIdentityKey(db, {
+    await db
+      .insert(people)
+      .values({
         clerkOrgId: input.clerkOrgId,
+        displayName,
+        identityProvider: normalized.identityProvider,
+        identityType: normalized.identityType,
+        identityValue: sourceIdentity.identityValue,
+        normalizedIdentityValue: normalized.normalizedIdentityValue,
         identityKey,
+        firstSeenSignalId: null,
+        lastSeenSignalId: null,
+        seenCount: 1,
+        metadata,
+        personSource: "entity_graph",
+      })
+      .onDuplicateKeyUpdate({
+        set: {
+          displayName: sql`COALESCE(${displayName}, ${people.displayName})`,
+          metadata,
+          personSource: sql`CASE WHEN ${people.personSource} = 'entity_graph' THEN 'entity_graph' ELSE 'mixed' END`,
+        },
       });
-      if (row) {
-        projectedPeople.push(row);
-      }
+
+    const row = await getPersonByIdentityKey(db, {
+      clerkOrgId: input.clerkOrgId,
+      identityKey,
+    });
+    if (row) {
+      projectedPeople.push(row);
     }
   }
 
@@ -363,7 +375,9 @@ async function loadGraphPeopleForSourceIdentities(
     sourceIdentities: EntitySourceIdentity[];
   }
 ): Promise<EntityPerson[]> {
-  const sourceIdentityIds = input.sourceIdentities.map((identity) => identity.id);
+  const sourceIdentityIds = input.sourceIdentities.map(
+    (identity) => identity.id
+  );
   const matchConditions = [
     inArray(orgEntityPeople.primarySourceIdentityId, sourceIdentityIds),
     ...input.sourceIdentities.map(
@@ -394,12 +408,21 @@ function graphPersonContainsSourceIdentity(
   );
 }
 
+function selectPrimaryBridgeSourceIdentity(
+  graphPerson: EntityPerson,
+  sourceIdentities: BridgeableGraphSourceIdentity[]
+): BridgeableGraphSourceIdentity | undefined {
+  return (
+    sourceIdentities.find(
+      (sourceIdentity) =>
+        graphPerson.primarySourceIdentityId === sourceIdentity.id
+    ) ?? sourceIdentities[0]
+  );
+}
+
 function isBridgeableGraphSourceIdentity(
   sourceIdentity: EntitySourceIdentity
-): sourceIdentity is EntitySourceIdentity & {
-  identityType: "handle";
-  provider: Extract<PersonIdentityProvider, "github" | "x">;
-} {
+): sourceIdentity is BridgeableGraphSourceIdentity {
   return (
     sourceIdentity.identityType === "handle" &&
     (sourceIdentity.provider === "x" || sourceIdentity.provider === "github")
@@ -410,7 +433,8 @@ function entityGraphPeopleBridgeMetadata(input: {
   graphPerson: EntityPerson;
   resolverVersion: string;
   source?: Record<string, unknown>;
-  sourceIdentity: EntitySourceIdentity;
+  sourceIdentities: BridgeableGraphSourceIdentity[];
+  sourceIdentity: BridgeableGraphSourceIdentity;
 }): EntityGraphMetadata {
   return {
     entityGraph: {
@@ -420,8 +444,26 @@ function entityGraphPeopleBridgeMetadata(input: {
       personStatus: input.graphPerson.status,
       resolverVersion: input.resolverVersion,
       source: input.source ?? null,
+      sourceIdentities: input.sourceIdentities.map(toBridgeSourceIdentity),
       sourceIdentityKey: input.sourceIdentity.identityKey,
+      sourceIdentityKeys: input.sourceIdentities.map(
+        (sourceIdentity) => sourceIdentity.identityKey
+      ),
       sourceIdentityPublicId: input.sourceIdentity.publicId,
+      sourceIdentityPublicIds: input.sourceIdentities.map(
+        (sourceIdentity) => sourceIdentity.publicId
+      ),
     },
+  };
+}
+
+function toBridgeSourceIdentity(sourceIdentity: BridgeableGraphSourceIdentity) {
+  return {
+    identityKey: sourceIdentity.identityKey,
+    identityType: sourceIdentity.identityType,
+    identityValue: sourceIdentity.identityValue,
+    normalizedValue: sourceIdentity.normalizedValue,
+    provider: sourceIdentity.provider,
+    publicId: sourceIdentity.publicId,
   };
 }

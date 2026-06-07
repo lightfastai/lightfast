@@ -50,12 +50,8 @@ vi.mock("../env", () => ({ env: envMock }));
 const { issueConnectorMcpToken } = await import(
   "../services/connectors/mcp-auth"
 );
-const {
-  getFreshXConnectorAccessToken,
-  handleXConnectorMcpRequest,
-} = await import(
-  "../services/connectors/x-mcp-bridge"
-);
+const { getFreshXConnectorAccessToken, handleXConnectorMcpRequest } =
+  await import("../services/connectors/x-mcp-bridge");
 
 function connection(
   overrides: Partial<OrgConnectorConnection> = {}

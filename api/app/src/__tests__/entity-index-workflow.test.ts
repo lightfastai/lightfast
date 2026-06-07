@@ -244,6 +244,7 @@ beforeEach(() => {
     errorCode: "SIGNAL_ENTITY_LINKING_FAILED",
     errorMessage: error instanceof Error ? error.message : String(error),
   }));
+  process.env.AI_GATEWAY_API_KEY = "test-ai-gateway-key";
 });
 
 describe("indexSignalEntities", () => {
@@ -340,6 +341,55 @@ describe("indexSignalEntities", () => {
     });
     expect(replaceSignalEntityLinksMock).toHaveBeenCalledWith(db, {
       candidates: [deterministicCandidate, aiCandidate],
+      clerkOrgId: "org_test",
+      signalId,
+    });
+    expect(step.sendEvent).toHaveBeenCalledWith(
+      "queue signal entity enrichment",
+      {
+        name: "app/signal.entity-enrichment.requested",
+        data: {
+          clerkOrgId: "org_test",
+          reason: "signal_indexed",
+          signalId,
+        },
+      }
+    );
+  });
+
+  it("uses deterministic links only in development without AI Gateway credentials", async () => {
+    const step = createStep();
+    delete process.env.AI_GATEWAY_API_KEY;
+    mergeSignalEntityLinkCandidatesMock.mockReturnValueOnce([
+      deterministicCandidate,
+    ]);
+    replaceSignalEntityLinksMock.mockResolvedValueOnce({
+      links: 1,
+      resolved: 0,
+    });
+
+    await expect(runWorkflow(step)).resolves.toEqual({
+      aiCandidates: 0,
+      candidates: 1,
+      deterministicCandidates: 1,
+      persistedLinks: 1,
+      resolvedLinks: 0,
+      status: "indexed",
+    });
+
+    expect(extractDeterministicSignalEntityLinksMock).toHaveBeenCalledWith({
+      input: signal.input,
+    });
+    expect(buildSignalEntityLinkingRequestMock).not.toHaveBeenCalled();
+    expect(step.ai.wrap).not.toHaveBeenCalled();
+    expect(classifySignalEntityLinksMock).not.toHaveBeenCalled();
+    expect(mergeSignalEntityLinkCandidatesMock).toHaveBeenCalledWith({
+      aiCandidates: [],
+      deterministicCandidates: [deterministicCandidate],
+      input: signal.input,
+    });
+    expect(replaceSignalEntityLinksMock).toHaveBeenCalledWith(db, {
+      candidates: [deterministicCandidate],
       clerkOrgId: "org_test",
       signalId,
     });

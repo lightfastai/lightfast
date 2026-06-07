@@ -59,6 +59,16 @@ export function createGitHubEmulatorSeed(): GitHubSeedConfig {
         twitter_username: "lightfast_dev",
         bio: "Builds local GitHub emulator fixtures for agent workflows.",
       },
+      {
+        login: "avachen",
+        name: "Ava Chen",
+        email: "ava@example.test",
+        company: "Open Identity Lab",
+        blog: "https://ava.example.test",
+        location: "New York, NY",
+        twitter_username: "ava_ai",
+        bio: "Researches open-source identity systems.",
+      },
     ],
     orgs: [
       {

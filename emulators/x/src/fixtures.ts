@@ -29,6 +29,14 @@ export const X_EMULATOR_USERS = [
     url: "https://agent.lightfast.ai",
     username: "agent",
   },
+  {
+    description: "Researches open-source identity systems.",
+    id: "x_user_3",
+    location: "New York, NY",
+    name: "Ava Chen",
+    url: "https://ava.example.test",
+    username: "ava_ai",
+  },
 ] as const;
 
 export const X_EMULATOR_POSTS = [

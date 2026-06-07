@@ -1,5 +1,4 @@
-import type { SignalEntityEnrichmentTargetsResult } from "@db/app";
-import type { Database } from "@db/app";
+import type { Database, SignalEntityEnrichmentTargetsResult } from "@db/app";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const executeXApiToolMock = vi.fn();
@@ -86,6 +85,8 @@ function targets(): SignalEntityEnrichmentTargetsResult {
 }
 
 beforeEach(() => {
+  envMock.VERCEL_ENV = "development";
+  envMock.X_API_ORIGIN = "https://x.lightfast.localhost";
   vi.stubEnv("NEXT_PUBLIC_APP_URL", envMock.NEXT_PUBLIC_APP_URL);
   executeXApiToolMock.mockReset();
   executeXApiToolMock.mockResolvedValue({
@@ -213,6 +214,162 @@ describe("fetchSignalEntityProfiles", () => {
       apiVersion: "2022-11-28",
       login: "avachen",
       token: "ghs_installation",
+    });
+  });
+
+  it("allows local X endpoints when Vercel env is development", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+
+    await expect(
+      fetchSignalEntityProfiles({
+        clerkOrgId: "org_test",
+        targets: targets(),
+      })
+    ).resolves.toMatchObject({
+      diagnostics: {},
+      xPayloads: [
+        {
+          description: "Founder at Acme.",
+          id: "x_1",
+          name: "Ava Chen",
+          username: "ava_ai",
+        },
+      ],
+    });
+  });
+
+  it("keeps GitHub enrichment when X profile fetch fails", async () => {
+    envMock.X_API_ORIGIN = "https://api.x.example.test";
+    executeXApiToolMock.mockRejectedValueOnce(new Error("x unavailable"));
+
+    await expect(
+      fetchSignalEntityProfiles({
+        clerkOrgId: "org_test",
+        targets: targets(),
+      })
+    ).resolves.toEqual({
+      diagnostics: {
+        x_profile_fetch_failed: 1,
+      },
+      githubPayloads: [
+        {
+          company: "Acme",
+          id: "12345",
+          login: "avachen",
+          name: "Ava Chen",
+          twitterUsername: "ava_ai",
+          type: "User",
+        },
+      ],
+      xPayloads: [],
+    });
+  });
+
+  it("uses the local X emulator token when dev token refresh fails", async () => {
+    getFreshXConnectorAccessTokenMock.mockRejectedValueOnce(
+      new Error("refresh unavailable")
+    );
+
+    await expect(
+      fetchSignalEntityProfiles({
+        clerkOrgId: "org_test",
+        targets: targets(),
+      })
+    ).resolves.toMatchObject({
+      diagnostics: {},
+      xPayloads: [
+        {
+          description: "Founder at Acme.",
+          id: "x_1",
+          name: "Ava Chen",
+          username: "ava_ai",
+        },
+      ],
+    });
+
+    expect(executeXApiToolMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        accessToken: "x_access_valid",
+        apiOrigin: "https://x.lightfast.localhost",
+        input: { usernames: ["ava_ai"] },
+        name: "getUsersByUsernames",
+      })
+    );
+  });
+
+  it("retries the local X emulator token when a dev tool call fails", async () => {
+    executeXApiToolMock
+      .mockRejectedValueOnce(new Error("invalid token"))
+      .mockResolvedValueOnce({
+        content: [{ text: "ok", type: "text" }],
+        structuredContent: {
+          data: [
+            {
+              description: "Founder at Acme.",
+              id: "x_1",
+              name: "Ava Chen",
+              username: "ava_ai",
+            },
+          ],
+        },
+      });
+
+    await expect(
+      fetchSignalEntityProfiles({
+        clerkOrgId: "org_test",
+        targets: targets(),
+      })
+    ).resolves.toMatchObject({
+      diagnostics: {},
+      xPayloads: [
+        {
+          description: "Founder at Acme.",
+          id: "x_1",
+          name: "Ava Chen",
+          username: "ava_ai",
+        },
+      ],
+    });
+
+    expect(executeXApiToolMock).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        accessToken: "x_access_token",
+        apiOrigin: "https://x.lightfast.localhost",
+      })
+    );
+    expect(executeXApiToolMock).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        accessToken: "x_access_valid",
+        apiOrigin: "https://x.lightfast.localhost",
+      })
+    );
+  });
+
+  it("keeps X enrichment when a GitHub profile fetch fails", async () => {
+    getGitHubUserByLoginMock.mockRejectedValueOnce(
+      new Error("github unavailable")
+    );
+
+    await expect(
+      fetchSignalEntityProfiles({
+        clerkOrgId: "org_test",
+        targets: targets(),
+      })
+    ).resolves.toEqual({
+      diagnostics: {
+        github_profile_fetch_failed: 1,
+      },
+      githubPayloads: [],
+      xPayloads: [
+        {
+          description: "Founder at Acme.",
+          id: "x_1",
+          name: "Ava Chen",
+          username: "ava_ai",
+        },
+      ],
     });
   });
 });

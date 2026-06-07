@@ -41,7 +41,7 @@ export function xUserPayloadToObservation(
 
   const id = cleanRequiredString(parsed.data.id);
   const username = cleanRequiredString(parsed.data.username);
-  if (!id || !username) {
+  if (!(id && username)) {
     return null;
   }
 
@@ -72,17 +72,15 @@ export function githubUserPayloadToObservation(
 
   const id = cleanRequiredString(parsed.data.id);
   const login = cleanRequiredString(parsed.data.login);
-  if (!id || !login) {
+  if (!(id && login)) {
     return null;
   }
 
-  const profile: Extract<
-    EntityObservation,
-    { provider: "github" }
-  >["profile"] = {
-    id,
-    login,
-  };
+  const profile: Extract<EntityObservation, { provider: "github" }>["profile"] =
+    {
+      id,
+      login,
+    };
   setOptionalProfileField(profile, "bio", parsed.data.bio);
   setOptionalProfileField(profile, "blog", parsed.data.blog);
   setOptionalProfileField(profile, "company", parsed.data.company);
@@ -114,7 +112,7 @@ function cleanOptionalNullableString(
     return null;
   }
   if (value === undefined) {
-    return undefined;
+    return;
   }
   const cleaned = value.trim();
   return cleaned.length > 0 ? cleaned : null;
@@ -123,11 +121,7 @@ function cleanOptionalNullableString(
 function setOptionalProfileField<
   TProfile extends Record<string, unknown>,
   TKey extends keyof TProfile,
->(
-  profile: TProfile,
-  key: TKey,
-  value: string | null | undefined
-) {
+>(profile: TProfile, key: TKey, value: string | null | undefined) {
   const cleaned = cleanOptionalNullableString(value);
   if (cleaned !== undefined) {
     profile[key] = cleaned as TProfile[TKey];

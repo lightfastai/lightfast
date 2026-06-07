@@ -48,7 +48,7 @@ describe("entity enrichment adapters", () => {
           blog: "https://acme.com",
           company: "Acme",
           email: null,
-          id: 12345,
+          id: 12_345,
           location: "San Francisco",
           login: "avachen",
           name: "Ava Chen",

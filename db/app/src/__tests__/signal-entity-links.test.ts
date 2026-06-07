@@ -380,12 +380,7 @@ describe("reconcileSignalEntityLinksForPeople", () => {
     await expect(
       reconcileSignalEntityLinksForPeople(db, {
         clerkOrgId: "org_test",
-        people: [
-          {
-            displayName: "Jordi",
-            normalizedIdentityValue: "jordi@doccy.com.au",
-          },
-        ],
+        people: [person],
       })
     ).resolves.toEqual({ resolved: 1 });
 
@@ -395,6 +390,68 @@ describe("reconcileSignalEntityLinksForPeople", () => {
     expect(spies.updateSet).toHaveBeenCalledWith({
       resolvedAt: expect.any(Date),
       resolvedPersonId: person.publicId,
+    });
+  });
+
+  it("resolves graph-projected source identity aliases to the same People row", async () => {
+    const projectedPerson = makePerson({
+      displayName: "Ava Chen",
+      identityProvider: "x",
+      identityType: "handle",
+      identityValue: "ava_ai",
+      normalizedIdentityValue: "ava_ai",
+      identityKey: createPersonIdentityKey({
+        identityProvider: "x",
+        identityType: "handle",
+        normalizedIdentityValue: "ava_ai",
+      }),
+      metadata: {
+        entityGraph: {
+          sourceIdentities: [
+            {
+              identityKey: "x:handle:ava_ai",
+              identityType: "handle",
+              identityValue: "ava_ai",
+              normalizedValue: "ava_ai",
+              provider: "x",
+              publicId: "sid_x",
+            },
+            {
+              identityKey: "github:handle:avachen",
+              identityType: "handle",
+              identityValue: "avachen",
+              normalizedValue: "avachen",
+              provider: "github",
+              publicId: "sid_github",
+            },
+          ],
+        },
+      },
+      personSource: "entity_graph",
+    });
+    const githubLink = makeLink({
+      id: 1,
+      anchorText: "https://github.com/avachen",
+      label: "https://github.com/avachen",
+      localEntityKey: "person_1",
+      mentionKind: "profile_url",
+      normalizedMentionValue: "avachen",
+    });
+    const { db, spies } = makeReconcileDb({
+      peopleResults: [[]],
+      unresolvedBatches: [[githubLink]],
+    });
+
+    await expect(
+      reconcileSignalEntityLinksForPeople(db, {
+        clerkOrgId: "org_test",
+        people: [projectedPerson],
+      })
+    ).resolves.toEqual({ resolved: 1 });
+
+    expect(spies.updateSet).toHaveBeenCalledWith({
+      resolvedAt: expect.any(Date),
+      resolvedPersonId: projectedPerson.publicId,
     });
   });
 });
@@ -461,9 +518,18 @@ describe("listSignalEntityEnrichmentTargets", () => {
         },
       ],
       skipped: expect.arrayContaining([
-        expect.objectContaining({ linkId: 4, reason: "unsupported_mention_kind" }),
-        expect.objectContaining({ linkId: 5, reason: "unsupported_mention_kind" }),
-        expect.objectContaining({ linkId: 6, reason: "unsupported_profile_url" }),
+        expect.objectContaining({
+          linkId: 4,
+          reason: "unsupported_mention_kind",
+        }),
+        expect.objectContaining({
+          linkId: 5,
+          reason: "unsupported_mention_kind",
+        }),
+        expect.objectContaining({
+          linkId: 6,
+          reason: "unsupported_profile_url",
+        }),
         expect.objectContaining({ linkId: 7, reason: "ambiguous_handle" }),
       ]),
       x: [

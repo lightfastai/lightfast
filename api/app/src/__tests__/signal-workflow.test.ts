@@ -7,6 +7,7 @@ const markSignalClassifiedMock = vi.fn();
 const markSignalFailedMock = vi.fn();
 const buildSignalClassificationRequestMock = vi.fn();
 const classifySignalInputMock = vi.fn();
+const classifySignalInputLocallyMock = vi.fn();
 const getSignalClassificationFailureMock = vi.fn();
 const getOrgIdentityContextMock = vi.fn();
 const formatOrgIdentitySystemSectionMock = vi.fn();
@@ -67,6 +68,7 @@ vi.mock("@repo/ai/signal-classifier", () => ({
   SIGNAL_CLASSIFIER_SYSTEM_PROMPT: "You are the Lightfast signal classifier.",
   buildSignalClassificationRequest: buildSignalClassificationRequestMock,
   classifySignalInput: classifySignalInputMock,
+  classifySignalInputLocally: classifySignalInputLocallyMock,
   getSignalClassificationFailure: getSignalClassificationFailureMock,
 }));
 
@@ -295,6 +297,7 @@ beforeEach(() => {
   markSignalFailedMock.mockReset();
   buildSignalClassificationRequestMock.mockReset();
   classifySignalInputMock.mockReset();
+  classifySignalInputLocallyMock.mockReset();
   getSignalClassificationFailureMock.mockReset();
   getOrgIdentityContextMock.mockReset();
   formatOrgIdentitySystemSectionMock.mockReset();
@@ -321,6 +324,7 @@ beforeEach(() => {
     system: "You are the Lightfast signal classifier.",
   });
   classifySignalInputMock.mockResolvedValue(teamPeopleClassification);
+  classifySignalInputLocallyMock.mockReturnValue(teamPeopleClassification);
   getSignalClassificationFailureMock.mockImplementation((error: unknown) => ({
     errorCode:
       error instanceof Error && error.name === "AI_APICallError"
@@ -328,6 +332,7 @@ beforeEach(() => {
         : "CLASSIFICATION_FAILED",
     errorMessage: error instanceof Error ? error.message : String(error),
   }));
+  process.env.AI_GATEWAY_API_KEY = "test-ai-gateway-key";
 });
 
 describe("classifySignal", () => {
@@ -462,6 +467,53 @@ describe("classifySignal", () => {
       ]
     );
     expect(sendMock).not.toHaveBeenCalled();
+  });
+
+  it("uses deterministic local classification in development without AI Gateway credentials", async () => {
+    const step = createStep();
+    delete process.env.AI_GATEWAY_API_KEY;
+
+    await expect(runWorkflow(step)).resolves.toEqual({
+      status: "classified",
+      visibilityScope: "team",
+      reviewRequired: false,
+      routedPeople: true,
+    });
+
+    expect(classifySignalInputLocallyMock).toHaveBeenCalledWith({
+      input: signal.input,
+      signalId,
+    });
+    expect(buildSignalClassificationRequestMock).not.toHaveBeenCalled();
+    expect(step.ai.wrap).not.toHaveBeenCalled();
+    expect(classifySignalInputMock).not.toHaveBeenCalled();
+    expect(markSignalClassifiedMock).toHaveBeenCalledWith(
+      db,
+      expect.objectContaining({
+        classification: teamPeopleClassification,
+        clerkOrgId: "org_test",
+        publicId: signalId,
+      })
+    );
+    expect(step.sendEvent).toHaveBeenCalledWith(
+      "queue classified signal downstream workflows",
+      [
+        {
+          name: "app/people.classification.requested",
+          data: {
+            clerkOrgId: "org_test",
+            signalId,
+          },
+        },
+        {
+          name: "app/signal.entity-index.requested",
+          data: {
+            clerkOrgId: "org_test",
+            signalId,
+          },
+        },
+      ]
+    );
   });
 
   it("queues entity indexing for non-actionable visible signals", async () => {
