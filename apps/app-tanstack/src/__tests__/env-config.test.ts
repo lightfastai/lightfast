@@ -32,6 +32,7 @@ describe("app-tanstack environment validation wiring", () => {
     expect(envSource).toContain("VITE_LIGHTFAST_APP_URL");
     expect(envSource).toContain("VITE_LIGHTFAST_WWW_URL");
     expect(envSource).toContain("VITE_LIGHTFAST_PLATFORM_URL");
+    expect(envSource).toContain("VITE_VERCEL_ENV");
   });
 
   it("evaluates env during Vite config loading", () => {
@@ -48,6 +49,7 @@ describe("app-tanstack environment validation wiring", () => {
     expect(viteConfigSource).toContain("process.env.PORTLESS_URL");
     expect(viteConfigSource).toContain("protocol: \"wss\"");
     expect(viteConfigSource).toContain("env.VITE_CLERK_PUBLISHABLE_KEY");
+    expect(viteConfigSource).toContain("env.VITE_VERCEL_ENV");
     expect(viteConfigSource).not.toContain(
       'env.VITE_CLERK_PUBLISHABLE_KEY ?? ""'
     );
@@ -66,6 +68,49 @@ describe("app-tanstack environment validation wiring", () => {
     expect(viteConfigSource).toContain("nitro()");
     expect(viteConfigSource).toContain("react()");
     expect(viteConfigSource).toContain("sentryTanstackStart");
+  });
+
+  it("keeps Turbo build caching sensitive to cutover URL env", () => {
+    const turboJson = JSON.parse(
+      readFileSync(resolve(appRoot, "turbo.json"), "utf8")
+    ) as {
+      tasks: {
+        build: {
+          env: string[];
+          passThroughEnv: string[];
+        };
+      };
+    };
+
+    expect(turboJson.tasks.build.env).toEqual(
+      expect.arrayContaining([
+        "NEXT_PUBLIC_APP_URL",
+        "NEXT_PUBLIC_WWW_URL",
+        "NEXT_PUBLIC_PLATFORM_URL",
+        "NEXT_PUBLIC_VERCEL_ENV",
+        "VITE_*",
+      ])
+    );
+    expect(turboJson.tasks.build.passThroughEnv).toEqual(
+      expect.arrayContaining([
+        "CLERK_CLI_OAUTH_CLIENT_ID",
+        "CLERK_DESKTOP_OAUTH_CLIENT_ID",
+        "CONNECTOR_MCP_AUTH_SECRET",
+        "ENCRYPTION_KEY",
+        "GITHUB_APP_CLIENT_ID",
+        "GITHUB_APP_CLIENT_SECRET",
+        "GITHUB_APP_ID",
+        "GITHUB_APP_PRIVATE_KEY",
+        "GITHUB_APP_SLUG",
+        "GITHUB_APP_WEBHOOK_SECRET",
+        "INNGEST_APP_NAME",
+        "INNGEST_EVENT_KEY",
+        "INNGEST_SERVE_ORIGIN",
+        "INNGEST_SIGNING_KEY",
+        "LINEAR_CLIENT_ID",
+        "LINEAR_CLIENT_SECRET",
+      ])
+    );
   });
 
   it("keeps production builds working without Sentry upload credentials", () => {

@@ -26,6 +26,7 @@ export const env = createEnv({
     VITE_LIGHTFAST_PLATFORM_URL: z.string().url(),
     VITE_LIGHTFAST_WWW_URL: z.string().url(),
     VITE_SENTRY_DSN: z.string().url().optional(),
+    VITE_VERCEL_ENV: vercelEnvSchema,
   },
   server: {
     BRAINTRUST_API_KEY: z.string().min(1).optional(),
@@ -85,6 +86,11 @@ export const env = createEnv({
       defaultAppUrl,
     VITE_SENTRY_DSN:
       process.env.VITE_SENTRY_DSN ?? process.env.NEXT_PUBLIC_SENTRY_DSN,
+    VITE_VERCEL_ENV:
+      process.env.VITE_VERCEL_ENV ??
+      process.env.NEXT_PUBLIC_VERCEL_ENV ??
+      process.env.VERCEL_ENV ??
+      "development",
   },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||

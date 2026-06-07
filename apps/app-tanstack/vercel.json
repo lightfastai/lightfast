@@ -1,5 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "tanstack-start",
-  "ignoreCommand": "npx turbo-ignore"
+  "ignoreCommand": "npx turbo-ignore",
+  "relatedProjects": [
+    "prj_fCNbgzrn0hHuJRVvM7EZuUvFyGgW",
+    "prj_JRXRxBruTvB5Bs99JjA63TLek6GT"
+  ]
 }

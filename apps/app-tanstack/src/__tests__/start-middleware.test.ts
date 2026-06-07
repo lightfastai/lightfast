@@ -24,6 +24,10 @@ describe("app-tanstack start middleware", () => {
     expect(isAppOwnedApiRoute("/api/connectors/x/mcp")).toBe(true);
     expect(isAppOwnedApiRoute("/api/connectors/x/mcp/messages")).toBe(true);
     expect(isAppOwnedApiRoute("/api/inngest")).toBe(true);
+    expect(isAppOwnedApiRoute("/api/internal/mcp/proxy/call")).toBe(true);
+    expect(isAppOwnedApiRoute("/api/internal/mcp/proxy/find")).toBe(true);
+    expect(isAppOwnedApiRoute("/api/internal/mcp/signals")).toBe(true);
+    expect(isAppOwnedApiRoute("/api/internal/mcp/signals/get")).toBe(true);
     expect(isAppOwnedApiRoute("/api/v1/orgs")).toBe(true);
   });
 
@@ -37,5 +41,8 @@ describe("app-tanstack start middleware", () => {
       false
     );
     expect(isAppOwnedApiRoute("/api/github/oauth/callback")).toBe(false);
+    expect(isAppOwnedApiRoute("/api/github/webhook")).toBe(false);
+    expect(isAppOwnedApiRoute("/api/native/proxy/routines")).toBe(false);
+    expect(isAppOwnedApiRoute("/api/internal/other")).toBe(false);
   });
 });

@@ -109,6 +109,7 @@ export default defineConfig(({ command }) => ({
       env.VITE_LIGHTFAST_WWW_URL
     ),
     "import.meta.env.VITE_SENTRY_DSN": JSON.stringify(sentryClientDsn ?? ""),
+    "import.meta.env.VITE_VERCEL_ENV": JSON.stringify(env.VITE_VERCEL_ENV),
   },
   server: {
     ...(host ? { host } : {}),

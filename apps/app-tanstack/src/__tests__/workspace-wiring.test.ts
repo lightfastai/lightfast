@@ -74,4 +74,21 @@ describe("app-tanstack workspace wiring", () => {
       "apps/app-tanstack|lightfast-app-tanstack|LIGHTFAST_VERCEL_PROJECT_ID_APP_TANSTACK"
     );
   });
+
+  it("declares the same related Vercel sibling projects as the current app", () => {
+    const appVercelJson = JSON.parse(
+      readFileSync(resolve(repoRoot, "apps/app/vercel.json"), "utf8")
+    ) as { relatedProjects: string[] };
+    const tanstackVercelJson = JSON.parse(
+      readFileSync(resolve(appRoot, "vercel.json"), "utf8")
+    ) as {
+      framework: string;
+      relatedProjects: string[];
+    };
+
+    expect(tanstackVercelJson.framework).toBe("tanstack-start");
+    expect(tanstackVercelJson.relatedProjects).toEqual(
+      appVercelJson.relatedProjects
+    );
+  });
 });
