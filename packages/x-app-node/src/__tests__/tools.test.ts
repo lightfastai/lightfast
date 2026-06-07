@@ -94,7 +94,7 @@ describe("executeXApiTool", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://api.x.test/2/users/by/username/lightfast",
+      "https://api.x.test/2/users/by/username/lightfast?user.fields=id%2Cname%2Cusername%2Cdescription%2Clocation%2Curl",
       expect.objectContaining({
         headers: expect.objectContaining({
           authorization: "Bearer x_access",
@@ -102,6 +102,45 @@ describe("executeXApiTool", () => {
         method: "GET",
       })
     );
+  });
+
+  it("requests rich user fields for every X user lookup tool", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async () =>
+      Response.json({
+        data: {
+          id: "x_user_123",
+          name: "Lightfast",
+          username: "lightfast",
+        },
+      })
+    );
+
+    const calls = [
+      { input: {}, name: "getUsersMe" },
+      { input: { username: "lightfast" }, name: "getUsersByUsername" },
+      {
+        input: { usernames: ["lightfast", "agent"] },
+        name: "getUsersByUsernames",
+      },
+      { input: { id: "x_user_123" }, name: "getUsersById" },
+      { input: { ids: ["x_user_123", "x_user_456"] }, name: "getUsersByIds" },
+    ];
+
+    for (const call of calls) {
+      await executeXApiTool({
+        accessToken: "x_access",
+        apiOrigin: "https://api.x.test",
+        fetch: fetchMock,
+        input: call.input,
+        name: call.name,
+      });
+    }
+
+    for (const [url] of fetchMock.mock.calls) {
+      expect(url).toContain(
+        "user.fields=id%2Cname%2Cusername%2Cdescription%2Clocation%2Curl"
+      );
+    }
   });
 
   it("executes JSON write operations with connected actor path injection", async () => {

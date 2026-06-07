@@ -20,7 +20,10 @@ export const xPlugin: ServicePlugin = {
     seedFailures(store);
     for (const user of X_EMULATOR_USERS) {
       store.collection<XUserRow>("users").insert({
+        description: user.description,
+        location: user.location,
         name: user.name,
+        url: user.url,
         username: user.username,
         x_id: user.id,
       });

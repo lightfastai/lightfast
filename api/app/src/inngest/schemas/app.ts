@@ -15,10 +15,26 @@ const entityGraphPersistedSummarySchema = z.object({
   candidateGroups: z.number().int().nonnegative(),
   candidateVersionsAppended: z.number().int().nonnegative(),
   candidateVersionsUnchanged: z.number().int().nonnegative(),
+  entityLinksResolved: z.number().int().nonnegative(),
   observations: z.number().int().nonnegative(),
+  projectedPeople: z.number().int().nonnegative(),
   skippedCanonicalCandidates: z.number().int().nonnegative(),
   sourceIdentities: z.number().int().nonnegative(),
 });
+
+const signalEntityEnrichmentReasonSchema = z.enum([
+  "signal_indexed",
+  "manual_retry",
+  "backfill",
+]);
+
+const connectorProfileObservedSourceSchema = z
+  .object({
+    kind: z.literal("signal_entity_enrichment"),
+    reason: signalEntityEnrichmentReasonSchema,
+    signalId: signalIdSchema,
+  })
+  .strict();
 
 export const appTeamMembersReconcileRequestedEventSchema = z.object({
   cursor: z.number().int().positive().nullable().optional(),
@@ -69,6 +85,7 @@ export const appEvents = {
         ingestionId: z.string().min(1),
         observations: z.array(entityObservationSchema).min(1),
         resolverVersion: z.string().min(1).optional(),
+        source: connectorProfileObservedSourceSchema.optional(),
       }),
     }
   ),
@@ -85,6 +102,16 @@ export const appEvents = {
       schema: z.object({
         signalId: signalIdSchema,
         clerkOrgId: z.string().min(1),
+      }),
+    }
+  ),
+  "app/signal.entity-enrichment.requested": eventType(
+    "app/signal.entity-enrichment.requested",
+    {
+      schema: z.object({
+        clerkOrgId: z.string().min(1),
+        reason: signalEntityEnrichmentReasonSchema,
+        signalId: signalIdSchema,
       }),
     }
   ),

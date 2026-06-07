@@ -7,6 +7,7 @@ import {
   listEntityPeople,
   listEntityPersonAccountAffiliations,
 } from "@db/app";
+import { signalIdSchema } from "@repo/api-contract";
 import { entityGraphStatusSchema } from "@repo/entity-graph-contract";
 import { SIMULATED_ENTITY_SCENARIOS } from "@repo/entity-resolution";
 import { TRPCError } from "@trpc/server";
@@ -25,6 +26,12 @@ const listEntitiesInput = z
 const publicIdInput = z
   .object({
     publicId: z.string().trim().min(1),
+  })
+  .strict();
+
+const retrySignalEnrichmentInput = z
+  .object({
+    signalId: signalIdSchema,
   })
   .strict();
 
@@ -138,5 +145,31 @@ export const workspaceEntityGraphRouter = createTRPCRouter({
         status: "queued" as const,
       };
     }),
+    retrySignalEnrichment: boundOrgProcedure
+      .input(retrySignalEnrichmentInput)
+      .mutation(async ({ ctx, input }) => {
+        if (process.env.NODE_ENV === "production") {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Signal enrichment retry is dev-only",
+          });
+        }
+
+        const { inngest } = await import("../../inngest/client");
+        await inngest.send({
+          id: `signal-entity-enrichment-manual-${ctx.auth.identity.orgId}-${input.signalId}`,
+          name: "app/signal.entity-enrichment.requested",
+          data: {
+            clerkOrgId: ctx.auth.identity.orgId,
+            reason: "manual_retry" as const,
+            signalId: input.signalId,
+          },
+        });
+
+        return {
+          signalId: input.signalId,
+          status: "queued" as const,
+        };
+      }),
   }),
 });

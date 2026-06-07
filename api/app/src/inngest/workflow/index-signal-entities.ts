@@ -30,6 +30,10 @@ function shouldIndexSignalEntities(signal: {
   );
 }
 
+function shouldUseDeterministicOnlyEntityLinking(): boolean {
+  return env.VERCEL_ENV === "development" && !process.env.AI_GATEWAY_API_KEY;
+}
+
 export const indexSignalEntities = inngest.createFunction(
   {
     id: "index-signal-entities",
@@ -77,25 +81,27 @@ export const indexSignalEntities = inngest.createFunction(
       () => extractDeterministicSignalEntityLinks({ input: signal.input })
     );
 
-    const request = buildSignalEntityLinkingRequest({
-      classification: signal.classification,
-      clerkOrgId,
-      deploymentEnvironment: env.VERCEL_ENV,
-      deterministicCandidates,
-      input: signal.input,
-      signalId,
-    });
-
-    const aiResult = await step.ai.wrap(
-      "link signal entities",
-      (linkingRequest) =>
-        classifySignalEntityLinks(linkingRequest, { logger: log }),
-      request
-    );
+    const aiCandidates = shouldUseDeterministicOnlyEntityLinking()
+      ? []
+      : (
+          await step.ai.wrap(
+            "link signal entities",
+            (linkingRequest) =>
+              classifySignalEntityLinks(linkingRequest, { logger: log }),
+            buildSignalEntityLinkingRequest({
+              classification: signal.classification,
+              clerkOrgId,
+              deploymentEnvironment: env.VERCEL_ENV,
+              deterministicCandidates,
+              input: signal.input,
+              signalId,
+            })
+          )
+        ).candidates;
 
     const candidates = await step.run("merge entity link candidates", () =>
       mergeSignalEntityLinkCandidates({
-        aiCandidates: aiResult.candidates,
+        aiCandidates,
         deterministicCandidates,
         input: signal.input,
       })
@@ -109,10 +115,19 @@ export const indexSignalEntities = inngest.createFunction(
       })
     );
 
+    await step.sendEvent("queue signal entity enrichment", {
+      name: "app/signal.entity-enrichment.requested",
+      data: {
+        clerkOrgId,
+        reason: "signal_indexed" as const,
+        signalId,
+      },
+    });
+
     return {
       status: "indexed",
       deterministicCandidates: deterministicCandidates.length,
-      aiCandidates: aiResult.candidates.length,
+      aiCandidates: aiCandidates.length,
       candidates: candidates.length,
       persistedLinks: persisted.links,
       resolvedLinks: persisted.resolved,

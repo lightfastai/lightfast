@@ -287,6 +287,27 @@ describe("workspaceEntityGraphRouter", () => {
     );
   });
 
+  it("queues dev-only signal enrichment retries through Inngest", async () => {
+    const signalId = "signal_123e4567-e89b-12d3-a456-426614174000";
+
+    await expect(
+      caller().entityGraph.dev.retrySignalEnrichment({ signalId })
+    ).resolves.toEqual({
+      signalId,
+      status: "queued",
+    });
+
+    expect(sendMock).toHaveBeenCalledWith({
+      id: `signal-entity-enrichment-manual-org_test-${signalId}`,
+      name: "app/signal.entity-enrichment.requested",
+      data: {
+        clerkOrgId: "org_test",
+        reason: "manual_retry",
+        signalId,
+      },
+    });
+  });
+
   it("rejects missing detail rows and non-active orgs", async () => {
     getEntityPersonByPublicIdMock.mockResolvedValueOnce(undefined);
 

@@ -5,12 +5,14 @@ import {
   Sheet,
   SheetClose,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from "@repo/ui/components/ui/sheet";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
+import { useCallback, useRef } from "react";
 import { useTRPC } from "~/trpc/react";
 import { PeopleDetailContent } from "./people-detail-content";
 import { getPersonName, type PersonRow } from "./people-model";
@@ -28,6 +30,7 @@ export function PeopleDetailSheet({
 }) {
   const trpc = useTRPC();
   const open = publicId !== null;
+  const skipNextCloseRef = useRef(false);
   const hasInitial = !!initialPerson && initialPerson.publicId === publicId;
 
   const query = useQuery(
@@ -60,8 +63,23 @@ export function PeopleDetailSheet({
       });
   }
 
+  const handleNavigateAway = useCallback(() => {
+    skipNextCloseRef.current = true;
+  }, []);
+
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (!nextOpen && skipNextCloseRef.current) {
+        skipNextCloseRef.current = false;
+        return;
+      }
+      onOpenChange(nextOpen);
+    },
+    [onOpenChange]
+  );
+
   return (
-    <Sheet onOpenChange={onOpenChange} open={open}>
+    <Sheet onOpenChange={handleOpenChange} open={open}>
       <SheetContent
         className="inset-y-3 right-3 left-auto h-auto w-full max-w-[calc(100%-1.5rem)] gap-0 overflow-hidden rounded-2xl border p-0 sm:max-w-md"
         showCloseButton={!person}
@@ -71,6 +89,9 @@ export function PeopleDetailSheet({
           <SheetTitle>
             {person ? getPersonName(person) : "Person details"}
           </SheetTitle>
+          <SheetDescription>
+            Person details, identity, and related signals.
+          </SheetDescription>
         </SheetHeader>
 
         {person ? (
@@ -89,6 +110,7 @@ export function PeopleDetailSheet({
               </SheetClose>
             }
             onCopyLink={handleCopyLink}
+            onNavigateAway={handleNavigateAway}
             person={person}
             slug={slug}
           />

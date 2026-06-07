@@ -116,6 +116,42 @@ describe("@repo/github-emulator", () => {
     );
   });
 
+  it("returns rich public user profiles by login", async () => {
+    const res = await fetch(`${emulator?.url}/users/emulator-dev`, {
+      headers: {
+        authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      login: "emulator-dev",
+      name: "Emulator Dev",
+      company: "Lightfast Labs",
+      blog: "https://lightfast.ai",
+      twitter_username: "lightfast_dev",
+    });
+  });
+
+  it("returns the Ava Chen local enrichment profile", async () => {
+    const res = await fetch(`${emulator?.url}/users/avachen`, {
+      headers: {
+        authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      bio: "Researches open-source identity systems.",
+      blog: "https://ava.example.test",
+      company: "Open Identity Lab",
+      login: "avachen",
+      name: "Ava Chen",
+      twitter_username: "ava_ai",
+      type: "User",
+    });
+  });
+
   it("accepts a valid GitHub App JWT after the local patch", async () => {
     const jwt = await createAppJwt();
     const res = await fetch(`${emulator?.url}/app`, {

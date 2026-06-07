@@ -1,5 +1,5 @@
 import type { SignalEntityLinkCandidate } from "@repo/ai/signal-entity-linker";
-import { and, asc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, sql } from "drizzle-orm";
 
 import type { Database } from "../client";
 import {
@@ -57,13 +57,63 @@ export interface SignalEntityLinkDetail {
   targetType: SignalEntityLink["targetType"];
 }
 
-export type SignalEntityLinkReconciliationPerson = Pick<
+type SignalEntityLinkResolutionPerson = Pick<
   Person,
-  "displayName" | "normalizedIdentityValue"
+  | "displayName"
+  | "identityKey"
+  | "metadata"
+  | "normalizedIdentityValue"
+  | "publicId"
 >;
+export type SignalEntityLinkReconciliationPerson =
+  SignalEntityLinkResolutionPerson;
 
 const SIGNAL_ENTITY_LINK_RECONCILE_BATCH_SIZE = 500;
+const MAX_ENRICHMENT_TARGETS_PER_PROVIDER = 10;
+const RESERVED_X_TWITTER_PATH_SEGMENTS = new Set([
+  "compose",
+  "download",
+  "explore",
+  "home",
+  "i",
+  "intent",
+  "login",
+  "logout",
+  "messages",
+  "notifications",
+  "privacy",
+  "search",
+  "settings",
+  "share",
+  "signup",
+  "tos",
+]);
 type SignalEntityLinkResolutionDb = Pick<Database, "select">;
+
+export interface SignalEntityEnrichmentTarget {
+  linkIds: number[];
+  normalizedValue: string;
+  provider: "x" | "github";
+  value: string;
+}
+
+export interface SignalEntityEnrichmentSkippedTarget {
+  anchorText: string;
+  linkId: number;
+  mentionKind: SignalEntityLink["mentionKind"];
+  reason:
+    | "already_resolved"
+    | "unsupported_mention_kind"
+    | "unsupported_profile_url"
+    | "ambiguous_handle"
+    | "over_cap";
+}
+
+export interface SignalEntityEnrichmentTargetsResult {
+  github: SignalEntityEnrichmentTarget[];
+  skipped: SignalEntityEnrichmentSkippedTarget[];
+  x: SignalEntityEnrichmentTarget[];
+}
 
 export function buildSignalEntityLinkResolutionHints(
   candidate: Pick<
@@ -210,12 +260,7 @@ export async function reconcileSignalEntityLinksForPeople(
   const normalizedValues = Array.from(
     new Set(
       input.people
-        .flatMap((person) => [
-          person.normalizedIdentityValue,
-          person.displayName
-            ? normalizeDisplayNameMention(person.displayName)
-            : undefined,
-        ])
+        .flatMap(normalizedMentionValuesForReconciliationPerson)
         .filter(isDefined)
         .filter((value) => value.length > 0)
     )
@@ -230,13 +275,12 @@ export async function reconcileSignalEntityLinksForPeople(
   let lastSeenLinkId = 0;
 
   while (true) {
-    const unresolvedLinks = await db
+    const matchingLinks = await db
       .select()
       .from(signalEntityLinks)
       .where(
         and(
           eq(signalEntityLinks.clerkOrgId, input.clerkOrgId),
-          isNull(signalEntityLinks.resolvedPersonId),
           inArray(signalEntityLinks.normalizedMentionValue, normalizedValues),
           gt(signalEntityLinks.id, lastSeenLinkId)
         )
@@ -244,11 +288,11 @@ export async function reconcileSignalEntityLinksForPeople(
       .orderBy(asc(signalEntityLinks.id))
       .limit(SIGNAL_ENTITY_LINK_RECONCILE_BATCH_SIZE);
 
-    if (unresolvedLinks.length === 0) {
+    if (matchingLinks.length === 0) {
       break;
     }
 
-    const linkHints = unresolvedLinks.map((link) => ({
+    const linkHints = matchingLinks.map((link) => ({
       hints: buildSignalEntityLinkResolutionHints(link),
       link,
     }));
@@ -256,11 +300,15 @@ export async function reconcileSignalEntityLinksForPeople(
       clerkOrgId: input.clerkOrgId,
       hints: linkHints.map(({ hints }) => hints),
     });
+    addReconciliationPeopleToLookup(lookup, input.people);
 
     for (const { hints, link } of linkHints) {
       lastSeenLinkId = Math.max(lastSeenLinkId, link.id);
       const resolvedPerson = resolveSignalEntityLinkHints(lookup, hints);
       if (!resolvedPerson) {
+        continue;
+      }
+      if (link.resolvedPersonId === resolvedPerson.publicId) {
         continue;
       }
 
@@ -272,19 +320,84 @@ export async function reconcileSignalEntityLinksForPeople(
         })
         .where(
           and(
-            eq(signalEntityLinks.id, link.id),
-            isNull(signalEntityLinks.resolvedPersonId)
+            eq(signalEntityLinks.clerkOrgId, input.clerkOrgId),
+            eq(signalEntityLinks.id, link.id)
           )
         );
       resolved += getRowsAffected(result);
     }
 
-    if (unresolvedLinks.length < SIGNAL_ENTITY_LINK_RECONCILE_BATCH_SIZE) {
+    if (matchingLinks.length < SIGNAL_ENTITY_LINK_RECONCILE_BATCH_SIZE) {
       break;
     }
   }
 
   return { resolved };
+}
+
+export async function listSignalEntityEnrichmentTargets(
+  db: Database,
+  input: { clerkOrgId: string; signalId: string }
+): Promise<SignalEntityEnrichmentTargetsResult> {
+  const rows = await db
+    .select()
+    .from(signalEntityLinks)
+    .where(
+      and(
+        eq(signalEntityLinks.clerkOrgId, input.clerkOrgId),
+        eq(signalEntityLinks.signalId, input.signalId)
+      )
+    )
+    .orderBy(asc(signalEntityLinks.id));
+
+  const targetsByKey = new Map<string, SignalEntityEnrichmentTarget>();
+  const skipped: SignalEntityEnrichmentSkippedTarget[] = [];
+
+  for (const link of rows) {
+    const parsed = enrichmentTargetFromLink(link);
+    if ("reason" in parsed) {
+      skipped.push(skippedTarget(link, parsed.reason));
+      continue;
+    }
+
+    const normalizedValue = parsed.value.trim().toLowerCase();
+    if (!normalizedValue) {
+      skipped.push(skippedTarget(link, "unsupported_profile_url"));
+      continue;
+    }
+
+    const targetKey = `${parsed.provider}:${normalizedValue}`;
+    const existingTarget = targetsByKey.get(targetKey);
+    if (existingTarget) {
+      existingTarget.linkIds.push(link.id);
+      continue;
+    }
+
+    targetsByKey.set(targetKey, {
+      linkIds: [link.id],
+      normalizedValue,
+      provider: parsed.provider,
+      value: normalizedValue,
+    });
+  }
+
+  const x: SignalEntityEnrichmentTarget[] = [];
+  const github: SignalEntityEnrichmentTarget[] = [];
+  for (const target of targetsByKey.values()) {
+    const providerTargets = target.provider === "x" ? x : github;
+    if (providerTargets.length >= MAX_ENRICHMENT_TARGETS_PER_PROVIDER) {
+      for (const linkId of target.linkIds) {
+        const link = rows.find((row) => row.id === linkId);
+        if (link) {
+          skipped.push(skippedTarget(link, "over_cap"));
+        }
+      }
+      continue;
+    }
+    providerTargets.push(target);
+  }
+
+  return { github, skipped, x };
 }
 
 export async function listSignalEntityLinksForSignal(
@@ -339,8 +452,8 @@ export async function listSignalEntityLinksForSignal(
 }
 
 interface SignalEntityLinkResolutionLookup {
-  peopleByDisplayName: Map<string, Person[]>;
-  peopleByIdentityKey: Map<string, Person>;
+  peopleByDisplayName: Map<string, SignalEntityLinkResolutionPerson[]>;
+  peopleByIdentityKey: Map<string, SignalEntityLinkResolutionPerson>;
 }
 
 async function loadSignalEntityLinkResolutionLookup(
@@ -397,12 +510,105 @@ async function loadSignalEntityLinkResolutionLookup(
   return { peopleByDisplayName, peopleByIdentityKey };
 }
 
+function addReconciliationPeopleToLookup(
+  lookup: SignalEntityLinkResolutionLookup,
+  people: SignalEntityLinkResolutionPerson[]
+) {
+  for (const person of people) {
+    for (const identityKey of identityKeysForReconciliationPerson(person)) {
+      lookup.peopleByIdentityKey.set(identityKey, person);
+    }
+
+    if (person.displayName) {
+      addPersonToLookup(
+        lookup.peopleByDisplayName,
+        normalizeDisplayNameMention(person.displayName),
+        person
+      );
+    }
+  }
+}
+
+function normalizedMentionValuesForReconciliationPerson(
+  person: SignalEntityLinkResolutionPerson
+): string[] {
+  return [
+    person.normalizedIdentityValue,
+    person.displayName
+      ? normalizeDisplayNameMention(person.displayName)
+      : undefined,
+    ...entityGraphSourceIdentityAliases(person.metadata).map(
+      (alias) => alias.normalizedValue
+    ),
+  ].filter(isDefined);
+}
+
+function identityKeysForReconciliationPerson(
+  person: SignalEntityLinkResolutionPerson
+): string[] {
+  return [
+    person.identityKey,
+    ...entityGraphSourceIdentityAliases(person.metadata)
+      .map((alias) =>
+        normalizePersonIdentityCandidate({
+          identityProvider: alias.provider,
+          identityType: "handle",
+          identityValue: alias.normalizedValue,
+        })
+      )
+      .filter(isDefined)
+      .map(createPersonIdentityKey),
+  ];
+}
+
+interface EntityGraphSourceIdentityAlias {
+  normalizedValue: string;
+  provider: Extract<PersonIdentityProvider, "github" | "x">;
+}
+
+function entityGraphSourceIdentityAliases(
+  metadata: Record<string, unknown>
+): EntityGraphSourceIdentityAlias[] {
+  const entityGraph = readRecord(metadata.entityGraph);
+  const sourceIdentities = Array.isArray(entityGraph?.sourceIdentities)
+    ? entityGraph.sourceIdentities
+    : [];
+
+  return sourceIdentities
+    .map((sourceIdentity) => {
+      const record = readRecord(sourceIdentity);
+      const provider = readString(record?.provider);
+      const identityType = readString(record?.identityType);
+      const normalizedValue = readString(record?.normalizedValue);
+
+      if (
+        !isXOrGitHubProvider(provider) ||
+        identityType !== "handle" ||
+        !normalizedValue
+      ) {
+        return null;
+      }
+
+      return {
+        normalizedValue,
+        provider,
+      };
+    })
+    .filter(isNonNullish);
+}
+
+function isXOrGitHubProvider(
+  value: string | null
+): value is Extract<PersonIdentityProvider, "github" | "x"> {
+  return value === "github" || value === "x";
+}
+
 function resolveSignalEntityLinkHints(
   lookup: SignalEntityLinkResolutionLookup,
   hints: SignalEntityLinkResolutionHints
-): Person | null {
+): SignalEntityLinkResolutionPerson | null {
   if (hints.identityKeys.length > 0) {
-    const matches = new Map<string, Person>();
+    const matches = new Map<string, SignalEntityLinkResolutionPerson>();
     for (const identityKey of hints.identityKeys) {
       const person = lookup.peopleByIdentityKey.get(identityKey);
       if (person) {
@@ -426,9 +632,9 @@ function resolveSignalEntityLinkHints(
 }
 
 function addPersonToLookup(
-  lookup: Map<string, Person[]>,
+  lookup: Map<string, SignalEntityLinkResolutionPerson[]>,
   key: string,
-  person: Person
+  person: SignalEntityLinkResolutionPerson
 ) {
   const matches = lookup.get(key);
   if (!matches) {
@@ -446,6 +652,16 @@ function firstMapValue<TKey, TValue>(map: Map<TKey, TValue>): TValue | null {
     return value;
   }
   return null;
+}
+
+function readRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function readString(value: unknown): string | null {
+  return typeof value === "string" ? value : null;
 }
 
 function inferProfileUrlProvider(
@@ -472,6 +688,81 @@ function inferProfileUrlProvider(
     return "website";
   }
   return;
+}
+
+function enrichmentTargetFromLink(
+  link: SignalEntityLink
+):
+  | { provider: "x" | "github"; value: string }
+  | { reason: SignalEntityEnrichmentSkippedTarget["reason"] } {
+  if (link.resolvedPersonId) {
+    return { reason: "already_resolved" };
+  }
+
+  if (link.mentionKind === "handle") {
+    const trimmed = link.anchorText.trim();
+    return trimmed.startsWith("@")
+      ? { provider: "x", value: trimmed.replace(/^@/, "") }
+      : { reason: "ambiguous_handle" };
+  }
+
+  if (link.mentionKind !== "profile_url") {
+    return { reason: "unsupported_mention_kind" };
+  }
+
+  return (
+    profileEnrichmentTargetFromUrl(link.anchorText) ?? {
+      reason: "unsupported_profile_url",
+    }
+  );
+}
+
+function profileEnrichmentTargetFromUrl(
+  value: string
+): { provider: "x" | "github"; value: string } | undefined {
+  let url: URL;
+  try {
+    url = new URL(value.trim());
+  } catch {
+    return;
+  }
+
+  if (!(url.protocol === "https:" || url.protocol === "http:")) {
+    return;
+  }
+
+  const host = url.hostname.toLowerCase().replace(/^www\./, "");
+  const pathSegments = url.pathname.split("/").filter(Boolean);
+  const profilePathSegment = pathSegments[0];
+  if (pathSegments.length !== 1 || !profilePathSegment) {
+    return;
+  }
+
+  if (host === "x.com" || host === "twitter.com") {
+    const normalizedSegment = profilePathSegment.toLowerCase();
+    if (RESERVED_X_TWITTER_PATH_SEGMENTS.has(normalizedSegment)) {
+      return;
+    }
+    return { provider: "x", value: profilePathSegment };
+  }
+
+  if (host === "github.com") {
+    return { provider: "github", value: profilePathSegment };
+  }
+
+  return;
+}
+
+function skippedTarget(
+  link: SignalEntityLink,
+  reason: SignalEntityEnrichmentSkippedTarget["reason"]
+): SignalEntityEnrichmentSkippedTarget {
+  return {
+    anchorText: link.anchorText,
+    linkId: link.id,
+    mentionKind: link.mentionKind,
+    reason,
+  };
 }
 
 function toResolvedPerson(row: {

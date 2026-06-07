@@ -5,18 +5,24 @@ import { isValidBearer } from "./auth";
 import { getFailures } from "./failures";
 
 export interface XUserRow extends Entity {
+  description?: string;
+  location?: string;
   name: string;
+  url?: string;
   username: string;
   x_id: string;
 }
 
 function userResponse(store: Store) {
   const user = store.collection<XUserRow>("users").all()[0];
+  if (user) {
+    return { data: userJson(user) };
+  }
   return {
     data: {
-      id: user?.x_id ?? X_EMULATOR_FIXTURES.userId,
-      name: user?.name ?? X_EMULATOR_FIXTURES.userName,
-      username: user?.username ?? X_EMULATOR_FIXTURES.username,
+      id: X_EMULATOR_FIXTURES.userId,
+      name: X_EMULATOR_FIXTURES.userName,
+      username: X_EMULATOR_FIXTURES.username,
     },
   };
 }
@@ -37,8 +43,11 @@ function findUserByUsername(store: Store, username: string) {
 
 function userJson(user: XUserRow) {
   return {
+    description: user.description,
     id: user.x_id,
+    location: user.location,
     name: user.name,
+    url: user.url,
     username: user.username,
   };
 }

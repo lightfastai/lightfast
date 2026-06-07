@@ -15,14 +15,28 @@ export const X_EMULATOR_SCOPE =
 
 export const X_EMULATOR_USERS = [
   {
+    description: "Builds local emulators for signal enrichment.",
     id: "x_user_1",
+    location: "Melbourne, Australia",
     name: "Emulator User",
+    url: "https://lightfast.ai",
     username: "emulator",
   },
   {
+    description: "Runs agent workflow tests.",
     id: "x_user_2",
+    location: "San Francisco, CA",
     name: "Agent",
+    url: "https://agent.lightfast.ai",
     username: "agent",
+  },
+  {
+    description: "Researches open-source identity systems.",
+    id: "x_user_3",
+    location: "New York, NY",
+    name: "Ava Chen",
+    url: "https://ava.example.test",
+    username: "ava_ai",
   },
 ] as const;
 

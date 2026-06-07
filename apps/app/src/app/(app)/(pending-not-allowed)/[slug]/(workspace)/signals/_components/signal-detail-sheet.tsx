@@ -12,6 +12,7 @@ import {
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
+import { useCallback, useRef } from "react";
 import { useTRPC } from "~/trpc/react";
 import { SignalDetailContent } from "./signal-detail-content";
 import {
@@ -35,6 +36,7 @@ export function SignalDetailSheet({
 }) {
   const trpc = useTRPC();
   const open = publicId !== null;
+  const skipNextCloseRef = useRef(false);
   const seededItem =
     initialItem && initialItem.publicId === publicId ? initialItem : undefined;
   // Processing rows (and any already-fetched full rows) carry `input`, so their
@@ -80,8 +82,23 @@ export function SignalDetailSheet({
       });
   }
 
+  const handleNavigateAway = useCallback(() => {
+    skipNextCloseRef.current = true;
+  }, []);
+
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (!nextOpen && skipNextCloseRef.current) {
+        skipNextCloseRef.current = false;
+        return;
+      }
+      onOpenChange(nextOpen);
+    },
+    [onOpenChange]
+  );
+
   return (
-    <Sheet onOpenChange={onOpenChange} open={open}>
+    <Sheet onOpenChange={handleOpenChange} open={open}>
       <SheetContent
         className="inset-y-3 right-3 left-auto h-auto w-full max-w-[calc(100%-1.5rem)] gap-0 overflow-hidden rounded-2xl border p-0 sm:max-w-md"
         showCloseButton={!headerItem}
@@ -116,6 +133,7 @@ export function SignalDetailSheet({
             detail={detail}
             item={headerItem}
             onCopyLink={handleCopyLink}
+            onNavigateAway={handleNavigateAway}
             slug={slug}
           />
         ) : query.isError ? (

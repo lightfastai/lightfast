@@ -6,6 +6,7 @@ import { backfillSignalEntityLinks } from "./workflow/backfill-signal-entity-lin
 import { classifyPeople } from "./workflow/classify-people";
 import { classifySignal } from "./workflow/classify-signal";
 import { cleanupDeveloperSandboxRuns } from "./workflow/cleanup-developer-sandbox-runs";
+import { enrichSignalEntities } from "./workflow/enrich-signal-entities";
 import { indexSignalEntities } from "./workflow/index-signal-entities";
 import { queueLightfastIndexRefreshesFromSourceControl } from "./workflow/queue-skill-refresh-from-source-control";
 import { reconcileIdentityIndexes } from "./workflow/reconcile-identity-indexes";
@@ -30,6 +31,7 @@ export function createInngestRouteContext() {
       ...getProductionOnlyFunctions(),
       classifySignal,
       indexSignalEntities,
+      enrichSignalEntities,
       backfillSignalEntityLinks,
       classifyPeople,
       cleanupDeveloperSandboxRuns,

@@ -14,7 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { MouseEvent, PointerEvent, ReactNode } from "react";
 import {
   formatSignalConfidence,
   formatSignalIdentifier,
@@ -69,9 +69,11 @@ function BodySection({
 
 function EntityLinksSection({
   links,
+  onNavigateAway,
   slug,
 }: {
   links: NonNullable<SignalDetailRow["entityLinks"]>;
+  onNavigateAway?: () => void;
   slug: string;
 }) {
   if (links.length === 0) {
@@ -110,6 +112,18 @@ function EntityLinksSection({
                 className="flex min-h-9 items-center gap-2 rounded-md border border-border/60 px-3 py-2 hover:bg-muted/30"
                 href={`/${slug}/people?person=${link.resolvedPerson.id}`}
                 key={link.localEntityKey}
+                onClick={(event) => {
+                  if (isModifiedNavigationEvent(event)) {
+                    return;
+                  }
+                  onNavigateAway?.();
+                }}
+                onPointerDown={(event) => {
+                  if (isModifiedNavigationEvent(event)) {
+                    return;
+                  }
+                  onNavigateAway?.();
+                }}
               >
                 {content}
               </Link>
@@ -140,6 +154,7 @@ export function SignalDetailContent({
   closeSlot,
   detail,
   item,
+  onNavigateAway,
   onCopyLink,
   slug,
 }: {
@@ -147,6 +162,7 @@ export function SignalDetailContent({
   closeSlot?: ReactNode;
   detail?: SignalDetailRow;
   item: SignalListItem;
+  onNavigateAway?: () => void;
   onCopyLink: () => void;
   slug: string;
 }) {
@@ -242,7 +258,11 @@ export function SignalDetailContent({
           <div className="flex flex-col gap-5">
             <BodySection label="Input">{detail.input}</BodySection>
             {detail.entityLinks?.length ? (
-              <EntityLinksSection links={detail.entityLinks} slug={slug} />
+              <EntityLinksSection
+                links={detail.entityLinks}
+                onNavigateAway={onNavigateAway}
+                slug={slug}
+              />
             ) : null}
             {summary ? (
               <BodySection label="Summary">{summary}</BodySection>
@@ -304,5 +324,18 @@ export function SignalDetailContent({
         ) : null}
       </div>
     </div>
+  );
+}
+
+function isModifiedNavigationEvent(
+  event: MouseEvent<HTMLAnchorElement> | PointerEvent<HTMLAnchorElement>
+) {
+  return (
+    event.defaultPrevented ||
+    event.button !== 0 ||
+    event.altKey ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.shiftKey
   );
 }

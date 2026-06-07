@@ -253,6 +253,13 @@ async function getFreshXBridgeAccessToken(input: {
   return refreshed.accessToken;
 }
 
+export async function getFreshXConnectorAccessToken(input: {
+  config: ReturnType<typeof requireXConnectorConfig>;
+  connection: OrgConnectorConnection;
+}): Promise<string> {
+  return await getFreshXBridgeAccessToken(input);
+}
+
 async function verifyXBridgeToken(input: {
   requestKind: XBridgeRequestKind;
   token: string;

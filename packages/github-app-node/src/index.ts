@@ -34,7 +34,10 @@ export {
   buildGitHubRepositoryUrl,
 } from "./urls";
 export {
+  type GetGitHubUserByLoginInput,
   type GitHubAuthenticatedUser,
+  type GitHubUserProfile,
   getGitHubAuthenticatedUser,
+  getGitHubUserByLogin,
 } from "./user";
 export { verifyGitHubWebhookSignature } from "./webhooks";

@@ -155,6 +155,10 @@ const { indexSignalEntities } = await import(
 function createStep() {
   return {
     run: vi.fn(<T>(_name: string, fn: () => T | Promise<T>) => fn()),
+    sendEvent: vi.fn(
+      (_name: string, event: { name: string; data: Record<string, unknown> }) =>
+        Promise.resolve(event)
+    ),
     ai: {
       wrap: vi.fn(
         <T>(
@@ -240,6 +244,7 @@ beforeEach(() => {
     errorCode: "SIGNAL_ENTITY_LINKING_FAILED",
     errorMessage: error instanceof Error ? error.message : String(error),
   }));
+  process.env.AI_GATEWAY_API_KEY = "test-ai-gateway-key";
 });
 
 describe("indexSignalEntities", () => {
@@ -262,6 +267,22 @@ describe("indexSignalEntities", () => {
         signalId,
       })
     ).toThrow();
+    expect(appEvents["app/signal.entity-enrichment.requested"]).toEqual(
+      expect.objectContaining({
+        event: "app/signal.entity-enrichment.requested",
+      })
+    );
+    expect(
+      appEvents["app/signal.entity-enrichment.requested"].schema.parse({
+        clerkOrgId: "org_test",
+        reason: "signal_indexed",
+        signalId,
+      })
+    ).toEqual({
+      clerkOrgId: "org_test",
+      reason: "signal_indexed",
+      signalId,
+    });
     expect(createFunctionMock).toHaveBeenCalledWith(
       {
         id: "index-signal-entities",
@@ -323,6 +344,66 @@ describe("indexSignalEntities", () => {
       clerkOrgId: "org_test",
       signalId,
     });
+    expect(step.sendEvent).toHaveBeenCalledWith(
+      "queue signal entity enrichment",
+      {
+        name: "app/signal.entity-enrichment.requested",
+        data: {
+          clerkOrgId: "org_test",
+          reason: "signal_indexed",
+          signalId,
+        },
+      }
+    );
+  });
+
+  it("uses deterministic links only in development without AI Gateway credentials", async () => {
+    const step = createStep();
+    delete process.env.AI_GATEWAY_API_KEY;
+    mergeSignalEntityLinkCandidatesMock.mockReturnValueOnce([
+      deterministicCandidate,
+    ]);
+    replaceSignalEntityLinksMock.mockResolvedValueOnce({
+      links: 1,
+      resolved: 0,
+    });
+
+    await expect(runWorkflow(step)).resolves.toEqual({
+      aiCandidates: 0,
+      candidates: 1,
+      deterministicCandidates: 1,
+      persistedLinks: 1,
+      resolvedLinks: 0,
+      status: "indexed",
+    });
+
+    expect(extractDeterministicSignalEntityLinksMock).toHaveBeenCalledWith({
+      input: signal.input,
+    });
+    expect(buildSignalEntityLinkingRequestMock).not.toHaveBeenCalled();
+    expect(step.ai.wrap).not.toHaveBeenCalled();
+    expect(classifySignalEntityLinksMock).not.toHaveBeenCalled();
+    expect(mergeSignalEntityLinkCandidatesMock).toHaveBeenCalledWith({
+      aiCandidates: [],
+      deterministicCandidates: [deterministicCandidate],
+      input: signal.input,
+    });
+    expect(replaceSignalEntityLinksMock).toHaveBeenCalledWith(db, {
+      candidates: [deterministicCandidate],
+      clerkOrgId: "org_test",
+      signalId,
+    });
+    expect(step.sendEvent).toHaveBeenCalledWith(
+      "queue signal entity enrichment",
+      {
+        name: "app/signal.entity-enrichment.requested",
+        data: {
+          clerkOrgId: "org_test",
+          reason: "signal_indexed",
+          signalId,
+        },
+      }
+    );
   });
 
   it("returns missing when the source signal is gone", async () => {
@@ -348,6 +429,7 @@ describe("indexSignalEntities", () => {
 
     expect(extractDeterministicSignalEntityLinksMock).not.toHaveBeenCalled();
     expect(step.ai.wrap).not.toHaveBeenCalled();
+    expect(step.sendEvent).not.toHaveBeenCalled();
     expect(mergeSignalEntityLinkCandidatesMock).not.toHaveBeenCalled();
     expect(replaceSignalEntityLinksMock).not.toHaveBeenCalled();
   });

@@ -35,6 +35,7 @@ const objectSchema = {
 } as const;
 
 const emptySchema = {} as const;
+const X_USER_FIELDS = "id,name,username,description,location,url";
 
 function schema(
   properties: Record<string, Record<string, unknown>>,
@@ -93,6 +94,13 @@ function queryValues(...keys: string[]) {
     );
 }
 
+function userLookupQuery(...keys: string[]) {
+  return (input: Record<string, unknown>) => ({
+    ...queryValues(...keys)(input),
+    "user.fields": X_USER_FIELDS,
+  });
+}
+
 function standardPathParams(
   input: Record<string, unknown>,
   connectedActorId?: string | null
@@ -115,6 +123,7 @@ const readOperations: XOperationDefinition[] = [
     method: "GET",
     name: "getUsersMe",
     path: "/2/users/me",
+    query: userLookupQuery(),
     requiredScopes: ["users.read"],
   },
   {
@@ -124,6 +133,7 @@ const readOperations: XOperationDefinition[] = [
     method: "GET",
     name: "getUsersByUsername",
     path: "/2/users/by/username/{username}",
+    query: userLookupQuery(),
     requiredScopes: ["users.read"],
   },
   {
@@ -136,7 +146,7 @@ const readOperations: XOperationDefinition[] = [
     method: "GET",
     name: "getUsersByUsernames",
     path: "/2/users/by",
-    query: queryValues("usernames"),
+    query: userLookupQuery("usernames"),
     requiredScopes: ["users.read"],
   },
   {
@@ -146,6 +156,7 @@ const readOperations: XOperationDefinition[] = [
     method: "GET",
     name: "getUsersById",
     path: "/2/users/{id}",
+    query: userLookupQuery(),
     requiredScopes: ["users.read"],
   },
   {
@@ -157,7 +168,7 @@ const readOperations: XOperationDefinition[] = [
     method: "GET",
     name: "getUsersByIds",
     path: "/2/users",
-    query: queryValues("ids"),
+    query: userLookupQuery("ids"),
     requiredScopes: ["users.read"],
   },
   {
