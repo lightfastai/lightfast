@@ -187,7 +187,8 @@ function safeRoutineId(
 
 function titleFromToolName(providerToolName: string) {
   return providerToolName
-    .split(/[_-]+/)
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .split(/[\s_-]+/)
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");

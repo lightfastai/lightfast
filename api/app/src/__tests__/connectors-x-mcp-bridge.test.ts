@@ -183,9 +183,7 @@ describe("X MCP bridge service", () => {
 
     expect(response.status).toBe(200);
     expect(json.result.tools).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ name: "getUsersByUsername" }),
-      ])
+      expect.arrayContaining([expect.objectContaining({ name: "getUsersMe" })])
     );
     expect(getCurrentOrgConnectorConnectionMock).toHaveBeenCalledWith(
       {},
@@ -214,7 +212,13 @@ describe("X MCP bridge service", () => {
     ).not.toContain("createPost");
 
     getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(
-      connection({ scopes: [...X_OAUTH_SCOPES] })
+      connection({
+        scopes: [...X_OAUTH_SCOPES],
+        toolManifest: [
+          { description: "Look up account", name: "getUsersMe" },
+          { description: "Create post", name: "createPost" },
+        ],
+      })
     );
 
     const writeResponse = await handleXConnectorMcpRequest({
@@ -227,6 +231,28 @@ describe("X MCP bridge service", () => {
     expect(
       writeJson.result.tools.map((tool: { name: string }) => tool.name)
     ).toContain("createPost");
+  });
+
+  it("filters listed X tools by the stored tool manifest", async () => {
+    getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(
+      connection({
+        scopes: [...X_OAUTH_SCOPES],
+        toolManifest: [{ description: "Look up account", name: "getUsersMe" }],
+      })
+    );
+
+    const response = await handleXConnectorMcpRequest({
+      request: mcpRequest({
+        body: { id: 1, jsonrpc: "2.0", method: "tools/list" },
+        token: await mcpToken({ purpose: "list" }),
+      }),
+    });
+    const json = await response.json();
+    const names = json.result.tools.map((tool: { name: string }) => tool.name);
+
+    expect(response.status).toBe(200);
+    expect(names).toContain("getUsersMe");
+    expect(names).not.toContain("createPost");
   });
 
   it("calls X tools with a matching purpose=call token", async () => {
@@ -284,7 +310,7 @@ describe("X MCP bridge service", () => {
 
     expect(response.status).toBe(200);
     const json = await response.json();
-    expect(json.result.isError).toBe(true);
+    expect(json.result?.isError ?? Boolean(json.error)).toBe(true);
     expect(executeXApiToolMock).not.toHaveBeenCalled();
   });
 
@@ -310,7 +336,7 @@ describe("X MCP bridge service", () => {
 
     expect(response.status).toBe(200);
     const json = await response.json();
-    expect(json.result.isError).toBe(true);
+    expect(json.result?.isError ?? Boolean(json.error)).toBe(true);
     expect(executeXApiToolMock).not.toHaveBeenCalled();
   });
 

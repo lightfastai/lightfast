@@ -245,10 +245,22 @@ async function callConnectorAdapterProviderRoutine(
     });
   }
 
+  if (
+    result.provider !== provider ||
+    result.providerToolName !== providerToolName
+  ) {
+    throw providerRoutineError({
+      code: "PROVIDER_ROUTINE_PROVIDER_FAILED",
+      message: `Provider routine ${parsed.routineId} returned mismatched metadata.`,
+      providerRoutineCallId: result.providerRoutineCallId,
+      routineId: parsed.routineId,
+    });
+  }
+
   return {
-    provider: result.provider,
+    provider,
     providerRoutineCallId: result.providerRoutineCallId,
-    providerToolName: result.providerToolName,
+    providerToolName,
     result: result.result,
     routineId: parsed.routineId,
     status: "succeeded",

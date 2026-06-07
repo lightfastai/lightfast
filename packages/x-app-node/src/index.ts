@@ -29,6 +29,7 @@ export {
   getXOperationDefinitions,
   getXToolDefinitionsForScopes,
   hasScopesForXOperation,
+  operationToolDefinition,
   X_SOCIAL_WRITE_TOOL_NAMES,
   type XOperationClassification,
   type XOperationDefinition,

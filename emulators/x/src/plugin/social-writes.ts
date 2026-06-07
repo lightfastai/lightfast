@@ -1,4 +1,4 @@
-import type { AppEnv, Context, Hono, Store } from "@emulators/core";
+import type { AppEnv, Context, Entity, Hono, Store } from "@emulators/core";
 
 import { X_EMULATOR_FIXTURES } from "../fixtures";
 import { isValidBearer } from "./auth";
@@ -6,6 +6,11 @@ import { getFailures } from "./failures";
 import type { XPostRow } from "./posts";
 
 type JsonObject = Record<string, unknown>;
+
+interface XListRow extends Entity {
+  list_id: string;
+  name: string;
+}
 
 async function socialWrite(
   c: Context<AppEnv>,
@@ -35,13 +40,35 @@ function booleanBody(body: JsonObject, key: string, fallback: boolean) {
 
 function createPost(store: Store, text: string) {
   const posts = store.collection<XPostRow>("posts");
-  const tweetId = `tweet_${posts.count() + 1}`;
+  const tweetId = nextPrefixedId(
+    "tweet",
+    posts.all().map((post) => post.tweet_id)
+  );
   posts.insert({
     author_id: X_EMULATOR_FIXTURES.userId,
     text,
     tweet_id: tweetId,
   });
   return { id: tweetId, text };
+}
+
+function createList(store: Store, name: string) {
+  const lists = store.collection<XListRow>("lists");
+  const listId = nextPrefixedId(
+    "list",
+    lists.all().map((list) => list.list_id)
+  );
+  lists.insert({ list_id: listId, name });
+  return { id: listId, name };
+}
+
+function nextPrefixedId(prefix: string, ids: string[]) {
+  const next =
+    ids.reduce((max, id) => {
+      const parsed = Number.parseInt(id.replace(`${prefix}_`, ""), 10);
+      return Number.isFinite(parsed) ? Math.max(max, parsed) : max;
+    }, 0) + 1;
+  return `${prefix}_${next}`;
 }
 
 function deletePost(store: Store, tweetId: string) {
@@ -132,10 +159,7 @@ export function registerSocialWrites(app: Hono<AppEnv>, store: Store): void {
     socialWrite(c, store, (body) =>
       c.json(
         {
-          data: {
-            id: `list_${store.collection("lists").count() + 1}`,
-            name: stringBody(body, "name"),
-          },
+          data: createList(store, stringBody(body, "name")),
         },
         200
       )

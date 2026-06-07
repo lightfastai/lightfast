@@ -363,18 +363,6 @@ async function waitForBrowserSignedIn(
 ) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const currentUrl = await agentBrowser(config, ["get", "url"]).catch(
-      () => ""
-    );
-    try {
-      const parsed = new URL(currentUrl);
-      if (parsed.pathname !== "/sign-in") {
-        return true;
-      }
-    } catch {
-      // Keep polling while the browser is between navigations.
-    }
-
     const result = await agentEvalJson<{
       error?: string | null;
       signedIn: boolean;

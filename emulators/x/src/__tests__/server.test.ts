@@ -345,6 +345,64 @@ describe("@repo/x-emulator", () => {
     expect(res.status).toBe(401);
   });
 
+  it("rejects invalid bearer tokens on social write endpoints", async () => {
+    const active = await start();
+    const res = await fetch(`${active.url}/2/tweets`, {
+      body: JSON.stringify({ text: "ship it" }),
+      headers: {
+        authorization: "Bearer invalid-token",
+        "content-type": "application/json",
+      },
+      method: "POST",
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("rejects expired bearer tokens on social write endpoints", async () => {
+    const active = await start();
+    await fetch(`${active.url}/failures`, {
+      body: JSON.stringify({ accessTokenExpired: true }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    });
+
+    const res = await writeJsonAuthed("POST", "/2/tweets", {
+      text: "ship it",
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("allocates tweet ids monotonically after deletes", async () => {
+    const deleted = await writeJsonAuthed("DELETE", "/2/tweets/tweet_1");
+    expect(deleted.status).toBe(200);
+
+    const created = await writeJsonAuthed("POST", "/2/tweets", {
+      text: "replacement",
+    });
+    expect(created.status).toBe(200);
+    await expect(created.json()).resolves.toMatchObject({
+      data: { id: "tweet_3" },
+    });
+  });
+
+  it("persists created lists so list ids remain stable", async () => {
+    const first = await writeJsonAuthed("POST", "/2/lists", {
+      name: "Launch list",
+    });
+    const second = await writeJsonAuthed("POST", "/2/lists", {
+      name: "Follow-up list",
+    });
+
+    expect(first.status).toBe(200);
+    await expect(first.json()).resolves.toMatchObject({
+      data: { id: "list_1", name: "Launch list" },
+    });
+    expect(second.status).toBe(200);
+    await expect(second.json()).resolves.toMatchObject({
+      data: { id: "list_2", name: "Follow-up list" },
+    });
+  });
+
   it("supports the socialWrite failure switch", async () => {
     const active = await start();
     await fetch(`${active.url}/failures`, {

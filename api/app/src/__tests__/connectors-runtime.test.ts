@@ -69,6 +69,7 @@ vi.mock("@vendor/observability/log/next", () => ({
 
 const {
   ConnectorRuntimeToolCallError,
+  loadAgentConnectorRuntimeTools,
   loadChatConnectorRuntimeTools,
   loadConnectorRuntimeTools,
 } = await import("../services/connectors/runtime");
@@ -300,6 +301,46 @@ describe("loadConnectorRuntimeTools", () => {
         sourceClientId: null,
         sourceRef: "conv_123",
         sourceSurface: "chat",
+      })
+    );
+  });
+
+  it("records hosted MCP runtime calls with client source attribution", async () => {
+    const mcpConnection = connection({
+      enabledForAgents: true,
+      enabledForAutomations: false,
+      toolManifest: [{ name: "list_issues" }],
+    });
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([mcpConnection]);
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(mcpConnection);
+    callLinearMcpToolMock.mockResolvedValue({
+      content: [{ text: "issue list" }],
+    });
+
+    const [tool] = await loadAgentConnectorRuntimeTools({
+      calledByUserId: "user_current",
+      clerkOrgId: "org_acme",
+      sourceClientId: "mcp_client_123",
+      sourceRef: "grant_123",
+      sourceSurface: "hosted_mcp",
+    });
+
+    await tool?.callWithMetadata({ query: "bug" });
+
+    expect(createProviderRoutineCallMock).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({
+        calledById: "user_current",
+        calledByKind: "user",
+        calledByUserId: "user_current",
+        clerkOrgId: "org_acme",
+        provider: "linear",
+        providerConnectionId: 1,
+        providerToolName: "list_issues",
+        routineId: "linear__list_issues",
+        sourceClientId: "mcp_client_123",
+        sourceRef: "grant_123",
+        sourceSurface: "hosted_mcp",
       })
     );
   });

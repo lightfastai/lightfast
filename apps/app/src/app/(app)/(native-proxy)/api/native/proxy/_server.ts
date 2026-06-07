@@ -1,40 +1,19 @@
 import { resolveAuthContextFromClerk } from "@api/app/auth/identity";
-import type { Database } from "@db/app";
+import { loadAgentConnectorRuntimeTools } from "@api/app/services/connectors/runtime";
 import { db } from "@db/app/client";
 import type {
   ProviderRoutineCallInput,
   ProviderRoutineCallSuccess,
   ProviderRoutineFindInput,
   ProviderRoutineFindOutput,
-  ProviderRoutineSourceSurface,
 } from "@repo/provider-routine-contract";
+import type { ProviderRoutineServiceContext } from "@repo/provider-routines";
 import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
 
 const PROVIDER_ROUTINES_PACKAGE: string = "@repo/provider-routines";
 
-export interface NativeProviderRoutineServiceContext {
-  actor: {
-    orgId: string;
-    userId: string;
-  };
-  db: Database;
-  log: {
-    error(message: string, metadata?: Record<string, unknown>): void;
-    info(message: string, metadata?: Record<string, unknown>): void;
-    warn(message: string, metadata?: Record<string, unknown>): void;
-  };
-  now: () => Date;
-  scopes: {
-    providerRoutineRead: boolean;
-    providerRoutineWrite: boolean;
-  };
-  source: {
-    clientId?: string | null;
-    ref?: string | null;
-    surface: ProviderRoutineSourceSurface;
-  };
-}
+export type NativeProviderRoutineServiceContext = ProviderRoutineServiceContext;
 
 export type NativeFindProviderRoutines = (
   context: NativeProviderRoutineServiceContext,
@@ -91,14 +70,16 @@ export async function createNativeProviderRoutineContext(
     db,
     headers: req.headers,
   });
-  if (auth.access?.kind !== "clerk-oauth" || auth.access.client !== "cli") {
+  const access = auth.access;
+  const identity = auth.identity;
+  if (access?.kind !== "clerk-oauth" || access.client !== "cli") {
     throw new NativeProxyRouteError(
       "UNAUTHORIZED",
       "Lightfast native CLI OAuth authentication required.",
       401
     );
   }
-  if (auth.identity.type !== "active") {
+  if (identity.type !== "active") {
     throw new NativeProxyRouteError(
       "FORBIDDEN",
       "Lightfast native CLI organization binding required.",
@@ -108,8 +89,20 @@ export async function createNativeProviderRoutineContext(
 
   return {
     actor: {
-      orgId: auth.identity.orgId,
-      userId: auth.identity.userId,
+      orgId: identity.orgId,
+      userId: identity.userId,
+    },
+    adapters: {
+      connectors: {
+        loadTools: async () =>
+          await loadAgentConnectorRuntimeTools({
+            calledByUserId: identity.userId,
+            clerkOrgId: identity.orgId,
+            sourceClientId: access.clientId,
+            sourceRef: identity.orgId,
+            sourceSurface: "native_cli",
+          }),
+      },
     },
     db,
     log,
@@ -119,8 +112,8 @@ export async function createNativeProviderRoutineContext(
       providerRoutineWrite: true,
     },
     source: {
-      clientId: auth.access.clientId,
-      ref: auth.identity.orgId,
+      clientId: access.clientId,
+      ref: identity.orgId,
       surface: "native_cli",
     },
   };

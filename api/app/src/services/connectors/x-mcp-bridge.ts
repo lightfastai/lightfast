@@ -95,8 +95,11 @@ function registerXTools(
     connection: OrgConnectorConnection | null;
   }
 ) {
-  const definitions = input.connection
-    ? getXToolDefinitionsForScopes(input.connection.scopes)
+  const connection = input.connection;
+  const definitions = connection
+    ? getXToolDefinitionsForScopes(connection.scopes).filter((definition) =>
+        hasManifestTool(connection, definition.name)
+      )
     : [];
 
   for (const definition of definitions) {

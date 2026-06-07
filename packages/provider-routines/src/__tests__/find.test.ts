@@ -174,6 +174,36 @@ describe("findProviderRoutines", () => {
     expect(listCurrentOrgConnectorConnectionsMock).not.toHaveBeenCalled();
   });
 
+  it("matches camelCase connector runtime adapter titles as separate words", async () => {
+    const loadConnectorToolsMock = vi.fn(async () => [
+      {
+        callWithMetadata: vi.fn(),
+        inputSchema: { type: "object" },
+        provider: "x" as const,
+        providerToolName: "createPost",
+        runtimeToolName: "x__createPost",
+      },
+    ]);
+
+    await expect(
+      findProviderRoutines(
+        context({
+          adapters: { connectors: { loadTools: loadConnectorToolsMock } },
+          scopes: { providerRoutineRead: true, providerRoutineWrite: true },
+        }),
+        { query: "create post" }
+      )
+    ).resolves.toMatchObject({
+      routines: [
+        {
+          provider: "x",
+          providerToolName: "createPost",
+          title: "Create Post",
+        },
+      ],
+    });
+  });
+
   it("omits cached input schemas unless includeSchema is true", async () => {
     listCurrentOrgConnectorConnectionsMock.mockResolvedValue([connection()]);
 

@@ -10,11 +10,16 @@ const db = { kind: "mock-db" } as unknown as Database;
 const resolveAuthContextFromClerk = vi.fn();
 const findProviderRoutines = vi.fn();
 const callProviderRoutine = vi.fn();
+const loadAgentConnectorRuntimeTools = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db }));
 
 vi.mock("@api/app/auth/identity", () => ({
   resolveAuthContextFromClerk,
+}));
+
+vi.mock("@api/app/services/connectors/runtime", () => ({
+  loadAgentConnectorRuntimeTools,
 }));
 
 vi.mock("@repo/provider-routines", () => ({
@@ -55,6 +60,7 @@ describe("native proxy routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resolveAuthContextFromClerk.mockResolvedValue(activeCliAuth());
+    loadAgentConnectorRuntimeTools.mockResolvedValue([]);
     findProviderRoutines.mockResolvedValue({
       routines: [
         {
@@ -175,6 +181,11 @@ describe("native proxy routes", () => {
     expect(findProviderRoutines).toHaveBeenCalledWith(
       expect.objectContaining({
         actor: { orgId: "org_test", userId: "user_test" },
+        adapters: {
+          connectors: {
+            loadTools: expect.any(Function),
+          },
+        },
         db,
         scopes: {
           providerRoutineRead: true,
@@ -194,6 +205,15 @@ describe("native proxy routes", () => {
         readOnly: true,
       }
     );
+    const providerContext = findProviderRoutines.mock.calls[0]?.[0];
+    await providerContext.adapters.connectors.loadTools();
+    expect(loadAgentConnectorRuntimeTools).toHaveBeenCalledWith({
+      calledByUserId: "user_test",
+      clerkOrgId: "org_test",
+      sourceClientId: "cli_client_test",
+      sourceRef: "org_test",
+      sourceSurface: "native_cli",
+    });
   });
 
   it("calls provider routines for active native CLI OAuth requests", async () => {
@@ -216,6 +236,11 @@ describe("native proxy routes", () => {
     expect(callProviderRoutine).toHaveBeenCalledWith(
       expect.objectContaining({
         actor: { orgId: "org_test", userId: "user_test" },
+        adapters: {
+          connectors: {
+            loadTools: expect.any(Function),
+          },
+        },
         db,
         scopes: {
           providerRoutineRead: true,

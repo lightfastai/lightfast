@@ -223,6 +223,44 @@ describe("callProviderRoutine", () => {
     expect(callWithMetadataMock).not.toHaveBeenCalled();
   });
 
+  it("rejects connector adapter results that do not match the requested routine", async () => {
+    const callWithMetadataMock = vi.fn();
+    const loadConnectorToolsMock = vi.fn(async () => [
+      {
+        callWithMetadata: callWithMetadataMock,
+        inputSchema: {
+          properties: { text: { type: "string" } },
+          required: ["text"],
+          type: "object",
+        },
+        provider: "x" as const,
+        providerToolName: "createPost",
+        runtimeToolName: "x__createPost",
+      },
+    ]);
+    callWithMetadataMock.mockResolvedValue({
+      provider: "linear",
+      providerRoutineCallId: "provider_routine_call_x",
+      providerToolName: "create_issue",
+      result: { data: { id: "post_1" } },
+      routineId: "linear__create_issue",
+      runtimeToolName: "linear__create_issue",
+    });
+
+    await expect(
+      callProviderRoutine(
+        context({
+          adapters: { connectors: { loadTools: loadConnectorToolsMock } },
+        }),
+        { input: { text: "ship it" }, routineId: "x__createPost" }
+      )
+    ).rejects.toMatchObject({
+      code: "PROVIDER_ROUTINE_PROVIDER_FAILED",
+      providerRoutineCallId: "provider_routine_call_x",
+      routineId: "x__createPost",
+    });
+  });
+
   it("records token refresh failures before providerAttempted is set", async () => {
     getAccessTokenMock.mockRejectedValue(
       errorWithCode("LINEAR_TOKEN_REFRESH_FAILED")
