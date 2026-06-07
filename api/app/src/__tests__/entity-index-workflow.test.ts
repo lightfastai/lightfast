@@ -262,6 +262,22 @@ describe("indexSignalEntities", () => {
         signalId,
       })
     ).toThrow();
+    expect(appEvents["app/signal.entity-enrichment.requested"]).toEqual(
+      expect.objectContaining({
+        event: "app/signal.entity-enrichment.requested",
+      })
+    );
+    expect(
+      appEvents["app/signal.entity-enrichment.requested"].schema.parse({
+        clerkOrgId: "org_test",
+        reason: "signal_indexed",
+        signalId,
+      })
+    ).toEqual({
+      clerkOrgId: "org_test",
+      reason: "signal_indexed",
+      signalId,
+    });
     expect(createFunctionMock).toHaveBeenCalledWith(
       {
         id: "index-signal-entities",

@@ -47,6 +47,7 @@ vi.mock("../inngest/client", () => ({
 const { runEntityResolution } = await import(
   "../inngest/workflow/run-entity-resolution"
 );
+const { appEvents } = await import("../inngest/schemas/app");
 
 const observation = {
   provider: "github" as const,
@@ -117,6 +118,29 @@ describe("runEntityResolution", () => {
       },
       expect.any(Function)
     );
+    expect(
+      appEvents["app/connector.profile.observed"].schema.parse({
+        clerkOrgId: "org_test",
+        ingestionId: "ingestion_1",
+        observations: [observation],
+        resolverVersion: "signal-entity-enrichment-v1",
+        source: {
+          kind: "signal_entity_enrichment",
+          reason: "signal_indexed",
+          signalId: "signal_123e4567-e89b-12d3-a456-426614174000",
+        },
+      })
+    ).toEqual({
+      clerkOrgId: "org_test",
+      ingestionId: "ingestion_1",
+      observations: [observation],
+      resolverVersion: "signal-entity-enrichment-v1",
+      source: {
+        kind: "signal_entity_enrichment",
+        reason: "signal_indexed",
+        signalId: "signal_123e4567-e89b-12d3-a456-426614174000",
+      },
+    });
   });
 
   it("persists observed profiles and emits the persisted event", async () => {
