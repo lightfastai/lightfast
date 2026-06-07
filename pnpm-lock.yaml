@@ -957,6 +957,9 @@ importers:
       '@repo/github-app-contract':
         specifier: workspace:*
         version: link:../../packages/github-app-contract
+      '@repo/native-auth-contract':
+        specifier: workspace:*
+        version: link:../../packages/native-auth-contract
       '@repo/provider-routine-contract':
         specifier: workspace:*
         version: link:../../packages/provider-routine-contract

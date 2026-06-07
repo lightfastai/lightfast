@@ -34,6 +34,7 @@
     "@repo/app-validation": "workspace:*",
     "@repo/connector-contract": "workspace:*",
     "@repo/github-app-contract": "workspace:*",
+    "@repo/native-auth-contract": "workspace:*",
     "@repo/provider-routine-contract": "workspace:*",
     "@repo/provider-routines": "workspace:*",
     "@repo/ui": "workspace:*",

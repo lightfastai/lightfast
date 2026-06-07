@@ -63,6 +63,68 @@ describe("app-tanstack authenticated route migration", () => {
     expect(routeSource).not.toContain('"use client"');
   });
 
+  it("ports OAuth auth-boundary pages without Next.js route primitives", () => {
+    const authorizeRouteSource = source("src/routes/oauth/authorize.tsx");
+    const consentCardSource = source("src/oauth/mcp-consent-card.tsx");
+    const consentFunctionsSource = source("src/oauth/mcp-consent-functions.ts");
+    const consentServerSource = source("src/oauth/mcp-consent.server.ts");
+    const nativeRouteSource = source("src/routes/oauth/$client/start.tsx");
+    const nativeOrgSelectSource = source(
+      "src/oauth/native-auth-org-select.tsx"
+    );
+    const nativeFunctionsSource = source("src/oauth/native-auth-functions.ts");
+    const nativeValidatorsSource = source(
+      "src/oauth/native-auth-validators.ts"
+    );
+
+    expect(authorizeRouteSource).toContain(
+      'createFileRoute("/oauth/authorize")'
+    );
+    expect(authorizeRouteSource).toContain("loadMcpConsentViewModel");
+    expect(consentCardSource).toContain("useServerFn");
+    expect(consentCardSource).toContain("approveMcpAuthorization");
+    expect(consentCardSource).toContain("denyMcpAuthorization");
+    expect(consentFunctionsSource).toContain("createServerFn");
+    expect(consentFunctionsSource).toContain("redirectToSignInForOAuth");
+    expect(consentFunctionsSource).toContain("redirect({ href: redirectUrl");
+    expect(consentServerSource).toContain(
+      'import "@tanstack/react-start/server-only"'
+    );
+    expect(consentServerSource).toContain("issueMcpAuthorizationCode");
+    expect(consentServerSource).toContain("requireUserOrgMembership");
+
+    expect(nativeRouteSource).toContain(
+      'createFileRoute("/oauth/$client/start")'
+    );
+    expect(nativeRouteSource).toContain("validateNativeAuthStartSearch");
+    expect(nativeRouteSource).toContain("loadNativeAuthOrganizations");
+    expect(nativeRouteSource).toContain("NativeAuthOrgSelect");
+    expect(nativeOrgSelectSource).toContain(
+      "native.auth.createAttempt.mutationOptions"
+    );
+    expect(nativeOrgSelectSource).toContain("withClerkDevBrowserContext");
+    expect(nativeFunctionsSource).toContain(
+      "trpc.native.auth.listOrganizations.queryOptions()"
+    );
+    expect(nativeFunctionsSource).toContain("redirectToSignInForOAuth");
+    expect(nativeValidatorsSource).toContain("isLoopbackRedirectUri");
+
+    for (const routeFile of [
+      authorizeRouteSource,
+      consentCardSource,
+      consentFunctionsSource,
+      consentServerSource,
+      nativeRouteSource,
+      nativeOrgSelectSource,
+      nativeFunctionsSource,
+      nativeValidatorsSource,
+    ]) {
+      expect(routeFile).not.toContain("next/");
+      expect(routeFile).not.toContain('"use client"');
+      expect(routeFile).not.toContain('"use server"');
+    }
+  });
+
   it("uses a pathless authenticated shell for account and org routes", () => {
     const shellSource = source("src/routes/_authenticated.tsx");
     const teamSwitcherSource = source("src/components/team-switcher.tsx");
