@@ -155,6 +155,10 @@ const { indexSignalEntities } = await import(
 function createStep() {
   return {
     run: vi.fn(<T>(_name: string, fn: () => T | Promise<T>) => fn()),
+    sendEvent: vi.fn(
+      (_name: string, event: { name: string; data: Record<string, unknown> }) =>
+        Promise.resolve(event)
+    ),
     ai: {
       wrap: vi.fn(
         <T>(
@@ -339,6 +343,17 @@ describe("indexSignalEntities", () => {
       clerkOrgId: "org_test",
       signalId,
     });
+    expect(step.sendEvent).toHaveBeenCalledWith(
+      "queue signal entity enrichment",
+      {
+        name: "app/signal.entity-enrichment.requested",
+        data: {
+          clerkOrgId: "org_test",
+          reason: "signal_indexed",
+          signalId,
+        },
+      }
+    );
   });
 
   it("returns missing when the source signal is gone", async () => {
@@ -364,6 +379,7 @@ describe("indexSignalEntities", () => {
 
     expect(extractDeterministicSignalEntityLinksMock).not.toHaveBeenCalled();
     expect(step.ai.wrap).not.toHaveBeenCalled();
+    expect(step.sendEvent).not.toHaveBeenCalled();
     expect(mergeSignalEntityLinkCandidatesMock).not.toHaveBeenCalled();
     expect(replaceSignalEntityLinksMock).not.toHaveBeenCalled();
   });

@@ -109,6 +109,15 @@ export const indexSignalEntities = inngest.createFunction(
       })
     );
 
+    await step.sendEvent("queue signal entity enrichment", {
+      name: "app/signal.entity-enrichment.requested",
+      data: {
+        clerkOrgId,
+        reason: "signal_indexed" as const,
+        signalId,
+      },
+    });
+
     return {
       status: "indexed",
       deterministicCandidates: deterministicCandidates.length,
