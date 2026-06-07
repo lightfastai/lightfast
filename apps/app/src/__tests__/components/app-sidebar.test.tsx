@@ -80,6 +80,23 @@ vi.mock("@tanstack/react-query", () => ({
   useQuery: () => ({ data: conversationsData, isError: conversationsIsError }),
 }));
 
+vi.mock("~/components/feedback-dialog", () => ({
+  FeedbackDialog: ({
+    onOpenChange,
+    open,
+  }: {
+    onOpenChange: (open: boolean) => void;
+    open: boolean;
+  }) =>
+    open ? (
+      <div aria-label="Send feedback" role="dialog">
+        <button onClick={() => onOpenChange(false)} type="button">
+          Close feedback
+        </button>
+      </div>
+    ) : null,
+}));
+
 vi.mock("@repo/ui/components/ui/sidebar", () => ({
   useSidebar: () => ({
     isMobile,
@@ -157,6 +174,36 @@ vi.mock("@repo/ui/components/ui/popover", () => ({
     <div>{children}</div>
   ),
   PopoverTrigger: ({ children }: { children?: ReactNode }) => <>{children}</>,
+}));
+
+vi.mock("@repo/ui/components/ui/dropdown-menu", () => ({
+  DropdownMenu: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuContent: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuItem: ({
+    asChild,
+    children,
+    onClick,
+  }: {
+    asChild?: boolean;
+    children?: ReactNode;
+    onClick?: () => void;
+  }) => {
+    if (asChild && isValidElement(children)) {
+      return children;
+    }
+    return (
+      <button onClick={onClick} type="button">
+        {children}
+      </button>
+    );
+  },
+  DropdownMenuTrigger: ({ children }: { children?: ReactNode }) => (
+    <>{children}</>
+  ),
 }));
 
 const { AppSidebar } = await import("~/components/app-sidebar");
@@ -314,6 +361,20 @@ describe("AppSidebar", () => {
     const newChat = screen.getByRole("link", { name: "New chat" });
     expect(newChat).toHaveAttribute("href", "/acme/chat");
     expect(newChat).toHaveAttribute("data-prefetch", "false");
+  });
+
+  it("keeps contact support while opening feedback from the help menu", () => {
+    render(<AppSidebar />);
+
+    expect(
+      screen.getByRole("link", { name: /contact support/i })
+    ).toHaveAttribute("href", "mailto:support@lightfast.ai");
+
+    fireEvent.click(screen.getByRole("button", { name: /send feedback/i }));
+
+    expect(
+      screen.getByRole("dialog", { name: /send feedback/i })
+    ).toBeInTheDocument();
   });
 
   it("hides the chats group when there are no conversations", () => {

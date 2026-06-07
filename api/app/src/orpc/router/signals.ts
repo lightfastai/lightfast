@@ -1,4 +1,7 @@
-import { getVisibleSignalByPublicId } from "@db/app";
+import {
+  getVisibleSignalByPublicId,
+  listSignalEntityLinksForSignal,
+} from "@db/app";
 import { db } from "@db/app/client";
 import { ORPCError } from "@orpc/server";
 import {
@@ -51,11 +54,17 @@ export const signalsRouter = {
       });
     }
 
+    const entityLinks = await listSignalEntityLinksForSignal(db, {
+      clerkOrgId: context.auth.identity.orgId,
+      signalId: signal.publicId,
+    });
+
     return {
       id: signal.publicId,
       input: signal.input,
       status: signal.status,
       classification: signal.classification,
+      entityLinks,
       visibilityScope: signal.visibilityScope,
       createdAt: signal.createdAt.toISOString(),
       updatedAt: signal.updatedAt.toISOString(),

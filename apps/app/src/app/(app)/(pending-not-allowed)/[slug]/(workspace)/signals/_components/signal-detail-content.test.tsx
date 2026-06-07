@@ -61,16 +61,22 @@ const detail: SignalDetailRow = {
     summary: "Customer wants migration help.",
     title: "Follow up on migration",
   },
+  classificationMetadata: null,
+  clerkOrgId: "org_test",
   createdAt: new Date("2026-05-27T01:00:00.000Z"),
   createdByApiKeyId: "key_test",
+  createdByMcpClientId: null,
+  createdByMcpGrantId: null,
   createdByUserId: "user_test",
   errorCode: null,
   errorMessage: null,
+  entityLinks: [],
   id: 7,
   input: "Customer asked for migration help",
   publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
   status: "classified",
   updatedAt: new Date("2026-05-27T01:01:00.000Z"),
+  visibilityScope: "team",
 } as SignalDetailRow;
 
 describe("SignalDetailContent", () => {
@@ -80,6 +86,7 @@ describe("SignalDetailContent", () => {
         bodyLoading={true}
         item={headerItem}
         onCopyLink={vi.fn()}
+        slug="lightfast"
       />
     );
 
@@ -103,6 +110,7 @@ describe("SignalDetailContent", () => {
         detail={detail}
         item={headerItem}
         onCopyLink={vi.fn()}
+        slug="lightfast"
       />
     );
 
@@ -145,6 +153,7 @@ describe("SignalDetailContent", () => {
         }
         item={headerItem}
         onCopyLink={vi.fn()}
+        slug="lightfast"
       />
     );
 
@@ -171,6 +180,7 @@ describe("SignalDetailContent", () => {
         }
         item={{ ...headerItem, classification: null, status: "failed" }}
         onCopyLink={vi.fn()}
+        slug="lightfast"
       />
     );
 
@@ -186,10 +196,67 @@ describe("SignalDetailContent", () => {
         detail={detail}
         item={headerItem}
         onCopyLink={onCopyLink}
+        slug="lightfast"
       />
     );
 
     fireEvent.click(screen.getByRole("button", { name: /copy link/i }));
     expect(onCopyLink).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders resolved entity links as people links", () => {
+    render(
+      <SignalDetailContent
+        bodyLoading={false}
+        detail={
+          {
+            ...detail,
+            entityLinks: [
+              {
+                targetType: "person",
+                localEntityKey: "person_1",
+                label: "Jordi",
+                mentionKind: "name",
+                anchorText: "Jordi",
+                anchorOccurrence: 1,
+                extractionMethod: "ai",
+                rationale: "Jordi is explicitly named.",
+                confidence: 0.73,
+                resolvedPerson: {
+                  id: "person_123e4567-e89b-12d3-a456-426614174000",
+                  displayName: "Jordi",
+                  identityProvider: "email",
+                  identityType: "email",
+                  identityValue: "jordi@doccy.com.au",
+                },
+              },
+              {
+                targetType: "person",
+                localEntityKey: "person_2",
+                label: "Archer",
+                mentionKind: "name",
+                anchorText: "Archer",
+                anchorOccurrence: 1,
+                extractionMethod: "ai",
+                rationale: "Archer is explicitly named.",
+                confidence: 0.66,
+                resolvedPerson: null,
+              },
+            ],
+          } as SignalDetailRow
+        }
+        item={headerItem}
+        onCopyLink={vi.fn()}
+        slug="lightfast"
+      />
+    );
+
+    const jordiLink = screen.getByRole("link", { name: /Jordi/i });
+    expect(jordiLink).toHaveAttribute(
+      "href",
+      "/lightfast/people?person=person_123e4567-e89b-12d3-a456-426614174000"
+    );
+    expect(screen.getByText("Archer")).toBeInTheDocument();
+    expect(screen.getByText("Unresolved")).toBeInTheDocument();
   });
 });

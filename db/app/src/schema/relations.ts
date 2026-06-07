@@ -3,12 +3,110 @@
 import { relations } from "drizzle-orm";
 
 import {
+  orgEntityAccounts,
+  orgEntityEvidenceItems,
+  orgEntityLinks,
+  orgEntityObservations,
+  orgEntityPeople,
+  orgEntityPersonAccountAffiliations,
+  orgEntityResolutionCandidateGroups,
+  orgEntityResolutionCandidateVersions,
+  orgEntitySourceIdentities,
   orgIdentityIndexFiles,
   orgIdentityIndexStates,
   orgSkillIndexEntries,
   orgSkillIndexStates,
   orgSourceControlRepositories,
 } from "./tables";
+
+export const orgEntityPeopleRelations = relations(
+  orgEntityPeople,
+  ({ many, one }) => ({
+    affiliations: many(orgEntityPersonAccountAffiliations),
+    primarySourceIdentity: one(orgEntitySourceIdentities, {
+      fields: [orgEntityPeople.primarySourceIdentityId],
+      references: [orgEntitySourceIdentities.id],
+    }),
+  })
+);
+
+export const orgEntityAccountsRelations = relations(
+  orgEntityAccounts,
+  ({ many }) => ({
+    affiliations: many(orgEntityPersonAccountAffiliations),
+  })
+);
+
+export const orgEntityPersonAccountAffiliationsRelations = relations(
+  orgEntityPersonAccountAffiliations,
+  ({ one }) => ({
+    account: one(orgEntityAccounts, {
+      fields: [orgEntityPersonAccountAffiliations.accountId],
+      references: [orgEntityAccounts.id],
+    }),
+    person: one(orgEntityPeople, {
+      fields: [orgEntityPersonAccountAffiliations.personId],
+      references: [orgEntityPeople.id],
+    }),
+  })
+);
+
+export const orgEntitySourceIdentitiesRelations = relations(
+  orgEntitySourceIdentities,
+  ({ many }) => ({
+    entityLinks: many(orgEntityLinks),
+    observations: many(orgEntityObservations),
+  })
+);
+
+export const orgEntityObservationsRelations = relations(
+  orgEntityObservations,
+  ({ many, one }) => ({
+    evidenceItems: many(orgEntityEvidenceItems),
+    sourceIdentity: one(orgEntitySourceIdentities, {
+      fields: [orgEntityObservations.sourceIdentityId],
+      references: [orgEntitySourceIdentities.id],
+    }),
+  })
+);
+
+export const orgEntityEvidenceItemsRelations = relations(
+  orgEntityEvidenceItems,
+  ({ one }) => ({
+    sourceObservation: one(orgEntityObservations, {
+      fields: [orgEntityEvidenceItems.sourceObservationId],
+      references: [orgEntityObservations.id],
+    }),
+  })
+);
+
+export const orgEntityLinksRelations = relations(orgEntityLinks, ({ one }) => ({
+  sourceIdentity: one(orgEntitySourceIdentities, {
+    fields: [orgEntityLinks.sourceIdentityId],
+    references: [orgEntitySourceIdentities.id],
+  }),
+}));
+
+export const orgEntityResolutionCandidateGroupsRelations = relations(
+  orgEntityResolutionCandidateGroups,
+  ({ many, one }) => ({
+    currentCandidateVersion: one(orgEntityResolutionCandidateVersions, {
+      fields: [orgEntityResolutionCandidateGroups.currentCandidateVersionId],
+      references: [orgEntityResolutionCandidateVersions.id],
+    }),
+    versions: many(orgEntityResolutionCandidateVersions),
+  })
+);
+
+export const orgEntityResolutionCandidateVersionsRelations = relations(
+  orgEntityResolutionCandidateVersions,
+  ({ one }) => ({
+    candidateGroup: one(orgEntityResolutionCandidateGroups, {
+      fields: [orgEntityResolutionCandidateVersions.candidateGroupId],
+      references: [orgEntityResolutionCandidateGroups.id],
+    }),
+  })
+);
 
 export const sourceControlRepositoriesRelations = relations(
   orgSourceControlRepositories,

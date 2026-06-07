@@ -9,6 +9,7 @@ import {
   type OrgConnectorConnection,
   type ProviderRoutineCall,
   type ProviderRoutineCallRedactedPayload,
+  type ProviderRoutineCallSourceSurface,
 } from "@db/app";
 import { db as appDb } from "@db/app/client";
 import {
@@ -71,52 +72,68 @@ export class ConnectorRuntimeToolCallError extends Error {
   }
 }
 
-export type ConnectorRuntimeEnabledFor = "agents" | "automations";
+type RuntimeConnectionAccess = "agents" | "automations";
 
-export type ConnectorRuntimeSourceSurface =
-  | "automation"
-  | "chat"
-  | "hosted_mcp"
-  | "native_cli"
-  | "system";
-
-export interface LoadConnectorRuntimeToolsInput {
-  automationPublicId?: string;
-  calledByUserId?: string | null;
-  clerkOrgId: string;
-  enabledFor?: ConnectorRuntimeEnabledFor;
-  runPublicId?: string;
-  sourceClientId?: string | null;
-  sourceRef?: string | null;
-  sourceSurface?: ConnectorRuntimeSourceSurface;
+interface RuntimeToolCallSource {
+  calledById: string;
+  calledByKind: "automation" | "system" | "user";
+  calledByUserId: string | null;
+  requireLedger: boolean;
+  sourceRef: string | null;
+  sourceSurface: ProviderRoutineCallSourceSurface;
 }
 
 interface RuntimeToolCallContext {
   automationPublicId?: string;
-  calledByUserId?: string | null;
   clerkOrgId: string;
-  enabledFor: ConnectorRuntimeEnabledFor;
+  connectionAccess: RuntimeConnectionAccess;
   provider: ConnectableConnectorProvider;
   providerToolName: string;
   runPublicId?: string;
   runtimeToolName: string;
-  sourceClientId?: string | null;
-  sourceRef?: string | null;
-  sourceSurface: ConnectorRuntimeSourceSurface;
+  source: RuntimeToolCallSource;
 }
 
-export async function loadConnectorRuntimeTools(
-  input: LoadConnectorRuntimeToolsInput
-): Promise<ConnectorRuntimeToolSource[]> {
+export async function loadConnectorRuntimeTools(input: {
+  clerkOrgId: string;
+  automationPublicId?: string;
+  calledByUserId?: string | null;
+  runPublicId?: string;
+}): Promise<ConnectorRuntimeToolSource[]> {
+  return await loadConnectorRuntimeToolsForConnections({
+    automationPublicId: input.automationPublicId,
+    clerkOrgId: input.clerkOrgId,
+    connectionAccess: "automations",
+    runPublicId: input.runPublicId,
+    source: automationRuntimeSource(input),
+  });
+}
+
+export async function loadChatConnectorRuntimeTools(input: {
+  calledByUserId: string;
+  clerkOrgId: string;
+  conversationId: string;
+}): Promise<ConnectorRuntimeToolSource[]> {
+  return await loadConnectorRuntimeToolsForConnections({
+    clerkOrgId: input.clerkOrgId,
+    connectionAccess: "agents",
+    source: chatRuntimeSource(input),
+  });
+}
+
+async function loadConnectorRuntimeToolsForConnections(input: {
+  automationPublicId?: string;
+  clerkOrgId: string;
+  connectionAccess: RuntimeConnectionAccess;
+  runPublicId?: string;
+  source: RuntimeToolCallSource;
+}): Promise<ConnectorRuntimeToolSource[]> {
   const connections = await listCurrentOrgConnectorConnections(appDb, {
     clerkOrgId: input.clerkOrgId,
   });
-  const enabledFor = input.enabledFor ?? "automations";
-  const sourceSurface =
-    input.sourceSurface ?? (input.runPublicId ? "automation" : "system");
 
   return connections.flatMap((connection) => {
-    if (!isActiveEnabledConnection(connection, enabledFor)) {
+    if (!isActiveRuntimeConnection(connection, input.connectionAccess)) {
       return [];
     }
 
@@ -132,16 +149,13 @@ export async function loadConnectorRuntimeTools(
       const callWithMetadata = (toolInput: unknown) =>
         callConnectorRuntimeTool(toolInput, {
           automationPublicId: input.automationPublicId,
-          calledByUserId: input.calledByUserId,
           clerkOrgId: input.clerkOrgId,
-          enabledFor,
+          connectionAccess: input.connectionAccess,
           provider: connection.provider,
           providerToolName: tool.name,
           runPublicId: input.runPublicId,
           runtimeToolName,
-          sourceClientId: input.sourceClientId,
-          sourceRef: input.sourceRef,
-          sourceSurface,
+          source: input.source,
         });
 
       return [
@@ -167,10 +181,12 @@ async function callConnectorRuntimeTool(
   const logContext = {
     automationPublicId: context.automationPublicId,
     clerkOrgId: context.clerkOrgId,
+    connectionAccess: context.connectionAccess,
     provider: context.provider,
     providerToolName: context.providerToolName,
     runPublicId: context.runPublicId,
     runtimeToolName: context.runtimeToolName,
+    sourceSurface: context.source.sourceSurface,
   };
   let providerRoutineCall: ProviderRoutineCall | null = null;
 
@@ -182,20 +198,19 @@ async function callConnectorRuntimeTool(
     if (
       !(
         connection &&
-        isActiveEnabledConnection(connection, context.enabledFor) &&
+        isActiveRuntimeConnection(connection, context.connectionAccess) &&
         hasValidCurrentTool(connection, context.providerToolName)
       )
     ) {
       throw new Error(
-        `${connectorDisplayName(context.provider)} connector is not active for ${context.enabledFor}.`
+        `${connectorDisplayName(context.provider)} connector is not active for ${context.connectionAccess}.`
       );
     }
 
-    const caller = calledByContext(context);
     providerRoutineCall = await safelyCreateProviderRoutineCall({
-      calledById: caller.calledById,
-      calledByKind: caller.calledByKind,
-      calledByUserId: caller.calledByUserId,
+      calledById: context.source.calledById,
+      calledByKind: context.source.calledByKind,
+      calledByUserId: context.source.calledByUserId,
       clerkOrgId: context.clerkOrgId,
       providerConnectionId: connection.id,
       inputRedacted: redactedPresence(input),
@@ -204,12 +219,12 @@ async function callConnectorRuntimeTool(
       providerToolName: context.providerToolName,
       providerWorkspaceId: connection.providerWorkspaceId,
       routineId: context.runtimeToolName,
-      sourceClientId: context.sourceClientId ?? null,
-      sourceRef: context.sourceRef ?? caller.calledById,
-      sourceSurface: context.sourceSurface,
+      sourceClientId: null,
+      sourceRef: context.source.sourceRef,
+      sourceSurface: context.source.sourceSurface,
     });
 
-    if (!providerRoutineCall && context.sourceSurface !== "system") {
+    if (!providerRoutineCall && context.source.requireLedger) {
       throw new ConnectorRuntimeToolCallError({
         cause: new Error("Provider routine call ledger row was not created."),
         code: "PROVIDER_ROUTINE_LEDGER_FAILED",
@@ -298,27 +313,42 @@ async function callConnectorRuntimeTool(
   }
 }
 
-function calledByContext(context: RuntimeToolCallContext) {
-  if (context.sourceSurface === "automation" && context.runPublicId) {
+function automationRuntimeSource(input: {
+  calledByUserId?: string | null;
+  runPublicId?: string;
+}): RuntimeToolCallSource {
+  if (input.runPublicId) {
     return {
-      calledById: context.runPublicId,
-      calledByKind: "automation" as const,
-      calledByUserId: context.calledByUserId ?? null,
-    };
-  }
-
-  if (context.calledByUserId) {
-    return {
-      calledById: context.sourceRef ?? context.calledByUserId,
-      calledByKind: "user" as const,
-      calledByUserId: context.calledByUserId,
+      calledById: input.runPublicId,
+      calledByKind: "automation",
+      calledByUserId: input.calledByUserId ?? null,
+      requireLedger: true,
+      sourceRef: input.runPublicId,
+      sourceSurface: "automation",
     };
   }
 
   return {
-    calledById: context.sourceRef ?? "connector-runtime",
-    calledByKind: "system" as const,
+    calledById: "connector-runtime",
+    calledByKind: "system",
     calledByUserId: null,
+    requireLedger: false,
+    sourceRef: "connector-runtime",
+    sourceSurface: "system",
+  };
+}
+
+function chatRuntimeSource(input: {
+  calledByUserId: string;
+  conversationId: string;
+}): RuntimeToolCallSource {
+  return {
+    calledById: input.calledByUserId,
+    calledByKind: "user",
+    calledByUserId: input.calledByUserId,
+    requireLedger: true,
+    sourceRef: input.conversationId,
+    sourceSurface: "chat",
   };
 }
 
@@ -354,7 +384,7 @@ async function safelyCreateProviderRoutineCall(input: {
   routineId: string;
   sourceClientId: string | null;
   sourceRef: string | null;
-  sourceSurface: ConnectorRuntimeSourceSurface;
+  sourceSurface: ProviderRoutineCallSourceSurface;
 }) {
   try {
     return await createProviderRoutineCall(appDb, input);
@@ -522,14 +552,14 @@ function callProviderRuntimeTool(
   }
 }
 
-function isActiveEnabledConnection(
+function isActiveRuntimeConnection(
   connection: OrgConnectorConnection,
-  enabledFor: ConnectorRuntimeEnabledFor
+  access: RuntimeConnectionAccess
 ) {
   if (connection.status !== "active") {
     return false;
   }
-  return enabledFor === "agents"
+  return access === "agents"
     ? connection.enabledForAgents
     : connection.enabledForAutomations;
 }

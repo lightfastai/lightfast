@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createSignal,
   getVisibleSignalByPublicId,
+  listSignalEntityIndexBackfillCandidates,
   listSignals,
   listWorkspaceSignals,
   markSignalClassified,
@@ -426,6 +427,44 @@ describe("listSignals", () => {
       items: [visibleTeam, visibleOwn],
       nextCursor: null,
     });
+  });
+});
+
+describe("listSignalEntityIndexBackfillCandidates", () => {
+  it("returns only classified v2 team-visible candidates and advances by scanned id", async () => {
+    const eligible = makeSignal({
+      id: 3,
+      publicId: "signal_333e4567-e89b-12d3-a456-426614174000",
+      visibilityScope: "team",
+      classification: makeClassificationWithVisibility("team"),
+    });
+    const userVisible = makeSignal({
+      id: 2,
+      publicId: "signal_222e4567-e89b-12d3-a456-426614174000",
+      visibilityScope: "user",
+      classification: makeClassificationWithVisibility("user"),
+    });
+    const needsReview = makeSignal({
+      id: 1,
+      publicId: "signal_111e4567-e89b-12d3-a456-426614174000",
+      visibilityScope: "needs_review",
+      classification: makeClassificationWithVisibility("needs_review"),
+    });
+    const { db, spies } = makeListDb([eligible, userVisible, needsReview]);
+
+    await expect(
+      listSignalEntityIndexBackfillCandidates(db, {
+        clerkOrgId: "org_test",
+        cursor: null,
+        limit: 3,
+      })
+    ).resolves.toEqual({
+      items: [{ id: eligible.id, publicId: eligible.publicId }],
+      nextCursor: needsReview.id,
+    });
+
+    expect(spies.limit).toHaveBeenCalledWith(3);
+    expect(spies.orderBy).toHaveBeenCalled();
   });
 });
 

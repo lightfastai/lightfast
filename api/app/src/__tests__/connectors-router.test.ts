@@ -9,6 +9,7 @@ const refreshConnectorToolsMock = vi.fn();
 const setConnectorAutomationEnabledMock = vi.fn();
 const setConnectorAgentEnabledMock = vi.fn();
 const disconnectConnectorMock = vi.fn();
+const listUserConnectorsForViewerMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 
@@ -30,6 +31,10 @@ vi.mock("../services/connectors", () => ({
   setConnectorAgentEnabled: setConnectorAgentEnabledMock,
   setConnectorAutomationEnabled: setConnectorAutomationEnabledMock,
   startConnectorOAuth: startConnectorOAuthMock,
+}));
+
+vi.mock("../services/user-connectors", () => ({
+  listUserConnectorsForViewer: listUserConnectorsForViewerMock,
 }));
 
 const { createCallerFactory, createTRPCRouter } = await import("../trpc");
@@ -89,6 +94,7 @@ describe("connectorsRouter", () => {
     setConnectorAutomationEnabledMock.mockReset();
     setConnectorAgentEnabledMock.mockReset();
     disconnectConnectorMock.mockReset();
+    listUserConnectorsForViewerMock.mockReset();
 
     listConnectorsForOrgMock.mockResolvedValue([
       {
@@ -98,6 +104,16 @@ describe("connectorsRouter", () => {
         connection: null,
         displayName: "Linear",
         provider: "linear",
+      },
+    ]);
+    listUserConnectorsForViewerMock.mockResolvedValue([
+      {
+        canManage: true,
+        catalogStatus: "available",
+        connection: null,
+        displayName: "Granola",
+        ownerType: "user",
+        provider: "granola",
       },
     ]);
     startConnectorOAuthMock.mockResolvedValue({
@@ -125,6 +141,30 @@ describe("connectorsRouter", () => {
           identity: expect.objectContaining({ orgId: "org_acme" }),
         }),
       })
+    );
+  });
+
+  it("returns workspace connector sections with team and user connectors", async () => {
+    await expect(
+      caller(nonAdminAccess()).connectors.listSections()
+    ).resolves.toEqual({
+      teamConnectors: [
+        expect.objectContaining({
+          canManage: false,
+          provider: "linear",
+        }),
+      ],
+      yourConnectors: [
+        expect.objectContaining({
+          ownerType: "user",
+          provider: "granola",
+        }),
+      ],
+    });
+
+    expect(listConnectorsForOrgMock).toHaveBeenCalledWith(expect.anything());
+    expect(listUserConnectorsForViewerMock).toHaveBeenCalledWith(
+      expect.anything()
     );
   });
 

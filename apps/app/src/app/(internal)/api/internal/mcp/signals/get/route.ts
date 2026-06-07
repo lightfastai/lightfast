@@ -1,5 +1,8 @@
 import { assertHostedMcpOrgAccess } from "@api/app/mcp-oauth/resource-access";
-import { getVisibleSignalByPublicId } from "@db/app";
+import {
+  getVisibleSignalByPublicId,
+  listSignalEntityLinksForSignal,
+} from "@db/app";
 import { db } from "@db/app/client";
 import { getMcpSignalCommandInput, getSignalOutput } from "@repo/api-contract";
 
@@ -38,11 +41,17 @@ export async function POST(request: Request): Promise<Response> {
       return jsonError("not_found", "Signal not found.", 404);
     }
 
+    const entityLinks = await listSignalEntityLinksForSignal(db, {
+      clerkOrgId: parsed.data.actor.orgId,
+      signalId: signal.publicId,
+    });
+
     const output = getSignalOutput.parse({
       id: signal.publicId,
       input: signal.input,
       status: signal.status,
       classification: signal.classification,
+      entityLinks,
       visibilityScope: signal.visibilityScope,
       createdAt: signal.createdAt.toISOString(),
       updatedAt: signal.updatedAt.toISOString(),

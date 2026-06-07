@@ -97,6 +97,12 @@ export const IntegrationIcons = {
       <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" />
     </svg>
   ),
+  granola: (props: IconProps) => (
+    <svg fill="currentColor" role="img" viewBox="0 0 24 24" {...props}>
+      <title>Granola</title>
+      <path d="M12 3.5a8.5 8.5 0 1 0 0 17c4.42 0 7.8-2.92 8.32-7.14H12v3h4.55A5.2 5.2 0 1 1 12 6.7c1.42 0 2.63.45 3.56 1.33l2.1-2.1A8.34 8.34 0 0 0 12 3.5Z" />
+    </svg>
+  ),
   googledocs: (props: IconProps) => (
     <svg fill="currentColor" role="img" viewBox="0 0 24 24" {...props}>
       <title>Google Docs</title>

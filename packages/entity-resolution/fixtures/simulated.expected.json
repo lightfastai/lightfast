@@ -1,0 +1,121 @@
+{
+  "people": [
+    {
+      "displayName": "agentloop",
+      "status": "possible",
+      "confidence": { "min": 0.4, "max": 0.6 },
+      "affiliations": [],
+      "conflicts": []
+    },
+    {
+      "displayName": "Ava Chen",
+      "status": "likely",
+      "confidence": { "min": 0.85, "max": 1 },
+      "affiliations": ["Acme"],
+      "conflicts": []
+    },
+    {
+      "displayName": "Ivy Brooks",
+      "status": "likely",
+      "confidence": { "min": 0.85, "max": 1 },
+      "affiliations": ["signalforge.dev"],
+      "conflicts": []
+    },
+    {
+      "displayName": "Lena Ortiz",
+      "status": "possible",
+      "confidence": { "min": 0.4, "max": 0.6 },
+      "affiliations": ["LumenDesk"],
+      "conflicts": []
+    },
+    {
+      "displayName": "Mira Patel",
+      "status": "conflicting",
+      "confidence": { "min": 0.85, "max": 1 },
+      "affiliations": ["Northstar AI", "Orbit Labs"],
+      "conflicts": [
+        {
+          "kind": "business.affiliation",
+          "values": ["Northstar AI", "Orbit Labs"]
+        }
+      ]
+    },
+    {
+      "displayName": "Noor Malik",
+      "status": "likely",
+      "confidence": { "min": 0.85, "max": 1 },
+      "affiliations": ["Vectorloop"],
+      "conflicts": []
+    },
+    {
+      "displayName": "Rhea Singh",
+      "status": "possible",
+      "confidence": { "min": 0.4, "max": 0.6 },
+      "affiliations": ["Open Source Labs"],
+      "conflicts": []
+    },
+    {
+      "displayName": "Tomas Reed",
+      "status": "likely",
+      "confidence": { "min": 0.85, "max": 1 },
+      "affiliations": ["Freshflow", "OldCRM"],
+      "conflicts": []
+    }
+  ],
+  "businesses": [
+    {
+      "displayName": "Acme",
+      "status": "likely",
+      "confidence": { "min": 0.8, "max": 1 },
+      "domains": ["acme.com"]
+    },
+    {
+      "displayName": "Freshflow",
+      "status": "possible",
+      "confidence": { "min": 0.6, "max": 0.8 },
+      "domains": ["freshflow.ai"]
+    },
+    {
+      "displayName": "LumenDesk",
+      "status": "possible",
+      "confidence": { "min": 0.6, "max": 0.8 },
+      "domains": ["lumendesk.com"]
+    },
+    {
+      "displayName": "Northstar AI",
+      "status": "possible",
+      "confidence": { "min": 0.6, "max": 0.8 },
+      "domains": ["northstar.ai"]
+    },
+    {
+      "displayName": "OldCRM",
+      "status": "possible",
+      "confidence": { "min": 0.4, "max": 0.6 },
+      "domains": ["tomasreed.dev"]
+    },
+    {
+      "displayName": "Open Source Labs",
+      "status": "possible",
+      "confidence": { "min": 0.6, "max": 0.8 },
+      "domains": ["rhea.dev"]
+    },
+    {
+      "displayName": "Orbit Labs",
+      "status": "possible",
+      "confidence": { "min": 0.6, "max": 0.8 },
+      "domains": ["orbitlabs.example"]
+    },
+    {
+      "displayName": "signalforge.dev",
+      "status": "likely",
+      "confidence": { "min": 0.8, "max": 1 },
+      "domains": ["signalforge.dev"]
+    },
+    {
+      "displayName": "Vectorloop",
+      "status": "likely",
+      "confidence": { "min": 0.8, "max": 1 },
+      "domains": ["vectorloop.dev"]
+    }
+  ]
+}

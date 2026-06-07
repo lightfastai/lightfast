@@ -46,13 +46,12 @@ initSentry({
     extraErrorDataIntegration({
       depth: 3,
     }),
-    // feedbackIntegration lazy-loaded below
   ],
 });
 
 export const onRouterTransitionStart = captureRouterTransitionStart;
 
-// Lazy-load replay and feedback after page is fully interactive
+// Lazy-load replay after page is fully interactive
 // This defers ~418KB of Sentry integrations from the initial bundle
 if (typeof window !== "undefined") {
   const loadLazySentryIntegrations = async () => {
@@ -62,14 +61,6 @@ if (typeof window !== "undefined") {
       Sentry.replayIntegration({
         maskAllText: true,
         blockAllMedia: true,
-      })
-    );
-
-    Sentry.addIntegration(
-      Sentry.feedbackIntegration({
-        colorScheme: "system",
-        showBranding: false,
-        enableScreenshot: true,
       })
     );
   };

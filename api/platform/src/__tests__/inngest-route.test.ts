@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
+const mocks = vi.hoisted(() => ({
+  vercelEnv: "production",
+}));
+
 const routeHandlers = {
   GET: vi.fn(),
   POST: vi.fn(),
@@ -16,6 +20,9 @@ vi.mock("inngest/next", () => ({
 vi.mock("../env", () => ({
   env: {
     INNGEST_SERVE_ORIGIN: "https://platform.lightfast.localhost",
+    get VERCEL_ENV() {
+      return mocks.vercelEnv;
+    },
   },
 }));
 
@@ -31,6 +38,8 @@ const { createInngestRouteContext, inngest } = await import("../inngest");
 
 describe("createInngestRouteContext", () => {
   it("serves the platform Inngest client with system health workflow", () => {
+    mocks.vercelEnv = "production";
+
     const handlers = createInngestRouteContext();
 
     expect(inngest).toBe(inngestClient);
@@ -38,6 +47,19 @@ describe("createInngestRouteContext", () => {
     expect(serveMock).toHaveBeenCalledWith({
       client: inngestClient,
       functions: [systemHealth],
+      serveOrigin: "https://platform.lightfast.localhost",
+      servePath: "/api/inngest",
+    });
+  });
+
+  it("omits cron health workflows outside production", () => {
+    mocks.vercelEnv = "preview";
+
+    createInngestRouteContext();
+
+    expect(serveMock).toHaveBeenLastCalledWith({
+      client: inngestClient,
+      functions: [],
       serveOrigin: "https://platform.lightfast.localhost",
       servePath: "/api/inngest",
     });

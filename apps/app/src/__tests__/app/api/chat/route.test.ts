@@ -1,19 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const appendWorkspaceAssistantMessageMock = vi.fn();
-const callProviderRoutineMock = vi.fn();
+const callUserConnectorToolMock = vi.fn();
+const callChatProviderRoutineMock = vi.fn();
 const createNewResumableStreamMock = vi.fn();
 const createWorkspaceAssistantGenerationMock = vi.fn();
 const createWorkspaceAssistantConversationMock = vi.fn();
 const convertToModelMessagesMock = vi.fn();
+const findUserConnectorToolsMock = vi.fn();
 const getSkillIndexSnapshotMock = vi.fn();
-const findProviderRoutinesMock = vi.fn();
+const findChatProviderRoutinesMock = vi.fn();
 const gatewayMock = vi.fn();
 const getWorkspaceAssistantConversationByPublicIdMock = vi.fn();
 const getVerifiedLightfastSkillSourceRepositoryIdMock = vi.fn();
 const isDuplicateKeyErrorMock = vi.fn();
 const listWorkspaceAssistantMessagesMock = vi.fn();
-const loadConnectorRuntimeToolsMock = vi.fn();
 const logErrorMock = vi.fn();
 const logInfoMock = vi.fn();
 const logWarnMock = vi.fn();
@@ -31,7 +32,11 @@ const toolMock = vi.fn();
 const streamTextMock = vi.fn();
 const workspaceAssistantToolsMock = {
   callProviderRoutine: { inputSchema: { kind: "call-input" } },
+  callUserConnectorTool: { inputSchema: { kind: "user-connector-call-input" } },
   findProviderRoutines: { inputSchema: { kind: "find-input" } },
+  findUserConnectorTools: {
+    inputSchema: { kind: "user-connector-find-input" },
+  },
 };
 
 vi.mock("@api/app/auth/identity", () => ({
@@ -44,8 +49,9 @@ vi.mock("@api/app/services/skills", () => ({
     getVerifiedLightfastSkillSourceRepositoryIdMock,
 }));
 
-vi.mock("@api/app/services/connectors/runtime", () => ({
-  loadConnectorRuntimeTools: loadConnectorRuntimeToolsMock,
+vi.mock("@api/app/services/user-connectors/runtime", () => ({
+  callUserConnectorTool: callUserConnectorToolMock,
+  findUserConnectorTools: findUserConnectorToolsMock,
 }));
 
 vi.mock("@db/app", () => ({
@@ -84,9 +90,9 @@ vi.mock("@vendor/ai", () => ({
   tool: toolMock,
 }));
 
-vi.mock("@repo/provider-routines", () => ({
-  callProviderRoutine: callProviderRoutineMock,
-  findProviderRoutines: findProviderRoutinesMock,
+vi.mock("@api/app/services/connectors", () => ({
+  callChatProviderRoutine: callChatProviderRoutineMock,
+  findChatProviderRoutines: findChatProviderRoutinesMock,
 }));
 
 vi.mock("@repo/ai/workspace-assistant", () => ({
@@ -115,19 +121,20 @@ const { POST } = await import("~/app/(chat)/api/chat/route");
 
 beforeEach(() => {
   appendWorkspaceAssistantMessageMock.mockReset();
-  callProviderRoutineMock.mockReset();
+  callUserConnectorToolMock.mockReset();
+  callChatProviderRoutineMock.mockReset();
   createNewResumableStreamMock.mockReset();
   createWorkspaceAssistantGenerationMock.mockReset();
   createWorkspaceAssistantConversationMock.mockReset();
   convertToModelMessagesMock.mockReset();
+  findUserConnectorToolsMock.mockReset();
   getSkillIndexSnapshotMock.mockReset();
-  findProviderRoutinesMock.mockReset();
+  findChatProviderRoutinesMock.mockReset();
   gatewayMock.mockReset();
   getWorkspaceAssistantConversationByPublicIdMock.mockReset();
   getVerifiedLightfastSkillSourceRepositoryIdMock.mockReset();
   isDuplicateKeyErrorMock.mockReset();
   listWorkspaceAssistantMessagesMock.mockReset();
-  loadConnectorRuntimeToolsMock.mockReset();
   logErrorMock.mockReset();
   logInfoMock.mockReset();
   logWarnMock.mockReset();
@@ -211,7 +218,7 @@ beforeEach(() => {
     ],
   });
   createNewResumableStreamMock.mockResolvedValue(new ReadableStream<string>());
-  callProviderRoutineMock.mockResolvedValue({
+  callChatProviderRoutineMock.mockResolvedValue({
     provider: "linear",
     providerRoutineCallId: "prc_123",
     providerToolName: "create_issue",
@@ -219,7 +226,15 @@ beforeEach(() => {
     routineId: "linear__create_issue",
     status: "succeeded",
   });
-  findProviderRoutinesMock.mockResolvedValue({ routines: [] });
+  callUserConnectorToolMock.mockResolvedValue({
+    provider: "granola",
+    providerToolName: "search_notes",
+    result: { content: [{ text: "result", type: "text" }] },
+    routineId: "granola__search_notes",
+    status: "succeeded",
+  });
+  findUserConnectorToolsMock.mockResolvedValue({ routines: [] });
+  findChatProviderRoutinesMock.mockResolvedValue({ routines: [] });
   smoothStreamMock.mockReturnValue("smooth-stream-transform");
   stepCountIsMock.mockImplementation((count) => ({
     count,
@@ -580,18 +595,26 @@ describe("chat route", () => {
     vi.doUnmock("~/app/(chat)/api/chat/resumable-stream-config");
   });
 
-  it("exposes read-write connector provider routines to the workspace assistant as server tools", async () => {
+  it("exposes provider routines and private user connector tools to the workspace assistant", async () => {
     const uiMessages = [
       {
         id: "client-message-1",
-        parts: [{ text: "Summarize my Linear issues", type: "text" }],
+        parts: [
+          {
+            text: "Summarize my Linear issues and Granola notes",
+            type: "text",
+          },
+        ],
         role: "user",
       },
     ];
     const streamResponse = new Response("stream");
 
     convertToModelMessagesMock.mockResolvedValue([
-      { content: "Summarize my Linear issues", role: "user" },
+      {
+        content: "Summarize my Linear issues and Granola notes",
+        role: "user",
+      },
     ]);
     gatewayMock.mockReturnValue("gateway:anthropic/claude-sonnet-4.6");
     streamTextMock.mockReturnValue({
@@ -612,19 +635,36 @@ describe("chat route", () => {
     expect(streamOptions).toEqual(
       expect.objectContaining({
         stopWhen: { count: 5, kind: "step-count" },
-        tools: {
+        tools: expect.objectContaining({
           callProviderRoutine: expect.objectContaining({
             description: expect.stringContaining(
               "Call one connected provider routine"
             ),
             execute: expect.any(Function),
           }),
-          findProviderRoutines: expect.objectContaining({
-            description: expect.stringContaining("agent-enabled connectors"),
+          callUserConnectorTool: expect.objectContaining({
+            description: expect.stringContaining(
+              "Call one private user connector"
+            ),
             execute: expect.any(Function),
           }),
-        },
+          findProviderRoutines: expect.objectContaining({
+            description: expect.stringContaining(
+              "Find connected provider routines"
+            ),
+            execute: expect.any(Function),
+          }),
+          findUserConnectorTools: expect.objectContaining({
+            description: expect.stringContaining(
+              "Find private user connector tools"
+            ),
+            execute: expect.any(Function),
+          }),
+        }),
       })
+    );
+    expect(streamOptions.system).toContain(
+      "Granola is private meeting context for the current user. Never describe Granola results as workspace or team knowledge."
     );
     expect(stepCountIsMock).toHaveBeenCalledWith(5);
 
@@ -632,71 +672,117 @@ describe("chat route", () => {
       includeSchema: true,
       query: "issue",
     });
-    expect(findProviderRoutinesMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        actor: { orgId: "org_123", userId: "user_123" },
-        adapters: {
-          connectors: { loadTools: expect.any(Function) },
-        },
-        db: { kind: "mock-db" },
-        scopes: {
-          providerRoutineRead: true,
-          providerRoutineWrite: true,
-        },
-        source: {
-          clientId: null,
-          ref: "conv_123",
-          surface: "chat",
-        },
-      }),
+    expect(findChatProviderRoutinesMock).toHaveBeenCalledWith(
+      {
+        clerkOrgId: "org_123",
+        conversationId: "conv_123",
+        userId: "user_123",
+        writeMode: false,
+      },
       {
         includeSchema: true,
         query: "issue",
       }
     );
-    const findContext = findProviderRoutinesMock.mock.calls[0]?.[0];
-    await findContext.adapters.connectors.loadTools();
-    expect(loadConnectorRuntimeToolsMock).toHaveBeenCalledWith({
-      calledByUserId: "user_123",
-      clerkOrgId: "org_123",
-      enabledFor: "agents",
-      sourceClientId: null,
-      sourceRef: "conv_123",
-      sourceSurface: "chat",
-    });
 
     await streamOptions.tools.callProviderRoutine.execute({
       input: { id: "issue_123" },
       routineId: "linear__get_issue",
     });
-    expect(callProviderRoutineMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        actor: { orgId: "org_123", userId: "user_123" },
-        log: expect.objectContaining({
-          error: expect.any(Function),
-          info: expect.any(Function),
-          warn: expect.any(Function),
-        }),
-        adapters: {
-          connectors: { loadTools: expect.any(Function) },
-        },
-        now: expect.any(Function),
-        scopes: {
-          providerRoutineRead: true,
-          providerRoutineWrite: true,
-        },
-        source: {
-          clientId: null,
-          ref: "conv_123",
-          surface: "chat",
-        },
-      }),
+    expect(callChatProviderRoutineMock).toHaveBeenCalledWith(
+      {
+        clerkOrgId: "org_123",
+        conversationId: "conv_123",
+        userId: "user_123",
+        writeMode: false,
+      },
       {
         input: { id: "issue_123" },
         routineId: "linear__get_issue",
       }
     );
+
+    await streamOptions.tools.findUserConnectorTools.execute({
+      provider: "granola",
+      query: "SOC2",
+    });
+    expect(findUserConnectorToolsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actor: { orgId: "org_123", userId: "user_123" },
+        db: { kind: "mock-db" },
+        now: expect.any(Function),
+        source: {
+          conversationId: "conv_123",
+          surface: "interactive_chat",
+        },
+      }),
+      {
+        provider: "granola",
+        query: "SOC2",
+      }
+    );
+
+    await streamOptions.tools.callUserConnectorTool.execute({
+      input: { query: "SOC2" },
+      routineId: "granola__search_notes",
+    });
+    expect(callUserConnectorToolMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actor: { orgId: "org_123", userId: "user_123" },
+        db: { kind: "mock-db" },
+        now: expect.any(Function),
+        source: {
+          conversationId: "conv_123",
+          surface: "interactive_chat",
+        },
+      }),
+      {
+        input: { query: "SOC2" },
+        routineId: "granola__search_notes",
+      }
+    );
     expect(response).toBe(streamResponse);
+  });
+
+  it("passes provider routine write mode into chat routine tools", async () => {
+    const uiMessages = [
+      {
+        id: "client-message-1",
+        parts: [{ text: "Create a Linear issue", type: "text" }],
+        role: "user",
+      },
+    ];
+    const streamResponse = new Response("stream");
+
+    convertToModelMessagesMock.mockResolvedValue([
+      { content: "Create a Linear issue", role: "user" },
+    ]);
+    gatewayMock.mockReturnValue("gateway:anthropic/claude-sonnet-4.6");
+    streamTextMock.mockReturnValue({
+      toUIMessageStreamResponse: toUIMessageStreamResponseMock,
+    });
+    toUIMessageStreamResponseMock.mockReturnValue(streamResponse);
+
+    await POST(
+      createJsonRequest({
+        idempotencyKey: "idem_user_1",
+        messages: uiMessages,
+        conversationId: "conv_123",
+        providerRoutineWriteMode: true,
+      })
+    );
+
+    const streamOptions = streamTextMock.mock.calls[0]?.[0];
+    await streamOptions.tools.findProviderRoutines.execute({
+      query: "create",
+    });
+    expect(findChatProviderRoutinesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: "conv_123",
+        writeMode: true,
+      }),
+      { query: "create" }
+    );
   });
 
   it("marks the assistant turn failed when the model produces no content", async () => {

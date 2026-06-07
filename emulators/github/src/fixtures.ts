@@ -113,7 +113,14 @@ export function createGitHubEmulatorSeed(): GitHubSeedConfig {
           metadata: "read",
           pull_requests: "read",
         },
-        events: ["issues", "pull_request", "push"],
+        events: [
+          "issue_comment",
+          "pull_request",
+          "pull_request_review",
+          "pull_request_review_comment",
+          "pull_request_review_thread",
+          "push",
+        ],
         installations: [
           {
             installation_id: GITHUB_EMULATOR_FIXTURES.installationId,

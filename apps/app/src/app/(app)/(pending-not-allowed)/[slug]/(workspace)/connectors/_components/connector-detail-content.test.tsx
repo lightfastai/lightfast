@@ -47,6 +47,37 @@ function connectedRow(
   } as ConnectorCatalogRow;
 }
 
+function connectedUserRow(): ConnectorCatalogRow {
+  return {
+    builder: "Granola",
+    canManage: true,
+    catalogStatus: "available",
+    category: "Meeting notes",
+    connectAvailability: { status: "available" },
+    connection: {
+      availableForInteractiveChats: true,
+      connectedAt: new Date("2026-06-01T00:00:00.000Z"),
+      lastToolRefreshAt: new Date("2026-06-01T00:00:00.000Z"),
+      lastToolRefreshErrorAt: null,
+      lastToolRefreshErrorCode: null,
+      providerAccountName: "jeevan@example.com",
+      status: "active",
+      tools: [
+        {
+          availableForInteractiveChats: true,
+          description: "Search private meeting notes",
+          name: "search_notes",
+        },
+      ],
+    },
+    description:
+      "Search and reference your private Granola meeting notes in Lightfast chats.",
+    displayName: "Granola",
+    ownerType: "user",
+    provider: "granola",
+  } as unknown as ConnectorCatalogRow;
+}
+
 describe("ConnectorDetailContent", () => {
   it("renders identity, automations, and the tools list for a connected row", () => {
     render(
@@ -138,6 +169,25 @@ describe("ConnectorDetailContent", () => {
 
     expect(screen.getByText(/Reconnect X/i)).toBeInTheDocument();
     expect(screen.getByText(/tweet.write, dm.write/i)).toBeInTheDocument();
+  });
+
+  it("renders private user connector details without team controls", () => {
+    render(
+      <ConnectorDetailContent onCopyLink={vi.fn()} row={connectedUserRow()} />
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Granola" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Only you")).toBeInTheDocument();
+    expect(
+      screen.getByText("Available in your chats. Not visible to teammates.")
+    ).toBeInTheDocument();
+    expect(screen.getByText("jeevan@example.com")).toBeInTheDocument();
+    expect(screen.getByText("search_notes")).toBeInTheDocument();
+    expect(screen.queryByText("Workspace")).not.toBeInTheDocument();
+    expect(screen.queryByText("Automations")).not.toBeInTheDocument();
+    expect(screen.queryByText("Agents")).not.toBeInTheDocument();
   });
 
   it("invokes onCopyLink when the copy-link button is clicked", () => {
