@@ -1,7 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { McpConnectionsClient } from "~/org/settings/mcp/mcp-connections-client";
+import {
+  loadRoutePrefetch,
+  RoutePrefetchBoundary,
+} from "~/trpc/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/$slug/settings/mcp")({
+  loader: () => loadRoutePrefetch({ data: { route: "org.mcp" } }),
   head: ({ params }) => ({
     meta: [
       { title: `MCP Connections - ${params.slug} - Lightfast` },
@@ -15,18 +20,22 @@ export const Route = createFileRoute("/_authenticated/$slug/settings/mcp")({
 });
 
 function McpSettingsPage() {
-  return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="font-medium font-pp text-2xl text-foreground">
-          MCP Connections
-        </h2>
-        <p className="mt-1 text-muted-foreground text-sm">
-          Review OAuth MCP clients connected to this organization.
-        </p>
-      </div>
+  const prefetchState = Route.useLoaderData();
 
-      <McpConnectionsClient />
-    </div>
+  return (
+    <RoutePrefetchBoundary state={prefetchState}>
+      <div className="space-y-8">
+        <div>
+          <h2 className="font-medium font-pp text-2xl text-foreground">
+            MCP Connections
+          </h2>
+          <p className="mt-1 text-muted-foreground text-sm">
+            Review OAuth MCP clients connected to this organization.
+          </p>
+        </div>
+
+        <McpConnectionsClient />
+      </div>
+    </RoutePrefetchBoundary>
   );
 }

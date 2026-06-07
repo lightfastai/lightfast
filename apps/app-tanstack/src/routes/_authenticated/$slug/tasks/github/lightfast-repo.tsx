@@ -2,10 +2,18 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { LightfastRepoSetupClient } from "~/org/setup/lightfast-repo-setup-client";
 import { useTRPC } from "~/trpc/react";
+import {
+  loadRoutePrefetch,
+  RoutePrefetchBoundary,
+} from "~/trpc/route-prefetch";
 
 export const Route = createFileRoute(
   "/_authenticated/$slug/tasks/github/lightfast-repo"
 )({
+  loader: ({ params }) =>
+    loadRoutePrefetch({
+      data: { route: "tasks.lightfastRepo", slug: params.slug },
+    }),
   head: ({ params }) => ({
     meta: [{ title: `.lightfast Repository - ${params.slug} - Lightfast` }],
   }),
@@ -13,6 +21,15 @@ export const Route = createFileRoute(
 });
 
 function LightfastRepoSetupPage() {
+  const prefetchState = Route.useLoaderData();
+  return (
+    <RoutePrefetchBoundary state={prefetchState}>
+      <LightfastRepoSetupPageContent />
+    </RoutePrefetchBoundary>
+  );
+}
+
+function LightfastRepoSetupPageContent() {
   const { slug } = Route.useParams();
   const trpc = useTRPC();
   const { data: gate, isPending: isGatePending } = useQuery({

@@ -32,6 +32,7 @@
     "@repo/app-billing": "workspace:*",
     "@repo/app-setup-contract": "workspace:*",
     "@repo/app-validation": "workspace:*",
+    "@repo/connector-contract": "workspace:*",
     "@repo/github-app-contract": "workspace:*",
     "@repo/provider-routine-contract": "workspace:*",
     "@repo/provider-routines": "workspace:*",
