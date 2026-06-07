@@ -138,7 +138,7 @@ export const CONNECTOR_CATALOG = [
     provider: "x",
     displayName: "X",
     description:
-      "Search posts and look up X accounts from Lightfast automations.",
+      "Search posts, manage engagement, send messages, and publish through X from Lightfast agents and automations.",
     builder: "Lightfast",
     category: "Social",
     catalogStatus: "available",

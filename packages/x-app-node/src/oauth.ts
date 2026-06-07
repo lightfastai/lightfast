@@ -7,7 +7,30 @@ import { XAppNodeError } from "./errors";
 
 const DEFAULT_X_OAUTH_TIMEOUT_MS = 10_000;
 
-export const X_OAUTH_SCOPE = "tweet.read users.read offline.access";
+export const X_OAUTH_SCOPES = [
+  "tweet.read",
+  "users.read",
+  "offline.access",
+  "tweet.write",
+  "tweet.moderate.write",
+  "follows.read",
+  "follows.write",
+  "mute.read",
+  "mute.write",
+  "like.read",
+  "like.write",
+  "list.read",
+  "list.write",
+  "block.read",
+  "block.write",
+  "bookmark.read",
+  "bookmark.write",
+  "dm.read",
+  "dm.write",
+  "media.write",
+] as const;
+
+export const X_OAUTH_SCOPE = X_OAUTH_SCOPES.join(" ");
 
 const xOAuthTokenResponseSchema = z.object({
   access_token: z.string().min(1),

@@ -93,6 +93,11 @@ export function ConnectorDetailContent({
   const status = isUserConnection
     ? userConnectionStatus(connection)
     : connectionStatus(connection);
+  const showXReconnectWarning =
+    !isUserConnection &&
+    row.provider === "x" &&
+    connection.scopeStatus === "missing_requested_scopes" &&
+    connection.missingScopes.length > 0;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -217,6 +222,13 @@ export function ConnectorDetailContent({
         </div>
 
         <div className="my-6 border-border/60 border-t" />
+
+        {showXReconnectWarning ? (
+          <div className="mb-5 rounded-[8px] border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-amber-800 text-sm dark:text-amber-300">
+            Reconnect X to grant the newly requested social write scopes:{" "}
+            {connection.missingScopes.join(", ")}.
+          </div>
+        ) : null}
 
         <div className="flex items-center gap-2">
           <h3 className="font-medium text-foreground text-sm">Tools</h3>

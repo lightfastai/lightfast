@@ -102,7 +102,7 @@ const baseSystemPrompt = [
   "When asked about skills, explain what the listed skills can do and suggest the next concrete action.",
   "When connector tools are useful, first find connected provider routines, then call the selected routine by routineId.",
   "Only call provider routines for the active workspace.",
-  "Connected provider routines in chat can read from enabled Linear and X connectors. Linear write routines are available only for a turn where write mode is enabled. If Linear write access is unavailable, tell the user to reconnect Linear to enable write access. X write routines are not available.",
+  "Connected provider routines in chat can read from enabled Linear and X connectors. Write routines are available only for a turn where write mode is enabled. If write access is unavailable, tell the user to reconnect the connector to enable write access.",
   "When private user connectors such as Granola are useful, first find user connector tools, then call the selected routine by routineId.",
   "Granola is private meeting context for the current user. Never describe Granola results as workspace or team knowledge.",
 ].join(" ");
@@ -549,7 +549,7 @@ function createWorkspaceAssistantProviderRoutineTools(input: {
   return {
     callProviderRoutine: tool({
       description:
-        "Call one connected provider routine by routineId using this workspace's enabled connector. Linear write routines require write mode for this turn. X write routines are unavailable.",
+        "Call one connected provider routine by routineId using this workspace's enabled connector. Write routines require write mode for this turn.",
       inputSchema: providerRoutineCallInputSchema,
       outputSchema: providerRoutineCallSuccessSchema,
       execute: async (toolInput) =>
@@ -557,7 +557,7 @@ function createWorkspaceAssistantProviderRoutineTools(input: {
     }),
     findProviderRoutines: tool({
       description:
-        "Find connected provider routines available to this workspace through enabled connectors. Returns Linear and X read routines, and Linear write routines only when write mode is enabled for this turn.",
+        "Find connected provider routines available to this workspace through enabled connectors. Returns read routines, and write routines only when write mode is enabled for this turn.",
       inputSchema: providerRoutineFindInputSchema,
       outputSchema: providerRoutineFindOutputSchema,
       execute: async (toolInput) =>

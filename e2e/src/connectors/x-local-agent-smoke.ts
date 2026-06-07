@@ -88,7 +88,7 @@ export function buildXConnectorSmokeConfig(
 
   return {
     appOrigin: normalizeUrl(
-      env.LIGHTFAST_E2E_APP_URL?.trim() || getPortlessUrl("app.lightfast"),
+      env.LIGHTFAST_E2E_APP_URL?.trim() || getPortlessUrl("lightfast"),
       "LIGHTFAST_E2E_APP_URL"
     ),
     clerkEmail: resolveXConnectorClerkEmail({ env }),
@@ -306,54 +306,109 @@ async function signInWithClerkTicket(
   await agentBrowser(config, ["open", `${config.appOrigin}/sign-in`]);
   await agentEval(
     config,
-    `(async () => {
+    `(() => {
       const ticket = ${JSON.stringify(ticket)};
-      for (let attempt = 0; attempt < 100; attempt += 1) {
-        if (window.Clerk?.client?.signIn && window.Clerk?.setActive) {
-          break;
+      window.__lightfastTicketSignIn = { error: null, started: true };
+      void (async () => {
+        for (let attempt = 0; attempt < 300; attempt += 1) {
+          if (window.Clerk?.session?.id) {
+            window.__lightfastTicketSignIn = { done: true, error: null, started: true };
+            return;
+          }
+          if (window.Clerk?.client?.signIn && window.Clerk?.setActive) {
+            break;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 100));
         }
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
-      if (!window.Clerk?.client?.signIn || !window.Clerk?.setActive) {
-        throw new Error("Clerk did not load");
-      }
-      if (window.Clerk.session?.id && window.Clerk.signOut) {
-        await window.Clerk.signOut();
-      }
-      const signIn = await window.Clerk.client.signIn.create({
-        strategy: "ticket",
-        ticket,
+        if (!window.Clerk?.client?.signIn || !window.Clerk?.setActive) {
+          throw new Error("Clerk did not load");
+        }
+        const signIn = await window.Clerk.client.signIn.create({
+          strategy: "ticket",
+          ticket,
+        });
+        const sessionId = signIn.createdSessionId || signIn.created_session_id;
+        if (!sessionId) {
+          throw new Error("Clerk ticket sign-in did not create a session");
+        }
+        await window.Clerk.setActive({ session: sessionId });
+        window.__lightfastTicketSignIn = {
+          done: true,
+          error: null,
+          signedIn: Boolean(window.Clerk.session?.id),
+          started: true,
+          status: signIn.status,
+          userId: window.Clerk.user?.id,
+        };
+      })().catch((error) => {
+        window.__lightfastTicketSignIn = {
+          done: true,
+          error: error instanceof Error ? error.message : String(error),
+          started: true,
+        };
       });
-      const sessionId = signIn.createdSessionId || signIn.created_session_id;
-      if (!sessionId) {
-        throw new Error("Clerk ticket sign-in did not create a session");
-      }
-      await window.Clerk.setActive({ session: sessionId });
-      return {
-        signedIn: Boolean(window.Clerk.session?.id),
-        status: signIn.status,
-        userId: window.Clerk.user?.id,
-      };
+      return { started: true };
     })()`
   );
+
+  const signedIn = await waitForBrowserSignedIn(config, 60_000);
+  if (!signedIn) {
+    throw new Error("Clerk ticket sign-in did not activate.");
+  }
+}
+
+async function waitForBrowserSignedIn(
+  config: XConnectorSmokeConfig,
+  timeoutMs = 30_000
+) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const result = await agentEvalJson<{
+      error?: string | null;
+      signedIn: boolean;
+    }>(
+      config,
+      `(() => ({
+        error: window.__lightfastTicketSignIn?.error ?? null,
+        signedIn: Boolean(window.Clerk?.session?.id),
+      }))()`
+    ).catch(() => undefined);
+    if (result?.error) {
+      throw new Error(`Clerk ticket sign-in failed: ${result.error}`);
+    }
+    if (result?.signedIn) {
+      return true;
+    }
+    await delay(1000);
+  }
+  return false;
 }
 
 async function createTeam(config: XConnectorSmokeConfig) {
   await agentBrowser(config, ["open", `${config.appOrigin}/account/teams/new`]);
   await agentBrowser(config, ["wait", "#teamSlug"]);
-  await agentBrowser(config, ["fill", "#teamSlug", config.orgSlug]);
-  let value = await readTeamSlugInputValue(config);
-  if (value !== config.orgSlug) {
-    await agentBrowser(config, ["click", "#teamSlug"]);
-    await agentBrowser(config, ["type", "#teamSlug", config.orgSlug]);
-    value = await readTeamSlugInputValue(config);
-  }
+  await agentBrowser(config, ["wait", "--load", "networkidle"]);
+  await agentBrowser(config, [
+    "find",
+    "label",
+    "Your Team Name",
+    "fill",
+    config.orgSlug,
+  ]);
+  const value = await readTeamSlugInputValue(config);
   if (value !== config.orgSlug) {
     throw new Error(
       `Team slug input did not fill. Expected ${config.orgSlug}, got ${value ?? "<empty>"}.`
     );
   }
-  await agentBrowser(config, ["press", "Enter"]);
+  await agentBrowser(config, [
+    "find",
+    "role",
+    "button",
+    "click",
+    "--name",
+    "Continue",
+  ]);
   await waitForUrl(
     config,
     (url) => url.pathname === `/${config.orgSlug}/tasks/bind`,
@@ -413,27 +468,48 @@ async function refreshActiveBrowserOrg(
 }
 
 async function openConnectorsPage(config: XConnectorSmokeConfig) {
+  const connectorCatalogPath = `/${config.orgSlug}/connectors`;
+  const xConnectorTaskPath = `/${config.orgSlug}/tasks/connectors/x`;
   await agentBrowser(config, [
     "open",
-    `${config.appOrigin}/${config.orgSlug}/connectors`,
+    `${config.appOrigin}${connectorCatalogPath}`,
   ]);
   const url = await waitForUrl(
     config,
-    (currentUrl) => currentUrl.pathname === `/${config.orgSlug}/connectors`,
-    "connectors page"
+    (currentUrl) =>
+      currentUrl.pathname === connectorCatalogPath ||
+      currentUrl.pathname === xConnectorTaskPath,
+    "X connector entry page"
   );
   if (url.searchParams.has("error")) {
     throw new Error(
       `Connectors page opened with error=${url.searchParams.get("error")}`
     );
   }
-  await waitForBrowserText(config, ["Connectors", "X"], "connectors catalog");
+  await waitForBrowserText(
+    config,
+    url.pathname === xConnectorTaskPath ? ["Connect X"] : ["Connectors", "X"],
+    url.pathname === xConnectorTaskPath
+      ? "X connector setup task"
+      : "connectors catalog"
+  );
 }
 
 async function clickXConnect(config: XConnectorSmokeConfig) {
   await agentEval(
     config,
     `(() => {
+      const setupButton = Array.from(document.querySelectorAll("button")).find((candidate) =>
+        /^connect x$/i.test((candidate.textContent || "").trim())
+      );
+      if (setupButton) {
+        if (setupButton.disabled) {
+          throw new Error("X connector setup button is disabled");
+        }
+        setupButton.click();
+        return { clicked: true, source: "setup-task" };
+      }
+
       const card = Array.from(document.querySelectorAll("section")).find((section) =>
         Array.from(section.querySelectorAll("h2")).some((heading) =>
           (heading.textContent || "").trim() === "X"
@@ -460,11 +536,16 @@ async function clickXConnect(config: XConnectorSmokeConfig) {
 async function waitForSuccessfulConnectorCallback(
   config: XConnectorSmokeConfig
 ) {
+  const connectorCatalogPath = `/${config.orgSlug}/connectors`;
+  const xConnectorCompletePath = `/${config.orgSlug}/tasks/connectors/x/complete`;
+  const workspaceRootPath = `/${config.orgSlug}`;
   const url = await waitForUrl(
     config,
     (currentUrl) =>
-      currentUrl.pathname === `/${config.orgSlug}/connectors` &&
-      currentUrl.searchParams.get("connector") === "x",
+      (currentUrl.pathname === connectorCatalogPath &&
+        currentUrl.searchParams.get("connector") === "x") ||
+      currentUrl.pathname === xConnectorCompletePath ||
+      currentUrl.pathname === workspaceRootPath,
     "successful X connector callback"
   );
   const error = url.searchParams.get("error");
@@ -580,11 +661,19 @@ async function runCommand(command: string, args: string[]) {
   } catch (error) {
     const failed = error as Error & { stderr?: string; stdout?: string };
     throw new Error(
-      `${command} ${args.join(" ")} failed:\n${
+      `${formatCommandForError(command, args)} failed:\n${
         failed.stderr || failed.stdout || failed.message
       }`
     );
   }
+}
+
+export function formatCommandForError(command: string, args: string[]) {
+  const evalIndex = command === "agent-browser" ? args.indexOf("eval") : -1;
+  if (evalIndex >= 0) {
+    return `${command} ${[...args.slice(0, evalIndex + 1), "<script>"].join(" ")}`;
+  }
+  return `${command} ${args.join(" ")}`;
 }
 
 function readPortlessUrl(name: string): string {
@@ -652,6 +741,7 @@ export async function runXConnectorLocalAgentSmoke(
     appOrigin: config.appOrigin,
     clerkOrgId: browserOrg.clerkOrgId,
   });
+  await openConnectorsPage(config);
   await waitForBrowserText(
     config,
     ["Connected", "getUsersMe", "getUsersByUsername"],

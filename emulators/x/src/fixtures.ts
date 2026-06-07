@@ -10,7 +10,8 @@ export const X_EMULATOR_FIXTURES = {
 
 export const X_EMULATOR_OAUTH_CODE = "x_oauth_code_emulator_local";
 
-export const X_EMULATOR_SCOPE = "tweet.read users.read offline.access";
+export const X_EMULATOR_SCOPE =
+  "tweet.read users.read offline.access tweet.write tweet.moderate.write follows.read follows.write mute.read mute.write like.read like.write list.read list.write block.read block.write bookmark.read bookmark.write dm.read dm.write media.write";
 
 export const X_EMULATOR_USERS = [
   {

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildXConnectorSmokeConfig,
   createUniqueXConnectorOrgSlug,
+  formatCommandForError,
   resolveXConnectorClerkEmail,
 } from "./x-local-agent-smoke";
 
@@ -40,7 +41,7 @@ describe("X connector local agent smoke helpers", () => {
     });
 
     expect(config).toMatchObject({
-      appOrigin: "https://app.lightfast.localhost",
+      appOrigin: "https://lightfast.localhost",
       clerkEmail: "lightfast-e2e-x-connector@example.com",
       clerkUserId: "user_123",
       orgSlug: "lf-e2e-x-fixed",
@@ -59,5 +60,17 @@ describe("X connector local agent smoke helpers", () => {
     });
 
     expect(config.orgSlug).toBe("x-smoke-1780396200000");
+  });
+
+  it("redacts agent-browser eval scripts from command failure messages", () => {
+    const formatted = formatCommandForError("agent-browser", [
+      "--session",
+      "smoke",
+      "eval",
+      "const ticket = 'secret-sign-in-ticket'",
+    ]);
+
+    expect(formatted).toContain("agent-browser --session smoke eval <script>");
+    expect(formatted).not.toContain("secret-sign-in-ticket");
   });
 });

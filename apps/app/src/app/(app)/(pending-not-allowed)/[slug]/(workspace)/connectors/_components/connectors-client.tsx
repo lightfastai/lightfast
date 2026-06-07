@@ -661,8 +661,7 @@ function TeamConnectedConnectorCard({
         <div className="min-w-0">
           <p className="text-foreground text-sm">Use in automations</p>
           <p className="mt-1 text-muted-foreground text-xs leading-relaxed">
-            Allow your data from {row.displayName} to be used inside automations
-            created in Lightfast.
+            Allow automations to read and write through {row.displayName} tools.
           </p>
         </div>
         <Switch
@@ -679,7 +678,8 @@ function TeamConnectedConnectorCard({
         <div className="min-w-0">
           <p className="text-foreground text-sm">Use in agents</p>
           <p className="mt-1 text-muted-foreground text-xs leading-relaxed">
-            Allow agents to discover and call tools from {row.displayName}.
+            Allow agent surfaces to discover and call read/write tools from{" "}
+            {row.displayName}.
           </p>
         </div>
         <Switch

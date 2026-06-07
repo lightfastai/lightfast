@@ -18,6 +18,7 @@ import {
   providerRoutineCallInputSchema,
 } from "@repo/provider-routine-contract";
 import type {
+  ConnectorProviderRoutineTool,
   LinearProviderRoutineAdapter,
   ProviderRoutineServiceContext,
 } from "./context";
@@ -33,6 +34,11 @@ export async function callProviderRoutine(
   const { provider, providerToolName } = parseProviderRoutineId(
     parsed.routineId
   );
+
+  if (context.adapters?.connectors) {
+    return await callConnectorAdapterProviderRoutine(context, parsed);
+  }
+
   const connection = await getCurrentOrgConnectorConnection(context.db, {
     clerkOrgId: context.actor.orgId,
     provider,
@@ -174,6 +180,93 @@ export async function callProviderRoutine(
   };
 }
 
+async function callConnectorAdapterProviderRoutine(
+  context: ProviderRoutineServiceContext,
+  parsed: ReturnType<typeof providerRoutineCallInputSchema.parse>
+): Promise<ProviderRoutineCallSuccess> {
+  const { provider, providerToolName } = parseProviderRoutineId(
+    parsed.routineId
+  );
+  const tools = await context.adapters!.connectors!.loadTools();
+  const tool = tools.find(
+    (candidate) =>
+      candidate.provider === provider &&
+      candidate.providerToolName === providerToolName
+  );
+
+  if (!tool) {
+    throw providerRoutineError({
+      code: "PROVIDER_ROUTINE_NOT_FOUND",
+      message: `Provider routine ${parsed.routineId} was not found.`,
+      routineId: parsed.routineId,
+    });
+  }
+
+  const classification = classifyRoutine({ provider, providerToolName });
+  if (!hasRoutineScope({ classification, scopes: context.scopes })) {
+    throw providerRoutineError({
+      code: "PROVIDER_ROUTINE_INSUFFICIENT_SCOPE",
+      message: `Provider routine ${parsed.routineId} requires additional scope.`,
+      routineId: parsed.routineId,
+    });
+  }
+
+  if (!isValidConnectorToolInput(tool, parsed.input)) {
+    throw providerRoutineError({
+      code: "PROVIDER_ROUTINE_INVALID_INPUT",
+      message: `Invalid input for provider routine ${parsed.routineId}.`,
+      routineId: parsed.routineId,
+    });
+  }
+
+  let result: Awaited<
+    ReturnType<ConnectorProviderRoutineTool["callWithMetadata"]>
+  >;
+  try {
+    result = await tool.callWithMetadata(parsed.input);
+  } catch (error) {
+    if (error instanceof ProviderRoutineError) {
+      throw error;
+    }
+    throw providerRoutineError({
+      cause: error,
+      code: "PROVIDER_ROUTINE_PROVIDER_FAILED",
+      message: `Provider routine ${parsed.routineId} failed.`,
+      providerRoutineCallId: providerRoutineCallIdFromError(error),
+      routineId: parsed.routineId,
+    });
+  }
+
+  if (!result.providerRoutineCallId) {
+    throw providerRoutineError({
+      code: "PROVIDER_ROUTINE_PROVIDER_FAILED",
+      message: `Provider routine ${parsed.routineId} was not recorded.`,
+      routineId: parsed.routineId,
+    });
+  }
+
+  if (
+    result.provider !== provider ||
+    result.providerToolName !== providerToolName
+  ) {
+    throw providerRoutineError({
+      code: "PROVIDER_ROUTINE_PROVIDER_FAILED",
+      message: `Provider routine ${parsed.routineId} returned mismatched metadata.`,
+      providerRoutineCallId: result.providerRoutineCallId,
+      routineId: parsed.routineId,
+    });
+  }
+
+  return {
+    provider,
+    providerRoutineCallId: result.providerRoutineCallId,
+    providerToolName,
+    result: result.result,
+    routineId: parsed.routineId,
+    status: "succeeded",
+  };
+}
+
 function isAgentEnabledConnection(connection: OrgConnectorConnection) {
   return (
     connection.provider === "linear" &&
@@ -193,6 +286,34 @@ function redactedPresence(value: unknown): ProviderRoutineCallRedactedPayload {
     return null;
   }
   return { present: true };
+}
+
+function isValidConnectorToolInput(
+  tool: ConnectorProviderRoutineTool,
+  input: Record<string, unknown>
+) {
+  return isValidToolInput(
+    {
+      ...(tool.description ? { description: tool.description } : {}),
+      ...(tool.inputSchema === undefined
+        ? {}
+        : { inputSchema: tool.inputSchema }),
+      name: tool.providerToolName,
+    },
+    input
+  );
+}
+
+function providerRoutineCallIdFromError(error: unknown) {
+  if (
+    error &&
+    typeof error === "object" &&
+    "providerRoutineCallId" in error &&
+    typeof error.providerRoutineCallId === "string"
+  ) {
+    return error.providerRoutineCallId;
+  }
+  return;
 }
 
 function isValidToolInput(

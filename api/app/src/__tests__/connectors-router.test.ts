@@ -281,6 +281,32 @@ describe("connectorsRouter", () => {
     });
   });
 
+  it("preserves connector scope status fields in list results", async () => {
+    listConnectorsForOrgMock.mockResolvedValueOnce([
+      {
+        canManage: true,
+        catalogStatus: "available",
+        connectAvailability: { status: "available" },
+        connection: {
+          missingScopes: ["tweet.write"],
+          scopeStatus: "missing_requested_scopes",
+        },
+        displayName: "X",
+        provider: "x",
+      },
+    ]);
+
+    await expect(caller().connectors.list()).resolves.toEqual([
+      expect.objectContaining({
+        connection: expect.objectContaining({
+          missingScopes: ["tweet.write"],
+          scopeStatus: "missing_requested_scopes",
+        }),
+        provider: "x",
+      }),
+    ]);
+  });
+
   it("allows X setup to list connectors and start X OAuth before the org is bound", async () => {
     await expect(
       caller(adminAccess(), xSetupIdentity).connectors.list()

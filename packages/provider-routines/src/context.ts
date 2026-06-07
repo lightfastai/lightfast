@@ -1,4 +1,5 @@
 import type { Database, OrgConnectorConnection } from "@db/app";
+import type { ConnectableConnectorProvider } from "@repo/connector-contract";
 import type { ProviderRoutineSourceSurface } from "@repo/provider-routine-contract";
 
 export interface ProviderRoutineServiceLog {
@@ -33,7 +34,28 @@ export interface LinearProviderRoutineAdapter {
   }): Promise<string>;
 }
 
+export interface ConnectorProviderRoutineTool {
+  callWithMetadata(input: unknown): Promise<{
+    provider: ConnectableConnectorProvider;
+    providerRoutineCallId: string | null;
+    providerToolName: string;
+    result: unknown;
+    routineId: string;
+    runtimeToolName: string;
+  }>;
+  description?: string;
+  inputSchema?: unknown;
+  provider: ConnectableConnectorProvider;
+  providerToolName: string;
+  runtimeToolName: string;
+}
+
+export interface ConnectorProviderRoutineAdapter {
+  loadTools(): Promise<ConnectorProviderRoutineTool[]>;
+}
+
 export interface ProviderRoutineServiceAdapters {
+  connectors?: ConnectorProviderRoutineAdapter;
   linear?: LinearProviderRoutineAdapter;
 }
 

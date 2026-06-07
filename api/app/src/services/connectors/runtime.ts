@@ -79,6 +79,7 @@ interface RuntimeToolCallSource {
   calledByKind: "automation" | "system" | "user";
   calledByUserId: string | null;
   requireLedger: boolean;
+  sourceClientId: string | null;
   sourceRef: string | null;
   sourceSurface: ProviderRoutineCallSourceSurface;
 }
@@ -118,6 +119,23 @@ export async function loadChatConnectorRuntimeTools(input: {
     clerkOrgId: input.clerkOrgId,
     connectionAccess: "agents",
     source: chatRuntimeSource(input),
+  });
+}
+
+export async function loadAgentConnectorRuntimeTools(input: {
+  calledByUserId: string;
+  clerkOrgId: string;
+  sourceClientId?: string | null;
+  sourceRef?: string | null;
+  sourceSurface: Extract<
+    ProviderRoutineCallSourceSurface,
+    "hosted_mcp" | "native_cli"
+  >;
+}): Promise<ConnectorRuntimeToolSource[]> {
+  return await loadConnectorRuntimeToolsForConnections({
+    clerkOrgId: input.clerkOrgId,
+    connectionAccess: "agents",
+    source: agentRuntimeSource(input),
   });
 }
 
@@ -219,7 +237,7 @@ async function callConnectorRuntimeTool(
       providerToolName: context.providerToolName,
       providerWorkspaceId: connection.providerWorkspaceId,
       routineId: context.runtimeToolName,
-      sourceClientId: null,
+      sourceClientId: context.source.sourceClientId,
       sourceRef: context.source.sourceRef,
       sourceSurface: context.source.sourceSurface,
     });
@@ -323,6 +341,7 @@ function automationRuntimeSource(input: {
       calledByKind: "automation",
       calledByUserId: input.calledByUserId ?? null,
       requireLedger: true,
+      sourceClientId: null,
       sourceRef: input.runPublicId,
       sourceSurface: "automation",
     };
@@ -333,6 +352,7 @@ function automationRuntimeSource(input: {
     calledByKind: "system",
     calledByUserId: null,
     requireLedger: false,
+    sourceClientId: null,
     sourceRef: "connector-runtime",
     sourceSurface: "system",
   };
@@ -347,8 +367,29 @@ function chatRuntimeSource(input: {
     calledByKind: "user",
     calledByUserId: input.calledByUserId,
     requireLedger: true,
+    sourceClientId: null,
     sourceRef: input.conversationId,
     sourceSurface: "chat",
+  };
+}
+
+function agentRuntimeSource(input: {
+  calledByUserId: string;
+  sourceClientId?: string | null;
+  sourceRef?: string | null;
+  sourceSurface: Extract<
+    ProviderRoutineCallSourceSurface,
+    "hosted_mcp" | "native_cli"
+  >;
+}): RuntimeToolCallSource {
+  return {
+    calledById: input.calledByUserId,
+    calledByKind: "user",
+    calledByUserId: input.calledByUserId,
+    requireLedger: true,
+    sourceClientId: input.sourceClientId ?? null,
+    sourceRef: input.sourceRef ?? null,
+    sourceSurface: input.sourceSurface,
   };
 }
 

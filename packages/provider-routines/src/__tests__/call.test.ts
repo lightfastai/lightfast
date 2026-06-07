@@ -141,6 +141,126 @@ describe("callProviderRoutine", () => {
     expect(createProviderRoutineCallMock).not.toHaveBeenCalled();
   });
 
+  it("delegates connector adapter calls without creating its own ledger row", async () => {
+    const callWithMetadataMock = vi.fn();
+    const loadConnectorToolsMock = vi.fn(async () => [
+      {
+        callWithMetadata: callWithMetadataMock,
+        description: "Create an X post",
+        inputSchema: {
+          properties: { text: { type: "string" } },
+          required: ["text"],
+          type: "object",
+        },
+        provider: "x" as const,
+        providerToolName: "createPost",
+        runtimeToolName: "x__createPost",
+      },
+    ]);
+    callWithMetadataMock.mockResolvedValue({
+      provider: "x",
+      providerRoutineCallId: "provider_routine_call_x",
+      providerToolName: "createPost",
+      result: { data: { id: "post_1" } },
+      routineId: "x__createPost",
+      runtimeToolName: "x__createPost",
+    });
+
+    await expect(
+      callProviderRoutine(
+        context({
+          adapters: { connectors: { loadTools: loadConnectorToolsMock } },
+        }),
+        { input: { text: "ship it" }, routineId: "x__createPost" }
+      )
+    ).resolves.toEqual({
+      provider: "x",
+      providerRoutineCallId: "provider_routine_call_x",
+      providerToolName: "createPost",
+      result: { data: { id: "post_1" } },
+      routineId: "x__createPost",
+      status: "succeeded",
+    });
+
+    expect(loadConnectorToolsMock).toHaveBeenCalledOnce();
+    expect(getCurrentOrgConnectorConnectionMock).not.toHaveBeenCalled();
+    expect(createProviderRoutineCallMock).not.toHaveBeenCalled();
+    expect(callWithMetadataMock).toHaveBeenCalledWith({ text: "ship it" });
+  });
+
+  it("rejects invalid connector adapter input before calling the provider", async () => {
+    const callWithMetadataMock = vi.fn();
+    const loadConnectorToolsMock = vi.fn(async () => [
+      {
+        callWithMetadata: callWithMetadataMock,
+        description: "Create an X post",
+        inputSchema: {
+          properties: { text: { type: "string" } },
+          required: ["text"],
+          type: "object",
+        },
+        provider: "x" as const,
+        providerToolName: "createPost",
+        runtimeToolName: "x__createPost",
+      },
+    ]);
+
+    await expect(
+      callProviderRoutine(
+        context({
+          adapters: { connectors: { loadTools: loadConnectorToolsMock } },
+        }),
+        { input: {}, routineId: "x__createPost" }
+      )
+    ).rejects.toMatchObject({
+      code: "PROVIDER_ROUTINE_INVALID_INPUT",
+      routineId: "x__createPost",
+    });
+
+    expect(loadConnectorToolsMock).toHaveBeenCalledOnce();
+    expect(getCurrentOrgConnectorConnectionMock).not.toHaveBeenCalled();
+    expect(createProviderRoutineCallMock).not.toHaveBeenCalled();
+    expect(callWithMetadataMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects connector adapter results that do not match the requested routine", async () => {
+    const callWithMetadataMock = vi.fn();
+    const loadConnectorToolsMock = vi.fn(async () => [
+      {
+        callWithMetadata: callWithMetadataMock,
+        inputSchema: {
+          properties: { text: { type: "string" } },
+          required: ["text"],
+          type: "object",
+        },
+        provider: "x" as const,
+        providerToolName: "createPost",
+        runtimeToolName: "x__createPost",
+      },
+    ]);
+    callWithMetadataMock.mockResolvedValue({
+      provider: "linear",
+      providerRoutineCallId: "provider_routine_call_x",
+      providerToolName: "create_issue",
+      result: { data: { id: "post_1" } },
+      routineId: "linear__create_issue",
+      runtimeToolName: "linear__create_issue",
+    });
+
+    await expect(
+      callProviderRoutine(
+        context({
+          adapters: { connectors: { loadTools: loadConnectorToolsMock } },
+        }),
+        { input: { text: "ship it" }, routineId: "x__createPost" }
+      )
+    ).rejects.toMatchObject({
+      code: "PROVIDER_ROUTINE_PROVIDER_FAILED",
+      providerRoutineCallId: "provider_routine_call_x",
+      routineId: "x__createPost",
+    });
+  });
+
   it("records token refresh failures before providerAttempted is set", async () => {
     getAccessTokenMock.mockRejectedValue(
       errorWithCode("LINEAR_TOKEN_REFRESH_FAILED")

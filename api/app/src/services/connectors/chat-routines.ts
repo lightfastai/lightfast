@@ -371,7 +371,7 @@ function isVisibleInChat(
     return false;
   }
   if (routine.provider === "x") {
-    return routine.classification === "read";
+    return routine.classification === "read" || context.writeMode;
   }
   if (routine.provider === "linear") {
     if (routine.classification === "read") {
@@ -430,13 +430,16 @@ function chatRoutineDecision(input: {
     if (input.classification === "read") {
       return { allowed: true, scopeDecision: "x_read_allowed" };
     }
-    return {
-      allowed: false,
-      code: "PROVIDER_ROUTINE_INSUFFICIENT_SCOPE",
-      denialReason: "x_write_unsupported",
-      message: "X write routines are not available in chat.",
-      scopeDecision: "x_write_blocked",
-    };
+    if (!input.context.writeMode) {
+      return {
+        allowed: false,
+        code: "PROVIDER_ROUTINE_INSUFFICIENT_SCOPE",
+        denialReason: "write_mode_disabled",
+        message: "Enable write mode before calling X write routines.",
+        scopeDecision: "write_mode_disabled",
+      };
+    }
+    return { allowed: true, scopeDecision: "x_write_mode_enabled" };
   }
 
   if (
@@ -501,7 +504,7 @@ function storedScopeSummary(connection: OrgConnectorConnection) {
   }
   return {
     read: connection.scopes.some((scope) => scope.endsWith(".read")),
-    write: false,
+    write: connection.scopes.some((scope) => scope.endsWith(".write")),
   };
 }
 

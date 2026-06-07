@@ -75,6 +75,32 @@ describe("connector MCP auth", () => {
     });
   });
 
+  it("issues and verifies discovery tokens for manifest refresh", async () => {
+    const now = new Date("2026-06-02T01:00:00.000Z");
+
+    const token = await issueConnectorMcpToken({
+      clerkOrgId: "org_acme",
+      connectionId: 42,
+      now,
+      provider: "x",
+      purpose: "discover",
+    });
+
+    await expect(
+      verifyConnectorMcpToken({
+        now,
+        provider: "x",
+        purpose: "discover",
+        token,
+      })
+    ).resolves.toMatchObject({
+      clerkOrgId: "org_acme",
+      connectionId: 42,
+      provider: "x",
+      purpose: "discover",
+    });
+  });
+
   it("rejects expired tokens", async () => {
     const token = await issueConnectorMcpToken({
       clerkOrgId: "org_acme",

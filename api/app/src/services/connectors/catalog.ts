@@ -11,6 +11,7 @@ import {
   connectorRuntimeToolName,
   type DisplayConnectorTool,
 } from "@repo/connector-contract";
+import { X_OAUTH_SCOPES } from "@repo/x-app-node";
 import type { AuthContext } from "../../trpc";
 import { getXConnectorConfig } from "./config";
 
@@ -42,8 +43,10 @@ export interface ConnectorCatalogRow {
     lastToolRefreshAt: Date | null;
     lastToolRefreshErrorAt: Date | null;
     lastToolRefreshErrorCode: string | null;
+    missingScopes: string[];
     providerActorName: string | null;
     providerWorkspaceName: string | null;
+    scopeStatus: "complete" | "missing_requested_scopes";
     status: "active" | "error" | "revoked";
     tools: DisplayConnectorTool[];
   } | null;
@@ -168,6 +171,7 @@ function shapeConnection(
   }
 
   const tools = displayTools(connection);
+  const missingScopes = missingRequestedScopes(connection);
   return {
     connectedAt: connection.connectedAt,
     enabledForAgents: connection.enabledForAgents,
@@ -175,11 +179,22 @@ function shapeConnection(
     lastToolRefreshAt: connection.lastToolRefreshAt,
     lastToolRefreshErrorAt: connection.lastToolRefreshErrorAt,
     lastToolRefreshErrorCode: connection.lastToolRefreshErrorCode,
+    missingScopes,
     providerActorName: connection.providerActorName,
     providerWorkspaceName: connection.providerWorkspaceName,
+    scopeStatus:
+      missingScopes.length > 0 ? "missing_requested_scopes" : "complete",
     status: connection.status,
     tools,
   };
+}
+
+function missingRequestedScopes(connection: OrgConnectorConnection): string[] {
+  if (connection.provider !== "x") {
+    return [];
+  }
+
+  return X_OAUTH_SCOPES.filter((scope) => !connection.scopes.includes(scope));
 }
 
 export async function listConnectorsForOrg(

@@ -631,6 +631,7 @@ describe("chat route", () => {
     );
 
     const streamOptions = streamTextMock.mock.calls[0]?.[0];
+    expect(streamOptions.system).not.toContain("read-only");
     expect(streamOptions).toEqual(
       expect.objectContaining({
         stopWhen: { count: 5, kind: "step-count" },
