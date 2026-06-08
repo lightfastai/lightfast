@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import { useMounted } from "@repo/ui/hooks/use-mounted";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Settings } from "lucide-react";
@@ -18,6 +19,7 @@ import { getUserMenuIdentity, SETTINGS_HREF } from "./user-menu-model";
 export function UserMenu() {
   const trpc = useTRPC();
   const { signOut } = useClerk();
+  const mounted = useMounted();
 
   const { data: profile, isPending } = useQuery({
     ...trpc.viewer.account.get.queryOptions(),
@@ -25,7 +27,7 @@ export function UserMenu() {
     staleTime: 5 * 60 * 1000,
   });
 
-  if (isPending || !profile) {
+  if (!mounted || isPending || !profile) {
     return <UserMenuSkeleton />;
   }
 

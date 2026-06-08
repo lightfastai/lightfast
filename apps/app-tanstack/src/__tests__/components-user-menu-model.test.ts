@@ -25,6 +25,9 @@ describe("TanStack user menu", () => {
     );
     expect(menuSource).toContain("viewer.account.get.queryOptions()");
     expect(menuSource).toContain('enabled: typeof window !== "undefined"');
+    expect(menuSource).toContain('from "@repo/ui/hooks/use-mounted"');
+    expect(menuSource).toContain("const mounted = useMounted();");
+    expect(menuSource).toContain("if (!mounted || isPending || !profile)");
     expect(menuSource).not.toContain("useSuspenseQuery");
     expect(menuSource).toContain("to={SETTINGS_HREF}");
     expect(menuSource).toContain('signOut({ redirectUrl: "/sign-in" })');

@@ -1,3 +1,5 @@
+import { log } from "@vendor/observability/log/next";
+
 import { createSkillRefreshDedupeKey } from "../../inngest/workflow/skill-refresh-event";
 import { resolveSkillIndexServiceDeps } from "./deps";
 import { getVerifiedCandidateByRepositoryId } from "./repository";
@@ -51,11 +53,31 @@ export async function requestSkillIndexRefresh(input: {
   }
 
   const enqueue = deps.enqueueRefresh ?? enqueueSkillIndexRefresh;
-  await enqueue({
-    reason: input.reason,
-    sourceControlRepositoryId: input.sourceControlRepositoryId,
-    targetCommitSha: input.targetCommitSha,
-  });
+  try {
+    await enqueue({
+      reason: input.reason,
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+      targetCommitSha: input.targetCommitSha,
+    });
+  } catch (error) {
+    if (input.reason !== "read") {
+      throw error;
+    }
+
+    log.warn("[skills] read-triggered skill index refresh enqueue failed", {
+      error,
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+      reason: input.reason,
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+      targetCommitSha: input.targetCommitSha,
+    });
+
+    return {
+      enqueued: false,
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+    };
+  }
 
   return {
     enqueued: true,

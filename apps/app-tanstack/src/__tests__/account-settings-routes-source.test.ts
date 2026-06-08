@@ -24,4 +24,14 @@ describe("app-tanstack account settings routes", () => {
     );
     expect(settingsIndexRouteSource).toContain("search={search}");
   });
+
+  it("keeps profile data on the loading shell until client mount", () => {
+    const profileSource = source(
+      "src/account/settings/profile-data-display.tsx"
+    );
+
+    expect(profileSource).toContain('from "@repo/ui/hooks/use-mounted"');
+    expect(profileSource).toContain("const mounted = useMounted();");
+    expect(profileSource).toContain("if (!mounted || isPending || !profile)");
+  });
 });
