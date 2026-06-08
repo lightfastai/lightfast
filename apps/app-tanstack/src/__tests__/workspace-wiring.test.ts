@@ -61,15 +61,27 @@ describe("app-tanstack workspace wiring", () => {
     );
   });
 
-  it("is included in cloud Vercel project hydration", () => {
+  it("reuses the current app Vercel env instead of requiring a temporary project", () => {
+    const packageJson = JSON.parse(
+      readFileSync(resolve(appRoot, "package.json"), "utf8")
+    ) as { scripts: Record<string, string> };
     const setupScript = readFileSync(
       resolve(repoRoot, "scripts/cloud/setup.sh"),
       "utf8"
     );
 
-    expect(setupScript).toContain("LIGHTFAST_VERCEL_PROJECT_ID_APP_TANSTACK");
+    expect(packageJson.scripts["with-env"]).toContain(
+      "../app/.vercel/.env.development.local"
+    );
+    expect(packageJson.scripts["with-env:local"]).toContain(
+      "../app/.vercel/.env.development.local"
+    );
+    expect(setupScript).not.toContain(
+      "LIGHTFAST_VERCEL_PROJECT_ID_APP_TANSTACK"
+    );
+    expect(setupScript).not.toContain("apps/app-tanstack|");
     expect(setupScript).toContain(
-      "apps/app-tanstack|lightfast-app-tanstack|LIGHTFAST_VERCEL_PROJECT_ID_APP_TANSTACK"
+      "final cutover keeps the existing lightfast-app Vercel project/env graph"
     );
   });
 

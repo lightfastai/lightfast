@@ -24,14 +24,22 @@ describe("app-tanstack environment validation wiring", () => {
     expect(envSource).toContain("extends: [dbEnv, upstashEnv, unkeyEnv]");
   });
 
-  it("accepts current NEXT_PUBLIC values and exposes Vite client values", () => {
+  it("maps the current app NEXT_PUBLIC env contract into Vite client values", () => {
     const envSource = readFileSync(resolve(appRoot, "src/env.ts"), "utf8");
 
     expect(envSource).toContain("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY");
     expect(envSource).toContain("NEXT_PUBLIC_SENTRY_DSN");
+    expect(envSource).toContain("process.env.NEXT_PUBLIC_APP_URL");
+    expect(envSource).toContain("process.env.NEXT_PUBLIC_WWW_URL");
+    expect(envSource).toContain("process.env.NEXT_PUBLIC_PLATFORM_URL");
+    expect(envSource).toContain("process.env.NEXT_PUBLIC_VERCEL_ENV");
+    expect(envSource).toContain(
+      "process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"
+    );
     expect(envSource).toContain("VITE_LIGHTFAST_APP_URL");
     expect(envSource).toContain("VITE_LIGHTFAST_WWW_URL");
     expect(envSource).toContain("VITE_LIGHTFAST_PLATFORM_URL");
+    expect(envSource).toContain("VITE_CLERK_PUBLISHABLE_KEY");
     expect(envSource).toContain("VITE_VERCEL_ENV");
   });
 
@@ -77,6 +85,7 @@ describe("app-tanstack environment validation wiring", () => {
       tasks: {
         build: {
           env: string[];
+          inputs: string[];
           passThroughEnv: string[];
         };
       };
@@ -89,6 +98,12 @@ describe("app-tanstack environment validation wiring", () => {
         "NEXT_PUBLIC_PLATFORM_URL",
         "NEXT_PUBLIC_VERCEL_ENV",
         "VITE_*",
+      ])
+    );
+    expect(turboJson.tasks.build.inputs).toEqual(
+      expect.arrayContaining([
+        "../app/.env.overrides.local",
+        "../app/.vercel/.env*",
       ])
     );
     expect(turboJson.tasks.build.passThroughEnv).toEqual(

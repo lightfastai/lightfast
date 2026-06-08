@@ -2,9 +2,26 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add `apps/app-tanstack` as a live TanStack Start sibling app with Portless dev routing, observability, security middleware, and a health endpoint while keeping the current Next.js console as the default app.
+**Goal:** Add `apps/app-tanstack` as a live TanStack Start migration app with Portless dev routing, observability, security middleware, app auth/product routes, and MFE composition while preserving the existing `lightfast-app` Vercel project for the final cutover.
 
-**Architecture:** Build a new `@lightfast/app-tanstack` package using the proven `apps/mcp` TanStack Start shape. Keep traffic isolated on `app-tanstack.lightfast` and do not modify `apps/app/microfrontends.json` routing. Add only infrastructure routes and middleware in this slice; product auth and tRPC remain out of scope.
+**Architecture:** Build a new `@lightfast/app-tanstack` package using the proven `apps/mcp` TanStack Start shape. In local dev and PR review, `apps/app-tanstack` temporarily owns the aggregate MFE default app so the TanStack app can be tested with `www` as the marketing/docs child. For production cutover, do not maintain a fully env-parity `lightfast-app-tanstack` Vercel project; instead, move the TanStack implementation into `apps/app` with a dedicated mechanical `git mv` commit and keep the existing `lightfast-app` Vercel project/env graph.
+
+## Current Cutover Strategy
+
+- Keep `apps/app-tanstack` as the temporary migration package for local dev, CI, and PR review.
+- Keep `lightfast-www` as the existing marketing/docs Vercel project and MFE child app.
+- Reuse the existing `lightfast-app` Vercel project for production cutover; it already owns the app-shell envs, domains, integrations, deployment history, observability, and MFE graph relationships.
+- Do not require `LIGHTFAST_VERCEL_PROJECT_ID_APP_TANSTACK` in cloud setup. `apps/app-tanstack` reads `../app/.vercel/.env.development.local` through its `with-env` scripts so it can validate against the existing app env contract.
+- Keep the TanStack app compatible with the current `NEXT_PUBLIC_*` env names and derive Vite-facing `VITE_*` values inside `apps/app-tanstack/src/env.ts` / `vite.config.ts`.
+- Final cutover should be a separate mechanical commit using `git mv` only, so Git rename detection and review stay clean:
+
+```bash
+git mv apps/app apps/app-next
+git mv apps/app-tanstack apps/app
+git commit -m "chore: replace app with TanStack implementation"
+```
+
+- Remove/archive `apps/app-next` and any temporary `lightfast-app-tanstack` Vercel project only after the existing `lightfast-app` project serves the TanStack implementation correctly.
 
 **Tech Stack:** pnpm workspace, Turborepo, Portless, Vite, TanStack Start, TanStack Router, React 19, Nitro, Sentry TanStack Start SDK, Vitest, TypeScript.
 
