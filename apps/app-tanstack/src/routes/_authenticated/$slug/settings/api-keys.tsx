@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { WorkspaceRoutePending } from "~/components/route-boundaries";
 import { OrgApiKeyCreate } from "~/org/settings/api-keys/org-api-key-create";
 import { OrgApiKeyList } from "~/org/settings/api-keys/org-api-key-list";
 import {
@@ -19,9 +20,14 @@ export const Route = createFileRoute("/_authenticated/$slug/settings/api-keys")(
         },
       ],
     }),
+    pendingComponent: ApiKeysRoutePending,
     component: ApiKeysSettingsPage,
   }
 );
+
+function ApiKeysRoutePending() {
+  return <WorkspaceRoutePending label="Loading API keys" />;
+}
 
 function ApiKeysSettingsPage() {
   const prefetchState = Route.useLoaderData();
