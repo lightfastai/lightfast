@@ -129,9 +129,34 @@ export const APP_TANSTACK_AUTH_ROUTE_SPECS: RouteSpec[] = [
     pathTemplate: "/$slug/automations",
   },
   {
+    expectedText: ["New automation", "Name", "Instructions", "Schedule"],
+    name: "new automation",
+    pathTemplate: "/$slug/automations/new",
+  },
+  {
+    expectedText: ["Ready when you are."],
+    name: "chat",
+    pathTemplate: "/$slug/chat",
+  },
+  {
     expectedText: ["Connectors", "Team connectors"],
     name: "connectors",
     pathTemplate: "/$slug/connectors",
+  },
+  {
+    expectedText: ["Decisions", "No decisions yet"],
+    name: "decisions",
+    pathTemplate: "/$slug/decisions",
+  },
+  {
+    expectedText: ["Developer Connections", "Connect provider CLIs"],
+    name: "developer connections",
+    pathTemplate: "/$slug/developer-connections",
+  },
+  {
+    expectedText: ["People", "No people yet"],
+    name: "people",
+    pathTemplate: "/$slug/people",
   },
   {
     expectedText: ["General", "Profile"],
