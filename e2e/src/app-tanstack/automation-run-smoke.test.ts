@@ -31,6 +31,18 @@ describe("app-tanstack automation run smoke helpers", () => {
     });
   });
 
+  it("returns null run detail path when run id is omitted", () => {
+    expect(
+      buildAppTanstackAutomationRunPaths({
+        automationId: "automation_123",
+        orgSlug: "lightfast",
+      })
+    ).toEqual({
+      detailPath: "/lightfast/automations/automation_123",
+      runDetailPath: null,
+    });
+  });
+
   it("recognizes run statuses that may be visible after enqueue", () => {
     expect(isObservedAutomationRunStatus("pending")).toBe(true);
     expect(isObservedAutomationRunStatus("running")).toBe(true);

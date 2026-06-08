@@ -157,6 +157,19 @@ async function waitForManualRun(input: {
   );
 }
 
+async function assertSelectedRunSearchParam(
+  config: AppTanstackAuthRouteSmokeConfig,
+  runId: string
+) {
+  const href = await agentBrowser(config, ["get", "url"]);
+  const selectedRunId = new URL(href).searchParams.get("run");
+  if (selectedRunId !== runId) {
+    throw new Error(
+      `Expected selected run query param ${runId}, received ${selectedRunId ?? "<missing>"} at ${href}`
+    );
+  }
+}
+
 export async function runAppTanstackAutomationRunSmoke(
   input: BuildAppTanstackAuthRouteSmokeConfigInput = {}
 ) {
@@ -226,6 +239,7 @@ export async function runAppTanstackAutomationRunSmoke(
       "open",
       new URL(runPaths.runDetailPath, config.appOrigin).toString(),
     ]);
+    await assertSelectedRunSearchParam(config, run.publicId);
     await waitForRouteText(config, {
       expectedText: ["manual run", "Status", "Trigger", "Run ID", run.publicId],
       name: "automation manual run detail",
