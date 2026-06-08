@@ -59,6 +59,23 @@ describe("app-tanstack product route data prefetch", () => {
     }
   });
 
+  it("prefetches settings and account task route queries owned by migrated pages", () => {
+    const prefetchSource = source("src/trpc/route-prefetch.tsx");
+
+    for (const query of [
+      "org.settings.identity.get.queryOptions",
+      "org.settings.organization.listDomains.queryOptions",
+      "org.settings.orgApiKeys.list.queryOptions",
+      "org.settings.orgMembers.list.queryOptions",
+      "org.settings.sourceControl.listRepositories.queryOptions",
+      "org.settings.orgBilling.overview.queryOptions",
+      "viewer.githubAccount.status.queryOptions",
+      "viewer.account.get.queryOptions",
+    ]) {
+      expect(prefetchSource).toContain(query);
+    }
+  });
+
   it("wires product pages through route loaders and hydration boundaries", () => {
     const routeFiles = [
       "src/routes/_authenticated/$slug/signals.tsx",
@@ -76,6 +93,15 @@ describe("app-tanstack product route data prefetch", () => {
       "src/routes/_authenticated/$slug/tasks/connectors/x/index.tsx",
       "src/routes/_authenticated/$slug/settings/mcp.tsx",
       "src/routes/_authenticated/account/mcp.tsx",
+      "src/routes/_authenticated/$slug/settings/general.tsx",
+      "src/routes/_authenticated/$slug/settings/source-control.tsx",
+      "src/routes/_authenticated/$slug/settings/members.tsx",
+      "src/routes/_authenticated/$slug/settings/billing.tsx",
+      "src/routes/_authenticated/$slug/settings/api-keys.tsx",
+      "src/routes/_authenticated/account/settings/general.tsx",
+      "src/routes/_authenticated/account/settings/source-control.tsx",
+      "src/routes/_authenticated/account/tasks/github/index.tsx",
+      "src/routes/_authenticated/account/tasks/username.tsx",
     ];
 
     for (const routeFile of routeFiles) {

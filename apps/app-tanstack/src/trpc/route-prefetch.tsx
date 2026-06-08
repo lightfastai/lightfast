@@ -10,7 +10,11 @@ import {
 } from "~/signals/signals-model";
 
 type RoutePrefetchInput =
+  | { route: "account.githubTask" }
   | { route: "account.mcp" }
+  | { route: "account.settings.general" }
+  | { route: "account.settings.sourceControl" }
+  | { route: "account.usernameTask" }
   | { route: "automations.detail"; automationId: string }
   | { route: "automations.list" }
   | { route: "automations.new" }
@@ -18,6 +22,11 @@ type RoutePrefetchInput =
   | { route: "decisions" }
   | { route: "developerConnections" }
   | { route: "org.mcp" }
+  | { route: "org.settings.apiKeys" }
+  | { route: "org.settings.billing" }
+  | { route: "org.settings.general"; slug: string }
+  | { route: "org.settings.members" }
+  | { route: "org.settings.sourceControl" }
   | { route: "people" }
   | { route: "signals" }
   | { route: "skills" }
@@ -35,7 +44,11 @@ interface SerializableRoutePrefetchState {
 }
 
 const ROUTES = new Set<RoutePrefetchRoute>([
+  "account.githubTask",
   "account.mcp",
+  "account.settings.general",
+  "account.settings.sourceControl",
+  "account.usernameTask",
   "automations.detail",
   "automations.list",
   "automations.new",
@@ -43,6 +56,11 @@ const ROUTES = new Set<RoutePrefetchRoute>([
   "decisions",
   "developerConnections",
   "org.mcp",
+  "org.settings.apiKeys",
+  "org.settings.billing",
+  "org.settings.general",
+  "org.settings.members",
+  "org.settings.sourceControl",
   "people",
   "signals",
   "skills",
@@ -78,7 +96,8 @@ function validateRoutePrefetchInput(input: RoutePrefetchInput) {
   }
 
   if (
-    (route === "tasks.bind" ||
+    (route === "org.settings.general" ||
+      route === "tasks.bind" ||
       route === "tasks.index" ||
       route === "tasks.lightfastRepo" ||
       route === "tasks.xConnector") &&
@@ -156,10 +175,20 @@ export const loadRoutePrefetch = createServerFn({ method: "GET" })
 
     try {
       switch (data.route) {
+        case "account.githubTask":
+        case "account.settings.sourceControl":
+          await queryClient.fetchQuery(
+            trpc.viewer.githubAccount.status.queryOptions()
+          );
+          break;
         case "account.mcp":
           await queryClient.fetchQuery(
             trpc.viewer.account.mcpConnections.list.queryOptions()
           );
+          break;
+        case "account.settings.general":
+        case "account.usernameTask":
+          await queryClient.fetchQuery(trpc.viewer.account.get.queryOptions());
           break;
         case "automations.detail":
           await Promise.all([
@@ -217,6 +246,46 @@ export const loadRoutePrefetch = createServerFn({ method: "GET" })
           await queryClient.fetchQuery(
             trpc.org.settings.mcpConnections.list.queryOptions()
           );
+          break;
+        case "org.settings.apiKeys":
+          await queryClient.fetchQuery(
+            trpc.org.settings.orgApiKeys.list.queryOptions()
+          );
+          break;
+        case "org.settings.billing":
+          await queryClient.fetchQuery(
+            trpc.org.settings.orgBilling.overview.queryOptions()
+          );
+          break;
+        case "org.settings.general":
+          await Promise.all([
+            queryClient.fetchQuery(
+              trpc.org.settings.identity.get.queryOptions()
+            ),
+            queryClient.fetchQuery(
+              trpc.org.settings.organization.listDomains.queryOptions({
+                slug: data.slug,
+              })
+            ),
+            queryClient.fetchQuery(
+              trpc.viewer.organization.listUserOrganizations.queryOptions()
+            ),
+          ]);
+          break;
+        case "org.settings.members":
+          await queryClient.fetchQuery(
+            trpc.org.settings.orgMembers.list.queryOptions()
+          );
+          break;
+        case "org.settings.sourceControl":
+          await Promise.all([
+            queryClient.fetchQuery(
+              trpc.org.settings.sourceControl.get.queryOptions()
+            ),
+            queryClient.fetchQuery(
+              trpc.org.settings.sourceControl.listRepositories.queryOptions()
+            ),
+          ]);
           break;
         case "people":
           await Promise.all([

@@ -1,9 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SourceControlSettingsClient } from "~/org/settings/source-control/source-control-settings-client";
+import {
+  loadRoutePrefetch,
+  RoutePrefetchBoundary,
+} from "~/trpc/route-prefetch";
 
 export const Route = createFileRoute(
   "/_authenticated/$slug/settings/source-control"
 )({
+  loader: () =>
+    loadRoutePrefetch({ data: { route: "org.settings.sourceControl" } }),
   head: ({ params }) => ({
     meta: [
       { title: `Source Control Settings - ${params.slug} - Lightfast` },
@@ -17,7 +23,12 @@ export const Route = createFileRoute(
 });
 
 function WorkspaceSourceControlSettingsPage() {
+  const prefetchState = Route.useLoaderData();
   const { slug } = Route.useParams();
 
-  return <SourceControlSettingsClient slug={slug} />;
+  return (
+    <RoutePrefetchBoundary state={prefetchState}>
+      <SourceControlSettingsClient slug={slug} />
+    </RoutePrefetchBoundary>
+  );
 }

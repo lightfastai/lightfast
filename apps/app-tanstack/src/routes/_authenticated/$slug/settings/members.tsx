@@ -1,7 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { OrgMembersClient } from "~/org/settings/members/org-members-client";
+import {
+  loadRoutePrefetch,
+  RoutePrefetchBoundary,
+} from "~/trpc/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/$slug/settings/members")({
+  loader: () => loadRoutePrefetch({ data: { route: "org.settings.members" } }),
   head: ({ params }) => ({
     meta: [
       { title: `Members - ${params.slug} - Lightfast` },
@@ -15,18 +20,22 @@ export const Route = createFileRoute("/_authenticated/$slug/settings/members")({
 });
 
 function MembersSettingsPage() {
-  return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="font-medium font-pp text-2xl text-foreground">
-          Members
-        </h2>
-        <p className="mt-1 text-muted-foreground text-sm">
-          Manage the people who can access this workspace.
-        </p>
-      </div>
+  const prefetchState = Route.useLoaderData();
 
-      <OrgMembersClient />
-    </div>
+  return (
+    <RoutePrefetchBoundary state={prefetchState}>
+      <div className="space-y-8">
+        <div>
+          <h2 className="font-medium font-pp text-2xl text-foreground">
+            Members
+          </h2>
+          <p className="mt-1 text-muted-foreground text-sm">
+            Manage the people who can access this workspace.
+          </p>
+        </div>
+
+        <OrgMembersClient />
+      </div>
+    </RoutePrefetchBoundary>
   );
 }
