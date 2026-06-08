@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest";
 import {
   APP_TANSTACK_AUTH_ROUTE_SPECS,
   buildAppTanstackAuthRouteSmokeConfig,
+  buildAppTanstackAuthSmokeAutomationInput,
   buildRouteChecks,
   collectRouteBodyProblems,
+  combineRouteTextForSmoke,
   createUniqueAppTanstackAuthOrgSlug,
   formatCommandForError,
   readAppTanstackAuthEncryptionKey,
@@ -77,6 +79,59 @@ describe("app-tanstack auth route smoke helpers", () => {
     expect(paths).toContain("/lf-tanstack/automations/new");
     expect(checks).toHaveLength(APP_TANSTACK_AUTH_ROUTE_SPECS.length);
     expect(checks.some((check) => check.path.includes("$slug"))).toBe(false);
+  });
+
+  it("builds dynamic route checks from seeded smoke fixtures", () => {
+    const checks = buildRouteChecks("lf-tanstack", {
+      automationId: "aut_smoke",
+    });
+
+    expect(
+      checks.find((check) => check.name === "automation detail")
+    ).toMatchObject({
+      expectedText: [
+        "Daily smoke automation",
+        "Review seeded route smoke coverage.",
+        "Status",
+        "Previous runs",
+      ],
+      path: "/lf-tanstack/automations/aut_smoke",
+    });
+    expect(checks.some((check) => check.path.includes("$automation"))).toBe(
+      false
+    );
+  });
+
+  it("builds the seeded automation fixture used by the detail route smoke", () => {
+    expect(
+      buildAppTanstackAuthSmokeAutomationInput({
+        orgId: "org_smoke",
+        userId: "user_smoke",
+      })
+    ).toEqual({
+      clerkOrgId: "org_smoke",
+      connectorProvider: null,
+      createdByUserId: "user_smoke",
+      name: "Daily smoke automation",
+      prompt: "Review seeded route smoke coverage.",
+      schedule: { kind: "daily", config: { time: "09:00" } },
+      timezone: "UTC",
+    });
+  });
+
+  it("combines page text with populated form control values for route checks", () => {
+    expect(
+      combineRouteTextForSmoke({
+        bodyText: "Status\nPrevious runs",
+        formControlValues: [
+          "Daily smoke automation",
+          "",
+          "Review seeded route smoke coverage.",
+        ],
+      })
+    ).toBe(
+      "Status\nPrevious runs\nDaily smoke automation\nReview seeded route smoke coverage."
+    );
   });
 
   it("flags auth, setup, and generic error states in route body text", () => {
