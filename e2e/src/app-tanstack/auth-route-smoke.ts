@@ -43,6 +43,13 @@ export interface BuildAppTanstackAuthRouteSmokeConfigInput {
   nowMs?: number;
 }
 
+export interface AppTanstackAuthSmokeSession {
+  config: AppTanstackAuthRouteSmokeConfig;
+  orgId: string;
+  orgSlug: string;
+  userId: string;
+}
+
 interface ClerkUser {
   id: string;
 }
@@ -529,6 +536,46 @@ async function createClerkSignInToken(
   return body.token;
 }
 
+async function deleteClerkOrganization(
+  config: AppTanstackAuthRouteSmokeConfig,
+  orgId: string
+) {
+  await fetchClerkJson(config, `/organizations/${orgId}`, {
+    method: "DELETE",
+  });
+}
+
+async function deleteClerkUser(
+  config: AppTanstackAuthRouteSmokeConfig,
+  userId: string
+) {
+  await fetchClerkJson(config, `/users/${userId}`, {
+    method: "DELETE",
+  });
+}
+
+async function cleanupClerkSmokeIdentity(
+  config: AppTanstackAuthRouteSmokeConfig,
+  input: { orgId?: string; userId?: string }
+) {
+  const errors: string[] = [];
+  if (input.orgId) {
+    await deleteClerkOrganization(config, input.orgId).catch(
+      (error: unknown) => {
+        errors.push(error instanceof Error ? error.message : String(error));
+      }
+    );
+  }
+  if (input.userId) {
+    await deleteClerkUser(config, input.userId).catch((error: unknown) => {
+      errors.push(error instanceof Error ? error.message : String(error));
+    });
+  }
+  if (errors.length > 0) {
+    console.warn(`[smoke] Clerk cleanup warning: ${errors.join(" | ")}`);
+  }
+}
+
 export function readAppTanstackAuthEncryptionKey(env: Env = process.env) {
   const value = env.ENCRYPTION_KEY?.trim();
   if (!value) {
@@ -662,7 +709,7 @@ function record(value: unknown): Record<string, unknown> {
     : {};
 }
 
-async function agentBrowser(
+export async function agentBrowser(
   config: AppTanstackAuthRouteSmokeConfig,
   args: string[]
 ) {
@@ -673,7 +720,10 @@ async function agentBrowser(
   ]);
 }
 
-async function agentEval(config: AppTanstackAuthRouteSmokeConfig, js: string) {
+export async function agentEval(
+  config: AppTanstackAuthRouteSmokeConfig,
+  js: string
+) {
   return await agentBrowser(config, ["eval", js]);
 }
 
@@ -717,7 +767,7 @@ async function signInWithClerkTicket(
   );
 }
 
-async function readPageState(config: AppTanstackAuthRouteSmokeConfig) {
+export async function readPageState(config: AppTanstackAuthRouteSmokeConfig) {
   const raw = await agentEval(
     config,
     `({
@@ -822,6 +872,69 @@ function readPortlessUrl(name: string): string {
       stdio: ["ignore", "pipe", "pipe"],
     }).trim()
   );
+}
+
+export async function createAppTanstackAuthSmokeSession(
+  input: BuildAppTanstackAuthRouteSmokeConfigInput & {
+    destinationPath?: string;
+  } = {}
+): Promise<AppTanstackAuthSmokeSession> {
+  const env = input.env ?? process.env;
+  const config = buildAppTanstackAuthRouteSmokeConfig(input);
+  allowLocalhostTls(config.appOrigin);
+
+  let user: ClerkUser | undefined;
+  let org: ClerkOrganization | undefined;
+  try {
+    user = await createClerkUser(config);
+    org = await createClerkOrganization(config, user.id);
+    await updateClerkUserLastActiveOrg(config, {
+      orgId: org.id,
+      userId: user.id,
+    });
+    await createBoundSourceControlBinding({
+      orgId: org.id,
+      orgSlug: config.orgSlug,
+      userId: user.id,
+    });
+    await createActiveXConnectorConnection({
+      config,
+      env,
+      orgId: org.id,
+      orgSlug: config.orgSlug,
+      userId: user.id,
+    });
+    await updateClerkOrgBoundMetadata(config, org.id);
+
+    const ticket = await createClerkSignInToken(config, user.id);
+    await signInWithClerkTicket(config, {
+      destinationPath: input.destinationPath ?? "/account/settings/general",
+      orgId: org.id,
+      ticket,
+    });
+
+    return {
+      config,
+      orgId: org.id,
+      orgSlug: config.orgSlug,
+      userId: user.id,
+    };
+  } catch (error) {
+    await cleanupClerkSmokeIdentity(config, {
+      orgId: org?.id,
+      userId: user?.id,
+    });
+    throw error;
+  }
+}
+
+export async function cleanupAppTanstackAuthSmokeSession(
+  session: AppTanstackAuthSmokeSession
+) {
+  await cleanupClerkSmokeIdentity(session.config, {
+    orgId: session.orgId,
+    userId: session.userId,
+  });
 }
 
 export async function runAppTanstackAuthRouteSmoke(

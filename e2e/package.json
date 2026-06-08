@@ -7,6 +7,7 @@
   "sideEffects": false,
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
+    "app-tanstack:automation-interactions": "NODE_OPTIONS=\"--conditions=react-server ${NODE_OPTIONS:-}\" pnpm with-env tsx src/app-tanstack/automation-interaction-smoke.ts",
     "app-tanstack:auth-routes": "NODE_OPTIONS=\"--conditions=react-server ${NODE_OPTIONS:-}\" pnpm with-env tsx src/app-tanstack/auth-route-smoke.ts",
     "connectors:x:local": "pnpm with-env tsx src/connectors/x-local-agent-smoke.ts",
     "decisions:real-clerk": "NODE_OPTIONS=\"--conditions=react-server ${NODE_OPTIONS:-}\" pnpm with-env tsx src/decisions/real-clerk-smoke.ts",
