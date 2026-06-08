@@ -1,5 +1,4 @@
 import type { AppRouterOutputs } from "@api/app";
-import { useAuth } from "@clerk/tanstack-react-start";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -11,6 +10,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "~/compat/clerk";
 import { useTRPC } from "~/trpc/react";
 import { setOne, upsertInList } from "./automations-cache";
 import { RailRow } from "./detail-sections";
@@ -42,6 +42,13 @@ export function AutomationStatusChip({
   const trpc = useTRPC();
   const id = automation.publicId;
   const isPaused = automation.status === "paused";
+  const withStatus = (
+    automationRow: Automation | undefined,
+    status: Automation["status"]
+  ) => ({
+    ...(automationRow ?? automation),
+    status,
+  });
 
   const pauseMutation = useMutation(
     trpc.org.workspace.automations.pause.mutationOptions({
@@ -58,14 +65,12 @@ export function AutomationStatusChip({
         ]);
         const prevGet = qc.getQueryData(getKey);
         const prevList = qc.getQueryData(listKey);
-        setOne(qc, trpc, id, (automationRow) => ({
-          ...automationRow!,
-          status: "paused",
-        }));
-        upsertInList(qc, trpc, id, (automationRow) => ({
-          ...automationRow!,
-          status: "paused",
-        }));
+        setOne(qc, trpc, id, (automationRow) =>
+          withStatus(automationRow, "paused")
+        );
+        upsertInList(qc, trpc, id, (automationRow) =>
+          withStatus(automationRow, "paused")
+        );
         return { prevGet, prevList };
       },
       onError: (_error, _variables, ctx) => {
@@ -103,14 +108,12 @@ export function AutomationStatusChip({
         ]);
         const prevGet = qc.getQueryData(getKey);
         const prevList = qc.getQueryData(listKey);
-        setOne(qc, trpc, id, (automationRow) => ({
-          ...automationRow!,
-          status: "active",
-        }));
-        upsertInList(qc, trpc, id, (automationRow) => ({
-          ...automationRow!,
-          status: "active",
-        }));
+        setOne(qc, trpc, id, (automationRow) =>
+          withStatus(automationRow, "active")
+        );
+        upsertInList(qc, trpc, id, (automationRow) =>
+          withStatus(automationRow, "active")
+        );
         return { prevGet, prevList };
       },
       onError: (_error, _variables, ctx) => {

@@ -14,7 +14,6 @@ const routerInvalidateMock = vi.fn();
 const routerNavigateMock = vi.fn();
 const sendMessageMock = vi.fn();
 const stopMock = vi.fn();
-const historyReplaceStateMock = vi.fn();
 
 let chatMessages: Array<{
   id: string;
@@ -150,7 +149,6 @@ beforeEach(() => {
   routerNavigateMock.mockReset();
   sendMessageMock.mockReset();
   stopMock.mockClear();
-  historyReplaceStateMock.mockReset();
 
   mutateAsyncMock.mockResolvedValue({
     publicId: "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
@@ -161,13 +159,10 @@ beforeEach(() => {
   vi.stubGlobal("crypto", {
     randomUUID: () => "ff83026e-ef0e-40db-ae59-544fbe4df209",
   });
-  vi.spyOn(History.prototype, "replaceState").mockImplementation(
-    historyReplaceStateMock
-  );
 });
 
 describe("WorkspaceAssistantClient", () => {
-  it("writes the preallocated conversation URL before first conversation creation resolves", async () => {
+  it("navigates to the preallocated conversation URL before first conversation creation resolves", async () => {
     let resolveCreate:
       | ((conversation: { publicId: string; title: string }) => void)
       | undefined;
@@ -193,12 +188,15 @@ describe("WorkspaceAssistantClient", () => {
         title: "Summarize the current workspace",
       });
     });
-    expect(historyReplaceStateMock.mock.calls[0]?.[1]).toBe("");
-    expect(historyReplaceStateMock.mock.calls[0]?.[2]).toBe(
-      "/lightfast/chat/conv_ff83026e-ef0e-40db-ae59-544fbe4df209"
-    );
+    expect(routerNavigateMock).toHaveBeenNthCalledWith(1, {
+      params: {
+        conversationId: "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
+        slug: "lightfast",
+      },
+      replace: true,
+      to: "/$slug/chat/$conversationId",
+    });
     expect(sendMessageMock).not.toHaveBeenCalled();
-    expect(routerNavigateMock).not.toHaveBeenCalled();
     expect(
       screen.getAllByText("Summarize the current workspace").length
     ).toBeGreaterThan(0);
@@ -224,7 +222,7 @@ describe("WorkspaceAssistantClient", () => {
         }
       );
     });
-    expect(routerNavigateMock).toHaveBeenCalledWith({
+    expect(routerNavigateMock).toHaveBeenNthCalledWith(2, {
       params: {
         conversationId: "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
         slug: "lightfast",

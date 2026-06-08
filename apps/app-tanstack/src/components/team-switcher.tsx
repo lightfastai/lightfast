@@ -1,4 +1,3 @@
-import { useOrganizationList } from "@clerk/tanstack-react-start";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -13,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { Suspense, useState } from "react";
+import { useOrganizationList } from "~/compat/clerk";
 import { useTRPC } from "~/trpc/react";
 
 const RESERVED_ROUTES = new Set([

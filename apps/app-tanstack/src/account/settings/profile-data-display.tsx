@@ -44,12 +44,13 @@ export function ProfileDataDisplay() {
   });
 
   const { isUpdating, updateDisplayName } = useAccountNameUpdate();
+  const { reset } = form;
   const watchedName = form.watch("displayName");
   const hasNameChanges = (watchedName ?? "").trim() !== currentDisplayName;
 
   useEffect(() => {
-    form.reset({ displayName: currentDisplayName });
-  }, [currentDisplayName, form]);
+    reset({ displayName: currentDisplayName });
+  }, [currentDisplayName, reset]);
 
   const onNameSubmit = useCallback(
     (values: AccountSettingsFormValues) => {

@@ -1,4 +1,4 @@
-import { isClerkAPIResponseError } from "@clerk/tanstack-react-start/errors";
+import { isClerkAPIResponseError } from "~/compat/clerk";
 import { AUTH_ERROR_MESSAGES, type AuthErrorCode } from "./search-params";
 
 export type MappedAuthError =

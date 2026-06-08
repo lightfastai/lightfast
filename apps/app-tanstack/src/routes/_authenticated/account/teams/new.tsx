@@ -1,4 +1,3 @@
-import { useOrganizationList } from "@clerk/tanstack-react-start";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
@@ -10,6 +9,7 @@ import {
   createTeamIdempotencyKey,
   normalizeTeamSlug,
 } from "~/account/team-name";
+import { useOrganizationList } from "~/compat/clerk";
 import { useTRPC } from "~/trpc/react";
 
 export const Route = createFileRoute("/_authenticated/account/teams/new")({

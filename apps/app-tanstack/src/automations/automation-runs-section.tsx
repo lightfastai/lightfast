@@ -27,6 +27,8 @@ export function AutomationRunsSection({
       id: automationId,
       limit: AUTOMATION_RUNS_PAGE_LIMIT,
     }),
+    // Initial runs are prefetched by the automation detail route loader; this
+    // gate only keeps background refreshes browser-side after hydration.
     enabled: typeof window !== "undefined",
     staleTime: 5000,
     refetchOnWindowFocus: true,

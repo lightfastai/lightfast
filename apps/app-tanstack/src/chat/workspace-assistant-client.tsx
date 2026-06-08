@@ -117,7 +117,13 @@ export function WorkspaceAssistantClient({
       if (!conversationCreatedRef.current) {
         setCreationError(undefined);
         setOptimisticFirstMessage(createOptimisticUserMessage(nextText));
-        replaceBrowserChatUrl(orgSlug, conversationId);
+        if (orgSlug) {
+          void router.navigate({
+            params: { conversationId, slug: orgSlug },
+            replace: true,
+            to: "/$slug/chat/$conversationId",
+          });
+        }
         try {
           await createConversation.mutateAsync({
             publicId: conversationId,
@@ -126,7 +132,13 @@ export function WorkspaceAssistantClient({
           conversationCreatedRef.current = true;
           void queryClient.invalidateQueries(listConversationsQueryFilter);
         } catch (error) {
-          replaceBrowserChatUrl(orgSlug);
+          if (orgSlug) {
+            void router.navigate({
+              params: { slug: orgSlug },
+              replace: true,
+              to: "/$slug/chat",
+            });
+          }
           setOptimisticFirstMessage(null);
           setCreationError(
             error instanceof Error
@@ -244,24 +256,6 @@ function createUuid() {
     return crypto.randomUUID();
   }
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2)}`;
-}
-
-function replaceBrowserChatUrl(
-  orgSlug: string | undefined,
-  conversationId?: string
-) {
-  if (typeof window === "undefined" || !orgSlug) {
-    return;
-  }
-  const nextPath = conversationId
-    ? `/${orgSlug}/chat/${conversationId}`
-    : `/${orgSlug}/chat`;
-  History.prototype.replaceState.call(
-    window.history,
-    window.history.state,
-    "",
-    nextPath
-  );
 }
 
 function EmptyChatState({ composer }: { composer: React.ReactNode }) {

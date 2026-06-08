@@ -14,17 +14,22 @@ export function upsertInList(
   qc: QueryClient,
   trpc: TRPCClient,
   id: string,
-  transform: (prev?: Automation) => Automation
+  transform: (prev?: Automation) => Automation | undefined
 ): void {
   const key = trpc.org.workspace.automations.list.queryOptions().queryKey;
   qc.setQueryData(key, (old: Automation[] | undefined) => {
     const list = old ?? [];
     const idx = list.findIndex((automation) => automation.publicId === id);
     if (idx === -1) {
-      return [...list, transform(undefined)];
+      const next = transform(undefined);
+      return next ? [...list, next] : list;
     }
     const updated = [...list];
-    updated[idx] = transform(list[idx]);
+    const next = transform(list[idx]);
+    if (!next) {
+      return list;
+    }
+    updated[idx] = next;
     return updated;
   });
 }
@@ -33,7 +38,7 @@ export function setOne(
   qc: QueryClient,
   trpc: TRPCClient,
   id: string,
-  transform: (prev?: Automation) => Automation
+  transform: (prev?: Automation) => Automation | undefined
 ): void {
   const key = trpc.org.workspace.automations.get.queryOptions({ id }).queryKey;
   qc.setQueryData(key, (old: Automation | undefined) => transform(old));
@@ -122,12 +127,10 @@ export function automationUpdateMutationOptions(
       ]);
       const prevGet = qc.getQueryData(getKey);
       const prevList = qc.getQueryData(listKey);
-      setOne(qc, trpc, id, (automation) =>
-        applyAutomationPatch(automation as Automation, patch)
-      );
-      upsertInList(qc, trpc, id, (automation) =>
-        applyAutomationPatch(automation as Automation, patch)
-      );
+      const patchCachedAutomation = (automation?: Automation) =>
+        automation ? applyAutomationPatch(automation, patch) : undefined;
+      setOne(qc, trpc, id, patchCachedAutomation);
+      upsertInList(qc, trpc, id, patchCachedAutomation);
       return { prevGet, prevList };
     },
     onError: (_error, _patch, ctx) => {

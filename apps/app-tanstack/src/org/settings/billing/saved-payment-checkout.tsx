@@ -52,7 +52,7 @@ export function SavedPaymentCheckout({
         setErrorMessage(checkoutErrorMessage(result.error));
         return;
       }
-      await checkout.finalize({
+      const finalizeResult = await checkout.finalize({
         // Soft client-side navigation: lets the dialog's onComplete (close +
         // invalidate the billing overview) run and the route re-render in place.
         // A hard window.location.href reload here would unmount the dialog
@@ -65,7 +65,13 @@ export function SavedPaymentCheckout({
           );
         },
       });
+      if (finalizeResult.error) {
+        setErrorMessage(checkoutErrorMessage(finalizeResult.error));
+        return;
+      }
       onComplete();
+    } catch (error) {
+      setErrorMessage(checkoutErrorMessage(error));
     } finally {
       isSubmittingRef.current = false;
       setIsSubmitting(false);

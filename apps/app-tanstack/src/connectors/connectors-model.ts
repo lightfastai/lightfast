@@ -71,7 +71,9 @@ export function filterConnectorCatalogRows(
     const matchesQuery =
       normalizedQuery.length === 0 ||
       [row.displayName, row.description, row.category, row.provider].some(
-        (value) => value.toLowerCase().includes(normalizedQuery)
+        (value) =>
+          typeof value === "string" &&
+          value.toLowerCase().includes(normalizedQuery)
       );
     return matchesQuery && filterMatches(row, statusFilter);
   });

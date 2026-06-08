@@ -26,6 +26,9 @@ export function makeFinalizeNavigate(
       options?.onBlockedTask?.(taskKey);
       return;
     }
+    if (typeof window === "undefined") {
+      return;
+    }
     window.location.href = params.decorateUrl(target);
   };
 }

@@ -31,4 +31,12 @@ describe("makeFinalizeNavigate", () => {
     expect(location.href).toBe("https://app.test/sign-in");
     expect(onBlockedTask).toHaveBeenCalledWith("verify-email-address");
   });
+
+  it("does not throw when invoked without a browser window", () => {
+    expect(() =>
+      makeFinalizeNavigate("/agents")({
+        decorateUrl: (target) => `https://app.test${target}`,
+      })
+    ).not.toThrow();
+  });
 });

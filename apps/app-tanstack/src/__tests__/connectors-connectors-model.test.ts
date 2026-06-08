@@ -110,6 +110,19 @@ describe("connectors model", () => {
     ).toEqual(["x"]);
   });
 
+  it("ignores nullable catalog text while filtering", () => {
+    const linear = connector({
+      description: null as unknown as ConnectorCatalogRow["description"],
+    });
+
+    expect(
+      filterConnectorCatalogRows([linear], {
+        query: "linear",
+        statusFilter: "all",
+      }).map((row) => row.provider)
+    ).toEqual(["linear"]);
+  });
+
   it("detects disabled connect states and provider-aware missing config copy", () => {
     const linear = connector({
       connectAvailability: {

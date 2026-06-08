@@ -1,4 +1,3 @@
-import { useAuth, useOrganizationList } from "@clerk/tanstack-react-start";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { TeamSettingsFormValues } from "@repo/app-validation/forms";
 import { teamSettingsFormSchema } from "@repo/app-validation/forms";
@@ -18,6 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Loader2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAuth, useOrganizationList } from "~/compat/clerk";
 import { SettingRow, SettingsGroup } from "~/components/settings-section";
 import { useTRPC } from "~/trpc/react";
 import {
