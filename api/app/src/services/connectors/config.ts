@@ -196,3 +196,26 @@ export function requireXConnectorConfig(
     cause: result,
   });
 }
+
+export function resolveXConnectorMcpEndpoint(
+  input: {
+    appOrigin?: string;
+    appUrl?: string;
+    env?: XConnectorConfigEnv;
+    nodeEnv?: string;
+  } = {}
+): string {
+  const configEnv = input.env ?? runtimeEnv;
+  const appOrigin =
+    input.appOrigin ?? resolveConnectorAppOrigin({ appUrl: input.appUrl });
+
+  return resolveXEndpoints({
+    appOrigin,
+    endpointOverrides: {
+      ...(configEnv.X_MCP_ENDPOINT
+        ? { mcpEndpoint: configEnv.X_MCP_ENDPOINT }
+        : {}),
+    },
+    nodeEnv: input.nodeEnv,
+  }).mcpEndpoint;
+}

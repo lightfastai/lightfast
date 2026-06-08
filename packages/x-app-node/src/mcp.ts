@@ -2,17 +2,32 @@ import {
   type FullConnectorToolManifest,
   fullConnectorToolManifestSchema,
 } from "@repo/connector-contract";
-import {
-  McpClient,
-  StreamableHTTPClientTransport,
-  type Tool,
-} from "@vendor/mcp";
+import { z } from "zod";
 
 import { assertXEndpointAllowed, DEFAULT_X_ENDPOINTS } from "./config";
 import { XAppNodeError } from "./errors";
 
 const DEFAULT_X_MCP_TIMEOUT_MS = 10_000;
-const DEFAULT_X_MCP_CLOSE_TIMEOUT_MS = 1000;
+const STREAMABLE_HTTP_ACCEPT_HEADER = "application/json, text/event-stream";
+
+const jsonRpcErrorSchema = z.object({
+  code: z.number(),
+  message: z.string(),
+});
+
+const toolsListResponseSchema = z.object({
+  error: jsonRpcErrorSchema.optional(),
+  result: z
+    .object({
+      tools: fullConnectorToolManifestSchema,
+    })
+    .optional(),
+});
+
+const toolCallResponseSchema = z.object({
+  error: jsonRpcErrorSchema.optional(),
+  result: z.unknown().optional(),
+});
 
 export async function listXBridgeMcpTools(input: {
   allowedEndpoint?: string;
@@ -27,43 +42,37 @@ export async function listXBridgeMcpTools(input: {
     value: input.endpoint,
   });
 
-  const client = new McpClient({
-    name: "lightfast-x-app-node",
-    version: "0.1.0",
-  });
-  const transport = new StreamableHTTPClientTransport(new URL(input.endpoint), {
-    requestInit: {
-      headers: {
-        authorization: `Bearer ${input.mcpToken}`,
-      },
+  const response = await sendXBridgeMcpRequest({
+    endpoint: input.endpoint,
+    mcpToken: input.mcpToken,
+    payload: {
+      id: 1,
+      jsonrpc: "2.0",
+      method: "tools/list",
+      params: {},
     },
-  });
-  const abortController = new AbortController();
-  const timeout = setTimeout(
-    () => abortController.abort(),
-    input.timeoutMs ?? DEFAULT_X_MCP_TIMEOUT_MS
-  );
-
-  try {
-    await withAbort(client.connect(transport), abortController.signal);
-    const { tools } = await withAbort(
-      client.listTools(),
-      abortController.signal
-    );
-    return fullConnectorToolManifestSchema.parse(tools.map(toManifestItem));
-  } catch (error) {
-    if (error instanceof XAppNodeError) {
-      throw error;
-    }
+    timeoutMs: input.timeoutMs,
+  }).catch((error) => {
     throw new XAppNodeError(
       "X_MCP_FAILED",
       "X MCP tool listing failed.",
       error
     );
-  } finally {
-    clearTimeout(timeout);
-    await closeMcpClient(client).catch(() => undefined);
+  });
+
+  const parsed = toolsListResponseSchema.parse(response);
+  if (parsed.error) {
+    throw new XAppNodeError(
+      "X_MCP_FAILED",
+      "X MCP tool listing failed.",
+      parsed.error
+    );
   }
+  if (!parsed.result) {
+    throw new XAppNodeError("X_MCP_FAILED", "X MCP tool listing failed.");
+  }
+
+  return parsed.result.tools;
 }
 
 export async function callXBridgeMcpTool(input: {
@@ -81,17 +90,41 @@ export async function callXBridgeMcpTool(input: {
     value: input.endpoint,
   });
 
-  const client = new McpClient({
-    name: "lightfast-x-app-node",
-    version: "0.1.0",
-  });
-  const transport = new StreamableHTTPClientTransport(new URL(input.endpoint), {
-    requestInit: {
-      headers: {
-        authorization: `Bearer ${input.mcpToken}`,
+  const response = await sendXBridgeMcpRequest({
+    endpoint: input.endpoint,
+    mcpToken: input.mcpToken,
+    payload: {
+      id: 1,
+      jsonrpc: "2.0",
+      method: "tools/call",
+      params: {
+        arguments: input.input,
+        name: input.name,
       },
     },
+    timeoutMs: input.timeoutMs,
+  }).catch((error) => {
+    throw new XAppNodeError("X_MCP_FAILED", "X MCP tool call failed.", error);
   });
+
+  const parsed = toolCallResponseSchema.parse(response);
+  if (parsed.error) {
+    throw new XAppNodeError(
+      "X_MCP_FAILED",
+      "X MCP tool call failed.",
+      parsed.error
+    );
+  }
+
+  return parsed.result;
+}
+
+async function sendXBridgeMcpRequest(input: {
+  endpoint: string;
+  mcpToken: string;
+  payload: unknown;
+  timeoutMs?: number;
+}) {
   const abortController = new AbortController();
   const timeout = setTimeout(
     () => abortController.abort(),
@@ -99,59 +132,21 @@ export async function callXBridgeMcpTool(input: {
   );
 
   try {
-    await withAbort(client.connect(transport), abortController.signal);
-    return await withAbort(
-      client.callTool({
-        arguments: input.input,
-        name: input.name,
-      }),
-      abortController.signal
-    );
-  } catch (error) {
-    if (error instanceof XAppNodeError) {
-      throw error;
+    const response = await fetch(input.endpoint, {
+      body: JSON.stringify(input.payload),
+      headers: {
+        accept: STREAMABLE_HTTP_ACCEPT_HEADER,
+        authorization: `Bearer ${input.mcpToken}`,
+        "content-type": "application/json",
+      },
+      method: "POST",
+      signal: abortController.signal,
+    });
+    if (!response.ok) {
+      throw new Error(`X MCP request failed with status ${response.status}.`);
     }
-    throw new XAppNodeError("X_MCP_FAILED", "X MCP tool call failed.", error);
+    return await response.json();
   } finally {
     clearTimeout(timeout);
-    await closeMcpClient(client).catch(() => undefined);
   }
-}
-
-async function closeMcpClient(client: { close(): Promise<void> }) {
-  await Promise.race([client.close(), delay(DEFAULT_X_MCP_CLOSE_TIMEOUT_MS)]);
-}
-
-async function withAbort<T>(
-  promise: Promise<T>,
-  signal: AbortSignal
-): Promise<T> {
-  if (signal.aborted) {
-    throw abortError();
-  }
-
-  return await Promise.race([
-    promise,
-    new Promise<T>((_resolve, reject) => {
-      signal.addEventListener("abort", () => reject(abortError()), {
-        once: true,
-      });
-    }),
-  ]);
-}
-
-function delay(timeoutMs: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, timeoutMs));
-}
-
-function abortError() {
-  return new DOMException("The operation was aborted.", "AbortError");
-}
-
-function toManifestItem(tool: Tool) {
-  return {
-    description: tool.description,
-    inputSchema: tool.inputSchema,
-    name: tool.name,
-  };
 }

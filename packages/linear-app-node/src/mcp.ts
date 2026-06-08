@@ -12,6 +12,7 @@ import { LinearAppNodeError } from "./errors";
 
 const DEFAULT_LINEAR_MCP_TIMEOUT_MS = 10_000;
 const DEFAULT_LINEAR_MCP_CLOSE_TIMEOUT_MS = 1000;
+const STREAMABLE_HTTP_ACCEPT_HEADER = "application/json, text/event-stream";
 
 export async function listLinearMcpTools(input: {
   accessToken: string;
@@ -32,6 +33,7 @@ export async function listLinearMcpTools(input: {
   const transport = new StreamableHTTPClientTransport(new URL(input.endpoint), {
     requestInit: {
       headers: {
+        accept: STREAMABLE_HTTP_ACCEPT_HEADER,
         authorization: `Bearer ${input.accessToken}`,
       },
     },
@@ -85,6 +87,7 @@ export async function callLinearMcpTool(input: {
   const transport = new StreamableHTTPClientTransport(new URL(input.endpoint), {
     requestInit: {
       headers: {
+        accept: STREAMABLE_HTTP_ACCEPT_HEADER,
         authorization: `Bearer ${input.accessToken}`,
       },
     },

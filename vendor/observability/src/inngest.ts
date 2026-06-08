@@ -1,6 +1,6 @@
 import "server-only";
 
-import * as Sentry from "@sentry/nextjs";
+import { captureException, flush } from "@sentry/core";
 import { Middleware, NonRetriableError } from "@vendor/inngest";
 
 import type { RequestContext } from "./context";
@@ -132,7 +132,7 @@ class LightfastInngestObservabilityMiddleware extends Middleware.BaseMiddleware 
           ? error.cause
           : error;
 
-      Sentry.captureException(reportedError, {
+      captureException(reportedError, {
         extra: {
           correlationId: runContext.correlationId,
           durationMs,
@@ -154,7 +154,7 @@ class LightfastInngestObservabilityMiddleware extends Middleware.BaseMiddleware 
       });
     }
 
-    await Sentry.flush(2000);
+    await flush(2000);
   }
 }
 

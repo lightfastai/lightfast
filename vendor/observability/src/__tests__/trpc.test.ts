@@ -9,6 +9,7 @@ const scopeSetContextMock = vi.fn();
 vi.mock("server-only", () => ({}));
 
 vi.mock("@sentry/core", () => ({
+  captureException: captureExceptionMock,
   getActiveSpan: () => ({
     spanContext: () => ({ traceId: "trace_1" }),
   }),
@@ -30,15 +31,11 @@ vi.mock("@sentry/core", () => ({
     }),
 }));
 
-vi.mock("@sentry/nextjs", () => ({
-  captureException: captureExceptionMock,
-}));
-
 vi.mock("@vendor/lib", () => ({
   nanoid: () => "request_1",
 }));
 
-vi.mock("./log/next", () => ({
+vi.mock("../log/next", () => ({
   log: {
     debug: vi.fn(),
     error: logErrorMock,
@@ -47,7 +44,7 @@ vi.mock("./log/next", () => ({
   },
 }));
 
-const { createObservabilityMiddleware } = await import("./trpc");
+const { createObservabilityMiddleware } = await import("../trpc");
 
 describe("createObservabilityMiddleware", () => {
   beforeEach(() => {

@@ -38,8 +38,10 @@ cd "$ROOT"
 
 # 2. The full set of Vercel-linked apps to hydrate, as "directory|name|projectIdVar".
 #    This is the ONE place to maintain when an app is added or removed — keep it in
-#    sync with `vercel pull`'s repo.json. mcp loads app's env too (see its with-env),
-#    so app is listed first.
+#    sync with `vercel pull`'s repo.json. apps/app-tanstack is a temporary migration
+#    workspace and intentionally reuses apps/app's env through its with-env script,
+#    because the final cutover keeps the existing lightfast-app Vercel project/env graph.
+#    mcp also loads app's env, so app is listed first.
 APPS="apps/app|lightfast-app|LIGHTFAST_VERCEL_PROJECT_ID_APP
 apps/www|lightfast-www|LIGHTFAST_VERCEL_PROJECT_ID_WWW
 apps/platform|lightfast-platform|LIGHTFAST_VERCEL_PROJECT_ID_PLATFORM

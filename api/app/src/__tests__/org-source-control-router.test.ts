@@ -133,6 +133,10 @@ function liveRepository(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function newLightfastRepositoryUrl(accountLogin = "acme") {
+  return `https://github.lightfast.localhost/organizations/${accountLogin}/repositories/new?name=.lightfast`;
+}
+
 const pendingIdentity: AuthIdentity = {
   type: "pending",
   userId: "user_test",
@@ -251,6 +255,7 @@ describe("org.settings.sourceControl.get", () => {
           id: "repo_lightfast",
           verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
         },
+        newLightfastRepositoryUrl: newLightfastRepositoryUrl(),
         provider: "github",
         providerLabel: "GitHub",
       },
@@ -324,6 +329,7 @@ describe("org.settings.sourceControl.listRepositories", () => {
           id: "repo_lightfast",
           verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
         },
+        newLightfastRepositoryUrl: newLightfastRepositoryUrl(),
         provider: "github",
         providerLabel: "GitHub",
       },
@@ -403,6 +409,7 @@ describe("org.settings.sourceControl.listRepositories", () => {
           id: "repo_lightfast",
           verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
         },
+        newLightfastRepositoryUrl: newLightfastRepositoryUrl(),
         provider: "github",
         providerLabel: "GitHub",
       },
@@ -454,6 +461,7 @@ describe("org.settings.sourceControl.listRepositories", () => {
           id: "repo_lightfast",
           verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
         },
+        newLightfastRepositoryUrl: newLightfastRepositoryUrl(),
         provider: "github",
         providerLabel: "GitHub",
       },
@@ -500,6 +508,7 @@ describe("org.settings.sourceControl.listRepositories", () => {
           id: "repo_lightfast",
           verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
         },
+        newLightfastRepositoryUrl: newLightfastRepositoryUrl(),
         provider: "github",
         providerLabel: "GitHub",
       },
@@ -544,6 +553,7 @@ describe("org.settings.sourceControl.listRepositories", () => {
           id: "repo_lightfast",
           verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
         },
+        newLightfastRepositoryUrl: newLightfastRepositoryUrl(),
         provider: "github",
         providerLabel: "GitHub",
       },
@@ -625,6 +635,7 @@ describe("org.settings.sourceControl.importRepository", () => {
           id: "repo_lightfast",
           verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
         },
+        newLightfastRepositoryUrl: newLightfastRepositoryUrl(),
         provider: "github",
         providerLabel: "GitHub",
       },

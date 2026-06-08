@@ -59,6 +59,8 @@ const baseConnection = {
   accountLogin: "acme-live",
   connectedAt: new Date("2026-05-29T01:02:03.000Z"),
   importedRepositoryCount: 1,
+  newLightfastRepositoryUrl:
+    "https://github.com/new?name=.lightfast&owner=acme-live",
   provider: "github" as const,
   providerLabel: "GitHub",
 };
@@ -170,7 +172,7 @@ describe("SourceControlConnectionCard", () => {
       <SourceControlConnectionCard
         connection={{
           ...baseConnection,
-          accountLogin: null,
+          accountLogin: "",
           lightfastRepository: verifiedRepository,
         }}
         orgSlug="acme"
