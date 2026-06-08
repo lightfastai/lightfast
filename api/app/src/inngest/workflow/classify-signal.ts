@@ -9,6 +9,7 @@ import { db } from "@db/app/client";
 import {
   buildSignalClassificationRequest,
   classifySignalInput,
+  classifySignalInputLocally,
   getSignalClassificationFailure,
 } from "@repo/ai/signal-classifier";
 import type {
@@ -119,6 +120,10 @@ function classifiedResult(
   };
 }
 
+function shouldUseLocalSignalClassification(): boolean {
+  return env.VERCEL_ENV === "development" && !process.env.AI_GATEWAY_API_KEY;
+}
+
 export const classifySignal = inngest.createFunction(
   {
     id: "classify-signal",
@@ -199,18 +204,24 @@ export const classifySignal = inngest.createFunction(
     const organizationIdentitySystemSection =
       formatOrgIdentitySystemSection(identityContext);
 
-    const classificationRequest = buildSignalClassificationRequest({
-      clerkOrgId,
-      deploymentEnvironment: env.VERCEL_ENV,
-      input: signal.input,
-      organizationIdentitySystemSection,
-      signalId,
-    });
-    const classification = await step.ai.wrap(
-      "classify signal",
-      (request) => classifySignalInput(request, { logger: log }),
-      classificationRequest
-    );
+    const classification = shouldUseLocalSignalClassification()
+      ? await step.run("classify signal locally", () =>
+          classifySignalInputLocally({
+            input: signal.input,
+            signalId,
+          })
+        )
+      : await step.ai.wrap(
+          "classify signal",
+          (request) => classifySignalInput(request, { logger: log }),
+          buildSignalClassificationRequest({
+            clerkOrgId,
+            deploymentEnvironment: env.VERCEL_ENV,
+            input: signal.input,
+            organizationIdentitySystemSection,
+            signalId,
+          })
+        );
 
     const persisted = await step.run("persist signal classification", () =>
       markSignalClassified(db, {

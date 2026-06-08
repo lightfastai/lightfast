@@ -55,6 +55,22 @@ async function getAuthed(path: string) {
   });
 }
 
+async function writeJsonAuthed(
+  method: "DELETE" | "POST" | "PUT",
+  path: string,
+  body: Record<string, unknown> = {}
+) {
+  const active = emulator ?? (await start());
+  return await fetch(`${active.url}${path}`, {
+    body: JSON.stringify(body),
+    headers: {
+      authorization: `Bearer ${X_EMULATOR_FIXTURES.accessToken}`,
+      "content-type": "application/json",
+    },
+    method,
+  });
+}
+
 afterEach(async () => {
   await emulator?.close();
   emulator = undefined;
@@ -172,7 +188,10 @@ describe("@repo/x-emulator", () => {
     expect(meRes.status).toBe(200);
     await expect(meRes.json()).resolves.toMatchObject({
       data: {
+        description: "Builds local emulators for signal enrichment.",
         id: X_EMULATOR_FIXTURES.userId,
+        location: "Melbourne, Australia",
+        url: "https://lightfast.ai",
         username: X_EMULATOR_FIXTURES.username,
       },
     });
@@ -188,32 +207,76 @@ describe("@repo/x-emulator", () => {
     const byUsernameRes = await getAuthed("/2/users/by/username/emulator");
     expect(byUsernameRes.status).toBe(200);
     await expect(byUsernameRes.json()).resolves.toMatchObject({
-      data: { id: "x_user_1", username: "emulator" },
+      data: {
+        description: "Builds local emulators for signal enrichment.",
+        id: "x_user_1",
+        location: "Melbourne, Australia",
+        url: "https://lightfast.ai",
+        username: "emulator",
+      },
     });
 
     const byUsernamesRes = await getAuthed(
-      "/2/users/by?usernames=emulator,agent"
+      "/2/users/by?usernames=emulator,agent,ava_ai"
     );
     expect(byUsernamesRes.status).toBe(200);
     await expect(byUsernamesRes.json()).resolves.toMatchObject({
       data: [
-        { id: "x_user_1", username: "emulator" },
-        { id: "x_user_2", username: "agent" },
+        {
+          description: "Builds local emulators for signal enrichment.",
+          id: "x_user_1",
+          location: "Melbourne, Australia",
+          url: "https://lightfast.ai",
+          username: "emulator",
+        },
+        {
+          description: "Runs agent workflow tests.",
+          id: "x_user_2",
+          location: "San Francisco, CA",
+          url: "https://agent.lightfast.ai",
+          username: "agent",
+        },
+        {
+          description: "Researches open-source identity systems.",
+          id: "x_user_3",
+          location: "New York, NY",
+          name: "Ava Chen",
+          url: "https://ava.example.test",
+          username: "ava_ai",
+        },
       ],
     });
 
     const byIdRes = await getAuthed("/2/users/x_user_1");
     expect(byIdRes.status).toBe(200);
     await expect(byIdRes.json()).resolves.toMatchObject({
-      data: { id: "x_user_1", username: "emulator" },
+      data: {
+        description: "Builds local emulators for signal enrichment.",
+        id: "x_user_1",
+        location: "Melbourne, Australia",
+        url: "https://lightfast.ai",
+        username: "emulator",
+      },
     });
 
     const byIdsRes = await getAuthed("/2/users?ids=x_user_1,x_user_2");
     expect(byIdsRes.status).toBe(200);
     await expect(byIdsRes.json()).resolves.toMatchObject({
       data: [
-        { id: "x_user_1", username: "emulator" },
-        { id: "x_user_2", username: "agent" },
+        {
+          description: "Builds local emulators for signal enrichment.",
+          id: "x_user_1",
+          location: "Melbourne, Australia",
+          url: "https://lightfast.ai",
+          username: "emulator",
+        },
+        {
+          description: "Runs agent workflow tests.",
+          id: "x_user_2",
+          location: "San Francisco, CA",
+          url: "https://agent.lightfast.ai",
+          username: "agent",
+        },
       ],
     });
   });
@@ -248,6 +311,157 @@ describe("@repo/x-emulator", () => {
     const active = await start();
     const res = await fetch(`${active.url}/2/tweets/tweet_1`);
     expect(res.status).toBe(401);
+  });
+
+  it("serves authenticated X social write endpoints", async () => {
+    const createPostRes = await writeJsonAuthed("POST", "/2/tweets", {
+      text: "ship it",
+    });
+    expect(createPostRes.status).toBe(200);
+    await expect(createPostRes.json()).resolves.toMatchObject({
+      data: { id: expect.stringMatching(/^tweet_/), text: "ship it" },
+    });
+
+    const deletePostRes = await writeJsonAuthed("DELETE", "/2/tweets/tweet_1");
+    expect(deletePostRes.status).toBe(200);
+    await expect(deletePostRes.json()).resolves.toMatchObject({
+      data: { deleted: true },
+    });
+
+    const likeRes = await writeJsonAuthed("POST", "/2/users/x_user_1/likes", {
+      tweet_id: "tweet_1",
+    });
+    expect(likeRes.status).toBe(200);
+    await expect(likeRes.json()).resolves.toMatchObject({
+      data: { liked: true },
+    });
+
+    const unlikeRes = await writeJsonAuthed(
+      "DELETE",
+      "/2/users/x_user_1/likes/tweet_1"
+    );
+    expect(unlikeRes.status).toBe(200);
+    await expect(unlikeRes.json()).resolves.toMatchObject({
+      data: { liked: false },
+    });
+
+    const followRes = await writeJsonAuthed(
+      "POST",
+      "/2/users/x_user_1/following",
+      { target_user_id: "x_user_2" }
+    );
+    expect(followRes.status).toBe(200);
+    await expect(followRes.json()).resolves.toMatchObject({
+      data: { following: true },
+    });
+
+    const listRes = await writeJsonAuthed("POST", "/2/lists", {
+      name: "Launch list",
+    });
+    expect(listRes.status).toBe(200);
+    await expect(listRes.json()).resolves.toMatchObject({
+      data: { id: expect.stringMatching(/^list_/), name: "Launch list" },
+    });
+
+    const dmRes = await writeJsonAuthed(
+      "POST",
+      "/2/dm_conversations/with/x_user_2/messages",
+      { text: "hello" }
+    );
+    expect(dmRes.status).toBe(200);
+    await expect(dmRes.json()).resolves.toMatchObject({
+      data: { dm_event_id: expect.stringMatching(/^dm_event_/) },
+    });
+
+    const noteRes = await writeJsonAuthed("POST", "/2/notes", {
+      text: "context",
+    });
+    expect(noteRes.status).toBe(200);
+    await expect(noteRes.json()).resolves.toMatchObject({
+      data: { id: expect.stringMatching(/^note_/) },
+    });
+  });
+
+  it("rejects missing bearer tokens on social write endpoints", async () => {
+    const active = await start();
+    const res = await fetch(`${active.url}/2/tweets`, {
+      body: JSON.stringify({ text: "ship it" }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("rejects invalid bearer tokens on social write endpoints", async () => {
+    const active = await start();
+    const res = await fetch(`${active.url}/2/tweets`, {
+      body: JSON.stringify({ text: "ship it" }),
+      headers: {
+        authorization: "Bearer invalid-token",
+        "content-type": "application/json",
+      },
+      method: "POST",
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("rejects expired bearer tokens on social write endpoints", async () => {
+    const active = await start();
+    await fetch(`${active.url}/failures`, {
+      body: JSON.stringify({ accessTokenExpired: true }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    });
+
+    const res = await writeJsonAuthed("POST", "/2/tweets", {
+      text: "ship it",
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("allocates tweet ids monotonically after deletes", async () => {
+    const deleted = await writeJsonAuthed("DELETE", "/2/tweets/tweet_1");
+    expect(deleted.status).toBe(200);
+
+    const created = await writeJsonAuthed("POST", "/2/tweets", {
+      text: "replacement",
+    });
+    expect(created.status).toBe(200);
+    await expect(created.json()).resolves.toMatchObject({
+      data: { id: "tweet_3" },
+    });
+  });
+
+  it("persists created lists so list ids remain stable", async () => {
+    const first = await writeJsonAuthed("POST", "/2/lists", {
+      name: "Launch list",
+    });
+    const second = await writeJsonAuthed("POST", "/2/lists", {
+      name: "Follow-up list",
+    });
+
+    expect(first.status).toBe(200);
+    await expect(first.json()).resolves.toMatchObject({
+      data: { id: "list_1", name: "Launch list" },
+    });
+    expect(second.status).toBe(200);
+    await expect(second.json()).resolves.toMatchObject({
+      data: { id: "list_2", name: "Follow-up list" },
+    });
+  });
+
+  it("supports the socialWrite failure switch", async () => {
+    const active = await start();
+    await fetch(`${active.url}/failures`, {
+      body: JSON.stringify({ socialWrite: true }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    });
+
+    const res = await writeJsonAuthed("POST", "/2/tweets", {
+      text: "blocked",
+    });
+    expect(res.status).toBe(500);
   });
 
   it("emits the app-hosted X MCP endpoint in its manifest", () => {

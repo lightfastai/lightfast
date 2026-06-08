@@ -1,4 +1,4 @@
-import { getSignalByPublicId } from "@db/app";
+import { getSignalByPublicId, replaceSignalEntityLinks } from "@db/app";
 import { db } from "@db/app/client";
 import {
   buildSignalEntityLinkingRequest,
@@ -25,9 +25,13 @@ function shouldIndexSignalEntities(signal: {
 
   return (
     signal.classification.schemaVersion === "signal.classification.v2" &&
-    signal.classification.routing.visibility.scope !== "needs_review" &&
-    signal.visibilityScope !== "needs_review"
+    signal.classification.routing.visibility.scope === "team" &&
+    signal.visibilityScope === "team"
   );
+}
+
+function shouldUseDeterministicOnlyEntityLinking(): boolean {
+  return env.VERCEL_ENV === "development" && !process.env.AI_GATEWAY_API_KEY;
 }
 
 export const indexSignalEntities = inngest.createFunction(
@@ -77,35 +81,56 @@ export const indexSignalEntities = inngest.createFunction(
       () => extractDeterministicSignalEntityLinks({ input: signal.input })
     );
 
-    const request = buildSignalEntityLinkingRequest({
-      classification: signal.classification,
-      clerkOrgId,
-      deploymentEnvironment: env.VERCEL_ENV,
-      deterministicCandidates,
-      input: signal.input,
-      signalId,
-    });
-
-    const aiResult = await step.ai.wrap(
-      "link signal entities",
-      (linkingRequest) =>
-        classifySignalEntityLinks(linkingRequest, { logger: log }),
-      request
-    );
+    const aiCandidates = shouldUseDeterministicOnlyEntityLinking()
+      ? []
+      : (
+          await step.ai.wrap(
+            "link signal entities",
+            (linkingRequest) =>
+              classifySignalEntityLinks(linkingRequest, { logger: log }),
+            buildSignalEntityLinkingRequest({
+              classification: signal.classification,
+              clerkOrgId,
+              deploymentEnvironment: env.VERCEL_ENV,
+              deterministicCandidates,
+              input: signal.input,
+              signalId,
+            })
+          )
+        ).candidates;
 
     const candidates = await step.run("merge entity link candidates", () =>
       mergeSignalEntityLinkCandidates({
-        aiCandidates: aiResult.candidates,
+        aiCandidates,
         deterministicCandidates,
         input: signal.input,
       })
     );
 
+    const persisted = await step.run("persist entity links", () =>
+      replaceSignalEntityLinks(db, {
+        candidates,
+        clerkOrgId,
+        signalId,
+      })
+    );
+
+    await step.sendEvent("queue signal entity enrichment", {
+      name: "app/signal.entity-enrichment.requested",
+      data: {
+        clerkOrgId,
+        reason: "signal_indexed" as const,
+        signalId,
+      },
+    });
+
     return {
       status: "indexed",
       deterministicCandidates: deterministicCandidates.length,
-      aiCandidates: aiResult.candidates.length,
+      aiCandidates: aiCandidates.length,
       candidates: candidates.length,
+      persistedLinks: persisted.links,
+      resolvedLinks: persisted.resolved,
     };
   }
 );

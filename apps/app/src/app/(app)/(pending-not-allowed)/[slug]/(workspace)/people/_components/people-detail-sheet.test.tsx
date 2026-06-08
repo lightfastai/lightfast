@@ -71,6 +71,26 @@ beforeEach(() => {
 });
 
 describe("PeopleDetailSheet", () => {
+  it("wires a dialog description for assistive technology", () => {
+    render(
+      <PeopleDetailSheet
+        initialPerson={personRow}
+        onOpenChange={vi.fn()}
+        publicId={personRow.publicId}
+        slug="acme"
+      />
+    );
+
+    const descriptionId = screen
+      .getByRole("dialog")
+      .getAttribute("aria-describedby");
+
+    expect(descriptionId).toBeTruthy();
+    expect(document.getElementById(descriptionId ?? "")).toHaveTextContent(
+      "Person details, identity, and related signals."
+    );
+  });
+
   it("shows an error toast when copying the person link fails", async () => {
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
@@ -137,5 +157,26 @@ describe("PeopleDetailSheet", () => {
     expect(screen.getByText("Role")).toBeInTheDocument();
     expect(screen.getByText("Admin")).toBeInTheDocument();
     expect(screen.getByText("Synced from Clerk")).toBeInTheDocument();
+  });
+
+  it("does not clear the person query when a linked signal navigation closes the sheet", () => {
+    const onOpenChange = vi.fn();
+
+    render(
+      <PeopleDetailSheet
+        initialPerson={{
+          ...personRow,
+          lastSeenSignalId: "signal_123e4567-e89b-12d3-a456-426614174000",
+        }}
+        onOpenChange={onOpenChange}
+        publicId={personRow.publicId}
+        slug="acme"
+      />
+    );
+
+    fireEvent.pointerDown(screen.getByRole("link", { name: /Open signal/i }));
+    fireEvent.click(screen.getByRole("button", { name: /close/i }));
+
+    expect(onOpenChange).not.toHaveBeenCalled();
   });
 });

@@ -38,7 +38,9 @@ describe("person source schemas", () => {
       "signal",
       "team_member",
       "mixed",
+      "entity_graph",
     ]);
+    expect(personSourceSchema.parse("entity_graph")).toBe("entity_graph");
   });
 
   it("accepts supported member statuses", () => {

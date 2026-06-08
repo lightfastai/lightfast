@@ -6,10 +6,34 @@ import {
   refreshXOAuthToken,
   revokeXOAuthToken,
   X_OAUTH_SCOPE,
+  X_OAUTH_SCOPES,
 } from "../oauth";
 
+const expectedScopes = [
+  "tweet.read",
+  "users.read",
+  "offline.access",
+  "tweet.write",
+  "tweet.moderate.write",
+  "follows.read",
+  "follows.write",
+  "mute.read",
+  "mute.write",
+  "like.read",
+  "like.write",
+  "list.read",
+  "list.write",
+  "block.read",
+  "block.write",
+  "bookmark.read",
+  "bookmark.write",
+  "dm.read",
+  "dm.write",
+  "media.write",
+];
+
 describe("buildXOAuthAuthorizeUrl", () => {
-  it("builds an OAuth2 PKCE authorize URL with read-only scopes", () => {
+  it("builds an OAuth2 PKCE authorize URL with social account scopes", () => {
     const url = new URL(
       buildXOAuthAuthorizeUrl({
         callbackUrl:
@@ -27,7 +51,8 @@ describe("buildXOAuthAuthorizeUrl", () => {
     expect(url.searchParams.get("redirect_uri")).toBe(
       "https://app.lightfast.localhost/api/connectors/x/callback"
     );
-    expect(url.searchParams.get("scope")).toBe(X_OAUTH_SCOPE);
+    expect(X_OAUTH_SCOPES).toEqual(expectedScopes);
+    expect(url.searchParams.get("scope")).toBe(expectedScopes.join(" "));
     expect(url.searchParams.get("state")).toBe("state_123");
     expect(url.searchParams.get("code_challenge")).toBe("challenge_123");
     expect(url.searchParams.get("code_challenge_method")).toBe("S256");
@@ -77,7 +102,7 @@ describe("exchangeXOAuthCode", () => {
       refreshToken: "x_refresh",
       refreshTokenExpiresIn: undefined,
       scope: X_OAUTH_SCOPE,
-      scopes: ["tweet.read", "users.read", "offline.access"],
+      scopes: expectedScopes,
       tokenType: "bearer",
     });
 
@@ -153,7 +178,7 @@ describe("refreshXOAuthToken", () => {
       refreshToken: "existing_refresh",
       refreshTokenExpiresIn: undefined,
       scope: X_OAUTH_SCOPE,
-      scopes: ["tweet.read", "users.read", "offline.access"],
+      scopes: expectedScopes,
       tokenType: "bearer",
     });
 

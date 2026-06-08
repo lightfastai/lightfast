@@ -105,10 +105,12 @@ describe("schema conventions", () => {
       "org-decision-views.ts",
       "org-developer-connections.ts",
       "org-developer-sandbox-runs.ts",
+      "org-entity-graph.ts",
       "org-identity-index.ts",
       "org-people-views.ts",
       "org-people.ts",
       "org-provider-routine-calls.ts",
+      "org-signal-entity-links.ts",
       "org-signal-views.ts",
       "org-signals.ts",
       "org-skill-index.ts",
@@ -117,6 +119,8 @@ describe("schema conventions", () => {
       "org-workspace-assistant.ts",
       "system-mcp-oauth.ts",
       "system-namespaces.ts",
+      "user-connector-tool-calls.ts",
+      "user-connectors.ts",
       "user-source-control.ts",
     ];
 

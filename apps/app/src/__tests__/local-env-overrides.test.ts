@@ -95,4 +95,33 @@ describe("local env overrides", () => {
       "../app/.env.overrides.local"
     );
   });
+
+  it("passes GitHub App server env through the app production build", () => {
+    const appTurbo = readJson<{
+      tasks: { build: { passThroughEnv: string[] } };
+    }>("apps/app/turbo.json");
+
+    expect(appTurbo.tasks.build.passThroughEnv).toEqual(
+      expect.arrayContaining([
+        "GITHUB_API_VERSION",
+        "GITHUB_APP_CLIENT_ID",
+        "GITHUB_APP_CLIENT_SECRET",
+        "GITHUB_APP_ENDPOINT_ORIGIN",
+        "GITHUB_APP_ID",
+        "GITHUB_APP_PRIVATE_KEY",
+        "GITHUB_APP_SLUG",
+        "GITHUB_APP_WEBHOOK_SECRET",
+      ])
+    );
+  });
+
+  it("passes X connector server env through the app production build", () => {
+    const appTurbo = readJson<{
+      tasks: { build: { passThroughEnv: string[] } };
+    }>("apps/app/turbo.json");
+
+    expect(appTurbo.tasks.build.passThroughEnv).toEqual(
+      expect.arrayContaining(["X_CLIENT_ID", "X_CLIENT_SECRET"])
+    );
+  });
 });

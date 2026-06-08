@@ -5,6 +5,7 @@ import type { AuthIdentity } from "../auth/identity";
 const listSignalsMock = vi.fn();
 const listWorkspaceSignalsMock = vi.fn();
 const getVisibleSignalByPublicIdMock = vi.fn();
+const listSignalEntityLinksForSignalMock = vi.fn();
 const createSignalForActorMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
@@ -12,6 +13,7 @@ vi.mock("@db/app", () => ({
   listSignals: listSignalsMock,
   listWorkspaceSignals: listWorkspaceSignalsMock,
   getVisibleSignalByPublicId: getVisibleSignalByPublicIdMock,
+  listSignalEntityLinksForSignal: listSignalEntityLinksForSignalMock,
 }));
 vi.mock("../signals/service", () => ({
   createSignalForActor: createSignalForActorMock,
@@ -125,6 +127,7 @@ beforeEach(() => {
   listSignalsMock.mockReset();
   listWorkspaceSignalsMock.mockReset();
   getVisibleSignalByPublicIdMock.mockReset();
+  listSignalEntityLinksForSignalMock.mockReset();
   createSignalForActorMock.mockReset();
   listSignalsMock.mockResolvedValue({
     items: [signalRow],
@@ -138,6 +141,7 @@ beforeEach(() => {
     windowDays: 30,
   });
   getVisibleSignalByPublicIdMock.mockResolvedValue(signalRow);
+  listSignalEntityLinksForSignalMock.mockResolvedValue([]);
   createSignalForActorMock.mockResolvedValue({
     id: "signal_123e4567-e89b-12d3-a456-426614174000",
     status: "queued",
@@ -379,7 +383,10 @@ describe("workspaceSignalsRouter.get", () => {
   it("returns the org-scoped signal for a matching publicId", async () => {
     await expect(
       caller().signals.get({ publicId: signalRow.publicId })
-    ).resolves.toEqual(signalRow);
+    ).resolves.toEqual({
+      ...signalRow,
+      entityLinks: [],
+    });
 
     expect(getVisibleSignalByPublicIdMock).toHaveBeenCalledWith(
       expect.anything(),
@@ -387,6 +394,13 @@ describe("workspaceSignalsRouter.get", () => {
         publicId: signalRow.publicId,
         clerkOrgId: "org_test",
         createdByUserId: "user_test",
+      }
+    );
+    expect(listSignalEntityLinksForSignalMock).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        clerkOrgId: "org_test",
+        signalId: signalRow.publicId,
       }
     );
   });

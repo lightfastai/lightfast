@@ -1,7 +1,11 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SignalDetailSheet } from "./signal-detail-sheet";
-import type { SignalListItem, SignalRow } from "./signals-model";
+import type {
+  SignalDetailRow,
+  SignalListItem,
+  SignalRow,
+} from "./signals-model";
 
 const useQueryMock = vi.fn();
 const getQueryOptionsMock = vi.fn((input: unknown, opts: unknown) => ({
@@ -100,6 +104,7 @@ describe("SignalDetailSheet", () => {
         initialItem={classifiedItem}
         onOpenChange={vi.fn()}
         publicId="signal_follow_up"
+        slug="acme"
       />
     );
 
@@ -124,6 +129,7 @@ describe("SignalDetailSheet", () => {
         initialItem={processingRow}
         onOpenChange={vi.fn()}
         publicId="signal_proc"
+        slug="acme"
       />
     );
 
@@ -146,6 +152,7 @@ describe("SignalDetailSheet", () => {
         initialItem={classifiedItem}
         onOpenChange={vi.fn()}
         publicId="signal_follow_up"
+        slug="acme"
       />
     );
 
@@ -155,5 +162,57 @@ describe("SignalDetailSheet", () => {
       expect(toastMocks.error).toHaveBeenCalledWith("Unable to copy link")
     );
     expect(toastMocks.success).not.toHaveBeenCalled();
+  });
+
+  it("does not clear the signal query when a linked person navigation closes the sheet", () => {
+    const onOpenChange = vi.fn();
+    useQueryMock.mockReturnValue({
+      data: {
+        ...classifiedItem,
+        classificationMetadata: null,
+        createdByMcpClientId: null,
+        createdByMcpGrantId: null,
+        entityLinks: [
+          {
+            anchorOccurrence: 1,
+            anchorText: "@jordi",
+            confidence: 0.8,
+            extractionMethod: "ai",
+            label: "Jordi",
+            localEntityKey: "person_1",
+            mentionKind: "handle",
+            rationale: "Jordi is explicitly mentioned.",
+            resolvedPerson: {
+              displayName: "Jordi",
+              id: "person_123e4567-e89b-12d3-a456-426614174000",
+              identityProvider: "x",
+              identityType: "handle",
+              identityValue: "jordi",
+            },
+            targetType: "person",
+          },
+        ],
+        errorCode: null,
+        errorMessage: null,
+        input: "Follow up with @jordi",
+        updatedAt: new Date("2026-05-27T01:01:00.000Z"),
+      } as SignalDetailRow,
+      isError: false,
+      isLoading: false,
+    });
+
+    render(
+      <SignalDetailSheet
+        initialItem={classifiedItem}
+        onOpenChange={onOpenChange}
+        publicId="signal_follow_up"
+        slug="acme"
+      />
+    );
+
+    fireEvent.pointerDown(screen.getByRole("link", { name: /Jordi handle/i }));
+    fireEvent.click(screen.getByRole("button", { name: /close/i }));
+
+    expect(onOpenChange).not.toHaveBeenCalled();
   });
 });

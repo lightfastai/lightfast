@@ -4,6 +4,7 @@ const X_FAILURE_NAMES = [
   "accessTokenExpired",
   "postsLookup",
   "refresh",
+  "socialWrite",
   "usersLookup",
   "usersMe",
 ] as const;

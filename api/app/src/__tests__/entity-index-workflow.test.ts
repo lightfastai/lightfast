@@ -2,6 +2,7 @@ import type { Database } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getSignalByPublicIdMock = vi.fn();
+const replaceSignalEntityLinksMock = vi.fn();
 const buildSignalEntityLinkingRequestMock = vi.fn();
 const classifySignalEntityLinksMock = vi.fn();
 const extractDeterministicSignalEntityLinksMock = vi.fn();
@@ -49,6 +50,7 @@ const createFunctionMock = vi.fn(
 
 vi.mock("@db/app", () => ({
   getSignalByPublicId: getSignalByPublicIdMock,
+  replaceSignalEntityLinks: replaceSignalEntityLinksMock,
 }));
 
 vi.mock("@db/app/client", () => ({ db }));
@@ -96,8 +98,8 @@ const classification = {
   confidence: 0.55,
   routing: {
     visibility: {
-      scope: "user",
-      rationale: "Creator-visible context.",
+      scope: "team",
+      rationale: "Shared team context.",
     },
     review: {
       required: false,
@@ -120,7 +122,7 @@ const signal = {
   input: "Talk to Jordi & Archer about their dev flow. See @archer.",
   status: "classified",
   classification,
-  visibilityScope: "user",
+  visibilityScope: "team",
 };
 const deterministicCandidate = {
   targetType: "person",
@@ -153,6 +155,10 @@ const { indexSignalEntities } = await import(
 function createStep() {
   return {
     run: vi.fn(<T>(_name: string, fn: () => T | Promise<T>) => fn()),
+    sendEvent: vi.fn(
+      (_name: string, event: { name: string; data: Record<string, unknown> }) =>
+        Promise.resolve(event)
+    ),
     ai: {
       wrap: vi.fn(
         <T>(
@@ -203,6 +209,7 @@ function runWorkflowFailure(error: Error) {
 
 beforeEach(() => {
   getSignalByPublicIdMock.mockReset();
+  replaceSignalEntityLinksMock.mockReset();
   extractDeterministicSignalEntityLinksMock.mockReset();
   buildSignalEntityLinkingRequestMock.mockReset();
   classifySignalEntityLinksMock.mockReset();
@@ -211,6 +218,7 @@ beforeEach(() => {
   logWarnMock.mockReset();
 
   getSignalByPublicIdMock.mockResolvedValue(signal);
+  replaceSignalEntityLinksMock.mockResolvedValue({ links: 2, resolved: 1 });
   extractDeterministicSignalEntityLinksMock.mockReturnValue([
     deterministicCandidate,
   ]);
@@ -236,6 +244,7 @@ beforeEach(() => {
     errorCode: "SIGNAL_ENTITY_LINKING_FAILED",
     errorMessage: error instanceof Error ? error.message : String(error),
   }));
+  process.env.AI_GATEWAY_API_KEY = "test-ai-gateway-key";
 });
 
 describe("indexSignalEntities", () => {
@@ -258,6 +267,22 @@ describe("indexSignalEntities", () => {
         signalId,
       })
     ).toThrow();
+    expect(appEvents["app/signal.entity-enrichment.requested"]).toEqual(
+      expect.objectContaining({
+        event: "app/signal.entity-enrichment.requested",
+      })
+    );
+    expect(
+      appEvents["app/signal.entity-enrichment.requested"].schema.parse({
+        clerkOrgId: "org_test",
+        reason: "signal_indexed",
+        signalId,
+      })
+    ).toEqual({
+      clerkOrgId: "org_test",
+      reason: "signal_indexed",
+      signalId,
+    });
     expect(createFunctionMock).toHaveBeenCalledWith(
       {
         id: "index-signal-entities",
@@ -273,13 +298,15 @@ describe("indexSignalEntities", () => {
     );
   });
 
-  it("extracts deterministic and AI candidates and merges without persistence", async () => {
+  it("extracts deterministic and AI candidates, merges, and persists links", async () => {
     const step = createStep();
 
     await expect(runWorkflow(step)).resolves.toEqual({
       aiCandidates: 1,
       candidates: 2,
       deterministicCandidates: 1,
+      persistedLinks: 2,
+      resolvedLinks: 1,
       status: "indexed",
     });
 
@@ -312,6 +339,71 @@ describe("indexSignalEntities", () => {
       deterministicCandidates: [deterministicCandidate],
       input: signal.input,
     });
+    expect(replaceSignalEntityLinksMock).toHaveBeenCalledWith(db, {
+      candidates: [deterministicCandidate, aiCandidate],
+      clerkOrgId: "org_test",
+      signalId,
+    });
+    expect(step.sendEvent).toHaveBeenCalledWith(
+      "queue signal entity enrichment",
+      {
+        name: "app/signal.entity-enrichment.requested",
+        data: {
+          clerkOrgId: "org_test",
+          reason: "signal_indexed",
+          signalId,
+        },
+      }
+    );
+  });
+
+  it("uses deterministic links only in development without AI Gateway credentials", async () => {
+    const step = createStep();
+    delete process.env.AI_GATEWAY_API_KEY;
+    mergeSignalEntityLinkCandidatesMock.mockReturnValueOnce([
+      deterministicCandidate,
+    ]);
+    replaceSignalEntityLinksMock.mockResolvedValueOnce({
+      links: 1,
+      resolved: 0,
+    });
+
+    await expect(runWorkflow(step)).resolves.toEqual({
+      aiCandidates: 0,
+      candidates: 1,
+      deterministicCandidates: 1,
+      persistedLinks: 1,
+      resolvedLinks: 0,
+      status: "indexed",
+    });
+
+    expect(extractDeterministicSignalEntityLinksMock).toHaveBeenCalledWith({
+      input: signal.input,
+    });
+    expect(buildSignalEntityLinkingRequestMock).not.toHaveBeenCalled();
+    expect(step.ai.wrap).not.toHaveBeenCalled();
+    expect(classifySignalEntityLinksMock).not.toHaveBeenCalled();
+    expect(mergeSignalEntityLinkCandidatesMock).toHaveBeenCalledWith({
+      aiCandidates: [],
+      deterministicCandidates: [deterministicCandidate],
+      input: signal.input,
+    });
+    expect(replaceSignalEntityLinksMock).toHaveBeenCalledWith(db, {
+      candidates: [deterministicCandidate],
+      clerkOrgId: "org_test",
+      signalId,
+    });
+    expect(step.sendEvent).toHaveBeenCalledWith(
+      "queue signal entity enrichment",
+      {
+        name: "app/signal.entity-enrichment.requested",
+        data: {
+          clerkOrgId: "org_test",
+          reason: "signal_indexed",
+          signalId,
+        },
+      }
+    );
   });
 
   it("returns missing when the source signal is gone", async () => {
@@ -322,6 +414,7 @@ describe("indexSignalEntities", () => {
 
     expect(step.ai.wrap).not.toHaveBeenCalled();
     expect(mergeSignalEntityLinkCandidatesMock).not.toHaveBeenCalled();
+    expect(replaceSignalEntityLinksMock).not.toHaveBeenCalled();
   });
 
   it("skips signals that are not classified", async () => {
@@ -336,7 +429,9 @@ describe("indexSignalEntities", () => {
 
     expect(extractDeterministicSignalEntityLinksMock).not.toHaveBeenCalled();
     expect(step.ai.wrap).not.toHaveBeenCalled();
+    expect(step.sendEvent).not.toHaveBeenCalled();
     expect(mergeSignalEntityLinkCandidatesMock).not.toHaveBeenCalled();
+    expect(replaceSignalEntityLinksMock).not.toHaveBeenCalled();
   });
 
   it("skips signals whose classification visibility needs review", async () => {
@@ -366,6 +461,47 @@ describe("indexSignalEntities", () => {
     expect(extractDeterministicSignalEntityLinksMock).not.toHaveBeenCalled();
     expect(step.ai.wrap).not.toHaveBeenCalled();
     expect(mergeSignalEntityLinkCandidatesMock).not.toHaveBeenCalled();
+    expect(replaceSignalEntityLinksMock).not.toHaveBeenCalled();
+  });
+
+  it("skips signals whose classification visibility is user-scoped", async () => {
+    const step = createStep();
+    getSignalByPublicIdMock.mockResolvedValueOnce({
+      ...signal,
+      classification: {
+        ...classification,
+        routing: {
+          ...classification.routing,
+          visibility: {
+            scope: "user",
+            rationale: "Creator-visible context.",
+          },
+        },
+      },
+      visibilityScope: "user",
+    });
+
+    await expect(runWorkflow(step)).resolves.toEqual({ status: "skipped" });
+
+    expect(extractDeterministicSignalEntityLinksMock).not.toHaveBeenCalled();
+    expect(step.ai.wrap).not.toHaveBeenCalled();
+    expect(mergeSignalEntityLinkCandidatesMock).not.toHaveBeenCalled();
+    expect(replaceSignalEntityLinksMock).not.toHaveBeenCalled();
+  });
+
+  it("skips signals whose persisted visibility is user-scoped", async () => {
+    const step = createStep();
+    getSignalByPublicIdMock.mockResolvedValueOnce({
+      ...signal,
+      visibilityScope: "user",
+    });
+
+    await expect(runWorkflow(step)).resolves.toEqual({ status: "skipped" });
+
+    expect(extractDeterministicSignalEntityLinksMock).not.toHaveBeenCalled();
+    expect(step.ai.wrap).not.toHaveBeenCalled();
+    expect(mergeSignalEntityLinkCandidatesMock).not.toHaveBeenCalled();
+    expect(replaceSignalEntityLinksMock).not.toHaveBeenCalled();
   });
 
   it("skips signals whose persisted visibility needs review", async () => {
@@ -380,6 +516,7 @@ describe("indexSignalEntities", () => {
     expect(extractDeterministicSignalEntityLinksMock).not.toHaveBeenCalled();
     expect(step.ai.wrap).not.toHaveBeenCalled();
     expect(mergeSignalEntityLinkCandidatesMock).not.toHaveBeenCalled();
+    expect(replaceSignalEntityLinksMock).not.toHaveBeenCalled();
   });
 
   it("lets AI failures bubble for Inngest retries", async () => {
@@ -391,6 +528,7 @@ describe("indexSignalEntities", () => {
     await expect(runWorkflow(step)).rejects.toThrow("model unavailable");
 
     expect(mergeSignalEntityLinkCandidatesMock).not.toHaveBeenCalled();
+    expect(replaceSignalEntityLinksMock).not.toHaveBeenCalled();
   });
 
   it("logs exhausted failures without mutating the signal", async () => {

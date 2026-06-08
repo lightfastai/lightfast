@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { executeXApiTool, X_TOOL_DEFINITIONS } from "../tools";
 
 describe("X_TOOL_DEFINITIONS", () => {
-  it("exposes the curated read-only v1 tool list", () => {
+  it("exposes the curated social account tool list", () => {
     expect(X_TOOL_DEFINITIONS.map((tool) => tool.name)).toEqual([
       "getUsersMe",
       "getUsersByUsername",
@@ -14,6 +14,50 @@ describe("X_TOOL_DEFINITIONS", () => {
       "getPostsByIds",
       "searchPostsRecent",
       "getPostsCountsRecent",
+      "createPost",
+      "deletePost",
+      "repostPost",
+      "unrepostPost",
+      "hideReply",
+      "likePost",
+      "unlikePost",
+      "createBookmark",
+      "deleteBookmark",
+      "followUser",
+      "unfollowUser",
+      "muteUser",
+      "unmuteUser",
+      "blockUser",
+      "unblockUser",
+      "blockDms",
+      "unblockDms",
+      "createList",
+      "updateList",
+      "deleteList",
+      "addListMember",
+      "removeListMember",
+      "followList",
+      "unfollowList",
+      "pinList",
+      "unpinList",
+      "createDmConversation",
+      "sendDmByParticipant",
+      "sendDmByConversation",
+      "deleteDmEvent",
+      "createChatConversation",
+      "initializeChatGroup",
+      "initializeChatConversationKeys",
+      "addChatGroupMembers",
+      "sendChatMessage",
+      "markChatConversationRead",
+      "sendChatTypingIndicator",
+      "addUserPublicKey",
+      "createMediaMetadata",
+      "createMediaSubtitles",
+      "deleteMediaSubtitles",
+      "createCommunityNote",
+      "deleteCommunityNote",
+      "evaluateCommunityNote",
     ]);
   });
 });
@@ -50,7 +94,7 @@ describe("executeXApiTool", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://api.x.test/2/users/by/username/lightfast",
+      "https://api.x.test/2/users/by/username/lightfast?user.fields=id%2Cname%2Cusername%2Cdescription%2Clocation%2Curl",
       expect.objectContaining({
         headers: expect.objectContaining({
           authorization: "Bearer x_access",
@@ -60,13 +104,117 @@ describe("executeXApiTool", () => {
     );
   });
 
-  it("rejects write-capable or unknown tool names", async () => {
+  it("requests rich user fields for every X user lookup tool", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async () =>
+      Response.json({
+        data: {
+          id: "x_user_123",
+          name: "Lightfast",
+          username: "lightfast",
+        },
+      })
+    );
+
+    const calls = [
+      { input: {}, name: "getUsersMe" },
+      { input: { username: "lightfast" }, name: "getUsersByUsername" },
+      {
+        input: { usernames: ["lightfast", "agent"] },
+        name: "getUsersByUsernames",
+      },
+      { input: { id: "x_user_123" }, name: "getUsersById" },
+      { input: { ids: ["x_user_123", "x_user_456"] }, name: "getUsersByIds" },
+    ];
+
+    for (const call of calls) {
+      await executeXApiTool({
+        accessToken: "x_access",
+        apiOrigin: "https://api.x.test",
+        fetch: fetchMock,
+        input: call.input,
+        name: call.name,
+      });
+    }
+
+    for (const [url] of fetchMock.mock.calls) {
+      expect(url).toContain(
+        "user.fields=id%2Cname%2Cusername%2Cdescription%2Clocation%2Curl"
+      );
+    }
+  });
+
+  it("executes JSON write operations with connected actor path injection", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async () =>
+      Response.json({ data: { liked: true } })
+    );
+
+    await expect(
+      executeXApiTool({
+        accessToken: "x_access",
+        apiOrigin: "https://api.x.test",
+        connectedActorId: "x_user_1",
+        fetch: fetchMock,
+        input: { tweet_id: "tweet_123" },
+        name: "likePost",
+      })
+    ).resolves.toEqual({
+      structuredContent: { data: { liked: true } },
+      content: [{ text: "X tool likePost completed.", type: "text" }],
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.x.test/2/users/x_user_1/likes",
+      expect.objectContaining({
+        body: JSON.stringify({ tweet_id: "tweet_123" }),
+        headers: expect.objectContaining({
+          "content-type": "application/json",
+          authorization: "Bearer x_access",
+        }),
+        method: "POST",
+      })
+    );
+  });
+
+  it("executes path-only delete operations without a request body", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async () =>
+      Response.json({ data: { deleted: true } })
+    );
+
+    await executeXApiTool({
+      accessToken: "x_access",
+      apiOrigin: "https://api.x.test",
+      fetch: fetchMock,
+      input: { id: "tweet_123" },
+      name: "deletePost",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.x.test/2/tweets/tweet_123",
+      expect.objectContaining({
+        body: undefined,
+        method: "DELETE",
+      })
+    );
+  });
+
+  it("requires connected actor id for source-user operations", async () => {
+    await expect(
+      executeXApiTool({
+        accessToken: "x_access",
+        apiOrigin: "https://api.x.test",
+        input: { tweet_id: "tweet_123" },
+        name: "likePost",
+      })
+    ).rejects.toMatchObject({ code: "X_TOOL_CALL_FAILED" });
+  });
+
+  it("rejects unknown tool names", async () => {
     await expect(
       executeXApiTool({
         accessToken: "x_access",
         apiOrigin: "https://api.x.test",
         input: {},
-        name: "createPost",
+        name: "unknownTool",
       })
     ).rejects.toMatchObject({ code: "X_TOOL_CALL_FAILED" });
   });

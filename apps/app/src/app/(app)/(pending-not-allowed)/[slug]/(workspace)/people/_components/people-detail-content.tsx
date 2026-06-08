@@ -15,7 +15,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { MouseEvent, PointerEvent, ReactNode } from "react";
 import { useTRPC } from "~/trpc/react";
 import {
   formatPersonSignalRef,
@@ -69,9 +69,11 @@ function BodySection({
 }
 
 function PersonSignalLink({
+  onNavigateAway,
   signalId,
   slug,
 }: {
+  onNavigateAway?: () => void;
   signalId: string;
   slug: string;
 }) {
@@ -90,6 +92,18 @@ function PersonSignalLink({
     <Link
       className="flex items-center gap-2 rounded-md border border-border/60 px-3 py-2 hover:bg-muted/30"
       href={`/${slug}/signals?signal=${signalId}`}
+      onClick={(event) => {
+        if (isModifiedNavigationEvent(event)) {
+          return;
+        }
+        onNavigateAway?.();
+      }}
+      onPointerDown={(event) => {
+        if (isModifiedNavigationEvent(event)) {
+          return;
+        }
+        onNavigateAway?.();
+      }}
     >
       <SignalIcon
         aria-hidden="true"
@@ -107,11 +121,13 @@ function PersonSignalLink({
 
 export function PeopleDetailContent({
   closeSlot,
+  onNavigateAway,
   onCopyLink,
   person,
   slug,
 }: {
   closeSlot?: ReactNode;
+  onNavigateAway?: () => void;
   onCopyLink: () => void;
   person: PersonRow;
   slug: string;
@@ -233,6 +249,7 @@ export function PeopleDetailContent({
                 {signalIds.map((signalId) => (
                   <PersonSignalLink
                     key={signalId}
+                    onNavigateAway={onNavigateAway}
                     signalId={signalId}
                     slug={slug}
                   />
@@ -264,5 +281,18 @@ export function PeopleDetailContent({
         </span>
       </div>
     </div>
+  );
+}
+
+function isModifiedNavigationEvent(
+  event: MouseEvent<HTMLAnchorElement> | PointerEvent<HTMLAnchorElement>
+) {
+  return (
+    event.defaultPrevented ||
+    event.button !== 0 ||
+    event.altKey ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.shiftKey
   );
 }

@@ -41,6 +41,14 @@
       "types": "./src/services/connectors/runtime.ts",
       "default": "./src/services/connectors/runtime.ts"
     },
+    "./services/user-connectors": {
+      "types": "./src/services/user-connectors/index.ts",
+      "default": "./src/services/user-connectors/index.ts"
+    },
+    "./services/user-connectors/runtime": {
+      "types": "./src/services/user-connectors/runtime.ts",
+      "default": "./src/services/user-connectors/runtime.ts"
+    },
     "./signals/service": {
       "types": "./src/signals/service.ts",
       "default": "./src/signals/service.ts"
@@ -81,8 +89,11 @@
     "@repo/app-validation": "workspace:^",
     "@repo/connector-contract": "workspace:*",
     "@repo/developer-connection-contract": "workspace:*",
+    "@repo/entity-graph-contract": "workspace:*",
+    "@repo/entity-resolution": "workspace:*",
     "@repo/github-app-contract": "workspace:*",
     "@repo/github-app-node": "workspace:*",
+    "@repo/granola-app-node": "workspace:*",
     "@repo/identity-contract": "workspace:*",
     "@repo/linear-app-node": "workspace:*",
     "@repo/native-auth-contract": "workspace:*",
@@ -91,6 +102,7 @@
     "@repo/sandbox-runtime": "workspace:*",
     "@repo/skills-contract": "workspace:*",
     "@repo/source-control-contract": "workspace:*",
+    "@repo/user-connector-contract": "workspace:*",
     "@repo/x-app-node": "workspace:*",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@trpc/server": "catalog:",

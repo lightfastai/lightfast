@@ -40,7 +40,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
+import { FeedbackDialog } from "~/components/feedback-dialog";
 import { TeamSwitcher, TeamSwitcherSkeleton } from "~/components/team-switcher";
 import { useTRPC } from "~/trpc/react";
 
@@ -257,128 +258,139 @@ function getConversationSidebarTitle(
 export function AppSidebar() {
   const pathname = usePathname();
   const { isMobile, setOpenMobile } = useSidebar();
+  const [isFeedbackOpen, setFeedbackOpen] = useState(false);
 
   const pathParts = pathname.split("/").filter(Boolean);
   const orgSlug = pathParts[0] ?? "";
 
   return (
-    <Sidebar collapsible="offcanvas">
-      <SidebarHeader className="h-14 flex-row items-center px-4 py-0">
-        <Suspense fallback={<TeamSwitcherSkeleton />}>
-          <TeamSwitcher />
-        </Suspense>
-        <div className="ml-auto flex items-center gap-1">
+    <>
+      <Sidebar collapsible="offcanvas">
+        <SidebarHeader className="h-14 flex-row items-center px-4 py-0">
+          <Suspense fallback={<TeamSwitcherSkeleton />}>
+            <TeamSwitcher />
+          </Suspense>
+          <div className="ml-auto flex items-center gap-1">
+            {orgSlug && (
+              <Button
+                aria-label="New chat"
+                asChild
+                className="size-11 rounded-full lg:h-6 lg:w-6"
+                size="sm"
+                title="New chat"
+                variant="ghost"
+              >
+                <Link
+                  href={{ pathname: `/${orgSlug}/chat` }}
+                  onClick={() => {
+                    if (isMobile) {
+                      setOpenMobile(false);
+                    }
+                  }}
+                  prefetch={false}
+                >
+                  <MessageCirclePlus className="size-3.5" />
+                </Link>
+              </Button>
+            )}
+            {isMobile && (
+              <Button
+                aria-label="Close sidebar"
+                className="size-11 rounded-xl text-muted-foreground"
+                onClick={() => setOpenMobile(false)}
+                size="icon"
+                type="button"
+                variant="ghost"
+              >
+                <X className="size-4" />
+              </Button>
+            )}
+          </div>
+        </SidebarHeader>
+        <SidebarContent>
           {orgSlug && (
-            <Button
-              aria-label="New chat"
-              asChild
-              className="size-11 rounded-full lg:h-6 lg:w-6"
-              size="sm"
-              title="New chat"
-              variant="ghost"
-            >
-              <Link
-                href={{ pathname: `/${orgSlug}/chat` }}
-                onClick={() => {
-                  if (isMobile) {
-                    setOpenMobile(false);
-                  }
-                }}
-                prefetch={false}
-              >
-                <MessageCirclePlus className="size-3.5" />
-              </Link>
-            </Button>
-          )}
-          {isMobile && (
-            <Button
-              aria-label="Close sidebar"
-              className="size-11 rounded-xl text-muted-foreground"
-              onClick={() => setOpenMobile(false)}
-              size="icon"
-              type="button"
-              variant="ghost"
-            >
-              <X className="size-4" />
-            </Button>
-          )}
-        </div>
-      </SidebarHeader>
-      <SidebarContent>
-        {orgSlug && (
-          <>
-            <SidebarGroup>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  <NavItems
-                    items={getOrgStandaloneItems(orgSlug)}
-                    pathname={pathname}
-                  />
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-            <SidebarGroup collapsible defaultOpen label="Workspace">
-              <SidebarGroupContent>
-                <nav aria-label="Workspace">
+            <>
+              <SidebarGroup>
+                <SidebarGroupContent>
                   <SidebarMenu>
                     <NavItems
-                      items={getOrgWorkspaceItems(orgSlug)}
+                      items={getOrgStandaloneItems(orgSlug)}
                       pathname={pathname}
                     />
                   </SidebarMenu>
-                </nav>
-              </SidebarGroupContent>
-            </SidebarGroup>
-            <SidebarGroup collapsible defaultOpen label="Manage">
-              <SidebarGroupContent>
-                <nav aria-label="Manage">
-                  <SidebarMenu>
-                    <NavItems
-                      items={getOrgManageItems(orgSlug)}
-                      pathname={pathname}
-                    />
-                  </SidebarMenu>
-                </nav>
-              </SidebarGroupContent>
-            </SidebarGroup>
-            <Suspense fallback={null}>
-              <ChatHistory orgSlug={orgSlug} pathname={pathname} />
-            </Suspense>
-          </>
-        )}
-      </SidebarContent>
-      <SidebarFooter>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              className="size-11 rounded-full bg-muted p-1 lg:h-8 lg:w-8"
-              size="icon"
-              title="Help"
-              variant="outline"
-            >
-              <HelpCircle className="size-3.5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="center" className="w-48">
-            <DropdownMenuItem asChild>
-              <a href="mailto:support@lightfast.ai">
-                <Mail className="size-3.5" />
-                Contact Support
-              </a>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link
-                href="https://lightfast.ai/docs/get-started/overview"
-                rel="noopener noreferrer"
-                target="_blank"
+                </SidebarGroupContent>
+              </SidebarGroup>
+              <SidebarGroup collapsible defaultOpen label="Workspace">
+                <SidebarGroupContent>
+                  <nav aria-label="Workspace">
+                    <SidebarMenu>
+                      <NavItems
+                        items={getOrgWorkspaceItems(orgSlug)}
+                        pathname={pathname}
+                      />
+                    </SidebarMenu>
+                  </nav>
+                </SidebarGroupContent>
+              </SidebarGroup>
+              <SidebarGroup collapsible defaultOpen label="Manage">
+                <SidebarGroupContent>
+                  <nav aria-label="Manage">
+                    <SidebarMenu>
+                      <NavItems
+                        items={getOrgManageItems(orgSlug)}
+                        pathname={pathname}
+                      />
+                    </SidebarMenu>
+                  </nav>
+                </SidebarGroupContent>
+              </SidebarGroup>
+              <Suspense fallback={null}>
+                <ChatHistory orgSlug={orgSlug} pathname={pathname} />
+              </Suspense>
+            </>
+          )}
+        </SidebarContent>
+        <SidebarFooter>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                className="size-11 rounded-full bg-muted p-1 lg:h-8 lg:w-8"
+                size="icon"
+                title="Help"
+                variant="outline"
               >
-                <BookOpen className="size-3.5" />
-                Help Docs
-              </Link>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarFooter>
-    </Sidebar>
+                <HelpCircle className="size-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" className="w-48">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => setFeedbackOpen(true)}
+              >
+                <MessageCircle className="size-3.5" />
+                Send feedback
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href="mailto:support@lightfast.ai">
+                  <Mail className="size-3.5" />
+                  Contact Support
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  href="https://lightfast.ai/docs/get-started/overview"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  <BookOpen className="size-3.5" />
+                  Help Docs
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarFooter>
+      </Sidebar>
+      <FeedbackDialog onOpenChange={setFeedbackOpen} open={isFeedbackOpen} />
+    </>
   );
 }

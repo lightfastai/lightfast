@@ -60,6 +60,7 @@ const GITHUB_BINDING_ROUTE_PATTERNS = [
 
 const PUBLIC_ROUTE_PATTERNS = [
   "/api/connectors/linear/oauth/callback",
+  "/api/connectors/granola/oauth/callback",
   "/.well-known/oauth-authorization-server",
   "/api/connectors/x/oauth/callback",
   "/api/oauth/(.*)",

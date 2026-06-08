@@ -12,7 +12,7 @@ export const getServerEnv = createServerOnlyFn(() =>
       NODE_ENV: z
         .enum(["development", "production", "test"])
         .default("development"),
-      SERVICE_JWT_SECRET: z.string().min(32),
+      SERVICE_JWT_SECRET: z.string().min(32).optional(),
     },
     runtimeEnv: {
       NODE_ENV: process.env.NODE_ENV,

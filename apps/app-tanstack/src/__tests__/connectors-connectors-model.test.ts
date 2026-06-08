@@ -39,8 +39,10 @@ function connected(
       lastToolRefreshAt: new Date("2026-06-01T00:00:00.000Z"),
       lastToolRefreshErrorAt: null,
       lastToolRefreshErrorCode: null,
+      missingScopes: [],
       providerActorName: "Lightfast App",
       providerWorkspaceName: "Acme Linear",
+      scopeStatus: "complete",
       status: "active",
       tools: [
         {

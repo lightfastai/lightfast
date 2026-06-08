@@ -54,7 +54,10 @@ export function SignalDetailSheet({
   const headerItem: SignalListItem | undefined = seededItem ?? query.data;
   // Body: the full row if seeded, else the fetched row.
   const detail: SignalDetailRow | undefined = hasBody
-    ? (seededItem as SignalRow)
+    ? ({
+        ...(seededItem as SignalRow),
+        entityLinks: [],
+      } as SignalDetailRow)
     : query.data;
   const bodyLoading = !detail && query.isLoading;
 

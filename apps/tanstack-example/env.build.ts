@@ -10,9 +10,7 @@ export const buildEnv = createEnv({
     VITE_LIGHTFAST_APP_URL: z.string().url(),
     VITE_TANSTACK_EXAMPLE_URL: z.string().url(),
   },
-  server: {
-    SERVICE_JWT_SECRET: z.string().min(32),
-  },
+  server: {},
   runtimeEnv: {
     VITE_LIGHTFAST_APP_URL:
       process.env.VITE_LIGHTFAST_APP_URL ??
@@ -22,7 +20,6 @@ export const buildEnv = createEnv({
       process.env.VITE_TANSTACK_EXAMPLE_URL ??
       process.env.PORTLESS_URL ??
       `http://${host || "localhost"}:${port ? String(port) : "5173"}`,
-    SERVICE_JWT_SECRET: process.env.SERVICE_JWT_SECRET,
   },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||

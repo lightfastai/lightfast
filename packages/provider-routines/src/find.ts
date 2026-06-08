@@ -10,7 +10,10 @@ import {
   providerRoutineFindInputSchema,
   providerRoutineId,
 } from "@repo/provider-routine-contract";
-import type { ProviderRoutineServiceContext } from "./context";
+import type {
+  ConnectorProviderRoutineTool,
+  ProviderRoutineServiceContext,
+} from "./context";
 import { classifyRoutine, hasRoutineScope } from "./policy";
 
 const DEFAULT_FIND_LIMIT = 10;
@@ -20,6 +23,29 @@ export async function findProviderRoutines(
   input: ProviderRoutineFindInput
 ): Promise<ProviderRoutineFindOutput> {
   const parsed = providerRoutineFindInputSchema.parse(input);
+  if (context.adapters?.connectors) {
+    const tools = await context.adapters.connectors.loadTools();
+    if (tools.length === 0) {
+      return { reason: "no_enabled_providers", routines: [] };
+    }
+
+    const routines = tools
+      .flatMap((tool) =>
+        summarizeConnectorTool({
+          includeSchema: parsed.includeSchema === true,
+          tool,
+        })
+      )
+      .filter((routine) => matchesFilters(routine, parsed, context))
+      .slice(0, parsed.limit ?? DEFAULT_FIND_LIMIT);
+
+    if (routines.length === 0) {
+      return { reason: "no_matching_routines", routines: [] };
+    }
+
+    return { routines };
+  }
+
   const connections = await listCurrentOrgConnectorConnections(context.db, {
     clerkOrgId: context.actor.orgId,
   });
@@ -33,8 +59,8 @@ export async function findProviderRoutines(
     .flatMap((connection) =>
       connection.toolManifest.flatMap((tool) =>
         summarizeTool({
-          connection,
           includeSchema: parsed.includeSchema === true,
+          provider: connection.provider,
           tool,
         })
       )
@@ -58,17 +84,17 @@ function isAgentEnabledConnection(connection: OrgConnectorConnection) {
 }
 
 function summarizeTool(input: {
-  connection: OrgConnectorConnection;
   includeSchema: boolean;
+  provider: import("@repo/connector-contract").ConnectableConnectorProvider;
   tool: FullConnectorToolManifestItem;
 }): ProviderRoutineSummary[] {
-  const routineId = safeRoutineId(input.connection.provider, input.tool.name);
+  const routineId = safeRoutineId(input.provider, input.tool.name);
   if (!routineId) {
     return [];
   }
 
   const classification = classifyRoutine({
-    provider: input.connection.provider,
+    provider: input.provider,
     providerToolName: input.tool.name,
   });
   return [
@@ -83,12 +109,31 @@ function summarizeTool(input: {
       ...(input.tool.inputSchema === undefined
         ? {}
         : { inputSummary: summarizeInputSchema(input.tool.inputSchema) }),
-      provider: input.connection.provider,
+      provider: input.provider,
       providerToolName: input.tool.name,
       routineId,
       title: titleFromToolName(input.tool.name),
     },
   ];
+}
+
+function summarizeConnectorTool(input: {
+  includeSchema: boolean;
+  tool: ConnectorProviderRoutineTool;
+}): ProviderRoutineSummary[] {
+  return summarizeTool({
+    includeSchema: input.includeSchema,
+    provider: input.tool.provider,
+    tool: {
+      ...(input.tool.description
+        ? { description: input.tool.description }
+        : {}),
+      ...(input.tool.inputSchema === undefined
+        ? {}
+        : { inputSchema: input.tool.inputSchema }),
+      name: input.tool.providerToolName,
+    },
+  });
 }
 
 function matchesFilters(
@@ -142,7 +187,8 @@ function safeRoutineId(
 
 function titleFromToolName(providerToolName: string) {
   return providerToolName
-    .split(/[_-]+/)
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .split(/[\s_-]+/)
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");

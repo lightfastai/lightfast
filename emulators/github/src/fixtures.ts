@@ -53,6 +53,21 @@ export function createGitHubEmulatorSeed(): GitHubSeedConfig {
         login: GITHUB_EMULATOR_FIXTURES.githubUserLogin,
         name: "Emulator Dev",
         email: GITHUB_EMULATOR_FIXTURES.githubUserEmail,
+        company: "Lightfast Labs",
+        blog: "https://lightfast.ai",
+        location: "Melbourne, Australia",
+        twitter_username: "lightfast_dev",
+        bio: "Builds local GitHub emulator fixtures for agent workflows.",
+      },
+      {
+        login: "avachen",
+        name: "Ava Chen",
+        email: "ava@example.test",
+        company: "Open Identity Lab",
+        blog: "https://ava.example.test",
+        location: "New York, NY",
+        twitter_username: "ava_ai",
+        bio: "Researches open-source identity systems.",
       },
     ],
     orgs: [
@@ -113,7 +128,14 @@ export function createGitHubEmulatorSeed(): GitHubSeedConfig {
           metadata: "read",
           pull_requests: "read",
         },
-        events: ["issues", "pull_request", "push"],
+        events: [
+          "issue_comment",
+          "pull_request",
+          "pull_request_review",
+          "pull_request_review_comment",
+          "pull_request_review_thread",
+          "push",
+        ],
         installations: [
           {
             installation_id: GITHUB_EMULATOR_FIXTURES.installationId,

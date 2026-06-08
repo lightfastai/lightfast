@@ -12,7 +12,7 @@ const getGreeting = createServerFn({ method: "GET" }).handler(async () => {
     publicAppUrl: clientEnv.VITE_LIGHTFAST_APP_URL,
     publicExampleUrl: clientEnv.VITE_TANSTACK_EXAMPLE_URL,
     serverRuntime: serverEnv.NODE_ENV,
-    serviceSecretAvailable: serverEnv.SERVICE_JWT_SECRET.length >= 32,
+    serviceSecretAvailable: (serverEnv.SERVICE_JWT_SECRET?.length ?? 0) >= 32,
   };
 });
 

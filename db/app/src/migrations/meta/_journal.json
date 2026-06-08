@@ -183,6 +183,34 @@
       "when": 1780742442925,
       "tag": "0025_shocking_smasher",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1780748986542,
+      "tag": "0026_luxuriant_wasp",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1780754411508,
+      "tag": "0027_slimy_dragon_lord",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "5",
+      "when": 1780800519505,
+      "tag": "0028_fair_wither",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "5",
+      "when": 1780822486187,
+      "tag": "0029_parched_maximus",
+      "breakpoints": true
     }
   ]
 }

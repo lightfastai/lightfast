@@ -3,13 +3,48 @@ import {
   automationIdSchema,
   automationRunIdSchema,
 } from "@repo/app-validation/schemas";
+import { entityObservationSchema } from "@repo/entity-resolution";
 import { sourceControlRepositoryPushEventSchema } from "@repo/source-control-contract";
 import { eventType } from "@vendor/inngest";
 import { z } from "zod";
 
+const entityGraphPersistedSummarySchema = z.object({
+  canonicalAccounts: z.number().int().nonnegative(),
+  canonicalAffiliations: z.number().int().nonnegative(),
+  canonicalPeople: z.number().int().nonnegative(),
+  candidateGroups: z.number().int().nonnegative(),
+  candidateVersionsAppended: z.number().int().nonnegative(),
+  candidateVersionsUnchanged: z.number().int().nonnegative(),
+  entityLinksResolved: z.number().int().nonnegative(),
+  observations: z.number().int().nonnegative(),
+  projectedPeople: z.number().int().nonnegative(),
+  skippedCanonicalCandidates: z.number().int().nonnegative(),
+  sourceIdentities: z.number().int().nonnegative(),
+});
+
+const signalEntityEnrichmentReasonSchema = z.enum([
+  "signal_indexed",
+  "manual_retry",
+  "backfill",
+]);
+
+const connectorProfileObservedSourceSchema = z
+  .object({
+    kind: z.literal("signal_entity_enrichment"),
+    reason: signalEntityEnrichmentReasonSchema,
+    signalId: signalIdSchema,
+  })
+  .strict();
+
 export const appTeamMembersReconcileRequestedEventSchema = z.object({
   cursor: z.number().int().positive().nullable().optional(),
   syncedAtIso: z.string().datetime().optional(),
+});
+
+export const appSignalEntityIndexBackfillRequestedEventSchema = z.object({
+  clerkOrgId: z.string().min(1),
+  confirm: z.literal("prod"),
+  cursor: z.number().int().positive().nullable().optional(),
 });
 
 export const appEvents = {
@@ -42,6 +77,25 @@ export const appEvents = {
       clerkOrgId: z.string().min(1),
     }),
   }),
+  "app/connector.profile.observed": eventType(
+    "app/connector.profile.observed",
+    {
+      schema: z.object({
+        clerkOrgId: z.string().min(1),
+        ingestionId: z.string().min(1),
+        observations: z.array(entityObservationSchema).min(1),
+        resolverVersion: z.string().min(1).optional(),
+        source: connectorProfileObservedSourceSchema.optional(),
+      }),
+    }
+  ),
+  "app/entity.graph.persisted": eventType("app/entity.graph.persisted", {
+    schema: entityGraphPersistedSummarySchema.extend({
+      clerkOrgId: z.string().min(1),
+      ingestionId: z.string().min(1),
+      resolverVersion: z.string().min(1),
+    }),
+  }),
   "app/signal.entity-index.requested": eventType(
     "app/signal.entity-index.requested",
     {
@@ -49,6 +103,22 @@ export const appEvents = {
         signalId: signalIdSchema,
         clerkOrgId: z.string().min(1),
       }),
+    }
+  ),
+  "app/signal.entity-enrichment.requested": eventType(
+    "app/signal.entity-enrichment.requested",
+    {
+      schema: z.object({
+        clerkOrgId: z.string().min(1),
+        reason: signalEntityEnrichmentReasonSchema,
+        signalId: signalIdSchema,
+      }),
+    }
+  ),
+  "app/signal.entity-index.backfill.requested": eventType(
+    "app/signal.entity-index.backfill.requested",
+    {
+      schema: appSignalEntityIndexBackfillRequestedEventSchema,
     }
   ),
   "app/github.repository.push.received": eventType(

@@ -11,7 +11,7 @@ const TOKEN_PREFIX = "lfmcp_v1";
 const DEFAULT_TTL_SECONDS = 5 * 60;
 const ISSUER = "lightfast-connectors";
 
-export type ConnectorMcpTokenPurpose = "call" | "list";
+export type ConnectorMcpTokenPurpose = "call" | "discover" | "list";
 
 export interface ConnectorMcpTokenClaims {
   aud: `connector-mcp:${ConnectableConnectorProvider}`;
@@ -42,7 +42,7 @@ const claimsSchema = z.object({
   iss: z.literal(ISSUER),
   nonce: z.string().min(16),
   provider: z.enum(CONNECTABLE_CONNECTOR_PROVIDERS),
-  purpose: z.enum(["call", "list"]),
+  purpose: z.enum(["call", "discover", "list"]),
   toolName: z.string().min(1).optional(),
 });
 

@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildSignalClassificationRequest,
   classifySignalInput,
+  classifySignalInputLocally,
   getSignalClassificationFailure,
   SIGNAL_CLASSIFICATION_FAILED_ERROR_CODE,
   SIGNAL_CLASSIFICATION_INVALID_OUTPUT_ERROR_CODE,
@@ -137,6 +138,73 @@ describe("classifySignalInput", () => {
     );
     expect(request.prompt).toContain("Run the test plan");
     expect(request).not.toHaveProperty("organizationIdentitySystemSection");
+  });
+
+  it("builds a deterministic local team classification for explicit person identities", () => {
+    expect(
+      classifySignalInputLocally({
+        input:
+          "Met Ava Chen today. Follow up with @ava_ai and review https://github.com/avachen.",
+        signalId,
+      })
+    ).toEqual(
+      expect.objectContaining({
+        schemaVersion: "signal.classification.v2",
+        disposition: "actionable",
+        kind: "follow_up",
+        priority: "normal",
+        routing: {
+          visibility: {
+            scope: "team",
+            rationale:
+              "Local development classifier found explicit person identity handles or profile URLs.",
+          },
+          review: {
+            required: false,
+            reason: null,
+            rationale: null,
+          },
+          routes: {
+            people: {
+              shouldRun: true,
+              confidence: 0.8,
+              rationale:
+                "Local development classifier found deterministic person identity candidates.",
+            },
+          },
+        },
+      })
+    );
+  });
+
+  it("keeps deterministic local classifications user-visible without explicit identities", () => {
+    expect(
+      classifySignalInputLocally({
+        input: "Remember to update the onboarding notes.",
+        signalId,
+      })
+    ).toEqual(
+      expect.objectContaining({
+        schemaVersion: "signal.classification.v2",
+        disposition: "actionable",
+        kind: "remember",
+        routing: expect.objectContaining({
+          visibility: {
+            scope: "user",
+            rationale:
+              "Local development classifier did not find explicit durable person identities.",
+          },
+          routes: {
+            people: {
+              shouldRun: false,
+              confidence: 0,
+              rationale:
+                "Local development classifier only routes explicit durable person identities.",
+            },
+          },
+        }),
+      })
+    );
   });
 
   it("uses AI SDK structured output with metadata-only telemetry", async () => {

@@ -1,11 +1,14 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ConnectorDetailContent } from "./connector-detail-content";
-import type { ConnectorCatalogRow } from "./connectors-model";
+import type {
+  ConnectorCatalogRow,
+  TeamConnectorCatalogRow,
+} from "./connectors-model";
 
 function connectedRow(
-  overrides: Partial<NonNullable<ConnectorCatalogRow["connection"]>> = {}
-): ConnectorCatalogRow {
+  overrides: Partial<NonNullable<TeamConnectorCatalogRow["connection"]>> = {}
+): TeamConnectorCatalogRow {
   return {
     availableForAutomations: true,
     builder: "Lightfast",
@@ -20,8 +23,10 @@ function connectedRow(
       lastToolRefreshAt: new Date("2026-06-01T00:00:00.000Z"),
       lastToolRefreshErrorAt: null,
       lastToolRefreshErrorCode: null,
+      missingScopes: [],
       providerActorName: "Lightfast App",
       providerWorkspaceName: "Acme Linear",
+      scopeStatus: "complete",
       status: "active",
       tools: [
         {
@@ -42,7 +47,38 @@ function connectedRow(
     description: "Find, create, and manage issues, projects in Linear.",
     displayName: "Linear",
     provider: "linear",
-  } as ConnectorCatalogRow;
+  } as TeamConnectorCatalogRow;
+}
+
+function connectedUserRow(): ConnectorCatalogRow {
+  return {
+    builder: "Granola",
+    canManage: true,
+    catalogStatus: "available",
+    category: "Meeting notes",
+    connectAvailability: { status: "available" },
+    connection: {
+      availableForInteractiveChats: true,
+      connectedAt: new Date("2026-06-01T00:00:00.000Z"),
+      lastToolRefreshAt: new Date("2026-06-01T00:00:00.000Z"),
+      lastToolRefreshErrorAt: null,
+      lastToolRefreshErrorCode: null,
+      providerAccountName: "jeevan@example.com",
+      status: "active",
+      tools: [
+        {
+          availableForInteractiveChats: true,
+          description: "Search private meeting notes",
+          name: "search_notes",
+        },
+      ],
+    },
+    description:
+      "Search and reference your private Granola meeting notes in Lightfast chats.",
+    displayName: "Granola",
+    ownerType: "user",
+    provider: "granola",
+  } as unknown as ConnectorCatalogRow;
 }
 
 describe("ConnectorDetailContent", () => {
@@ -117,6 +153,44 @@ describe("ConnectorDetailContent", () => {
 
     expect(screen.getAllByText("Tools stale").length).toBeGreaterThan(0);
     expect(screen.getByText("linear_unavailable")).toBeInTheDocument();
+  });
+
+  it("shows an X reconnect warning when requested scopes are missing", () => {
+    render(
+      <ConnectorDetailContent
+        onCopyLink={vi.fn()}
+        row={{
+          ...connectedRow({
+            missingScopes: ["tweet.write", "dm.write"],
+            scopeStatus: "missing_requested_scopes",
+          }),
+          displayName: "X",
+          provider: "x",
+        }}
+      />
+    );
+
+    expect(screen.getByText(/Reconnect X/i)).toBeInTheDocument();
+    expect(screen.getByText(/tweet.write, dm.write/i)).toBeInTheDocument();
+  });
+
+  it("renders private user connector details without team controls", () => {
+    render(
+      <ConnectorDetailContent onCopyLink={vi.fn()} row={connectedUserRow()} />
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Granola" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Only you")).toBeInTheDocument();
+    expect(
+      screen.getByText("Available in your chats. Not visible to teammates.")
+    ).toBeInTheDocument();
+    expect(screen.getByText("jeevan@example.com")).toBeInTheDocument();
+    expect(screen.getByText("search_notes")).toBeInTheDocument();
+    expect(screen.queryByText("Workspace")).not.toBeInTheDocument();
+    expect(screen.queryByText("Automations")).not.toBeInTheDocument();
+    expect(screen.queryByText("Agents")).not.toBeInTheDocument();
   });
 
   it("invokes onCopyLink when the copy-link button is clicked", () => {

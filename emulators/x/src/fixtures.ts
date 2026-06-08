@@ -10,18 +10,33 @@ export const X_EMULATOR_FIXTURES = {
 
 export const X_EMULATOR_OAUTH_CODE = "x_oauth_code_emulator_local";
 
-export const X_EMULATOR_SCOPE = "tweet.read users.read offline.access";
+export const X_EMULATOR_SCOPE =
+  "tweet.read users.read offline.access tweet.write tweet.moderate.write follows.read follows.write mute.read mute.write like.read like.write list.read list.write block.read block.write bookmark.read bookmark.write dm.read dm.write media.write";
 
 export const X_EMULATOR_USERS = [
   {
+    description: "Builds local emulators for signal enrichment.",
     id: "x_user_1",
+    location: "Melbourne, Australia",
     name: "Emulator User",
+    url: "https://lightfast.ai",
     username: "emulator",
   },
   {
+    description: "Runs agent workflow tests.",
     id: "x_user_2",
+    location: "San Francisco, CA",
     name: "Agent",
+    url: "https://agent.lightfast.ai",
     username: "agent",
+  },
+  {
+    description: "Researches open-source identity systems.",
+    id: "x_user_3",
+    location: "New York, NY",
+    name: "Ava Chen",
+    url: "https://ava.example.test",
+    username: "ava_ai",
   },
 ] as const;
 

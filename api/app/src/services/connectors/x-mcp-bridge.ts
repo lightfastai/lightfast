@@ -8,7 +8,7 @@ import { db as appDb } from "@db/app/client";
 import { decrypt, encrypt } from "@repo/app-encryption";
 import {
   executeXApiTool,
-  getXToolDefinitions,
+  getXToolDefinitionsForScopes,
   refreshXOAuthToken,
   XAppNodeError,
 } from "@repo/x-app-node";
@@ -95,12 +95,29 @@ function registerXTools(
     connection: OrgConnectorConnection | null;
   }
 ) {
-  for (const definition of getXToolDefinitions()) {
+  const connection = input.connection;
+  const definitions = connection
+    ? getXToolDefinitionsForScopes(connection.scopes).filter((definition) =>
+        shouldRegisterTool({
+          claims: input.claims,
+          connection,
+          toolName: definition.name,
+        })
+      )
+    : [];
+
+  for (const definition of definitions) {
     const handleToolCall = async (args: XToolArgs) => {
       if (!input.connection) {
         throw new XAppNodeError(
           "X_TOKEN_REFRESH_FAILED",
           "X connector connection is not available."
+        );
+      }
+      if (!hasManifestTool(input.connection, definition.name)) {
+        throw new XAppNodeError(
+          "X_TOOL_CALL_FAILED",
+          "X connector tool is not available on the current connection."
         );
       }
 
@@ -115,6 +132,7 @@ function registerXTools(
         const result = await executeXApiTool({
           accessToken,
           apiOrigin: config.endpoints.apiOrigin,
+          connectedActorId: input.connection.providerActorId,
           input: args,
           name: definition.name,
         });
@@ -142,6 +160,21 @@ function registerXTools(
       handleToolCall as never
     );
   }
+}
+
+function hasManifestTool(connection: OrgConnectorConnection, toolName: string) {
+  return connection.toolManifest.some((tool) => tool.name === toolName);
+}
+
+function shouldRegisterTool(input: {
+  claims: ConnectorMcpTokenClaims;
+  connection: OrgConnectorConnection;
+  toolName: string;
+}) {
+  if (input.claims.purpose === "discover") {
+    return true;
+  }
+  return hasManifestTool(input.connection, input.toolName);
 }
 
 async function getFreshXBridgeAccessToken(input: {
@@ -220,14 +253,23 @@ async function getFreshXBridgeAccessToken(input: {
   return refreshed.accessToken;
 }
 
+export async function getFreshXConnectorAccessToken(input: {
+  config: ReturnType<typeof requireXConnectorConfig>;
+  connection: OrgConnectorConnection;
+}): Promise<string> {
+  return await getFreshXBridgeAccessToken(input);
+}
+
 async function verifyXBridgeToken(input: {
   requestKind: XBridgeRequestKind;
   token: string;
 }): Promise<ConnectorMcpTokenClaims | null> {
   const purposes: ConnectorMcpTokenPurpose[] =
     input.requestKind.purpose === null
-      ? ["list", "call"]
-      : [input.requestKind.purpose];
+      ? ["list", "discover", "call"]
+      : input.requestKind.purpose === "list"
+        ? ["list", "discover"]
+        : ["call"];
 
   for (const purpose of purposes) {
     try {

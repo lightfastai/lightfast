@@ -34,6 +34,7 @@ function dependencies(): ExecuteHostedMcpToolDependencies {
     db,
     findProviderRoutines: vi.fn(),
     getVisibleSignalByPublicId: vi.fn(),
+    listSignalEntityLinksForSignal: vi.fn().mockResolvedValue([]),
     now: vi
       .fn()
       .mockReturnValueOnce(new Date("2026-06-01T00:00:00.000Z"))

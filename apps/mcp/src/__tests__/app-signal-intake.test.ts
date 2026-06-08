@@ -154,6 +154,7 @@ describe("app signal intake adapter", () => {
       Response.json({
         classification: null,
         createdAt: "2026-06-01T00:00:00.000Z",
+        entityLinks: [],
         id: "signal_123e4567-e89b-12d3-a456-426614174000",
         input: "Signal from MCP",
         status: "queued",
@@ -181,6 +182,7 @@ describe("app signal intake adapter", () => {
     ).resolves.toEqual({
       classification: null,
       createdAt: "2026-06-01T00:00:00.000Z",
+      entityLinks: [],
       id: "signal_123e4567-e89b-12d3-a456-426614174000",
       input: "Signal from MCP",
       status: "queued",
