@@ -421,8 +421,11 @@ describe("app-tanstack authenticated route migration", () => {
 
     expect(connectorsRouteSource).toContain("validateConnectorsSearch");
     expect(connectorsRouteSource).toContain("setSearchParams");
-    expect(connectorsClientSource).toContain("connectors.list.queryOptions");
+    expect(connectorsClientSource).toContain(
+      "connectors.listSections.queryOptions"
+    );
     expect(connectorsClientSource).toContain("startConnect.mutationOptions");
+    expect(connectorsClientSource).toContain("userConnectors.startConnect");
     expect(connectorsClientSource).toContain("window.location.assign");
     expect(connectorsClientSource).toContain("ConnectorDetailSheet");
     expect(connectorsClientSource).toContain(

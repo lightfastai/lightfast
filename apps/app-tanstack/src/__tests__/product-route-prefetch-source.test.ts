@@ -40,6 +40,7 @@ describe("app-tanstack product route data prefetch", () => {
       "skills.list.queryOptions",
       "viewer.organization.getBySlug.queryOptions",
       "sourceControl.get.queryOptions",
+      "connectors.listSections.queryOptions",
       "connectors.list.queryOptions",
       "mcpConnections.list.queryOptions",
       "developerConnections.list.queryOptions",

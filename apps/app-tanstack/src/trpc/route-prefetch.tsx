@@ -166,7 +166,7 @@ export const loadRoutePrefetch = createServerFn({ method: "GET" })
         break;
       case "connectors":
         await queryClient.fetchQuery(
-          trpc.org.workspace.connectors.list.queryOptions()
+          trpc.org.workspace.connectors.listSections.queryOptions()
         );
         break;
       case "decisions":

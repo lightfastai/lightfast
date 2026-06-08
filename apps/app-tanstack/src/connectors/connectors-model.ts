@@ -1,19 +1,37 @@
 import type { AppRouterOutputs } from "@api/app";
 
 export type ConnectorCatalogRow =
-  AppRouterOutputs["org"]["workspace"]["connectors"]["list"][number];
+  | TeamConnectorCatalogRow
+  | UserConnectorCatalogRow;
+export type ConnectorSections =
+  AppRouterOutputs["org"]["workspace"]["connectors"]["listSections"];
+export type TeamConnectorCatalogRow =
+  ConnectorSections["teamConnectors"][number];
+export type UserConnectorCatalogRow =
+  ConnectorSections["yourConnectors"][number];
 export type ConnectorProvider = ConnectorCatalogRow["provider"];
+export type TeamConnectorConnection = NonNullable<
+  TeamConnectorCatalogRow["connection"]
+>;
+export type UserConnectorConnection = NonNullable<
+  UserConnectorCatalogRow["connection"]
+>;
 export type ConnectorConnection = NonNullable<
   ConnectorCatalogRow["connection"]
 >;
-export type ConnectorTool = ConnectorConnection["tools"][number];
+export type ConnectorTool =
+  | TeamConnectorConnection["tools"][number]
+  | UserConnectorConnection["tools"][number];
 export type ConnectorStatusFilter =
   | "all"
   | "available"
   | "connected"
   | "needs_reconnect";
 
-const CONNECTABLE_PROVIDERS = new Set<ConnectorProvider>(["linear", "x"]);
+const CONNECTABLE_PROVIDERS = new Set<TeamConnectorCatalogRow["provider"]>([
+  "linear",
+  "x",
+]);
 
 export function displayProviderName(provider: string | undefined) {
   if (!provider) {
@@ -22,7 +40,25 @@ export function displayProviderName(provider: string | undefined) {
   return provider.charAt(0).toUpperCase() + provider.slice(1);
 }
 
-export function connectionStatus(connection: ConnectorConnection): {
+export function isUserConnectorRow(
+  row: ConnectorCatalogRow
+): row is UserConnectorCatalogRow {
+  return "ownerType" in row && row.ownerType === "user";
+}
+
+export function isTeamConnectorRow(
+  row: ConnectorCatalogRow
+): row is TeamConnectorCatalogRow {
+  return !isUserConnectorRow(row);
+}
+
+export function isUserConnectorConnection(
+  connection: ConnectorConnection
+): connection is UserConnectorConnection {
+  return "providerAccountName" in connection;
+}
+
+export function connectionStatus(connection: TeamConnectorConnection): {
   dotClass: string;
   label: string;
 } {
@@ -35,8 +71,25 @@ export function connectionStatus(connection: ConnectorConnection): {
   return { dotClass: "bg-emerald-500", label: "Connected" };
 }
 
-export function isConnectableProvider(provider: ConnectorProvider) {
-  return CONNECTABLE_PROVIDERS.has(provider);
+export function userConnectionStatus(connection: UserConnectorConnection): {
+  dotClass: string;
+  label: string;
+} {
+  if (connection.status === "error") {
+    return { dotClass: "bg-destructive", label: "Needs reconnect" };
+  }
+  if (connection.lastToolRefreshErrorAt) {
+    return { dotClass: "bg-amber-500", label: "Tools stale" };
+  }
+  return { dotClass: "bg-emerald-500", label: "Connected" };
+}
+
+export function isConnectableProvider(
+  provider: ConnectorProvider
+): provider is TeamConnectorCatalogRow["provider"] {
+  return CONNECTABLE_PROVIDERS.has(
+    provider as TeamConnectorCatalogRow["provider"]
+  );
 }
 
 export function filterMatches(
@@ -55,8 +108,10 @@ export function filterMatches(
   }
 }
 
-export function filterConnectorCatalogRows(
-  rows: readonly ConnectorCatalogRow[],
+export function filterConnectorCatalogRows<
+  TConnector extends ConnectorCatalogRow,
+>(
+  rows: readonly TConnector[],
   {
     query,
     statusFilter,
@@ -64,7 +119,7 @@ export function filterConnectorCatalogRows(
     query: string;
     statusFilter: ConnectorStatusFilter;
   }
-) {
+): TConnector[] {
   const normalizedQuery = query.trim().toLowerCase();
 
   return rows.filter((row) => {
@@ -80,7 +135,12 @@ export function filterConnectorCatalogRows(
 }
 
 export function isMutationDisabled(row: ConnectorCatalogRow, pending: boolean) {
-  return pending || !row.canManage || !isConnectableProvider(row.provider);
+  return (
+    pending ||
+    !isTeamConnectorRow(row) ||
+    !row.canManage ||
+    !isConnectableProvider(row.provider)
+  );
 }
 
 export function isConnectDisabled(row: ConnectorCatalogRow, pending: boolean) {
