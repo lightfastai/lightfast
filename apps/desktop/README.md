@@ -64,12 +64,14 @@ All commands below run from the repo root:
 
 - After `pnpm install` you have a Node-ABI prebuilt —
   `pnpm -F @lightfast/desktop test` works.
-- `pnpm -F @lightfast/desktop dev` (electron-forge start) rebuilds in-tree to
-  Electron's ABI — `pnpm -F @lightfast/desktop test` will then fail with
-  `NODE_MODULE_VERSION` mismatch.
-- Run `pnpm -F @lightfast/desktop rebuild:sqlite:node` to flip back to Node ABI
-  before testing, `pnpm -F @lightfast/desktop rebuild:sqlite` to flip back to
-  Electron ABI before dev/package.
+- `pnpm -F @lightfast/desktop dev` runs `predev`, which rebuilds in-tree to
+  Electron's ABI before Electron opens the database.
+- `pnpm -F @lightfast/desktop test` runs `pretest`, which flips back to the
+  host Node ABI before Vitest imports `better-sqlite3`.
+- For focused one-off commands that bypass package lifecycle scripts, run
+  `pnpm -F @lightfast/desktop rebuild:sqlite:node` before Node/Vitest commands,
+  or `pnpm -F @lightfast/desktop rebuild:sqlite` before Electron dev/package
+  commands.
 
 CI runs `pnpm test` before `pnpm package`, so the ordering is already correct
 in `desktop-ci.yml`.
