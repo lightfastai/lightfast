@@ -15,7 +15,5 @@ process.env.UNKEY_API_ID ||= "api_test";
 process.env.UNKEY_ROOT_KEY ||= "unkey_test";
 process.env.VITE_LIGHTFAST_APP_URL ||=
   "https://app-tanstack.lightfast.localhost";
-process.env.VITE_LIGHTFAST_PLATFORM_URL ||=
-  "https://platform.lightfast.localhost";
 process.env.VITE_LIGHTFAST_WWW_URL ||= "https://www.lightfast.localhost";
 process.env.VITE_SENTRY_DSN ||= "https://public@sentry.test/1";

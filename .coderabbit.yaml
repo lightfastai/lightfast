@@ -133,13 +133,6 @@ reviews:
         - Auth routes (/sign-in, /sign-up, /early-access) are served directly by this app
         - Check new route directories for missing error.tsx and loading.tsx
 
-    - path: "apps/platform/**"
-      instructions: |
-        Standalone Next.js + Inngest service at platform.lightfast.ai (port 4112). Review for:
-        - OAuth tokens must go through vault abstraction — never stored raw
-        - Inngest workflows must have idempotency keys and proper error handling
-        - Webhook ingestion endpoints must validate provider signatures
-
     - path: "apps/www/**"
       instructions: |
         Marketing + docs site using Fumadocs MDX. Review for:
@@ -151,7 +144,7 @@ reviews:
         tRPC API layer. Review for:
         - Auth boundaries: userRouter (no org), orgRouter (org required)
         - All procedures must use correct guard (userProcedure vs orgProcedure)
-        - Inngest workflows in api/app/src/inngest/workflow/ and api/platform/src/inngest/
+        - Inngest workflows in api/app/src/inngest/workflow/
         - Inngest functions need: idempotency key, proper step boundaries, timeout handling
 
     - path: "vendor/**"

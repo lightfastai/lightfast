@@ -102,9 +102,6 @@ export default defineConfig(({ command }) => ({
     "import.meta.env.VITE_LIGHTFAST_APP_URL": JSON.stringify(
       env.VITE_LIGHTFAST_APP_URL
     ),
-    "import.meta.env.VITE_LIGHTFAST_PLATFORM_URL": JSON.stringify(
-      env.VITE_LIGHTFAST_PLATFORM_URL
-    ),
     "import.meta.env.VITE_LIGHTFAST_WWW_URL": JSON.stringify(
       env.VITE_LIGHTFAST_WWW_URL
     ),

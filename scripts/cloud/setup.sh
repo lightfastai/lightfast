@@ -18,7 +18,6 @@
 #   LIGHTFAST_VERCEL_ORG_ID                 Vercel team id
 #   LIGHTFAST_VERCEL_PROJECT_ID_APP         apps/app      project id
 #   LIGHTFAST_VERCEL_PROJECT_ID_WWW         apps/www      project id
-#   LIGHTFAST_VERCEL_PROJECT_ID_PLATFORM    apps/platform project id
 #   LIGHTFAST_VERCEL_PROJECT_ID_MCP         apps/mcp      project id
 #
 # Auth:
@@ -44,7 +43,6 @@ cd "$ROOT"
 #    mcp also loads app's env, so app is listed first.
 APPS="apps/app|lightfast-app|LIGHTFAST_VERCEL_PROJECT_ID_APP
 apps/www|lightfast-www|LIGHTFAST_VERCEL_PROJECT_ID_WWW
-apps/platform|lightfast-platform|LIGHTFAST_VERCEL_PROJECT_ID_PLATFORM
 apps/mcp|lightfast-mcp|LIGHTFAST_VERCEL_PROJECT_ID_MCP"
 
 # 3. Require the linkage vars — fail loudly and by name (better than a bare set -u abort).

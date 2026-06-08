@@ -6,7 +6,6 @@
 // Usage:
 //   FOO=bar BAZ=qux node lib/write-env.mjs \
 //     --file apps/app/.env.overrides.local \
-//     --file apps/platform/.env.overrides.local \
 //     --set FOO --set BAZ
 //
 // Each --set NAME pulls process.env[NAME] and writes NAME=<value>.

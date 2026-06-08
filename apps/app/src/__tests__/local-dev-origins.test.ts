@@ -11,13 +11,11 @@ describe("local dev origins", () => {
       localAllowedDevOrigins([
         "https://debug-auth-local-infra.app.lightfast.localhost",
         "https://debug-auth-local-infra.www.lightfast.localhost",
-        "https://debug-auth-local-infra.platform.lightfast.localhost",
       ])
     ).toEqual([
       "debug-auth-local-infra.app.lightfast.localhost",
       "debug-auth-local-infra.lightfast.localhost",
       "debug-auth-local-infra.www.lightfast.localhost",
-      "debug-auth-local-infra.platform.lightfast.localhost",
     ]);
   });
 
@@ -50,13 +48,11 @@ describe("local dev origins", () => {
       localAllowedDevOrigins([
         "https://app.lightfast.localhost",
         "https://www.lightfast.localhost",
-        "https://platform.lightfast.localhost",
       ])
     ).toEqual([
       "app.lightfast.localhost",
       "lightfast.localhost",
       "www.lightfast.localhost",
-      "platform.lightfast.localhost",
     ]);
   });
 
@@ -85,12 +81,10 @@ describe("local dev origins", () => {
       localServerActionHosts([
         "https://debug-auth-local-infra.app.lightfast.localhost",
         "https://debug-auth-local-infra.www.lightfast.localhost",
-        "https://debug-auth-local-infra.platform.lightfast.localhost",
       ])
     ).toEqual([
       "debug-auth-local-infra.app.lightfast.localhost",
       "debug-auth-local-infra.www.lightfast.localhost",
-      "debug-auth-local-infra.platform.lightfast.localhost",
     ]);
   });
 });

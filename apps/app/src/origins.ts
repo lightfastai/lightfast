@@ -13,8 +13,3 @@ export const wwwUrl = withRelatedProject({
   projectName: "lightfast-www",
   defaultHost: env.NEXT_PUBLIC_WWW_URL,
 });
-
-export const platformUrl = withRelatedProject({
-  projectName: "lightfast-platform",
-  defaultHost: env.NEXT_PUBLIC_PLATFORM_URL,
-});

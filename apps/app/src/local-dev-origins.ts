@@ -3,7 +3,6 @@ const DIRECT_SERVICE_HOST_PREFIXES = new Set([
   "db",
   "inngest",
   "mcp",
-  "platform",
   "qstash",
   "www",
 ]);

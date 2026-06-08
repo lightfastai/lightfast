@@ -15,7 +15,6 @@ const nodeEnvSchema = z
   .default("development");
 
 const defaultAppUrl = "https://lightfast.ai";
-const defaultPlatformUrl = "https://lightfast-platform.vercel.app";
 
 export const env = createEnv({
   extends: [dbEnv, upstashEnv, unkeyEnv],
@@ -23,7 +22,6 @@ export const env = createEnv({
   client: {
     VITE_CLERK_PUBLISHABLE_KEY: z.string().min(1).startsWith("pk_"),
     VITE_LIGHTFAST_APP_URL: z.string().url(),
-    VITE_LIGHTFAST_PLATFORM_URL: z.string().url(),
     VITE_LIGHTFAST_WWW_URL: z.string().url(),
     VITE_SENTRY_DSN: z.string().url().optional(),
     VITE_VERCEL_ENV: vercelEnvSchema,
@@ -76,10 +74,6 @@ export const env = createEnv({
     VITE_CLERK_PUBLISHABLE_KEY:
       process.env.VITE_CLERK_PUBLISHABLE_KEY ??
       process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-    VITE_LIGHTFAST_PLATFORM_URL:
-      process.env.VITE_LIGHTFAST_PLATFORM_URL ??
-      process.env.NEXT_PUBLIC_PLATFORM_URL ??
-      defaultPlatformUrl,
     VITE_LIGHTFAST_WWW_URL:
       process.env.VITE_LIGHTFAST_WWW_URL ??
       process.env.NEXT_PUBLIC_WWW_URL ??

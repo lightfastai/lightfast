@@ -32,14 +32,19 @@ vi.mock("~/env", () => ({
 const jwtSecret = "test-service-jwt-secret-at-least-32-chars";
 
 async function token(
-  input: {
-    audience?: "lightfast-app" | "lightfast-platform";
-    caller?: "app" | "mcp";
-  } = {}
+  input: { audience?: "lightfast-app"; caller?: "app" | "mcp" } = {}
 ) {
   return await signServiceJWT({
     audience: input.audience ?? "lightfast-app",
     caller: input.caller ?? "mcp",
+    jwtSecret,
+  });
+}
+
+async function wrongAudienceToken() {
+  return await signServiceJWT({
+    audience: "wrong-service" as never,
+    caller: "mcp",
     jwtSecret,
   });
 }
@@ -92,10 +97,7 @@ describe("internal MCP signal route", () => {
     );
 
     const res = await POST(
-      request(
-        { input: "Signal" },
-        await token({ audience: "lightfast-platform" })
-      )
+      request({ input: "Signal" }, await wrongAudienceToken())
     );
 
     expect(res.status).toBe(401);
