@@ -65,14 +65,16 @@ describe("app-tanstack auth route smoke helpers", () => {
 
   it("builds route checks for account and org-authenticated pages", () => {
     const checks = buildRouteChecks("lf-tanstack");
+    const paths = checks.map((check) => check.path);
 
-    expect(checks.map((check) => check.path)).toContain(
-      "/account/settings/general"
-    );
-    expect(checks.map((check) => check.path)).toContain(
-      "/lf-tanstack/settings/source-control"
-    );
-    expect(checks.map((check) => check.path)).toContain("/lf-tanstack/signals");
+    expect(paths).toContain("/account/settings/general");
+    expect(paths).toContain("/lf-tanstack/settings/source-control");
+    expect(paths).toContain("/lf-tanstack/signals");
+    expect(paths).toContain("/lf-tanstack/chat");
+    expect(paths).toContain("/lf-tanstack/decisions");
+    expect(paths).toContain("/lf-tanstack/people");
+    expect(paths).toContain("/lf-tanstack/developer-connections");
+    expect(paths).toContain("/lf-tanstack/automations/new");
     expect(checks).toHaveLength(APP_TANSTACK_AUTH_ROUTE_SPECS.length);
     expect(checks.some((check) => check.path.includes("$slug"))).toBe(false);
   });
