@@ -1,3 +1,4 @@
+import { IntegrationIcons } from "@repo/ui/integration-icons";
 import { cn } from "@repo/ui/lib/utils";
 import type { FC } from "react";
 import type { ConnectorProvider } from "./connectors-model";
@@ -39,6 +40,7 @@ function XMark({ className }: { className?: string }) {
 }
 
 const marks: Record<ConnectorProvider, FC<{ className?: string }>> = {
+  granola: IntegrationIcons.granola,
   linear: LinearMark,
   x: XMark,
 };

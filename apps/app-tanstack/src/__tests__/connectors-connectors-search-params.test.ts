@@ -14,6 +14,7 @@ describe("connectors search params", () => {
     ).toEqual({
       connector: "linear",
       error: "access_denied",
+      scope: "team",
     });
   });
 
@@ -26,6 +27,28 @@ describe("connectors search params", () => {
     ).toEqual({
       connector: null,
       error: null,
+      scope: "team",
+    });
+  });
+
+  it("preserves personal scope and defaults invalid scopes to team", () => {
+    expect(
+      normalizeConnectorsSearch({
+        scope: "personal",
+      })
+    ).toEqual({
+      connector: null,
+      error: null,
+      scope: "personal",
+    });
+    expect(
+      normalizeConnectorsSearch({
+        scope: "workspace",
+      })
+    ).toEqual({
+      connector: null,
+      error: null,
+      scope: "team",
     });
   });
 
@@ -37,6 +60,13 @@ describe("connectors search params", () => {
       })
     ).toEqual({
       connector: "x",
+    });
+    expect(
+      validateConnectorsSearch({
+        scope: "personal",
+      })
+    ).toEqual({
+      scope: "personal",
     });
   });
 });

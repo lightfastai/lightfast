@@ -16,6 +16,9 @@ describe("app-tanstack connector API routes", () => {
     const xCallbackSource = source(
       "src/routes/api/connectors/x/oauth/callback.ts"
     );
+    const granolaCallbackSource = source(
+      "src/routes/api/connectors/granola/oauth/callback.ts"
+    );
 
     expect(linearCallbackSource).toContain(
       'createFileRoute("/api/connectors/linear/oauth/callback")'
@@ -29,8 +32,22 @@ describe("app-tanstack connector API routes", () => {
     );
     expect(xCallbackSource).toContain("completeXConnectorOAuth");
     expect(xCallbackSource).toContain("Response.redirect(result.redirectUrl)");
+    expect(granolaCallbackSource).toContain(
+      'createFileRoute("/api/connectors/granola/oauth/callback")'
+    );
+    expect(granolaCallbackSource).toContain(
+      "completeGranolaUserConnectorOAuth"
+    );
+    expect(granolaCallbackSource).toContain("missing_oauth_code");
+    expect(granolaCallbackSource).toContain(
+      "Response.redirect(result.redirectUrl)"
+    );
 
-    for (const routeSource of [linearCallbackSource, xCallbackSource]) {
+    for (const routeSource of [
+      linearCallbackSource,
+      xCallbackSource,
+      granolaCallbackSource,
+    ]) {
       expect(routeSource).not.toContain("next/");
     }
   });

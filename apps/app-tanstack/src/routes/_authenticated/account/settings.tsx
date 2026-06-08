@@ -4,7 +4,10 @@ import { SettingsSidebar } from "~/components/settings-sidebar";
 export const Route = createFileRoute("/_authenticated/account/settings")({
   beforeLoad: ({ location }) => {
     if (location.pathname === "/account/settings") {
-      throw redirect({ to: "/account/settings/general" });
+      throw redirect({
+        search: location.search,
+        to: "/account/settings/general",
+      });
     }
   },
   head: () => ({

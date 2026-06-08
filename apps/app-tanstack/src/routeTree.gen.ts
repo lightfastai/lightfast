@@ -82,6 +82,7 @@ import { Route as ApiInternalMcpProxyCallRouteImport } from './routes/api/intern
 import { Route as ApiGithubUserOauthCallbackRouteImport } from './routes/api/github/user/oauth/callback'
 import { Route as ApiConnectorsXOauthCallbackRouteImport } from './routes/api/connectors/x/oauth/callback'
 import { Route as ApiConnectorsLinearOauthCallbackRouteImport } from './routes/api/connectors/linear/oauth/callback'
+import { Route as ApiConnectorsGranolaOauthCallbackRouteImport } from './routes/api/connectors/granola/oauth/callback'
 import { Route as AuthenticatedAccountTasksGithubCompleteRouteImport } from './routes/_authenticated/account/tasks/github/complete'
 import { Route as AuthenticatedSlugTasksGithubLightfastRepoRouteImport } from './routes/_authenticated/$slug/tasks/github/lightfast-repo'
 import { Route as AuthenticatedSlugTasksConnectorsXRouteImport } from './routes/_authenticated/$slug/tasks/connectors/x'
@@ -488,6 +489,12 @@ const ApiConnectorsLinearOauthCallbackRoute =
     path: '/api/connectors/linear/oauth/callback',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiConnectorsGranolaOauthCallbackRoute =
+  ApiConnectorsGranolaOauthCallbackRouteImport.update({
+    id: '/api/connectors/granola/oauth/callback',
+    path: '/api/connectors/granola/oauth/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAccountTasksGithubCompleteRoute =
   AuthenticatedAccountTasksGithubCompleteRouteImport.update({
     id: '/complete',
@@ -593,6 +600,7 @@ export interface FileRoutesByFullPath {
   '/$slug/tasks/connectors/x': typeof AuthenticatedSlugTasksConnectorsXRouteWithChildren
   '/$slug/tasks/github/lightfast-repo': typeof AuthenticatedSlugTasksGithubLightfastRepoRoute
   '/account/tasks/github/complete': typeof AuthenticatedAccountTasksGithubCompleteRoute
+  '/api/connectors/granola/oauth/callback': typeof ApiConnectorsGranolaOauthCallbackRoute
   '/api/connectors/linear/oauth/callback': typeof ApiConnectorsLinearOauthCallbackRoute
   '/api/connectors/x/oauth/callback': typeof ApiConnectorsXOauthCallbackRoute
   '/api/github/user/oauth/callback': typeof ApiGithubUserOauthCallbackRoute
@@ -664,6 +672,7 @@ export interface FileRoutesByTo {
   '/account/settings': typeof AuthenticatedAccountSettingsIndexRoute
   '/$slug/tasks/github/lightfast-repo': typeof AuthenticatedSlugTasksGithubLightfastRepoRoute
   '/account/tasks/github/complete': typeof AuthenticatedAccountTasksGithubCompleteRoute
+  '/api/connectors/granola/oauth/callback': typeof ApiConnectorsGranolaOauthCallbackRoute
   '/api/connectors/linear/oauth/callback': typeof ApiConnectorsLinearOauthCallbackRoute
   '/api/connectors/x/oauth/callback': typeof ApiConnectorsXOauthCallbackRoute
   '/api/github/user/oauth/callback': typeof ApiGithubUserOauthCallbackRoute
@@ -746,6 +755,7 @@ export interface FileRoutesById {
   '/_authenticated/$slug/tasks/connectors/x': typeof AuthenticatedSlugTasksConnectorsXRouteWithChildren
   '/_authenticated/$slug/tasks/github/lightfast-repo': typeof AuthenticatedSlugTasksGithubLightfastRepoRoute
   '/_authenticated/account/tasks/github/complete': typeof AuthenticatedAccountTasksGithubCompleteRoute
+  '/api/connectors/granola/oauth/callback': typeof ApiConnectorsGranolaOauthCallbackRoute
   '/api/connectors/linear/oauth/callback': typeof ApiConnectorsLinearOauthCallbackRoute
   '/api/connectors/x/oauth/callback': typeof ApiConnectorsXOauthCallbackRoute
   '/api/github/user/oauth/callback': typeof ApiGithubUserOauthCallbackRoute
@@ -828,6 +838,7 @@ export interface FileRouteTypes {
     | '/$slug/tasks/connectors/x'
     | '/$slug/tasks/github/lightfast-repo'
     | '/account/tasks/github/complete'
+    | '/api/connectors/granola/oauth/callback'
     | '/api/connectors/linear/oauth/callback'
     | '/api/connectors/x/oauth/callback'
     | '/api/github/user/oauth/callback'
@@ -899,6 +910,7 @@ export interface FileRouteTypes {
     | '/account/settings'
     | '/$slug/tasks/github/lightfast-repo'
     | '/account/tasks/github/complete'
+    | '/api/connectors/granola/oauth/callback'
     | '/api/connectors/linear/oauth/callback'
     | '/api/connectors/x/oauth/callback'
     | '/api/github/user/oauth/callback'
@@ -980,6 +992,7 @@ export interface FileRouteTypes {
     | '/_authenticated/$slug/tasks/connectors/x'
     | '/_authenticated/$slug/tasks/github/lightfast-repo'
     | '/_authenticated/account/tasks/github/complete'
+    | '/api/connectors/granola/oauth/callback'
     | '/api/connectors/linear/oauth/callback'
     | '/api/connectors/x/oauth/callback'
     | '/api/github/user/oauth/callback'
@@ -1021,6 +1034,7 @@ export interface RootRouteChildren {
   ApiNativeProxyRoutinesRoute: typeof ApiNativeProxyRoutinesRoute
   ApiOauthClientConfigRoute: typeof ApiOauthClientConfigRoute
   ApiSkillsIndexEventsRoute: typeof ApiSkillsIndexEventsRoute
+  ApiConnectorsGranolaOauthCallbackRoute: typeof ApiConnectorsGranolaOauthCallbackRoute
   ApiConnectorsLinearOauthCallbackRoute: typeof ApiConnectorsLinearOauthCallbackRoute
   ApiConnectorsXOauthCallbackRoute: typeof ApiConnectorsXOauthCallbackRoute
   ApiGithubUserOauthCallbackRoute: typeof ApiGithubUserOauthCallbackRoute
@@ -1541,6 +1555,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiConnectorsLinearOauthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/connectors/granola/oauth/callback': {
+      id: '/api/connectors/granola/oauth/callback'
+      path: '/api/connectors/granola/oauth/callback'
+      fullPath: '/api/connectors/granola/oauth/callback'
+      preLoaderRoute: typeof ApiConnectorsGranolaOauthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/account/tasks/github/complete': {
       id: '/_authenticated/account/tasks/github/complete'
       path: '/complete'
@@ -1886,6 +1907,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiNativeProxyRoutinesRoute: ApiNativeProxyRoutinesRoute,
   ApiOauthClientConfigRoute: ApiOauthClientConfigRoute,
   ApiSkillsIndexEventsRoute: ApiSkillsIndexEventsRoute,
+  ApiConnectorsGranolaOauthCallbackRoute:
+    ApiConnectorsGranolaOauthCallbackRoute,
   ApiConnectorsLinearOauthCallbackRoute: ApiConnectorsLinearOauthCallbackRoute,
   ApiConnectorsXOauthCallbackRoute: ApiConnectorsXOauthCallbackRoute,
   ApiGithubUserOauthCallbackRoute: ApiGithubUserOauthCallbackRoute,

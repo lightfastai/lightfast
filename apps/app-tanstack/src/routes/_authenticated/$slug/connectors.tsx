@@ -40,6 +40,12 @@ function ConnectorsPage() {
           if ("error" in updates) {
             next.error = updates.error || undefined;
           }
+          if ("scope" in updates) {
+            next.scope =
+              updates.scope && updates.scope !== "team"
+                ? updates.scope
+                : undefined;
+          }
           return next;
         },
       });

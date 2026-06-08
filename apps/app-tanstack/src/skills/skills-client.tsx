@@ -10,6 +10,8 @@ import { SkillsActions } from "./skills-actions";
 import { SkillsLoading } from "./skills-loading";
 import { getVisibleSkills, type SkillFilter } from "./skills-model";
 import type { NormalizedSkillsSearch } from "./skills-search-params";
+import type { SkillsListResult } from "./skills-types";
+import { useSkillIndexRefreshController } from "./use-skill-index-refresh-controller";
 import { useSkillsListQuery } from "./use-skills-list-query";
 
 export function SkillsClient({
@@ -22,22 +24,7 @@ export function SkillsClient({
   const { query: skillsQuery } = useSkillsListQuery();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<SkillFilter>("all");
-  const deferredQuery = useDeferredValue(query);
-
   const data = skillsQuery.data;
-  const visibleSkills = useMemo(
-    () =>
-      data
-        ? getVisibleSkills(data.skills, {
-            query: deferredQuery,
-            validationStatus: filter,
-          })
-        : [],
-    [data, deferredQuery, filter]
-  );
-  const selectedSkill = search.skill
-    ? data?.skills.find((skill) => skill.slug === search.skill)
-    : undefined;
 
   if (skillsQuery.isError) {
     return (
@@ -70,6 +57,50 @@ export function SkillsClient({
   if (!data) {
     return <SkillsLoading />;
   }
+
+  return (
+    <SkillsClientContent
+      data={data}
+      filter={filter}
+      query={query}
+      search={search}
+      setFilter={setFilter}
+      setQuery={setQuery}
+      setSearchParams={setSearchParams}
+    />
+  );
+}
+
+function SkillsClientContent({
+  data,
+  filter,
+  query,
+  search,
+  setFilter,
+  setQuery,
+  setSearchParams,
+}: {
+  data: SkillsListResult;
+  filter: SkillFilter;
+  query: string;
+  search: NormalizedSkillsSearch;
+  setFilter: (filter: SkillFilter) => void;
+  setQuery: (query: string) => void;
+  setSearchParams: (updates: Partial<NormalizedSkillsSearch>) => void;
+}) {
+  useSkillIndexRefreshController(data);
+  const deferredQuery = useDeferredValue(query);
+  const visibleSkills = useMemo(
+    () =>
+      getVisibleSkills(data.skills, {
+        query: deferredQuery,
+        validationStatus: filter,
+      }),
+    [data, deferredQuery, filter]
+  );
+  const selectedSkill = search.skill
+    ? data.skills.find((skill) => skill.slug === search.skill)
+    : undefined;
 
   return (
     <WorkspaceSurface className="overflow-y-auto bg-background" variant="flush">

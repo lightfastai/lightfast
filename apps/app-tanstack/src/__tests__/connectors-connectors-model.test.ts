@@ -1,19 +1,23 @@
 import { describe, expect, it } from "vitest";
 import {
-  type ConnectorCatalogRow,
   connectionStatus,
   displayProviderName,
   filterConnectorCatalogRows,
   isConnectDisabled,
+  isUserConnectorRow,
   missingConfigFallback,
   missingConfigMessage,
+  type TeamConnectorCatalogRow,
+  type UserConnectorCatalogRow,
+  userConnectionStatus,
 } from "~/connectors/connectors-model";
 
 function connector(
-  overrides: Partial<ConnectorCatalogRow> = {}
-): ConnectorCatalogRow {
+  overrides: Partial<TeamConnectorCatalogRow> = {}
+): TeamConnectorCatalogRow {
   return {
     availableForAutomations: false,
+    availableForAgents: false,
     builder: "Lightfast",
     canManage: true,
     catalogStatus: "available",
@@ -24,12 +28,12 @@ function connector(
     displayName: "Linear",
     provider: "linear",
     ...overrides,
-  } as ConnectorCatalogRow;
+  } as TeamConnectorCatalogRow;
 }
 
 function connected(
-  overrides: Partial<NonNullable<ConnectorCatalogRow["connection"]>> = {}
-): ConnectorCatalogRow {
+  overrides: Partial<NonNullable<TeamConnectorCatalogRow["connection"]>> = {}
+): TeamConnectorCatalogRow {
   return connector({
     availableForAutomations: true,
     connection: {
@@ -57,6 +61,48 @@ function connected(
   });
 }
 
+function granolaConnector(
+  overrides: Partial<UserConnectorCatalogRow> = {}
+): UserConnectorCatalogRow {
+  return {
+    builder: "Granola",
+    canManage: true,
+    catalogStatus: "available",
+    category: "Meetings",
+    connectAvailability: { status: "available" },
+    connection: null,
+    description: "Search and reference your Granola notes.",
+    displayName: "Granola",
+    ownerType: "user",
+    provider: "granola",
+    ...overrides,
+  } as UserConnectorCatalogRow;
+}
+
+function connectedGranola(
+  overrides: Partial<NonNullable<UserConnectorCatalogRow["connection"]>> = {}
+): UserConnectorCatalogRow {
+  return granolaConnector({
+    connection: {
+      availableForInteractiveChats: true,
+      connectedAt: new Date("2026-06-01T00:00:00.000Z"),
+      lastToolRefreshAt: new Date("2026-06-01T00:00:00.000Z"),
+      lastToolRefreshErrorAt: null,
+      lastToolRefreshErrorCode: null,
+      providerAccountName: "Jeevan",
+      status: "active",
+      tools: [
+        {
+          availableForInteractiveChats: true,
+          description: "Search notes",
+          name: "search_notes",
+        },
+      ],
+      ...overrides,
+    },
+  });
+}
+
 describe("connectors model", () => {
   it("formats provider and connection status labels", () => {
     expect(displayProviderName(undefined)).toBe("Connector");
@@ -74,6 +120,26 @@ describe("connectors model", () => {
     expect(
       connectionStatus(
         connected({
+          lastToolRefreshErrorAt: new Date("2026-06-01T00:05:00.000Z"),
+        }).connection!
+      )
+    ).toEqual({
+      dotClass: "bg-amber-500",
+      label: "Tools stale",
+    });
+  });
+
+  it("detects personal connector rows and status labels", () => {
+    const granola = connectedGranola();
+
+    expect(isUserConnectorRow(granola)).toBe(true);
+    expect(userConnectionStatus(granola.connection!)).toEqual({
+      dotClass: "bg-emerald-500",
+      label: "Connected",
+    });
+    expect(
+      userConnectionStatus(
+        connectedGranola({
           lastToolRefreshErrorAt: new Date("2026-06-01T00:05:00.000Z"),
         }).connection!
       )
@@ -114,7 +180,7 @@ describe("connectors model", () => {
 
   it("ignores nullable catalog text while filtering", () => {
     const linear = connector({
-      description: null as unknown as ConnectorCatalogRow["description"],
+      description: null as unknown as TeamConnectorCatalogRow["description"],
     });
 
     expect(
