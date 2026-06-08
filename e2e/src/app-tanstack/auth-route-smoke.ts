@@ -389,13 +389,11 @@ async function updateClerkOrgBoundMetadata(
   config: AppTanstackAuthRouteSmokeConfig,
   orgId: string
 ) {
-  const org = await fetchClerkJson<{ public_metadata?: Record<string, unknown> }>(
-    config,
-    `/organizations/${orgId}`,
-    {
-      method: "GET",
-    }
-  );
+  const org = await fetchClerkJson<{
+    public_metadata?: Record<string, unknown>;
+  }>(config, `/organizations/${orgId}`, {
+    method: "GET",
+  });
   const currentMetadata = record(org.public_metadata);
   const currentLightfast = record(currentMetadata.lightfast);
 
@@ -518,8 +516,10 @@ async function createActiveXConnectorConnection(input: {
     ),
     enabledForAutomations: true,
     lastToolRefreshAt: new Date(),
-    mcpEndpoint: new URL("/api/connectors/x/mcp", input.config.appOrigin)
-      .toString(),
+    mcpEndpoint: new URL(
+      "/api/connectors/x/mcp",
+      input.config.appOrigin
+    ).toString(),
     metadata: {
       smoke: "app-tanstack-auth-routes",
       username: input.orgSlug,
@@ -568,10 +568,7 @@ async function agentBrowser(
   ]);
 }
 
-async function agentEval(
-  config: AppTanstackAuthRouteSmokeConfig,
-  js: string
-) {
+async function agentEval(config: AppTanstackAuthRouteSmokeConfig, js: string) {
   return await agentBrowser(config, ["eval", js]);
 }
 

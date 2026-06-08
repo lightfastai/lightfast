@@ -55,8 +55,7 @@ describe("app-tanstack auth route smoke helpers", () => {
     });
 
     expect(config).toMatchObject({
-      appOrigin:
-        "https://route-smoke.app-tanstack.lightfast.localhost",
+      appOrigin: "https://route-smoke.app-tanstack.lightfast.localhost",
       clerkApiTimeoutMs: 30_000,
       emailAddress: "app-tanstack-auth-smoke-1780876800000@lightfast.ai",
       orgSlug: "lf-app-tanstack-auth-e2e-1780876800000",
@@ -73,9 +72,7 @@ describe("app-tanstack auth route smoke helpers", () => {
     expect(checks.map((check) => check.path)).toContain(
       "/lf-tanstack/settings/source-control"
     );
-    expect(checks.map((check) => check.path)).toContain(
-      "/lf-tanstack/signals"
-    );
+    expect(checks.map((check) => check.path)).toContain("/lf-tanstack/signals");
     expect(checks).toHaveLength(APP_TANSTACK_AUTH_ROUTE_SPECS.length);
     expect(checks.some((check) => check.path.includes("$slug"))).toBe(false);
   });
