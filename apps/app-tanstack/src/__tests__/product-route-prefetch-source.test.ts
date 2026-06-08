@@ -23,6 +23,15 @@ describe("app-tanstack product route data prefetch", () => {
     expect(prefetchSource).not.toContain("next/");
   });
 
+  it("does not turn unauthenticated protected-route prefetches into route-loader 500s", () => {
+    const prefetchSource = source("src/trpc/route-prefetch.tsx");
+
+    expect(prefetchSource).toContain("createEmptyPrefetchState");
+    expect(prefetchSource).toContain("isUnauthorizedTRPCError");
+    expect(prefetchSource).toContain("return createEmptyPrefetchState()");
+    expect(prefetchSource).toContain('error.code === "UNAUTHORIZED"');
+  });
+
   it("prefetches the non-chat product route queries owned by the migrated pages", () => {
     const prefetchSource = source("src/trpc/route-prefetch.tsx");
 
