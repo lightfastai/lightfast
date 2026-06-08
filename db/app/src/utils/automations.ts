@@ -332,6 +332,28 @@ export async function setAutomationStatus(
   return getAutomationByPublicId(db, input);
 }
 
+export async function deleteAutomation(
+  db: Database,
+  input: {
+    clerkOrgId: string;
+    publicId: string;
+  }
+): Promise<boolean> {
+  const result = await db
+    .update(automations)
+    .set({
+      status: "deleted",
+    })
+    .where(
+      and(
+        eq(automations.clerkOrgId, input.clerkOrgId),
+        eq(automations.publicId, input.publicId),
+        ne(automations.status, "deleted")
+      )
+    );
+  return getRowsAffected(result) > 0;
+}
+
 export async function listAutomationRuns(
   db: Database,
   input: { automationPublicId: string; clerkOrgId: string; limit?: number }

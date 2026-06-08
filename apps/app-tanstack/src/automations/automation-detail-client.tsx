@@ -146,7 +146,7 @@ export function AutomationDetailClient({
           <AutomationScheduleEditor automation={automation} />
         </RailSection>
 
-        <AutomationActions automation={automation} />
+        <AutomationActions automation={automation} slug={slug} />
 
         <RailSection title="Previous runs">
           <AutomationRunsSection

@@ -193,6 +193,7 @@ export {
   claimDueAutomationRuns,
   createAutomation,
   createAutomationRun,
+  deleteAutomation,
   type GetAutomationByPublicIdInput,
   getAutomationByPublicId,
   getAutomationRunByIdempotencyKey,

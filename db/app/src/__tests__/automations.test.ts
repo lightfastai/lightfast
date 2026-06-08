@@ -6,6 +6,7 @@ import type { Database } from "../client";
 import {
   calculateNextRunAt,
   createAutomation,
+  deleteAutomation,
   markAutomationRunFailed,
 } from "../utils/automations";
 
@@ -243,6 +244,58 @@ describe("createAutomation", () => {
         connectorProvider: null,
       })
     );
+  });
+});
+
+describe("deleteAutomation", () => {
+  it("soft deletes active automations scoped to the organization", async () => {
+    const whereMock = vi.fn((_: SQL) => ({ affectedRows: 1 }));
+    const setMock = vi.fn(() => ({ where: whereMock }));
+    const db = {
+      update: vi.fn(() => ({ set: setMock })),
+    } as unknown as Database;
+
+    await expect(
+      deleteAutomation(db, {
+        clerkOrgId: "org_test",
+        publicId: "automation_123e4567-e89b-12d3-a456-426614174000",
+      })
+    ).resolves.toBe(true);
+
+    expect(setMock).toHaveBeenCalledWith({ status: "deleted" });
+
+    const condition = whereMock.mock.calls[0]?.[0];
+    expect(condition).toBeDefined();
+    if (!condition) {
+      throw new Error("expected update where condition");
+    }
+    const query = new MySqlDialect().sqlToQuery(condition);
+
+    expect(query.sql).toContain("`clerk_org_id` = ?");
+    expect(query.sql).toContain("`public_id` = ?");
+    expect(query.sql).toContain("`status` <> ?");
+    expect(query.params).toEqual(
+      expect.arrayContaining([
+        "org_test",
+        "automation_123e4567-e89b-12d3-a456-426614174000",
+        "deleted",
+      ])
+    );
+  });
+
+  it("returns false when no automation row was deleted", async () => {
+    const whereMock = vi.fn((_: SQL) => ({ rowsAffected: 0 }));
+    const setMock = vi.fn(() => ({ where: whereMock }));
+    const db = {
+      update: vi.fn(() => ({ set: setMock })),
+    } as unknown as Database;
+
+    await expect(
+      deleteAutomation(db, {
+        clerkOrgId: "org_test",
+        publicId: "automation_123e4567-e89b-12d3-a456-426614174000",
+      })
+    ).resolves.toBe(false);
   });
 });
 
