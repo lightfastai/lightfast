@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -19,40 +19,35 @@ describe("app-tanstack workspace wiring", () => {
     expect(portlessJson.name).toBe("app-tanstack.lightfast");
   });
 
-  it("is included in root pnpm dev", () => {
+  it("keeps root pnpm dev on the current Next app while desktop auth is debugged", () => {
     const rootPackageJson = JSON.parse(
       readFileSync(resolve(repoRoot, "package.json"), "utf8")
     ) as { scripts: Record<string, string> };
 
-    expect(rootPackageJson.scripts.dev).toContain("-F @lightfast/app-tanstack");
-    expect(rootPackageJson.scripts.dev).toContain(
-      "@lightfast/app-tanstack#mfe:proxy"
+    expect(rootPackageJson.scripts.dev).toContain("-F @lightfast/app");
+    expect(rootPackageJson.scripts.dev).toContain("@lightfast/app#mfe:proxy");
+    expect(rootPackageJson.scripts.dev).not.toContain(
+      "-F @lightfast/app-tanstack"
     );
     expect(rootPackageJson.scripts.dev).not.toContain(
-      "@lightfast/app#mfe:proxy"
+      "@lightfast/app-tanstack#mfe:proxy"
     );
   });
 
-  it("owns the default MFE mesh for the aggregate app URL", () => {
-    const microfrontendsJson = readFileSync(
-      resolve(appRoot, "microfrontends.json"),
-      "utf8"
-    );
-
-    expect(microfrontendsJson).toContain(
-      '"packageName": "@lightfast/app-tanstack"'
-    );
-    expect(microfrontendsJson).toContain('"packageName": "@lightfast/www"');
+  it("does not carry a temporary MFE mesh while app-tanstack is promoted elsewhere", () => {
+    expect(existsSync(resolve(appRoot, "microfrontends.json"))).toBe(false);
   });
 
-  it("injects aggregate app URLs into the TanStack dev server", () => {
+  it("injects aggregate app URLs into the direct TanStack dev server", () => {
     const packageJson = JSON.parse(
       readFileSync(resolve(appRoot, "package.json"), "utf8")
-    ) as { scripts: Record<string, string> };
+    ) as {
+      dependencies: Record<string, string | undefined>;
+      scripts: Record<string, string | undefined>;
+    };
 
-    expect(packageJson.scripts["mfe:proxy"]).toContain(
-      "lightfast-app-tanstack=$(portless get app-tanstack.lightfast)"
-    );
+    expect(packageJson.scripts["mfe:proxy"]).toBeUndefined();
+    expect(packageJson.dependencies["@vercel/microfrontends"]).toBeUndefined();
     expect(packageJson.scripts["with-related-projects"]).toContain(
       "NEXT_PUBLIC_APP_URL=$(portless get lightfast)"
     );

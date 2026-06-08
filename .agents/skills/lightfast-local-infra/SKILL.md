@@ -15,6 +15,11 @@ Local DB/Redis provisioning for this repo. Replaces the old `pnpm db:up`,
 - No provider deletes. `drop` is intentionally deferred.
 - Only write the managed keys listed in `references/env-files.md` to local
   override files. Do not write DB/Redis credentials to Vercel-pulled env files.
+- Desktop multi-instance ids are chosen by the local infra/worktree flow, not
+  inferred inside `apps/desktop`. When running multiple dev desktops, pass
+  `LIGHTFAST_DESKTOP_DEV_INSTANCE_ID=<lowercase-dash-id>` explicitly so
+  Electron stores auth, DB, settings, and browser state under
+  `lightfast-local/instances/<id>`.
 
 ## First Probes
 

@@ -1,15 +1,22 @@
-import { join } from "node:path";
 import { app } from "electron";
 import squirrelStartup from "electron-squirrel-startup";
 import { mainEnv } from "../env/main";
+import { resolveUserDataPath } from "./user-data-path";
 
 if (squirrelStartup) {
   app.quit();
 }
 
-const productName = app.isPackaged ? "Lightfast" : "Lightfast Dev";
-app.setName(productName);
-app.setPath("userData", join(app.getPath("appData"), productName));
+const appName = app.isPackaged ? "Lightfast" : "Lightfast Dev";
+app.setName(appName);
+app.setPath(
+  "userData",
+  resolveUserDataPath(
+    app.getPath("appData"),
+    app.isPackaged,
+    mainEnv.LIGHTFAST_DESKTOP_DEV_INSTANCE_ID
+  )
+);
 
 // Bootstrap runs before `./index` is dynamically imported, so the logger
 // module isn't loaded yet. These two console.* calls intentionally stay

@@ -110,6 +110,11 @@ The `with-env` script (invoked by `pnpm --filter @lightfast/desktop dev`) loads
 this file via `dotenv-cli`. Normal desktop dev does not require the file. Set
 `APP_URL` only when you need to override the local aggregate URL manually.
 
+For multi-worktree desktop testing, set `LIGHTFAST_DESKTOP_DEV_INSTANCE_ID`
+explicitly from the local infra/worktree flow. Desktop does not infer branch or
+worktree names itself. The instance id isolates auth, DB, settings, and browser
+state under `lightfast-local/instances/<id>`.
+
 ### Sign-in flow (OAuth + loopback callback)
 
 1. User clicks **Sign in with Lightfast** in the desktop app

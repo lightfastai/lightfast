@@ -152,6 +152,7 @@ const config = withSentryConfig(
 );
 
 const baseExport = withMicrofrontends(config, {
+  configPath: "./microfrontends.json",
   debug: env.NODE_ENV !== "production",
 });
 
