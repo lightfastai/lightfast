@@ -1,7 +1,17 @@
+import { cn } from "@repo/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { LogOut } from "lucide-react";
 import { useTRPC } from "../../trpc/react";
 import { useAuthSnapshot } from "../../use-auth-snapshot";
+
+const sectionClass = "mb-4 max-w-none";
+const cardClass =
+  "mb-4 flex flex-col overflow-hidden rounded-lg border border-[#0d0d0d]/10 bg-[#0d0d0d]/4 [.electron-dark_&]:border-white/10 [.electron-dark_&]:bg-white/3";
+const rowClass =
+  "flex items-center justify-between gap-4 border-b border-[#0d0d0d]/5 px-4 py-3 last:border-b-0 [.electron-dark_&]:border-white/5";
+const labelClass = "text-[12px] text-[#0d0d0d] [.electron-dark_&]:text-white";
+const buttonClass =
+  "inline-flex cursor-default items-center gap-1.5 rounded-md border border-[#0d0d0d]/10 bg-[#0d0d0d]/4 px-2.5 py-1 text-[12px] text-[#0d0d0d] [-webkit-app-region:no-drag] [.electron-dark_&]:border-white/10 [.electron-dark_&]:bg-white/3 [.electron-dark_&]:text-white";
 
 export function Account() {
   const auth = useAuthSnapshot();
@@ -14,12 +24,12 @@ export function Account() {
 
   if (!auth.isSignedIn) {
     return (
-      <section className="settings-section">
-        <div className="settings-card">
-          <div className="settings-row">
-            <div className="settings-row__label">Not signed in</div>
+      <section className={sectionClass}>
+        <div className={cardClass}>
+          <div className={rowClass}>
+            <div className={labelClass}>Not signed in</div>
             <button
-              className="settings-button"
+              className={buttonClass}
               onClick={() => void window.lightfastBridge.auth.signIn()}
               type="button"
             >
@@ -32,17 +42,18 @@ export function Account() {
   }
 
   return (
-    <section className="settings-section">
-      <div className="settings-card">
-        <div className="settings-row">
-          <div className="account-identity">
+    <section className={sectionClass}>
+      <div className={cardClass}>
+        <div className={rowClass}>
+          <div className="flex items-center gap-3">
             <div
               aria-hidden
-              className={
+              className={cn(
+                "size-10 flex-shrink-0 rounded-full bg-[#0d0d0d]/4 bg-center bg-cover [.electron-dark_&]:bg-white/3",
                 data?.imageUrl
-                  ? "account-avatar"
-                  : "account-avatar account-avatar--placeholder"
-              }
+                  ? undefined
+                  : "bg-[#0d0d0d]/10 [.electron-dark_&]:bg-white/7"
+              )}
               style={
                 data?.imageUrl
                   ? { backgroundImage: `url("${data.imageUrl}")` }
@@ -50,19 +61,21 @@ export function Account() {
               }
             />
             <div>
-              <div className="account-name">{data?.fullName ?? "—"}</div>
-              <div className="account-email">
+              <div className="font-medium text-[#0d0d0d] text-[12px] [.electron-dark_&]:text-white">
+                {data?.fullName ?? "—"}
+              </div>
+              <div className="text-[#0d0d0d]/50 text-[12px] [.electron-dark_&]:text-white/50">
                 {data?.primaryEmailAddress ?? ""}
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div className="settings-card">
-        <div className="settings-row">
-          <div className="settings-row__label">Sign out of Lightfast</div>
+      <div className={cardClass}>
+        <div className={rowClass}>
+          <div className={labelClass}>Sign out of Lightfast</div>
           <button
-            className="settings-button settings-button--destructive"
+            className={cn(buttonClass, "text-red-500 hover:bg-red-500/8")}
             onClick={() => void window.lightfastBridge.auth.signOut()}
             type="button"
           >
