@@ -1010,6 +1010,51 @@ describe("skills index refresh/read service", () => {
     expect(deps.readSkillRepositoryTree).not.toHaveBeenCalled();
   });
 
+  it("treats read-triggered enqueue failures as non-blocking", async () => {
+    const deps = createDeps({
+      targetState: staleState({ indexedCommitSha: "old-index" }),
+    });
+    deps.enqueueRefresh = vi.fn(async () => {
+      throw new Error("Inngest API Error: 404 Event key not found");
+    });
+
+    await expect(
+      requestSkillIndexRefresh({
+        clerkOrgId: "org_123",
+        deps,
+        reason: "read",
+        sourceControlRepositoryId: 1,
+      })
+    ).resolves.toEqual({
+      enqueued: false,
+      sourceControlRepositoryId: 1,
+    });
+
+    expect(deps.enqueueRefresh).toHaveBeenCalledWith({
+      reason: "read",
+      sourceControlRepositoryId: 1,
+      targetCommitSha: undefined,
+    });
+  });
+
+  it("propagates setup-triggered enqueue failures", async () => {
+    const deps = createDeps({
+      targetState: staleState({ indexedCommitSha: "old-index" }),
+    });
+    deps.enqueueRefresh = vi.fn(async () => {
+      throw new Error("setup enqueue failed");
+    });
+
+    await expect(
+      requestSkillIndexRefresh({
+        clerkOrgId: "org_123",
+        deps,
+        reason: "setup",
+        sourceControlRepositoryId: 1,
+      })
+    ).rejects.toThrow("setup enqueue failed");
+  });
+
   it("does not enqueue a refresh when repository access is not verified", async () => {
     const deps = createDeps({ candidate: null });
     deps.enqueueRefresh = vi.fn(async () => undefined);

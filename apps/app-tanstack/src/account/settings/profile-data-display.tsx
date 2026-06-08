@@ -17,6 +17,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
+import { useMounted } from "@repo/ui/hooks/use-mounted";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect } from "react";
@@ -27,6 +28,7 @@ import { ProfileDataLoading } from "./profile-data-loading";
 
 export function ProfileDataDisplay() {
   const trpc = useTRPC();
+  const mounted = useMounted();
   const accountQuery = trpc.viewer.account.get.queryOptions();
   const { data: profile, isPending } = useQuery({
     ...accountQuery,
@@ -59,7 +61,7 @@ export function ProfileDataDisplay() {
     [updateDisplayName]
   );
 
-  if (isPending || !profile) {
+  if (!mounted || isPending || !profile) {
     return <ProfileDataLoading />;
   }
 

@@ -153,6 +153,9 @@ describe("app-tanstack authenticated route migration", () => {
     expect(shellSource).toContain("isAuthRoute");
     expect(teamSwitcherSource).toContain("function TeamSwitcherSlot()");
     expect(teamSwitcherSource).toContain("<TeamSwitcherSkeleton />");
+    expect(teamSwitcherSource).toContain('from "@repo/ui/hooks/use-mounted"');
+    expect(teamSwitcherSource).toContain("const mounted = useMounted();");
+    expect(teamSwitcherSource).toContain("if (!mounted || isPending)");
     expect(shellSource).toContain(
       "<AuthenticatedTopbar left={<TeamSwitcherSlot />} />"
     );

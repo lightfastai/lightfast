@@ -51,11 +51,22 @@ export async function requestSkillIndexRefresh(input: {
   }
 
   const enqueue = deps.enqueueRefresh ?? enqueueSkillIndexRefresh;
-  await enqueue({
-    reason: input.reason,
-    sourceControlRepositoryId: input.sourceControlRepositoryId,
-    targetCommitSha: input.targetCommitSha,
-  });
+  try {
+    await enqueue({
+      reason: input.reason,
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+      targetCommitSha: input.targetCommitSha,
+    });
+  } catch (error) {
+    if (input.reason !== "read") {
+      throw error;
+    }
+
+    return {
+      enqueued: false,
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+    };
+  }
 
   return {
     enqueued: true,

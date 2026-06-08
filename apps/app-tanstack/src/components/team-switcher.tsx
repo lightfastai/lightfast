@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import { useMounted } from "@repo/ui/hooks/use-mounted";
 import { cn } from "@repo/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
@@ -37,6 +38,7 @@ export function TeamSwitcher() {
   const navigate = useNavigate();
   const { setActive } = useOrganizationList();
   const [open, setOpen] = useState(false);
+  const mounted = useMounted();
 
   const { data: organizations = [], isPending } = useQuery({
     ...trpc.viewer.organization.listUserOrganizations.queryOptions(),
@@ -69,7 +71,7 @@ export function TeamSwitcher() {
     await navigate({ to: "/$slug", params: { slug } });
   };
 
-  if (isPending) {
+  if (!mounted || isPending) {
     return <TeamSwitcherSkeleton />;
   }
 
