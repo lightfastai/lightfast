@@ -7,15 +7,16 @@
   "sideEffects": false,
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
+    "app-tanstack:auth-routes": "NODE_OPTIONS=\"--conditions=react-server ${NODE_OPTIONS:-}\" pnpm with-env tsx src/app-tanstack/auth-route-smoke.ts",
     "connectors:x:local": "pnpm with-env tsx src/connectors/x-local-agent-smoke.ts",
     "decisions:real-clerk": "NODE_OPTIONS=\"--conditions=react-server ${NODE_OPTIONS:-}\" pnpm with-env tsx src/decisions/real-clerk-smoke.ts",
     "github:setup:real-clerk": "pnpm with-env tsx src/github-setup/real-clerk-smoke.ts",
     "provider-routine-proxy:real-cli": "pnpm --dir ../core/cli build && pnpm with-env tsx src/provider-routine-proxy/real-cli-smoke.ts",
     "sdk": "pnpm --dir ../core/lightfast build && pnpm with-env vitest run src/sdk/system-health.e2e.test.ts",
     "signals": "pnpm with-env vitest run src/signals/signal-pipeline.e2e.test.ts",
-    "test": "vitest run src/helpers/*.test.ts src/github-setup/*.test.ts src/decisions/*.test.ts src/connectors/*.test.ts --passWithNoTests",
+    "test": "vitest run src/helpers/*.test.ts src/github-setup/*.test.ts src/decisions/*.test.ts src/connectors/*.test.ts src/app-tanstack/*.test.ts --passWithNoTests",
     "typecheck": "pnpm --dir ../core/lightfast build && tsc --noEmit",
-    "with-env": "dotenv -e ../apps/app/.vercel/.env.development.local --"
+    "with-env": "dotenv -e ../apps/app/.env.overrides.local -e ../apps/app/.vercel/.env.development.local --"
   },
   "dependencies": {
     "@api/app": "workspace:*",
