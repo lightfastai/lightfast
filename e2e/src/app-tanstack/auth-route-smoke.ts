@@ -4,6 +4,8 @@ import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
+import type { CreateAutomationInput } from "@db/app";
+
 import {
   allowLocalhostTls,
   normalizeUrl,
@@ -20,6 +22,8 @@ const DEFAULT_ROUTE_TIMEOUT_MS = 120_000;
 const X_EMULATOR_ACCESS_TOKEN = "x_access_valid";
 const X_EMULATOR_REFRESH_TOKEN = "x_refresh_valid";
 const X_EMULATOR_TOOL_NAME = "getUsersMe";
+const SMOKE_AUTOMATION_NAME = "Daily smoke automation";
+const SMOKE_AUTOMATION_PROMPT = "Review seeded route smoke coverage.";
 
 type Env = Record<string, string | undefined>;
 
@@ -58,6 +62,10 @@ interface RouteCheck {
   expectedText: string[];
   name: string;
   path: string;
+}
+
+interface RouteFixtureIds {
+  automationId?: string;
 }
 
 interface RouteBodyProblemInput {
@@ -190,6 +198,22 @@ export const APP_TANSTACK_AUTH_ROUTE_SPECS: RouteSpec[] = [
   },
 ];
 
+const APP_TANSTACK_AUTH_FIXTURE_ROUTE_SPECS: Array<
+  RouteSpec & { fixture: keyof RouteFixtureIds }
+> = [
+  {
+    expectedText: [
+      SMOKE_AUTOMATION_NAME,
+      SMOKE_AUTOMATION_PROMPT,
+      "Status",
+      "Previous runs",
+    ],
+    fixture: "automationId",
+    name: "automation detail",
+    pathTemplate: "/$slug/automations/$automation",
+  },
+];
+
 export function createUniqueAppTanstackAuthOrgSlug(input: {
   nowMs?: number;
   prefix?: string;
@@ -253,12 +277,46 @@ export function buildAppTanstackAuthRouteSmokeConfig(
   };
 }
 
-export function buildRouteChecks(orgSlug: string): RouteCheck[] {
-  return APP_TANSTACK_AUTH_ROUTE_SPECS.map((spec) => ({
+export function buildRouteChecks(
+  orgSlug: string,
+  fixtures: RouteFixtureIds = {}
+): RouteCheck[] {
+  const staticChecks = APP_TANSTACK_AUTH_ROUTE_SPECS.map((spec) =>
+    buildRouteCheck(spec, orgSlug, fixtures)
+  );
+  const fixtureChecks = APP_TANSTACK_AUTH_FIXTURE_ROUTE_SPECS.filter((spec) =>
+    Boolean(fixtures[spec.fixture])
+  ).map((spec) => buildRouteCheck(spec, orgSlug, fixtures));
+  return [...staticChecks, ...fixtureChecks];
+}
+
+function buildRouteCheck(
+  spec: RouteSpec,
+  orgSlug: string,
+  fixtures: RouteFixtureIds
+): RouteCheck {
+  return {
     expectedText: spec.expectedText,
     name: spec.name,
-    path: spec.pathTemplate.replaceAll("$slug", orgSlug),
-  }));
+    path: spec.pathTemplate
+      .replaceAll("$slug", orgSlug)
+      .replaceAll("$automation", fixtures.automationId ?? ""),
+  };
+}
+
+export function buildAppTanstackAuthSmokeAutomationInput(input: {
+  orgId: string;
+  userId: string;
+}): CreateAutomationInput {
+  return {
+    clerkOrgId: input.orgId,
+    connectorProvider: null,
+    createdByUserId: input.userId,
+    name: SMOKE_AUTOMATION_NAME,
+    prompt: SMOKE_AUTOMATION_PROMPT,
+    schedule: { kind: "daily", config: { time: "09:00" } },
+    timezone: "UTC",
+  };
 }
 
 export function collectRouteBodyProblems(input: RouteBodyProblemInput) {
@@ -286,6 +344,16 @@ export function collectRouteBodyProblems(input: RouteBodyProblemInput) {
     );
   }
   return problems;
+}
+
+export function combineRouteTextForSmoke(input: {
+  bodyText: string;
+  formControlValues?: string[];
+}) {
+  return [input.bodyText, ...(input.formControlValues ?? [])]
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .join("\n");
 }
 
 function slugPart(value: string) {
@@ -576,6 +644,18 @@ async function createActiveXConnectorConnection(input: {
   });
 }
 
+async function createSmokeAutomation(input: { orgId: string; userId: string }) {
+  const [{ db }, { createAutomation }] = await Promise.all([
+    import("@db/app/client"),
+    import("@db/app"),
+  ]);
+  const automation = await createAutomation(
+    db,
+    buildAppTanstackAuthSmokeAutomationInput(input)
+  );
+  return automation.publicId;
+}
+
 function record(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -642,14 +722,25 @@ async function readPageState(config: AppTanstackAuthRouteSmokeConfig) {
     config,
     `({
       bodyText: document.body.innerText,
+      formControlValues: Array.from(
+        document.querySelectorAll("input, textarea, select")
+      )
+        .map((element) => "value" in element ? String(element.value) : "")
+        .filter(Boolean),
       href: location.href,
       pathname: location.pathname,
     })`
   );
-  return JSON.parse(raw) as {
+  const state = JSON.parse(raw) as {
     bodyText: string;
+    formControlValues: string[];
     href: string;
     pathname: string;
+  };
+  return {
+    bodyText: combineRouteTextForSmoke(state),
+    href: state.href,
+    pathname: state.pathname,
   };
 }
 
@@ -739,12 +830,10 @@ export async function runAppTanstackAuthRouteSmoke(
   const env = input.env ?? process.env;
   const config = buildAppTanstackAuthRouteSmokeConfig(input);
   allowLocalhostTls(config.appOrigin);
-  const routes = buildRouteChecks(config.orgSlug);
 
   console.log(`[smoke] app=${config.appOrigin}`);
   console.log(`[smoke] org=${config.orgSlug}`);
   console.log(`[smoke] email=${config.emailAddress}`);
-  console.log(`[smoke] routes=${routes.length}`);
 
   try {
     const user = await createClerkUser(config);
@@ -766,6 +855,12 @@ export async function runAppTanstackAuthRouteSmoke(
       userId: user.id,
     });
     await updateClerkOrgBoundMetadata(config, org.id);
+    const automationId = await createSmokeAutomation({
+      orgId: org.id,
+      userId: user.id,
+    });
+    const routes = buildRouteChecks(config.orgSlug, { automationId });
+    console.log(`[smoke] routes=${routes.length}`);
 
     const ticket = await createClerkSignInToken(config, user.id);
     await signInWithClerkTicket(config, {
