@@ -5,5 +5,6 @@ export const Route = createFileRoute("/_authenticated/account/settings/")({
 });
 
 function AccountSettingsIndexRedirect() {
-  return <Navigate replace to="/account/settings/general" />;
+  const search = Route.useSearch();
+  return <Navigate replace search={search} to="/account/settings/general" />;
 }
