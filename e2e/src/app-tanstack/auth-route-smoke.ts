@@ -15,6 +15,7 @@ const execFileAsync = promisify(execFile);
 const DEFAULT_SESSION_NAME = "lightfast-app-tanstack-auth-smoke";
 const DEFAULT_EMAIL_DOMAIN = "lightfast.ai";
 const APP_TANSTACK_PORTLESS_NAME = "app-tanstack.lightfast";
+const DEFAULT_CLERK_API_TIMEOUT_MS = 30_000;
 const DEFAULT_ROUTE_TIMEOUT_MS = 120_000;
 const X_EMULATOR_ACCESS_TOKEN = "x_access_valid";
 const X_EMULATOR_REFRESH_TOKEN = "x_refresh_valid";
@@ -24,6 +25,7 @@ type Env = Record<string, string | undefined>;
 
 export interface AppTanstackAuthRouteSmokeConfig {
   appOrigin: string;
+  clerkApiTimeoutMs: number;
   clerkSecretKey: string;
   emailAddress: string;
   orgSlug: string;
@@ -77,6 +79,7 @@ const FORBIDDEN_ROUTE_TEXT = [
   "Failed to load",
   "UNAUTHORIZED",
   "Authentication required",
+  "Session expired",
 ] as const;
 
 export const APP_TANSTACK_AUTH_ROUTE_SPECS: RouteSpec[] = [
@@ -201,6 +204,11 @@ export function buildAppTanstackAuthRouteSmokeConfig(
     DEFAULT_ROUTE_TIMEOUT_MS,
     "LIGHTFAST_E2E_APP_TANSTACK_AUTH_ROUTE_TIMEOUT_MS"
   );
+  const clerkApiTimeoutMs = readPositiveInteger(
+    env.LIGHTFAST_E2E_APP_TANSTACK_AUTH_CLERK_API_TIMEOUT_MS,
+    DEFAULT_CLERK_API_TIMEOUT_MS,
+    "LIGHTFAST_E2E_APP_TANSTACK_AUTH_CLERK_API_TIMEOUT_MS"
+  );
 
   return {
     appOrigin: normalizeUrl(
@@ -209,6 +217,7 @@ export function buildAppTanstackAuthRouteSmokeConfig(
         getPortlessUrl(APP_TANSTACK_PORTLESS_NAME),
       "LIGHTFAST_E2E_APP_TANSTACK_URL"
     ),
+    clerkApiTimeoutMs,
     clerkSecretKey,
     emailAddress,
     orgSlug,
@@ -297,6 +306,10 @@ async function fetchClerkJson<T>(
     body?: Record<string, unknown>;
   }
 ): Promise<T> {
+  const timeoutSignal = AbortSignal.timeout(config.clerkApiTimeoutMs);
+  const signal = init.signal
+    ? AbortSignal.any([init.signal, timeoutSignal])
+    : timeoutSignal;
   const res = await fetch(`https://api.clerk.com/v1${path}`, {
     ...init,
     body: init.body ? JSON.stringify(init.body) : undefined,
@@ -304,6 +317,7 @@ async function fetchClerkJson<T>(
       authorization: `Bearer ${config.clerkSecretKey}`,
       "content-type": "application/json",
     },
+    signal,
   });
   const body = (await res.json().catch(() => null)) as
     | {
@@ -424,8 +438,8 @@ async function createClerkSignInToken(
   return body.token;
 }
 
-function requireEncryptionKey() {
-  const value = process.env.ENCRYPTION_KEY?.trim();
+export function readAppTanstackAuthEncryptionKey(env: Env = process.env) {
+  const value = env.ENCRYPTION_KEY?.trim();
   if (!value) {
     throw new Error(
       "ENCRYPTION_KEY is missing. Run this script through `pnpm with-env` from @lightfast/e2e."
@@ -473,6 +487,7 @@ async function createBoundSourceControlBinding(input: {
 
 async function createActiveXConnectorConnection(input: {
   config: AppTanstackAuthRouteSmokeConfig;
+  env: Env;
   orgId: string;
   orgSlug: string;
   userId: string;
@@ -490,7 +505,7 @@ async function createActiveXConnectorConnection(input: {
     import("@db/app"),
     import("@repo/app-encryption"),
   ]);
-  const encryptionKey = requireEncryptionKey();
+  const encryptionKey = readAppTanstackAuthEncryptionKey(input.env);
 
   await finalizeCurrentOrgConnectorConnection(db, {
     accessTokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
@@ -699,6 +714,7 @@ function readPortlessUrl(name: string): string {
 export async function runAppTanstackAuthRouteSmoke(
   input: BuildAppTanstackAuthRouteSmokeConfigInput = {}
 ) {
+  const env = input.env ?? process.env;
   const config = buildAppTanstackAuthRouteSmokeConfig(input);
   allowLocalhostTls(config.appOrigin);
   const routes = buildRouteChecks(config.orgSlug);
@@ -722,6 +738,7 @@ export async function runAppTanstackAuthRouteSmoke(
     });
     await createActiveXConnectorConnection({
       config,
+      env,
       orgId: org.id,
       orgSlug: config.orgSlug,
       userId: user.id,

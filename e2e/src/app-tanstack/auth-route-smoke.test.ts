@@ -7,6 +7,7 @@ import {
   collectRouteBodyProblems,
   createUniqueAppTanstackAuthOrgSlug,
   formatCommandForError,
+  readAppTanstackAuthEncryptionKey,
 } from "./auth-route-smoke";
 
 describe("app-tanstack auth route smoke helpers", () => {
@@ -24,6 +25,7 @@ describe("app-tanstack auth route smoke helpers", () => {
       env: {
         CLERK_SECRET_KEY: "sk_test_123",
         LIGHTFAST_E2E_AGENT_BROWSER_SESSION: "app-tanstack-session",
+        LIGHTFAST_E2E_APP_TANSTACK_AUTH_CLERK_API_TIMEOUT_MS: "45000",
         LIGHTFAST_E2E_APP_TANSTACK_AUTH_EMAIL_PREFIX: "TanStack Auth",
         LIGHTFAST_E2E_APP_TANSTACK_AUTH_ORG_SLUG: "lf-app-tanstack-fixed",
         LIGHTFAST_E2E_APP_TANSTACK_URL:
@@ -35,6 +37,7 @@ describe("app-tanstack auth route smoke helpers", () => {
 
     expect(config).toMatchObject({
       appOrigin: "https://custom.app-tanstack.lightfast.localhost",
+      clerkApiTimeoutMs: 45_000,
       clerkSecretKey: "sk_test_123",
       emailAddress: "tanstack-auth-1780876800000@lightfast.ai",
       orgSlug: "lf-app-tanstack-fixed",
@@ -54,6 +57,7 @@ describe("app-tanstack auth route smoke helpers", () => {
     expect(config).toMatchObject({
       appOrigin:
         "https://route-smoke.app-tanstack.lightfast.localhost",
+      clerkApiTimeoutMs: 30_000,
       emailAddress: "app-tanstack-auth-smoke-1780876800000@lightfast.ai",
       orgSlug: "lf-app-tanstack-auth-e2e-1780876800000",
       sessionName: "lightfast-app-tanstack-auth-smoke-1780876800000",
@@ -95,6 +99,55 @@ describe("app-tanstack auth route smoke helpers", () => {
     ]);
   });
 
+  it("flags no-org setup as a distinct auth-boundary failure", () => {
+    const problems = collectRouteBodyProblems({
+      bodyText:
+        "Organization setup required\nComplete setup before using Lightfast features.",
+      expectedText: ["Signals"],
+      finalPathname: "/lf-tanstack/signals",
+      routeName: "signals",
+      routePath: "/lf-tanstack/signals",
+    });
+
+    expect(problems).toEqual([
+      "signals rendered forbidden text: Organization setup required",
+      "signals did not render expected text: Signals",
+    ]);
+  });
+
+  it("flags wrong-org route access by pathname and not-found content", () => {
+    const problems = collectRouteBodyProblems({
+      bodyText: "Team not found",
+      expectedText: ["Signals"],
+      finalPathname: "/unknown-team/signals",
+      routeName: "signals",
+      routePath: "/lf-tanstack/signals",
+    });
+
+    expect(problems).toEqual([
+      "signals landed on /unknown-team/signals instead of /lf-tanstack/signals",
+      "signals rendered forbidden text: Team not found",
+      "signals did not render expected text: Signals",
+    ]);
+  });
+
+  it("flags expired-session redirects as an auth-boundary failure", () => {
+    const problems = collectRouteBodyProblems({
+      bodyText: "Session expired\nLog in to Lightfast",
+      expectedText: ["Signals"],
+      finalPathname: "/sign-in",
+      routeName: "signals",
+      routePath: "/lf-tanstack/signals",
+    });
+
+    expect(problems).toEqual([
+      "signals landed on /sign-in instead of /lf-tanstack/signals",
+      "signals rendered forbidden text: Log in to Lightfast",
+      "signals rendered forbidden text: Session expired",
+      "signals did not render expected text: Signals",
+    ]);
+  });
+
   it("redacts agent-browser eval scripts from command failure messages", () => {
     const formatted = formatCommandForError("agent-browser", [
       "--session",
@@ -115,5 +168,17 @@ describe("app-tanstack auth route smoke helpers", () => {
         nowMs: Date.parse("2026-06-08T00:00:00.000Z"),
       })
     ).toThrow("CLERK_SECRET_KEY");
+  });
+
+  it("reads the connector encryption key from injected env", () => {
+    expect(
+      readAppTanstackAuthEncryptionKey({
+        ENCRYPTION_KEY: " smoke-encryption-key ",
+      })
+    ).toBe("smoke-encryption-key");
+
+    expect(() => readAppTanstackAuthEncryptionKey({})).toThrow(
+      "ENCRYPTION_KEY"
+    );
   });
 });
