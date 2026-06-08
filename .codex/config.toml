@@ -1,9 +1,3 @@
-# Project-scoped Codex MCP configuration.
-# Docs: https://developers.openai.com/codex/mcp
-#
-# Standardized with .mcp.json (Claude Code): both harnesses run the same
-# MCP server set. Keep these two files in sync.
-
 [mcp_servers.exa]
 url = "https://mcp.exa.ai/mcp"
 
@@ -12,4 +6,10 @@ url = "http://127.0.0.1:8288/mcp"
 
 [mcp_servers.next-devtools]
 command = "npx"
-args = ["-y", "next-devtools-mcp@0.3.10"]
+args = [
+    "-y",
+    "next-devtools-mcp@0.3.10",
+]
+
+[mcp_servers.lightfast]
+url = "https://mcp.lightfast.ai/mcp"
