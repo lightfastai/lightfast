@@ -3,22 +3,22 @@ import { rmSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-const productName = "Lightfast Dev";
+const userDataDir = "lightfast-local";
 
-// Mirror bootstrap.ts:10-12 — Electron resolves userData as join(appData, productName).
+// Mirror bootstrap.ts:10-13 — Electron resolves userData as join(appData, userDataDir).
 function resolveUserData() {
   switch (process.platform) {
     case "darwin":
-      return join(homedir(), "Library", "Application Support", productName);
+      return join(homedir(), "Library", "Application Support", userDataDir);
     case "win32":
       return join(
         process.env.APPDATA ?? join(homedir(), "AppData", "Roaming"),
-        productName
+        userDataDir
       );
     case "linux":
       return join(
         process.env.XDG_CONFIG_HOME ?? join(homedir(), ".config"),
-        productName
+        userDataDir
       );
     default:
       throw new Error(`Unsupported platform: ${process.platform}`);

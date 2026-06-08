@@ -100,5 +100,6 @@ const withMDX = createMDX({
 });
 
 export default withMicrofrontends(withMDX(config), {
+  configPath: "../app/microfrontends.json",
   debug: process.env.NODE_ENV === "development",
 });

@@ -9,6 +9,7 @@ export const mainEnv = createEnv({
     SPARKLE_FEED_URL: z.string().url().optional(),
     SQUIRREL_FEED_URL: z.string().url().optional(),
     APP_URL: z.string().url().optional(),
+    LIGHTFAST_DESKTOP_DEV_INSTANCE_ID: z.string().optional(),
     LIGHTFAST_REMOTE_DEBUG_PORT: z.coerce
       .number()
       .int()
@@ -24,6 +25,8 @@ export const mainEnv = createEnv({
     SPARKLE_FEED_URL: process.env.SPARKLE_FEED_URL,
     SQUIRREL_FEED_URL: process.env.SQUIRREL_FEED_URL,
     APP_URL: process.env.APP_URL,
+    LIGHTFAST_DESKTOP_DEV_INSTANCE_ID:
+      process.env.LIGHTFAST_DESKTOP_DEV_INSTANCE_ID,
     LIGHTFAST_REMOTE_DEBUG_PORT: process.env.LIGHTFAST_REMOTE_DEBUG_PORT,
   },
   isServer: true,
