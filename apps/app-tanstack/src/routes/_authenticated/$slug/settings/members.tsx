@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { WorkspaceRoutePending } from "~/components/route-boundaries";
 import { OrgMembersClient } from "~/org/settings/members/org-members-client";
 import {
   loadRoutePrefetch,
@@ -16,8 +17,13 @@ export const Route = createFileRoute("/_authenticated/$slug/settings/members")({
       },
     ],
   }),
+  pendingComponent: MembersRoutePending,
   component: MembersSettingsPage,
 });
+
+function MembersRoutePending() {
+  return <WorkspaceRoutePending label="Loading members" />;
+}
 
 function MembersSettingsPage() {
   const prefetchState = Route.useLoaderData();

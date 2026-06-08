@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { WorkspaceRoutePending } from "~/components/route-boundaries";
 import { SourceControlSettingsClient } from "~/org/settings/source-control/source-control-settings-client";
 import {
   loadRoutePrefetch,
@@ -19,8 +20,13 @@ export const Route = createFileRoute(
       },
     ],
   }),
+  pendingComponent: SourceControlRoutePending,
   component: WorkspaceSourceControlSettingsPage,
 });
+
+function SourceControlRoutePending() {
+  return <WorkspaceRoutePending label="Loading source control" />;
+}
 
 function WorkspaceSourceControlSettingsPage() {
   const prefetchState = Route.useLoaderData();

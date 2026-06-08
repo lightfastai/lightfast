@@ -2,6 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { AutomationDetailClient } from "~/automations/automation-detail-client";
 import {
+  WorkspaceRouteErrorPanel,
+  WorkspaceRoutePending,
+} from "~/components/route-boundaries";
+import {
   loadRoutePrefetch,
   RoutePrefetchBoundary,
 } from "~/trpc/route-prefetch";
@@ -27,8 +31,37 @@ export const Route = createFileRoute(
   head: ({ params }) => ({
     meta: [{ title: `Automation - ${params.slug} - Lightfast` }],
   }),
+  pendingComponent: AutomationDetailRoutePending,
+  errorComponent: AutomationDetailRouteError,
   component: AutomationDetailPage,
 });
+
+function AutomationDetailRoutePending() {
+  return <WorkspaceRoutePending label="Loading automation" />;
+}
+
+function AutomationDetailRouteError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  const { slug } = Route.useParams();
+
+  return (
+    <WorkspaceRouteErrorPanel
+      backHref={`/${slug}/automations`}
+      backLabel="Back to automations"
+      description="It may have been deleted, or there was a transient error."
+      error={error}
+      maxWidth="max-w-5xl"
+      reset={reset}
+      route="automations/[automationId]"
+      title="Couldn't load automation"
+    />
+  );
+}
 
 function AutomationDetailPage() {
   const { automation: automationId, slug } = Route.useParams();

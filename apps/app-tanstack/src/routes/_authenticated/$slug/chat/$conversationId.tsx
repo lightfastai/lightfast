@@ -5,6 +5,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { ChatLoading } from "~/chat/chat-loading";
 import { isPreallocatedConversationId } from "~/chat/conversation-id";
 import { WorkspaceAssistantClient } from "~/chat/workspace-assistant-client";
+import { WorkspaceRouteErrorPanel } from "~/components/route-boundaries";
 import { useTRPC } from "~/trpc/react";
 
 export const Route = createFileRoute(
@@ -15,8 +16,36 @@ export const Route = createFileRoute(
       { title: `Chat ${params.conversationId} - ${params.slug} - Lightfast` },
     ],
   }),
+  pendingComponent: ChatRoutePending,
+  errorComponent: ChatRouteError,
   component: WorkspaceConversationPage,
 });
+
+function ChatRoutePending() {
+  return <ChatLoading />;
+}
+
+function ChatRouteError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  const { slug } = Route.useParams();
+
+  return (
+    <WorkspaceRouteErrorPanel
+      backHref={`/${slug}/chat`}
+      backLabel="New chat"
+      description="There was a transient error while loading the conversation."
+      error={error}
+      reset={reset}
+      route="workspace-chat"
+      title="Couldn't load this chat"
+    />
+  );
+}
 
 function WorkspaceConversationPage() {
   const { conversationId } = Route.useParams();
