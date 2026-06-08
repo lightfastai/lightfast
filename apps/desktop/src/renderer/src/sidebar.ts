@@ -1,10 +1,13 @@
 const STORAGE_KEY = "lightfast-desktop:sidebar-collapsed";
+export const SIDEBAR_COLLAPSED_EVENT = "lightfast-sidebar-collapsed";
 
 export interface SidebarController {
   isCollapsed(): boolean;
   setCollapsed(collapsed: boolean): void;
   toggle(): void;
 }
+
+let controller: SidebarController | null = null;
 
 function readPersistedState(): boolean {
   try {
@@ -23,24 +26,21 @@ function writePersistedState(collapsed: boolean): void {
 }
 
 export function createSidebarController(): SidebarController {
+  if (controller) {
+    return controller;
+  }
+
   let collapsed = readPersistedState();
   apply();
 
   function apply(): void {
     document.documentElement.dataset.sidebarCollapsed = String(collapsed);
-    const trigger = document.querySelector<HTMLButtonElement>(
-      "[data-sidebar-trigger]"
+    window.dispatchEvent(
+      new CustomEvent<boolean>(SIDEBAR_COLLAPSED_EVENT, { detail: collapsed })
     );
-    if (trigger) {
-      trigger.setAttribute("aria-expanded", String(!collapsed));
-      trigger.setAttribute(
-        "aria-label",
-        collapsed ? "Expand sidebar" : "Collapse sidebar"
-      );
-    }
   }
 
-  return {
+  controller = {
     isCollapsed() {
       return collapsed;
     },
@@ -56,4 +56,6 @@ export function createSidebarController(): SidebarController {
       this.setCollapsed(!collapsed);
     },
   };
+
+  return controller;
 }

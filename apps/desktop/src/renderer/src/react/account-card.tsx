@@ -25,7 +25,7 @@ export function AccountCard() {
 
   const user = query.data;
   return (
-    <div className="account-card">
+    <div className="text-[#0d0d0d] [.electron-dark_&]:text-white">
       <h1>{user.fullName ?? "Unknown"}</h1>
       <p>{user.primaryEmailAddress ?? ""}</p>
     </div>

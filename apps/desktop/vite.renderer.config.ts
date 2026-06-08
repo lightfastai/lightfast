@@ -1,10 +1,17 @@
 import { resolve } from "node:path";
+import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 export default defineConfig({
   root: resolve(import.meta.dirname, "src/renderer"),
-  plugins: [react()],
+  plugins: [
+    tanstackRouter({
+      target: "react",
+      autoCodeSplitting: true,
+    }),
+    react(),
+  ],
   resolve: {
     // Follow pnpm symlinks to real paths so esbuild's optimizer resolves
     // transitive CJS peers (e.g. copy-anything imported by superjson) via the

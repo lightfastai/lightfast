@@ -9,15 +9,17 @@ function ensureOverlay(): HTMLElement {
   }
   const overlay = document.createElement("div");
   overlay.id = OVERLAY_ID;
+  overlay.className =
+    "fixed inset-0 z-[9999] hidden items-center justify-center bg-black/85";
   overlay.innerHTML = `
-    <div class="error-overlay__panel">
-      <h2>Something went wrong</h2>
-      <pre class="error-overlay__message"></pre>
-      <button type="button" class="error-overlay__reload">Reload window</button>
+    <div class="max-w-[520px] rounded-lg border border-white/20 bg-[#282828] px-8 py-6 text-white">
+      <h2 class="m-0 mb-3 text-[17px] font-semibold">Something went wrong</h2>
+      <pre class="mb-4 max-h-[200px] overflow-auto whitespace-pre-wrap rounded bg-white/3 p-2 font-mono text-[11.4px] text-white/70"></pre>
+      <button type="button" class="cursor-default rounded-md border border-white/10 bg-white/3 px-4 py-1.5 text-[12px] text-white">Reload window</button>
     </div>
   `;
   overlay
-    .querySelector<HTMLButtonElement>(".error-overlay__reload")
+    .querySelector<HTMLButtonElement>("button")
     ?.addEventListener("click", () => {
       window.location.reload();
     });
@@ -27,11 +29,13 @@ function ensureOverlay(): HTMLElement {
 
 function showOverlay(message: string): void {
   const overlay = ensureOverlay();
-  const pre = overlay.querySelector<HTMLPreElement>(".error-overlay__message");
+  const pre = overlay.querySelector<HTMLPreElement>("pre");
   if (pre) {
     pre.textContent = message;
   }
   overlay.dataset.visible = "true";
+  overlay.classList.remove("hidden");
+  overlay.classList.add("flex");
 }
 
 export function installErrorBoundary(

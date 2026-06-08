@@ -1,9 +1,8 @@
-import "./react/entry";
+import "./styles.css";
 import {
   ACCELERATORS,
   type AcceleratorName,
   type FormatPlatform,
-  formatAccelerator,
 } from "../../shared/accelerators";
 import type { LightfastBridge, WindowKind } from "../../shared/ipc";
 import { WINDOW_KIND_GLOBAL } from "../../shared/window-globals";
@@ -41,6 +40,9 @@ const formatPlatform: FormatPlatform =
 document.documentElement.dataset.platform = platform;
 document.documentElement.dataset.windowKind = window[WINDOW_KIND_GLOBAL];
 document.documentElement.dataset.buildFlavor = buildInfo.buildFlavor;
+document.body.className =
+  "m-0 h-screen overflow-hidden bg-[#f9f9f9] font-sans text-[13px] text-[#0d0d0d] [.electron-dark_&]:bg-[#181818] [.electron-dark_&]:text-white";
+document.getElementById("app")?.classList.add("relative", "flex", "h-full");
 
 function applyThemeVariant(variant: "light" | "dark"): void {
   const classes = document.documentElement.classList;
@@ -51,36 +53,7 @@ function applyThemeVariant(variant: "light" | "dark"): void {
 void window.lightfastBridge.getSystemThemeVariant().then(applyThemeVariant);
 window.lightfastBridge.onSystemThemeVariantUpdated(applyThemeVariant);
 
-const buildBadge = document.querySelector<HTMLElement>("[data-build-badge]");
-if (buildBadge) {
-  buildBadge.textContent = `${buildInfo.buildFlavor} · v${buildInfo.version} (${buildInfo.buildNumber})`;
-}
-
-for (const el of document.querySelectorAll<HTMLElement>("[data-kbd-hint]")) {
-  const name = el.dataset.kbdHint as AcceleratorName | undefined;
-  if (name && name in ACCELERATORS) {
-    el.textContent = formatAccelerator(ACCELERATORS[name], formatPlatform);
-  }
-}
-
 const sidebar = createSidebarController();
-
-for (const button of document.querySelectorAll<HTMLButtonElement>(
-  "[data-open-window]"
-)) {
-  button.addEventListener("click", () => {
-    const kind = button.dataset.openWindow as WindowKind | undefined;
-    if (kind) {
-      void window.lightfastBridge.openWindow(kind);
-    }
-  });
-}
-
-for (const button of document.querySelectorAll<HTMLButtonElement>(
-  "[data-sidebar-trigger]"
-)) {
-  button.addEventListener("click", () => sidebar.toggle());
-}
 
 function dispatchAction(name: AcceleratorName): void {
   switch (name) {
@@ -104,3 +77,5 @@ for (const name of Object.keys(ACCELERATORS) as AcceleratorName[]) {
 }
 
 window.lightfastBridge.onMenuAction((name) => dispatchAction(name));
+
+void import("./react/entry");
