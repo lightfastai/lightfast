@@ -15,15 +15,7 @@
       "project": ["src/**/*.{ts,tsx}"],
       "ignoreDependencies": ["jiti"]
     },
-    "apps/platform": {
-      "entry": ["src/app/**/*.{ts,tsx}"],
-      "project": ["src/**/*.{ts,tsx}"]
-    },
     "api/app": {
-      "entry": ["src/origins.ts"],
-      "project": ["src/**/*.ts"]
-    },
-    "api/platform": {
       "entry": ["src/origins.ts"],
       "project": ["src/**/*.ts"]
     },

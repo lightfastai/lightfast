@@ -2,10 +2,7 @@ import { jwtVerify, SignJWT } from "@vendor/jose";
 import { z } from "zod";
 
 export const SERVICE_JWT_CALLERS = ["app", "inngest", "cron", "mcp"] as const;
-export const SERVICE_JWT_AUDIENCES = [
-  "lightfast-platform",
-  "lightfast-app",
-] as const;
+export const SERVICE_JWT_AUDIENCES = ["lightfast-app"] as const;
 
 export type ServiceJwtCaller = (typeof SERVICE_JWT_CALLERS)[number];
 export type ServiceJwtAudience = (typeof SERVICE_JWT_AUDIENCES)[number];

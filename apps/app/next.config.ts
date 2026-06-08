@@ -11,11 +11,7 @@ import {
   localServerActionHosts,
 } from "./src/local-dev-origins";
 
-const localDevUrls = [
-  env.NEXT_PUBLIC_APP_URL,
-  env.NEXT_PUBLIC_WWW_URL,
-  env.NEXT_PUBLIC_PLATFORM_URL,
-];
+const localDevUrls = [env.NEXT_PUBLIC_APP_URL, env.NEXT_PUBLIC_WWW_URL];
 
 const appConfig: NextConfig = merge({}, baseConfig, {
   allowedDevOrigins: localAllowedDevOrigins(localDevUrls),

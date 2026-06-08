@@ -3,13 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 function setupMocks(opts: {
   appUrl: string;
-  platformUrl?: string;
   vercelEnv: "development" | "preview" | "production" | undefined;
   wwwUrl?: string;
 }) {
   vi.doMock("~/origins", () => ({
     appUrl: opts.appUrl,
-    platformUrl: opts.platformUrl ?? "https://platform.lightfast.localhost",
     wwwUrl: opts.wwwUrl ?? "https://www.lightfast.localhost",
   }));
   vi.doMock("~/env", () => ({
@@ -52,7 +50,6 @@ describe("isAllowedWebOrigin (dev)", () => {
   beforeEach(() => {
     setupMocks({
       appUrl: "https://app.lightfast.localhost/",
-      platformUrl: "https://platform.lightfast.localhost",
       vercelEnv: undefined,
       wwwUrl: "https://www.lightfast.localhost",
     });
@@ -68,11 +65,9 @@ describe("isAllowedWebOrigin (dev)", () => {
     expect(isAllowedWebOrigin("https://www.lightfast.localhost")).toBe(false);
   });
 
-  it("rejects the direct local platform origin", async () => {
+  it("rejects an unrelated direct local service origin", async () => {
     const { isAllowedWebOrigin } = await import("~/cors");
-    expect(isAllowedWebOrigin("https://platform.lightfast.localhost")).toBe(
-      false
-    );
+    expect(isAllowedWebOrigin("https://mcp.lightfast.localhost")).toBe(false);
   });
 
   it("rejects a worktree-prefixed app origin that is not an exact env URL", async () => {
@@ -215,7 +210,6 @@ describe("tRPC OPTIONS route CORS headers", () => {
   beforeEach(() => {
     setupMocks({
       appUrl: "https://app.lightfast.localhost/",
-      platformUrl: "https://platform.lightfast.localhost",
       vercelEnv: undefined,
       wwwUrl: "https://www.lightfast.localhost",
     });

@@ -27,10 +27,7 @@ vi.mock("~/env", () => ({
 const jwtSecret = "test-service-jwt-secret-at-least-32-chars";
 
 async function token(
-  input: {
-    audience?: "lightfast-app" | "lightfast-platform";
-    caller?: "app" | "mcp";
-  } = {}
+  input: { audience?: "lightfast-app"; caller?: "app" | "mcp" } = {}
 ) {
   return await signServiceJWT({
     audience: input.audience ?? "lightfast-app",

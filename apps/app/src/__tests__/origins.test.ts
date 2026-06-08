@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 interface Env {
   appUrl?: string;
-  platformUrl?: string;
   vercelEnv?: "development" | "preview" | "production";
   wwwUrl?: string;
 }
@@ -15,8 +14,6 @@ function mockEnv(opts: Env) {
       NEXT_PUBLIC_VERCEL_ENV: opts.vercelEnv ?? "development",
       NEXT_PUBLIC_APP_URL: opts.appUrl ?? "https://lightfast.ai",
       NEXT_PUBLIC_WWW_URL: opts.wwwUrl ?? "https://lightfast.ai",
-      NEXT_PUBLIC_PLATFORM_URL:
-        opts.platformUrl ?? "https://lightfast-platform.vercel.app",
     },
   }));
 }
@@ -35,7 +32,6 @@ describe("origins (dev — NEXT_PUBLIC_VERCEL_ENV defaults to development)", () 
     mockEnv({
       appUrl: "https://lightfast.localhost",
       wwwUrl: "https://www.lightfast.localhost",
-      platformUrl: "https://platform.lightfast.localhost",
     });
   });
 
@@ -47,11 +43,6 @@ describe("origins (dev — NEXT_PUBLIC_VERCEL_ENV defaults to development)", () 
   it("wwwUrl resolves to the injected portless sibling URL", async () => {
     const { wwwUrl } = await import("../origins");
     expect(wwwUrl).toBe("https://www.lightfast.localhost");
-  });
-
-  it("platformUrl resolves to the injected portless sibling URL", async () => {
-    const { platformUrl } = await import("../origins");
-    expect(platformUrl).toBe("https://platform.lightfast.localhost");
   });
 
   it("does not export a generic dev origin pattern list", async () => {
@@ -76,7 +67,6 @@ describe("origins (dev — NEXT_PUBLIC_<APP>_URL with port)", () => {
     mockEnv({
       appUrl: "http://localhost:3000",
       wwwUrl: "http://localhost:3001",
-      platformUrl: "http://localhost:3002",
     });
   });
 
@@ -88,11 +78,6 @@ describe("origins (dev — NEXT_PUBLIC_<APP>_URL with port)", () => {
   it("wwwUrl resolves to the injected localhost URL", async () => {
     const { wwwUrl } = await import("../origins");
     expect(wwwUrl).toBe("http://localhost:3001");
-  });
-
-  it("platformUrl resolves to the injected localhost URL", async () => {
-    const { platformUrl } = await import("../origins");
-    expect(platformUrl).toBe("http://localhost:3002");
   });
 });
 
@@ -111,11 +96,6 @@ describe("origins (production — VRP unset)", () => {
     const { wwwUrl } = await import("../origins");
     expect(wwwUrl).toBe("https://lightfast.ai");
   });
-
-  it("platformUrl falls back to its production literal when VRP is empty", async () => {
-    const { platformUrl } = await import("../origins");
-    expect(platformUrl).toBe("https://lightfast-platform.vercel.app");
-  });
 });
 
 describe("origins (production — VRP populated)", () => {
@@ -129,10 +109,6 @@ describe("origins (production — VRP populated)", () => {
           project: { name: "lightfast-www" },
           production: { alias: "lightfast.ai" },
         },
-        {
-          project: { name: "lightfast-platform" },
-          production: { url: "lightfast-platform-prod.vercel.app" },
-        },
       ])
     );
   });
@@ -145,10 +121,5 @@ describe("origins (production — VRP populated)", () => {
   it("wwwUrl uses the matched VRP alias", async () => {
     const { wwwUrl } = await import("../origins");
     expect(wwwUrl).toBe("https://lightfast.ai");
-  });
-
-  it("platformUrl uses the matched VRP url", async () => {
-    const { platformUrl } = await import("../origins");
-    expect(platformUrl).toBe("https://lightfast-platform-prod.vercel.app");
   });
 });

@@ -22,16 +22,6 @@ describe("local env overrides", () => {
         },
       ],
       [
-        "apps/platform/package.json",
-        {
-          "with-env":
-            "dotenv -e ./.env.overrides.local -e ./.vercel/.env.development.local --",
-          "with-env:local":
-            "dotenv -e ./.env.overrides.local -e ./.vercel/.env.development.local --",
-          "with-env:vercel": "dotenv -e ./.vercel/.env.development.local --",
-        },
-      ],
-      [
         "apps/mcp/package.json",
         {
           "with-env":
@@ -82,15 +72,11 @@ describe("local env overrides", () => {
     const appTurbo = readJson<{ tasks: { build: { inputs: string[] } } }>(
       "apps/app/turbo.json"
     );
-    const platformTurbo = readJson<{ tasks: { build: { inputs: string[] } } }>(
-      "apps/platform/turbo.json"
-    );
     const mcpTurbo = readJson<{ tasks: { build: { inputs: string[] } } }>(
       "apps/mcp/turbo.json"
     );
 
     expect(appTurbo.tasks.build.inputs).toContain(".env.overrides.local");
-    expect(platformTurbo.tasks.build.inputs).toContain(".env.overrides.local");
     expect(mcpTurbo.tasks.build.inputs).toContain(
       "../app/.env.overrides.local"
     );

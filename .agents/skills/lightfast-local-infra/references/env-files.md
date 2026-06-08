@@ -8,7 +8,6 @@ must not store generated local DB/Redis credentials.
 
 ```text
 apps/app/.env.overrides.local
-apps/platform/.env.overrides.local
 ```
 
 `@db/app` reads the app env files through:
@@ -40,13 +39,6 @@ KV_REST_API_URL
 KV_REST_API_TOKEN
 ```
 
-Platform:
-
-```text
-KV_REST_API_URL
-KV_REST_API_TOKEN
-```
-
 Only the keys above are managed. Leave any other keys in the override file
 alone unless the human explicitly asks to prune local secrets.
 
@@ -73,7 +65,6 @@ KV_REST_API_URL="$kv_rest_api_url" \
 KV_REST_API_TOKEN="$kv_rest_api_token" \
 node .agents/skills/lightfast-local-infra/lib/write-env.mjs \
   --file apps/app/.env.overrides.local \
-  --file apps/platform/.env.overrides.local \
   --set KV_REST_API_URL --set KV_REST_API_TOKEN
 ```
 
@@ -82,7 +73,7 @@ node .agents/skills/lightfast-local-infra/lib/write-env.mjs \
 Print key names only:
 
 ```bash
-for file in apps/app/.env.overrides.local apps/platform/.env.overrides.local; do
+for file in apps/app/.env.overrides.local; do
   echo "$file"
   awk -F= '/^[A-Za-z_][A-Za-z0-9_]*=/{print $1}' "$file" | sort
 done
@@ -93,9 +84,5 @@ Expected managed keys:
 ```bash
 for key in DATABASE_HOST DATABASE_USERNAME DATABASE_PASSWORD KV_REST_API_URL KV_REST_API_TOKEN; do
   grep -q "^$key=" apps/app/.env.overrides.local
-done
-
-for key in KV_REST_API_URL KV_REST_API_TOKEN; do
-  grep -q "^$key=" apps/platform/.env.overrides.local
 done
 ```

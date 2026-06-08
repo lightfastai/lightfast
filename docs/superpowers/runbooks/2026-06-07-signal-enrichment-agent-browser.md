@@ -5,7 +5,7 @@ the X and GitHub emulators.
 
 ## Preconditions
 
-- Local infra env overrides are present for `apps/app` and `apps/platform`.
+- Local infra env overrides are present for `apps/app`.
 - The current branch has the signal entity enrichment workflow registered.
 - The local org has X and GitHub connectors bound through the emulator setup.
 

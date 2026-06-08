@@ -1,8 +1,25 @@
+import { SignJWT } from "@vendor/jose";
 import { describe, expect, it } from "vitest";
 
 import { signServiceJWT, verifyServiceJWT } from "../service-jwt";
 
 const jwtSecret = "test-service-jwt-secret-at-least-32-chars";
+
+function secretKey(): Uint8Array {
+  return new TextEncoder().encode(jwtSecret);
+}
+
+async function tokenWithAudience(audience: string): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+
+  return await new SignJWT({ token_use: "service_access" })
+    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+    .setIssuer("mcp")
+    .setAudience(audience)
+    .setIssuedAt(now)
+    .setExpirationTime(now + 60)
+    .sign(secretKey());
+}
 
 describe("service JWT", () => {
   it("signs and verifies an mcp caller for the app audience", async () => {
@@ -26,11 +43,7 @@ describe("service JWT", () => {
   });
 
   it("rejects the wrong audience", async () => {
-    const token = await signServiceJWT({
-      audience: "lightfast-platform",
-      caller: "mcp",
-      jwtSecret,
-    });
+    const token = await tokenWithAudience("wrong-service");
 
     await expect(
       verifyServiceJWT({

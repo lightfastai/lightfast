@@ -7,12 +7,10 @@ describe("www local dev origins", () => {
       localAllowedDevOrigins([
         "https://app-tanstack.lightfast.localhost",
         "https://app-tanstack.www.lightfast.localhost",
-        "https://app-tanstack.platform.lightfast.localhost",
       ])
     ).toEqual([
       "app-tanstack.lightfast.localhost",
       "app-tanstack.www.lightfast.localhost",
-      "app-tanstack.platform.lightfast.localhost",
     ]);
   });
 

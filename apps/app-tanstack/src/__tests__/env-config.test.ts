@@ -31,14 +31,12 @@ describe("app-tanstack environment validation wiring", () => {
     expect(envSource).toContain("NEXT_PUBLIC_SENTRY_DSN");
     expect(envSource).toContain("process.env.NEXT_PUBLIC_APP_URL");
     expect(envSource).toContain("process.env.NEXT_PUBLIC_WWW_URL");
-    expect(envSource).toContain("process.env.NEXT_PUBLIC_PLATFORM_URL");
     expect(envSource).toContain("process.env.NEXT_PUBLIC_VERCEL_ENV");
     expect(envSource).toContain(
       "process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"
     );
     expect(envSource).toContain("VITE_LIGHTFAST_APP_URL");
     expect(envSource).toContain("VITE_LIGHTFAST_WWW_URL");
-    expect(envSource).toContain("VITE_LIGHTFAST_PLATFORM_URL");
     expect(envSource).toContain("VITE_CLERK_PUBLISHABLE_KEY");
     expect(envSource).toContain("VITE_VERCEL_ENV");
   });
@@ -95,7 +93,6 @@ describe("app-tanstack environment validation wiring", () => {
       expect.arrayContaining([
         "NEXT_PUBLIC_APP_URL",
         "NEXT_PUBLIC_WWW_URL",
-        "NEXT_PUBLIC_PLATFORM_URL",
         "NEXT_PUBLIC_VERCEL_ENV",
         "VITE_*",
       ])
