@@ -59,7 +59,7 @@ export function buildAppTanstackAutomationInteractionPaths(
   };
 }
 
-async function waitForRouteText(
+export async function waitForRouteText(
   config: AppTanstackAuthRouteSmokeConfig,
   input: WaitForRouteTextInput
 ) {
@@ -152,7 +152,7 @@ async function clickAutomationLinkByName(
   );
 }
 
-async function clickButtonByText(
+export async function clickButtonByText(
   config: AppTanstackAuthRouteSmokeConfig,
   name: string
 ) {
