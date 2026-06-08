@@ -1014,8 +1014,11 @@ describe("skills index refresh/read service", () => {
     const deps = createDeps({
       targetState: staleState({ indexedCommitSha: "old-index" }),
     });
+    const enqueueError = new Error(
+      "Inngest API Error: 404 Event key not found"
+    );
     deps.enqueueRefresh = vi.fn(async () => {
-      throw new Error("Inngest API Error: 404 Event key not found");
+      throw enqueueError;
     });
 
     await expect(
@@ -1035,6 +1038,17 @@ describe("skills index refresh/read service", () => {
       sourceControlRepositoryId: 1,
       targetCommitSha: undefined,
     });
+    expect(logWarnMock).toHaveBeenCalledWith(
+      "[skills] read-triggered skill index refresh enqueue failed",
+      {
+        error: enqueueError,
+        errorMessage: "Inngest API Error: 404 Event key not found",
+        errorStack: expect.any(String),
+        reason: "read",
+        sourceControlRepositoryId: 1,
+        targetCommitSha: undefined,
+      }
+    );
   });
 
   it("propagates setup-triggered enqueue failures", async () => {
@@ -1053,6 +1067,7 @@ describe("skills index refresh/read service", () => {
         sourceControlRepositoryId: 1,
       })
     ).rejects.toThrow("setup enqueue failed");
+    expect(logWarnMock).not.toHaveBeenCalled();
   });
 
   it("does not enqueue a refresh when repository access is not verified", async () => {
