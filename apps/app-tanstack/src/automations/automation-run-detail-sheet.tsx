@@ -45,6 +45,8 @@ export function AutomationRunDetailSheet({
 
   const run = hasInitial ? initialRun : query.data;
 
+  // Closing on query.isError asks the parent to clear the invalid run search
+  // param, which re-renders this sheet with publicId=null and stops recovery.
   useEffect(() => {
     if (publicId && query.isError) {
       onOpenChange(false);
