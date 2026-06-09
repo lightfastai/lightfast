@@ -10,6 +10,7 @@ import {
 import { toast } from "@repo/ui/components/ui/sonner";
 import { skipToken, useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
+import { useEffect } from "react";
 import { useTRPC } from "~/trpc/react";
 import { AutomationRunDetailContent } from "./automation-run-detail-content";
 
@@ -36,12 +37,19 @@ export function AutomationRunDetailSheet({
       {
         enabled: typeof window !== "undefined" && shouldFetchRun,
         refetchOnWindowFocus: true,
+        retry: false,
         staleTime: 5000,
       }
     )
   );
 
   const run = hasInitial ? initialRun : query.data;
+
+  useEffect(() => {
+    if (publicId && query.isError) {
+      onOpenChange(false);
+    }
+  }, [onOpenChange, publicId, query.isError]);
 
   function handleCopyLink() {
     if (typeof window === "undefined") {

@@ -159,15 +159,36 @@ async function waitForManualRun(input: {
 
 async function assertSelectedRunSearchParam(
   config: AppTanstackAuthRouteSmokeConfig,
-  runId: string
+  runId: string | null
 ) {
   const href = await agentBrowser(config, ["get", "url"]);
   const selectedRunId = new URL(href).searchParams.get("run");
   if (selectedRunId !== runId) {
     throw new Error(
-      `Expected selected run query param ${runId}, received ${selectedRunId ?? "<missing>"} at ${href}`
+      `Expected selected run query param ${runId ?? "<missing>"}, received ${selectedRunId ?? "<missing>"} at ${href}`
     );
   }
+}
+
+async function waitForSelectedRunSearchParam(
+  config: AppTanstackAuthRouteSmokeConfig,
+  runId: string | null
+) {
+  const deadline = Date.now() + config.routeTimeoutMs;
+  let latestHref = "";
+
+  while (Date.now() < deadline) {
+    latestHref = await agentBrowser(config, ["get", "url"]);
+    const selectedRunId = new URL(latestHref).searchParams.get("run");
+    if (selectedRunId === runId) {
+      return;
+    }
+    await delay(500);
+  }
+
+  throw new Error(
+    `Timed out waiting for selected run query param ${runId ?? "<missing>"}. Last URL: ${latestHref}`
+  );
 }
 
 export async function runAppTanstackAutomationRunSmoke(
@@ -244,6 +265,26 @@ export async function runAppTanstackAutomationRunSmoke(
       expectedText: ["manual run", "Status", "Trigger", "Run ID", run.publicId],
       name: "automation manual run detail",
       path: runPaths.detailPath,
+    });
+
+    const invalidRunPaths = buildAppTanstackAutomationRunPaths({
+      automationId: automation.publicId,
+      orgSlug: session.orgSlug,
+      runId: "automation_run_00000000-0000-4000-8000-000000000000",
+    });
+    if (!invalidRunPaths.runDetailPath) {
+      throw new Error("Invalid run detail path was not built.");
+    }
+
+    await agentBrowser(config, [
+      "open",
+      new URL(invalidRunPaths.runDetailPath, config.appOrigin).toString(),
+    ]);
+    await waitForSelectedRunSearchParam(config, null);
+    await waitForRouteText(config, {
+      expectedText: ["Previous runs", "manual"],
+      name: "automation invalid selected run recovery",
+      path: invalidRunPaths.detailPath,
     });
 
     console.log(`[smoke] completed automation manual run ${run.publicId}`);

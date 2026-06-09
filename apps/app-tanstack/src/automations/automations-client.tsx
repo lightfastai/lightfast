@@ -123,7 +123,7 @@ function AutomationRow({
     <Link
       className="flex items-center justify-between gap-4 rounded-xl px-3 py-3 transition-colors hover:bg-muted/40"
       params={{ automation: automation.publicId, slug }}
-      search={{ run: null }}
+      search={{ run: undefined }}
       to="/$slug/automations/$automation"
     >
       <div className="flex min-w-0 items-center gap-3">
