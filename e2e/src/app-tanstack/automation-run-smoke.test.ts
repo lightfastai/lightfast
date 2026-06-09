@@ -31,6 +31,20 @@ describe("app-tanstack automation run smoke helpers", () => {
     });
   });
 
+  it("builds automation detail path for invalid selected-run recovery", () => {
+    expect(
+      buildAppTanstackAutomationRunPaths({
+        automationId: "automation_123",
+        orgSlug: "lightfast",
+        runId: "missing run/id",
+      })
+    ).toEqual({
+      detailPath: "/lightfast/automations/automation_123",
+      runDetailPath:
+        "/lightfast/automations/automation_123?run=missing%20run%2Fid",
+    });
+  });
+
   it("returns null run detail path when run id is omitted", () => {
     expect(
       buildAppTanstackAutomationRunPaths({

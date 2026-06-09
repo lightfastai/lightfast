@@ -18,7 +18,7 @@ describe("app-tanstack automation schedule smoke helpers", () => {
     });
   });
 
-  it("builds the organization-scoped automation detail path", () => {
+  it("builds the organization-scoped automation detail and list paths", () => {
     expect(
       buildAppTanstackAutomationSchedulePaths({
         automationId: "automation_123",
@@ -26,6 +26,7 @@ describe("app-tanstack automation schedule smoke helpers", () => {
       })
     ).toEqual({
       detailPath: "/lightfast/automations/automation_123",
+      listPath: "/lightfast/automations",
     });
   });
 });

@@ -27,6 +27,7 @@ export interface AppTanstackAutomationSchedulePathsInput {
 
 export interface AppTanstackAutomationSchedulePaths {
   detailPath: string;
+  listPath: string;
 }
 
 export function buildAppTanstackAutomationScheduleFixture(
@@ -45,6 +46,7 @@ export function buildAppTanstackAutomationSchedulePaths(
 ): AppTanstackAutomationSchedulePaths {
   return {
     detailPath: `/${input.orgSlug}/automations/${input.automationId}`,
+    listPath: `/${input.orgSlug}/automations`,
   };
 }
 
@@ -183,12 +185,22 @@ async function fillTimeInput(
           ),
         };
       }
+      input.focus();
       const valueSetter = Object.getOwnPropertyDescriptor(
         HTMLInputElement.prototype,
         "value"
       )?.set;
       valueSetter?.call(input, time);
-      input.dispatchEvent(new Event("input", { bubbles: true }));
+      const inputEvent =
+        typeof InputEvent === "function"
+          ? new InputEvent("input", {
+              bubbles: true,
+              cancelable: true,
+              data: time,
+              inputType: "insertReplacementText",
+            })
+          : new Event("input", { bubbles: true, cancelable: true });
+      input.dispatchEvent(inputEvent);
       input.dispatchEvent(new Event("change", { bubbles: true }));
       input.blur();
       return { filled: true, value: input.value };
@@ -370,6 +382,21 @@ export async function runAppTanstackAutomationScheduleSmoke(
       expectedText: ["Active", "Weekly on Friday at 2:30 PM", "UTC"],
       name: "automation detail after schedule edit reload",
       path: paths.detailPath,
+    });
+
+    await agentBrowser(config, [
+      "open",
+      new URL(paths.listPath, config.appOrigin).toString(),
+    ]);
+    await waitForRouteText(config, {
+      expectedText: [
+        "Automations",
+        "Current",
+        fixture.automationName,
+        "Weekly on Friday at 2:30 PM",
+      ],
+      name: "automation list after schedule edit",
+      path: paths.listPath,
     });
 
     console.log(

@@ -11,9 +11,9 @@ import {
 } from "~/trpc/route-prefetch";
 
 function validateAutomationDetailSearch(search: Record<string, unknown>) {
-  const run = typeof search.run === "string" ? search.run : null;
+  const run = typeof search.run === "string" ? search.run : undefined;
   return {
-    run: run && run.length > 0 ? run : null,
+    run: run && run !== "null" && run.length > 0 ? run : undefined,
   };
 }
 
@@ -74,7 +74,7 @@ function AutomationDetailPage() {
         replace: true,
         search: (previous) => ({
           ...previous,
-          run: publicId,
+          run: publicId ?? undefined,
         }),
       });
     },
@@ -85,7 +85,7 @@ function AutomationDetailPage() {
     <RoutePrefetchBoundary state={prefetchState}>
       <AutomationDetailClient
         automationId={automationId}
-        selectedRunId={run}
+        selectedRunId={run ?? null}
         setSelectedRunId={setSelectedRunId}
         slug={slug}
       />
