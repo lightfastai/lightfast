@@ -7,6 +7,7 @@
   "sideEffects": false,
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
+    "app-tanstack:automation-delete": "NODE_OPTIONS=\"--conditions=react-server ${NODE_OPTIONS:-}\" pnpm with-env tsx src/app-tanstack/automation-delete-smoke.ts",
     "app-tanstack:automation-interactions": "NODE_OPTIONS=\"--conditions=react-server ${NODE_OPTIONS:-}\" pnpm with-env tsx src/app-tanstack/automation-interaction-smoke.ts",
     "app-tanstack:automation-run": "NODE_OPTIONS=\"--conditions=react-server ${NODE_OPTIONS:-}\" pnpm with-env tsx src/app-tanstack/automation-run-smoke.ts",
     "app-tanstack:automation-schedule": "NODE_OPTIONS=\"--conditions=react-server ${NODE_OPTIONS:-}\" pnpm with-env tsx src/app-tanstack/automation-schedule-smoke.ts",
