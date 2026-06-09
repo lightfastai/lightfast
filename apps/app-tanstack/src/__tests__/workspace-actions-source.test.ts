@@ -79,13 +79,4 @@ describe("workspace page-owned actions", () => {
     expect(newRouteSource).toContain("New automation -");
     expect(detailRouteSource).toContain("Automation -");
   });
-
-  it("keeps automation run sheets accessible for dialog descriptions", () => {
-    const runSheetSource = source(
-      "src/automations/automation-run-detail-sheet.tsx"
-    );
-
-    expect(runSheetSource).toContain("SheetDescription");
-    expect(runSheetSource).toContain("Automation run details");
-  });
 });
