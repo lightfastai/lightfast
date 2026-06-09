@@ -12,6 +12,11 @@ import { AutomationScheduleEditor } from "./automation-schedule-editor";
 import { AutomationStatusChip } from "./automation-status-chip";
 import { RailRow, RailSection } from "./detail-sections";
 
+const CONNECTOR_LABELS = {
+  linear: "Linear",
+  x: "X",
+} as const;
+
 function formatDate(date: Date | null | undefined): string {
   if (!date) {
     return "-";
@@ -44,6 +49,12 @@ function TimestampValue({
       {formatDate(date)}
     </span>
   );
+}
+
+function formatConnectorProvider(
+  provider: keyof typeof CONNECTOR_LABELS | null | undefined
+) {
+  return provider ? CONNECTOR_LABELS[provider] : "-";
 }
 
 export function AutomationDetailClient({
@@ -144,6 +155,11 @@ export function AutomationDetailClient({
 
         <RailSection title="Details">
           <AutomationScheduleEditor automation={automation} />
+          <RailRow label="Connector">
+            <span className="text-foreground text-sm">
+              {formatConnectorProvider(automation.connectorProvider)}
+            </span>
+          </RailRow>
         </RailSection>
 
         <AutomationActions automation={automation} slug={slug} />
