@@ -82,7 +82,7 @@ vi.mock("@repo/provider-routine-contract", () => ({
   providerRoutineFindOutputSchema: { kind: "provider-find-output" },
 }));
 
-vi.mock("@api/app/services/connectors", () => ({
+vi.mock("@api/app/services/connectors/chat-routines", () => ({
   callChatProviderRoutine: callProviderRoutineMock,
   findChatProviderRoutines: findProviderRoutinesMock,
 }));
@@ -177,6 +177,7 @@ beforeEach(() => {
   getWorkspaceAssistantConversationByPublicIdMock.mockResolvedValue(
     makeConversation()
   );
+  isDuplicateKeyErrorMock.mockReturnValue(false);
   listWorkspaceAssistantMessagesMock.mockResolvedValue([]);
   appendWorkspaceAssistantMessageMock
     .mockResolvedValueOnce(
@@ -260,6 +261,76 @@ describe("workspace assistant chat server route", () => {
 
     expect(response.status).toBe(401);
     expect(streamTextMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects write-mode chat requests with an unauthenticated identity (expired token)", async () => {
+    resolveWorkspaceAssistantAuthContextMock.mockResolvedValueOnce({
+      identity: { type: "unauthenticated" },
+    });
+
+    const response = await handleWorkspaceAssistantChatRequest(
+      createWriteModeRequest()
+    );
+
+    expect(response.status).toBe(401);
+    expect(streamTextMock).not.toHaveBeenCalled();
+    expect(findProviderRoutinesMock).not.toHaveBeenCalled();
+    expect(findUserConnectorToolsMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects write-mode chat requests without an active organization", async () => {
+    resolveWorkspaceAssistantAuthContextMock.mockResolvedValueOnce({
+      identity: { type: "pending", userId: "user_123" },
+    });
+
+    const response = await handleWorkspaceAssistantChatRequest(
+      createWriteModeRequest()
+    );
+
+    expect(response.status).toBe(403);
+    expect(streamTextMock).not.toHaveBeenCalled();
+    expect(findProviderRoutinesMock).not.toHaveBeenCalled();
+    expect(findUserConnectorToolsMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects write-mode chat requests when the active organization is not bound", async () => {
+    resolveWorkspaceAssistantAuthContextMock.mockResolvedValueOnce({
+      identity: {
+        orgGate: { bindingStatus: "unbound", nextSetupRequirement: "bind" },
+        orgId: "org_123",
+        type: "active",
+        userId: "user_123",
+      },
+    });
+
+    const response = await handleWorkspaceAssistantChatRequest(
+      createWriteModeRequest()
+    );
+
+    expect(response.status).toBe(403);
+    expect(streamTextMock).not.toHaveBeenCalled();
+    expect(findProviderRoutinesMock).not.toHaveBeenCalled();
+    expect(findUserConnectorToolsMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects write-mode chat requests when the conversation belongs to another organization", async () => {
+    const duplicatePublicId = new Error("duplicate public id");
+    getWorkspaceAssistantConversationByPublicIdMock
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined);
+    createWorkspaceAssistantConversationMock.mockRejectedValueOnce(
+      duplicatePublicId
+    );
+    isDuplicateKeyErrorMock.mockReturnValueOnce(true);
+
+    const response = await handleWorkspaceAssistantChatRequest(
+      createWriteModeRequest()
+    );
+
+    expect(response.status).toBe(404);
+    expect(streamTextMock).not.toHaveBeenCalled();
+    expect(findProviderRoutinesMock).not.toHaveBeenCalled();
+    expect(findUserConnectorToolsMock).not.toHaveBeenCalled();
   });
 
   it("persists an idempotent turn and streams through the AI Gateway model", async () => {
@@ -422,6 +493,20 @@ function createJsonRequest(body: unknown) {
     body: JSON.stringify(body),
     headers: { "Content-Type": "application/json" },
     method: "POST",
+  });
+}
+
+function createWriteModeRequest() {
+  return createJsonRequest({
+    conversationId: "conv_123",
+    messages: [
+      {
+        id: "client-message-1",
+        parts: [{ text: "Create a Linear issue", type: "text" }],
+        role: "user",
+      },
+    ],
+    providerRoutineWriteMode: true,
   });
 }
 

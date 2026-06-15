@@ -1,15 +1,5 @@
 import { createHash } from "node:crypto";
 import {
-  type ChatProviderRoutineContext,
-  callChatProviderRoutine,
-  findChatProviderRoutines,
-} from "@api/app/services/connectors";
-import {
-  callUserConnectorTool,
-  findUserConnectorTools,
-  type UserConnectorChatContext,
-} from "@api/app/services/user-connectors/runtime";
-import {
   appendWorkspaceAssistantMessage,
   createWorkspaceAssistantConversation,
   createWorkspaceAssistantGeneration,
@@ -70,6 +60,26 @@ const WORKSPACE_ASSISTANT_STREAM_SMOOTHING = {
   chunking: "word",
   delayInMs: 20,
 } as const;
+
+interface ChatProviderRoutineContext {
+  clerkOrgId: string;
+  conversationId: string;
+  userId: string;
+  writeMode: boolean;
+}
+
+interface UserConnectorChatContext {
+  actor: {
+    orgId: string;
+    userId: string;
+  };
+  db: typeof db;
+  now: () => Date;
+  source: {
+    conversationId: string;
+    surface: "interactive_chat";
+  };
+}
 
 const chatRequestSchema = z
   .object({
@@ -509,16 +519,24 @@ function createWorkspaceAssistantTools(input: {
         "Call one private user connector tool by routineId for the current user. Use routineIds returned by findUserConnectorTools.",
       inputSchema: userConnectorCallInputSchema,
       outputSchema: userConnectorCallSuccessSchema,
-      execute: async (toolInput) =>
-        callUserConnectorTool(userConnectorContext(input), toolInput),
+      execute: async (toolInput) => {
+        const { callUserConnectorTool } = await import(
+          "@api/app/services/user-connectors/runtime"
+        );
+        return callUserConnectorTool(userConnectorContext(input), toolInput);
+      },
     }),
     findUserConnectorTools: tool({
       description:
         "Find private user connector tools available to the current user, such as Granola meeting note tools. Use this before calling callUserConnectorTool.",
       inputSchema: userConnectorFindInputSchema,
       outputSchema: userConnectorFindOutputSchema,
-      execute: async (toolInput) =>
-        findUserConnectorTools(userConnectorContext(input), toolInput),
+      execute: async (toolInput) => {
+        const { findUserConnectorTools } = await import(
+          "@api/app/services/user-connectors/runtime"
+        );
+        return findUserConnectorTools(userConnectorContext(input), toolInput);
+      },
     }),
   };
 }
@@ -535,16 +553,30 @@ function createWorkspaceAssistantProviderRoutineTools(input: {
         "Call one connected provider routine by routineId using this workspace's enabled connector. Write routines require write mode for this turn.",
       inputSchema: providerRoutineCallInputSchema,
       outputSchema: providerRoutineCallSuccessSchema,
-      execute: async (toolInput) =>
-        callChatProviderRoutine(providerRoutineContext(input), toolInput),
+      execute: async (toolInput) => {
+        const { callChatProviderRoutine } = await import(
+          "@api/app/services/connectors/chat-routines"
+        );
+        return callChatProviderRoutine(
+          providerRoutineContext(input),
+          toolInput
+        );
+      },
     }),
     findProviderRoutines: tool({
       description:
         "Find connected provider routines available to this workspace through enabled connectors. Returns read routines, and write routines only when write mode is enabled for this turn.",
       inputSchema: providerRoutineFindInputSchema,
       outputSchema: providerRoutineFindOutputSchema,
-      execute: async (toolInput) =>
-        findChatProviderRoutines(providerRoutineContext(input), toolInput),
+      execute: async (toolInput) => {
+        const { findChatProviderRoutines } = await import(
+          "@api/app/services/connectors/chat-routines"
+        );
+        return findChatProviderRoutines(
+          providerRoutineContext(input),
+          toolInput
+        );
+      },
     }),
   };
 }
