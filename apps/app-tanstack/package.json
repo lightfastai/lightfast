@@ -37,6 +37,7 @@
     "@repo/provider-routine-contract": "workspace:*",
     "@repo/provider-routines": "workspace:*",
     "@repo/ui": "workspace:*",
+    "@repo/user-connector-contract": "workspace:*",
     "@sentry/tanstackstart-react": "catalog:",
     "@t3-oss/env-core": "catalog:",
     "@tanstack/react-query": "catalog:",
