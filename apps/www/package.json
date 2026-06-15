@@ -14,7 +14,7 @@
     "search:sync": "mxbai store sync $MXBAI_STORE_ID \"./src/content/**/*.mdx\" --api-key $MXBAI_API_KEY",
     "search:sync:ci": "mxbai store sync $MXBAI_STORE_ID \"./src/content/**/*.mdx\" --api-key $MXBAI_API_KEY -y",
     "clean": "git clean -xdf .cache .clerk .next .turbo .vercel node_modules",
-    "dev:next": "portless run pnpm with-related-projects pnpm with-env next dev --turbo",
+    "dev": "portless run pnpm with-related-projects pnpm with-env next dev --turbo",
     "start": "pnpm with-env next start -p 4101",
     "test": "vitest run",
     "typecheck": "pnpm with-env next typegen && tsc --noEmit",

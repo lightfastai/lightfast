@@ -27,7 +27,7 @@
         "VERCEL_ENV"
       ]
     },
-    "dev:next": {
+    "dev": {
       "cache": false,
       "persistent": true
     },

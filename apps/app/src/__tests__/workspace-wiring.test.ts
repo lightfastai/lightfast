@@ -24,12 +24,23 @@ describe("app workspace wiring", () => {
       readFileSync(resolve(repoRoot, "package.json"), "utf8")
     ) as { scripts: Record<string, string> };
 
+    expect(rootPackageJson.scripts.dev).toContain("turbo run dev");
     expect(rootPackageJson.scripts.dev).toContain("-F @lightfast/app");
     expect(rootPackageJson.scripts.dev).toContain("@lightfast/app#mfe:proxy");
+    expect(rootPackageJson.scripts.dev).not.toContain("dev:next");
     expect(rootPackageJson.scripts.dev).not.toContain("-F @lightfast/app-next");
     expect(rootPackageJson.scripts.dev).not.toContain(
       "@lightfast/app-next#mfe:proxy"
     );
+  });
+
+  it("does not expose the canonical app through a Next-specific dev task", () => {
+    const packageJson = JSON.parse(
+      readFileSync(resolve(appRoot, "package.json"), "utf8")
+    ) as { scripts: Record<string, string | undefined> };
+
+    expect(packageJson.scripts.dev).toContain("vite dev");
+    expect(packageJson.scripts["dev:next"]).toBeUndefined();
   });
 
   it("carries the canonical MFE mesh and proxy dependency", () => {

@@ -38,10 +38,6 @@
       "persistent": true,
       "passThroughEnv": ["HOST", "PORT", "PORTLESS_URL"]
     },
-    "dev:next": {
-      "cache": false,
-      "persistent": true
-    },
     "transit": {}
   }
 }
