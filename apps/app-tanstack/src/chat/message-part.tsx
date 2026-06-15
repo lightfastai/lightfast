@@ -1,16 +1,28 @@
-import { Badge } from "@repo/ui/components/ui/badge";
-import { cn } from "@repo/ui/lib/utils";
-import type { UIMessage } from "@vendor/ai";
-import { ChevronDown, Wrench } from "lucide-react";
+import { MessageResponse } from "@repo/ui/components/ai-elements/message";
+import {
+  Reasoning,
+  ReasoningContent,
+  ReasoningTrigger,
+} from "@repo/ui/components/ai-elements/reasoning";
+import {
+  type ToolPart as AiElementsToolPart,
+  Tool,
+  ToolContent,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+} from "@repo/ui/components/ai-elements/tool";
+import type { DynamicToolUIPart, ToolUIPart, UIMessage } from "@vendor/ai";
 import { memo } from "react";
 
-type ToolPart = UIMessage["parts"][number] & {
-  errorText?: string;
-  input?: unknown;
-  output?: unknown;
-  state: string;
+interface WorkspaceToolPart {
+  errorText?: AiElementsToolPart["errorText"];
+  input?: AiElementsToolPart["input"];
+  output?: AiElementsToolPart["output"];
+  state: AiElementsToolPart["state"];
   toolName?: string;
-};
+  type: "dynamic-tool" | `tool-${string}`;
+}
 
 export const WorkspaceAssistantMessagePart = memo(
   function WorkspaceAssistantMessagePart({
@@ -21,58 +33,53 @@ export const WorkspaceAssistantMessagePart = memo(
     part: UIMessage["parts"][number];
   }) {
     if (part.type === "text") {
-      return <div className="whitespace-pre-wrap">{part.text}</div>;
+      return <MessageResponse>{part.text}</MessageResponse>;
     }
 
     if (part.type === "reasoning") {
       return (
-        <details
-          className="rounded-sm border border-border/60 bg-muted/20 p-3 text-sm"
-          open={isStreaming}
-        >
-          <summary className="cursor-pointer font-medium text-muted-foreground">
-            Reasoning
-          </summary>
-          <div className="mt-3 whitespace-pre-wrap text-muted-foreground">
-            {part.text}
-          </div>
-        </details>
+        <Reasoning defaultOpen={isStreaming} isStreaming={isStreaming}>
+          <ReasoningTrigger />
+          <ReasoningContent>{part.text}</ReasoningContent>
+        </Reasoning>
+      );
+    }
+
+    if (isGranolaUserConnectorToolPart(part)) {
+      return (
+        <div className="inline-flex w-fit items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 text-muted-foreground text-xs">
+          Used Granola
+        </div>
       );
     }
 
     if (isToolPart(part)) {
-      const toolName =
-        part.type === "dynamic-tool"
-          ? part.toolName
-          : part.type.split("-").slice(1).join("-");
+      const toolPart = part as unknown as WorkspaceToolPart;
       return (
-        <details
-          className="rounded-sm border border-border/60 bg-muted/20 text-sm"
-          open={part.state !== "output-available"}
+        <Tool
+          defaultOpen={toolPart.state !== "output-available"}
+          key={toolPart.state}
         >
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
-            <span className="flex min-w-0 items-center gap-2">
-              <Wrench className="size-3.5 shrink-0 text-muted-foreground" />
-              <span className="truncate font-medium">{toolName}</span>
-            </span>
-            <span className="flex shrink-0 items-center gap-2">
-              <Badge className="rounded-full text-xs" variant="secondary">
-                {formatPartLabel(part.state)}
-              </Badge>
-              <ChevronDown className="size-3.5 text-muted-foreground" />
-            </span>
-          </summary>
-          <div className="space-y-3 border-border/60 border-t p-3">
-            <ToolPayload label="Input" value={part.input} />
-            {part.errorText ? (
-              <div className="rounded-sm border border-destructive/30 bg-destructive/10 p-3 text-destructive">
-                {part.errorText}
-              </div>
-            ) : (
-              <ToolPayload label="Output" value={part.output} />
-            )}
-          </div>
-        </details>
+          {toolPart.type === "dynamic-tool" ? (
+            <ToolHeader
+              state={toolPart.state as DynamicToolUIPart["state"]}
+              toolName={toolPart.toolName ?? ""}
+              type="dynamic-tool"
+            />
+          ) : (
+            <ToolHeader
+              state={toolPart.state as ToolUIPart["state"]}
+              type={toolPart.type as ToolUIPart["type"]}
+            />
+          )}
+          <ToolContent>
+            <ToolInput input={toolPart.input} />
+            <ToolOutput
+              errorText={toolPart.errorText}
+              output={toolPart.output}
+            />
+          </ToolContent>
+        </Tool>
       );
     }
 
@@ -144,42 +151,31 @@ export const WorkspaceAssistantMessagePart = memo(
   }
 );
 
-function isToolPart(part: UIMessage["parts"][number]): part is ToolPart {
+function isToolPart(part: UIMessage["parts"][number]) {
   return (
     "state" in part &&
     (part.type === "dynamic-tool" || part.type.startsWith("tool-"))
   );
 }
 
-function ToolPayload({ label, value }: { label: string; value: unknown }) {
-  if (value === undefined || value === null) {
-    return null;
+function isGranolaUserConnectorToolPart(
+  part: UIMessage["parts"][number]
+): boolean {
+  if (
+    !("state" in part) ||
+    part.type !== "tool-callUserConnectorTool" ||
+    part.state !== "output-available"
+  ) {
+    return false;
   }
 
+  const output = part.output;
   return (
-    <div className="space-y-1.5">
-      <div className="font-medium text-muted-foreground text-xs">{label}</div>
-      <pre
-        className={cn(
-          "max-h-72 overflow-auto rounded-sm bg-background/80 p-3 text-xs",
-          "whitespace-pre-wrap break-words"
-        )}
-      >
-        {formatPayload(value)}
-      </pre>
-    </div>
+    typeof output === "object" &&
+    output !== null &&
+    "provider" in output &&
+    output.provider === "granola"
   );
-}
-
-function formatPayload(value: unknown) {
-  if (typeof value === "string") {
-    return value;
-  }
-  try {
-    return JSON.stringify(value, null, 2);
-  } catch {
-    return String(value);
-  }
 }
 
 function formatPartLabel(value: string) {
