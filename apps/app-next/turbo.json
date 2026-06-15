@@ -1,0 +1,91 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "extends": ["//"],
+  "tags": ["app"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["transit"],
+      "env": [
+        "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+        "NEXT_PUBLIC_SENTRY_DSN",
+        "SENTRY_DSN",
+        "NEXT_PUBLIC_POSTHOG_HOST",
+        "NEXT_PUBLIC_POSTHOG_KEY",
+        "NEXT_PUBLIC_VERCEL_ENV",
+        "NEXT_PUBLIC_APP_URL",
+        "NEXT_PUBLIC_WWW_URL",
+        "GRANOLA_MCP_ENDPOINT",
+        "LINEAR_API_ORIGIN",
+        "LINEAR_MCP_ENDPOINT",
+        "VERCEL_ENV"
+      ],
+      "passThroughEnv": [
+        "SENTRY_AUTH_TOKEN",
+        "SENTRY_ORG",
+        "SENTRY_PROJECT",
+        "BRAINTRUST_API_KEY",
+        "CLERK_SECRET_KEY",
+        "CLERK_CLI_OAUTH_CLIENT_ID",
+        "CLERK_DESKTOP_OAUTH_CLIENT_ID",
+        "DEVELOPER_AUTH_BOX_ORIGIN",
+        "DEVELOPER_AUTH_BOX_TOKEN",
+        "CONNECTOR_MCP_AUTH_SECRET",
+        "ENCRYPTION_KEY",
+        "GITHUB_API_VERSION",
+        "GITHUB_APP_CLIENT_ID",
+        "GITHUB_APP_CLIENT_SECRET",
+        "GITHUB_APP_ENDPOINT_ORIGIN",
+        "GITHUB_APP_ID",
+        "GITHUB_APP_PRIVATE_KEY",
+        "GITHUB_APP_SLUG",
+        "GITHUB_APP_WEBHOOK_SECRET",
+        "LINEAR_CLIENT_ID",
+        "LINEAR_CLIENT_SECRET",
+        "X_CLIENT_ID",
+        "X_CLIENT_SECRET",
+        "DATABASE_HOST",
+        "DATABASE_USERNAME",
+        "DATABASE_PASSWORD",
+        "KV_REST_API_URL",
+        "KV_REST_API_TOKEN",
+        "HEALTH_CHECK_AUTH_TOKEN",
+        "ARCJET_KEY",
+        "INNGEST_APP_NAME",
+        "INNGEST_EVENT_KEY",
+        "INNGEST_SERVE_ORIGIN",
+        "INNGEST_SIGNING_KEY",
+        "UNKEY_API_ID",
+        "UNKEY_ROOT_KEY",
+        "SERVICE_JWT_SECRET",
+        "PORT"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!src/**/__tests__/**",
+        "!src/**/*.test.*",
+        "!src/**/*.spec.*",
+        "!vitest.config.ts",
+        ".env.overrides.local",
+        ".vercel/.env*"
+      ],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "!.next/dev/**",
+        "next-env.d.ts"
+      ]
+    },
+    "dev:next": {
+      "persistent": true,
+      "passThroughEnv": [
+        "MFE_DISABLE_LOCAL_PROXY_REWRITE",
+        "TURBO_TASK_HAS_MFE_PROXY"
+      ]
+    },
+    "mfe:proxy": {
+      "cache": false,
+      "persistent": true
+    },
+    "transit": {}
+  }
+}

@@ -1,5 +1,3 @@
-"use client";
-
 import type { AppRouterOutputs } from "@api/app";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -22,6 +20,7 @@ import {
 } from "@repo/ui/components/ui/sidebar";
 import { cn } from "@repo/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
+import { Link, useLocation } from "@tanstack/react-router";
 import {
   Aperture,
   Blocks,
@@ -38,134 +37,148 @@ import {
   Workflow,
   X,
 } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Suspense, useState } from "react";
-import { FeedbackDialog } from "~/components/feedback-dialog";
-import { TeamSwitcher, TeamSwitcherSkeleton } from "~/components/team-switcher";
+import type { ComponentType } from "react";
+import { Suspense } from "react";
 import { useTRPC } from "~/trpc/react";
+import {
+  getWorkspaceNavSections,
+  isWorkspacePathActive,
+  type WorkspaceNavItem,
+  type WorkspaceNavTitle,
+} from "./app-sidebar-model";
+import { TeamSwitcher, TeamSwitcherSkeleton } from "./team-switcher";
 
 type WorkspaceAssistantConversationList =
   AppRouterOutputs["org"]["workspace"]["assistant"]["listConversations"];
 type WorkspaceAssistantConversationListItem =
   WorkspaceAssistantConversationList["items"][number];
 
-interface NavItem {
-  activePrefix?: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  prefetch?: boolean;
-  title: string;
-}
+const navIcons: Record<
+  WorkspaceNavTitle,
+  ComponentType<{ className?: string }>
+> = {
+  Automations: Workflow,
+  Connectors: Blocks,
+  Decisions: ListChecks,
+  "Developer Connections": KeyRound,
+  People: Network,
+  Settings,
+  Signals: Aperture,
+  Skills: Scroll,
+};
 
-function getOrgStandaloneItems(orgSlug: string): NavItem[] {
-  return [
-    {
-      title: "Automations",
-      href: `/${orgSlug}/automations`,
-      icon: Workflow,
-    },
-    {
-      title: "Connectors",
-      href: `/${orgSlug}/connectors`,
-      icon: Blocks,
-    },
-    {
-      title: "Developer Connections",
-      href: `/${orgSlug}/developer-connections`,
-      icon: KeyRound,
-    },
-    {
-      title: "Skills",
-      href: `/${orgSlug}/skills`,
-      icon: Scroll,
-      prefetch: false,
-    },
-    {
-      title: "Decisions",
-      href: `/${orgSlug}/decisions`,
-      icon: ListChecks,
-    },
-  ];
-}
-
-function getOrgWorkspaceItems(orgSlug: string): NavItem[] {
-  return [
-    {
-      title: "Signals",
-      href: `/${orgSlug}/signals`,
-      icon: Aperture,
-    },
-    {
-      title: "People",
-      href: `/${orgSlug}/people`,
-      icon: Network,
-    },
-  ];
-}
-
-function getOrgManageItems(orgSlug: string): NavItem[] {
-  return [
-    {
-      title: "Settings",
-      href: `/${orgSlug}/settings`,
-      icon: Settings,
-    },
-  ];
-}
-
-function isPathActive(href: string, pathname: string) {
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
-
-function isActiveNavItem(item: NavItem, pathname: string) {
-  if (item.activePrefix) {
-    return (
-      pathname === item.href ||
-      pathname === item.activePrefix ||
-      pathname.startsWith(`${item.activePrefix}/`)
-    );
-  }
-  return isPathActive(item.href, pathname);
-}
-
-function NavItems({ items, pathname }: { items: NavItem[]; pathname: string }) {
+export function AppSidebar({
+  orgSlug,
+  showChatHistory = true,
+}: {
+  orgSlug: string;
+  showChatHistory?: boolean;
+}) {
+  const { pathname } = useLocation();
   const { isMobile, setOpenMobile } = useSidebar();
+  const navSections = getWorkspaceNavSections(orgSlug);
 
-  return items.map((item) => {
-    const isActive = isActiveNavItem(item, pathname);
-    const handleNavigate = () => {
-      if (isMobile) {
-        setOpenMobile(false);
-      }
-    };
-
-    return (
-      <SidebarMenuItem key={item.title}>
-        <SidebarMenuButton
-          asChild
-          className={cn(
-            "h-11 rounded-xl lg:h-7 [&>svg]:size-3.5",
-            isActive
-              ? "text-foreground data-[active=true]:text-foreground"
-              : "text-muted-foreground"
-          )}
-          isActive={isActive}
-          size="sm"
-        >
-          <Link
-            aria-current={isActive ? "page" : undefined}
-            href={{ pathname: item.href }}
-            onClick={handleNavigate}
-            prefetch={item.prefetch ?? true}
+  return (
+    <Sidebar collapsible="offcanvas">
+      <SidebarHeader className="h-14 flex-row items-center px-4 py-0">
+        <Suspense fallback={<TeamSwitcherSkeleton />}>
+          <TeamSwitcher />
+        </Suspense>
+        <div className="ml-auto flex items-center gap-1">
+          <Button
+            aria-label="New chat"
+            asChild
+            className="size-11 rounded-full lg:h-6 lg:w-6"
+            size="sm"
+            title="New chat"
+            variant="ghost"
           >
-            <item.icon className="size-3.5" />
-            <span>{item.title}</span>
-          </Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    );
-  });
+            <Link
+              onClick={() => {
+                if (isMobile) {
+                  setOpenMobile(false);
+                }
+              }}
+              params={{ slug: orgSlug }}
+              preload="intent"
+              to="/$slug/chat"
+            >
+              <MessageCirclePlus className="size-3.5" />
+            </Link>
+          </Button>
+          {isMobile ? (
+            <Button
+              aria-label="Close sidebar"
+              className="size-11 rounded-xl text-muted-foreground"
+              onClick={() => setOpenMobile(false)}
+              size="icon"
+              type="button"
+              variant="ghost"
+            >
+              <X className="size-4" />
+            </Button>
+          ) : null}
+        </div>
+      </SidebarHeader>
+      <SidebarContent>
+        {navSections.map((section) => (
+          <SidebarGroup
+            collapsible={Boolean(section.label)}
+            defaultOpen
+            key={section.label ?? "primary"}
+            label={section.label}
+          >
+            <SidebarGroupContent>
+              <nav aria-label={section.label ?? "Workspace navigation"}>
+                <SidebarMenu>
+                  <NavItems
+                    items={section.items}
+                    orgSlug={orgSlug}
+                    pathname={pathname}
+                  />
+                </SidebarMenu>
+              </nav>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
+        {showChatHistory ? (
+          <ChatHistory orgSlug={orgSlug} pathname={pathname} />
+        ) : null}
+      </SidebarContent>
+      <SidebarFooter>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              className="size-11 rounded-full bg-muted p-1 lg:h-8 lg:w-8"
+              size="icon"
+              title="Help"
+              variant="outline"
+            >
+              <HelpCircle className="size-3.5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="center" className="w-48">
+            <DropdownMenuItem asChild>
+              <a href="mailto:support@lightfast.ai">
+                <Mail className="size-3.5" />
+                Contact Support
+              </a>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <a
+                href="https://lightfast.ai/docs/get-started/overview"
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                <BookOpen className="size-3.5" />
+                Help Docs
+              </a>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarFooter>
+    </Sidebar>
+  );
 }
 
 function ChatHistory({
@@ -176,14 +189,15 @@ function ChatHistory({
   pathname: string;
 }) {
   const trpc = useTRPC();
-  const { data, isError } = useQuery(
-    trpc.org.workspace.assistant.listConversations.queryOptions(
+  const { data, error, isPending } = useQuery({
+    ...trpc.org.workspace.assistant.listConversations.queryOptions(
       { limit: 20 },
       { staleTime: 0 }
-    )
-  );
+    ),
+    enabled: typeof window !== "undefined" && Boolean(orgSlug),
+  });
 
-  if (isError || !data || data.items.length === 0) {
+  if (isPending || error || !data?.items.length) {
     return null;
   }
 
@@ -220,11 +234,6 @@ function ChatHistoryItem({
   const href = `/${orgSlug}/chat/${conversation.publicId}`;
   const isActive = pathname === href;
   const title = getConversationSidebarTitle(conversation);
-  const handleNavigate = () => {
-    if (isMobile) {
-      setOpenMobile(false);
-    }
-  };
 
   return (
     <SidebarMenuItem>
@@ -239,7 +248,17 @@ function ChatHistoryItem({
         isActive={isActive}
         size="sm"
       >
-        <Link href={{ pathname: href }} onClick={handleNavigate} prefetch>
+        <Link
+          aria-current={isActive ? "page" : undefined}
+          onClick={() => {
+            if (isMobile) {
+              setOpenMobile(false);
+            }
+          }}
+          params={{ conversationId: conversation.publicId, slug: orgSlug }}
+          preload="intent"
+          to="/$slug/chat/$conversationId"
+        >
           <MessageCircle className="size-3.5" />
           <span>{title}</span>
         </Link>
@@ -255,142 +274,50 @@ function getConversationSidebarTitle(
   return title || "Untitled chat";
 }
 
-export function AppSidebar() {
-  const pathname = usePathname();
+function NavItems({
+  items,
+  orgSlug,
+  pathname,
+}: {
+  items: WorkspaceNavItem[];
+  orgSlug: string;
+  pathname: string;
+}) {
   const { isMobile, setOpenMobile } = useSidebar();
-  const [isFeedbackOpen, setFeedbackOpen] = useState(false);
 
-  const pathParts = pathname.split("/").filter(Boolean);
-  const orgSlug = pathParts[0] ?? "";
+  return items.map((item) => {
+    const Icon = navIcons[item.title];
+    const isActive = isWorkspacePathActive(item.href, pathname);
 
-  return (
-    <>
-      <Sidebar collapsible="offcanvas">
-        <SidebarHeader className="h-14 flex-row items-center px-4 py-0">
-          <Suspense fallback={<TeamSwitcherSkeleton />}>
-            <TeamSwitcher />
-          </Suspense>
-          <div className="ml-auto flex items-center gap-1">
-            {orgSlug && (
-              <Button
-                aria-label="New chat"
-                asChild
-                className="size-11 rounded-full lg:h-6 lg:w-6"
-                size="sm"
-                title="New chat"
-                variant="ghost"
-              >
-                <Link
-                  href={{ pathname: `/${orgSlug}/chat` }}
-                  onClick={() => {
-                    if (isMobile) {
-                      setOpenMobile(false);
-                    }
-                  }}
-                  prefetch={false}
-                >
-                  <MessageCirclePlus className="size-3.5" />
-                </Link>
-              </Button>
-            )}
-            {isMobile && (
-              <Button
-                aria-label="Close sidebar"
-                className="size-11 rounded-xl text-muted-foreground"
-                onClick={() => setOpenMobile(false)}
-                size="icon"
-                type="button"
-                variant="ghost"
-              >
-                <X className="size-4" />
-              </Button>
-            )}
-          </div>
-        </SidebarHeader>
-        <SidebarContent>
-          {orgSlug && (
-            <>
-              <SidebarGroup>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    <NavItems
-                      items={getOrgStandaloneItems(orgSlug)}
-                      pathname={pathname}
-                    />
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-              <SidebarGroup collapsible defaultOpen label="Workspace">
-                <SidebarGroupContent>
-                  <nav aria-label="Workspace">
-                    <SidebarMenu>
-                      <NavItems
-                        items={getOrgWorkspaceItems(orgSlug)}
-                        pathname={pathname}
-                      />
-                    </SidebarMenu>
-                  </nav>
-                </SidebarGroupContent>
-              </SidebarGroup>
-              <SidebarGroup collapsible defaultOpen label="Manage">
-                <SidebarGroupContent>
-                  <nav aria-label="Manage">
-                    <SidebarMenu>
-                      <NavItems
-                        items={getOrgManageItems(orgSlug)}
-                        pathname={pathname}
-                      />
-                    </SidebarMenu>
-                  </nav>
-                </SidebarGroupContent>
-              </SidebarGroup>
-              <Suspense fallback={null}>
-                <ChatHistory orgSlug={orgSlug} pathname={pathname} />
-              </Suspense>
-            </>
+    return (
+      <SidebarMenuItem key={item.title}>
+        <SidebarMenuButton
+          asChild
+          className={cn(
+            "h-11 rounded-xl lg:h-7 [&>svg]:size-3.5",
+            isActive
+              ? "text-foreground data-[active=true]:text-foreground"
+              : "text-muted-foreground"
           )}
-        </SidebarContent>
-        <SidebarFooter>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                className="size-11 rounded-full bg-muted p-1 lg:h-8 lg:w-8"
-                size="icon"
-                title="Help"
-                variant="outline"
-              >
-                <HelpCircle className="size-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="center" className="w-48">
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => setFeedbackOpen(true)}
-              >
-                <MessageCircle className="size-3.5" />
-                Send feedback
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <a href="mailto:support@lightfast.ai">
-                  <Mail className="size-3.5" />
-                  Contact Support
-                </a>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link
-                  href="https://lightfast.ai/docs/get-started/overview"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  <BookOpen className="size-3.5" />
-                  Help Docs
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </SidebarFooter>
-      </Sidebar>
-      <FeedbackDialog onOpenChange={setFeedbackOpen} open={isFeedbackOpen} />
-    </>
-  );
+          isActive={isActive}
+          size="sm"
+        >
+          <Link
+            aria-current={isActive ? "page" : undefined}
+            onClick={() => {
+              if (isMobile) {
+                setOpenMobile(false);
+              }
+            }}
+            params={{ slug: orgSlug }}
+            preload="intent"
+            to={item.to}
+          >
+            <Icon className="size-3.5" />
+            <span>{item.title}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  });
 }

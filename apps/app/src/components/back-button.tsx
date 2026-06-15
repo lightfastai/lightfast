@@ -1,15 +1,16 @@
 import { Button } from "@repo/ui/components/ui/button";
+import { Link } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
-import type { Route } from "next";
-import Link from "next/link";
 
-/**
- * General-purpose compact back affordance for the topbar `@actions` slot.
- * Ghost chrome (transparent at rest, fills on hover) sized to match the
- * signals toolbar controls: h-6 / rounded-lg / text-sm. The chevron implies
- * "back", so `label` is just the destination name (e.g. "Automations").
- */
-export function BackButton({ href, label }: { href: Route; label: string }) {
+export function BackButton({
+  label,
+  params,
+  to,
+}: {
+  label: string;
+  params: { slug: string };
+  to: "/$slug/automations";
+}) {
   return (
     <Button
       asChild
@@ -17,7 +18,7 @@ export function BackButton({ href, label }: { href: Route; label: string }) {
       size="sm"
       variant="ghost"
     >
-      <Link href={href}>
+      <Link params={params} preload="intent" to={to}>
         <ChevronLeft className="size-3" />
         {label}
       </Link>

@@ -1,6 +1,5 @@
-"use client";
-
 import type { AppRouter } from "@api/app";
+import { toast } from "@repo/ui/components/ui/sonner";
 import type { QueryClient } from "@tanstack/react-query";
 import { MutationCache, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -11,9 +10,7 @@ import {
 } from "@trpc/client";
 import { createTRPCContext } from "@trpc/tanstack-react-query";
 import { useState } from "react";
-import { toast } from "sonner";
 import SuperJSON from "superjson";
-import { env } from "~/env";
 
 import { createQueryClient } from "./query-client";
 import "./react-query-meta";
@@ -46,7 +43,7 @@ const mutationCache = new MutationCache({
 
 let clientQueryClientSingleton: QueryClient | undefined;
 
-function getBrowserQueryClient() {
+function getQueryClient() {
   if (typeof window === "undefined") {
     return createQueryClient();
   }
@@ -58,14 +55,12 @@ function defaultGetBaseUrl() {
   if (typeof window !== "undefined") {
     return window.location.origin;
   }
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-  return `http://localhost:${process.env.PORT ?? 4104}`;
+
+  return import.meta.env.VITE_LIGHTFAST_APP_URL;
 }
 
 export function TRPCReactProvider({ children }: { children: React.ReactNode }) {
-  const queryClient = getBrowserQueryClient();
+  const queryClient = getQueryClient();
 
   const [trpcClient] = useState(() => {
     const baseUrl = defaultGetBaseUrl();
@@ -73,7 +68,7 @@ export function TRPCReactProvider({ children }: { children: React.ReactNode }) {
     return createTRPCClient<AppRouter>({
       links: [
         loggerLink({
-          enabled: () => env.NODE_ENV === "development",
+          enabled: () => import.meta.env.DEV,
         }),
         httpBatchStreamLink({
           transformer: SuperJSON,
@@ -82,10 +77,16 @@ export function TRPCReactProvider({ children }: { children: React.ReactNode }) {
             "x-trpc-source": "client",
           }),
           fetch(url, init) {
+            if (typeof window === "undefined") {
+              throw new Error(
+                "Server-side tRPC React fetches require request-aware auth wiring."
+              );
+            }
+
             const sameOrigin =
-              typeof window !== "undefined" &&
               new URL(url.toString(), window.location.origin).origin ===
-                window.location.origin;
+              window.location.origin;
+
             return fetch(url, {
               ...init,
               credentials: sameOrigin ? "include" : "omit",
