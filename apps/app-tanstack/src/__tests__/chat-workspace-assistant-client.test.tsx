@@ -1,8 +1,15 @@
 // @vitest-environment happy-dom
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { AppRouterOutputs } from "@api/app";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const clearErrorMock = vi.fn();
 const invalidateQueriesMock = vi.fn();
@@ -20,6 +27,8 @@ let chatMessages: Array<{
   parts: Array<{ text?: string; type: string }>;
   role: "assistant" | "user";
 }> = [];
+type WorkspaceAssistantConversationResult =
+  AppRouterOutputs["org"]["workspace"]["assistant"]["getConversation"];
 
 vi.mock("@ai-sdk/react", () => ({
   useChat: (options: { messages?: typeof chatMessages } = {}) => {
@@ -99,14 +108,18 @@ vi.mock("~/chat/chat-composer", () => ({
     error,
     onSubmit,
     onTextChange,
+    onWriteModeChange,
     status,
     text,
+    writeModeEnabled,
   }: {
     error?: Error;
     onSubmit: (message: { files: []; text: string }) => Promise<void>;
     onTextChange: (value: string) => void;
+    onWriteModeChange?: (enabled: boolean) => void;
     status: string;
     text: string;
+    writeModeEnabled?: boolean;
   }) => (
     <form
       onSubmit={(event) => {
@@ -119,6 +132,13 @@ vi.mock("~/chat/chat-composer", () => ({
         onChange={(event) => onTextChange(event.currentTarget.value)}
         value={text}
       />
+      <button
+        aria-pressed={writeModeEnabled ? "true" : "false"}
+        onClick={() => onWriteModeChange?.(!writeModeEnabled)}
+        type="button"
+      >
+        Write
+      </button>
       <button aria-label="Send message" data-status={status} type="submit">
         Send
       </button>
@@ -159,6 +179,10 @@ beforeEach(() => {
   vi.stubGlobal("crypto", {
     randomUUID: () => "ff83026e-ef0e-40db-ae59-544fbe4df209",
   });
+});
+
+afterEach(() => {
+  cleanup();
 });
 
 describe("WorkspaceAssistantClient", () => {
@@ -232,4 +256,65 @@ describe("WorkspaceAssistantClient", () => {
     });
     expect(routerInvalidateMock).not.toHaveBeenCalled();
   });
+
+  it("sends one existing conversation turn with provider routine write mode enabled", async () => {
+    render(
+      <WorkspaceAssistantClient
+        conversationId="conv_existing"
+        initialConversation={conversationResult()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Write" }));
+    expect(
+      screen.getByRole("button", { name: "Write" }).getAttribute("aria-pressed")
+    ).toBe("true");
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: "Update the Linear ticket" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => {
+      expect(sendMessageMock).toHaveBeenCalledWith(
+        { text: "Update the Linear ticket" },
+        {
+          body: {
+            conversationId: "conv_existing",
+            idempotencyKey: "idem_ff83026e-ef0e-40db-ae59-544fbe4df209",
+            providerRoutineWriteMode: true,
+          },
+        }
+      );
+    });
+    await waitFor(() => {
+      expect(
+        screen
+          .getByRole("button", { name: "Write" })
+          .getAttribute("aria-pressed")
+      ).toBe("false");
+    });
+  });
 });
+
+function conversationResult(
+  overrides: Partial<WorkspaceAssistantConversationResult["conversation"]> = {}
+): WorkspaceAssistantConversationResult {
+  return {
+    conversation: {
+      activeStreamId: null,
+      clerkOrgId: "org_lightfast",
+      createdAt: new Date("2026-06-15T00:00:00.000Z"),
+      createdByUserId: "user_lightfast",
+      id: 1,
+      lastMessageAt: null,
+      lastMessageId: null,
+      metadata: {},
+      publicId: "conv_existing",
+      status: "active",
+      title: "Existing chat",
+      updatedAt: new Date("2026-06-15T00:00:00.000Z"),
+      ...overrides,
+    },
+    messages: [],
+  };
+}
