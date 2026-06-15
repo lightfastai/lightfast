@@ -1,5 +1,3 @@
-"use client";
-
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -9,13 +7,13 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import { useMounted } from "@repo/ui/hooks/use-mounted";
 import { cn } from "@repo/ui/lib/utils";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useOrganizationList } from "@vendor/clerk";
+import { useQuery } from "@tanstack/react-query";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useOrganizationList } from "~/compat/clerk";
 import { useTRPC } from "~/trpc/react";
 
 const RESERVED_ROUTES = new Set([
@@ -25,21 +23,30 @@ const RESERVED_ROUTES = new Set([
   "sign-in",
   "sign-up",
 ]);
-const CREATE_TEAM_HREF = "/account/teams/new";
+
+export function TeamSwitcherSlot() {
+  return (
+    <Suspense fallback={<TeamSwitcherSkeleton />}>
+      <TeamSwitcher />
+    </Suspense>
+  );
+}
 
 export function TeamSwitcher() {
   const trpc = useTRPC();
-  const pathname = usePathname();
-  const router = useRouter();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { setActive } = useOrganizationList();
   const [open, setOpen] = useState(false);
+  const mounted = useMounted();
 
-  const { data: organizations = [] } = useSuspenseQuery({
+  const { data: organizations = [], isPending } = useQuery({
     ...trpc.viewer.organization.listUserOrganizations.queryOptions(),
+    enabled: typeof window !== "undefined",
     staleTime: 5 * 60 * 1000,
   });
 
-  const firstSegment = pathname.split("/").filter(Boolean)[0];
+  const firstSegment = location.pathname.split("/").filter(Boolean)[0];
   const mode =
     !firstSegment || RESERVED_ROUTES.has(firstSegment)
       ? "account"
@@ -54,28 +61,40 @@ export function TeamSwitcher() {
   const displayInitials =
     mode === "account" ? "MA" : (currentOrg?.initials ?? "?");
 
-  const switchTo = async (orgId: string, slug: string) => {
+  const switchTo = async (orgId: string, slug: string | null | undefined) => {
+    if (!slug) {
+      return;
+    }
     if (setActive) {
       await setActive({ organization: orgId });
     }
-    router.push(`/${slug}`);
+    await navigate({ to: "/$slug", params: { slug } });
   };
+
+  if (!mounted || isPending) {
+    return <TeamSwitcherSkeleton />;
+  }
 
   return (
     <DropdownMenu onOpenChange={setOpen} open={open}>
       <div className="flex items-center gap-1">
-        {mode === "organization" && currentOrg ? (
+        {mode === "organization" && currentOrg?.slug ? (
           <Link
             className="flex min-h-11 min-w-0 items-center gap-2 lg:min-h-0"
-            href={`/${currentOrg.slug}`}
-            onClick={async (e) => {
-              if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) {
+            onClick={async (event) => {
+              if (
+                event.ctrlKey ||
+                event.metaKey ||
+                event.shiftKey ||
+                event.altKey
+              ) {
                 return;
               }
-              e.preventDefault();
-              await switchTo(currentOrg.id, currentOrg.slug ?? "");
+              event.preventDefault();
+              await switchTo(currentOrg.id, currentOrg.slug);
             }}
-            prefetch={true}
+            params={{ slug: currentOrg.slug }}
+            to="/$slug"
           >
             <Avatar className="size-7 lg:size-6">
               <AvatarFallback className="bg-foreground text-[10px] text-background">
@@ -100,6 +119,7 @@ export function TeamSwitcher() {
         )}
         <DropdownMenuTrigger asChild>
           <Button
+            aria-label="Switch team"
             className="size-11 rounded-full lg:h-6 lg:w-6"
             size="sm"
             variant="ghost"
@@ -120,16 +140,21 @@ export function TeamSwitcher() {
               key={org.id}
             >
               <Link
-                href={`/${org.slug}`}
-                onClick={async (e) => {
-                  if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) {
+                onClick={async (event) => {
+                  if (
+                    event.ctrlKey ||
+                    event.metaKey ||
+                    event.shiftKey ||
+                    event.altKey
+                  ) {
                     return;
                   }
-                  e.preventDefault();
+                  event.preventDefault();
                   setOpen(false);
-                  await switchTo(org.id, org.slug ?? "");
+                  await switchTo(org.id, org.slug);
                 }}
-                prefetch={true}
+                params={{ slug: org.slug ?? "" }}
+                to="/$slug"
               >
                 <Avatar className="h-5 w-5 shrink-0">
                   <AvatarFallback className="bg-foreground text-[10px] text-background">
@@ -148,7 +173,7 @@ export function TeamSwitcher() {
           asChild
           className="cursor-pointer px-2 text-muted-foreground"
         >
-          <Link href={{ pathname: CREATE_TEAM_HREF }} prefetch={true}>
+          <Link to="/account/teams/new">
             <div className="flex h-5 w-5 items-center justify-center rounded-full border border-border/50 border-dashed">
               <Plus className="h-3 w-3" />
             </div>

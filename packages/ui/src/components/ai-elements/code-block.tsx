@@ -9,6 +9,26 @@ import {
   SelectValue,
 } from "@repo/ui/components/ui/select";
 import { cn } from "@repo/ui/lib/utils";
+import type { HighlighterCore, ThemedToken } from "@shikijs/core";
+import { createHighlighterCore } from "@shikijs/core";
+import { createJavaScriptRegexEngine } from "@shikijs/engine-javascript";
+import langBash from "@shikijs/langs/bash";
+import langCss from "@shikijs/langs/css";
+import langGo from "@shikijs/langs/go";
+import langHtml from "@shikijs/langs/html";
+import langJs from "@shikijs/langs/javascript";
+import langJson from "@shikijs/langs/json";
+import langJsonc from "@shikijs/langs/jsonc";
+import langJsx from "@shikijs/langs/jsx";
+import langMarkdown from "@shikijs/langs/markdown";
+import langPy from "@shikijs/langs/python";
+import langRust from "@shikijs/langs/rust";
+import langSql from "@shikijs/langs/sql";
+import langTsx from "@shikijs/langs/tsx";
+import langTs from "@shikijs/langs/typescript";
+import langYaml from "@shikijs/langs/yaml";
+import githubDark from "@shikijs/themes/github-dark";
+import githubLight from "@shikijs/themes/github-light";
 import { CheckIcon, CopyIcon } from "lucide-react";
 import type { ComponentProps, CSSProperties, HTMLAttributes } from "react";
 import {
@@ -21,13 +41,8 @@ import {
   useRef,
   useState,
 } from "react";
-import type {
-  BundledLanguage,
-  BundledTheme,
-  HighlighterGeneric,
-  ThemedToken,
-} from "shiki";
-import { createHighlighter } from "shiki";
+
+type CodeBlockLanguage = string;
 
 // Shiki uses bitflags for font styles: 1=italic, 2=bold, 4=underline
 // oxlint-disable-next-line eslint(no-bitwise)
@@ -110,7 +125,7 @@ const LineSpan = ({
 // Types
 type CodeBlockProps = HTMLAttributes<HTMLDivElement> & {
   code: string;
-  language: BundledLanguage;
+  language: CodeBlockLanguage;
   showLineNumbers?: boolean;
 };
 
@@ -129,11 +144,8 @@ const CodeBlockContext = createContext<CodeBlockContextType>({
   code: "",
 });
 
-// Highlighter cache (singleton per language)
-const highlighterCache = new Map<
-  string,
-  Promise<HighlighterGeneric<BundledLanguage, BundledTheme>>
->();
+// Highlighter cache (singleton for all supported languages)
+let highlighterPromise: Promise<HighlighterCore> | null = null;
 
 // Token cache
 const tokensCache = new Map<string, TokenizedCode>();
@@ -141,7 +153,7 @@ const tokensCache = new Map<string, TokenizedCode>();
 // Subscribers for async token updates
 const subscribers = new Map<string, Set<(result: TokenizedCode) => void>>();
 
-const getTokensCacheKey = (code: string, language: BundledLanguage) => {
+const getTokensCacheKey = (code: string, language: CodeBlockLanguage) => {
   let hash = 2_166_136_261;
   for (let i = 0; i < code.length; i++) {
     hash ^= code.charCodeAt(i);
@@ -150,20 +162,31 @@ const getTokensCacheKey = (code: string, language: BundledLanguage) => {
   return `${language}:${code.length}:${hash.toString(16)}`;
 };
 
-const getHighlighter = (
-  language: BundledLanguage
-): Promise<HighlighterGeneric<BundledLanguage, BundledTheme>> => {
-  const cached = highlighterCache.get(language);
-  if (cached) {
-    return cached;
+const getHighlighter = (): Promise<HighlighterCore> => {
+  if (!highlighterPromise) {
+    highlighterPromise = createHighlighterCore({
+      langs: [
+        langTs,
+        langJs,
+        langTsx,
+        langJsx,
+        langBash,
+        langJson,
+        langJsonc,
+        langYaml,
+        langPy,
+        langGo,
+        langRust,
+        langSql,
+        langCss,
+        langHtml,
+        langMarkdown,
+      ],
+      themes: [githubLight, githubDark],
+      engine: createJavaScriptRegexEngine(),
+    });
   }
 
-  const highlighterPromise = createHighlighter({
-    langs: [language],
-    themes: ["github-light", "github-dark"],
-  });
-
-  highlighterCache.set(language, highlighterPromise);
   return highlighterPromise;
 };
 
@@ -186,7 +209,7 @@ const createRawTokens = (code: string): TokenizedCode => ({
 // Synchronous highlight with callback for async results
 export const highlightCode = (
   code: string,
-  language: BundledLanguage,
+  language: CodeBlockLanguage,
   // oxlint-disable-next-line eslint-plugin-promise(prefer-await-to-callbacks)
   callback?: (result: TokenizedCode) => void
 ): TokenizedCode | null => {
@@ -207,7 +230,7 @@ export const highlightCode = (
   }
 
   // Start highlighting in background - fire-and-forget async pattern
-  getHighlighter(language)
+  getHighlighter()
     // oxlint-disable-next-line eslint-plugin-promise(prefer-await-to-then)
     .then((highlighter) => {
       const availableLangs = highlighter.getLoadedLanguages();
@@ -380,7 +403,7 @@ export const CodeBlockContent = ({
   showLineNumbers = false,
 }: {
   code: string;
-  language: BundledLanguage;
+  language: CodeBlockLanguage;
   showLineNumbers?: boolean;
 }) => {
   // Memoized raw tokens for immediate display

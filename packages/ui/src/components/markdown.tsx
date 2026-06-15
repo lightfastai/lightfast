@@ -6,7 +6,6 @@ import { isValidElement, memo } from "react";
 import type { Components as ReactMarkdownComponents } from "react-markdown";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import type { BundledLanguage } from "shiki";
 import {
   CodeBlock,
   CodeBlockActions,
@@ -102,7 +101,7 @@ const components: Partial<ReactMarkdownComponents> = {
 
   // Pre component for code blocks
   pre({ node: _node, className, children }: MarkdownComponentProps) {
-    let language: BundledLanguage = "javascript";
+    let language = "javascript";
 
     const nodeClassName = getClassName(
       (_node as { properties?: { className?: string | string[] } } | undefined)
@@ -124,7 +123,7 @@ const components: Partial<ReactMarkdownComponents> = {
       );
 
     if (contentClassName) {
-      language = contentClassName as BundledLanguage;
+      language = contentClassName;
     }
 
     // Extract code content from children safely

@@ -1,0 +1,132 @@
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
+
+const appRoot = resolve(import.meta.dirname, "../..");
+
+function source(path: string) {
+  return readFileSync(resolve(appRoot, path), "utf8");
+}
+
+describe("app product route data prefetch", () => {
+  it("keeps authenticated tRPC prefetching behind a TanStack server function", () => {
+    const prefetchSource = source("src/trpc/route-prefetch.tsx");
+
+    expect(prefetchSource).toContain("createServerFn");
+    expect(prefetchSource).toContain('import("@tanstack/react-start/server")');
+    expect(prefetchSource).toContain('import("@api/app")');
+    expect(prefetchSource).toContain("createTRPCOptionsProxy");
+    expect(prefetchSource).toContain("getRequest()");
+    expect(prefetchSource).toContain('"x-trpc-source"');
+    expect(prefetchSource).toContain("HydrationBoundary");
+    expect(prefetchSource).not.toContain('from "@api/app"');
+    expect(prefetchSource).not.toContain("next/");
+  });
+
+  it("does not turn unauthenticated protected-route prefetches into route-loader 500s", () => {
+    const prefetchSource = source("src/trpc/route-prefetch.tsx");
+
+    expect(prefetchSource).toContain("createEmptyPrefetchState");
+    expect(prefetchSource).toContain("isUnauthorizedTRPCError");
+    expect(prefetchSource).toContain("return createEmptyPrefetchState()");
+    expect(prefetchSource).toContain('error.code === "UNAUTHORIZED"');
+  });
+
+  it("prefetches the non-chat product route queries owned by the migrated pages", () => {
+    const prefetchSource = source("src/trpc/route-prefetch.tsx");
+
+    for (const query of [
+      "signals.workingSet.queryOptions",
+      "signals.list.queryOptions",
+      "signals.views.list.queryOptions",
+      "automations.list.queryOptions",
+      "automations.get.queryOptions",
+      "automations.listRuns.queryOptions",
+      "decisions.list.infiniteQueryOptions",
+      "decisions.views.list.queryOptions",
+      "people.list.infiniteQueryOptions",
+      "people.views.list.queryOptions",
+      "skills.list.queryOptions",
+      "viewer.organization.getBySlug.queryOptions",
+      "sourceControl.get.queryOptions",
+      "connectors.listSections.queryOptions",
+      "connectors.list.queryOptions",
+      "mcpConnections.list.queryOptions",
+      "developerConnections.list.queryOptions",
+      "viewer.account.mcpConnections.list.queryOptions",
+    ]) {
+      expect(prefetchSource).toContain(query);
+    }
+  });
+
+  it("prefetches settings and account task route queries owned by migrated pages", () => {
+    const prefetchSource = source("src/trpc/route-prefetch.tsx");
+
+    for (const query of [
+      "org.settings.identity.get.queryOptions",
+      "org.settings.organization.listDomains.queryOptions",
+      "org.settings.orgApiKeys.list.queryOptions",
+      "org.settings.orgMembers.list.queryOptions",
+      "org.settings.sourceControl.listRepositories.queryOptions",
+      "org.settings.orgBilling.overview.queryOptions",
+      "viewer.githubAccount.status.queryOptions",
+      "viewer.account.get.queryOptions",
+    ]) {
+      expect(prefetchSource).toContain(query);
+    }
+  });
+
+  it("wires product pages through route loaders and hydration boundaries", () => {
+    const routeFiles = [
+      "src/routes/_authenticated/$slug/signals.tsx",
+      "src/routes/_authenticated/$slug/automations/index.tsx",
+      "src/routes/_authenticated/$slug/automations/new.tsx",
+      "src/routes/_authenticated/$slug/automations/$automation.tsx",
+      "src/routes/_authenticated/$slug/connectors.tsx",
+      "src/routes/_authenticated/$slug/decisions.tsx",
+      "src/routes/_authenticated/$slug/developer-connections.tsx",
+      "src/routes/_authenticated/$slug/people.tsx",
+      "src/routes/_authenticated/$slug/skills.tsx",
+      "src/routes/_authenticated/$slug/tasks/index.tsx",
+      "src/routes/_authenticated/$slug/tasks/bind/index.tsx",
+      "src/routes/_authenticated/$slug/tasks/github/lightfast-repo.tsx",
+      "src/routes/_authenticated/$slug/tasks/connectors/x/index.tsx",
+      "src/routes/_authenticated/$slug/settings/mcp.tsx",
+      "src/routes/_authenticated/account/mcp.tsx",
+      "src/routes/_authenticated/$slug/settings/general.tsx",
+      "src/routes/_authenticated/$slug/settings/source-control.tsx",
+      "src/routes/_authenticated/$slug/settings/members.tsx",
+      "src/routes/_authenticated/$slug/settings/billing.tsx",
+      "src/routes/_authenticated/$slug/settings/api-keys.tsx",
+      "src/routes/_authenticated/account/settings/general.tsx",
+      "src/routes/_authenticated/account/settings/source-control.tsx",
+      "src/routes/_authenticated/account/tasks/github/index.tsx",
+      "src/routes/_authenticated/account/tasks/username.tsx",
+    ];
+
+    for (const routeFile of routeFiles) {
+      expect(
+        existsSync(resolve(appRoot, routeFile)),
+        `${routeFile} should exist`
+      ).toBe(true);
+      const routeSource = source(routeFile);
+      expect(routeSource).toContain("loadRoutePrefetch");
+      expect(routeSource).toContain("RoutePrefetchBoundary");
+      expect(routeSource).toContain("loader:");
+    }
+  });
+
+  it("keeps automation creation parity with connector-aware Next form data", () => {
+    const formSource = source("src/automations/automation-create-form.tsx");
+    const packageSource = source("package.json");
+
+    expect(packageSource).toContain(
+      '"@repo/connector-contract": "workspace:*"'
+    );
+    expect(formSource).toContain("connectableConnectorProviderSchema");
+    expect(formSource).toContain("connectors.list.queryOptions");
+    expect(formSource).toContain("availableForAutomations");
+    expect(formSource).toContain("connectorProvider");
+    expect(formSource).toContain("No connector");
+  });
+});
