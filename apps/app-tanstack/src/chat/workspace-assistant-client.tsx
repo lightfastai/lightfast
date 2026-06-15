@@ -61,6 +61,8 @@ export function WorkspaceAssistantClient({
   const [creationError, setCreationError] = useState<Error | undefined>();
   const [optimisticFirstMessage, setOptimisticFirstMessage] =
     useState<UIMessage | null>(null);
+  const [providerRoutineWriteMode, setProviderRoutineWriteMode] =
+    useState(false);
   const conversationCreatedRef = useRef(Boolean(initialConversation));
 
   const transport = useMemo(
@@ -149,6 +151,7 @@ export function WorkspaceAssistantClient({
         }
       }
 
+      const writeModeForTurn = providerRoutineWriteMode;
       try {
         await sendMessage(
           { text: nextText },
@@ -156,11 +159,13 @@ export function WorkspaceAssistantClient({
             body: {
               idempotencyKey: createWorkspaceAssistantIdempotencyKey(),
               conversationId,
+              ...(writeModeForTurn ? { providerRoutineWriteMode: true } : {}),
             },
           }
         );
       } finally {
         setOptimisticFirstMessage(null);
+        setProviderRoutineWriteMode(false);
       }
       setText("");
       if (!initialConversation) {
@@ -185,6 +190,7 @@ export function WorkspaceAssistantClient({
       router,
       sendMessage,
       clearError,
+      providerRoutineWriteMode,
     ]
   );
 
@@ -194,9 +200,11 @@ export function WorkspaceAssistantClient({
       error={displayError}
       onSubmit={handleSubmit}
       onTextChange={setText}
+      onWriteModeChange={setProviderRoutineWriteMode}
       status={composerStatus}
       stop={stop}
       text={text}
+      writeModeEnabled={providerRoutineWriteMode}
     />
   );
 
