@@ -8,12 +8,16 @@ const getSkillIndexSnapshotMock = vi.fn();
 const getVerifiedLightfastSkillSourceRepositoryIdMock = vi.fn();
 const gatewayMock = vi.fn();
 const getWorkspaceAssistantConversationByPublicIdMock = vi.fn();
+const callUserConnectorToolMock = vi.fn();
+const findUserConnectorToolsMock = vi.fn();
 const isDuplicateKeyErrorMock = vi.fn();
 const listWorkspaceAssistantMessagesMock = vi.fn();
 const markWorkspaceAssistantGenerationCompletedMock = vi.fn();
 const markWorkspaceAssistantGenerationFailedMock = vi.fn();
 const markWorkspaceAssistantMessageCompletedMock = vi.fn();
 const markWorkspaceAssistantMessageFailedMock = vi.fn();
+const callProviderRoutineMock = vi.fn();
+const findProviderRoutinesMock = vi.fn();
 const resolveWorkspaceAssistantAuthContextMock = vi.fn();
 const safeValidateUIMessagesMock = vi.fn();
 const setWorkspaceAssistantConversationActiveStreamMock = vi.fn();
@@ -78,9 +82,21 @@ vi.mock("@repo/provider-routine-contract", () => ({
   providerRoutineFindOutputSchema: { kind: "provider-find-output" },
 }));
 
-vi.mock("@repo/provider-routines", () => ({
-  callProviderRoutine: vi.fn(),
-  findProviderRoutines: vi.fn(),
+vi.mock("@api/app/services/connectors/chat-routines", () => ({
+  callChatProviderRoutine: callProviderRoutineMock,
+  findChatProviderRoutines: findProviderRoutinesMock,
+}));
+
+vi.mock("@repo/user-connector-contract", () => ({
+  userConnectorCallInputSchema: { kind: "user-connector-call-input" },
+  userConnectorCallSuccessSchema: { kind: "user-connector-call-success" },
+  userConnectorFindInputSchema: { kind: "user-connector-find-input" },
+  userConnectorFindOutputSchema: { kind: "user-connector-find-output" },
+}));
+
+vi.mock("@api/app/services/user-connectors/runtime", () => ({
+  callUserConnectorTool: callUserConnectorToolMock,
+  findUserConnectorTools: findUserConnectorToolsMock,
 }));
 
 vi.mock("@vendor/ai", () => ({
@@ -124,12 +140,16 @@ beforeEach(() => {
   getVerifiedLightfastSkillSourceRepositoryIdMock.mockReset();
   gatewayMock.mockReset();
   getWorkspaceAssistantConversationByPublicIdMock.mockReset();
+  callUserConnectorToolMock.mockReset();
+  findUserConnectorToolsMock.mockReset();
   isDuplicateKeyErrorMock.mockReset();
   listWorkspaceAssistantMessagesMock.mockReset();
   markWorkspaceAssistantGenerationCompletedMock.mockReset();
   markWorkspaceAssistantGenerationFailedMock.mockReset();
   markWorkspaceAssistantMessageCompletedMock.mockReset();
   markWorkspaceAssistantMessageFailedMock.mockReset();
+  callProviderRoutineMock.mockReset();
+  findProviderRoutinesMock.mockReset();
   resolveWorkspaceAssistantAuthContextMock.mockReset();
   safeValidateUIMessagesMock.mockReset();
   setWorkspaceAssistantConversationActiveStreamMock.mockReset();
@@ -157,6 +177,7 @@ beforeEach(() => {
   getWorkspaceAssistantConversationByPublicIdMock.mockResolvedValue(
     makeConversation()
   );
+  isDuplicateKeyErrorMock.mockReturnValue(false);
   listWorkspaceAssistantMessagesMock.mockResolvedValue([]);
   appendWorkspaceAssistantMessageMock
     .mockResolvedValueOnce(
@@ -240,6 +261,76 @@ describe("workspace assistant chat server route", () => {
 
     expect(response.status).toBe(401);
     expect(streamTextMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects write-mode chat requests with an unauthenticated identity (expired token)", async () => {
+    resolveWorkspaceAssistantAuthContextMock.mockResolvedValueOnce({
+      identity: { type: "unauthenticated" },
+    });
+
+    const response = await handleWorkspaceAssistantChatRequest(
+      createWriteModeRequest()
+    );
+
+    expect(response.status).toBe(401);
+    expect(streamTextMock).not.toHaveBeenCalled();
+    expect(findProviderRoutinesMock).not.toHaveBeenCalled();
+    expect(findUserConnectorToolsMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects write-mode chat requests without an active organization", async () => {
+    resolveWorkspaceAssistantAuthContextMock.mockResolvedValueOnce({
+      identity: { type: "pending", userId: "user_123" },
+    });
+
+    const response = await handleWorkspaceAssistantChatRequest(
+      createWriteModeRequest()
+    );
+
+    expect(response.status).toBe(403);
+    expect(streamTextMock).not.toHaveBeenCalled();
+    expect(findProviderRoutinesMock).not.toHaveBeenCalled();
+    expect(findUserConnectorToolsMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects write-mode chat requests when the active organization is not bound", async () => {
+    resolveWorkspaceAssistantAuthContextMock.mockResolvedValueOnce({
+      identity: {
+        orgGate: { bindingStatus: "unbound", nextSetupRequirement: "bind" },
+        orgId: "org_123",
+        type: "active",
+        userId: "user_123",
+      },
+    });
+
+    const response = await handleWorkspaceAssistantChatRequest(
+      createWriteModeRequest()
+    );
+
+    expect(response.status).toBe(403);
+    expect(streamTextMock).not.toHaveBeenCalled();
+    expect(findProviderRoutinesMock).not.toHaveBeenCalled();
+    expect(findUserConnectorToolsMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects write-mode chat requests when the conversation belongs to another organization", async () => {
+    const duplicatePublicId = new Error("duplicate public id");
+    getWorkspaceAssistantConversationByPublicIdMock
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined);
+    createWorkspaceAssistantConversationMock.mockRejectedValueOnce(
+      duplicatePublicId
+    );
+    isDuplicateKeyErrorMock.mockReturnValueOnce(true);
+
+    const response = await handleWorkspaceAssistantChatRequest(
+      createWriteModeRequest()
+    );
+
+    expect(response.status).toBe(404);
+    expect(streamTextMock).not.toHaveBeenCalled();
+    expect(findProviderRoutinesMock).not.toHaveBeenCalled();
+    expect(findUserConnectorToolsMock).not.toHaveBeenCalled();
   });
 
   it("persists an idempotent turn and streams through the AI Gateway model", async () => {
@@ -330,6 +421,71 @@ describe("workspace assistant chat server route", () => {
       })
     );
   });
+
+  it("passes write mode through provider routine tools and exposes user connector tools", async () => {
+    const uiMessages = [
+      {
+        id: "client-message-1",
+        parts: [
+          { text: "Create a Linear issue from my meeting", type: "text" },
+        ],
+        role: "user",
+      },
+    ];
+
+    const response = await handleWorkspaceAssistantChatRequest(
+      createJsonRequest({
+        conversationId: "conv_123",
+        messages: uiMessages,
+        providerRoutineWriteMode: true,
+      })
+    );
+
+    expect(response.status).toBe(200);
+    const streamOptions = streamTextMock.mock.calls.at(-1)?.[0] as
+      | {
+          tools?: Record<
+            string,
+            { execute?: (input: Record<string, unknown>) => Promise<unknown> }
+          >;
+        }
+      | undefined;
+    expect(streamOptions?.tools).toEqual(
+      expect.objectContaining({
+        callProviderRoutine: expect.any(Object),
+        findProviderRoutines: expect.any(Object),
+        callUserConnectorTool: expect.any(Object),
+        findUserConnectorTools: expect.any(Object),
+      })
+    );
+
+    await streamOptions?.tools?.findProviderRoutines?.execute?.({
+      query: "linear",
+    });
+    expect(findProviderRoutinesMock).toHaveBeenCalledWith(
+      {
+        clerkOrgId: "org_123",
+        conversationId: "conv_123",
+        userId: "user_123",
+        writeMode: true,
+      },
+      { query: "linear" }
+    );
+
+    await streamOptions?.tools?.findUserConnectorTools?.execute?.({
+      query: "granola",
+    });
+    expect(findUserConnectorToolsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actor: { orgId: "org_123", userId: "user_123" },
+        source: {
+          conversationId: "conv_123",
+          surface: "interactive_chat",
+        },
+      }),
+      { query: "granola" }
+    );
+  });
 });
 
 function createJsonRequest(body: unknown) {
@@ -337,6 +493,20 @@ function createJsonRequest(body: unknown) {
     body: JSON.stringify(body),
     headers: { "Content-Type": "application/json" },
     method: "POST",
+  });
+}
+
+function createWriteModeRequest() {
+  return createJsonRequest({
+    conversationId: "conv_123",
+    messages: [
+      {
+        id: "client-message-1",
+        parts: [{ text: "Create a Linear issue", type: "text" }],
+        role: "user",
+      },
+    ],
+    providerRoutineWriteMode: true,
   });
 }
 

@@ -33,10 +33,11 @@ import {
   providerRoutineFindOutputSchema,
 } from "@repo/provider-routine-contract";
 import {
-  callProviderRoutine,
-  findProviderRoutines,
-  type ProviderRoutineServiceContext,
-} from "@repo/provider-routines";
+  userConnectorCallInputSchema,
+  userConnectorCallSuccessSchema,
+  userConnectorFindInputSchema,
+  userConnectorFindOutputSchema,
+} from "@repo/user-connector-contract";
 import {
   convertToModelMessages,
   gateway,
@@ -60,6 +61,26 @@ const WORKSPACE_ASSISTANT_STREAM_SMOOTHING = {
   delayInMs: 20,
 } as const;
 
+interface ChatProviderRoutineContext {
+  clerkOrgId: string;
+  conversationId: string;
+  userId: string;
+  writeMode: boolean;
+}
+
+interface UserConnectorChatContext {
+  actor: {
+    orgId: string;
+    userId: string;
+  };
+  db: typeof db;
+  now: () => Date;
+  source: {
+    conversationId: string;
+    surface: "interactive_chat";
+  };
+}
+
 const chatRequestSchema = z
   .object({
     idempotencyKey: z
@@ -77,6 +98,7 @@ const chatRequestSchema = z
       .max(80)
       .regex(/^conv_[A-Za-z0-9_-]+$/)
       .optional(),
+    providerRoutineWriteMode: z.boolean().optional(),
   })
   .passthrough();
 
@@ -86,7 +108,9 @@ const baseSystemPrompt = [
   "When asked about skills, explain what the listed skills can do and suggest the next concrete action.",
   "When connector tools are useful, first find connected provider routines, then call the selected routine by routineId.",
   "Only call provider routines for the active workspace.",
-  "Connected provider routines in chat are read-only; do not use them to create, update, delete, post, assign, archive, or move external records.",
+  "Connected provider routines in chat can read from enabled Linear and X connectors. Write routines are available only for a turn where write mode is enabled. If write access is unavailable, tell the user to reconnect the connector to enable write access.",
+  "When private user connectors such as Granola are useful, first find user connector tools, then call the selected routine by routineId.",
+  "Granola is private meeting context for the current user. Never describe Granola results as workspace or team knowledge.",
 ].join(" ");
 
 export async function handleWorkspaceAssistantChatRequest(request: Request) {
@@ -134,6 +158,8 @@ export async function handleWorkspaceAssistantChatRequest(request: Request) {
       { status: 400 }
     );
   }
+  const providerRoutineWriteMode =
+    parsed.data.providerRoutineWriteMode === true;
 
   const conversation = await resolveConversation({
     createdByUserId: identity.userId,
@@ -232,6 +258,7 @@ export async function handleWorkspaceAssistantChatRequest(request: Request) {
     model: WORKSPACE_ASSISTANT_MODEL,
     streamId,
     conversationId: conversation.publicId,
+    providerRoutineWriteMode,
     userId: identity.userId,
   };
 
@@ -316,10 +343,11 @@ export async function handleWorkspaceAssistantChatRequest(request: Request) {
     },
     stopWhen: stepCountIs(WORKSPACE_ASSISTANT_MAX_TOOL_STEPS),
     system,
-    tools: createWorkspaceAssistantProviderRoutineTools({
+    tools: createWorkspaceAssistantTools({
       conversation,
       orgId: identity.orgId,
       userId: identity.userId,
+      writeMode: providerRoutineWriteMode,
     }),
   });
 
@@ -478,31 +506,97 @@ export async function handleWorkspaceAssistantChatRequest(request: Request) {
   });
 }
 
+function createWorkspaceAssistantTools(input: {
+  conversation: WorkspaceAssistantConversation;
+  orgId: string;
+  userId: string;
+  writeMode: boolean;
+}) {
+  return {
+    ...createWorkspaceAssistantProviderRoutineTools(input),
+    callUserConnectorTool: tool({
+      description:
+        "Call one private user connector tool by routineId for the current user. Use routineIds returned by findUserConnectorTools.",
+      inputSchema: userConnectorCallInputSchema,
+      outputSchema: userConnectorCallSuccessSchema,
+      execute: async (toolInput) => {
+        const { callUserConnectorTool } = await import(
+          "@api/app/services/user-connectors/runtime"
+        );
+        return callUserConnectorTool(userConnectorContext(input), toolInput);
+      },
+    }),
+    findUserConnectorTools: tool({
+      description:
+        "Find private user connector tools available to the current user, such as Granola meeting note tools. Use this before calling callUserConnectorTool.",
+      inputSchema: userConnectorFindInputSchema,
+      outputSchema: userConnectorFindOutputSchema,
+      execute: async (toolInput) => {
+        const { findUserConnectorTools } = await import(
+          "@api/app/services/user-connectors/runtime"
+        );
+        return findUserConnectorTools(userConnectorContext(input), toolInput);
+      },
+    }),
+  };
+}
+
 function createWorkspaceAssistantProviderRoutineTools(input: {
   conversation: WorkspaceAssistantConversation;
   orgId: string;
   userId: string;
+  writeMode: boolean;
 }) {
   return {
     callProviderRoutine: tool({
       description:
-        "Call one read-only connected provider routine by routineId using this workspace's enabled connector. Use routineIds returned by findProviderRoutines.",
+        "Call one connected provider routine by routineId using this workspace's enabled connector. Write routines require write mode for this turn.",
       inputSchema: providerRoutineCallInputSchema,
       outputSchema: providerRoutineCallSuccessSchema,
-      execute: async (toolInput) =>
-        callProviderRoutine(providerRoutineContext(input), toolInput),
+      execute: async (toolInput) => {
+        const { callChatProviderRoutine } = await import(
+          "@api/app/services/connectors/chat-routines"
+        );
+        return callChatProviderRoutine(
+          providerRoutineContext(input),
+          toolInput
+        );
+      },
     }),
     findProviderRoutines: tool({
       description:
-        "Find read-only connected provider routines available to this workspace through enabled connectors. Use this before calling callProviderRoutine.",
+        "Find connected provider routines available to this workspace through enabled connectors. Returns read routines, and write routines only when write mode is enabled for this turn.",
       inputSchema: providerRoutineFindInputSchema,
       outputSchema: providerRoutineFindOutputSchema,
-      execute: async (toolInput) =>
-        findProviderRoutines(providerRoutineContext(input), {
-          ...toolInput,
-          readOnly: true,
-        }),
+      execute: async (toolInput) => {
+        const { findChatProviderRoutines } = await import(
+          "@api/app/services/connectors/chat-routines"
+        );
+        return findChatProviderRoutines(
+          providerRoutineContext(input),
+          toolInput
+        );
+      },
     }),
+  };
+}
+
+function userConnectorContext(input: {
+  conversation: WorkspaceAssistantConversation;
+  orgId: string;
+  userId: string;
+}): UserConnectorChatContext {
+  return {
+    actor: {
+      orgId: input.orgId,
+      userId: input.userId,
+    },
+    db,
+    now: () => new Date(),
+    source: {
+      conversationId: input.conversation.publicId,
+      surface: "interactive_chat",
+    },
   };
 }
 
@@ -510,24 +604,13 @@ function providerRoutineContext(input: {
   conversation: WorkspaceAssistantConversation;
   orgId: string;
   userId: string;
-}): ProviderRoutineServiceContext {
+  writeMode: boolean;
+}): ChatProviderRoutineContext {
   return {
-    actor: {
-      orgId: input.orgId,
-      userId: input.userId,
-    },
-    db,
-    log,
-    now: () => new Date(),
-    scopes: {
-      providerRoutineRead: true,
-      providerRoutineWrite: false,
-    },
-    source: {
-      clientId: null,
-      ref: input.conversation.publicId,
-      surface: "chat",
-    },
+    clerkOrgId: input.orgId,
+    conversationId: input.conversation.publicId,
+    userId: input.userId,
+    writeMode: input.writeMode,
   };
 }
 
