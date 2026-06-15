@@ -3,8 +3,76 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const repoRoot = resolve(import.meta.dirname, "../../../..");
-const nextAppRoot = resolve(repoRoot, "apps/app-next");
 const tanstackAppRoot = resolve(repoRoot, "apps/app");
+
+const migratedNextAppRoutes = [
+  "/$",
+  "/$/automations",
+  "/$/automations/$",
+  "/$/automations/new",
+  "/$/chat",
+  "/$/chat/$",
+  "/$/connectors",
+  "/$/decisions",
+  "/$/developer-connections",
+  "/$/people",
+  "/$/settings",
+  "/$/settings/api-keys",
+  "/$/settings/billing",
+  "/$/settings/mcp",
+  "/$/settings/members",
+  "/$/settings/source-control",
+  "/$/signals",
+  "/$/skills",
+  "/$/tasks/bind",
+  "/$/tasks/bind/github/complete",
+  "/$/tasks/connectors/x",
+  "/$/tasks/connectors/x/complete",
+  "/$/tasks/github/lightfast-repo",
+  "/.well-known/oauth-authorization-server",
+  "/account",
+  "/account/mcp",
+  "/account/settings",
+  "/account/settings/general",
+  "/account/settings/source-control",
+  "/account/tasks/github",
+  "/account/tasks/github/complete",
+  "/account/tasks/username",
+  "/account/teams/new",
+  "/api/chat",
+  "/api/chat/$/stream",
+  "/api/connectors/granola/oauth/callback",
+  "/api/connectors/linear/oauth/callback",
+  "/api/connectors/x/mcp",
+  "/api/connectors/x/oauth/callback",
+  "/api/github/oauth/callback",
+  "/api/github/setup",
+  "/api/github/user/oauth/callback",
+  "/api/github/webhook",
+  "/api/health",
+  "/api/inngest",
+  "/api/internal/mcp/proxy/call",
+  "/api/internal/mcp/proxy/find",
+  "/api/internal/mcp/signals",
+  "/api/internal/mcp/signals/get",
+  "/api/native/proxy/call",
+  "/api/native/proxy/routines",
+  "/api/oauth/$/config",
+  "/api/oauth/finalize",
+  "/api/skills/index/events",
+  "/api/trpc/$",
+  "/api/v1/$",
+  "/oauth/$/start",
+  "/oauth/authorize",
+  "/oauth/jwks",
+  "/oauth/register",
+  "/oauth/register/$",
+  "/oauth/revoke",
+  "/oauth/token",
+  "/sign-in",
+  "/sign-up",
+  "/sign-up/accept-invitation",
+] as const;
 
 function readWorkspaceFile(path: string) {
   return readFileSync(resolve(repoRoot, path), "utf8");
@@ -24,28 +92,6 @@ function stripTrailingSlash(path: string) {
   return path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
 }
 
-function normalizeNextSegment(segment: string) {
-  if (segment === "[...not-found]") {
-    return null;
-  }
-  if (segment.startsWith("(") && segment.endsWith(")")) {
-    return null;
-  }
-  if (segment.startsWith("@")) {
-    return null;
-  }
-  if (segment.startsWith("[[...") && segment.endsWith("]]")) {
-    return "$";
-  }
-  if (segment.startsWith("[...") && segment.endsWith("]")) {
-    return "$";
-  }
-  if (segment.startsWith("[") && segment.endsWith("]")) {
-    return `$${segment.slice(1, -1)}`;
-  }
-  return segment;
-}
-
 function normalizeAddressableRoute(path: string) {
   return stripTrailingSlash(path)
     .split("/")
@@ -56,24 +102,6 @@ function normalizeAddressableRoute(path: string) {
       return publicSegment.replace(/^\$[A-Za-z0-9]+$/, "$");
     })
     .join("/");
-}
-
-function nextAddressableRoutes() {
-  const appDir = resolve(nextAppRoot, "src/app");
-  expect(existsSync(appDir), "legacy Next app routes should exist").toBe(true);
-  return walkFiles(appDir)
-    .filter((path) => path.endsWith("/page.tsx") || path.endsWith("/route.ts"))
-    .filter((path) => !path.includes("/@"))
-    .map((path) => {
-      const relative = path.slice(appDir.length + 1);
-      const segments = relative.split("/").slice(0, -1);
-      const normalizedSegments = segments.flatMap((segment) => {
-        const normalized = normalizeNextSegment(segment);
-        return normalized ? [normalized] : [];
-      });
-      return normalizeAddressableRoute(`/${normalizedSegments.join("/")}`);
-    })
-    .sort();
 }
 
 function tanstackRouteDeclarations() {
@@ -95,15 +123,18 @@ function tanstackRouteDeclarations() {
 }
 
 describe("app migration readiness", () => {
-  it("declares TanStack routes for every addressable legacy Next route", () => {
-    const nextRoutes = nextAddressableRoutes();
+  it("declares TanStack routes for every migrated legacy Next route", () => {
     const tanstackRoutes = new Set(tanstackRouteDeclarations());
 
-    expect(nextRoutes.length).toBeGreaterThan(0);
+    expect(migratedNextAppRoutes.length).toBe(66);
     expect(tanstackRoutes.size).toBeGreaterThan(0);
     expect(
-      nextRoutes.filter((route) => !tanstackRoutes.has(route))
+      migratedNextAppRoutes.filter((route) => !tanstackRoutes.has(route))
     ).toStrictEqual([]);
+  });
+
+  it("removes the archived Next.js app workspace after promotion", () => {
+    expect(existsSync(resolve(repoRoot, "apps/app-next"))).toBe(false);
   });
 
   it("keeps the TanStack app deployable under the old app environment surface", () => {
