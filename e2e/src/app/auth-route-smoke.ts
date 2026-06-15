@@ -14,9 +14,9 @@ import {
 
 const execFileAsync = promisify(execFile);
 
-const DEFAULT_SESSION_NAME = "lightfast-app-tanstack-auth-smoke";
+const DEFAULT_SESSION_NAME = "lightfast-app-auth-smoke";
 const DEFAULT_EMAIL_DOMAIN = "lightfast.ai";
-const APP_TANSTACK_PORTLESS_NAME = "app-tanstack.lightfast";
+const APP_PORTLESS_NAME = "app.lightfast";
 const DEFAULT_CLERK_API_TIMEOUT_MS = 30_000;
 const DEFAULT_ROUTE_TIMEOUT_MS = 120_000;
 const X_EMULATOR_ACCESS_TOKEN = "x_access_valid";
@@ -27,7 +27,7 @@ const SMOKE_AUTOMATION_PROMPT = "Review seeded route smoke coverage.";
 
 type Env = Record<string, string | undefined>;
 
-export interface AppTanstackAuthRouteSmokeConfig {
+export interface AppAuthRouteSmokeConfig {
   appOrigin: string;
   clerkApiTimeoutMs: number;
   clerkSecretKey: string;
@@ -37,14 +37,14 @@ export interface AppTanstackAuthRouteSmokeConfig {
   sessionName: string;
 }
 
-export interface BuildAppTanstackAuthRouteSmokeConfigInput {
+export interface BuildAppAuthRouteSmokeConfigInput {
   env?: Env;
   getPortlessUrl?: (name: string) => string;
   nowMs?: number;
 }
 
-export interface AppTanstackAuthSmokeSession {
-  config: AppTanstackAuthRouteSmokeConfig;
+export interface AppAuthSmokeSession {
+  config: AppAuthRouteSmokeConfig;
   orgId: string;
   orgSlug: string;
   userId: string;
@@ -97,7 +97,7 @@ const FORBIDDEN_ROUTE_TEXT = [
   "Session expired",
 ] as const;
 
-export const APP_TANSTACK_AUTH_ROUTE_SPECS: RouteSpec[] = [
+export const APP_AUTH_ROUTE_SPECS: RouteSpec[] = [
   {
     expectedText: ["General", "Profile", "Display name"],
     name: "account general settings",
@@ -205,7 +205,7 @@ export const APP_TANSTACK_AUTH_ROUTE_SPECS: RouteSpec[] = [
   },
 ];
 
-const APP_TANSTACK_AUTH_FIXTURE_ROUTE_SPECS: Array<
+const APP_AUTH_FIXTURE_ROUTE_SPECS: Array<
   RouteSpec & { fixture: keyof RouteFixtureIds }
 > = [
   {
@@ -221,18 +221,18 @@ const APP_TANSTACK_AUTH_FIXTURE_ROUTE_SPECS: Array<
   },
 ];
 
-export function createUniqueAppTanstackAuthOrgSlug(input: {
+export function createUniqueAppAuthOrgSlug(input: {
   nowMs?: number;
   prefix?: string;
 }) {
-  const prefix = slugPart(input.prefix ?? "lf-app-tanstack-auth-e2e");
+  const prefix = slugPart(input.prefix ?? "lf-app-auth-e2e");
   const timestampMs = input.nowMs ?? Date.now();
-  return `${prefix || "lf-app-tanstack-auth-e2e"}-${timestampMs}`;
+  return `${prefix || "lf-app-auth-e2e"}-${timestampMs}`;
 }
 
-export function buildAppTanstackAuthRouteSmokeConfig(
-  input: BuildAppTanstackAuthRouteSmokeConfigInput = {}
-): AppTanstackAuthRouteSmokeConfig {
+export function buildAppAuthRouteSmokeConfig(
+  input: BuildAppAuthRouteSmokeConfigInput = {}
+): AppAuthRouteSmokeConfig {
   const env = input.env ?? process.env;
   const clerkSecretKey = env.CLERK_SECRET_KEY?.trim();
   if (!clerkSecretKey) {
@@ -244,34 +244,31 @@ export function buildAppTanstackAuthRouteSmokeConfig(
   const getPortlessUrl = input.getPortlessUrl ?? readPortlessUrl;
   const nowMs = input.nowMs ?? Date.now();
   const orgSlug =
-    env.LIGHTFAST_E2E_APP_TANSTACK_AUTH_ORG_SLUG?.trim() ||
-    createUniqueAppTanstackAuthOrgSlug({
+    env.LIGHTFAST_E2E_APP_AUTH_ORG_SLUG?.trim() ||
+    createUniqueAppAuthOrgSlug({
       nowMs,
-      prefix: env.LIGHTFAST_E2E_APP_TANSTACK_AUTH_ORG_SLUG_PREFIX,
+      prefix: env.LIGHTFAST_E2E_APP_AUTH_ORG_SLUG_PREFIX,
     });
   const emailAddress =
-    env.LIGHTFAST_E2E_APP_TANSTACK_AUTH_EMAIL?.trim() ||
+    env.LIGHTFAST_E2E_APP_AUTH_EMAIL?.trim() ||
     `${slugPart(
-      env.LIGHTFAST_E2E_APP_TANSTACK_AUTH_EMAIL_PREFIX ??
-        "app-tanstack-auth-smoke"
+      env.LIGHTFAST_E2E_APP_AUTH_EMAIL_PREFIX ?? "app-auth-smoke"
     )}-${nowMs}@${DEFAULT_EMAIL_DOMAIN}`;
   const routeTimeoutMs = readPositiveInteger(
-    env.LIGHTFAST_E2E_APP_TANSTACK_AUTH_ROUTE_TIMEOUT_MS,
+    env.LIGHTFAST_E2E_APP_AUTH_ROUTE_TIMEOUT_MS,
     DEFAULT_ROUTE_TIMEOUT_MS,
-    "LIGHTFAST_E2E_APP_TANSTACK_AUTH_ROUTE_TIMEOUT_MS"
+    "LIGHTFAST_E2E_APP_AUTH_ROUTE_TIMEOUT_MS"
   );
   const clerkApiTimeoutMs = readPositiveInteger(
-    env.LIGHTFAST_E2E_APP_TANSTACK_AUTH_CLERK_API_TIMEOUT_MS,
+    env.LIGHTFAST_E2E_APP_AUTH_CLERK_API_TIMEOUT_MS,
     DEFAULT_CLERK_API_TIMEOUT_MS,
-    "LIGHTFAST_E2E_APP_TANSTACK_AUTH_CLERK_API_TIMEOUT_MS"
+    "LIGHTFAST_E2E_APP_AUTH_CLERK_API_TIMEOUT_MS"
   );
 
   return {
     appOrigin: normalizeUrl(
-      env.LIGHTFAST_E2E_APP_TANSTACK_URL?.trim() ||
-        env.LIGHTFAST_E2E_APP_URL?.trim() ||
-        getPortlessUrl(APP_TANSTACK_PORTLESS_NAME),
-      "LIGHTFAST_E2E_APP_TANSTACK_URL"
+      env.LIGHTFAST_E2E_APP_URL?.trim() || getPortlessUrl(APP_PORTLESS_NAME),
+      "LIGHTFAST_E2E_APP_URL"
     ),
     clerkApiTimeoutMs,
     clerkSecretKey,
@@ -288,10 +285,10 @@ export function buildRouteChecks(
   orgSlug: string,
   fixtures: RouteFixtureIds = {}
 ): RouteCheck[] {
-  const staticChecks = APP_TANSTACK_AUTH_ROUTE_SPECS.map((spec) =>
+  const staticChecks = APP_AUTH_ROUTE_SPECS.map((spec) =>
     buildRouteCheck(spec, orgSlug, fixtures)
   );
-  const fixtureChecks = APP_TANSTACK_AUTH_FIXTURE_ROUTE_SPECS.filter((spec) =>
+  const fixtureChecks = APP_AUTH_FIXTURE_ROUTE_SPECS.filter((spec) =>
     Boolean(fixtures[spec.fixture])
   ).map((spec) => buildRouteCheck(spec, orgSlug, fixtures));
   return [...staticChecks, ...fixtureChecks];
@@ -311,7 +308,7 @@ function buildRouteCheck(
   };
 }
 
-export function buildAppTanstackAuthSmokeAutomationInput(input: {
+export function buildAppAuthSmokeAutomationInput(input: {
   orgId: string;
   userId: string;
 }): CreateAutomationInput {
@@ -400,7 +397,7 @@ function boundPublicMetadata() {
 }
 
 async function fetchClerkJson<T>(
-  config: AppTanstackAuthRouteSmokeConfig,
+  config: AppAuthRouteSmokeConfig,
   path: `/${string}`,
   init: Omit<RequestInit, "body" | "headers"> & {
     body?: Record<string, unknown>;
@@ -441,11 +438,11 @@ async function fetchClerkJson<T>(
   return body as T;
 }
 
-async function createClerkUser(config: AppTanstackAuthRouteSmokeConfig) {
+async function createClerkUser(config: AppAuthRouteSmokeConfig) {
   return await fetchClerkJson<ClerkUser>(config, "/users", {
     body: {
       email_address: [config.emailAddress],
-      first_name: "TanStack",
+      first_name: "App",
       last_name: "Smoke",
       legal_accepted_at: new Date().toISOString(),
     },
@@ -454,7 +451,7 @@ async function createClerkUser(config: AppTanstackAuthRouteSmokeConfig) {
 }
 
 async function createClerkOrganization(
-  config: AppTanstackAuthRouteSmokeConfig,
+  config: AppAuthRouteSmokeConfig,
   userId: string
 ) {
   return await fetchClerkJson<ClerkOrganization>(config, "/organizations", {
@@ -469,7 +466,7 @@ async function createClerkOrganization(
 }
 
 async function updateClerkUserLastActiveOrg(
-  config: AppTanstackAuthRouteSmokeConfig,
+  config: AppAuthRouteSmokeConfig,
   input: { orgId: string; userId: string }
 ) {
   await fetchClerkJson(config, `/users/${input.userId}/metadata`, {
@@ -486,7 +483,7 @@ async function updateClerkUserLastActiveOrg(
 }
 
 async function updateClerkOrgBoundMetadata(
-  config: AppTanstackAuthRouteSmokeConfig,
+  config: AppAuthRouteSmokeConfig,
   orgId: string
 ) {
   const org = await fetchClerkJson<{
@@ -516,7 +513,7 @@ async function updateClerkOrgBoundMetadata(
 }
 
 async function createClerkSignInToken(
-  config: AppTanstackAuthRouteSmokeConfig,
+  config: AppAuthRouteSmokeConfig,
   userId: string
 ) {
   const body = await fetchClerkJson<{ token: string }>(
@@ -537,7 +534,7 @@ async function createClerkSignInToken(
 }
 
 async function deleteClerkOrganization(
-  config: AppTanstackAuthRouteSmokeConfig,
+  config: AppAuthRouteSmokeConfig,
   orgId: string
 ) {
   await fetchClerkJson(config, `/organizations/${orgId}`, {
@@ -546,7 +543,7 @@ async function deleteClerkOrganization(
 }
 
 async function deleteClerkUser(
-  config: AppTanstackAuthRouteSmokeConfig,
+  config: AppAuthRouteSmokeConfig,
   userId: string
 ) {
   await fetchClerkJson(config, `/users/${userId}`, {
@@ -555,7 +552,7 @@ async function deleteClerkUser(
 }
 
 async function cleanupClerkSmokeIdentity(
-  config: AppTanstackAuthRouteSmokeConfig,
+  config: AppAuthRouteSmokeConfig,
   input: { orgId?: string; userId?: string }
 ) {
   const errors: string[] = [];
@@ -576,7 +573,7 @@ async function cleanupClerkSmokeIdentity(
   }
 }
 
-export function readAppTanstackAuthEncryptionKey(env: Env = process.env) {
+export function readAppAuthEncryptionKey(env: Env = process.env) {
   const value = env.ENCRYPTION_KEY?.trim();
   if (!value) {
     throw new Error(
@@ -624,7 +621,7 @@ async function createBoundSourceControlBinding(input: {
 }
 
 async function createActiveXConnectorConnection(input: {
-  config: AppTanstackAuthRouteSmokeConfig;
+  config: AppAuthRouteSmokeConfig;
   env: Env;
   orgId: string;
   orgSlug: string;
@@ -643,7 +640,7 @@ async function createActiveXConnectorConnection(input: {
     import("@db/app"),
     import("@repo/app-encryption"),
   ]);
-  const encryptionKey = readAppTanstackAuthEncryptionKey(input.env);
+  const encryptionKey = readAppAuthEncryptionKey(input.env);
 
   await finalizeCurrentOrgConnectorConnection(db, {
     accessTokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
@@ -661,7 +658,7 @@ async function createActiveXConnectorConnection(input: {
       input.config.appOrigin
     ).toString(),
     metadata: {
-      smoke: "app-tanstack-auth-routes",
+      smoke: "app-auth-routes",
       username: input.orgSlug,
     },
     provider: "x",
@@ -698,7 +695,7 @@ async function createSmokeAutomation(input: { orgId: string; userId: string }) {
   ]);
   const automation = await createAutomation(
     db,
-    buildAppTanstackAuthSmokeAutomationInput(input)
+    buildAppAuthSmokeAutomationInput(input)
   );
   return automation.publicId;
 }
@@ -710,7 +707,7 @@ function record(value: unknown): Record<string, unknown> {
 }
 
 export async function agentBrowser(
-  config: AppTanstackAuthRouteSmokeConfig,
+  config: AppAuthRouteSmokeConfig,
   args: string[]
 ) {
   return await runCommand("agent-browser", [
@@ -720,15 +717,12 @@ export async function agentBrowser(
   ]);
 }
 
-export async function agentEval(
-  config: AppTanstackAuthRouteSmokeConfig,
-  js: string
-) {
+export async function agentEval(config: AppAuthRouteSmokeConfig, js: string) {
   return await agentBrowser(config, ["eval", js]);
 }
 
 async function signInWithClerkTicket(
-  config: AppTanstackAuthRouteSmokeConfig,
+  config: AppAuthRouteSmokeConfig,
   input: { destinationPath: string; orgId: string; ticket: string }
 ) {
   await agentBrowser(config, ["open", `${config.appOrigin}/sign-in`]);
@@ -767,7 +761,7 @@ async function signInWithClerkTicket(
   );
 }
 
-export async function readPageState(config: AppTanstackAuthRouteSmokeConfig) {
+export async function readPageState(config: AppAuthRouteSmokeConfig) {
   const raw = await agentEval(
     config,
     `({
@@ -795,7 +789,7 @@ export async function readPageState(config: AppTanstackAuthRouteSmokeConfig) {
 }
 
 async function assertRouteRendered(
-  config: AppTanstackAuthRouteSmokeConfig,
+  config: AppAuthRouteSmokeConfig,
   route: RouteCheck
 ) {
   const targetUrl = new URL(route.path, config.appOrigin);
@@ -874,13 +868,13 @@ function readPortlessUrl(name: string): string {
   );
 }
 
-export async function createAppTanstackAuthSmokeSession(
-  input: BuildAppTanstackAuthRouteSmokeConfigInput & {
+export async function createAppAuthSmokeSession(
+  input: BuildAppAuthRouteSmokeConfigInput & {
     destinationPath?: string;
   } = {}
-): Promise<AppTanstackAuthSmokeSession> {
+): Promise<AppAuthSmokeSession> {
   const env = input.env ?? process.env;
-  const config = buildAppTanstackAuthRouteSmokeConfig(input);
+  const config = buildAppAuthRouteSmokeConfig(input);
   allowLocalhostTls(config.appOrigin);
 
   let user: ClerkUser | undefined;
@@ -928,20 +922,18 @@ export async function createAppTanstackAuthSmokeSession(
   }
 }
 
-export async function cleanupAppTanstackAuthSmokeSession(
-  session: AppTanstackAuthSmokeSession
-) {
+export async function cleanupAppAuthSmokeSession(session: AppAuthSmokeSession) {
   await cleanupClerkSmokeIdentity(session.config, {
     orgId: session.orgId,
     userId: session.userId,
   });
 }
 
-export async function runAppTanstackAuthRouteSmoke(
-  input: BuildAppTanstackAuthRouteSmokeConfigInput = {}
+export async function runAppAuthRouteSmoke(
+  input: BuildAppAuthRouteSmokeConfigInput = {}
 ) {
   const env = input.env ?? process.env;
-  const config = buildAppTanstackAuthRouteSmokeConfig(input);
+  const config = buildAppAuthRouteSmokeConfig(input);
   allowLocalhostTls(config.appOrigin);
 
   console.log(`[smoke] app=${config.appOrigin}`);
@@ -1000,7 +992,7 @@ function isMainModule() {
 }
 
 if (isMainModule()) {
-  runAppTanstackAuthRouteSmoke().catch((error: unknown) => {
+  runAppAuthRouteSmoke().catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;
   });

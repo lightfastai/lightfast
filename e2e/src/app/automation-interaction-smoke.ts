@@ -3,27 +3,27 @@ import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
 import type {
-  AppTanstackAuthRouteSmokeConfig,
-  AppTanstackAuthSmokeSession,
-  BuildAppTanstackAuthRouteSmokeConfigInput,
+  AppAuthRouteSmokeConfig,
+  AppAuthSmokeSession,
+  BuildAppAuthRouteSmokeConfigInput,
 } from "./auth-route-smoke";
 import {
   agentBrowser,
   agentEval,
-  cleanupAppTanstackAuthSmokeSession,
+  cleanupAppAuthSmokeSession,
   collectRouteBodyProblems,
-  createAppTanstackAuthSmokeSession,
+  createAppAuthSmokeSession,
   readPageState,
 } from "./auth-route-smoke";
 
-export interface AppTanstackAutomationInteractionFixture {
+export interface AppAutomationInteractionFixture {
   createName: string;
   createPrompt: string;
   updateName: string;
   updatePrompt: string;
 }
 
-export interface AppTanstackAutomationInteractionPaths {
+export interface AppAutomationInteractionPaths {
   listPath: string;
   newPath: string;
 }
@@ -38,21 +38,21 @@ interface ClickAutomationLinkResult {
   href: string;
 }
 
-export function buildAppTanstackAutomationInteractionFixture(
+export function buildAppAutomationInteractionFixture(
   input: { nowMs?: number } = {}
-): AppTanstackAutomationInteractionFixture {
+): AppAutomationInteractionFixture {
   const timestampMs = input.nowMs ?? Date.now();
   return {
     createName: `UI smoke automation ${timestampMs}`,
-    createPrompt: "Created through app-tanstack automation interaction smoke.",
+    createPrompt: "Created through app automation interaction smoke.",
     updateName: `Updated UI smoke automation ${timestampMs}`,
-    updatePrompt: "Updated through app-tanstack automation interaction smoke.",
+    updatePrompt: "Updated through app automation interaction smoke.",
   };
 }
 
-export function buildAppTanstackAutomationInteractionPaths(
+export function buildAppAutomationInteractionPaths(
   orgSlug: string
-): AppTanstackAutomationInteractionPaths {
+): AppAutomationInteractionPaths {
   return {
     listPath: `/${orgSlug}/automations`,
     newPath: `/${orgSlug}/automations/new`,
@@ -60,7 +60,7 @@ export function buildAppTanstackAutomationInteractionPaths(
 }
 
 export async function waitForRouteText(
-  config: AppTanstackAuthRouteSmokeConfig,
+  config: AppAuthRouteSmokeConfig,
   input: WaitForRouteTextInput
 ) {
   const deadline = Date.now() + config.routeTimeoutMs;
@@ -102,7 +102,7 @@ export async function waitForRouteText(
 }
 
 async function clickAutomationLinkByName(
-  config: AppTanstackAuthRouteSmokeConfig,
+  config: AppAuthRouteSmokeConfig,
   name: string
 ): Promise<ClickAutomationLinkResult> {
   const deadline = Date.now() + config.routeTimeoutMs;
@@ -153,7 +153,7 @@ async function clickAutomationLinkByName(
 }
 
 export async function clickButtonByText(
-  config: AppTanstackAuthRouteSmokeConfig,
+  config: AppAuthRouteSmokeConfig,
   name: string
 ) {
   const raw = await agentEval(
@@ -195,7 +195,7 @@ function extractAutomationPublicId(href: string): string {
   return publicId;
 }
 
-async function blurActiveElement(config: AppTanstackAuthRouteSmokeConfig) {
+async function blurActiveElement(config: AppAuthRouteSmokeConfig) {
   await agentEval(
     config,
     `(() => {
@@ -208,7 +208,7 @@ async function blurActiveElement(config: AppTanstackAuthRouteSmokeConfig) {
 }
 
 async function waitForTextareaByAriaLabel(
-  config: AppTanstackAuthRouteSmokeConfig,
+  config: AppAuthRouteSmokeConfig,
   label: string
 ) {
   const deadline = Date.now() + config.routeTimeoutMs;
@@ -249,7 +249,7 @@ async function waitForTextareaByAriaLabel(
 }
 
 async function waitForAutomationPersisted(input: {
-  config: AppTanstackAuthRouteSmokeConfig;
+  config: AppAuthRouteSmokeConfig;
   expectedName: string;
   expectedPrompt: string;
   orgId: string;
@@ -291,21 +291,21 @@ async function waitForAutomationPersisted(input: {
   );
 }
 
-export async function runAppTanstackAutomationInteractionSmoke(
-  input: BuildAppTanstackAuthRouteSmokeConfigInput = {}
+export async function runAppAutomationInteractionSmoke(
+  input: BuildAppAuthRouteSmokeConfigInput = {}
 ) {
   const nowMs = input.nowMs ?? Date.now();
-  const fixture = buildAppTanstackAutomationInteractionFixture({ nowMs });
-  let config: AppTanstackAuthRouteSmokeConfig | undefined;
-  let session: AppTanstackAuthSmokeSession | undefined;
+  const fixture = buildAppAutomationInteractionFixture({ nowMs });
+  let config: AppAuthRouteSmokeConfig | undefined;
+  let session: AppAuthSmokeSession | undefined;
 
   try {
-    session = await createAppTanstackAuthSmokeSession({
+    session = await createAppAuthSmokeSession({
       ...input,
       nowMs,
     });
     config = session.config;
-    const paths = buildAppTanstackAutomationInteractionPaths(session.orgSlug);
+    const paths = buildAppAutomationInteractionPaths(session.orgSlug);
 
     console.log(`[smoke] app=${config.appOrigin}`);
     console.log(`[smoke] org=${session.orgSlug}`);
@@ -424,7 +424,7 @@ export async function runAppTanstackAutomationInteractionSmoke(
       await agentBrowser(config, ["close"]).catch(() => undefined);
     }
     if (session) {
-      await cleanupAppTanstackAuthSmokeSession(session);
+      await cleanupAppAuthSmokeSession(session);
     }
   }
 }
@@ -437,7 +437,7 @@ function isMainModule() {
 }
 
 if (isMainModule()) {
-  runAppTanstackAutomationInteractionSmoke().catch((error: unknown) => {
+  runAppAutomationInteractionSmoke().catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;
   });

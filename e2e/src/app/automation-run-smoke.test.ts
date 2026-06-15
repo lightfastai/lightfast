@@ -1,25 +1,23 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  buildAppTanstackAutomationRunFixture,
-  buildAppTanstackAutomationRunPaths,
+  buildAppAutomationRunFixture,
+  buildAppAutomationRunPaths,
   isObservedAutomationRunStatus,
 } from "./automation-run-smoke";
 
-describe("app-tanstack automation run smoke helpers", () => {
+describe("app automation run smoke helpers", () => {
   it("builds deterministic automation copy for manual run assertions", () => {
-    expect(
-      buildAppTanstackAutomationRunFixture({ nowMs: 1_780_876_800_000 })
-    ).toEqual({
+    expect(buildAppAutomationRunFixture({ nowMs: 1_780_876_800_000 })).toEqual({
       automationName: "Manual run smoke automation 1780876800000",
       automationPrompt:
-        "Verify the app-tanstack manual run history smoke can enqueue this automation.",
+        "Verify the app manual run history smoke can enqueue this automation.",
     });
   });
 
   it("builds automation detail and selected-run paths", () => {
     expect(
-      buildAppTanstackAutomationRunPaths({
+      buildAppAutomationRunPaths({
         automationId: "automation_123",
         orgSlug: "lightfast",
         runId: "automation_run_456",
@@ -33,7 +31,7 @@ describe("app-tanstack automation run smoke helpers", () => {
 
   it("builds automation detail path for invalid selected-run recovery", () => {
     expect(
-      buildAppTanstackAutomationRunPaths({
+      buildAppAutomationRunPaths({
         automationId: "automation_123",
         orgSlug: "lightfast",
         runId: "missing run/id",
@@ -47,7 +45,7 @@ describe("app-tanstack automation run smoke helpers", () => {
 
   it("returns null run detail path when run id is omitted", () => {
     expect(
-      buildAppTanstackAutomationRunPaths({
+      buildAppAutomationRunPaths({
         automationId: "automation_123",
         orgSlug: "lightfast",
       })
