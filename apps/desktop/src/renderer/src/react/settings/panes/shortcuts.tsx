@@ -1,3 +1,6 @@
+import { Card } from "@repo/ui-v2/components/ui/card";
+import { Separator } from "@repo/ui-v2/components/ui/separator";
+import { Fragment } from "react";
 import {
   ACCELERATORS,
   type AcceleratorName,
@@ -15,21 +18,21 @@ export function Shortcuts({ platform }: { platform: FormatPlatform }) {
   const names = Object.keys(ACCELERATORS) as AcceleratorName[];
   return (
     <section className="mb-4 max-w-none">
-      <div className="flex flex-col overflow-hidden rounded-lg border border-[#0d0d0d]/10 bg-[#0d0d0d]/4 [.electron-dark_&]:border-white/10 [.electron-dark_&]:bg-white/3">
-        {names.map((name) => (
-          <div
-            className="flex items-center justify-between gap-4 border-[#0d0d0d]/5 border-b px-4 py-3 last:border-b-0 [.electron-dark_&]:border-white/5"
-            key={name}
-          >
-            <div className="text-[#0d0d0d] text-[12px] [.electron-dark_&]:text-white">
-              {SHORTCUT_LABELS[name]}
+      <Card className="gap-0 overflow-hidden py-0">
+        {names.map((name, index) => (
+          <Fragment key={name}>
+            <div className="flex items-center justify-between gap-4 px-4 py-3">
+              <div className="text-foreground text-xs">
+                {SHORTCUT_LABELS[name]}
+              </div>
+              <kbd className="rounded-md border bg-muted px-1.5 py-0.5 font-mono text-muted-foreground text-xs">
+                {formatAccelerator(ACCELERATORS[name], platform)}
+              </kbd>
             </div>
-            <kbd className="rounded border border-[#0d0d0d]/10 bg-white px-1.5 py-0.5 font-mono text-[#0d0d0d]/70 text-[0.82rem] [.electron-dark_&]:border-white/10 [.electron-dark_&]:bg-[#282828] [.electron-dark_&]:text-white/70">
-              {formatAccelerator(ACCELERATORS[name], platform)}
-            </kbd>
-          </div>
+            {index < names.length - 1 && <Separator />}
+          </Fragment>
         ))}
-      </div>
+      </Card>
     </section>
   );
 }

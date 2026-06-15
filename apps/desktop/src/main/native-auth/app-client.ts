@@ -1,4 +1,5 @@
 import {
+  NATIVE_AUTH_HEADERS,
   nativeOAuthConfigSchema,
   nativeSessionMetadataSchema,
 } from "@repo/native-auth-contract";
@@ -68,6 +69,20 @@ export function createDesktopNativeAuthClient(
             client: "desktop",
             state: input.state,
           }),
+        }
+      );
+      return readJson(response, nativeSessionMetadataSchema);
+    },
+    async session(input: { accessToken: string; organizationId: string }) {
+      const response = await fetchImpl(
+        createAppUrl("/api/oauth/desktop/session").toString(),
+        {
+          headers: {
+            accept: "application/json",
+            authorization: `Bearer ${input.accessToken}`,
+            [NATIVE_AUTH_HEADERS.client]: "desktop",
+            [NATIVE_AUTH_HEADERS.organizationId]: input.organizationId,
+          },
         }
       );
       return readJson(response, nativeSessionMetadataSchema);

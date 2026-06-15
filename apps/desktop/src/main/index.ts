@@ -14,7 +14,7 @@ import {
   type RendererErrorPayload,
   type SystemThemeVariant,
 } from "../shared/ipc";
-import { openAppOrigin } from "./app-url";
+import { openAppOrigin, openAppPath } from "./app-url";
 import { createAuthFocusGate } from "./auth-focus-gate";
 import { getBuildInfo } from "./build-info";
 import { closeDb, initDb } from "./db";
@@ -27,6 +27,7 @@ import {
   onPendingSigninUrl,
 } from "./native-auth/flow";
 import { getValidAuthRequestHeaders } from "./native-auth/session";
+import { syncNativeSessionProfile } from "./native-auth/profile-sync";
 import {
   getAuthSnapshot,
   getToken as getAuthToken,
@@ -53,6 +54,9 @@ import { applyTitleBarOverlayTheme, createWindow } from "./windows/factory";
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined;
 
 const ALLOWED_EXTERNAL_PROTOCOLS = new Set(["http:", "https:", "mailto:"]);
+const PROFILE_SYNC_THROTTLE_MS = 5 * 60 * 1000;
+let lastProfileSyncAt = 0;
+let profileSyncInFlight: Promise<void> | null = null;
 
 function currentThemeVariant(): SystemThemeVariant {
   return nativeTheme.shouldUseDarkColors ? "dark" : "light";
@@ -107,6 +111,29 @@ function openAllowedExternalUrl(url: string): void {
   } catch {
     // ignore malformed urls
   }
+}
+
+function scheduleNativeSessionProfileSync({
+  force = false,
+}: { force?: boolean } = {}): void {
+  if (!getAuthSnapshot().isSignedIn) {
+    return;
+  }
+
+  const now = Date.now();
+  if (!force && now - lastProfileSyncAt < PROFILE_SYNC_THROTTLE_MS) {
+    return;
+  }
+  lastProfileSyncAt = now;
+
+  profileSyncInFlight ??= syncNativeSessionProfile()
+    .then(() => undefined)
+    .catch((error) => {
+      logger.warn("[native-auth] session profile sync failed", error);
+    })
+    .finally(() => {
+      profileSyncInFlight = null;
+    });
 }
 
 function buildContentSecurityPolicy(): string {
@@ -204,6 +231,14 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle(IpcChannels.openApp, async () => {
     await openAppOrigin();
+  });
+
+  ipcMain.handle(IpcChannels.openAppPath, async (_event, path: unknown) => {
+    if (typeof path !== "string") {
+      throw new Error("Expected app path string");
+    }
+
+    await openAppPath(path);
   });
 
   ipcMain.on(IpcChannels.rendererError, (_event, payload: unknown) => {
@@ -397,12 +432,16 @@ app.whenReady().then(() => {
       win.webContents.send(IpcChannels.authChanged, snapshot);
     }
     focusGate(snapshot);
+    if (snapshot.isSignedIn && !snapshot.userUsername) {
+      scheduleNativeSessionProfileSync({ force: true });
+    }
   });
   onPendingSigninUrl((url) => {
     for (const win of BrowserWindow.getAllWindows()) {
       win.webContents.send(IpcChannels.authPendingSigninUrlChanged, url);
     }
   });
+  scheduleNativeSessionProfileSync({ force: true });
 
   // Agent-mode auto-trigger. No-op outside agent mode. Idempotent — emits
   // auth_already_signed_in if a token is already persisted.
@@ -412,6 +451,9 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) {
       void openPrimaryWindow();
     }
+  });
+  app.on("browser-window-focus", () => {
+    scheduleNativeSessionProfileSync();
   });
 });
 

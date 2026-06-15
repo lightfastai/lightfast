@@ -1,3 +1,4 @@
+import "@fontsource-variable/geist";
 import "./styles.css";
 import {
   ACCELERATORS,
@@ -41,13 +42,12 @@ document.documentElement.dataset.platform = platform;
 document.documentElement.dataset.windowKind = window[WINDOW_KIND_GLOBAL];
 document.documentElement.dataset.buildFlavor = buildInfo.buildFlavor;
 document.body.className =
-  "m-0 h-screen overflow-hidden bg-[#f9f9f9] font-sans text-[13px] text-[#0d0d0d] [.electron-dark_&]:bg-[#181818] [.electron-dark_&]:text-white";
+  "m-0 h-screen overflow-hidden bg-background font-sans text-[13px] text-foreground";
 document.getElementById("app")?.classList.add("relative", "flex", "h-full");
 
 function applyThemeVariant(variant: "light" | "dark"): void {
   const classes = document.documentElement.classList;
-  classes.toggle("electron-dark", variant === "dark");
-  classes.toggle("electron-light", variant === "light");
+  classes.toggle("dark", variant === "dark");
 }
 
 void window.lightfastBridge.getSystemThemeVariant().then(applyThemeVariant);

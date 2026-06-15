@@ -1,4 +1,8 @@
-import { cn } from "@repo/ui/lib/utils";
+import { Card } from "@repo/ui-v2/components/ui/card";
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@repo/ui/components/ui/toggle-group";
 import type { ThemeSource } from "../../../../../shared/ipc";
 import { useSettingsSnapshot } from "../use-settings-snapshot";
 
@@ -12,36 +16,37 @@ export function Appearance() {
   const snapshot = useSettingsSnapshot();
   return (
     <section className="mb-4 max-w-none">
-      <div className="flex flex-col overflow-hidden rounded-lg border border-[#0d0d0d]/10 bg-[#0d0d0d]/4 [.electron-dark_&]:border-white/10 [.electron-dark_&]:bg-white/3">
-        <div className="flex items-center justify-between gap-4 border-[#0d0d0d]/5 border-b px-4 py-3 last:border-b-0 [.electron-dark_&]:border-white/5">
-          <div className="text-[#0d0d0d] text-[12px] [.electron-dark_&]:text-white">
-            Theme
-          </div>
-          <div className="inline-flex rounded-md border border-[#0d0d0d]/10 bg-white p-0.5 [.electron-dark_&]:border-white/10 [.electron-dark_&]:bg-[#282828]">
+      <Card className="gap-0 overflow-hidden py-0">
+        <div className="flex items-center justify-between gap-4 px-4 py-3">
+          <div className="text-foreground text-xs">Theme</div>
+          <ToggleGroup
+            className="[-webkit-app-region:no-drag]"
+            onValueChange={(value) => {
+              if (value) {
+                void window.lightfastBridge.updateSetting(
+                  "themeSource",
+                  value as ThemeSource
+                );
+              }
+            }}
+            size="sm"
+            type="single"
+            value={snapshot.themeSource}
+            variant="outline"
+          >
             {THEME_OPTIONS.map((option) => (
-              <button
-                aria-pressed={snapshot.themeSource === option.value}
-                className={cn(
-                  "cursor-default rounded px-2 py-1 text-[#0d0d0d]/50 text-[12px] hover:text-[#0d0d0d]/70 [.electron-dark_&]:text-white/50 [.electron-dark_&]:hover:text-white/70",
-                  snapshot.themeSource === option.value
-                    ? "bg-[#0d0d0d]/4 text-[#0d0d0d] [.electron-dark_&]:bg-white/7 [.electron-dark_&]:text-white"
-                    : undefined
-                )}
+              <ToggleGroupItem
+                aria-label={option.label}
+                className="cursor-default px-3"
                 key={option.value}
-                onClick={() =>
-                  void window.lightfastBridge.updateSetting(
-                    "themeSource",
-                    option.value
-                  )
-                }
-                type="button"
+                value={option.value}
               >
                 {option.label}
-              </button>
+              </ToggleGroupItem>
             ))}
-          </div>
+          </ToggleGroup>
         </div>
-      </div>
+      </Card>
     </section>
   );
 }

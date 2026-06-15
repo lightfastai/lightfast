@@ -20,6 +20,9 @@ export interface AuthSnapshot {
   organizationName?: string;
   organizationSlug?: string | null;
   userEmail?: string | null;
+  userImageUrl?: string | null;
+  userInitials?: string | null;
+  userUsername?: string | null;
 }
 
 function defaultStorePath(): string {
@@ -103,6 +106,9 @@ function snapshot(session = globalStore.getSession()): AuthSnapshot {
     organizationName: session?.organization.name,
     organizationSlug: session?.organization.slug,
     userEmail: session?.user.email,
+    userImageUrl: session?.user.imageUrl,
+    userInitials: session?.user.initials,
+    userUsername: session?.user.username,
   };
 }
 

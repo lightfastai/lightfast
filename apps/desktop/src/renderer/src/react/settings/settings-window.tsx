@@ -1,5 +1,16 @@
-import { cn } from "@repo/ui/lib/utils";
-import { Settings as Gear, Keyboard, Palette, User } from "lucide-react";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@repo/ui-v2/components/ui/tabs";
+import {
+  KeyboardIcon,
+  PaintBoardIcon,
+  SettingsIcon,
+  UserIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import { useState } from "react";
 import type { FormatPlatform } from "../../../../shared/accelerators";
 import { Account } from "./panes/account";
@@ -9,46 +20,65 @@ import { Shortcuts } from "./panes/shortcuts";
 
 type PaneId = "account" | "general" | "appearance" | "shortcuts";
 
-const TABS: Array<{ id: PaneId; label: string; Icon: typeof User }> = [
-  { id: "account", label: "Account", Icon: User },
-  { id: "general", label: "General", Icon: Gear },
-  { id: "appearance", label: "Appearance", Icon: Palette },
-  { id: "shortcuts", label: "Shortcuts", Icon: Keyboard },
+const TABS: Array<{ id: PaneId; label: string; icon: IconSvgElement }> = [
+  { id: "account", label: "Account", icon: UserIcon },
+  { id: "general", label: "General", icon: SettingsIcon },
+  { id: "appearance", label: "Appearance", icon: PaintBoardIcon },
+  { id: "shortcuts", label: "Shortcuts", icon: KeyboardIcon },
 ];
+
+function isPaneId(value: string): value is PaneId {
+  return TABS.some((tab) => tab.id === value);
+}
 
 export function SettingsWindow({ platform }: { platform: FormatPlatform }) {
   const [pane, setPane] = useState<PaneId>("account");
   return (
-    <div className="flex h-screen flex-col bg-transparent">
-      <div
-        className="flex items-end justify-center gap-1 border-[#0d0d0d]/10 border-b px-4 pt-9 pb-2 [-webkit-app-region:drag] [.electron-dark_&]:border-white/10"
-        role="tablist"
-      >
-        {TABS.map(({ id, label, Icon }) => (
-          <button
-            aria-selected={pane === id}
-            className={cn(
-              "flex min-w-[72px] cursor-default flex-col items-center gap-1 rounded-md border-0 bg-transparent px-2 py-1.5 text-[#0d0d0d]/50 text-[12px] [-webkit-app-region:no-drag] hover:bg-[#0d0d0d]/6 hover:text-[#0d0d0d]/70 [.electron-dark_&]:text-white/50 [.electron-dark_&]:hover:bg-white/7 [.electron-dark_&]:hover:text-white/70",
-              pane === id
-                ? "bg-[#0d0d0d]/10 text-[#0d0d0d] [.electron-dark_&]:bg-white/10 [.electron-dark_&]:text-white"
-                : undefined
-            )}
+    <Tabs
+      className="flex h-screen flex-col bg-transparent"
+      onValueChange={(value) => {
+        if (isPaneId(value)) {
+          setPane(value);
+        }
+      }}
+      value={pane}
+    >
+      <TabsList className="flex h-auto items-end justify-center gap-1 rounded-none border-x-0 border-t-0 border-b bg-transparent px-4 pt-9 pb-2 [-webkit-app-region:drag]">
+        {TABS.map(({ id, label, icon }) => (
+          <TabsTrigger
+            className="h-auto min-w-[72px] cursor-default flex-col gap-1 px-2 py-1.5 text-xs [-webkit-app-region:no-drag] data-[state=active]:bg-accent data-[state=active]:shadow-none"
             key={id}
-            onClick={() => setPane(id)}
-            role="tab"
-            type="button"
+            value={id}
           >
-            <Icon aria-hidden className="size-5" size={20} />
-            <span className="text-[12px]">{label}</span>
-          </button>
+            <HugeiconsIcon aria-hidden className="size-5" icon={icon} size={20} />
+            <span>{label}</span>
+          </TabsTrigger>
         ))}
-      </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5" role="tabpanel">
-        {pane === "account" && <Account />}
-        {pane === "general" && <General />}
-        {pane === "appearance" && <Appearance />}
-        {pane === "shortcuts" && <Shortcuts platform={platform} />}
-      </div>
-    </div>
+      </TabsList>
+      <TabsContent
+        className="m-0 min-h-0 flex-1 overflow-y-auto px-6 py-5"
+        value="account"
+      >
+        <Account />
+      </TabsContent>
+      <TabsContent
+        className="m-0 min-h-0 flex-1 overflow-y-auto px-6 py-5"
+        value="general"
+      >
+        <General />
+      </TabsContent>
+      <TabsContent
+        className="m-0 min-h-0 flex-1 overflow-y-auto px-6 py-5"
+        value="appearance"
+      >
+        <Appearance />
+      </TabsContent>
+      <TabsContent
+        className="m-0 min-h-0 flex-1 overflow-y-auto px-6 py-5"
+        value="shortcuts"
+      >
+        <Shortcuts platform={platform} />
+      </TabsContent>
+    </Tabs>
   );
 }

@@ -1,17 +1,20 @@
-import { cn } from "@repo/ui/lib/utils";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@repo/ui-v2/components/ui/avatar";
+import { Button } from "@repo/ui-v2/components/ui/button";
+import { Card } from "@repo/ui-v2/components/ui/card";
+import { LogoutIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useQuery } from "@tanstack/react-query";
-import { LogOut } from "lucide-react";
 import { useTRPC } from "../../trpc/react";
 import { useAuthSnapshot } from "../../use-auth-snapshot";
 
 const sectionClass = "mb-4 max-w-none";
-const cardClass =
-  "mb-4 flex flex-col overflow-hidden rounded-lg border border-[#0d0d0d]/10 bg-[#0d0d0d]/4 [.electron-dark_&]:border-white/10 [.electron-dark_&]:bg-white/3";
-const rowClass =
-  "flex items-center justify-between gap-4 border-b border-[#0d0d0d]/5 px-4 py-3 last:border-b-0 [.electron-dark_&]:border-white/5";
-const labelClass = "text-[12px] text-[#0d0d0d] [.electron-dark_&]:text-white";
-const buttonClass =
-  "inline-flex cursor-default items-center gap-1.5 rounded-md border border-[#0d0d0d]/10 bg-[#0d0d0d]/4 px-2.5 py-1 text-[12px] text-[#0d0d0d] [-webkit-app-region:no-drag] [.electron-dark_&]:border-white/10 [.electron-dark_&]:bg-white/3 [.electron-dark_&]:text-white";
+const cardClass = "mb-4 gap-0 overflow-hidden py-0";
+const rowClass = "flex items-center justify-between gap-4 px-4 py-3";
+const labelClass = "text-xs text-foreground";
 
 export function Account() {
   const auth = useAuthSnapshot();
@@ -21,69 +24,65 @@ export function Account() {
     enabled: auth.isSignedIn,
   });
   const data = query.data;
+  const displayName = data?.fullName ?? "Unknown";
+  const fallbackInitial = displayName.trim().charAt(0).toUpperCase() || "U";
 
   if (!auth.isSignedIn) {
     return (
       <section className={sectionClass}>
-        <div className={cardClass}>
+        <Card className={cardClass}>
           <div className={rowClass}>
             <div className={labelClass}>Not signed in</div>
-            <button
-              className={buttonClass}
+            <Button
+              className="cursor-default [-webkit-app-region:no-drag]"
               onClick={() => void window.lightfastBridge.auth.signIn()}
+              size="sm"
               type="button"
+              variant="outline"
             >
               Sign in
-            </button>
+            </Button>
           </div>
-        </div>
+        </Card>
       </section>
     );
   }
 
   return (
     <section className={sectionClass}>
-      <div className={cardClass}>
+      <Card className={cardClass}>
         <div className={rowClass}>
           <div className="flex items-center gap-3">
-            <div
-              aria-hidden
-              className={cn(
-                "size-10 flex-shrink-0 rounded-full bg-[#0d0d0d]/4 bg-center bg-cover [.electron-dark_&]:bg-white/3",
-                data?.imageUrl
-                  ? undefined
-                  : "bg-[#0d0d0d]/10 [.electron-dark_&]:bg-white/7"
-              )}
-              style={
-                data?.imageUrl
-                  ? { backgroundImage: `url("${data.imageUrl}")` }
-                  : undefined
-              }
-            />
+            <Avatar className="size-10">
+              <AvatarImage alt="" src={data?.imageUrl ?? undefined} />
+              <AvatarFallback>{fallbackInitial}</AvatarFallback>
+            </Avatar>
             <div>
-              <div className="font-medium text-[#0d0d0d] text-[12px] [.electron-dark_&]:text-white">
-                {data?.fullName ?? "—"}
+              <div className="font-medium text-foreground text-xs">
+                {displayName}
               </div>
-              <div className="text-[#0d0d0d]/50 text-[12px] [.electron-dark_&]:text-white/50">
+              <div className="text-muted-foreground text-xs">
                 {data?.primaryEmailAddress ?? ""}
               </div>
             </div>
           </div>
         </div>
-      </div>
-      <div className={cardClass}>
+      </Card>
+      <Card className={cardClass}>
         <div className={rowClass}>
           <div className={labelClass}>Sign out of Lightfast</div>
-          <button
-            className={cn(buttonClass, "text-red-500 hover:bg-red-500/8")}
+          <Button
+            className="cursor-default [-webkit-app-region:no-drag]"
             onClick={() => void window.lightfastBridge.auth.signOut()}
+            size="sm"
             type="button"
+            variant="destructive"
           >
-            <LogOut size={14} />
+            <HugeiconsIcon icon={LogoutIcon} size={14} />
             <span>Sign out</span>
-          </button>
+          </Button>
         </div>
-      </div>
+      </Card>
     </section>
   );
 }

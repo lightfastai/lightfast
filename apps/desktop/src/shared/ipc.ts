@@ -6,6 +6,7 @@ export const IpcChannels = {
   getSystemThemeVariant: channel("get-system-theme-variant"),
   systemThemeVariantUpdated: channel("system-theme-variant-updated"),
   openApp: channel("open-app"),
+  openAppPath: channel("open-app-path"),
   openWindow: channel("open-window"),
   getBuildInfoSync: channel("get-build-info-sync"),
   rendererError: channel("renderer-error"),
@@ -95,6 +96,9 @@ export interface AuthSnapshot {
   organizationName?: string;
   organizationSlug?: string | null;
   userEmail?: string | null;
+  userImageUrl?: string | null;
+  userInitials?: string | null;
+  userUsername?: string | null;
 }
 
 export interface AuthRequestHeaders {
@@ -134,6 +138,7 @@ export interface LightfastBridge {
     listener: (status: UpdaterStatusSnapshot) => void
   ) => () => void;
   openApp: () => Promise<void>;
+  openAppPath: (path: string) => Promise<void>;
   openWindow: (kind: WindowKind) => Promise<void>;
   platform: Platform;
   reportError: (payload: RendererErrorPayload) => void;

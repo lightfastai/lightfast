@@ -12,9 +12,11 @@ const rendererMain = readFileSync(
 
 describe("primary shell layout", () => {
   it("keeps the content container aligned below the compact header surface", () => {
-    expect(desktopShell).toContain('const surfaceClass = "bg-[#f9f9f9]');
+    expect(desktopShell).toContain("bg-background");
     expect(desktopShell).toContain('"mt-10 h-[calc(100%_-_40px)]"');
-    expect(desktopShell).toContain('"absolute top-0 right-0 z-[1] h-10"');
+    expect(desktopShell).toContain(
+      '"absolute top-0 right-0 z-[1] h-10 bg-background"'
+    );
     expect(desktopShell).toContain('"left-[52px]"');
   });
 

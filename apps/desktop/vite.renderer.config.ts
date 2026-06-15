@@ -13,6 +13,9 @@ export default defineConfig({
     react(),
   ],
   resolve: {
+    alias: {
+      "@": resolve(import.meta.dirname, "src/renderer/src"),
+    },
     // Follow pnpm symlinks to real paths so esbuild's optimizer resolves
     // transitive CJS peers (e.g. copy-anything imported by superjson) via the
     // .pnpm store layout instead of getting stuck in symlinked node_modules
@@ -21,8 +24,8 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: [
-      "@radix-ui/react-dropdown-menu",
-      "lucide-react",
+      "@hugeicons/react",
+      "@hugeicons/core-free-icons",
       "superjson",
       "sonner",
     ],

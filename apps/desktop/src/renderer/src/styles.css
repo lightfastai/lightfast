@@ -1,11 +1,6 @@
-@import "tailwindcss";
+@import "@repo/ui-v2/globals.css";
 
 @source "../index.html";
 @source "./**/*.{ts,tsx}";
 @source "../../../../../packages/ui/src/**/*.{ts,tsx}";
-
-@theme inline {
-  --font-sans:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --font-mono: "SF Mono", ui-monospace, Menlo, monospace;
-}
+@source "../../../../../packages/ui-v2/src/**/*.{ts,tsx}";

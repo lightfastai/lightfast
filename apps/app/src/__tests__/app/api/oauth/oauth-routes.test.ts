@@ -8,9 +8,10 @@ interface NativeOAuthFacadeInput {
 
 const oauthConfig = vi.fn();
 const finalize = vi.fn();
+const currentSession = vi.fn();
 const createNativeOAuthFacadeCaller = vi.fn(
   async (_input: NativeOAuthFacadeInput) => ({
-    native: { auth: { finalize, oauthConfig } },
+    native: { auth: { finalize, oauthConfig, session: currentSession } },
   })
 );
 
@@ -109,6 +110,49 @@ describe("native OAuth facade routes", () => {
       client: "desktop",
       state: "state_1234567890123",
     });
+    expect(createNativeOAuthFacadeCaller).toHaveBeenCalledWith({
+      headers: expect.any(Headers),
+      source: "desktop",
+    });
+    const headers = createNativeOAuthFacadeCaller.mock.calls[0]?.[0]
+      .headers as Headers;
+    expect(headers.get("authorization")).toBe("Bearer access");
+  });
+
+  it("returns Desktop session metadata refreshes through native tRPC", async () => {
+    currentSession.mockResolvedValueOnce({
+      client: "desktop",
+      organization: { id: "org_1", name: "Acme", slug: "acme" },
+      user: {
+        email: "dev@example.com",
+        id: "user_1",
+        imageUrl: "https://img.example.com/user_1.png",
+        initials: "JP",
+        username: "jeevanpillay",
+      },
+    });
+
+    const { GET } = await import(
+      "../../../../app/(app)/(oauth)/api/oauth/desktop/session/route"
+    );
+    const res = await GET(
+      new Request("https://app.test/api/oauth/desktop/session", {
+        headers: { authorization: "Bearer access" },
+      })
+    );
+
+    await expect(res.json()).resolves.toEqual({
+      client: "desktop",
+      organization: { id: "org_1", name: "Acme", slug: "acme" },
+      user: {
+        email: "dev@example.com",
+        id: "user_1",
+        imageUrl: "https://img.example.com/user_1.png",
+        initials: "JP",
+        username: "jeevanpillay",
+      },
+    });
+    expect(currentSession).toHaveBeenCalledWith();
     expect(createNativeOAuthFacadeCaller).toHaveBeenCalledWith({
       headers: expect.any(Headers),
       source: "desktop",

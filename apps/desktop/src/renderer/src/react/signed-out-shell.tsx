@@ -1,3 +1,5 @@
+import { Button } from "@repo/ui-v2/components/ui/button";
+
 interface SignedOutShellProps {
   onLearnMore: () => void;
   onSignIn: () => void;
@@ -5,7 +7,7 @@ interface SignedOutShellProps {
 
 export function SignedOutShell({ onSignIn, onLearnMore }: SignedOutShellProps) {
   return (
-    <div className="fixed inset-0 z-10 flex flex-col overflow-hidden bg-[#f9f9f9] text-[#0d0d0d] [-webkit-app-region:drag] [.electron-dark_&]:bg-[#181818] [.electron-dark_&]:text-white">
+    <div className="fixed inset-0 z-10 flex flex-col overflow-hidden bg-background text-foreground [-webkit-app-region:drag]">
       <div aria-hidden="true" className="h-10 flex-shrink-0" />
       <div className="flex flex-1 flex-col items-center justify-center px-4 pb-6 [-webkit-app-region:no-drag]">
         <div className="flex flex-col items-center gap-8">
@@ -15,20 +17,24 @@ export function SignedOutShell({ onSignIn, onLearnMore }: SignedOutShellProps) {
           </h1>
         </div>
         <div className="mt-8 flex w-full max-w-[340px] flex-col items-center gap-3">
-          <button
-            className="flex h-12 w-full cursor-pointer items-center justify-center rounded-full border border-transparent bg-[#0d0d0d] font-medium text-[#f9f9f9] text-sm leading-5 transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-[#0a66d6] focus-visible:outline-offset-2 [.electron-dark_&]:bg-white [.electron-dark_&]:text-[#181818] [.electron-dark_&]:focus-visible:outline-[#4f9cff]"
+          <Button
+            className="h-12 w-full rounded-full"
             onClick={onSignIn}
+            size="lg"
             type="button"
+            variant="default"
           >
             Sign in with Lightfast
-          </button>
-          <button
-            className="flex h-[46px] w-full cursor-pointer items-center justify-center rounded-full border border-[#0d0d0d]/10 bg-transparent font-medium text-[#0d0d0d] text-sm leading-5 transition-colors hover:bg-[#0d0d0d]/4 focus-visible:outline-2 focus-visible:outline-[#0a66d6] focus-visible:outline-offset-2 [.electron-dark_&]:border-white/10 [.electron-dark_&]:text-white [.electron-dark_&]:hover:bg-white/3 [.electron-dark_&]:focus-visible:outline-[#4f9cff]"
+          </Button>
+          <Button
+            className="h-[46px] w-full rounded-full"
             onClick={onLearnMore}
+            size="lg"
             type="button"
+            variant="outline"
           >
             Learn more
-          </button>
+          </Button>
         </div>
       </div>
     </div>

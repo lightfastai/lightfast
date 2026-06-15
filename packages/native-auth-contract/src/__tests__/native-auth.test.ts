@@ -88,12 +88,23 @@ describe("@repo/native-auth-contract native auth", () => {
           name: "Acme",
           slug: "acme",
         },
-        user: { email: "dev@example.com", id: "user_1" },
+        user: {
+          email: "dev@example.com",
+          id: "user_1",
+          imageUrl: "https://img.example.com/user_1.png",
+          initials: "JP",
+          username: "jeevanpillay",
+        },
       })
     ).toMatchObject({
       client: "cli",
       organization: { id: "org_1" },
-      user: { id: "user_1" },
+      user: {
+        id: "user_1",
+        imageUrl: "https://img.example.com/user_1.png",
+        initials: "JP",
+        username: "jeevanpillay",
+      },
     });
   });
 
@@ -114,12 +125,23 @@ describe("@repo/native-auth-contract native auth", () => {
           refreshToken: "refresh",
           tokenType: "Bearer",
         },
-        user: { email: "dev@example.com", id: "user_1" },
+        user: {
+          email: "dev@example.com",
+          id: "user_1",
+          imageUrl: "https://img.example.com/user_1.png",
+          initials: "JP",
+          username: "jeevanpillay",
+        },
       })
     ).toMatchObject({
       client: "cli",
       organization: { id: "org_1" },
       schemaVersion: 2,
+      user: {
+        imageUrl: "https://img.example.com/user_1.png",
+        initials: "JP",
+        username: "jeevanpillay",
+      },
     });
   });
 

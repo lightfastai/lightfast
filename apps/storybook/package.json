@@ -1,0 +1,49 @@
+{
+  "name": "@lightfast/storybook",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "storybook dev -p 6006",
+    "build": "storybook build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "clean": "git clean -xdf .cache .turbo storybook-static node_modules"
+  },
+  "dependencies": {
+    "@fontsource-variable/geist": "catalog:",
+    "@hugeicons/core-free-icons": "catalog:",
+    "@hugeicons/react": "catalog:",
+    "@repo/ui-v2": "workspace:*",
+    "react": "catalog:react19",
+    "react-dom": "catalog:react19"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@repo/vitest-config": "workspace:*",
+    "@storybook/addon-a11y": "catalog:",
+    "@storybook/addon-docs": "catalog:",
+    "@storybook/addon-vitest": "catalog:",
+    "@storybook/react-vite": "catalog:",
+    "@tailwindcss/postcss": "catalog:tailwind4",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:react19",
+    "@types/react-dom": "catalog:react19",
+    "@vitejs/plugin-react": "catalog:",
+    "@vitest/browser-playwright": "catalog:",
+    "happy-dom": "catalog:",
+    "msw": "catalog:",
+    "msw-storybook-addon": "catalog:",
+    "postcss": "catalog:tailwind4",
+    "storybook": "catalog:",
+    "tailwindcss": "catalog:tailwind4",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
+  }
+}
