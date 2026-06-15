@@ -1,54 +1,53 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  APP_TANSTACK_AUTH_ROUTE_SPECS,
-  buildAppTanstackAuthRouteSmokeConfig,
-  buildAppTanstackAuthSmokeAutomationInput,
+  APP_AUTH_ROUTE_SPECS,
+  buildAppAuthRouteSmokeConfig,
+  buildAppAuthSmokeAutomationInput,
   buildRouteChecks,
   collectRouteBodyProblems,
   combineRouteTextForSmoke,
-  createUniqueAppTanstackAuthOrgSlug,
+  createUniqueAppAuthOrgSlug,
   formatCommandForError,
-  readAppTanstackAuthEncryptionKey,
+  readAppAuthEncryptionKey,
 } from "./auth-route-smoke";
 
-describe("app-tanstack auth route smoke helpers", () => {
+describe("app auth route smoke helpers", () => {
   it("creates stable slug-safe org names from a timestamp", () => {
     expect(
-      createUniqueAppTanstackAuthOrgSlug({
+      createUniqueAppAuthOrgSlug({
         nowMs: Date.parse("2026-06-08T00:00:00.000Z"),
-        prefix: "App TanStack Auth!",
+        prefix: "App Auth!",
       })
-    ).toBe("app-tanstack-auth-1780876800000");
+    ).toBe("app-auth-1780876800000");
   });
 
   it("resolves config from explicit smoke inputs", () => {
-    const config = buildAppTanstackAuthRouteSmokeConfig({
+    const config = buildAppAuthRouteSmokeConfig({
       env: {
         CLERK_SECRET_KEY: "sk_test_123",
-        LIGHTFAST_E2E_AGENT_BROWSER_SESSION: "app-tanstack-session",
-        LIGHTFAST_E2E_APP_TANSTACK_AUTH_CLERK_API_TIMEOUT_MS: "45000",
-        LIGHTFAST_E2E_APP_TANSTACK_AUTH_EMAIL_PREFIX: "TanStack Auth",
-        LIGHTFAST_E2E_APP_TANSTACK_AUTH_ORG_SLUG: "lf-app-tanstack-fixed",
-        LIGHTFAST_E2E_APP_TANSTACK_URL:
-          "https://custom.app-tanstack.lightfast.localhost/",
+        LIGHTFAST_E2E_AGENT_BROWSER_SESSION: "app-session",
+        LIGHTFAST_E2E_APP_AUTH_CLERK_API_TIMEOUT_MS: "45000",
+        LIGHTFAST_E2E_APP_AUTH_EMAIL_PREFIX: "App Auth",
+        LIGHTFAST_E2E_APP_AUTH_ORG_SLUG: "lf-app-fixed",
+        LIGHTFAST_E2E_APP_URL: "https://custom.app.lightfast.localhost/",
       },
       getPortlessUrl: (name) => `https://${name}.localhost`,
       nowMs: Date.parse("2026-06-08T00:00:00.000Z"),
     });
 
     expect(config).toMatchObject({
-      appOrigin: "https://custom.app-tanstack.lightfast.localhost",
+      appOrigin: "https://custom.app.lightfast.localhost",
       clerkApiTimeoutMs: 45_000,
       clerkSecretKey: "sk_test_123",
-      emailAddress: "tanstack-auth-1780876800000@lightfast.ai",
-      orgSlug: "lf-app-tanstack-fixed",
-      sessionName: "app-tanstack-session",
+      emailAddress: "app-auth-1780876800000@lightfast.ai",
+      orgSlug: "lf-app-fixed",
+      sessionName: "app-session",
     });
   });
 
-  it("uses the app-tanstack Portless service by default", () => {
-    const config = buildAppTanstackAuthRouteSmokeConfig({
+  it("uses the app Portless service by default", () => {
+    const config = buildAppAuthRouteSmokeConfig({
       env: {
         CLERK_SECRET_KEY: "sk_test_123",
       },
@@ -57,32 +56,32 @@ describe("app-tanstack auth route smoke helpers", () => {
     });
 
     expect(config).toMatchObject({
-      appOrigin: "https://route-smoke.app-tanstack.lightfast.localhost",
+      appOrigin: "https://route-smoke.app.lightfast.localhost",
       clerkApiTimeoutMs: 30_000,
-      emailAddress: "app-tanstack-auth-smoke-1780876800000@lightfast.ai",
-      orgSlug: "lf-app-tanstack-auth-e2e-1780876800000",
-      sessionName: "lightfast-app-tanstack-auth-smoke-1780876800000",
+      emailAddress: "app-auth-smoke-1780876800000@lightfast.ai",
+      orgSlug: "lf-app-auth-e2e-1780876800000",
+      sessionName: "lightfast-app-auth-smoke-1780876800000",
     });
   });
 
   it("builds route checks for account and org-authenticated pages", () => {
-    const checks = buildRouteChecks("lf-tanstack");
+    const checks = buildRouteChecks("lf-app");
     const paths = checks.map((check) => check.path);
 
     expect(paths).toContain("/account/settings/general");
-    expect(paths).toContain("/lf-tanstack/settings/source-control");
-    expect(paths).toContain("/lf-tanstack/signals");
-    expect(paths).toContain("/lf-tanstack/chat");
-    expect(paths).toContain("/lf-tanstack/decisions");
-    expect(paths).toContain("/lf-tanstack/people");
-    expect(paths).toContain("/lf-tanstack/developer-connections");
-    expect(paths).toContain("/lf-tanstack/automations/new");
-    expect(checks).toHaveLength(APP_TANSTACK_AUTH_ROUTE_SPECS.length);
+    expect(paths).toContain("/lf-app/settings/source-control");
+    expect(paths).toContain("/lf-app/signals");
+    expect(paths).toContain("/lf-app/chat");
+    expect(paths).toContain("/lf-app/decisions");
+    expect(paths).toContain("/lf-app/people");
+    expect(paths).toContain("/lf-app/developer-connections");
+    expect(paths).toContain("/lf-app/automations/new");
+    expect(checks).toHaveLength(APP_AUTH_ROUTE_SPECS.length);
     expect(checks.some((check) => check.path.includes("$slug"))).toBe(false);
   });
 
   it("builds dynamic route checks from seeded smoke fixtures", () => {
-    const checks = buildRouteChecks("lf-tanstack", {
+    const checks = buildRouteChecks("lf-app", {
       automationId: "aut_smoke",
     });
 
@@ -95,7 +94,7 @@ describe("app-tanstack auth route smoke helpers", () => {
         "Status",
         "Previous runs",
       ],
-      path: "/lf-tanstack/automations/aut_smoke",
+      path: "/lf-app/automations/aut_smoke",
     });
     expect(checks.some((check) => check.path.includes("$automation"))).toBe(
       false
@@ -104,7 +103,7 @@ describe("app-tanstack auth route smoke helpers", () => {
 
   it("builds the seeded automation fixture used by the detail route smoke", () => {
     expect(
-      buildAppTanstackAuthSmokeAutomationInput({
+      buildAppAuthSmokeAutomationInput({
         orgId: "org_smoke",
         userId: "user_smoke",
       })
@@ -141,11 +140,11 @@ describe("app-tanstack auth route smoke helpers", () => {
       expectedText: ["Signals"],
       finalPathname: "/sign-in",
       routeName: "signals",
-      routePath: "/lf-tanstack/signals",
+      routePath: "/lf-app/signals",
     });
 
     expect(problems).toEqual([
-      "signals landed on /sign-in instead of /lf-tanstack/signals",
+      "signals landed on /sign-in instead of /lf-app/signals",
       "signals rendered forbidden text: Log in to Lightfast",
       "signals rendered forbidden text: Organization setup required",
       "signals rendered forbidden text: Application Error",
@@ -158,9 +157,9 @@ describe("app-tanstack auth route smoke helpers", () => {
       bodyText:
         "Organization setup required\nComplete setup before using Lightfast features.",
       expectedText: ["Signals"],
-      finalPathname: "/lf-tanstack/signals",
+      finalPathname: "/lf-app/signals",
       routeName: "signals",
-      routePath: "/lf-tanstack/signals",
+      routePath: "/lf-app/signals",
     });
 
     expect(problems).toEqual([
@@ -175,11 +174,11 @@ describe("app-tanstack auth route smoke helpers", () => {
       expectedText: ["Signals"],
       finalPathname: "/unknown-team/signals",
       routeName: "signals",
-      routePath: "/lf-tanstack/signals",
+      routePath: "/lf-app/signals",
     });
 
     expect(problems).toEqual([
-      "signals landed on /unknown-team/signals instead of /lf-tanstack/signals",
+      "signals landed on /unknown-team/signals instead of /lf-app/signals",
       "signals rendered forbidden text: Team not found",
       "signals did not render expected text: Signals",
     ]);
@@ -191,11 +190,11 @@ describe("app-tanstack auth route smoke helpers", () => {
       expectedText: ["Signals"],
       finalPathname: "/sign-in",
       routeName: "signals",
-      routePath: "/lf-tanstack/signals",
+      routePath: "/lf-app/signals",
     });
 
     expect(problems).toEqual([
-      "signals landed on /sign-in instead of /lf-tanstack/signals",
+      "signals landed on /sign-in instead of /lf-app/signals",
       "signals rendered forbidden text: Log in to Lightfast",
       "signals rendered forbidden text: Session expired",
       "signals did not render expected text: Signals",
@@ -216,7 +215,7 @@ describe("app-tanstack auth route smoke helpers", () => {
 
   it("requires a Clerk secret key so smoke runs can create dev users", () => {
     expect(() =>
-      buildAppTanstackAuthRouteSmokeConfig({
+      buildAppAuthRouteSmokeConfig({
         env: {},
         getPortlessUrl: (name) => `https://${name}.localhost`,
         nowMs: Date.parse("2026-06-08T00:00:00.000Z"),
@@ -226,13 +225,11 @@ describe("app-tanstack auth route smoke helpers", () => {
 
   it("reads the connector encryption key from injected env", () => {
     expect(
-      readAppTanstackAuthEncryptionKey({
+      readAppAuthEncryptionKey({
         ENCRYPTION_KEY: " smoke-encryption-key ",
       })
     ).toBe("smoke-encryption-key");
 
-    expect(() => readAppTanstackAuthEncryptionKey({})).toThrow(
-      "ENCRYPTION_KEY"
-    );
+    expect(() => readAppAuthEncryptionKey({})).toThrow("ENCRYPTION_KEY");
   });
 });

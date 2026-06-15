@@ -3,32 +3,32 @@ import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
 import type {
-  AppTanstackAuthRouteSmokeConfig,
-  AppTanstackAuthSmokeSession,
-  BuildAppTanstackAuthRouteSmokeConfigInput,
+  AppAuthRouteSmokeConfig,
+  AppAuthSmokeSession,
+  BuildAppAuthRouteSmokeConfigInput,
 } from "./auth-route-smoke";
 import {
   agentBrowser,
-  cleanupAppTanstackAuthSmokeSession,
-  createAppTanstackAuthSmokeSession,
+  cleanupAppAuthSmokeSession,
+  createAppAuthSmokeSession,
 } from "./auth-route-smoke";
 import {
   clickButtonByText,
   waitForRouteText,
 } from "./automation-interaction-smoke";
 
-export interface AppTanstackAutomationRunFixture {
+export interface AppAutomationRunFixture {
   automationName: string;
   automationPrompt: string;
 }
 
-export interface AppTanstackAutomationRunPathsInput {
+export interface AppAutomationRunPathsInput {
   automationId: string;
   orgSlug: string;
   runId?: string;
 }
 
-export interface AppTanstackAutomationRunPaths {
+export interface AppAutomationRunPaths {
   detailPath: string;
   runDetailPath: string | null;
 }
@@ -52,20 +52,20 @@ interface AutomationRunRecord {
   trigger: string;
 }
 
-export function buildAppTanstackAutomationRunFixture(
+export function buildAppAutomationRunFixture(
   input: { nowMs?: number } = {}
-): AppTanstackAutomationRunFixture {
+): AppAutomationRunFixture {
   const timestampMs = input.nowMs ?? Date.now();
   return {
     automationName: `Manual run smoke automation ${timestampMs}`,
     automationPrompt:
-      "Verify the app-tanstack manual run history smoke can enqueue this automation.",
+      "Verify the app manual run history smoke can enqueue this automation.",
   };
 }
 
-export function buildAppTanstackAutomationRunPaths(
-  input: AppTanstackAutomationRunPathsInput
-): AppTanstackAutomationRunPaths {
+export function buildAppAutomationRunPaths(
+  input: AppAutomationRunPathsInput
+): AppAutomationRunPaths {
   const detailPath = `/${input.orgSlug}/automations/${input.automationId}`;
   return {
     detailPath,
@@ -84,8 +84,8 @@ export function isObservedAutomationRunStatus(
 }
 
 async function createManualRunSmokeAutomation(input: {
-  fixture: AppTanstackAutomationRunFixture;
-  session: AppTanstackAuthSmokeSession;
+  fixture: AppAutomationRunFixture;
+  session: AppAuthSmokeSession;
 }) {
   const [{ db }, { createAutomation }] = await Promise.all([
     import("@db/app/client"),
@@ -104,7 +104,7 @@ async function createManualRunSmokeAutomation(input: {
 
 async function waitForManualRun(input: {
   automationPublicId: string;
-  config: AppTanstackAuthRouteSmokeConfig;
+  config: AppAuthRouteSmokeConfig;
   orgId: string;
 }) {
   const [{ db }, { listAutomationRuns }] = await Promise.all([
@@ -158,7 +158,7 @@ async function waitForManualRun(input: {
 }
 
 async function assertSelectedRunSearchParam(
-  config: AppTanstackAuthRouteSmokeConfig,
+  config: AppAuthRouteSmokeConfig,
   runId: string | null
 ) {
   const href = await agentBrowser(config, ["get", "url"]);
@@ -171,7 +171,7 @@ async function assertSelectedRunSearchParam(
 }
 
 async function waitForSelectedRunSearchParam(
-  config: AppTanstackAuthRouteSmokeConfig,
+  config: AppAuthRouteSmokeConfig,
   runId: string | null
 ) {
   const deadline = Date.now() + config.routeTimeoutMs;
@@ -191,16 +191,16 @@ async function waitForSelectedRunSearchParam(
   );
 }
 
-export async function runAppTanstackAutomationRunSmoke(
-  input: BuildAppTanstackAuthRouteSmokeConfigInput = {}
+export async function runAppAutomationRunSmoke(
+  input: BuildAppAuthRouteSmokeConfigInput = {}
 ) {
   const nowMs = input.nowMs ?? Date.now();
-  const fixture = buildAppTanstackAutomationRunFixture({ nowMs });
-  let config: AppTanstackAuthRouteSmokeConfig | undefined;
-  let session: AppTanstackAuthSmokeSession | undefined;
+  const fixture = buildAppAutomationRunFixture({ nowMs });
+  let config: AppAuthRouteSmokeConfig | undefined;
+  let session: AppAuthSmokeSession | undefined;
 
   try {
-    session = await createAppTanstackAuthSmokeSession({
+    session = await createAppAuthSmokeSession({
       ...input,
       nowMs,
     });
@@ -209,7 +209,7 @@ export async function runAppTanstackAutomationRunSmoke(
       fixture,
       session,
     });
-    const paths = buildAppTanstackAutomationRunPaths({
+    const paths = buildAppAutomationRunPaths({
       automationId: automation.publicId,
       orgSlug: session.orgSlug,
     });
@@ -247,7 +247,7 @@ export async function runAppTanstackAutomationRunSmoke(
       path: paths.detailPath,
     });
 
-    const runPaths = buildAppTanstackAutomationRunPaths({
+    const runPaths = buildAppAutomationRunPaths({
       automationId: automation.publicId,
       orgSlug: session.orgSlug,
       runId: run.publicId,
@@ -267,7 +267,7 @@ export async function runAppTanstackAutomationRunSmoke(
       path: runPaths.detailPath,
     });
 
-    const invalidRunPaths = buildAppTanstackAutomationRunPaths({
+    const invalidRunPaths = buildAppAutomationRunPaths({
       automationId: automation.publicId,
       orgSlug: session.orgSlug,
       runId: "automation_run_00000000-0000-4000-8000-000000000000",
@@ -293,7 +293,7 @@ export async function runAppTanstackAutomationRunSmoke(
       await agentBrowser(config, ["close"]).catch(() => undefined);
     }
     if (session) {
-      await cleanupAppTanstackAuthSmokeSession(session);
+      await cleanupAppAuthSmokeSession(session);
     }
   }
 }
@@ -306,7 +306,7 @@ function isMainModule() {
 }
 
 if (isMainModule()) {
-  runAppTanstackAutomationRunSmoke().catch((error: unknown) => {
+  runAppAutomationRunSmoke().catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;
   });

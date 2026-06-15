@@ -3,47 +3,47 @@ import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
 import type {
-  AppTanstackAuthRouteSmokeConfig,
-  AppTanstackAuthSmokeSession,
-  BuildAppTanstackAuthRouteSmokeConfigInput,
+  AppAuthRouteSmokeConfig,
+  AppAuthSmokeSession,
+  BuildAppAuthRouteSmokeConfigInput,
 } from "./auth-route-smoke";
 import {
   agentBrowser,
   agentEval,
-  cleanupAppTanstackAuthSmokeSession,
-  createAppTanstackAuthSmokeSession,
+  cleanupAppAuthSmokeSession,
+  createAppAuthSmokeSession,
 } from "./auth-route-smoke";
 import { waitForRouteText } from "./automation-interaction-smoke";
 
-export interface AppTanstackAutomationScheduleFixture {
+export interface AppAutomationScheduleFixture {
   automationName: string;
   automationPrompt: string;
 }
 
-export interface AppTanstackAutomationSchedulePathsInput {
+export interface AppAutomationSchedulePathsInput {
   automationId: string;
   orgSlug: string;
 }
 
-export interface AppTanstackAutomationSchedulePaths {
+export interface AppAutomationSchedulePaths {
   detailPath: string;
   listPath: string;
 }
 
-export function buildAppTanstackAutomationScheduleFixture(
+export function buildAppAutomationScheduleFixture(
   input: { nowMs?: number } = {}
-): AppTanstackAutomationScheduleFixture {
+): AppAutomationScheduleFixture {
   const timestampMs = input.nowMs ?? Date.now();
   return {
     automationName: `Schedule smoke automation ${timestampMs}`,
     automationPrompt:
-      "Verify the app-tanstack schedule and status editor smoke can mutate this automation.",
+      "Verify the app schedule and status editor smoke can mutate this automation.",
   };
 }
 
-export function buildAppTanstackAutomationSchedulePaths(
-  input: AppTanstackAutomationSchedulePathsInput
-): AppTanstackAutomationSchedulePaths {
+export function buildAppAutomationSchedulePaths(
+  input: AppAutomationSchedulePathsInput
+): AppAutomationSchedulePaths {
   return {
     detailPath: `/${input.orgSlug}/automations/${input.automationId}`,
     listPath: `/${input.orgSlug}/automations`,
@@ -51,8 +51,8 @@ export function buildAppTanstackAutomationSchedulePaths(
 }
 
 async function createScheduleSmokeAutomation(input: {
-  fixture: AppTanstackAutomationScheduleFixture;
-  session: AppTanstackAuthSmokeSession;
+  fixture: AppAutomationScheduleFixture;
+  session: AppAuthSmokeSession;
 }) {
   const [{ db }, { createAutomation }] = await Promise.all([
     import("@db/app/client"),
@@ -70,7 +70,7 @@ async function createScheduleSmokeAutomation(input: {
 }
 
 async function clickMenuItemByText(
-  config: AppTanstackAuthRouteSmokeConfig,
+  config: AppAuthRouteSmokeConfig,
   text: string
 ) {
   await clickElementByExactText(config, {
@@ -81,7 +81,7 @@ async function clickMenuItemByText(
 }
 
 async function clickButtonByName(
-  config: AppTanstackAuthRouteSmokeConfig,
+  config: AppAuthRouteSmokeConfig,
   name: string
 ) {
   await clickElementByExactText(config, {
@@ -92,7 +92,7 @@ async function clickButtonByName(
 }
 
 async function clickElementByExactText(
-  config: AppTanstackAuthRouteSmokeConfig,
+  config: AppAuthRouteSmokeConfig,
   input: { label: string; selector: string; text: string }
 ) {
   const deadline = Date.now() + config.routeTimeoutMs;
@@ -168,10 +168,7 @@ async function clickElementByExactText(
   );
 }
 
-async function fillTimeInput(
-  config: AppTanstackAuthRouteSmokeConfig,
-  time: string
-) {
+async function fillTimeInput(config: AppAuthRouteSmokeConfig, time: string) {
   const raw = await agentEval(
     config,
     `(() => {
@@ -221,7 +218,7 @@ async function fillTimeInput(
 
 async function waitForAutomationState(input: {
   automationPublicId: string;
-  config: AppTanstackAuthRouteSmokeConfig;
+  config: AppAuthRouteSmokeConfig;
   orgId: string;
   predicate: (automation: {
     scheduleConfig: unknown;
@@ -292,16 +289,16 @@ function isWeeklyFridayAfternoon(input: {
   );
 }
 
-export async function runAppTanstackAutomationScheduleSmoke(
-  input: BuildAppTanstackAuthRouteSmokeConfigInput = {}
+export async function runAppAutomationScheduleSmoke(
+  input: BuildAppAuthRouteSmokeConfigInput = {}
 ) {
   const nowMs = input.nowMs ?? Date.now();
-  const fixture = buildAppTanstackAutomationScheduleFixture({ nowMs });
-  let config: AppTanstackAuthRouteSmokeConfig | undefined;
-  let session: AppTanstackAuthSmokeSession | undefined;
+  const fixture = buildAppAutomationScheduleFixture({ nowMs });
+  let config: AppAuthRouteSmokeConfig | undefined;
+  let session: AppAuthSmokeSession | undefined;
 
   try {
-    session = await createAppTanstackAuthSmokeSession({
+    session = await createAppAuthSmokeSession({
       ...input,
       nowMs,
     });
@@ -310,7 +307,7 @@ export async function runAppTanstackAutomationScheduleSmoke(
       fixture,
       session,
     });
-    const paths = buildAppTanstackAutomationSchedulePaths({
+    const paths = buildAppAutomationSchedulePaths({
       automationId: automation.publicId,
       orgSlug: session.orgSlug,
     });
@@ -407,7 +404,7 @@ export async function runAppTanstackAutomationScheduleSmoke(
       await agentBrowser(config, ["close"]).catch(() => undefined);
     }
     if (session) {
-      await cleanupAppTanstackAuthSmokeSession(session);
+      await cleanupAppAuthSmokeSession(session);
     }
   }
 }
@@ -420,7 +417,7 @@ function isMainModule() {
 }
 
 if (isMainModule()) {
-  runAppTanstackAutomationScheduleSmoke().catch((error: unknown) => {
+  runAppAutomationScheduleSmoke().catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;
   });

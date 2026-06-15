@@ -3,47 +3,47 @@ import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
 import type {
-  AppTanstackAuthRouteSmokeConfig,
-  AppTanstackAuthSmokeSession,
-  BuildAppTanstackAuthRouteSmokeConfigInput,
+  AppAuthRouteSmokeConfig,
+  AppAuthSmokeSession,
+  BuildAppAuthRouteSmokeConfigInput,
 } from "./auth-route-smoke";
 import {
   agentBrowser,
   agentEval,
-  cleanupAppTanstackAuthSmokeSession,
-  createAppTanstackAuthSmokeSession,
+  cleanupAppAuthSmokeSession,
+  createAppAuthSmokeSession,
 } from "./auth-route-smoke";
 import { waitForRouteText } from "./automation-interaction-smoke";
 
-export interface AppTanstackAutomationDeleteFixture {
+export interface AppAutomationDeleteFixture {
   automationName: string;
   automationPrompt: string;
 }
 
-export interface AppTanstackAutomationDeletePathsInput {
+export interface AppAutomationDeletePathsInput {
   automationId: string;
   orgSlug: string;
 }
 
-export interface AppTanstackAutomationDeletePaths {
+export interface AppAutomationDeletePaths {
   detailPath: string;
   listPath: string;
 }
 
-export function buildAppTanstackAutomationDeleteFixture(
+export function buildAppAutomationDeleteFixture(
   input: { nowMs?: number } = {}
-): AppTanstackAutomationDeleteFixture {
+): AppAutomationDeleteFixture {
   const timestampMs = input.nowMs ?? Date.now();
   return {
     automationName: `Delete smoke automation ${timestampMs}`,
     automationPrompt:
-      "Verify the app-tanstack automation delete smoke can remove this automation from the workspace list.",
+      "Verify the app automation delete smoke can remove this automation from the workspace list.",
   };
 }
 
-export function buildAppTanstackAutomationDeletePaths(
-  input: AppTanstackAutomationDeletePathsInput
-): AppTanstackAutomationDeletePaths {
+export function buildAppAutomationDeletePaths(
+  input: AppAutomationDeletePathsInput
+): AppAutomationDeletePaths {
   return {
     detailPath: `/${input.orgSlug}/automations/${input.automationId}`,
     listPath: `/${input.orgSlug}/automations`,
@@ -51,8 +51,8 @@ export function buildAppTanstackAutomationDeletePaths(
 }
 
 async function createDeleteSmokeAutomation(input: {
-  fixture: AppTanstackAutomationDeleteFixture;
-  session: AppTanstackAuthSmokeSession;
+  fixture: AppAutomationDeleteFixture;
+  session: AppAuthSmokeSession;
 }) {
   const [{ db }, { createAutomation }] = await Promise.all([
     import("@db/app/client"),
@@ -70,7 +70,7 @@ async function createDeleteSmokeAutomation(input: {
 }
 
 async function clickButtonByExactText(
-  config: AppTanstackAuthRouteSmokeConfig,
+  config: AppAuthRouteSmokeConfig,
   input: { preferLast?: boolean; text: string }
 ) {
   const deadline = Date.now() + config.routeTimeoutMs;
@@ -155,7 +155,7 @@ async function clickButtonByExactText(
 
 async function waitForDeletedAutomation(input: {
   automationPublicId: string;
-  config: AppTanstackAuthRouteSmokeConfig;
+  config: AppAuthRouteSmokeConfig;
   orgId: string;
 }) {
   const [{ db }, { getAutomationByPublicId }] = await Promise.all([
@@ -182,16 +182,16 @@ async function waitForDeletedAutomation(input: {
   );
 }
 
-export async function runAppTanstackAutomationDeleteSmoke(
-  input: BuildAppTanstackAuthRouteSmokeConfigInput = {}
+export async function runAppAutomationDeleteSmoke(
+  input: BuildAppAuthRouteSmokeConfigInput = {}
 ) {
   const nowMs = input.nowMs ?? Date.now();
-  const fixture = buildAppTanstackAutomationDeleteFixture({ nowMs });
-  let config: AppTanstackAuthRouteSmokeConfig | undefined;
-  let session: AppTanstackAuthSmokeSession | undefined;
+  const fixture = buildAppAutomationDeleteFixture({ nowMs });
+  let config: AppAuthRouteSmokeConfig | undefined;
+  let session: AppAuthSmokeSession | undefined;
 
   try {
-    session = await createAppTanstackAuthSmokeSession({
+    session = await createAppAuthSmokeSession({
       ...input,
       nowMs,
     });
@@ -200,7 +200,7 @@ export async function runAppTanstackAutomationDeleteSmoke(
       fixture,
       session,
     });
-    const paths = buildAppTanstackAutomationDeletePaths({
+    const paths = buildAppAutomationDeletePaths({
       automationId: automation.publicId,
       orgSlug: session.orgSlug,
     });
@@ -261,7 +261,7 @@ export async function runAppTanstackAutomationDeleteSmoke(
       await agentBrowser(config, ["close"]).catch(() => undefined);
     }
     if (session) {
-      await cleanupAppTanstackAuthSmokeSession(session);
+      await cleanupAppAuthSmokeSession(session);
     }
   }
 }
@@ -274,7 +274,7 @@ function isMainModule() {
 }
 
 if (isMainModule()) {
-  runAppTanstackAutomationDeleteSmoke().catch((error: unknown) => {
+  runAppAutomationDeleteSmoke().catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;
   });

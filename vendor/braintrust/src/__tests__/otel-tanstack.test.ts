@@ -42,7 +42,7 @@ describe("registerBraintrustOTel for TanStack Start", () => {
     expect(
       source.registerBraintrustOTel({
         parent: "project_name:test-ai-feature",
-        serviceName: "lightfast-app-tanstack",
+        serviceName: "lightfast-app",
       })
     ).toEqual({
       enabled: true,
@@ -54,7 +54,7 @@ describe("registerBraintrustOTel for TanStack Start", () => {
       parent: "project_name:test-ai-feature",
     });
     expect(registerOTelMock).toHaveBeenCalledWith({
-      serviceName: "lightfast-app-tanstack",
+      serviceName: "lightfast-app",
       traceExporter: { kind: "braintrust-exporter" },
     });
   });
@@ -66,7 +66,7 @@ describe("registerBraintrustOTel for TanStack Start", () => {
     expect(
       registerBraintrustOTel({
         parent: "project_name:test-ai-feature",
-        serviceName: "lightfast-app-tanstack",
+        serviceName: "lightfast-app",
       })
     ).toEqual({
       enabled: false,

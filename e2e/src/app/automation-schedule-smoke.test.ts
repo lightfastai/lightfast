@@ -1,26 +1,26 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  buildAppTanstackAutomationScheduleFixture,
-  buildAppTanstackAutomationSchedulePaths,
+  buildAppAutomationScheduleFixture,
+  buildAppAutomationSchedulePaths,
 } from "./automation-schedule-smoke";
 
-describe("app-tanstack automation schedule smoke helpers", () => {
+describe("app automation schedule smoke helpers", () => {
   it("builds deterministic automation copy for schedule assertions", () => {
     expect(
-      buildAppTanstackAutomationScheduleFixture({
+      buildAppAutomationScheduleFixture({
         nowMs: 1_780_876_800_000,
       })
     ).toEqual({
       automationName: "Schedule smoke automation 1780876800000",
       automationPrompt:
-        "Verify the app-tanstack schedule and status editor smoke can mutate this automation.",
+        "Verify the app schedule and status editor smoke can mutate this automation.",
     });
   });
 
   it("builds the organization-scoped automation detail and list paths", () => {
     expect(
-      buildAppTanstackAutomationSchedulePaths({
+      buildAppAutomationSchedulePaths({
         automationId: "automation_123",
         orgSlug: "lightfast",
       })
