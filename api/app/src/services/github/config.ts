@@ -52,10 +52,10 @@ export function normalizeGitHubPrivateKey(value: string): string {
 export function resolveGitHubAppOrigin(
   input: { appUrl?: string } = {}
 ): string {
-  const appUrl = input.appUrl ?? process.env.NEXT_PUBLIC_APP_URL;
+  const appUrl = input.appUrl ?? process.env.VITE_LIGHTFAST_APP_URL;
   if (!appUrl) {
     throw new Error(
-      "NEXT_PUBLIC_APP_URL is required for GitHub app origin resolution."
+      "VITE_LIGHTFAST_APP_URL is required for GitHub app origin resolution."
     );
   }
 

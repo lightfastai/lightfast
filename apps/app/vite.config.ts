@@ -34,20 +34,11 @@ export function createSentryBuildOptions(
   clientDsn = sentryClientDsn,
   serverDsn = sentryServerDsn
 ): SentryBuildOptions {
-  if (command === "build") {
-    if (!clientDsn) {
-      throw new Error(
-        "Missing required public Sentry DSN environment variable: VITE_SENTRY_DSN or NEXT_PUBLIC_SENTRY_DSN"
-      );
-    }
-    if (!serverDsn) {
-      throw new Error(
-        "Missing required server Sentry DSN environment variable: SENTRY_DSN, VITE_SENTRY_DSN, or NEXT_PUBLIC_SENTRY_DSN"
-      );
-    }
-  }
+  const hasRequiredSentryBuildConfig = Boolean(
+    clientDsn && serverDsn && hasSentrySourceMapUploadCredentials(sentryEnv)
+  );
 
-  if (!hasSentrySourceMapUploadCredentials(sentryEnv)) {
+  if (command === "build" && !hasRequiredSentryBuildConfig) {
     return {
       org: undefined,
       project: undefined,
@@ -101,9 +92,6 @@ export default defineConfig(({ command }) => ({
     ),
     "import.meta.env.VITE_LIGHTFAST_APP_URL": JSON.stringify(
       env.VITE_LIGHTFAST_APP_URL
-    ),
-    "import.meta.env.VITE_LIGHTFAST_WWW_URL": JSON.stringify(
-      env.VITE_LIGHTFAST_WWW_URL
     ),
     "import.meta.env.VITE_SENTRY_DSN": JSON.stringify(sentryClientDsn ?? ""),
     "import.meta.env.VITE_VERCEL_ENV": JSON.stringify(env.VITE_VERCEL_ENV),

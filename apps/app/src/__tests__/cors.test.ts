@@ -9,7 +9,7 @@ describe("app CORS", () => {
   beforeEach(() => {
     vi.unstubAllEnvs();
     vi.stubEnv("NODE_ENV", "development");
-    vi.stubEnv("NEXT_PUBLIC_VERCEL_ENV", "development");
+    vi.stubEnv("VITE_VERCEL_ENV", "development");
     vi.stubEnv("VITE_LIGHTFAST_APP_URL", "https://lightfast.localhost");
     vi.stubEnv("PORTLESS_URL", "https://app.app.lightfast.localhost");
   });

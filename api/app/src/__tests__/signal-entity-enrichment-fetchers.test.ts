@@ -18,7 +18,7 @@ const envMock = {
   GITHUB_APP_ID: "12345",
   GITHUB_APP_PRIVATE_KEY: "test-private-key",
   GITHUB_APP_SLUG: "lightfast-test",
-  NEXT_PUBLIC_APP_URL: "https://app.lightfast.localhost",
+  VITE_LIGHTFAST_APP_URL: "https://app.lightfast.localhost",
   VERCEL_ENV: "development" as const,
   X_API_ORIGIN: "https://x.lightfast.localhost",
   X_CLIENT_ID: "x_client_test",
@@ -87,7 +87,7 @@ function targets(): SignalEntityEnrichmentTargetsResult {
 beforeEach(() => {
   envMock.VERCEL_ENV = "development";
   envMock.X_API_ORIGIN = "https://x.lightfast.localhost";
-  vi.stubEnv("NEXT_PUBLIC_APP_URL", envMock.NEXT_PUBLIC_APP_URL);
+  vi.stubEnv("VITE_LIGHTFAST_APP_URL", envMock.VITE_LIGHTFAST_APP_URL);
   executeXApiToolMock.mockReset();
   executeXApiToolMock.mockResolvedValue({
     content: [{ text: "ok", type: "text" }],

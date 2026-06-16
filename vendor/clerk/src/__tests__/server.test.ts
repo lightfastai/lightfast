@@ -5,12 +5,11 @@ vi.mock("server-only", () => ({}));
 let toPlainClerkResource: typeof import("../server").toPlainClerkResource;
 
 const originalClerkSecretKey = process.env.CLERK_SECRET_KEY;
-const originalClerkPublishableKey =
-  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+const originalClerkPublishableKey = process.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 beforeAll(async () => {
   process.env.CLERK_SECRET_KEY = "sk_test_fixture";
-  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = "pk_test_fixture";
+  process.env.VITE_CLERK_PUBLISHABLE_KEY = "pk_test_fixture";
 
   ({ toPlainClerkResource } = await import("../server"));
 });
@@ -22,9 +21,9 @@ afterAll(() => {
     process.env.CLERK_SECRET_KEY = originalClerkSecretKey;
   }
   if (originalClerkPublishableKey === undefined) {
-    delete process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+    delete process.env.VITE_CLERK_PUBLISHABLE_KEY;
   } else {
-    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = originalClerkPublishableKey;
+    process.env.VITE_CLERK_PUBLISHABLE_KEY = originalClerkPublishableKey;
   }
 });
 

@@ -43,7 +43,7 @@ const envMock = {
   LINEAR_CLIENT_ID: "linear_client_test",
   LINEAR_CLIENT_SECRET: "linear_secret_test",
   LINEAR_MCP_ENDPOINT: "https://linear.test/mcp",
-  NEXT_PUBLIC_APP_URL: "https://app.lightfast.localhost",
+  VITE_LIGHTFAST_APP_URL: "https://app.lightfast.localhost",
   VERCEL_ENV: "development",
   X_API_ORIGIN: "https://x.test",
   X_CLIENT_ID: "x_client_test",
@@ -694,7 +694,7 @@ describe("Linear connector flow", () => {
     envMock.LINEAR_CLIENT_ID = "linear_client_test";
     envMock.LINEAR_CLIENT_SECRET = "linear_secret_test";
     envMock.LINEAR_MCP_ENDPOINT = "https://linear.test/mcp";
-    process.env.NEXT_PUBLIC_APP_URL = "https://app.lightfast.localhost";
+    process.env.VITE_LIGHTFAST_APP_URL = "https://app.lightfast.localhost";
 
     clerkGetOrganizationMembershipListMock.mockReset();
     decryptMock.mockReset();
@@ -1316,7 +1316,7 @@ describe("X connector flow", () => {
     envMock.X_MCP_ENDPOINT =
       "https://app.lightfast.localhost/api/connectors/x/mcp";
     envMock.X_OAUTH_ORIGIN = "https://x.test";
-    process.env.NEXT_PUBLIC_APP_URL = "https://app.lightfast.localhost";
+    process.env.VITE_LIGHTFAST_APP_URL = "https://app.lightfast.localhost";
 
     clerkGetOrganizationMembershipListMock.mockReset();
     createXPkcePairMock.mockReset();

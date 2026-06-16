@@ -9,40 +9,48 @@ import { env } from "./src/env";
 const host = process.env.HOST;
 const port = process.env.PORT ? Number(process.env.PORT) : undefined;
 
-const sentryBuildEnvKeys = [
-  "SENTRY_AUTH_TOKEN",
-  "SENTRY_ORG",
-  "SENTRY_PROJECT",
-] as const;
-
-const sentryClientDsn = env.VITE_SENTRY_DSN ?? env.NEXT_PUBLIC_SENTRY_DSN;
+const sentryClientDsn = env.VITE_SENTRY_DSN;
 const sentryServerDsn = env.SENTRY_DSN ?? sentryClientDsn;
 
-function requireSentryBuildEnv(command: "build" | "serve") {
-  if (command === "build") {
-    for (const key of sentryBuildEnvKeys) {
-      if (!env[key]) {
-        throw new Error(
-          `Missing required Sentry build environment variable: ${key}`
-        );
-      }
-    }
-    if (!sentryClientDsn) {
-      throw new Error(
-        "Missing required public Sentry DSN environment variable: VITE_SENTRY_DSN or NEXT_PUBLIC_SENTRY_DSN"
-      );
-    }
-    if (!sentryServerDsn) {
-      throw new Error(
-        "Missing required server Sentry DSN environment variable: SENTRY_DSN, VITE_SENTRY_DSN, or NEXT_PUBLIC_SENTRY_DSN"
-      );
-    }
+type SentryBuildOptions = NonNullable<
+  Parameters<typeof sentryTanstackStart>[0]
+>;
+
+type SentryUploadEnv = Pick<
+  typeof env,
+  "SENTRY_AUTH_TOKEN" | "SENTRY_ORG" | "SENTRY_PROJECT"
+>;
+
+function hasSentrySourceMapUploadCredentials(sentryEnv: SentryUploadEnv) {
+  return Boolean(
+    sentryEnv.SENTRY_AUTH_TOKEN &&
+      sentryEnv.SENTRY_ORG &&
+      sentryEnv.SENTRY_PROJECT
+  );
+}
+
+export function createSentryBuildOptions(
+  command: "build" | "serve",
+  sentryEnv: SentryUploadEnv = env,
+  clientDsn = sentryClientDsn,
+  serverDsn = sentryServerDsn
+): SentryBuildOptions {
+  const hasRequiredSentryBuildConfig = Boolean(
+    clientDsn && serverDsn && hasSentrySourceMapUploadCredentials(sentryEnv)
+  );
+
+  if (command === "build" && !hasRequiredSentryBuildConfig) {
+    return {
+      org: undefined,
+      project: undefined,
+      sourcemaps: { disable: "disable-upload" },
+    };
   }
 
   return {
-    authToken: env.SENTRY_AUTH_TOKEN,
-    org: env.SENTRY_ORG,
-    project: env.SENTRY_PROJECT,
+    authToken: sentryEnv.SENTRY_AUTH_TOKEN,
+    org: sentryEnv.SENTRY_ORG,
+    project: sentryEnv.SENTRY_PROJECT,
   };
 }
 
@@ -51,7 +59,7 @@ export default defineConfig(({ command }) => ({
     ...tanstackStart(),
     nitro(),
     react(),
-    ...sentryTanstackStart(requireSentryBuildEnv(command)),
+    ...sentryTanstackStart(createSentryBuildOptions(command)),
   ],
   resolve: {
     alias: {

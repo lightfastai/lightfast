@@ -555,7 +555,7 @@ function sameDate(left: Date | null, right: Date | null) {
 }
 
 function granolaRedirectUrl() {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const appUrl = process.env.VITE_LIGHTFAST_APP_URL;
   if (!appUrl) {
     return LOCAL_GRANOLA_CALLBACK_URL;
   }

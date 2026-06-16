@@ -13,35 +13,33 @@ describe("app environment validation wiring", () => {
     expect(envSource).toContain('from "@t3-oss/env-core"');
     expect(envSource).not.toContain("@t3-oss/env-nextjs");
     expect(envSource).toContain('from "@vendor/clerk/env"');
-    expect(envSource).toContain('from "@vendor/observability/sentry-env"');
+    expect(envSource).not.toContain("@vendor/observability/sentry-env");
   });
 
-  it("extends core-compatible provider env modules", () => {
+  it("extends core-compatible non-Next provider env modules", () => {
     const envSource = readFileSync(resolve(appRoot, "src/env.ts"), "utf8");
 
     expect(envSource).toContain('from "@db/app/env"');
     expect(envSource).toContain('from "@vendor/clerk/env"');
-    expect(envSource).toContain('from "@vendor/observability/sentry-env"');
+    expect(envSource).not.toContain("@vendor/observability/sentry-env");
     expect(envSource).toContain('from "@vendor/upstash/env"');
     expect(envSource).toContain('from "@vendor/unkey/env"');
     expect(envSource).toContain(
-      "extends: [dbEnv, clerkEnvBase, sentryEnv, upstashEnv, unkeyEnv]"
+      "extends: [dbEnv, clerkEnvBase, upstashEnv, unkeyEnv]"
     );
   });
 
-  it("maps the current app NEXT_PUBLIC env contract into Vite client values", () => {
+  it("uses only Vite-prefixed public env names", () => {
     const envSource = readFileSync(resolve(appRoot, "src/env.ts"), "utf8");
 
-    expect(envSource).toContain("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY");
-    expect(envSource).toContain("NEXT_PUBLIC_SENTRY_DSN");
-    expect(envSource).toContain("process.env.NEXT_PUBLIC_APP_URL");
-    expect(envSource).toContain("process.env.NEXT_PUBLIC_WWW_URL");
-    expect(envSource).toContain("process.env.NEXT_PUBLIC_VERCEL_ENV");
-    expect(envSource).toContain(
-      "process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"
-    );
+    expect(envSource).toContain("VITE_CLERK_PUBLISHABLE_KEY");
+    expect(envSource).toContain("VITE_SENTRY_DSN");
+    expect(envSource).toContain("process.env.VITE_LIGHTFAST_APP_URL");
+    expect(envSource).toContain("process.env.VITE_VERCEL_ENV");
+    expect(envSource).toContain("process.env.VITE_CLERK_PUBLISHABLE_KEY");
+    expect(envSource).not.toContain("NEXT_PUBLIC_");
     expect(envSource).toContain("VITE_LIGHTFAST_APP_URL");
-    expect(envSource).toContain("VITE_LIGHTFAST_WWW_URL");
+    expect(envSource).not.toContain("VITE_LIGHTFAST_WWW_URL");
     expect(envSource).toContain("VITE_CLERK_PUBLISHABLE_KEY");
     expect(envSource).toContain("VITE_VERCEL_ENV");
   });
@@ -96,12 +94,12 @@ describe("app environment validation wiring", () => {
 
     expect(turboJson.tasks.build.env).toEqual(
       expect.arrayContaining([
-        "NEXT_PUBLIC_APP_URL",
-        "NEXT_PUBLIC_WWW_URL",
-        "NEXT_PUBLIC_VERCEL_ENV",
+        "VITE_LIGHTFAST_APP_URL",
+        "VITE_VERCEL_ENV",
         "VITE_*",
       ])
     );
+    expect(turboJson.tasks.build.env).not.toContain("VITE_LIGHTFAST_WWW_URL");
     expect(turboJson.tasks.build.inputs).toEqual(
       expect.arrayContaining([".env.overrides.local", ".vercel/.env*"])
     );
@@ -138,6 +136,25 @@ describe("app environment validation wiring", () => {
         },
         "https://public@sentry.test/1",
         "https://server@sentry.test/1"
+      )
+    ).toEqual({
+      org: undefined,
+      project: undefined,
+      sourcemaps: { disable: "disable-upload" },
+    });
+  });
+
+  it("keeps production builds working without Sentry DSNs", () => {
+    expect(
+      createSentryBuildOptions(
+        "build",
+        {
+          SENTRY_AUTH_TOKEN: undefined,
+          SENTRY_ORG: undefined,
+          SENTRY_PROJECT: undefined,
+        },
+        "",
+        ""
       )
     ).toEqual({
       org: undefined,

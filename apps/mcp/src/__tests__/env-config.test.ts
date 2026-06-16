@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { createSentryBuildOptions } from "../../vite.config";
 
 const appRoot = resolve(import.meta.dirname, "../..");
 
@@ -10,9 +11,9 @@ describe("MCP environment validation wiring", () => {
 
     expect(envSource).toContain('import "@tanstack/react-start/server-only"');
     expect(envSource).toContain('from "@db/app/env"');
-    expect(envSource).toContain('from "@vendor/observability/sentry-env"');
+    expect(envSource).not.toContain("@vendor/observability/sentry-env");
     expect(envSource).toContain('from "@t3-oss/env-core"');
-    expect(envSource).toContain("extends: [dbEnv, sentryEnv]");
+    expect(envSource).toContain("extends: [dbEnv]");
   });
 
   it("evaluates the MCP env schema during Vite config loading", () => {
@@ -24,7 +25,7 @@ describe("MCP environment validation wiring", () => {
     expect(viteConfigSource).toContain('import { env } from "./src/env"');
   });
 
-  it("requires Sentry build env through the Vite config", () => {
+  it("configures Sentry through the Vite config without requiring upload env", () => {
     const viteConfigSource = readFileSync(
       resolve(appRoot, "vite.config.ts"),
       "utf8"
@@ -35,8 +36,27 @@ describe("MCP environment validation wiring", () => {
     expect(viteConfigSource).toContain("SENTRY_ORG");
     expect(viteConfigSource).toContain("SENTRY_PROJECT");
     expect(viteConfigSource).toContain("VITE_SENTRY_DSN");
-    expect(viteConfigSource).toContain("NEXT_PUBLIC_SENTRY_DSN");
+    expect(viteConfigSource).not.toContain("NEXT_PUBLIC_");
     expect(viteConfigSource).toContain("SENTRY_DSN");
+  });
+
+  it("keeps production builds working without Sentry DSNs", () => {
+    expect(
+      createSentryBuildOptions(
+        "build",
+        {
+          SENTRY_AUTH_TOKEN: undefined,
+          SENTRY_ORG: undefined,
+          SENTRY_PROJECT: undefined,
+        },
+        "",
+        ""
+      )
+    ).toEqual({
+      org: undefined,
+      project: undefined,
+      sourcemaps: { disable: "disable-upload" },
+    });
   });
 
   it("passes Sentry env fallbacks through the Turbo build task", () => {
@@ -46,7 +66,7 @@ describe("MCP environment validation wiring", () => {
 
     expect(turboConfig.tasks.build.env).toEqual(
       expect.arrayContaining([
-        "NEXT_PUBLIC_SENTRY_DSN",
+        "VITE_SENTRY_DSN",
         "SENTRY_AUTH_TOKEN",
         "SENTRY_DSN",
         "SENTRY_ORG",

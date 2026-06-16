@@ -67,7 +67,7 @@ describe("app workspace wiring", () => {
     };
 
     expect(packageJson.scripts["with-related-projects"]).toContain(
-      "NEXT_PUBLIC_APP_URL=$(portless get lightfast)"
+      "VITE_LIGHTFAST_APP_URL=$(portless get lightfast)"
     );
     expect(packageJson.scripts["with-related-projects"]).toContain(
       "VITE_LIGHTFAST_APP_URL=$(portless get lightfast)"

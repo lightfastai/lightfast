@@ -13,7 +13,7 @@ const envMock = {
   CONNECTOR_MCP_AUTH_SECRET: "mcp_auth_secret_12345678901234567890",
   ENCRYPTION_KEY:
     "0000000000000000000000000000000000000000000000000000000000000000",
-  NEXT_PUBLIC_APP_URL: "https://app.lightfast.localhost",
+  VITE_LIGHTFAST_APP_URL: "https://app.lightfast.localhost",
   VERCEL_ENV: "development",
   X_API_ORIGIN: "https://x.test",
   X_CLIENT_ID: "x_client_test",

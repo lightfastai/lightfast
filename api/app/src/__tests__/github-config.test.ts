@@ -17,7 +17,7 @@ describe("GitHub config", () => {
     expect(normalizeGitHubPrivateKey("a\\nb\\n")).toBe("a\nb\n");
   });
 
-  it("resolves the app origin from NEXT_PUBLIC_APP_URL", () => {
+  it("resolves the app origin from VITE_LIGHTFAST_APP_URL", () => {
     expect(
       resolveGitHubAppOrigin({
         appUrl: "https://app.lightfast.localhost",

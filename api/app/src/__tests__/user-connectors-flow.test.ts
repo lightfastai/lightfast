@@ -20,7 +20,7 @@ const envMock = {
   ENCRYPTION_KEY:
     "0000000000000000000000000000000000000000000000000000000000000000",
   GRANOLA_MCP_ENDPOINT: "https://granola.test/mcp",
-  NEXT_PUBLIC_APP_URL: "https://app.lightfast.localhost",
+  VITE_LIGHTFAST_APP_URL: "https://app.lightfast.localhost",
 };
 
 class MockGranolaAppNodeError extends Error {
@@ -298,7 +298,7 @@ describe("Granola user connector OAuth flow", () => {
     vi.useRealTimers();
     authMock.mockReset();
     authMock.mockResolvedValue({ userId: "user_current" });
-    process.env.NEXT_PUBLIC_APP_URL = envMock.NEXT_PUBLIC_APP_URL;
+    process.env.VITE_LIGHTFAST_APP_URL = envMock.VITE_LIGHTFAST_APP_URL;
     nanoidMock.mockReset();
     nanoidMock.mockReturnValue("attempt_123456789012345678901234");
     redisGetMock.mockReset();

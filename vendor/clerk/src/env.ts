@@ -2,17 +2,16 @@ import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 export const clerkEnvBase = createEnv({
-  clientPrefix: "NEXT_PUBLIC_",
+  clientPrefix: "VITE_",
   server: {
     CLERK_SECRET_KEY: z.string().min(1).startsWith("sk_"),
   },
   client: {
-    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1).startsWith("pk_"),
+    VITE_CLERK_PUBLISHABLE_KEY: z.string().min(1).startsWith("pk_"),
   },
   runtimeEnv: {
     CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
-    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
-      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+    VITE_CLERK_PUBLISHABLE_KEY: process.env.VITE_CLERK_PUBLISHABLE_KEY,
   },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||
@@ -20,8 +19,7 @@ export const clerkEnvBase = createEnv({
 });
 
 export function getClerkFrontendApi(): string {
-  const base64Part =
-    clerkEnvBase.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.split("_")[2];
+  const base64Part = clerkEnvBase.VITE_CLERK_PUBLISHABLE_KEY.split("_")[2];
 
   if (!base64Part) {
     return "";

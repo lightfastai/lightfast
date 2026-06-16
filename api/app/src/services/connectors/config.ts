@@ -53,10 +53,10 @@ interface XConnectorConfigEnv {
 }
 
 export function resolveConnectorAppOrigin(input: { appUrl?: string } = {}) {
-  const appUrl = input.appUrl ?? process.env.NEXT_PUBLIC_APP_URL;
+  const appUrl = input.appUrl ?? process.env.VITE_LIGHTFAST_APP_URL;
   if (!appUrl) {
     throw new Error(
-      "NEXT_PUBLIC_APP_URL is required for connector callback URL resolution."
+      "VITE_LIGHTFAST_APP_URL is required for connector callback URL resolution."
     );
   }
   return new URL(appUrl).origin;
