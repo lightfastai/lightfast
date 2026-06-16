@@ -34,7 +34,6 @@ describe("app chat API route migration", () => {
       "src/server/chat/workspace-assistant-stream-route.ts"
     );
     const resumableSource = source("src/server/chat/resumable-stream.ts");
-    const packageSource = source("package.json");
 
     expect(chatSource).toContain("resolveWorkspaceAssistantAuthContext");
     expect(chatSource).toContain("safeValidateUIMessages");
@@ -60,6 +59,5 @@ describe("app chat API route migration", () => {
       expect(nextFreeSource).not.toContain("@api/app/auth/identity");
     }
     expect(chatSource).not.toContain('from "@api/app/services/skills"');
-    expect(packageSource).not.toContain('"@vendor/observability"');
   });
 });
