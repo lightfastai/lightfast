@@ -13,7 +13,6 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuPortal,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
@@ -32,7 +31,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 const meta = {
   title: "ui/DropdownMenu",
   component: DropdownMenu,
-  tags: ["autodocs", "ai-generated"],
+  tags: ["autodocs"],
   argTypes: {},
   render: (args) => (
     <DropdownMenu {...args}>
@@ -110,23 +109,21 @@ export const WithSubmenus: Story = {
               <HugeiconsIcon className="mr-2" icon={UserAdd01Icon} size={16} />
               <span>Invite users</span>
             </DropdownMenuSubTrigger>
-            <DropdownMenuPortal>
-              <DropdownMenuSubContent>
-                <DropdownMenuItem>
-                  <HugeiconsIcon className="mr-2" icon={Mail01Icon} size={16} />
-                  <span>Email</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <HugeiconsIcon
-                    className="mr-2"
-                    icon={AddCircleIcon}
-                    size={16}
-                  />
-                  <span>More...</span>
-                </DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuPortal>
+            <DropdownMenuSubContent>
+              <DropdownMenuItem>
+                <HugeiconsIcon className="mr-2" icon={Mail01Icon} size={16} />
+                <span>Email</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <HugeiconsIcon
+                  className="mr-2"
+                  icon={AddCircleIcon}
+                  size={16}
+                />
+                <span>More...</span>
+              </DropdownMenuItem>
+            </DropdownMenuSubContent>
           </DropdownMenuSub>
         </DropdownMenuGroup>
       </DropdownMenuContent>

@@ -9,6 +9,10 @@ const desktopShell = readFileSync(
   new URL("../src/react/desktop-shell.tsx", import.meta.url),
   "utf8"
 );
+const appSidebar = readFileSync(
+  new URL("../src/react/components/app-sidebar.tsx", import.meta.url),
+  "utf8"
+);
 const packageJson = JSON.parse(
   readFileSync(new URL("../../../package.json", import.meta.url), "utf8")
 ) as {
@@ -25,7 +29,14 @@ const uiV2PackageJson = JSON.parse(
   devDependencies?: Record<string, string>;
 };
 const sourceFiles = readFileSync(
-  new URL("../src/react/desktop-shell.tsx", import.meta.url),
+  new URL("../src/react/components/app-sidebar.tsx", import.meta.url),
+  "utf8"
+);
+const localSidebar = readFileSync(
+  new URL(
+    "../../../../../packages/ui-v2/src/components/ui/sidebar.tsx",
+    import.meta.url
+  ),
   "utf8"
 );
 const componentsJson = readFileSync(
@@ -50,49 +61,63 @@ describe("primary objective sidebar", () => {
   });
 
   it("renders the Objective landing icon rail from the React app shell", () => {
-    expect(desktopShell).toContain("function IconSidebar()");
-    expect(desktopShell).toContain("w-[52px]");
-    expect(desktopShell).toContain("items-start justify-center pt-8");
-    expect(desktopShell).toContain(
-      'import { Button } from "@repo/ui-v2/components/ui/button";'
+    expect(desktopShell).toContain("AppSidebar");
+    expect(desktopShell).toContain('from "./components/app-sidebar";');
+    expect(appSidebar).toContain("function AppSidebar()");
+    expect(appSidebar).toContain("function AppSidebarProvider");
+    expect(appSidebar).toContain("open={false}");
+    expect(appSidebar).toContain('collapsible="icon"');
+    expect(appSidebar).toContain('className="border-none"');
+    expect(appSidebar).toContain("SidebarGroup");
+    expect(appSidebar).toContain('from "@repo/ui-v2/components/ui/sidebar";');
+    expect(appSidebar).toContain("SidebarMenuButton");
+    expect(appSidebar).toContain(
+      'className="overflow-visible group-data-[collapsible=icon]:overflow-visible"'
     );
-    expect(desktopShell).toContain('from "@repo/ui-v2/components/ui/tooltip";');
-    expect(desktopShell).toContain('aria-label="New chat"');
-    expect(desktopShell).toContain('aria-label="Recent chats"');
-    expect(desktopShell).toContain("New Chat");
-    expect(desktopShell).toContain("Recent Chats");
-    expect(desktopShell).toContain('side="right"');
-    expect(desktopShell).toContain('aria-label="Add objective"');
-    expect(desktopShell).toContain('variant="ghost"');
-    expect(desktopShell).toContain('size="icon-sm"');
-    expect(desktopShell).toContain('"left-[52px]"');
-    expect(desktopShell).toContain("function ObjectiveIndicator");
-    expect(desktopShell).toContain("animate-objective-gradient");
-    expect(desktopShell).toContain("bg-[length:400%_400%]");
-    expect(desktopShell).toContain("from-[#ef4444] via-[#f43f5e] to-[#a855f7]");
-    expect(desktopShell).toContain("from-[#06b6d4] via-[#3b82f6] to-[#4f46e5]");
-    expect(desktopShell).toContain("from-[#f59e0b] via-[#f97316] to-[#e11d48]");
+    expect(appSidebar).toContain(
+      'className="absolute inset-x-0 top-1/2 -translate-y-1/2"'
+    );
+    expect(appSidebar).toContain('aria-label="New chat"');
+    expect(appSidebar).toContain('aria-label="Recent chats"');
+    expect(appSidebar).toContain("New Chat");
+    expect(appSidebar).toContain("Recent Chats");
+    expect(appSidebar).toContain(
+      'tooltip={{ children: "New Chat", hidden: false }}'
+    );
+    expect(appSidebar).toContain(
+      'tooltip={{ children: "Recent Chats", hidden: false }}'
+    );
+    expect(localSidebar).toContain('side="right"');
+    expect(appSidebar).toContain('aria-label="Add objective"');
+    expect(desktopShell).toContain("left-(--sidebar-width-icon)");
+    expect(appSidebar).toContain("function ObjectiveIndicator");
+    expect(appSidebar).toContain(
+      'className={cn("justify-center", appRegionNoDrag)}'
+    );
+    expect(appSidebar).toContain("animate-objective-gradient");
+    expect(appSidebar).toContain("bg-[length:400%_400%]");
+    expect(appSidebar).toContain("from-chart-3 via-chart-4 to-chart-5");
+    expect(appSidebar).toContain("from-chart-1 via-chart-2 to-chart-4");
+    expect(appSidebar).toContain("from-chart-5 via-chart-3 to-destructive");
 
-    expect(desktopShell).not.toContain('className="objective-sidebar-card"');
-    expect(desktopShell).not.toContain('className="nav objective-nav"');
-    expect(desktopShell).not.toContain("icon-sidebar__");
-    expect(desktopShell).not.toContain('const swatchClass = "size-2.5');
-    expect(desktopShell).not.toContain("blur-md");
-    expect(desktopShell).not.toContain("animate-pulse");
-    expect(desktopShell).not.toContain("bg-conic");
-    expect(desktopShell).not.toContain("from-primary");
-    expect(desktopShell).not.toContain("via-ring");
-    expect(desktopShell).not.toContain("to-accent");
-    expect(desktopShell).not.toContain("via-muted-foreground");
-    expect(desktopShell).not.toContain(
-      "motion-safe:animate-objective-gradient"
-    );
-    expect(desktopShell).not.toContain("filter:");
-    expect(desktopShell).not.toContain("shape-displacement");
-    expect(desktopShell).not.toContain("dangerouslySetInnerHTML");
-    expect(desktopShell).not.toContain("Mission Control");
-    expect(desktopShell).not.toContain("Mode Core Prism 1");
-    expect(desktopShell).not.toContain("Runtime signal");
+    expect(appSidebar).not.toContain('className="objective-sidebar-card"');
+    expect(appSidebar).not.toContain('className="nav objective-nav"');
+    expect(appSidebar).not.toContain("icon-sidebar__");
+    expect(appSidebar).not.toContain('const swatchClass = "size-2.5');
+    expect(appSidebar).not.toContain("blur-md");
+    expect(appSidebar).not.toContain("animate-pulse");
+    expect(appSidebar).not.toContain("bg-conic");
+    expect(appSidebar).not.toContain("from-primary");
+    expect(appSidebar).not.toContain("via-ring");
+    expect(appSidebar).not.toContain("to-accent");
+    expect(appSidebar).not.toContain("via-muted-foreground");
+    expect(appSidebar).not.toContain("motion-safe:animate-objective-gradient");
+    expect(appSidebar).not.toContain("filter:");
+    expect(appSidebar).not.toContain("shape-displacement");
+    expect(appSidebar).not.toContain("dangerouslySetInnerHTML");
+    expect(appSidebar).not.toContain("Mission Control");
+    expect(appSidebar).not.toContain("Mode Core Prism 1");
+    expect(appSidebar).not.toContain("Runtime signal");
   });
 
   it("uses the ui-v2 Base UI shadcn system for the sidebar migration", () => {
@@ -108,6 +133,8 @@ describe("primary objective sidebar", () => {
     expect(componentsJson).toContain('"style": "base-rhea"');
     expect(componentsJson).toContain('"iconLibrary": "hugeicons"');
     expect(localButton).toContain("@base-ui/react/button");
+    expect(localSidebar).toContain("@base-ui/react/use-render");
+    expect(localSidebar).toContain("function SidebarProvider");
     expect(localButton).toContain('icon: "size-8"');
     expect(packageJson.dependencies).not.toHaveProperty(
       "@radix-ui/react-dropdown-menu"

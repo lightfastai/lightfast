@@ -2754,12 +2754,21 @@ importers:
       '@hugeicons/react':
         specifier: 'catalog:'
         version: 1.1.6(react@19.2.6)
+      '@vendor/ai':
+        specifier: workspace:*
+        version: link:../../vendor/ai
       class-variance-authority:
         specifier: 'catalog:'
         version: 0.7.1
       clsx:
         specifier: 'catalog:'
         version: 2.1.1
+      cmdk:
+        specifier: 'catalog:'
+        version: 1.1.1(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      nanoid:
+        specifier: 'catalog:'
+        version: 5.1.9
       react:
         specifier: ^19.2.6
         version: 19.2.6
@@ -26731,7 +26740,7 @@ snapshots:
 
   postcss@8.5.1:
     dependencies:
-      nanoid: 3.3.11
+      nanoid: 3.3.12
       picocolors: 1.1.1
       source-map-js: 1.2.1
 

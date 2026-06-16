@@ -51,17 +51,10 @@ const localTooltip = readFileSync(
   new URL("src/components/ui/tooltip.tsx", uiV2Root),
   "utf8"
 );
-const allowedObjectiveIndicatorHexColors = [
-  "#ef4444",
-  "#f43f5e",
-  "#a855f7",
-  "#06b6d4",
-  "#3b82f6",
-  "#4f46e5",
-  "#f59e0b",
-  "#f97316",
-  "#e11d48",
-] as const;
+const localSidebar = readFileSync(
+  new URL("src/components/ui/sidebar.tsx", uiV2Root),
+  "utf8"
+);
 
 describe("desktop shadcn native cleanup", () => {
   it("uses ui-v2 Base UI shadcn primitives for the renderer", () => {
@@ -74,19 +67,11 @@ describe("desktop shadcn native cleanup", () => {
     expect(combinedSource).not.toMatch(/@radix-ui\/react-/);
   });
 
-  it("keeps renderer UI on shadcn theme tokens outside objective indicator colors", () => {
+  it("keeps renderer UI on shadcn theme tokens", () => {
+    const customColorPattern =
+      /#[0-9a-fA-F]{3,8}|\[\.electron-dark_&\]|(?:from|via|to|bg|text|border|ring|outline|fill|stroke|decoration|caret|accent)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|white|black|transparent)(?:-|["'`\s])|(?:from|via|to|bg|text|border|ring|outline|fill|stroke|decoration|caret|accent)-\[(?:#|rgb|rgba|hsl|hsla|oklch|oklab|color-mix)/;
     const offenders = sourceFiles
-      .filter(({ source }) => {
-        const sourceWithoutAllowedObjectiveColors =
-          allowedObjectiveIndicatorHexColors.reduce(
-            (nextSource, color) => nextSource.replaceAll(color, ""),
-            source
-          );
-
-        return /#[0-9a-fA-F]{3,8}|\[\.electron-dark_&\]/.test(
-          sourceWithoutAllowedObjectiveColors
-        );
-      })
+      .filter(({ source }) => customColorPattern.test(source))
       .map(({ path }) => path.replace(rendererSrc.pathname, ""));
 
     expect(offenders).toEqual([]);
@@ -105,8 +90,13 @@ describe("desktop shadcn native cleanup", () => {
 
   it("keeps tooltip primitives available for primary sidebar icon actions", () => {
     expect(localTooltip).toContain("TooltipProvider");
-    expect(combinedSource).toContain("TooltipTrigger");
-    expect(combinedSource).toContain("TooltipContent");
+    expect(localSidebar).toContain("TooltipTrigger");
+    expect(localSidebar).toContain("TooltipContent");
+    expect(localSidebar).toContain("const sidebarMenuButtonVariants = cva(");
+    expect(localSidebar).toContain('shape: "default"');
+    expect(localSidebar).toContain("square:");
+    expect(localSidebar).toContain("[&_[data-slot=avatar]]:rounded-md");
+    expect(combinedSource).toContain("SidebarMenuButton");
     expect(combinedSource).toContain('aria-label="New chat"');
     expect(combinedSource).toContain('aria-label="Recent chats"');
     expect(combinedSource).toContain("New Chat");

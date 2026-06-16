@@ -2,7 +2,6 @@ import { join } from "node:path";
 import {
   BrowserWindow,
   type BrowserWindowConstructorOptions,
-  nativeTheme,
   type WebContents,
 } from "electron";
 import type { WindowKind } from "../../shared/ipc";
@@ -32,10 +31,8 @@ function preloadFileFor(kind: WindowKind): string {
 }
 
 function titleBarOverlayColors(): Electron.TitleBarOverlayOptions {
-  const isDark = nativeTheme.shouldUseDarkColors;
   return {
-    color: "#00000000",
-    symbolColor: isDark ? "#ffffff" : "#000000",
+    color: "transparent",
     height: 46,
   };
 }
@@ -45,7 +42,7 @@ function baseWindowOptions(): BrowserWindowConstructorOptions {
   const isWindows = process.platform === "win32";
   return {
     show: false,
-    backgroundColor: "#00000000",
+    backgroundColor: "transparent",
     vibrancy: "menu",
     visualEffectState: "active",
     backgroundMaterial: "mica",

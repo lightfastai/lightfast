@@ -1,7 +1,6 @@
 import { SettingsIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Avatar, AvatarFallback } from "@repo/ui-v2/components/ui/avatar";
-import { Button } from "@repo/ui-v2/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +10,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@repo/ui-v2/components/ui/dropdown-menu";
-import { useAuthSnapshot } from "./use-auth-snapshot";
+import { SidebarMenuButton } from "@repo/ui-v2/components/ui/sidebar";
+import { useAuthSnapshot } from "../use-auth-snapshot";
 
 export function TeamMenu() {
   const auth = useAuthSnapshot();
@@ -21,17 +21,17 @@ export function TeamMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button
+          <SidebarMenuButton
             aria-label="Open team menu"
-            className="cursor-default p-0 [-webkit-app-region:no-drag]"
-            size="icon"
+            className="cursor-default [-webkit-app-region:no-drag]"
+            shape="square"
+            size="lg"
             type="button"
-            variant="square"
           />
         }
       >
-        <Avatar className="size-7 rounded-md">
-          <AvatarFallback className="rounded-md bg-foreground text-[10px] text-background">
+        <Avatar>
+          <AvatarFallback>
             {organizationName.trim().charAt(0).toUpperCase() || "T"}
           </AvatarFallback>
         </Avatar>
@@ -39,19 +39,12 @@ export function TeamMenu() {
 
       <DropdownMenuContent
         align="start"
-        className="z-[100] w-56"
+        className="z-100 w-56"
         side="right"
         sideOffset={8}
       >
         <DropdownMenuGroup>
-          <DropdownMenuLabel className="flex select-none items-center gap-2">
-            <Avatar className="size-6 rounded-md">
-              <AvatarFallback className="rounded-md bg-foreground text-[10px] text-background">
-                {organizationName.trim().charAt(0).toUpperCase() || "T"}
-              </AvatarFallback>
-            </Avatar>
-            <span className="min-w-0 flex-1 truncate">{organizationName}</span>
-          </DropdownMenuLabel>
+          <DropdownMenuLabel>{organizationName}</DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
@@ -64,7 +57,7 @@ export function TeamMenu() {
               )
             }
           >
-            <HugeiconsIcon aria-hidden="true" icon={SettingsIcon} size={14} />
+            <HugeiconsIcon aria-hidden="true" icon={SettingsIcon} />
             Team Settings
           </DropdownMenuItem>
         </DropdownMenuGroup>

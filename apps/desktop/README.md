@@ -170,12 +170,13 @@ Main process (`src/main/index.ts`):
 - `visualEffectState: "active"` — stay vibrant when unfocused
 - `titleBarStyle: "hiddenInset"` + `trafficLightPosition: { x: 16, y: 16 }`
 - `backgroundMaterial: "mica"` — Windows 11 equivalent
-- `backgroundColor: "#00000000"` — don't paint an opaque background
+- `backgroundColor: "transparent"` — let the renderer own the semantic surfaces
 
-Renderer (`src/renderer/src/styles.css`):
+Renderer:
 
-- `html, body, #app { background: transparent; }`
-- Sidebar container: `background: transparent;`
+- Document/root surfaces use `bg-background`
+- Main content uses `bg-background`
+- Sidebar container uses `bg-sidebar`
 - `.titlebar-drag { -webkit-app-region: drag; }` on the top strip;
   `-webkit-app-region: no-drag` on buttons.
 

@@ -35,7 +35,7 @@ export function SettingsWindow({ platform }: { platform: FormatPlatform }) {
   const [pane, setPane] = useState<PaneId>("account");
   return (
     <Tabs
-      className="flex h-screen flex-col bg-transparent"
+      className="flex h-screen flex-col bg-background"
       onValueChange={(value) => {
         if (isPaneId(value)) {
           setPane(value);
@@ -43,7 +43,7 @@ export function SettingsWindow({ platform }: { platform: FormatPlatform }) {
       }}
       value={pane}
     >
-      <TabsList className="flex h-auto items-end justify-center gap-1 rounded-none border-x-0 border-t-0 border-b bg-transparent px-4 pt-9 pb-2 [-webkit-app-region:drag]">
+      <TabsList className="flex h-auto items-end justify-center gap-1 rounded-none border-x-0 border-t-0 border-b bg-background px-4 pt-9 pb-2 [-webkit-app-region:drag]">
         {TABS.map(({ id, label, icon }) => (
           <TabsTrigger
             className="h-auto min-w-[72px] cursor-default flex-col gap-1 px-2 py-1.5 text-xs [-webkit-app-region:no-drag] data-[state=active]:bg-accent data-[state=active]:shadow-none"
