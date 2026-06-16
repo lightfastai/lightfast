@@ -1,4 +1,4 @@
-import { createEnv } from "@t3-oss/env-nextjs";
+import { createEnv } from "@t3-oss/env-core";
 import { braintrustEnv } from "@vendor/braintrust/env";
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { env as inngestEnv } from "@vendor/inngest/env";
@@ -13,7 +13,8 @@ const isConnectorMcpAuthSecretRequired =
 
 export const env = createEnv({
   extends: [clerkEnvBase, sentryEnv, inngestEnv, braintrustEnv, unkeyEnv],
-  shared: {},
+  clientPrefix: "" as const,
+  client: {},
   server: {
     CLERK_CLI_OAUTH_CLIENT_ID: z.string().min(1).optional(),
     CLERK_DESKTOP_OAUTH_CLIENT_ID: z.string().min(1).optional(),
@@ -51,8 +52,7 @@ export const env = createEnv({
     X_CLIENT_SECRET: z.string().min(1).optional(),
     X_MCP_ENDPOINT: z.string().url().optional(),
   },
-  client: {},
-  experimental__runtimeEnv: {
+  runtimeEnv: {
     CLERK_CLI_OAUTH_CLIENT_ID: process.env.CLERK_CLI_OAUTH_CLIENT_ID,
     CLERK_DESKTOP_OAUTH_CLIENT_ID: process.env.CLERK_DESKTOP_OAUTH_CLIENT_ID,
     DEVELOPER_AUTH_BOX_ORIGIN: process.env.DEVELOPER_AUTH_BOX_ORIGIN,

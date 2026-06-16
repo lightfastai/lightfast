@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const GITHUB_APP_ENV_KEYS = [
@@ -37,6 +39,18 @@ describe("api app env", () => {
     }
     vi.restoreAllMocks();
     vi.resetModules();
+  });
+
+  it("uses framework-neutral env-core wiring", () => {
+    const envSource = readFileSync(resolve(import.meta.dirname, "../env.ts"), {
+      encoding: "utf8",
+    });
+
+    expect(envSource).toContain('from "@t3-oss/env-core"');
+    expect(envSource).not.toContain("@t3-oss/env-nextjs");
+    expect(envSource).toContain('clientPrefix: "" as const');
+    expect(envSource).toContain("runtimeEnv:");
+    expect(envSource).not.toContain("experimental__runtimeEnv");
   });
 
   it("requires ENCRYPTION_KEY during env module evaluation", async () => {
