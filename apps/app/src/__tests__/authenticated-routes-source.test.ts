@@ -196,8 +196,12 @@ describe("app authenticated route migration", () => {
       'orgAccess.bindingStatus === "bound"'
     );
     expect(workspaceShellSource).not.toContain("showChatHistory");
-    expect(workspaceShellSource).not.toContain("shouldShowWorkspaceChatHistory");
-    expect(workspaceModelSource).not.toContain("shouldShowWorkspaceChatHistory");
+    expect(workspaceShellSource).not.toContain(
+      "shouldShowWorkspaceChatHistory"
+    );
+    expect(workspaceModelSource).not.toContain(
+      "shouldShowWorkspaceChatHistory"
+    );
     expect(workspaceModelSource).toContain("isOrgSettingsPath");
     expect(workspaceShellSource).toContain("Team not found");
     expect(workspaceShellSource).not.toContain("organization?.name ?? slug");
