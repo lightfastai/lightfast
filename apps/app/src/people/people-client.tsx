@@ -1,6 +1,7 @@
 import { useDeferredValue, useMemo } from "react";
 import { WorkspaceSurface } from "~/components/workspace-surface";
 import { PeopleDetailSheet } from "./people-detail-sheet";
+import { PeopleLoading } from "./people-loading";
 import {
   flattenPeoplePages,
   type PeopleClassificationFilters,
@@ -53,6 +54,18 @@ export function PeopleClient({
     }
     return map;
   }, [rows]);
+
+  if (peopleQuery.isPending && rows.length === 0) {
+    return (
+      <WorkspaceSurface
+        className="flex min-h-full flex-col bg-background"
+        variant="flush"
+      >
+        <h1 className="sr-only">People</h1>
+        <PeopleLoading />
+      </WorkspaceSurface>
+    );
+  }
 
   return (
     <WorkspaceSurface

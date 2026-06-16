@@ -6,6 +6,7 @@ import { useTRPC } from "~/trpc/react";
 import { SignalCreateDialog } from "./signal-create-dialog";
 import { SignalDetailSheet } from "./signal-detail-sheet";
 import { SignalsListView } from "./signals-list-view";
+import { SignalsLoading } from "./signals-loading";
 import type { SignalClassificationFilters } from "./signals-model";
 import {
   type NormalizedSignalsSearch,
@@ -60,6 +61,7 @@ export function SignalsClient({
 
   const {
     hasAnyRows,
+    isInitialPending,
     limit,
     signalsByPublicId,
     truncated,
@@ -91,6 +93,18 @@ export function SignalsClient({
       Add Signal
     </Button>
   );
+
+  if (isInitialPending) {
+    return (
+      <WorkspaceSurface
+        className="flex min-h-full flex-col bg-background"
+        variant="flush"
+      >
+        <h1 className="sr-only">Signals</h1>
+        <SignalsLoading />
+      </WorkspaceSurface>
+    );
+  }
 
   return (
     <WorkspaceSurface

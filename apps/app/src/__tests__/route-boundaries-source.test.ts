@@ -44,6 +44,24 @@ describe("app route boundaries", () => {
     }
   });
 
+  it("wires product workspace list routes with pending and error boundaries", () => {
+    const routeFiles = [
+      "src/routes/_authenticated/$slug/people.tsx",
+      "src/routes/_authenticated/$slug/signals.tsx",
+      "src/routes/_authenticated/$slug/decisions.tsx",
+      "src/routes/_authenticated/$slug/automations/index.tsx",
+    ];
+
+    for (const routeFile of routeFiles) {
+      const routeSource = expectSource(routeFile);
+
+      expect(routeSource).toContain("pendingComponent:");
+      expect(routeSource).toContain("errorComponent:");
+      expect(routeSource).toContain("WorkspaceRouteErrorPanel");
+      expect(routeSource).not.toContain("next/");
+    }
+  });
+
   it("wires loading shells for settings routes with async prefetch loaders", () => {
     const routeFiles = [
       "src/routes/_authenticated/$slug/settings/source-control.tsx",

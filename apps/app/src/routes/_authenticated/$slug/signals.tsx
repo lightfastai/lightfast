@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
+import { WorkspaceRouteErrorPanel } from "~/components/route-boundaries";
 import { SignalsClient } from "~/signals/signals-client";
+import { SignalsLoading } from "~/signals/signals-loading";
 import {
   type NormalizedSignalsSearch,
   normalizeSignalsSearch,
@@ -17,8 +19,34 @@ export const Route = createFileRoute("/_authenticated/$slug/signals")({
   head: ({ params }) => ({
     meta: [{ title: `Signals - ${params.slug} - Lightfast` }],
   }),
+  pendingMs: 250,
+  pendingMinMs: 250,
+  pendingComponent: SignalsRoutePending,
+  errorComponent: SignalsRouteError,
   component: SignalsPage,
 });
+
+function SignalsRoutePending() {
+  return <SignalsLoading />;
+}
+
+function SignalsRouteError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  return (
+    <WorkspaceRouteErrorPanel
+      description="We couldn't load signals for this workspace. Refresh the route to try again."
+      error={error}
+      reset={reset}
+      route="signals"
+      title="Couldn't load signals"
+    />
+  );
+}
 
 function SignalsPage() {
   const prefetchState = Route.useLoaderData();

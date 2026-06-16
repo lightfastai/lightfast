@@ -87,8 +87,12 @@ export function useSignalsWorkspaceData({
     return map;
   }, [classifiedRows, dedupedProcessingFullRows]);
 
+  const hasAnyRows = classifiedRows.length + processingRows.length > 0;
+
   return {
-    hasAnyRows: classifiedRows.length + processingRows.length > 0,
+    hasAnyRows,
+    isInitialPending:
+      !hasAnyRows && (workingSetQuery.isPending || processingQuery.isPending),
     limit: workingSetQuery.data?.limit ?? 2000,
     processingQueryKey,
     signalsByPublicId,
