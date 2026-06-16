@@ -1,9 +1,8 @@
-import { createEnv } from "@t3-oss/env-nextjs";
+import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 export const sentryEnv = createEnv({
-  extends: [],
-  shared: {},
+  clientPrefix: "NEXT_PUBLIC_",
   server: {
     SENTRY_ORG: z.string().min(1).optional(),
     SENTRY_PROJECT: z.string().min(1).optional(),
@@ -15,7 +14,10 @@ export const sentryEnv = createEnv({
       .enum(["development", "preview", "production"])
       .default("development"),
   },
-  experimental__runtimeEnv: {
+  runtimeEnv: {
+    SENTRY_ORG: process.env.SENTRY_ORG,
+    SENTRY_PROJECT: process.env.SENTRY_PROJECT,
+    SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
     NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
   },

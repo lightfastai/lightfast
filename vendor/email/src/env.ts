@@ -1,12 +1,15 @@
-import { createEnv } from "@t3-oss/env-nextjs";
+import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 export const env = createEnv({
+  clientPrefix: "" as const,
+  client: {},
   server: {
     RESEND_API_KEY: z.string().min(1).startsWith("re_"),
   },
-  client: {},
-  experimental__runtimeEnv: {},
+  runtimeEnv: {
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
+  },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||
     process.env.npm_lifecycle_event === "lint",

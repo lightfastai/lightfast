@@ -10,8 +10,9 @@ describe("MCP environment validation wiring", () => {
 
     expect(envSource).toContain('import "@tanstack/react-start/server-only"');
     expect(envSource).toContain('from "@db/app/env"');
+    expect(envSource).toContain('from "@vendor/observability/sentry-env"');
     expect(envSource).toContain('from "@t3-oss/env-core"');
-    expect(envSource).toContain("extends: [dbEnv]");
+    expect(envSource).toContain("extends: [dbEnv, sentryEnv]");
   });
 
   it("evaluates the MCP env schema during Vite config loading", () => {

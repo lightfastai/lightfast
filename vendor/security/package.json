@@ -40,7 +40,7 @@
     "@arcjet/decorate": "^1.4.0",
     "@arcjet/next": "^1.4.0",
     "@nosecone/next": "^1.4.0",
-    "@t3-oss/env-nextjs": "catalog:",
+    "@t3-oss/env-core": "catalog:",
     "@vendor/clerk": "workspace:^",
     "zod": "catalog:"
   }

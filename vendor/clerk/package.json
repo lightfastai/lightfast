@@ -32,7 +32,7 @@
     "@clerk/backend": "catalog:",
     "@clerk/nextjs": "catalog:",
     "@clerk/shared": "catalog:",
-    "@t3-oss/env-nextjs": "catalog:",
+    "@t3-oss/env-core": "catalog:",
     "next": "catalog:next16",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
