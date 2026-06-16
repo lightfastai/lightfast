@@ -47,9 +47,9 @@ export const listProcessingSignalsInput = z
   })
   .strict();
 
-export const listWorkingSetSignalsInput = z.object({}).strict();
+const listWorkingSetSignalsInput = z.object({}).strict();
 
-export const getSignalInput = z
+const getSignalInput = z
   .object({
     publicId: signalIdSchema,
   })

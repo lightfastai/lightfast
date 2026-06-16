@@ -1,6 +1,5 @@
 export type DomainErrorKind =
   | "authz"
-  | "conflict"
   | "internal"
   | "not_found"
   | "validation";
@@ -58,18 +57,6 @@ export class NotFoundError extends DomainError {
   ) {
     super("not_found", code, message, details, options);
     this.name = "NotFoundError";
-  }
-}
-
-export class ConflictError extends DomainError {
-  constructor(
-    code: string,
-    message: string,
-    details: Record<string, unknown> = {},
-    options?: ErrorOptions
-  ) {
-    super("conflict", code, message, details, options);
-    this.name = "ConflictError";
   }
 }
 
