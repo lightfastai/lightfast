@@ -4,13 +4,8 @@ import {
   WorkspaceRouteErrorPanel,
   WorkspaceRoutePending,
 } from "~/components/route-boundaries";
-import {
-  loadRoutePrefetch,
-  RoutePrefetchBoundary,
-} from "~/trpc/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/$slug/automations/")({
-  loader: () => loadRoutePrefetch({ data: { route: "automations.list" } }),
   head: ({ params }) => ({
     meta: [{ title: `Automations - ${params.slug} - Lightfast` }],
   }),
@@ -47,11 +42,6 @@ function AutomationsRouteError({
 
 function AutomationsPage() {
   const { slug } = Route.useParams();
-  const prefetchState = Route.useLoaderData();
 
-  return (
-    <RoutePrefetchBoundary state={prefetchState}>
-      <AutomationsClient slug={slug} />
-    </RoutePrefetchBoundary>
-  );
+  return <AutomationsClient slug={slug} />;
 }

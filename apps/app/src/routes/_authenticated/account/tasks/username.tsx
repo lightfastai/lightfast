@@ -1,12 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { UsernameAccountTaskClient } from "~/account/tasks/username-account-task-client";
-import {
-  loadRoutePrefetch,
-  RoutePrefetchBoundary,
-} from "~/trpc/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/account/tasks/username")({
-  loader: () => loadRoutePrefetch({ data: { route: "account.usernameTask" } }),
   head: () => ({
     meta: [
       { title: "Choose Username - Lightfast" },
@@ -24,11 +19,6 @@ export const Route = createFileRoute("/_authenticated/account/tasks/username")({
 });
 
 function UsernameAccountTaskPage() {
-  const prefetchState = Route.useLoaderData();
   const search = Route.useSearch();
-  return (
-    <RoutePrefetchBoundary state={prefetchState}>
-      <UsernameAccountTaskClient returnTo={search.return_to} />
-    </RoutePrefetchBoundary>
-  );
+  return <UsernameAccountTaskClient returnTo={search.return_to} />;
 }

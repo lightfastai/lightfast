@@ -2,11 +2,7 @@ import type { z } from "zod";
 import type { ExecutionContext } from "./actor";
 import { NotFoundError, ValidationError } from "./errors";
 
-export interface CommandRunArgs<
-  TInput,
-  TOutput,
-  TDeps extends object,
-> {
+export interface CommandRunArgs<TInput, _TOutput, TDeps extends object> {
   ctx: ExecutionContext;
   deps: TDeps;
   input: TInput;
@@ -48,12 +44,22 @@ type AnyCommandDefinition = CommandDefinition<
 >;
 
 type CommandDeps<TCommand> =
-  TCommand extends CommandDefinition<string, z.ZodTypeAny, z.ZodTypeAny, infer TDeps>
+  TCommand extends CommandDefinition<
+    string,
+    z.ZodTypeAny,
+    z.ZodTypeAny,
+    infer TDeps
+  >
     ? TDeps
     : object;
 
 type CommandOutput<TCommand> =
-  TCommand extends CommandDefinition<string, z.ZodTypeAny, infer TOutput, object>
+  TCommand extends CommandDefinition<
+    string,
+    z.ZodTypeAny,
+    infer TOutput,
+    object
+  >
     ? z.infer<TOutput>
     : unknown;
 
@@ -71,10 +77,14 @@ export async function dispatchCommand<
   args: {
     command: TCommand;
     ctx: ExecutionContext;
-    deps?: TCommand extends keyof TSurface ? CommandDeps<TSurface[TCommand]> : object;
+    deps?: TCommand extends keyof TSurface
+      ? CommandDeps<TSurface[TCommand]>
+      : object;
     input: unknown;
   }
-): Promise<TCommand extends keyof TSurface ? CommandOutput<TSurface[TCommand]> : unknown> {
+): Promise<
+  TCommand extends keyof TSurface ? CommandOutput<TSurface[TCommand]> : unknown
+> {
   const command = surface[args.command as keyof TSurface];
   if (!command) {
     throw new NotFoundError(
@@ -85,9 +95,13 @@ export async function dispatchCommand<
 
   const parsedInput = command.input.safeParse(args.input);
   if (!parsedInput.success) {
-    throw new ValidationError("INVALID_COMMAND_INPUT", "Invalid command input.", {
-      issues: parsedInput.error.issues,
-    });
+    throw new ValidationError(
+      "INVALID_COMMAND_INPUT",
+      "Invalid command input.",
+      {
+        issues: parsedInput.error.issues,
+      }
+    );
   }
 
   const result = await command.run({

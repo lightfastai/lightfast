@@ -5,10 +5,6 @@ import {
   WorkspaceRouteErrorPanel,
   WorkspaceRoutePending,
 } from "~/components/route-boundaries";
-import {
-  loadRoutePrefetch,
-  RoutePrefetchBoundary,
-} from "~/trpc/route-prefetch";
 
 function validateAutomationDetailSearch(search: Record<string, unknown>) {
   const run = typeof search.run === "string" ? search.run : undefined;
@@ -21,13 +17,6 @@ export const Route = createFileRoute(
   "/_authenticated/$slug/automations/$automation"
 )({
   validateSearch: validateAutomationDetailSearch,
-  loader: ({ params }) =>
-    loadRoutePrefetch({
-      data: {
-        automationId: params.automation,
-        route: "automations.detail",
-      },
-    }),
   head: ({ params }) => ({
     meta: [{ title: `Automation - ${params.slug} - Lightfast` }],
   }),
@@ -67,7 +56,6 @@ function AutomationDetailRouteError({
 
 function AutomationDetailPage() {
   const { automation: automationId, slug } = Route.useParams();
-  const prefetchState = Route.useLoaderData();
   const { run } = Route.useSearch();
   const navigate = Route.useNavigate();
   const setSelectedRunId = useCallback(
@@ -84,13 +72,11 @@ function AutomationDetailPage() {
   );
 
   return (
-    <RoutePrefetchBoundary state={prefetchState}>
-      <AutomationDetailClient
-        automationId={automationId}
-        selectedRunId={run ?? null}
-        setSelectedRunId={setSelectedRunId}
-        slug={slug}
-      />
-    </RoutePrefetchBoundary>
+    <AutomationDetailClient
+      automationId={automationId}
+      selectedRunId={run ?? null}
+      setSelectedRunId={setSelectedRunId}
+      slug={slug}
+    />
   );
 }

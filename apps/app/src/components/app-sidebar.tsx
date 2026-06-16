@@ -100,7 +100,7 @@ export function AppSidebar({
                 }
               }}
               params={{ slug: orgSlug }}
-              preload="intent"
+              preload={false}
               to="/$slug/chat"
             >
               <MessageCirclePlus className="size-3.5" />

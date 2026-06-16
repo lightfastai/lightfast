@@ -7,6 +7,7 @@ import { SignalDetailSheet } from "./signal-detail-sheet";
 import { SignalsListView } from "./signals-list-view";
 import { SignalsLoading } from "./signals-loading";
 import type { SignalClassificationFilters } from "./signals-model";
+import { signalDetailQueryOptions } from "./signals-queries";
 import {
   type NormalizedSignalsSearch,
   parseSignalDispositions,
@@ -15,7 +16,6 @@ import {
   serializeSignalValues,
   toggleSignalValue,
 } from "./signals-search-params";
-import { signalDetailQueryOptions } from "./signals-queries";
 import { SignalsToolbar } from "./signals-toolbar";
 import { SignalsTruncationBanner } from "./signals-truncation-banner";
 import { useSignalsUiStore } from "./signals-ui-store";

@@ -6,16 +6,11 @@ import {
   normalizeDeveloperConnectionsSearch,
   validateDeveloperConnectionsSearch,
 } from "~/developer-connections/developer-connections-search-params";
-import {
-  loadRoutePrefetch,
-  RoutePrefetchBoundary,
-} from "~/trpc/route-prefetch";
 
 export const Route = createFileRoute(
   "/_authenticated/$slug/developer-connections"
 )({
   validateSearch: validateDeveloperConnectionsSearch,
-  loader: () => loadRoutePrefetch({ data: { route: "developerConnections" } }),
   head: ({ params }) => ({
     meta: [{ title: `Developer Connections - ${params.slug} - Lightfast` }],
   }),
@@ -23,7 +18,6 @@ export const Route = createFileRoute(
 });
 
 function DeveloperConnectionsPage() {
-  const prefetchState = Route.useLoaderData();
   const routeSearch = Route.useSearch();
   const search = useMemo(
     () => normalizeDeveloperConnectionsSearch(routeSearch),
@@ -50,11 +44,9 @@ function DeveloperConnectionsPage() {
   );
 
   return (
-    <RoutePrefetchBoundary state={prefetchState}>
-      <DeveloperConnectionsClient
-        search={search}
-        setSearchParams={setSearchParams}
-      />
-    </RoutePrefetchBoundary>
+    <DeveloperConnectionsClient
+      search={search}
+      setSearchParams={setSearchParams}
+    />
   );
 }

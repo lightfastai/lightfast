@@ -6,14 +6,9 @@ import {
   normalizeSkillsSearch,
   validateSkillsSearch,
 } from "~/skills/skills-search-params";
-import {
-  loadRoutePrefetch,
-  RoutePrefetchBoundary,
-} from "~/trpc/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/$slug/skills")({
   validateSearch: validateSkillsSearch,
-  loader: () => loadRoutePrefetch({ data: { route: "skills" } }),
   head: ({ params }) => ({
     meta: [{ title: `Skills - ${params.slug} - Lightfast` }],
   }),
@@ -21,7 +16,6 @@ export const Route = createFileRoute("/_authenticated/$slug/skills")({
 });
 
 function SkillsPage() {
-  const prefetchState = Route.useLoaderData();
   const routeSearch = Route.useSearch();
   const search = useMemo(
     () => normalizeSkillsSearch(routeSearch),
@@ -44,9 +38,5 @@ function SkillsPage() {
     [navigate]
   );
 
-  return (
-    <RoutePrefetchBoundary state={prefetchState}>
-      <SkillsClient search={search} setSearchParams={setSearchParams} />
-    </RoutePrefetchBoundary>
-  );
+  return <SkillsClient search={search} setSearchParams={setSearchParams} />;
 }

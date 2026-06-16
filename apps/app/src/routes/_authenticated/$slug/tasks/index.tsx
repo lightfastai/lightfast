@@ -15,10 +15,6 @@ import {
 import type { ReactNode } from "react";
 import { ConnectorIcon } from "~/connectors/connector-icons";
 import { useTRPC } from "~/trpc/react";
-import {
-  loadRoutePrefetch,
-  RoutePrefetchBoundary,
-} from "~/trpc/route-prefetch";
 
 type SetupTaskStatus = "complete" | "current" | "locked";
 const SETUP_REQUIREMENT_ORDER: OrgSetupRequirement[] = [
@@ -28,10 +24,6 @@ const SETUP_REQUIREMENT_ORDER: OrgSetupRequirement[] = [
 ];
 
 export const Route = createFileRoute("/_authenticated/$slug/tasks/")({
-  loader: ({ params }) =>
-    loadRoutePrefetch({
-      data: { route: "tasks.index", slug: params.slug },
-    }),
   head: ({ params }) => ({
     meta: [{ title: `Setup Tasks - ${params.slug} - Lightfast` }],
   }),
@@ -55,12 +47,7 @@ function setupTaskStatus(input: {
 }
 
 function SetupTasksPage() {
-  const prefetchState = Route.useLoaderData();
-  return (
-    <RoutePrefetchBoundary state={prefetchState}>
-      <SetupTasksPageContent />
-    </RoutePrefetchBoundary>
-  );
+  return <SetupTasksPageContent />;
 }
 
 function SetupTasksPageContent() {
