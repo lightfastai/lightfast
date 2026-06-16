@@ -5,7 +5,6 @@ import {
   isOrgSetupCompletePath,
   isOrgSetupExemptPath,
   isOrgSetupPath,
-  shouldShowWorkspaceChatHistory,
 } from "../workspace/workspace-route-model";
 
 describe("workspace route model", () => {
@@ -51,29 +50,5 @@ describe("workspace route model", () => {
       params: { slug: "acme" },
       to: "/$slug/tasks/bind",
     });
-  });
-
-  it("shows chat history only for bound non-settings workspace routes", () => {
-    expect(
-      shouldShowWorkspaceChatHistory({
-        bindingStatus: "bound",
-        pathname: "/acme/automations",
-        slug: "acme",
-      })
-    ).toBe(true);
-    expect(
-      shouldShowWorkspaceChatHistory({
-        bindingStatus: "pending",
-        pathname: "/acme/automations",
-        slug: "acme",
-      })
-    ).toBe(false);
-    expect(
-      shouldShowWorkspaceChatHistory({
-        bindingStatus: "bound",
-        pathname: "/acme/settings/general",
-        slug: "acme",
-      })
-    ).toBe(false);
   });
 });

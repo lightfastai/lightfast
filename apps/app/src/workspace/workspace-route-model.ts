@@ -46,15 +46,3 @@ export function getSetupRequirementRedirect(
       };
   }
 }
-
-export function shouldShowWorkspaceChatHistory({
-  bindingStatus,
-  pathname,
-  slug,
-}: {
-  bindingStatus: string;
-  pathname: string;
-  slug: string;
-}) {
-  return bindingStatus === "bound" && !isOrgSettingsPath(slug, pathname);
-}
