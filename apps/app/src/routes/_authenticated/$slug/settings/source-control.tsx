@@ -20,6 +20,8 @@ export const Route = createFileRoute(
       },
     ],
   }),
+  pendingMs: 0,
+  pendingMinMs: 0,
   pendingComponent: SourceControlRoutePending,
   component: WorkspaceSourceControlSettingsPage,
 });

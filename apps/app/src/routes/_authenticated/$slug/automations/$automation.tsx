@@ -31,6 +31,8 @@ export const Route = createFileRoute(
   head: ({ params }) => ({
     meta: [{ title: `Automation - ${params.slug} - Lightfast` }],
   }),
+  pendingMs: 0,
+  pendingMinMs: 0,
   pendingComponent: AutomationDetailRoutePending,
   errorComponent: AutomationDetailRouteError,
   component: AutomationDetailPage,

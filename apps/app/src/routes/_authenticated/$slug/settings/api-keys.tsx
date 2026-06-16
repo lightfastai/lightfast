@@ -20,6 +20,8 @@ export const Route = createFileRoute("/_authenticated/$slug/settings/api-keys")(
         },
       ],
     }),
+    pendingMs: 0,
+    pendingMinMs: 0,
     pendingComponent: ApiKeysRoutePending,
     component: ApiKeysSettingsPage,
   }

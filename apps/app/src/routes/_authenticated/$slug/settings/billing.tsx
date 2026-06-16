@@ -20,6 +20,8 @@ export const Route = createFileRoute("/_authenticated/$slug/settings/billing")({
       },
     ],
   }),
+  pendingMs: 0,
+  pendingMinMs: 0,
   pendingComponent: BillingRoutePending,
   errorComponent: BillingRouteError,
   component: BillingSettingsPage,
