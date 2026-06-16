@@ -2,7 +2,7 @@ import { githubBindErrorCodeSchema } from "@repo/github-app-contract";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Navigate, useSearch } from "@tanstack/react-router";
 import { BindGithubCard } from "~/org/setup/bind-github-card";
-import { useTRPC } from "~/trpc/react";
+import { organizationBySlugQueryOptions } from "~/organization/organization-queries";
 
 export const Route = createFileRoute("/_authenticated/$slug/tasks/bind/")({
   head: ({ params }) => ({
@@ -28,11 +28,8 @@ function BindTaskPageContent() {
   const search = useSearch({ strict: false });
   const parsedError = githubBindErrorCodeSchema.safeParse(search.github_error);
   const githubError = parsedError.success ? parsedError.data : undefined;
-  const trpc = useTRPC();
   const { data: gate, isPending } = useQuery({
-    ...trpc.viewer.organization.getBySlug.queryOptions({ slug }),
-    enabled: typeof window !== "undefined",
-    staleTime: 5 * 60 * 1000,
+    ...organizationBySlugQueryOptions({ slug }),
   });
 
   if (isPending) {

@@ -1,6 +1,11 @@
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
+import {
+  organizationQueryKeys,
+  type UserOrganizationsData,
+  updateOrganizationNameMutationOptions,
+} from "~/organization/organization-queries";
 import { useTRPC } from "~/trpc/react";
 
 const DOMAIN_PATTERN =
@@ -48,8 +53,8 @@ export function normalizeTeamDomainList(domains: string[]) {
   return [...new Set(domains.flatMap(parseTeamDomainInput))];
 }
 
-export function renameOrganizationSlug<T extends { slug: string }>(
-  organizations: T[] | undefined,
+export function renameOrganizationSlug(
+  organizations: UserOrganizationsData | undefined,
   {
     name,
     slug,
@@ -59,7 +64,9 @@ export function renameOrganizationSlug<T extends { slug: string }>(
   }
 ) {
   return organizations?.map((organization) =>
-    organization.slug === slug ? { ...organization, slug: name } : organization
+    organization.slug === slug
+      ? { ...organization, name, slug: name }
+      : organization
   );
 }
 
@@ -68,46 +75,43 @@ export function useTeamNameUpdate({
 }: {
   onUpdated: (data: { id: string; name: string }) => Promise<void>;
 }) {
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
 
-  const updateNameMutation = useMutation(
-    trpc.org.settings.organization.updateName.mutationOptions({
-      meta: { errorTitle: "Failed to update team name" },
-      onMutate: async (input) => {
-        await queryClient.cancelQueries(
-          trpc.viewer.organization.listUserOrganizations.queryFilter()
-        );
-        const previousOrgs = queryClient.getQueryData(
-          trpc.viewer.organization.listUserOrganizations.queryKey()
-        );
+  const updateNameMutation = useMutation({
+    ...updateOrganizationNameMutationOptions(),
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({
+        queryKey: organizationQueryKeys.list(),
+      });
+      const previousOrgs = queryClient.getQueryData<UserOrganizationsData>(
+        organizationQueryKeys.list()
+      );
+      queryClient.setQueryData<UserOrganizationsData>(
+        organizationQueryKeys.list(),
+        (old) => renameOrganizationSlug(old, input)
+      );
+      return { previousOrgs };
+    },
+    onError: (_err, _input, context) => {
+      if (context?.previousOrgs) {
         queryClient.setQueryData(
-          trpc.viewer.organization.listUserOrganizations.queryKey(),
-          (old: typeof previousOrgs) => renameOrganizationSlug(old, input)
+          organizationQueryKeys.list(),
+          context.previousOrgs
         );
-        return { previousOrgs };
-      },
-      onError: (_err, _input, context) => {
-        if (context?.previousOrgs) {
-          queryClient.setQueryData(
-            trpc.viewer.organization.listUserOrganizations.queryKey(),
-            context.previousOrgs
-          );
-        }
-      },
-      onSuccess: async (data) => {
-        toast.success("Team updated!", {
-          description: `Team name changed to "${data.name}"`,
-        });
-        await onUpdated(data);
-      },
-      onSettled: () => {
-        void queryClient.invalidateQueries(
-          trpc.viewer.organization.listUserOrganizations.queryFilter()
-        );
-      },
-    })
-  );
+      }
+    },
+    onSuccess: async (data) => {
+      toast.success("Team updated!", {
+        description: `Team name changed to "${data.name}"`,
+      });
+      await onUpdated(data);
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({
+        queryKey: organizationQueryKeys.list(),
+      });
+    },
+  });
 
   const updateTeamName = useCallback(
     (name: string, slug: string) => updateNameMutation.mutate({ name, slug }),

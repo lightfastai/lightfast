@@ -14,7 +14,7 @@ import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { Suspense, useState } from "react";
 import { useOrganizationList } from "~/compat/clerk";
-import { useTRPC } from "~/trpc/react";
+import { listUserOrganizationsQueryOptions } from "~/organization/organization-queries";
 
 const RESERVED_ROUTES = new Set([
   "new",
@@ -33,7 +33,6 @@ export function TeamSwitcherSlot() {
 }
 
 export function TeamSwitcher() {
-  const trpc = useTRPC();
   const location = useLocation();
   const navigate = useNavigate();
   const { setActive } = useOrganizationList();
@@ -41,9 +40,7 @@ export function TeamSwitcher() {
   const mounted = useMounted();
 
   const { data: organizations = [], isPending } = useQuery({
-    ...trpc.viewer.organization.listUserOrganizations.queryOptions(),
-    enabled: typeof window !== "undefined",
-    staleTime: 5 * 60 * 1000,
+    ...listUserOrganizationsQueryOptions(),
   });
 
   const firstSegment = location.pathname.split("/").filter(Boolean)[0];

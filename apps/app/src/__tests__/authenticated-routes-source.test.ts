@@ -41,7 +41,8 @@ describe("app authenticated route migration", () => {
       'createFileRoute("/_authenticated/account/teams/new")'
     );
     expect(routeSource).toContain("CreateTeamClient");
-    expect(clientSource).toContain("viewer.organization.create");
+    expect(clientSource).toContain("createOrganizationMutationOptions");
+    expect(clientSource).toContain("organizationQueryKeys");
     expect(clientSource).toContain("normalizeTeamSlug");
     expect(clientSource).toContain("createTeamIdempotencyKey");
     expect(clientSource).toContain(
@@ -172,9 +173,7 @@ describe("app authenticated route migration", () => {
     expect(shellSource).toContain(
       "<AuthenticatedTopbar left={<TeamSwitcherSlot />} />"
     );
-    expect(teamSwitcherSource).toContain(
-      "listUserOrganizations.queryOptions()"
-    );
+    expect(teamSwitcherSource).toContain("listUserOrganizationsQueryOptions()");
     expect(teamSwitcherSource).toContain('to="/account/teams/new"');
     expect(teamSwitcherSource).toContain('to="/$slug"');
     expect(teamSwitcherSource).not.toContain("next/navigation");
@@ -184,7 +183,9 @@ describe("app authenticated route migration", () => {
     expect(appSidebarSource).toContain("showChatHistory = true");
     expect(appSidebarSource).toContain("showChatHistory ? (");
     expect(orgRouteSource).toContain("WorkspaceRouteShell");
-    expect(workspaceShellSource).toContain("getBySlug.queryOptions({ slug })");
+    expect(workspaceShellSource).toContain(
+      "organizationBySlugQueryOptions({ slug })"
+    );
     expect(workspaceShellSource).toContain("useAuth");
     expect(workspaceShellSource).toContain("useOrganizationList");
     expect(workspaceShellSource).toContain("orgAccess.org.id");
@@ -234,7 +235,7 @@ describe("app authenticated route migration", () => {
     expect(clientSource).toContain("SignalsViewSwitcher");
     expect(clientSource).toContain("signalDetailQueryOptions");
     expect(createDialogSource).toContain("createSignalMutationOptions");
-    expect(createDialogSource).toContain("listUserOrganizations.queryOptions");
+    expect(createDialogSource).toContain("listUserOrganizationsQueryOptions");
     expect(searchSource).toContain("validateSignalsSearch");
     expect(searchSource).toContain("parseSignalDispositions");
     expect(querySource).toContain("workingSetSignalsQueryOptions");
@@ -830,6 +831,9 @@ describe("app authenticated route migration", () => {
     const apiKeyCacheSource = source(
       "src/org/settings/api-keys/org-api-key-cache.ts"
     );
+    const apiKeyQueriesSource = source(
+      "src/org/settings/api-keys/org-api-key-queries.ts"
+    );
     const mcpClientSource = source(
       "src/org/settings/mcp/mcp-connections-client.tsx"
     );
@@ -880,24 +884,32 @@ describe("app authenticated route migration", () => {
       'AppRouterOutputs["org"]["settings"]["orgMembers"]["list"]'
     );
 
-    expect(apiKeyListSource).toContain("orgApiKeys.list.queryOptions");
+    expect(apiKeyListSource).toContain("orgApiKeysQueryOptions");
     expect(apiKeyListSource).toContain(
       'enabled: typeof window !== "undefined"'
     );
     expect(apiKeyListSource).toContain('from "@clerk/tanstack-react-start"');
     expect(apiKeyCreateSource).toContain("useOrgApiKeyCreateAction");
     expect(apiKeyCreateActionsSource).toContain(
-      "orgApiKeys.create.mutationOptions"
+      "createOrgApiKeyMutationOptions"
     );
-    expect(apiKeyListActionsSource).toContain(
-      "orgApiKeys.revoke.mutationOptions"
-    );
-    expect(apiKeyListActionsSource).toContain(
-      "orgApiKeys.delete.mutationOptions"
-    );
-    expect(apiKeyCacheSource).toContain(
-      'AppRouterOutputs["org"]["settings"]["orgApiKeys"]["list"]'
-    );
+    expect(apiKeyListActionsSource).toContain("revokeOrgApiKeyMutationOptions");
+    expect(apiKeyListActionsSource).toContain("deleteOrgApiKeyMutationOptions");
+    expect(apiKeyListActionsSource).toContain("rotateOrgApiKeyMutationOptions");
+    expect(apiKeyCacheSource).toContain("OrgApiKeyListData");
+    expect(apiKeyQueriesSource).toContain('@api/app/tanstack/org-api-keys"');
+
+    for (const apiKeySource of [
+      apiKeyCreateActionsSource,
+      apiKeyListActionsSource,
+      apiKeyListSource,
+      apiKeyCacheSource,
+      apiKeyQueriesSource,
+    ]) {
+      expect(apiKeySource).not.toContain("useTRPC");
+      expect(apiKeySource).not.toContain("orgApiKeys.");
+      expect(apiKeySource).not.toContain("AppRouterOutputs");
+    }
 
     expect(mcpClientSource).toContain("mcpConnections.list.queryOptions");
     expect(mcpClientSource).toContain("mcpConnections.revoke.mutationOptions");
@@ -1003,7 +1015,7 @@ describe("app authenticated route migration", () => {
     expect(billingRouteSource).toContain("BillingSettingsClient");
 
     expect(teamGeneralClientSource).toContain(
-      "listUserOrganizations.queryOptions"
+      "listUserOrganizationsQueryOptions"
     );
     expect(teamGeneralClientSource).toContain("listDomains.queryOptions");
     expect(teamGeneralClientSource).toContain(
@@ -1011,7 +1023,7 @@ describe("app authenticated route migration", () => {
     );
     expect(teamGeneralClientSource).toContain("useNavigate");
     expect(teamGeneralActionsSource).toContain(
-      "organization.updateName.mutationOptions"
+      "updateOrganizationNameMutationOptions"
     );
     expect(teamGeneralActionsSource).toContain(
       "organization.updateDomains.mutationOptions"

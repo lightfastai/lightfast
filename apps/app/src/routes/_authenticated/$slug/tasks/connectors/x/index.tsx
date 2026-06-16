@@ -2,7 +2,7 @@ import { pathForSetupRequirement } from "@repo/app-setup-contract";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { XConnectorSetupClient } from "~/org/setup/x-connector-setup-client";
-import { useTRPC } from "~/trpc/react";
+import { organizationBySlugQueryOptions } from "~/organization/organization-queries";
 
 export const Route = createFileRoute(
   "/_authenticated/$slug/tasks/connectors/x/"
@@ -19,11 +19,8 @@ function XConnectorSetupPage() {
 
 function XConnectorSetupPageContent() {
   const { slug } = Route.useParams();
-  const trpc = useTRPC();
   const { data: gate, isPending } = useQuery({
-    ...trpc.viewer.organization.getBySlug.queryOptions({ slug }),
-    enabled: typeof window !== "undefined",
-    staleTime: 5 * 60 * 1000,
+    ...organizationBySlugQueryOptions({ slug }),
   });
 
   if (isPending) {

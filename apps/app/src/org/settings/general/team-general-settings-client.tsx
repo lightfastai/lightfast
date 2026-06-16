@@ -19,6 +19,7 @@ import { Loader2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth, useOrganizationList } from "~/compat/clerk";
 import { SettingRow, SettingsGroup } from "~/components/settings-section";
+import { listUserOrganizationsQueryOptions } from "~/organization/organization-queries";
 import { useTRPC } from "~/trpc/react";
 import {
   normalizeTeamDomainList,
@@ -54,9 +55,7 @@ export function TeamGeneralSettingsClient({
     error: organizationsError,
     isPending: isOrganizationsPending,
   } = useQuery({
-    ...trpc.viewer.organization.listUserOrganizations.queryOptions(),
-    enabled: typeof window !== "undefined",
-    staleTime: 5 * 60 * 1000,
+    ...listUserOrganizationsQueryOptions(),
   });
   const {
     data: organizationDomains,

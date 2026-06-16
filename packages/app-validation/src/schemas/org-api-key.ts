@@ -13,3 +13,8 @@ export const revokeOrgApiKeySchema = z.object({
 export const deleteOrgApiKeySchema = z.object({
   keyId: z.string().min(1),
 });
+
+export const rotateOrgApiKeySchema = z.object({
+  keyId: z.string().min(1),
+  revokeOldAfterMs: z.number().int().min(0).default(0).optional(),
+});

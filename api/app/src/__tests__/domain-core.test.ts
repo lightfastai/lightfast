@@ -28,15 +28,14 @@ describe("actorFromAuthIdentity", () => {
     });
   });
 
-  it("rejects pending identities with a domain authz error", () => {
-    expect(() =>
+  it("creates a Clerk user actor from a pending identity without active org authority", () => {
+    expect(
       actorFromAuthIdentity({ type: "pending", userId: "user_test" }, "web")
-    ).toThrowError(
-      expect.objectContaining({
-        code: "ORG_REQUIRED",
-        kind: "authz",
-      })
-    );
+    ).toEqual({
+      kind: "clerkUser",
+      source: "web",
+      userId: "user_test",
+    });
   });
 });
 
@@ -61,6 +60,20 @@ describe("requireBoundClerkOrgActor", () => {
     expect(() => requireBoundClerkOrgActor({ actor })).toThrowError(
       expect.objectContaining({
         code: "ORG_SETUP_REQUIRED",
+        kind: "authz",
+      })
+    );
+  });
+
+  it("rejects pending users without active org authority", () => {
+    const actor = actorFromAuthIdentity(
+      { type: "pending", userId: "user_test" },
+      "web"
+    );
+
+    expect(() => requireBoundClerkOrgActor({ actor })).toThrowError(
+      expect.objectContaining({
+        code: "ORG_REQUIRED",
         kind: "authz",
       })
     );
