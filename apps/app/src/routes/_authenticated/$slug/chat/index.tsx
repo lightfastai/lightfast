@@ -15,6 +15,8 @@ const createNewWorkspaceAssistantConversationId = createServerFn({
 
 export const Route = createFileRoute("/_authenticated/$slug/chat/")({
   loader: () => createNewWorkspaceAssistantConversationId(),
+  pendingMs: 0,
+  pendingMinMs: 0,
   pendingComponent: ChatRoutePending,
   errorComponent: ChatRouteError,
   component: WorkspaceChatPage,

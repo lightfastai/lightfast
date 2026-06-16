@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const appRoot = resolve(import.meta.dirname, "../..");
@@ -11,6 +11,30 @@ function source(path: string) {
 function expectSource(path: string) {
   expect(existsSync(resolve(appRoot, path)), `${path} should exist`).toBe(true);
   return source(path);
+}
+
+function routeFilesWithPendingComponents() {
+  const routesRoot = resolve(appRoot, "src/routes");
+  const routeFiles: string[] = [];
+  const visit = (directory: string) => {
+    for (const entry of readdirSync(directory)) {
+      const fullPath = join(directory, entry);
+      if (statSync(fullPath).isDirectory()) {
+        visit(fullPath);
+        continue;
+      }
+      if (!entry.endsWith(".tsx")) {
+        continue;
+      }
+      const routeFile = relative(appRoot, fullPath);
+      if (source(routeFile).includes("pendingComponent:")) {
+        routeFiles.push(routeFile);
+      }
+    }
+  };
+
+  visit(routesRoot);
+  return routeFiles.sort();
 }
 
 describe("app route boundaries", () => {
@@ -63,6 +87,26 @@ describe("app route boundaries", () => {
       expect(routeSource).not.toContain("pendingMs: 250");
       expect(routeSource).not.toContain("pendingMinMs: 250");
       expect(routeSource).not.toContain("next/");
+    }
+  });
+
+  it("shows every route pending boundary immediately", () => {
+    const routeFiles = routeFilesWithPendingComponents();
+
+    expect(routeFiles).toContain(
+      "src/routes/_authenticated/$slug/chat/index.tsx"
+    );
+    expect(routeFiles).toContain(
+      "src/routes/_authenticated/$slug/decisions.tsx"
+    );
+
+    for (const routeFile of routeFiles) {
+      const routeSource = expectSource(routeFile);
+
+      expect(routeSource, `${routeFile} pendingMs`).toContain("pendingMs: 0");
+      expect(routeSource, `${routeFile} pendingMinMs`).toContain(
+        "pendingMinMs: 0"
+      );
     }
   });
 

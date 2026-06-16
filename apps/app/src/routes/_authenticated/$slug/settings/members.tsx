@@ -17,6 +17,8 @@ export const Route = createFileRoute("/_authenticated/$slug/settings/members")({
       },
     ],
   }),
+  pendingMs: 0,
+  pendingMinMs: 0,
   pendingComponent: MembersRoutePending,
   component: MembersSettingsPage,
 });

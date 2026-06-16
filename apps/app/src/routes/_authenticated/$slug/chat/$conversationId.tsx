@@ -16,6 +16,8 @@ export const Route = createFileRoute(
       { title: `Chat ${params.conversationId} - ${params.slug} - Lightfast` },
     ],
   }),
+  pendingMs: 0,
+  pendingMinMs: 0,
   pendingComponent: ChatRoutePending,
   errorComponent: ChatRouteError,
   component: WorkspaceConversationPage,

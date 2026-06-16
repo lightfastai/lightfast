@@ -14,6 +14,8 @@ export const Route = createFileRoute("/_authenticated/$slug/automations/new")({
   head: ({ params }) => ({
     meta: [{ title: `New automation - ${params.slug} - Lightfast` }],
   }),
+  pendingMs: 0,
+  pendingMinMs: 0,
   pendingComponent: AutomationFormRoutePending,
   errorComponent: NewAutomationRouteError,
   component: NewAutomationPage,
