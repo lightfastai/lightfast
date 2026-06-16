@@ -1,39 +1,45 @@
+import {
+  createSignalView,
+  deleteSignalView,
+  listSignalViews,
+} from "@api/app/tanstack/signal-views";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useTRPC } from "~/trpc/react";
+import type { SignalViewConfig } from "./signals-views-model";
+
+const signalViewQueryKeys = {
+  list: () => ["signals", "views"] as const,
+};
 
 export function useSignalViewsQuery() {
-  const trpc = useTRPC();
   return useQuery({
-    ...trpc.org.workspace.signals.views.list.queryOptions(),
     enabled: typeof window !== "undefined",
+    queryFn: () => listSignalViews(),
+    queryKey: signalViewQueryKeys.list(),
     staleTime: 60_000,
   });
 }
 
 export function useCreateSignalView() {
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
-  return useMutation(
-    trpc.org.workspace.signals.views.create.mutationOptions({
-      meta: { errorTitle: "Failed to save view" },
-      onSuccess: () =>
-        queryClient.invalidateQueries({
-          queryKey: trpc.org.workspace.signals.views.list.queryKey(),
-        }),
-    })
-  );
+  return useMutation({
+    meta: { errorTitle: "Failed to save view" },
+    mutationFn: (data: { config: SignalViewConfig; name: string }) =>
+      createSignalView({ data }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: signalViewQueryKeys.list(),
+      }),
+  });
 }
 
 export function useDeleteSignalView() {
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
-  return useMutation(
-    trpc.org.workspace.signals.views.delete.mutationOptions({
-      meta: { errorTitle: "Failed to delete view" },
-      onSuccess: () =>
-        queryClient.invalidateQueries({
-          queryKey: trpc.org.workspace.signals.views.list.queryKey(),
-        }),
-    })
-  );
+  return useMutation({
+    meta: { errorTitle: "Failed to delete view" },
+    mutationFn: (data: { publicId: string }) => deleteSignalView({ data }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: signalViewQueryKeys.list(),
+      }),
+  });
 }

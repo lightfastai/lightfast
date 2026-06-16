@@ -180,8 +180,7 @@ describe("app authenticated route migration", () => {
     expect(teamSwitcherSource).not.toContain("next/link");
     expect(appSidebarSource).toContain("listConversations.queryOptions");
     expect(appSidebarSource).toContain('to="/$slug/chat/$conversationId"');
-    expect(appSidebarSource).toContain("showChatHistory = true");
-    expect(appSidebarSource).toContain("showChatHistory ? (");
+    expect(appSidebarSource).not.toContain("showChatHistory");
     expect(orgRouteSource).toContain("WorkspaceRouteShell");
     expect(workspaceShellSource).toContain(
       "organizationBySlugQueryOptions({ slug })"
@@ -194,11 +193,16 @@ describe("app authenticated route migration", () => {
     );
     expect(workspaceShellSource).toContain("isOrgSetupExemptPath");
     expect(workspaceShellSource).toContain("SetupRequirementNavigate");
-    expect(workspaceShellSource).toContain("showChatHistory={");
     expect(workspaceShellSource).toContain(
       'orgAccess.bindingStatus === "bound"'
     );
-    expect(workspaceShellSource).toContain("shouldShowWorkspaceChatHistory");
+    expect(workspaceShellSource).not.toContain("showChatHistory");
+    expect(workspaceShellSource).not.toContain(
+      "shouldShowWorkspaceChatHistory"
+    );
+    expect(workspaceModelSource).not.toContain(
+      "shouldShowWorkspaceChatHistory"
+    );
     expect(workspaceModelSource).toContain("isOrgSettingsPath");
     expect(workspaceShellSource).toContain("Team not found");
     expect(workspaceShellSource).not.toContain("organization?.name ?? slug");
@@ -240,7 +244,8 @@ describe("app authenticated route migration", () => {
     expect(searchSource).toContain("parseSignalDispositions");
     expect(querySource).toContain("workingSetSignalsQueryOptions");
     expect(querySource).toContain("processingSignalsQueryOptions");
-    expect(viewQuerySource).toContain("signals.views.list.queryOptions");
+    expect(viewQuerySource).toContain('@api/app/tanstack/signal-views"');
+    expect(viewQuerySource).toContain("listSignalViews");
     expect(viewQuerySource).toContain('enabled: typeof window !== "undefined"');
     expect(viewsSource).toContain("viewConfigToParamValues");
     expect(viewSwitcherSource).toContain("partitionViews");
@@ -284,7 +289,8 @@ describe("app authenticated route migration", () => {
     expect(querySource).toContain("people.list.infiniteQueryOptions");
     expect(querySource).toContain('enabled: typeof window !== "undefined"');
     expect(viewsSource).toContain("viewConfigToParamValues");
-    expect(viewQuerySource).toContain("people.views.list.queryOptions");
+    expect(viewQuerySource).toContain('@api/app/tanstack/people-views"');
+    expect(viewQuerySource).toContain("listPeopleViews");
     expect(toolbarSource).toContain("viewsSlot");
     expect(tableSource).toContain("PeopleEmptyState");
     expect(detailSource).toContain('to="/$slug/signals"');

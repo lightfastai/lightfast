@@ -59,6 +59,37 @@ describe("workspace page-owned actions", () => {
     );
   });
 
+  it("keeps secondary workspace page actions at the top-left", () => {
+    const skillsClientSource = source("src/skills/skills-client.tsx");
+    const skillsActionsSource = source("src/skills/skills-actions.tsx");
+    const connectorsClientSource = source(
+      "src/connectors/connectors-client.tsx"
+    );
+
+    const skillsActionsIndex = skillsClientSource.indexOf(
+      'data-testid="skills-actions-row"'
+    );
+    const skillsHeaderIndex = skillsClientSource.indexOf(
+      "Make Lightfast work your way"
+    );
+    const connectorsActionsIndex = connectorsClientSource.indexOf(
+      'data-testid="connectors-actions-row"'
+    );
+    const connectorsHeaderIndex =
+      connectorsClientSource.indexOf("<h1") >= 0
+        ? connectorsClientSource.indexOf("<h1")
+        : connectorsClientSource.indexOf("Connectors");
+
+    expect(skillsActionsIndex).toBeGreaterThanOrEqual(0);
+    expect(skillsActionsIndex).toBeLessThan(skillsHeaderIndex);
+    expect(skillsClientSource).not.toContain("pt-6 text-center");
+    expect(skillsActionsSource).toContain("justify-start");
+
+    expect(connectorsActionsIndex).toBeGreaterThanOrEqual(0);
+    expect(connectorsActionsIndex).toBeLessThan(connectorsHeaderIndex);
+    expect(connectorsClientSource).toContain("ConnectorOwnerScopeTabs");
+  });
+
   it("lets automation child routes own document titles", () => {
     const layoutRouteSource = source(
       "src/routes/_authenticated/$slug/automations.tsx"

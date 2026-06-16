@@ -19,7 +19,6 @@ import {
   isOrgSetupCompletePath,
   isOrgSetupExemptPath,
   isOrgSetupPath,
-  shouldShowWorkspaceChatHistory,
 } from "./workspace-route-model";
 
 function SetupRequirementNavigate({
@@ -144,14 +143,7 @@ export function WorkspaceRouteShell({ slug }: { slug: string }) {
 
   return (
     <SidebarProvider className="!h-full !min-h-0 overflow-hidden bg-background">
-      <AppSidebar
-        orgSlug={slug}
-        showChatHistory={shouldShowWorkspaceChatHistory({
-          bindingStatus: orgAccess.bindingStatus,
-          pathname: location.pathname,
-          slug,
-        })}
-      />
+      <AppSidebar orgSlug={slug} />
       <SidebarInset className="min-h-0 overflow-hidden">
         <AuthenticatedTopbar
           left={<SidebarTrigger className="size-11 rounded-xl lg:hidden" />}
