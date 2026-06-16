@@ -1,9 +1,8 @@
-import type { AppRouterOutputs } from "@api/app";
+import type { ListPeopleViewsResult } from "@api/app/tanstack/people-views";
 import type { PeopleClassificationFilters } from "./people-model";
 import { serializePersonValues } from "./people-search-params";
 
-export type PeopleViewList =
-  AppRouterOutputs["org"]["workspace"]["people"]["views"]["list"];
+export type PeopleViewList = ListPeopleViewsResult;
 export type PeopleViewRow = PeopleViewList[number];
 export type PeopleViewConfig = PeopleViewRow["config"];
 

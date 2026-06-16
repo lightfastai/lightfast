@@ -105,23 +105,27 @@ function SkillsClientContent({
   return (
     <WorkspaceSurface className="overflow-y-auto bg-background" variant="flush">
       <div className="mx-auto w-full max-w-3xl px-6 py-10">
-        <div className="pt-6 text-center">
+        <div
+          className="flex min-w-0 items-center justify-start"
+          data-testid="skills-actions-row"
+        >
+          <SkillsActions
+            freshness={data.freshness}
+            repositoryUrl={data.repositoryUrl}
+          />
+        </div>
+
+        <header className="mt-8">
           <h1 className="font-semibold text-3xl text-foreground tracking-[-0.02em]">
             Make Lightfast work your way
           </h1>
-          <p className="mx-auto mt-3 max-w-[30rem] text-muted-foreground text-sm">
+          <p className="mt-3 max-w-[30rem] text-muted-foreground text-sm">
             Reusable instructions your agents load on demand, indexed from your
             team&apos;s connected GitHub repository.
           </p>
-          <div className="mt-4">
-            <SkillsActions
-              freshness={data.freshness}
-              repositoryUrl={data.repositoryUrl}
-            />
-          </div>
-        </div>
+        </header>
 
-        <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input

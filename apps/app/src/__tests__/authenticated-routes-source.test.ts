@@ -239,7 +239,8 @@ describe("app authenticated route migration", () => {
     expect(searchSource).toContain("parseSignalDispositions");
     expect(querySource).toContain("workingSetSignalsQueryOptions");
     expect(querySource).toContain("processingSignalsQueryOptions");
-    expect(viewQuerySource).toContain("signals.views.list.queryOptions");
+    expect(viewQuerySource).toContain('@api/app/tanstack/signal-views"');
+    expect(viewQuerySource).toContain("listSignalViews");
     expect(viewQuerySource).toContain('enabled: typeof window !== "undefined"');
     expect(viewsSource).toContain("viewConfigToParamValues");
     expect(viewSwitcherSource).toContain("partitionViews");
@@ -283,7 +284,8 @@ describe("app authenticated route migration", () => {
     expect(querySource).toContain("people.list.infiniteQueryOptions");
     expect(querySource).toContain('enabled: typeof window !== "undefined"');
     expect(viewsSource).toContain("viewConfigToParamValues");
-    expect(viewQuerySource).toContain("people.views.list.queryOptions");
+    expect(viewQuerySource).toContain('@api/app/tanstack/people-views"');
+    expect(viewQuerySource).toContain("listPeopleViews");
     expect(toolbarSource).toContain("viewsSlot");
     expect(tableSource).toContain("PeopleEmptyState");
     expect(detailSource).toContain('to="/$slug/signals"');

@@ -33,6 +33,14 @@
       "types": "./src/adapters/tanstack/signals.ts",
       "default": "./src/adapters/tanstack/signals.ts"
     },
+    "./tanstack/signal-views": {
+      "types": "./src/adapters/tanstack/signal-views.ts",
+      "default": "./src/adapters/tanstack/signal-views.ts"
+    },
+    "./tanstack/people-views": {
+      "types": "./src/adapters/tanstack/people-views.ts",
+      "default": "./src/adapters/tanstack/people-views.ts"
+    },
     "./services/github": {
       "types": "./src/services/github/index.ts",
       "default": "./src/services/github/index.ts"

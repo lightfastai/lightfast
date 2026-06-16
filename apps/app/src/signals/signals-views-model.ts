@@ -1,9 +1,8 @@
-import type { AppRouterOutputs } from "@api/app";
+import type { ListSignalViewsResult } from "@api/app/tanstack/signal-views";
 import type { SignalClassificationFilters } from "./signals-model";
 import { serializeSignalValues } from "./signals-search-params";
 
-export type SignalViewList =
-  AppRouterOutputs["org"]["workspace"]["signals"]["views"]["list"];
+export type SignalViewList = ListSignalViewsResult;
 export type SignalViewRow = SignalViewList[number];
 export type SignalViewConfig = SignalViewRow["config"];
 
