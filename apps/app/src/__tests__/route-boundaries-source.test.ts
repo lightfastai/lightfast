@@ -58,6 +58,10 @@ describe("app route boundaries", () => {
       expect(routeSource).toContain("pendingComponent:");
       expect(routeSource).toContain("errorComponent:");
       expect(routeSource).toContain("WorkspaceRouteErrorPanel");
+      expect(routeSource).toContain("pendingMs: 0");
+      expect(routeSource).toContain("pendingMinMs: 0");
+      expect(routeSource).not.toContain("pendingMs: 250");
+      expect(routeSource).not.toContain("pendingMinMs: 250");
       expect(routeSource).not.toContain("next/");
     }
   });
