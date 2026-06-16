@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -9,6 +9,50 @@ function source(path: string) {
 }
 
 describe("app account settings routes", () => {
+  it("keeps the account settings layout in an account-owned module", () => {
+    const routeSource = source(
+      "src/routes/_authenticated/account/settings.tsx"
+    );
+    const layoutPath = "src/account/settings/account-settings-layout.tsx";
+
+    expect(
+      existsSync(resolve(appRoot, layoutPath)),
+      `${layoutPath} should exist`
+    ).toBe(true);
+    const layoutSource = source(layoutPath);
+
+    expect(routeSource).toContain("AccountSettingsLayout");
+    expect(routeSource).not.toContain("SettingsSidebar");
+    expect(routeSource).not.toContain("Source Control & Git");
+
+    expect(layoutSource).toContain("SettingsSidebar");
+    expect(layoutSource).toContain("Source Control & Git");
+    expect(layoutSource).toContain("<Outlet />");
+  });
+
+  it("keeps team creation behavior in an account-owned client module", () => {
+    const routeSource = source(
+      "src/routes/_authenticated/account/teams/new.tsx"
+    );
+    const clientPath = "src/account/team-create-client.tsx";
+
+    expect(
+      existsSync(resolve(appRoot, clientPath)),
+      `${clientPath} should exist`
+    ).toBe(true);
+    const clientSource = source(clientPath);
+
+    expect(routeSource).toContain("CreateTeamClient");
+    expect(routeSource).not.toContain("normalizeTeamSlug");
+    expect(routeSource).not.toContain("createTeamIdempotencyKey");
+    expect(routeSource).not.toContain("viewer.organization.create");
+
+    expect(clientSource).toContain("normalizeTeamSlug");
+    expect(clientSource).toContain("createTeamIdempotencyKey");
+    expect(clientSource).toContain("viewer.organization.create");
+    expect(clientSource).toContain('await navigate({ to: "/$slug"');
+  });
+
   it("preserves connector callback search params when redirecting to general settings", () => {
     const settingsRouteSource = source(
       "src/routes/_authenticated/account/settings.tsx"

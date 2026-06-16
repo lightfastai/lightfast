@@ -35,18 +35,25 @@ describe("app authenticated route migration", () => {
     const routeSource = source(
       "src/routes/_authenticated/account/teams/new.tsx"
     );
+    const clientSource = source("src/account/team-create-client.tsx");
 
-    expect(routeSource).toContain("viewer.organization.create");
-    expect(routeSource).toContain("normalizeTeamSlug");
-    expect(routeSource).toContain("createTeamIdempotencyKey");
     expect(routeSource).toContain(
+      'createFileRoute("/_authenticated/account/teams/new")'
+    );
+    expect(routeSource).toContain("CreateTeamClient");
+    expect(clientSource).toContain("viewer.organization.create");
+    expect(clientSource).toContain("normalizeTeamSlug");
+    expect(clientSource).toContain("createTeamIdempotencyKey");
+    expect(clientSource).toContain(
       "setActive({ organization: data.organizationId })"
     );
-    expect(routeSource).toContain('await navigate({ to: "/$slug"');
-    expect(routeSource).toContain('id="teamSlug"');
-    expect(routeSource).toContain("lightfast.ai/");
+    expect(clientSource).toContain('await navigate({ to: "/$slug"');
+    expect(clientSource).toContain('id="teamSlug"');
+    expect(clientSource).toContain("lightfast.ai/");
     expect(routeSource).not.toContain("next/navigation");
     expect(routeSource).not.toContain("next/link");
+    expect(clientSource).not.toContain("next/navigation");
+    expect(clientSource).not.toContain("next/link");
   });
 
   it("ports invitation acceptance without Next.js auth route imports", () => {
