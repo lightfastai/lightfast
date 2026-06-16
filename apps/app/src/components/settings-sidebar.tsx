@@ -1,28 +1,38 @@
-"use client";
-
 import { Button } from "@repo/ui/components/ui/button";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, useLocation } from "@tanstack/react-router";
 
-interface NavItem {
+interface AccountSettingsSidebarItem {
+  activePath?: string;
   name: string;
-  path: string;
+  params?: never;
+  to: "/account/settings/general" | "/account/settings/source-control";
 }
 
-interface SettingsSidebarProps {
-  basePath: string;
-  items: NavItem[];
+interface WorkspaceSettingsSidebarItem {
+  activePath: string;
+  name: string;
+  params: { slug: string };
+  to:
+    | "/$slug/settings/general"
+    | "/$slug/settings/members"
+    | "/$slug/settings/billing"
+    | "/$slug/settings/api-keys"
+    | "/$slug/settings/mcp"
+    | "/$slug/settings/source-control";
 }
 
-export function SettingsSidebar({ basePath, items }: SettingsSidebarProps) {
-  const pathname = usePathname();
+type SettingsSidebarItem =
+  | AccountSettingsSidebarItem
+  | WorkspaceSettingsSidebarItem;
+
+export function SettingsSidebar({ items }: { items: SettingsSidebarItem[] }) {
+  const location = useLocation();
 
   return (
     <aside className="w-full flex-shrink-0 md:w-48">
       <nav className="grid grid-cols-2 gap-1 sm:grid-cols-4 md:block md:space-y-1">
         {items.map((item) => {
-          const href = item.path ? `${basePath}/${item.path}` : basePath;
-          const isActive = pathname === href;
+          const isActive = location.pathname === (item.activePath ?? item.to);
 
           return (
             <Button
@@ -33,9 +43,15 @@ export function SettingsSidebar({ basePath, items }: SettingsSidebarProps) {
               size="sm"
               variant="none"
             >
-              <Link href={{ pathname: href }} prefetch={true}>
-                {item.name}
-              </Link>
+              {item.params ? (
+                <Link params={item.params} preload="intent" to={item.to}>
+                  {item.name}
+                </Link>
+              ) : (
+                <Link preload="intent" to={item.to}>
+                  {item.name}
+                </Link>
+              )}
             </Button>
           );
         })}

@@ -5,13 +5,10 @@ describe("www local dev origins", () => {
   it("allows env-injected local aggregate and direct service hosts", () => {
     expect(
       localAllowedDevOrigins([
-        "https://app-tanstack.lightfast.localhost",
-        "https://app-tanstack.www.lightfast.localhost",
+        "https://app.lightfast.localhost",
+        "https://app.www.lightfast.localhost",
       ])
-    ).toEqual([
-      "app-tanstack.lightfast.localhost",
-      "app-tanstack.www.lightfast.localhost",
-    ]);
+    ).toEqual(["app.lightfast.localhost", "app.www.lightfast.localhost"]);
   });
 
   it("drops production hosts and invalid URLs", () => {

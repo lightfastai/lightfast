@@ -1,6 +1,7 @@
 "use client";
 
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
+import { Markdown } from "@repo/ui/components/markdown";
 import {
   Collapsible,
   CollapsibleContent,
@@ -19,7 +20,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { Streamdown } from "streamdown";
 
 import { Shimmer } from "./shimmer";
 
@@ -211,7 +211,7 @@ export const ReasoningContent = memo(
       )}
       {...props}
     >
-      <Streamdown>{children}</Streamdown>
+      <Markdown>{children}</Markdown>
     </CollapsibleContent>
   )
 );

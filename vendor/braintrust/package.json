@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@braintrust/otel": "catalog:",
-    "@t3-oss/env-nextjs": "catalog:",
+    "@t3-oss/env-core": "catalog:",
     "@vercel/otel": "catalog:",
     "braintrust": "catalog:",
     "server-only": "^0.0.1",

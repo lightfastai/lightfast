@@ -1,4 +1,4 @@
-import type { ThemeRegistrationRaw } from "shiki";
+import type { ThemeRegistrationRaw } from "@shikijs/core";
 
 /**
  * Custom Shiki theme matching OpenAI's developer docs dark mode.

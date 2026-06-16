@@ -19,8 +19,6 @@ import {
 import type { ComponentProps, ReactNode } from "react";
 import { isValidElement } from "react";
 
-import { CodeBlock } from "./code-block";
-
 export type ToolProps = ComponentProps<typeof Collapsible>;
 
 export const Tool = ({ className, ...props }: ToolProps) => (
@@ -121,12 +119,7 @@ export const ToolInput = ({ className, input, ...props }: ToolInputProps) => (
     <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
       Parameters
     </h4>
-    <div className="rounded-md bg-muted/50">
-      <CodeBlock
-        code={JSON.stringify(input ?? null, null, 2)}
-        language="json"
-      />
-    </div>
+    <JsonBlock value={input ?? null} />
   </div>
 );
 
@@ -151,11 +144,9 @@ export const ToolOutput = ({
     output === null ||
     (typeof output === "object" && !isValidElement(output))
   ) {
-    Output = (
-      <CodeBlock code={JSON.stringify(output, null, 2)} language="json" />
-    );
+    Output = <JsonBlock value={output} />;
   } else if (typeof output === "string") {
-    Output = <CodeBlock code={output} language="json" />;
+    Output = <JsonBlock value={output} />;
   }
 
   return (
@@ -177,3 +168,25 @@ export const ToolOutput = ({
     </div>
   );
 };
+
+function JsonBlock({ value }: { value: unknown }) {
+  const code = serializeForCode(value);
+
+  return (
+    <pre className="overflow-x-auto rounded-md bg-muted/50 p-3 text-xs">
+      <code>{code}</code>
+    </pre>
+  );
+}
+
+function serializeForCode(value: unknown): string {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  try {
+    return JSON.stringify(value, null, 2) ?? String(value);
+  } catch {
+    return String(value);
+  }
+}

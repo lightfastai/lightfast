@@ -1,4 +1,7 @@
 import { cn } from "@repo/ui/lib/utils";
+import type { HighlighterCore } from "@shikijs/core";
+import { createHighlighterCore } from "@shikijs/core";
+import { createJavaScriptRegexEngine } from "@shikijs/engine-javascript";
 import langBash from "@shikijs/langs/bash";
 import langCss from "@shikijs/langs/css";
 import langGo from "@shikijs/langs/go";
@@ -18,10 +21,6 @@ import githubLightDefault from "@shikijs/themes/github-light-default";
 import { toJsxRuntime } from "hast-util-to-jsx-runtime";
 import { Fragment } from "react";
 import { jsx, jsxs } from "react/jsx-runtime";
-import type { BundledLanguage } from "shiki";
-import type { HighlighterCore } from "shiki/core";
-import { createHighlighterCore } from "shiki/core";
-import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
 import { SSRCodeBlockCopyButton } from "./copy-button";
 import { openaiDark } from "./openai-dark-theme";
 
@@ -55,9 +54,6 @@ function getHighlighter(): Promise<HighlighterCore> {
   return _highlighterPromise;
 }
 
-// Re-export types for consumers
-export type { BundledLanguage, BundledTheme } from "shiki";
-
 interface SSRCodeBlockProps {
   children: string;
   className?: string;
@@ -74,13 +70,13 @@ export async function SSRCodeBlock({
   const code = children.trim();
 
   // Normalize language names - handle common aliases and invalid languages
-  let lang: BundledLanguage = language as BundledLanguage;
+  let lang = language;
   const languageLower = language.toLowerCase();
 
   // Map common invalid/alias names to valid Shiki languages
-  const languageMap: Record<string, BundledLanguage> = {
-    plaintext: "plaintext" as BundledLanguage,
-    plain: "plaintext" as BundledLanguage,
+  const languageMap: Record<string, string> = {
+    plaintext: "plaintext",
+    plain: "plaintext",
   };
 
   const mappedLang = languageMap[languageLower];

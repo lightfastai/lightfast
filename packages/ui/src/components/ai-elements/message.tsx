@@ -1,5 +1,6 @@
 "use client";
 
+import { Markdown } from "@repo/ui/components/markdown";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   ButtonGroup,
@@ -29,7 +30,6 @@ import {
   useMemo,
   useState,
 } from "react";
-import { Streamdown } from "streamdown";
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: UIMessage["role"];
@@ -334,17 +334,45 @@ export const MessageBranchPage = ({
   );
 };
 
-export type MessageResponseProps = ComponentProps<typeof Streamdown>;
+export type MessageResponseProps = Omit<
+  HTMLAttributes<HTMLDivElement>,
+  "children"
+> & {
+  children: string;
+  isAnimating?: boolean;
+  parseIncompleteMarkdown?: boolean;
+  components?: unknown;
+  rehypePlugins?: unknown;
+  remarkPlugins?: unknown;
+  shikiTheme?: unknown;
+  mermaidConfig?: unknown;
+  controls?: unknown;
+};
 
 export const MessageResponse = memo(
-  ({ className, ...props }: MessageResponseProps) => (
-    <Streamdown
-      className={cn(
-        "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-        className
-      )}
-      {...props}
-    />
+  ({
+    children,
+    className,
+    components: _components,
+    controls: _controls,
+    isAnimating: _isAnimating,
+    mermaidConfig: _mermaidConfig,
+    parseIncompleteMarkdown: _parseIncompleteMarkdown,
+    rehypePlugins: _rehypePlugins,
+    remarkPlugins: _remarkPlugins,
+    shikiTheme: _shikiTheme,
+    ...props
+  }: MessageResponseProps) => (
+    <div {...props}>
+      <Markdown
+        className={cn(
+          "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
+          className
+        )}
+      >
+        {children}
+      </Markdown>
+    </div>
   ),
   (prevProps, nextProps) =>
     prevProps.children === nextProps.children &&

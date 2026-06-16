@@ -1,16 +1,17 @@
-import { createEnv } from "@t3-oss/env-nextjs";
+import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 export const env = createEnv({
-  shared: {},
+  clientPrefix: "" as const,
+  client: {},
   server: {
     ARCJET_KEY: z.string().min(1).startsWith("ajkey_"),
     VERCEL_ENV: z
       .enum(["development", "preview", "production"])
       .default("development"),
   },
-  client: {},
-  experimental__runtimeEnv: {
+  runtimeEnv: {
+    ARCJET_KEY: process.env.ARCJET_KEY,
     VERCEL_ENV: process.env.VERCEL_ENV ?? "development",
   },
   skipValidation:

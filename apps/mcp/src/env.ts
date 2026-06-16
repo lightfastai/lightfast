@@ -2,6 +2,7 @@ import "@tanstack/react-start/server-only";
 
 import { env as dbEnv } from "@db/app/env";
 import { createEnv } from "@t3-oss/env-core";
+import { sentryEnv } from "@vendor/observability/sentry-env";
 import { z } from "zod";
 
 const vercelEnvSchema = z
@@ -9,7 +10,7 @@ const vercelEnvSchema = z
   .default("development");
 
 export const env = createEnv({
-  extends: [dbEnv],
+  extends: [dbEnv, sentryEnv],
   clientPrefix: "VITE_",
   client: {
     VITE_SENTRY_DSN: z.string().url().optional(),
@@ -20,12 +21,8 @@ export const env = createEnv({
       .default("development"),
     MCP_AUTH_ISSUER: z.string().url(),
     MCP_RESOURCE_URL: z.string().url(),
-    NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
     SERVICE_JWT_SECRET: z.string().min(32),
     SENTRY_DSN: z.string().url().optional(),
-    SENTRY_AUTH_TOKEN: z.string().min(1).optional(),
-    SENTRY_ORG: z.string().min(1).optional(),
-    SENTRY_PROJECT: z.string().min(1).optional(),
     VERCEL_ENV: vercelEnvSchema,
   },
   runtimeEnv: {
@@ -35,12 +32,8 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     MCP_AUTH_ISSUER: process.env.MCP_AUTH_ISSUER,
     MCP_RESOURCE_URL: process.env.MCP_RESOURCE_URL,
-    NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
     SERVICE_JWT_SECRET: process.env.SERVICE_JWT_SECRET,
     SENTRY_DSN: process.env.SENTRY_DSN,
-    SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
-    SENTRY_ORG: process.env.SENTRY_ORG,
-    SENTRY_PROJECT: process.env.SENTRY_PROJECT,
     VERCEL_ENV: process.env.VERCEL_ENV,
     VITE_SENTRY_DSN: process.env.VITE_SENTRY_DSN,
   },

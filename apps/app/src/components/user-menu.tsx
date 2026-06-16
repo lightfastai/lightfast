@@ -1,5 +1,4 @@
-"use client";
-
+import { useClerk } from "@clerk/tanstack-react-start";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -10,29 +9,29 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useClerk } from "@vendor/clerk";
+import { useMounted } from "@repo/ui/hooks/use-mounted";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { Settings } from "lucide-react";
-import Link from "next/link";
 import { useTRPC } from "~/trpc/react";
-
-const SETTINGS_HREF = "/account/settings/general";
+import { getUserMenuIdentity, SETTINGS_HREF } from "./user-menu-model";
 
 export function UserMenu() {
   const trpc = useTRPC();
   const { signOut } = useClerk();
+  const mounted = useMounted();
 
-  const { data: profile } = useSuspenseQuery({
+  const { data: profile, isPending } = useQuery({
     ...trpc.viewer.account.get.queryOptions(),
+    enabled: typeof window !== "undefined",
     staleTime: 5 * 60 * 1000,
   });
 
-  const identityLines = [profile.username, profile.primaryEmailAddress].filter(
-    (value): value is string => Boolean(value)
-  );
+  if (!mounted || isPending || !profile) {
+    return <UserMenuSkeleton />;
+  }
 
-  const primaryIdentity = identityLines[0] ?? "User";
-  const secondaryIdentity = identityLines[1] ?? null;
+  const { primaryIdentity, secondaryIdentity } = getUserMenuIdentity(profile);
 
   return (
     <DropdownMenu>
@@ -63,7 +62,7 @@ export function UserMenu() {
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild className="cursor-pointer">
-          <Link href={{ pathname: SETTINGS_HREF }} prefetch={true}>
+          <Link preload="intent" to={SETTINGS_HREF}>
             <Settings className="h-3 w-3" />
             Your Account
           </Link>

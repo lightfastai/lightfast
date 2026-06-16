@@ -5,6 +5,7 @@ import type { AuthIdentity } from "../auth/identity";
 
 const createAutomationMock = vi.fn();
 const createAutomationRunMock = vi.fn();
+const deleteAutomationMock = vi.fn();
 const getAutomationByPublicIdMock = vi.fn();
 const getAutomationRunByPublicIdMock = vi.fn();
 const listAutomationRunsMock = vi.fn();
@@ -17,6 +18,7 @@ vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({
   createAutomation: createAutomationMock,
   createAutomationRun: createAutomationRunMock,
+  deleteAutomation: deleteAutomationMock,
   getAutomationByPublicId: getAutomationByPublicIdMock,
   getAutomationRunByPublicId: getAutomationRunByPublicIdMock,
   listAutomationRuns: listAutomationRunsMock,
@@ -166,6 +168,7 @@ const run = {
 beforeEach(() => {
   createAutomationMock.mockReset();
   createAutomationRunMock.mockReset();
+  deleteAutomationMock.mockReset();
   getAutomationByPublicIdMock.mockReset();
   getAutomationRunByPublicIdMock.mockReset();
   listAutomationRunsMock.mockReset();
@@ -176,6 +179,7 @@ beforeEach(() => {
 
   createAutomationMock.mockResolvedValue(automation);
   createAutomationRunMock.mockResolvedValue(run);
+  deleteAutomationMock.mockResolvedValue(true);
   getAutomationByPublicIdMock.mockResolvedValue(automation);
   getAutomationRunByPublicIdMock.mockResolvedValue(run);
   listAutomationRunsMock.mockResolvedValue([run]);
@@ -367,6 +371,33 @@ describe("automationsRouter", () => {
     expect(getAutomationByPublicIdMock).not.toHaveBeenCalled();
     expect(createAutomationRunMock).not.toHaveBeenCalled();
     expect(sendMock).not.toHaveBeenCalled();
+  });
+
+  it("deletes an automation for org admins", async () => {
+    await expect(
+      caller().automations.delete({ id: automation.publicId })
+    ).resolves.toEqual({ deleted: true });
+
+    expect(deleteAutomationMock).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_acme",
+      publicId: automation.publicId,
+    });
+  });
+
+  it("returns NOT_FOUND when deleting a missing automation", async () => {
+    deleteAutomationMock.mockResolvedValueOnce(false);
+
+    await expect(
+      caller().automations.delete({ id: automation.publicId })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("rejects delete for non-admin org members", async () => {
+    await expect(
+      caller(nonAdminAccess()).automations.delete({ id: automation.publicId })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    expect(deleteAutomationMock).not.toHaveBeenCalled();
   });
 
   it("gets a single run scoped to the active organization", async () => {

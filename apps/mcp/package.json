@@ -9,7 +9,6 @@
     "build": "pnpm with-env vite build",
     "clean": "git clean -xdf .cache .output .tanstack .turbo .vercel dist node_modules src/routeTree.gen.ts",
     "dev": "portless run pnpm with-related-projects pnpm with-env vite dev",
-    "dev:next": "pnpm dev",
     "preview": "pnpm with-env vite preview",
     "start": "pnpm preview",
     "test": "vitest run",
@@ -31,6 +30,7 @@
     "@tanstack/react-start": "catalog:",
     "@vendor/jose": "workspace:*",
     "@vendor/mcp": "workspace:*",
+    "@vendor/observability": "workspace:*",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
     "zod": "catalog:"

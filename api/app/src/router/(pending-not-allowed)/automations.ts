@@ -1,6 +1,7 @@
 import {
   createAutomation,
   createAutomationRun,
+  deleteAutomation,
   getAutomationByPublicId,
   getAutomationRunByPublicId,
   listAutomationRuns,
@@ -103,6 +104,19 @@ export const automationsRouter = {
         status: "active",
       });
       return automation ?? notFound();
+    }),
+
+  delete: boundOrgAdminProcedure
+    .input(getAutomationSchema)
+    .mutation(async ({ ctx, input }) => {
+      const deleted = await deleteAutomation(ctx.db, {
+        clerkOrgId: ctx.auth.identity.orgId,
+        publicId: input.id,
+      });
+      if (!deleted) {
+        notFound();
+      }
+      return { deleted: true };
     }),
 
   runNow: boundOrgAdminProcedure
