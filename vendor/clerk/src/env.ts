@@ -1,15 +1,16 @@
-import { createEnv } from "@t3-oss/env-nextjs";
+import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 export const clerkEnvBase = createEnv({
-  shared: {},
+  clientPrefix: "NEXT_PUBLIC_",
   server: {
     CLERK_SECRET_KEY: z.string().min(1).startsWith("sk_"),
   },
   client: {
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1).startsWith("pk_"),
   },
-  experimental__runtimeEnv: {
+  runtimeEnv: {
+    CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
       process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
   },

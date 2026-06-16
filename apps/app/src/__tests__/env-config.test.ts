@@ -12,16 +12,21 @@ describe("app environment validation wiring", () => {
     expect(envSource).toContain('import "@tanstack/react-start/server-only"');
     expect(envSource).toContain('from "@t3-oss/env-core"');
     expect(envSource).not.toContain("@t3-oss/env-nextjs");
-    expect(envSource).not.toContain("@vendor/clerk/env");
+    expect(envSource).toContain('from "@vendor/clerk/env"');
+    expect(envSource).toContain('from "@vendor/observability/sentry-env"');
   });
 
-  it("extends only non-Next shared env modules", () => {
+  it("extends core-compatible provider env modules", () => {
     const envSource = readFileSync(resolve(appRoot, "src/env.ts"), "utf8");
 
     expect(envSource).toContain('from "@db/app/env"');
+    expect(envSource).toContain('from "@vendor/clerk/env"');
+    expect(envSource).toContain('from "@vendor/observability/sentry-env"');
     expect(envSource).toContain('from "@vendor/upstash/env"');
     expect(envSource).toContain('from "@vendor/unkey/env"');
-    expect(envSource).toContain("extends: [dbEnv, upstashEnv, unkeyEnv]");
+    expect(envSource).toContain(
+      "extends: [dbEnv, clerkEnvBase, sentryEnv, upstashEnv, unkeyEnv]"
+    );
   });
 
   it("maps the current app NEXT_PUBLIC env contract into Vite client values", () => {

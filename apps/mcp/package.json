@@ -30,6 +30,7 @@
     "@tanstack/react-start": "catalog:",
     "@vendor/jose": "workspace:*",
     "@vendor/mcp": "workspace:*",
+    "@vendor/observability": "workspace:*",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
     "zod": "catalog:"

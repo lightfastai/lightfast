@@ -730,9 +730,15 @@ importers:
       '@vendor/braintrust':
         specifier: workspace:*
         version: link:../../vendor/braintrust
+      '@vendor/clerk':
+        specifier: workspace:*
+        version: link:../../vendor/clerk
       '@vendor/lib':
         specifier: workspace:*
         version: link:../../vendor/lib
+      '@vendor/observability':
+        specifier: workspace:*
+        version: link:../../vendor/observability
       '@vendor/unkey':
         specifier: workspace:*
         version: link:../../vendor/unkey
@@ -1026,6 +1032,9 @@ importers:
       '@vendor/mcp':
         specifier: workspace:*
         version: link:../../vendor/mcp
+      '@vendor/observability':
+        specifier: workspace:*
+        version: link:../../vendor/observability
       react:
         specifier: ^19.2.6
         version: 19.2.6
@@ -2684,7 +2693,7 @@ importers:
 
   vendor/analytics:
     dependencies:
-      '@t3-oss/env-nextjs':
+      '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
       '@vercel/analytics':
@@ -2733,7 +2742,7 @@ importers:
       '@braintrust/otel':
         specifier: 'catalog:'
         version: 0.2.0(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.218.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1))(braintrust@3.11.0(zod@4.3.6))
-      '@t3-oss/env-nextjs':
+      '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
       '@vercel/otel':
@@ -2776,7 +2785,7 @@ importers:
       '@clerk/shared':
         specifier: 'catalog:'
         version: 4.12.2(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      '@t3-oss/env-nextjs':
+      '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
       next:
@@ -2856,7 +2865,7 @@ importers:
 
   vendor/email:
     dependencies:
-      '@t3-oss/env-nextjs':
+      '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
       resend:
@@ -3019,7 +3028,7 @@ importers:
       '@sentry/nextjs':
         specifier: 'catalog:'
         version: 10.49.0(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.218.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1))(encoding@0.1.13)(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(webpack@5.105.4(esbuild@0.28.0))
-      '@t3-oss/env-nextjs':
+      '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
       '@trpc/server':
@@ -3118,7 +3127,7 @@ importers:
       '@nosecone/next':
         specifier: ^1.4.0
         version: 1.4.0(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))
-      '@t3-oss/env-nextjs':
+      '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
       '@vendor/clerk':
@@ -3140,7 +3149,7 @@ importers:
 
   vendor/seo:
     dependencies:
-      '@t3-oss/env-nextjs':
+      '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
       react:

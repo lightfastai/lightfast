@@ -43,7 +43,7 @@
     "typescript": "catalog:"
   },
   "dependencies": {
-    "@t3-oss/env-nextjs": "catalog:",
+    "@t3-oss/env-core": "catalog:",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "next": "catalog:next16",
