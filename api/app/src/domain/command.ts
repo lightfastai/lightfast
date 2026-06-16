@@ -5,7 +5,7 @@ import { NotFoundError, ValidationError } from "./errors";
 export interface CommandRunArgs<
   TInput,
   TOutput,
-  TDeps extends Record<string, unknown>,
+  TDeps extends object,
 > {
   ctx: ExecutionContext;
   deps: TDeps;
@@ -16,7 +16,7 @@ export interface CommandDefinition<
   TName extends string,
   TInputSchema extends z.ZodTypeAny,
   TOutputSchema extends z.ZodTypeAny,
-  TDeps extends Record<string, unknown> = Record<string, never>,
+  TDeps extends object = Record<string, never>,
 > {
   input: TInputSchema;
   name: TName;
@@ -30,7 +30,7 @@ export function defineCommand<
   TName extends string,
   TInputSchema extends z.ZodTypeAny,
   TOutputSchema extends z.ZodTypeAny,
-  TDeps extends Record<string, unknown> = Record<string, never>,
+  TDeps extends object = Record<string, never>,
 >(
   definition: CommandDefinition<TName, TInputSchema, TOutputSchema, TDeps>
 ): CommandDefinition<TName, TInputSchema, TOutputSchema, TDeps> {
@@ -41,8 +41,21 @@ type AnyCommandDefinition = CommandDefinition<
   string,
   z.ZodTypeAny,
   z.ZodTypeAny,
-  Record<string, unknown>
+  // This erasure is only used by the generic dispatcher/surface registry.
+  // Individual command definitions retain their concrete dependency type.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  any
 >;
+
+type CommandDeps<TCommand> =
+  TCommand extends CommandDefinition<string, z.ZodTypeAny, z.ZodTypeAny, infer TDeps>
+    ? TDeps
+    : object;
+
+type CommandOutput<TCommand> =
+  TCommand extends CommandDefinition<string, z.ZodTypeAny, infer TOutput, object>
+    ? z.infer<TOutput>
+    : unknown;
 
 export function defineCommandSurface<
   TSurface extends Record<string, AnyCommandDefinition>,
@@ -52,17 +65,17 @@ export function defineCommandSurface<
 
 export async function dispatchCommand<
   TSurface extends Record<string, AnyCommandDefinition>,
-  TCommand extends keyof TSurface & string,
+  TCommand extends string,
 >(
   surface: TSurface,
   args: {
     command: TCommand;
     ctx: ExecutionContext;
-    deps?: Record<string, unknown>;
+    deps?: TCommand extends keyof TSurface ? CommandDeps<TSurface[TCommand]> : object;
     input: unknown;
   }
-): Promise<z.infer<TSurface[TCommand]["output"]>> {
-  const command = surface[args.command];
+): Promise<TCommand extends keyof TSurface ? CommandOutput<TSurface[TCommand]> : unknown> {
+  const command = surface[args.command as keyof TSurface];
   if (!command) {
     throw new NotFoundError(
       "COMMAND_NOT_FOUND",
@@ -79,7 +92,7 @@ export async function dispatchCommand<
 
   const result = await command.run({
     ctx: args.ctx,
-    deps: (args.deps ?? {}) as Record<string, unknown>,
+    deps: args.deps ?? {},
     input: parsedInput.data,
   });
 
@@ -92,5 +105,7 @@ export async function dispatchCommand<
     );
   }
 
-  return parsedOutput.data;
+  return parsedOutput.data as TCommand extends keyof TSurface
+    ? CommandOutput<TSurface[TCommand]>
+    : unknown;
 }
