@@ -89,8 +89,8 @@ describe("app product route data prefetch", () => {
     ].join("\n");
 
     for (const query of [
-      "signals.workingSet.queryOptions",
-      "signals.list.queryOptions",
+      "workingSetSignalsQueryOptions",
+      "processingSignalsQueryOptions",
       "signals.views.list.queryOptions",
       "automations.list.queryOptions",
       "automations.get.queryOptions",

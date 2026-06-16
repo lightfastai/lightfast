@@ -25,6 +25,14 @@
       "types": "./src/service-jwt.ts",
       "default": "./src/service-jwt.ts"
     },
+    "./domain": {
+      "types": "./src/domain/index.ts",
+      "default": "./src/domain/index.ts"
+    },
+    "./tanstack/signals": {
+      "types": "./src/adapters/tanstack/signals.ts",
+      "default": "./src/adapters/tanstack/signals.ts"
+    },
     "./services/github": {
       "types": "./src/services/github/index.ts",
       "default": "./src/services/github/index.ts"
@@ -109,6 +117,7 @@
     "@repo/user-connector-contract": "workspace:*",
     "@repo/x-app-node": "workspace:*",
     "@t3-oss/env-core": "catalog:",
+    "@tanstack/react-start": "catalog:",
     "@trpc/server": "catalog:",
     "@vendor/ai": "workspace:*",
     "@vendor/braintrust": "workspace:*",

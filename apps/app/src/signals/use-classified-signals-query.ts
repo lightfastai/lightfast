@@ -1,12 +1,8 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useTRPC } from "~/trpc/react";
+import { useQuery } from "@tanstack/react-query";
 import {
-  PROCESSING_SIGNALS_LIMIT,
-  signalProcessingStatuses,
-} from "./signals-model";
-
-const WORKING_SET_REFETCH_MS = 30_000;
-const PROCESSING_REFETCH_MS = 5000;
+  processingSignalsQueryOptions,
+  workingSetSignalsQueryOptions,
+} from "./signals-queries";
 
 /**
  * Bounded, projected classified working set — fetched once, unfiltered. Filters
@@ -14,14 +10,7 @@ const PROCESSING_REFETCH_MS = 5000;
  * A fixed 30s interval surfaces newly-classified signals.
  */
 export function useWorkingSetQuery() {
-  const trpc = useTRPC();
-  const options = {
-    ...trpc.org.workspace.signals.workingSet.queryOptions(),
-    enabled: typeof window !== "undefined",
-    placeholderData: keepPreviousData,
-    refetchInterval: WORKING_SET_REFETCH_MS,
-    staleTime: WORKING_SET_REFETCH_MS,
-  };
+  const options = workingSetSignalsQueryOptions();
   return { query: useQuery(options), queryKey: options.queryKey };
 }
 
@@ -30,16 +19,6 @@ export function useWorkingSetQuery() {
  * classification filters (those rows are not classified yet).
  */
 export function useProcessingSignalsQuery() {
-  const trpc = useTRPC();
-  const options = {
-    ...trpc.org.workspace.signals.list.queryOptions({
-      limit: PROCESSING_SIGNALS_LIMIT,
-      statuses: [...signalProcessingStatuses],
-    }),
-    enabled: typeof window !== "undefined",
-    placeholderData: keepPreviousData,
-    refetchInterval: PROCESSING_REFETCH_MS,
-    staleTime: PROCESSING_REFETCH_MS,
-  };
+  const options = processingSignalsQueryOptions();
   return { query: useQuery(options), queryKey: options.queryKey };
 }

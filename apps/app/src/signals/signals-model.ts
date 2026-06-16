@@ -1,18 +1,19 @@
-import type { AppRouterOutputs } from "@api/app";
+import type {
+  ProcessingSignalsResult,
+  SignalDetailQueryResult,
+  WorkingSetSignalsResult,
+} from "./signals-queries";
 
 /** Full row from the cursor `list` query (processing path) — carries body fields. */
-export type SignalList =
-  AppRouterOutputs["org"]["workspace"]["signals"]["list"];
+export type SignalList = ProcessingSignalsResult;
 export type SignalRow = SignalList["items"][number];
 
 /** Projected working-set row (classified, no body). */
-export type WorkspaceSignals =
-  AppRouterOutputs["org"]["workspace"]["signals"]["workingSet"];
+export type WorkspaceSignals = WorkingSetSignalsResult;
 export type WorkspaceSignalRow = WorkspaceSignals["items"][number];
 
 /** Full row from `get` — used for the detail body. */
-export type SignalDetailRow =
-  AppRouterOutputs["org"]["workspace"]["signals"]["get"];
+export type SignalDetailRow = SignalDetailQueryResult;
 
 /**
  * Canonical view-row type for list/grouping. It is the projected

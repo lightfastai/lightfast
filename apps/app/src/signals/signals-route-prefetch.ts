@@ -1,8 +1,8 @@
-import {
-  PROCESSING_SIGNALS_LIMIT,
-  signalProcessingStatuses,
-} from "~/signals/signals-model";
 import type { RoutePrefetchContext } from "~/trpc/route-prefetch-types";
+import {
+  processingSignalsQueryOptions,
+  workingSetSignalsQueryOptions,
+} from "./signals-queries";
 
 export async function prefetchSignalsRoute({
   queryClient,
@@ -10,14 +10,11 @@ export async function prefetchSignalsRoute({
 }: RoutePrefetchContext) {
   await Promise.all([
     queryClient.fetchQuery({
-      ...trpc.org.workspace.signals.workingSet.queryOptions(),
+      ...workingSetSignalsQueryOptions(),
       staleTime: 30_000,
     }),
     queryClient.fetchQuery({
-      ...trpc.org.workspace.signals.list.queryOptions({
-        limit: PROCESSING_SIGNALS_LIMIT,
-        statuses: [...signalProcessingStatuses],
-      }),
+      ...processingSignalsQueryOptions(),
       staleTime: 5000,
     }),
     queryClient.fetchQuery({

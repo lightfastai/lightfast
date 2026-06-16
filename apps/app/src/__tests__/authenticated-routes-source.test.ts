@@ -232,14 +232,13 @@ describe("app authenticated route migration", () => {
     expect(routeSource).toContain("setSearchParams");
     expect(clientSource).toContain("SignalCreateDialog");
     expect(clientSource).toContain("SignalsViewSwitcher");
-    expect(clientSource).toContain("signals.get.queryOptions");
-    expect(createDialogSource).toContain("signals.create.mutationOptions");
+    expect(clientSource).toContain("signalDetailQueryOptions");
+    expect(createDialogSource).toContain("createSignalMutationOptions");
     expect(createDialogSource).toContain("listUserOrganizations.queryOptions");
     expect(searchSource).toContain("validateSignalsSearch");
     expect(searchSource).toContain("parseSignalDispositions");
-    expect(querySource).toContain("signals.workingSet.queryOptions");
-    expect(querySource).toContain("signals.list.queryOptions");
-    expect(querySource).toContain('enabled: typeof window !== "undefined"');
+    expect(querySource).toContain("workingSetSignalsQueryOptions");
+    expect(querySource).toContain("processingSignalsQueryOptions");
     expect(viewQuerySource).toContain("signals.views.list.queryOptions");
     expect(viewQuerySource).toContain('enabled: typeof window !== "undefined"');
     expect(viewsSource).toContain("viewConfigToParamValues");

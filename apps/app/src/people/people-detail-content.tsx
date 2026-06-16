@@ -12,7 +12,7 @@ import {
   Tag,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import { useTRPC } from "~/trpc/react";
+import { signalDetailQueryOptions } from "~/signals/signals-queries";
 import {
   formatPersonSignalRef,
   getPersonName,
@@ -70,12 +70,8 @@ function PersonSignalLink({
   signalId: string;
   slug: string;
 }) {
-  const trpc = useTRPC();
   const query = useQuery(
-    trpc.org.workspace.signals.get.queryOptions(
-      { publicId: signalId },
-      { enabled: typeof window !== "undefined" && Boolean(signalId) }
-    )
+    signalDetailQueryOptions({ enabled: Boolean(signalId), publicId: signalId })
   );
   const title = query.data
     ? (query.data.classification?.title ?? query.data.input)

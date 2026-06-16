@@ -10,7 +10,6 @@ import {
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
-import { useTRPC } from "~/trpc/react";
 import { SignalDetailContent } from "./signal-detail-content";
 import {
   getSignalSummary,
@@ -19,6 +18,7 @@ import {
   type SignalListItem,
   type SignalRow,
 } from "./signals-model";
+import { signalDetailQueryOptions } from "./signals-queries";
 
 export function SignalDetailSheet({
   initialItem,
@@ -29,7 +29,6 @@ export function SignalDetailSheet({
   onOpenChange: (open: boolean) => void;
   publicId: string | null;
 }) {
-  const trpc = useTRPC();
   const open = publicId !== null;
   const seededItem =
     initialItem && initialItem.publicId === publicId ? initialItem : undefined;
@@ -38,16 +37,10 @@ export function SignalDetailSheet({
   const hasBody = !!seededItem && "input" in seededItem;
 
   const query = useQuery(
-    trpc.org.workspace.signals.get.queryOptions(
-      { publicId: publicId ?? "" },
-      {
-        enabled:
-          typeof window !== "undefined" &&
-          open &&
-          !hasBody &&
-          Boolean(publicId),
-      }
-    )
+    signalDetailQueryOptions({
+      enabled: open && !hasBody && Boolean(publicId),
+      publicId: publicId ?? "",
+    })
   );
 
   // Header seed: the projection (or, for deep-links not in cache, the fetched row).
