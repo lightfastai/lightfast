@@ -3,8 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "portless": "storybook.lightfast",
   "scripts": {
-    "dev": "storybook dev -p 6006",
+    "dev": "portless run pnpm storybook:dev",
+    "storybook:dev": "storybook dev --host ${HOST:-127.0.0.1} --port ${PORT:-6006} --no-open",
     "build": "storybook build",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
