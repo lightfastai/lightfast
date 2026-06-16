@@ -12,10 +12,7 @@
 import { accountRouter } from "./router/(pending-allowed)/account";
 import { githubAccountRouter } from "./router/(pending-allowed)/github-account";
 import { nativeAuthRouter } from "./router/(pending-allowed)/native-auth";
-import {
-  organizationRouter,
-  orgSettingsOrganizationRouter,
-} from "./router/(pending-allowed)/organization";
+import { orgSettingsOrganizationRouter } from "./router/(pending-allowed)/organization";
 import { automationsRouter } from "./router/(pending-not-allowed)/automations";
 import { connectorsRouter } from "./router/(pending-not-allowed)/connectors";
 import { decisionsRouter } from "./router/(pending-not-allowed)/decisions";
@@ -25,7 +22,6 @@ import {
   accountMcpConnectionsRouter,
   orgMcpConnectionsRouter,
 } from "./router/(pending-not-allowed)/mcp-connections";
-import { orgApiKeysRouter } from "./router/(pending-not-allowed)/org-api-keys";
 import { orgBillingRouter } from "./router/(pending-not-allowed)/org-billing";
 import { orgIdentityRouter } from "./router/(pending-not-allowed)/org-identity";
 import { orgMembersRouter } from "./router/(pending-not-allowed)/org-members";
@@ -44,7 +40,6 @@ export const appRouter = createTRPCRouter({
     auth: nativeAuthRouter,
   }),
   viewer: createTRPCRouter({
-    organization: organizationRouter,
     account: createTRPCRouter({
       ...accountRouter,
       mcpConnections: accountMcpConnectionsRouter,
@@ -59,7 +54,6 @@ export const appRouter = createTRPCRouter({
     }),
     settings: createTRPCRouter({
       organization: orgSettingsOrganizationRouter,
-      orgApiKeys: orgApiKeysRouter,
       orgBilling: orgBillingRouter,
       identity: orgIdentityRouter,
       orgMembers: orgMembersRouter,

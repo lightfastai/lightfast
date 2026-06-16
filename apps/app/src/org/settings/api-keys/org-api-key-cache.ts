@@ -1,8 +1,6 @@
-import type { AppRouterOutputs } from "@api/app";
+import type { OrgApiKey, OrgApiKeyListData } from "./org-api-key-queries";
 
-export type OrgApiKeyListData =
-  AppRouterOutputs["org"]["settings"]["orgApiKeys"]["list"];
-export type OrgApiKey = OrgApiKeyListData[number];
+export type { OrgApiKey, OrgApiKeyListData };
 
 function insertAt<T>(items: T[], item: T, index: number) {
   const next = [...items];

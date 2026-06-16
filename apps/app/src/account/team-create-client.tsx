@@ -10,7 +10,10 @@ import {
   normalizeTeamSlug,
 } from "~/account/team-name";
 import { useOrganizationList } from "~/compat/clerk";
-import { useTRPC } from "~/trpc/react";
+import {
+  createOrganizationMutationOptions,
+  organizationQueryKeys,
+} from "~/organization/organization-queries";
 
 export function CreateTeamClient() {
   return (
@@ -35,31 +38,26 @@ function TeamNameForm() {
   const [slug, setSlug] = useState("");
   const [error, setError] = useState<string>();
   const idempotencyKeyRef = useRef<string | null>(null);
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { setActive } = useOrganizationList();
   const navigate = useNavigate({ from: "/account/teams/new" });
 
-  const mutation = useMutation(
-    trpc.viewer.organization.create.mutationOptions({
-      meta: { suppressErrorToast: true },
-      onSuccess: async (data) => {
-        idempotencyKeyRef.current = null;
-        if (setActive) {
-          await setActive({ organization: data.organizationId });
-        }
-        void queryClient.invalidateQueries({
-          queryKey:
-            trpc.viewer.organization.listUserOrganizations.queryOptions()
-              .queryKey,
-        });
-        await navigate({ to: "/$slug", params: { slug: data.slug } });
-      },
-      onError: (err) => {
-        setError(err.message ?? "Failed to create team. Please try again.");
-      },
-    })
-  );
+  const mutation = useMutation({
+    ...createOrganizationMutationOptions(),
+    onSuccess: async (data) => {
+      idempotencyKeyRef.current = null;
+      if (setActive) {
+        await setActive({ organization: data.organizationId });
+      }
+      void queryClient.invalidateQueries({
+        queryKey: organizationQueryKeys.list(),
+      });
+      await navigate({ to: "/$slug", params: { slug: data.slug } });
+    },
+    onError: (err) => {
+      setError(err.message ?? "Failed to create team. Please try again.");
+    },
+  });
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();

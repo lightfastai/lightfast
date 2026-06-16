@@ -12,6 +12,13 @@ import {
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -19,36 +26,66 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
-import { Key, MoreHorizontal, ShieldOff, Trash2 } from "lucide-react";
+import {
+  Check,
+  Copy,
+  Key,
+  MoreHorizontal,
+  RotateCw,
+  ShieldOff,
+  Trash2,
+} from "lucide-react";
 import { memo, useCallback, useState } from "react";
-import { useTRPC } from "~/trpc/react";
 import type { OrgApiKey } from "./org-api-key-cache";
 import { useOrgApiKeyListActions } from "./org-api-key-list-actions";
+import { orgApiKeysQueryOptions } from "./org-api-key-queries";
 
 interface AlertAction {
   keyId: string;
   keyName: string;
-  type: "revoke" | "delete";
+  type: "revoke" | "delete" | "rotate";
 }
 
 export function OrgApiKeyList() {
   const { has, isLoaded } = useAuth();
   const canManageApiKeys = isLoaded && !!has?.({ role: "org:admin" });
-  const trpc = useTRPC();
 
   const {
     data: keys = [],
     error,
     isPending,
   } = useQuery({
-    ...trpc.org.settings.orgApiKeys.list.queryOptions(),
+    ...orgApiKeysQueryOptions(),
     enabled: typeof window !== "undefined",
     staleTime: 5 * 60 * 1000,
   });
-  const { deleteKey, pendingDeleteKeyId, pendingRevokeKeyId, revokeKey } =
-    useOrgApiKeyListActions();
 
   const [alertAction, setAlertAction] = useState<AlertAction | null>(null);
+  const [rotatedKey, setRotatedKey] = useState<{
+    keyName: string;
+    secret: string;
+  } | null>(null);
+  const [copiedRotatedKey, setCopiedRotatedKey] = useState(false);
+
+  const {
+    deleteKey,
+    pendingDeleteKeyId,
+    pendingRevokeKeyId,
+    pendingRotateKeyId,
+    revokeKey,
+    rotateKey,
+  } = useOrgApiKeyListActions({
+    onRotated: ({ key, keyId }) => {
+      if (!key) {
+        return;
+      }
+
+      const keyName =
+        keys.find((item) => item.keyId === keyId)?.name ?? key.slice(0, 8);
+      setRotatedKey({ keyName, secret: key });
+      setCopiedRotatedKey(false);
+    },
+  });
 
   const handleRequestRevoke = useCallback((keyId: string, keyName: string) => {
     setAlertAction({ keyId, keyName, type: "revoke" });
@@ -56,6 +93,10 @@ export function OrgApiKeyList() {
 
   const handleRequestDelete = useCallback((keyId: string, keyName: string) => {
     setAlertAction({ keyId, keyName, type: "delete" });
+  }, []);
+
+  const handleRequestRotate = useCallback((keyId: string, keyName: string) => {
+    setAlertAction({ keyId, keyName, type: "rotate" });
   }, []);
 
   const handleConfirmAlert = useCallback(() => {
@@ -69,11 +110,24 @@ export function OrgApiKeyList() {
       case "delete":
         deleteKey(alertAction.keyId);
         break;
+      case "rotate":
+        rotateKey(alertAction.keyId);
+        break;
       default:
         break;
     }
     setAlertAction(null);
-  }, [alertAction, deleteKey, revokeKey]);
+  }, [alertAction, deleteKey, revokeKey, rotateKey]);
+
+  const handleCopyRotatedKey = useCallback(() => {
+    if (!rotatedKey) {
+      return;
+    }
+
+    navigator.clipboard.writeText(rotatedKey.secret);
+    setCopiedRotatedKey(true);
+    setTimeout(() => setCopiedRotatedKey(false), 2000);
+  }, [rotatedKey]);
 
   if (isPending) {
     return (
@@ -123,12 +177,14 @@ export function OrgApiKeyList() {
               canManageApiKeys={canManageApiKeys}
               isPending={
                 pendingRevokeKeyId === key.keyId ||
-                pendingDeleteKeyId === key.keyId
+                pendingDeleteKeyId === key.keyId ||
+                pendingRotateKeyId === key.keyId
               }
               key={key.keyId}
               keyItem={key}
               onRequestDelete={handleRequestDelete}
               onRequestRevoke={handleRequestRevoke}
+              onRequestRotate={handleRequestRotate}
             />
           ))}
         </div>
@@ -147,12 +203,15 @@ export function OrgApiKeyList() {
             <AlertDialogTitle>
               {alertAction?.type === "revoke" && "Revoke API Key?"}
               {alertAction?.type === "delete" && "Delete API Key?"}
+              {alertAction?.type === "rotate" && "Rotate API Key?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {alertAction?.type === "revoke" &&
                 `"${alertAction.keyName}" will be deactivated immediately. Any requests using this key will fail.`}
               {alertAction?.type === "delete" &&
                 `"${alertAction.keyName}" will be permanently deleted. This action cannot be undone.`}
+              {alertAction?.type === "rotate" &&
+                `"${alertAction.keyName}" will receive a new secret. The current secret will stop working immediately.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -167,10 +226,50 @@ export function OrgApiKeyList() {
             >
               {alertAction?.type === "revoke" && "Revoke"}
               {alertAction?.type === "delete" && "Delete"}
+              {alertAction?.type === "rotate" && "Rotate"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog
+        onOpenChange={(open) => {
+          if (!open) {
+            setRotatedKey(null);
+            setCopiedRotatedKey(false);
+          }
+        }}
+        open={!!rotatedKey}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Copy Rotated API Key</DialogTitle>
+            <DialogDescription>
+              {rotatedKey?.keyName} has a new secret. This key will only be
+              shown once.
+            </DialogDescription>
+          </DialogHeader>
+          {rotatedKey && (
+            <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
+              <code className="flex-1 break-all font-mono text-sm">
+                {rotatedKey.secret}
+              </code>
+              <Button
+                className="h-8 w-8 shrink-0"
+                onClick={handleCopyRotatedKey}
+                size="icon"
+                variant="ghost"
+              >
+                {copiedRotatedKey ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
@@ -181,12 +280,14 @@ const OrgApiKeyRow = memo(function OrgApiKeyRow({
   keyItem,
   onRequestDelete,
   onRequestRevoke,
+  onRequestRotate,
 }: {
   canManageApiKeys: boolean;
   isPending: boolean;
   keyItem: OrgApiKey;
   onRequestDelete: (keyId: string, keyName: string) => void;
   onRequestRevoke: (keyId: string, keyName: string) => void;
+  onRequestRotate: (keyId: string, keyName: string) => void;
 }) {
   const isExpired =
     typeof keyItem.expires === "number" && keyItem.expires <= Date.now();
@@ -256,6 +357,15 @@ const OrgApiKeyRow = memo(function OrgApiKeyRow({
               >
                 <ShieldOff />
                 Revoke
+              </DropdownMenuItem>
+            )}
+            {isActive && (
+              <DropdownMenuItem
+                className="cursor-pointer rounded-xl px-2"
+                onClick={() => onRequestRotate(keyItem.keyId, keyName)}
+              >
+                <RotateCw />
+                Rotate
               </DropdownMenuItem>
             )}
             <DropdownMenuItem
