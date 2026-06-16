@@ -7,6 +7,10 @@ inputs:
   artifact-name:
     description: 'Artifact name (must be unique per job)'
     required: true
+  upload-artifact:
+    description: 'Whether to upload .turbo/runs as a GitHub Actions artifact.'
+    required: false
+    default: 'false'
 runs:
   using: 'composite'
   steps:
@@ -21,8 +25,7 @@ runs:
           echo "_Turbo wasn't run with \`--summarize\` in this job — no report available._" >> "$GITHUB_STEP_SUMMARY"
         fi
     - name: Upload .turbo/runs artifact
-      if: always()
-      continue-on-error: true
+      if: ${{ inputs.upload-artifact == 'true' }}
       uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.artifact-name }}

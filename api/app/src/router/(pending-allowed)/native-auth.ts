@@ -31,18 +31,7 @@ import {
   publicProcedure,
   viewerProcedure,
 } from "../../trpc";
-
-function primaryEmail(user: {
-  emailAddresses?: Array<{ emailAddress?: string; id?: string }>;
-  primaryEmailAddressId?: string | null;
-}): string | null {
-  const primary = user.emailAddresses?.find(
-    (email) => email.id === user.primaryEmailAddressId
-  );
-  return (
-    primary?.emailAddress ?? user.emailAddresses?.[0]?.emailAddress ?? null
-  );
-}
+import { toAccountProfile } from "./account-profile";
 
 function requireNativeOAuthConfig(client: NativeClient) {
   const config = getNativeOAuthConfig(client);
@@ -120,6 +109,7 @@ async function createNativeSessionMetadata(input: {
       message: "User is not a member of the selected organization",
     });
   }
+  const profile = toAccountProfile(user);
 
   return nativeSessionMetadataSchema.parse({
     client: input.client,
@@ -129,8 +119,11 @@ async function createNativeSessionMetadata(input: {
       slug: organization.slug,
     },
     user: {
-      email: primaryEmail(user),
-      id: input.userId,
+      email: profile.primaryEmailAddress,
+      id: profile.id,
+      imageUrl: profile.imageUrl,
+      initials: profile.initials,
+      username: profile.username,
     },
   });
 }
@@ -146,6 +139,22 @@ export const nativeAuthRouter = {
       userId: ctx.auth.identity.userId,
     })
   ),
+
+  session: nativeOAuthProcedure.query(({ ctx }) => {
+    if (ctx.auth.identity.type !== "active") {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Native session organization required",
+      });
+    }
+
+    return createNativeSessionMetadata({
+      db: ctx.db,
+      client: ctx.auth.access.client,
+      organizationId: ctx.auth.identity.orgId,
+      userId: ctx.auth.identity.userId,
+    });
+  }),
 
   createAttempt: viewerProcedure
     .input(nativeCreateAttemptInputSchema)

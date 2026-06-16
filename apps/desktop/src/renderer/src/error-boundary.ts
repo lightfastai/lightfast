@@ -10,12 +10,12 @@ function ensureOverlay(): HTMLElement {
   const overlay = document.createElement("div");
   overlay.id = OVERLAY_ID;
   overlay.className =
-    "fixed inset-0 z-[9999] hidden items-center justify-center bg-black/85";
+    "fixed inset-0 z-[9999] hidden items-center justify-center bg-background/95 text-foreground";
   overlay.innerHTML = `
-    <div class="max-w-[520px] rounded-lg border border-white/20 bg-[#282828] px-8 py-6 text-white">
+    <div class="max-w-[520px] rounded-lg border bg-popover px-8 py-6 text-popover-foreground shadow-lg">
       <h2 class="m-0 mb-3 text-[17px] font-semibold">Something went wrong</h2>
-      <pre class="mb-4 max-h-[200px] overflow-auto whitespace-pre-wrap rounded bg-white/3 p-2 font-mono text-[11.4px] text-white/70"></pre>
-      <button type="button" class="cursor-default rounded-md border border-white/10 bg-white/3 px-4 py-1.5 text-[12px] text-white">Reload window</button>
+      <pre class="mb-4 max-h-[200px] overflow-auto whitespace-pre-wrap rounded-md bg-muted p-2 font-mono text-[11.4px] text-muted-foreground"></pre>
+      <button type="button" class="cursor-default rounded-md border bg-background px-4 py-1.5 text-[12px] text-foreground hover:bg-accent hover:text-accent-foreground">Reload window</button>
     </div>
   `;
   overlay

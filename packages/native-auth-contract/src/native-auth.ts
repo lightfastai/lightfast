@@ -43,6 +43,9 @@ export const nativeOrganizationSchema = z.object({
 export const nativeUserSchema = z.object({
   email: z.string().email().nullable(),
   id: z.string().min(1),
+  imageUrl: z.string().min(1).nullable().optional(),
+  initials: z.string().min(1).max(2).nullable().optional(),
+  username: z.string().min(1).nullable().optional(),
 });
 
 export const nativeSessionMetadataSchema = z.object({

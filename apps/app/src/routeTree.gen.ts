@@ -51,6 +51,7 @@ import { Route as AuthenticatedSlugSettingsIndexRouteImport } from './routes/_au
 import { Route as AuthenticatedSlugChatIndexRouteImport } from './routes/_authenticated/$slug/chat/index'
 import { Route as AuthenticatedSlugAutomationsIndexRouteImport } from './routes/_authenticated/$slug/automations/index'
 import { Route as ApiSkillsIndexEventsRouteImport } from './routes/api/skills/index/events'
+import { Route as ApiOauthDesktopSessionRouteImport } from './routes/api/oauth/desktop/session'
 import { Route as ApiOauthClientConfigRouteImport } from './routes/api/oauth/$client/config'
 import { Route as ApiNativeProxyRoutinesRouteImport } from './routes/api/native/proxy/routines'
 import { Route as ApiNativeProxyCallRouteImport } from './routes/api/native/proxy/call'
@@ -310,6 +311,11 @@ const AuthenticatedSlugAutomationsIndexRoute =
 const ApiSkillsIndexEventsRoute = ApiSkillsIndexEventsRouteImport.update({
   id: '/api/skills/index/events',
   path: '/api/skills/index/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOauthDesktopSessionRoute = ApiOauthDesktopSessionRouteImport.update({
+  id: '/api/oauth/desktop/session',
+  path: '/api/oauth/desktop/session',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiOauthClientConfigRoute = ApiOauthClientConfigRouteImport.update({
@@ -591,6 +597,7 @@ export interface FileRoutesByFullPath {
   '/api/native/proxy/call': typeof ApiNativeProxyCallRoute
   '/api/native/proxy/routines': typeof ApiNativeProxyRoutinesRoute
   '/api/oauth/$client/config': typeof ApiOauthClientConfigRoute
+  '/api/oauth/desktop/session': typeof ApiOauthDesktopSessionRoute
   '/api/skills/index/events': typeof ApiSkillsIndexEventsRoute
   '/$slug/automations/': typeof AuthenticatedSlugAutomationsIndexRoute
   '/$slug/chat/': typeof AuthenticatedSlugChatIndexRoute
@@ -664,6 +671,7 @@ export interface FileRoutesByTo {
   '/api/native/proxy/call': typeof ApiNativeProxyCallRoute
   '/api/native/proxy/routines': typeof ApiNativeProxyRoutinesRoute
   '/api/oauth/$client/config': typeof ApiOauthClientConfigRoute
+  '/api/oauth/desktop/session': typeof ApiOauthDesktopSessionRoute
   '/api/skills/index/events': typeof ApiSkillsIndexEventsRoute
   '/$slug/automations': typeof AuthenticatedSlugAutomationsIndexRoute
   '/$slug/chat': typeof AuthenticatedSlugChatIndexRoute
@@ -746,6 +754,7 @@ export interface FileRoutesById {
   '/api/native/proxy/call': typeof ApiNativeProxyCallRoute
   '/api/native/proxy/routines': typeof ApiNativeProxyRoutinesRoute
   '/api/oauth/$client/config': typeof ApiOauthClientConfigRoute
+  '/api/oauth/desktop/session': typeof ApiOauthDesktopSessionRoute
   '/api/skills/index/events': typeof ApiSkillsIndexEventsRoute
   '/_authenticated/$slug/automations/': typeof AuthenticatedSlugAutomationsIndexRoute
   '/_authenticated/$slug/chat/': typeof AuthenticatedSlugChatIndexRoute
@@ -829,6 +838,7 @@ export interface FileRouteTypes {
     | '/api/native/proxy/call'
     | '/api/native/proxy/routines'
     | '/api/oauth/$client/config'
+    | '/api/oauth/desktop/session'
     | '/api/skills/index/events'
     | '/$slug/automations/'
     | '/$slug/chat/'
@@ -902,6 +912,7 @@ export interface FileRouteTypes {
     | '/api/native/proxy/call'
     | '/api/native/proxy/routines'
     | '/api/oauth/$client/config'
+    | '/api/oauth/desktop/session'
     | '/api/skills/index/events'
     | '/$slug/automations'
     | '/$slug/chat'
@@ -983,6 +994,7 @@ export interface FileRouteTypes {
     | '/api/native/proxy/call'
     | '/api/native/proxy/routines'
     | '/api/oauth/$client/config'
+    | '/api/oauth/desktop/session'
     | '/api/skills/index/events'
     | '/_authenticated/$slug/automations/'
     | '/_authenticated/$slug/chat/'
@@ -1033,6 +1045,7 @@ export interface RootRouteChildren {
   ApiNativeProxyCallRoute: typeof ApiNativeProxyCallRoute
   ApiNativeProxyRoutinesRoute: typeof ApiNativeProxyRoutinesRoute
   ApiOauthClientConfigRoute: typeof ApiOauthClientConfigRoute
+  ApiOauthDesktopSessionRoute: typeof ApiOauthDesktopSessionRoute
   ApiSkillsIndexEventsRoute: typeof ApiSkillsIndexEventsRoute
   ApiConnectorsGranolaOauthCallbackRoute: typeof ApiConnectorsGranolaOauthCallbackRoute
   ApiConnectorsLinearOauthCallbackRoute: typeof ApiConnectorsLinearOauthCallbackRoute
@@ -1336,6 +1349,13 @@ declare module '@tanstack/react-router' {
       path: '/api/skills/index/events'
       fullPath: '/api/skills/index/events'
       preLoaderRoute: typeof ApiSkillsIndexEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/oauth/desktop/session': {
+      id: '/api/oauth/desktop/session'
+      path: '/api/oauth/desktop/session'
+      fullPath: '/api/oauth/desktop/session'
+      preLoaderRoute: typeof ApiOauthDesktopSessionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/oauth/$client/config': {
@@ -1906,6 +1926,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiNativeProxyCallRoute: ApiNativeProxyCallRoute,
   ApiNativeProxyRoutinesRoute: ApiNativeProxyRoutinesRoute,
   ApiOauthClientConfigRoute: ApiOauthClientConfigRoute,
+  ApiOauthDesktopSessionRoute: ApiOauthDesktopSessionRoute,
   ApiSkillsIndexEventsRoute: ApiSkillsIndexEventsRoute,
   ApiConnectorsGranolaOauthCallbackRoute:
     ApiConnectorsGranolaOauthCallbackRoute,

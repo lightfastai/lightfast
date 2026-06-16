@@ -6,7 +6,9 @@
     "jsx": "react-jsx",
     "moduleResolution": "Bundler",
     "paths": {
-      "@repo/ui/*": ["../../packages/ui/src/*"]
+      "@/*": ["./src/renderer/src/*"],
+      "@repo/ui/*": ["../../packages/ui/src/*"],
+      "@repo/ui-v2/*": ["../../packages/ui-v2/src/*"]
     }
   },
   "include": [

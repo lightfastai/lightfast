@@ -1,3 +1,4 @@
+import { Button } from "@repo/ui-v2/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { captureException } from "@vendor/observability/sentry-browser";
 import { useEffect } from "react";
@@ -57,10 +58,10 @@ export function AppShell() {
   }
 
   return (
-    <div>
+    <div className="space-y-4">
       <Toaster />
       <AccountCard />
-      <button
+      <Button
         onClick={() => {
           void window.lightfastBridge.auth.signOut().then((ok) => {
             if (!ok) {
@@ -69,9 +70,10 @@ export function AppShell() {
           });
         }}
         type="button"
+        variant="outline"
       >
         Sign out
-      </button>
+      </Button>
     </div>
   );
 }

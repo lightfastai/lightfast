@@ -70,6 +70,7 @@ describe("app OAuth protocol route migration", () => {
   it("ports native OAuth facade endpoints through request-aware tRPC callers", () => {
     const configSource = source("src/routes/api/oauth/$client/config.ts");
     const finalizeSource = source("src/routes/api/oauth/finalize.ts");
+    const sessionSource = source("src/routes/api/oauth/desktop/session.ts");
     const nativeServerSource = source("src/server/oauth/native-auth.ts");
 
     expect(configSource).toContain(
@@ -84,6 +85,13 @@ describe("app OAuth protocol route migration", () => {
     expect(finalizeSource).toContain("nativeFinalizeRequestSchema");
     expect(finalizeSource).toContain("nativeSessionMetadataSchema");
     expect(finalizeSource).toContain("finalize");
+    expect(sessionSource).toContain(
+      'createFileRoute("/api/oauth/desktop/session")'
+    );
+    expect(sessionSource).toContain("nativeSessionMetadataSchema");
+    expect(sessionSource).toContain("createNativeOAuthFacadeCaller");
+    expect(sessionSource).toContain('source: "desktop"');
+    expect(sessionSource).toContain("native.auth.session");
     expect(nativeServerSource).toContain("createCallerFactory(appRouter)");
     expect(nativeServerSource).toContain("createTRPCContext");
     expect(nativeServerSource).toContain("NATIVE_AUTH_HEADERS.client");
@@ -93,6 +101,7 @@ describe("app OAuth protocol route migration", () => {
     for (const routeSource of [
       configSource,
       finalizeSource,
+      sessionSource,
       nativeServerSource,
     ]) {
       expect(routeSource).not.toContain("next/");

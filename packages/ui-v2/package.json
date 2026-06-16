@@ -1,0 +1,42 @@
+{
+  "name": "@repo/ui-v2",
+  "license": "MIT",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "exports": {
+    "./components/ui/*": "./src/components/ui/*",
+    "./lib/*": "./src/lib/*",
+    "./postcss.config": "./postcss.config.mjs",
+    "./globals.css": "./src/globals.css"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "ui": "pnpm dlx shadcn@latest",
+    "clean": "git clean -xdf .cache .turbo dist node_modules"
+  },
+  "dependencies": {
+    "@base-ui/react": "catalog:",
+    "@hugeicons/core-free-icons": "catalog:",
+    "@hugeicons/react": "catalog:",
+    "class-variance-authority": "catalog:",
+    "clsx": "catalog:",
+    "react": "catalog:react19",
+    "tailwind-merge": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@tailwindcss/postcss": "catalog:tailwind4",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:react19",
+    "@types/react-dom": "catalog:react19",
+    "postcss": "catalog:tailwind4",
+    "shadcn": "catalog:",
+    "tailwindcss": "catalog:tailwind4",
+    "tw-animate-css": "catalog:",
+    "typescript": "catalog:"
+  }
+}

@@ -87,6 +87,31 @@ function makeCaller(
   });
 }
 
+function makeActiveNativeOAuthCaller() {
+  return createCaller({
+    auth: {
+      access: {
+        client: "desktop",
+        clientId: "desktop_client_test",
+        kind: "clerk-oauth",
+        scopes: ["openid", "profile", "email"],
+        userId: "user_1",
+      },
+      identity: {
+        type: "active",
+        userId: "user_1",
+        orgId: "org_1",
+        orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
+      },
+    },
+    db: {} as Database,
+    headers: new Headers({
+      "x-lightfast-native-client": "desktop",
+      "x-lightfast-organization-id": "org_1",
+    }),
+  });
+}
+
 describe("nativeAuthRouter", () => {
   beforeEach(() => {
     clerkGetUserMock.mockReset();
@@ -118,10 +143,13 @@ describe("nativeAuthRouter", () => {
           : undefined
     );
     clerkGetUserMock.mockResolvedValue({
-      emailAddresses: [
-        { emailAddress: "dev@example.com", id: "email_primary" },
-      ],
-      primaryEmailAddressId: "email_primary",
+      createdAt: Date.parse("2026-06-01T00:00:00.000Z"),
+      firstName: "Jeevan",
+      id: "user_1",
+      imageUrl: "https://img.example.com/user_1.png",
+      lastName: "Pillay",
+      primaryEmailAddress: { emailAddress: "dev@example.com" },
+      username: "jeevanpillay",
     });
     clerkGetOrganizationMembershipListMock.mockResolvedValue({
       data: [
@@ -276,7 +304,41 @@ describe("nativeAuthRouter", () => {
     ).resolves.toEqual({
       client: "desktop",
       organization: { id: "org_1", name: "Acme", slug: "acme" },
-      user: { email: "dev@example.com", id: "user_1" },
+      user: {
+        email: "dev@example.com",
+        id: "user_1",
+        imageUrl: "https://img.example.com/user_1.png",
+        initials: "JP",
+        username: "jeevanpillay",
+      },
+    });
+  });
+
+  it("rejects native session refreshes without an active organization identity", async () => {
+    await expect(
+      makeCaller({
+        client: "desktop",
+        clientId: "desktop_client_test",
+        kind: "clerk-oauth",
+        scopes: ["openid", "profile", "email"],
+        userId: "user_1",
+      }).native.auth.session()
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("returns current org-bound native session metadata for refreshes", async () => {
+    await expect(
+      makeActiveNativeOAuthCaller().native.auth.session()
+    ).resolves.toEqual({
+      client: "desktop",
+      organization: { id: "org_1", name: "Acme", slug: "acme" },
+      user: {
+        email: "dev@example.com",
+        id: "user_1",
+        imageUrl: "https://img.example.com/user_1.png",
+        initials: "JP",
+        username: "jeevanpillay",
+      },
     });
   });
 });

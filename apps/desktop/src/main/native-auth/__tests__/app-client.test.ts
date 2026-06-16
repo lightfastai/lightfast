@@ -61,6 +61,44 @@ describe("createDesktopNativeAuthClient", () => {
     expect(netFetchMock).not.toHaveBeenCalled();
   });
 
+  it("fetches current desktop session metadata with native auth headers", async () => {
+    const fetchImpl = vi.fn().mockResolvedValueOnce(
+      Response.json({
+        client: "desktop",
+        organization: { id: "org_1", name: "Acme", slug: "acme" },
+        user: {
+          email: "dev@example.com",
+          id: "user_1",
+          imageUrl: "https://img.example.com/user_1.png",
+          initials: "JP",
+          username: "jeevanpillay",
+        },
+      })
+    );
+
+    const client = createDesktopNativeAuthClient({ fetchImpl });
+    await expect(
+      client.session({
+        accessToken: "access",
+        organizationId: "org_1",
+      })
+    ).resolves.toMatchObject({
+      user: { initials: "JP", username: "jeevanpillay" },
+    });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      "https://lightfast.localhost/api/oauth/desktop/session",
+      {
+        headers: {
+          accept: "application/json",
+          authorization: "Bearer access",
+          "x-lightfast-native-client": "desktop",
+          "x-lightfast-organization-id": "org_1",
+        },
+      }
+    );
+  });
+
   it("rejects finalize responses without organization metadata", async () => {
     const fetchImpl = vi.fn().mockResolvedValueOnce(
       Response.json({

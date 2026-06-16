@@ -1,3 +1,9 @@
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui-v2/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "./trpc/react";
 import { useAuthSnapshot } from "./use-auth-snapshot";
@@ -14,10 +20,10 @@ export function AccountCard() {
     return null;
   }
   if (query.isLoading) {
-    return <p>Loading account…</p>;
+    return <p className="text-muted-foreground">Loading account...</p>;
   }
   if (query.error) {
-    return <p>Error: {query.error.message}</p>;
+    return <p className="text-destructive">Error: {query.error.message}</p>;
   }
   if (!query.data) {
     return null;
@@ -25,9 +31,11 @@ export function AccountCard() {
 
   const user = query.data;
   return (
-    <div className="text-[#0d0d0d] [.electron-dark_&]:text-white">
-      <h1>{user.fullName ?? "Unknown"}</h1>
-      <p>{user.primaryEmailAddress ?? ""}</p>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>{user.fullName ?? "Unknown"}</CardTitle>
+        <CardDescription>{user.primaryEmailAddress ?? ""}</CardDescription>
+      </CardHeader>
+    </Card>
   );
 }

@@ -85,6 +85,7 @@ export function buildBridge(): LightfastBridge {
       return () => ipcRenderer.off(IpcChannels.settingsChanged, handler);
     },
     openApp: () => ipcRenderer.invoke(IpcChannels.openApp),
+    openAppPath: (path) => ipcRenderer.invoke(IpcChannels.openAppPath, path),
     openWindow: (kind) => ipcRenderer.invoke(IpcChannels.openWindow, kind),
     reportError: (payload) =>
       ipcRenderer.send(IpcChannels.rendererError, payload),
