@@ -4,6 +4,8 @@ import type { StorybookConfig } from "@storybook/react-vite";
 import { mergeConfig, searchForWorkspaceRoot } from "vite";
 
 const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const portlessUrl = process.env.PORTLESS_URL;
+const hmrHost = portlessUrl ? new URL(portlessUrl).hostname : undefined;
 
 const config: StorybookConfig = {
   stories: ["../stories/**/*.stories.@(ts|tsx|mdx)"],
@@ -27,6 +29,15 @@ const config: StorybookConfig = {
         fs: {
           allow: [appRoot, searchForWorkspaceRoot(appRoot)],
         },
+        ...(hmrHost
+          ? {
+              hmr: {
+                clientPort: 443,
+                host: hmrHost,
+                protocol: "wss" as const,
+              },
+            }
+          : {}),
       },
       optimizeDeps: {
         include: ["@hugeicons/core-free-icons", "@hugeicons/react"],

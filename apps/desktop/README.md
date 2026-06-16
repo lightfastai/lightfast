@@ -134,18 +134,18 @@ No Lightfast API keys or Clerk JWT templates are created for desktop login.
 ### Run the stack (two terminals)
 
 ```bash
-# Terminal 1 — app + www + mcp + local services + MFE aggregate
+# Terminal 1 — app + www + mcp + Storybook + local services + MFE aggregate
 pnpm dev
 
 # Terminal 2 — Electron app
 pnpm --filter @lightfast/desktop dev
 ```
 
-`pnpm dev` boots `apps/app`, `apps/www`, `apps/mcp`, local Inngest, local
-QStash, and the Portless-backed Microfrontends aggregate. The desktop package
-dev script passes `APP_URL=$(portless get lightfast)` to Electron so dev opens
-the aggregate URL. The direct app route remains `https://app.lightfast.localhost`
-for service wiring and `NEXT_PUBLIC_APP_URL`.
+`pnpm dev` boots `apps/app`, `apps/www`, `apps/mcp`, `apps/storybook`, local
+Inngest, local QStash, and the Portless-backed Microfrontends aggregate. The
+desktop package dev script passes `APP_URL=$(portless get lightfast)` to
+Electron so dev opens the aggregate URL. The direct app route remains
+`https://app.lightfast.localhost` for service wiring and `NEXT_PUBLIC_APP_URL`.
 
 ### Inspect the encrypted session store
 
