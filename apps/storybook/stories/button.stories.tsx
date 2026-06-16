@@ -10,10 +10,35 @@ import { expect } from "storybook/test";
 const meta = {
   title: "ui/Button",
   component: Button,
-  tags: ["autodocs", "ai-generated"],
+  tags: ["autodocs"],
   argTypes: {
     children: {
       control: "text",
+    },
+    size: {
+      control: "radio",
+      options: [
+        "xs",
+        "sm",
+        "default",
+        "lg",
+        "icon-xs",
+        "icon-sm",
+        "icon",
+        "icon-lg",
+      ],
+    },
+    variant: {
+      control: "radio",
+      options: [
+        "default",
+        "outline",
+        "secondary",
+        "square",
+        "ghost",
+        "destructive",
+        "link",
+      ],
     },
   },
   parameters: {
@@ -148,6 +173,15 @@ export const Small: Story = {
 };
 
 /**
+ * Use the `xs` size for the most compact text button.
+ */
+export const ExtraSmall: Story = {
+  args: {
+    size: "xs",
+  },
+};
+
+/**
  * Use the `lg` size for a larger button, offering better visibility and easier
  * interaction for users.
  */
@@ -167,6 +201,26 @@ export const Icon: Story = {
     size: "icon",
     children: <HugeiconsIcon aria-hidden="true" icon={Mail01Icon} />,
   },
+};
+
+/**
+ * Use compact icon sizes in dense toolbars and rails.
+ */
+export const IconSizes: Story = {
+  render: () => (
+    <div className="flex items-center gap-2">
+      {(["icon-xs", "icon-sm", "icon", "icon-lg"] as const).map((size) => (
+        <Button
+          aria-label={`Login with email ${size}`}
+          key={size}
+          size={size}
+          variant="secondary"
+        >
+          <HugeiconsIcon aria-hidden="true" icon={Mail01Icon} />
+        </Button>
+      ))}
+    </div>
+  ),
 };
 
 /**

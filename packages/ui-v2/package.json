@@ -8,7 +8,9 @@
     "*.css"
   ],
   "exports": {
+    "./components/ai-elements/*": "./src/components/ai-elements/*",
     "./components/ui/*": "./src/components/ui/*",
+    "./hooks/*": "./src/hooks/*",
     "./lib/*": "./src/lib/*",
     "./postcss.config": "./postcss.config.mjs",
     "./globals.css": "./src/globals.css"
@@ -22,8 +24,11 @@
     "@base-ui/react": "catalog:",
     "@hugeicons/core-free-icons": "catalog:",
     "@hugeicons/react": "catalog:",
+    "@vendor/ai": "workspace:*",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
+    "cmdk": "catalog:",
+    "nanoid": "catalog:",
     "react": "catalog:react19",
     "tailwind-merge": "catalog:"
   },

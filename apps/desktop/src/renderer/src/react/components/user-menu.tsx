@@ -12,7 +12,6 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@repo/ui-v2/components/ui/avatar";
-import { Button } from "@repo/ui-v2/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,62 +24,43 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@repo/ui-v2/components/ui/dropdown-menu";
-import { useAuthSnapshot } from "./use-auth-snapshot";
+import { SidebarMenuButton } from "@repo/ui-v2/components/ui/sidebar";
+import { useAuthSnapshot } from "../use-auth-snapshot";
 
 export function UserMenu() {
   const auth = useAuthSnapshot();
   const primaryIdentity = auth.userUsername ?? "User";
-  const secondaryIdentity = auth.userEmail ?? null;
   const initials = auth.userInitials ?? "U";
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button
+          <SidebarMenuButton
             aria-label="Open user menu"
-            className="cursor-default overflow-hidden p-0 [-webkit-app-region:no-drag]"
-            size="icon"
+            className="cursor-default [-webkit-app-region:no-drag]"
+            shape="square"
+            size="lg"
             type="button"
-            variant="square"
           />
         }
       >
-        <Avatar className="size-7 rounded-md">
+        <Avatar>
           <AvatarImage alt="" src={auth.userImageUrl ?? undefined} />
-          <AvatarFallback className="rounded-md bg-foreground text-[10px] text-background">
-            {initials}
-          </AvatarFallback>
+          <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
         align="start"
-        className="z-[100] w-56"
+        className="z-100 w-56"
         side="top"
         sideOffset={6}
       >
         {auth.isSignedIn && (
           <>
             <DropdownMenuGroup>
-              <DropdownMenuLabel className="flex select-none items-center gap-2">
-                <Avatar className="size-6 rounded-md">
-                  <AvatarImage alt="" src={auth.userImageUrl ?? undefined} />
-                  <AvatarFallback className="rounded-md bg-foreground text-[10px] text-background">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-sm">
-                    {primaryIdentity}
-                  </p>
-                  {secondaryIdentity ? (
-                    <p className="truncate text-muted-foreground text-xs">
-                      {secondaryIdentity}
-                    </p>
-                  ) : null}
-                </div>
-              </DropdownMenuLabel>
+              <DropdownMenuLabel>{primaryIdentity}</DropdownMenuLabel>
             </DropdownMenuGroup>
 
             <DropdownMenuSeparator />
@@ -89,30 +69,17 @@ export function UserMenu() {
 
         <DropdownMenuGroup>
           <DropdownMenuItem
-            onClick={() =>
-              void window.lightfastBridge.openAppPath(
-                "/account/settings/general"
-              )
-            }
+            onClick={() => void window.lightfastBridge.openWindow("settings")}
           >
-            <HugeiconsIcon
-              className="flex-shrink-0 text-muted-foreground"
-              icon={SettingsIcon}
-              size={14}
-            />
-            Account Settings
+            <HugeiconsIcon icon={SettingsIcon} />
+            Settings
           </DropdownMenuItem>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <HugeiconsIcon
-                aria-hidden="true"
-                className="flex-shrink-0 text-muted-foreground"
-                icon={HelpCircleIcon}
-                size={14}
-              />
+              <HugeiconsIcon aria-hidden="true" icon={HelpCircleIcon} />
               Help
             </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent className="w-48">
+            <DropdownMenuSubContent>
               <DropdownMenuItem
                 render={(props) => (
                   <a
@@ -125,12 +92,7 @@ export function UserMenu() {
                   </a>
                 )}
               >
-                <HugeiconsIcon
-                  aria-hidden="true"
-                  className="flex-shrink-0 text-muted-foreground"
-                  icon={BookOpen01Icon}
-                  size={14}
-                />
+                <HugeiconsIcon aria-hidden="true" icon={BookOpen01Icon} />
                 Help Docs
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -140,12 +102,7 @@ export function UserMenu() {
                   </a>
                 )}
               >
-                <HugeiconsIcon
-                  aria-hidden="true"
-                  className="flex-shrink-0 text-muted-foreground"
-                  icon={Mail01Icon}
-                  size={14}
-                />
+                <HugeiconsIcon aria-hidden="true" icon={Mail01Icon} />
                 Contact Support
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -158,12 +115,7 @@ export function UserMenu() {
                   </a>
                 )}
               >
-                <HugeiconsIcon
-                  aria-hidden="true"
-                  className="flex-shrink-0 text-muted-foreground"
-                  icon={ChatFeedbackIcon}
-                  size={14}
-                />
+                <HugeiconsIcon aria-hidden="true" icon={ChatFeedbackIcon} />
                 Send Feedback
               </DropdownMenuItem>
             </DropdownMenuSubContent>
@@ -178,11 +130,7 @@ export function UserMenu() {
               <DropdownMenuItem
                 onClick={() => void window.lightfastBridge.auth.signOut()}
               >
-                <HugeiconsIcon
-                  className="flex-shrink-0 text-muted-foreground"
-                  icon={LogoutIcon}
-                  size={14}
-                />
+                <HugeiconsIcon icon={LogoutIcon} />
                 Sign out
               </DropdownMenuItem>
             </DropdownMenuGroup>

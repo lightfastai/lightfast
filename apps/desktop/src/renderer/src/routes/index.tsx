@@ -17,9 +17,8 @@ function PrimaryIndexRoute() {
         Primary window
       </h1>
       <p className="mb-3 leading-[1.55]">
-        The left pane is transparent so the <code>NSVisualEffectView</code> (
-        <code>vibrancy: &quot;menu&quot;</code>) shows through. Drag the window
-        from the top strip; click items to confirm they don&apos;t drag.
+        The primary desktop shell is ready. Drag the window from the top strip;
+        click items to confirm they don&apos;t drag.
       </p>
       <p className="mb-3 text-muted-foreground leading-[1.55]">
         Press{" "}

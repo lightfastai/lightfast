@@ -109,9 +109,15 @@ describe("desktop Tailwind setup", () => {
     expect(uiV2PostcssConfig).toContain('"@tailwindcss/postcss": {}');
   });
 
-  it("uses the Base Rhea sidebar tokens from the desktop-local preset", () => {
-    expect(getCssBlock(":root")).toContain("--sidebar: oklch(0.985 0 0);");
-    expect(getCssBlock(".dark")).toContain("--sidebar: oklch(0.205 0 0);");
+  it("uses the OpenAI-derived shadcn sidebar tokens from ui-v2", () => {
+    expect(getCssBlock(":root")).toContain("--sidebar: oklch(0.982 0 0);");
+    expect(getCssBlock(":root")).toContain(
+      "--sidebar-ring: oklch(0.529 0.173 254.975);"
+    );
+    expect(getCssBlock(".dark")).toContain("--sidebar: oklch(0.2002 0 0);");
+    expect(getCssBlock(".dark")).toContain(
+      "--sidebar-ring: oklch(0.626 0.205 254.947);"
+    );
   });
 
   it("declares Tailwind v4 toolchain dependencies", () => {
