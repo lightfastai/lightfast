@@ -3,18 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { XConnectorSetupClient } from "~/org/setup/x-connector-setup-client";
 import { useTRPC } from "~/trpc/react";
-import {
-  loadRoutePrefetch,
-  RoutePrefetchBoundary,
-} from "~/trpc/route-prefetch";
 
 export const Route = createFileRoute(
   "/_authenticated/$slug/tasks/connectors/x/"
 )({
-  loader: ({ params }) =>
-    loadRoutePrefetch({
-      data: { route: "tasks.xConnector", slug: params.slug },
-    }),
   head: ({ params }) => ({
     meta: [{ title: `Connect X - ${params.slug} - Lightfast` }],
   }),
@@ -22,12 +14,7 @@ export const Route = createFileRoute(
 });
 
 function XConnectorSetupPage() {
-  const prefetchState = Route.useLoaderData();
-  return (
-    <RoutePrefetchBoundary state={prefetchState}>
-      <XConnectorSetupPageContent />
-    </RoutePrefetchBoundary>
-  );
+  return <XConnectorSetupPageContent />;
 }
 
 function XConnectorSetupPageContent() {

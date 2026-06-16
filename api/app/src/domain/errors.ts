@@ -1,8 +1,4 @@
-export type DomainErrorKind =
-  | "authz"
-  | "internal"
-  | "not_found"
-  | "validation";
+export type DomainErrorKind = "authz" | "internal" | "not_found" | "validation";
 
 export class DomainError extends Error {
   readonly code: string;

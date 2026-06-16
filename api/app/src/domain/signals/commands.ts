@@ -1,9 +1,9 @@
 import {
+  type Database,
   getVisibleSignalByPublicId,
   listSignalEntityLinksForSignal,
   listSignals,
   listWorkspaceSignals,
-  type Database,
 } from "@db/app";
 import {
   createSignalInput,
@@ -136,7 +136,10 @@ export const getSignalCommand = defineCommand({
     ctx,
     deps,
     input,
-  }: SignalCommandRunArgs<z.infer<typeof getSignalInput>, SignalDetailResult>) => {
+  }: SignalCommandRunArgs<
+    z.infer<typeof getSignalInput>,
+    SignalDetailResult
+  >) => {
     const actor = requireBoundClerkOrgActor(ctx);
     const signal = await deps.getVisibleSignalByPublicId(deps.db, {
       clerkOrgId: actor.orgId,

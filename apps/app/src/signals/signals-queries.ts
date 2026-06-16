@@ -1,16 +1,16 @@
 import {
   createSignal,
   getSignal,
-  listProcessingSignals,
-  listWorkingSetSignals,
   type ListProcessingSignalsResult,
   type ListWorkingSetSignalsResult,
+  listProcessingSignals,
+  listWorkingSetSignals,
   type SignalDetailResult,
 } from "@api/app/tanstack/signals";
 import {
   keepPreviousData,
-  queryOptions,
   type QueryClient,
+  queryOptions,
 } from "@tanstack/react-query";
 import {
   PROCESSING_SIGNALS_LIMIT,

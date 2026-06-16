@@ -3,16 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Navigate, useSearch } from "@tanstack/react-router";
 import { BindGithubCard } from "~/org/setup/bind-github-card";
 import { useTRPC } from "~/trpc/react";
-import {
-  loadRoutePrefetch,
-  RoutePrefetchBoundary,
-} from "~/trpc/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/$slug/tasks/bind/")({
-  loader: ({ params }) =>
-    loadRoutePrefetch({
-      data: { route: "tasks.bind", slug: params.slug },
-    }),
   head: ({ params }) => ({
     meta: [{ title: `Connect GitHub - ${params.slug} - Lightfast` }],
   }),
@@ -28,12 +20,7 @@ export const Route = createFileRoute("/_authenticated/$slug/tasks/bind/")({
 });
 
 function BindTaskPage() {
-  const prefetchState = Route.useLoaderData();
-  return (
-    <RoutePrefetchBoundary state={prefetchState}>
-      <BindTaskPageContent />
-    </RoutePrefetchBoundary>
-  );
+  return <BindTaskPageContent />;
 }
 
 function BindTaskPageContent() {

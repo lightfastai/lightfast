@@ -3,10 +3,10 @@ import { z } from "zod";
 import type { AuthIdentity } from "../auth/identity";
 import {
   actorFromAuthIdentity,
+  DomainError,
   defineCommand,
   defineCommandSurface,
   dispatchCommand,
-  DomainError,
   requireBoundClerkOrgActor,
 } from "../domain";
 
@@ -104,7 +104,11 @@ describe("dispatchCommand", () => {
   });
 
   it("uses DomainError as the common error base", () => {
-    const error = new DomainError("validation", "INVALID_INPUT", "Invalid input");
+    const error = new DomainError(
+      "validation",
+      "INVALID_INPUT",
+      "Invalid input"
+    );
     expect(error.kind).toBe("validation");
     expect(error.code).toBe("INVALID_INPUT");
   });

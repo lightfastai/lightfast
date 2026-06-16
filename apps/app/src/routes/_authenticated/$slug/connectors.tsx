@@ -6,14 +6,9 @@ import {
   normalizeConnectorsSearch,
   validateConnectorsSearch,
 } from "~/connectors/connectors-search-params";
-import {
-  loadRoutePrefetch,
-  RoutePrefetchBoundary,
-} from "~/trpc/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/$slug/connectors")({
   validateSearch: validateConnectorsSearch,
-  loader: () => loadRoutePrefetch({ data: { route: "connectors" } }),
   head: ({ params }) => ({
     meta: [{ title: `Connectors - ${params.slug} - Lightfast` }],
   }),
@@ -21,7 +16,6 @@ export const Route = createFileRoute("/_authenticated/$slug/connectors")({
 });
 
 function ConnectorsPage() {
-  const prefetchState = Route.useLoaderData();
   const routeSearch = Route.useSearch();
   const search = useMemo(
     () => normalizeConnectorsSearch(routeSearch),
@@ -53,9 +47,5 @@ function ConnectorsPage() {
     [navigate]
   );
 
-  return (
-    <RoutePrefetchBoundary state={prefetchState}>
-      <ConnectorsClient search={search} setSearchParams={setSearchParams} />
-    </RoutePrefetchBoundary>
-  );
+  return <ConnectorsClient search={search} setSearchParams={setSearchParams} />;
 }

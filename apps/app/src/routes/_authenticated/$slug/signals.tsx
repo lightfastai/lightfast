@@ -8,14 +8,9 @@ import {
   normalizeSignalsSearch,
   validateSignalsSearch,
 } from "~/signals/signals-search-params";
-import {
-  loadRoutePrefetch,
-  RoutePrefetchBoundary,
-} from "~/trpc/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/$slug/signals")({
   validateSearch: validateSignalsSearch,
-  loader: () => loadRoutePrefetch({ data: { route: "signals" } }),
   head: ({ params }) => ({
     meta: [{ title: `Signals - ${params.slug} - Lightfast` }],
   }),
@@ -49,7 +44,6 @@ function SignalsRouteError({
 }
 
 function SignalsPage() {
-  const prefetchState = Route.useLoaderData();
   const routeSearch = Route.useSearch();
   const search = useMemo(
     () => normalizeSignalsSearch(routeSearch),
@@ -88,9 +82,5 @@ function SignalsPage() {
     [navigate]
   );
 
-  return (
-    <RoutePrefetchBoundary state={prefetchState}>
-      <SignalsClient search={search} setSearchParams={setSearchParams} />
-    </RoutePrefetchBoundary>
-  );
+  return <SignalsClient search={search} setSearchParams={setSearchParams} />;
 }
