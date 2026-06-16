@@ -56,9 +56,7 @@ describe("primary objective sidebar", () => {
     expect(desktopShell).toContain(
       'import { Button } from "@repo/ui-v2/components/ui/button";'
     );
-    expect(desktopShell).toContain(
-      'from "@repo/ui-v2/components/ui/tooltip";'
-    );
+    expect(desktopShell).toContain('from "@repo/ui-v2/components/ui/tooltip";');
     expect(desktopShell).toContain('aria-label="New chat"');
     expect(desktopShell).toContain('aria-label="Recent chats"');
     expect(desktopShell).toContain("New Chat");
@@ -86,7 +84,9 @@ describe("primary objective sidebar", () => {
     expect(desktopShell).not.toContain("via-ring");
     expect(desktopShell).not.toContain("to-accent");
     expect(desktopShell).not.toContain("via-muted-foreground");
-    expect(desktopShell).not.toContain("motion-safe:animate-objective-gradient");
+    expect(desktopShell).not.toContain(
+      "motion-safe:animate-objective-gradient"
+    );
     expect(desktopShell).not.toContain("filter:");
     expect(desktopShell).not.toContain("shape-displacement");
     expect(desktopShell).not.toContain("dangerouslySetInnerHTML");
@@ -107,9 +107,11 @@ describe("primary objective sidebar", () => {
     });
     expect(componentsJson).toContain('"style": "base-rhea"');
     expect(componentsJson).toContain('"iconLibrary": "hugeicons"');
-    expect(localButton).toContain('@base-ui/react/button');
+    expect(localButton).toContain("@base-ui/react/button");
     expect(localButton).toContain('icon: "size-8"');
-    expect(packageJson.dependencies).not.toHaveProperty("@radix-ui/react-dropdown-menu");
+    expect(packageJson.dependencies).not.toHaveProperty(
+      "@radix-ui/react-dropdown-menu"
+    );
     expect(packageJson.dependencies).not.toHaveProperty("clsx");
     expect(packageJson.devDependencies).not.toHaveProperty("clsx");
     expect(sourceFiles).not.toContain('from "../ui"');

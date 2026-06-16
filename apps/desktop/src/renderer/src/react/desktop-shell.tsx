@@ -1,10 +1,3 @@
-import { Button } from "@repo/ui-v2/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@repo/ui-v2/components/ui/tooltip";
-import { cn } from "@repo/ui-v2/lib/utils";
 import {
   AddIcon,
   HistoryIcon,
@@ -12,6 +5,13 @@ import {
   PanelLeftIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@repo/ui-v2/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui-v2/components/ui/tooltip";
+import { cn } from "@repo/ui-v2/lib/utils";
 import { useEffect, useSyncExternalStore } from "react";
 import type { FormatPlatform } from "../../../shared/accelerators";
 import type { BuildInfoSnapshot, WindowKind } from "../../../shared/ipc";
@@ -101,7 +101,7 @@ function ObjectiveIndicator({
     <span className="relative flex size-2.5 overflow-hidden rounded-[2px]">
       <span
         className={cn(
-          "absolute inset-0 animate-objective-gradient bg-gradient-to-br bg-[length:400%_400%]",
+          "absolute inset-0 animate-objective-gradient bg-[length:400%_400%] bg-gradient-to-br",
           gradientClassName
         )}
       />

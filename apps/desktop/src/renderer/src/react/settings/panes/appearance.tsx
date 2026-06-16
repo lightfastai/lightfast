@@ -1,8 +1,8 @@
-import { Card } from "@repo/ui-v2/components/ui/card";
 import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@repo/ui/components/ui/toggle-group";
+import { Card } from "@repo/ui-v2/components/ui/card";
 import type { ThemeSource } from "../../../../../shared/ipc";
 import { useSettingsSnapshot } from "../use-settings-snapshot";
 

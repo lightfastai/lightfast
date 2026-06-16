@@ -1,10 +1,6 @@
 import type { NativeSessionMetadata } from "@repo/native-auth-contract";
 import { createDesktopNativeAuthClient } from "./app-client";
-import {
-  type DesktopNativeSession,
-  getSession,
-  setSession,
-} from "./store";
+import { type DesktopNativeSession, getSession, setSession } from "./store";
 
 interface NativeSessionProfileClient {
   session(input: {

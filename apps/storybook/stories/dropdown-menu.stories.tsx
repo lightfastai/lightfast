@@ -1,4 +1,3 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
 import {
   Add02Icon,
   AddCircleIcon,
@@ -24,6 +23,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@repo/ui-v2/components/ui/dropdown-menu";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 
 /**
  * Displays a menu to the user, such as a set of actions or functions,
@@ -161,7 +161,7 @@ export const WithCheckboxes: Story = {
     <DropdownMenu {...args}>
       <DropdownMenuTrigger>Open</DropdownMenuTrigger>
       <DropdownMenuContent className="w-44">
-        <DropdownMenuCheckboxItem checked>
+        <DropdownMenuCheckboxItem defaultChecked>
           Autosave
           <DropdownMenuShortcut>Cmd+S</DropdownMenuShortcut>
         </DropdownMenuCheckboxItem>

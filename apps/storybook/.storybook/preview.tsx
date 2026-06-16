@@ -5,7 +5,7 @@ import "@repo/ui-v2/globals.css";
 import { TooltipProvider } from "@repo/ui-v2/components/ui/tooltip";
 import { mswHandlers } from "./msw-handlers";
 
-initialize({ onUnhandledRequest: "bypass" });
+initialize({ onUnhandledRequest: "error" });
 
 const preview: Preview = {
   globalTypes: {

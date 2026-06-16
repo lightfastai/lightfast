@@ -29,10 +29,7 @@ const config: StorybookConfig = {
         },
       },
       optimizeDeps: {
-        include: [
-          "@hugeicons/core-free-icons",
-          "@hugeicons/react",
-        ],
+        include: ["@hugeicons/core-free-icons", "@hugeicons/react"],
       },
     });
   },

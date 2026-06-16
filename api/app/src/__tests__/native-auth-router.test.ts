@@ -314,6 +314,18 @@ describe("nativeAuthRouter", () => {
     });
   });
 
+  it("rejects native session refreshes without an active organization identity", async () => {
+    await expect(
+      makeCaller({
+        client: "desktop",
+        clientId: "desktop_client_test",
+        kind: "clerk-oauth",
+        scopes: ["openid", "profile", "email"],
+        userId: "user_1",
+      }).native.auth.session()
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
   it("returns current org-bound native session metadata for refreshes", async () => {
     await expect(
       makeActiveNativeOAuthCaller().native.auth.session()

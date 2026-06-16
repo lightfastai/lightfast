@@ -1,4 +1,17 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui-v2/components/ui/avatar";
+import {
+  BookOpen01Icon,
+  ChatFeedbackIcon,
+  HelpCircleIcon,
+  LogoutIcon,
+  Mail01Icon,
+  SettingsIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@repo/ui-v2/components/ui/avatar";
 import { Button } from "@repo/ui-v2/components/ui/button";
 import {
   DropdownMenu,
@@ -12,15 +25,6 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@repo/ui-v2/components/ui/dropdown-menu";
-import {
-  BookOpen01Icon,
-  ChatFeedbackIcon,
-  HelpCircleIcon,
-  LogoutIcon,
-  Mail01Icon,
-  SettingsIcon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { useAuthSnapshot } from "./use-auth-snapshot";
 
 export function UserMenu() {
@@ -86,7 +90,9 @@ export function UserMenu() {
         <DropdownMenuGroup>
           <DropdownMenuItem
             onClick={() =>
-              void window.lightfastBridge.openAppPath("/account/settings/general")
+              void window.lightfastBridge.openAppPath(
+                "/account/settings/general"
+              )
             }
           >
             <HugeiconsIcon
@@ -108,13 +114,16 @@ export function UserMenu() {
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent className="w-48">
               <DropdownMenuItem
-                render={
+                render={(props) => (
                   <a
+                    {...props}
                     href="https://lightfast.ai/docs/get-started/overview"
                     rel="noopener noreferrer"
                     target="_blank"
-                  />
-                }
+                  >
+                    {props.children}
+                  </a>
+                )}
               >
                 <HugeiconsIcon
                   aria-hidden="true"
@@ -125,7 +134,11 @@ export function UserMenu() {
                 Help Docs
               </DropdownMenuItem>
               <DropdownMenuItem
-                render={<a href="mailto:support@lightfast.ai" />}
+                render={(props) => (
+                  <a {...props} href="mailto:support@lightfast.ai">
+                    {props.children}
+                  </a>
+                )}
               >
                 <HugeiconsIcon
                   aria-hidden="true"
@@ -136,9 +149,14 @@ export function UserMenu() {
                 Contact Support
               </DropdownMenuItem>
               <DropdownMenuItem
-                render={
-                  <a href="mailto:support@lightfast.ai?subject=Lightfast%20Feedback" />
-                }
+                render={(props) => (
+                  <a
+                    {...props}
+                    href="mailto:support@lightfast.ai?subject=Lightfast%20Feedback"
+                  >
+                    {props.children}
+                  </a>
+                )}
               >
                 <HugeiconsIcon
                   aria-hidden="true"

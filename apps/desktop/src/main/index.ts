@@ -26,8 +26,8 @@ import {
   maybeAutoBeginSignIn,
   onPendingSigninUrl,
 } from "./native-auth/flow";
-import { getValidAuthRequestHeaders } from "./native-auth/session";
 import { syncNativeSessionProfile } from "./native-auth/profile-sync";
+import { getValidAuthRequestHeaders } from "./native-auth/session";
 import {
   getAuthSnapshot,
   getToken as getAuthToken,
@@ -115,7 +115,9 @@ function openAllowedExternalUrl(url: string): void {
 
 function scheduleNativeSessionProfileSync({
   force = false,
-}: { force?: boolean } = {}): void {
+}: {
+  force?: boolean;
+} = {}): void {
   if (!getAuthSnapshot().isSignedIn) {
     return;
   }
@@ -124,9 +126,12 @@ function scheduleNativeSessionProfileSync({
   if (!force && now - lastProfileSyncAt < PROFILE_SYNC_THROTTLE_MS) {
     return;
   }
+  if (profileSyncInFlight) {
+    return;
+  }
   lastProfileSyncAt = now;
 
-  profileSyncInFlight ??= syncNativeSessionProfile()
+  profileSyncInFlight = syncNativeSessionProfile()
     .then(() => undefined)
     .catch((error) => {
       logger.warn("[native-auth] session profile sync failed", error);

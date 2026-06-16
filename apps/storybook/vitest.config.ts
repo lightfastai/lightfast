@@ -6,9 +6,9 @@ import { playwright } from "@vitest/browser-playwright";
 import { defineConfig, mergeConfig } from "vitest/config";
 
 const dirname =
-  typeof __dirname !== "undefined"
-    ? __dirname
-    : path.dirname(fileURLToPath(import.meta.url));
+  typeof import.meta.dirname === "undefined"
+    ? path.dirname(fileURLToPath(import.meta.url))
+    : import.meta.dirname;
 
 export default mergeConfig(
   sharedConfig,

@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const rendererSrc = new URL("../src/", import.meta.url);
@@ -67,10 +67,10 @@ describe("desktop shadcn native cleanup", () => {
   it("uses ui-v2 Base UI shadcn primitives for the renderer", () => {
     expect(componentsJson).toContain('"style": "base-rhea"');
     expect(combinedSource).toContain("@repo/ui-v2/components/ui");
-    expect(localButton).toContain('@base-ui/react/button');
-    expect(localDropdownMenu).toContain('@base-ui/react/menu');
-    expect(localAvatar).toContain('@base-ui/react/avatar');
-    expect(localTooltip).toContain('@base-ui/react/tooltip');
+    expect(localButton).toContain("@base-ui/react/button");
+    expect(localDropdownMenu).toContain("@base-ui/react/menu");
+    expect(localAvatar).toContain("@base-ui/react/avatar");
+    expect(localTooltip).toContain("@base-ui/react/tooltip");
     expect(combinedSource).not.toMatch(/@radix-ui\/react-/);
   });
 

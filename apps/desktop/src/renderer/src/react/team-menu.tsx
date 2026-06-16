@@ -1,3 +1,5 @@
+import { SettingsIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Avatar, AvatarFallback } from "@repo/ui-v2/components/ui/avatar";
 import { Button } from "@repo/ui-v2/components/ui/button";
 import {
@@ -9,8 +11,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@repo/ui-v2/components/ui/dropdown-menu";
-import { SettingsIcon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { useAuthSnapshot } from "./use-auth-snapshot";
 
 export function TeamMenu() {

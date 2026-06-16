@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 function readOptional(pathname: string) {
@@ -42,14 +42,17 @@ const appUrl = readFileSync(
   new URL("../../main/app-url.ts", import.meta.url),
   "utf8"
 );
-const storybookStories = new URL("../../../../storybook/stories/", import.meta.url);
+const storybookStories = new URL(
+  "../../../../storybook/stories/",
+  import.meta.url
+);
 
 describe("desktop sidebar menus", () => {
   it("replaces the Lightfast logo with a single active team menu", () => {
     expect(desktopShell).toContain('import { TeamMenu } from "./team-menu";');
     expect(desktopShell).toContain("<TeamMenu />");
     expect(desktopShell).not.toContain("LightfastMark");
-    expect(desktopShell).not.toContain("viewBox=\"0 0 129.334 129.334\"");
+    expect(desktopShell).not.toContain('viewBox="0 0 129.334 129.334"');
 
     expect(teamMenu).toContain("@repo/ui-v2/components/ui/avatar");
     expect(teamMenu).toContain("@repo/ui-v2/components/ui/button");
@@ -80,7 +83,9 @@ describe("desktop sidebar menus", () => {
     expect(userMenu).toContain("<Button");
     expect(userMenu).toContain('variant="square"');
     expect(userMenu).toContain("AvatarFallback");
-    expect(userMenu).toContain('const primaryIdentity = auth.userUsername ?? "User";');
+    expect(userMenu).toContain(
+      'const primaryIdentity = auth.userUsername ?? "User";'
+    );
     expect(userMenu).toContain(
       "const secondaryIdentity = auth.userEmail ?? null;"
     );
@@ -100,9 +105,12 @@ describe("desktop sidebar menus", () => {
     expect(userMenu).toContain("Contact Support");
     expect(userMenu).toContain("Send Feedback");
     expect(userMenu).toContain("Sign out");
-    expect(userMenu).toContain("https://lightfast.ai/docs/get-started/overview");
+    expect(userMenu).toContain(
+      "https://lightfast.ai/docs/get-started/overview"
+    );
     expect(userMenu).toContain("mailto:support@lightfast.ai");
-    expect(userMenu).toContain('openAppPath("/account/settings/general")');
+    expect(userMenu).toContain("openAppPath");
+    expect(userMenu).toContain('"/account/settings/general"');
     expect(userMenu).toContain("rounded-md");
     expect(userMenu).not.toContain("menuIconClass");
     expect(userMenu).not.toContain("ACCOUNT_SETTINGS_PATH");
@@ -118,7 +126,7 @@ describe("desktop sidebar menus", () => {
   });
 
   it("opens web app paths from desktop menu items", () => {
-    expect(ipc).toContain("openAppPath: channel(\"open-app-path\")");
+    expect(ipc).toContain('openAppPath: channel("open-app-path")');
     expect(ipc).toContain("openAppPath: (path: string) => Promise<void>;");
     expect(preloadBridge).toContain("openAppPath: (path) =>");
     expect(preloadBridge).toContain("IpcChannels.openAppPath");

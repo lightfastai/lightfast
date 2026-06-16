@@ -1,3 +1,5 @@
+import { LogoutIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Avatar,
   AvatarFallback,
@@ -5,8 +7,6 @@ import {
 } from "@repo/ui-v2/components/ui/avatar";
 import { Button } from "@repo/ui-v2/components/ui/button";
 import { Card } from "@repo/ui-v2/components/ui/card";
-import { LogoutIcon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "../../trpc/react";
 import { useAuthSnapshot } from "../../use-auth-snapshot";

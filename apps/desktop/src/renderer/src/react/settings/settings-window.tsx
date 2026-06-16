@@ -1,16 +1,16 @@
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@repo/ui-v2/components/ui/tabs";
-import {
   KeyboardIcon,
   PaintBoardIcon,
   SettingsIcon,
   UserIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@repo/ui-v2/components/ui/tabs";
 import { useState } from "react";
 import type { FormatPlatform } from "../../../../shared/accelerators";
 import { Account } from "./panes/account";
@@ -50,7 +50,12 @@ export function SettingsWindow({ platform }: { platform: FormatPlatform }) {
             key={id}
             value={id}
           >
-            <HugeiconsIcon aria-hidden className="size-5" icon={icon} size={20} />
+            <HugeiconsIcon
+              aria-hidden
+              className="size-5"
+              icon={icon}
+              size={20}
+            />
             <span>{label}</span>
           </TabsTrigger>
         ))}
