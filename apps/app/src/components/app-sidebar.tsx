@@ -67,13 +67,7 @@ const navIcons: Record<
   Skills: Scroll,
 };
 
-export function AppSidebar({
-  orgSlug,
-  showChatHistory = true,
-}: {
-  orgSlug: string;
-  showChatHistory?: boolean;
-}) {
+export function AppSidebar({ orgSlug }: { orgSlug: string }) {
   const { pathname } = useLocation();
   const { isMobile, setOpenMobile } = useSidebar();
   const navSections = getWorkspaceNavSections(orgSlug);
@@ -141,9 +135,7 @@ export function AppSidebar({
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
-        {showChatHistory ? (
-          <ChatHistory orgSlug={orgSlug} pathname={pathname} />
-        ) : null}
+        <ChatHistory orgSlug={orgSlug} pathname={pathname} />
       </SidebarContent>
       <SidebarFooter>
         <DropdownMenu>

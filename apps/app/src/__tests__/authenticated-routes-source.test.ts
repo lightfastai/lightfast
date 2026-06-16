@@ -181,8 +181,7 @@ describe("app authenticated route migration", () => {
     expect(teamSwitcherSource).not.toContain("next/link");
     expect(appSidebarSource).toContain("listConversations.queryOptions");
     expect(appSidebarSource).toContain('to="/$slug/chat/$conversationId"');
-    expect(appSidebarSource).toContain("showChatHistory = true");
-    expect(appSidebarSource).toContain("showChatHistory ? (");
+    expect(appSidebarSource).not.toContain("showChatHistory");
     expect(orgRouteSource).toContain("WorkspaceRouteShell");
     expect(workspaceShellSource).toContain("getBySlug.queryOptions({ slug })");
     expect(workspaceShellSource).toContain("useAuth");
@@ -193,11 +192,16 @@ describe("app authenticated route migration", () => {
     );
     expect(workspaceShellSource).toContain("isOrgSetupExemptPath");
     expect(workspaceShellSource).toContain("SetupRequirementNavigate");
-    expect(workspaceShellSource).toContain("showChatHistory={");
     expect(workspaceShellSource).toContain(
       'orgAccess.bindingStatus === "bound"'
     );
-    expect(workspaceShellSource).toContain("shouldShowWorkspaceChatHistory");
+    expect(workspaceShellSource).not.toContain("showChatHistory");
+    expect(workspaceShellSource).not.toContain(
+      "shouldShowWorkspaceChatHistory"
+    );
+    expect(workspaceModelSource).not.toContain(
+      "shouldShowWorkspaceChatHistory"
+    );
     expect(workspaceModelSource).toContain("isOrgSettingsPath");
     expect(workspaceShellSource).toContain("Team not found");
     expect(workspaceShellSource).not.toContain("organization?.name ?? slug");
