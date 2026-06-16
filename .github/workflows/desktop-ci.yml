@@ -87,6 +87,7 @@ jobs:
         # under app.asar.unpacked/ (e.g. better_sqlite3.node on both legs).
         # if-no-files-found=error catches a silent forge regression where out/
         # doesn't materialize.
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: desktop-package-${{ runner.os }}

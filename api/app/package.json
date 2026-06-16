@@ -108,7 +108,7 @@
     "@repo/source-control-contract": "workspace:*",
     "@repo/user-connector-contract": "workspace:*",
     "@repo/x-app-node": "workspace:*",
-    "@t3-oss/env-nextjs": "^0.12.0",
+    "@t3-oss/env-core": "catalog:",
     "@trpc/server": "catalog:",
     "@vendor/ai": "workspace:*",
     "@vendor/braintrust": "workspace:*",
