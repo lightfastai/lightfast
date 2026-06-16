@@ -1,16 +1,6 @@
 import "@tanstack/react-start/server-only";
 
 import { env } from "~/env";
-import { appUrl, directAppUrl } from "~/origins";
-
-const productionAppOrigin = "https://lightfast.ai";
-
-const isDev =
-  env.NEXT_PUBLIC_VERCEL_ENV === undefined ||
-  env.NEXT_PUBLIC_VERCEL_ENV === "development";
-
-const isBuildPhase =
-  process.env.npm_lifecycle_event?.includes("build") ?? false;
 
 function originFromUrl(value: string | undefined) {
   if (!value) {
@@ -23,15 +13,8 @@ function originFromUrl(value: string | undefined) {
   }
 }
 
-const canonicalAppOrigin = originFromUrl(appUrl);
-const directAppOrigin = originFromUrl(directAppUrl);
-
-if (isDev && !isBuildPhase && canonicalAppOrigin === productionAppOrigin) {
-  throw new Error(
-    "[cors] app app URL resolved to production URL in dev; portless env injection is missing. " +
-      "Run `pnpm dev` from the workspace root before starting app."
-  );
-}
+const canonicalAppOrigin = originFromUrl(env.VITE_LIGHTFAST_APP_URL);
+const directAppOrigin = originFromUrl(process.env.PORTLESS_URL);
 
 export function isAllowedWebOrigin(origin: string | null): origin is string {
   if (!origin) {

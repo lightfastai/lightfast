@@ -20,7 +20,7 @@ const envMock = {
     "0000000000000000000000000000000000000000000000000000000000000000",
 };
 
-const originalNextPublicAppUrl = process.env.NEXT_PUBLIC_APP_URL;
+const originalNextPublicAppUrl = process.env.VITE_LIGHTFAST_APP_URL;
 
 class MockGranolaAppNodeError extends Error {
   constructor(
@@ -107,7 +107,7 @@ const { callUserConnectorTool, findUserConnectorTools } = await import(
 
 describe("user connector chat runtime", () => {
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_APP_URL =
+    process.env.VITE_LIGHTFAST_APP_URL =
       "https://chat.lightfast.test/workspaces/acme";
 
     getCurrentUserConnectorConnectionMock.mockReset();
@@ -161,9 +161,9 @@ describe("user connector chat runtime", () => {
 
   afterEach(() => {
     if (originalNextPublicAppUrl === undefined) {
-      delete process.env.NEXT_PUBLIC_APP_URL;
+      delete process.env.VITE_LIGHTFAST_APP_URL;
     } else {
-      process.env.NEXT_PUBLIC_APP_URL = originalNextPublicAppUrl;
+      process.env.VITE_LIGHTFAST_APP_URL = originalNextPublicAppUrl;
     }
   });
 

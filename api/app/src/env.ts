@@ -1,8 +1,6 @@
 import { createEnv } from "@t3-oss/env-core";
 import { braintrustEnv } from "@vendor/braintrust/env";
-import { clerkEnvBase } from "@vendor/clerk/env";
 import { env as inngestEnv } from "@vendor/inngest/env";
-import { sentryEnv } from "@vendor/observability/sentry-env";
 import { unkeyEnv } from "@vendor/unkey/env";
 import { z } from "zod";
 
@@ -12,12 +10,13 @@ const isConnectorMcpAuthSecretRequired =
     process.env.NODE_ENV === "production");
 
 export const env = createEnv({
-  extends: [clerkEnvBase, sentryEnv, inngestEnv, braintrustEnv, unkeyEnv],
+  extends: [inngestEnv, braintrustEnv, unkeyEnv],
   clientPrefix: "" as const,
   client: {},
   server: {
     CLERK_CLI_OAUTH_CLIENT_ID: z.string().min(1).optional(),
     CLERK_DESKTOP_OAUTH_CLIENT_ID: z.string().min(1).optional(),
+    CLERK_SECRET_KEY: z.string().min(1).startsWith("sk_"),
     DEVELOPER_AUTH_BOX_ORIGIN: z.string().url().optional(),
     DEVELOPER_AUTH_BOX_TOKEN: z.string().min(1).optional(),
     ENCRYPTION_KEY: z
@@ -55,6 +54,7 @@ export const env = createEnv({
   runtimeEnv: {
     CLERK_CLI_OAUTH_CLIENT_ID: process.env.CLERK_CLI_OAUTH_CLIENT_ID,
     CLERK_DESKTOP_OAUTH_CLIENT_ID: process.env.CLERK_DESKTOP_OAUTH_CLIENT_ID,
+    CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
     DEVELOPER_AUTH_BOX_ORIGIN: process.env.DEVELOPER_AUTH_BOX_ORIGIN,
     DEVELOPER_AUTH_BOX_TOKEN: process.env.DEVELOPER_AUTH_BOX_TOKEN,
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,

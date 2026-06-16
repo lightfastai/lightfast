@@ -19,7 +19,7 @@ const MUTATED_ENV_KEYS = [
   "CONNECTOR_MCP_AUTH_SECRET",
   "ENCRYPTION_KEY",
   "INNGEST_APP_NAME",
-  "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+  "VITE_CLERK_PUBLISHABLE_KEY",
   "SKIP_ENV_VALIDATION",
   "UNKEY_API_ID",
   "UNKEY_ROOT_KEY",
@@ -60,7 +60,7 @@ describe("api app env", () => {
     process.env.BRAINTRUST_API_KEY = "bt_test_key";
     process.env.CLERK_SECRET_KEY = "sk_test_fake-secret-key-for-tests";
     process.env.INNGEST_APP_NAME = "lightfast-test";
-    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY =
+    process.env.VITE_CLERK_PUBLISHABLE_KEY =
       "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk";
     delete process.env.ENCRYPTION_KEY;
     delete process.env.SKIP_ENV_VALIDATION;
@@ -153,7 +153,7 @@ function setValidBaseEnv(vercelEnv: "development" | "preview" | "production") {
   process.env.INNGEST_APP_NAME = "lightfast-test";
   process.env.LINEAR_CLIENT_ID = "linear_client_test";
   process.env.LINEAR_CLIENT_SECRET = "linear_secret_test";
-  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY =
+  process.env.VITE_CLERK_PUBLISHABLE_KEY =
     "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk";
   delete process.env.SKIP_ENV_VALIDATION;
   process.env.UNKEY_API_ID = "api_test";

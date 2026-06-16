@@ -34,13 +34,8 @@ function clerkHostForAppUrl(value: string | undefined): string | null {
 }
 
 function isAllowedProductionClerkHost(hostname: string) {
-  return [
-    import.meta.env.VITE_LIGHTFAST_APP_URL,
-    import.meta.env.VITE_LIGHTFAST_WWW_URL,
-  ].some((origin) => {
-    const clerkHost = clerkHostForAppUrl(origin);
-    return clerkHost !== null && hostname === clerkHost;
-  });
+  const clerkHost = clerkHostForAppUrl(import.meta.env.VITE_LIGHTFAST_APP_URL);
+  return clerkHost !== null && hostname === clerkHost;
 }
 
 export function isClerkOAuthContinuationUrl(url: URL) {

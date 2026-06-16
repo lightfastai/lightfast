@@ -18,7 +18,7 @@ const envMock = {
   CONNECTOR_MCP_AUTH_SECRET: "mcp_auth_secret_12345678901234567890",
   ENCRYPTION_KEY:
     "0000000000000000000000000000000000000000000000000000000000000000",
-  NEXT_PUBLIC_APP_URL: "https://app.lightfast.localhost",
+  VITE_LIGHTFAST_APP_URL: "https://app.lightfast.localhost",
   VERCEL_ENV: "test",
   X_CLIENT_ID: "x_client_test",
   X_CLIENT_SECRET: "x_secret_test",
@@ -124,7 +124,7 @@ async function catchRejection(promise: Promise<unknown>) {
 
 describe("loadConnectorRuntimeTools", () => {
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_APP_URL = envMock.NEXT_PUBLIC_APP_URL;
+    process.env.VITE_LIGHTFAST_APP_URL = envMock.VITE_LIGHTFAST_APP_URL;
     listCurrentOrgConnectorConnectionsMock.mockReset();
     getCurrentOrgConnectorConnectionMock.mockReset();
     markCurrentOrgConnectorConnectionErrorMock.mockReset();

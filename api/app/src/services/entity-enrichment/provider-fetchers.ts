@@ -96,7 +96,7 @@ async function fetchXProfiles(
   }
 
   const config = requireXConnectorConfig({
-    appUrl: process.env.NEXT_PUBLIC_APP_URL,
+    appUrl: process.env.VITE_LIGHTFAST_APP_URL,
     nodeEnv:
       env.VERCEL_ENV === "development" ? "development" : process.env.NODE_ENV,
   });

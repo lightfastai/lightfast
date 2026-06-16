@@ -3,12 +3,11 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 let getClerkFrontendApi: typeof import("../env").getClerkFrontendApi;
 
 const originalClerkSecretKey = process.env.CLERK_SECRET_KEY;
-const originalClerkPublishableKey =
-  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+const originalClerkPublishableKey = process.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 beforeAll(async () => {
   process.env.CLERK_SECRET_KEY = "sk_test_fake-secret-key-for-tests";
-  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = `pk_test_${Buffer.from(
+  process.env.VITE_CLERK_PUBLISHABLE_KEY = `pk_test_${Buffer.from(
     "test-clerk.lightfast.example$"
   ).toString("base64")}`;
 
@@ -22,9 +21,9 @@ afterAll(() => {
     process.env.CLERK_SECRET_KEY = originalClerkSecretKey;
   }
   if (originalClerkPublishableKey === undefined) {
-    delete process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+    delete process.env.VITE_CLERK_PUBLISHABLE_KEY;
   } else {
-    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = originalClerkPublishableKey;
+    process.env.VITE_CLERK_PUBLISHABLE_KEY = originalClerkPublishableKey;
   }
 });
 

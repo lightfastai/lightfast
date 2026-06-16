@@ -137,7 +137,7 @@ describe("app migration readiness", () => {
     expect(existsSync(resolve(repoRoot, "apps/app-next"))).toBe(false);
   });
 
-  it("keeps the TanStack app deployable under the old app environment surface", () => {
+  it("keeps the TanStack app deployable with Vite environment names", () => {
     const packageJson = JSON.parse(
       readWorkspaceFile("apps/app/package.json")
     ) as {
@@ -160,17 +160,14 @@ describe("app migration readiness", () => {
       "./.env.overrides.local"
     );
     expect(envSource).toMatch(
-      /VITE_LIGHTFAST_APP_URL:\s*process\.env\.VITE_LIGHTFAST_APP_URL\s*\?\?\s*process\.env\.NEXT_PUBLIC_APP_URL/
+      /VITE_LIGHTFAST_APP_URL:\s*process\.env\.VITE_LIGHTFAST_APP_URL/
     );
-    expect(envSource).toMatch(
-      /VITE_LIGHTFAST_WWW_URL:\s*process\.env\.VITE_LIGHTFAST_WWW_URL\s*\?\?\s*process\.env\.NEXT_PUBLIC_WWW_URL/
+    expect(envSource).not.toContain("VITE_LIGHTFAST_WWW_URL");
+    expect(envSource).toContain(
+      "VITE_CLERK_PUBLISHABLE_KEY: process.env.VITE_CLERK_PUBLISHABLE_KEY"
     );
-    expect(envSource).toMatch(
-      /VITE_CLERK_PUBLISHABLE_KEY:\s*process\.env\.VITE_CLERK_PUBLISHABLE_KEY\s*\?\?\s*process\.env\.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY/
-    );
-    expect(envSource).toMatch(
-      /VITE_SENTRY_DSN:\s*process\.env\.VITE_SENTRY_DSN\s*\?\?\s*process\.env\.NEXT_PUBLIC_SENTRY_DSN/
-    );
+    expect(envSource).toContain("VITE_SENTRY_DSN: process.env.VITE_SENTRY_DSN");
+    expect(envSource).not.toContain("NEXT_PUBLIC_");
     expect(viteConfigSource).toMatch(/plugins:\s*\[[\s\S]*tanstackStart\(\)/);
     expect(viteConfigSource).toMatch(/plugins:\s*\[[\s\S]*sentryTanstackStart/);
     expect(vercelConfig.framework).toBe("tanstack-start");
