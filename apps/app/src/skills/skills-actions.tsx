@@ -11,7 +11,7 @@ export function SkillsActions({
   repositoryUrl: string;
 }) {
   return (
-    <div className="flex min-w-0 flex-wrap items-center justify-center gap-3">
+    <div className="flex min-w-0 flex-wrap items-center justify-start gap-3">
       <SkillStatus freshness={freshness} />
       {repositoryUrl && (
         <Button

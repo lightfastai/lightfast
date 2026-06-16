@@ -250,7 +250,17 @@ export function ConnectorsClient({
 
   return (
     <WorkspaceSurface className="max-w-3xl px-6 py-10">
-      <header>
+      <div
+        className="flex min-w-0 items-center justify-start"
+        data-testid="connectors-actions-row"
+      >
+        <ConnectorOwnerScopeTabs
+          onOwnerScopeChange={(scope) => setSearchParams({ scope })}
+          ownerScope={ownerView}
+        />
+      </div>
+
+      <header className="mt-8">
         <h1 className="font-semibold text-2xl text-foreground tracking-[-0.02em]">
           Connectors
         </h1>
@@ -296,13 +306,6 @@ export function ConnectorsClient({
             { label: "Needs reconnect", value: "needs_reconnect" },
           ]}
           value={statusFilter}
-        />
-      </div>
-
-      <div className="mt-4">
-        <ConnectorOwnerScopeTabs
-          onOwnerScopeChange={(scope) => setSearchParams({ scope })}
-          ownerScope={ownerView}
         />
       </div>
 
