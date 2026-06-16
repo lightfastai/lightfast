@@ -2,7 +2,6 @@ import { Button } from "@repo/ui/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { WorkspaceSurface } from "~/components/workspace-surface";
-import { useTRPC } from "~/trpc/react";
 import { SignalCreateDialog } from "./signal-create-dialog";
 import { SignalDetailSheet } from "./signal-detail-sheet";
 import { SignalsListView } from "./signals-list-view";
@@ -15,6 +14,7 @@ import {
   serializeSignalValues,
   toggleSignalValue,
 } from "./signals-search-params";
+import { signalDetailQueryOptions } from "./signals-queries";
 import { SignalsToolbar } from "./signals-toolbar";
 import { SignalsTruncationBanner } from "./signals-truncation-banner";
 import { useSignalsUiStore } from "./signals-ui-store";
@@ -28,7 +28,6 @@ export function SignalsClient({
   search: NormalizedSignalsSearch;
   setSearchParams: (updates: Partial<NormalizedSignalsSearch>) => void;
 }) {
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const openCreateSignal = useCallback(() => setCreateOpen(true), []);
@@ -74,10 +73,10 @@ export function SignalsClient({
         return; // processing/full rows already carry the body
       }
       void queryClient.prefetchQuery(
-        trpc.org.workspace.signals.get.queryOptions({ publicId })
+        signalDetailQueryOptions({ enabled: true, publicId })
       );
     },
-    [queryClient, signalsByPublicId, trpc]
+    [queryClient, signalsByPublicId]
   );
 
   const emptyCreateAction = (

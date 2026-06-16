@@ -10,6 +10,7 @@ import type { ChangeEvent, FormEvent, KeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { CreateDialogShell } from "~/components/create-dialog-shell";
 import { useTRPC } from "~/trpc/react";
+import { createSignalMutationOptions } from "./signals-queries";
 
 interface SignalCreateDialogProps {
   onOpenChange: (open: boolean) => void;
@@ -120,26 +121,19 @@ export function SignalCreateDialog({
   const formattedInputLimit = SIGNAL_INPUT_MAX_LENGTH.toLocaleString();
 
   const createMutation = useMutation(
-    trpc.org.workspace.signals.create.mutationOptions({
-      meta: { errorTitle: "Failed to create signal" },
-      onSuccess: () => {
-        removeSignalDraft(draftStorageKey);
-        void queryClient.invalidateQueries(
-          trpc.org.workspace.signals.workingSet.queryFilter()
-        );
-        void queryClient.invalidateQueries(
-          trpc.org.workspace.signals.list.queryFilter()
-        );
+    createSignalMutationOptions({
+      draftStorageKey,
+      onClose: () => onOpenChange(false),
+      onCreateMore: () =>
+        requestAnimationFrame(() => textareaRef.current?.focus()),
+      queryClient,
+      removeDraft: removeSignalDraft,
+      resetInput: () => setInput(""),
+      shouldCreateMore: () => createMore,
+      toastSuccess: () =>
         toast.success("Signal queued", {
           description: "Classification will start shortly.",
-        });
-        setInput("");
-        if (createMore) {
-          requestAnimationFrame(() => textareaRef.current?.focus());
-          return;
-        }
-        onOpenChange(false);
-      },
+        }),
     })
   );
 
