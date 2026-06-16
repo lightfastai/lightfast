@@ -68,13 +68,13 @@ test("boots, renderer paints, quits cleanly", async () => {
   window.on("pageerror", (err) => errors.push(`pageerror: ${err.message}`));
 
   // Anchor on the React mount point, not just `body :not-empty` — chrome-error
-  // and devtools pages also have non-empty bodies. `#react-root` is the
-  // primary window's mount id (apps/desktop/src/renderer/index.html:118 +
-  // src/renderer/src/react/entry.tsx:34). Use `state: "attached"` because the
+  // and devtools pages also have non-empty bodies. `#app` is the primary
+  // window's mount id (apps/desktop/src/renderer/index.html +
+  // src/renderer/src/react/entry.tsx). Use `state: "attached"` because the
   // first child is sonner's `<section aria-live="polite">` (always present,
   // never visible). Attachment proves the React tree mounted, which is the
   // smoke we care about.
-  await window.waitForSelector("#react-root *", {
+  await window.waitForSelector("#app *", {
     state: "attached",
     timeout: 30_000,
   });
