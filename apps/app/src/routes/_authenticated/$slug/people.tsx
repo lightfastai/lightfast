@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
+import { WorkspaceRouteErrorPanel } from "~/components/route-boundaries";
 import { PeopleClient } from "~/people/people-client";
+import { PeopleLoading } from "~/people/people-loading";
 import {
   type NormalizedPeopleSearch,
   normalizePeopleSearch,
@@ -13,12 +15,44 @@ import {
 
 export const Route = createFileRoute("/_authenticated/$slug/people")({
   validateSearch: validatePeopleSearch,
-  loader: () => loadRoutePrefetch({ data: { route: "people" } }),
+  loaderDeps: ({ search }) => ({
+    peopleQuery: search.peopleQuery,
+    provider: search.provider,
+    type: search.type,
+  }),
+  loader: ({ deps }) =>
+    loadRoutePrefetch({ data: { route: "people", ...deps } }),
   head: ({ params }) => ({
     meta: [{ title: `People - ${params.slug} - Lightfast` }],
   }),
+  pendingMs: 250,
+  pendingMinMs: 250,
+  pendingComponent: PeopleRoutePending,
+  errorComponent: PeopleRouteError,
   component: PeoplePage,
 });
+
+function PeopleRoutePending() {
+  return <PeopleLoading />;
+}
+
+function PeopleRouteError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  return (
+    <WorkspaceRouteErrorPanel
+      description="We couldn't load people for this workspace. Refresh the route to try again."
+      error={error}
+      reset={reset}
+      route="people"
+      title="Couldn't load people"
+    />
+  );
+}
 
 function PeoplePage() {
   const prefetchState = Route.useLoaderData();

@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
+import { WorkspaceRouteErrorPanel } from "~/components/route-boundaries";
 import { DecisionsClient } from "~/decisions/decisions-client";
+import { DecisionsLoading } from "~/decisions/decisions-loading";
 import {
   type NormalizedDecisionsSearch,
   normalizeDecisionsSearch,
@@ -13,12 +15,44 @@ import {
 
 export const Route = createFileRoute("/_authenticated/$slug/decisions")({
   validateSearch: validateDecisionsSearch,
-  loader: () => loadRoutePrefetch({ data: { route: "decisions" } }),
+  loaderDeps: ({ search }) => ({
+    provider: search.provider,
+    q: search.q,
+    status: search.status,
+  }),
+  loader: ({ deps }) =>
+    loadRoutePrefetch({ data: { route: "decisions", ...deps } }),
   head: ({ params }) => ({
     meta: [{ title: `Decisions - ${params.slug} - Lightfast` }],
   }),
+  pendingMs: 250,
+  pendingMinMs: 250,
+  pendingComponent: DecisionsRoutePending,
+  errorComponent: DecisionsRouteError,
   component: DecisionsPage,
 });
+
+function DecisionsRoutePending() {
+  return <DecisionsLoading />;
+}
+
+function DecisionsRouteError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  return (
+    <WorkspaceRouteErrorPanel
+      description="We couldn't load decisions for this workspace. Refresh the route to try again."
+      error={error}
+      reset={reset}
+      route="decisions"
+      title="Couldn't load decisions"
+    />
+  );
+}
 
 function DecisionsPage() {
   const prefetchState = Route.useLoaderData();

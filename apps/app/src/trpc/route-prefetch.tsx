@@ -13,7 +13,7 @@ type RoutePrefetchInput =
   | { route: "automations.list" }
   | { route: "automations.new" }
   | { route: "connectors" }
-  | { route: "decisions" }
+  | { provider?: string; q?: string; route: "decisions"; status?: string }
   | { route: "developerConnections" }
   | { route: "org.mcp" }
   | { route: "org.settings.apiKeys" }
@@ -21,7 +21,7 @@ type RoutePrefetchInput =
   | { route: "org.settings.general"; slug: string }
   | { route: "org.settings.members" }
   | { route: "org.settings.sourceControl" }
-  | { route: "people" }
+  | { peopleQuery?: string; provider?: string; route: "people"; type?: string }
   | { route: "signals" }
   | { route: "skills" }
   | { route: "tasks.bind"; slug: string }
@@ -219,7 +219,11 @@ export const loadRoutePrefetch = createServerFn({ method: "GET" })
           await connectorsPrefetch.prefetchConnectorsRoute(prefetchContext);
           break;
         case "decisions":
-          await decisionsPrefetch.prefetchDecisionsRoute(prefetchContext);
+          await decisionsPrefetch.prefetchDecisionsRoute(prefetchContext, {
+            provider: data.provider,
+            q: data.q,
+            status: data.status,
+          });
           break;
         case "developerConnections":
           await developerConnectionsPrefetch.prefetchDeveloperConnectionsRoute(
@@ -248,7 +252,11 @@ export const loadRoutePrefetch = createServerFn({ method: "GET" })
           await orgPrefetch.prefetchOrgSourceControlRoute(prefetchContext);
           break;
         case "people":
-          await peoplePrefetch.prefetchPeopleRoute(prefetchContext);
+          await peoplePrefetch.prefetchPeopleRoute(prefetchContext, {
+            peopleQuery: data.peopleQuery,
+            provider: data.provider,
+            type: data.type,
+          });
           break;
         case "signals":
           await signalsPrefetch.prefetchSignalsRoute(prefetchContext);

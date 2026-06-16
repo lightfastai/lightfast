@@ -185,4 +185,32 @@ describe("app product route data prefetch", () => {
     expect(formSource).toContain("connectorProvider");
     expect(formSource).toContain("No connector");
   });
+
+  it("hydrates people and decisions with the active route search params", () => {
+    const peopleRouteSource = source(
+      "src/routes/_authenticated/$slug/people.tsx"
+    );
+    const decisionsRouteSource = source(
+      "src/routes/_authenticated/$slug/decisions.tsx"
+    );
+    const prefetchSource = source("src/trpc/route-prefetch.tsx");
+
+    expect(peopleRouteSource).toContain("loaderDeps:");
+    expect(peopleRouteSource).toContain("peopleQuery: search.peopleQuery");
+    expect(peopleRouteSource).toContain("provider: search.provider");
+    expect(peopleRouteSource).toContain("type: search.type");
+    expect(peopleRouteSource).toContain("...deps");
+
+    expect(decisionsRouteSource).toContain("loaderDeps:");
+    expect(decisionsRouteSource).toContain("provider: search.provider");
+    expect(decisionsRouteSource).toContain("q: search.q");
+    expect(decisionsRouteSource).toContain("status: search.status");
+    expect(decisionsRouteSource).toContain("...deps");
+
+    expect(prefetchSource).toContain("peopleQuery?: string");
+    expect(prefetchSource).toContain("provider?: string");
+    expect(prefetchSource).toContain("status?: string");
+    expect(prefetchSource).toContain("prefetchPeopleRoute(prefetchContext,");
+    expect(prefetchSource).toContain("prefetchDecisionsRoute(prefetchContext,");
+  });
 });
