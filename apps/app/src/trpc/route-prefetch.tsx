@@ -1,13 +1,7 @@
 import { type DehydratedState, HydrationBoundary } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import type { ReactNode } from "react";
-import { AUTOMATION_RUNS_PAGE_LIMIT } from "~/automations/automations-cache";
-import { DECISIONS_PAGE_SIZE } from "~/decisions/decisions-model";
-import { PEOPLE_PAGE_SIZE } from "~/people/people-model";
-import {
-  PROCESSING_SIGNALS_LIMIT,
-  signalProcessingStatuses,
-} from "~/signals/signals-model";
+import type { RoutePrefetchContext } from "~/trpc/route-prefetch-types";
 
 type RoutePrefetchInput =
   | { route: "account.githubTask" }
@@ -153,12 +147,30 @@ export const loadRoutePrefetch = createServerFn({ method: "GET" })
       { appRouter, createTRPCContext },
       { createTRPCOptionsProxy },
       { createQueryClient },
+      accountPrefetch,
+      automationsPrefetch,
+      connectorsPrefetch,
+      decisionsPrefetch,
+      developerConnectionsPrefetch,
+      orgPrefetch,
+      peoplePrefetch,
+      signalsPrefetch,
+      skillsPrefetch,
     ] = await Promise.all([
       import("@tanstack/react-query"),
       import("@tanstack/react-start/server"),
       import("@api/app"),
       import("@trpc/tanstack-react-query"),
       import("~/trpc/query-client"),
+      import("~/account/account-route-prefetch"),
+      import("~/automations/automations-route-prefetch"),
+      import("~/connectors/connectors-route-prefetch"),
+      import("~/decisions/decisions-route-prefetch"),
+      import("~/developer-connections/developer-connections-route-prefetch"),
+      import("~/org/org-route-prefetch"),
+      import("~/people/people-route-prefetch"),
+      import("~/signals/signals-route-prefetch"),
+      import("~/skills/skills-route-prefetch"),
     ]);
 
     const headers = new Headers(getRequest().headers);
@@ -172,193 +184,96 @@ export const loadRoutePrefetch = createServerFn({ method: "GET" })
       ctx: () => createTRPCContext({ headers }),
       queryClient: () => queryClient,
     });
+    const prefetchContext: RoutePrefetchContext = { queryClient, trpc };
 
     try {
       switch (data.route) {
         case "account.githubTask":
         case "account.settings.sourceControl":
-          await queryClient.fetchQuery(
-            trpc.viewer.githubAccount.status.queryOptions()
-          );
+          await accountPrefetch.prefetchAccountGithubStatus(prefetchContext);
           break;
         case "account.mcp":
-          await queryClient.fetchQuery(
-            trpc.viewer.account.mcpConnections.list.queryOptions()
-          );
+          await accountPrefetch.prefetchAccountMcpConnections(prefetchContext);
           break;
         case "account.settings.general":
         case "account.usernameTask":
-          await queryClient.fetchQuery(trpc.viewer.account.get.queryOptions());
+          await accountPrefetch.prefetchAccountProfile(prefetchContext);
           break;
         case "automations.detail":
-          await Promise.all([
-            queryClient.fetchQuery(
-              trpc.org.workspace.automations.get.queryOptions({
-                id: data.automationId,
-              })
-            ),
-            queryClient.fetchQuery(
-              trpc.org.workspace.automations.listRuns.queryOptions({
-                id: data.automationId,
-                limit: AUTOMATION_RUNS_PAGE_LIMIT,
-              })
-            ),
-          ]);
+          await automationsPrefetch.prefetchAutomationDetailRoute(
+            prefetchContext,
+            data.automationId
+          );
           break;
         case "automations.list":
-          await queryClient.fetchQuery(
-            trpc.org.workspace.automations.list.queryOptions()
+          await automationsPrefetch.prefetchAutomationsListRoute(
+            prefetchContext
           );
           break;
         case "automations.new":
-          await queryClient.fetchQuery(
-            trpc.org.workspace.connectors.list.queryOptions()
+          await automationsPrefetch.prefetchAutomationCreateRoute(
+            prefetchContext
           );
           break;
         case "connectors":
-          await queryClient.fetchQuery(
-            trpc.org.workspace.connectors.listSections.queryOptions()
-          );
+          await connectorsPrefetch.prefetchConnectorsRoute(prefetchContext);
           break;
         case "decisions":
-          await Promise.all([
-            queryClient.fetchInfiniteQuery(
-              trpc.org.workspace.decisions.list.infiniteQueryOptions(
-                { limit: DECISIONS_PAGE_SIZE },
-                {
-                  getNextPageParam: (lastPage) => lastPage.nextCursor,
-                  staleTime: 60_000,
-                }
-              )
-            ),
-            queryClient.fetchQuery({
-              ...trpc.org.workspace.decisions.views.list.queryOptions(),
-              staleTime: 60_000,
-            }),
-          ]);
+          await decisionsPrefetch.prefetchDecisionsRoute(prefetchContext);
           break;
         case "developerConnections":
-          await queryClient.fetchQuery(
-            trpc.org.workspace.developerConnections.list.queryOptions()
+          await developerConnectionsPrefetch.prefetchDeveloperConnectionsRoute(
+            prefetchContext
           );
           break;
         case "org.mcp":
-          await queryClient.fetchQuery(
-            trpc.org.settings.mcpConnections.list.queryOptions()
-          );
+          await orgPrefetch.prefetchOrgMcpRoute(prefetchContext);
           break;
         case "org.settings.apiKeys":
-          await queryClient.fetchQuery(
-            trpc.org.settings.orgApiKeys.list.queryOptions()
-          );
+          await orgPrefetch.prefetchOrgApiKeysRoute(prefetchContext);
           break;
         case "org.settings.billing":
-          await queryClient.fetchQuery(
-            trpc.org.settings.orgBilling.overview.queryOptions()
-          );
+          await orgPrefetch.prefetchOrgBillingRoute(prefetchContext);
           break;
         case "org.settings.general":
-          await Promise.all([
-            queryClient.fetchQuery(
-              trpc.org.settings.identity.get.queryOptions()
-            ),
-            queryClient.fetchQuery(
-              trpc.org.settings.organization.listDomains.queryOptions({
-                slug: data.slug,
-              })
-            ),
-            queryClient.fetchQuery(
-              trpc.viewer.organization.listUserOrganizations.queryOptions()
-            ),
-          ]);
+          await orgPrefetch.prefetchOrgGeneralSettingsRoute(
+            prefetchContext,
+            data.slug
+          );
           break;
         case "org.settings.members":
-          await queryClient.fetchQuery(
-            trpc.org.settings.orgMembers.list.queryOptions()
-          );
+          await orgPrefetch.prefetchOrgMembersRoute(prefetchContext);
           break;
         case "org.settings.sourceControl":
-          await Promise.all([
-            queryClient.fetchQuery(
-              trpc.org.settings.sourceControl.get.queryOptions()
-            ),
-            queryClient.fetchQuery(
-              trpc.org.settings.sourceControl.listRepositories.queryOptions()
-            ),
-          ]);
+          await orgPrefetch.prefetchOrgSourceControlRoute(prefetchContext);
           break;
         case "people":
-          await Promise.all([
-            queryClient.fetchInfiniteQuery(
-              trpc.org.workspace.people.list.infiniteQueryOptions(
-                { limit: PEOPLE_PAGE_SIZE },
-                {
-                  getNextPageParam: (lastPage) => lastPage.nextCursor,
-                  staleTime: 60_000,
-                }
-              )
-            ),
-            queryClient.fetchQuery({
-              ...trpc.org.workspace.people.views.list.queryOptions(),
-              staleTime: 60_000,
-            }),
-          ]);
+          await peoplePrefetch.prefetchPeopleRoute(prefetchContext);
           break;
         case "signals":
-          await Promise.all([
-            queryClient.fetchQuery({
-              ...trpc.org.workspace.signals.workingSet.queryOptions(),
-              staleTime: 30_000,
-            }),
-            queryClient.fetchQuery({
-              ...trpc.org.workspace.signals.list.queryOptions({
-                limit: PROCESSING_SIGNALS_LIMIT,
-                statuses: [...signalProcessingStatuses],
-              }),
-              staleTime: 5000,
-            }),
-            queryClient.fetchQuery({
-              ...trpc.org.workspace.signals.views.list.queryOptions(),
-              staleTime: 60_000,
-            }),
-          ]);
+          await signalsPrefetch.prefetchSignalsRoute(prefetchContext);
           break;
         case "skills":
-          await queryClient.fetchQuery(
-            trpc.org.workspace.skills.list.queryOptions(undefined, {
-              staleTime: 0,
-            })
-          );
+          await skillsPrefetch.prefetchSkillsRoute(prefetchContext);
           break;
         case "tasks.bind":
-          await queryClient.fetchQuery(
-            trpc.viewer.organization.getBySlug.queryOptions({ slug: data.slug })
+          await orgPrefetch.prefetchOrgSetupBindRoute(
+            prefetchContext,
+            data.slug
           );
           break;
         case "tasks.index":
         case "tasks.lightfastRepo":
-          await Promise.all([
-            queryClient.fetchQuery(
-              trpc.viewer.organization.getBySlug.queryOptions({
-                slug: data.slug,
-              })
-            ),
-            queryClient.fetchQuery(
-              trpc.org.settings.sourceControl.get.queryOptions()
-            ),
-          ]);
+          await orgPrefetch.prefetchOrgSetupIndexRoute(
+            prefetchContext,
+            data.slug
+          );
           break;
         case "tasks.xConnector":
-          await Promise.all([
-            queryClient.fetchQuery(
-              trpc.viewer.organization.getBySlug.queryOptions({
-                slug: data.slug,
-              })
-            ),
-            queryClient.fetchQuery(
-              trpc.org.workspace.connectors.list.queryOptions()
-            ),
-          ]);
+          await orgPrefetch.prefetchOrgSetupXConnectorRoute(
+            prefetchContext,
+            data.slug
+          );
           break;
         default:
           throw new Error("Unsupported route prefetch route");

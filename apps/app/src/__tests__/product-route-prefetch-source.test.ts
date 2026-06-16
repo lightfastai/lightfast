@@ -32,8 +32,61 @@ describe("app product route data prefetch", () => {
     expect(prefetchSource).toContain('error.code === "UNAUTHORIZED"');
   });
 
-  it("prefetches the non-chat product route queries owned by the migrated pages", () => {
+  it("delegates route query recipes to feature-owned prefetch modules", () => {
     const prefetchSource = source("src/trpc/route-prefetch.tsx");
+    const featurePrefetchFiles = [
+      "src/account/account-route-prefetch.ts",
+      "src/automations/automations-route-prefetch.ts",
+      "src/connectors/connectors-route-prefetch.ts",
+      "src/decisions/decisions-route-prefetch.ts",
+      "src/developer-connections/developer-connections-route-prefetch.ts",
+      "src/org/org-route-prefetch.ts",
+      "src/people/people-route-prefetch.ts",
+      "src/signals/signals-route-prefetch.ts",
+      "src/skills/skills-route-prefetch.ts",
+    ];
+
+    for (const routePrefetchFile of featurePrefetchFiles) {
+      expect(
+        existsSync(resolve(appRoot, routePrefetchFile)),
+        `${routePrefetchFile} should exist`
+      ).toBe(true);
+    }
+
+    for (const modulePath of [
+      "~/account/account-route-prefetch",
+      "~/automations/automations-route-prefetch",
+      "~/connectors/connectors-route-prefetch",
+      "~/decisions/decisions-route-prefetch",
+      "~/developer-connections/developer-connections-route-prefetch",
+      "~/org/org-route-prefetch",
+      "~/people/people-route-prefetch",
+      "~/signals/signals-route-prefetch",
+      "~/skills/skills-route-prefetch",
+    ]) {
+      expect(prefetchSource).toContain(modulePath);
+    }
+
+    expect(prefetchSource).not.toContain("PROCESSING_SIGNALS_LIMIT");
+    expect(prefetchSource).not.toContain("DECISIONS_PAGE_SIZE");
+    expect(prefetchSource).not.toContain("PEOPLE_PAGE_SIZE");
+    expect(prefetchSource).not.toContain("AUTOMATION_RUNS_PAGE_LIMIT");
+  });
+
+  it("prefetches the non-chat product route queries owned by the migrated pages", () => {
+    const prefetchSource = [
+      source("src/automations/automations-route-prefetch.ts"),
+      source("src/connectors/connectors-route-prefetch.ts"),
+      source("src/decisions/decisions-route-prefetch.ts"),
+      source(
+        "src/developer-connections/developer-connections-route-prefetch.ts"
+      ),
+      source("src/org/org-route-prefetch.ts"),
+      source("src/people/people-route-prefetch.ts"),
+      source("src/signals/signals-route-prefetch.ts"),
+      source("src/skills/skills-route-prefetch.ts"),
+      source("src/account/account-route-prefetch.ts"),
+    ].join("\n");
 
     for (const query of [
       "signals.workingSet.queryOptions",
@@ -60,7 +113,10 @@ describe("app product route data prefetch", () => {
   });
 
   it("prefetches settings and account task route queries owned by migrated pages", () => {
-    const prefetchSource = source("src/trpc/route-prefetch.tsx");
+    const prefetchSource = [
+      source("src/account/account-route-prefetch.ts"),
+      source("src/org/org-route-prefetch.ts"),
+    ].join("\n");
 
     for (const query of [
       "org.settings.identity.get.queryOptions",

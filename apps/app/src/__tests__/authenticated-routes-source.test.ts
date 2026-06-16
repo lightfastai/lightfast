@@ -142,6 +142,12 @@ describe("app authenticated route migration", () => {
     const teamSwitcherSource = source("src/components/team-switcher.tsx");
     const appSidebarSource = source("src/components/app-sidebar.tsx");
     const orgRouteSource = source("src/routes/_authenticated/$slug.tsx");
+    const workspaceShellSource = source(
+      "src/workspace/workspace-route-shell.tsx"
+    );
+    const workspaceModelSource = source(
+      "src/workspace/workspace-route-model.ts"
+    );
     const conversationRouteSource = source(
       "src/routes/_authenticated/$slug/chat/$conversationId.tsx"
     );
@@ -170,22 +176,24 @@ describe("app authenticated route migration", () => {
     expect(appSidebarSource).toContain('to="/$slug/chat/$conversationId"');
     expect(appSidebarSource).toContain("showChatHistory = true");
     expect(appSidebarSource).toContain("showChatHistory ? (");
-    expect(orgRouteSource).toContain("getBySlug.queryOptions({ slug })");
-    expect(orgRouteSource).toContain("useAuth");
-    expect(orgRouteSource).toContain("useOrganizationList");
-    expect(orgRouteSource).toContain("orgAccess.org.id");
-    expect(orgRouteSource).toContain(
+    expect(orgRouteSource).toContain("WorkspaceRouteShell");
+    expect(workspaceShellSource).toContain("getBySlug.queryOptions({ slug })");
+    expect(workspaceShellSource).toContain("useAuth");
+    expect(workspaceShellSource).toContain("useOrganizationList");
+    expect(workspaceShellSource).toContain("orgAccess.org.id");
+    expect(workspaceShellSource).toContain(
       "setActive({ organization: targetOrgId })"
     );
-    expect(orgRouteSource).toContain("orgSetupExemptPath");
-    expect(orgRouteSource).toContain("SetupRequirementNavigate");
-    expect(orgRouteSource).toContain("showChatHistory={");
-    expect(orgRouteSource).toContain('orgAccess.bindingStatus === "bound"');
-    expect(orgRouteSource).toContain(
-      "!orgSettingsPath(slug, location.pathname)"
+    expect(workspaceShellSource).toContain("isOrgSetupExemptPath");
+    expect(workspaceShellSource).toContain("SetupRequirementNavigate");
+    expect(workspaceShellSource).toContain("showChatHistory={");
+    expect(workspaceShellSource).toContain(
+      'orgAccess.bindingStatus === "bound"'
     );
-    expect(orgRouteSource).toContain("Team not found");
-    expect(orgRouteSource).not.toContain("organization?.name ?? slug");
+    expect(workspaceShellSource).toContain("shouldShowWorkspaceChatHistory");
+    expect(workspaceModelSource).toContain("isOrgSettingsPath");
+    expect(workspaceShellSource).toContain("Team not found");
+    expect(workspaceShellSource).not.toContain("organization?.name ?? slug");
     expect(conversationRouteSource).toContain("createFileRoute");
     expect(conversationRouteSource).toContain(
       '"/_authenticated/$slug/chat/$conversationId"'
@@ -569,6 +577,12 @@ describe("app authenticated route migration", () => {
 
   it("ports org setup routes and GitHub callbacks", () => {
     const orgRouteSource = source("src/routes/_authenticated/$slug.tsx");
+    const workspaceShellSource = source(
+      "src/workspace/workspace-route-shell.tsx"
+    );
+    const workspaceModelSource = source(
+      "src/workspace/workspace-route-model.ts"
+    );
     const accountGithubRouteSource = source(
       "src/routes/_authenticated/account/tasks/github.tsx"
     );
@@ -605,13 +619,16 @@ describe("app authenticated route migration", () => {
       "src/routes/api/github/oauth/callback.ts"
     );
 
-    expect(orgRouteSource).toContain('bindingStatus !== "bound"');
-    expect(orgRouteSource).toContain(
+    expect(orgRouteSource).toContain("WorkspaceRouteShell");
+    expect(workspaceShellSource).toContain('bindingStatus !== "bound"');
+    expect(workspaceShellSource).toContain(
       "<AuthenticatedTopbar left={<TeamSwitcherSlot />} />"
     );
-    expect(orgRouteSource).toContain('to="/$slug/tasks/bind"');
-    expect(orgRouteSource).toContain('to="/$slug/tasks/github/lightfast-repo"');
-    expect(orgRouteSource).toContain(
+    expect(workspaceModelSource).toContain('to: "/$slug/tasks/bind"');
+    expect(workspaceModelSource).toContain(
+      'to: "/$slug/tasks/github/lightfast-repo"'
+    );
+    expect(workspaceModelSource).toContain(
       ["pathname === `/", "$", "{slug}", "/tasks`"].join("")
     );
     expect(accountGithubRouteSource).toContain("component: Outlet");
