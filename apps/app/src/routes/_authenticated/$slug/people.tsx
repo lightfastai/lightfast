@@ -25,8 +25,8 @@ export const Route = createFileRoute("/_authenticated/$slug/people")({
   head: ({ params }) => ({
     meta: [{ title: `People - ${params.slug} - Lightfast` }],
   }),
-  pendingMs: 250,
-  pendingMinMs: 250,
+  pendingMs: 0,
+  pendingMinMs: 0,
   pendingComponent: PeopleRoutePending,
   errorComponent: PeopleRouteError,
   component: PeoplePage,

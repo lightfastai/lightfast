@@ -25,8 +25,8 @@ export const Route = createFileRoute("/_authenticated/$slug/decisions")({
   head: ({ params }) => ({
     meta: [{ title: `Decisions - ${params.slug} - Lightfast` }],
   }),
-  pendingMs: 250,
-  pendingMinMs: 250,
+  pendingMs: 0,
+  pendingMinMs: 0,
   pendingComponent: DecisionsRoutePending,
   errorComponent: DecisionsRouteError,
   component: DecisionsPage,

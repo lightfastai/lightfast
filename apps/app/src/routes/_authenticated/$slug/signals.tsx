@@ -19,8 +19,8 @@ export const Route = createFileRoute("/_authenticated/$slug/signals")({
   head: ({ params }) => ({
     meta: [{ title: `Signals - ${params.slug} - Lightfast` }],
   }),
-  pendingMs: 250,
-  pendingMinMs: 250,
+  pendingMs: 0,
+  pendingMinMs: 0,
   pendingComponent: SignalsRoutePending,
   errorComponent: SignalsRouteError,
   component: SignalsPage,
