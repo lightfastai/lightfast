@@ -25,6 +25,10 @@
       "types": "./src/service-jwt.ts",
       "default": "./src/service-jwt.ts"
     },
+    "./domain": {
+      "types": "./src/domain/index.ts",
+      "default": "./src/domain/index.ts"
+    },
     "./services/github": {
       "types": "./src/services/github/index.ts",
       "default": "./src/services/github/index.ts"
