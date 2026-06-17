@@ -4,8 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { ChatLoading } from "~/chat/chat-loading";
 import { WorkspaceAssistantClient } from "~/chat/workspace-assistant-client";
+import { assistantConversationQueryOptions } from "~/chat/workspace-assistant-queries";
 import { WorkspaceRouteErrorPanel } from "~/components/route-boundaries";
-import { useTRPC } from "~/trpc/react";
+
+const conversationNotFoundCode = "WORKSPACE_ASSISTANT_CONVERSATION_NOT_FOUND";
 
 export const Route = createFileRoute(
   "/_authenticated/$slug/chat/$conversationId"
@@ -50,13 +52,8 @@ function ChatRouteError({
 
 function WorkspaceConversationPage() {
   const { conversationId } = Route.useParams();
-  const trpc = useTRPC();
   const conversationQuery = useQuery({
-    ...trpc.org.workspace.assistant.getConversation.queryOptions({
-      id: conversationId,
-    }),
-    enabled: typeof window !== "undefined",
-    retry: false,
+    ...assistantConversationQueryOptions({ conversationId }),
   });
 
   if (conversationQuery.isPending) {
@@ -105,9 +102,10 @@ function isConversationNotFoundError(error: unknown) {
   };
 
   return (
+    maybeCode.code === conversationNotFoundCode ||
+    maybeCode.data?.code === conversationNotFoundCode ||
     maybeCode.code === "NOT_FOUND" ||
-    maybeCode.data?.code === "NOT_FOUND" ||
-    error.message === "Workspace assistant conversation not found"
+    maybeCode.data?.code === "NOT_FOUND"
   );
 }
 

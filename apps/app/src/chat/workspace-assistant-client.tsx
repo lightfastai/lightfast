@@ -1,5 +1,5 @@
 import { useChat } from "@ai-sdk/react";
-import type { AppRouterOutputs } from "@api/app";
+import { createConversation } from "@api/app/tanstack/assistant";
 import {
   lightfastWorkspaceAssistantDataPartSchemas,
   lightfastWorkspaceAssistantMessageMetadataSchema,
@@ -19,12 +19,13 @@ import {
 } from "@vendor/ai";
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useTRPC } from "~/trpc/react";
 import { ChatComposer } from "./chat-composer";
 import { ChatMessage } from "./chat-message";
-
-type WorkspaceAssistantConversationResult =
-  AppRouterOutputs["org"]["workspace"]["assistant"]["getConversation"];
+import {
+  assistantConversationQueryOptions,
+  assistantConversationsQueryKey,
+  type WorkspaceAssistantConversationResult,
+} from "./workspace-assistant-queries";
 
 const isResumableStreamEnabled =
   (import.meta.env.VITE_VERCEL_ENV ?? "development") !== "development";
@@ -33,6 +34,8 @@ const messageRowRenderingHints = {
   containIntrinsicSize: "0 160px",
   contentVisibility: "auto",
 } satisfies CSSProperties;
+
+const conversationTitleMaxLength = 160;
 
 interface WorkspaceAssistantClientProps {
   conversationId: string;
@@ -46,21 +49,14 @@ export function WorkspaceAssistantClient({
   const params = useParams({ strict: false });
   const orgSlug = typeof params.slug === "string" ? params.slug : undefined;
   const router = useRouter();
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const createConversation = useMutation(
-    trpc.org.workspace.assistant.createConversation.mutationOptions()
-  );
-  const listConversationsQueryFilter = useMemo(
-    () => trpc.org.workspace.assistant.listConversations.queryFilter(),
-    [trpc]
-  );
+  const createConversationMutation = useMutation({
+    mutationFn: (data: { publicId: string; title: string }) =>
+      createConversation({ data }),
+  });
   const getConversationQueryOptions = useMemo(
-    () =>
-      trpc.org.workspace.assistant.getConversation.queryOptions({
-        id: conversationId,
-      }),
-    [conversationId, trpc]
+    () => assistantConversationQueryOptions({ conversationId }),
+    [conversationId]
   );
   const initialMessages = useMemo(
     () => initialConversation?.messages.map(toUIMessage) ?? [],
@@ -116,7 +112,7 @@ export function WorkspaceAssistantClient({
   const isPreparingFirstMessage =
     Boolean(optimisticFirstMessage) && status === "ready";
   const composerStatus: ChatStatus =
-    createConversation.isPending || isPreparingFirstMessage
+    createConversationMutation.isPending || isPreparingFirstMessage
       ? "submitted"
       : status;
 
@@ -144,13 +140,15 @@ export function WorkspaceAssistantClient({
           );
         }
         try {
-          createdConversation = await createConversation.mutateAsync({
+          createdConversation = await createConversationMutation.mutateAsync({
             publicId: conversationId,
-            title: nextText,
+            title: conversationTitleFromPrompt(nextText),
           });
           conversationCreatedRef.current = true;
           createdConversationDuringSubmit = true;
-          void queryClient.invalidateQueries(listConversationsQueryFilter);
+          void queryClient.invalidateQueries({
+            queryKey: assistantConversationsQueryKey,
+          });
         } catch (error) {
           if (orgSlug) {
             replaceBrowserHistoryPath(workspaceChatPath(orgSlug));
@@ -203,9 +201,8 @@ export function WorkspaceAssistantClient({
     },
     [
       conversationId,
-      createConversation.mutateAsync,
+      createConversationMutation.mutateAsync,
       getConversationQueryOptions.queryKey,
-      listConversationsQueryFilter,
       orgSlug,
       queryClient,
       router,
@@ -272,6 +269,10 @@ export function WorkspaceAssistantClient({
 
 function createWorkspaceAssistantIdempotencyKey() {
   return `idem_${createUuid()}`;
+}
+
+function conversationTitleFromPrompt(text: string) {
+  return text.slice(0, conversationTitleMaxLength);
 }
 
 function replaceBrowserHistoryPath(pathname: string) {

@@ -220,7 +220,9 @@ describe("app authenticated route migration", () => {
     expect(teamSwitcherSource).toContain('to="/$slug"');
     expect(teamSwitcherSource).not.toContain("next/navigation");
     expect(teamSwitcherSource).not.toContain("next/link");
-    expect(recentChatsMenuSource).toContain("listConversations.queryOptions");
+    expect(recentChatsMenuSource).toContain(
+      "assistantConversationsQueryOptions"
+    );
     expect(recentChatsMenuSource).toContain('to="/$slug/chat/$conversationId"');
     expect(appSidebarSource).not.toContain("showChatHistory");
     expect(orgRouteSource).toContain("WorkspaceRouteShell");
@@ -644,7 +646,7 @@ describe("app authenticated route migration", () => {
     expect(chatIndexRouteSource).toContain("key={conversationId}");
     expect(chatRouteSource).not.toContain("WorkspacePage");
     expect(conversationRouteSource).toContain(
-      "assistant.getConversation.queryOptions"
+      "assistantConversationQueryOptions"
     );
     expect(conversationRouteSource).toContain("WorkspaceAssistantClient");
     expect(conversationRouteSource).toContain("isPreallocatedConversationId");
@@ -659,10 +661,8 @@ describe("app authenticated route migration", () => {
     expect(assistantClientSource).toContain(
       'to: "/$slug/chat/$conversationId"'
     );
-    expect(assistantClientSource).toContain(
-      "createConversation.mutationOptions"
-    );
-    expect(assistantClientSource).toContain("listConversations.queryFilter");
+    expect(assistantClientSource).toContain("createConversation({ data })");
+    expect(assistantClientSource).toContain("assistantConversationsQueryKey");
     expect(composerSource).toContain("PromptInput");
     expect(composerSource).toContain("PromptInputSubmit");
     expect(messageSource).toContain("ChatMessage");

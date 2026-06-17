@@ -1,6 +1,5 @@
 // @vitest-environment happy-dom
 
-import type { AppRouterOutputs } from "@api/app";
 import {
   cleanup,
   fireEvent,
@@ -10,16 +9,11 @@ import {
 } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { WorkspaceAssistantConversationResult } from "~/chat/workspace-assistant-queries";
 
 const clearErrorMock = vi.fn();
 const invalidateQueriesMock = vi.fn();
 const setQueryDataMock = vi.fn();
-const getConversationQueryOptionsMock = vi.fn((input: { id: string }) => ({
-  queryKey: ["org", "workspace", "assistant", "getConversation", input],
-}));
-const listConversationsQueryFilterMock = vi.fn(() => ({
-  queryKey: ["org", "workspace", "assistant", "listConversations"],
-}));
 const mutateAsyncMock = vi.fn();
 const routerInvalidateMock = vi.fn();
 const routerNavigateMock = vi.fn();
@@ -31,8 +25,6 @@ let chatMessages: Array<{
   parts: Array<{ text?: string; type: string }>;
   role: "assistant" | "user";
 }> = [];
-type WorkspaceAssistantConversationResult =
-  AppRouterOutputs["org"]["workspace"]["assistant"]["getConversation"];
 
 vi.mock("@ai-sdk/react", () => ({
   useChat: (options: { messages?: typeof chatMessages } = {}) => {
@@ -51,6 +43,12 @@ vi.mock("@ai-sdk/react", () => ({
 vi.mock("@repo/ai/workspace-assistant", () => ({
   lightfastWorkspaceAssistantDataPartSchemas: {},
   lightfastWorkspaceAssistantMessageMetadataSchema: {},
+}));
+
+vi.mock("@api/app/tanstack/assistant", () => ({
+  createConversation: vi.fn(),
+  getConversation: vi.fn(),
+  listConversations: vi.fn(),
 }));
 
 vi.mock("@repo/ui-v2/components/ai-elements/conversation", () => ({
@@ -80,6 +78,7 @@ vi.mock("@repo/ui-v2/components/ai-elements/conversation", () => ({
 }));
 
 vi.mock("@tanstack/react-query", () => ({
+  queryOptions: (options: unknown) => options,
   useMutation: () => ({
     isPending: false,
     mutateAsync: mutateAsyncMock,
@@ -105,26 +104,6 @@ vi.mock("@vendor/ai", () => ({
       this.options = options;
     }
   },
-}));
-
-vi.mock("~/trpc/react", () => ({
-  useTRPC: () => ({
-    org: {
-      workspace: {
-        assistant: {
-          createConversation: {
-            mutationOptions: () => ({}),
-          },
-          getConversation: {
-            queryOptions: getConversationQueryOptionsMock,
-          },
-          listConversations: {
-            queryFilter: listConversationsQueryFilterMock,
-          },
-        },
-      },
-    },
-  }),
 }));
 
 vi.mock("~/chat/chat-composer", () => ({
@@ -187,10 +166,8 @@ const { WorkspaceAssistantClient } = await import(
 beforeEach(() => {
   chatMessages = [];
   clearErrorMock.mockClear();
-  getConversationQueryOptionsMock.mockClear();
   invalidateQueriesMock.mockClear();
   setQueryDataMock.mockClear();
-  listConversationsQueryFilterMock.mockClear();
   mutateAsyncMock.mockReset();
   routerInvalidateMock.mockReset();
   routerNavigateMock.mockReset();
@@ -359,11 +336,9 @@ describe("WorkspaceAssistantClient", () => {
     });
     expect(setQueryDataMock).toHaveBeenCalledWith(
       [
-        "org",
-        "workspace",
-        "assistant",
-        "getConversation",
-        { id: "conv_ff83026e-ef0e-40db-ae59-544fbe4df209" },
+        "workspace-assistant",
+        "conversation",
+        "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
       ],
       expect.objectContaining({
         conversation: expect.objectContaining({
@@ -383,6 +358,26 @@ describe("WorkspaceAssistantClient", () => {
       });
     });
     expect(routerInvalidateMock).not.toHaveBeenCalled();
+  });
+
+  it("clamps the first prompt when using it as the conversation title", async () => {
+    const longPrompt = "Summarize ".repeat(24).trim();
+
+    render(
+      <WorkspaceAssistantClient conversationId="conv_ff83026e-ef0e-40db-ae59-544fbe4df209" />
+    );
+
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: longPrompt },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => {
+      expect(mutateAsyncMock).toHaveBeenCalledWith({
+        publicId: "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
+        title: longPrompt.slice(0, 160),
+      });
+    });
   });
 
   it("sends one existing conversation turn with provider routine write mode enabled", async () => {

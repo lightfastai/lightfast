@@ -1,4 +1,3 @@
-import type { AppRouterOutputs } from "@api/app";
 import {
   CollapseIcon,
   ExpandIcon,
@@ -20,12 +19,10 @@ import { ScrollEdgeCues } from "@repo/ui-v2/components/ui/scroll-edge-cue";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { type ReactNode, useState } from "react";
-import { useTRPC } from "~/trpc/react";
-
-type WorkspaceAssistantConversationList =
-  AppRouterOutputs["org"]["workspace"]["assistant"]["listConversations"];
-type WorkspaceAssistantConversationListItem =
-  WorkspaceAssistantConversationList["items"][number];
+import {
+  assistantConversationsQueryOptions,
+  type WorkspaceAssistantConversationListItem,
+} from "~/chat/workspace-assistant-queries";
 
 export function RecentChatsMenu({
   onConversationSelect,
@@ -39,12 +36,8 @@ export function RecentChatsMenu({
   trigger: ReactNode;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const trpc = useTRPC();
   const { data, error, isPending } = useQuery({
-    ...trpc.org.workspace.assistant.listConversations.queryOptions(
-      { limit: 20 },
-      { staleTime: 0 }
-    ),
+    ...assistantConversationsQueryOptions({ limit: 20 }),
     enabled: typeof window !== "undefined" && Boolean(orgSlug),
   });
 
