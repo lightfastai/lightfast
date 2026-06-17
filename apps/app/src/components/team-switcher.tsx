@@ -1,11 +1,11 @@
-import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { Button } from "@repo/ui/components/ui/button";
+import { Avatar, AvatarFallback } from "@repo/ui-v2/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@repo/ui/components/ui/dropdown-menu";
+} from "@repo/ui-v2/components/ui/dropdown-menu";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { useMounted } from "@repo/ui/hooks/use-mounted";
 import { cn } from "@repo/ui/lib/utils";
@@ -114,15 +114,17 @@ export function TeamSwitcher() {
             </span>
           </div>
         )}
-        <DropdownMenuTrigger asChild>
-          <Button
-            aria-label="Switch team"
-            className="size-11 rounded-full lg:h-6 lg:w-6"
-            size="sm"
-            variant="ghost"
-          >
-            <ChevronsUpDown className="size-3.5 opacity-50" />
-          </Button>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              aria-label="Switch team"
+              className="size-11 rounded-full lg:h-6 lg:w-6"
+              size="sm"
+              variant="ghost"
+            />
+          }
+        >
+          <ChevronsUpDown className="size-3.5 opacity-50" />
         </DropdownMenuTrigger>
       </div>
       <DropdownMenuContent align="center" className="w-[220px] space-y-1">
@@ -132,50 +134,48 @@ export function TeamSwitcher() {
 
           return (
             <DropdownMenuItem
-              asChild
               className={cn("cursor-pointer px-2", isSelected && "bg-muted/50")}
               key={org.id}
+              render={
+                <Link
+                  onClick={async (event) => {
+                    if (
+                      event.ctrlKey ||
+                      event.metaKey ||
+                      event.shiftKey ||
+                      event.altKey
+                    ) {
+                      return;
+                    }
+                    event.preventDefault();
+                    setOpen(false);
+                    await switchTo(org.id, org.slug);
+                  }}
+                  params={{ slug: org.slug ?? "" }}
+                  to="/$slug"
+                />
+              }
             >
-              <Link
-                onClick={async (event) => {
-                  if (
-                    event.ctrlKey ||
-                    event.metaKey ||
-                    event.shiftKey ||
-                    event.altKey
-                  ) {
-                    return;
-                  }
-                  event.preventDefault();
-                  setOpen(false);
-                  await switchTo(org.id, org.slug);
-                }}
-                params={{ slug: org.slug ?? "" }}
-                to="/$slug"
-              >
-                <Avatar className="h-5 w-5 shrink-0">
-                  <AvatarFallback className="bg-foreground text-[10px] text-background">
-                    {org.initials}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="flex-1 truncate">{org.name}</span>
-                {isSelected && (
-                  <Check className="h-4 w-4 shrink-0 text-foreground" />
-                )}
-              </Link>
+              <Avatar className="h-5 w-5 shrink-0">
+                <AvatarFallback className="bg-foreground text-[10px] text-background">
+                  {org.initials}
+                </AvatarFallback>
+              </Avatar>
+              <span className="flex-1 truncate">{org.name}</span>
+              {isSelected && (
+                <Check className="h-4 w-4 shrink-0 text-foreground" />
+              )}
             </DropdownMenuItem>
           );
         })}
         <DropdownMenuItem
-          asChild
           className="cursor-pointer px-2 text-muted-foreground"
+          render={<Link to="/account/teams/new" />}
         >
-          <Link to="/account/teams/new">
-            <div className="flex h-5 w-5 items-center justify-center rounded-full border border-border/50 border-dashed">
-              <Plus className="h-3 w-3" />
-            </div>
-            <span>Create Team</span>
-          </Link>
+          <div className="flex h-5 w-5 items-center justify-center rounded-full border border-border/50 border-dashed">
+            <Plus className="h-3 w-3" />
+          </div>
+          <span>Create Team</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

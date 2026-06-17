@@ -67,7 +67,7 @@ describe("desktop Tailwind setup", () => {
   });
 
   it("keeps ui-v2 globals as Tailwind and shadcn theme plumbing", () => {
-    expect(uiV2Styles).toContain('@import "tailwindcss";');
+    expect(uiV2Styles).toContain('@import "tailwindcss/index.css";');
     expect(uiV2Styles).toContain('@import "tw-animate-css";');
     expect(uiV2Styles).toContain('@import "shadcn/tailwind.css";');
     expect(uiV2Styles).toContain('@source "./**/*.{ts,tsx}";');

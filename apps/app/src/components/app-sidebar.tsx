@@ -1,15 +1,8 @@
 import type { AppRouterOutputs } from "@api/app";
 import { Button } from "@repo/ui/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@repo/ui/components/ui/dropdown-menu";
-import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
@@ -24,11 +17,8 @@ import { Link, useLocation } from "@tanstack/react-router";
 import {
   Aperture,
   Blocks,
-  BookOpen,
-  HelpCircle,
   KeyRound,
   ListChecks,
-  Mail,
   MessageCircle,
   MessageCirclePlus,
   Network,
@@ -137,38 +127,6 @@ export function AppSidebar({ orgSlug }: { orgSlug: string }) {
         ))}
         <ChatHistory orgSlug={orgSlug} pathname={pathname} />
       </SidebarContent>
-      <SidebarFooter>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              className="size-11 rounded-full bg-muted p-1 lg:h-8 lg:w-8"
-              size="icon"
-              title="Help"
-              variant="outline"
-            >
-              <HelpCircle className="size-3.5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="center" className="w-48">
-            <DropdownMenuItem asChild>
-              <a href="mailto:support@lightfast.ai">
-                <Mail className="size-3.5" />
-                Contact Support
-              </a>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <a
-                href="https://lightfast.ai/docs/get-started/overview"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                <BookOpen className="size-3.5" />
-                Help Docs
-              </a>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarFooter>
     </Sidebar>
   );
 }

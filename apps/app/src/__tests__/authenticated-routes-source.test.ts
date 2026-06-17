@@ -3,9 +3,14 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const appRoot = resolve(import.meta.dirname, "../..");
+const repoRoot = resolve(appRoot, "../..");
 
 function source(path: string) {
   return readFileSync(resolve(appRoot, path), "utf8");
+}
+
+function repoSource(path: string) {
+  return readFileSync(resolve(repoRoot, path), "utf8");
 }
 
 function expectSource(path: string) {
@@ -168,6 +173,23 @@ describe("app authenticated route migration", () => {
     expect(teamSwitcherSource).toContain("function TeamSwitcherSlot()");
     expect(teamSwitcherSource).toContain("<TeamSwitcherSkeleton />");
     expect(teamSwitcherSource).toContain('from "@repo/ui/hooks/use-mounted"');
+    expect(teamSwitcherSource).toContain(
+      'from "@repo/ui-v2/components/ui/dropdown-menu"'
+    );
+    expect(teamSwitcherSource).not.toContain(
+      'from "@repo/ui/components/ui/dropdown-menu"'
+    );
+    expect(teamSwitcherSource).toContain(
+      'from "@repo/ui-v2/components/ui/avatar"'
+    );
+    expect(teamSwitcherSource).not.toContain(
+      'from "@repo/ui/components/ui/avatar"'
+    );
+    expect(teamSwitcherSource).toContain(
+      "bg-foreground text-[10px] text-background"
+    );
+    expect(teamSwitcherSource).not.toContain("!text-background");
+    expect(teamSwitcherSource).not.toContain("asChild");
     expect(teamSwitcherSource).toContain("const mounted = useMounted();");
     expect(teamSwitcherSource).toContain("if (!mounted || isPending)");
     expect(shellSource).toContain(
@@ -220,6 +242,38 @@ describe("app authenticated route migration", () => {
       "/app/fonts/pp-neue-montreal/PPNeueMontreal-Medium"
     );
     expect(globalCss).not.toContain('url("/fonts/');
+  });
+
+  it("uses ui-v2 globals while keeping gradual migration CSS hooks", () => {
+    const globalCss = source("src/styles/globals.css");
+    const postcssConfig = source("postcss.config.mjs");
+
+    expect(globalCss).toContain('@import "@repo/ui-v2/globals.css";');
+    expect(globalCss).not.toContain('@import "@repo/ui/globals.css";');
+    expect(globalCss).toContain('@source "../**/*.{ts,tsx}";');
+    expect(globalCss).toContain(
+      '@source "../../../../packages/ui/src/**/*.{ts,tsx}";'
+    );
+    expect(globalCss).toContain(
+      '@source "../../../../packages/ui-v2/src/**/*.{ts,tsx}";'
+    );
+    expect(globalCss).toContain("--font-geist-sans");
+    expect(globalCss).toContain(".font-pp");
+    expect(postcssConfig).toContain("@repo/ui-v2/postcss.config");
+    expect(postcssConfig).not.toContain("@repo/ui/postcss.config");
+  });
+
+  it("keeps ui-v2 dropdown focused items from overriding composed child colors", () => {
+    const dropdownMenuSource = repoSource(
+      "packages/ui-v2/src/components/ui/dropdown-menu.tsx"
+    );
+
+    expect(dropdownMenuSource).toContain(
+      "focus:bg-accent focus:text-accent-foreground"
+    );
+    expect(dropdownMenuSource).not.toContain(
+      "focus:**:text-accent-foreground"
+    );
   });
 
   it("ports Signals without Next.js search or link assumptions", () => {
