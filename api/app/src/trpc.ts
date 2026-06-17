@@ -227,9 +227,9 @@ export const publicProcedure = t.procedure.use(observabilityMiddleware);
  * onboarding-time procedure does not require renaming the gate.
  *
  * Typical use cases:
- * - User profile and settings (`account.get`)
  * - List user's organizations
  * - Create the first organization
+ * - Account-scoped connector setup flows
  *
  * For procedures that must reject `pending` identities, use
  * `orgProcedure`.
