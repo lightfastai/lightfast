@@ -48,6 +48,15 @@ function getCssBlock(selector: string) {
   return match?.groups?.body ?? "";
 }
 
+function getCssVariable(block: string, variable: string) {
+  const escapedVariable = variable.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = block.match(new RegExp(`${escapedVariable}: (?<value>[^;]+);`));
+
+  expect(match?.groups?.value).toBeDefined();
+
+  return match?.groups?.value ?? "";
+}
+
 describe("desktop Tailwind setup", () => {
   it("keeps desktop styles.css as the app source entry for ui-v2 globals", () => {
     expect(styles).toContain('@import "@repo/ui-v2/globals.css";');
@@ -114,7 +123,14 @@ describe("desktop Tailwind setup", () => {
     expect(getCssBlock(":root")).toContain(
       "--sidebar-ring: oklch(0.529 0.173 254.975);"
     );
-    expect(getCssBlock(".dark")).toContain("--sidebar: oklch(0.2002 0 0);");
+
+    const darkBlock = getCssBlock(".dark");
+    expect(getCssVariable(darkBlock, "--sidebar")).toBe(
+      getCssVariable(darkBlock, "--background")
+    );
+    expect(getCssVariable(darkBlock, "--sidebar")).toBe(
+      "oklch(0.1339 0.0026 106.74)"
+    );
     expect(getCssBlock(".dark")).toContain(
       "--sidebar-ring: oklch(0.626 0.205 254.947);"
     );

@@ -25,6 +25,10 @@
     "@hugeicons/core-free-icons": "catalog:",
     "@hugeicons/react": "catalog:",
     "@radix-ui/react-use-controllable-state": "catalog:",
+    "@shikijs/core": "catalog:",
+    "@shikijs/engine-javascript": "catalog:",
+    "@shikijs/langs": "catalog:",
+    "@shikijs/themes": "catalog:",
     "@vendor/ai": "workspace:*",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
@@ -33,7 +37,6 @@
     "motion": "catalog:",
     "nanoid": "catalog:",
     "react": "catalog:react19",
-    "shiki": "catalog:",
     "streamdown": "catalog:",
     "tailwind-merge": "catalog:",
     "use-stick-to-bottom": "catalog:"
