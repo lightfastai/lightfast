@@ -936,9 +936,10 @@ describe("app authenticated route migration", () => {
       expect(apiKeySource).not.toContain("AppRouterOutputs");
     }
 
-    expect(mcpClientSource).toContain("mcpConnections.list.queryOptions");
-    expect(mcpClientSource).toContain("mcpConnections.revoke.mutationOptions");
-    expect(mcpClientSource).toContain('enabled: typeof window !== "undefined"');
+    expect(mcpClientSource).toContain("orgMcpConnectionsQueryOptions");
+    expect(mcpClientSource).toContain("revokeOrgMcpConnectionMutationOptions");
+    expect(mcpClientSource).not.toContain("useTRPC");
+    expect(mcpClientSource).not.toContain("org.settings.mcpConnections");
     expect(mcpClientSource).toContain("showConnectedUser");
 
     for (const routeFile of [

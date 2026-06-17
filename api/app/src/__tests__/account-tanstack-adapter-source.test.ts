@@ -50,6 +50,8 @@ describe("account TanStack adapter boundary", () => {
 
     expect(mcpSource).toContain("listAccountMcpConnectionsCommand");
     expect(mcpSource).toContain("revokeAccountMcpConnectionCommand");
+    expect(mcpSource).toContain("listOrgMcpConnectionsCommand");
+    expect(mcpSource).toContain("revokeOrgMcpConnectionCommand");
     expect(userConnectorSource).toContain("startUserConnectorCommand");
     expect(userConnectorSource).toContain("disconnectUserConnectorCommand");
 
@@ -59,6 +61,22 @@ describe("account TanStack adapter boundary", () => {
       expect(source).not.toContain("ORPCError");
       expect(source).not.toContain("defineCommandSurface");
       expect(source).not.toContain("dispatchCommand");
+    }
+  });
+
+  it("removes migrated org MCP settings procedures from tRPC", () => {
+    const rootSource = readFileSync(resolve(apiRoot, "src/root.ts"), "utf8");
+    const routerPath = resolve(
+      apiRoot,
+      "src/router/(pending-not-allowed)/mcp-connections.ts"
+    );
+
+    expect(rootSource).not.toContain("mcpConnections: orgMcpConnectionsRouter");
+
+    if (existsSync(routerPath)) {
+      const routerSource = readFileSync(routerPath, "utf8");
+      expect(routerSource).not.toContain("orgMcpConnectionsRouter");
+      expect(routerSource).not.toContain("orgAdminProcedure");
     }
   });
 

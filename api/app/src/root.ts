@@ -17,7 +17,6 @@ import { connectorsRouter } from "./router/(pending-not-allowed)/connectors";
 import { decisionsRouter } from "./router/(pending-not-allowed)/decisions";
 import { developerConnectionsRouter } from "./router/(pending-not-allowed)/developer-connections";
 import { githubSetupRouter } from "./router/(pending-not-allowed)/github-setup";
-import { orgMcpConnectionsRouter } from "./router/(pending-not-allowed)/mcp-connections";
 import { orgBillingRouter } from "./router/(pending-not-allowed)/org-billing";
 import { orgIdentityRouter } from "./router/(pending-not-allowed)/org-identity";
 import { orgMembersRouter } from "./router/(pending-not-allowed)/org-members";
@@ -48,7 +47,6 @@ export const appRouter = createTRPCRouter({
       identity: orgIdentityRouter,
       orgMembers: orgMembersRouter,
       sourceControl: orgSourceControlRouter,
-      mcpConnections: orgMcpConnectionsRouter,
     }),
     workspace: createTRPCRouter({
       automations: automationsRouter,

@@ -23,58 +23,35 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import { Info, ShieldCheck, ShieldQuestion, Unplug } from "lucide-react";
 import { useCallback, useState } from "react";
-import { useTRPC } from "~/trpc/react";
+import {
+  type OrgMcpConnection,
+  orgMcpConnectionQueryKeys,
+  orgMcpConnectionsQueryOptions,
+  revokeOrgMcpConnectionMutationOptions,
+} from "./mcp-connections-queries";
 
-export interface McpConnection {
-  clientId: string;
-  clientName: string;
-  clientPolicyUri: string | null;
-  clientUri: string | null;
-  clientVerificationStatus: "unverified" | "verified";
-  connectedUserId: string;
-  createdAt: string;
-  grantId: string;
-  lastUsedAt: string | null;
-  logoUri: string | null;
-  redirectUris: string[];
-  refreshTokenStatusSummary: {
-    active: number;
-    reuseDetected: number;
-    revoked: number;
-    rotated: number;
-  };
-  resource: string;
-  revokedAt: string | null;
-  scopes: string[];
-  status: "active" | "revoked";
-}
+type McpConnection = OrgMcpConnection;
 
 export function McpConnectionsClient() {
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
   const {
     data: connections,
     error,
     isPending,
-  } = useQuery({
-    ...trpc.org.settings.mcpConnections.list.queryOptions(),
-    enabled: typeof window !== "undefined",
-  });
+  } = useQuery(orgMcpConnectionsQueryOptions());
   const [detailsConnection, setDetailsConnection] =
     useState<McpConnection | null>(null);
   const [revokeConnection, setRevokeConnection] =
     useState<McpConnection | null>(null);
 
-  const revokeMutation = useMutation(
-    trpc.org.settings.mcpConnections.revoke.mutationOptions({
-      meta: { errorTitle: "Failed to revoke MCP connection" },
-      onSuccess: () => toast.success("MCP connection revoked"),
-      onSettled: () =>
-        void queryClient.invalidateQueries(
-          trpc.org.settings.mcpConnections.list.queryFilter()
-        ),
-    })
-  );
+  const revokeMutation = useMutation({
+    ...revokeOrgMcpConnectionMutationOptions(),
+    onSuccess: () => toast.success("MCP connection revoked"),
+    onSettled: () =>
+      void queryClient.invalidateQueries({
+        queryKey: orgMcpConnectionQueryKeys.list(),
+      }),
+  });
 
   const handleConfirmRevoke = useCallback(() => {
     if (!revokeConnection) {
@@ -146,7 +123,7 @@ export function McpConnectionsClient() {
   );
 }
 
-export function McpConnectionsList({
+function McpConnectionsList({
   connections,
   isRevokingGrantId,
   onDetails,
@@ -274,7 +251,7 @@ function VerificationBadge({
   );
 }
 
-export function McpConnectionDetailsSheet({
+function McpConnectionDetailsSheet({
   connection,
   onOpenChange,
 }: {
@@ -326,7 +303,7 @@ function DetailsBlock({ rows }: { rows: [string, string][] }) {
   );
 }
 
-export function permissionSummary(scopes: string[]): string {
+function permissionSummary(scopes: string[]): string {
   const canReadSignals = scopes.includes("mcp:signals:read");
   const canWriteSignals = scopes.includes("mcp:signals:write");
   if (canReadSignals && canWriteSignals) {
