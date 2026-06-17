@@ -79,30 +79,34 @@ export const startGitHubOrgSetup = createServerFn({ method: "POST" })
 
 export const syncGitHubBindingClaim = createServerFn({
   method: "POST",
-}).handler(async () => {
-  noStore();
-  try {
-    return await syncGitHubBindingClaimCommand.run({
-      ctx: await createTanStackGitHubSetupContext(),
-      deps: createDefaultGitHubSetupCommandDeps({ db }),
-      input: {},
-    });
-  } catch (error) {
-    mapTanStackError(error);
-  }
-});
+})
+  .inputValidator(syncGitHubBindingClaimCommand.input)
+  .handler(async ({ data }) => {
+    noStore();
+    try {
+      return await syncGitHubBindingClaimCommand.run({
+        ctx: await createTanStackGitHubSetupContext(),
+        deps: createDefaultGitHubSetupCommandDeps({ db }),
+        input: data,
+      });
+    } catch (error) {
+      mapTanStackError(error);
+    }
+  });
 
 export const verifyGitHubLightfastRepo = createServerFn({
   method: "POST",
-}).handler(async () => {
-  noStore();
-  try {
-    return await verifyGitHubLightfastRepoCommand.run({
-      ctx: await createTanStackGitHubSetupContext(),
-      deps: createDefaultGitHubSetupCommandDeps({ db }),
-      input: {},
-    });
-  } catch (error) {
-    mapTanStackError(error);
-  }
-});
+})
+  .inputValidator(verifyGitHubLightfastRepoCommand.input)
+  .handler(async ({ data }) => {
+    noStore();
+    try {
+      return await verifyGitHubLightfastRepoCommand.run({
+        ctx: await createTanStackGitHubSetupContext(),
+        deps: createDefaultGitHubSetupCommandDeps({ db }),
+        input: data,
+      });
+    } catch (error) {
+      mapTanStackError(error);
+    }
+  });

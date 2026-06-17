@@ -51,6 +51,13 @@ const pendingCtx: ExecutionContext = {
   },
 };
 
+const serviceCtx: ExecutionContext = {
+  actor: {
+    kind: "service",
+    service: "system",
+  },
+};
+
 function createDeps() {
   return {
     buildGitHubInstallationUrl: buildGitHubInstallationUrlMock,
@@ -212,6 +219,30 @@ describe("syncGitHubBindingClaimCommand", () => {
     expect(syncGitHubBindingClaimMock).toHaveBeenCalledWith({
       clerkOrgId: "org_1",
     });
+  });
+
+  it("rejects binding claim sync for callers without an active organization", async () => {
+    await expect(
+      syncGitHubBindingClaimCommand.run({
+        ctx: pendingCtx,
+        deps,
+        input: {},
+      })
+    ).rejects.toMatchObject({ code: "ORG_REQUIRED", kind: "authz" });
+
+    expect(syncGitHubBindingClaimMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects binding claim sync for non-Clerk actors", async () => {
+    await expect(
+      syncGitHubBindingClaimCommand.run({
+        ctx: serviceCtx,
+        deps,
+        input: {},
+      })
+    ).rejects.toMatchObject({ code: "CLERK_USER_REQUIRED", kind: "authz" });
+
+    expect(syncGitHubBindingClaimMock).not.toHaveBeenCalled();
   });
 });
 

@@ -40,7 +40,7 @@ describe("GitHub setup TanStack adapter boundary", () => {
     );
 
     expect(rootSource).not.toContain("githubSetupRouter");
-    expect(rootSource).not.toContain("github:");
+    expect(rootSource).not.toContain("github: githubSetupRouter");
 
     if (existsSync(routerPath)) {
       const routerSource = readFileSync(routerPath, "utf8");

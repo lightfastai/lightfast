@@ -30,7 +30,7 @@ export function syncGitHubBindingClaimMutationOptions(
     meta: {
       errorTitle: input.errorTitle ?? "Failed to finish GitHub connection",
     },
-    mutationFn: () => syncGitHubBindingClaim(),
+    mutationFn: () => syncGitHubBindingClaim({ data: {} }),
   });
 }
 
@@ -39,6 +39,6 @@ export function verifyGitHubLightfastRepoMutationOptions(
 ) {
   return mutationOptions({
     meta: { errorTitle: input.errorTitle ?? "Failed to verify .lightfast" },
-    mutationFn: () => verifyGitHubLightfastRepo(),
+    mutationFn: () => verifyGitHubLightfastRepo({ data: {} }),
   });
 }
