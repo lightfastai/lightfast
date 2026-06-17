@@ -9,7 +9,7 @@ function source(path: string) {
 }
 
 const migratedFiles = [
-  "src/components/user-menu.tsx",
+  "src/components/app-sidebar.tsx",
   "src/account/settings/profile-data-display.tsx",
   "src/account/settings/account-settings-actions.ts",
   "src/account/tasks/username-account-task-client.tsx",

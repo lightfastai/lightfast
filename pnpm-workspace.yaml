@@ -144,7 +144,7 @@ catalog:
   shiki: ^4.0.2
   sonner: ^2.0.6
   storybook: ^10.4.2
-  streamdown: ^1.4.0
+  streamdown: ^2.5.0
   require-in-the-middle: ^8.0.1
   server-only: ^0.0.1
   superjson: ^2.2.6

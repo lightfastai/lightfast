@@ -4,10 +4,12 @@ import {
 } from "@db/app";
 import { db } from "@db/app/client";
 import { UI_MESSAGE_STREAM_HEADERS } from "@vendor/ai";
-import { isResumableStreamEnabled } from "~/chat/resumable-stream-config";
 import { resolveWorkspaceAssistantAuthContext } from "~/server/chat/auth";
 import { getLightfastResumableStreamContext } from "~/server/chat/resumable-stream";
 import { log } from "~/server/log";
+
+const isResumableStreamEnabled =
+  (import.meta.env.VITE_VERCEL_ENV ?? "development") !== "development";
 
 export async function handleWorkspaceAssistantStreamRequest(
   _request: Request,

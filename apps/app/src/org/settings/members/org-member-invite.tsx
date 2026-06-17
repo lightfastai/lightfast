@@ -2,11 +2,10 @@ import { useAuth } from "@clerk/tanstack-react-start";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
-  DialogActionButton,
-  DialogActions,
   DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -110,14 +109,16 @@ export function OrgMemberInvite() {
           </Select>
         </div>
 
-        <DialogActions>
+        <DialogFooter>
           <DialogClose asChild>
-            <DialogActionButton>Cancel</DialogActionButton>
+            <Button type="button" variant="outline">
+              Cancel
+            </Button>
           </DialogClose>
-          <DialogActionButton
+          <Button
             disabled={!emailAddress.trim() || inviteMutation.isPending}
             onClick={handleInvite}
-            variant="primary"
+            type="button"
           >
             {inviteMutation.isPending ? (
               <>
@@ -127,8 +128,8 @@ export function OrgMemberInvite() {
             ) : (
               "Send invite"
             )}
-          </DialogActionButton>
-        </DialogActions>
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

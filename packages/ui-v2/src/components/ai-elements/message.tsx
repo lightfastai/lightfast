@@ -1,26 +1,20 @@
 "use client";
 
-import { Markdown } from "@repo/ui/components/markdown";
-import { Button } from "@repo/ui/components/ui/button";
+import { Button } from "@repo/ui-v2/components/ui/button";
 import {
   ButtonGroup,
   ButtonGroupText,
-} from "@repo/ui/components/ui/button-group";
+} from "@repo/ui-v2/components/ui/button-group";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@repo/ui/components/ui/tooltip";
-import { cn } from "@repo/ui/lib/utils";
+} from "@repo/ui-v2/components/ui/tooltip";
+import { cn } from "@repo/ui-v2/lib/utils";
 import type { UIMessage } from "@vendor/ai";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-import type {
-  ComponentProps,
-  HTMLAttributes,
-  MouseEvent,
-  ReactElement,
-} from "react";
+import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
 import {
   createContext,
   memo,
@@ -30,6 +24,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { Streamdown } from "streamdown";
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: UIMessage["role"];
@@ -55,8 +50,8 @@ export const MessageContent = ({
 }: MessageContentProps) => (
   <div
     className={cn(
-      "is-user:dark flex w-fit min-w-0 max-w-full flex-col gap-2 overflow-hidden text-sm",
-      "group-[.is-user]:ml-auto group-[.is-user]:rounded-lg group-[.is-user]:bg-secondary group-[.is-user]:px-4 group-[.is-user]:py-3 group-[.is-user]:text-foreground",
+      "is-user:dark flex w-fit min-w-0 max-w-full flex-col gap-2 overflow-hidden text-base leading-7",
+      "group-[.is-user]:ml-auto group-[.is-user]:rounded-3xl group-[.is-user]:bg-muted group-[.is-user]:px-5 group-[.is-user]:py-2 group-[.is-user]:text-foreground group-[.is-user]:leading-6",
       "group-[.is-assistant]:text-foreground",
       className
     )}
@@ -102,7 +97,7 @@ export const MessageAction = ({
     return (
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger asChild>{button}</TooltipTrigger>
+          <TooltipTrigger>{button}</TooltipTrigger>
           <TooltipContent>
             <p>{tooltip}</p>
           </TooltipContent>
@@ -115,12 +110,12 @@ export const MessageAction = ({
 };
 
 interface MessageBranchContextType {
-  branches: ReactElement[];
   currentBranch: number;
-  goToNext: () => void;
-  goToPrevious: () => void;
-  setBranches: (branches: ReactElement[]) => void;
   totalBranches: number;
+  goToPrevious: () => void;
+  goToNext: () => void;
+  branches: ReactElement[];
+  setBranches: (branches: ReactElement[]) => void;
 }
 
 const MessageBranchContext = createContext<MessageBranchContextType | null>(
@@ -220,7 +215,7 @@ export const MessageBranchContent = ({
         "grid gap-2 overflow-hidden [&>div]:pb-0",
         index === currentBranch ? "block" : "hidden"
       )}
-      key={branch.key ?? index}
+      key={branch.key}
       {...props}
     >
       {branch}
@@ -257,22 +252,15 @@ export type MessageBranchPreviousProps = ComponentProps<typeof Button>;
 
 export const MessageBranchPrevious = ({
   children,
-  onClick,
   ...props
 }: MessageBranchPreviousProps) => {
   const { goToPrevious, totalBranches } = useMessageBranch();
-  const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
-    onClick?.(event);
-    if (!event.defaultPrevented) {
-      goToPrevious();
-    }
-  };
 
   return (
     <Button
       aria-label="Previous branch"
       disabled={totalBranches <= 1}
-      onClick={handleClick}
+      onClick={goToPrevious}
       size="icon-sm"
       type="button"
       variant="ghost"
@@ -287,22 +275,15 @@ export type MessageBranchNextProps = ComponentProps<typeof Button>;
 
 export const MessageBranchNext = ({
   children,
-  onClick,
   ...props
 }: MessageBranchNextProps) => {
   const { goToNext, totalBranches } = useMessageBranch();
-  const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
-    onClick?.(event);
-    if (!event.defaultPrevented) {
-      goToNext();
-    }
-  };
 
   return (
     <Button
       aria-label="Next branch"
       disabled={totalBranches <= 1}
-      onClick={handleClick}
+      onClick={goToNext}
       size="icon-sm"
       type="button"
       variant="ghost"
@@ -334,49 +315,20 @@ export const MessageBranchPage = ({
   );
 };
 
-export type MessageResponseProps = Omit<
-  HTMLAttributes<HTMLDivElement>,
-  "children"
-> & {
-  children: string;
-  isAnimating?: boolean;
-  parseIncompleteMarkdown?: boolean;
-  components?: unknown;
-  rehypePlugins?: unknown;
-  remarkPlugins?: unknown;
-  shikiTheme?: unknown;
-  mermaidConfig?: unknown;
-  controls?: unknown;
-};
+export type MessageResponseProps = ComponentProps<typeof Streamdown>;
 
 export const MessageResponse = memo(
-  ({
-    children,
-    className,
-    components: _components,
-    controls: _controls,
-    isAnimating: _isAnimating,
-    mermaidConfig: _mermaidConfig,
-    parseIncompleteMarkdown: _parseIncompleteMarkdown,
-    rehypePlugins: _rehypePlugins,
-    remarkPlugins: _remarkPlugins,
-    shikiTheme: _shikiTheme,
-    ...props
-  }: MessageResponseProps) => (
-    <div {...props}>
-      <Markdown
-        className={cn(
-          "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-          className
-        )}
-      >
-        {children}
-      </Markdown>
-    </div>
+  ({ className, ...props }: MessageResponseProps) => (
+    <Streamdown
+      className={cn(
+        "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
+        className
+      )}
+      {...props}
+    />
   ),
   (prevProps, nextProps) =>
     prevProps.children === nextProps.children &&
-    prevProps.className === nextProps.className &&
     nextProps.isAnimating === prevProps.isAnimating
 );
 

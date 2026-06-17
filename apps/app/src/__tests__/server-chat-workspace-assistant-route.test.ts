@@ -109,10 +109,6 @@ vi.mock("@vendor/ai", () => ({
   tool: toolMock,
 }));
 
-vi.mock("~/chat/resumable-stream-config", () => ({
-  isResumableStreamEnabled: false,
-}));
-
 vi.mock("~/server/chat/resumable-stream", () => ({
   getLightfastResumableStreamContext: () => ({
     createNewResumableStream: vi.fn(),

@@ -1,9 +1,9 @@
 "use client";
 
-import { cn } from "@repo/ui/lib/utils";
+import { cn } from "@repo/ui-v2/lib/utils";
 import type { MotionProps } from "motion/react";
 import { motion } from "motion/react";
-import type { ComponentType, CSSProperties, ElementType, JSX } from "react";
+import type { CSSProperties, ElementType, JSX } from "react";
 import { memo, useMemo } from "react";
 
 type MotionHTMLProps = MotionProps & Record<string, unknown>;
@@ -11,7 +11,7 @@ type MotionHTMLProps = MotionProps & Record<string, unknown>;
 // Cache motion components at module level to avoid creating during render
 const motionComponentCache = new Map<
   keyof JSX.IntrinsicElements,
-  ComponentType<MotionHTMLProps>
+  React.ComponentType<MotionHTMLProps>
 >();
 
 const getMotionComponent = (element: keyof JSX.IntrinsicElements) => {
@@ -24,8 +24,8 @@ const getMotionComponent = (element: keyof JSX.IntrinsicElements) => {
 };
 
 export interface TextShimmerProps {
-  as?: ElementType;
   children: string;
+  as?: ElementType;
   className?: string;
   duration?: number;
   spread?: number;

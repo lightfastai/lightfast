@@ -15,7 +15,7 @@ function expectSource(path: string) {
 
 describe("workspace page-owned actions", () => {
   it("replaces the Next @actions slot with colocated TanStack page actions", () => {
-    const backButtonSource = expectSource("src/components/back-button.tsx");
+    const backButtonPath = resolve(appRoot, "src/components/back-button.tsx");
     const createFormSource = source(
       "src/automations/automation-create-form.tsx"
     );
@@ -39,10 +39,15 @@ describe("workspace page-owned actions", () => {
       "src/decisions/use-decision-views-query.ts"
     );
 
-    expect(backButtonSource).toContain("@tanstack/react-router");
-    expect(backButtonSource).toContain("ChevronLeft");
-    expect(createFormSource).toContain("BackButton");
-    expect(detailClientSource).toContain("BackButton");
+    expect(existsSync(backButtonPath)).toBe(false);
+    expect(createFormSource).not.toContain("~/components/back-button");
+    expect(detailClientSource).not.toContain("~/components/back-button");
+    expect(createFormSource).not.toContain("BackButton");
+    expect(detailClientSource).not.toContain("BackButton");
+    expect(createFormSource).toContain('to="/$slug/automations"');
+    expect(detailClientSource).toContain('to="/$slug/automations"');
+    expect(createFormSource).toContain("ChevronLeft");
+    expect(detailClientSource).toContain("ChevronLeft");
     expect(detailRouteSource).toContain("slug={slug}");
 
     expect(decisionsClientSource).toContain("DecisionsViewSwitcher");

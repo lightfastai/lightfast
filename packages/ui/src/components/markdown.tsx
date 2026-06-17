@@ -6,14 +6,6 @@ import { isValidElement, memo } from "react";
 import type { Components as ReactMarkdownComponents } from "react-markdown";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import {
-  CodeBlock,
-  CodeBlockActions,
-  CodeBlockCopyButton,
-  CodeBlockFilename,
-  CodeBlockHeader,
-  CodeBlockTitle,
-} from "./ai-elements/code-block";
 
 // Properly typed component props based on react-markdown's actual types
 type MarkdownComponentProps = React.HTMLAttributes<HTMLElement> & {
@@ -130,24 +122,20 @@ const components: Partial<ReactMarkdownComponents> = {
     const code = extractCodeText(children);
 
     return (
-      <CodeBlock
+      <pre
         className={cn(
-          "my-4 h-auto rounded-md border border-border",
+          "my-4 overflow-x-auto rounded-md border border-border p-4",
           "bg-muted/50 dark:bg-muted/20",
           className
         )}
-        code={code}
-        language={language}
       >
-        <CodeBlockHeader>
-          <CodeBlockTitle>
-            <CodeBlockFilename>{language}</CodeBlockFilename>
-          </CodeBlockTitle>
-          <CodeBlockActions>
-            <CodeBlockCopyButton />
-          </CodeBlockActions>
-        </CodeBlockHeader>
-      </CodeBlock>
+        <code
+          className="block font-mono text-xs leading-6"
+          data-language={language}
+        >
+          {code}
+        </code>
+      </pre>
     );
   },
 

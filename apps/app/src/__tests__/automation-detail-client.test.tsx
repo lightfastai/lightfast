@@ -16,6 +16,12 @@ vi.mock("@tanstack/react-query", () => ({
   useQuery: useQueryMock,
 }));
 
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children }: ComponentProps<"a">) => (
+    <a href="/acme/automations">{children}</a>
+  ),
+}));
+
 vi.mock("~/trpc/react", () => ({
   useTRPC: () => ({
     org: {
@@ -33,10 +39,6 @@ vi.mock("~/trpc/react", () => ({
       },
     },
   }),
-}));
-
-vi.mock("~/components/back-button", () => ({
-  BackButton: () => <a href="/acme/automations">Automations</a>,
 }));
 
 vi.mock("@repo/ui/components/ui/button", () => ({

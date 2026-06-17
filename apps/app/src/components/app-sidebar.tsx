@@ -1,11 +1,18 @@
-import type { AppRouterOutputs } from "@api/app";
-import { Button } from "@repo/ui/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@repo/ui/components/ui/dropdown-menu";
+  ApertureIcon,
+  BlocksIcon,
+  Cancel01Icon,
+  CheckListIcon,
+  Key01Icon,
+  Message01Icon,
+  MessageCirclePlus,
+  Scroll01Icon,
+  SettingsIcon,
+  UserGroupIcon,
+  WorkflowSquare07Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+import { Button } from "@repo/ui/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -19,59 +26,110 @@ import {
   useSidebar,
 } from "@repo/ui/components/ui/sidebar";
 import { cn } from "@repo/ui/lib/utils";
-import { useQuery } from "@tanstack/react-query";
+import { DropdownMenuTrigger } from "@repo/ui-v2/components/ui/dropdown-menu";
 import { Link, useLocation } from "@tanstack/react-router";
-import {
-  Aperture,
-  Blocks,
-  BookOpen,
-  HelpCircle,
-  KeyRound,
-  ListChecks,
-  Mail,
-  MessageCircle,
-  MessageCirclePlus,
-  Network,
-  Scroll,
-  Settings,
-  Workflow,
-  X,
-} from "lucide-react";
-import type { ComponentType } from "react";
 import { Suspense } from "react";
-import { useTRPC } from "~/trpc/react";
-import {
-  getWorkspaceNavSections,
-  isWorkspacePathActive,
-  type WorkspaceNavItem,
-  type WorkspaceNavTitle,
-} from "./app-sidebar-model";
+import { RecentChatsMenu } from "./recent-chats-menu";
 import { TeamSwitcher, TeamSwitcherSkeleton } from "./team-switcher";
+import { UserMenu } from "./user-menu";
 
-type WorkspaceAssistantConversationList =
-  AppRouterOutputs["org"]["workspace"]["assistant"]["listConversations"];
-type WorkspaceAssistantConversationListItem =
-  WorkspaceAssistantConversationList["items"][number];
+type WorkspaceRouteTo =
+  | "/$slug/automations"
+  | "/$slug/connectors"
+  | "/$slug/decisions"
+  | "/$slug/developer-connections"
+  | "/$slug/people"
+  | "/$slug/settings"
+  | "/$slug/signals"
+  | "/$slug/skills";
 
-const navIcons: Record<
-  WorkspaceNavTitle,
-  ComponentType<{ className?: string }>
-> = {
-  Automations: Workflow,
-  Connectors: Blocks,
-  Decisions: ListChecks,
-  "Developer Connections": KeyRound,
-  People: Network,
-  Settings,
-  Signals: Aperture,
-  Skills: Scroll,
+type WorkspaceNavTitle =
+  | "Automations"
+  | "Connectors"
+  | "Decisions"
+  | "Developer Connections"
+  | "People"
+  | "Settings"
+  | "Signals"
+  | "Skills";
+
+interface WorkspaceNavItem {
+  href: string;
+  title: WorkspaceNavTitle;
+  to: WorkspaceRouteTo;
+}
+
+interface WorkspaceNavSection {
+  items: WorkspaceNavItem[];
+  label: string;
+}
+
+const navIcons: Record<WorkspaceNavTitle, IconSvgElement> = {
+  Automations: WorkflowSquare07Icon,
+  Connectors: BlocksIcon,
+  Decisions: CheckListIcon,
+  "Developer Connections": Key01Icon,
+  People: UserGroupIcon,
+  Settings: SettingsIcon,
+  Signals: ApertureIcon,
+  Skills: Scroll01Icon,
 };
 
 export function AppSidebar({ orgSlug }: { orgSlug: string }) {
   const { pathname } = useLocation();
   const { isMobile, setOpenMobile } = useSidebar();
-  const navSections = getWorkspaceNavSections(orgSlug);
-
+  const navSections: WorkspaceNavSection[] = [
+    {
+      label: "Workspace",
+      items: [
+        {
+          href: `/${orgSlug}/automations`,
+          title: "Automations",
+          to: "/$slug/automations",
+        },
+        {
+          href: `/${orgSlug}/decisions`,
+          title: "Decisions",
+          to: "/$slug/decisions",
+        },
+        {
+          href: `/${orgSlug}/skills`,
+          title: "Skills",
+          to: "/$slug/skills",
+        },
+        {
+          href: `/${orgSlug}/signals`,
+          title: "Signals",
+          to: "/$slug/signals",
+        },
+        {
+          href: `/${orgSlug}/people`,
+          title: "People",
+          to: "/$slug/people",
+        },
+      ],
+    },
+    {
+      label: "Manage",
+      items: [
+        {
+          href: `/${orgSlug}/connectors`,
+          title: "Connectors",
+          to: "/$slug/connectors",
+        },
+        {
+          href: `/${orgSlug}/developer-connections`,
+          title: "Developer Connections",
+          to: "/$slug/developer-connections",
+        },
+        {
+          href: `/${orgSlug}/settings`,
+          title: "Settings",
+          to: "/$slug/settings",
+        },
+      ],
+    },
+  ];
   return (
     <Sidebar collapsible="offcanvas">
       <SidebarHeader className="h-14 flex-row items-center px-4 py-0">
@@ -97,7 +155,11 @@ export function AppSidebar({ orgSlug }: { orgSlug: string }) {
               preload={false}
               to="/$slug/chat"
             >
-              <MessageCirclePlus className="size-3.5" />
+              <HugeiconsIcon
+                aria-hidden="true"
+                className="size-3.5"
+                icon={MessageCirclePlus}
+              />
             </Link>
           </Button>
           {isMobile ? (
@@ -109,12 +171,26 @@ export function AppSidebar({ orgSlug }: { orgSlug: string }) {
               type="button"
               variant="ghost"
             >
-              <X className="size-4" />
+              <HugeiconsIcon
+                aria-hidden="true"
+                className="size-4"
+                icon={Cancel01Icon}
+              />
             </Button>
           ) : null}
         </div>
       </SidebarHeader>
       <SidebarContent>
+        <RecentChatsMenu
+          onConversationSelect={() => {
+            if (isMobile) {
+              setOpenMobile(false);
+            }
+          }}
+          orgSlug={orgSlug}
+          pathname={pathname}
+          trigger={<RecentChatsMenuTrigger />}
+        />
         {navSections.map((section) => (
           <SidebarGroup
             collapsible={Boolean(section.label)}
@@ -135,135 +211,39 @@ export function AppSidebar({ orgSlug }: { orgSlug: string }) {
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
-        <ChatHistory orgSlug={orgSlug} pathname={pathname} />
       </SidebarContent>
       <SidebarFooter>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              className="size-11 rounded-full bg-muted p-1 lg:h-8 lg:w-8"
-              size="icon"
-              title="Help"
-              variant="outline"
-            >
-              <HelpCircle className="size-3.5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="center" className="w-48">
-            <DropdownMenuItem asChild>
-              <a href="mailto:support@lightfast.ai">
-                <Mail className="size-3.5" />
-                Contact Support
-              </a>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <a
-                href="https://lightfast.ai/docs/get-started/overview"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                <BookOpen className="size-3.5" />
-                Help Docs
-              </a>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <UserMenu />
       </SidebarFooter>
     </Sidebar>
   );
 }
 
-function ChatHistory({
-  orgSlug,
-  pathname,
-}: {
-  orgSlug: string;
-  pathname: string;
-}) {
-  const trpc = useTRPC();
-  const { data, error, isPending } = useQuery({
-    ...trpc.org.workspace.assistant.listConversations.queryOptions(
-      { limit: 20 },
-      { staleTime: 0 }
-    ),
-    enabled: typeof window !== "undefined" && Boolean(orgSlug),
-  });
-
-  if (isPending || error || !data?.items.length) {
-    return null;
-  }
-
+function RecentChatsMenuTrigger() {
   return (
-    <SidebarGroup collapsible defaultOpen label="Chats">
-      <SidebarGroupContent>
-        <nav aria-label="Chats">
-          <SidebarMenu>
-            {data.items.map((conversation) => (
-              <ChatHistoryItem
-                conversation={conversation}
-                key={conversation.publicId}
-                orgSlug={orgSlug}
-                pathname={pathname}
+    <div className="px-2">
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <DropdownMenuTrigger
+            render={
+              <SidebarMenuButton
+                aria-label="Open recents"
+                className="h-11 rounded-xl text-muted-foreground lg:h-7 [&>svg]:size-3.5"
+                size="sm"
               />
-            ))}
-          </SidebarMenu>
-        </nav>
-      </SidebarGroupContent>
-    </SidebarGroup>
-  );
-}
-
-function ChatHistoryItem({
-  conversation,
-  orgSlug,
-  pathname,
-}: {
-  conversation: WorkspaceAssistantConversationListItem;
-  orgSlug: string;
-  pathname: string;
-}) {
-  const { isMobile, setOpenMobile } = useSidebar();
-  const href = `/${orgSlug}/chat/${conversation.publicId}`;
-  const isActive = pathname === href;
-  const title = getConversationSidebarTitle(conversation);
-
-  return (
-    <SidebarMenuItem>
-      <SidebarMenuButton
-        asChild
-        className={cn(
-          "h-11 rounded-xl lg:h-7 [&>svg]:size-3.5",
-          isActive
-            ? "text-foreground data-[active=true]:text-foreground"
-            : "text-muted-foreground"
-        )}
-        isActive={isActive}
-        size="sm"
-      >
-        <Link
-          aria-current={isActive ? "page" : undefined}
-          onClick={() => {
-            if (isMobile) {
-              setOpenMobile(false);
             }
-          }}
-          params={{ conversationId: conversation.publicId, slug: orgSlug }}
-          preload="intent"
-          to="/$slug/chat/$conversationId"
-        >
-          <MessageCircle className="size-3.5" />
-          <span>{title}</span>
-        </Link>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
+          >
+            <HugeiconsIcon
+              aria-hidden="true"
+              className="size-3.5"
+              icon={Message01Icon}
+            />
+            <span>Recents</span>
+          </DropdownMenuTrigger>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    </div>
   );
-}
-
-function getConversationSidebarTitle(
-  conversation: WorkspaceAssistantConversationListItem
-) {
-  const title = conversation.title?.trim();
-  return title || "Untitled chat";
 }
 
 function NavItems({
@@ -278,8 +258,9 @@ function NavItems({
   const { isMobile, setOpenMobile } = useSidebar();
 
   return items.map((item) => {
-    const Icon = navIcons[item.title];
-    const isActive = isWorkspacePathActive(item.href, pathname);
+    const icon = navIcons[item.title];
+    const isActive =
+      pathname === item.href || pathname.startsWith(`${item.href}/`);
 
     return (
       <SidebarMenuItem key={item.title}>
@@ -305,7 +286,11 @@ function NavItems({
             preload="intent"
             to={item.to}
           >
-            <Icon className="size-3.5" />
+            <HugeiconsIcon
+              aria-hidden="true"
+              className="size-3.5"
+              icon={icon}
+            />
             <span>{item.title}</span>
           </Link>
         </SidebarMenuButton>

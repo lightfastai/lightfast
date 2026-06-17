@@ -3,9 +3,14 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const appRoot = resolve(import.meta.dirname, "../..");
+const repoRoot = resolve(appRoot, "../..");
 
 function source(path: string) {
   return readFileSync(resolve(appRoot, path), "utf8");
+}
+
+function repoSource(path: string) {
+  return readFileSync(resolve(repoRoot, path), "utf8");
 }
 
 function expectSource(path: string) {
@@ -147,8 +152,15 @@ describe("app authenticated route migration", () => {
 
   it("uses a pathless authenticated shell for account and org routes", () => {
     const shellSource = source("src/routes/_authenticated.tsx");
+    const authenticatedLayoutModelPath = resolve(
+      appRoot,
+      "src/components/authenticated-layout-model.ts"
+    );
     const teamSwitcherSource = source("src/components/team-switcher.tsx");
     const appSidebarSource = source("src/components/app-sidebar.tsx");
+    const recentChatsMenuSource = source(
+      "src/components/recent-chats-menu.tsx"
+    );
     const orgRouteSource = source("src/routes/_authenticated/$slug.tsx");
     const workspaceShellSource = source(
       "src/workspace/workspace-route-shell.tsx"
@@ -165,21 +177,51 @@ describe("app authenticated route migration", () => {
     expect(shellSource).toContain("redirect_url: location.href");
     expect(shellSource).toContain("AUTH_ROUTE_PATHS");
     expect(shellSource).toContain("isAuthRoute");
+    expect(existsSync(authenticatedLayoutModelPath)).toBe(false);
+    expect(shellSource).not.toContain("authenticated-layout-model");
+    expect(shellSource).toContain(
+      'const BASIC_SHELL_PREFIXES = ["/account", "/accounts"] as const'
+    );
+    expect(shellSource).toContain("const usesBasicShell");
+    expect(shellSource).toContain("if (!usesBasicShell)");
     expect(teamSwitcherSource).toContain("function TeamSwitcherSlot()");
     expect(teamSwitcherSource).toContain("<TeamSwitcherSkeleton />");
     expect(teamSwitcherSource).toContain('from "@repo/ui/hooks/use-mounted"');
+    expect(teamSwitcherSource).toContain(
+      'from "@repo/ui-v2/components/ui/dropdown-menu"'
+    );
+    expect(teamSwitcherSource).not.toContain(
+      'from "@repo/ui/components/ui/dropdown-menu"'
+    );
+    expect(teamSwitcherSource).toContain(
+      'from "@repo/ui-v2/components/ui/avatar"'
+    );
+    expect(teamSwitcherSource).not.toContain(
+      'from "@repo/ui/components/ui/avatar"'
+    );
+    expect(teamSwitcherSource).toContain(
+      "bg-foreground text-[10px] text-background"
+    );
+    expect(teamSwitcherSource).not.toContain("!text-background");
+    expect(teamSwitcherSource).not.toContain("asChild");
     expect(teamSwitcherSource).toContain("const mounted = useMounted();");
     expect(teamSwitcherSource).toContain("if (!mounted || isPending)");
     expect(shellSource).toContain(
       "<AuthenticatedTopbar left={<TeamSwitcherSlot />} />"
     );
     expect(teamSwitcherSource).toContain("listUserOrganizationsQueryOptions()");
+    expect(teamSwitcherSource).toContain(
+      '<DropdownMenuContent align="center" size="sm">'
+    );
+    expect(teamSwitcherSource).not.toContain(
+      '<DropdownMenuContent align="center" className='
+    );
     expect(teamSwitcherSource).toContain('to="/account/teams/new"');
     expect(teamSwitcherSource).toContain('to="/$slug"');
     expect(teamSwitcherSource).not.toContain("next/navigation");
     expect(teamSwitcherSource).not.toContain("next/link");
-    expect(appSidebarSource).toContain("listConversations.queryOptions");
-    expect(appSidebarSource).toContain('to="/$slug/chat/$conversationId"');
+    expect(recentChatsMenuSource).toContain("listConversations.queryOptions");
+    expect(recentChatsMenuSource).toContain('to="/$slug/chat/$conversationId"');
     expect(appSidebarSource).not.toContain("showChatHistory");
     expect(orgRouteSource).toContain("WorkspaceRouteShell");
     expect(workspaceShellSource).toContain(
@@ -220,6 +262,36 @@ describe("app authenticated route migration", () => {
       "/app/fonts/pp-neue-montreal/PPNeueMontreal-Medium"
     );
     expect(globalCss).not.toContain('url("/fonts/');
+  });
+
+  it("uses ui-v2 globals while keeping gradual migration CSS hooks", () => {
+    const globalCss = source("src/styles/globals.css");
+    const postcssConfig = source("postcss.config.mjs");
+
+    expect(globalCss).toContain('@import "@repo/ui-v2/globals.css";');
+    expect(globalCss).not.toContain('@import "@repo/ui/globals.css";');
+    expect(globalCss).toContain('@source "../**/*.{ts,tsx}";');
+    expect(globalCss).toContain(
+      '@source "../../../../packages/ui/src/**/*.{ts,tsx}";'
+    );
+    expect(globalCss).toContain(
+      '@source "../../../../packages/ui-v2/src/**/*.{ts,tsx}";'
+    );
+    expect(globalCss).toContain("--font-geist-sans");
+    expect(globalCss).toContain(".font-pp");
+    expect(postcssConfig).toContain("@repo/ui-v2/postcss.config");
+    expect(postcssConfig).not.toContain("@repo/ui/postcss.config");
+  });
+
+  it("keeps ui-v2 dropdown focused items from overriding composed child colors", () => {
+    const dropdownMenuSource = repoSource(
+      "packages/ui-v2/src/components/ui/dropdown-menu.tsx"
+    );
+
+    expect(dropdownMenuSource).toContain(
+      "focus:bg-accent focus:text-accent-foreground"
+    );
+    expect(dropdownMenuSource).not.toContain("focus:**:text-accent-foreground");
   });
 
   it("ports Signals without Next.js search or link assumptions", () => {
@@ -547,7 +619,17 @@ describe("app authenticated route migration", () => {
     const messageSource = source("src/chat/chat-message.tsx");
     const messagePartSource = source("src/chat/message-part.tsx");
     const copyButtonSource = source("src/chat/message-copy-button.tsx");
-    const resumableConfigSource = source("src/chat/resumable-stream-config.ts");
+    const chatRequestRouteSource = source(
+      "src/server/chat/workspace-assistant-route.ts"
+    );
+    const chatStreamRouteSource = source(
+      "src/server/chat/workspace-assistant-stream-route.ts"
+    );
+    const conversationIdPath = resolve(appRoot, "src/chat/conversation-id.ts");
+    const resumableConfigPath = resolve(
+      appRoot,
+      "src/chat/resumable-stream-config.ts"
+    );
 
     expect(packageSource).toContain('"@ai-sdk/react": "catalog:"');
     expect(packageSource).toContain('"@vendor/ai": "workspace:*"');
@@ -566,15 +648,17 @@ describe("app authenticated route migration", () => {
     );
     expect(conversationRouteSource).toContain("WorkspaceAssistantClient");
     expect(conversationRouteSource).toContain("isPreallocatedConversationId");
+    expect(conversationRouteSource).not.toContain("~/chat/conversation-id");
     expect(conversationRouteSource).toContain("notFound()");
     expect(assistantClientSource).toContain("useChat");
     expect(assistantClientSource).toContain("DefaultChatTransport");
     expect(assistantClientSource).toContain("useParams({ strict: false })");
     expect(assistantClientSource).toContain("useRouter");
+    expect(assistantClientSource).toContain("History.prototype.replaceState");
+    expect(assistantClientSource).toContain("workspaceConversationPath");
     expect(assistantClientSource).toContain(
       'to: "/$slug/chat/$conversationId"'
     );
-    expect(assistantClientSource).toContain("router.invalidate()");
     expect(assistantClientSource).toContain(
       "createConversation.mutationOptions"
     );
@@ -584,8 +668,35 @@ describe("app authenticated route migration", () => {
     expect(messageSource).toContain("ChatMessage");
     expect(messagePartSource).toContain("WorkspaceAssistantMessagePart");
     expect(copyButtonSource).toContain("extractMessageText");
-    expect(resumableConfigSource).toContain("isResumableStreamEnabled");
-    expect(resumableConfigSource).toContain("VITE_VERCEL_ENV");
+    expect(existsSync(conversationIdPath)).toBe(false);
+    expect(existsSync(resumableConfigPath)).toBe(false);
+    expect(assistantClientSource).toContain("isResumableStreamEnabled");
+    expect(assistantClientSource).toContain("VITE_VERCEL_ENV");
+    expect(assistantClientSource).not.toContain("resumable-stream-config");
+    expect(chatRequestRouteSource).toContain("isResumableStreamEnabled");
+    expect(chatRequestRouteSource).toContain("VITE_VERCEL_ENV");
+    expect(chatRequestRouteSource).not.toContain("resumable-stream-config");
+    expect(chatStreamRouteSource).toContain("isResumableStreamEnabled");
+    expect(chatStreamRouteSource).toContain("VITE_VERCEL_ENV");
+    expect(chatStreamRouteSource).not.toContain("resumable-stream-config");
+    expect(assistantClientSource).toContain(
+      "@repo/ui-v2/components/ai-elements/conversation"
+    );
+    expect(composerSource).toContain(
+      "@repo/ui-v2/components/ai-elements/prompt-input"
+    );
+    expect(messageSource).toContain(
+      "@repo/ui-v2/components/ai-elements/message"
+    );
+    expect(messagePartSource).toContain(
+      "@repo/ui-v2/components/ai-elements/message"
+    );
+    expect(messagePartSource).toContain(
+      "@repo/ui-v2/components/ai-elements/reasoning"
+    );
+    expect(messagePartSource).toContain(
+      "@repo/ui-v2/components/ai-elements/tool"
+    );
 
     for (const routeFile of [
       chatRouteSource,
@@ -596,10 +707,12 @@ describe("app authenticated route migration", () => {
       messageSource,
       messagePartSource,
       copyButtonSource,
-      resumableConfigSource,
+      chatRequestRouteSource,
+      chatStreamRouteSource,
     ]) {
       expect(routeFile).not.toContain("next/");
       expect(routeFile).not.toContain("nuqs");
+      expect(routeFile).not.toContain("@repo/ui/components/ai-elements");
       expect(routeFile).not.toContain('"use client"');
       expect(routeFile).not.toContain('"use server"');
     }

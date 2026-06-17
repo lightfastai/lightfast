@@ -1,5 +1,12 @@
 import { SIGNAL_INPUT_MAX_LENGTH } from "@repo/api-contract";
+import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { Button } from "@repo/ui/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@repo/ui/components/ui/dialog";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { Switch } from "@repo/ui/components/ui/switch";
 import { Textarea } from "@repo/ui/components/ui/textarea";
@@ -8,7 +15,6 @@ import { useLocation } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import type { ChangeEvent, FormEvent, KeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
-import { CreateDialogShell } from "~/components/create-dialog-shell";
 import { listUserOrganizationsQueryOptions } from "~/organization/organization-queries";
 import { createSignalMutationOptions } from "./signals-queries";
 
@@ -188,97 +194,122 @@ export function SignalCreateDialog({
     writeCreateMore(next);
   }
 
-  return (
-    <CreateDialogShell
-      busy={createMutation.isPending}
-      description="Paste one raw signal to queue it for classification."
-      footerLeft={
-        <div
-          aria-live="polite"
-          className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground text-xs"
-        >
-          <span className="shrink-0">
-            {formattedInputLength} / {formattedInputLimit} characters
-          </span>
-          {(isAtLimit || isOverLimit) && (
-            <>
-              <span aria-hidden="true">·</span>
-              <span
-                className={
-                  isOverLimit
-                    ? "shrink-0 text-destructive"
-                    : "shrink-0 text-muted-foreground"
-                }
-              >
-                {isOverLimit ? "Too long" : "Limit reached"}
-              </span>
-            </>
-          )}
-          {trimmedInput.length === 0 && inputLength > 0 && (
-            <>
-              <span aria-hidden="true">·</span>
-              <span className="shrink-0 text-muted-foreground">
-                Add signal text
-              </span>
-            </>
-          )}
-        </div>
-      }
-      footerRight={
-        <>
-          <span className="flex items-center gap-2 text-muted-foreground text-sm">
-            <Switch
-              aria-label="Create more"
-              checked={createMore}
-              disabled={createMutation.isPending}
-              onCheckedChange={handleCreateMoreChange}
-            />
-            Create more
-          </span>
-          <Button
-            disabled={isSubmitDisabled}
-            form={SIGNAL_CREATE_FORM_ID}
-            size="sm"
-            type="submit"
-          >
-            {createMutation.isPending && (
-              <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
-            )}
-            {createMutation.isPending ? "Creating" : "Create signal"}
-            {!createMutation.isPending && (
-              <kbd className="ml-1 rounded bg-foreground/10 px-1 text-[10px] text-primary-foreground/80">
-                ⌘↵
-              </kbd>
-            )}
-          </Button>
-        </>
-      }
-      onOpenChange={handleOpenChange}
-      open={open}
-      org={org}
-      title="New signal"
+  const footerLeft = (
+    <div
+      aria-live="polite"
+      className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground text-xs"
     >
-      <form
-        aria-label="Create signal"
-        className="flex min-h-[14rem] px-4 pb-2"
-        id={SIGNAL_CREATE_FORM_ID}
-        onSubmit={handleSubmit}
-        ref={formRef}
-      >
-        <Textarea
-          aria-label="Signal input"
-          autoFocus
-          className="field-sizing-fixed h-full max-h-[40vh] min-h-[14rem] flex-1 resize-none overflow-y-auto whitespace-pre-wrap break-words rounded-none border-0 bg-transparent p-0 text-sm leading-6 shadow-none focus-visible:ring-0 dark:bg-transparent"
+      <span className="shrink-0">
+        {formattedInputLength} / {formattedInputLimit} characters
+      </span>
+      {(isAtLimit || isOverLimit) && (
+        <>
+          <span aria-hidden="true">·</span>
+          <span
+            className={
+              isOverLimit
+                ? "shrink-0 text-destructive"
+                : "shrink-0 text-muted-foreground"
+            }
+          >
+            {isOverLimit ? "Too long" : "Limit reached"}
+          </span>
+        </>
+      )}
+      {trimmedInput.length === 0 && inputLength > 0 && (
+        <>
+          <span aria-hidden="true">·</span>
+          <span className="shrink-0 text-muted-foreground">
+            Add signal text
+          </span>
+        </>
+      )}
+    </div>
+  );
+
+  const footerRight = (
+    <>
+      <span className="flex items-center gap-2 text-muted-foreground text-sm">
+        <Switch
+          aria-label="Create more"
+          checked={createMore}
           disabled={createMutation.isPending}
-          maxLength={SIGNAL_INPUT_MAX_LENGTH}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          placeholder="Paste a customer request, support note, product signal, or internal observation..."
-          ref={textareaRef}
-          value={input}
-          wrap="soft"
+          onCheckedChange={handleCreateMoreChange}
         />
-      </form>
-    </CreateDialogShell>
+        Create more
+      </span>
+      <Button
+        disabled={isSubmitDisabled}
+        form={SIGNAL_CREATE_FORM_ID}
+        size="sm"
+        type="submit"
+      >
+        {createMutation.isPending && (
+          <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
+        )}
+        {createMutation.isPending ? "Creating" : "Create signal"}
+        {!createMutation.isPending && (
+          <kbd className="ml-1 rounded bg-foreground/10 px-1 text-[10px] text-primary-foreground/80">
+            ⌘↵
+          </kbd>
+        )}
+      </Button>
+    </>
+  );
+
+  return (
+    <Dialog onOpenChange={handleOpenChange} open={open}>
+      <DialogContent className="gap-0 overflow-hidden rounded-[12px] border-border bg-card p-0 shadow-2xl sm:max-w-2xl">
+        <DialogDescription className="sr-only">
+          Paste one raw signal to queue it for classification.
+        </DialogDescription>
+
+        <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-1">
+          <div className="flex min-w-0 items-center gap-2 pr-8 text-sm">
+            <Avatar className="size-5">
+              <AvatarFallback className="bg-foreground text-[10px] text-background">
+                {org?.initials ?? "?"}
+              </AvatarFallback>
+            </Avatar>
+            <span className="truncate font-medium">
+              {org?.name ?? "Workspace"}
+            </span>
+            <span aria-hidden="true" className="text-muted-foreground">
+              ›
+            </span>
+            <DialogTitle className="truncate font-medium text-sm">
+              New signal
+            </DialogTitle>
+          </div>
+        </div>
+
+        <form
+          aria-label="Create signal"
+          className="flex min-h-[14rem] px-4 pb-2"
+          id={SIGNAL_CREATE_FORM_ID}
+          onSubmit={handleSubmit}
+          ref={formRef}
+        >
+          <Textarea
+            aria-label="Signal input"
+            autoFocus
+            className="field-sizing-fixed h-full max-h-[40vh] min-h-[14rem] flex-1 resize-none overflow-y-auto whitespace-pre-wrap break-words rounded-none border-0 bg-transparent p-0 text-sm leading-6 shadow-none focus-visible:ring-0 dark:bg-transparent"
+            disabled={createMutation.isPending}
+            maxLength={SIGNAL_INPUT_MAX_LENGTH}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Paste a customer request, support note, product signal, or internal observation..."
+            ref={textareaRef}
+            value={input}
+            wrap="soft"
+          />
+        </form>
+
+        <div className="flex items-center justify-between gap-3 px-4 pt-2 pb-4">
+          <div className="min-w-0">{footerLeft}</div>
+          <div className="flex items-center gap-3">{footerRight}</div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
