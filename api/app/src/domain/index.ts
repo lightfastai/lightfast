@@ -7,6 +7,7 @@ export * from "./gates";
 export * from "./mcp-connections";
 export * from "./org-api-keys";
 export * from "./org-identity";
+export * from "./org-members";
 export * from "./organizations";
 export * from "./people";
 export * from "./signals";

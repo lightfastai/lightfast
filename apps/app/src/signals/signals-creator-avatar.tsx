@@ -1,3 +1,4 @@
+import { useAuth } from "@clerk/tanstack-react-start";
 import {
   Avatar,
   AvatarFallback,
@@ -5,7 +6,7 @@ import {
 } from "@repo/ui/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
 import { KeyRound, User } from "lucide-react";
-import { useTRPC } from "~/trpc/react";
+import { orgMembersQueryOptions } from "~/org/settings/members/org-member-queries";
 import type { SignalListItem } from "./signals-model";
 
 function deriveInitials(name: string) {
@@ -32,11 +33,9 @@ export function SignalCreatorAvatar({
 }: {
   signal: Pick<SignalListItem, "createdByApiKeyId" | "createdByUserId">;
 }) {
-  const trpc = useTRPC();
+  const { orgId } = useAuth();
   const { data } = useQuery({
-    ...trpc.org.settings.orgMembers.list.queryOptions(),
-    enabled: typeof window !== "undefined",
-    staleTime: 5 * 60 * 1000,
+    ...orgMembersQueryOptions({ orgId }),
   });
 
   if (signal.createdByApiKeyId) {

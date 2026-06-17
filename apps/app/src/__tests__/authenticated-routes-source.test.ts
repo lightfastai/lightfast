@@ -960,6 +960,9 @@ describe("app authenticated route migration", () => {
     const memberCacheSource = source(
       "src/org/settings/members/org-member-cache.ts"
     );
+    const memberQueriesSource = source(
+      "src/org/settings/members/org-member-queries.ts"
+    );
     const apiKeyCreateSource = source(
       "src/org/settings/api-keys/org-api-key-create.tsx"
     );
@@ -1006,27 +1009,26 @@ describe("app authenticated route migration", () => {
 
     expect(membersClientSource).toContain("OrgMemberInvite");
     expect(membersClientSource).toContain("OrgMemberList");
-    expect(memberListSource).toContain("orgMembers.list.queryOptions");
-    expect(memberListSource).toContain(
+    expect(memberListSource).toContain("orgMembersQueryOptions");
+    expect(memberListSource).not.toContain("orgMembers.list.queryOptions");
+    expect(memberListSource).not.toContain(
       'enabled: typeof window !== "undefined"'
     );
     expect(memberListSource).toContain('from "@clerk/tanstack-react-start"');
     expect(memberInviteSource).toContain("useOrgMemberInviteAction");
     expect(memberInviteActionsSource).toContain(
-      "orgMembers.invite.mutationOptions"
+      "inviteOrgMemberMutationOptions"
     );
     expect(memberListActionsSource).toContain(
-      "orgMembers.updateRole.mutationOptions"
+      "updateOrgMemberRoleMutationOptions"
     );
     expect(memberListActionsSource).toContain(
-      "orgMembers.revokeInvitation.mutationOptions"
+      "revokeOrgInvitationMutationOptions"
     );
-    expect(memberListActionsSource).toContain(
-      "orgMembers.remove.mutationOptions"
-    );
-    expect(memberCacheSource).toContain(
-      'AppRouterOutputs["org"]["settings"]["orgMembers"]["list"]'
-    );
+    expect(memberListActionsSource).toContain("removeOrgMemberMutationOptions");
+    expect(memberQueriesSource).toContain("orgMemberQueryKeys");
+    expect(memberQueriesSource).not.toContain("useTRPC");
+    expect(memberCacheSource).not.toContain("AppRouterOutputs");
 
     expect(apiKeyListSource).toContain("orgApiKeysQueryOptions");
     expect(apiKeyListSource).toContain(

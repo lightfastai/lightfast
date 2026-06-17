@@ -1,8 +1,6 @@
-import type { AppRouterOutputs } from "@api/app";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { useTRPC } from "~/trpc/react";
 import {
   type OrgMembersData,
   type OrgRole,
@@ -12,148 +10,131 @@ import {
   restoreMember,
   updateMemberRole,
 } from "./org-member-cache";
+import {
+  orgMemberQueryKeys,
+  removeOrgMemberMutationOptions,
+  revokeOrgInvitationMutationOptions,
+  updateOrgMemberRoleMutationOptions,
+} from "./org-member-queries";
 
-type OrgMembersOutput =
-  AppRouterOutputs["org"]["settings"]["orgMembers"]["list"];
-
-export function useOrgMemberListActions() {
-  const trpc = useTRPC();
+export function useOrgMemberListActions({
+  orgId,
+}: {
+  orgId: string | null | undefined;
+}) {
   const queryClient = useQueryClient();
+  const listQueryKey = orgMemberQueryKeys.list(orgId);
 
-  const updateRoleMutation = useMutation(
-    trpc.org.settings.orgMembers.updateRole.mutationOptions({
-      meta: { errorTitle: "Failed to update role" },
-      onMutate: async (input) => {
-        await queryClient.cancelQueries(
-          trpc.org.settings.orgMembers.list.queryFilter()
-        );
+  const updateRoleMutation = useMutation({
+    ...updateOrgMemberRoleMutationOptions(),
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: listQueryKey });
 
-        const previous = queryClient.getQueryData<OrgMembersOutput>(
-          trpc.org.settings.orgMembers.list.queryKey()
-        );
-        const previousRole = previous?.members.find(
-          (member) => member.userId === input.userId
-        )?.role as OrgRole | undefined;
+      const previous = queryClient.getQueryData<OrgMembersData>(listQueryKey);
+      const previousRole = previous?.members.find(
+        (member) => member.userId === input.userId
+      )?.role as OrgRole | undefined;
 
-        queryClient.setQueryData(
-          trpc.org.settings.orgMembers.list.queryKey(),
-          (old: OrgMembersData | undefined) =>
-            updateMemberRole(old, input.userId, input.role)
-        );
+      queryClient.setQueryData(
+        listQueryKey,
+        (old: OrgMembersData | undefined) =>
+          updateMemberRole(old, input.userId, input.role)
+      );
 
-        return { previousRole };
-      },
-      onError: (_err, input, context) => {
-        const previousRole = context?.previousRole;
-        if (!previousRole) {
-          return;
-        }
+      return { previousRole };
+    },
+    onError: (_err, input, context) => {
+      const previousRole = context?.previousRole;
+      if (!previousRole) {
+        return;
+      }
 
-        queryClient.setQueryData(
-          trpc.org.settings.orgMembers.list.queryKey(),
-          (old: OrgMembersData | undefined) =>
-            updateMemberRole(old, input.userId, previousRole)
-        );
-      },
-      onSuccess: () => toast.success("Role updated"),
-      onSettled: () =>
-        void queryClient.invalidateQueries(
-          trpc.org.settings.orgMembers.list.queryFilter()
-        ),
-    })
-  );
+      queryClient.setQueryData(
+        listQueryKey,
+        (old: OrgMembersData | undefined) =>
+          updateMemberRole(old, input.userId, previousRole)
+      );
+    },
+    onSuccess: () => toast.success("Role updated"),
+    onSettled: () =>
+      void queryClient.invalidateQueries({ queryKey: listQueryKey }),
+  });
 
-  const removeMutation = useMutation(
-    trpc.org.settings.orgMembers.remove.mutationOptions({
-      meta: { errorTitle: "Failed to remove member" },
-      onMutate: async (input) => {
-        await queryClient.cancelQueries(
-          trpc.org.settings.orgMembers.list.queryFilter()
-        );
+  const removeMutation = useMutation({
+    ...removeOrgMemberMutationOptions(),
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: listQueryKey });
 
-        const previous = queryClient.getQueryData<OrgMembersOutput>(
-          trpc.org.settings.orgMembers.list.queryKey()
-        );
-        const { removedIndex, removedMember } = removeMember(
-          previous,
-          input.userId
-        );
+      const previous = queryClient.getQueryData<OrgMembersData>(listQueryKey);
+      const { removedIndex, removedMember } = removeMember(
+        previous,
+        input.userId
+      );
 
-        queryClient.setQueryData(
-          trpc.org.settings.orgMembers.list.queryKey(),
-          (old: OrgMembersData | undefined) =>
-            removeMember(old, input.userId).data
-        );
+      queryClient.setQueryData(
+        listQueryKey,
+        (old: OrgMembersData | undefined) =>
+          removeMember(old, input.userId).data
+      );
 
-        return { removedIndex, removedMember };
-      },
-      onError: (_err, _input, context) => {
-        if (!context?.removedMember) {
-          return;
-        }
+      return { removedIndex, removedMember };
+    },
+    onError: (_err, _input, context) => {
+      if (!context?.removedMember) {
+        return;
+      }
 
-        queryClient.setQueryData(
-          trpc.org.settings.orgMembers.list.queryKey(),
-          (old: OrgMembersData | undefined) =>
-            restoreMember(old, context.removedMember, context.removedIndex)
-        );
-      },
-      onSuccess: () => toast.success("Member removed"),
-      onSettled: () =>
-        void queryClient.invalidateQueries(
-          trpc.org.settings.orgMembers.list.queryFilter()
-        ),
-    })
-  );
+      queryClient.setQueryData(
+        listQueryKey,
+        (old: OrgMembersData | undefined) =>
+          restoreMember(old, context.removedMember, context.removedIndex)
+      );
+    },
+    onSuccess: () => toast.success("Member removed"),
+    onSettled: () =>
+      void queryClient.invalidateQueries({ queryKey: listQueryKey }),
+  });
 
-  const revokeInvitationMutation = useMutation(
-    trpc.org.settings.orgMembers.revokeInvitation.mutationOptions({
-      meta: { errorTitle: "Failed to revoke invitation" },
-      onMutate: async (input) => {
-        await queryClient.cancelQueries(
-          trpc.org.settings.orgMembers.list.queryFilter()
-        );
+  const revokeInvitationMutation = useMutation({
+    ...revokeOrgInvitationMutationOptions(),
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: listQueryKey });
 
-        const previous = queryClient.getQueryData<OrgMembersOutput>(
-          trpc.org.settings.orgMembers.list.queryKey()
-        );
-        const removedIndex =
-          previous?.invitations.findIndex(
-            (invitation) => invitation.id === input.invitationId
-          ) ?? -1;
-        const removedInvitation =
-          removedIndex >= 0 ? previous?.invitations[removedIndex] : undefined;
+      const previous = queryClient.getQueryData<OrgMembersData>(listQueryKey);
+      const removedIndex =
+        previous?.invitations.findIndex(
+          (invitation) => invitation.id === input.invitationId
+        ) ?? -1;
+      const removedInvitation =
+        removedIndex >= 0 ? previous?.invitations[removedIndex] : undefined;
 
-        queryClient.setQueryData(
-          trpc.org.settings.orgMembers.list.queryKey(),
-          (old: OrgMembersData | undefined) =>
-            removeInvitation(old, input.invitationId)
-        );
+      queryClient.setQueryData(
+        listQueryKey,
+        (old: OrgMembersData | undefined) =>
+          removeInvitation(old, input.invitationId)
+      );
 
-        return { removedIndex, removedInvitation };
-      },
-      onError: (_err, _input, context) => {
-        if (!context?.removedInvitation) {
-          return;
-        }
+      return { removedIndex, removedInvitation };
+    },
+    onError: (_err, _input, context) => {
+      if (!context?.removedInvitation) {
+        return;
+      }
 
-        queryClient.setQueryData(
-          trpc.org.settings.orgMembers.list.queryKey(),
-          (old: OrgMembersData | undefined) =>
-            restoreInvitation(
-              old,
-              context.removedInvitation,
-              context.removedIndex
-            )
-        );
-      },
-      onSuccess: () => toast.success("Invitation revoked"),
-      onSettled: () =>
-        void queryClient.invalidateQueries(
-          trpc.org.settings.orgMembers.list.queryFilter()
-        ),
-    })
-  );
+      queryClient.setQueryData(
+        listQueryKey,
+        (old: OrgMembersData | undefined) =>
+          restoreInvitation(
+            old,
+            context.removedInvitation,
+            context.removedIndex
+          )
+      );
+    },
+    onSuccess: () => toast.success("Invitation revoked"),
+    onSettled: () =>
+      void queryClient.invalidateQueries({ queryKey: listQueryKey }),
+  });
 
   const updateRole = useCallback(
     (userId: string, role: OrgRole) =>

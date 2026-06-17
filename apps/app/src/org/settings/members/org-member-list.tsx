@@ -27,7 +27,6 @@ import {
   Users,
 } from "lucide-react";
 import { memo, type ReactNode, useMemo } from "react";
-import { useTRPC } from "~/trpc/react";
 import {
   isOptimisticInvitation,
   type OrgInvitation,
@@ -35,6 +34,7 @@ import {
   type OrgRole,
 } from "./org-member-cache";
 import { useOrgMemberListActions } from "./org-member-list-actions";
+import { orgMembersQueryOptions } from "./org-member-queries";
 
 function initials(name: string) {
   const letters = name
@@ -123,14 +123,11 @@ function EmptyState({
 }
 
 export function OrgMemberList({ searchQuery = "" }: { searchQuery?: string }) {
-  const { has, isLoaded } = useAuth();
+  const { has, isLoaded, orgId } = useAuth();
   const canManageMembers = isLoaded && !!has?.({ role: "org:admin" });
-  const trpc = useTRPC();
 
-  const { data, error, isPending } = useQuery({
-    ...trpc.org.settings.orgMembers.list.queryOptions(),
-    enabled: typeof window !== "undefined",
-    staleTime: 5 * 60 * 1000,
+  const { data, error, isLoading } = useQuery({
+    ...orgMembersQueryOptions({ orgId }),
   });
   const {
     pendingInvitationId,
@@ -139,7 +136,7 @@ export function OrgMemberList({ searchQuery = "" }: { searchQuery?: string }) {
     removeOrgMember,
     revokeInvitation,
     updateRole,
-  } = useOrgMemberListActions();
+  } = useOrgMemberListActions({ orgId });
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
   const members = data?.members ?? [];
@@ -167,7 +164,20 @@ export function OrgMemberList({ searchQuery = "" }: { searchQuery?: string }) {
     );
   }, [invitations, normalizedQuery]);
 
-  if (isPending) {
+  if (!orgId) {
+    return (
+      <EmptyState
+        icon={
+          <Users aria-hidden="true" className="size-4 text-muted-foreground" />
+        }
+        title="No organization selected"
+      >
+        Select an organization to view members.
+      </EmptyState>
+    );
+  }
+
+  if (isLoading) {
     return (
       <div className="divide-y divide-border rounded-[12px] border border-border bg-background">
         {Array.from({ length: 4 }).map((_, index) => (
