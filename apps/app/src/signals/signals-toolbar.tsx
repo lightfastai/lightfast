@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Flag, ListFilter, Tag, UserRoundCheck, X } from "lucide-react";
-import type { ComponentType, ReactNode } from "react";
+import type { ComponentType } from "react";
 import {
   getSignalDispositionLabel,
   getSignalKindLabel,
@@ -50,7 +50,6 @@ export function SignalsToolbar({
   onToggleDisposition,
   onToggleKind,
   onTogglePriority,
-  viewsSlot,
 }: {
   filters: SignalClassificationFilters;
   onAddSignal: () => void;
@@ -61,7 +60,6 @@ export function SignalsToolbar({
   onToggleDisposition: (value: SignalDisposition) => void;
   onToggleKind: (value: SignalKind) => void;
   onTogglePriority: (value: SignalPriority) => void;
-  viewsSlot?: ReactNode;
 }) {
   const filterGroups: FilterGroup[] = [
     {
@@ -101,11 +99,6 @@ export function SignalsToolbar({
       data-testid="signals-toolbar"
     >
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
-        {viewsSlot ? (
-          <div className="flex min-w-[12rem] flex-1 basis-full items-center overflow-hidden lg:basis-auto">
-            {viewsSlot}
-          </div>
-        ) : null}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

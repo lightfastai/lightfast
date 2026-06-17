@@ -11,6 +11,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/$slug/signals")({
   validateSearch: validateSignalsSearch,
+  staticData: { workspaceTopbarAction: "signals" },
   head: ({ params }) => ({
     meta: [{ title: `Signals - ${params.slug} - Lightfast` }],
   }),

@@ -19,7 +19,6 @@ import {
 import { SignalsToolbar } from "./signals-toolbar";
 import { SignalsTruncationBanner } from "./signals-truncation-banner";
 import { useSignalsUiStore } from "./signals-ui-store";
-import { SignalsViewSwitcher } from "./signals-view-switcher";
 import { useSignalsWorkspaceData } from "./use-signals-workspace-data";
 
 export function SignalsClient({
@@ -152,12 +151,6 @@ export function SignalsClient({
             view: null,
           });
         }}
-        viewsSlot={
-          <SignalsViewSwitcher
-            search={search}
-            setSearchParams={setSearchParams}
-          />
-        }
       />
 
       <SignalsTruncationBanner

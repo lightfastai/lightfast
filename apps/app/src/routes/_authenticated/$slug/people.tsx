@@ -11,6 +11,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/$slug/people")({
   validateSearch: validatePeopleSearch,
+  staticData: { workspaceTopbarAction: "people" },
   head: ({ params }) => ({
     meta: [{ title: `People - ${params.slug} - Lightfast` }],
   }),
