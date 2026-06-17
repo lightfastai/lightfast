@@ -1,39 +1,45 @@
+import {
+  createDecisionView,
+  deleteDecisionView,
+  listDecisionViews,
+} from "@api/app/tanstack/decision-views";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useTRPC } from "~/trpc/react";
+import type { DecisionViewConfig } from "./decisions-views-model";
+
+const decisionViewQueryKeys = {
+  list: () => ["decisions", "views"] as const,
+};
 
 export function useDecisionViewsQuery() {
-  const trpc = useTRPC();
   return useQuery({
-    ...trpc.org.workspace.decisions.views.list.queryOptions(),
     enabled: typeof window !== "undefined",
+    queryFn: () => listDecisionViews(),
+    queryKey: decisionViewQueryKeys.list(),
     staleTime: 60_000,
   });
 }
 
 export function useCreateDecisionView() {
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
-  return useMutation(
-    trpc.org.workspace.decisions.views.create.mutationOptions({
-      meta: { errorTitle: "Failed to save view" },
-      onSuccess: () =>
-        queryClient.invalidateQueries({
-          queryKey: trpc.org.workspace.decisions.views.list.queryKey(),
-        }),
-    })
-  );
+  return useMutation({
+    meta: { errorTitle: "Failed to save view" },
+    mutationFn: (data: { config: DecisionViewConfig; name: string }) =>
+      createDecisionView({ data }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: decisionViewQueryKeys.list(),
+      }),
+  });
 }
 
 export function useDeleteDecisionView() {
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
-  return useMutation(
-    trpc.org.workspace.decisions.views.delete.mutationOptions({
-      meta: { errorTitle: "Failed to delete view" },
-      onSuccess: () =>
-        queryClient.invalidateQueries({
-          queryKey: trpc.org.workspace.decisions.views.list.queryKey(),
-        }),
-    })
-  );
+  return useMutation({
+    meta: { errorTitle: "Failed to delete view" },
+    mutationFn: (data: { publicId: string }) => deleteDecisionView({ data }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: decisionViewQueryKeys.list(),
+      }),
+  });
 }
