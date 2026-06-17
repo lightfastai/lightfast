@@ -8,7 +8,6 @@
  * - `org.workspace`: bound-org product surface.
  */
 
-import { nativeAuthRouter } from "./router/(pending-allowed)/native-auth";
 import { automationsRouter } from "./router/(pending-not-allowed)/automations";
 import { connectorsRouter } from "./router/(pending-not-allowed)/connectors";
 import { developerConnectionsRouter } from "./router/(pending-not-allowed)/developer-connections";
@@ -18,9 +17,6 @@ import { workspaceEntityGraphRouter } from "./router/(pending-not-allowed)/works
 import { createTRPCRouter } from "./trpc";
 
 export const appRouter = createTRPCRouter({
-  native: createTRPCRouter({
-    auth: nativeAuthRouter,
-  }),
   org: createTRPCRouter({
     setup: createTRPCRouter({
       task: taskRouter,
