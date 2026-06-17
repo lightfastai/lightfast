@@ -18,8 +18,13 @@ export function useSkillIndexRefreshController(snapshot: SkillsListResult) {
     snapshot.freshness.errorCode || snapshot.freshness.errorMessage
   );
   const { mutate } = useMutation({
-    mutationFn: (_data: Record<string, never>) =>
-      requestSkillRefresh({ data: {} }),
+    mutationFn: async (_data: Record<string, never>) => {
+      const result = await requestSkillRefresh({ data: {} });
+      if (!result.enqueued) {
+        throw new Error("Skill index refresh was not enqueued");
+      }
+      return result;
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: skillsListQueryKey });
     },

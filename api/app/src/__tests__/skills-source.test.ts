@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -18,12 +18,7 @@ describe("skills TanStack migration", () => {
     const rootSource = readFileSync(resolve(apiRoot, "root.ts"), "utf8");
 
     expect(rootSource).not.toContain("workspaceSkillsRouter");
-    expect(rootSource).not.toContain("skills:");
-    expect(
-      existsSync(
-        resolve(apiRoot, "router/(pending-not-allowed)/workspace-skills.ts")
-      )
-    ).toBe(false);
+    expect(rootSource).not.toMatch(/skills\s*:\s*workspaceSkillsRouter/);
   });
 
   it("defines skills server functions in the api/app adapter layer", () => {

@@ -10,19 +10,20 @@ function source(path: string) {
 
 describe("migrated skills data access", () => {
   it("uses TanStack server functions instead of tRPC", () => {
+    const skillsAdapterImport = /from\s+["']@api\/app\/tanstack\/skills["']/;
     const querySource = source("src/skills/use-skills-list-query.ts");
     const controllerSource = source(
       "src/skills/use-skill-index-refresh-controller.ts"
     );
     const typesSource = source("src/skills/skills-types.ts");
 
-    expect(querySource).toContain('@api/app/tanstack/skills"');
+    expect(querySource).toMatch(skillsAdapterImport);
     expect(querySource).not.toContain("useTRPC");
     expect(querySource).not.toContain("trpc.org.workspace.skills");
-    expect(controllerSource).toContain('@api/app/tanstack/skills"');
+    expect(controllerSource).toMatch(skillsAdapterImport);
     expect(controllerSource).not.toContain("useTRPC");
     expect(controllerSource).not.toContain("trpc.org.workspace.skills");
-    expect(typesSource).toContain('@api/app/tanstack/skills"');
+    expect(typesSource).toMatch(skillsAdapterImport);
     expect(typesSource).not.toContain("AppRouterOutputs");
   });
 });

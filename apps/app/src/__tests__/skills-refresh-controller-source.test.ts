@@ -16,8 +16,13 @@ describe("skills refresh controller source", () => {
     );
 
     expect(clientSource).toContain("useSkillIndexRefreshController(data)");
-    expect(controllerSource).toContain('@api/app/tanstack/skills"');
+    expect(controllerSource).toMatch(
+      /from\s+["']@api\/app\/tanstack\/skills["']/
+    );
     expect(controllerSource).toContain("requestSkillRefresh");
+    expect(controllerSource).toContain(
+      "Skill index refresh was not enqueued"
+    );
     expect(controllerSource).toContain("skillsListQueryKey");
     expect(controllerSource).toContain(
       'new EventSource("/api/skills/index/events")'
