@@ -186,6 +186,31 @@ afterEach(() => {
 });
 
 describe("WorkspaceAssistantClient", () => {
+  it("places the empty new chat landing in the upper-middle of the available workspace height", () => {
+    render(
+      <WorkspaceAssistantClient conversationId="conv_ff83026e-ef0e-40db-ae59-544fbe4df209" />
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Ready when you are." })
+    ).not.toBeNull();
+    expect(
+      screen
+        .getByRole("heading", { name: "Ready when you are." })
+        .closest("section")?.className
+    ).toContain("min-h-[calc(100svh-3.5rem)]");
+    expect(
+      screen
+        .getByRole("heading", { name: "Ready when you are." })
+        .closest("section")?.className
+    ).toContain("justify-start");
+    expect(
+      screen
+        .getByRole("heading", { name: "Ready when you are." })
+        .closest("section")?.className
+    ).toContain("pt-[clamp(8rem,26svh,18rem)]");
+  });
+
   it("navigates to the preallocated conversation URL before first conversation creation resolves", async () => {
     let resolveCreate:
       | ((conversation: { publicId: string; title: string }) => void)

@@ -268,7 +268,7 @@ function createUuid() {
 
 function EmptyChatState({ composer }: { composer: React.ReactNode }) {
   return (
-    <section className="mx-auto flex min-h-full w-full max-w-3xl flex-col justify-center px-5 py-10 md:px-10">
+    <section className="mx-auto flex min-h-[calc(100svh-3.5rem)] w-full max-w-3xl flex-col justify-start px-5 pt-[clamp(8rem,26svh,18rem)] pb-10 md:px-10">
       <div className="mb-6 text-center">
         <h1 className="font-medium text-2xl text-foreground tracking-normal md:text-3xl">
           Ready when you are.
