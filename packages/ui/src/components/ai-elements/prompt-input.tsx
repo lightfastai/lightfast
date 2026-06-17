@@ -914,12 +914,18 @@ export const PromptInput = ({
         type="file"
       />
       <form
-        className={cn("w-full", className)}
+        className={cn(
+          "group/prompt-input w-full rounded-[1.75rem] has-[textarea:placeholder-shown]:rounded-full",
+          className
+        )}
+        {...props}
+        data-slot="prompt-input"
         onSubmit={handleSubmit}
         ref={formRef}
-        {...props}
       >
-        <InputGroup className="overflow-hidden">{children}</InputGroup>
+        <InputGroup className="grid h-auto grid-cols-[auto_minmax(0,1fr)_auto] items-stretch overflow-hidden has-[[data-slot=input-group-control]:focus-visible]:ring-0 group-has-[textarea:placeholder-shown]/prompt-input:items-center">
+          {children}
+        </InputGroup>
       </form>
     </>
   );
@@ -944,7 +950,31 @@ export const PromptInputBody = ({
   className,
   ...props
 }: PromptInputBodyProps) => (
-  <div className={cn("contents", className)} {...props} />
+  <div
+    className={cn("contents", className)}
+    data-slot="prompt-input-body"
+    {...props}
+  />
+);
+
+export type PromptInputStartProps = Omit<
+  ComponentProps<typeof InputGroupAddon>,
+  "align"
+>;
+
+export const PromptInputStart = ({
+  className,
+  ...props
+}: PromptInputStartProps) => (
+  <InputGroupAddon
+    align="inline-start"
+    className={cn(
+      "order-2 col-start-1 group-has-[textarea:placeholder-shown]/prompt-input:order-1",
+      className
+    )}
+    data-slot="prompt-input-start"
+    {...props}
+  />
 );
 
 export type PromptInputTextareaProps = ComponentProps<
@@ -953,6 +983,7 @@ export type PromptInputTextareaProps = ComponentProps<
 
 export const PromptInputTextarea = ({
   onChange,
+  onInput,
   onKeyDown,
   className,
   placeholder = "What would you like to know?",
@@ -1040,31 +1071,39 @@ export const PromptInputTextarea = ({
   const handleCompositionEnd = useCallback(() => setIsComposing(false), []);
   const handleCompositionStart = useCallback(() => setIsComposing(true), []);
 
+  const handleChange = useCallback(
+    (e: ChangeEvent<HTMLTextAreaElement>) => {
+      if (controller) {
+        controller.textInput.setInput(e.currentTarget.value);
+      }
+      onChange?.(e);
+    },
+    [controller, onChange]
+  );
+
   const controlledProps = controller
     ? hasExternalTextControl
       ? {
-          onChange: (e: ChangeEvent<HTMLTextAreaElement>) => {
-            controller.textInput.setInput(e.currentTarget.value);
-            onChange?.(e);
-          },
+          onChange: handleChange,
         }
       : {
-          onChange: (e: ChangeEvent<HTMLTextAreaElement>) => {
-            controller.textInput.setInput(e.currentTarget.value);
-            onChange?.(e);
-          },
+          onChange: handleChange,
           value: controller.textInput.value,
         }
     : {
-        onChange,
+        onChange: handleChange,
       };
 
   return (
     <InputGroupTextarea
-      className={cn("field-sizing-content max-h-48 min-h-16", className)}
+      className={cn(
+        "field-sizing-content order-1 col-span-3 col-start-1 max-h-48 min-h-0 px-5 pt-5 group-has-[textarea:placeholder-shown]/prompt-input:order-2 group-has-[textarea:placeholder-shown]/prompt-input:col-span-1 group-has-[textarea:placeholder-shown]/prompt-input:col-start-2 group-has-[textarea:placeholder-shown]/prompt-input:py-3",
+        className
+      )}
       name="message"
       onCompositionEnd={handleCompositionEnd}
       onCompositionStart={handleCompositionStart}
+      onInput={onInput}
       onKeyDown={handleKeyDown}
       onPaste={handlePaste}
       placeholder={placeholder}
@@ -1085,7 +1124,8 @@ export const PromptInputHeader = ({
 }: PromptInputHeaderProps) => (
   <InputGroupAddon
     align="block-end"
-    className={cn("order-first flex-wrap gap-1", className)}
+    className={cn("order-0 col-span-3 col-start-1 flex-wrap gap-1", className)}
+    data-slot="prompt-input-header"
     {...props}
   />
 );
@@ -1100,8 +1140,12 @@ export const PromptInputFooter = ({
   ...props
 }: PromptInputFooterProps) => (
   <InputGroupAddon
-    align="block-end"
-    className={cn("justify-between gap-1", className)}
+    align="inline-end"
+    className={cn(
+      "order-2 col-start-2 col-end-4 justify-end gap-1 group-has-[textarea:placeholder-shown]/prompt-input:order-3 group-has-[textarea:placeholder-shown]/prompt-input:col-start-3",
+      className
+    )}
+    data-slot="prompt-input-footer"
     {...props}
   />
 );
