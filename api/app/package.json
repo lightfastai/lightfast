@@ -33,6 +33,14 @@
       "types": "./src/adapters/tanstack/signals.ts",
       "default": "./src/adapters/tanstack/signals.ts"
     },
+    "./tanstack/org-api-keys": {
+      "types": "./src/adapters/tanstack/org-api-keys.ts",
+      "default": "./src/adapters/tanstack/org-api-keys.ts"
+    },
+    "./tanstack/organizations": {
+      "types": "./src/adapters/tanstack/organizations.ts",
+      "default": "./src/adapters/tanstack/organizations.ts"
+    },
     "./tanstack/signal-views": {
       "types": "./src/adapters/tanstack/signal-views.ts",
       "default": "./src/adapters/tanstack/signal-views.ts"

@@ -9,7 +9,7 @@ import { Loader2 } from "lucide-react";
 import type { ChangeEvent, FormEvent, KeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { CreateDialogShell } from "~/components/create-dialog-shell";
-import { useTRPC } from "~/trpc/react";
+import { listUserOrganizationsQueryOptions } from "~/organization/organization-queries";
 import { createSignalMutationOptions } from "./signals-queries";
 
 interface SignalCreateDialogProps {
@@ -95,14 +95,11 @@ export function SignalCreateDialog({
   onOpenChange,
   open,
 }: SignalCreateDialogProps) {
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { pathname } = useLocation();
   const slug = getPathSlug(pathname);
   const { data: organizations = [] } = useQuery({
-    ...trpc.viewer.organization.listUserOrganizations.queryOptions(),
-    enabled: open && typeof window !== "undefined",
-    staleTime: 5 * 60 * 1000,
+    ...listUserOrganizationsQueryOptions({ enabled: open }),
   });
   const org = slug
     ? (organizations.find((organization) => organization.slug === slug) ?? null)

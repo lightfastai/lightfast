@@ -12,12 +12,6 @@ vi.mock("@db/app/client", () => ({ db: {} }));
 
 const getOrganizationMock = vi.fn();
 const updateOrganizationMock = vi.fn();
-const apisListKeysMock = vi.fn();
-const identitiesCreateIdentityMock = vi.fn();
-const keysCreateKeyMock = vi.fn();
-const keysDeleteKeyMock = vi.fn();
-const keysGetKeyMock = vi.fn();
-const keysUpdateKeyMock = vi.fn();
 const logDebugMock = vi.fn();
 const logErrorMock = vi.fn();
 const logInfoMock = vi.fn();
@@ -37,20 +31,6 @@ vi.mock("@vendor/clerk/server", () => ({
       },
     }),
   auth: vi.fn(),
-}));
-
-vi.mock("@vendor/unkey/server", () => ({
-  unkeyEnv: { UNKEY_API_ID: "api_test", UNKEY_ROOT_KEY: "unkey_test" },
-  getUnkeyClient: () => ({
-    apis: { listKeys: apisListKeysMock },
-    identities: { createIdentity: identitiesCreateIdentityMock },
-    keys: {
-      createKey: keysCreateKeyMock,
-      deleteKey: keysDeleteKeyMock,
-      getKey: keysGetKeyMock,
-      updateKey: keysUpdateKeyMock,
-    },
-  }),
 }));
 
 vi.mock("@vendor/observability/log/next", () => ({
@@ -84,15 +64,11 @@ const {
   boundOrgAdminProcedure,
 } = await import("../trpc");
 const { taskRouter } = await import("../router/(pending-not-allowed)/task");
-const { orgApiKeysRouter } = await import(
-  "../router/(pending-not-allowed)/org-api-keys"
-);
 
 // ----- a router that exposes the gates + the real setup/feature routers ------
 
 const testRouter = createTRPCRouter({
   task: taskRouter,
-  orgApiKeys: orgApiKeysRouter,
   // Bare probes: the gate is the only thing between the call and the handler.
   viewerProbe: viewerProcedure.query(() => "viewer-ok"),
   orgProbe: orgProcedure.query(() => "org-ok"),
@@ -214,52 +190,6 @@ beforeEach(() => {
   getOrganizationMock.mockResolvedValue({ publicMetadata: {} });
   updateOrganizationMock.mockReset();
   updateOrganizationMock.mockResolvedValue(undefined);
-  apisListKeysMock.mockReset();
-  apisListKeysMock.mockResolvedValue({ data: [] });
-  identitiesCreateIdentityMock.mockReset();
-  identitiesCreateIdentityMock.mockResolvedValue({
-    data: { externalId: "org_test", id: "identity_test" },
-    meta: { requestId: "req_identity" },
-  });
-  keysCreateKeyMock.mockReset();
-  keysCreateKeyMock.mockResolvedValue({
-    data: {
-      key: "lf_secret_value",
-      keyId: "key_test",
-    },
-    meta: { requestId: "req_create" },
-  });
-  keysDeleteKeyMock.mockReset();
-  keysDeleteKeyMock.mockResolvedValue({ data: {}, meta: { requestId: "req" } });
-  keysGetKeyMock.mockReset();
-  keysGetKeyMock.mockResolvedValue({
-    data: {
-      createdAt: 1_700_000_000_000,
-      enabled: true,
-      identity: { externalId: "org_test", id: "identity_test" },
-      keyId: "key_test",
-      lastUsedAt: undefined,
-      meta: { createdByUserId: "user_test" },
-      name: "Test key",
-      start: "lf_live",
-      updatedAt: 1_700_000_000_000,
-    },
-    meta: { requestId: "req_get" },
-  });
-  keysUpdateKeyMock.mockReset();
-  keysUpdateKeyMock.mockResolvedValue({
-    data: {
-      createdAt: 1_700_000_000_000,
-      enabled: false,
-      identity: { externalId: "org_test", id: "identity_test" },
-      keyId: "key_test",
-      meta: { createdByUserId: "user_test" },
-      name: "Test key",
-      start: "lf_live",
-      updatedAt: 1_700_000_000_000,
-    },
-    meta: { requestId: "req_update" },
-  });
   logDebugMock.mockReset();
   logErrorMock.mockReset();
   logInfoMock.mockReset();
@@ -421,119 +351,6 @@ describe("boundOrgAdminProcedure", () => {
     await expect(caller.boundOrgAdminProbe()).rejects.toMatchObject({
       code: "FORBIDDEN",
     });
-  });
-});
-
-// ----- orgApiKeys is active-org settings surface -----------------------------
-
-describe("orgApiKeys", () => {
-  it("allows an unbound active org to list keys", async () => {
-    const caller = makeCaller(active("unbound"));
-    await expect(caller.orgApiKeys.list()).resolves.toEqual([]);
-    expect(apisListKeysMock).toHaveBeenCalledWith({
-      apiId: "api_test",
-      decrypt: false,
-      externalId: "org_test",
-      limit: 100,
-    });
-  });
-
-  it("allows an unbound active org to create keys", async () => {
-    const caller = makeCaller(active("unbound"), {} as Database, adminAccess());
-    await expect(
-      caller.orgApiKeys.create({ name: "Test key" })
-    ).resolves.toMatchObject({
-      key: "lf_secret_value",
-      keyId: "key_test",
-    });
-    expect(identitiesCreateIdentityMock).toHaveBeenCalledWith({
-      externalId: "org_test",
-      meta: { clerkOrgId: "org_test" },
-    });
-    expect(keysCreateKeyMock).toHaveBeenCalledWith({
-      apiId: "api_test",
-      externalId: "org_test",
-      meta: { createdByUserId: "user_test", source: "dashboard" },
-      name: "Test key",
-      prefix: "lf",
-      recoverable: false,
-    });
-  });
-
-  it("treats existing Unkey org identities as success when creating keys", async () => {
-    const conflict = new Error("identity already exists") as Error & {
-      statusCode: number;
-    };
-    conflict.statusCode = 409;
-    identitiesCreateIdentityMock.mockRejectedValueOnce(conflict);
-    const caller = makeCaller(active("unbound"), {} as Database, adminAccess());
-
-    await expect(
-      caller.orgApiKeys.create({ name: "Test key" })
-    ).resolves.toMatchObject({
-      key: "lf_secret_value",
-      keyId: "key_test",
-    });
-    expect(keysCreateKeyMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        externalId: "org_test",
-        name: "Test key",
-      })
-    );
-  });
-
-  it("allows an unbound active org to revoke keys", async () => {
-    const caller = makeCaller(active("unbound"), {} as Database, adminAccess());
-    await expect(
-      caller.orgApiKeys.revoke({ keyId: "key_test" })
-    ).resolves.toEqual({ success: true });
-    expect(keysUpdateKeyMock).toHaveBeenCalledWith({
-      enabled: false,
-      keyId: "key_test",
-    });
-  });
-
-  it("does not revoke another org's key", async () => {
-    keysGetKeyMock.mockResolvedValueOnce({
-      data: {
-        createdAt: 1_700_000_000_000,
-        enabled: true,
-        identity: { externalId: "org_other", id: "identity_other" },
-        keyId: "key_other",
-        name: "Other key",
-        start: "lf_other",
-      },
-      meta: { requestId: "req_get" },
-    });
-    const caller = makeCaller(active("unbound"), {} as Database, adminAccess());
-
-    await expect(
-      caller.orgApiKeys.revoke({ keyId: "key_other" })
-    ).rejects.toMatchObject({ code: "NOT_FOUND" });
-    expect(keysGetKeyMock).toHaveBeenCalledWith({
-      decrypt: false,
-      keyId: "key_other",
-    });
-    expect(keysUpdateKeyMock).not.toHaveBeenCalled();
-  });
-
-  it("allows an unbound active org to delete keys", async () => {
-    const caller = makeCaller(active("unbound"), {} as Database, adminAccess());
-    await expect(
-      caller.orgApiKeys.delete({ keyId: "key_test" })
-    ).resolves.toEqual({ success: true });
-    expect(keysDeleteKeyMock).toHaveBeenCalledWith({
-      keyId: "key_test",
-      permanent: false,
-    });
-  });
-
-  it("rejects API key writes without a matching admin session", async () => {
-    const caller = makeCaller(active("unbound"));
-    await expect(
-      caller.orgApiKeys.create({ name: "Test key" })
-    ).rejects.toMatchObject({ code: "FORBIDDEN" });
-    expect(keysCreateKeyMock).not.toHaveBeenCalled();
   });
 });
 

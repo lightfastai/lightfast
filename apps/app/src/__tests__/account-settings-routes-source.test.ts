@@ -49,7 +49,9 @@ describe("app account settings routes", () => {
 
     expect(clientSource).toContain("normalizeTeamSlug");
     expect(clientSource).toContain("createTeamIdempotencyKey");
-    expect(clientSource).toContain("viewer.organization.create");
+    expect(clientSource).toContain("createOrganizationMutationOptions");
+    expect(clientSource).toContain("organizationQueryKeys");
+    expect(clientSource).not.toContain("viewer.organization.create");
     expect(clientSource).toContain('await navigate({ to: "/$slug"');
   });
 

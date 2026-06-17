@@ -4,8 +4,8 @@ import { AuthzError } from "./errors";
 export type Actor =
   | {
       kind: "clerkUser";
-      orgGate: OrgGate;
-      orgId: string;
+      orgGate?: OrgGate;
+      orgId?: string;
       orgRole?: string;
       source: "desktop-web" | "web";
       userId: string;
@@ -66,10 +66,11 @@ export function actorFromAuthIdentity(
   }
 
   if (identity.type === "pending") {
-    throw new AuthzError(
-      "ORG_REQUIRED",
-      "Organization required. Please create or join an organization first."
-    );
+    return {
+      kind: "clerkUser",
+      source,
+      userId: identity.userId,
+    };
   }
 
   return {

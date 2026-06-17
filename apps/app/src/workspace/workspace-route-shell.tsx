@@ -13,7 +13,7 @@ import { useAuth, useOrganizationList } from "~/compat/clerk";
 import { AppSidebar } from "~/components/app-sidebar";
 import { AuthenticatedTopbar } from "~/components/authenticated-topbar";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
-import { useTRPC } from "~/trpc/react";
+import { organizationBySlugQueryOptions } from "~/organization/organization-queries";
 import { useWorkspaceTopbarAction } from "./workspace-topbar-actions";
 import {
   getSetupRequirementRedirect,
@@ -36,7 +36,6 @@ function SetupRequirementNavigate({
 
 export function WorkspaceRouteShell({ slug }: { slug: string }) {
   const location = useLocation();
-  const trpc = useTRPC();
   const { orgId } = useAuth();
   const { setActive } = useOrganizationList();
   const workspaceTopbarAction = useWorkspaceTopbarAction();
@@ -49,9 +48,7 @@ export function WorkspaceRouteShell({ slug }: { slug: string }) {
     error,
     isPending,
   } = useQuery({
-    ...trpc.viewer.organization.getBySlug.queryOptions({ slug }),
-    enabled: typeof window !== "undefined",
-    staleTime: 5 * 60 * 1000,
+    ...organizationBySlugQueryOptions({ slug }),
   });
 
   useEffect(() => {
