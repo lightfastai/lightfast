@@ -1,7 +1,11 @@
 import { db } from "@db/app/client";
 import { nativeCreateAttemptInputSchema } from "@repo/native-auth-contract";
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest, setResponseHeader } from "@tanstack/react-start/server";
+import {
+  getRequest,
+  setResponseHeader,
+  setResponseStatus,
+} from "@tanstack/react-start/server";
 
 import { resolveAuthContextFromClerk } from "../../auth/identity";
 import {
@@ -20,6 +24,7 @@ async function createTanStackNativeAuthContext() {
 
 function mapTanStackNativeAuthError(error: unknown): never {
   if (isNativeAuthError(error)) {
+    setResponseStatus(error.status);
     throw new Error(error.message, { cause: error });
   }
   throw error;
