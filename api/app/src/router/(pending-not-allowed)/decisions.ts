@@ -6,7 +6,6 @@ import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
 
 import { boundOrgProcedure } from "../../trpc";
-import { workspaceDecisionViewsRouter } from "./workspace-decision-views";
 import {
   workspaceListCursorInput,
   workspaceListLimitInput,
@@ -108,5 +107,4 @@ export const decisionsRouter = {
 
       return withCallerUsernames(page);
     }),
-  views: workspaceDecisionViewsRouter,
 } satisfies TRPCRouterRecord;

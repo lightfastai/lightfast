@@ -1,9 +1,8 @@
-import type { AppRouterOutputs } from "@api/app";
+import type { ListDecisionViewsResult } from "@api/app/tanstack/decision-views";
 import type { DecisionFilters } from "./decisions-model";
 import { serializeDecisionValues } from "./decisions-search-params";
 
-export type DecisionViewList =
-  AppRouterOutputs["org"]["workspace"]["decisions"]["views"]["list"];
+export type DecisionViewList = ListDecisionViewsResult;
 export type DecisionViewRow = DecisionViewList[number];
 export type DecisionViewConfig = DecisionViewRow["config"];
 

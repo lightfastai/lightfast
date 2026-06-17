@@ -73,6 +73,10 @@
       "types": "./src/adapters/tanstack/people-views.ts",
       "default": "./src/adapters/tanstack/people-views.ts"
     },
+    "./tanstack/decision-views": {
+      "types": "./src/adapters/tanstack/decision-views.ts",
+      "default": "./src/adapters/tanstack/decision-views.ts"
+    },
     "./tanstack/people": {
       "types": "./src/adapters/tanstack/people.ts",
       "default": "./src/adapters/tanstack/people.ts"

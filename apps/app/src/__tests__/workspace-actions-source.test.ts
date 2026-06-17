@@ -52,8 +52,9 @@ describe("workspace page-owned actions", () => {
     expect(decisionsViewSwitcherSource).toContain("ViewSwitcher");
     expect(decisionsViewSwitcherSource).not.toContain("nuqs");
     expect(decisionsViewQuerySource).toContain(
-      "decisions.views.list.queryOptions"
+      '@api/app/tanstack/decision-views"'
     );
+    expect(decisionsViewQuerySource).not.toContain("useTRPC");
     expect(decisionsViewQuerySource).toContain(
       'enabled: typeof window !== "undefined"'
     );
