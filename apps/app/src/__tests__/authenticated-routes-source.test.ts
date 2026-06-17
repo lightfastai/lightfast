@@ -636,9 +636,9 @@ describe("app authenticated route migration", () => {
 
     expect(orgRouteSource).toContain("WorkspaceRouteShell");
     expect(workspaceShellSource).toContain('bindingStatus !== "bound"');
-    expect(workspaceShellSource).toContain(
-      "<AuthenticatedTopbar left={<TeamSwitcherSlot />} />"
-    );
+    expect(workspaceShellSource).toContain("useWorkspaceTopbarAction");
+    expect(workspaceShellSource).toContain("actions={workspaceTopbarAction}");
+    expect(workspaceShellSource).toContain("left={<TeamSwitcherSlot />}");
     expect(workspaceModelSource).toContain('to: "/$slug/tasks/bind"');
     expect(workspaceModelSource).toContain(
       'to: "/$slug/tasks/github/lightfast-repo"'

@@ -9,6 +9,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/$slug/skills")({
   validateSearch: validateSkillsSearch,
+  staticData: { workspaceTopbarAction: "skills" },
   head: ({ params }) => ({
     meta: [{ title: `Skills - ${params.slug} - Lightfast` }],
   }),

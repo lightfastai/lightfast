@@ -59,35 +59,52 @@ describe("workspace page-owned actions", () => {
     );
   });
 
-  it("keeps secondary workspace page actions at the top-left", () => {
+  it("renders secondary workspace page actions in the authenticated topbar slot", () => {
+    const shellSource = source("src/workspace/workspace-route-shell.tsx");
+    const topbarActionsSource = expectSource(
+      "src/workspace/workspace-topbar-actions.tsx"
+    );
+    const skillsRouteSource = source(
+      "src/routes/_authenticated/$slug/skills.tsx"
+    );
+    const connectorsRouteSource = source(
+      "src/routes/_authenticated/$slug/connectors.tsx"
+    );
     const skillsClientSource = source("src/skills/skills-client.tsx");
-    const skillsActionsSource = source("src/skills/skills-actions.tsx");
     const connectorsClientSource = source(
       "src/connectors/connectors-client.tsx"
     );
 
-    const skillsActionsIndex = skillsClientSource.indexOf(
+    expect(shellSource).toContain("useWorkspaceTopbarAction");
+    expect(shellSource).toContain("actions={workspaceTopbarAction}");
+    expect(topbarActionsSource).toContain("useMatches");
+    expect(topbarActionsSource).toContain("workspaceTopbarAction");
+    expect(topbarActionsSource).toContain("ConnectorsTopbarActions");
+    expect(topbarActionsSource).toContain("SkillsTopbarActions");
+    expect(topbarActionsSource).toContain(
+      'getRouteApi("/_authenticated/$slug/connectors")'
+    );
+    expect(topbarActionsSource).toContain(
+      'getRouteApi("/_authenticated/$slug/skills")'
+    );
+    expect(topbarActionsSource).toContain("ConnectorOwnerScopeTabs");
+    expect(topbarActionsSource).toContain("SkillsActions");
+
+    expect(skillsRouteSource).toContain(
+      'staticData: { workspaceTopbarAction: "skills" }'
+    );
+    expect(connectorsRouteSource).toContain(
+      'staticData: { workspaceTopbarAction: "connectors" }'
+    );
+
+    expect(skillsClientSource).not.toContain(
       'data-testid="skills-actions-row"'
     );
-    const skillsHeaderIndex = skillsClientSource.indexOf(
-      "Make Lightfast work your way"
-    );
-    const connectorsActionsIndex = connectorsClientSource.indexOf(
+    expect(skillsClientSource).not.toContain("<SkillsActions");
+    expect(connectorsClientSource).not.toContain(
       'data-testid="connectors-actions-row"'
     );
-    const connectorsHeaderIndex =
-      connectorsClientSource.indexOf("<h1") >= 0
-        ? connectorsClientSource.indexOf("<h1")
-        : connectorsClientSource.indexOf("Connectors");
-
-    expect(skillsActionsIndex).toBeGreaterThanOrEqual(0);
-    expect(skillsActionsIndex).toBeLessThan(skillsHeaderIndex);
-    expect(skillsClientSource).not.toContain("pt-6 text-center");
-    expect(skillsActionsSource).toContain("justify-start");
-
-    expect(connectorsActionsIndex).toBeGreaterThanOrEqual(0);
-    expect(connectorsActionsIndex).toBeLessThan(connectorsHeaderIndex);
-    expect(connectorsClientSource).toContain("ConnectorOwnerScopeTabs");
+    expect(connectorsClientSource).not.toContain("<ConnectorOwnerScopeTabs");
   });
 
   it("lets automation child routes own document titles", () => {

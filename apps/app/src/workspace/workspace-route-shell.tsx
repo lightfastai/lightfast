@@ -20,6 +20,7 @@ import {
   isOrgSetupExemptPath,
   isOrgSetupPath,
 } from "./workspace-route-model";
+import { useWorkspaceTopbarAction } from "./workspace-topbar-actions";
 
 function SetupRequirementNavigate({
   requirement,
@@ -37,6 +38,7 @@ export function WorkspaceRouteShell({ slug }: { slug: string }) {
   const location = useLocation();
   const { orgId } = useAuth();
   const { setActive } = useOrganizationList();
+  const workspaceTopbarAction = useWorkspaceTopbarAction();
   const [activeOrgSync, setActiveOrgSync] = useState<{
     orgId: string;
     status: "error" | "pending" | "synced";
@@ -133,7 +135,10 @@ export function WorkspaceRouteShell({ slug }: { slug: string }) {
   if (isOrgSetupPath(slug, location.pathname)) {
     return (
       <div className="flex h-screen flex-col overflow-hidden bg-background">
-        <AuthenticatedTopbar left={<TeamSwitcherSlot />} />
+        <AuthenticatedTopbar
+          actions={workspaceTopbarAction}
+          left={<TeamSwitcherSlot />}
+        />
         <main className="min-h-0 flex-1 overflow-y-auto">
           <Outlet />
         </main>
@@ -146,6 +151,7 @@ export function WorkspaceRouteShell({ slug }: { slug: string }) {
       <AppSidebar orgSlug={slug} />
       <SidebarInset className="min-h-0 overflow-hidden">
         <AuthenticatedTopbar
+          actions={workspaceTopbarAction}
           left={<SidebarTrigger className="size-11 rounded-xl lg:hidden" />}
         />
         <div className="min-h-0 flex-1 overflow-y-auto">
