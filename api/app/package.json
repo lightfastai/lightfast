@@ -49,6 +49,10 @@
       "types": "./src/adapters/tanstack/organizations.ts",
       "default": "./src/adapters/tanstack/organizations.ts"
     },
+    "./tanstack/org-identity": {
+      "types": "./src/adapters/tanstack/org-identity.ts",
+      "default": "./src/adapters/tanstack/org-identity.ts"
+    },
     "./tanstack/account": {
       "types": "./src/adapters/tanstack/account.ts",
       "default": "./src/adapters/tanstack/account.ts"
