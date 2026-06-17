@@ -3,7 +3,7 @@ import {
   type StaticDataRouteOption,
   useMatches,
 } from "@tanstack/react-router";
-import { useCallback, useMemo, type ReactNode } from "react";
+import { type ReactNode, useCallback, useMemo } from "react";
 import { ConnectorOwnerScopeTabs } from "~/connectors/connector-owner-scope-tabs";
 import {
   type ConnectorOwnerScope,
@@ -14,18 +14,24 @@ import { useSkillsListQuery } from "~/skills/use-skills-list-query";
 
 type WorkspaceTopbarAction = "connectors" | "skills";
 
-const connectorsRoute = getRouteApi("/_authenticated/$slug/connectors");
-const skillsRoute = getRouteApi("/_authenticated/$slug/skills");
+const workspaceActionRoutes = {
+  connectors: getRouteApi("/_authenticated/$slug/connectors"),
+  skills: getRouteApi("/_authenticated/$slug/skills"),
+};
 
 function getWorkspaceTopbarActionKey(
   staticData: StaticDataRouteOption
 ): WorkspaceTopbarAction | undefined {
   if (!("workspaceTopbarAction" in staticData)) {
-    return undefined;
+    return;
   }
 
   const action = staticData.workspaceTopbarAction;
-  return action === "connectors" || action === "skills" ? action : undefined;
+  if (action === "connectors" || action === "skills") {
+    return action;
+  }
+
+  return;
 }
 
 export function useWorkspaceTopbarAction(): ReactNode {
@@ -40,7 +46,7 @@ export function useWorkspaceTopbarAction(): ReactNode {
           }
         }
       }
-      return undefined;
+      return;
     },
   });
 
@@ -55,8 +61,8 @@ export function useWorkspaceTopbarAction(): ReactNode {
 }
 
 function ConnectorsTopbarActions() {
-  const routeSearch = connectorsRoute.useSearch();
-  const navigate = connectorsRoute.useNavigate();
+  const routeSearch = workspaceActionRoutes.connectors.useSearch();
+  const navigate = workspaceActionRoutes.connectors.useNavigate();
   const search = useMemo(
     () => normalizeConnectorsSearch(routeSearch),
     [routeSearch]

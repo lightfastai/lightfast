@@ -14,13 +14,13 @@ import { AppSidebar } from "~/components/app-sidebar";
 import { AuthenticatedTopbar } from "~/components/authenticated-topbar";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
 import { organizationBySlugQueryOptions } from "~/organization/organization-queries";
-import { useWorkspaceTopbarAction } from "./workspace-topbar-actions";
 import {
   getSetupRequirementRedirect,
   isOrgSetupCompletePath,
   isOrgSetupExemptPath,
   isOrgSetupPath,
 } from "./workspace-route-model";
+import { useWorkspaceTopbarAction } from "./workspace-topbar-actions";
 
 function SetupRequirementNavigate({
   requirement,

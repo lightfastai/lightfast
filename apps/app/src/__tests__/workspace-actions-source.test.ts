@@ -97,7 +97,9 @@ describe("workspace page-owned actions", () => {
       'staticData: { workspaceTopbarAction: "connectors" }'
     );
 
-    expect(skillsClientSource).not.toContain('data-testid="skills-actions-row"');
+    expect(skillsClientSource).not.toContain(
+      'data-testid="skills-actions-row"'
+    );
     expect(skillsClientSource).not.toContain("<SkillsActions");
     expect(connectorsClientSource).not.toContain(
       'data-testid="connectors-actions-row"'
