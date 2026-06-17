@@ -14,8 +14,8 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { ConnectorIcon } from "~/connectors/connector-icons";
+import { sourceControlConnectionQueryOptions } from "~/org/settings/source-control/source-control-queries";
 import { organizationBySlugQueryOptions } from "~/organization/organization-queries";
-import { useTRPC } from "~/trpc/react";
 
 type SetupTaskStatus = "complete" | "current" | "locked";
 const SETUP_REQUIREMENT_ORDER: OrgSetupRequirement[] = [
@@ -53,13 +53,11 @@ function SetupTasksPage() {
 
 function SetupTasksPageContent() {
   const { slug } = Route.useParams();
-  const trpc = useTRPC();
   const { data: gate, isPending: isGatePending } = useQuery({
     ...organizationBySlugQueryOptions({ slug }),
   });
   const { data: sourceControl, isPending: isSourceControlPending } = useQuery({
-    ...trpc.org.settings.sourceControl.get.queryOptions(),
-    enabled: typeof window !== "undefined",
+    ...sourceControlConnectionQueryOptions(),
     staleTime: 30_000,
   });
 

@@ -6,4 +6,5 @@ export * from "./mcp-connections";
 export * from "./org-api-keys";
 export * from "./organizations";
 export * from "./signals";
+export * from "./source-control";
 export * from "./user-connectors";

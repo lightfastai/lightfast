@@ -53,6 +53,10 @@
       "types": "./src/adapters/tanstack/user-connectors.ts",
       "default": "./src/adapters/tanstack/user-connectors.ts"
     },
+    "./tanstack/source-control": {
+      "types": "./src/adapters/tanstack/source-control.ts",
+      "default": "./src/adapters/tanstack/source-control.ts"
+    },
     "./tanstack/signal-views": {
       "types": "./src/adapters/tanstack/signal-views.ts",
       "default": "./src/adapters/tanstack/signal-views.ts"

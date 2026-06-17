@@ -1,4 +1,3 @@
-import type { AppRouterOutputs } from "@api/app";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -16,9 +15,7 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
-
-type SourceControlRepositoryRow =
-  AppRouterOutputs["org"]["settings"]["sourceControl"]["listRepositories"]["repositories"][number];
+import type { SourceControlRepositoryRow } from "./source-control-queries";
 
 const ALL_PATHS_GLOB = "**";
 

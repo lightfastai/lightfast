@@ -1,4 +1,3 @@
-import type { AppRouterOutputs } from "@api/app";
 import { LIGHTFAST_REPOSITORY_NAME } from "@repo/app-setup-contract";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
@@ -15,10 +14,10 @@ import { Input } from "@repo/ui/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { GitBranch, Loader2, Search } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useTRPC } from "~/trpc/react";
-
-type SourceControlRepositoryRow =
-  AppRouterOutputs["org"]["settings"]["sourceControl"]["listRepositories"]["repositories"][number];
+import {
+  importSourceControlRepositoryMutationOptions,
+  type SourceControlRepositoryRow,
+} from "./source-control-queries";
 
 export function AddRepositoryDialog({
   disabled,
@@ -27,10 +26,7 @@ export function AddRepositoryDialog({
   disabled: boolean;
   repositories: SourceControlRepositoryRow[];
 }) {
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const listQueryOptions =
-    trpc.org.settings.sourceControl.listRepositories.queryOptions();
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedRepositoryId, setSelectedRepositoryId] = useState<
@@ -38,14 +34,13 @@ export function AddRepositoryDialog({
   >(null);
 
   const importRepository = useMutation(
-    trpc.org.settings.sourceControl.importRepository.mutationOptions({
-      meta: { errorTitle: "Failed to add repository" },
-      onSuccess: (data) => {
-        queryClient.setQueryData(listQueryOptions.queryKey, data);
+    importSourceControlRepositoryMutationOptions({
+      onImported: () => {
         setSelectedRepositoryId(null);
         setSearch("");
         setIsOpen(false);
       },
+      queryClient,
     })
   );
 

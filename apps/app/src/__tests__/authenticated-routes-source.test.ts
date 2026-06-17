@@ -690,7 +690,7 @@ describe("app authenticated route migration", () => {
     expect(bindIndexRouteSource).toContain("BindGithubCard");
     expect(bindCardSource).toContain("org.setup.github.start");
     expect(lightfastRepoRouteSource).toContain(
-      "org.settings.sourceControl.get"
+      "sourceControlConnectionQueryOptions"
     );
     expect(lightfastRepoRouteSource).toContain("newLightfastRepositoryUrl");
     expect(lightfastRepoRouteSource).not.toContain("getGitHubNewRepositoryUrl");
@@ -740,6 +740,9 @@ describe("app authenticated route migration", () => {
     const addRepositoryDialogSource = source(
       "src/org/settings/source-control/add-repository-dialog.tsx"
     );
+    const sourceControlQueriesSource = source(
+      "src/org/settings/source-control/source-control-queries.ts"
+    );
     const repositoryCardSource = source(
       "src/org/settings/source-control/repository-card.tsx"
     );
@@ -766,12 +769,15 @@ describe("app authenticated route migration", () => {
     expect(sourceControlRouteSource).toContain("SourceControlSettingsClient");
     expect(sidebarSource).toContain("params");
     expect(settingsClientSource).toContain(
-      "org.settings.sourceControl.get.queryOptions"
+      "sourceControlConnectionQueryOptions"
     );
     expect(settingsClientSource).toContain(
-      "org.settings.sourceControl.listRepositories.queryOptions"
+      "sourceControlRepositoriesQueryOptions"
     );
-    expect(settingsClientSource).toContain(
+    expect(sourceControlQueriesSource).toContain(
+      '@api/app/tanstack/source-control"'
+    );
+    expect(sourceControlQueriesSource).toContain(
       'enabled: typeof window !== "undefined"'
     );
     expect(settingsClientSource).toContain("SourceControlConnectionCard");
@@ -785,9 +791,9 @@ describe("app authenticated route migration", () => {
     expect(repositoryListSource).toContain("RepositoryCard");
     expect(repositoryListSource).toContain("LfSelect");
     expect(addRepositoryDialogSource).toContain(
-      "sourceControl.importRepository.mutationOptions"
+      "importSourceControlRepositoryMutationOptions"
     );
-    expect(addRepositoryDialogSource).toContain("setQueryData");
+    expect(sourceControlQueriesSource).toContain("setQueryData");
     expect(addRepositoryDialogSource).toContain("LIGHTFAST_REPOSITORY_NAME");
     expect(repositoryCardSource).toContain("Open on GitHub");
     expect(formatSource).toContain("formatStatusSubtitle");
@@ -800,6 +806,7 @@ describe("app authenticated route migration", () => {
       connectionCardSource,
       repositoryListSource,
       addRepositoryDialogSource,
+      sourceControlQueriesSource,
       repositoryCardSource,
       formatSource,
       lfSelectSource,

@@ -3,9 +3,12 @@ import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ExternalLink } from "lucide-react";
-import { useTRPC } from "~/trpc/react";
 import { RepositoryList } from "./repository-list";
 import { SourceControlConnectionCard } from "./source-control-connection-card";
+import {
+  sourceControlConnectionQueryOptions,
+  sourceControlRepositoriesQueryOptions,
+} from "./source-control-queries";
 
 interface SourceControlSettingsClientProps {
   slug: string;
@@ -14,24 +17,16 @@ interface SourceControlSettingsClientProps {
 export function SourceControlSettingsClient({
   slug,
 }: SourceControlSettingsClientProps) {
-  const trpc = useTRPC();
-
   const {
     data: sourceControlConnection,
     error: connectionError,
     isPending: isConnectionPending,
-  } = useQuery({
-    ...trpc.org.settings.sourceControl.get.queryOptions(),
-    enabled: typeof window !== "undefined",
-  });
+  } = useQuery(sourceControlConnectionQueryOptions());
   const {
     data: sourceControlRepositories,
     error: repositoriesError,
     isPending: isRepositoriesPending,
-  } = useQuery({
-    ...trpc.org.settings.sourceControl.listRepositories.queryOptions(),
-    enabled: typeof window !== "undefined",
-  });
+  } = useQuery(sourceControlRepositoriesQueryOptions());
 
   const connection = sourceControlConnection?.binding ?? null;
   const isPending = isConnectionPending || isRepositoriesPending;
