@@ -471,7 +471,12 @@ describe("app authenticated route migration", () => {
       "connectors.listSections.queryOptions"
     );
     expect(connectorsClientSource).toContain("startConnect.mutationOptions");
-    expect(connectorsClientSource).toContain("userConnectors.startConnect");
+    expect(connectorsClientSource).toContain(
+      "startUserConnectorMutationOptions"
+    );
+    expect(connectorsClientSource).toContain(
+      "disconnectUserConnectorMutationOptions"
+    );
     expect(connectorsClientSource).toContain("window.location.assign");
     expect(connectorsClientSource).toContain("ConnectorDetailSheet");
     expect(connectorsClientSource).toContain(

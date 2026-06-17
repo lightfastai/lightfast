@@ -45,6 +45,14 @@
       "types": "./src/adapters/tanstack/account.ts",
       "default": "./src/adapters/tanstack/account.ts"
     },
+    "./tanstack/mcp-connections": {
+      "types": "./src/adapters/tanstack/mcp-connections.ts",
+      "default": "./src/adapters/tanstack/mcp-connections.ts"
+    },
+    "./tanstack/user-connectors": {
+      "types": "./src/adapters/tanstack/user-connectors.ts",
+      "default": "./src/adapters/tanstack/user-connectors.ts"
+    },
     "./tanstack/signal-views": {
       "types": "./src/adapters/tanstack/signal-views.ts",
       "default": "./src/adapters/tanstack/signal-views.ts"

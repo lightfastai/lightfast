@@ -5,7 +5,6 @@ import type { AuthIdentity } from "../auth/identity";
 
 const getMcpOauthGrantByPublicIdMock = vi.fn();
 const listMcpOauthGrantConnectionsForOrgMock = vi.fn();
-const listMcpOauthGrantConnectionsForUserMock = vi.fn();
 const revokeMcpOauthGrantMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
@@ -13,7 +12,6 @@ vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({
   getMcpOauthGrantByPublicId: getMcpOauthGrantByPublicIdMock,
   listMcpOauthGrantConnectionsForOrg: listMcpOauthGrantConnectionsForOrgMock,
-  listMcpOauthGrantConnectionsForUser: listMcpOauthGrantConnectionsForUserMock,
   revokeMcpOauthGrant: revokeMcpOauthGrantMock,
 }));
 
@@ -25,12 +23,11 @@ vi.mock("@vendor/observability/trpc", () => ({
 }));
 
 const { createCallerFactory, createTRPCRouter } = await import("../trpc");
-const { accountMcpConnectionsRouter, orgMcpConnectionsRouter } = await import(
+const { orgMcpConnectionsRouter } = await import(
   "../router/(pending-not-allowed)/mcp-connections"
 );
 
 const testRouter = createTRPCRouter({
-  accountMcpConnections: accountMcpConnectionsRouter,
   orgMcpConnections: orgMcpConnectionsRouter,
 });
 const createCaller = createCallerFactory(testRouter);
@@ -137,40 +134,14 @@ function connection(overrides: Partial<ReturnType<typeof grant>> = {}) {
 beforeEach(() => {
   getMcpOauthGrantByPublicIdMock.mockReset();
   listMcpOauthGrantConnectionsForOrgMock.mockReset();
-  listMcpOauthGrantConnectionsForUserMock.mockReset();
   revokeMcpOauthGrantMock.mockReset();
 
   getMcpOauthGrantByPublicIdMock.mockResolvedValue(grant());
   listMcpOauthGrantConnectionsForOrgMock.mockResolvedValue([connection()]);
-  listMcpOauthGrantConnectionsForUserMock.mockResolvedValue([connection()]);
   revokeMcpOauthGrantMock.mockResolvedValue(true);
 });
 
 describe("MCP connection routers", () => {
-  it("lists current user's MCP grants", async () => {
-    await expect(caller().accountMcpConnections.list()).resolves.toEqual([
-      expect.objectContaining({
-        clientId: "mcp_client_test",
-        clientName: "Lightfield",
-        clientVerificationStatus: "verified",
-        connectedUserId: "user_current",
-        createdAt: "2026-06-01T00:00:00.000Z",
-        grantId: "mcp_grant_test",
-        redirectUris: [
-          "https://backend.lightfield.app/connections/callback/MCP",
-        ],
-        resource: "https://mcp.lightfast.localhost/mcp",
-        scopes: ["mcp:signals:read"],
-        status: "active",
-      }),
-    ]);
-
-    expect(listMcpOauthGrantConnectionsForUserMock).toHaveBeenCalledWith(
-      {},
-      { clerkUserId: "user_current" }
-    );
-  });
-
   it("lists org grants for org admins", async () => {
     await expect(
       caller(adminAccess()).orgMcpConnections.list()
@@ -194,48 +165,6 @@ describe("MCP connection routers", () => {
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
 
     expect(listMcpOauthGrantConnectionsForOrgMock).not.toHaveBeenCalled();
-  });
-
-  it("revokes a user's own grant", async () => {
-    await expect(
-      caller().accountMcpConnections.revoke({ grantId: "mcp_grant_test" })
-    ).resolves.toEqual({ success: true });
-
-    expect(getMcpOauthGrantByPublicIdMock).toHaveBeenCalledWith(
-      {},
-      { publicId: "mcp_grant_test" }
-    );
-    expect(revokeMcpOauthGrantMock).toHaveBeenCalledWith(
-      {},
-      { publicId: "mcp_grant_test" }
-    );
-  });
-
-  it("blocks unauthenticated account revokes before grant lookup", async () => {
-    await expect(
-      callerWithAuth({
-        identity: { type: "unauthenticated" },
-      }).accountMcpConnections.revoke({ grantId: "mcp_grant_test" })
-    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
-
-    expect(getMcpOauthGrantByPublicIdMock).not.toHaveBeenCalled();
-    expect(revokeMcpOauthGrantMock).not.toHaveBeenCalled();
-  });
-
-  it("does not revoke grants owned by another user", async () => {
-    getMcpOauthGrantByPublicIdMock.mockResolvedValueOnce(
-      grant({ clerkUserId: "user_other" })
-    );
-
-    await expect(
-      caller().accountMcpConnections.revoke({ grantId: "mcp_grant_test" })
-    ).rejects.toMatchObject({ code: "NOT_FOUND" });
-
-    expect(getMcpOauthGrantByPublicIdMock).toHaveBeenCalledWith(
-      {},
-      { publicId: "mcp_grant_test" }
-    );
-    expect(revokeMcpOauthGrantMock).not.toHaveBeenCalled();
   });
 
   it("allows org admins to revoke an org grant", async () => {

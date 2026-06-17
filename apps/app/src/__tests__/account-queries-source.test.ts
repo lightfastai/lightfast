@@ -36,13 +36,36 @@ describe("account query helpers", () => {
     }
   });
 
-  it("leaves account connector management on tRPC for later product slices", () => {
+  it("moves account connector management off viewer.account tRPC", () => {
+    const querySource = source("src/account/account-queries.ts");
     const mcpConnectionsSource = source(
       "src/account/mcp-connections-client.tsx"
     );
     const connectorsSource = source("src/connectors/connectors-client.tsx");
+    const userConnectorQuerySource = source(
+      "src/connectors/user-connector-queries.ts"
+    );
 
-    expect(mcpConnectionsSource).toContain("viewer.account.mcpConnections");
-    expect(connectorsSource).toContain("viewer.account.userConnectors");
+    expect(querySource).toContain("@api/app/tanstack/mcp-connections");
+    expect(querySource).toContain("accountMcpConnectionsQueryOptions");
+    expect(querySource).toContain("revokeAccountMcpConnectionMutationOptions");
+    expect(userConnectorQuerySource).toContain(
+      "@api/app/tanstack/user-connectors"
+    );
+    expect(userConnectorQuerySource).toContain(
+      "startUserConnectorMutationOptions"
+    );
+    expect(userConnectorQuerySource).toContain(
+      "disconnectUserConnectorMutationOptions"
+    );
+
+    for (const fileSource of [
+      mcpConnectionsSource,
+      connectorsSource,
+      userConnectorQuerySource,
+    ]) {
+      expect(fileSource).not.toContain("viewer.account.mcpConnections");
+      expect(fileSource).not.toContain("viewer.account.userConnectors");
+    }
   });
 });
