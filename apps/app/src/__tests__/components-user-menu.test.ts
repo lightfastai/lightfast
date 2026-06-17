@@ -1,10 +1,6 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import {
-  getUserMenuIdentity,
-  SETTINGS_HREF,
-} from "~/components/user-menu-model";
 
 const appRoot = resolve(import.meta.dirname, "../..");
 
@@ -13,30 +9,37 @@ function source(path: string) {
 }
 
 describe("TanStack user menu", () => {
-  it("uses the sidebar-owned menu instead of Clerk's packaged UserButton", () => {
+  it("uses the extracted sidebar menu instead of Clerk's packaged UserButton", () => {
     const topbarSource = source("src/components/authenticated-topbar.tsx");
     const sidebarSource = source("src/components/app-sidebar.tsx");
+    const menuSource = source("src/components/user-menu.tsx");
 
     expect(topbarSource).not.toContain('from "~/components/user-menu"');
     expect(topbarSource).not.toContain("<UserMenu />");
     expect(topbarSource).not.toContain("UserButton");
     expect(sidebarSource).toContain("<SidebarFooter");
+    expect(sidebarSource).toContain('import { UserMenu } from "./user-menu";');
     expect(sidebarSource).toContain("<UserMenu />");
-    expect(sidebarSource).toContain(
+    expect(sidebarSource).not.toContain("function UserMenu");
+    expect(sidebarSource).not.toContain("function UserMenuSkeleton");
+    expect(sidebarSource).not.toContain(
       'useClerk } from "@clerk/tanstack-react-start"'
     );
-    expect(sidebarSource).toContain("accountProfileQueryOptions()");
-    expect(sidebarSource).toContain('enabled: typeof window !== "undefined"');
-    expect(sidebarSource).toContain('from "@repo/ui/hooks/use-mounted"');
-    expect(sidebarSource).toContain("const mounted = useMounted();");
-    expect(sidebarSource).toContain("if (!mounted || isPending || !profile)");
-    expect(sidebarSource).not.toContain("useSuspenseQuery");
-    expect(sidebarSource).toContain("to={SETTINGS_HREF}");
-    expect(sidebarSource).toContain('signOut({ redirectUrl: "/sign-in" })');
+    expect(menuSource).toContain(
+      'useClerk } from "@clerk/tanstack-react-start"'
+    );
+    expect(menuSource).toContain("accountProfileQueryOptions()");
+    expect(menuSource).toContain('enabled: typeof window !== "undefined"');
+    expect(menuSource).toContain('from "@repo/ui/hooks/use-mounted"');
+    expect(menuSource).toContain("const mounted = useMounted();");
+    expect(menuSource).toContain("if (!mounted || isPending || !profile)");
+    expect(menuSource).not.toContain("useSuspenseQuery");
+    expect(menuSource).toContain('to="/account/settings/general"');
+    expect(menuSource).toContain('signOut({ redirectUrl: "/sign-in" })');
   });
 
   it("uses ui-v2 dropdown and avatar primitives while old ui components migrate separately", () => {
-    const menuSource = source("src/components/app-sidebar.tsx");
+    const menuSource = source("src/components/user-menu.tsx");
 
     expect(menuSource).toContain(
       'from "@repo/ui-v2/components/ui/dropdown-menu"'
@@ -50,7 +53,7 @@ describe("TanStack user menu", () => {
   });
 
   it("uses Hugeicons for user-menu glyphs", () => {
-    const menuSource = source("src/components/app-sidebar.tsx");
+    const menuSource = source("src/components/user-menu.tsx");
 
     expect(menuSource).toContain('from "@hugeicons/core-free-icons"');
     expect(menuSource).toContain('from "@hugeicons/react"');
@@ -64,7 +67,7 @@ describe("TanStack user menu", () => {
   });
 
   it("owns account, help, and sign-out menu sections", () => {
-    const menuSource = source("src/components/app-sidebar.tsx");
+    const menuSource = source("src/components/user-menu.tsx");
 
     expect(menuSource).toContain("DropdownMenuGroup");
     expect(menuSource).toContain("DropdownMenuSub");
@@ -81,7 +84,7 @@ describe("TanStack user menu", () => {
   });
 
   it("uses the shared small dropdown size without app-specific content width overrides", () => {
-    const menuSource = source("src/components/app-sidebar.tsx");
+    const menuSource = source("src/components/user-menu.tsx");
     const dropdownSource = readFileSync(
       resolve(
         appRoot,
@@ -106,7 +109,7 @@ describe("TanStack user menu", () => {
   });
 
   it("uses avatar and username in the sidebar footer trigger", () => {
-    const menuSource = source("src/components/app-sidebar.tsx");
+    const menuSource = source("src/components/user-menu.tsx");
 
     expect(menuSource).toContain('aria-label="Open user menu"');
     expect(menuSource).toContain('className="h-11 w-full justify-start');
@@ -114,39 +117,26 @@ describe("TanStack user menu", () => {
     expect(menuSource).toContain("{primaryIdentity}");
   });
 
-  it("derives the visible identity from username and email", () => {
-    expect(
-      getUserMenuIdentity({
-        primaryEmailAddress: "ada@example.com",
-        username: "ada-dev",
-      })
-    ).toEqual({
-      primaryIdentity: "ada-dev",
-      secondaryIdentity: "ada@example.com",
-    });
+  it("keeps identity and settings logic inline in the user menu component", () => {
+    const menuSource = source("src/components/user-menu.tsx");
+    const userMenuModelPath = resolve(
+      appRoot,
+      "src/components/user-menu-model.ts"
+    );
 
-    expect(
-      getUserMenuIdentity({
-        primaryEmailAddress: "ada@example.com",
-        username: null,
-      })
-    ).toEqual({
-      primaryIdentity: "ada@example.com",
-      secondaryIdentity: null,
-    });
-
-    expect(
-      getUserMenuIdentity({
-        primaryEmailAddress: null,
-        username: null,
-      })
-    ).toEqual({
-      primaryIdentity: "User",
-      secondaryIdentity: null,
-    });
-  });
-
-  it("links to general account settings", () => {
-    expect(SETTINGS_HREF).toBe("/account/settings/general");
+    expect(existsSync(userMenuModelPath)).toBe(false);
+    expect(menuSource).not.toContain("user-menu-model");
+    expect(menuSource).not.toContain("getUserMenuIdentity");
+    expect(menuSource).not.toContain("SETTINGS_HREF");
+    expect(menuSource).toContain("const identityLines = [");
+    expect(menuSource).toContain("profile.username");
+    expect(menuSource).toContain("profile.primaryEmailAddress");
+    expect(menuSource).toContain(
+      'primaryIdentity = identityLines[0] ?? "User"'
+    );
+    expect(menuSource).toContain(
+      "secondaryIdentity = identityLines[1] ?? null"
+    );
+    expect(menuSource).toContain('to="/account/settings/general"');
   });
 });

@@ -152,8 +152,13 @@ describe("app authenticated route migration", () => {
 
   it("uses a pathless authenticated shell for account and org routes", () => {
     const shellSource = source("src/routes/_authenticated.tsx");
+    const authenticatedLayoutModelPath = resolve(
+      appRoot,
+      "src/components/authenticated-layout-model.ts"
+    );
     const teamSwitcherSource = source("src/components/team-switcher.tsx");
     const appSidebarSource = source("src/components/app-sidebar.tsx");
+    const recentChatsMenuSource = source("src/components/recent-chats-menu.tsx");
     const orgRouteSource = source("src/routes/_authenticated/$slug.tsx");
     const workspaceShellSource = source(
       "src/workspace/workspace-route-shell.tsx"
@@ -170,6 +175,13 @@ describe("app authenticated route migration", () => {
     expect(shellSource).toContain("redirect_url: location.href");
     expect(shellSource).toContain("AUTH_ROUTE_PATHS");
     expect(shellSource).toContain("isAuthRoute");
+    expect(existsSync(authenticatedLayoutModelPath)).toBe(false);
+    expect(shellSource).not.toContain("authenticated-layout-model");
+    expect(shellSource).toContain(
+      'const BASIC_SHELL_PREFIXES = ["/account", "/accounts"] as const'
+    );
+    expect(shellSource).toContain("const usesBasicShell");
+    expect(shellSource).toContain("if (!usesBasicShell)");
     expect(teamSwitcherSource).toContain("function TeamSwitcherSlot()");
     expect(teamSwitcherSource).toContain("<TeamSwitcherSkeleton />");
     expect(teamSwitcherSource).toContain('from "@repo/ui/hooks/use-mounted"');
@@ -206,8 +218,8 @@ describe("app authenticated route migration", () => {
     expect(teamSwitcherSource).toContain('to="/$slug"');
     expect(teamSwitcherSource).not.toContain("next/navigation");
     expect(teamSwitcherSource).not.toContain("next/link");
-    expect(appSidebarSource).toContain("listConversations.queryOptions");
-    expect(appSidebarSource).toContain('to="/$slug/chat/$conversationId"');
+    expect(recentChatsMenuSource).toContain("listConversations.queryOptions");
+    expect(recentChatsMenuSource).toContain('to="/$slug/chat/$conversationId"');
     expect(appSidebarSource).not.toContain("showChatHistory");
     expect(orgRouteSource).toContain("WorkspaceRouteShell");
     expect(workspaceShellSource).toContain(
@@ -628,10 +640,11 @@ describe("app authenticated route migration", () => {
     expect(assistantClientSource).toContain("DefaultChatTransport");
     expect(assistantClientSource).toContain("useParams({ strict: false })");
     expect(assistantClientSource).toContain("useRouter");
+    expect(assistantClientSource).toContain("History.prototype.replaceState");
+    expect(assistantClientSource).toContain("workspaceConversationPath");
     expect(assistantClientSource).toContain(
       'to: "/$slug/chat/$conversationId"'
     );
-    expect(assistantClientSource).toContain("router.invalidate()");
     expect(assistantClientSource).toContain(
       "createConversation.mutationOptions"
     );

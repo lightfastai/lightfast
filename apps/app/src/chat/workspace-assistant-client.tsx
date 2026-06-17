@@ -116,15 +116,15 @@ export function WorkspaceAssistantClient({
 
       clearError();
 
+      let createdConversationDuringSubmit = false;
+
       if (!conversationCreatedRef.current) {
         setCreationError(undefined);
         setOptimisticFirstMessage(createOptimisticUserMessage(nextText));
         if (orgSlug) {
-          void router.navigate({
-            params: { conversationId, slug: orgSlug },
-            replace: true,
-            to: "/$slug/chat/$conversationId",
-          });
+          replaceBrowserHistoryPath(
+            workspaceConversationPath(orgSlug, conversationId)
+          );
         }
         try {
           await createConversation.mutateAsync({
@@ -132,14 +132,11 @@ export function WorkspaceAssistantClient({
             title: nextText,
           });
           conversationCreatedRef.current = true;
+          createdConversationDuringSubmit = true;
           void queryClient.invalidateQueries(listConversationsQueryFilter);
         } catch (error) {
           if (orgSlug) {
-            void router.navigate({
-              params: { slug: orgSlug },
-              replace: true,
-              to: "/$slug/chat",
-            });
+            replaceBrowserHistoryPath(workspaceChatPath(orgSlug));
           }
           setOptimisticFirstMessage(null);
           setCreationError(
@@ -168,7 +165,7 @@ export function WorkspaceAssistantClient({
         setProviderRoutineWriteMode(false);
       }
       setText("");
-      if (!initialConversation) {
+      if (createdConversationDuringSubmit) {
         if (orgSlug) {
           await router.navigate({
             params: { conversationId, slug: orgSlug },
@@ -183,7 +180,6 @@ export function WorkspaceAssistantClient({
     [
       conversationId,
       createConversation.mutateAsync,
-      initialConversation,
       listConversationsQueryFilter,
       orgSlug,
       queryClient,
@@ -249,6 +245,30 @@ export function WorkspaceAssistantClient({
 
 function createWorkspaceAssistantIdempotencyKey() {
   return `idem_${createUuid()}`;
+}
+
+function replaceBrowserHistoryPath(pathname: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  // TanStack Router patches window.history.replaceState and treats it as a
+  // route transition. Call the native method so the active chat stream stays
+  // mounted while the address bar reflects the preallocated conversation.
+  History.prototype.replaceState.call(
+    window.history,
+    window.history.state,
+    "",
+    pathname
+  );
+}
+
+function workspaceConversationPath(orgSlug: string, conversationId: string) {
+  return `${workspaceChatPath(orgSlug)}/${encodeURIComponent(conversationId)}`;
+}
+
+function workspaceChatPath(orgSlug: string) {
+  return `/${encodeURIComponent(orgSlug)}/chat`;
 }
 
 function createOptimisticUserMessage(text: string): UIMessage {

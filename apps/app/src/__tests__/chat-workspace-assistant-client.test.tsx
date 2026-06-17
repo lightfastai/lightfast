@@ -183,6 +183,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
 
 describe("WorkspaceAssistantClient", () => {
@@ -211,10 +212,13 @@ describe("WorkspaceAssistantClient", () => {
     ).toContain("pt-[clamp(8rem,26svh,18rem)]");
   });
 
-  it("navigates to the preallocated conversation URL before first conversation creation resolves", async () => {
+  it("soft-replaces the browser URL before creation and syncs the router after send", async () => {
     let resolveCreate:
       | ((conversation: { publicId: string; title: string }) => void)
       | undefined;
+    const replaceStateSpy = vi
+      .spyOn(History.prototype, "replaceState")
+      .mockImplementation(() => undefined);
     mutateAsyncMock.mockImplementation(
       () =>
         new Promise((resolve) => {
@@ -237,14 +241,12 @@ describe("WorkspaceAssistantClient", () => {
         title: "Summarize the current workspace",
       });
     });
-    expect(routerNavigateMock).toHaveBeenNthCalledWith(1, {
-      params: {
-        conversationId: "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
-        slug: "lightfast",
-      },
-      replace: true,
-      to: "/$slug/chat/$conversationId",
-    });
+    expect(replaceStateSpy).toHaveBeenCalledWith(
+      window.history.state,
+      "",
+      "/lightfast/chat/conv_ff83026e-ef0e-40db-ae59-544fbe4df209"
+    );
+    expect(routerNavigateMock).not.toHaveBeenCalled();
     expect(sendMessageMock).not.toHaveBeenCalled();
     expect(
       screen.getAllByText("Summarize the current workspace").length
@@ -271,13 +273,15 @@ describe("WorkspaceAssistantClient", () => {
         }
       );
     });
-    expect(routerNavigateMock).toHaveBeenNthCalledWith(2, {
-      params: {
-        conversationId: "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
-        slug: "lightfast",
-      },
-      replace: true,
-      to: "/$slug/chat/$conversationId",
+    await waitFor(() => {
+      expect(routerNavigateMock).toHaveBeenCalledWith({
+        params: {
+          conversationId: "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
+          slug: "lightfast",
+        },
+        replace: true,
+        to: "/$slug/chat/$conversationId",
+      });
     });
     expect(routerInvalidateMock).not.toHaveBeenCalled();
   });
