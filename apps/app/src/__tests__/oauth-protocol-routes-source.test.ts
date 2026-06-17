@@ -67,7 +67,7 @@ describe("app OAuth protocol route migration", () => {
     }
   });
 
-  it("ports native OAuth facade endpoints through request-aware tRPC callers", () => {
+  it("ports native OAuth facade endpoints through explicit api/app handlers", () => {
     const configSource = source("src/routes/api/oauth/$client/config.ts");
     const finalizeSource = source("src/routes/api/oauth/finalize.ts");
     const sessionSource = source("src/routes/api/oauth/desktop/session.ts");
@@ -78,24 +78,26 @@ describe("app OAuth protocol route migration", () => {
     );
     expect(configSource).toContain("nativeClientSchema");
     expect(configSource).toContain("nativeOAuthConfigSchema");
-    expect(configSource).toContain("createNativeOAuthFacadeCaller");
+    expect(configSource).toContain("getNativeOAuthClientConfig");
     expect(configSource).toContain("params.client");
-    expect(configSource).toContain("oauthConfig");
+    expect(configSource).not.toContain("caller.native.auth");
     expect(finalizeSource).toContain('createFileRoute("/api/oauth/finalize")');
     expect(finalizeSource).toContain("nativeFinalizeRequestSchema");
     expect(finalizeSource).toContain("nativeSessionMetadataSchema");
-    expect(finalizeSource).toContain("finalize");
+    expect(finalizeSource).toContain("finalizeNativeAuthAttemptForRequest");
+    expect(finalizeSource).not.toContain("caller.native.auth");
     expect(sessionSource).toContain(
       'createFileRoute("/api/oauth/desktop/session")'
     );
     expect(sessionSource).toContain("nativeSessionMetadataSchema");
-    expect(sessionSource).toContain("createNativeOAuthFacadeCaller");
+    expect(sessionSource).toContain("getNativeAuthSessionForRequest");
     expect(sessionSource).toContain('source: "desktop"');
-    expect(sessionSource).toContain("native.auth.session");
-    expect(nativeServerSource).toContain("createCallerFactory(appRouter)");
-    expect(nativeServerSource).toContain("createTRPCContext");
-    expect(nativeServerSource).toContain("NATIVE_AUTH_HEADERS.client");
-    expect(nativeServerSource).toContain("getHTTPStatusCodeFromError");
+    expect(sessionSource).not.toContain("caller.native.auth");
+    expect(nativeServerSource).toContain("@api/app/native-auth");
+    expect(nativeServerSource).not.toContain("appRouter");
+    expect(nativeServerSource).not.toContain("createTRPCContext");
+    expect(nativeServerSource).not.toContain("TRPCError");
+    expect(nativeServerSource).not.toContain("getHTTPStatusCodeFromError");
     expect(nativeServerSource).toContain("Unexpected auth error");
 
     for (const routeSource of [

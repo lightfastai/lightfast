@@ -1,3 +1,4 @@
+import { listNativeAuthOrganizations } from "@api/app/tanstack/native-auth";
 import {
   type NativeOrganization,
   nativeClientSchema,
@@ -15,16 +16,10 @@ export const loadNativeAuthOrganizations = createServerFn({ method: "GET" })
     const [
       { getRequest, setResponseHeader },
       { auth },
-      { appRouter, createTRPCContext },
-      { createTRPCOptionsProxy },
-      { createQueryClient },
       { redirectToSignInForOAuth },
     ] = await Promise.all([
       import("@tanstack/react-start/server"),
       import("@vendor/clerk/server"),
-      import("@api/app"),
-      import("@trpc/tanstack-react-query"),
-      import("~/trpc/query-client"),
       import("./oauth-auth-redirect"),
     ]);
 
@@ -34,19 +29,7 @@ export const loadNativeAuthOrganizations = createServerFn({ method: "GET" })
       redirectToSignInForOAuth(request.url);
     }
 
-    const headers = new Headers(request.headers);
-    headers.set("x-trpc-source", "tanstack-native-auth-start");
-
     setResponseHeader("cache-control", "private, no-store");
 
-    const queryClient = createQueryClient();
-    const trpc = createTRPCOptionsProxy({
-      router: appRouter,
-      ctx: () => createTRPCContext({ headers }),
-      queryClient: () => queryClient,
-    });
-
-    return queryClient.fetchQuery(
-      trpc.native.auth.listOrganizations.queryOptions()
-    ) as Promise<NativeOrganization[]>;
+    return listNativeAuthOrganizations() as Promise<NativeOrganization[]>;
   });

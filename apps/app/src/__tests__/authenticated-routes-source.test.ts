@@ -124,14 +124,17 @@ describe("app authenticated route migration", () => {
     expect(nativeRouteSource).toContain("validateNativeAuthStartSearch");
     expect(nativeRouteSource).toContain("loadNativeAuthOrganizations");
     expect(nativeRouteSource).toContain("NativeAuthOrgSelect");
-    expect(nativeOrgSelectSource).toContain(
-      "native.auth.createAttempt.mutationOptions"
-    );
+    expect(nativeOrgSelectSource).toContain('@api/app/tanstack/native-auth"');
+    expect(nativeOrgSelectSource).toContain("createNativeAuthAttempt");
+    expect(nativeOrgSelectSource).not.toContain("useTRPC");
+    expect(nativeOrgSelectSource).not.toContain("native.auth");
     expect(nativeOrgSelectSource).toContain("withClerkDevBrowserContext");
-    expect(nativeFunctionsSource).toContain(
-      "trpc.native.auth.listOrganizations.queryOptions()"
-    );
+    expect(nativeFunctionsSource).toContain('@api/app/tanstack/native-auth"');
+    expect(nativeFunctionsSource).toContain("listNativeAuthOrganizations");
     expect(nativeFunctionsSource).toContain("redirectToSignInForOAuth");
+    expect(nativeFunctionsSource).not.toContain("createTRPCOptionsProxy");
+    expect(nativeFunctionsSource).not.toContain("appRouter");
+    expect(nativeFunctionsSource).not.toContain("trpc.native");
     expect(nativeValidatorsSource).toContain("isLoopbackRedirectUri");
 
     for (const routeFile of [
