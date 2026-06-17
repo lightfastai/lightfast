@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { sourceControlConnectionQueryOptions } from "~/org/settings/source-control/source-control-queries";
 import { LightfastRepoSetupClient } from "~/org/setup/lightfast-repo-setup-client";
 import { organizationBySlugQueryOptions } from "~/organization/organization-queries";
-import { useTRPC } from "~/trpc/react";
 
 export const Route = createFileRoute(
   "/_authenticated/$slug/tasks/github/lightfast-repo"
@@ -19,13 +19,11 @@ function LightfastRepoSetupPage() {
 
 function LightfastRepoSetupPageContent() {
   const { slug } = Route.useParams();
-  const trpc = useTRPC();
   const { data: gate, isPending: isGatePending } = useQuery({
     ...organizationBySlugQueryOptions({ slug }),
   });
   const { data: sourceControl, isPending: isSourceControlPending } = useQuery({
-    ...trpc.org.settings.sourceControl.get.queryOptions(),
-    enabled: typeof window !== "undefined",
+    ...sourceControlConnectionQueryOptions(),
     staleTime: 30_000,
   });
   const accountLogin = sourceControl?.binding?.accountLogin;

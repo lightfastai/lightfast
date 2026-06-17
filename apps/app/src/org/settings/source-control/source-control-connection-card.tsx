@@ -1,4 +1,3 @@
-import type { AppRouterOutputs } from "@api/app";
 import { LIGHTFAST_REPOSITORY_NAME } from "@repo/app-setup-contract";
 import { Icons } from "@repo/ui/components/icons";
 import { Badge } from "@repo/ui/components/ui/badge";
@@ -18,10 +17,7 @@ import { Link } from "@tanstack/react-router";
 import { ChevronDown, ExternalLink, Settings, Unplug } from "lucide-react";
 import type { ReactNode } from "react";
 import { displayValue, formatStatusSubtitle } from "./source-control-format";
-
-type SourceControlConnection = NonNullable<
-  AppRouterOutputs["org"]["settings"]["sourceControl"]["get"]["binding"]
->;
+import type { SourceControlConnection } from "./source-control-queries";
 
 const IMMUTABLE_CONNECTION_TOOLTIP =
   "Connection is set up once and can't be disconnected.";

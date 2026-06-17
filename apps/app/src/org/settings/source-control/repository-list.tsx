@@ -1,4 +1,3 @@
-import type { AppRouterOutputs } from "@api/app";
 import { useAuth } from "@clerk/tanstack-react-start";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
@@ -6,12 +5,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { RefreshCw, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { LfSelect } from "~/components/lf-select";
-import { useTRPC } from "~/trpc/react";
 import { AddRepositoryDialog } from "./add-repository-dialog";
 import { RepositoryCard } from "./repository-card";
-
-type SourceControlRepositories =
-  AppRouterOutputs["org"]["settings"]["sourceControl"]["listRepositories"];
+import {
+  type SourceControlRepositories,
+  sourceControlQueryKeys,
+} from "./source-control-queries";
 
 type SyncFilter = "all" | "enabled" | "disabled";
 
@@ -22,10 +21,7 @@ export function RepositoryList({
 }) {
   const { has, isLoaded } = useAuth();
   const isAdmin = isLoaded && !!has?.({ role: "org:admin" });
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const listQueryOptions =
-    trpc.org.settings.sourceControl.listRepositories.queryOptions();
 
   const [query, setQuery] = useState("");
   const [syncFilter, setSyncFilter] = useState<SyncFilter>("all");
@@ -68,7 +64,7 @@ export function RepositoryList({
             className="h-6 w-6 rounded-full"
             onClick={() =>
               queryClient.invalidateQueries({
-                queryKey: listQueryOptions.queryKey,
+                queryKey: sourceControlQueryKeys.repositories(),
               })
             }
             size="sm"
