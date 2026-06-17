@@ -24,9 +24,18 @@ export const sourceControlQueryKeys = {
   repositories: () => ["source-control", "repositories"] as const,
 };
 
+function connectionResultFromRepositoriesResult(
+  data: ListSourceControlRepositoriesResult
+): SourceControlConnectionResult {
+  if (!data.binding) {
+    return { binding: null, status: "unbound" };
+  }
+
+  return { binding: data.binding, status: "bound" };
+}
+
 export function sourceControlConnectionQueryOptions() {
   return queryOptions({
-    enabled: typeof window !== "undefined",
     queryFn: () => getSourceControlConnection(),
     queryKey: sourceControlQueryKeys.connection(),
     staleTime: 30_000,
@@ -35,7 +44,6 @@ export function sourceControlConnectionQueryOptions() {
 
 export function sourceControlRepositoriesQueryOptions() {
   return queryOptions({
-    enabled: typeof window !== "undefined",
     queryFn: () => listSourceControlRepositories(),
     queryKey: sourceControlQueryKeys.repositories(),
   });
@@ -56,15 +64,7 @@ export function importSourceControlRepositoryMutationOptions(input: {
       );
       input.queryClient.setQueryData(
         sourceControlQueryKeys.connection(),
-        data.binding
-          ? {
-              binding: data.binding,
-              status: "bound" as const,
-            }
-          : {
-              binding: null,
-              status: "unbound" as const,
-            }
+        connectionResultFromRepositoriesResult(data)
       );
       input.onImported?.();
     },

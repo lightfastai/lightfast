@@ -125,12 +125,11 @@ function createDeps() {
       id: "1001",
       targetType: "Organization",
     }),
-    getWatchedSourceControlRepository: vi.fn(),
-    insertWatchedSourceControlRepository: vi.fn(),
     listAllGitHubInstallationRepositories: vi
       .fn()
       .mockResolvedValue([liveRepository()]),
     listWatchedSourceControlRepositories: vi.fn(),
+    upsertWatchedSourceControlRepository: vi.fn(),
   };
 }
 
@@ -293,7 +292,7 @@ describe("listSourceControlRepositoriesCommand", () => {
     });
 
     expect(deps.createGitHubInstallationToken).not.toHaveBeenCalled();
-    expect(deps.insertWatchedSourceControlRepository).not.toHaveBeenCalled();
+    expect(deps.upsertWatchedSourceControlRepository).not.toHaveBeenCalled();
   });
 });
 
@@ -315,7 +314,6 @@ describe("importSourceControlRepositoryCommand", () => {
 
   it("registers one repository without watch globs", async () => {
     deps.getActiveOrgBinding.mockResolvedValue(activeBinding());
-    deps.getWatchedSourceControlRepository.mockResolvedValue(undefined);
     deps.listWatchedSourceControlRepositories.mockResolvedValueOnce([
       watchedRepository({
         fullName: "acme-live/app",
@@ -343,7 +341,7 @@ describe("importSourceControlRepositoryCommand", () => {
       status: "bound",
     });
 
-    expect(deps.insertWatchedSourceControlRepository).toHaveBeenCalledWith(
+    expect(deps.upsertWatchedSourceControlRepository).toHaveBeenCalledWith(
       expect.anything(),
       {
         fullName: "acme-live/app",
@@ -372,6 +370,6 @@ describe("importSourceControlRepositoryCommand", () => {
 
     expect(deps.createGitHubAppJwt).not.toHaveBeenCalled();
     expect(deps.listAllGitHubInstallationRepositories).not.toHaveBeenCalled();
-    expect(deps.insertWatchedSourceControlRepository).not.toHaveBeenCalled();
+    expect(deps.upsertWatchedSourceControlRepository).not.toHaveBeenCalled();
   });
 });

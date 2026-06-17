@@ -26,6 +26,7 @@ describe("source-control app data access", () => {
     expect(source).toContain("queryOptions");
     expect(source).toContain("mutationOptions");
     expect(source).not.toContain("useTRPC");
+    expect(source).not.toContain('enabled: typeof window !== "undefined"');
   });
 
   it("removes source-control UI callers from tRPC", () => {
