@@ -1186,16 +1186,17 @@ describe("app authenticated route migration", () => {
       'to="/$slug/settings/source-control"'
     );
 
-    expect(billingClientSource).toContain("orgBilling.overview.queryOptions");
-    expect(billingClientSource).toContain(
+    expect(billingClientSource).toContain("billingOverviewQueryOptions");
+    expect(billingClientSource).not.toContain("useTRPC");
+    expect(billingClientSource).not.toContain(
       'enabled: typeof window !== "undefined"'
     );
     expect(billingClientSource).toContain("usePaymentMethods");
     expect(billingClientSource).toContain("useStatements");
     expect(billingClientSource).toContain("BillingCheckoutDialog");
-    expect(billingActionsSource).toContain("orgBilling.overview.queryFilter");
+    expect(billingActionsSource).toContain("orgBillingQueryKeys.overview");
     expect(billingCancellationSource).toContain(
-      "orgBilling.cancelSubscriptionItem.mutationOptions"
+      "cancelOrgBillingSubscriptionItemMutationOptions"
     );
     expect(billingViewModelSource).toContain("deriveBillingViewModel");
     expect(billingSectionsSource).toContain("PlanSection");

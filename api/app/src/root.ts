@@ -13,7 +13,6 @@ import { automationsRouter } from "./router/(pending-not-allowed)/automations";
 import { connectorsRouter } from "./router/(pending-not-allowed)/connectors";
 import { developerConnectionsRouter } from "./router/(pending-not-allowed)/developer-connections";
 import { githubSetupRouter } from "./router/(pending-not-allowed)/github-setup";
-import { orgBillingRouter } from "./router/(pending-not-allowed)/org-billing";
 import { orgSourceControlRouter } from "./router/(pending-not-allowed)/org-source-control";
 import { taskRouter } from "./router/(pending-not-allowed)/task";
 import { workspaceEntityGraphRouter } from "./router/(pending-not-allowed)/workspace-entity-graph";
@@ -29,7 +28,6 @@ export const appRouter = createTRPCRouter({
       task: taskRouter,
     }),
     settings: createTRPCRouter({
-      orgBilling: orgBillingRouter,
       sourceControl: orgSourceControlRouter,
     }),
     workspace: createTRPCRouter({

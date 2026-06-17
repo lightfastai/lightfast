@@ -6,6 +6,7 @@ export * from "./errors";
 export * from "./gates";
 export * from "./mcp-connections";
 export * from "./org-api-keys";
+export * from "./org-billing";
 export * from "./org-identity";
 export * from "./org-members";
 export * from "./organizations";

@@ -1,4 +1,3 @@
-import type { AppRouterOutputs } from "@api/app";
 import {
   billingStripeAppearance,
   formatMoney,
@@ -19,12 +18,9 @@ import {
 } from "@vendor/clerk";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
-
+import type { BillingPlan } from "./billing-queries";
 import { NewPaymentCheckout } from "./new-payment-checkout";
 import { SavedPaymentCheckout } from "./saved-payment-checkout";
-
-type BillingPlan =
-  AppRouterOutputs["org"]["settings"]["orgBilling"]["overview"]["plans"][number];
 
 export function BillingCheckoutDialog({
   onComplete,

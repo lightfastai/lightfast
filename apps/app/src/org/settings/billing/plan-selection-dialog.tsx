@@ -1,4 +1,3 @@
-import type { AppRouterOutputs } from "@api/app";
 import { businessContact, planAmountLabel } from "@repo/app-billing";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -11,8 +10,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 import { Check } from "lucide-react";
 
-type BillingPlan =
-  AppRouterOutputs["org"]["settings"]["orgBilling"]["overview"]["plans"][number];
+import type { BillingPlan } from "./billing-queries";
 
 export function PlanSelectionDialog({
   currentTier,

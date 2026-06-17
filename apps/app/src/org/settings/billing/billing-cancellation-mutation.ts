@@ -1,75 +1,72 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useTRPC } from "~/trpc/react";
-import type { BillingOverview } from "./billing-view-model";
+import {
+  cancelOrgBillingSubscriptionItemMutationOptions,
+  orgBillingQueryKeys,
+} from "./billing-queries";
+import type {
+  BillingOverview,
+  BillingSubscriptionItem,
+} from "./billing-view-model";
 
-export function useCancelSubscriptionItemMutation() {
-  const trpc = useTRPC();
+export function useCancelSubscriptionItemMutation(input: {
+  orgId: string | null | undefined;
+}) {
   const queryClient = useQueryClient();
+  const overviewQueryKey = orgBillingQueryKeys.overview(input.orgId);
 
-  return useMutation(
-    trpc.org.settings.orgBilling.cancelSubscriptionItem.mutationOptions({
-      meta: { errorTitle: "Failed to schedule cancellation" },
-      onMutate: async (input) => {
-        await queryClient.cancelQueries(
-          trpc.org.settings.orgBilling.overview.queryFilter()
-        );
+  return useMutation({
+    ...cancelOrgBillingSubscriptionItemMutationOptions(),
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: overviewQueryKey });
 
-        const previousOverview = queryClient.getQueryData<BillingOverview>(
-          trpc.org.settings.orgBilling.overview.queryKey()
-        );
-        const canceledAt = Date.now();
+      const previousOverview =
+        queryClient.getQueryData<BillingOverview>(overviewQueryKey);
+      const canceledAt = Date.now();
 
-        queryClient.setQueryData(
-          trpc.org.settings.orgBilling.overview.queryKey(),
-          (old: BillingOverview | undefined) =>
-            old
-              ? {
-                  ...old,
-                  subscription: {
-                    ...old.subscription,
-                    subscriptionItems: old.subscription.subscriptionItems.map(
-                      (item) =>
-                        item.id === input.subscriptionItemId
-                          ? { ...item, canceledAt }
-                          : item
-                    ),
-                  },
-                }
-              : old
-        );
+      queryClient.setQueryData(
+        overviewQueryKey,
+        (old: BillingOverview | undefined) =>
+          old
+            ? {
+                ...old,
+                subscription: {
+                  ...old.subscription,
+                  subscriptionItems: old.subscription.subscriptionItems.map(
+                    (item) =>
+                      item.id === input.subscriptionItemId
+                        ? { ...item, canceledAt }
+                        : item
+                  ),
+                },
+              }
+            : old
+      );
 
-        return { previousOverview };
-      },
-      onError: (_err, _input, context) => {
-        if (context?.previousOverview) {
-          queryClient.setQueryData(
-            trpc.org.settings.orgBilling.overview.queryKey(),
-            context.previousOverview
-          );
-        }
-      },
-      onSuccess: (updatedItem) => {
-        queryClient.setQueryData(
-          trpc.org.settings.orgBilling.overview.queryKey(),
-          (old: BillingOverview | undefined) =>
-            old
-              ? {
-                  ...old,
-                  subscription: {
-                    ...old.subscription,
-                    subscriptionItems: old.subscription.subscriptionItems.map(
-                      (item) =>
-                        item.id === updatedItem.id ? updatedItem : item
-                    ),
-                  },
-                }
-              : old
-        );
-      },
-      onSettled: () =>
-        void queryClient.invalidateQueries(
-          trpc.org.settings.orgBilling.overview.queryFilter()
-        ),
-    })
-  );
+      return { previousOverview };
+    },
+    onError: (_err, _input, context) => {
+      if (context?.previousOverview) {
+        queryClient.setQueryData(overviewQueryKey, context.previousOverview);
+      }
+    },
+    onSuccess: (updatedItem: BillingSubscriptionItem) => {
+      queryClient.setQueryData(
+        overviewQueryKey,
+        (old: BillingOverview | undefined) =>
+          old
+            ? {
+                ...old,
+                subscription: {
+                  ...old.subscription,
+                  subscriptionItems: old.subscription.subscriptionItems.map(
+                    (item) => (item.id === updatedItem.id ? updatedItem : item)
+                  ),
+                },
+              }
+            : old
+      );
+    },
+    onSettled: () =>
+      void queryClient.invalidateQueries({ queryKey: overviewQueryKey }),
+  });
 }

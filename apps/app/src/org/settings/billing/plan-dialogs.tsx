@@ -1,4 +1,3 @@
-import type { AppRouterOutputs } from "@api/app";
 import { businessContact, planAmountLabel } from "@repo/app-billing";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -12,11 +11,7 @@ import {
 import { formatUtcCalendarDate as formatDate } from "@vendor/lib/time";
 import { Check } from "lucide-react";
 
-type BillingOverview =
-  AppRouterOutputs["org"]["settings"]["orgBilling"]["overview"];
-type BillingPlan = BillingOverview["plans"][number];
-type BillingSubscriptionItem =
-  BillingOverview["subscription"]["subscriptionItems"][number];
+import type { BillingPlan, BillingSubscriptionItem } from "./billing-queries";
 
 export function ConfirmDowngradeDialog({
   currentPlanName,

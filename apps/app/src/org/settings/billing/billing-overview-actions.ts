@@ -1,16 +1,17 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@vendor/clerk";
 import { useCallback } from "react";
-import { useTRPC } from "~/trpc/react";
+import { orgBillingQueryKeys } from "./billing-queries";
 
 export function useBillingOverviewRefresh() {
-  const trpc = useTRPC();
+  const auth = useAuth();
   const queryClient = useQueryClient();
 
   return useCallback(
     () =>
-      queryClient.invalidateQueries(
-        trpc.org.settings.orgBilling.overview.queryFilter()
-      ),
-    [queryClient, trpc]
+      queryClient.invalidateQueries({
+        queryKey: orgBillingQueryKeys.overview(auth.orgId),
+      }),
+    [auth.orgId, queryClient]
   );
 }
