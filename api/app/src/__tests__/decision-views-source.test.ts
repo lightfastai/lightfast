@@ -15,13 +15,19 @@ describe("decision views TanStack migration", () => {
   });
 
   it("does not expose decision views over tRPC", () => {
-    const decisionsRouterSource = readFileSync(
-      resolve(apiRoot, "router/(pending-not-allowed)/decisions.ts"),
-      "utf8"
+    const decisionsRouterPath = resolve(
+      apiRoot,
+      "router/(pending-not-allowed)/decisions.ts"
     );
 
-    expect(decisionsRouterSource).not.toContain("workspaceDecisionViewsRouter");
-    expect(decisionsRouterSource).not.toContain("views:");
+    if (existsSync(decisionsRouterPath)) {
+      const decisionsRouterSource = readFileSync(decisionsRouterPath, "utf8");
+      expect(decisionsRouterSource).not.toContain(
+        "workspaceDecisionViewsRouter"
+      );
+      expect(decisionsRouterSource).not.toContain("views:");
+    }
+
     expect(
       existsSync(
         resolve(

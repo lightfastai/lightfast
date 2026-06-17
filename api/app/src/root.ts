@@ -12,7 +12,6 @@ import { nativeAuthRouter } from "./router/(pending-allowed)/native-auth";
 import { orgSettingsOrganizationRouter } from "./router/(pending-allowed)/organization";
 import { automationsRouter } from "./router/(pending-not-allowed)/automations";
 import { connectorsRouter } from "./router/(pending-not-allowed)/connectors";
-import { decisionsRouter } from "./router/(pending-not-allowed)/decisions";
 import { developerConnectionsRouter } from "./router/(pending-not-allowed)/developer-connections";
 import { githubSetupRouter } from "./router/(pending-not-allowed)/github-setup";
 import { orgBillingRouter } from "./router/(pending-not-allowed)/org-billing";
@@ -45,7 +44,6 @@ export const appRouter = createTRPCRouter({
       automations: automationsRouter,
       assistant: workspaceAssistantRouter,
       connectors: connectorsRouter,
-      decisions: decisionsRouter,
       developerConnections: developerConnectionsRouter,
       entityGraph: workspaceEntityGraphRouter,
       skills: workspaceSkillsRouter,
