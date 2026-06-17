@@ -41,6 +41,10 @@
       "types": "./src/adapters/public/signals.ts",
       "default": "./src/adapters/public/signals.ts"
     },
+    "./public-api/system": {
+      "types": "./src/adapters/public/system.ts",
+      "default": "./src/adapters/public/system.ts"
+    },
     "./tanstack/signals": {
       "types": "./src/adapters/tanstack/signals.ts",
       "default": "./src/adapters/tanstack/signals.ts"
