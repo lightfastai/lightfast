@@ -20,6 +20,14 @@ const trpcContext = createTRPCContext<AppRouter>();
 export const useTRPC = trpcContext.useTRPC;
 export const TRPCProvider = trpcContext.TRPCProvider;
 
+function isExpectedDomainError(error: unknown) {
+  return (
+    error instanceof Error &&
+    error.name === "DomainError" &&
+    error.message.trim().length > 0
+  );
+}
+
 const mutationCache = new MutationCache({
   onError: (error, _variables, _context, mutation) => {
     if (mutation.options.meta?.suppressErrorToast) {
@@ -34,6 +42,8 @@ const mutationCache = new MutationCache({
       error.data?.httpStatus != null &&
       error.data.httpStatus < 500
     ) {
+      message = error.message;
+    } else if (isExpectedDomainError(error)) {
       message = error.message;
     }
 

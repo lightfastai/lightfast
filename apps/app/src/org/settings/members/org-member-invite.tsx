@@ -24,7 +24,7 @@ import type { OrgRole } from "./org-member-cache";
 import { useOrgMemberInviteAction } from "./org-member-invite-actions";
 
 export function OrgMemberInvite() {
-  const { has, isLoaded } = useAuth();
+  const { has, isLoaded, orgId } = useAuth();
   const canManageMembers = isLoaded && !!has?.({ role: "org:admin" });
 
   const [isOpen, setIsOpen] = useState(false);
@@ -49,6 +49,7 @@ export function OrgMemberInvite() {
   const inviteMutation = useOrgMemberInviteAction({
     onErrorRestore: restoreInviteForm,
     onOptimisticInvite: resetInviteForm,
+    orgId,
   });
 
   const handleInvite = useCallback(() => {

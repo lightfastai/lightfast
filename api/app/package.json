@@ -45,6 +45,10 @@
       "types": "./src/adapters/tanstack/org-api-keys.ts",
       "default": "./src/adapters/tanstack/org-api-keys.ts"
     },
+    "./tanstack/org-members": {
+      "types": "./src/adapters/tanstack/org-members.ts",
+      "default": "./src/adapters/tanstack/org-members.ts"
+    },
     "./tanstack/organizations": {
       "types": "./src/adapters/tanstack/organizations.ts",
       "default": "./src/adapters/tanstack/organizations.ts"

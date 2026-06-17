@@ -1,9 +1,11 @@
-import type { AppRouterOutputs } from "@api/app";
+import type {
+  OrgInvitation,
+  OrgMember,
+  OrgMembersListData,
+} from "./org-member-queries";
 
-export type OrgMembersData =
-  AppRouterOutputs["org"]["settings"]["orgMembers"]["list"];
-export type OrgMember = OrgMembersData["members"][number];
-export type OrgInvitation = OrgMembersData["invitations"][number];
+export type OrgMembersData = OrgMembersListData;
+export type { OrgInvitation, OrgMember };
 export type OrgRole = "org:admin" | "org:member";
 
 let optimisticInvitationSequence = 0;
