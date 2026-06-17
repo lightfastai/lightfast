@@ -1,15 +1,15 @@
-import type { AppRouterOutputs } from "@api/app";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { ExternalLink, FileText } from "lucide-react";
+import type {
+  ConfiguredOrgIdentitySettings,
+  OrgIdentitySettingsFile,
+} from "./identity-soul-queries";
 
-type IdentitySettingsData = Extract<
-  AppRouterOutputs["org"]["settings"]["identity"]["get"],
-  { configured: true }
->;
-type IdentitySettingsFile = IdentitySettingsData["files"][number];
+type IdentitySettingsData = ConfiguredOrgIdentitySettings;
+type IdentitySettingsFile = OrgIdentitySettingsFile;
 
 function SectionHeader() {
   return (

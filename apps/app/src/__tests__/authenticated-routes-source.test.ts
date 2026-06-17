@@ -1175,8 +1175,9 @@ describe("app authenticated route migration", () => {
     expect(teamGeneralActionsSource).toContain(
       "organizationQueryKeys.domains(slug)"
     );
-    expect(identityCardSource).toContain("identity.get.queryOptions");
-    expect(identityCardSource).toContain(
+    expect(identityCardSource).toContain("orgIdentityQueryOptions");
+    expect(identityCardSource).not.toContain("identity.get.queryOptions");
+    expect(identityCardSource).not.toContain(
       'enabled: typeof window !== "undefined"'
     );
     expect(identitySectionSource).toContain(
