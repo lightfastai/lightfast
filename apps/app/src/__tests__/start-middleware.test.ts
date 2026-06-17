@@ -38,10 +38,12 @@ describe("app start middleware", () => {
     expect(isAppOwnedApiRoute("/api/trpc/org.workspace.connectors.list")).toBe(
       false
     );
+    expect(isAppOwnedApiRoute("/api/cli/rpc")).toBe(false);
     expect(isAppOwnedApiRoute("/api/connectors/x/oauth/callback")).toBe(false);
     expect(isAppOwnedApiRoute("/api/connectors/linear/oauth/callback")).toBe(
       false
     );
+    expect(isAppOwnedApiRoute("/api/desktop/rpc")).toBe(false);
     expect(isAppOwnedApiRoute("/api/github/oauth/callback")).toBe(false);
     expect(isAppOwnedApiRoute("/api/github/webhook")).toBe(false);
     expect(isAppOwnedApiRoute("/api/native/proxy/routines")).toBe(false);

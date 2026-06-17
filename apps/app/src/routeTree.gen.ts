@@ -33,6 +33,8 @@ import { Route as ApiTrpcSplatRouteImport } from './routes/api/trpc.$'
 import { Route as ApiOauthFinalizeRouteImport } from './routes/api/oauth/finalize'
 import { Route as ApiGithubWebhookRouteImport } from './routes/api/github/webhook'
 import { Route as ApiGithubSetupRouteImport } from './routes/api/github/setup'
+import { Route as ApiDesktopRpcRouteImport } from './routes/api/desktop/rpc'
+import { Route as ApiCliRpcRouteImport } from './routes/api/cli/rpc'
 import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated/account/settings'
 import { Route as AuthenticatedAccountMcpRouteImport } from './routes/_authenticated/account/mcp'
 import { Route as AuthenticatedSlugTasksRouteImport } from './routes/_authenticated/$slug/tasks'
@@ -211,6 +213,16 @@ const ApiGithubWebhookRoute = ApiGithubWebhookRouteImport.update({
 const ApiGithubSetupRoute = ApiGithubSetupRouteImport.update({
   id: '/api/github/setup',
   path: '/api/github/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDesktopRpcRoute = ApiDesktopRpcRouteImport.update({
+  id: '/api/desktop/rpc',
+  path: '/api/desktop/rpc',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCliRpcRoute = ApiCliRpcRouteImport.update({
+  id: '/api/cli/rpc',
+  path: '/api/cli/rpc',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAccountSettingsRoute =
@@ -578,6 +590,8 @@ export interface FileRoutesByFullPath {
   '/$slug/tasks': typeof AuthenticatedSlugTasksRouteWithChildren
   '/account/mcp': typeof AuthenticatedAccountMcpRoute
   '/account/settings': typeof AuthenticatedAccountSettingsRouteWithChildren
+  '/api/cli/rpc': typeof ApiCliRpcRoute
+  '/api/desktop/rpc': typeof ApiDesktopRpcRoute
   '/api/github/setup': typeof ApiGithubSetupRoute
   '/api/github/webhook': typeof ApiGithubWebhookRoute
   '/api/oauth/finalize': typeof ApiOauthFinalizeRoute
@@ -656,6 +670,8 @@ export interface FileRoutesByTo {
   '/$slug/signals': typeof AuthenticatedSlugSignalsRoute
   '/$slug/skills': typeof AuthenticatedSlugSkillsRoute
   '/account/mcp': typeof AuthenticatedAccountMcpRoute
+  '/api/cli/rpc': typeof ApiCliRpcRoute
+  '/api/desktop/rpc': typeof ApiDesktopRpcRoute
   '/api/github/setup': typeof ApiGithubSetupRoute
   '/api/github/webhook': typeof ApiGithubWebhookRoute
   '/api/oauth/finalize': typeof ApiOauthFinalizeRoute
@@ -739,6 +755,8 @@ export interface FileRoutesById {
   '/_authenticated/$slug/tasks': typeof AuthenticatedSlugTasksRouteWithChildren
   '/_authenticated/account/mcp': typeof AuthenticatedAccountMcpRoute
   '/_authenticated/account/settings': typeof AuthenticatedAccountSettingsRouteWithChildren
+  '/api/cli/rpc': typeof ApiCliRpcRoute
+  '/api/desktop/rpc': typeof ApiDesktopRpcRoute
   '/api/github/setup': typeof ApiGithubSetupRoute
   '/api/github/webhook': typeof ApiGithubWebhookRoute
   '/api/oauth/finalize': typeof ApiOauthFinalizeRoute
@@ -825,6 +843,8 @@ export interface FileRouteTypes {
     | '/$slug/tasks'
     | '/account/mcp'
     | '/account/settings'
+    | '/api/cli/rpc'
+    | '/api/desktop/rpc'
     | '/api/github/setup'
     | '/api/github/webhook'
     | '/api/oauth/finalize'
@@ -903,6 +923,8 @@ export interface FileRouteTypes {
     | '/$slug/signals'
     | '/$slug/skills'
     | '/account/mcp'
+    | '/api/cli/rpc'
+    | '/api/desktop/rpc'
     | '/api/github/setup'
     | '/api/github/webhook'
     | '/api/oauth/finalize'
@@ -985,6 +1007,8 @@ export interface FileRouteTypes {
     | '/_authenticated/$slug/tasks'
     | '/_authenticated/account/mcp'
     | '/_authenticated/account/settings'
+    | '/api/cli/rpc'
+    | '/api/desktop/rpc'
     | '/api/github/setup'
     | '/api/github/webhook'
     | '/api/oauth/finalize'
@@ -1057,6 +1081,8 @@ export interface RootRouteChildren {
   OauthRevokeRoute: typeof OauthRevokeRoute
   OauthTokenRoute: typeof OauthTokenRoute
   SignUpAcceptInvitationRoute: typeof SignUpAcceptInvitationRoute
+  ApiCliRpcRoute: typeof ApiCliRpcRoute
+  ApiDesktopRpcRoute: typeof ApiDesktopRpcRoute
   ApiGithubSetupRoute: typeof ApiGithubSetupRoute
   ApiGithubWebhookRoute: typeof ApiGithubWebhookRoute
   ApiOauthFinalizeRoute: typeof ApiOauthFinalizeRoute
@@ -1248,6 +1274,20 @@ declare module '@tanstack/react-router' {
       path: '/api/github/setup'
       fullPath: '/api/github/setup'
       preLoaderRoute: typeof ApiGithubSetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/desktop/rpc': {
+      id: '/api/desktop/rpc'
+      path: '/api/desktop/rpc'
+      fullPath: '/api/desktop/rpc'
+      preLoaderRoute: typeof ApiDesktopRpcRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cli/rpc': {
+      id: '/api/cli/rpc'
+      path: '/api/cli/rpc'
+      fullPath: '/api/cli/rpc'
+      preLoaderRoute: typeof ApiCliRpcRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/account/settings': {
@@ -1965,6 +2005,8 @@ const rootRouteChildren: RootRouteChildren = {
   OauthRevokeRoute: OauthRevokeRoute,
   OauthTokenRoute: OauthTokenRoute,
   SignUpAcceptInvitationRoute: SignUpAcceptInvitationRoute,
+  ApiCliRpcRoute: ApiCliRpcRoute,
+  ApiDesktopRpcRoute: ApiDesktopRpcRoute,
   ApiGithubSetupRoute: ApiGithubSetupRoute,
   ApiGithubWebhookRoute: ApiGithubWebhookRoute,
   ApiOauthFinalizeRoute: ApiOauthFinalizeRoute,

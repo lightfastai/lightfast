@@ -61,17 +61,20 @@ describe("createDesktopNativeAuthClient", () => {
     expect(netFetchMock).not.toHaveBeenCalled();
   });
 
-  it("fetches current desktop session metadata with native auth headers", async () => {
+  it("fetches current desktop session metadata through desktop RPC", async () => {
     const fetchImpl = vi.fn().mockResolvedValueOnce(
       Response.json({
-        client: "desktop",
-        organization: { id: "org_1", name: "Acme", slug: "acme" },
-        user: {
-          email: "dev@example.com",
-          id: "user_1",
-          imageUrl: "https://img.example.com/user_1.png",
-          initials: "JP",
-          username: "jeevanpillay",
+        ok: true,
+        result: {
+          client: "desktop",
+          organization: { id: "org_1", name: "Acme", slug: "acme" },
+          user: {
+            email: "dev@example.com",
+            id: "user_1",
+            imageUrl: "https://img.example.com/user_1.png",
+            initials: "JP",
+            username: "jeevanpillay",
+          },
         },
       })
     );
@@ -87,16 +90,65 @@ describe("createDesktopNativeAuthClient", () => {
     });
 
     expect(fetchImpl).toHaveBeenCalledWith(
-      "https://lightfast.localhost/api/oauth/desktop/session",
+      "https://lightfast.localhost/api/desktop/rpc",
       {
+        body: JSON.stringify({ command: "auth.session" }),
         headers: {
           accept: "application/json",
           authorization: "Bearer access",
+          "content-type": "application/json",
           "x-lightfast-native-client": "desktop",
           "x-lightfast-organization-id": "org_1",
         },
+        method: "POST",
       }
     );
+  });
+
+  it.each([
+    {
+      code: "FORBIDDEN",
+      label: "missing organization",
+      message: "Native session organization required",
+      status: 403,
+    },
+    {
+      code: "FORBIDDEN",
+      label: "wrong organization",
+      message: "User is not a member of the selected organization",
+      status: 403,
+    },
+    {
+      code: "UNAUTHORIZED",
+      label: "expired token",
+      message: "Lightfast native OAuth authentication required.",
+      status: 401,
+    },
+  ])("surfaces desktop RPC session $label errors", async ({
+    code,
+    message,
+    status,
+  }) => {
+    const fetchImpl = vi.fn().mockResolvedValueOnce(
+      Response.json(
+        {
+          ok: false,
+          error: { code, message },
+        },
+        { status }
+      )
+    );
+
+    const client = createDesktopNativeAuthClient({ fetchImpl });
+
+    await expect(
+      client.session({
+        accessToken: "access",
+        organizationId: "org_1",
+      })
+    ).rejects.toThrow(message);
+    expect(fetchImpl).toHaveBeenCalledOnce();
+    expect(netFetchMock).not.toHaveBeenCalled();
   });
 
   it("rejects finalize responses without organization metadata", async () => {

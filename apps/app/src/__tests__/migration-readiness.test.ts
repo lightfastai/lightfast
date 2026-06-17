@@ -41,10 +41,12 @@ const migratedNextAppRoutes = [
   "/account/teams/new",
   "/api/chat",
   "/api/chat/$/stream",
+  "/api/cli/rpc",
   "/api/connectors/granola/oauth/callback",
   "/api/connectors/linear/oauth/callback",
   "/api/connectors/x/mcp",
   "/api/connectors/x/oauth/callback",
+  "/api/desktop/rpc",
   "/api/github/oauth/callback",
   "/api/github/setup",
   "/api/github/user/oauth/callback",
@@ -128,7 +130,7 @@ describe("app migration readiness", () => {
   it("declares TanStack routes for every migrated legacy Next route", () => {
     const tanstackRoutes = new Set(tanstackRouteDeclarations());
 
-    expect(migratedNextAppRoutes.length).toBe(68);
+    expect(migratedNextAppRoutes.length).toBe(70);
     expect(tanstackRoutes.size).toBeGreaterThan(0);
     expect(
       migratedNextAppRoutes.filter((route) => !tanstackRoutes.has(route))
