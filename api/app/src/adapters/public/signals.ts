@@ -58,9 +58,9 @@ function authErrorResponse(error: unknown): Response {
   }
 
   return jsonError(
-    error.orpcCode === "FORBIDDEN" ? "forbidden" : "auth_required",
+    error.status === 403 ? "forbidden" : "auth_required",
     error.message,
-    error.orpcCode === "FORBIDDEN" ? 403 : 401,
+    error.status,
     { diagnostics: [error.diagnostic] }
   );
 }

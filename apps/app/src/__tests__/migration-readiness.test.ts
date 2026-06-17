@@ -61,7 +61,6 @@ const migratedNextAppRoutes = [
   "/api/oauth/finalize",
   "/api/skills/index/events",
   "/api/trpc/$",
-  "/api/v1/$",
   "/api/v1/signals",
   "/api/v1/signals/$",
   "/api/v1/system/health",
@@ -129,7 +128,7 @@ describe("app migration readiness", () => {
   it("declares TanStack routes for every migrated legacy Next route", () => {
     const tanstackRoutes = new Set(tanstackRouteDeclarations());
 
-    expect(migratedNextAppRoutes.length).toBe(69);
+    expect(migratedNextAppRoutes.length).toBe(68);
     expect(tanstackRoutes.size).toBeGreaterThan(0);
     expect(
       migratedNextAppRoutes.filter((route) => !tanstackRoutes.has(route))

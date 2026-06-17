@@ -27,7 +27,6 @@
     "@hookform/resolvers": "catalog:",
     "@hugeicons/core-free-icons": "catalog:",
     "@hugeicons/react": "catalog:",
-    "@orpc/openapi": "^1.14.2",
     "@repo/ai": "workspace:*",
     "@repo/api-contract": "workspace:*",
     "@repo/app-billing": "workspace:*",

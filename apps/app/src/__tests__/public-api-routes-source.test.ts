@@ -88,11 +88,15 @@ describe("public API route boundaries", () => {
     expect(adapter).not.toContain("OpenAPIHandler");
   });
 
-  it("keeps the oRPC catch-all only as the temporary public fallback", () => {
-    const fallback = appSource("src/routes/api/v1/$.ts");
+  it("removes the oRPC catch-all after explicit public routes cover the contract", () => {
+    const packageJson = JSON.parse(repoSource("apps/app/package.json")) as {
+      dependencies?: Record<string, string>;
+    };
+    const routeTree = appSource("src/routeTree.gen.ts");
 
-    expect(fallback).toContain('createFileRoute("/api/v1/$")');
-    expect(fallback).toContain("OpenAPIHandler");
-    expect(fallback).toContain("orpcRouter");
+    expect(existsSync(resolve(appRoot, "src/routes/api/v1/$.ts"))).toBe(false);
+    expect(packageJson.dependencies?.["@orpc/openapi"]).toBeUndefined();
+    expect(routeTree).not.toContain("/api/v1/$");
+    expect(routeTree).not.toContain("ApiV1SplatRoute");
   });
 });
