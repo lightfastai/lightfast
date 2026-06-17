@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 let messageRenderCount = 0;
 let messageResponseRenderCount = 0;
 
-vi.mock("@repo/ui/components/ai-elements/message", () => ({
+vi.mock("@repo/ui-v2/components/ai-elements/message", () => ({
   Message: ({
     children,
     className,
@@ -53,7 +53,7 @@ vi.mock("@repo/ui/components/ai-elements/message", () => ({
   },
 }));
 
-vi.mock("@repo/ui/components/ai-elements/reasoning", () => ({
+vi.mock("@repo/ui-v2/components/ai-elements/reasoning", () => ({
   Reasoning: ({
     children,
     defaultOpen,
@@ -77,7 +77,7 @@ vi.mock("@repo/ui/components/ai-elements/reasoning", () => ({
   ReasoningTrigger: () => <button type="button">Reasoning</button>,
 }));
 
-vi.mock("@repo/ui/components/ai-elements/tool", () => ({
+vi.mock("@repo/ui-v2/components/ai-elements/tool", () => ({
   Tool: ({
     children,
     defaultOpen,
@@ -191,6 +191,42 @@ describe("ChatMessage", () => {
     );
     expect(screen.getByTestId("message-response").textContent).toBe("Hello");
     expect(screen.getByTestId("message-actions")).toBeTruthy();
+  });
+
+  it("leaves user bubble styling to the base message component", () => {
+    render(
+      <ChatMessage
+        isStreaming={false}
+        message={{
+          id: "msg_user",
+          parts: [{ text: "hey", type: "text" }],
+          role: "user",
+        }}
+      />
+    );
+
+    const contentClassName = screen.getByTestId("message-content").className;
+    expect(contentClassName).not.toContain("!rounded");
+    expect(contentClassName).not.toContain("!bg-");
+    expect(contentClassName).not.toContain("!px-");
+    expect(contentClassName).not.toContain("!py-");
+    expect(contentClassName).not.toContain("[&_p]:!");
+  });
+
+  it("leaves assistant text sizing to the base message component", () => {
+    render(
+      <ChatMessage
+        isStreaming={false}
+        message={{
+          id: "msg_assistant",
+          parts: [{ text: "Hello", type: "text" }],
+          role: "assistant",
+        }}
+      />
+    );
+
+    const contentClassName = screen.getByTestId("message-content").className;
+    expect(contentClassName).not.toContain("text-base");
   });
 
   it("does not re-render a completed message when the parent re-renders", () => {

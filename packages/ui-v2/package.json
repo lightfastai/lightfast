@@ -24,13 +24,19 @@
     "@base-ui/react": "catalog:",
     "@hugeicons/core-free-icons": "catalog:",
     "@hugeicons/react": "catalog:",
+    "@radix-ui/react-use-controllable-state": "catalog:",
     "@vendor/ai": "workspace:*",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "cmdk": "catalog:",
+    "lucide-react": "catalog:",
+    "motion": "catalog:",
     "nanoid": "catalog:",
     "react": "catalog:react19",
-    "tailwind-merge": "catalog:"
+    "shiki": "catalog:",
+    "streamdown": "catalog:",
+    "tailwind-merge": "catalog:",
+    "use-stick-to-bottom": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

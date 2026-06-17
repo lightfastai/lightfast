@@ -1,12 +1,12 @@
 "use client";
 
-import { Badge } from "@repo/ui/components/ui/badge";
+import { Badge } from "@repo/ui-v2/components/ui/badge";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@repo/ui/components/ui/collapsible";
-import { cn } from "@repo/ui/lib/utils";
+} from "@repo/ui-v2/components/ui/collapsible";
+import { cn } from "@repo/ui-v2/lib/utils";
 import type { DynamicToolUIPart, ToolUIPart } from "@vendor/ai";
 import {
   CheckCircleIcon,
@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 import { isValidElement } from "react";
+
+import { CodeBlock } from "./code-block";
 
 export type ToolProps = ComponentProps<typeof Collapsible>;
 
@@ -119,7 +121,9 @@ export const ToolInput = ({ className, input, ...props }: ToolInputProps) => (
     <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
       Parameters
     </h4>
-    <JsonBlock value={input ?? null} />
+    <div className="rounded-md bg-muted/50">
+      <CodeBlock code={JSON.stringify(input, null, 2)} language="json" />
+    </div>
   </div>
 );
 
@@ -134,19 +138,18 @@ export const ToolOutput = ({
   errorText,
   ...props
 }: ToolOutputProps) => {
-  if (output === undefined && !errorText) {
+  if (!(output || errorText)) {
     return null;
   }
 
   let Output = <div>{output as ReactNode}</div>;
 
-  if (
-    output === null ||
-    (typeof output === "object" && !isValidElement(output))
-  ) {
-    Output = <JsonBlock value={output} />;
+  if (typeof output === "object" && !isValidElement(output)) {
+    Output = (
+      <CodeBlock code={JSON.stringify(output, null, 2)} language="json" />
+    );
   } else if (typeof output === "string") {
-    Output = <JsonBlock value={output} />;
+    Output = <CodeBlock code={output} language="json" />;
   }
 
   return (
@@ -168,25 +171,3 @@ export const ToolOutput = ({
     </div>
   );
 };
-
-function JsonBlock({ value }: { value: unknown }) {
-  const code = serializeForCode(value);
-
-  return (
-    <pre className="overflow-x-auto rounded-md bg-muted/50 p-3 text-xs">
-      <code>{code}</code>
-    </pre>
-  );
-}
-
-function serializeForCode(value: unknown): string {
-  if (typeof value === "string") {
-    return value;
-  }
-
-  try {
-    return JSON.stringify(value, null, 2) ?? String(value);
-  } catch {
-    return String(value);
-  }
-}

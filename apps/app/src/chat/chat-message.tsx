@@ -1,9 +1,9 @@
+import { cn } from "@repo/ui/lib/utils";
 import {
   Message,
   MessageActions,
   MessageContent,
-} from "@repo/ui/components/ai-elements/message";
-import { cn } from "@repo/ui/lib/utils";
+} from "@repo/ui-v2/components/ai-elements/message";
 import type { UIMessage } from "@vendor/ai";
 import { memo } from "react";
 import { extractMessageText, MessageCopyButton } from "./message-copy-button";
@@ -21,10 +21,8 @@ export const ChatMessage = memo(function ChatMessage({
     <Message className="relative" from={message.role}>
       <MessageContent
         className={cn(
-          message.role === "user" &&
-            "max-w-[80%] rounded-3xl bg-muted px-5 py-2 text-base leading-6",
           message.role === "assistant" &&
-            "w-full max-w-none bg-transparent px-0 py-0 text-base leading-7"
+            "w-full max-w-none bg-transparent px-0 py-0"
         )}
       >
         {message.parts.map((part, index) => (

@@ -158,7 +158,9 @@ describe("app authenticated route migration", () => {
     );
     const teamSwitcherSource = source("src/components/team-switcher.tsx");
     const appSidebarSource = source("src/components/app-sidebar.tsx");
-    const recentChatsMenuSource = source("src/components/recent-chats-menu.tsx");
+    const recentChatsMenuSource = source(
+      "src/components/recent-chats-menu.tsx"
+    );
     const orgRouteSource = source("src/routes/_authenticated/$slug.tsx");
     const workspaceShellSource = source(
       "src/workspace/workspace-route-shell.tsx"
@@ -616,7 +618,17 @@ describe("app authenticated route migration", () => {
     const messageSource = source("src/chat/chat-message.tsx");
     const messagePartSource = source("src/chat/message-part.tsx");
     const copyButtonSource = source("src/chat/message-copy-button.tsx");
-    const resumableConfigSource = source("src/chat/resumable-stream-config.ts");
+    const chatRequestRouteSource = source(
+      "src/server/chat/workspace-assistant-route.ts"
+    );
+    const chatStreamRouteSource = source(
+      "src/server/chat/workspace-assistant-stream-route.ts"
+    );
+    const conversationIdPath = resolve(appRoot, "src/chat/conversation-id.ts");
+    const resumableConfigPath = resolve(
+      appRoot,
+      "src/chat/resumable-stream-config.ts"
+    );
 
     expect(packageSource).toContain('"@ai-sdk/react": "catalog:"');
     expect(packageSource).toContain('"@vendor/ai": "workspace:*"');
@@ -635,6 +647,7 @@ describe("app authenticated route migration", () => {
     );
     expect(conversationRouteSource).toContain("WorkspaceAssistantClient");
     expect(conversationRouteSource).toContain("isPreallocatedConversationId");
+    expect(conversationRouteSource).not.toContain("~/chat/conversation-id");
     expect(conversationRouteSource).toContain("notFound()");
     expect(assistantClientSource).toContain("useChat");
     expect(assistantClientSource).toContain("DefaultChatTransport");
@@ -654,8 +667,35 @@ describe("app authenticated route migration", () => {
     expect(messageSource).toContain("ChatMessage");
     expect(messagePartSource).toContain("WorkspaceAssistantMessagePart");
     expect(copyButtonSource).toContain("extractMessageText");
-    expect(resumableConfigSource).toContain("isResumableStreamEnabled");
-    expect(resumableConfigSource).toContain("VITE_VERCEL_ENV");
+    expect(existsSync(conversationIdPath)).toBe(false);
+    expect(existsSync(resumableConfigPath)).toBe(false);
+    expect(assistantClientSource).toContain("isResumableStreamEnabled");
+    expect(assistantClientSource).toContain("VITE_VERCEL_ENV");
+    expect(assistantClientSource).not.toContain("resumable-stream-config");
+    expect(chatRequestRouteSource).toContain("isResumableStreamEnabled");
+    expect(chatRequestRouteSource).toContain("VITE_VERCEL_ENV");
+    expect(chatRequestRouteSource).not.toContain("resumable-stream-config");
+    expect(chatStreamRouteSource).toContain("isResumableStreamEnabled");
+    expect(chatStreamRouteSource).toContain("VITE_VERCEL_ENV");
+    expect(chatStreamRouteSource).not.toContain("resumable-stream-config");
+    expect(assistantClientSource).toContain(
+      "@repo/ui-v2/components/ai-elements/conversation"
+    );
+    expect(composerSource).toContain(
+      "@repo/ui-v2/components/ai-elements/prompt-input"
+    );
+    expect(messageSource).toContain(
+      "@repo/ui-v2/components/ai-elements/message"
+    );
+    expect(messagePartSource).toContain(
+      "@repo/ui-v2/components/ai-elements/message"
+    );
+    expect(messagePartSource).toContain(
+      "@repo/ui-v2/components/ai-elements/reasoning"
+    );
+    expect(messagePartSource).toContain(
+      "@repo/ui-v2/components/ai-elements/tool"
+    );
 
     for (const routeFile of [
       chatRouteSource,
@@ -666,10 +706,12 @@ describe("app authenticated route migration", () => {
       messageSource,
       messagePartSource,
       copyButtonSource,
-      resumableConfigSource,
+      chatRequestRouteSource,
+      chatStreamRouteSource,
     ]) {
       expect(routeFile).not.toContain("next/");
       expect(routeFile).not.toContain("nuqs");
+      expect(routeFile).not.toContain("@repo/ui/components/ai-elements");
       expect(routeFile).not.toContain('"use client"');
       expect(routeFile).not.toContain('"use server"');
     }

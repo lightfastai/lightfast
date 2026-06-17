@@ -4,7 +4,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@repo/ui/components/ai-elements/prompt-input", () => ({
+vi.mock("@repo/ui-v2/components/ai-elements/prompt-input", () => ({
   PromptInput: ({
     children,
     className,
@@ -20,18 +20,7 @@ vi.mock("@repo/ui/components/ai-elements/prompt-input", () => ({
     children?: ReactNode;
     className?: string;
   }) => (
-    <div className={className} data-align="inline-end">
-      {children}
-    </div>
-  ),
-  PromptInputStart: ({
-    children,
-    className,
-  }: {
-    children?: ReactNode;
-    className?: string;
-  }) => (
-    <div className={className} data-align="inline-start">
+    <div className={className} data-align="block-end">
       {children}
     </div>
   ),
@@ -124,18 +113,14 @@ const baseProps = {
 
 describe("ChatComposer", () => {
   it("renders a stable native prompt input slot structure", () => {
-    const { container, rerender } = render(
-      <ChatComposer {...baseProps} compact={true} />
-    );
+    const { container } = render(<ChatComposer {...baseProps} />);
 
     expect(
       screen.getByPlaceholderText("Ask Lightfield").getAttribute("rows")
     ).toBe("1");
-    expect(
-      container.querySelector('[data-align="inline-start"]')
-    ).not.toBeNull();
-    expect(container.querySelector('[data-align="inline-end"]')).not.toBeNull();
-    expect(container.querySelector('[data-align="block-end"]')).toBeNull();
+    expect(container.querySelector('[data-align="inline-start"]')).toBeNull();
+    expect(container.querySelector('[data-align="inline-end"]')).toBeNull();
+    expect(container.querySelector('[data-align="block-end"]')).not.toBeNull();
     expect(container.querySelector("form")?.className).not.toContain(
       "data-[multiline="
     );
@@ -164,66 +149,10 @@ describe("ChatComposer", () => {
       /(?:^|\s)px-1(?:\s|$)/
     );
     expect(
-      container.querySelector('[data-align="inline-start"]')?.className
+      container.querySelector('[data-align="block-end"]')?.className
     ).not.toContain("pb-");
     expect(
-      container.querySelector('[data-align="inline-start"]')?.className
-    ).toContain("py-1.5");
-    expect(
-      container.querySelector('[data-align="inline-end"]')?.className
-    ).not.toContain("pb-");
-    expect(
-      container.querySelector('[data-align="inline-end"]')?.className
-    ).toContain("py-1.5");
-
-    rerender(<ChatComposer {...baseProps} compact={false} />);
-
-    expect(
-      screen.getByPlaceholderText("Ask Lightfield").getAttribute("rows")
-    ).toBe("1");
-    expect(
-      container.querySelector('[data-align="inline-start"]')
-    ).not.toBeNull();
-    expect(container.querySelector('[data-align="inline-end"]')).not.toBeNull();
-    expect(container.querySelector('[data-align="block-end"]')).toBeNull();
-    expect(container.querySelector("form")?.className).not.toContain(
-      "data-[multiline="
-    );
-    expect(container.querySelector("form")?.className).not.toMatch(
-      /(?:^|\s)shadow-(?!none\b)\S+/
-    );
-    expect(screen.getByLabelText("Add context").className).not.toMatch(
-      /(?:^|\s)size-\d/
-    );
-    expect(screen.getByLabelText("Write mode").className).not.toMatch(
-      /(?:^|\s)size-\d/
-    );
-    expect(screen.getByLabelText("Send message").className).not.toMatch(
-      /(?:^|\s)size-\d/
-    );
-    expect(
-      screen.getByPlaceholderText("Ask Lightfield").className
-    ).not.toContain("min-h-6");
-    expect(
-      screen.getByPlaceholderText("Ask Lightfield").className
-    ).not.toContain("group-data-[multiline=");
-    expect(screen.getByPlaceholderText("Ask Lightfield").className).not.toMatch(
-      /(?:^|\s)pr-\d(?:\s|$)/
-    );
-    expect(screen.getByPlaceholderText("Ask Lightfield").className).not.toMatch(
-      /(?:^|\s)px-1(?:\s|$)/
-    );
-    expect(
-      container.querySelector('[data-align="inline-start"]')?.className
-    ).not.toContain("pb-");
-    expect(
-      container.querySelector('[data-align="inline-start"]')?.className
-    ).toContain("py-1.5");
-    expect(
-      container.querySelector('[data-align="inline-end"]')?.className
-    ).not.toContain("pb-");
-    expect(
-      container.querySelector('[data-align="inline-end"]')?.className
+      container.querySelector('[data-align="block-end"]')?.className
     ).toContain("py-1.5");
   });
 });

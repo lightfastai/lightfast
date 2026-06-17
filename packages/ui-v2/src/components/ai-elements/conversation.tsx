@@ -1,24 +1,17 @@
 "use client";
 
-import { Button } from "@repo/ui/components/ui/button";
-import { cn } from "@repo/ui/lib/utils";
+import { Button } from "@repo/ui-v2/components/ui/button";
+import { cn } from "@repo/ui-v2/lib/utils";
 import type { UIMessage } from "@vendor/ai";
 import { ArrowDownIcon, DownloadIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 import { useCallback } from "react";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 
-export type ConversationProps = ComponentProps<typeof StickToBottom> & {
-  "aria-label"?: string;
-};
+export type ConversationProps = ComponentProps<typeof StickToBottom>;
 
-export const Conversation = ({
-  "aria-label": ariaLabel,
-  className,
-  ...props
-}: ConversationProps) => (
+export const Conversation = ({ className, ...props }: ConversationProps) => (
   <StickToBottom
-    aria-label={ariaLabel ?? "Conversation"}
     className={cn("relative flex-1 overflow-y-hidden", className)}
     initial="smooth"
     resize="smooth"
@@ -79,7 +72,6 @@ export const ConversationEmptyState = ({
 export type ConversationScrollButtonProps = ComponentProps<typeof Button>;
 
 export const ConversationScrollButton = ({
-  "aria-label": ariaLabel,
   className,
   ...props
 }: ConversationScrollButtonProps) => {
@@ -89,25 +81,22 @@ export const ConversationScrollButton = ({
     scrollToBottom();
   }, [scrollToBottom]);
 
-  if (isAtBottom) {
-    return null;
-  }
-
   return (
-    <Button
-      aria-label={ariaLabel ?? "Scroll to latest message"}
-      className={cn(
-        "absolute bottom-4 left-[50%] translate-x-[-50%] rounded-full dark:bg-background dark:hover:bg-muted",
-        className
-      )}
-      onClick={handleScrollToBottom}
-      size="icon"
-      type="button"
-      variant="outline"
-      {...props}
-    >
-      <ArrowDownIcon className="size-4" />
-    </Button>
+    !isAtBottom && (
+      <Button
+        className={cn(
+          "absolute bottom-4 left-[50%] translate-x-[-50%] rounded-full dark:bg-background dark:hover:bg-muted",
+          className
+        )}
+        onClick={handleScrollToBottom}
+        size="icon"
+        type="button"
+        variant="outline"
+        {...props}
+      >
+        <ArrowDownIcon className="size-4" />
+      </Button>
+    )
   );
 };
 
@@ -144,7 +133,6 @@ export const ConversationDownload = ({
   messages,
   filename = "conversation.md",
   formatMessage = defaultFormatMessage,
-  "aria-label": ariaLabel,
   className,
   children,
   ...props
@@ -159,14 +147,11 @@ export const ConversationDownload = ({
     document.body.append(link);
     link.click();
     link.remove();
-    window.setTimeout(() => {
-      URL.revokeObjectURL(url);
-    }, 0);
+    URL.revokeObjectURL(url);
   }, [messages, filename, formatMessage]);
 
   return (
     <Button
-      aria-label={ariaLabel ?? "Download conversation"}
       className={cn(
         "absolute top-4 right-4 rounded-full dark:bg-background dark:hover:bg-muted",
         className

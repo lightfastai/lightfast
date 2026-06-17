@@ -1,15 +1,6 @@
 "use client";
 
 import {
-  CornerDownLeftIcon,
-  ImageIcon,
-  ComputerIcon as Monitor,
-  PlusSignIcon as PlusIcon,
-  SquareIcon,
-  Cancel01Icon as XIcon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import {
   Command,
   CommandEmpty,
   CommandGroup,
@@ -50,6 +41,14 @@ import {
 } from "@repo/ui-v2/components/ui/tooltip";
 import { cn } from "@repo/ui-v2/lib/utils";
 import type { ChatStatus, FileUIPart, SourceDocumentUIPart } from "@vendor/ai";
+import {
+  CornerDownLeftIcon,
+  ImageIcon,
+  Monitor,
+  PlusIcon,
+  SquareIcon,
+  XIcon,
+} from "lucide-react";
 import { nanoid } from "nanoid";
 import type {
   ChangeEvent,
@@ -132,7 +131,7 @@ const captureScreenshot = async (): Promise<File | null> => {
 
     const width = video.videoWidth;
     const height = video.videoHeight;
-    if (!(width && height)) {
+    if (!width || !height) {
       return null;
     }
 
@@ -180,28 +179,28 @@ const captureScreenshot = async (): Promise<File | null> => {
 // ============================================================================
 
 export interface AttachmentsContext {
-  add: (files: File[] | FileList) => void;
-  clear: () => void;
-  fileInputRef: RefObject<HTMLInputElement | null>;
   files: (FileUIPart & { id: string })[];
-  openFileDialog: () => void;
+  add: (files: File[] | FileList) => void;
   remove: (id: string) => void;
+  clear: () => void;
+  openFileDialog: () => void;
+  fileInputRef: RefObject<HTMLInputElement | null>;
 }
 
 export interface TextInputContext {
-  clear: () => void;
-  setInput: (v: string) => void;
   value: string;
+  setInput: (v: string) => void;
+  clear: () => void;
 }
 
 export interface PromptInputControllerProps {
+  textInput: TextInputContext;
+  attachments: AttachmentsContext;
   /** INTERNAL: Allows PromptInput to register its file textInput + "open" callback */
   __registerFileInput: (
     ref: RefObject<HTMLInputElement | null>,
     open: () => void
   ) => void;
-  attachments: AttachmentsContext;
-  textInput: TextInputContext;
 }
 
 const PromptInputController = createContext<PromptInputControllerProps | null>(
@@ -390,10 +389,10 @@ export const usePromptInputAttachments = () => {
 // ============================================================================
 
 export interface ReferencedSourcesContext {
-  add: (sources: SourceDocumentUIPart[] | SourceDocumentUIPart) => void;
-  clear: () => void;
-  remove: (id: string) => void;
   sources: (SourceDocumentUIPart & { id: string })[];
+  add: (sources: SourceDocumentUIPart[] | SourceDocumentUIPart) => void;
+  remove: (id: string) => void;
+  clear: () => void;
 }
 
 export const LocalReferencedSourcesContext =
@@ -421,12 +420,10 @@ export const PromptInputActionAddAttachments = ({
 }: PromptInputActionAddAttachmentsProps) => {
   const attachments = usePromptInputAttachments();
 
-  const handleSelect = useCallback(
-    (
-      event: Parameters<
-        NonNullable<ComponentProps<typeof DropdownMenuItem>["onSelect"]>
-      >[0]
-    ) => {
+  const handleSelect = useCallback<
+    NonNullable<PromptInputActionAddAttachmentsProps["onSelect"]>
+  >(
+    (event) => {
       event.preventDefault();
       attachments.openFileDialog();
     },
@@ -435,7 +432,7 @@ export const PromptInputActionAddAttachments = ({
 
   return (
     <DropdownMenuItem {...props} onSelect={handleSelect}>
-      <HugeiconsIcon className="mr-2 size-4" icon={ImageIcon} /> {label}
+      <ImageIcon className="mr-2 size-4" /> {label}
     </DropdownMenuItem>
   );
 };
@@ -453,12 +450,10 @@ export const PromptInputActionAddScreenshot = ({
 }: PromptInputActionAddScreenshotProps) => {
   const attachments = usePromptInputAttachments();
 
-  const handleSelect = useCallback(
-    async (
-      event: Parameters<
-        NonNullable<ComponentProps<typeof DropdownMenuItem>["onSelect"]>
-      >[0]
-    ) => {
+  const handleSelect = useCallback<
+    NonNullable<PromptInputActionAddScreenshotProps["onSelect"]>
+  >(
+    async (event) => {
       onSelect?.(event);
       if (event.defaultPrevented) {
         return;
@@ -484,15 +479,15 @@ export const PromptInputActionAddScreenshot = ({
 
   return (
     <DropdownMenuItem {...props} onSelect={handleSelect}>
-      <HugeiconsIcon className="mr-2 size-4" icon={Monitor} />
+      <Monitor className="mr-2 size-4" />
       {label}
     </DropdownMenuItem>
   );
 };
 
 export interface PromptInputMessage {
-  files: FileUIPart[];
   text: string;
+  files: FileUIPart[];
 }
 
 export type PromptInputProps = Omit<
@@ -1145,7 +1140,7 @@ export const PromptInputButton = ({
 
   const button = (
     <InputGroupButton
-      className={cn("font-normal", className)}
+      className={cn(className)}
       size={newSize}
       type="button"
       variant={variant}
@@ -1164,7 +1159,7 @@ export const PromptInputButton = ({
 
   return (
     <Tooltip>
-      <TooltipTrigger render={button} />
+      <TooltipTrigger>{button}</TooltipTrigger>
       <TooltipContent side={side}>
         {tooltipContent}
         {shortcut && (
@@ -1187,13 +1182,7 @@ export const PromptInputActionMenuTrigger = ({
   children,
   ...props
 }: PromptInputActionMenuTriggerProps) => (
-  <DropdownMenuTrigger
-    render={
-      <PromptInputButton className={className} {...props}>
-        {children ?? <HugeiconsIcon className="size-4" icon={PlusIcon} />}
-      </PromptInputButton>
-    }
-  />
+  <DropdownMenuTrigger render={<PromptInputButton className={className} {...props} />}>{children ?? <PlusIcon className="size-4" />}</DropdownMenuTrigger>
 );
 
 export type PromptInputActionMenuContentProps = ComponentProps<
@@ -1236,22 +1225,18 @@ export const PromptInputSubmit = ({
 }: PromptInputSubmitProps) => {
   const isGenerating = status === "submitted" || status === "streaming";
 
-  let Icon = <HugeiconsIcon className="size-4" icon={CornerDownLeftIcon} />;
+  let Icon = <CornerDownLeftIcon className="size-4" />;
 
   if (status === "submitted") {
     Icon = <Spinner />;
   } else if (status === "streaming") {
-    Icon = <HugeiconsIcon className="size-4" icon={SquareIcon} />;
+    Icon = <SquareIcon className="size-4" />;
   } else if (status === "error") {
-    Icon = <HugeiconsIcon className="size-4" icon={XIcon} />;
+    Icon = <XIcon className="size-4" />;
   }
 
-  const handleClick = useCallback(
-    (
-      event: Parameters<
-        NonNullable<ComponentProps<typeof InputGroupButton>["onClick"]>
-      >[0]
-    ) => {
+  const handleClick = useCallback<NonNullable<PromptInputSubmitProps["onClick"]>>(
+    (event) => {
       if (isGenerating && onStop) {
         event.preventDefault();
         onStop();
@@ -1293,7 +1278,7 @@ export const PromptInputSelectTrigger = ({
 }: PromptInputSelectTriggerProps) => (
   <SelectTrigger
     className={cn(
-      "border-none bg-transparent font-normal text-muted-foreground shadow-none transition-colors",
+      "border-none bg-transparent font-medium text-muted-foreground shadow-none transition-colors",
       "hover:bg-accent hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground",
       className
     )}
@@ -1330,16 +1315,11 @@ export const PromptInputSelectValue = ({
   <SelectValue className={cn(className)} {...props} />
 );
 
-export type PromptInputHoverCardProps = ComponentProps<typeof HoverCard> & {
-  openDelay?: number;
-  closeDelay?: number;
-};
+export type PromptInputHoverCardProps = ComponentProps<typeof HoverCard>;
 
-export const PromptInputHoverCard = ({
-  openDelay: _openDelay = 0,
-  closeDelay: _closeDelay = 0,
-  ...props
-}: PromptInputHoverCardProps) => <HoverCard {...props} />;
+export const PromptInputHoverCard = (props: PromptInputHoverCardProps) => (
+  <HoverCard {...props} />
+);
 
 export type PromptInputHoverCardTriggerProps = ComponentProps<
   typeof HoverCardTrigger

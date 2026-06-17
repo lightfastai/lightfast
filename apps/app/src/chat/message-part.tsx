@@ -1,9 +1,9 @@
-import { MessageResponse } from "@repo/ui/components/ai-elements/message";
+import { MessageResponse } from "@repo/ui-v2/components/ai-elements/message";
 import {
   Reasoning,
   ReasoningContent,
   ReasoningTrigger,
-} from "@repo/ui/components/ai-elements/reasoning";
+} from "@repo/ui-v2/components/ai-elements/reasoning";
 import {
   type ToolPart as AiElementsToolPart,
   Tool,
@@ -11,7 +11,7 @@ import {
   ToolHeader,
   ToolInput,
   ToolOutput,
-} from "@repo/ui/components/ai-elements/tool";
+} from "@repo/ui-v2/components/ai-elements/tool";
 import type { DynamicToolUIPart, ToolUIPart, UIMessage } from "@vendor/ai";
 import { memo } from "react";
 

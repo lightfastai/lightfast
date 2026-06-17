@@ -11,8 +11,7 @@ import {
   useState,
 } from "react";
 
-const DEFAULT_SCROLL_VIEWPORT_SELECTOR =
-  '[data-slot="scroll-area-viewport"]';
+const DEFAULT_SCROLL_VIEWPORT_SELECTOR = '[data-slot="scroll-area-viewport"]';
 
 export interface ScrollEdges {
   bottom: boolean;
@@ -69,7 +68,7 @@ export function useScrollEdges({
 
     const maxScrollTop = Math.max(
       viewport.scrollHeight - viewport.clientHeight,
-      0
+      0,
     );
     const nextEdges = {
       bottom: maxScrollTop - viewport.scrollTop > 1,
@@ -79,7 +78,7 @@ export function useScrollEdges({
     setEdges((current) =>
       current.bottom === nextEdges.bottom && current.top === nextEdges.top
         ? current
-        : nextEdges
+        : nextEdges,
     );
   }, [rootElement, viewportSelector]);
 
@@ -133,7 +132,7 @@ export function ScrollEdgeCue({
         isTop
           ? "top-0 bg-gradient-to-b from-popover via-popover/90 to-transparent"
           : "bottom-0 bg-gradient-to-t from-popover via-popover/90 to-transparent",
-        visible ? "opacity-100" : "opacity-0"
+        visible ? "opacity-100" : "opacity-0",
       )}
     >
       <HugeiconsIcon
@@ -148,7 +147,7 @@ export function ScrollEdgeCue({
 
 function getScrollViewport(
   root: HTMLDivElement | null,
-  viewportSelector: string
+  viewportSelector: string,
 ) {
   return root?.querySelector<HTMLElement>(viewportSelector) ?? root;
 }

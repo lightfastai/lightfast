@@ -1,34 +1,14 @@
 "use client";
 
-import { Button } from "@repo/ui/components/ui/button";
+import { Button } from "@repo/ui-v2/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@repo/ui/components/ui/select";
-import { cn } from "@repo/ui/lib/utils";
-import type { HighlighterCore, ThemedToken } from "@shikijs/core";
-import { createHighlighterCore } from "@shikijs/core";
-import { createJavaScriptRegexEngine } from "@shikijs/engine-javascript";
-import langBash from "@shikijs/langs/bash";
-import langCss from "@shikijs/langs/css";
-import langGo from "@shikijs/langs/go";
-import langHtml from "@shikijs/langs/html";
-import langJs from "@shikijs/langs/javascript";
-import langJson from "@shikijs/langs/json";
-import langJsonc from "@shikijs/langs/jsonc";
-import langJsx from "@shikijs/langs/jsx";
-import langMarkdown from "@shikijs/langs/markdown";
-import langPy from "@shikijs/langs/python";
-import langRust from "@shikijs/langs/rust";
-import langSql from "@shikijs/langs/sql";
-import langTsx from "@shikijs/langs/tsx";
-import langTs from "@shikijs/langs/typescript";
-import langYaml from "@shikijs/langs/yaml";
-import githubDark from "@shikijs/themes/github-dark";
-import githubLight from "@shikijs/themes/github-light";
+} from "@repo/ui-v2/components/ui/select";
+import { cn } from "@repo/ui-v2/lib/utils";
 import { CheckIcon, CopyIcon } from "lucide-react";
 import type { ComponentProps, CSSProperties, HTMLAttributes } from "react";
 import {
@@ -41,8 +21,13 @@ import {
   useRef,
   useState,
 } from "react";
-
-type CodeBlockLanguage = string;
+import type {
+  BundledLanguage,
+  BundledTheme,
+  HighlighterGeneric,
+  ThemedToken,
+} from "shiki";
+import { createHighlighter } from "shiki";
 
 // Shiki uses bitflags for font styles: 1=italic, 2=bold, 4=underline
 // oxlint-disable-next-line eslint(no-bitwise)
@@ -55,12 +40,12 @@ const isUnderline = (fontStyle: number | undefined) =>
 
 // Transform tokens to include pre-computed keys to avoid noArrayIndexKey lint
 interface KeyedToken {
-  key: string;
   token: ThemedToken;
+  key: string;
 }
 interface KeyedLine {
-  key: string;
   tokens: KeyedToken[];
+  key: string;
 }
 
 const addKeysToTokens = (lines: ThemedToken[][]): KeyedLine[] =>
@@ -125,14 +110,14 @@ const LineSpan = ({
 // Types
 type CodeBlockProps = HTMLAttributes<HTMLDivElement> & {
   code: string;
-  language: CodeBlockLanguage;
+  language: BundledLanguage;
   showLineNumbers?: boolean;
 };
 
 interface TokenizedCode {
-  bg: string;
-  fg: string;
   tokens: ThemedToken[][];
+  fg: string;
+  bg: string;
 }
 
 interface CodeBlockContextType {
@@ -144,8 +129,11 @@ const CodeBlockContext = createContext<CodeBlockContextType>({
   code: "",
 });
 
-// Highlighter cache (singleton for all supported languages)
-let highlighterPromise: Promise<HighlighterCore> | null = null;
+// Highlighter cache (singleton per language)
+const highlighterCache = new Map<
+  string,
+  Promise<HighlighterGeneric<BundledLanguage, BundledTheme>>
+>();
 
 // Token cache
 const tokensCache = new Map<string, TokenizedCode>();
@@ -153,40 +141,26 @@ const tokensCache = new Map<string, TokenizedCode>();
 // Subscribers for async token updates
 const subscribers = new Map<string, Set<(result: TokenizedCode) => void>>();
 
-const getTokensCacheKey = (code: string, language: CodeBlockLanguage) => {
-  let hash = 2_166_136_261;
-  for (let i = 0; i < code.length; i++) {
-    hash ^= code.charCodeAt(i);
-    hash = (hash * 16_777_619) >>> 0;
-  }
-  return `${language}:${code.length}:${hash.toString(16)}`;
+const getTokensCacheKey = (code: string, language: BundledLanguage) => {
+  const start = code.slice(0, 100);
+  const end = code.length > 100 ? code.slice(-100) : "";
+  return `${language}:${code.length}:${start}:${end}`;
 };
 
-const getHighlighter = (): Promise<HighlighterCore> => {
-  if (!highlighterPromise) {
-    highlighterPromise = createHighlighterCore({
-      langs: [
-        langTs,
-        langJs,
-        langTsx,
-        langJsx,
-        langBash,
-        langJson,
-        langJsonc,
-        langYaml,
-        langPy,
-        langGo,
-        langRust,
-        langSql,
-        langCss,
-        langHtml,
-        langMarkdown,
-      ],
-      themes: [githubLight, githubDark],
-      engine: createJavaScriptRegexEngine(),
-    });
+const getHighlighter = (
+  language: BundledLanguage
+): Promise<HighlighterGeneric<BundledLanguage, BundledTheme>> => {
+  const cached = highlighterCache.get(language);
+  if (cached) {
+    return cached;
   }
 
+  const highlighterPromise = createHighlighter({
+    langs: [language],
+    themes: ["github-light", "github-dark"],
+  });
+
+  highlighterCache.set(language, highlighterPromise);
   return highlighterPromise;
 };
 
@@ -209,7 +183,7 @@ const createRawTokens = (code: string): TokenizedCode => ({
 // Synchronous highlight with callback for async results
 export const highlightCode = (
   code: string,
-  language: CodeBlockLanguage,
+  language: BundledLanguage,
   // oxlint-disable-next-line eslint-plugin-promise(prefer-await-to-callbacks)
   callback?: (result: TokenizedCode) => void
 ): TokenizedCode | null => {
@@ -230,7 +204,7 @@ export const highlightCode = (
   }
 
   // Start highlighting in background - fire-and-forget async pattern
-  getHighlighter()
+  getHighlighter(language)
     // oxlint-disable-next-line eslint-plugin-promise(prefer-await-to-then)
     .then((highlighter) => {
       const availableLangs = highlighter.getLoadedLanguages();
@@ -403,7 +377,7 @@ export const CodeBlockContent = ({
   showLineNumbers = false,
 }: {
   code: string;
-  language: CodeBlockLanguage;
+  language: BundledLanguage;
   showLineNumbers?: boolean;
 }) => {
   // Memoized raw tokens for immediate display
@@ -525,11 +499,9 @@ export const CodeBlockCopyButton = ({
 
   return (
     <Button
-      aria-label={children ? undefined : "Copy code"}
       className={cn("shrink-0", className)}
       onClick={copyToClipboard}
       size="icon"
-      type="button"
       variant="ghost"
       {...props}
     >

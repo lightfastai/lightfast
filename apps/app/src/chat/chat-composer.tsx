@@ -1,14 +1,3 @@
-import {
-  PromptInput,
-  PromptInputBody,
-  PromptInputButton,
-  PromptInputFooter,
-  type PromptInputMessage,
-  PromptInputStart,
-  PromptInputSubmit,
-  PromptInputTextarea,
-  PromptInputTools,
-} from "@repo/ui/components/ai-elements/prompt-input";
 import { Toggle } from "@repo/ui/components/ui/toggle";
 import {
   Tooltip,
@@ -16,6 +5,16 @@ import {
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
 import { cn } from "@repo/ui/lib/utils";
+import {
+  PromptInput,
+  PromptInputBody,
+  PromptInputButton,
+  PromptInputFooter,
+  type PromptInputMessage,
+  PromptInputSubmit,
+  PromptInputTextarea,
+  PromptInputTools,
+} from "@repo/ui-v2/components/ai-elements/prompt-input";
 import type { ChatStatus } from "@vendor/ai";
 import { ArrowUp, PencilLine, Plus } from "lucide-react";
 import type { ReactNode } from "react";
@@ -31,7 +30,6 @@ export const ChatComposer = memo(function ChatComposer({
   text,
   writeModeEnabled,
 }: {
-  compact: boolean;
   error: Error | undefined;
   onSubmit: (message: PromptInputMessage) => Promise<void>;
   onTextChange: (text: string) => void;
@@ -148,7 +146,6 @@ function ChatComposerLayout({
 }) {
   return (
     <>
-      <PromptInputStart className="py-1.5">{addContextButton}</PromptInputStart>
       <PromptInputBody key="body">
         <PromptInputTextarea
           className="max-h-48 text-base leading-6"
@@ -160,7 +157,10 @@ function ChatComposerLayout({
         />
       </PromptInputBody>
       <PromptInputFooter className="py-1.5">
-        <PromptInputTools>{writeModeToggle}</PromptInputTools>
+        <PromptInputTools>
+          {addContextButton}
+          {writeModeToggle}
+        </PromptInputTools>
         {submit}
       </PromptInputFooter>
     </>
