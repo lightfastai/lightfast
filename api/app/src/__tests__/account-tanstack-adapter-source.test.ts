@@ -25,6 +25,10 @@ describe("account TanStack adapter boundary", () => {
     expect(source).toContain("getAccountProfileCommand");
     expect(source).toContain("updateAccountNameCommand");
     expect(source).toContain("createAccountUsernameCommand");
+    expect(source).toContain("getGitHubAccountStatusCommand");
+    expect(source).toContain("startGitHubAccountBindingCommand");
+    expect(source).toContain("syncGitHubAccountCommand");
+    expect(source).toContain("disconnectGitHubAccountCommand");
     expect(source).not.toContain("TRPCError");
     expect(source).not.toContain("ORPCError");
     expect(source).not.toContain("defineCommandSurface");
@@ -98,6 +102,23 @@ describe("account TanStack adapter boundary", () => {
       expect(routerSource).not.toContain("updateName: viewerProcedure");
       expect(routerSource).not.toContain("createUsername: viewerProcedure");
       expect(routerSource).not.toContain("TRPCError");
+    }
+  });
+
+  it("removes migrated GitHub account procedures from tRPC", () => {
+    const rootSource = readFileSync(resolve(apiRoot, "src/root.ts"), "utf8");
+    const routerPath = resolve(
+      apiRoot,
+      "src/router/(pending-allowed)/github-account.ts"
+    );
+
+    expect(rootSource).not.toContain("githubAccount: githubAccountRouter");
+
+    if (existsSync(routerPath)) {
+      const routerSource = readFileSync(routerPath, "utf8");
+      expect(routerSource).not.toContain("githubAccountRouter");
+      expect(routerSource).not.toContain("viewerProcedure");
+      expect(routerSource).not.toContain("TRPCRouterRecord");
     }
   });
 });

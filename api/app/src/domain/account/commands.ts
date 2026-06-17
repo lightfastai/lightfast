@@ -11,12 +11,18 @@ import {
   accountSettingsFormSchema,
   lightfastHandleSchema,
 } from "@repo/app-validation";
+import { githubUserAccountReturnToSchema } from "@repo/github-app-contract";
 import { clerkClient } from "@vendor/clerk/server";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
 
 import { isClerkConflictError } from "../../auth/clerk-errors";
+import {
+  disconnectGitHubUserAccount,
+  getGitHubUserAccountStatus,
+  startGitHubUserAccountBinding,
+} from "../../services/github/user-account/flow";
 import { defineCommand } from "../command";
 import {
   AuthzError,
@@ -34,11 +40,14 @@ interface AccountCommandDeps {
   clerk: { users: ClerkUserClient };
   db: Database;
   deletePreClerkNamespaceReservation: typeof deletePreClerkNamespaceReservation;
+  disconnectGitHubUserAccount: typeof disconnectGitHubUserAccount;
   finalizeNamespaceOperation: typeof finalizeNamespaceOperation;
+  getGitHubUserAccountStatus: typeof getGitHubUserAccountStatus;
   isClerkConflictError: typeof isClerkConflictError;
   log: Pick<typeof log, "error">;
   markNamespaceOperationClerkApplied: typeof markNamespaceOperationClerkApplied;
   reserveNamespaceForOperation: typeof reserveNamespaceForOperation;
+  startGitHubUserAccountBinding: typeof startGitHubUserAccountBinding;
   startNamespaceOperation: typeof startNamespaceOperation;
 }
 
@@ -46,33 +55,42 @@ export function createDefaultAccountCommandDeps(input: {
   clerk: { users: ClerkUserClient };
   db: Database;
   deletePreClerkNamespaceReservation?: typeof deletePreClerkNamespaceReservation;
+  disconnectGitHubUserAccount?: typeof disconnectGitHubUserAccount;
   finalizeNamespaceOperation?: typeof finalizeNamespaceOperation;
+  getGitHubUserAccountStatus?: typeof getGitHubUserAccountStatus;
   isClerkConflictError?: typeof isClerkConflictError;
   log?: Pick<typeof log, "error">;
   markNamespaceOperationClerkApplied?: typeof markNamespaceOperationClerkApplied;
   reserveNamespaceForOperation?: typeof reserveNamespaceForOperation;
+  startGitHubUserAccountBinding?: typeof startGitHubUserAccountBinding;
   startNamespaceOperation?: typeof startNamespaceOperation;
 }): AccountCommandDeps;
 export function createDefaultAccountCommandDeps(input: {
   clerk?: { users: ClerkUserClient };
   db: Database;
   deletePreClerkNamespaceReservation?: typeof deletePreClerkNamespaceReservation;
+  disconnectGitHubUserAccount?: typeof disconnectGitHubUserAccount;
   finalizeNamespaceOperation?: typeof finalizeNamespaceOperation;
+  getGitHubUserAccountStatus?: typeof getGitHubUserAccountStatus;
   isClerkConflictError?: typeof isClerkConflictError;
   log?: Pick<typeof log, "error">;
   markNamespaceOperationClerkApplied?: typeof markNamespaceOperationClerkApplied;
   reserveNamespaceForOperation?: typeof reserveNamespaceForOperation;
+  startGitHubUserAccountBinding?: typeof startGitHubUserAccountBinding;
   startNamespaceOperation?: typeof startNamespaceOperation;
 }): Promise<AccountCommandDeps>;
 export function createDefaultAccountCommandDeps(input: {
   clerk?: { users: ClerkUserClient };
   db: Database;
   deletePreClerkNamespaceReservation?: typeof deletePreClerkNamespaceReservation;
+  disconnectGitHubUserAccount?: typeof disconnectGitHubUserAccount;
   finalizeNamespaceOperation?: typeof finalizeNamespaceOperation;
+  getGitHubUserAccountStatus?: typeof getGitHubUserAccountStatus;
   isClerkConflictError?: typeof isClerkConflictError;
   log?: Pick<typeof log, "error">;
   markNamespaceOperationClerkApplied?: typeof markNamespaceOperationClerkApplied;
   reserveNamespaceForOperation?: typeof reserveNamespaceForOperation;
+  startGitHubUserAccountBinding?: typeof startGitHubUserAccountBinding;
   startNamespaceOperation?: typeof startNamespaceOperation;
 }): AccountCommandDeps | Promise<AccountCommandDeps> {
   const base = {
@@ -80,8 +98,12 @@ export function createDefaultAccountCommandDeps(input: {
     deletePreClerkNamespaceReservation:
       input.deletePreClerkNamespaceReservation ??
       deletePreClerkNamespaceReservation,
+    disconnectGitHubUserAccount:
+      input.disconnectGitHubUserAccount ?? disconnectGitHubUserAccount,
     finalizeNamespaceOperation:
       input.finalizeNamespaceOperation ?? finalizeNamespaceOperation,
+    getGitHubUserAccountStatus:
+      input.getGitHubUserAccountStatus ?? getGitHubUserAccountStatus,
     isClerkConflictError: input.isClerkConflictError ?? isClerkConflictError,
     log: input.log ?? log,
     markNamespaceOperationClerkApplied:
@@ -89,6 +111,8 @@ export function createDefaultAccountCommandDeps(input: {
       markNamespaceOperationClerkApplied,
     reserveNamespaceForOperation:
       input.reserveNamespaceForOperation ?? reserveNamespaceForOperation,
+    startGitHubUserAccountBinding:
+      input.startGitHubUserAccountBinding ?? startGitHubUserAccountBinding,
     startNamespaceOperation:
       input.startNamespaceOperation ?? startNamespaceOperation,
   };
@@ -116,6 +140,31 @@ const accountProfileOutput = z.object({
 const createAccountUsernameInput = z.object({
   idempotencyKey: z.string().min(1).max(128),
   username: lightfastHandleSchema,
+});
+
+const githubAccountInput = z.object({}).strict();
+const startGitHubAccountBindingInput = z
+  .object({
+    returnTo: githubUserAccountReturnToSchema.optional(),
+  })
+  .strict();
+const githubAccountStatusOutput = z.object({
+  account: z
+    .object({
+      accessTokenExpiresAt: z.date(),
+      connectedAt: z.date(),
+      provider: z.literal("github"),
+      providerUserId: z.string().min(1),
+      refreshTokenExpiresAt: z.date(),
+      status: z.literal("active"),
+    })
+    .nullable(),
+});
+const startGitHubAccountBindingOutput = z.object({
+  authorizationUrl: z.string().url(),
+});
+const disconnectGitHubAccountOutput = z.object({
+  ok: z.literal(true),
 });
 
 function usernameConflict(username: string, cause?: unknown) {
@@ -362,5 +411,77 @@ export const createAccountUsernameCommand = defineCommand<
         error instanceof Error ? { cause: error } : undefined
       );
     }
+  },
+});
+
+export const getGitHubAccountStatusCommand = defineCommand<
+  "account.github.status",
+  typeof githubAccountInput,
+  typeof githubAccountStatusOutput,
+  AccountCommandDeps
+>({
+  name: "account.github.status",
+  input: githubAccountInput,
+  output: githubAccountStatusOutput,
+  run: async ({ ctx, deps }) => {
+    const actor = requireClerkUserActor(ctx);
+    return deps.getGitHubUserAccountStatus({ clerkUserId: actor.userId });
+  },
+});
+
+export const startGitHubAccountBindingCommand = defineCommand<
+  "account.github.start",
+  typeof startGitHubAccountBindingInput,
+  typeof startGitHubAccountBindingOutput,
+  AccountCommandDeps
+>({
+  name: "account.github.start",
+  input: startGitHubAccountBindingInput,
+  output: startGitHubAccountBindingOutput,
+  run: async ({ ctx, deps, input }) => {
+    const parsedInput = startGitHubAccountBindingInput.safeParse(input);
+    if (!parsedInput.success) {
+      throw new ValidationError(
+        "INVALID_INPUT",
+        "Invalid GitHub account binding input.",
+        { issues: parsedInput.error.issues }
+      );
+    }
+
+    const actor = requireClerkUserActor(ctx);
+    return deps.startGitHubUserAccountBinding({
+      lightfastUserId: actor.userId,
+      returnTo: parsedInput.data.returnTo,
+    });
+  },
+});
+
+export const syncGitHubAccountCommand = defineCommand<
+  "account.github.sync",
+  typeof githubAccountInput,
+  typeof githubAccountStatusOutput,
+  AccountCommandDeps
+>({
+  name: "account.github.sync",
+  input: githubAccountInput,
+  output: githubAccountStatusOutput,
+  run: async ({ ctx, deps }) => {
+    const actor = requireClerkUserActor(ctx);
+    return deps.getGitHubUserAccountStatus({ clerkUserId: actor.userId });
+  },
+});
+
+export const disconnectGitHubAccountCommand = defineCommand<
+  "account.github.disconnect",
+  typeof githubAccountInput,
+  typeof disconnectGitHubAccountOutput,
+  AccountCommandDeps
+>({
+  name: "account.github.disconnect",
+  input: githubAccountInput,
+  output: disconnectGitHubAccountOutput,
+  run: async ({ ctx, deps }) => {
+    const actor = requireClerkUserActor(ctx);
+    return deps.disconnectGitHubUserAccount({ clerkUserId: actor.userId });
   },
 });

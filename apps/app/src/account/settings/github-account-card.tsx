@@ -1,4 +1,3 @@
-import type { AppRouterOutputs } from "@api/app";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -15,10 +14,7 @@ import {
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, Settings, Unplug } from "lucide-react";
 import type { ReactNode } from "react";
-
-type GithubUserAccount = NonNullable<
-  AppRouterOutputs["viewer"]["githubAccount"]["status"]["account"]
->;
+import type { GitHubUserAccount } from "../account-queries";
 
 const DISCONNECT_TOOLTIP = "Connection is managed from the GitHub setup task.";
 
@@ -43,7 +39,7 @@ function IconTile({ children }: { children: ReactNode }) {
   );
 }
 
-export function GithubAccountCard({ account }: { account: GithubUserAccount }) {
+export function GithubAccountCard({ account }: { account: GitHubUserAccount }) {
   const subtitle = formatConnectedAt(account.connectedAt);
 
   return (

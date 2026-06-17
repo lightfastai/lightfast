@@ -3,7 +3,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useTRPC } from "~/trpc/react";
+import { syncGitHubAccountMutationOptions } from "../account-queries";
 
 interface GithubAccountCompleteClientProps {
   returnTo?: string;
@@ -18,15 +18,10 @@ function normalizeReturnTo(returnTo: string | undefined): string {
 export function GithubAccountCompleteClient({
   returnTo,
 }: GithubAccountCompleteClientProps) {
-  const trpc = useTRPC();
   const [failed, setFailed] = useState(false);
   const hasStartedRef = useRef(false);
 
-  const syncMutation = useMutation(
-    trpc.viewer.githubAccount.sync.mutationOptions({
-      meta: { errorTitle: "Failed to finish GitHub connection" },
-    })
-  );
+  const syncMutation = useMutation(syncGitHubAccountMutationOptions());
   const { mutateAsync } = syncMutation;
 
   const finish = useCallback(async () => {
