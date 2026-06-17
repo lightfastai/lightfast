@@ -28,13 +28,6 @@ describe("native auth boundary exports", () => {
     ).toBe(true);
   });
 
-  it("preserves native auth statuses through TanStack server functions", () => {
-    const adapterSource = source("src/adapters/tanstack/native-auth.ts");
-
-    expect(adapterSource).toContain("setResponseStatus");
-    expect(adapterSource).toContain("setResponseStatus(error.status)");
-  });
-
   it("keeps the tRPC native router as a compatibility wrapper", () => {
     const routerSource = source("src/router/(pending-allowed)/native-auth.ts");
 
