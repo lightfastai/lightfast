@@ -1,0 +1,52 @@
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
+
+const repoRoot = resolve(import.meta.dirname, "../../../..");
+const apiRoot = resolve(repoRoot, "api/app");
+
+describe("account TanStack adapter boundary", () => {
+  it("exports account server functions from @api/app", () => {
+    const packageJson = JSON.parse(
+      readFileSync(resolve(apiRoot, "package.json"), "utf8")
+    ) as { exports?: Record<string, unknown> };
+
+    expect(packageJson.exports).toHaveProperty("./tanstack/account");
+  });
+
+  it("defines handwritten account server functions in the api/app adapter layer", () => {
+    const source = readFileSync(
+      resolve(apiRoot, "src/adapters/tanstack/account.ts"),
+      "utf8"
+    );
+
+    expect(source).toContain('from "@tanstack/react-start"');
+    expect(source).toContain("createServerFn");
+    expect(source).toContain("getAccountProfileCommand");
+    expect(source).toContain("updateAccountNameCommand");
+    expect(source).toContain("createAccountUsernameCommand");
+    expect(source).not.toContain("TRPCError");
+    expect(source).not.toContain("ORPCError");
+    expect(source).not.toContain("defineCommandSurface");
+    expect(source).not.toContain("dispatchCommand");
+  });
+
+  it("removes migrated account procedures from tRPC but keeps nested account routers", () => {
+    const rootSource = readFileSync(resolve(apiRoot, "src/root.ts"), "utf8");
+    const routerPath = resolve(
+      apiRoot,
+      "src/router/(pending-allowed)/account.ts"
+    );
+
+    expect(rootSource).toContain("mcpConnections: accountMcpConnectionsRouter");
+    expect(rootSource).toContain("userConnectors: userConnectorsRouter");
+
+    if (existsSync(routerPath)) {
+      const routerSource = readFileSync(routerPath, "utf8");
+      expect(routerSource).not.toContain("get: viewerProcedure");
+      expect(routerSource).not.toContain("updateName: viewerProcedure");
+      expect(routerSource).not.toContain("createUsername: viewerProcedure");
+      expect(routerSource).not.toContain("TRPCError");
+    }
+  });
+});

@@ -26,12 +26,12 @@ import {
   getNativeOAuthConfig,
 } from "../../auth/native-oauth";
 import { resolveOrgSetupGate } from "../../auth/org-setup-gate";
+import { toAccountProfile } from "../../domain/account";
 import {
   nativeOAuthProcedure,
   publicProcedure,
   viewerProcedure,
 } from "../../trpc";
-import { toAccountProfile } from "./account-profile";
 
 function requireNativeOAuthConfig(client: NativeClient) {
   const config = getNativeOAuthConfig(client);

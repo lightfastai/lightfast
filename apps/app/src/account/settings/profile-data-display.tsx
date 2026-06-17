@@ -22,14 +22,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect } from "react";
 import { SettingRow, SettingsGroup } from "~/components/settings-section";
-import { useTRPC } from "~/trpc/react";
+import { accountProfileQueryOptions } from "../account-queries";
 import { useAccountNameUpdate } from "./account-settings-actions";
 import { ProfileDataLoading } from "./profile-data-loading";
 
 export function ProfileDataDisplay() {
-  const trpc = useTRPC();
   const mounted = useMounted();
-  const accountQuery = trpc.viewer.account.get.queryOptions();
+  const accountQuery = accountProfileQueryOptions();
   const { data: profile, isPending } = useQuery({
     ...accountQuery,
     enabled: typeof window !== "undefined",

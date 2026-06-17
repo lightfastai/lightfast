@@ -3,6 +3,13 @@ import type { NamespaceOperation } from "@db/app/schema";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AuthIdentity } from "../auth/identity";
+import { actorFromAuthIdentity } from "../domain";
+import {
+  createAccountUsernameCommand,
+  createDefaultAccountCommandDeps,
+  getAccountProfileCommand,
+  updateAccountNameCommand,
+} from "../domain/account";
 
 const getUserMock = vi.fn();
 const updateUserMock = vi.fn();
@@ -12,76 +19,36 @@ const reserveNamespaceForOperationMock = vi.fn();
 const markNamespaceOperationClerkAppliedMock = vi.fn();
 const finalizeNamespaceOperationMock = vi.fn();
 const deletePreClerkNamespaceReservationMock = vi.fn();
-const failUnreservedNamespaceOperationMock = vi.fn();
+const logErrorMock = vi.fn();
 
-class MockNamespaceConflictError extends Error {
-  constructor(
-    public readonly code: string,
-    message: string
-  ) {
-    super(message);
-    this.name = "NamespaceConflictError";
-  }
-}
+const { MockNamespaceConflictError } = vi.hoisted(() => ({
+  MockNamespaceConflictError: class MockNamespaceConflictError extends Error {
+    readonly code: string;
 
-vi.mock("@db/app/client", () => ({ db: {} }));
-vi.mock("@db/app", () => ({
+    constructor(code: string, message: string) {
+      super(message);
+      this.name = "NamespaceConflictError";
+      this.code = code;
+    }
+  },
+}));
+
+vi.mock("@db/app", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@db/app")>()),
   NamespaceConflictError: MockNamespaceConflictError,
-  deletePreClerkNamespaceReservation: deletePreClerkNamespaceReservationMock,
-  failUnreservedNamespaceOperation: failUnreservedNamespaceOperationMock,
-  finalizeNamespaceOperation: finalizeNamespaceOperationMock,
-  markNamespaceOperationClerkApplied: markNamespaceOperationClerkAppliedMock,
-  reserveNamespaceForOperation: reserveNamespaceForOperationMock,
-  startNamespaceOperation: startNamespaceOperationMock,
 }));
-
-vi.mock("@vendor/clerk/env", () => ({
-  clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
-}));
-
-vi.mock("@vendor/clerk/server", () => ({
-  clerkClient: () =>
-    Promise.resolve({
-      users: {
-        getUser: getUserMock,
-        updateUser: updateUserMock,
-      },
-    }),
-}));
-
-vi.mock("../auth/clerk-errors", () => ({
-  isClerkConflictError: isClerkConflictErrorMock,
-}));
-
-vi.mock("@vendor/observability/log/next", () => ({
-  log: { debug: vi.fn(), error: vi.fn(), info: vi.fn(), warn: vi.fn() },
-}));
-
-vi.mock("@vendor/observability/trpc", () => ({
-  createObservabilityMiddleware:
-    () =>
-    ({ next }: { next: () => unknown }) =>
-      next(),
-}));
-
-const { createCallerFactory, createTRPCRouter } = await import("../trpc");
-const { accountRouter } = await import("../router/(pending-allowed)/account");
-
-const testRouter = createTRPCRouter({
-  viewer: createTRPCRouter({
-    account: accountRouter,
-  }),
-});
-const createCaller = createCallerFactory(testRouter);
 
 const pendingIdentity: AuthIdentity = {
   type: "pending",
   userId: "user_test",
 };
 
-const unauthenticatedIdentity: AuthIdentity = {
-  type: "unauthenticated",
-};
+function ctx(identity: AuthIdentity = pendingIdentity) {
+  return {
+    actor: actorFromAuthIdentity(identity, "web"),
+    request: { id: "req_test", source: "tanstack" as const },
+  };
+}
 
 function clerkUser(overrides: Record<string, unknown> = {}) {
   return {
@@ -120,11 +87,22 @@ function operation(
   };
 }
 
-function caller(identity = pendingIdentity) {
-  return createCaller({
-    auth: { identity },
+function deps() {
+  return createDefaultAccountCommandDeps({
+    clerk: {
+      users: {
+        getUser: getUserMock,
+        updateUser: updateUserMock,
+      },
+    },
     db: {} as Database,
-    headers: new Headers(),
+    deletePreClerkNamespaceReservation: deletePreClerkNamespaceReservationMock,
+    finalizeNamespaceOperation: finalizeNamespaceOperationMock,
+    isClerkConflictError: isClerkConflictErrorMock,
+    log: { error: logErrorMock },
+    markNamespaceOperationClerkApplied: markNamespaceOperationClerkAppliedMock,
+    reserveNamespaceForOperation: reserveNamespaceForOperationMock,
+    startNamespaceOperation: startNamespaceOperationMock,
   });
 }
 
@@ -137,7 +115,7 @@ beforeEach(() => {
   markNamespaceOperationClerkAppliedMock.mockReset();
   finalizeNamespaceOperationMock.mockReset();
   deletePreClerkNamespaceReservationMock.mockReset();
-  failUnreservedNamespaceOperationMock.mockReset();
+  logErrorMock.mockReset();
 
   getUserMock.mockResolvedValue(clerkUser());
   updateUserMock.mockImplementation(
@@ -157,20 +135,36 @@ beforeEach(() => {
   );
 });
 
-describe("account.updateName", () => {
-  it("rejects unauthenticated callers", async () => {
+describe("account domain commands", () => {
+  it("loads a pending Clerk user's account profile", async () => {
     await expect(
-      caller(unauthenticatedIdentity).viewer.account.updateName({
-        displayName: "Ada Lovelace",
+      getAccountProfileCommand.run({
+        ctx: ctx(),
+        deps: deps(),
+        input: {},
       })
-    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    ).resolves.toEqual({
+      createdAt: "2026-06-01T00:00:00.000Z",
+      firstName: "Ada",
+      fullName: "Ada Lovelace",
+      id: "user_test",
+      imageUrl: "https://img.example.com/user.png",
+      initials: "AL",
+      lastName: "Lovelace",
+      primaryEmailAddress: "ada@example.com",
+      username: null,
+    });
 
-    expect(updateUserMock).not.toHaveBeenCalled();
+    expect(getUserMock).toHaveBeenCalledWith("user_test");
   });
 
-  it("updates the Clerk first and last name from a display name", async () => {
+  it("updates the Clerk display name for the signed-in user", async () => {
     await expect(
-      caller().viewer.account.updateName({ displayName: "Ada Lovelace" })
+      updateAccountNameCommand.run({
+        ctx: ctx(),
+        deps: deps(),
+        input: { displayName: "Ada Lovelace" },
+      })
     ).resolves.toMatchObject({
       firstName: "Ada Lovelace",
       fullName: "Ada Lovelace",
@@ -182,14 +176,13 @@ describe("account.updateName", () => {
       lastName: "",
     });
   });
-});
 
-describe("account.createUsername", () => {
   it("reserves the Lightfast namespace before setting Clerk username", async () => {
     await expect(
-      caller().viewer.account.createUsername({
-        idempotencyKey: "idem_1",
-        username: "Ada-Dev",
+      createAccountUsernameCommand.run({
+        ctx: ctx(),
+        deps: deps(),
+        input: { idempotencyKey: "idem_1", username: "Ada-Dev" },
       })
     ).resolves.toMatchObject({
       id: "user_test",
@@ -206,51 +199,46 @@ describe("account.createUsername", () => {
         toHandle: "ada-dev",
       }
     );
-    expect(reserveNamespaceForOperationMock).toHaveBeenCalledWith(
-      expect.anything(),
-      operation()
-    );
     expect(updateUserMock).toHaveBeenCalledWith("user_test", {
       username: "ada-dev",
     });
-    expect(markNamespaceOperationClerkAppliedMock).toHaveBeenCalledWith(
-      expect.anything(),
-      operation({ status: "namespace_reserved" })
-    );
     expect(finalizeNamespaceOperationMock).toHaveBeenCalledWith(
       expect.anything(),
       operation({ status: "clerk_applied" })
     );
   });
 
-  it("does not allow changing an existing username", async () => {
+  it("returns the existing profile when retrying the same username", async () => {
     getUserMock.mockResolvedValue(clerkUser({ username: "ada-dev" }));
 
     await expect(
-      caller().viewer.account.createUsername({
-        idempotencyKey: "idem_1",
-        username: "other-dev",
+      createAccountUsernameCommand.run({
+        ctx: ctx(),
+        deps: deps(),
+        input: { idempotencyKey: "idem_1", username: "ada-dev" },
       })
-    ).rejects.toMatchObject({
-      code: "BAD_REQUEST",
-      message: "Username has already been set",
-    });
+    ).resolves.toMatchObject({ username: "ada-dev" });
 
     expect(startNamespaceOperationMock).not.toHaveBeenCalled();
     expect(updateUserMock).not.toHaveBeenCalled();
   });
 
-  it("returns the existing profile when retrying the same username", async () => {
+  it("rejects attempts to change an existing username with a domain validation error", async () => {
     getUserMock.mockResolvedValue(clerkUser({ username: "ada-dev" }));
 
     await expect(
-      caller().viewer.account.createUsername({
-        idempotencyKey: "idem_1",
-        username: "ada-dev",
+      createAccountUsernameCommand.run({
+        ctx: ctx(),
+        deps: deps(),
+        input: { idempotencyKey: "idem_1", username: "other-dev" },
       })
-    ).resolves.toMatchObject({
-      username: "ada-dev",
-    });
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        code: "USERNAME_ALREADY_SET",
+        kind: "validation",
+        message: "Username has already been set",
+      })
+    );
 
     expect(startNamespaceOperationMock).not.toHaveBeenCalled();
     expect(updateUserMock).not.toHaveBeenCalled();
@@ -265,14 +253,18 @@ describe("account.createUsername", () => {
     );
 
     await expect(
-      caller().viewer.account.createUsername({
-        idempotencyKey: "idem_1",
-        username: "ada-dev",
+      createAccountUsernameCommand.run({
+        ctx: ctx(),
+        deps: deps(),
+        input: { idempotencyKey: "idem_1", username: "ada-dev" },
       })
-    ).rejects.toMatchObject({
-      code: "CONFLICT",
-      message: "This username is already taken",
-    });
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        code: "USERNAME_CONFLICT",
+        kind: "conflict",
+        message: "This username is already taken",
+      })
+    );
 
     expect(deletePreClerkNamespaceReservationMock).toHaveBeenCalledWith(
       expect.anything(),

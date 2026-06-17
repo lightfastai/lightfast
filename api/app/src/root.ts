@@ -9,7 +9,6 @@
  * - `org.workspace`: bound-org product surface.
  */
 
-import { accountRouter } from "./router/(pending-allowed)/account";
 import { githubAccountRouter } from "./router/(pending-allowed)/github-account";
 import { nativeAuthRouter } from "./router/(pending-allowed)/native-auth";
 import { orgSettingsOrganizationRouter } from "./router/(pending-allowed)/organization";
@@ -41,7 +40,6 @@ export const appRouter = createTRPCRouter({
   }),
   viewer: createTRPCRouter({
     account: createTRPCRouter({
-      ...accountRouter,
       mcpConnections: accountMcpConnectionsRouter,
       userConnectors: userConnectorsRouter,
     }),
