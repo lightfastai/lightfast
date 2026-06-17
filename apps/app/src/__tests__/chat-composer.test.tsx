@@ -132,9 +132,7 @@ describe("ChatComposer", () => {
     expect(
       container.querySelector('[data-align="inline-start"]')
     ).not.toBeNull();
-    expect(
-      container.querySelector('[data-align="inline-end"]')
-    ).not.toBeNull();
+    expect(container.querySelector('[data-align="inline-end"]')).not.toBeNull();
     expect(container.querySelector('[data-align="block-end"]')).toBeNull();
     expect(container.querySelector("form")?.className).not.toContain(
       "data-[multiline="
