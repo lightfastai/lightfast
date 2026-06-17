@@ -1,23 +1,15 @@
-import { appRouter, createCallerFactory, createTRPCContext } from "@api/app";
 import {
-  NATIVE_AUTH_HEADERS,
-  type NativeClient,
-} from "@repo/native-auth-contract";
-import { TRPCError } from "@trpc/server";
-import { getHTTPStatusCodeFromError } from "@trpc/server/http";
+  finalizeNativeAuthAttemptForRequest,
+  getNativeAuthSessionForRequest,
+  getNativeOAuthClientConfig,
+  isNativeAuthError,
+} from "@api/app/native-auth";
 
-const createCaller = createCallerFactory(appRouter);
-
-export async function createNativeOAuthFacadeCaller(input: {
-  headers: Headers;
-  source: NativeClient;
-}) {
-  const headers = new Headers(input.headers);
-  headers.set("x-trpc-source", input.source);
-  headers.set(NATIVE_AUTH_HEADERS.client, input.source);
-
-  return createCaller(await createTRPCContext({ headers }));
-}
+export {
+  finalizeNativeAuthAttemptForRequest,
+  getNativeAuthSessionForRequest,
+  getNativeOAuthClientConfig,
+};
 
 export function jsonResponse(data: unknown, init: ResponseInit = {}) {
   const headers = new Headers(init.headers);
@@ -28,16 +20,16 @@ export function jsonResponse(data: unknown, init: ResponseInit = {}) {
 }
 
 export function errorResponse(error: unknown) {
-  if (error instanceof TRPCError) {
-    const status = getHTTPStatusCodeFromError(error);
+  if (isNativeAuthError(error)) {
     return jsonResponse(
       {
         error: {
           code: error.code,
-          message: status >= 500 ? "Unexpected auth error" : error.message,
+          message:
+            error.status >= 500 ? "Unexpected auth error" : error.message,
         },
       },
-      { status }
+      { status: error.status }
     );
   }
 

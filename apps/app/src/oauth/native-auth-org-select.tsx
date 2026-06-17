@@ -1,12 +1,13 @@
+import { createNativeAuthAttempt } from "@api/app/tanstack/native-auth";
 import type {
   NativeClient,
+  NativeCreateAttemptInput,
   NativeOrganization,
 } from "@repo/native-auth-contract";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
-import { useMutation } from "@tanstack/react-query";
+import { mutationOptions, useMutation } from "@tanstack/react-query";
 import { ArrowRight, Loader2 } from "lucide-react";
-import { useTRPC } from "~/trpc/react";
 
 const clientLabels = {
   cli: "Lightfast CLI",
@@ -75,9 +76,11 @@ export function NativeAuthOrgSelect({
   redirectUri: string;
   state: string;
 }) {
-  const trpc = useTRPC();
   const createAttemptMutation = useMutation(
-    trpc.native.auth.createAttempt.mutationOptions({
+    mutationOptions({
+      meta: { errorTitle: "Failed to continue native authorization" },
+      mutationFn: (data: NativeCreateAttemptInput) =>
+        createNativeAuthAttempt({ data }),
       onSuccess: (result) => {
         window.location.assign(
           withClerkDevBrowserContext(result.authorizationUrl)

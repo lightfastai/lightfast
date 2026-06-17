@@ -29,9 +29,17 @@
       "types": "./src/domain/index.ts",
       "default": "./src/domain/index.ts"
     },
+    "./native-auth": {
+      "types": "./src/native-auth/index.ts",
+      "default": "./src/native-auth/index.ts"
+    },
     "./tanstack/signals": {
       "types": "./src/adapters/tanstack/signals.ts",
       "default": "./src/adapters/tanstack/signals.ts"
+    },
+    "./tanstack/native-auth": {
+      "types": "./src/adapters/tanstack/native-auth.ts",
+      "default": "./src/adapters/tanstack/native-auth.ts"
     },
     "./tanstack/org-api-keys": {
       "types": "./src/adapters/tanstack/org-api-keys.ts",

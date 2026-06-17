@@ -4,8 +4,8 @@ import {
 } from "@repo/native-auth-contract";
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  createNativeOAuthFacadeCaller,
   errorResponse,
+  finalizeNativeAuthAttemptForRequest,
   jsonResponse,
 } from "~/server/oauth/native-auth";
 
@@ -17,11 +17,11 @@ export const Route = createFileRoute("/api/oauth/finalize")({
           const body = nativeFinalizeRequestSchema.parse(
             await request.json().catch(() => null)
           );
-          const caller = await createNativeOAuthFacadeCaller({
+          const session = await finalizeNativeAuthAttemptForRequest({
+            data: body,
             headers: request.headers,
             source: body.client,
           });
-          const session = await caller.native.auth.finalize(body);
           return jsonResponse(nativeSessionMetadataSchema.parse(session));
         } catch (error) {
           return errorResponse(error);
