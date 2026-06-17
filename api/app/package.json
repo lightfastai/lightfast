@@ -65,6 +65,10 @@
       "types": "./src/adapters/tanstack/source-control.ts",
       "default": "./src/adapters/tanstack/source-control.ts"
     },
+    "./tanstack/skills": {
+      "types": "./src/adapters/tanstack/skills.ts",
+      "default": "./src/adapters/tanstack/skills.ts"
+    },
     "./tanstack/signal-views": {
       "types": "./src/adapters/tanstack/signal-views.ts",
       "default": "./src/adapters/tanstack/signal-views.ts"

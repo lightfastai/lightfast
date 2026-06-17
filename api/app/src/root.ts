@@ -21,7 +21,6 @@ import { orgSourceControlRouter } from "./router/(pending-not-allowed)/org-sourc
 import { taskRouter } from "./router/(pending-not-allowed)/task";
 import { workspaceAssistantRouter } from "./router/(pending-not-allowed)/workspace-assistant";
 import { workspaceEntityGraphRouter } from "./router/(pending-not-allowed)/workspace-entity-graph";
-import { workspaceSkillsRouter } from "./router/(pending-not-allowed)/workspace-skills";
 import { createTRPCRouter } from "./trpc";
 
 export const appRouter = createTRPCRouter({
@@ -46,7 +45,6 @@ export const appRouter = createTRPCRouter({
       connectors: connectorsRouter,
       developerConnections: developerConnectionsRouter,
       entityGraph: workspaceEntityGraphRouter,
-      skills: workspaceSkillsRouter,
     }),
   }),
 });
