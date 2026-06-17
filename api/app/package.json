@@ -73,6 +73,10 @@
       "types": "./src/adapters/tanstack/people-views.ts",
       "default": "./src/adapters/tanstack/people-views.ts"
     },
+    "./tanstack/people": {
+      "types": "./src/adapters/tanstack/people.ts",
+      "default": "./src/adapters/tanstack/people.ts"
+    },
     "./services/github": {
       "types": "./src/services/github/index.ts",
       "default": "./src/services/github/index.ts"
