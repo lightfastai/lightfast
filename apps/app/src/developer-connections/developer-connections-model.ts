@@ -1,7 +1,7 @@
-import type { AppRouterOutputs } from "@api/app";
+import type { ListDeveloperConnectionsResult } from "@api/app/tanstack/developer-connections";
 
 export type DeveloperConnectionCatalogRow =
-  AppRouterOutputs["org"]["workspace"]["developerConnections"]["list"][number];
+  ListDeveloperConnectionsResult[number];
 export type DeveloperConnectionProvider =
   DeveloperConnectionCatalogRow["provider"];
 
