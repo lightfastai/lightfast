@@ -9,7 +9,6 @@
  */
 
 import { nativeAuthRouter } from "./router/(pending-allowed)/native-auth";
-import { orgSettingsOrganizationRouter } from "./router/(pending-allowed)/organization";
 import { automationsRouter } from "./router/(pending-not-allowed)/automations";
 import { connectorsRouter } from "./router/(pending-not-allowed)/connectors";
 import { developerConnectionsRouter } from "./router/(pending-not-allowed)/developer-connections";
@@ -32,7 +31,6 @@ export const appRouter = createTRPCRouter({
       task: taskRouter,
     }),
     settings: createTRPCRouter({
-      organization: orgSettingsOrganizationRouter,
       orgBilling: orgBillingRouter,
       identity: orgIdentityRouter,
       orgMembers: orgMembersRouter,

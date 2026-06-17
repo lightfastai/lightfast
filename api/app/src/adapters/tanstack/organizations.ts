@@ -9,7 +9,9 @@ import {
   createDefaultOrganizationCommandDeps,
   createOrganizationCommand,
   getOrganizationBySlugCommand,
+  listOrganizationDomainsCommand,
   listUserOrganizationsCommand,
+  updateOrganizationDomainsCommand,
   updateOrganizationNameCommand,
 } from "../../domain/organizations";
 
@@ -106,6 +108,21 @@ export const createOrganization = createServerFn({ method: "POST" })
     }
   });
 
+export const listOrganizationDomains = createServerFn({ method: "GET" })
+  .inputValidator(listOrganizationDomainsCommand.input)
+  .handler(async ({ data }) => {
+    noStore();
+    try {
+      return await listOrganizationDomainsCommand.run({
+        ctx: await createTanStackOrganizationContext(),
+        deps: await createDefaultOrganizationCommandDeps({ db }),
+        input: data,
+      });
+    } catch (error) {
+      mapTanStackError(error);
+    }
+  });
+
 export const updateOrganizationName = createServerFn({ method: "POST" })
   .inputValidator(updateOrganizationNameCommand.input)
   .handler(async ({ data }) => {
@@ -121,6 +138,27 @@ export const updateOrganizationName = createServerFn({ method: "POST" })
     }
   });
 
+export const updateOrganizationDomains = createServerFn({ method: "POST" })
+  .inputValidator(updateOrganizationDomainsCommand.input)
+  .handler(async ({ data }) => {
+    noStore();
+    try {
+      return await updateOrganizationDomainsCommand.run({
+        ctx: await createTanStackOrganizationContext(),
+        deps: await createDefaultOrganizationCommandDeps({ db }),
+        input: data,
+      });
+    } catch (error) {
+      mapTanStackError(error);
+    }
+  });
+
 export type ListUserOrganizationsResult = Awaited<
   ReturnType<typeof listUserOrganizations>
+>;
+export type ListOrganizationDomainsResult = Awaited<
+  ReturnType<typeof listOrganizationDomains>
+>;
+export type UpdateOrganizationDomainsResult = Awaited<
+  ReturnType<typeof updateOrganizationDomains>
 >;
