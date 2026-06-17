@@ -1,14 +1,14 @@
+import { requestSkillRefresh } from "@api/app/tanstack/skills";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { useTRPC } from "~/trpc/react";
 import type { SkillsListResult } from "./skills-types";
+import { skillsListQueryKey } from "./use-skills-list-query";
 
 const REFRESHABLE_STATUSES = new Set(["stale", "unavailable"]);
 const POLLABLE_STATUSES = new Set(["refreshing", "stale", "unavailable"]);
 const REFRESH_POLL_INTERVAL_MS = 5000;
 
 export function useSkillIndexRefreshController(snapshot: SkillsListResult) {
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
   const attemptedRetryTicks = useRef(new Map<string, number>());
   const requestedVersions = useRef(new Set<string>());
@@ -17,15 +17,13 @@ export function useSkillIndexRefreshController(snapshot: SkillsListResult) {
   const hasTerminalRefreshError = Boolean(
     snapshot.freshness.errorCode || snapshot.freshness.errorMessage
   );
-  const { mutate } = useMutation(
-    trpc.org.workspace.skills.requestRefresh.mutationOptions({
-      onSuccess: () => {
-        void queryClient.invalidateQueries(
-          trpc.org.workspace.skills.list.queryFilter()
-        );
-      },
-    })
-  );
+  const { mutate } = useMutation({
+    mutationFn: (_data: Record<string, never>) =>
+      requestSkillRefresh({ data: {} }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: skillsListQueryKey });
+    },
+  });
 
   useEffect(() => {
     const version = snapshot.snapshotVersion ?? "missing";
@@ -85,9 +83,7 @@ export function useSkillIndexRefreshController(snapshot: SkillsListResult) {
 
     const source = new EventSource("/api/skills/index/events");
     const onSkillIndex = () => {
-      void queryClient.invalidateQueries(
-        trpc.org.workspace.skills.list.queryFilter()
-      );
+      void queryClient.invalidateQueries({ queryKey: skillsListQueryKey });
     };
 
     source.addEventListener("skill-index", onSkillIndex);
@@ -95,7 +91,7 @@ export function useSkillIndexRefreshController(snapshot: SkillsListResult) {
     return () => {
       source.close();
     };
-  }, [queryClient, trpc]);
+  }, [queryClient]);
 
   useEffect(() => {
     if (!POLLABLE_STATUSES.has(snapshot.freshness.status)) {
@@ -106,13 +102,11 @@ export function useSkillIndexRefreshController(snapshot: SkillsListResult) {
     }
 
     const interval = setInterval(() => {
-      void queryClient.invalidateQueries(
-        trpc.org.workspace.skills.list.queryFilter()
-      );
+      void queryClient.invalidateQueries({ queryKey: skillsListQueryKey });
     }, REFRESH_POLL_INTERVAL_MS);
 
     return () => {
       clearInterval(interval);
     };
-  }, [hasTerminalRefreshError, queryClient, snapshot.freshness.status, trpc]);
+  }, [hasTerminalRefreshError, queryClient, snapshot.freshness.status]);
 }

@@ -1,6 +1,5 @@
-import type { AppRouterOutputs } from "@api/app";
+import type { ListSkillsResult } from "@api/app/tanstack/skills";
 
-export type SkillsListResult =
-  AppRouterOutputs["org"]["workspace"]["skills"]["list"];
+export type SkillsListResult = ListSkillsResult;
 export type Skill = SkillsListResult["skills"][number];
 export type SkillsFreshness = SkillsListResult["freshness"];

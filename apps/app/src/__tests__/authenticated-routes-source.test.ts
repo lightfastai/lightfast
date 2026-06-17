@@ -458,7 +458,7 @@ describe("app authenticated route migration", () => {
     expect(skillsClientSource).toContain("SkillGrid");
     expect(skillsClientSource).toContain("SkillDialog");
     expect(skillsSearchSource).toContain("validateSkillsSearch");
-    expect(skillsQuerySource).toContain("skills.list.queryOptions");
+    expect(skillsQuerySource).toContain('@api/app/tanstack/skills"');
     expect(skillsQuerySource).toContain(
       'enabled: typeof window !== "undefined"'
     );

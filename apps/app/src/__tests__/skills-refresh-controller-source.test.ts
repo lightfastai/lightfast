@@ -16,8 +16,9 @@ describe("skills refresh controller source", () => {
     );
 
     expect(clientSource).toContain("useSkillIndexRefreshController(data)");
-    expect(controllerSource).toContain("skills.requestRefresh.mutationOptions");
-    expect(controllerSource).toContain("skills.list.queryFilter()");
+    expect(controllerSource).toContain('@api/app/tanstack/skills"');
+    expect(controllerSource).toContain("requestSkillRefresh");
+    expect(controllerSource).toContain("skillsListQueryKey");
     expect(controllerSource).toContain(
       'new EventSource("/api/skills/index/events")'
     );
