@@ -16,7 +16,6 @@ import {
 } from "./people-search-params";
 import { PeopleTableView } from "./people-table-view";
 import { PeopleToolbar } from "./people-toolbar";
-import { PeopleViewSwitcher } from "./people-view-switcher";
 import { usePeopleListQuery } from "./use-people-list-query";
 
 export function PeopleClient({
@@ -100,12 +99,6 @@ export function PeopleClient({
           });
         }}
         query={search.peopleQuery}
-        viewsSlot={
-          <PeopleViewSwitcher
-            search={search}
-            setSearchParams={setSearchParams}
-          />
-        }
       />
 
       <PeopleTableView

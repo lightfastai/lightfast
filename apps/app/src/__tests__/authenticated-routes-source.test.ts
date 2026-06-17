@@ -231,13 +231,20 @@ describe("app authenticated route migration", () => {
     const viewsSource = source("src/signals/signals-view-switcher.tsx");
     const viewQuerySource = source("src/signals/use-signal-views-query.ts");
     const viewSwitcherSource = source("src/components/views/view-switcher.tsx");
+    const topbarActionsSource = source(
+      "src/workspace/workspace-topbar-actions.tsx"
+    );
 
     expect(routeSource).toContain("validateSignalsSearch");
     expect(routeSource).toContain("createFileRoute");
     expect(routeSource).toContain("setSearchParams");
+    expect(routeSource).toContain(
+      'staticData: { workspaceTopbarAction: "signals" }'
+    );
     expect(clientSource).toContain("SignalCreateDialog");
-    expect(clientSource).toContain("SignalsViewSwitcher");
+    expect(clientSource).not.toContain("SignalsViewSwitcher");
     expect(clientSource).toContain("signalDetailQueryOptions");
+    expect(topbarActionsSource).toContain("SignalsViewSwitcher");
     expect(createDialogSource).toContain("createSignalMutationOptions");
     expect(createDialogSource).toContain("listUserOrganizationsQueryOptions");
     expect(searchSource).toContain("validateSignalsSearch");
@@ -275,15 +282,22 @@ describe("app authenticated route migration", () => {
     const tableSource = source("src/people/people-table-view.tsx");
     const detailSource = source("src/people/people-detail-content.tsx");
     const emptySource = source("src/people/people-empty-state.tsx");
+    const topbarActionsSource = source(
+      "src/workspace/workspace-topbar-actions.tsx"
+    );
 
     expect(routeSource).toContain("validatePeopleSearch");
     expect(routeSource).toContain("createFileRoute");
     expect(routeSource).toContain("setSearchParams");
+    expect(routeSource).toContain(
+      'staticData: { workspaceTopbarAction: "people" }'
+    );
     expect(clientSource).toContain("PeopleToolbar");
-    expect(clientSource).toContain("PeopleViewSwitcher");
+    expect(clientSource).not.toContain("PeopleViewSwitcher");
     expect(clientSource).toContain("PeopleTableView");
     expect(clientSource).toContain("PeopleDetailSheet");
     expect(clientSource).toContain("usePeopleListQuery");
+    expect(topbarActionsSource).toContain("PeopleViewSwitcher");
     expect(searchSource).toContain("validatePeopleSearch");
     expect(searchSource).toContain("parsePersonProviders");
     expect(querySource).toContain("people.list.infiniteQueryOptions");
@@ -291,7 +305,7 @@ describe("app authenticated route migration", () => {
     expect(viewsSource).toContain("viewConfigToParamValues");
     expect(viewQuerySource).toContain('@api/app/tanstack/people-views"');
     expect(viewQuerySource).toContain("listPeopleViews");
-    expect(toolbarSource).toContain("viewsSlot");
+    expect(toolbarSource).not.toContain("viewsSlot");
     expect(tableSource).toContain("PeopleEmptyState");
     expect(detailSource).toContain('to="/$slug/signals"');
     expect(emptySource).toContain('href="/docs/get-started/overview"');

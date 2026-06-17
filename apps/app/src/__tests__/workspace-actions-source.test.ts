@@ -70,31 +70,57 @@ describe("workspace page-owned actions", () => {
     const connectorsRouteSource = source(
       "src/routes/_authenticated/$slug/connectors.tsx"
     );
+    const peopleRouteSource = source(
+      "src/routes/_authenticated/$slug/people.tsx"
+    );
+    const signalsRouteSource = source(
+      "src/routes/_authenticated/$slug/signals.tsx"
+    );
     const skillsClientSource = source("src/skills/skills-client.tsx");
     const connectorsClientSource = source(
       "src/connectors/connectors-client.tsx"
     );
+    const peopleClientSource = source("src/people/people-client.tsx");
+    const peopleToolbarSource = source("src/people/people-toolbar.tsx");
+    const signalsClientSource = source("src/signals/signals-client.tsx");
+    const signalsToolbarSource = source("src/signals/signals-toolbar.tsx");
 
     expect(shellSource).toContain("useWorkspaceTopbarAction");
     expect(shellSource).toContain("actions={workspaceTopbarAction}");
     expect(topbarActionsSource).toContain("useMatches");
     expect(topbarActionsSource).toContain("workspaceTopbarAction");
     expect(topbarActionsSource).toContain("ConnectorsTopbarActions");
+    expect(topbarActionsSource).toContain("PeopleTopbarActions");
     expect(topbarActionsSource).toContain("SkillsTopbarActions");
+    expect(topbarActionsSource).toContain("SignalsTopbarActions");
     expect(topbarActionsSource).toContain(
       'getRouteApi("/_authenticated/$slug/connectors")'
     );
     expect(topbarActionsSource).toContain(
+      'getRouteApi("/_authenticated/$slug/people")'
+    );
+    expect(topbarActionsSource).toContain(
       'getRouteApi("/_authenticated/$slug/skills")'
     );
+    expect(topbarActionsSource).toContain(
+      'getRouteApi("/_authenticated/$slug/signals")'
+    );
     expect(topbarActionsSource).toContain("ConnectorOwnerScopeTabs");
+    expect(topbarActionsSource).toContain("PeopleViewSwitcher");
     expect(topbarActionsSource).toContain("SkillsActions");
+    expect(topbarActionsSource).toContain("SignalsViewSwitcher");
 
     expect(skillsRouteSource).toContain(
       'staticData: { workspaceTopbarAction: "skills" }'
     );
     expect(connectorsRouteSource).toContain(
       'staticData: { workspaceTopbarAction: "connectors" }'
+    );
+    expect(peopleRouteSource).toContain(
+      'staticData: { workspaceTopbarAction: "people" }'
+    );
+    expect(signalsRouteSource).toContain(
+      'staticData: { workspaceTopbarAction: "signals" }'
     );
 
     expect(skillsClientSource).not.toContain(
@@ -105,6 +131,12 @@ describe("workspace page-owned actions", () => {
       'data-testid="connectors-actions-row"'
     );
     expect(connectorsClientSource).not.toContain("<ConnectorOwnerScopeTabs");
+    expect(peopleClientSource).not.toContain("<PeopleViewSwitcher");
+    expect(peopleClientSource).not.toContain("viewsSlot=");
+    expect(peopleToolbarSource).not.toContain("viewsSlot");
+    expect(signalsClientSource).not.toContain("<SignalsViewSwitcher");
+    expect(signalsClientSource).not.toContain("viewsSlot=");
+    expect(signalsToolbarSource).not.toContain("viewsSlot");
   });
 
   it("lets automation child routes own document titles", () => {
