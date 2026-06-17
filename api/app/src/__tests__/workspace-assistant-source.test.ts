@@ -27,11 +27,27 @@ describe("workspace assistant TanStack migration", () => {
     expect(existsSync(adapterPath)).toBe(true);
 
     const adapterSource = readFileSync(adapterPath, "utf8");
-    expect(adapterSource).toContain('from "@tanstack/react-start"');
-    expect(adapterSource).toContain("createServerFn");
-    expect(adapterSource).toContain("listConversations");
-    expect(adapterSource).toContain("getConversation");
-    expect(adapterSource).toContain("createConversation");
+    expect(adapterSource).toMatch(
+      /import\s+\{\s*createServerFn\s*\}\s+from\s+"@tanstack\/react-start"/
+    );
+    expect(adapterSource).toMatch(
+      /export\s+const\s+listConversations\s*=\s*createServerFn/
+    );
+    expect(adapterSource).toMatch(
+      /export\s+const\s+getConversation\s*=\s*createServerFn/
+    );
+    expect(adapterSource).toMatch(
+      /export\s+const\s+createConversation\s*=\s*createServerFn/
+    );
     expect(adapterSource).not.toContain("TRPCError");
+  });
+
+  it("preserves domain error codes for TanStack callers", () => {
+    const adapterPath = resolve(apiRoot, "adapters/tanstack/assistant.ts");
+    const adapterSource = readFileSync(adapterPath, "utf8");
+
+    expect(adapterSource).toMatch(/mappedError\.code\s*=\s*error\.code/);
+    expect(adapterSource).toMatch(/code:\s*error\.code/);
+    expect(adapterSource).toMatch(/kind:\s*error\.kind/);
   });
 });

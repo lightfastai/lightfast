@@ -8,6 +8,8 @@ import { WorkspaceAssistantClient } from "~/chat/workspace-assistant-client";
 import { assistantConversationQueryOptions } from "~/chat/workspace-assistant-queries";
 import { WorkspaceRouteErrorPanel } from "~/components/route-boundaries";
 
+const conversationNotFoundCode = "WORKSPACE_ASSISTANT_CONVERSATION_NOT_FOUND";
+
 export const Route = createFileRoute(
   "/_authenticated/$slug/chat/$conversationId"
 )({
@@ -97,8 +99,9 @@ function isConversationNotFoundError(error: unknown) {
   };
 
   return (
+    maybeCode.code === conversationNotFoundCode ||
+    maybeCode.data?.code === conversationNotFoundCode ||
     maybeCode.code === "NOT_FOUND" ||
-    maybeCode.data?.code === "NOT_FOUND" ||
-    error.message === "Workspace assistant conversation not found"
+    maybeCode.data?.code === "NOT_FOUND"
   );
 }

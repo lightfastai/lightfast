@@ -32,6 +32,8 @@ const messageRowRenderingHints = {
   contentVisibility: "auto",
 } satisfies CSSProperties;
 
+const conversationTitleMaxLength = 160;
+
 interface WorkspaceAssistantClientProps {
   conversationId: string;
   initialConversation?: WorkspaceAssistantConversationResult;
@@ -125,7 +127,7 @@ export function WorkspaceAssistantClient({
         try {
           await createConversationMutation.mutateAsync({
             publicId: conversationId,
-            title: nextText,
+            title: conversationTitleFromPrompt(nextText),
           });
           conversationCreatedRef.current = true;
           void queryClient.invalidateQueries({
@@ -246,6 +248,10 @@ export function WorkspaceAssistantClient({
 
 function createWorkspaceAssistantIdempotencyKey() {
   return `idem_${createUuid()}`;
+}
+
+function conversationTitleFromPrompt(text: string) {
+  return text.slice(0, conversationTitleMaxLength);
 }
 
 function createOptimisticUserMessage(text: string): UIMessage {

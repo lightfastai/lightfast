@@ -105,6 +105,14 @@ export interface GetConversationResult {
 }
 export type CreateConversationResult = ConversationListItemResult;
 
+interface TanStackDomainError extends Error {
+  code: string;
+  data: {
+    code: string;
+    kind: string;
+  };
+}
+
 function requestId() {
   return crypto.randomUUID();
 }
@@ -123,7 +131,15 @@ async function getBoundActor() {
 
 function mapTanStackError(error: unknown): never {
   if (isDomainError(error)) {
-    throw new Error(error.message, { cause: error });
+    const mappedError = new Error(error.message, {
+      cause: error,
+    }) as TanStackDomainError;
+    mappedError.code = error.code;
+    mappedError.data = {
+      code: error.code,
+      kind: error.kind,
+    };
+    throw mappedError;
   }
   throw error;
 }

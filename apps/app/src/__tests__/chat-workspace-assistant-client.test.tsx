@@ -240,6 +240,26 @@ describe("WorkspaceAssistantClient", () => {
     expect(routerInvalidateMock).not.toHaveBeenCalled();
   });
 
+  it("clamps the first prompt when using it as the conversation title", async () => {
+    const longPrompt = "Summarize ".repeat(24).trim();
+
+    render(
+      <WorkspaceAssistantClient conversationId="conv_ff83026e-ef0e-40db-ae59-544fbe4df209" />
+    );
+
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: longPrompt },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => {
+      expect(mutateAsyncMock).toHaveBeenCalledWith({
+        publicId: "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
+        title: longPrompt.slice(0, 160),
+      });
+    });
+  });
+
   it("sends one existing conversation turn with provider routine write mode enabled", async () => {
     render(
       <WorkspaceAssistantClient
