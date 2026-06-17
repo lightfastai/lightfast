@@ -8,7 +8,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { ExternalLink, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { useTRPC } from "~/trpc/react";
+import { verifyGitHubLightfastRepoMutationOptions } from "./github-setup-queries";
 
 interface LightfastRepoSetupClientProps {
   accountLogin: string;
@@ -21,14 +21,11 @@ export function LightfastRepoSetupClient({
   newRepositoryUrl,
   orgSlug,
 }: LightfastRepoSetupClientProps) {
-  const trpc = useTRPC();
   const { session } = useSession();
   const [failed, setFailed] = useState(false);
 
   const verifyMutation = useMutation(
-    trpc.org.setup.github.verifyLightfastRepo.mutationOptions({
-      meta: { errorTitle: "Failed to verify .lightfast" },
-    })
+    verifyGitHubLightfastRepoMutationOptions()
   );
 
   async function handleVerify() {

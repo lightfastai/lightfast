@@ -3,7 +3,7 @@ import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { ArrowRight, Loader2 } from "lucide-react";
-import { useTRPC } from "~/trpc/react";
+import { startGitHubOrgSetupMutationOptions } from "./github-setup-queries";
 
 interface BindGithubCardProps {
   githubError?: GitHubBindErrorCode;
@@ -31,12 +31,7 @@ const GITHUB_ERROR_MESSAGES: Record<GitHubBindErrorCode, string> = {
 };
 
 export function BindGithubCard({ githubError, orgSlug }: BindGithubCardProps) {
-  const trpc = useTRPC();
-  const bindMutation = useMutation(
-    trpc.org.setup.github.start.mutationOptions({
-      meta: { errorTitle: "Failed to connect GitHub" },
-    })
-  );
+  const bindMutation = useMutation(startGitHubOrgSetupMutationOptions());
 
   async function handleConnect() {
     if (bindMutation.isPending) {

@@ -4,7 +4,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useTRPC } from "~/trpc/react";
+import { syncGitHubBindingClaimMutationOptions } from "./github-setup-queries";
 
 interface GitHubBindCompleteClientProps {
   orgSlug: string;
@@ -13,16 +13,11 @@ interface GitHubBindCompleteClientProps {
 export function GitHubBindCompleteClient({
   orgSlug,
 }: GitHubBindCompleteClientProps) {
-  const trpc = useTRPC();
   const { isLoaded: isSessionLoaded, session } = useSession();
   const [failed, setFailed] = useState(false);
   const hasStartedRef = useRef(false);
 
-  const syncMutation = useMutation(
-    trpc.org.setup.github.syncBindingClaim.mutationOptions({
-      meta: { errorTitle: "Failed to finish GitHub connection" },
-    })
-  );
+  const syncMutation = useMutation(syncGitHubBindingClaimMutationOptions());
   const { mutateAsync } = syncMutation;
 
   const finish = useCallback(async () => {
