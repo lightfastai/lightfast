@@ -53,6 +53,10 @@
       "types": "./src/adapters/tanstack/user-connectors.ts",
       "default": "./src/adapters/tanstack/user-connectors.ts"
     },
+    "./tanstack/connectors": {
+      "types": "./src/adapters/tanstack/connectors.ts",
+      "default": "./src/adapters/tanstack/connectors.ts"
+    },
     "./tanstack/developer-connections": {
       "types": "./src/adapters/tanstack/developer-connections.ts",
       "default": "./src/adapters/tanstack/developer-connections.ts"

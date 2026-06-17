@@ -6,7 +6,10 @@ import {
   type ConnectorCatalogRow,
   connectionStatus,
 } from "~/connectors/connectors-model";
-import { useTRPC } from "~/trpc/react";
+import {
+  connectorsListQueryOptions,
+  startConnectorMutationOptions,
+} from "~/connectors/connectors-queries";
 
 interface XConnectorSetupClientProps {
   orgSlug: string;
@@ -38,22 +41,18 @@ function unavailableMessage(row: ConnectorCatalogRow) {
 }
 
 export function XConnectorSetupClient({ orgSlug }: XConnectorSetupClientProps) {
-  const trpc = useTRPC();
-  const listQueryOptions = trpc.org.workspace.connectors.list.queryOptions();
   const {
     data: connectors = [],
     error,
     isPending,
   } = useQuery({
-    ...listQueryOptions,
+    ...connectorsListQueryOptions({ staleTime: 30_000 }),
     enabled: typeof window !== "undefined",
-    staleTime: 30_000,
   });
   const xConnector = connectors.find((row) => row.provider === "x");
 
   const startConnectMutation = useMutation(
-    trpc.org.workspace.connectors.startConnect.mutationOptions({
-      meta: { errorTitle: "Failed to connect X" },
+    startConnectorMutationOptions({
       onSuccess: (result) => {
         window.location.assign(result.authorizationUrl);
       },

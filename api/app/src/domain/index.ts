@@ -1,5 +1,6 @@
 export * from "./actor";
 export * from "./command";
+export * from "./connectors";
 export * from "./developer-connections";
 export * from "./errors";
 export * from "./gates";

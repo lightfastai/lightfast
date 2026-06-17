@@ -27,6 +27,7 @@ import { useEffect, useMemo } from "react";
 import { z } from "zod";
 import { BackButton } from "~/components/back-button";
 import { LfSelect } from "~/components/lf-select";
+import { connectorsListQueryOptions } from "~/connectors/connectors-queries";
 import { useTRPC } from "~/trpc/react";
 import { upsertInList } from "./automations-cache";
 import {
@@ -90,9 +91,8 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { data: connectors = [] } = useQuery({
-    ...trpc.org.workspace.connectors.list.queryOptions(),
+    ...connectorsListQueryOptions({ staleTime: 30_000 }),
     enabled: typeof window !== "undefined",
-    staleTime: 30_000,
   });
 
   useEffect(() => {

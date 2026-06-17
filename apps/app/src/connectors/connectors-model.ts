@@ -1,14 +1,15 @@
-import type { AppRouterOutputs } from "@api/app";
+import type {
+  ConnectorSections as ConnectorSectionsResult,
+  TeamConnectorCatalogRow as TeamConnectorCatalogRowResult,
+  UserConnectorCatalogRow as UserConnectorCatalogRowResult,
+} from "./connectors-queries";
 
 export type ConnectorCatalogRow =
   | TeamConnectorCatalogRow
   | UserConnectorCatalogRow;
-export type ConnectorSections =
-  AppRouterOutputs["org"]["workspace"]["connectors"]["listSections"];
-export type TeamConnectorCatalogRow =
-  ConnectorSections["teamConnectors"][number];
-export type UserConnectorCatalogRow =
-  ConnectorSections["yourConnectors"][number];
+export type ConnectorSections = ConnectorSectionsResult;
+export type TeamConnectorCatalogRow = TeamConnectorCatalogRowResult;
+export type UserConnectorCatalogRow = UserConnectorCatalogRowResult;
 export type ConnectorProvider = ConnectorCatalogRow["provider"];
 export type TeamConnectorConnection = NonNullable<
   TeamConnectorCatalogRow["connection"]
