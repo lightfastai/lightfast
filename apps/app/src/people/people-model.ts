@@ -1,7 +1,7 @@
-import type { AppRouterOutputs } from "@api/app";
+import type { PeopleList, PersonRow } from "./people-queries";
 
-export type PeopleList = AppRouterOutputs["org"]["workspace"]["people"]["list"];
-export type PersonRow = PeopleList["items"][number];
+export type { PeopleList, PersonRow } from "./people-queries";
+
 export type PersonProvider = PersonRow["identityProvider"];
 export type PersonType = PersonRow["identityType"];
 

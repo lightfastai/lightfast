@@ -9,9 +9,9 @@ import {
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
-import { useTRPC } from "~/trpc/react";
 import { PeopleDetailContent } from "./people-detail-content";
 import { getPersonName, type PersonRow } from "./people-model";
+import { personDetailQueryOptions } from "./people-queries";
 
 export function PeopleDetailSheet({
   initialPerson,
@@ -24,21 +24,14 @@ export function PeopleDetailSheet({
   publicId: string | null;
   slug: string;
 }) {
-  const trpc = useTRPC();
   const open = publicId !== null;
   const hasInitial = !!initialPerson && initialPerson.publicId === publicId;
 
   const query = useQuery(
-    trpc.org.workspace.people.get.queryOptions(
-      { publicId: publicId ?? "" },
-      {
-        enabled:
-          typeof window !== "undefined" &&
-          open &&
-          !hasInitial &&
-          Boolean(publicId),
-      }
-    )
+    personDetailQueryOptions({
+      enabled: open && !hasInitial && Boolean(publicId),
+      publicId: publicId ?? "",
+    })
   );
 
   const person = hasInitial ? initialPerson : query.data;
