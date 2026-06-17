@@ -16,6 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
 } from "@repo/ui-v2/components/ui/dropdown-menu";
+import { ScrollEdgeCues } from "@repo/ui-v2/components/ui/scroll-edge-cue";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { type ReactNode, useState } from "react";
@@ -42,7 +43,7 @@ export function RecentChatsMenu({
   const { data, error, isPending } = useQuery({
     ...trpc.org.workspace.assistant.listConversations.queryOptions(
       { limit: 20 },
-      { staleTime: 0 },
+      { staleTime: 0 }
     ),
     enabled: typeof window !== "undefined" && Boolean(orgSlug),
   });
@@ -78,44 +79,46 @@ export function RecentChatsMenu({
             </Button>
           </DropdownMenuLabel>
         </DropdownMenuGroup>
-        <ScrollArea
-          className={cn(
-            "overflow-hidden transition-[height] duration-200",
-            expanded ? "h-80" : "h-40",
-          )}
-        >
-          <div className="space-y-1">
-            {isPending ? (
-              <>
-                <Skeleton className="h-7 rounded-xl" />
-                <Skeleton className="h-7 rounded-xl" />
-                <Skeleton className="h-7 rounded-xl" />
-              </>
-            ) : error ? (
-              <DropdownMenuItem disabled>
-                <span className="truncate text-muted-foreground">
-                  Unable to load recents
-                </span>
-              </DropdownMenuItem>
-            ) : conversations.length > 0 ? (
-              conversations.map((conversation) => (
-                <RecentChatsMenuItem
-                  conversation={conversation}
-                  key={conversation.publicId}
-                  onConversationSelect={onConversationSelect}
-                  orgSlug={orgSlug}
-                  pathname={pathname}
-                />
-              ))
-            ) : (
-              <DropdownMenuItem disabled>
-                <span className="truncate text-muted-foreground">
-                  No recent chats
-                </span>
-              </DropdownMenuItem>
+        <ScrollEdgeCues>
+          <ScrollArea
+            className={cn(
+              "overflow-hidden rounded-xl transition-[height] duration-200",
+              expanded ? "h-80" : "h-40"
             )}
-          </div>
-        </ScrollArea>
+          >
+            <div className="space-y-1">
+              {isPending ? (
+                <>
+                  <Skeleton className="h-7 rounded-xl" />
+                  <Skeleton className="h-7 rounded-xl" />
+                  <Skeleton className="h-7 rounded-xl" />
+                </>
+              ) : error ? (
+                <DropdownMenuItem disabled>
+                  <span className="truncate text-muted-foreground">
+                    Unable to load recents
+                  </span>
+                </DropdownMenuItem>
+              ) : conversations.length > 0 ? (
+                conversations.map((conversation) => (
+                  <RecentChatsMenuItem
+                    conversation={conversation}
+                    key={conversation.publicId}
+                    onConversationSelect={onConversationSelect}
+                    orgSlug={orgSlug}
+                    pathname={pathname}
+                  />
+                ))
+              ) : (
+                <DropdownMenuItem disabled>
+                  <span className="truncate text-muted-foreground">
+                    No recent chats
+                  </span>
+                </DropdownMenuItem>
+              )}
+            </div>
+          </ScrollArea>
+        </ScrollEdgeCues>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -139,8 +142,8 @@ function RecentChatsMenuItem({
   return (
     <DropdownMenuItem
       className={cn(
-        "grid w-full min-w-0 max-w-full grid-cols-[auto_minmax(0,1fr)] overflow-hidden cursor-pointer",
-        isActive && "bg-accent text-accent-foreground",
+        "grid w-full min-w-0 max-w-full cursor-pointer grid-cols-[auto_minmax(0,1fr)] overflow-hidden",
+        isActive && "bg-accent text-accent-foreground"
       )}
       render={
         <Link
@@ -163,7 +166,7 @@ function RecentChatsMenuItem({
 }
 
 function getConversationSidebarTitle(
-  conversation: WorkspaceAssistantConversationListItem,
+  conversation: WorkspaceAssistantConversationListItem
 ) {
   const title = conversation.title?.trim();
   return title || "Untitled chat";

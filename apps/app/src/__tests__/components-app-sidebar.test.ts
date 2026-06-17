@@ -37,7 +37,9 @@ describe("workspace sidebar", () => {
     expect(sidebarSource).toContain('title: "Developer Connections"');
     expect(sidebarSource).toContain('title: "Settings"');
     expect(sidebarSource).toContain("pathname === item.href");
-    expect(sidebarSource).toContain("pathname.startsWith(`${item.href}/`)");
+    expect(sidebarSource).toContain(
+      ["pathname.startsWith(`", "$", "{item.href}/`)"].join("")
+    );
   });
 
   it("lets workspace routes own their shell while account routes use the basic shell", () => {
@@ -55,7 +57,9 @@ describe("workspace sidebar", () => {
       'const BASIC_SHELL_PREFIXES = ["/account", "/accounts"] as const'
     );
     expect(authenticatedRouteSource).toContain(
-      "pathname === prefix || pathname.startsWith(`${prefix}/`)"
+      ["pathname === prefix || pathname.startsWith(`", "$", "{prefix}/`)"].join(
+        ""
+      )
     );
     expect(authenticatedRouteSource).toContain("if (!usesBasicShell)");
   });
@@ -72,9 +76,14 @@ describe("workspace sidebar", () => {
 
   it("renders recent chats as a standalone medium dropdown above workspace groups", () => {
     const sidebarSource = source("src/components/app-sidebar.tsx");
-    const recentChatsMenuSource = source("src/components/recent-chats-menu.tsx");
+    const recentChatsMenuSource = source(
+      "src/components/recent-chats-menu.tsx"
+    );
     const dropdownMenuSource = repoSource(
       "packages/ui-v2/src/components/ui/dropdown-menu.tsx"
+    );
+    const scrollEdgeCueSource = repoSource(
+      "packages/ui-v2/src/components/ui/scroll-edge-cue.tsx"
     );
     const recentsIndex = sidebarSource.indexOf("<RecentChatsMenu");
     const navSectionsIndex = sidebarSource.indexOf("{navSections.map");
@@ -97,12 +106,16 @@ describe("workspace sidebar", () => {
     expect(sidebarSource).toContain("function RecentChatsMenuTrigger()");
     expect(sidebarSource).not.toContain("isRecentChatsActive");
     expect(sidebarSource).not.toContain("recentChatConversationPrefix");
-    expect(sidebarSource).not.toContain('pathname === `/${orgSlug}/chat`');
+    expect(sidebarSource).not.toContain(
+      ["pathname === `/", "$", "{orgSlug}/chat`"].join("")
+    );
     expect(sidebarSource).not.toContain("function RecentsDropdown");
     expect(recentChatsMenuSource).toContain("export function RecentChatsMenu");
     expect(recentChatsMenuSource).toContain("trigger: ReactNode");
     expect(recentChatsMenuSource).toContain("{trigger}");
-    expect(recentChatsMenuSource).toContain("onConversationSelect?: () => void");
+    expect(recentChatsMenuSource).toContain(
+      "onConversationSelect?: () => void"
+    );
     expect(recentChatsMenuSource).not.toContain(
       'from "@repo/ui/components/ui/sidebar"'
     );
@@ -121,7 +134,7 @@ describe("workspace sidebar", () => {
     expect(recentChatsMenuSource).toContain("DropdownMenuLabel");
     expect(recentChatsMenuSource).toContain(">Recent Chats</span>");
     expect(recentChatsMenuSource).not.toContain("DropdownMenuSeparator");
-    expect(recentChatsMenuSource).not.toContain("p-0");
+    expect(recentChatsMenuSource).not.toMatch(/(?:^|[\s"])p-0(?:[\s"]|$)/);
     expect(recentChatsMenuSource).not.toContain(
       'className="flex h-7 items-center gap-2 px-2"'
     );
@@ -142,12 +155,26 @@ describe("workspace sidebar", () => {
     );
     expect(recentChatsMenuSource).toContain("<ScrollArea");
     expect(recentChatsMenuSource).toContain(
-      'expanded ? "h-80" : "h-40"'
+      'from "@repo/ui-v2/components/ui/scroll-edge-cue"'
     );
+    expect(recentChatsMenuSource).toContain("<ScrollEdgeCues>");
+    expect(recentChatsMenuSource).not.toContain("function useScrollEdges");
+    expect(recentChatsMenuSource).not.toContain("function ScrollEdgeCue");
+    expect(recentChatsMenuSource).not.toContain("ChevronUpIcon");
+    expect(recentChatsMenuSource).not.toContain("ChevronDownIcon");
+    expect(scrollEdgeCueSource).toContain("export function ScrollEdgeCues");
+    expect(scrollEdgeCueSource).toContain("function useScrollEdges");
+    expect(scrollEdgeCueSource).toContain("function ScrollEdgeCue");
+    expect(scrollEdgeCueSource).toContain("ChevronUpIcon");
+    expect(scrollEdgeCueSource).toContain("ChevronDownIcon");
+    expect(scrollEdgeCueSource).toContain("bg-gradient-to-b from-popover");
+    expect(scrollEdgeCueSource).toContain("bg-gradient-to-t from-popover");
+    expect(scrollEdgeCueSource).toContain('[data-slot="scroll-area-viewport"]');
+    expect(recentChatsMenuSource).toContain('expanded ? "h-80" : "h-40"');
     expect(dropdownMenuSource).not.toContain("function DropdownMenuItemText");
     expect(dropdownMenuSource).not.toContain("truncate?: boolean");
     expect(recentChatsMenuSource).toContain(
-      '"grid w-full min-w-0 max-w-full grid-cols-[auto_minmax(0,1fr)] overflow-hidden cursor-pointer"'
+      '"grid w-full min-w-0 max-w-full cursor-pointer grid-cols-[auto_minmax(0,1fr)] overflow-hidden"'
     );
     expect(recentChatsMenuSource).toContain(
       'className="block min-w-0 truncate"'
