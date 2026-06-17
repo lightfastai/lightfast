@@ -41,6 +41,23 @@ describe("public API route boundaries", () => {
     }
   });
 
+  it("mounts public system health as a thin app-owned route file", () => {
+    const healthPath = resolve(appRoot, "src/routes/api/v1/system/health.ts");
+
+    expect(existsSync(healthPath)).toBe(true);
+
+    const healthRoute = appSource("src/routes/api/v1/system/health.ts");
+
+    expect(healthRoute).toContain('createFileRoute("/api/v1/system/health")');
+    expect(healthRoute).toContain('@api/app/public-api/system"');
+    expect(healthRoute).toContain("handleSystemHealthPublicApiRequest");
+    expect(healthRoute).toContain("handlePublicApiOptionsRequest");
+    expect(healthRoute).not.toContain("OpenAPIHandler");
+    expect(healthRoute).not.toContain("orpcRouter");
+    expect(healthRoute).not.toContain("@db/app");
+    expect(healthRoute).not.toContain("resolveApiKeyAuth");
+  });
+
   it("keeps public signal behavior in an explicit api/app adapter", () => {
     const packageJson = JSON.parse(repoSource("api/app/package.json")) as {
       exports?: Record<string, unknown>;
@@ -52,6 +69,20 @@ describe("public API route boundaries", () => {
     expect(adapter).toContain("createSignalInput");
     expect(adapter).toContain("getSignalOutput.parse");
     expect(adapter).toContain("createSignalForActor");
+    expect(adapter).not.toContain("ORPCError");
+    expect(adapter).not.toContain("@orpc/");
+    expect(adapter).not.toContain("OpenAPIHandler");
+  });
+
+  it("keeps public system health behavior in an explicit api/app adapter", () => {
+    const packageJson = JSON.parse(repoSource("api/app/package.json")) as {
+      exports?: Record<string, unknown>;
+    };
+    const adapter = repoSource("api/app/src/adapters/public/system.ts");
+
+    expect(packageJson.exports).toHaveProperty("./public-api/system");
+    expect(adapter).toContain("resolveApiKeyAuth");
+    expect(adapter).toContain("systemHealthOutput.parse");
     expect(adapter).not.toContain("ORPCError");
     expect(adapter).not.toContain("@orpc/");
     expect(adapter).not.toContain("OpenAPIHandler");

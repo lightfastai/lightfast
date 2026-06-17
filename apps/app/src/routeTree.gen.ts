@@ -51,6 +51,7 @@ import { Route as AuthenticatedSlugTasksIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedSlugSettingsIndexRouteImport } from './routes/_authenticated/$slug/settings/index'
 import { Route as AuthenticatedSlugChatIndexRouteImport } from './routes/_authenticated/$slug/chat/index'
 import { Route as AuthenticatedSlugAutomationsIndexRouteImport } from './routes/_authenticated/$slug/automations/index'
+import { Route as ApiV1SystemHealthRouteImport } from './routes/api/v1/system/health'
 import { Route as ApiV1SignalsIdRouteImport } from './routes/api/v1/signals/$id'
 import { Route as ApiSkillsIndexEventsRouteImport } from './routes/api/skills/index/events'
 import { Route as ApiOauthDesktopSessionRouteImport } from './routes/api/oauth/desktop/session'
@@ -315,6 +316,11 @@ const AuthenticatedSlugAutomationsIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedSlugAutomationsRoute,
   } as any)
+const ApiV1SystemHealthRoute = ApiV1SystemHealthRouteImport.update({
+  id: '/api/v1/system/health',
+  path: '/api/v1/system/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiV1SignalsIdRoute = ApiV1SignalsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -613,6 +619,7 @@ export interface FileRoutesByFullPath {
   '/api/oauth/desktop/session': typeof ApiOauthDesktopSessionRoute
   '/api/skills/index/events': typeof ApiSkillsIndexEventsRoute
   '/api/v1/signals/$id': typeof ApiV1SignalsIdRoute
+  '/api/v1/system/health': typeof ApiV1SystemHealthRoute
   '/$slug/automations/': typeof AuthenticatedSlugAutomationsIndexRoute
   '/$slug/chat/': typeof AuthenticatedSlugChatIndexRoute
   '/$slug/settings/': typeof AuthenticatedSlugSettingsIndexRoute
@@ -689,6 +696,7 @@ export interface FileRoutesByTo {
   '/api/oauth/desktop/session': typeof ApiOauthDesktopSessionRoute
   '/api/skills/index/events': typeof ApiSkillsIndexEventsRoute
   '/api/v1/signals/$id': typeof ApiV1SignalsIdRoute
+  '/api/v1/system/health': typeof ApiV1SystemHealthRoute
   '/$slug/automations': typeof AuthenticatedSlugAutomationsIndexRoute
   '/$slug/chat': typeof AuthenticatedSlugChatIndexRoute
   '/$slug/settings': typeof AuthenticatedSlugSettingsIndexRoute
@@ -774,6 +782,7 @@ export interface FileRoutesById {
   '/api/oauth/desktop/session': typeof ApiOauthDesktopSessionRoute
   '/api/skills/index/events': typeof ApiSkillsIndexEventsRoute
   '/api/v1/signals/$id': typeof ApiV1SignalsIdRoute
+  '/api/v1/system/health': typeof ApiV1SystemHealthRoute
   '/_authenticated/$slug/automations/': typeof AuthenticatedSlugAutomationsIndexRoute
   '/_authenticated/$slug/chat/': typeof AuthenticatedSlugChatIndexRoute
   '/_authenticated/$slug/settings/': typeof AuthenticatedSlugSettingsIndexRoute
@@ -860,6 +869,7 @@ export interface FileRouteTypes {
     | '/api/oauth/desktop/session'
     | '/api/skills/index/events'
     | '/api/v1/signals/$id'
+    | '/api/v1/system/health'
     | '/$slug/automations/'
     | '/$slug/chat/'
     | '/$slug/settings/'
@@ -936,6 +946,7 @@ export interface FileRouteTypes {
     | '/api/oauth/desktop/session'
     | '/api/skills/index/events'
     | '/api/v1/signals/$id'
+    | '/api/v1/system/health'
     | '/$slug/automations'
     | '/$slug/chat'
     | '/$slug/settings'
@@ -1020,6 +1031,7 @@ export interface FileRouteTypes {
     | '/api/oauth/desktop/session'
     | '/api/skills/index/events'
     | '/api/v1/signals/$id'
+    | '/api/v1/system/health'
     | '/_authenticated/$slug/automations/'
     | '/_authenticated/$slug/chat/'
     | '/_authenticated/$slug/settings/'
@@ -1072,6 +1084,7 @@ export interface RootRouteChildren {
   ApiOauthClientConfigRoute: typeof ApiOauthClientConfigRoute
   ApiOauthDesktopSessionRoute: typeof ApiOauthDesktopSessionRoute
   ApiSkillsIndexEventsRoute: typeof ApiSkillsIndexEventsRoute
+  ApiV1SystemHealthRoute: typeof ApiV1SystemHealthRoute
   ApiConnectorsGranolaOauthCallbackRoute: typeof ApiConnectorsGranolaOauthCallbackRoute
   ApiConnectorsLinearOauthCallbackRoute: typeof ApiConnectorsLinearOauthCallbackRoute
   ApiConnectorsXOauthCallbackRoute: typeof ApiConnectorsXOauthCallbackRoute
@@ -1375,6 +1388,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/$slug/automations/'
       preLoaderRoute: typeof AuthenticatedSlugAutomationsIndexRouteImport
       parentRoute: typeof AuthenticatedSlugAutomationsRoute
+    }
+    '/api/v1/system/health': {
+      id: '/api/v1/system/health'
+      path: '/api/v1/system/health'
+      fullPath: '/api/v1/system/health'
+      preLoaderRoute: typeof ApiV1SystemHealthRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/v1/signals/$id': {
       id: '/api/v1/signals/$id'
@@ -1980,6 +2000,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiOauthClientConfigRoute: ApiOauthClientConfigRoute,
   ApiOauthDesktopSessionRoute: ApiOauthDesktopSessionRoute,
   ApiSkillsIndexEventsRoute: ApiSkillsIndexEventsRoute,
+  ApiV1SystemHealthRoute: ApiV1SystemHealthRoute,
   ApiConnectorsGranolaOauthCallbackRoute:
     ApiConnectorsGranolaOauthCallbackRoute,
   ApiConnectorsLinearOauthCallbackRoute: ApiConnectorsLinearOauthCallbackRoute,
