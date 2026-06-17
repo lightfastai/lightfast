@@ -1356,11 +1356,15 @@ describe("app authenticated route migration", () => {
     expect(mcpSignalsRouteSource).toContain(
       'createFileRoute("/api/internal/mcp/signals")'
     );
-    expect(mcpSignalsRouteSource).toContain("createSignalForActor");
+    expect(mcpSignalsRouteSource).toContain(
+      "handleCreateMcpSignalInternalRequest"
+    );
     expect(mcpSignalsGetRouteSource).toContain(
       'createFileRoute("/api/internal/mcp/signals/get")'
     );
-    expect(mcpSignalsGetRouteSource).toContain("getVisibleSignalByPublicId");
+    expect(mcpSignalsGetRouteSource).toContain(
+      "handleGetMcpSignalInternalRequest"
+    );
 
     for (const startupSensitiveFile of [
       openApiRouteSource,
