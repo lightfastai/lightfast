@@ -448,9 +448,7 @@ describe("app authenticated route migration", () => {
     expect(decisionsClientSource).toContain("DecisionsToolbar");
     expect(decisionsClientSource).toContain("DecisionsTableView");
     expect(decisionsSearchSource).toContain("parseDecisionProviders");
-    expect(decisionsQuerySource).toContain(
-      "decisions.list.infiniteQueryOptions"
-    );
+    expect(decisionsQuerySource).toContain('@api/app/tanstack/decisions"');
     expect(decisionsQuerySource).toContain(
       'enabled: typeof window !== "undefined"'
     );

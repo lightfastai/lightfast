@@ -1,8 +1,7 @@
-import type { AppRouterOutputs } from "@api/app";
+import type { ListDecisionsResult } from "@api/app/tanstack/decisions";
 import { formatUtcCalendarDate } from "@vendor/lib/time";
 
-export type DecisionsList =
-  AppRouterOutputs["org"]["workspace"]["decisions"]["list"];
+export type DecisionsList = ListDecisionsResult;
 export type DecisionRow = DecisionsList["items"][number];
 export type DecisionProvider = DecisionRow["provider"];
 export type DecisionStatus = DecisionRow["status"];
