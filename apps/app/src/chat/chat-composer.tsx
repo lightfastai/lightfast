@@ -11,6 +11,7 @@ import {
   PromptInputButton,
   PromptInputFooter,
   type PromptInputMessage,
+  PromptInputStart,
   PromptInputSubmit,
   PromptInputTextarea,
   PromptInputTools,
@@ -146,6 +147,7 @@ function ChatComposerLayout({
 }) {
   return (
     <>
+      <PromptInputStart className="py-1.5">{addContextButton}</PromptInputStart>
       <PromptInputBody key="body">
         <PromptInputTextarea
           className="max-h-48 text-base leading-6"
@@ -157,10 +159,7 @@ function ChatComposerLayout({
         />
       </PromptInputBody>
       <PromptInputFooter className="py-1.5">
-        <PromptInputTools>
-          {addContextButton}
-          {writeModeToggle}
-        </PromptInputTools>
+        <PromptInputTools>{writeModeToggle}</PromptInputTools>
         {submit}
       </PromptInputFooter>
     </>

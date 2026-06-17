@@ -13,6 +13,17 @@ vi.mock("@repo/ui-v2/components/ai-elements/prompt-input", () => ({
     className?: string;
   }) => <form className={className}>{children}</form>,
   PromptInputBody: ({ children }: { children?: ReactNode }) => <>{children}</>,
+  PromptInputStart: ({
+    children,
+    className,
+  }: {
+    children?: ReactNode;
+    className?: string;
+  }) => (
+    <div className={className} data-align="inline-start">
+      {children}
+    </div>
+  ),
   PromptInputFooter: ({
     children,
     className,
@@ -20,7 +31,7 @@ vi.mock("@repo/ui-v2/components/ai-elements/prompt-input", () => ({
     children?: ReactNode;
     className?: string;
   }) => (
-    <div className={className} data-align="block-end">
+    <div className={className} data-align="inline-end">
       {children}
     </div>
   ),
@@ -118,9 +129,13 @@ describe("ChatComposer", () => {
     expect(
       screen.getByPlaceholderText("Ask Lightfield").getAttribute("rows")
     ).toBe("1");
-    expect(container.querySelector('[data-align="inline-start"]')).toBeNull();
-    expect(container.querySelector('[data-align="inline-end"]')).toBeNull();
-    expect(container.querySelector('[data-align="block-end"]')).not.toBeNull();
+    expect(
+      container.querySelector('[data-align="inline-start"]')
+    ).not.toBeNull();
+    expect(
+      container.querySelector('[data-align="inline-end"]')
+    ).not.toBeNull();
+    expect(container.querySelector('[data-align="block-end"]')).toBeNull();
     expect(container.querySelector("form")?.className).not.toContain(
       "data-[multiline="
     );
@@ -149,10 +164,10 @@ describe("ChatComposer", () => {
       /(?:^|\s)px-1(?:\s|$)/
     );
     expect(
-      container.querySelector('[data-align="block-end"]')?.className
-    ).not.toContain("pb-");
+      container.querySelector('[data-align="inline-start"]')?.className
+    ).toContain("py-1.5");
     expect(
-      container.querySelector('[data-align="block-end"]')?.className
+      container.querySelector('[data-align="inline-end"]')?.className
     ).toContain("py-1.5");
   });
 });
