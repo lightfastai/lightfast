@@ -3,6 +3,9 @@ import type { AcceleratorName } from "../shared/accelerators";
 import {
   type AuthSnapshot,
   type BuildInfoSnapshot,
+  type DesktopApiCommandName,
+  type DesktopApiInput,
+  type DesktopApiOutput,
   IpcChannels,
   type LightfastBridge,
   type RuntimeConfigSnapshot,
@@ -12,6 +15,19 @@ import {
   type WindowKind,
 } from "../shared/ipc";
 import { BRIDGE_GLOBAL, WINDOW_KIND_GLOBAL } from "../shared/window-globals";
+
+function callDesktopApi<C extends DesktopApiCommandName>(
+  command: C,
+  ...args: DesktopApiInput<C> extends undefined
+    ? [input?: undefined]
+    : [input: DesktopApiInput<C>]
+): Promise<DesktopApiOutput<C>> {
+  const [input] = args;
+  return ipcRenderer.invoke(IpcChannels.desktopApiCall, {
+    command,
+    input,
+  }) as Promise<DesktopApiOutput<C>>;
+}
 
 export function buildBridge(): LightfastBridge {
   const buildInfo = ipcRenderer.sendSync(
@@ -31,12 +47,12 @@ export function buildBridge(): LightfastBridge {
   ) as RuntimeConfigSnapshot;
 
   return {
+    api: {
+      call: callDesktopApi,
+    },
     appOrigin: runtimeConfig.appOrigin,
     auth: {
       snapshot: authSnapshot,
-      getToken: () => ipcRenderer.invoke(IpcChannels.authGetToken),
-      getRequestHeaders: () =>
-        ipcRenderer.invoke(IpcChannels.authGetRequestHeaders),
       signIn: () => ipcRenderer.invoke(IpcChannels.authSignIn),
       signOut: () => ipcRenderer.invoke(IpcChannels.authSignOut),
       onChanged: (listener) => {

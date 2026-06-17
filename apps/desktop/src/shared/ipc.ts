@@ -19,13 +19,12 @@ export const IpcChannels = {
   updateSetting: channel("update-setting"),
   settingsChanged: channel("settings-changed"),
   authSnapshotSync: channel("auth-snapshot-sync"),
-  authGetToken: channel("auth-get-token"),
-  authGetRequestHeaders: channel("auth-get-request-headers"),
   authSignIn: channel("auth-sign-in"),
   authSignOut: channel("auth-sign-out"),
   authChanged: channel("auth-changed"),
   authPendingSigninUrl: channel("auth-pending-signin-url"),
   authPendingSigninUrlChanged: channel("auth-pending-signin-url-changed"),
+  desktopApiCall: channel("desktop-api-call"),
   runtimeConfigSync: channel("runtime-config-sync"),
 } as const;
 
@@ -101,10 +100,35 @@ export interface AuthSnapshot {
   userUsername?: string | null;
 }
 
-export interface AuthRequestHeaders {
-  Authorization?: string;
-  "x-lightfast-native-client"?: "desktop";
-  "x-lightfast-organization-id"?: string;
+export interface DesktopApiCommandMap {
+  "auth.snapshot": {
+    input: undefined;
+    output: AuthSnapshot;
+  };
+}
+
+export type DesktopApiCommandName = keyof DesktopApiCommandMap;
+
+export type DesktopApiInput<C extends DesktopApiCommandName> =
+  DesktopApiCommandMap[C]["input"];
+
+export type DesktopApiOutput<C extends DesktopApiCommandName> =
+  DesktopApiCommandMap[C]["output"];
+
+export interface DesktopApiCallPayload<
+  C extends DesktopApiCommandName = DesktopApiCommandName,
+> {
+  command: C;
+  input: DesktopApiInput<C>;
+}
+
+export interface DesktopApiBridge {
+  call<C extends DesktopApiCommandName>(
+    command: C,
+    ...args: DesktopApiInput<C> extends undefined
+      ? [input?: undefined]
+      : [input: DesktopApiInput<C>]
+  ): Promise<DesktopApiOutput<C>>;
 }
 
 export interface RuntimeConfigSnapshot {
@@ -112,11 +136,10 @@ export interface RuntimeConfigSnapshot {
 }
 
 export interface LightfastBridge {
+  api: DesktopApiBridge;
   appOrigin: string;
   auth: {
     snapshot: AuthSnapshot;
-    getToken: () => Promise<string | null>;
-    getRequestHeaders: () => Promise<AuthRequestHeaders>;
     signIn: () => Promise<string | null>;
     signOut: () => Promise<boolean>;
     onChanged: (listener: (snapshot: AuthSnapshot) => void) => () => void;

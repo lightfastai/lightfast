@@ -10,6 +10,7 @@ import {
 } from "electron";
 import contextMenu from "electron-context-menu";
 import {
+  type DesktopApiCallPayload,
   IpcChannels,
   type RendererErrorPayload,
   type SystemThemeVariant,
@@ -27,10 +28,8 @@ import {
   onPendingSigninUrl,
 } from "./native-auth/flow";
 import { syncNativeSessionProfile } from "./native-auth/profile-sync";
-import { getValidAuthRequestHeaders } from "./native-auth/session";
 import {
   getAuthSnapshot,
-  getToken as getAuthToken,
   onAuthChanged,
   signOut as signOutAuth,
 } from "./native-auth/store";
@@ -100,6 +99,28 @@ function forwardRendererErrorToSentry(payload: unknown): void {
     tags: { bundle: "renderer", rendererKind: payload.kind },
     extra: { source: payload.source, url: payload.url },
   });
+}
+
+function isDesktopApiCallPayload(
+  value: unknown
+): value is DesktopApiCallPayload {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const candidate = value as Partial<DesktopApiCallPayload>;
+  return candidate.command === "auth.snapshot";
+}
+
+function handleDesktopApiCall(payload: unknown) {
+  if (!isDesktopApiCallPayload(payload)) {
+    throw new Error("Unknown desktop API command");
+  }
+
+  if (payload.command === "auth.snapshot") {
+    return getAuthSnapshot();
+  }
+
+  throw new Error("Unknown desktop API command");
 }
 
 function openAllowedExternalUrl(url: string): void {
@@ -264,13 +285,12 @@ function registerIpcHandlers(): void {
   ipcMain.on(IpcChannels.authSnapshotSync, (event) => {
     event.returnValue = getAuthSnapshot();
   });
-  ipcMain.handle(IpcChannels.authGetToken, () => getAuthToken());
-  ipcMain.handle(IpcChannels.authGetRequestHeaders, () =>
-    getValidAuthRequestHeaders()
-  );
   ipcMain.handle(IpcChannels.authSignIn, () => beginSignIn());
   ipcMain.handle(IpcChannels.authSignOut, () => signOutAuth());
   ipcMain.handle(IpcChannels.authPendingSigninUrl, () => getPendingSigninUrl());
+  ipcMain.handle(IpcChannels.desktopApiCall, (_event, payload: unknown) =>
+    handleDesktopApiCall(payload)
+  );
 }
 
 function broadcastThemeUpdates(): void {

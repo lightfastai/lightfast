@@ -64,7 +64,6 @@
     "vitest": "catalog:"
   },
   "dependencies": {
-    "@api/app": "workspace:*",
     "@fontsource-variable/geist": "catalog:",
     "@hugeicons/core-free-icons": "catalog:",
     "@hugeicons/react": "catalog:",
@@ -75,8 +74,6 @@
     "@sentry/electron": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-router": "catalog:",
-    "@trpc/client": "catalog:",
-    "@trpc/tanstack-react-query": "catalog:",
     "@vendor/electron": "workspace:*",
     "@vendor/observability": "workspace:*",
     "better-sqlite3": "^12.4.1",
