@@ -6,7 +6,6 @@ import { LfSelect } from "~/components/lf-select";
 import { WorkspaceSurface } from "~/components/workspace-surface";
 import { SkillDialog } from "./skill-dialog";
 import { SkillGrid } from "./skill-grid";
-import { SkillsActions } from "./skills-actions";
 import { SkillsLoading } from "./skills-loading";
 import { getVisibleSkills, type SkillFilter } from "./skills-model";
 import type { NormalizedSkillsSearch } from "./skills-search-params";
@@ -105,27 +104,17 @@ function SkillsClientContent({
   return (
     <WorkspaceSurface className="overflow-y-auto bg-background" variant="flush">
       <div className="mx-auto w-full max-w-3xl px-6 py-10">
-        <div
-          className="flex min-w-0 items-center justify-start"
-          data-testid="skills-actions-row"
-        >
-          <SkillsActions
-            freshness={data.freshness}
-            repositoryUrl={data.repositoryUrl}
-          />
-        </div>
-
-        <header className="mt-8">
+        <div className="pt-6 text-center">
           <h1 className="font-semibold text-3xl text-foreground tracking-[-0.02em]">
             Make Lightfast work your way
           </h1>
-          <p className="mt-3 max-w-[30rem] text-muted-foreground text-sm">
+          <p className="mx-auto mt-3 max-w-[30rem] text-muted-foreground text-sm">
             Reusable instructions your agents load on demand, indexed from your
             team&apos;s connected GitHub repository.
           </p>
-        </header>
+        </div>
 
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
