@@ -22,9 +22,13 @@ import { toast } from "@repo/ui/components/ui/sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Info, ShieldCheck, ShieldQuestion, Unplug } from "lucide-react";
 import { useCallback, useState } from "react";
-import { useTRPC } from "~/trpc/react";
+import {
+  accountMcpConnectionsQueryOptions,
+  accountQueryKeys,
+  revokeAccountMcpConnectionMutationOptions,
+} from "./account-queries";
 
-export interface McpConnection {
+interface McpConnection {
   clientId: string;
   clientName: string;
   clientPolicyUri: string | null;
@@ -49,27 +53,23 @@ export interface McpConnection {
 }
 
 export function UserMcpConnectionsClient() {
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { data: connections, isPending } = useQuery({
-    ...trpc.viewer.account.mcpConnections.list.queryOptions(),
-    enabled: typeof window !== "undefined",
-  });
+  const { data: connections, isPending } = useQuery(
+    accountMcpConnectionsQueryOptions()
+  );
   const [detailsConnection, setDetailsConnection] =
     useState<McpConnection | null>(null);
   const [revokeConnection, setRevokeConnection] =
     useState<McpConnection | null>(null);
 
-  const revokeMutation = useMutation(
-    trpc.viewer.account.mcpConnections.revoke.mutationOptions({
-      meta: { errorTitle: "Failed to revoke MCP connection" },
-      onSuccess: () => toast.success("MCP connection revoked"),
-      onSettled: () =>
-        void queryClient.invalidateQueries(
-          trpc.viewer.account.mcpConnections.list.queryFilter()
-        ),
-    })
-  );
+  const revokeMutation = useMutation({
+    ...revokeAccountMcpConnectionMutationOptions(),
+    onSuccess: () => toast.success("MCP connection revoked"),
+    onSettled: () =>
+      void queryClient.invalidateQueries({
+        queryKey: accountQueryKeys.mcpConnections(),
+      }),
+  });
 
   const handleConfirmRevoke = useCallback(() => {
     if (!revokeConnection) {

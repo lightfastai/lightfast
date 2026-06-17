@@ -59,6 +59,10 @@ import type {
   ConnectorOwnerScope,
   NormalizedConnectorsSearch,
 } from "./connectors-search-params";
+import {
+  disconnectUserConnectorMutationOptions,
+  startUserConnectorMutationOptions,
+} from "./user-connector-queries";
 
 const ADMIN_REQUIRED_MESSAGE = "Admin access required to manage connectors";
 const DISCONNECT_UNAVAILABLE_MESSAGE =
@@ -103,7 +107,7 @@ export function ConnectorsClient({
     })
   );
   const userStartConnectMutation = useMutation(
-    trpc.viewer.account.userConnectors.startConnect.mutationOptions({
+    startUserConnectorMutationOptions({
       onSuccess: (result) => {
         window.location.assign(result.authorizationUrl);
       },
@@ -130,7 +134,7 @@ export function ConnectorsClient({
     })
   );
   const userDisconnectMutation = useMutation(
-    trpc.viewer.account.userConnectors.disconnect.mutationOptions({
+    disconnectUserConnectorMutationOptions({
       onSuccess: invalidateList,
     })
   );

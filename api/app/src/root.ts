@@ -17,16 +17,12 @@ import { connectorsRouter } from "./router/(pending-not-allowed)/connectors";
 import { decisionsRouter } from "./router/(pending-not-allowed)/decisions";
 import { developerConnectionsRouter } from "./router/(pending-not-allowed)/developer-connections";
 import { githubSetupRouter } from "./router/(pending-not-allowed)/github-setup";
-import {
-  accountMcpConnectionsRouter,
-  orgMcpConnectionsRouter,
-} from "./router/(pending-not-allowed)/mcp-connections";
+import { orgMcpConnectionsRouter } from "./router/(pending-not-allowed)/mcp-connections";
 import { orgBillingRouter } from "./router/(pending-not-allowed)/org-billing";
 import { orgIdentityRouter } from "./router/(pending-not-allowed)/org-identity";
 import { orgMembersRouter } from "./router/(pending-not-allowed)/org-members";
 import { orgSourceControlRouter } from "./router/(pending-not-allowed)/org-source-control";
 import { taskRouter } from "./router/(pending-not-allowed)/task";
-import { userConnectorsRouter } from "./router/(pending-not-allowed)/user-connectors";
 import { workspaceAssistantRouter } from "./router/(pending-not-allowed)/workspace-assistant";
 import { workspaceEntityGraphRouter } from "./router/(pending-not-allowed)/workspace-entity-graph";
 import { workspacePeopleRouter } from "./router/(pending-not-allowed)/workspace-people";
@@ -39,10 +35,6 @@ export const appRouter = createTRPCRouter({
     auth: nativeAuthRouter,
   }),
   viewer: createTRPCRouter({
-    account: createTRPCRouter({
-      mcpConnections: accountMcpConnectionsRouter,
-      userConnectors: userConnectorsRouter,
-    }),
     githubAccount: githubAccountRouter,
   }),
   org: createTRPCRouter({

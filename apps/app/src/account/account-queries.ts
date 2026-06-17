@@ -3,10 +3,15 @@ import {
   getAccountProfile,
   updateAccountName,
 } from "@api/app/tanstack/account";
+import {
+  listAccountMcpConnections,
+  revokeAccountMcpConnection,
+} from "@api/app/tanstack/mcp-connections";
 import { mutationOptions, queryOptions } from "@tanstack/react-query";
 
 export const accountQueryKeys = {
   all: ["account"] as const,
+  mcpConnections: () => ["account", "mcp-connections"] as const,
   profile: () => ["account", "profile"] as const,
 };
 
@@ -34,5 +39,25 @@ export function createAccountUsernameMutationOptions() {
     meta: { suppressErrorToast: true },
     mutationFn: (data: { idempotencyKey: string; username: string }) =>
       createAccountUsername({ data }),
+  });
+}
+
+export function accountMcpConnectionsQueryOptions(input?: {
+  enabled?: boolean;
+  staleTime?: number;
+}) {
+  return queryOptions({
+    enabled: (input?.enabled ?? true) && typeof window !== "undefined",
+    queryFn: () => listAccountMcpConnections(),
+    queryKey: accountQueryKeys.mcpConnections(),
+    staleTime: input?.staleTime,
+  });
+}
+
+export function revokeAccountMcpConnectionMutationOptions() {
+  return mutationOptions({
+    meta: { errorTitle: "Failed to revoke MCP connection" },
+    mutationFn: (data: { grantId: string }) =>
+      revokeAccountMcpConnection({ data }),
   });
 }
