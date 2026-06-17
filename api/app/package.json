@@ -187,8 +187,6 @@
   },
   "dependencies": {
     "@db/app": "workspace:*",
-    "@orpc/contract": "^1.14.2",
-    "@orpc/server": "^1.14.2",
     "@repo/ai": "workspace:*",
     "@repo/api-contract": "workspace:*",
     "@repo/app-clerk-claim": "workspace:*",

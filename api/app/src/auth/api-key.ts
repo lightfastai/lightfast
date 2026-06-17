@@ -23,13 +23,13 @@ export type ApiKeyAuthFailure =
   | "not-org-scoped"
   | "missing-creator";
 
-type ApiKeyAuthOrpcCode = "UNAUTHORIZED" | "FORBIDDEN";
+type ApiKeyAuthStatus = 401 | 403;
 
 export class ApiKeyAuthError extends Error {
   constructor(
     public readonly reason: ApiKeyAuthFailure,
     message: string,
-    public readonly orpcCode: ApiKeyAuthOrpcCode
+    public readonly status: ApiKeyAuthStatus
   ) {
     super(message);
     this.name = "ApiKeyAuthError";
@@ -37,7 +37,7 @@ export class ApiKeyAuthError extends Error {
 
   get diagnostic(): Diagnostic {
     return {
-      code: this.orpcCode === "FORBIDDEN" ? "ORG_REQUIRED" : "AUTH_REQUIRED",
+      code: this.status === 403 ? "ORG_REQUIRED" : "AUTH_REQUIRED",
       message: this.message,
     };
   }
@@ -54,18 +54,14 @@ function parseBearerApiKey(headers: Headers): string {
     throw new ApiKeyAuthError(
       "missing",
       "API key required. Provide 'Authorization: Bearer <api-key>' header.",
-      "UNAUTHORIZED"
+      401
     );
   }
 
   // Lightfast public API keys use Unkey's `lf_` prefix. Keep this as a cheap
   // shape check before making a network request to Unkey.
   if (!token.startsWith(LIGHTFAST_API_KEY_PREFIX)) {
-    throw new ApiKeyAuthError(
-      "invalid-format",
-      "Invalid API key format.",
-      "UNAUTHORIZED"
-    );
+    throw new ApiKeyAuthError("invalid-format", "Invalid API key format.", 401);
   }
 
   return token;
@@ -82,18 +78,18 @@ export async function resolveApiKeyAuth(input: {
   try {
     verification = await unkey.keys.verifyKey({ key: token });
   } catch {
-    throw new ApiKeyAuthError("invalid", "Invalid API key", "UNAUTHORIZED");
+    throw new ApiKeyAuthError("invalid", "Invalid API key", 401);
   }
 
   const key = verification.data;
   if (!key.valid) {
     if (key.code === "DISABLED") {
-      throw new ApiKeyAuthError("disabled", "API key disabled", "UNAUTHORIZED");
+      throw new ApiKeyAuthError("disabled", "API key disabled", 401);
     }
     if (key.code === "EXPIRED") {
-      throw new ApiKeyAuthError("expired", "API key expired", "UNAUTHORIZED");
+      throw new ApiKeyAuthError("expired", "API key expired", 401);
     }
-    throw new ApiKeyAuthError("invalid", "Invalid API key", "UNAUTHORIZED");
+    throw new ApiKeyAuthError("invalid", "Invalid API key", 401);
   }
 
   const orgId = key.identity?.externalId;
@@ -101,7 +97,7 @@ export async function resolveApiKeyAuth(input: {
     throw new ApiKeyAuthError(
       "not-org-scoped",
       "API key is not org-scoped",
-      "FORBIDDEN"
+      403
     );
   }
 
@@ -110,7 +106,7 @@ export async function resolveApiKeyAuth(input: {
     throw new ApiKeyAuthError(
       "missing-creator",
       "API key is missing creator metadata",
-      "FORBIDDEN"
+      403
     );
   }
 
@@ -126,7 +122,7 @@ export async function resolveApiKeyAuth(input: {
   };
 
   if (!key.keyId) {
-    throw new ApiKeyAuthError("invalid", "Invalid API key", "UNAUTHORIZED");
+    throw new ApiKeyAuthError("invalid", "Invalid API key", 401);
   }
 
   return { apiKeyId: key.keyId, identity };

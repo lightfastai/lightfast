@@ -1250,7 +1250,6 @@ describe("app authenticated route migration", () => {
       "src/org/setup/x-connector-setup-complete-client.tsx"
     );
     const githubWebhookRouteSource = source("src/routes/api/github/webhook.ts");
-    const openApiRouteSource = source("src/routes/api/v1/$.ts");
     const skillsIndexEventsRouteSource = source(
       "src/routes/api/skills/index/events.ts"
     );
@@ -1310,10 +1309,6 @@ describe("app authenticated route migration", () => {
       'createFileRoute("/api/github/webhook")'
     );
     expect(githubWebhookRouteSource).toContain("handleGitHubWebhook");
-    expect(openApiRouteSource).toContain('createFileRoute("/api/v1/$")');
-    expect(openApiRouteSource).toContain("OpenAPIHandler");
-    expect(openApiRouteSource).toContain("orpcRouter");
-    expect(openApiRouteSource).toContain("setCorsHeaders");
     expect(skillsIndexEventsRouteSource).toContain(
       'createFileRoute("/api/skills/index/events")'
     );
@@ -1367,7 +1362,6 @@ describe("app authenticated route migration", () => {
     );
 
     for (const startupSensitiveFile of [
-      openApiRouteSource,
       skillsIndexEventsRouteSource,
       nativeProxyServerSource,
       mcpServiceAuthSource,
@@ -1387,7 +1381,6 @@ describe("app authenticated route migration", () => {
       xSetupClientSource,
       xCompleteClientSource,
       githubWebhookRouteSource,
-      openApiRouteSource,
       skillsIndexEventsRouteSource,
       skillsIndexEventStreamSource,
       nativeProxyServerSource,
