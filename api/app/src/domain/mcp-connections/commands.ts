@@ -1,6 +1,7 @@
 import {
   type Database,
   getMcpOauthGrantByPublicId,
+  listMcpOauthGrantConnectionsForOrg,
   listMcpOauthGrantConnectionsForUser,
   type McpOauthGrant,
   type McpOauthGrantConnection,
@@ -10,7 +11,7 @@ import { z } from "zod";
 
 import { defineCommand } from "../command";
 import { NotFoundError } from "../errors";
-import { requireClerkUserActor } from "../gates";
+import { requireClerkOrgAdminActor, requireClerkUserActor } from "../gates";
 
 interface McpConnectionDto {
   clientId: string;
@@ -34,6 +35,7 @@ interface McpConnectionDto {
 interface McpConnectionCommandDeps {
   db: Database;
   getMcpOauthGrantByPublicId: typeof getMcpOauthGrantByPublicId;
+  listMcpOauthGrantConnectionsForOrg: typeof listMcpOauthGrantConnectionsForOrg;
   listMcpOauthGrantConnectionsForUser: typeof listMcpOauthGrantConnectionsForUser;
   revokeMcpOauthGrant: typeof revokeMcpOauthGrant;
 }
@@ -41,6 +43,7 @@ interface McpConnectionCommandDeps {
 export function createDefaultMcpConnectionCommandDeps(input: {
   db: Database;
   getMcpOauthGrantByPublicId?: typeof getMcpOauthGrantByPublicId;
+  listMcpOauthGrantConnectionsForOrg?: typeof listMcpOauthGrantConnectionsForOrg;
   listMcpOauthGrantConnectionsForUser?: typeof listMcpOauthGrantConnectionsForUser;
   revokeMcpOauthGrant?: typeof revokeMcpOauthGrant;
 }): McpConnectionCommandDeps {
@@ -48,6 +51,9 @@ export function createDefaultMcpConnectionCommandDeps(input: {
     db: input.db,
     getMcpOauthGrantByPublicId:
       input.getMcpOauthGrantByPublicId ?? getMcpOauthGrantByPublicId,
+    listMcpOauthGrantConnectionsForOrg:
+      input.listMcpOauthGrantConnectionsForOrg ??
+      listMcpOauthGrantConnectionsForOrg,
     listMcpOauthGrantConnectionsForUser:
       input.listMcpOauthGrantConnectionsForUser ??
       listMcpOauthGrantConnectionsForUser,
@@ -136,7 +142,55 @@ export const revokeAccountMcpConnectionCommand = defineCommand<
   },
 });
 
-export function toMcpConnectionDto(
+export const listOrgMcpConnectionsCommand = defineCommand<
+  "mcpConnections.listForOrg",
+  typeof mcpConnectionInput,
+  z.ZodArray<typeof mcpConnectionDtoOutput>,
+  McpConnectionCommandDeps
+>({
+  name: "mcpConnections.listForOrg",
+  input: mcpConnectionInput,
+  output: z.array(mcpConnectionDtoOutput),
+  run: async ({ ctx, deps }) => {
+    const actor = requireClerkOrgAdminActor(ctx);
+    const connections = await deps.listMcpOauthGrantConnectionsForOrg(deps.db, {
+      clerkOrgId: actor.orgId,
+    });
+    return connections.map(toMcpConnectionDto);
+  },
+});
+
+export const revokeOrgMcpConnectionCommand = defineCommand<
+  "mcpConnections.revokeForOrg",
+  typeof revokeMcpConnectionInput,
+  typeof successOutput,
+  McpConnectionCommandDeps
+>({
+  name: "mcpConnections.revokeForOrg",
+  input: revokeMcpConnectionInput,
+  output: successOutput,
+  run: async ({ ctx, deps, input }) => {
+    const actor = requireClerkOrgAdminActor(ctx);
+    const grant = await deps.getMcpOauthGrantByPublicId(deps.db, {
+      publicId: input.grantId,
+    });
+
+    if (!grant || grant.clerkOrgId !== actor.orgId) {
+      throw new NotFoundError(
+        "MCP_CONNECTION_NOT_FOUND",
+        "MCP connection not found."
+      );
+    }
+
+    if (grant.status === "active") {
+      await deps.revokeMcpOauthGrant(deps.db, { publicId: input.grantId });
+    }
+
+    return { success: true };
+  },
+});
+
+function toMcpConnectionDto(
   connection: McpOauthGrantConnection
 ): McpConnectionDto {
   const client = connection.client;

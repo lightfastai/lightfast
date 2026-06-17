@@ -3,15 +3,36 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest, setResponseHeader } from "@tanstack/react-start/server";
 
 import { resolveAuthContextFromClerk } from "../../auth/identity";
+import type { Actor } from "../../domain";
 import { actorFromAuthIdentity, isDomainError } from "../../domain";
 import {
   createDefaultMcpConnectionCommandDeps,
   listAccountMcpConnectionsCommand,
+  listOrgMcpConnectionsCommand,
   revokeAccountMcpConnectionCommand,
+  revokeOrgMcpConnectionCommand,
 } from "../../domain/mcp-connections";
 
 function requestId() {
   return crypto.randomUUID();
+}
+
+function maybeMarkOrgAdmin(input: {
+  actor: Actor;
+  auth: Awaited<ReturnType<typeof resolveAuthContextFromClerk>>;
+}): Actor {
+  if (
+    input.actor.kind === "clerkUser" &&
+    input.auth.identity.type === "active" &&
+    input.auth.access?.kind === "clerk-session" &&
+    input.auth.access.userId === input.auth.identity.userId &&
+    input.auth.access.orgId === input.auth.identity.orgId &&
+    input.auth.access.has({ role: "org:admin" })
+  ) {
+    return { ...input.actor, orgRole: "admin" };
+  }
+
+  return input.actor;
 }
 
 async function createTanStackMcpConnectionContext() {
@@ -20,9 +41,10 @@ async function createTanStackMcpConnectionContext() {
     db,
     headers: new Headers(request.headers),
   });
+  const actor = actorFromAuthIdentity(auth.identity, "web");
 
   return {
-    actor: actorFromAuthIdentity(auth.identity, "web"),
+    actor: maybeMarkOrgAdmin({ actor, auth }),
     request: { id: requestId(), source: "tanstack" as const },
   };
 }
@@ -68,3 +90,37 @@ export const revokeAccountMcpConnection = createServerFn({ method: "POST" })
       mapTanStackError(error);
     }
   });
+
+export const listOrgMcpConnections = createServerFn({
+  method: "GET",
+}).handler(async () => {
+  noStore();
+  try {
+    return await listOrgMcpConnectionsCommand.run({
+      ctx: await createTanStackMcpConnectionContext(),
+      deps: createDefaultMcpConnectionCommandDeps({ db }),
+      input: {},
+    });
+  } catch (error) {
+    mapTanStackError(error);
+  }
+});
+
+export const revokeOrgMcpConnection = createServerFn({ method: "POST" })
+  .inputValidator(revokeOrgMcpConnectionCommand.input)
+  .handler(async ({ data }) => {
+    noStore();
+    try {
+      return await revokeOrgMcpConnectionCommand.run({
+        ctx: await createTanStackMcpConnectionContext(),
+        deps: createDefaultMcpConnectionCommandDeps({ db }),
+        input: data,
+      });
+    } catch (error) {
+      mapTanStackError(error);
+    }
+  });
+
+export type ListOrgMcpConnectionsResult = Awaited<
+  ReturnType<typeof listOrgMcpConnections>
+>;
