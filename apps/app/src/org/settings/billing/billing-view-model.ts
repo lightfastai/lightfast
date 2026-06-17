@@ -1,4 +1,3 @@
-import type { AppRouterOutputs } from "@api/app";
 import {
   getCurrentSubscriptionItem,
   getDefaultPaymentMethod,
@@ -7,9 +6,12 @@ import {
   tierForPlan,
 } from "@repo/app-billing";
 import type { BillingPaymentMethodResource } from "@vendor/clerk";
+import type { BillingOverview } from "./billing-queries";
 
-export type BillingOverview =
-  AppRouterOutputs["org"]["settings"]["orgBilling"]["overview"];
+export type {
+  BillingOverview,
+  BillingSubscriptionItem,
+} from "./billing-queries";
 
 export function deriveBillingViewModel({
   overview,

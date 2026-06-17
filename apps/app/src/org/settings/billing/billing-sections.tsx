@@ -1,4 +1,3 @@
-import type { AppRouterOutputs } from "@api/app";
 import {
   cardLabel,
   formatMoney,
@@ -24,8 +23,7 @@ import { formatUtcCalendarDate as formatDate } from "@vendor/lib/time";
 import { CreditCard } from "lucide-react";
 import { memo } from "react";
 
-type BillingSubscription =
-  AppRouterOutputs["org"]["settings"]["orgBilling"]["overview"]["subscription"];
+import type { BillingSubscription } from "./billing-queries";
 
 export function LoadingLine({ label }: { label: string }) {
   return (

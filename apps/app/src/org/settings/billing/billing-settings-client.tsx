@@ -5,11 +5,11 @@ import type {
 } from "@vendor/clerk";
 import { useAuth, usePaymentMethods, useStatements } from "@vendor/clerk";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useTRPC } from "~/trpc/react";
 
 import { useCancelSubscriptionItemMutation } from "./billing-cancellation-mutation";
 import { BillingCheckoutDialog } from "./billing-checkout-dialog";
 import { useBillingOverviewRefresh } from "./billing-overview-actions";
+import { billingOverviewQueryOptions } from "./billing-queries";
 import {
   CancellationSection,
   InvoicesSection,
@@ -83,7 +83,6 @@ function usePricingHashDialogState() {
 }
 
 export function BillingSettingsClient() {
-  const trpc = useTRPC();
   const auth = useAuth();
   const refreshBillingOverview = useBillingOverviewRefresh();
   const {
@@ -91,9 +90,7 @@ export function BillingSettingsClient() {
     error: overviewError,
     isPending: isOverviewPending,
   } = useQuery({
-    ...trpc.org.settings.orgBilling.overview.queryOptions(),
-    enabled: typeof window !== "undefined",
-    staleTime: 5 * 60 * 1000,
+    ...billingOverviewQueryOptions({ orgId: auth.orgId }),
   });
 
   const paymentMethodsQuery = usePaymentMethods({
@@ -134,8 +131,9 @@ export function BillingSettingsClient() {
   const [selectedStatement, setSelectedStatement] =
     useState<BillingStatementResource | null>(null);
 
-  const { mutate: cancelSubscriptionItem } =
-    useCancelSubscriptionItemMutation();
+  const { mutate: cancelSubscriptionItem } = useCancelSubscriptionItemMutation({
+    orgId: auth.orgId,
+  });
 
   const confirmDowngrade = useCallback(
     (item: BillingSubscriptionItem) => {
@@ -202,7 +200,18 @@ export function BillingSettingsClient() {
     }
   }, []);
 
-  if (isOverviewPending) {
+  if (auth.isLoaded && !auth.orgId) {
+    return (
+      <div className="space-y-8">
+        <BillingSettingsHeader />
+        <div className="rounded-lg border border-border/60 px-4 py-4 text-muted-foreground text-sm">
+          Select an organization to view billing settings.
+        </div>
+      </div>
+    );
+  }
+
+  if (!auth.isLoaded || isOverviewPending) {
     return (
       <div className="space-y-8">
         <BillingSettingsHeader />
