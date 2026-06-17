@@ -3,15 +3,11 @@ import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ExternalLink } from "lucide-react";
-import { useTRPC } from "~/trpc/react";
+import { githubAccountStatusQueryOptions } from "../account-queries";
 import { GithubAccountCard } from "./github-account-card";
 
 export function AccountSourceControlClient() {
-  const trpc = useTRPC();
-  const { data, isPending } = useQuery({
-    ...trpc.viewer.githubAccount.status.queryOptions(),
-    enabled: typeof window !== "undefined",
-  });
+  const { data, isPending } = useQuery(githubAccountStatusQueryOptions());
 
   const account = data?.account;
 

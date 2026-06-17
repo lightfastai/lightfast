@@ -7,7 +7,11 @@ import { actorFromAuthIdentity, isDomainError } from "../../domain";
 import {
   createAccountUsernameCommand,
   createDefaultAccountCommandDeps,
+  disconnectGitHubAccountCommand,
   getAccountProfileCommand,
+  getGitHubAccountStatusCommand,
+  startGitHubAccountBindingCommand,
+  syncGitHubAccountCommand,
   updateAccountNameCommand,
 } from "../../domain/account";
 
@@ -84,3 +88,70 @@ export const createAccountUsername = createServerFn({ method: "POST" })
       mapTanStackError(error);
     }
   });
+
+export const getGitHubAccountStatus = createServerFn({ method: "GET" }).handler(
+  async () => {
+    noStore();
+    try {
+      return await getGitHubAccountStatusCommand.run({
+        ctx: await createTanStackAccountContext(),
+        deps: await createDefaultAccountCommandDeps({ db }),
+        input: {},
+      });
+    } catch (error) {
+      mapTanStackError(error);
+    }
+  }
+);
+
+export const startGitHubAccountBinding = createServerFn({ method: "POST" })
+  .inputValidator(startGitHubAccountBindingCommand.input)
+  .handler(async ({ data }) => {
+    noStore();
+    try {
+      return await startGitHubAccountBindingCommand.run({
+        ctx: await createTanStackAccountContext(),
+        deps: await createDefaultAccountCommandDeps({ db }),
+        input: data,
+      });
+    } catch (error) {
+      mapTanStackError(error);
+    }
+  });
+
+export const syncGitHubAccount = createServerFn({ method: "POST" }).handler(
+  async () => {
+    noStore();
+    try {
+      return await syncGitHubAccountCommand.run({
+        ctx: await createTanStackAccountContext(),
+        deps: await createDefaultAccountCommandDeps({ db }),
+        input: {},
+      });
+    } catch (error) {
+      mapTanStackError(error);
+    }
+  }
+);
+
+export const disconnectGitHubAccount = createServerFn({
+  method: "POST",
+}).handler(async () => {
+  noStore();
+  try {
+    return await disconnectGitHubAccountCommand.run({
+      ctx: await createTanStackAccountContext(),
+      deps: await createDefaultAccountCommandDeps({ db }),
+      input: {},
+    });
+  } catch (error) {
+    mapTanStackError(error);
+  }
+});
+
+export type GitHubAccountStatusResult = Awaited<
+  ReturnType<typeof getGitHubAccountStatus>
+>;
+export type GitHubUserAccount = NonNullable<
+  GitHubAccountStatusResult["account"]
+>;

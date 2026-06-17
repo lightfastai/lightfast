@@ -3,13 +3,11 @@
  *
  * Auth, org setup, and permission gates live in procedure builders. Public
  * router paths stay small and product-oriented:
- * - `viewer`: signed-in user surface, active org optional.
  * - `org.setup`: active org setup surface, binding optional.
  * - `org.settings`: active org settings surface, binding optional.
  * - `org.workspace`: bound-org product surface.
  */
 
-import { githubAccountRouter } from "./router/(pending-allowed)/github-account";
 import { nativeAuthRouter } from "./router/(pending-allowed)/native-auth";
 import { orgSettingsOrganizationRouter } from "./router/(pending-allowed)/organization";
 import { automationsRouter } from "./router/(pending-not-allowed)/automations";
@@ -32,9 +30,6 @@ import { createTRPCRouter } from "./trpc";
 export const appRouter = createTRPCRouter({
   native: createTRPCRouter({
     auth: nativeAuthRouter,
-  }),
-  viewer: createTRPCRouter({
-    githubAccount: githubAccountRouter,
   }),
   org: createTRPCRouter({
     setup: createTRPCRouter({

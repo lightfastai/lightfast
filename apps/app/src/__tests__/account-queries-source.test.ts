@@ -24,6 +24,10 @@ describe("account query helpers", () => {
     expect(querySource).toContain("accountProfileQueryOptions");
     expect(querySource).toContain("updateAccountNameMutationOptions");
     expect(querySource).toContain("createAccountUsernameMutationOptions");
+    expect(querySource).toContain("githubAccountStatusQueryOptions");
+    expect(querySource).toContain("startGitHubAccountBindingMutationOptions");
+    expect(querySource).toContain("syncGitHubAccountMutationOptions");
+    expect(querySource).toContain("disconnectGitHubAccountMutationOptions");
     expect(querySource).not.toContain("useTRPC");
   });
 
@@ -66,6 +70,22 @@ describe("account query helpers", () => {
     ]) {
       expect(fileSource).not.toContain("viewer.account.mcpConnections");
       expect(fileSource).not.toContain("viewer.account.userConnectors");
+    }
+  });
+
+  it("moves migrated GitHub account UI calls off viewer.githubAccount tRPC", () => {
+    const migratedGitHubAccountFiles = [
+      "src/account/settings/account-source-control-client.tsx",
+      "src/account/settings/github-account-card.tsx",
+      "src/account/tasks/github-account-task-client.tsx",
+      "src/account/tasks/github-account-complete-client.tsx",
+    ] as const;
+
+    for (const file of migratedGitHubAccountFiles) {
+      const fileSource = source(file);
+      expect(fileSource, file).not.toContain("useTRPC");
+      expect(fileSource, file).not.toContain("viewer.githubAccount");
+      expect(fileSource, file).not.toContain("AppRouterOutputs");
     }
   });
 });

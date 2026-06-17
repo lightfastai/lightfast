@@ -4,7 +4,10 @@ import { Button } from "@repo/ui/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
-import { useTRPC } from "~/trpc/react";
+import {
+  githubAccountStatusQueryOptions,
+  startGitHubAccountBindingMutationOptions,
+} from "../account-queries";
 
 interface GithubAccountTaskClientProps {
   githubError?: GitHubUserAccountBindErrorCode;
@@ -34,17 +37,9 @@ const GITHUB_USER_ACCOUNT_ERROR_MESSAGES: Record<
 export function GithubAccountTaskClient({
   githubError,
 }: GithubAccountTaskClientProps) {
-  const trpc = useTRPC();
-  const { data } = useQuery({
-    ...trpc.viewer.githubAccount.status.queryOptions(),
-    enabled: typeof window !== "undefined",
-  });
+  const { data } = useQuery(githubAccountStatusQueryOptions());
 
-  const startMutation = useMutation(
-    trpc.viewer.githubAccount.start.mutationOptions({
-      meta: { errorTitle: "Failed to connect GitHub" },
-    })
-  );
+  const startMutation = useMutation(startGitHubAccountBindingMutationOptions());
   const [isStarting, setIsStarting] = useState(false);
   const isStartingRef = useRef(false);
   const isConnecting = startMutation.isPending || isStarting;
