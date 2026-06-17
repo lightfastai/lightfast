@@ -61,17 +61,20 @@ describe("createDesktopNativeAuthClient", () => {
     expect(netFetchMock).not.toHaveBeenCalled();
   });
 
-  it("fetches current desktop session metadata with native auth headers", async () => {
+  it("fetches current desktop session metadata through desktop RPC", async () => {
     const fetchImpl = vi.fn().mockResolvedValueOnce(
       Response.json({
-        client: "desktop",
-        organization: { id: "org_1", name: "Acme", slug: "acme" },
-        user: {
-          email: "dev@example.com",
-          id: "user_1",
-          imageUrl: "https://img.example.com/user_1.png",
-          initials: "JP",
-          username: "jeevanpillay",
+        ok: true,
+        result: {
+          client: "desktop",
+          organization: { id: "org_1", name: "Acme", slug: "acme" },
+          user: {
+            email: "dev@example.com",
+            id: "user_1",
+            imageUrl: "https://img.example.com/user_1.png",
+            initials: "JP",
+            username: "jeevanpillay",
+          },
         },
       })
     );
@@ -87,14 +90,17 @@ describe("createDesktopNativeAuthClient", () => {
     });
 
     expect(fetchImpl).toHaveBeenCalledWith(
-      "https://lightfast.localhost/api/oauth/desktop/session",
+      "https://lightfast.localhost/api/desktop/rpc",
       {
+        body: JSON.stringify({ command: "auth.session" }),
         headers: {
           accept: "application/json",
           authorization: "Bearer access",
+          "content-type": "application/json",
           "x-lightfast-native-client": "desktop",
           "x-lightfast-organization-id": "org_1",
         },
+        method: "POST",
       }
     );
   });

@@ -11,7 +11,9 @@ import {
 import { applySecurityHeaders } from "~/security/headers";
 
 export const APP_OWNED_API_PREFIXES = [
+  "/api/cli/rpc",
   "/api/connectors/x/mcp",
+  "/api/desktop/rpc",
   "/api/inngest",
   "/api/internal/mcp/proxy",
   "/api/internal/mcp/signals",

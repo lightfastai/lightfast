@@ -24,3 +24,19 @@ export {
   type TokenSet,
   tokenSetSchema,
 } from "./native-auth";
+
+export {
+  type NativeRpcCommand,
+  type NativeRpcErrorCode,
+  type NativeRpcErrorResponse,
+  type NativeRpcRequest,
+  type NativeRpcSuccessResponse,
+  nativeRpcAuthSessionInputSchema,
+  nativeRpcAuthSessionSuccessResponseSchema,
+  nativeRpcCommandNames,
+  nativeRpcCommandSchema,
+  nativeRpcErrorCodeSchema,
+  nativeRpcErrorResponseSchema,
+  nativeRpcRequestSchema,
+  nativeRpcSuccessResponseSchema,
+} from "./native-rpc";

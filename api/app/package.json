@@ -33,6 +33,14 @@
       "types": "./src/native-auth/index.ts",
       "default": "./src/native-auth/index.ts"
     },
+    "./desktop-api": {
+      "types": "./src/adapters/desktop-api.ts",
+      "default": "./src/adapters/desktop-api.ts"
+    },
+    "./cli-api": {
+      "types": "./src/adapters/cli-api.ts",
+      "default": "./src/adapters/cli-api.ts"
+    },
     "./internal-api/mcp-signals": {
       "types": "./src/adapters/internal/mcp-signals.ts",
       "default": "./src/adapters/internal/mcp-signals.ts"

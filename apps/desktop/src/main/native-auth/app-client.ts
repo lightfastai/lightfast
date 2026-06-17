@@ -1,6 +1,7 @@
 import {
   NATIVE_AUTH_HEADERS,
   nativeOAuthConfigSchema,
+  nativeRpcAuthSessionSuccessResponseSchema,
   nativeSessionMetadataSchema,
 } from "@repo/native-auth-contract";
 import { electronNetFetch } from "@vendor/electron/net";
@@ -75,17 +76,24 @@ export function createDesktopNativeAuthClient(
     },
     async session(input: { accessToken: string; organizationId: string }) {
       const response = await fetchImpl(
-        createAppUrl("/api/oauth/desktop/session").toString(),
+        createAppUrl("/api/desktop/rpc").toString(),
         {
+          method: "POST",
           headers: {
             accept: "application/json",
             authorization: `Bearer ${input.accessToken}`,
+            "content-type": "application/json",
             [NATIVE_AUTH_HEADERS.client]: "desktop",
             [NATIVE_AUTH_HEADERS.organizationId]: input.organizationId,
           },
+          body: JSON.stringify({ command: "auth.session" }),
         }
       );
-      return readJson(response, nativeSessionMetadataSchema);
+      const envelope = await readJson(
+        response,
+        nativeRpcAuthSessionSuccessResponseSchema
+      );
+      return envelope.result;
     },
   };
 }

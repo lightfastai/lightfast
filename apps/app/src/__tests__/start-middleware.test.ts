@@ -23,8 +23,10 @@ describe("app start middleware", () => {
   });
 
   it("classifies app-owned API routes that handle their own auth", () => {
+    expect(isAppOwnedApiRoute("/api/cli/rpc")).toBe(true);
     expect(isAppOwnedApiRoute("/api/connectors/x/mcp")).toBe(true);
     expect(isAppOwnedApiRoute("/api/connectors/x/mcp/messages")).toBe(true);
+    expect(isAppOwnedApiRoute("/api/desktop/rpc")).toBe(true);
     expect(isAppOwnedApiRoute("/api/inngest")).toBe(true);
     expect(isAppOwnedApiRoute("/api/internal/mcp/proxy/call")).toBe(true);
     expect(isAppOwnedApiRoute("/api/internal/mcp/proxy/find")).toBe(true);
