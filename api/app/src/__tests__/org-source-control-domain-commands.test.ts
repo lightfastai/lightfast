@@ -125,12 +125,11 @@ function createDeps() {
       id: "1001",
       targetType: "Organization",
     }),
-    getWatchedSourceControlRepository: vi.fn(),
-    insertWatchedSourceControlRepository: vi.fn(),
     listAllGitHubInstallationRepositories: vi
       .fn()
       .mockResolvedValue([liveRepository()]),
     listWatchedSourceControlRepositories: vi.fn(),
+    insertWatchedSourceControlRepository: vi.fn(),
   };
 }
 
@@ -315,7 +314,6 @@ describe("importSourceControlRepositoryCommand", () => {
 
   it("registers one repository without watch globs", async () => {
     deps.getActiveOrgBinding.mockResolvedValue(activeBinding());
-    deps.getWatchedSourceControlRepository.mockResolvedValue(undefined);
     deps.listWatchedSourceControlRepositories.mockResolvedValueOnce([
       watchedRepository({
         fullName: "acme-live/app",
