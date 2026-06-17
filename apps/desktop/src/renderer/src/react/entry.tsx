@@ -4,9 +4,8 @@ import type { FormatPlatform } from "../../../shared/accelerators";
 import { WINDOW_KIND_GLOBAL } from "../../../shared/window-globals";
 import { AuthQueryCacheBoundary } from "./auth-query-cache-boundary";
 import { DesktopShell } from "./desktop-shell";
-import { DesktopTRPCProvider } from "./trpc/provider";
+import { DesktopQueryProvider } from "./query-provider";
 
-const appOrigin = window.lightfastBridge.appOrigin;
 const platform = window.lightfastBridge.platform;
 const buildInfo = window.lightfastBridge.buildInfo;
 const windowKind = window[WINDOW_KIND_GLOBAL];
@@ -18,10 +17,10 @@ const formatPlatform: FormatPlatform =
 function Providers({ children }: { children: React.ReactNode }) {
   return (
     <StrictMode>
-      <DesktopTRPCProvider baseUrl={appOrigin}>
+      <DesktopQueryProvider>
         <AuthQueryCacheBoundary />
         {children}
-      </DesktopTRPCProvider>
+      </DesktopQueryProvider>
     </StrictMode>
   );
 }
