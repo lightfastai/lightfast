@@ -7,7 +7,9 @@ import {
   createDefaultOrganizationCommandDeps,
   createOrganizationCommand,
   getOrganizationBySlugCommand,
+  listOrganizationDomainsCommand,
   listUserOrganizationsCommand,
+  updateOrganizationDomainsCommand,
   updateOrganizationNameCommand,
 } from "../domain/organizations";
 
@@ -19,11 +21,17 @@ const markNamespaceOperationClerkAppliedMock = vi.fn();
 const finalizeNamespaceOperationMock = vi.fn();
 const deletePreClerkNamespaceReservationMock = vi.fn();
 const createOrganizationMock = vi.fn();
+const createOrganizationDomainMock = vi.fn();
+const deleteOrganizationDomainMock = vi.fn();
 const getOrganizationMock = vi.fn();
+const getOrganizationDomainListMock = vi.fn();
 const updateOrganizationMock = vi.fn();
+const updateOrganizationDomainMock = vi.fn();
 const isClerkConflictErrorMock = vi.fn();
+const isClerkOrganizationDomainsNotEnabledMock = vi.fn();
 const logInfoMock = vi.fn();
 const logErrorMock = vi.fn();
+const logWarnMock = vi.fn();
 
 const { MockNamespaceConflictError } = vi.hoisted(() => ({
   MockNamespaceConflictError: class MockNamespaceConflictError extends Error {
@@ -93,13 +101,33 @@ function membership(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function organizationDomain(overrides: Record<string, unknown> = {}) {
+  return {
+    affiliationEmailAddress: null,
+    createdAt: 1_765_000_000_000,
+    enrollmentMode: "automatic_invitation",
+    id: "orgdmn_acme",
+    name: "acme.com",
+    organizationId: "org_acme",
+    totalPendingInvitations: 0,
+    totalPendingSuggestions: 0,
+    updatedAt: 1_765_000_000_000,
+    verification: { status: "verified" },
+    ...overrides,
+  };
+}
+
 function deps() {
   return createDefaultOrganizationCommandDeps({
     clerk: {
       organizations: {
         createOrganization: createOrganizationMock,
+        createOrganizationDomain: createOrganizationDomainMock,
+        deleteOrganizationDomain: deleteOrganizationDomainMock,
         getOrganization: getOrganizationMock,
+        getOrganizationDomainList: getOrganizationDomainListMock,
         updateOrganization: updateOrganizationMock,
+        updateOrganizationDomain: updateOrganizationDomainMock,
       },
     },
     db: {} as Database,
@@ -107,8 +135,10 @@ function deps() {
     finalizeNamespaceOperation: finalizeNamespaceOperationMock,
     getOrgAccessBySlug: getOrgAccessBySlugMock,
     isClerkConflictError: isClerkConflictErrorMock,
+    isClerkOrganizationDomainsNotEnabled:
+      isClerkOrganizationDomainsNotEnabledMock,
     listUserOrganizationMemberships: listUserOrganizationMembershipsMock,
-    log: { error: logErrorMock, info: logInfoMock },
+    log: { error: logErrorMock, info: logInfoMock, warn: logWarnMock },
     markNamespaceOperationClerkApplied: markNamespaceOperationClerkAppliedMock,
     reserveNamespaceForOperation: reserveNamespaceForOperationMock,
     startNamespaceOperation: startNamespaceOperationMock,
@@ -148,14 +178,29 @@ beforeEach(() => {
   deletePreClerkNamespaceReservationMock.mockReset();
   createOrganizationMock.mockReset();
   createOrganizationMock.mockResolvedValue({ id: "org_acme", slug: "acme" });
+  createOrganizationDomainMock.mockReset();
+  createOrganizationDomainMock.mockResolvedValue(
+    organizationDomain({ id: "orgdmn_new", name: "new.com" })
+  );
+  deleteOrganizationDomainMock.mockReset();
+  deleteOrganizationDomainMock.mockResolvedValue({});
   getOrganizationMock.mockReset();
   getOrganizationMock.mockResolvedValue({ id: "org_acme" });
+  getOrganizationDomainListMock.mockReset();
+  getOrganizationDomainListMock.mockResolvedValue({ data: [] });
   updateOrganizationMock.mockReset();
   updateOrganizationMock.mockResolvedValue({});
+  updateOrganizationDomainMock.mockReset();
+  updateOrganizationDomainMock.mockResolvedValue(
+    organizationDomain({ id: "orgdmn_lightfast", name: "lightfast.ai" })
+  );
   isClerkConflictErrorMock.mockReset();
   isClerkConflictErrorMock.mockReturnValue(false);
+  isClerkOrganizationDomainsNotEnabledMock.mockReset();
+  isClerkOrganizationDomainsNotEnabledMock.mockReturnValue(false);
   logInfoMock.mockReset();
   logErrorMock.mockReset();
+  logWarnMock.mockReset();
 });
 
 describe("organization domain commands", () => {
@@ -282,5 +327,164 @@ describe("organization domain commands", () => {
         kind: "authz",
       })
     );
+  });
+
+  it("lists organization domains for an accessible slug", async () => {
+    getOrganizationDomainListMock.mockResolvedValueOnce({
+      data: [
+        organizationDomain({
+          enrollmentMode: undefined,
+          enrollment_mode: "automatic_invitation",
+          id: "orgdmn_lightfast",
+          name: "Lightfast.AI",
+          verification: { status: "verified" },
+        }),
+      ],
+    });
+
+    await expect(
+      listOrganizationDomainsCommand.run({
+        ctx: ctx(pendingIdentity),
+        deps: deps(),
+        input: { slug: "acme" },
+      })
+    ).resolves.toEqual({
+      domains: [
+        {
+          enrollmentMode: "automatic_invitation",
+          id: "orgdmn_lightfast",
+          name: "lightfast.ai",
+          verificationStatus: "verified",
+        },
+      ],
+      enabled: true,
+    });
+
+    expect(getOrgAccessBySlugMock).toHaveBeenCalledWith({
+      db: expect.anything(),
+      slug: "acme",
+      userId: "user_test",
+    });
+    expect(getOrganizationDomainListMock).toHaveBeenCalledWith({
+      limit: 100,
+      organizationId: "org_acme",
+    });
+  });
+
+  it("returns disabled organization domains when Clerk does not support them", async () => {
+    const error = new Error("domains unavailable");
+    isClerkOrganizationDomainsNotEnabledMock.mockReturnValue(true);
+    getOrganizationDomainListMock.mockRejectedValueOnce(error);
+
+    await expect(
+      listOrganizationDomainsCommand.run({
+        ctx: ctx(pendingIdentity),
+        deps: deps(),
+        input: { slug: "acme" },
+      })
+    ).resolves.toEqual({ domains: [], enabled: false });
+
+    expect(logWarnMock).toHaveBeenCalledWith(
+      "[organization] domains unavailable",
+      expect.objectContaining({ organizationId: "org_acme" })
+    );
+  });
+
+  it("reconciles organization domains for the active admin organization", async () => {
+    getOrganizationDomainListMock
+      .mockResolvedValueOnce({
+        data: [
+          organizationDomain({ id: "orgdmn_acme", name: "acme.com" }),
+          organizationDomain({
+            enrollmentMode: undefined,
+            enrollment_mode: "manual_invitation",
+            id: "orgdmn_lightfast",
+            name: "lightfast.ai",
+          }),
+          organizationDomain({ id: "orgdmn_old", name: "old.com" }),
+        ],
+      })
+      .mockResolvedValueOnce({
+        data: [
+          organizationDomain({ id: "orgdmn_acme", name: "acme.com" }),
+          organizationDomain({
+            id: "orgdmn_lightfast",
+            name: "lightfast.ai",
+          }),
+          organizationDomain({ id: "orgdmn_new", name: "new.com" }),
+        ],
+      });
+
+    await expect(
+      updateOrganizationDomainsCommand.run({
+        ctx: ctx(activeIdentity, { admin: true }),
+        deps: deps(),
+        input: {
+          domains: [" Lightfast.AI ", "new.com", "acme.com", "lightfast.ai"],
+          slug: "acme",
+        },
+      })
+    ).resolves.toEqual([
+      {
+        enrollmentMode: "automatic_invitation",
+        id: "orgdmn_acme",
+        name: "acme.com",
+        verificationStatus: "verified",
+      },
+      {
+        enrollmentMode: "automatic_invitation",
+        id: "orgdmn_lightfast",
+        name: "lightfast.ai",
+        verificationStatus: "verified",
+      },
+      {
+        enrollmentMode: "automatic_invitation",
+        id: "orgdmn_new",
+        name: "new.com",
+        verificationStatus: "verified",
+      },
+    ]);
+
+    expect(updateOrganizationDomainMock).toHaveBeenCalledWith({
+      domainId: "orgdmn_lightfast",
+      enrollmentMode: "automatic_invitation",
+      organizationId: "org_acme",
+      verified: true,
+    });
+    expect(createOrganizationDomainMock).toHaveBeenCalledWith({
+      enrollmentMode: "automatic_invitation",
+      name: "new.com",
+      organizationId: "org_acme",
+      verified: true,
+    });
+    expect(deleteOrganizationDomainMock).toHaveBeenCalledWith({
+      domainId: "orgdmn_old",
+      organizationId: "org_acme",
+    });
+  });
+
+  it("rejects organization domain updates for a different active org", async () => {
+    await expect(
+      updateOrganizationDomainsCommand.run({
+        ctx: ctx(
+          {
+            ...activeIdentity,
+            orgId: "org_other",
+          },
+          { admin: true }
+        ),
+        deps: deps(),
+        input: { domains: ["acme.com"], slug: "acme" },
+      })
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        code: "ORG_NOT_FOUND",
+        kind: "not_found",
+      })
+    );
+
+    expect(createOrganizationDomainMock).not.toHaveBeenCalled();
+    expect(deleteOrganizationDomainMock).not.toHaveBeenCalled();
+    expect(updateOrganizationDomainMock).not.toHaveBeenCalled();
   });
 });

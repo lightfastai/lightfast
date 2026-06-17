@@ -1162,16 +1162,18 @@ describe("app authenticated route migration", () => {
     expect(teamGeneralClientSource).toContain(
       "listUserOrganizationsQueryOptions"
     );
-    expect(teamGeneralClientSource).toContain("listDomains.queryOptions");
     expect(teamGeneralClientSource).toContain(
-      'enabled: typeof window !== "undefined"'
+      "organizationDomainsQueryOptions"
     );
     expect(teamGeneralClientSource).toContain("useNavigate");
     expect(teamGeneralActionsSource).toContain(
       "updateOrganizationNameMutationOptions"
     );
     expect(teamGeneralActionsSource).toContain(
-      "organization.updateDomains.mutationOptions"
+      "updateOrganizationDomainsMutationOptions"
+    );
+    expect(teamGeneralActionsSource).toContain(
+      "organizationQueryKeys.domains(slug)"
     );
     expect(identityCardSource).toContain("identity.get.queryOptions");
     expect(identityCardSource).toContain(

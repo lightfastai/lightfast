@@ -4,9 +4,9 @@ import { useCallback } from "react";
 import {
   organizationQueryKeys,
   type UserOrganizationsData,
+  updateOrganizationDomainsMutationOptions,
   updateOrganizationNameMutationOptions,
 } from "~/organization/organization-queries";
-import { useTRPC } from "~/trpc/react";
 
 const DOMAIN_PATTERN =
   /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
@@ -133,28 +133,25 @@ export function useTeamDomainsUpdate({
   onUpdated?: (domains: { id: string; name: string }[]) => void;
   slug: string;
 }) {
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
 
-  const updateDomainsMutation = useMutation(
-    trpc.org.settings.organization.updateDomains.mutationOptions({
-      meta: { errorTitle: "Failed to update domains" },
-      onError: () => {
-        onError?.();
-      },
-      onSuccess: (domains) => {
-        toast.success("Domains updated!", {
-          description: "Matching email domains will auto-join this team.",
-        });
-        onUpdated?.(domains);
-      },
-      onSettled: () => {
-        void queryClient.invalidateQueries(
-          trpc.org.settings.organization.listDomains.queryFilter({ slug })
-        );
-      },
-    })
-  );
+  const updateDomainsMutation = useMutation({
+    ...updateOrganizationDomainsMutationOptions(),
+    onError: () => {
+      onError?.();
+    },
+    onSuccess: (domains) => {
+      toast.success("Domains updated!", {
+        description: "Matching email domains will auto-join this team.",
+      });
+      onUpdated?.(domains);
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({
+        queryKey: organizationQueryKeys.domains(slug),
+      });
+    },
+  });
 
   const updateTeamDomains = useCallback(
     (domains: string[]) => updateDomainsMutation.mutate({ domains, slug }),

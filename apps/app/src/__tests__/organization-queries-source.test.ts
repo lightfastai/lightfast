@@ -29,7 +29,9 @@ describe("organization query helpers", () => {
     expect(querySource).toContain("organizationQueryKeys");
     expect(querySource).toContain("listUserOrganizationsQueryOptions");
     expect(querySource).toContain("organizationBySlugQueryOptions");
+    expect(querySource).toContain("organizationDomainsQueryOptions");
     expect(querySource).toContain("createOrganizationMutationOptions");
+    expect(querySource).toContain("updateOrganizationDomainsMutationOptions");
     expect(querySource).toContain("updateOrganizationNameMutationOptions");
     expect(querySource).not.toContain("useTRPC");
   });
@@ -44,13 +46,19 @@ describe("organization query helpers", () => {
     }
   });
 
-  it("leaves organization domain management on tRPC for a later product slice", () => {
+  it("moves organization domain management off tRPC", () => {
+    const clientSource = source(
+      "src/org/settings/general/team-general-settings-client.tsx"
+    );
     const actionsSource = source(
       "src/org/settings/general/team-general-settings-actions.ts"
     );
 
-    expect(actionsSource).toContain(
-      "org.settings.organization.updateDomains.mutationOptions"
+    expect(clientSource).not.toContain("useTRPC");
+    expect(clientSource).not.toContain("org.settings.organization.listDomains");
+    expect(actionsSource).not.toContain("useTRPC");
+    expect(actionsSource).not.toContain(
+      "org.settings.organization.updateDomains"
     );
   });
 });

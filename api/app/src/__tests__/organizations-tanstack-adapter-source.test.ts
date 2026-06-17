@@ -23,7 +23,9 @@ describe("organizations TanStack adapter boundary", () => {
     expect(source).toContain('from "@tanstack/react-start"');
     expect(source).toContain("createServerFn");
     expect(source).toContain("listUserOrganizationsCommand");
+    expect(source).toContain("listOrganizationDomainsCommand");
     expect(source).toContain("createOrganizationCommand");
+    expect(source).toContain("updateOrganizationDomainsCommand");
     expect(source).toContain("updateOrganizationNameCommand");
     expect(source).not.toContain("TRPCError");
     expect(source).not.toContain("ORPCError");
@@ -38,8 +40,8 @@ describe("organizations TanStack adapter boundary", () => {
       "src/router/(pending-allowed)/organization.ts"
     );
 
-    expect(rootSource).not.toContain("import { organizationRouter");
-    expect(rootSource).not.toContain("organization: organizationRouter");
+    expect(rootSource).not.toContain("orgSettingsOrganizationRouter");
+    expect(rootSource).not.toContain("organization:");
 
     if (existsSync(routerPath)) {
       const routerSource = readFileSync(routerPath, "utf8");
@@ -47,6 +49,8 @@ describe("organizations TanStack adapter boundary", () => {
       expect(routerSource).not.toContain("getBySlug");
       expect(routerSource).not.toContain("create: viewerProcedure");
       expect(routerSource).not.toContain("updateName");
+      expect(routerSource).not.toContain("listDomains");
+      expect(routerSource).not.toContain("updateDomains");
     }
   });
 });

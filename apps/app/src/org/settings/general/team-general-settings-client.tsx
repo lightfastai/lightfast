@@ -19,8 +19,10 @@ import { Loader2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth, useOrganizationList } from "~/compat/clerk";
 import { SettingRow, SettingsGroup } from "~/components/settings-section";
-import { listUserOrganizationsQueryOptions } from "~/organization/organization-queries";
-import { useTRPC } from "~/trpc/react";
+import {
+  listUserOrganizationsQueryOptions,
+  organizationDomainsQueryOptions,
+} from "~/organization/organization-queries";
 import {
   normalizeTeamDomainList,
   normalizeTeamSlugInput,
@@ -45,7 +47,6 @@ export function TeamGeneralSettingsClient({
   slug,
 }: TeamGeneralSettingsClientProps) {
   const navigate = useNavigate();
-  const trpc = useTRPC();
   const { has, isLoaded } = useAuth();
   const { setActive } = useOrganizationList();
   const canManageDomains = isLoaded && !!has?.({ role: "org:admin" });
@@ -62,9 +63,7 @@ export function TeamGeneralSettingsClient({
     error: organizationDomainsError,
     isPending: isOrganizationDomainsPending,
   } = useQuery({
-    ...trpc.org.settings.organization.listDomains.queryOptions({ slug }),
-    enabled: typeof window !== "undefined",
-    staleTime: 5 * 60 * 1000,
+    ...organizationDomainsQueryOptions({ slug }),
   });
   const currentOrg = useMemo(
     () => organizations.find((org) => org.slug === slug),
