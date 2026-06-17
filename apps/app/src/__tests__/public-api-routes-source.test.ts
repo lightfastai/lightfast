@@ -1,0 +1,67 @@
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
+
+const repoRoot = resolve(import.meta.dirname, "../../../..");
+const appRoot = resolve(repoRoot, "apps/app");
+
+function appSource(path: string) {
+  return readFileSync(resolve(appRoot, path), "utf8");
+}
+
+function repoSource(path: string) {
+  return readFileSync(resolve(repoRoot, path), "utf8");
+}
+
+describe("public API route boundaries", () => {
+  it("mounts public signal routes as thin app-owned route files", () => {
+    const createPath = resolve(appRoot, "src/routes/api/v1/signals.ts");
+    const getPath = resolve(appRoot, "src/routes/api/v1/signals/$id.ts");
+
+    expect(existsSync(createPath)).toBe(true);
+    expect(existsSync(getPath)).toBe(true);
+
+    const createRoute = appSource("src/routes/api/v1/signals.ts");
+    const getRoute = appSource("src/routes/api/v1/signals/$id.ts");
+
+    expect(createRoute).toContain('createFileRoute("/api/v1/signals")');
+    expect(createRoute).toContain('@api/app/public-api/signals"');
+    expect(createRoute).toContain("handleCreateSignalPublicApiRequest");
+    expect(createRoute).toContain("handlePublicApiOptionsRequest");
+    expect(getRoute).toContain('createFileRoute("/api/v1/signals/$id")');
+    expect(getRoute).toContain('@api/app/public-api/signals"');
+    expect(getRoute).toContain("handleGetSignalPublicApiRequest");
+    expect(getRoute).toContain("params.id");
+
+    for (const source of [createRoute, getRoute]) {
+      expect(source).not.toContain("OpenAPIHandler");
+      expect(source).not.toContain("orpcRouter");
+      expect(source).not.toContain("@db/app");
+      expect(source).not.toContain("resolveApiKeyAuth");
+    }
+  });
+
+  it("keeps public signal behavior in an explicit api/app adapter", () => {
+    const packageJson = JSON.parse(repoSource("api/app/package.json")) as {
+      exports?: Record<string, unknown>;
+    };
+    const adapter = repoSource("api/app/src/adapters/public/signals.ts");
+
+    expect(packageJson.exports).toHaveProperty("./public-api/signals");
+    expect(adapter).toContain("resolveApiKeyAuth");
+    expect(adapter).toContain("createSignalInput");
+    expect(adapter).toContain("getSignalOutput.parse");
+    expect(adapter).toContain("createSignalForActor");
+    expect(adapter).not.toContain("ORPCError");
+    expect(adapter).not.toContain("@orpc/");
+    expect(adapter).not.toContain("OpenAPIHandler");
+  });
+
+  it("keeps the oRPC catch-all only as the temporary public fallback", () => {
+    const fallback = appSource("src/routes/api/v1/$.ts");
+
+    expect(fallback).toContain('createFileRoute("/api/v1/$")');
+    expect(fallback).toContain("OpenAPIHandler");
+    expect(fallback).toContain("orpcRouter");
+  });
+});

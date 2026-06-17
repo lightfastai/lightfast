@@ -37,6 +37,10 @@
       "types": "./src/adapters/internal/mcp-signals.ts",
       "default": "./src/adapters/internal/mcp-signals.ts"
     },
+    "./public-api/signals": {
+      "types": "./src/adapters/public/signals.ts",
+      "default": "./src/adapters/public/signals.ts"
+    },
     "./tanstack/signals": {
       "types": "./src/adapters/tanstack/signals.ts",
       "default": "./src/adapters/tanstack/signals.ts"

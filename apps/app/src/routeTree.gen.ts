@@ -28,6 +28,7 @@ import { Route as DotwellKnownOauthAuthorizationServerRouteImport } from './rout
 import { Route as AuthenticatedSlugIndexRouteImport } from './routes/_authenticated/$slug/index'
 import { Route as OauthRegisterClientIdRouteImport } from './routes/oauth/register/$clientId'
 import { Route as OauthClientStartRouteImport } from './routes/oauth/$client/start'
+import { Route as ApiV1SignalsRouteImport } from './routes/api/v1/signals'
 import { Route as ApiV1SplatRouteImport } from './routes/api/v1/$'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api/trpc.$'
 import { Route as ApiOauthFinalizeRouteImport } from './routes/api/oauth/finalize'
@@ -50,6 +51,7 @@ import { Route as AuthenticatedSlugTasksIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedSlugSettingsIndexRouteImport } from './routes/_authenticated/$slug/settings/index'
 import { Route as AuthenticatedSlugChatIndexRouteImport } from './routes/_authenticated/$slug/chat/index'
 import { Route as AuthenticatedSlugAutomationsIndexRouteImport } from './routes/_authenticated/$slug/automations/index'
+import { Route as ApiV1SignalsIdRouteImport } from './routes/api/v1/signals/$id'
 import { Route as ApiSkillsIndexEventsRouteImport } from './routes/api/skills/index/events'
 import { Route as ApiOauthDesktopSessionRouteImport } from './routes/api/oauth/desktop/session'
 import { Route as ApiOauthClientConfigRouteImport } from './routes/api/oauth/$client/config'
@@ -186,6 +188,11 @@ const OauthClientStartRoute = OauthClientStartRouteImport.update({
   path: '/oauth/$client/start',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1SignalsRoute = ApiV1SignalsRouteImport.update({
+  id: '/api/v1/signals',
+  path: '/api/v1/signals',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiV1SplatRoute = ApiV1SplatRouteImport.update({
   id: '/api/v1/$',
   path: '/api/v1/$',
@@ -308,6 +315,11 @@ const AuthenticatedSlugAutomationsIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedSlugAutomationsRoute,
   } as any)
+const ApiV1SignalsIdRoute = ApiV1SignalsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiV1SignalsRoute,
+} as any)
 const ApiSkillsIndexEventsRoute = ApiSkillsIndexEventsRouteImport.update({
   id: '/api/skills/index/events',
   path: '/api/skills/index/events',
@@ -571,6 +583,7 @@ export interface FileRoutesByFullPath {
   '/api/oauth/finalize': typeof ApiOauthFinalizeRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
+  '/api/v1/signals': typeof ApiV1SignalsRouteWithChildren
   '/oauth/$client/start': typeof OauthClientStartRoute
   '/oauth/register/$clientId': typeof OauthRegisterClientIdRoute
   '/$slug/': typeof AuthenticatedSlugIndexRoute
@@ -599,6 +612,7 @@ export interface FileRoutesByFullPath {
   '/api/oauth/$client/config': typeof ApiOauthClientConfigRoute
   '/api/oauth/desktop/session': typeof ApiOauthDesktopSessionRoute
   '/api/skills/index/events': typeof ApiSkillsIndexEventsRoute
+  '/api/v1/signals/$id': typeof ApiV1SignalsIdRoute
   '/$slug/automations/': typeof AuthenticatedSlugAutomationsIndexRoute
   '/$slug/chat/': typeof AuthenticatedSlugChatIndexRoute
   '/$slug/settings/': typeof AuthenticatedSlugSettingsIndexRoute
@@ -647,6 +661,7 @@ export interface FileRoutesByTo {
   '/api/oauth/finalize': typeof ApiOauthFinalizeRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
+  '/api/v1/signals': typeof ApiV1SignalsRouteWithChildren
   '/oauth/$client/start': typeof OauthClientStartRoute
   '/oauth/register/$clientId': typeof OauthRegisterClientIdRoute
   '/$slug': typeof AuthenticatedSlugIndexRoute
@@ -673,6 +688,7 @@ export interface FileRoutesByTo {
   '/api/oauth/$client/config': typeof ApiOauthClientConfigRoute
   '/api/oauth/desktop/session': typeof ApiOauthDesktopSessionRoute
   '/api/skills/index/events': typeof ApiSkillsIndexEventsRoute
+  '/api/v1/signals/$id': typeof ApiV1SignalsIdRoute
   '/$slug/automations': typeof AuthenticatedSlugAutomationsIndexRoute
   '/$slug/chat': typeof AuthenticatedSlugChatIndexRoute
   '/$slug/settings': typeof AuthenticatedSlugSettingsIndexRoute
@@ -728,6 +744,7 @@ export interface FileRoutesById {
   '/api/oauth/finalize': typeof ApiOauthFinalizeRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
+  '/api/v1/signals': typeof ApiV1SignalsRouteWithChildren
   '/oauth/$client/start': typeof OauthClientStartRoute
   '/oauth/register/$clientId': typeof OauthRegisterClientIdRoute
   '/_authenticated/$slug/': typeof AuthenticatedSlugIndexRoute
@@ -756,6 +773,7 @@ export interface FileRoutesById {
   '/api/oauth/$client/config': typeof ApiOauthClientConfigRoute
   '/api/oauth/desktop/session': typeof ApiOauthDesktopSessionRoute
   '/api/skills/index/events': typeof ApiSkillsIndexEventsRoute
+  '/api/v1/signals/$id': typeof ApiV1SignalsIdRoute
   '/_authenticated/$slug/automations/': typeof AuthenticatedSlugAutomationsIndexRoute
   '/_authenticated/$slug/chat/': typeof AuthenticatedSlugChatIndexRoute
   '/_authenticated/$slug/settings/': typeof AuthenticatedSlugSettingsIndexRoute
@@ -812,6 +830,7 @@ export interface FileRouteTypes {
     | '/api/oauth/finalize'
     | '/api/trpc/$'
     | '/api/v1/$'
+    | '/api/v1/signals'
     | '/oauth/$client/start'
     | '/oauth/register/$clientId'
     | '/$slug/'
@@ -840,6 +859,7 @@ export interface FileRouteTypes {
     | '/api/oauth/$client/config'
     | '/api/oauth/desktop/session'
     | '/api/skills/index/events'
+    | '/api/v1/signals/$id'
     | '/$slug/automations/'
     | '/$slug/chat/'
     | '/$slug/settings/'
@@ -888,6 +908,7 @@ export interface FileRouteTypes {
     | '/api/oauth/finalize'
     | '/api/trpc/$'
     | '/api/v1/$'
+    | '/api/v1/signals'
     | '/oauth/$client/start'
     | '/oauth/register/$clientId'
     | '/$slug'
@@ -914,6 +935,7 @@ export interface FileRouteTypes {
     | '/api/oauth/$client/config'
     | '/api/oauth/desktop/session'
     | '/api/skills/index/events'
+    | '/api/v1/signals/$id'
     | '/$slug/automations'
     | '/$slug/chat'
     | '/$slug/settings'
@@ -968,6 +990,7 @@ export interface FileRouteTypes {
     | '/api/oauth/finalize'
     | '/api/trpc/$'
     | '/api/v1/$'
+    | '/api/v1/signals'
     | '/oauth/$client/start'
     | '/oauth/register/$clientId'
     | '/_authenticated/$slug/'
@@ -996,6 +1019,7 @@ export interface FileRouteTypes {
     | '/api/oauth/$client/config'
     | '/api/oauth/desktop/session'
     | '/api/skills/index/events'
+    | '/api/v1/signals/$id'
     | '/_authenticated/$slug/automations/'
     | '/_authenticated/$slug/chat/'
     | '/_authenticated/$slug/settings/'
@@ -1038,6 +1062,7 @@ export interface RootRouteChildren {
   ApiOauthFinalizeRoute: typeof ApiOauthFinalizeRoute
   ApiTrpcSplatRoute: typeof ApiTrpcSplatRoute
   ApiV1SplatRoute: typeof ApiV1SplatRoute
+  ApiV1SignalsRoute: typeof ApiV1SignalsRouteWithChildren
   OauthClientStartRoute: typeof OauthClientStartRoute
   ApiConnectorsXMcpRoute: typeof ApiConnectorsXMcpRoute
   ApiGithubOauthCallbackRoute: typeof ApiGithubOauthCallbackRoute
@@ -1188,6 +1213,13 @@ declare module '@tanstack/react-router' {
       path: '/oauth/$client/start'
       fullPath: '/oauth/$client/start'
       preLoaderRoute: typeof OauthClientStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/signals': {
+      id: '/api/v1/signals'
+      path: '/api/v1/signals'
+      fullPath: '/api/v1/signals'
+      preLoaderRoute: typeof ApiV1SignalsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/v1/$': {
@@ -1343,6 +1375,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/$slug/automations/'
       preLoaderRoute: typeof AuthenticatedSlugAutomationsIndexRouteImport
       parentRoute: typeof AuthenticatedSlugAutomationsRoute
+    }
+    '/api/v1/signals/$id': {
+      id: '/api/v1/signals/$id'
+      path: '/$id'
+      fullPath: '/api/v1/signals/$id'
+      preLoaderRoute: typeof ApiV1SignalsIdRouteImport
+      parentRoute: typeof ApiV1SignalsRoute
     }
     '/api/skills/index/events': {
       id: '/api/skills/index/events'
@@ -1885,6 +1924,18 @@ const OauthRegisterRouteWithChildren = OauthRegisterRoute._addFileChildren(
   OauthRegisterRouteChildren,
 )
 
+interface ApiV1SignalsRouteChildren {
+  ApiV1SignalsIdRoute: typeof ApiV1SignalsIdRoute
+}
+
+const ApiV1SignalsRouteChildren: ApiV1SignalsRouteChildren = {
+  ApiV1SignalsIdRoute: ApiV1SignalsIdRoute,
+}
+
+const ApiV1SignalsRouteWithChildren = ApiV1SignalsRoute._addFileChildren(
+  ApiV1SignalsRouteChildren,
+)
+
 interface ApiInternalMcpSignalsRouteChildren {
   ApiInternalMcpSignalsGetRoute: typeof ApiInternalMcpSignalsGetRoute
 }
@@ -1919,6 +1970,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiOauthFinalizeRoute: ApiOauthFinalizeRoute,
   ApiTrpcSplatRoute: ApiTrpcSplatRoute,
   ApiV1SplatRoute: ApiV1SplatRoute,
+  ApiV1SignalsRoute: ApiV1SignalsRouteWithChildren,
   OauthClientStartRoute: OauthClientStartRoute,
   ApiConnectorsXMcpRoute: ApiConnectorsXMcpRoute,
   ApiGithubOauthCallbackRoute: ApiGithubOauthCallbackRoute,
