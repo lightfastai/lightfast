@@ -20,9 +20,7 @@ describe("skills refresh controller source", () => {
       /from\s+["']@api\/app\/tanstack\/skills["']/
     );
     expect(controllerSource).toContain("requestSkillRefresh");
-    expect(controllerSource).toContain(
-      "Skill index refresh was not enqueued"
-    );
+    expect(controllerSource).toContain("Skill index refresh was not enqueued");
     expect(controllerSource).toContain("skillsListQueryKey");
     expect(controllerSource).toContain(
       'new EventSource("/api/skills/index/events")'
