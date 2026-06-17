@@ -1,8 +1,8 @@
 import type { Database, OrgSourceControlBinding } from "@db/app";
 import {
   getActiveOrgBinding,
+  insertWatchedSourceControlRepository,
   listWatchedSourceControlRepositories,
-  upsertWatchedSourceControlRepository,
 } from "@db/app";
 import { LIGHTFAST_REPOSITORY_NAME } from "@repo/app-setup-contract";
 import {
@@ -46,9 +46,9 @@ interface SourceControlCommandDeps {
   getActiveOrgBinding: typeof getActiveOrgBinding;
   getGitHubAppConfig: typeof getGitHubAppConfig;
   getGitHubAppInstallation: typeof getGitHubAppInstallation;
+  insertWatchedSourceControlRepository: typeof insertWatchedSourceControlRepository;
   listAllGitHubInstallationRepositories: typeof listAllGitHubInstallationRepositories;
   listWatchedSourceControlRepositories: typeof listWatchedSourceControlRepositories;
-  upsertWatchedSourceControlRepository: typeof upsertWatchedSourceControlRepository;
 }
 
 export function createDefaultSourceControlCommandDeps(input: {
@@ -58,9 +58,9 @@ export function createDefaultSourceControlCommandDeps(input: {
   getActiveOrgBinding?: typeof getActiveOrgBinding;
   getGitHubAppConfig?: typeof getGitHubAppConfig;
   getGitHubAppInstallation?: typeof getGitHubAppInstallation;
+  insertWatchedSourceControlRepository?: typeof insertWatchedSourceControlRepository;
   listAllGitHubInstallationRepositories?: typeof listAllGitHubInstallationRepositories;
   listWatchedSourceControlRepositories?: typeof listWatchedSourceControlRepositories;
-  upsertWatchedSourceControlRepository?: typeof upsertWatchedSourceControlRepository;
 }): SourceControlCommandDeps {
   return {
     createGitHubAppJwt: input.createGitHubAppJwt ?? createGitHubAppJwt,
@@ -71,15 +71,15 @@ export function createDefaultSourceControlCommandDeps(input: {
     getGitHubAppConfig: input.getGitHubAppConfig ?? getGitHubAppConfig,
     getGitHubAppInstallation:
       input.getGitHubAppInstallation ?? getGitHubAppInstallation,
+    insertWatchedSourceControlRepository:
+      input.insertWatchedSourceControlRepository ??
+      insertWatchedSourceControlRepository,
     listAllGitHubInstallationRepositories:
       input.listAllGitHubInstallationRepositories ??
       listAllGitHubInstallationRepositories,
     listWatchedSourceControlRepositories:
       input.listWatchedSourceControlRepositories ??
       listWatchedSourceControlRepositories,
-    upsertWatchedSourceControlRepository:
-      input.upsertWatchedSourceControlRepository ??
-      upsertWatchedSourceControlRepository,
   };
 }
 
@@ -587,7 +587,9 @@ export const importSourceControlRepositoryCommand = defineCommand<
       );
     }
 
-    await deps.upsertWatchedSourceControlRepository(deps.db, {
+    // The insert helper handles duplicate-key races without overwriting an
+    // existing watch's sync status or path policy.
+    await deps.insertWatchedSourceControlRepository(deps.db, {
       fullName: selectedRepository.fullName,
       orgSourceControlBindingId: binding.id,
       providerRepositoryId: selectedRepository.id,

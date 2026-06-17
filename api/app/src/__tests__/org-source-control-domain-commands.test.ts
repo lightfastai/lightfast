@@ -129,7 +129,7 @@ function createDeps() {
       .fn()
       .mockResolvedValue([liveRepository()]),
     listWatchedSourceControlRepositories: vi.fn(),
-    upsertWatchedSourceControlRepository: vi.fn(),
+    insertWatchedSourceControlRepository: vi.fn(),
   };
 }
 
@@ -292,7 +292,7 @@ describe("listSourceControlRepositoriesCommand", () => {
     });
 
     expect(deps.createGitHubInstallationToken).not.toHaveBeenCalled();
-    expect(deps.upsertWatchedSourceControlRepository).not.toHaveBeenCalled();
+    expect(deps.insertWatchedSourceControlRepository).not.toHaveBeenCalled();
   });
 });
 
@@ -341,7 +341,7 @@ describe("importSourceControlRepositoryCommand", () => {
       status: "bound",
     });
 
-    expect(deps.upsertWatchedSourceControlRepository).toHaveBeenCalledWith(
+    expect(deps.insertWatchedSourceControlRepository).toHaveBeenCalledWith(
       expect.anything(),
       {
         fullName: "acme-live/app",
@@ -370,6 +370,6 @@ describe("importSourceControlRepositoryCommand", () => {
 
     expect(deps.createGitHubAppJwt).not.toHaveBeenCalled();
     expect(deps.listAllGitHubInstallationRepositories).not.toHaveBeenCalled();
-    expect(deps.upsertWatchedSourceControlRepository).not.toHaveBeenCalled();
+    expect(deps.insertWatchedSourceControlRepository).not.toHaveBeenCalled();
   });
 });
