@@ -105,6 +105,52 @@ describe("createDesktopNativeAuthClient", () => {
     );
   });
 
+  it.each([
+    {
+      code: "FORBIDDEN",
+      label: "missing organization",
+      message: "Native session organization required",
+      status: 403,
+    },
+    {
+      code: "FORBIDDEN",
+      label: "wrong organization",
+      message: "User is not a member of the selected organization",
+      status: 403,
+    },
+    {
+      code: "UNAUTHORIZED",
+      label: "expired token",
+      message: "Lightfast native OAuth authentication required.",
+      status: 401,
+    },
+  ])("surfaces desktop RPC session $label errors", async ({
+    code,
+    message,
+    status,
+  }) => {
+    const fetchImpl = vi.fn().mockResolvedValueOnce(
+      Response.json(
+        {
+          ok: false,
+          error: { code, message },
+        },
+        { status }
+      )
+    );
+
+    const client = createDesktopNativeAuthClient({ fetchImpl });
+
+    await expect(
+      client.session({
+        accessToken: "access",
+        organizationId: "org_1",
+      })
+    ).rejects.toThrow(message);
+    expect(fetchImpl).toHaveBeenCalledOnce();
+    expect(netFetchMock).not.toHaveBeenCalled();
+  });
+
   it("rejects finalize responses without organization metadata", async () => {
     const fetchImpl = vi.fn().mockResolvedValueOnce(
       Response.json({

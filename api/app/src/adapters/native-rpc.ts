@@ -86,9 +86,9 @@ export async function handleNativeRpcRequest(
   try {
     switch (parsedRequest.data.command) {
       case "auth.session": {
-        const parsedInput = nativeRpcAuthSessionInputSchema.safeParse(
-          parsedRequest.data.input ?? {}
-        );
+        const input =
+          "input" in parsedRequest.data ? parsedRequest.data.input : {};
+        const parsedInput = nativeRpcAuthSessionInputSchema.safeParse(input);
         if (!parsedInput.success) {
           return invalidRequestResponse();
         }

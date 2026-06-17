@@ -125,13 +125,48 @@ describe("native RPC adapters", () => {
     expect(mocks.getNativeAuthSessionForRequest).not.toHaveBeenCalled();
   });
 
-  it("maps native OAuth errors to the native RPC error envelope", async () => {
+  it("rejects explicit null command input", async () => {
+    const response = await handleDesktopNativeRpcRequest(
+      rpcRequest({ command: "auth.session", input: null })
+    );
+
+    await expect(response.json()).resolves.toEqual({
+      ok: false,
+      error: {
+        code: "BAD_REQUEST",
+        message: "Native RPC request is invalid.",
+      },
+    });
+    expect(response.status).toBe(400);
+    expect(mocks.getNativeAuthSessionForRequest).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    {
+      code: "FORBIDDEN" as const,
+      label: "missing organization",
+      message: "Native session organization required",
+      status: 403,
+    },
+    {
+      code: "FORBIDDEN" as const,
+      label: "wrong organization",
+      message: "User is not a member of the selected organization",
+      status: 403,
+    },
+    {
+      code: "UNAUTHORIZED" as const,
+      label: "expired token",
+      message: "Lightfast native OAuth authentication required.",
+      status: 401,
+    },
+  ])("maps native OAuth $label errors to the native RPC error envelope", async ({
+    code,
+    message,
+    status,
+  }) => {
     mocks.getNativeAuthSessionForRequest.mockRejectedValue(
-      new mocks.NativeAuthError({
-        code: "UNAUTHORIZED",
-        message: "Lightfast native OAuth authentication required.",
-        status: 401,
-      })
+      new mocks.NativeAuthError({ code, message, status })
     );
 
     const response = await handleDesktopNativeRpcRequest(
@@ -141,11 +176,11 @@ describe("native RPC adapters", () => {
     await expect(response.json()).resolves.toEqual({
       ok: false,
       error: {
-        code: "UNAUTHORIZED",
-        message: "Lightfast native OAuth authentication required.",
+        code,
+        message,
       },
     });
-    expect(response.status).toBe(401);
+    expect(response.status).toBe(status);
   });
 
   it("treats invalid backend output as an internal native RPC error", async () => {
