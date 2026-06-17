@@ -4,6 +4,7 @@ export * from "./connectors";
 export * from "./developer-connections";
 export * from "./errors";
 export * from "./gates";
+export * from "./github-setup";
 export * from "./mcp-connections";
 export * from "./org-api-keys";
 export * from "./org-billing";

@@ -6,7 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useTRPC } from "~/trpc/react";
+import { syncGitHubBindingClaimMutationOptions } from "./github-setup-queries";
 
 interface XConnectorSetupCompleteClientProps {
   orgSlug: string;
@@ -16,14 +16,13 @@ export function XConnectorSetupCompleteClient({
   orgSlug,
 }: XConnectorSetupCompleteClientProps) {
   const navigate = useNavigate();
-  const trpc = useTRPC();
   const { isLoaded: isSessionLoaded, session } = useSession();
   const [failed, setFailed] = useState(false);
   const hasStartedRef = useRef(false);
 
   const syncMutation = useMutation(
-    trpc.org.setup.github.syncBindingClaim.mutationOptions({
-      meta: { errorTitle: "Failed to finish X connection" },
+    syncGitHubBindingClaimMutationOptions({
+      errorTitle: "Failed to finish X connection",
     })
   );
   const { mutateAsync } = syncMutation;

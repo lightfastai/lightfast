@@ -12,7 +12,6 @@ import { nativeAuthRouter } from "./router/(pending-allowed)/native-auth";
 import { automationsRouter } from "./router/(pending-not-allowed)/automations";
 import { connectorsRouter } from "./router/(pending-not-allowed)/connectors";
 import { developerConnectionsRouter } from "./router/(pending-not-allowed)/developer-connections";
-import { githubSetupRouter } from "./router/(pending-not-allowed)/github-setup";
 import { orgSourceControlRouter } from "./router/(pending-not-allowed)/org-source-control";
 import { taskRouter } from "./router/(pending-not-allowed)/task";
 import { workspaceEntityGraphRouter } from "./router/(pending-not-allowed)/workspace-entity-graph";
@@ -24,7 +23,6 @@ export const appRouter = createTRPCRouter({
   }),
   org: createTRPCRouter({
     setup: createTRPCRouter({
-      github: githubSetupRouter,
       task: taskRouter,
     }),
     settings: createTRPCRouter({

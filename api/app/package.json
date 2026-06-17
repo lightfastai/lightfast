@@ -49,6 +49,10 @@
       "types": "./src/adapters/tanstack/org-billing.ts",
       "default": "./src/adapters/tanstack/org-billing.ts"
     },
+    "./tanstack/github-setup": {
+      "types": "./src/adapters/tanstack/github-setup.ts",
+      "default": "./src/adapters/tanstack/github-setup.ts"
+    },
     "./tanstack/org-members": {
       "types": "./src/adapters/tanstack/org-members.ts",
       "default": "./src/adapters/tanstack/org-members.ts"

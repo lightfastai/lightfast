@@ -800,13 +800,15 @@ describe("app authenticated route migration", () => {
     expect(bindIndexRouteSource).toContain("useSearch({ strict: false })");
     expect(bindIndexRouteSource).not.toContain("useRouterState");
     expect(bindIndexRouteSource).toContain("BindGithubCard");
-    expect(bindCardSource).toContain("org.setup.github.start");
+    expect(bindCardSource).toContain("startGitHubOrgSetupMutationOptions");
     expect(lightfastRepoRouteSource).toContain(
       "sourceControlConnectionQueryOptions"
     );
     expect(lightfastRepoRouteSource).toContain("newLightfastRepositoryUrl");
     expect(lightfastRepoRouteSource).not.toContain("getGitHubNewRepositoryUrl");
-    expect(repoClientSource).toContain("verifyLightfastRepo");
+    expect(repoClientSource).toContain(
+      "verifyGitHubLightfastRepoMutationOptions"
+    );
     expect(repoClientSource).toContain("newRepositoryUrl");
     expect(repoClientSource).not.toContain("https://github.com");
     expect(completeRouteSource).toContain("GitHubBindCompleteClient");
@@ -1299,7 +1301,9 @@ describe("app authenticated route migration", () => {
     expect(xSetupClientSource).toContain("window.location.assign");
     expect(xCompleteClientSource).toContain("useSession");
     expect(xCompleteClientSource).toContain("useNavigate");
-    expect(xCompleteClientSource).toContain("syncBindingClaim.mutationOptions");
+    expect(xCompleteClientSource).toContain(
+      "syncGitHubBindingClaimMutationOptions"
+    );
     expect(xCompleteClientSource).toContain("pathForSetupRequirement");
 
     expect(githubWebhookRouteSource).toContain(

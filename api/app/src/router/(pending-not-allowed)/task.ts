@@ -11,7 +11,7 @@ import { setupProcedure } from "../../trpc";
  * Both procedures use `setupProcedure`: an active org must reach them *before*
  * it is bound. `task.status` reports the canonical setup gate for the setup UI.
  * `task.bind` remains as a fail-closed compatibility stub for old clients; real
- * setup is owned by `org.setup.github`.
+ * setup is owned by the GitHub setup TanStack adapter.
  */
 export const taskRouter = {
   /**
