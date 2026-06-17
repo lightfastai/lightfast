@@ -15,7 +15,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUpRight, PanelRight, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { LfSelect } from "~/components/lf-select";
-import { useTRPC } from "~/trpc/react";
 import { DeveloperConnectionDetailSheet } from "./developer-connection-detail-sheet";
 import { DeveloperConnectionIcon } from "./developer-connection-icons";
 import {
@@ -23,6 +22,15 @@ import {
   developerConnectionStatus,
   displayDeveloperConnectionProvider,
 } from "./developer-connections-model";
+import {
+  completeSentryDeveloperConnectionAuthMutationOptions,
+  connectDeveloperConnectionMutationOptions,
+  developerConnectionQueryKeys,
+  developerConnectionsQueryOptions,
+  disconnectDeveloperConnectionMutationOptions,
+  setDeveloperConnectionSandboxEnabledMutationOptions,
+  startSentryDeveloperConnectionAuthMutationOptions,
+} from "./developer-connections-queries";
 import type { NormalizedDeveloperConnectionsSearch } from "./developer-connections-search-params";
 
 type StatusFilter =
@@ -80,15 +88,10 @@ export function DeveloperConnectionsClient({
     updates: Partial<NormalizedDeveloperConnectionsSearch>
   ) => void;
 }) {
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const listQueryOptions =
-    trpc.org.workspace.developerConnections.list.queryOptions();
-  const listQuery = useQuery({
-    ...listQueryOptions,
-    enabled: typeof window !== "undefined",
-    staleTime: 30_000,
-  });
+  const listQuery = useQuery(
+    developerConnectionsQueryOptions({ staleTime: 30_000 })
+  );
   const connections = listQuery.data ?? [];
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -105,13 +108,13 @@ export function DeveloperConnectionsClient({
   } | null>(null);
 
   const invalidateList = () => {
-    void queryClient.invalidateQueries(
-      trpc.org.workspace.developerConnections.list.queryFilter()
-    );
+    void queryClient.invalidateQueries({
+      queryKey: developerConnectionQueryKeys.list(),
+    });
   };
 
   const connectMutation = useMutation(
-    trpc.org.workspace.developerConnections.connect.mutationOptions({
+    connectDeveloperConnectionMutationOptions({
       onSuccess: () => {
         setConnectRow(null);
         invalidateList();
@@ -119,7 +122,7 @@ export function DeveloperConnectionsClient({
     })
   );
   const startSentryAuthMutation = useMutation(
-    trpc.org.workspace.developerConnections.startSentryAuth.mutationOptions({
+    startSentryDeveloperConnectionAuthMutationOptions({
       onSuccess: (result) => {
         setSentryAuthAttempt({
           attemptId: result.attemptId,
@@ -130,7 +133,7 @@ export function DeveloperConnectionsClient({
     })
   );
   const completeSentryAuthMutation = useMutation(
-    trpc.org.workspace.developerConnections.completeSentryAuth.mutationOptions({
+    completeSentryDeveloperConnectionAuthMutationOptions({
       onSuccess: () => {
         setConnectRow(null);
         setSentryAuthAttempt(null);
@@ -139,12 +142,12 @@ export function DeveloperConnectionsClient({
     })
   );
   const setSandboxEnabledMutation = useMutation(
-    trpc.org.workspace.developerConnections.setSandboxEnabled.mutationOptions({
+    setDeveloperConnectionSandboxEnabledMutationOptions({
       onSuccess: invalidateList,
     })
   );
   const disconnectMutation = useMutation(
-    trpc.org.workspace.developerConnections.disconnect.mutationOptions({
+    disconnectDeveloperConnectionMutationOptions({
       onSuccess: invalidateList,
     })
   );

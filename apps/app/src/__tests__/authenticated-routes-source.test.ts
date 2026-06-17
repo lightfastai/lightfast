@@ -352,21 +352,19 @@ describe("app authenticated route migration", () => {
       '"/_authenticated/$slug/developer-connections"'
     );
     expect(routeSource).toContain("setSearchParams");
-    expect(clientSource).toContain("developerConnections.list.queryOptions");
+    expect(clientSource).toContain("developerConnectionsQueryOptions");
+    expect(clientSource).toContain("connectDeveloperConnectionMutationOptions");
     expect(clientSource).toContain(
-      "developerConnections.connect.mutationOptions"
+      "startSentryDeveloperConnectionAuthMutationOptions"
     );
     expect(clientSource).toContain(
-      "developerConnections.startSentryAuth.mutationOptions"
+      "completeSentryDeveloperConnectionAuthMutationOptions"
     );
     expect(clientSource).toContain(
-      "developerConnections.completeSentryAuth.mutationOptions"
+      "setDeveloperConnectionSandboxEnabledMutationOptions"
     );
     expect(clientSource).toContain(
-      "developerConnections.setSandboxEnabled.mutationOptions"
-    );
-    expect(clientSource).toContain(
-      "developerConnections.disconnect.mutationOptions"
+      "disconnectDeveloperConnectionMutationOptions"
     );
     expect(searchSource).toContain("validateDeveloperConnectionsSearch");
     expect(modelSource).toContain("developerConnectionStatus");
