@@ -1,5 +1,5 @@
 import { useChat } from "@ai-sdk/react";
-import type { AppRouterOutputs } from "@api/app";
+import { createConversation } from "@api/app/tanstack/assistant";
 import {
   lightfastWorkspaceAssistantDataPartSchemas,
   lightfastWorkspaceAssistantMessageMetadataSchema,
@@ -19,13 +19,13 @@ import {
 } from "@vendor/ai";
 import type { CSSProperties } from "react";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { useTRPC } from "~/trpc/react";
 import { ChatComposer } from "./chat-composer";
 import { ChatMessage } from "./chat-message";
 import { isResumableStreamEnabled } from "./resumable-stream-config";
-
-type WorkspaceAssistantConversationResult =
-  AppRouterOutputs["org"]["workspace"]["assistant"]["getConversation"];
+import {
+  assistantConversationsQueryKey,
+  type WorkspaceAssistantConversationResult,
+} from "./workspace-assistant-queries";
 
 const messageRowRenderingHints = {
   containIntrinsicSize: "0 160px",
@@ -44,15 +44,11 @@ export function WorkspaceAssistantClient({
   const params = useParams({ strict: false });
   const orgSlug = typeof params.slug === "string" ? params.slug : undefined;
   const router = useRouter();
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const createConversation = useMutation(
-    trpc.org.workspace.assistant.createConversation.mutationOptions()
-  );
-  const listConversationsQueryFilter = useMemo(
-    () => trpc.org.workspace.assistant.listConversations.queryFilter(),
-    [trpc]
-  );
+  const createConversationMutation = useMutation({
+    mutationFn: (data: { publicId: string; title: string }) =>
+      createConversation({ data }),
+  });
   const initialMessages = useMemo(
     () => initialConversation?.messages.map(toUIMessage) ?? [],
     [initialConversation]
@@ -102,7 +98,7 @@ export function WorkspaceAssistantClient({
   const isPreparingFirstMessage =
     Boolean(optimisticFirstMessage) && status === "ready";
   const composerStatus: ChatStatus =
-    createConversation.isPending || isPreparingFirstMessage
+    createConversationMutation.isPending || isPreparingFirstMessage
       ? "submitted"
       : status;
 
@@ -127,12 +123,14 @@ export function WorkspaceAssistantClient({
           });
         }
         try {
-          await createConversation.mutateAsync({
+          await createConversationMutation.mutateAsync({
             publicId: conversationId,
             title: nextText,
           });
           conversationCreatedRef.current = true;
-          void queryClient.invalidateQueries(listConversationsQueryFilter);
+          void queryClient.invalidateQueries({
+            queryKey: assistantConversationsQueryKey,
+          });
         } catch (error) {
           if (orgSlug) {
             void router.navigate({
@@ -182,9 +180,8 @@ export function WorkspaceAssistantClient({
     },
     [
       conversationId,
-      createConversation.mutateAsync,
+      createConversationMutation.mutateAsync,
       initialConversation,
-      listConversationsQueryFilter,
       orgSlug,
       queryClient,
       router,

@@ -1,6 +1,5 @@
 // @vitest-environment happy-dom
 
-import type { AppRouterOutputs } from "@api/app";
 import {
   cleanup,
   fireEvent,
@@ -10,12 +9,10 @@ import {
 } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { WorkspaceAssistantConversationResult } from "~/chat/workspace-assistant-queries";
 
 const clearErrorMock = vi.fn();
 const invalidateQueriesMock = vi.fn();
-const listConversationsQueryFilterMock = vi.fn(() => ({
-  queryKey: ["org", "workspace", "assistant", "listConversations"],
-}));
 const mutateAsyncMock = vi.fn();
 const routerInvalidateMock = vi.fn();
 const routerNavigateMock = vi.fn();
@@ -27,8 +24,6 @@ let chatMessages: Array<{
   parts: Array<{ text?: string; type: string }>;
   role: "assistant" | "user";
 }> = [];
-type WorkspaceAssistantConversationResult =
-  AppRouterOutputs["org"]["workspace"]["assistant"]["getConversation"];
 
 vi.mock("@ai-sdk/react", () => ({
   useChat: (options: { messages?: typeof chatMessages } = {}) => {
@@ -47,6 +42,12 @@ vi.mock("@ai-sdk/react", () => ({
 vi.mock("@repo/ai/workspace-assistant", () => ({
   lightfastWorkspaceAssistantDataPartSchemas: {},
   lightfastWorkspaceAssistantMessageMetadataSchema: {},
+}));
+
+vi.mock("@api/app/tanstack/assistant", () => ({
+  createConversation: vi.fn(),
+  getConversation: vi.fn(),
+  listConversations: vi.fn(),
 }));
 
 vi.mock("@repo/ui/components/ai-elements/conversation", () => ({
@@ -84,23 +85,6 @@ vi.mock("@vendor/ai", () => ({
       this.options = options;
     }
   },
-}));
-
-vi.mock("~/trpc/react", () => ({
-  useTRPC: () => ({
-    org: {
-      workspace: {
-        assistant: {
-          createConversation: {
-            mutationOptions: () => ({}),
-          },
-          listConversations: {
-            queryFilter: listConversationsQueryFilterMock,
-          },
-        },
-      },
-    },
-  }),
 }));
 
 vi.mock("~/chat/chat-composer", () => ({
@@ -163,7 +147,6 @@ beforeEach(() => {
   chatMessages = [];
   clearErrorMock.mockClear();
   invalidateQueriesMock.mockClear();
-  listConversationsQueryFilterMock.mockClear();
   mutateAsyncMock.mockReset();
   routerInvalidateMock.mockReset();
   routerNavigateMock.mockReset();

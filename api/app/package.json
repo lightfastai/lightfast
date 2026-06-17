@@ -45,6 +45,10 @@
       "types": "./src/adapters/tanstack/account.ts",
       "default": "./src/adapters/tanstack/account.ts"
     },
+    "./tanstack/assistant": {
+      "types": "./src/adapters/tanstack/assistant.ts",
+      "default": "./src/adapters/tanstack/assistant.ts"
+    },
     "./tanstack/mcp-connections": {
       "types": "./src/adapters/tanstack/mcp-connections.ts",
       "default": "./src/adapters/tanstack/mcp-connections.ts"

@@ -1,4 +1,3 @@
-import type { AppRouterOutputs } from "@api/app";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -39,7 +38,10 @@ import {
 } from "lucide-react";
 import type { ComponentType } from "react";
 import { Suspense } from "react";
-import { useTRPC } from "~/trpc/react";
+import {
+  assistantConversationsQueryOptions,
+  type WorkspaceAssistantConversationListItem,
+} from "~/chat/workspace-assistant-queries";
 import {
   getWorkspaceNavSections,
   isWorkspacePathActive,
@@ -47,11 +49,6 @@ import {
   type WorkspaceNavTitle,
 } from "./app-sidebar-model";
 import { TeamSwitcher, TeamSwitcherSkeleton } from "./team-switcher";
-
-type WorkspaceAssistantConversationList =
-  AppRouterOutputs["org"]["workspace"]["assistant"]["listConversations"];
-type WorkspaceAssistantConversationListItem =
-  WorkspaceAssistantConversationList["items"][number];
 
 const navIcons: Record<
   WorkspaceNavTitle,
@@ -180,12 +177,8 @@ function ChatHistory({
   orgSlug: string;
   pathname: string;
 }) {
-  const trpc = useTRPC();
   const { data, error, isPending } = useQuery({
-    ...trpc.org.workspace.assistant.listConversations.queryOptions(
-      { limit: 20 },
-      { staleTime: 0 }
-    ),
+    ...assistantConversationsQueryOptions({ limit: 20 }),
     enabled: typeof window !== "undefined" && Boolean(orgSlug),
   });
 
