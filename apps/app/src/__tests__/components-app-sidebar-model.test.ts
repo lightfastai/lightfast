@@ -1,9 +1,17 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   getWorkspaceNavSections,
   isWorkspacePathActive,
 } from "~/components/app-sidebar-model";
 import { usesRouteOwnedAuthenticatedShell } from "~/components/authenticated-layout-model";
+
+const appRoot = resolve(import.meta.dirname, "../..");
+
+function source(path: string) {
+  return readFileSync(resolve(appRoot, path), "utf8");
+}
 
 describe("workspace sidebar model", () => {
   it("builds the workspace navigation groups from the active slug", () => {
@@ -55,5 +63,15 @@ describe("workspace sidebar model", () => {
     );
     expect(usesRouteOwnedAuthenticatedShell("/accounts/teams/new")).toBe(false);
     expect(usesRouteOwnedAuthenticatedShell("/sign-in")).toBe(false);
+  });
+
+  it("uses Hugeicons for app-sidebar glyphs", () => {
+    const sidebarSource = source("src/components/app-sidebar.tsx");
+
+    expect(sidebarSource).toContain('from "@hugeicons/core-free-icons"');
+    expect(sidebarSource).toContain('from "@hugeicons/react"');
+    expect(sidebarSource).not.toContain('from "lucide-react"');
+    expect(sidebarSource).toContain("HugeiconsIcon");
+    expect(sidebarSource).toContain("navIcons");
   });
 });

@@ -1,8 +1,28 @@
 import type { AppRouterOutputs } from "@api/app";
+import { useClerk } from "@clerk/tanstack-react-start";
+import {
+  ApertureIcon,
+  BlocksIcon,
+  BookOpen01Icon,
+  Cancel01Icon,
+  CheckListIcon,
+  HelpCircleIcon,
+  Key01Icon,
+  LogoutIcon,
+  Mail01Icon,
+  Message01Icon,
+  MessageCirclePlus,
+  Scroll01Icon,
+  SettingsIcon,
+  UserGroupIcon,
+  WorkflowSquare07Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
@@ -11,24 +31,25 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@repo/ui/components/ui/sidebar";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import { useMounted } from "@repo/ui/hooks/use-mounted";
 import { cn } from "@repo/ui/lib/utils";
+import { Avatar, AvatarFallback } from "@repo/ui-v2/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@repo/ui-v2/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "@tanstack/react-router";
-import {
-  Aperture,
-  Blocks,
-  KeyRound,
-  ListChecks,
-  MessageCircle,
-  MessageCirclePlus,
-  Network,
-  Scroll,
-  Settings,
-  Workflow,
-  X,
-} from "lucide-react";
-import type { ComponentType } from "react";
 import { Suspense } from "react";
+import { accountProfileQueryOptions } from "~/account/account-queries";
 import { useTRPC } from "~/trpc/react";
 import {
   getWorkspaceNavSections,
@@ -37,24 +58,22 @@ import {
   type WorkspaceNavTitle,
 } from "./app-sidebar-model";
 import { TeamSwitcher, TeamSwitcherSkeleton } from "./team-switcher";
+import { getUserMenuIdentity, SETTINGS_HREF } from "./user-menu-model";
 
 type WorkspaceAssistantConversationList =
   AppRouterOutputs["org"]["workspace"]["assistant"]["listConversations"];
 type WorkspaceAssistantConversationListItem =
   WorkspaceAssistantConversationList["items"][number];
 
-const navIcons: Record<
-  WorkspaceNavTitle,
-  ComponentType<{ className?: string }>
-> = {
-  Automations: Workflow,
-  Connectors: Blocks,
-  Decisions: ListChecks,
-  "Developer Connections": KeyRound,
-  People: Network,
-  Settings,
-  Signals: Aperture,
-  Skills: Scroll,
+const navIcons: Record<WorkspaceNavTitle, IconSvgElement> = {
+  Automations: WorkflowSquare07Icon,
+  Connectors: BlocksIcon,
+  Decisions: CheckListIcon,
+  "Developer Connections": Key01Icon,
+  People: UserGroupIcon,
+  Settings: SettingsIcon,
+  Signals: ApertureIcon,
+  Skills: Scroll01Icon,
 };
 
 export function AppSidebar({ orgSlug }: { orgSlug: string }) {
@@ -87,7 +106,11 @@ export function AppSidebar({ orgSlug }: { orgSlug: string }) {
               preload={false}
               to="/$slug/chat"
             >
-              <MessageCirclePlus className="size-3.5" />
+              <HugeiconsIcon
+                aria-hidden="true"
+                className="size-3.5"
+                icon={MessageCirclePlus}
+              />
             </Link>
           </Button>
           {isMobile ? (
@@ -99,7 +122,11 @@ export function AppSidebar({ orgSlug }: { orgSlug: string }) {
               type="button"
               variant="ghost"
             >
-              <X className="size-4" />
+              <HugeiconsIcon
+                aria-hidden="true"
+                className="size-4"
+                icon={Cancel01Icon}
+              />
             </Button>
           ) : null}
         </div>
@@ -127,7 +154,129 @@ export function AppSidebar({ orgSlug }: { orgSlug: string }) {
         ))}
         <ChatHistory orgSlug={orgSlug} pathname={pathname} />
       </SidebarContent>
+      <SidebarFooter>
+        <UserMenu />
+      </SidebarFooter>
     </Sidebar>
+  );
+}
+
+function UserMenu() {
+  const { signOut } = useClerk();
+  const mounted = useMounted();
+
+  const { data: profile, isPending } = useQuery({
+    ...accountProfileQueryOptions(),
+    enabled: typeof window !== "undefined",
+    staleTime: 5 * 60 * 1000,
+  });
+
+  if (!mounted || isPending || !profile) {
+    return <UserMenuSkeleton />;
+  }
+
+  const { primaryIdentity, secondaryIdentity } = getUserMenuIdentity(profile);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            aria-label="Open user menu"
+            className="h-11 w-full justify-start gap-2 rounded-xl px-2 text-left"
+            variant="ghost"
+          />
+        }
+      >
+        <Avatar className="size-7">
+          <AvatarFallback className="bg-foreground text-[10px] text-background">
+            {profile.initials}
+          </AvatarFallback>
+        </Avatar>
+        <span className="min-w-0 flex-1 truncate text-left">
+          {primaryIdentity}
+        </span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" side="top" size="sm">
+        <DropdownMenuGroup>
+          <div className="flex items-center gap-2 px-2 py-1.5">
+            <Avatar className="size-6">
+              <AvatarFallback className="bg-foreground text-[10px] text-background">
+                {profile.initials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-medium text-sm">{primaryIdentity}</p>
+              {secondaryIdentity ? (
+                <p className="truncate text-muted-foreground text-xs">
+                  {secondaryIdentity}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem
+            render={<Link preload="intent" to={SETTINGS_HREF} />}
+          >
+            <HugeiconsIcon aria-hidden="true" icon={SettingsIcon} />
+            Your Account
+          </DropdownMenuItem>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <HugeiconsIcon aria-hidden="true" icon={HelpCircleIcon} />
+              Help
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuItem
+                render={(props) => (
+                  <a
+                    {...props}
+                    href="https://lightfast.ai/docs/get-started/overview"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    {props.children}
+                  </a>
+                )}
+              >
+                <HugeiconsIcon aria-hidden="true" icon={BookOpen01Icon} />
+                Help Docs
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                render={(props) => (
+                  <a {...props} href="mailto:support@lightfast.ai">
+                    {props.children}
+                  </a>
+                )}
+              >
+                <HugeiconsIcon aria-hidden="true" icon={Mail01Icon} />
+                Contact Support
+              </DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem
+            onClick={() => void signOut({ redirectUrl: "/sign-in" })}
+          >
+            <HugeiconsIcon aria-hidden="true" icon={LogoutIcon} />
+            Sign out
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function UserMenuSkeleton() {
+  return (
+    <div className="flex h-11 items-center gap-2 rounded-xl px-2">
+      <Skeleton className="size-7 rounded-full" />
+      <Skeleton className="h-4 min-w-0 flex-1 rounded-xl" />
+    </div>
   );
 }
 
@@ -209,7 +358,11 @@ function ChatHistoryItem({
           preload="intent"
           to="/$slug/chat/$conversationId"
         >
-          <MessageCircle className="size-3.5" />
+          <HugeiconsIcon
+            aria-hidden="true"
+            className="size-3.5"
+            icon={Message01Icon}
+          />
           <span>{title}</span>
         </Link>
       </SidebarMenuButton>
@@ -236,7 +389,7 @@ function NavItems({
   const { isMobile, setOpenMobile } = useSidebar();
 
   return items.map((item) => {
-    const Icon = navIcons[item.title];
+    const icon = navIcons[item.title];
     const isActive = isWorkspacePathActive(item.href, pathname);
 
     return (
@@ -263,7 +416,11 @@ function NavItems({
             preload="intent"
             to={item.to}
           >
-            <Icon className="size-3.5" />
+            <HugeiconsIcon
+              aria-hidden="true"
+              className="size-3.5"
+              icon={icon}
+            />
             <span>{item.title}</span>
           </Link>
         </SidebarMenuButton>

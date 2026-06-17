@@ -62,6 +62,38 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 
 /**
+ * Size variants provide shared content sizing for app menus.
+ */
+export const Sizes: Story = {
+  render: (args) => (
+    <div className="flex items-center gap-4">
+      <DropdownMenu {...args}>
+        <DropdownMenuTrigger>Small</DropdownMenuTrigger>
+        <DropdownMenuContent align="center" size="sm">
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Workspace</DropdownMenuLabel>
+            <DropdownMenuItem>Lightfast</DropdownMenuItem>
+            <DropdownMenuItem>Engineering</DropdownMenuItem>
+            <DropdownMenuItem>Design</DropdownMenuItem>
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <DropdownMenu {...args}>
+        <DropdownMenuTrigger>Medium</DropdownMenuTrigger>
+        <DropdownMenuContent align="center" size="md">
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem>View details</DropdownMenuItem>
+            <DropdownMenuItem>Copy link</DropdownMenuItem>
+            <DropdownMenuItem>Archive item</DropdownMenuItem>
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  ),
+};
+
+/**
  * A dropdown menu with shortcuts.
  */
 export const WithShortcuts: Story = {

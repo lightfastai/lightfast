@@ -196,6 +196,12 @@ describe("app authenticated route migration", () => {
       "<AuthenticatedTopbar left={<TeamSwitcherSlot />} />"
     );
     expect(teamSwitcherSource).toContain("listUserOrganizationsQueryOptions()");
+    expect(teamSwitcherSource).toContain(
+      '<DropdownMenuContent align="center" size="sm">'
+    );
+    expect(teamSwitcherSource).not.toContain(
+      '<DropdownMenuContent align="center" className='
+    );
     expect(teamSwitcherSource).toContain('to="/account/teams/new"');
     expect(teamSwitcherSource).toContain('to="/$slug"');
     expect(teamSwitcherSource).not.toContain("next/navigation");
@@ -271,9 +277,7 @@ describe("app authenticated route migration", () => {
     expect(dropdownMenuSource).toContain(
       "focus:bg-accent focus:text-accent-foreground"
     );
-    expect(dropdownMenuSource).not.toContain(
-      "focus:**:text-accent-foreground"
-    );
+    expect(dropdownMenuSource).not.toContain("focus:**:text-accent-foreground");
   });
 
   it("ports Signals without Next.js search or link assumptions", () => {

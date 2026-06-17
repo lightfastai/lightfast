@@ -13,28 +13,30 @@ function source(path: string) {
 }
 
 describe("TanStack user menu", () => {
-  it("uses the app-owned menu instead of Clerk's packaged UserButton", () => {
+  it("uses the sidebar-owned menu instead of Clerk's packaged UserButton", () => {
     const topbarSource = source("src/components/authenticated-topbar.tsx");
-    const menuSource = source("src/components/user-menu.tsx");
+    const sidebarSource = source("src/components/app-sidebar.tsx");
 
-    expect(topbarSource).toContain('from "~/components/user-menu"');
-    expect(topbarSource).toContain("<UserMenu />");
+    expect(topbarSource).not.toContain('from "~/components/user-menu"');
+    expect(topbarSource).not.toContain("<UserMenu />");
     expect(topbarSource).not.toContain("UserButton");
-    expect(menuSource).toContain(
+    expect(sidebarSource).toContain("<SidebarFooter");
+    expect(sidebarSource).toContain("<UserMenu />");
+    expect(sidebarSource).toContain(
       'useClerk } from "@clerk/tanstack-react-start"'
     );
-    expect(menuSource).toContain("accountProfileQueryOptions()");
-    expect(menuSource).toContain('enabled: typeof window !== "undefined"');
-    expect(menuSource).toContain('from "@repo/ui/hooks/use-mounted"');
-    expect(menuSource).toContain("const mounted = useMounted();");
-    expect(menuSource).toContain("if (!mounted || isPending || !profile)");
-    expect(menuSource).not.toContain("useSuspenseQuery");
-    expect(menuSource).toContain("to={SETTINGS_HREF}");
-    expect(menuSource).toContain('signOut({ redirectUrl: "/sign-in" })');
+    expect(sidebarSource).toContain("accountProfileQueryOptions()");
+    expect(sidebarSource).toContain('enabled: typeof window !== "undefined"');
+    expect(sidebarSource).toContain('from "@repo/ui/hooks/use-mounted"');
+    expect(sidebarSource).toContain("const mounted = useMounted();");
+    expect(sidebarSource).toContain("if (!mounted || isPending || !profile)");
+    expect(sidebarSource).not.toContain("useSuspenseQuery");
+    expect(sidebarSource).toContain("to={SETTINGS_HREF}");
+    expect(sidebarSource).toContain('signOut({ redirectUrl: "/sign-in" })');
   });
 
   it("uses ui-v2 dropdown and avatar primitives while old ui components migrate separately", () => {
-    const menuSource = source("src/components/user-menu.tsx");
+    const menuSource = source("src/components/app-sidebar.tsx");
 
     expect(menuSource).toContain(
       'from "@repo/ui-v2/components/ui/dropdown-menu"'
@@ -48,7 +50,7 @@ describe("TanStack user menu", () => {
   });
 
   it("uses Hugeicons for user-menu glyphs", () => {
-    const menuSource = source("src/components/user-menu.tsx");
+    const menuSource = source("src/components/app-sidebar.tsx");
 
     expect(menuSource).toContain('from "@hugeicons/core-free-icons"');
     expect(menuSource).toContain('from "@hugeicons/react"');
@@ -62,8 +64,7 @@ describe("TanStack user menu", () => {
   });
 
   it("owns account, help, and sign-out menu sections", () => {
-    const menuSource = source("src/components/user-menu.tsx");
-    const appSidebarSource = source("src/components/app-sidebar.tsx");
+    const menuSource = source("src/components/app-sidebar.tsx");
 
     expect(menuSource).toContain("DropdownMenuGroup");
     expect(menuSource).toContain("DropdownMenuSub");
@@ -77,24 +78,40 @@ describe("TanStack user menu", () => {
     );
     expect(menuSource).toContain("mailto:support@lightfast.ai");
     expect(menuSource).toContain("Sign out");
-
-    expect(appSidebarSource).not.toContain("DropdownMenu");
-    expect(appSidebarSource).not.toContain("Help Docs");
-    expect(appSidebarSource).not.toContain("Contact Support");
-    expect(appSidebarSource).not.toContain("mailto:support@lightfast.ai");
   });
 
-  it("uses dropdown defaults without app-specific dropdown class overrides", () => {
-    const menuSource = source("src/components/user-menu.tsx");
-
-    expect(menuSource).toContain("<DropdownMenuContent align=\"end\">");
-    expect(menuSource).not.toContain(
-      '<DropdownMenuContent align="end" className='
+  it("uses the shared small dropdown size without app-specific content width overrides", () => {
+    const menuSource = source("src/components/app-sidebar.tsx");
+    const dropdownSource = readFileSync(
+      resolve(
+        appRoot,
+        "../../packages/ui-v2/src/components/ui/dropdown-menu.tsx"
+      ),
+      "utf8"
     );
-    expect(menuSource).not.toContain("asChild");
+
+    expect(dropdownSource).toContain('size?: "sm" | "md"');
+    expect(dropdownSource).toContain('sm: "w-[220px] space-y-1"');
+    expect(dropdownSource).toContain('md: "w-[280px] space-y-1"');
+    expect(menuSource).toContain(
+      '<DropdownMenuContent align="start" side="top" size="sm">'
+    );
+    expect(menuSource).not.toContain(
+      '<DropdownMenuContent align="start" className='
+    );
+    expect(menuSource).not.toContain("<DropdownMenuTrigger asChild");
     expect(menuSource).not.toContain("<DropdownMenuItem asChild className=");
     expect(menuSource).not.toContain("<DropdownMenuItem\n          className=");
     expect(menuSource).not.toContain("<HugeiconsIcon className=");
+  });
+
+  it("uses avatar and username in the sidebar footer trigger", () => {
+    const menuSource = source("src/components/app-sidebar.tsx");
+
+    expect(menuSource).toContain('aria-label="Open user menu"');
+    expect(menuSource).toContain('className="h-11 w-full justify-start');
+    expect(menuSource).toContain('<Avatar className="size-7');
+    expect(menuSource).toContain("{primaryIdentity}");
   });
 
   it("derives the visible identity from username and email", () => {

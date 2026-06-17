@@ -1,4 +1,7 @@
 import { Button } from "@repo/ui/components/ui/button";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import { useMounted } from "@repo/ui/hooks/use-mounted";
+import { cn } from "@repo/ui/lib/utils";
 import { Avatar, AvatarFallback } from "@repo/ui-v2/components/ui/avatar";
 import {
   DropdownMenu,
@@ -6,9 +9,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@repo/ui-v2/components/ui/dropdown-menu";
-import { Skeleton } from "@repo/ui/components/ui/skeleton";
-import { useMounted } from "@repo/ui/hooks/use-mounted";
-import { cn } from "@repo/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
@@ -127,7 +127,7 @@ export function TeamSwitcher() {
           <ChevronsUpDown className="size-3.5 opacity-50" />
         </DropdownMenuTrigger>
       </div>
-      <DropdownMenuContent align="center" className="w-[220px] space-y-1">
+      <DropdownMenuContent align="center" size="sm">
         {organizations.map((org) => {
           const isSelected =
             mode === "organization" && currentOrg?.id === org.id;

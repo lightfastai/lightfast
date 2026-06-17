@@ -18,9 +18,18 @@ function DropdownMenuTrigger({ ...props }: MenuPrimitive.Trigger.Props) {
   return <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />;
 }
 
+type DropdownMenuContentSize = "sm" | "md";
+
+const dropdownMenuContentSizeVariants: Record<DropdownMenuContentSize, string> =
+  {
+    sm: "w-[220px] space-y-1",
+    md: "w-[280px] space-y-1",
+  };
+
 function DropdownMenuContent({
   align = "start",
   alignOffset = 0,
+  size,
   side = "bottom",
   sideOffset = 4,
   className,
@@ -29,7 +38,9 @@ function DropdownMenuContent({
   Pick<
     MenuPrimitive.Positioner.Props,
     "align" | "alignOffset" | "side" | "sideOffset"
-  >) {
+  > & {
+    size?: "sm" | "md";
+  }) {
   return (
     <MenuPrimitive.Portal>
       <MenuPrimitive.Positioner
@@ -41,9 +52,13 @@ function DropdownMenuContent({
       >
         <MenuPrimitive.Popup
           className={cn(
-            "data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 z-50 max-h-(--available-height) w-max min-w-32 origin-(--transform-origin) overflow-y-auto overflow-x-hidden rounded-2xl bg-popover p-1 text-popover-foreground shadow-lg outline-none ring-1 ring-foreground/5 duration-100 data-closed:animate-out data-open:animate-in data-closed:overflow-hidden dark:ring-foreground/10",
+            "data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 z-50 max-h-(--available-height) origin-(--transform-origin) overflow-y-auto overflow-x-hidden rounded-2xl bg-popover p-1 text-popover-foreground shadow-lg outline-none ring-1 ring-foreground/5 duration-100 data-closed:animate-out data-open:animate-in data-closed:overflow-hidden dark:ring-foreground/10",
+            size
+              ? dropdownMenuContentSizeVariants[size]
+              : "w-max min-w-32",
             className
           )}
+          data-size={size}
           data-slot="dropdown-menu-content"
           {...props}
         />
