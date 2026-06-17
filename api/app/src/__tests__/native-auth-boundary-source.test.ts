@@ -28,12 +28,15 @@ describe("native auth boundary exports", () => {
     ).toBe(true);
   });
 
-  it("keeps the tRPC native router as a compatibility wrapper", () => {
-    const routerSource = source("src/router/(pending-allowed)/native-auth.ts");
+  it("keeps native auth off the tRPC router", () => {
+    const rootSource = source("src/root.ts");
 
-    expect(routerSource).toContain('from "../../native-auth"');
-    expect(routerSource).not.toContain("buildClerkAuthorizeUrl");
-    expect(routerSource).not.toContain("issueNativeAuthAttempt");
-    expect(routerSource).not.toContain("consumeNativeAuthAttempt");
+    expect(
+      existsSync(
+        resolve(apiRoot, "src/router/(pending-allowed)/native-auth.ts")
+      )
+    ).toBe(false);
+    expect(rootSource).not.toContain("nativeAuthRouter");
+    expect(rootSource).not.toContain("native:");
   });
 });
