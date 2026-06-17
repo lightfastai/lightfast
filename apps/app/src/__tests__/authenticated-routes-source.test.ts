@@ -777,7 +777,7 @@ describe("app authenticated route migration", () => {
     expect(sourceControlQueriesSource).toContain(
       '@api/app/tanstack/source-control"'
     );
-    expect(sourceControlQueriesSource).toContain(
+    expect(sourceControlQueriesSource).not.toContain(
       'enabled: typeof window !== "undefined"'
     );
     expect(settingsClientSource).toContain("SourceControlConnectionCard");

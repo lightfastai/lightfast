@@ -1,9 +1,8 @@
 import type { Database, OrgSourceControlBinding } from "@db/app";
 import {
   getActiveOrgBinding,
-  getWatchedSourceControlRepository,
-  insertWatchedSourceControlRepository,
   listWatchedSourceControlRepositories,
+  upsertWatchedSourceControlRepository,
 } from "@db/app";
 import { LIGHTFAST_REPOSITORY_NAME } from "@repo/app-setup-contract";
 import {
@@ -12,6 +11,7 @@ import {
   createGitHubInstallationToken,
   getGitHubAppInstallation,
 } from "@repo/github-app-node";
+import { sourceControlRepositorySyncStatusSchema } from "@repo/source-control-contract";
 import { z } from "zod";
 
 import { getMatchingGitHubLightfastRepository } from "../../auth/org-setup-gate";
@@ -46,10 +46,9 @@ interface SourceControlCommandDeps {
   getActiveOrgBinding: typeof getActiveOrgBinding;
   getGitHubAppConfig: typeof getGitHubAppConfig;
   getGitHubAppInstallation: typeof getGitHubAppInstallation;
-  getWatchedSourceControlRepository: typeof getWatchedSourceControlRepository;
-  insertWatchedSourceControlRepository: typeof insertWatchedSourceControlRepository;
   listAllGitHubInstallationRepositories: typeof listAllGitHubInstallationRepositories;
   listWatchedSourceControlRepositories: typeof listWatchedSourceControlRepositories;
+  upsertWatchedSourceControlRepository: typeof upsertWatchedSourceControlRepository;
 }
 
 export function createDefaultSourceControlCommandDeps(input: {
@@ -59,10 +58,9 @@ export function createDefaultSourceControlCommandDeps(input: {
   getActiveOrgBinding?: typeof getActiveOrgBinding;
   getGitHubAppConfig?: typeof getGitHubAppConfig;
   getGitHubAppInstallation?: typeof getGitHubAppInstallation;
-  getWatchedSourceControlRepository?: typeof getWatchedSourceControlRepository;
-  insertWatchedSourceControlRepository?: typeof insertWatchedSourceControlRepository;
   listAllGitHubInstallationRepositories?: typeof listAllGitHubInstallationRepositories;
   listWatchedSourceControlRepositories?: typeof listWatchedSourceControlRepositories;
+  upsertWatchedSourceControlRepository?: typeof upsertWatchedSourceControlRepository;
 }): SourceControlCommandDeps {
   return {
     createGitHubAppJwt: input.createGitHubAppJwt ?? createGitHubAppJwt,
@@ -73,18 +71,15 @@ export function createDefaultSourceControlCommandDeps(input: {
     getGitHubAppConfig: input.getGitHubAppConfig ?? getGitHubAppConfig,
     getGitHubAppInstallation:
       input.getGitHubAppInstallation ?? getGitHubAppInstallation,
-    getWatchedSourceControlRepository:
-      input.getWatchedSourceControlRepository ??
-      getWatchedSourceControlRepository,
-    insertWatchedSourceControlRepository:
-      input.insertWatchedSourceControlRepository ??
-      insertWatchedSourceControlRepository,
     listAllGitHubInstallationRepositories:
       input.listAllGitHubInstallationRepositories ??
       listAllGitHubInstallationRepositories,
     listWatchedSourceControlRepositories:
       input.listWatchedSourceControlRepositories ??
       listWatchedSourceControlRepositories,
+    upsertWatchedSourceControlRepository:
+      input.upsertWatchedSourceControlRepository ??
+      upsertWatchedSourceControlRepository,
   };
 }
 
@@ -147,24 +142,98 @@ export type ListSourceControlRepositoriesResult =
     };
 
 const getSourceControlConnectionInput = z.object({}).strict();
-const getSourceControlConnectionOutput =
-  z.custom<SourceControlConnectionResult>(
-    (value) => typeof value === "object" && value !== null
-  );
+
+const lightfastRepositoryOutput = z.object({
+  fullName: z.string().min(1),
+  id: z.string().min(1),
+  verifiedAt: z.date(),
+});
+
+const sourceControlBindingSummaryOutput = z.object({
+  accountLogin: z.string().min(1),
+  connectedAt: z.date(),
+  importedRepositoryCount: z.number().int().nonnegative(),
+  lightfastRepository: lightfastRepositoryOutput.nullable(),
+  newLightfastRepositoryUrl: z.string().url(),
+  provider: z.string().min(1),
+  providerLabel: z.string().min(1),
+}) satisfies z.ZodType<SourceControlBindingSummary>;
+
+const getSourceControlConnectionOutput = z.discriminatedUnion("status", [
+  z.object({
+    binding: z.null(),
+    status: z.literal("unbound"),
+  }),
+  z.object({
+    binding: sourceControlBindingSummaryOutput,
+    status: z.literal("bound"),
+  }),
+]) satisfies z.ZodType<SourceControlConnectionResult>;
+
+const sourceControlOrganizationOutput = z.object({
+  id: z.string().min(1),
+  installationManageUrl: z.string().url(),
+  login: z.string().min(1),
+}) satisfies z.ZodType<SourceControlOrganization>;
+
+const sourceControlRepositoryErrorOutput = z.discriminatedUnion("code", [
+  z.object({
+    code: z.literal("github_installation_account_mismatch"),
+    message: z.string().min(1),
+  }),
+  z.object({
+    code: z.literal("github_repository_listing_failed"),
+    message: z.string().min(1),
+  }),
+]) satisfies z.ZodType<SourceControlRepositoryError>;
+
+const sourceControlRepositoryRowOutput = z.object({
+  fullName: z.string().min(1),
+  id: z.string().min(1),
+  imported: z.boolean(),
+  name: z.string().min(1),
+  owner: z.object({
+    id: z.string().min(1),
+    login: z.string().min(1),
+  }),
+  private: z.boolean(),
+  syncStatus: sourceControlRepositorySyncStatusSchema,
+  watchedPathGlobs: z.array(z.string().min(1)).nullable(),
+  webUrl: z.string().url(),
+}) satisfies z.ZodType<SourceControlRepositoryRow>;
 
 const listSourceControlRepositoriesInput = z.object({}).strict();
-const listSourceControlRepositoriesOutput =
-  z.custom<ListSourceControlRepositoriesResult>(
-    (value) => typeof value === "object" && value !== null
-  );
+const listSourceControlRepositoriesOutput = z.discriminatedUnion("status", [
+  z.object({
+    binding: z.null(),
+    lightfastRepository: z.null(),
+    organization: z.null(),
+    repositories: z.tuple([]),
+    repositoriesError: z.null(),
+    status: z.literal("unbound"),
+  }),
+  z.object({
+    binding: sourceControlBindingSummaryOutput,
+    lightfastRepository: lightfastRepositoryOutput.nullable(),
+    organization: sourceControlOrganizationOutput.nullable(),
+    repositories: z.array(sourceControlRepositoryRowOutput),
+    repositoriesError: sourceControlRepositoryErrorOutput.nullable(),
+    status: z.literal("bound"),
+  }),
+  z.object({
+    binding: sourceControlBindingSummaryOutput,
+    lightfastRepository: lightfastRepositoryOutput.nullable(),
+    organization: sourceControlOrganizationOutput.nullable(),
+    repositories: z.array(sourceControlRepositoryRowOutput),
+    repositoriesError: sourceControlRepositoryErrorOutput.nullable(),
+    status: z.literal("broken"),
+  }),
+]) satisfies z.ZodType<ListSourceControlRepositoriesResult>;
 
 const importSourceControlRepositoryInput = z.object({
   repositoryId: z.string().min(1),
 });
-const importSourceControlRepositoryOutput =
-  z.custom<ListSourceControlRepositoriesResult>(
-    (value) => typeof value === "object" && value !== null
-  );
+const importSourceControlRepositoryOutput = listSourceControlRepositoriesOutput;
 
 const GITHUB_INSTALLATION_METADATA_FAILED_MESSAGE =
   "GitHub installation metadata could not be refreshed.";
@@ -518,23 +587,13 @@ export const importSourceControlRepositoryCommand = defineCommand<
       );
     }
 
-    const existingWatch = await deps.getWatchedSourceControlRepository(
-      deps.db,
-      {
-        orgSourceControlBindingId: binding.id,
-        providerRepositoryId: selectedRepository.id,
-      }
-    );
-
-    if (!existingWatch) {
-      await deps.insertWatchedSourceControlRepository(deps.db, {
-        fullName: selectedRepository.fullName,
-        orgSourceControlBindingId: binding.id,
-        providerRepositoryId: selectedRepository.id,
-        syncStatus: "disabled",
-        watchedPathGlobs: null,
-      });
-    }
+    await deps.upsertWatchedSourceControlRepository(deps.db, {
+      fullName: selectedRepository.fullName,
+      orgSourceControlBindingId: binding.id,
+      providerRepositoryId: selectedRepository.id,
+      syncStatus: "disabled",
+      watchedPathGlobs: null,
+    });
 
     const watchedRepositories = await deps.listWatchedSourceControlRepositories(
       deps.db,
