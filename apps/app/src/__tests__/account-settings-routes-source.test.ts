@@ -77,6 +77,7 @@ describe("app account settings routes", () => {
     );
 
     expect(profileSource).toContain('from "@repo/ui/hooks/use-mounted"');
+    expect(profileSource).toContain("accountProfileQueryOptions()");
     expect(profileSource).toContain("const mounted = useMounted();");
     expect(profileSource).toContain("if (!mounted || isPending || !profile)");
   });

@@ -41,6 +41,10 @@
       "types": "./src/adapters/tanstack/organizations.ts",
       "default": "./src/adapters/tanstack/organizations.ts"
     },
+    "./tanstack/account": {
+      "types": "./src/adapters/tanstack/account.ts",
+      "default": "./src/adapters/tanstack/account.ts"
+    },
     "./tanstack/signal-views": {
       "types": "./src/adapters/tanstack/signal-views.ts",
       "default": "./src/adapters/tanstack/signal-views.ts"

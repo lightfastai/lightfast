@@ -4,7 +4,10 @@ import { Input } from "@repo/ui/components/ui/input";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useTRPC } from "~/trpc/react";
+import {
+  accountProfileQueryOptions,
+  createAccountUsernameMutationOptions,
+} from "../account-queries";
 
 interface UsernameAccountTaskClientProps {
   returnTo?: string;
@@ -58,9 +61,8 @@ function normalizeReturnTo(returnTo: string | undefined): string {
 export function UsernameAccountTaskClient({
   returnTo,
 }: UsernameAccountTaskClientProps) {
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const accountQuery = trpc.viewer.account.get.queryOptions();
+  const accountQuery = accountProfileQueryOptions();
   const { data: profile } = useQuery({
     ...accountQuery,
     enabled: typeof window !== "undefined",
@@ -70,19 +72,17 @@ export function UsernameAccountTaskClient({
   const idempotencyKeyRef = useRef<string | null>(null);
   const targetPath = normalizeReturnTo(returnTo);
 
-  const createUsernameMutation = useMutation(
-    trpc.viewer.account.createUsername.mutationOptions({
-      meta: { suppressErrorToast: true },
-      onSuccess: (data) => {
-        idempotencyKeyRef.current = null;
-        queryClient.setQueryData(accountQuery.queryKey, data);
-        window.location.replace(targetPath);
-      },
-      onError: (err) => {
-        setError(err.message ?? "Failed to create username. Please try again.");
-      },
-    })
-  );
+  const createUsernameMutation = useMutation({
+    ...createAccountUsernameMutationOptions(),
+    onSuccess: (data) => {
+      idempotencyKeyRef.current = null;
+      queryClient.setQueryData(accountQuery.queryKey, data);
+      window.location.replace(targetPath);
+    },
+    onError: (err) => {
+      setError(err.message ?? "Failed to create username. Please try again.");
+    },
+  });
 
   useEffect(() => {
     if (profile?.username) {
