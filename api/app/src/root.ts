@@ -22,8 +22,6 @@ import { orgSourceControlRouter } from "./router/(pending-not-allowed)/org-sourc
 import { taskRouter } from "./router/(pending-not-allowed)/task";
 import { workspaceAssistantRouter } from "./router/(pending-not-allowed)/workspace-assistant";
 import { workspaceEntityGraphRouter } from "./router/(pending-not-allowed)/workspace-entity-graph";
-import { workspacePeopleRouter } from "./router/(pending-not-allowed)/workspace-people";
-import { workspaceSignalsRouter } from "./router/(pending-not-allowed)/workspace-signals";
 import { workspaceSkillsRouter } from "./router/(pending-not-allowed)/workspace-skills";
 import { createTRPCRouter } from "./trpc";
 
@@ -50,9 +48,7 @@ export const appRouter = createTRPCRouter({
       decisions: decisionsRouter,
       developerConnections: developerConnectionsRouter,
       entityGraph: workspaceEntityGraphRouter,
-      people: workspacePeopleRouter,
       skills: workspaceSkillsRouter,
-      signals: workspaceSignalsRouter,
     }),
   }),
 });
