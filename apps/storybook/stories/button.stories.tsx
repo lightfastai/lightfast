@@ -34,7 +34,6 @@ const meta = {
         "default",
         "outline",
         "secondary",
-        "square",
         "ghost",
         "destructive",
         "link",
@@ -86,16 +85,6 @@ export const Ghost: Story = {
 export const Secondary: Story = {
   args: {
     variant: "secondary",
-  },
-};
-
-/**
- * Use the `square` button for compact square-ish controls in rails and menu
- * triggers.
- */
-export const Square: Story = {
-  args: {
-    variant: "square",
   },
 };
 

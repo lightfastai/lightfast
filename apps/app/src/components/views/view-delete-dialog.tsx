@@ -1,10 +1,10 @@
+import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
-  DialogActionButton,
-  DialogActions,
   DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
@@ -49,13 +49,16 @@ export function ViewDeleteDialog({
               : null}
           </DialogDescription>
         </DialogHeader>
-        <DialogActions>
+        <DialogFooter>
           <DialogClose asChild>
-            <DialogActionButton>Cancel</DialogActionButton>
+            <Button type="button" variant="outline">
+              Cancel
+            </Button>
           </DialogClose>
-          <DialogActionButton
+          <Button
             disabled={submitting}
             onClick={() => void confirm()}
+            type="button"
             variant="destructive"
           >
             {submitting ? (
@@ -66,8 +69,8 @@ export function ViewDeleteDialog({
             ) : (
               "Delete view"
             )}
-          </DialogActionButton>
-        </DialogActions>
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -48,7 +48,6 @@ import {
   tool,
 } from "@vendor/ai";
 import { z } from "zod";
-import { isResumableStreamEnabled } from "~/chat/resumable-stream-config";
 import { resolveWorkspaceAssistantAuthContext } from "~/server/chat/auth";
 import { getLightfastResumableStreamContext } from "~/server/chat/resumable-stream";
 import { log } from "~/server/log";
@@ -60,6 +59,8 @@ const WORKSPACE_ASSISTANT_STREAM_SMOOTHING = {
   chunking: "word",
   delayInMs: 20,
 } as const;
+const isResumableStreamEnabled =
+  (import.meta.env.VITE_VERCEL_ENV ?? "development") !== "development";
 
 interface ChatProviderRoutineContext {
   clerkOrgId: string;

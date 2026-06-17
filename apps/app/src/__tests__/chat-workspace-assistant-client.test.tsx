@@ -13,6 +13,7 @@ import type { WorkspaceAssistantConversationResult } from "~/chat/workspace-assi
 
 const clearErrorMock = vi.fn();
 const invalidateQueriesMock = vi.fn();
+const setQueryDataMock = vi.fn();
 const mutateAsyncMock = vi.fn();
 const routerInvalidateMock = vi.fn();
 const routerNavigateMock = vi.fn();
@@ -50,23 +51,41 @@ vi.mock("@api/app/tanstack/assistant", () => ({
   listConversations: vi.fn(),
 }));
 
-vi.mock("@repo/ui/components/ai-elements/conversation", () => ({
-  Conversation: ({ children }: { children?: ReactNode }) => (
-    <div>{children}</div>
+vi.mock("@repo/ui-v2/components/ai-elements/conversation", () => ({
+  Conversation: ({
+    children,
+    className,
+  }: {
+    children?: ReactNode;
+    className?: string;
+  }) => (
+    <div className={className} data-testid="conversation">
+      {children}
+    </div>
   ),
-  ConversationContent: ({ children }: { children?: ReactNode }) => (
-    <div>{children}</div>
+  ConversationContent: ({
+    children,
+    className,
+  }: {
+    children?: ReactNode;
+    className?: string;
+  }) => (
+    <div className={className} data-testid="conversation-content">
+      {children}
+    </div>
   ),
   ConversationScrollButton: () => null,
 }));
 
 vi.mock("@tanstack/react-query", () => ({
+  queryOptions: (options: unknown) => options,
   useMutation: () => ({
     isPending: false,
     mutateAsync: mutateAsyncMock,
   }),
   useQueryClient: () => ({
     invalidateQueries: invalidateQueriesMock,
+    setQueryData: setQueryDataMock,
   }),
 }));
 
@@ -108,6 +127,7 @@ vi.mock("~/chat/chat-composer", () => ({
     <form
       onSubmit={(event) => {
         event.preventDefault();
+        onTextChange("");
         void onSubmit({ files: [], text });
       }}
     >
@@ -147,6 +167,7 @@ beforeEach(() => {
   chatMessages = [];
   clearErrorMock.mockClear();
   invalidateQueriesMock.mockClear();
+  setQueryDataMock.mockClear();
   mutateAsyncMock.mockReset();
   routerInvalidateMock.mockReset();
   routerNavigateMock.mockReset();
@@ -166,13 +187,99 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
 
 describe("WorkspaceAssistantClient", () => {
-  it("navigates to the preallocated conversation URL before first conversation creation resolves", async () => {
+  it("places the empty new chat landing in the upper-middle of the available workspace height", () => {
+    render(
+      <WorkspaceAssistantClient conversationId="conv_ff83026e-ef0e-40db-ae59-544fbe4df209" />
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Ready when you are." })
+    ).not.toBeNull();
+    expect(
+      screen
+        .getByRole("heading", { name: "Ready when you are." })
+        .closest("section")?.className
+    ).toContain("min-h-[calc(100svh-3.5rem)]");
+    expect(
+      screen
+        .getByRole("heading", { name: "Ready when you are." })
+        .closest("section")?.className
+    ).toContain("justify-start");
+    expect(
+      screen
+        .getByRole("heading", { name: "Ready when you are." })
+        .closest("section")?.className
+    ).toContain("pt-[clamp(8rem,26svh,18rem)]");
+    expect(
+      screen
+        .getByRole("heading", { name: "Ready when you are." })
+        .closest("section")?.className
+    ).toContain("px-4");
+    expect(
+      screen
+        .getByRole("heading", { name: "Ready when you are." })
+        .closest("section")?.className
+    ).toContain("md:px-8");
+    expect(
+      screen
+        .getByRole("heading", { name: "Ready when you are." })
+        .closest("section")?.className
+    ).not.toContain("max-w-3xl");
+    expect(
+      screen.getByRole("heading", { name: "Ready when you are." }).parentElement
+        ?.className
+    ).toContain("max-w-3xl");
+    expect(
+      screen.queryByText("Lightfast can make mistakes. Check important info.")
+    ).toBeNull();
+  });
+
+  it("pins the existing chat composer below a bounded scrollable message region", () => {
+    const { container } = render(
+      <WorkspaceAssistantClient
+        conversationId="conv_existing"
+        initialConversation={conversationResult({
+          messages: [
+            {
+              parts: [{ text: "Existing message", type: "text" }],
+              publicId: "msg_existing",
+              role: "user",
+            },
+          ],
+        })}
+      />
+    );
+
+    expect(container.querySelector("main")?.className).toContain(
+      "h-[calc(100svh-3.5rem)]"
+    );
+    expect(container.querySelector("main")?.className).toContain(
+      "overflow-hidden"
+    );
+    expect(screen.getByTestId("conversation").className).toContain("h-full");
+    expect(
+      screen.getByTestId("conversation").parentElement?.className
+    ).toContain("overflow-hidden");
+    expect(
+      screen.getByRole("button", { name: "Send message" }).closest("form")
+        ?.parentElement?.className
+    ).toContain("shrink-0");
+    expect(
+      screen.getByText("Lightfast can make mistakes. Check important info.")
+    ).not.toBeNull();
+  });
+
+  it("soft-replaces the browser URL before creation and syncs the router after send", async () => {
     let resolveCreate:
       | ((conversation: { publicId: string; title: string }) => void)
       | undefined;
+    const replaceStateSpy = vi
+      .spyOn(History.prototype, "replaceState")
+      .mockImplementation(() => undefined);
     mutateAsyncMock.mockImplementation(
       () =>
         new Promise((resolve) => {
@@ -195,14 +302,12 @@ describe("WorkspaceAssistantClient", () => {
         title: "Summarize the current workspace",
       });
     });
-    expect(routerNavigateMock).toHaveBeenNthCalledWith(1, {
-      params: {
-        conversationId: "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
-        slug: "lightfast",
-      },
-      replace: true,
-      to: "/$slug/chat/$conversationId",
-    });
+    expect(replaceStateSpy).toHaveBeenCalledWith(
+      window.history.state,
+      "",
+      "/lightfast/chat/conv_ff83026e-ef0e-40db-ae59-544fbe4df209"
+    );
+    expect(routerNavigateMock).not.toHaveBeenCalled();
     expect(sendMessageMock).not.toHaveBeenCalled();
     expect(
       screen.getAllByText("Summarize the current workspace").length
@@ -229,13 +334,28 @@ describe("WorkspaceAssistantClient", () => {
         }
       );
     });
-    expect(routerNavigateMock).toHaveBeenNthCalledWith(2, {
-      params: {
-        conversationId: "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
-        slug: "lightfast",
-      },
-      replace: true,
-      to: "/$slug/chat/$conversationId",
+    expect(setQueryDataMock).toHaveBeenCalledWith(
+      [
+        "workspace-assistant",
+        "conversation",
+        "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
+      ],
+      expect.objectContaining({
+        conversation: expect.objectContaining({
+          publicId: "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
+        }),
+        messages: [],
+      })
+    );
+    await waitFor(() => {
+      expect(routerNavigateMock).toHaveBeenCalledWith({
+        params: {
+          conversationId: "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
+          slug: "lightfast",
+        },
+        replace: true,
+        to: "/$slug/chat/$conversationId",
+      });
     });
     expect(routerInvalidateMock).not.toHaveBeenCalled();
   });
@@ -297,11 +417,68 @@ describe("WorkspaceAssistantClient", () => {
       ).toBe("false");
     });
   });
+
+  it("preserves a draft typed while the assistant response is streaming", async () => {
+    let resolveSend: (() => void) | undefined;
+    sendMessageMock.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveSend = resolve;
+        })
+    );
+
+    render(
+      <WorkspaceAssistantClient
+        conversationId="conv_existing"
+        initialConversation={conversationResult()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Write" }));
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: "Start this task" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => {
+      expect(sendMessageMock).toHaveBeenCalledWith(
+        { text: "Start this task" },
+        expect.any(Object)
+      );
+    });
+
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: "Draft the follow-up" },
+    });
+    expect(
+      (screen.getByLabelText("Message") as HTMLTextAreaElement).value
+    ).toBe("Draft the follow-up");
+
+    resolveSend?.();
+
+    await waitFor(() => {
+      expect(
+        screen
+          .getByRole("button", { name: "Write" })
+          .getAttribute("aria-pressed")
+      ).toBe("false");
+    });
+    expect(
+      (screen.getByLabelText("Message") as HTMLTextAreaElement).value
+    ).toBe("Draft the follow-up");
+  });
 });
 
 function conversationResult(
-  overrides: Partial<WorkspaceAssistantConversationResult["conversation"]> = {}
+  overrides: Partial<WorkspaceAssistantConversationResult["conversation"]> & {
+    messages?: Array<{
+      parts: WorkspaceAssistantConversationResult["messages"][number]["parts"];
+      publicId: string;
+      role: WorkspaceAssistantConversationResult["messages"][number]["role"];
+    }>;
+  } = {}
 ): WorkspaceAssistantConversationResult {
+  const { messages = [], ...conversationOverrides } = overrides;
   return {
     conversation: {
       activeStreamId: null,
@@ -316,8 +493,25 @@ function conversationResult(
       status: "active",
       title: "Existing chat",
       updatedAt: new Date("2026-06-15T00:00:00.000Z"),
-      ...overrides,
+      ...conversationOverrides,
     },
-    messages: [],
+    messages: messages.map((message, index) => ({
+      conversationId: 1,
+      conversationPublicId: "conv_existing",
+      clerkOrgId: "org_lightfast",
+      createdAt: new Date("2026-06-15T00:00:00.000Z"),
+      createdByUserId: "user_lightfast",
+      errorCode: null,
+      errorMessage: null,
+      id: index + 1,
+      idempotencyKey: null,
+      metadata: {},
+      parts: message.parts,
+      publicId: message.publicId,
+      role: message.role,
+      sequence: index,
+      status: "completed",
+      updatedAt: new Date("2026-06-15T00:00:00.000Z"),
+    })),
   };
 }

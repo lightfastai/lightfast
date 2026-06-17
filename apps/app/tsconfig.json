@@ -10,7 +10,8 @@
       "@vendor/clerk": ["./src/compat/clerk.ts"],
       "@vendor/clerk/server": ["./src/compat/clerk-server.ts"],
       "~/*": ["./src/*"],
-      "@repo/ui/*": ["../../packages/ui/src/*"]
+      "@repo/ui/*": ["../../packages/ui/src/*"],
+      "@repo/ui-v2/*": ["../../packages/ui-v2/src/*"]
     }
   },
   "include": ["src", "vite.config.ts", "vitest.config.ts"],

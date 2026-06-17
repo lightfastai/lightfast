@@ -1,13 +1,12 @@
 "use client";
 
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
-import { Markdown } from "@repo/ui/components/markdown";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@repo/ui/components/ui/collapsible";
-import { cn } from "@repo/ui/lib/utils";
+} from "@repo/ui-v2/components/ui/collapsible";
+import { cn } from "@repo/ui-v2/lib/utils";
 import { BrainIcon, ChevronDownIcon } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 import {
@@ -20,14 +19,15 @@ import {
   useRef,
   useState,
 } from "react";
+import { Streamdown } from "streamdown";
 
 import { Shimmer } from "./shimmer";
 
 interface ReasoningContextValue {
-  duration: number;
-  isOpen: boolean;
   isStreaming: boolean;
+  isOpen: boolean;
   setIsOpen: (open: boolean) => void;
+  duration: number | undefined;
 }
 
 const ReasoningContext = createContext<ReasoningContextValue | null>(null);
@@ -71,8 +71,8 @@ export const Reasoning = memo(
       onChange: onOpenChange,
       prop: open,
     });
-    const [duration, setDuration] = useControllableState<number>({
-      defaultProp: 0,
+    const [duration, setDuration] = useControllableState<number | undefined>({
+      defaultProp: undefined,
       prop: durationProp,
     });
 
@@ -115,7 +115,7 @@ export const Reasoning = memo(
 
         return () => clearTimeout(timer);
       }
-      return;
+      return undefined;
     }, [isStreaming, isOpen, setIsOpen, hasAutoClosed]);
 
     const handleOpenChange = useCallback(
@@ -156,9 +156,9 @@ const defaultGetThinkingMessage = (isStreaming: boolean, duration?: number) => {
     return <Shimmer duration={1}>Thinking...</Shimmer>;
   }
   if (duration === undefined) {
-    return <span>Thought for a few seconds</span>;
+    return <p>Thought for a few seconds</p>;
   }
-  return <span>Thought for {duration} seconds</span>;
+  return <p>Thought for {duration} seconds</p>;
 };
 
 export const ReasoningTrigger = memo(
@@ -211,7 +211,7 @@ export const ReasoningContent = memo(
       )}
       {...props}
     >
-      <Markdown>{children}</Markdown>
+      <Streamdown>{children}</Streamdown>
     </CollapsibleContent>
   )
 );

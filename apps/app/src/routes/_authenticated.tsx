@@ -6,10 +6,10 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { usesRouteOwnedAuthenticatedShell } from "~/components/authenticated-layout-model";
 import { AuthenticatedTopbar } from "~/components/authenticated-topbar";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
 
+const BASIC_SHELL_PREFIXES = ["/account", "/accounts"] as const;
 const AUTH_ROUTE_PATHS = new Set(["/sign-in", "/sign-up"]);
 
 export const Route = createFileRoute("/_authenticated")({
@@ -20,7 +20,11 @@ function AuthenticatedLayout() {
   const { isLoaded, isSignedIn } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const pathname = location.pathname;
   const isAuthRoute = AUTH_ROUTE_PATHS.has(location.pathname);
+  const usesBasicShell = BASIC_SHELL_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
 
   useEffect(() => {
     if (!isLoaded || isSignedIn || isAuthRoute) {
@@ -42,7 +46,7 @@ function AuthenticatedLayout() {
     return <AuthenticatedShellSkeleton />;
   }
 
-  if (usesRouteOwnedAuthenticatedShell(location.pathname)) {
+  if (!usesBasicShell) {
     return <Outlet />;
   }
 

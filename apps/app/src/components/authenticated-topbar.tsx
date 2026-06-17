@@ -1,6 +1,3 @@
-import { Suspense } from "react";
-import { UserMenu, UserMenuSkeleton } from "~/components/user-menu";
-
 interface AuthenticatedTopbarProps {
   actions?: React.ReactNode;
   left?: React.ReactNode;
@@ -33,9 +30,6 @@ export function AuthenticatedTopbar({
             API Reference
           </a>
         </div>
-        <Suspense fallback={<UserMenuSkeleton />}>
-          <UserMenu />
-        </Suspense>
       </div>
     </header>
   );

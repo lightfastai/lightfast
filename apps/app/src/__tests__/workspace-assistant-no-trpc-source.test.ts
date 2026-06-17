@@ -13,6 +13,9 @@ describe("migrated workspace assistant data access", () => {
   it("uses TanStack server functions instead of tRPC in app consumers", () => {
     const queryHelperSource = source("src/chat/workspace-assistant-queries.ts");
     const sidebarSource = source("src/components/app-sidebar.tsx");
+    const recentChatsMenuSource = source(
+      "src/components/recent-chats-menu.tsx"
+    );
     const clientSource = source("src/chat/workspace-assistant-client.tsx");
     const conversationRouteSource = source(
       "src/routes/_authenticated/$slug/chat/$conversationId.tsx"
@@ -25,6 +28,7 @@ describe("migrated workspace assistant data access", () => {
     for (const fileSource of [
       queryHelperSource,
       sidebarSource,
+      recentChatsMenuSource,
       clientSource,
       conversationRouteSource,
     ]) {
@@ -33,7 +37,9 @@ describe("migrated workspace assistant data access", () => {
       expect(fileSource).not.toContain("AppRouterOutputs");
     }
 
-    expect(sidebarSource).toContain("assistantConversationsQueryOptions");
+    expect(recentChatsMenuSource).toContain(
+      "assistantConversationsQueryOptions"
+    );
     expect(clientSource).toContain("createConversation");
     expect(clientSource).toContain("assistantConversationsQueryKey");
     expect(conversationRouteSource).toContain(

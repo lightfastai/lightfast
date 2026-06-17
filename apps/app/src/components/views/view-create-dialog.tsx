@@ -1,10 +1,10 @@
+import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
-  DialogActionButton,
-  DialogActions,
   DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
@@ -70,14 +70,16 @@ export function ViewCreateDialog({
           placeholder="View name"
           value={name}
         />
-        <DialogActions>
+        <DialogFooter>
           <DialogClose asChild>
-            <DialogActionButton>Cancel</DialogActionButton>
+            <Button type="button" variant="outline">
+              Cancel
+            </Button>
           </DialogClose>
-          <DialogActionButton
+          <Button
             disabled={!name.trim() || submitting}
             onClick={() => void submit()}
-            variant="primary"
+            type="button"
           >
             {submitting ? (
               <>
@@ -87,8 +89,8 @@ export function ViewCreateDialog({
             ) : (
               "Save view"
             )}
-          </DialogActionButton>
-        </DialogActions>
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

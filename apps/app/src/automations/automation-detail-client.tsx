@@ -1,8 +1,8 @@
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 import { useIsMutating, useQuery } from "@tanstack/react-query";
-import { Loader2, RefreshCcw } from "lucide-react";
-import { BackButton } from "~/components/back-button";
+import { Link } from "@tanstack/react-router";
+import { ChevronLeft, Loader2, RefreshCcw } from "lucide-react";
 import { useTRPC } from "~/trpc/react";
 import { AutomationActions } from "./automation-actions";
 import { AutomationNameEditor } from "./automation-name-editor";
@@ -92,11 +92,17 @@ export function AutomationDetailClient({
     return (
       <div className="flex min-h-full items-center justify-center px-4 pb-24">
         <section className="w-full max-w-lg space-y-4">
-          <BackButton
-            label="Automations"
-            params={{ slug }}
-            to="/$slug/automations"
-          />
+          <Button
+            asChild
+            className="-ml-1 h-6 gap-1 rounded-lg px-2 font-normal text-muted-foreground text-sm hover:bg-muted/60 hover:text-foreground"
+            size="sm"
+            variant="ghost"
+          >
+            <Link params={{ slug }} preload="intent" to="/$slug/automations">
+              <ChevronLeft className="size-3" />
+              Automations
+            </Link>
+          </Button>
           <p className="font-mono text-muted-foreground text-sm">
             {automationId}
           </p>
@@ -127,11 +133,17 @@ export function AutomationDetailClient({
     <div className="grid grid-cols-1 lg:h-full lg:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="min-w-0 px-8 py-10 lg:min-h-0 lg:overflow-y-auto lg:px-12 lg:py-12">
         <div className="mb-6">
-          <BackButton
-            label="Automations"
-            params={{ slug }}
-            to="/$slug/automations"
-          />
+          <Button
+            asChild
+            className="-ml-1 h-6 gap-1 rounded-lg px-2 font-normal text-muted-foreground text-sm hover:bg-muted/60 hover:text-foreground"
+            size="sm"
+            variant="ghost"
+          >
+            <Link params={{ slug }} preload="intent" to="/$slug/automations">
+              <ChevronLeft className="size-3" />
+              Automations
+            </Link>
+          </Button>
         </div>
         <AutomationNameEditor automation={automation} />
         <div className="mt-6">
@@ -180,11 +192,17 @@ function AutomationDetailSkeleton({ slug }: { slug: string }) {
   return (
     <div className="grid grid-cols-1 lg:h-full lg:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="space-y-6 px-8 py-10 lg:px-12 lg:py-12">
-        <BackButton
-          label="Automations"
-          params={{ slug }}
-          to="/$slug/automations"
-        />
+        <Button
+          asChild
+          className="-ml-1 h-6 gap-1 rounded-lg px-2 font-normal text-muted-foreground text-sm hover:bg-muted/60 hover:text-foreground"
+          size="sm"
+          variant="ghost"
+        >
+          <Link params={{ slug }} preload="intent" to="/$slug/automations">
+            <ChevronLeft className="size-3" />
+            Automations
+          </Link>
+        </Button>
         <div className="h-9 w-72 animate-pulse rounded bg-muted" />
         <div className="space-y-3">
           <div className="h-4 w-full max-w-3xl animate-pulse rounded bg-muted" />

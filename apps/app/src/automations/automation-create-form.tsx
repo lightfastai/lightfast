@@ -22,10 +22,9 @@ import { toast } from "@repo/ui/components/ui/sonner";
 import { Textarea } from "@repo/ui/components/ui/textarea";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
+import { ChevronLeft, Loader2 } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { z } from "zod";
-import { BackButton } from "~/components/back-button";
 import { LfSelect } from "~/components/lf-select";
 import { connectorsListQueryOptions } from "~/connectors/connectors-queries";
 import { useTRPC } from "~/trpc/react";
@@ -192,11 +191,17 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
     <div className="min-h-full bg-background text-foreground">
       <div className="mx-auto w-full max-w-xl px-6 py-12">
         <div className="mb-6">
-          <BackButton
-            label="Automations"
-            params={{ slug }}
-            to="/$slug/automations"
-          />
+          <Button
+            asChild
+            className="-ml-1 h-6 gap-1 rounded-lg px-2 font-normal text-muted-foreground text-sm hover:bg-muted/60 hover:text-foreground"
+            size="sm"
+            variant="ghost"
+          >
+            <Link params={{ slug }} preload="intent" to="/$slug/automations">
+              <ChevronLeft className="size-3" />
+              Automations
+            </Link>
+          </Button>
         </div>
         <h1 className="font-semibold text-2xl tracking-[-0.02em]">
           New automation

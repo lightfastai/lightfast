@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { ChatLoading } from "~/chat/chat-loading";
-import { isPreallocatedConversationId } from "~/chat/conversation-id";
 import { WorkspaceAssistantClient } from "~/chat/workspace-assistant-client";
 import { assistantConversationQueryOptions } from "~/chat/workspace-assistant-queries";
 import { WorkspaceRouteErrorPanel } from "~/components/route-boundaries";
@@ -61,6 +60,16 @@ function WorkspaceConversationPage() {
     return <ChatLoading />;
   }
 
+  if (conversationQuery.data) {
+    return (
+      <WorkspaceAssistantClient
+        conversationId={conversationId}
+        initialConversation={conversationQuery.data}
+        key={conversationId}
+      />
+    );
+  }
+
   if (conversationQuery.error) {
     if (
       isConversationNotFoundError(conversationQuery.error) &&
@@ -79,13 +88,7 @@ function WorkspaceConversationPage() {
     throw conversationQuery.error;
   }
 
-  return (
-    <WorkspaceAssistantClient
-      conversationId={conversationId}
-      initialConversation={conversationQuery.data}
-      key={conversationId}
-    />
-  );
+  throw new Error("Workspace assistant conversation failed to load");
 }
 
 function isConversationNotFoundError(error: unknown) {
@@ -103,5 +106,11 @@ function isConversationNotFoundError(error: unknown) {
     maybeCode.data?.code === conversationNotFoundCode ||
     maybeCode.code === "NOT_FOUND" ||
     maybeCode.data?.code === "NOT_FOUND"
+  );
+}
+
+function isPreallocatedConversationId(conversationId: string) {
+  return /^conv_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    conversationId
   );
 }

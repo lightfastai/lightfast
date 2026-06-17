@@ -8,8 +8,8 @@ import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
-} from "@repo/ui/components/ai-elements/conversation";
-import type { PromptInputMessage } from "@repo/ui/components/ai-elements/prompt-input";
+} from "@repo/ui-v2/components/ai-elements/conversation";
+import type { PromptInputMessage } from "@repo/ui-v2/components/ai-elements/prompt-input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "@tanstack/react-router";
 import {
@@ -18,14 +18,17 @@ import {
   type UIMessage,
 } from "@vendor/ai";
 import type { CSSProperties } from "react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChatComposer } from "./chat-composer";
 import { ChatMessage } from "./chat-message";
-import { isResumableStreamEnabled } from "./resumable-stream-config";
 import {
+  assistantConversationQueryOptions,
   assistantConversationsQueryKey,
   type WorkspaceAssistantConversationResult,
 } from "./workspace-assistant-queries";
+
+const isResumableStreamEnabled =
+  (import.meta.env.VITE_VERCEL_ENV ?? "development") !== "development";
 
 const messageRowRenderingHints = {
   containIntrinsicSize: "0 160px",
@@ -51,6 +54,10 @@ export function WorkspaceAssistantClient({
     mutationFn: (data: { publicId: string; title: string }) =>
       createConversation({ data }),
   });
+  const getConversationQueryOptions = useMemo(
+    () => assistantConversationQueryOptions({ conversationId }),
+    [conversationId]
+  );
   const initialMessages = useMemo(
     () => initialConversation?.messages.map(toUIMessage) ?? [],
     [initialConversation]
@@ -90,6 +97,11 @@ export function WorkspaceAssistantClient({
     resume: isResumableStreamEnabled && Boolean(initialConversation),
     transport,
   });
+  const messagesRef = useRef(messages);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   const displayMessages =
     optimisticFirstMessage && messages.length === 0
@@ -114,32 +126,32 @@ export function WorkspaceAssistantClient({
 
       clearError();
 
+      let createdConversationDuringSubmit = false;
+      let createdConversation:
+        | WorkspaceAssistantConversationResult["conversation"]
+        | undefined;
+
       if (!conversationCreatedRef.current) {
         setCreationError(undefined);
         setOptimisticFirstMessage(createOptimisticUserMessage(nextText));
         if (orgSlug) {
-          void router.navigate({
-            params: { conversationId, slug: orgSlug },
-            replace: true,
-            to: "/$slug/chat/$conversationId",
-          });
+          replaceBrowserHistoryPath(
+            workspaceConversationPath(orgSlug, conversationId)
+          );
         }
         try {
-          await createConversationMutation.mutateAsync({
+          createdConversation = await createConversationMutation.mutateAsync({
             publicId: conversationId,
             title: conversationTitleFromPrompt(nextText),
           });
           conversationCreatedRef.current = true;
+          createdConversationDuringSubmit = true;
           void queryClient.invalidateQueries({
             queryKey: assistantConversationsQueryKey,
           });
         } catch (error) {
           if (orgSlug) {
-            void router.navigate({
-              params: { slug: orgSlug },
-              replace: true,
-              to: "/$slug/chat",
-            });
+            replaceBrowserHistoryPath(workspaceChatPath(orgSlug));
           }
           setOptimisticFirstMessage(null);
           setCreationError(
@@ -167,8 +179,15 @@ export function WorkspaceAssistantClient({
         setOptimisticFirstMessage(null);
         setProviderRoutineWriteMode(false);
       }
-      setText("");
-      if (!initialConversation) {
+      if (createdConversationDuringSubmit && createdConversation) {
+        queryClient.setQueryData(getConversationQueryOptions.queryKey, {
+          conversation: createdConversation,
+          messages: toSeededConversationMessages(
+            messagesRef.current,
+            createdConversation
+          ),
+        } satisfies WorkspaceAssistantConversationResult);
+
         if (orgSlug) {
           await router.navigate({
             params: { conversationId, slug: orgSlug },
@@ -183,7 +202,7 @@ export function WorkspaceAssistantClient({
     [
       conversationId,
       createConversationMutation.mutateAsync,
-      initialConversation,
+      getConversationQueryOptions.queryKey,
       orgSlug,
       queryClient,
       router,
@@ -193,9 +212,8 @@ export function WorkspaceAssistantClient({
     ]
   );
 
-  const renderComposer = (compact: boolean) => (
+  const renderComposer = () => (
     <ChatComposer
-      compact={compact}
       error={displayError}
       onSubmit={handleSubmit}
       onTextChange={setText}
@@ -208,10 +226,10 @@ export function WorkspaceAssistantClient({
   );
 
   return (
-    <main className="flex h-full min-h-0 flex-1 flex-col bg-background text-foreground">
+    <main className="flex h-[calc(100svh-3.5rem)] min-h-0 flex-1 flex-col overflow-hidden bg-background text-foreground">
       {hasMessages ? (
         <>
-          <div className="relative min-h-0 flex-1">
+          <div className="relative min-h-0 flex-1 overflow-hidden">
             <Conversation className="h-full">
               <ConversationContent className="gap-0 p-0 pb-8">
                 {displayMessages.map((message, index) => (
@@ -233,13 +251,16 @@ export function WorkspaceAssistantClient({
               <ConversationScrollButton />
             </Conversation>
           </div>
-          <div className="shrink-0 px-4 pb-5 md:px-8">
-            {renderComposer(false)}
+          <div className="shrink-0 px-4 pt-3 pb-5 md:px-8">
+            {renderComposer()}
+            <p className="mx-auto mt-2 max-w-3xl text-center text-muted-foreground text-xs">
+              Lightfast can make mistakes. Check important info.
+            </p>
           </div>
         </>
       ) : (
         <div className="relative min-h-0 flex-1 overflow-y-auto">
-          <EmptyChatState composer={renderComposer(true)} />
+          <EmptyChatState composer={renderComposer()} />
         </div>
       )}
     </main>
@@ -254,12 +275,66 @@ function conversationTitleFromPrompt(text: string) {
   return text.slice(0, conversationTitleMaxLength);
 }
 
+function replaceBrowserHistoryPath(pathname: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  // TanStack Router patches window.history.replaceState and treats it as a
+  // route transition. Call the native method so the active chat stream stays
+  // mounted while the address bar reflects the preallocated conversation.
+  History.prototype.replaceState.call(
+    window.history,
+    window.history.state,
+    "",
+    pathname
+  );
+}
+
+function workspaceConversationPath(orgSlug: string, conversationId: string) {
+  return `${workspaceChatPath(orgSlug)}/${encodeURIComponent(conversationId)}`;
+}
+
+function workspaceChatPath(orgSlug: string) {
+  return `/${encodeURIComponent(orgSlug)}/chat`;
+}
+
 function createOptimisticUserMessage(text: string): UIMessage {
   return {
     id: `optimistic_${createUuid()}`,
     parts: [{ text, type: "text" }],
     role: "user",
   };
+}
+
+function toSeededConversationMessages(
+  messages: UIMessage[],
+  conversation: WorkspaceAssistantConversationResult["conversation"]
+): WorkspaceAssistantConversationResult["messages"] {
+  const now = new Date();
+
+  return messages.map((message, index) => ({
+    conversationId: conversation.id,
+    conversationPublicId: conversation.publicId,
+    clerkOrgId: conversation.clerkOrgId,
+    createdAt: now,
+    createdByUserId: conversation.createdByUserId,
+    errorCode: null,
+    errorMessage: null,
+    id: -(index + 1),
+    idempotencyKey: null,
+    metadata:
+      (message.metadata as
+        | WorkspaceAssistantConversationResult["messages"][number]["metadata"]
+        | undefined) ?? {},
+    parts:
+      message.parts as WorkspaceAssistantConversationResult["messages"][number]["parts"],
+    publicId: message.id,
+    role: message.role as WorkspaceAssistantConversationResult["messages"][number]["role"],
+    sequence: index,
+    status: "completed",
+    updatedAt: now,
+  }));
 }
 
 function createUuid() {
@@ -271,8 +346,8 @@ function createUuid() {
 
 function EmptyChatState({ composer }: { composer: React.ReactNode }) {
   return (
-    <section className="mx-auto flex min-h-full w-full max-w-3xl flex-col justify-center px-5 py-10 md:px-10">
-      <div className="mb-6 text-center">
+    <section className="flex min-h-[calc(100svh-3.5rem)] w-full flex-col justify-start px-4 pt-[clamp(8rem,26svh,18rem)] pb-10 md:px-8">
+      <div className="mx-auto mb-6 w-full max-w-3xl text-center">
         <h1 className="font-medium text-2xl text-foreground tracking-normal md:text-3xl">
           Ready when you are.
         </h1>

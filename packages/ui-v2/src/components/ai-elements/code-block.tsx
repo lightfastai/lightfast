@@ -1,14 +1,14 @@
 "use client";
 
-import { Button } from "@repo/ui/components/ui/button";
+import { Button } from "@repo/ui-v2/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@repo/ui/components/ui/select";
-import { cn } from "@repo/ui/lib/utils";
+} from "@repo/ui-v2/components/ui/select";
+import { cn } from "@repo/ui-v2/lib/utils";
 import type { HighlighterCore, ThemedToken } from "@shikijs/core";
 import { createHighlighterCore } from "@shikijs/core";
 import { createJavaScriptRegexEngine } from "@shikijs/engine-javascript";
@@ -55,12 +55,12 @@ const isUnderline = (fontStyle: number | undefined) =>
 
 // Transform tokens to include pre-computed keys to avoid noArrayIndexKey lint
 interface KeyedToken {
-  key: string;
   token: ThemedToken;
+  key: string;
 }
 interface KeyedLine {
-  key: string;
   tokens: KeyedToken[];
+  key: string;
 }
 
 const addKeysToTokens = (lines: ThemedToken[][]): KeyedLine[] =>
@@ -130,9 +130,9 @@ type CodeBlockProps = HTMLAttributes<HTMLDivElement> & {
 };
 
 interface TokenizedCode {
-  bg: string;
-  fg: string;
   tokens: ThemedToken[][];
+  fg: string;
+  bg: string;
 }
 
 interface CodeBlockContextType {
@@ -157,6 +157,7 @@ const getTokensCacheKey = (code: string, language: CodeBlockLanguage) => {
   let hash = 2_166_136_261;
   for (let i = 0; i < code.length; i++) {
     hash ^= code.charCodeAt(i);
+    // oxlint-disable-next-line eslint(no-bitwise)
     hash = (hash * 16_777_619) >>> 0;
   }
   return `${language}:${code.length}:${hash.toString(16)}`;
@@ -183,6 +184,7 @@ const getHighlighter = (): Promise<HighlighterCore> => {
         langMarkdown,
       ],
       themes: [githubLight, githubDark],
+      // Revisit once Vite/Rolldown can bundle Shiki's Oniguruma wasm path in SSR builds.
       engine: createJavaScriptRegexEngine(),
     });
   }
@@ -525,11 +527,9 @@ export const CodeBlockCopyButton = ({
 
   return (
     <Button
-      aria-label={children ? undefined : "Copy code"}
       className={cn("shrink-0", className)}
       onClick={copyToClipboard}
       size="icon"
-      type="button"
       variant="ghost"
       {...props}
     >
