@@ -2,14 +2,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => {
   class NativeAuthError extends Error {
-    readonly code: "FORBIDDEN";
+    readonly code: "FORBIDDEN" | "UNAUTHORIZED";
     readonly status: number;
 
-    constructor(status: number, message: string) {
-      super(message);
+    constructor(input: {
+      code: "FORBIDDEN" | "UNAUTHORIZED";
+      message: string;
+      status: number;
+    }) {
+      super(input.message);
       this.name = "NativeAuthError";
-      this.code = "FORBIDDEN";
-      this.status = status;
+      this.code = input.code;
+      this.status = input.status;
     }
   }
 
@@ -72,15 +76,42 @@ describe("native auth TanStack adapter", () => {
     });
   });
 
-  it("preserves native auth status codes on server function errors", async () => {
+  it.each([
+    {
+      code: "UNAUTHORIZED" as const,
+      label: "expired token",
+      message: "Lightfast native OAuth authentication required.",
+      status: 401,
+    },
+    {
+      code: "FORBIDDEN" as const,
+      label: "missing organization",
+      message: "Native session organization required",
+      status: 403,
+    },
+    {
+      code: "FORBIDDEN" as const,
+      label: "wrong organization",
+      message: "User is not a member of the selected organization",
+      status: 403,
+    },
+    {
+      code: "FORBIDDEN" as const,
+      label: "membership mismatch",
+      message: "User is not a member",
+      status: 403,
+    },
+  ])("preserves native auth status codes on $label errors", async ({
+    code,
+    message,
+    status,
+  }) => {
     mocks.listNativeOrganizationsForAuthContext.mockRejectedValue(
-      new mocks.NativeAuthError(403, "User is not a member")
+      new mocks.NativeAuthError({ code, message, status })
     );
 
-    await expect(listNativeAuthOrganizations()).rejects.toThrow(
-      "User is not a member"
-    );
+    await expect(listNativeAuthOrganizations()).rejects.toThrow(message);
 
-    expect(mocks.setResponseStatus).toHaveBeenCalledWith(403);
+    expect(mocks.setResponseStatus).toHaveBeenCalledWith(status);
   });
 });
