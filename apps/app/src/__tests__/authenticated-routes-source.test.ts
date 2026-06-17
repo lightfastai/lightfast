@@ -465,10 +465,8 @@ describe("app authenticated route migration", () => {
 
     expect(connectorsRouteSource).toContain("validateConnectorsSearch");
     expect(connectorsRouteSource).toContain("setSearchParams");
-    expect(connectorsClientSource).toContain(
-      "connectors.listSections.queryOptions"
-    );
-    expect(connectorsClientSource).toContain("startConnect.mutationOptions");
+    expect(connectorsClientSource).toContain("connectorSectionsQueryOptions");
+    expect(connectorsClientSource).toContain("startConnectorMutationOptions");
     expect(connectorsClientSource).toContain(
       "startUserConnectorMutationOptions"
     );
@@ -1170,12 +1168,12 @@ describe("app authenticated route migration", () => {
       '"/_authenticated/$slug/tasks/connectors/x/complete"'
     );
     expect(xCompleteRouteSource).toContain("XConnectorSetupCompleteClient");
-    expect(xSetupClientSource).toContain("connectors.list.queryOptions");
+    expect(xSetupClientSource).toContain("connectorsListQueryOptions");
     expect(xSetupClientSource).toContain(
       'enabled: typeof window !== "undefined"'
     );
     expect(xSetupClientSource).toContain("ConnectorIcon");
-    expect(xSetupClientSource).toContain("startConnect.mutationOptions");
+    expect(xSetupClientSource).toContain("startConnectorMutationOptions");
     expect(xSetupClientSource).toContain("window.location.assign");
     expect(xCompleteClientSource).toContain("useSession");
     expect(xCompleteClientSource).toContain("useNavigate");

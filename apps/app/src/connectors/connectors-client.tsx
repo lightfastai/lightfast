@@ -37,7 +37,6 @@ import {
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { LfSelect } from "~/components/lf-select";
 import { WorkspaceSurface } from "~/components/workspace-surface";
-import { useTRPC } from "~/trpc/react";
 import { ConnectorDetailSheet } from "./connector-detail-sheet";
 import { ConnectorIcon } from "./connector-icons";
 import {
@@ -55,6 +54,15 @@ import {
   type UserConnectorCatalogRow,
   userConnectionStatus,
 } from "./connectors-model";
+import {
+  connectorQueryKeys,
+  connectorSectionsQueryOptions,
+  disconnectConnectorMutationOptions,
+  refreshConnectorToolsMutationOptions,
+  setConnectorAgentEnabledMutationOptions,
+  setConnectorAutomationEnabledMutationOptions,
+  startConnectorMutationOptions,
+} from "./connectors-queries";
 import type {
   ConnectorOwnerScope,
   NormalizedConnectorsSearch,
@@ -77,14 +85,10 @@ export function ConnectorsClient({
   search: NormalizedConnectorsSearch;
   setSearchParams: (updates: Partial<NormalizedConnectorsSearch>) => void;
 }) {
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const listSectionsQueryOptions =
-    trpc.org.workspace.connectors.listSections.queryOptions();
   const connectorsQuery = useQuery({
-    ...listSectionsQueryOptions,
+    ...connectorSectionsQueryOptions({ staleTime: 30_000 }),
     enabled: typeof window !== "undefined",
-    staleTime: 30_000,
   });
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] =
@@ -95,12 +99,10 @@ export function ConnectorsClient({
   }));
 
   const invalidateList = () =>
-    queryClient.invalidateQueries(
-      trpc.org.workspace.connectors.listSections.queryFilter()
-    );
+    queryClient.invalidateQueries({ queryKey: connectorQueryKeys.all });
 
   const startConnectMutation = useMutation(
-    trpc.org.workspace.connectors.startConnect.mutationOptions({
+    startConnectorMutationOptions({
       onSuccess: (result) => {
         window.location.assign(result.authorizationUrl);
       },
@@ -114,22 +116,22 @@ export function ConnectorsClient({
     })
   );
   const refreshToolsMutation = useMutation(
-    trpc.org.workspace.connectors.refreshTools.mutationOptions({
+    refreshConnectorToolsMutationOptions({
       onSuccess: invalidateList,
     })
   );
   const setAutomationEnabledMutation = useMutation(
-    trpc.org.workspace.connectors.setAutomationEnabled.mutationOptions({
+    setConnectorAutomationEnabledMutationOptions({
       onSuccess: invalidateList,
     })
   );
   const setAgentEnabledMutation = useMutation(
-    trpc.org.workspace.connectors.setAgentEnabled.mutationOptions({
+    setConnectorAgentEnabledMutationOptions({
       onSuccess: invalidateList,
     })
   );
   const disconnectMutation = useMutation(
-    trpc.org.workspace.connectors.disconnect.mutationOptions({
+    disconnectConnectorMutationOptions({
       onSuccess: invalidateList,
     })
   );
