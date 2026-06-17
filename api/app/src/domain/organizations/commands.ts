@@ -449,16 +449,17 @@ export const updateOrganizationDomainsCommand = defineCommand<
   input: organizationDomainsUpdateInput,
   output: organizationDomainsUpdateOutput,
   run: async ({ ctx, deps, input }) => {
+    const parsedInput = organizationDomainsUpdateInput.parse(input);
     const actor = requireClerkOrgAdminActor(ctx);
     const access = await getOrganizationAccessBySlugOrThrow({
       deps,
-      slug: input.slug,
+      slug: parsedInput.slug,
       userId: actor.userId,
     });
 
     if (access.org.id !== actor.orgId) {
       throw new NotFoundError("ORG_NOT_FOUND", "Organization not found.", {
-        slug: input.slug,
+        slug: parsedInput.slug,
       });
     }
 
@@ -467,7 +468,7 @@ export const updateOrganizationDomainsCommand = defineCommand<
         deps,
         access.org.id
       );
-      const nextDomainNames = new Set(input.domains);
+      const nextDomainNames = new Set(parsedInput.domains);
       const existingByName = new Map(
         existingDomains.map((domain) => [domain.name.toLowerCase(), domain])
       );
@@ -476,7 +477,7 @@ export const updateOrganizationDomainsCommand = defineCommand<
       );
 
       await Promise.all(
-        input.domains.map((name) => {
+        parsedInput.domains.map((name) => {
           const existingDomain = existingByName.get(name);
           if (!existingDomain) {
             return deps.clerk.organizations.createOrganizationDomain({
@@ -521,7 +522,7 @@ export const updateOrganizationDomainsCommand = defineCommand<
         throw new InternalDomainError(
           "ORG_DOMAINS_UNAVAILABLE",
           "Organization domains are not enabled for this Clerk instance.",
-          { slug: input.slug },
+          { slug: parsedInput.slug },
           error instanceof Error ? { cause: error } : undefined
         );
       }

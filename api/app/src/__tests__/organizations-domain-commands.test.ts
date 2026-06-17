@@ -457,6 +457,7 @@ describe("organization domain commands", () => {
       organizationId: "org_acme",
       verified: true,
     });
+    expect(createOrganizationDomainMock).toHaveBeenCalledTimes(1);
     expect(deleteOrganizationDomainMock).toHaveBeenCalledWith({
       domainId: "orgdmn_old",
       organizationId: "org_acme",
