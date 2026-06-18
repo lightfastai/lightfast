@@ -11,7 +11,7 @@ import type {
   DeveloperConnectionSetSandboxEnabledInput,
   DeveloperConnectionStartAuthInput,
 } from "@repo/developer-connection-contract";
-import { TRPCError } from "@trpc/server";
+import { AuthzError } from "../../domain/errors";
 import type { AuthContext } from "../../trpc";
 import { verifyDeveloperConnectionInput } from "./adapters";
 import { sentryAuthBoxClient } from "./auth-box";
@@ -46,7 +46,10 @@ function activeAdmin(ctx: DeveloperConnectionServiceContext) {
     access.orgId !== identity.orgId ||
     !access.has({ role: "org:admin" })
   ) {
-    throw new TRPCError({ code: "FORBIDDEN" });
+    throw new AuthzError(
+      "PERMISSION_REQUIRED",
+      "Only organization administrators can perform this action."
+    );
   }
   return identity;
 }

@@ -188,6 +188,22 @@ describe("developer connection services", () => {
     );
   });
 
+  it("throws a domain authz error when non-admin users manage developer connections", async () => {
+    await expect(
+      connectDeveloperConnection(ctx({ isAdmin: false }), {
+        provider: "pscale",
+        providerAccountName: "lightfast/main",
+        serviceTokenId: "token-id",
+        serviceToken: "token-secret",
+      })
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        code: "PERMISSION_REQUIRED",
+        kind: "authz",
+      })
+    );
+  });
+
   it("starts and completes Sentry auth through the auth-box client", async () => {
     await expect(
       startSentryDeveloperConnectionAuth(ctx(), {
@@ -293,6 +309,23 @@ describe("developer connection services", () => {
         }),
       ],
     });
+  });
+
+  it("throws a domain conflict error when a requested developer connection is missing", async () => {
+    listCurrentDeveloperConnectionsMock.mockResolvedValue([]);
+
+    await expect(
+      issueDeveloperConnectionLeases(ctx(), {
+        providers: ["sentry"],
+        sandboxRunId: "sandbox_run_1",
+        workflowRunId: "workflow_run_1",
+      })
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        code: "DEVELOPER_CONNECTION_RECONNECT_REQUIRED",
+        kind: "conflict",
+      })
+    );
   });
 
   it("issues leases for all enabled connected developer connections", async () => {

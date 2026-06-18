@@ -12,6 +12,7 @@ import {
   setDeveloperConnectionSandboxEnabledCommand,
   startSentryDeveloperConnectionAuthCommand,
 } from "../domain/developer-connections";
+import { ConflictError } from "../domain/errors";
 
 const serviceMocks = vi.hoisted(() => ({
   completeSentryDeveloperConnectionAuth: vi.fn(),
@@ -240,5 +241,31 @@ describe("developer connection domain commands", () => {
         },
       })
     ).resolves.toEqual({ provider: "sentry", status: "connected" });
+  });
+
+  it("preserves domain errors raised by developer connection services", async () => {
+    serviceMocks.connectDeveloperConnection.mockRejectedValueOnce(
+      new ConflictError(
+        "DEVELOPER_CONNECTION_RECONNECT_REQUIRED",
+        "sentry needs reconnect"
+      )
+    );
+
+    await expect(
+      connectDeveloperConnectionCommand.run({
+        ctx: ctx({ admin: true }),
+        deps: deps(),
+        input: {
+          provider: "sentry",
+          providerAccountName: "lightfast/app",
+          token: "token",
+        },
+      })
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        code: "DEVELOPER_CONNECTION_RECONNECT_REQUIRED",
+        kind: "conflict",
+      })
+    );
   });
 });
