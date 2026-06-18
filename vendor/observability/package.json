@@ -9,17 +9,9 @@
       "types": "./src/env/sentry-env.ts",
       "default": "./src/env/sentry-env.ts"
     },
-    "./sentry": {
-      "types": "./src/sentry.ts",
-      "default": "./src/sentry.ts"
-    },
     "./sentry-electron-main": {
       "types": "./src/sentry-electron-main.ts",
       "default": "./src/sentry-electron-main.ts"
-    },
-    "./sentry-electron-renderer": {
-      "types": "./src/sentry-electron-renderer.ts",
-      "default": "./src/sentry-electron-renderer.ts"
     },
     "./sentry-browser": {
       "types": "./src/sentry-browser.ts",
@@ -72,7 +64,6 @@
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",
-    "@types/react": "catalog:react19",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },
@@ -85,7 +76,6 @@
     "@trpc/server": "catalog:",
     "@vendor/inngest": "workspace:*",
     "@vendor/lib": "workspace:*",
-    "react": "catalog:react19",
     "server-only": "^0.0.1",
     "zod": "catalog:"
   }

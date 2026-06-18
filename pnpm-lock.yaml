@@ -3187,9 +3187,6 @@ importers:
       '@vendor/lib':
         specifier: workspace:*
         version: link:../lib
-      react:
-        specifier: ^19.2.6
-        version: 19.2.6
       server-only:
         specifier: ^0.0.1
         version: 0.0.1
@@ -3206,9 +3203,6 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.9.1
-      '@types/react':
-        specifier: ^19.2.15
-        version: 19.2.15
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
