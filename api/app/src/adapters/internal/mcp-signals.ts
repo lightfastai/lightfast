@@ -1,14 +1,21 @@
-import { getVisibleSignalByPublicId } from "@db/app";
 import { db } from "@db/app/client";
 import {
+  type CreateMcpSignalCommandInput,
   createMcpSignalCommandInput,
+  type GetMcpSignalCommandInput,
   getMcpSignalCommandInput,
   getSignalOutput,
 } from "@repo/api-contract";
 
+import { type ExecutionContext, isDomainError } from "../../domain";
+import {
+  createSignalCommand,
+  createSignalCommandDeps,
+  getSignalCommand,
+  getSignalCommandDeps,
+} from "../../domain/signals";
 import { assertHostedMcpOrgAccess } from "../../mcp-oauth/resource-access";
 import { verifyServiceJWT } from "../../service-jwt";
-import { createSignalForActor } from "../../signals/service";
 
 function bearerToken(request: Request): string | undefined {
   const authorization = request.headers.get("authorization");
@@ -82,8 +89,54 @@ function mcpOrgAccessDeniedMessage(error: { message?: unknown }): string {
     : "MCP organization access denied.";
 }
 
-function isSignalCreateQueueErrorLike(error: unknown): error is Error {
-  return error instanceof Error && error.name === "SignalCreateQueueError";
+function requestId() {
+  return crypto.randomUUID();
+}
+
+type McpSignalActor =
+  | CreateMcpSignalCommandInput["actor"]
+  | GetMcpSignalCommandInput["actor"];
+
+function mcpSignalContext(actor: McpSignalActor): ExecutionContext {
+  return {
+    actor: {
+      clientId: actor.clientId,
+      grantId: actor.grantId,
+      kind: "mcpClient",
+      orgId: actor.orgId,
+      scopes: [],
+      userId: actor.userId,
+    },
+    caller: { kind: "service", service: "apps-mcp" },
+    request: { id: requestId(), source: "mcp" },
+  };
+}
+
+function domainErrorResponse(
+  error: unknown,
+  fallbackMessage: string
+): Response {
+  if (!isDomainError(error)) {
+    return jsonError("internal_error", fallbackMessage, 500);
+  }
+
+  if (error.code === "SIGNAL_NOT_FOUND") {
+    return jsonError("not_found", "Signal not found.", 404);
+  }
+
+  if (error.code === "SIGNAL_QUEUE_FAILED") {
+    return jsonError("signal_enqueue_failed", error.message, 500);
+  }
+
+  if (error.kind === "authz") {
+    return jsonError("forbidden", error.message, 403);
+  }
+
+  if (error.kind === "validation") {
+    return jsonError("invalid_request", error.message, 400);
+  }
+
+  return jsonError("internal_error", fallbackMessage, 500);
 }
 
 export async function handleCreateMcpSignalInternalRequest(
@@ -109,7 +162,11 @@ export async function handleCreateMcpSignalInternalRequest(
       orgId: parsed.data.actor.orgId,
       userId: parsed.data.actor.userId,
     });
-    const result = await createSignalForActor(db, parsed.data);
+    const result = await createSignalCommand.run({
+      ctx: mcpSignalContext(parsed.data.actor),
+      deps: createSignalCommandDeps({ db }),
+      input: { input: parsed.data.input },
+    });
     return Response.json(result, { status: 200 });
   } catch (error) {
     if (isMcpOrgAccessDenied(error)) {
@@ -119,10 +176,7 @@ export async function handleCreateMcpSignalInternalRequest(
         403
       );
     }
-    if (isSignalCreateQueueErrorLike(error)) {
-      return jsonError("signal_enqueue_failed", error.message, 500);
-    }
-    return jsonError("internal_error", "Failed to create signal.", 500);
+    return domainErrorResponse(error, "Failed to create signal.");
   }
 }
 
@@ -149,21 +203,18 @@ export async function handleGetMcpSignalInternalRequest(
       orgId: parsed.data.actor.orgId,
       userId: parsed.data.actor.userId,
     });
-    const signal = await getVisibleSignalByPublicId(db, {
-      publicId: parsed.data.id,
-      clerkOrgId: parsed.data.actor.orgId,
-      createdByUserId: parsed.data.actor.userId,
+    const signal = await getSignalCommand.run({
+      ctx: mcpSignalContext(parsed.data.actor),
+      deps: getSignalCommandDeps({ db }),
+      input: { publicId: parsed.data.id },
     });
-
-    if (!signal) {
-      return jsonError("not_found", "Signal not found.", 404);
-    }
 
     const output = getSignalOutput.parse({
       id: signal.publicId,
       input: signal.input,
       status: signal.status,
       classification: signal.classification,
+      entityLinks: signal.entityLinks,
       visibilityScope: signal.visibilityScope,
       createdAt: signal.createdAt.toISOString(),
       updatedAt: signal.updatedAt.toISOString(),
@@ -177,6 +228,6 @@ export async function handleGetMcpSignalInternalRequest(
         403
       );
     }
-    return jsonError("internal_error", "Failed to get signal.", 500);
+    return domainErrorResponse(error, "Failed to get signal.");
   }
 }

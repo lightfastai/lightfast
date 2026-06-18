@@ -220,6 +220,42 @@ describe("signal domain commands", () => {
     });
   });
 
+  it("creates a signal as an MCP client actor with grant attribution", async () => {
+    await expect(
+      createSignalCommand.run({
+        ctx: {
+          actor: {
+            clientId: "client_test",
+            grantId: "grant_test",
+            kind: "mcpClient",
+            orgId: "org_test",
+            scopes: [],
+            userId: "user_test",
+          },
+          caller: { kind: "service", service: "apps-mcp" },
+          request: { id: "req_mcp_test", source: "mcp" },
+        },
+        deps: deps(),
+        input: { input: "new signal" },
+      })
+    ).resolves.toEqual({
+      id: signalRow.publicId,
+      status: "queued",
+      visibilityScope: "user",
+    });
+
+    expect(createSignalForActorMock).toHaveBeenCalledWith(expect.anything(), {
+      actor: {
+        clientId: "client_test",
+        grantId: "grant_test",
+        kind: "mcp",
+        orgId: "org_test",
+        userId: "user_test",
+      },
+      input: "new signal",
+    });
+  });
+
   it("loads signal detail as an API-key actor using creator visibility", async () => {
     await getSignalCommand.run({
       ctx: {
@@ -231,6 +267,34 @@ describe("signal domain commands", () => {
           orgId: "org_test",
           scopes: ["api:signals:read"],
         },
+      },
+      deps: deps(),
+      input: { publicId: signalRow.publicId },
+    });
+
+    expect(getVisibleSignalByPublicIdMock).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        clerkOrgId: "org_test",
+        createdByUserId: "user_test",
+        publicId: signalRow.publicId,
+      }
+    );
+  });
+
+  it("loads signal detail as an MCP client actor using creator visibility", async () => {
+    await getSignalCommand.run({
+      ctx: {
+        actor: {
+          clientId: "client_test",
+          grantId: "grant_test",
+          kind: "mcpClient",
+          orgId: "org_test",
+          scopes: [],
+          userId: "user_test",
+        },
+        caller: { kind: "service", service: "apps-mcp" },
+        request: { id: "req_mcp_test", source: "mcp" },
       },
       deps: deps(),
       input: { publicId: signalRow.publicId },

@@ -125,7 +125,14 @@ type SignalCommandRunArgs<
 
 type ResolvedSignalCommandActor =
   | { kind: "web"; orgId: string; userId: string }
-  | { apiKeyId: string; kind: "api_key"; orgId: string; userId: string };
+  | { apiKeyId: string; kind: "api_key"; orgId: string; userId: string }
+  | {
+      clientId: string;
+      grantId: string;
+      kind: "mcp";
+      orgId: string;
+      userId: string;
+    };
 
 function requireSignalCommandActor(
   ctx: ExecutionContext
@@ -154,9 +161,30 @@ function requireSignalCommandActor(
     };
   }
 
+  if (ctx.actor.kind === "mcpClient") {
+    if (
+      ctx.caller?.kind !== "service" ||
+      ctx.caller.service !== "apps-mcp" ||
+      ctx.request?.source !== "mcp"
+    ) {
+      throw new AuthzError(
+        "MCP_SERVICE_CALLER_REQUIRED",
+        "MCP signal commands require the apps-mcp service caller."
+      );
+    }
+
+    return {
+      clientId: ctx.actor.clientId,
+      grantId: ctx.actor.grantId,
+      kind: "mcp",
+      orgId: ctx.actor.orgId,
+      userId: ctx.actor.userId,
+    };
+  }
+
   throw new AuthzError(
     "SIGNAL_ACTOR_REQUIRED",
-    "A Lightfast user or API key is required."
+    "A Lightfast user, API key, or MCP client is required."
   );
 }
 
