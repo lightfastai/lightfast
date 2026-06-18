@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -6,8 +6,12 @@ const appRoot = resolve(import.meta.dirname, "../..");
 
 describe("migrated decision views data access", () => {
   it("uses TanStack server functions instead of tRPC", () => {
+    const hookPath = resolve(
+      appRoot,
+      "src/decisions/use-decision-views-query.ts"
+    );
     const querySource = readFileSync(
-      resolve(appRoot, "src/decisions/use-decision-views-query.ts"),
+      resolve(appRoot, "src/decisions/decisions-view-switcher.tsx"),
       "utf8"
     );
     const modelSource = readFileSync(
@@ -15,9 +19,11 @@ describe("migrated decision views data access", () => {
       "utf8"
     );
 
+    expect(existsSync(hookPath)).toBe(false);
     expect(querySource).toContain('@api/app/tanstack/decision-views"');
     expect(querySource).not.toContain("useTRPC");
     expect(querySource).not.toContain("trpc.org.workspace.decisions.views");
+    expect(querySource).not.toContain("./use-decision-views-query");
     expect(modelSource).toContain('@api/app/tanstack/decision-views"');
     expect(modelSource).not.toContain("AppRouterOutputs");
   });
