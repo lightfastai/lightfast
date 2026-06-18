@@ -41,8 +41,48 @@ vi.mock("@ai-sdk/react", () => ({
 }));
 
 vi.mock("@repo/ai/workspace-assistant", () => ({
+  CHAT_SETTINGS_STORAGE_KEYS: {
+    capabilityMode: "lightfast.chat.defaultCapabilityMode",
+    modelProfile: "lightfast.chat.defaultModelProfile",
+  },
+  getDefaultChatSettings: () => ({
+    capabilityMode: "read",
+    modelProfile: "fast",
+    version: "2.0.0",
+  }),
   lightfastWorkspaceAssistantDataPartSchemas: {},
   lightfastWorkspaceAssistantMessageMetadataSchema: {},
+  parseChatSettings: (metadata: unknown) => {
+    if (
+      metadata &&
+      typeof metadata === "object" &&
+      "chatSettings" in metadata
+    ) {
+      const chatSettings = (
+        metadata as {
+          chatSettings?: {
+            capabilityMode?: unknown;
+            modelProfile?: unknown;
+            version?: unknown;
+          };
+        }
+      ).chatSettings;
+      if (
+        chatSettings?.version === "2.0.0" &&
+        (chatSettings.capabilityMode === "read" ||
+          chatSettings.capabilityMode === "write") &&
+        (chatSettings.modelProfile === "fast" ||
+          chatSettings.modelProfile === "thinking")
+      ) {
+        return chatSettings;
+      }
+    }
+
+    return {
+      model: "anthropic/claude-sonnet-4.6",
+      version: "1.0.0",
+    };
+  },
 }));
 
 vi.mock("@api/app/tanstack/assistant", () => ({
@@ -114,21 +154,27 @@ vi.mock("@vendor/ai", () => ({
 
 vi.mock("~/chat/chat-composer", () => ({
   ChatComposer: ({
+    capabilityMode,
     error,
+    modelProfile,
+    onCapabilityModeChange,
+    onModelProfileChange,
     onSubmit,
     onTextChange,
-    onWriteModeChange,
+    settingsLocked,
     status,
     text,
-    writeModeEnabled,
   }: {
+    capabilityMode: "read" | "write";
     error?: Error;
+    modelProfile: "fast" | "thinking";
+    onCapabilityModeChange: (mode: "read" | "write") => void;
+    onModelProfileChange: (profile: "fast" | "thinking") => void;
     onSubmit: (message: { files: []; text: string }) => Promise<void>;
     onTextChange: (value: string) => void;
-    onWriteModeChange?: (enabled: boolean) => void;
+    settingsLocked: boolean;
     status: string;
     text: string;
-    writeModeEnabled?: boolean;
   }) => (
     <form
       onSubmit={(event) => {
@@ -143,11 +189,20 @@ vi.mock("~/chat/chat-composer", () => ({
         value={text}
       />
       <button
-        aria-pressed={writeModeEnabled ? "true" : "false"}
-        onClick={() => onWriteModeChange?.(!writeModeEnabled)}
+        aria-label="Capability mode"
+        data-locked={String(settingsLocked)}
+        onClick={() => onCapabilityModeChange("write")}
         type="button"
       >
-        Write
+        {capabilityMode}
+      </button>
+      <button
+        aria-label="Model profile"
+        data-locked={String(settingsLocked)}
+        onClick={() => onModelProfileChange("thinking")}
+        type="button"
+      >
+        {modelProfile}
       </button>
       <button aria-label="Send message" data-status={status} type="submit">
         Send
@@ -181,6 +236,13 @@ beforeEach(() => {
   stopMock.mockClear();
 
   mutateAsyncMock.mockResolvedValue({
+    metadata: {
+      chatSettings: {
+        capabilityMode: "read",
+        modelProfile: "fast",
+        version: "2.0.0",
+      },
+    },
     publicId: "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
     title: "Summarize the current workspace",
   });
@@ -189,6 +251,7 @@ beforeEach(() => {
   vi.stubGlobal("crypto", {
     randomUUID: () => "ff83026e-ef0e-40db-ae59-544fbe4df209",
   });
+  window.localStorage.clear();
 });
 
 afterEach(() => {
@@ -280,9 +343,98 @@ describe("WorkspaceAssistantClient", () => {
     ).not.toBeNull();
   });
 
+  it("uses localStorage defaults for a new conversation and sends them on first send", async () => {
+    window.localStorage.setItem(
+      "lightfast.chat.defaultCapabilityMode",
+      "write"
+    );
+    window.localStorage.setItem(
+      "lightfast.chat.defaultModelProfile",
+      "thinking"
+    );
+
+    render(
+      <WorkspaceAssistantClient conversationId="conv_ff83026e-ef0e-40db-ae59-544fbe4df209" />
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Capability mode" }).textContent
+    ).toBe("write");
+    expect(
+      screen.getByRole("button", { name: "Model profile" }).textContent
+    ).toBe("thinking");
+
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: "Update the ticket" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => {
+      expect(mutateAsyncMock).toHaveBeenCalledWith({
+        chatSettings: {
+          capabilityMode: "write",
+          modelProfile: "thinking",
+          version: "2.0.0",
+        },
+        publicId: "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
+        title: "Update the ticket",
+      });
+    });
+
+    await waitFor(() => {
+      expect(sendMessageMock).toHaveBeenCalledWith(
+        { text: "Update the ticket" },
+        {
+          body: expect.objectContaining({
+            chatSettings: {
+              capabilityMode: "write",
+              modelProfile: "thinking",
+              version: "2.0.0",
+            },
+          }),
+        }
+      );
+    });
+  });
+
+  it("locks controls to persisted settings for an existing conversation", () => {
+    render(
+      <WorkspaceAssistantClient
+        conversationId="conv_existing"
+        initialConversation={conversationResult({
+          conversation: {
+            metadata: {
+              chatSettings: {
+                capabilityMode: "read",
+                modelProfile: "fast",
+                version: "2.0.0",
+              },
+            },
+          },
+        })}
+      />
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Capability mode" }).textContent
+    ).toBe("read");
+    expect(
+      screen
+        .getByRole("button", { name: "Capability mode" })
+        .getAttribute("data-locked")
+    ).toBe("true");
+    expect(
+      screen.getByRole("button", { name: "Model profile" }).textContent
+    ).toBe("fast");
+  });
+
   it("soft-replaces the browser URL before creation and syncs the router after send", async () => {
     let resolveCreate:
-      | ((conversation: { publicId: string; title: string }) => void)
+      | ((conversation: {
+          metadata?: Record<string, unknown>;
+          publicId: string;
+          title: string;
+        }) => void)
       | undefined;
     const replaceStateSpy = vi
       .spyOn(History.prototype, "replaceState")
@@ -305,6 +457,11 @@ describe("WorkspaceAssistantClient", () => {
 
     await waitFor(() => {
       expect(mutateAsyncMock).toHaveBeenCalledWith({
+        chatSettings: {
+          capabilityMode: "read",
+          modelProfile: "fast",
+          version: "2.0.0",
+        },
         publicId: "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
         title: "Summarize the current workspace",
       });
@@ -326,6 +483,13 @@ describe("WorkspaceAssistantClient", () => {
     ).toBe("submitted");
 
     resolveCreate?.({
+      metadata: {
+        chatSettings: {
+          capabilityMode: "read",
+          modelProfile: "fast",
+          version: "2.0.0",
+        },
+      },
       publicId: "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
       title: "Summarize the current workspace",
     });
@@ -335,6 +499,11 @@ describe("WorkspaceAssistantClient", () => {
         { text: "Summarize the current workspace" },
         {
           body: {
+            chatSettings: {
+              capabilityMode: "read",
+              modelProfile: "fast",
+              version: "2.0.0",
+            },
             conversationId: "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
             idempotencyKey: "idem_ff83026e-ef0e-40db-ae59-544fbe4df209",
           },
@@ -381,24 +550,38 @@ describe("WorkspaceAssistantClient", () => {
 
     await waitFor(() => {
       expect(mutateAsyncMock).toHaveBeenCalledWith({
+        chatSettings: {
+          capabilityMode: "read",
+          modelProfile: "fast",
+          version: "2.0.0",
+        },
         publicId: "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
         title: longPrompt.slice(0, 160),
       });
     });
   });
 
-  it("sends one existing conversation turn with provider routine write mode enabled", async () => {
+  it("sends existing v2 conversation settings without resetting the locked mode", async () => {
     render(
       <WorkspaceAssistantClient
         conversationId="conv_existing"
-        initialConversation={conversationResult()}
+        initialConversation={conversationResult({
+          conversation: {
+            metadata: {
+              chatSettings: {
+                capabilityMode: "write",
+                modelProfile: "thinking",
+                version: "2.0.0",
+              },
+            },
+          },
+        })}
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Write" }));
     expect(
-      screen.getByRole("button", { name: "Write" }).getAttribute("aria-pressed")
-    ).toBe("true");
+      screen.getByRole("button", { name: "Capability mode" }).textContent
+    ).toBe("write");
     fireEvent.change(screen.getByLabelText("Message"), {
       target: { value: "Update the Linear ticket" },
     });
@@ -409,19 +592,21 @@ describe("WorkspaceAssistantClient", () => {
         { text: "Update the Linear ticket" },
         {
           body: {
+            chatSettings: {
+              capabilityMode: "write",
+              modelProfile: "thinking",
+              version: "2.0.0",
+            },
             conversationId: "conv_existing",
             idempotencyKey: "idem_ff83026e-ef0e-40db-ae59-544fbe4df209",
-            providerRoutineWriteMode: true,
           },
         }
       );
     });
     await waitFor(() => {
       expect(
-        screen
-          .getByRole("button", { name: "Write" })
-          .getAttribute("aria-pressed")
-      ).toBe("false");
+        screen.getByRole("button", { name: "Capability mode" }).textContent
+      ).toBe("write");
     });
   });
 
@@ -437,11 +622,20 @@ describe("WorkspaceAssistantClient", () => {
     render(
       <WorkspaceAssistantClient
         conversationId="conv_existing"
-        initialConversation={conversationResult()}
+        initialConversation={conversationResult({
+          conversation: {
+            metadata: {
+              chatSettings: {
+                capabilityMode: "write",
+                modelProfile: "thinking",
+                version: "2.0.0",
+              },
+            },
+          },
+        })}
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Write" }));
     fireEvent.change(screen.getByLabelText("Message"), {
       target: { value: "Start this task" },
     });
@@ -465,10 +659,8 @@ describe("WorkspaceAssistantClient", () => {
 
     await waitFor(() => {
       expect(
-        screen
-          .getByRole("button", { name: "Write" })
-          .getAttribute("aria-pressed")
-      ).toBe("false");
+        screen.getByRole("button", { name: "Capability mode" }).textContent
+      ).toBe("write");
     });
     expect(
       (screen.getByLabelText("Message") as HTMLTextAreaElement).value
@@ -477,15 +669,16 @@ describe("WorkspaceAssistantClient", () => {
 });
 
 function conversationResult(
-  overrides: Partial<WorkspaceAssistantConversationResult["conversation"]> & {
-    messages?: Array<{
-      parts: WorkspaceAssistantConversationResult["messages"][number]["parts"];
-      publicId: string;
-      role: WorkspaceAssistantConversationResult["messages"][number]["role"];
-    }>;
+  overrides: {
+    conversation?: Partial<
+      WorkspaceAssistantConversationResult["conversation"]
+    >;
+    messages?: Partial<
+      WorkspaceAssistantConversationResult["messages"][number]
+    >[];
   } = {}
 ): WorkspaceAssistantConversationResult {
-  const { messages = [], ...conversationOverrides } = overrides;
+  const { conversation: conversationOverrides = {}, messages = [] } = overrides;
   return {
     conversation: {
       activeStreamId: null,
@@ -513,9 +706,9 @@ function conversationResult(
       id: index + 1,
       idempotencyKey: null,
       metadata: {},
-      parts: message.parts,
-      publicId: message.publicId,
-      role: message.role,
+      parts: message.parts ?? [],
+      publicId: message.publicId ?? `msg_${index}`,
+      role: message.role ?? "user",
       sequence: index,
       status: "completed",
       updatedAt: new Date("2026-06-15T00:00:00.000Z"),

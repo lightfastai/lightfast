@@ -21,10 +21,17 @@ import {
 } from "@db/app";
 import { db } from "@db/app/client";
 import {
+  type ChatConversationSettingsV2,
+  chatConversationSettingsV2Schema,
+  getDefaultChatSettings,
+  getSettingsMetadata,
+  isChatSettingsRequestCompatible,
   type LightfastUIMessage,
   lightfastWorkspaceAssistantDataPartSchemas,
   lightfastWorkspaceAssistantMessageMetadataSchema,
   lightfastWorkspaceAssistantTools,
+  parseChatSettings,
+  resolveChatModelProfile,
 } from "@repo/ai/workspace-assistant";
 import {
   providerRoutineCallInputSchema,
@@ -45,6 +52,7 @@ import {
   smoothStream,
   stepCountIs,
   streamText,
+  type Tool,
   tool,
 } from "@vendor/ai";
 import { z } from "zod";
@@ -52,8 +60,6 @@ import { resolveWorkspaceAssistantAuthContext } from "~/server/chat/auth";
 import { getLightfastResumableStreamContext } from "~/server/chat/resumable-stream";
 import { log } from "~/server/log";
 
-const WORKSPACE_ASSISTANT_MODEL = "anthropic/claude-sonnet-4.6";
-const WORKSPACE_ASSISTANT_FALLBACK_MODELS = ["openai/gpt-5.4"] as const;
 const WORKSPACE_ASSISTANT_MAX_TOOL_STEPS = 5;
 const WORKSPACE_ASSISTANT_STREAM_SMOOTHING = {
   chunking: "word",
@@ -82,8 +88,18 @@ interface UserConnectorChatContext {
   };
 }
 
+type ChatToolCapability = "read" | "write";
+type WorkspaceAssistantTool = Tool<any, any>;
+
+interface ChatToolDefinition {
+  capability: ChatToolCapability;
+  create: () => WorkspaceAssistantTool;
+  name: string;
+}
+
 const chatRequestSchema = z
   .object({
+    chatSettings: chatConversationSettingsV2Schema.optional(),
     idempotencyKey: z
       .string()
       .trim()
@@ -159,10 +175,11 @@ export async function handleWorkspaceAssistantChatRequest(request: Request) {
       { status: 400 }
     );
   }
-  const providerRoutineWriteMode =
+  const legacyProviderRoutineWriteMode =
     parsed.data.providerRoutineWriteMode === true;
 
   const conversation = await resolveConversation({
+    chatSettings: parsed.data.chatSettings,
     createdByUserId: identity.userId,
     orgId: identity.orgId,
     submittedMessage,
@@ -174,6 +191,20 @@ export async function handleWorkspaceAssistantChatRequest(request: Request) {
       { status: 404 }
     );
   }
+  const chatSettings = parseChatSettings(conversation.metadata);
+  if (
+    !isChatSettingsRequestCompatible(chatSettings, parsed.data.chatSettings)
+  ) {
+    return Response.json(
+      { error: "Conversation settings are locked" },
+      { status: 409 }
+    );
+  }
+  const resolvedModel = resolveChatModelProfile(chatSettings);
+  const providerRoutineWriteMode =
+    chatSettings.version === "2.0.0"
+      ? chatSettings.capabilityMode === "write"
+      : legacyProviderRoutineWriteMode;
 
   const existingMessages = await listWorkspaceAssistantMessages(db, {
     clerkOrgId: identity.orgId,
@@ -229,7 +260,7 @@ export async function handleWorkspaceAssistantChatRequest(request: Request) {
   });
   const generation = await createWorkspaceAssistantGeneration(db, {
     assistantMessage,
-    model: WORKSPACE_ASSISTANT_MODEL,
+    model: resolvedModel.model,
     requestedByUserId: identity.userId,
     requestMetadata: {
       source: "workspace-assistant",
@@ -256,7 +287,7 @@ export async function handleWorkspaceAssistantChatRequest(request: Request) {
   const generationLogMetadata = {
     clerkOrgId: identity.orgId,
     generationId: generation.publicId,
-    model: WORKSPACE_ASSISTANT_MODEL,
+    model: resolvedModel.model,
     streamId,
     conversationId: conversation.publicId,
     providerRoutineWriteMode,
@@ -289,7 +320,7 @@ export async function handleWorkspaceAssistantChatRequest(request: Request) {
     },
     experimental_transform: smoothStream(WORKSPACE_ASSISTANT_STREAM_SMOOTHING),
     messages: modelMessages,
-    model: gateway(WORKSPACE_ASSISTANT_MODEL),
+    model: gateway(resolvedModel.model),
     onError: async ({ error }) => {
       streamErrored = true;
       const message = getErrorMessage(error);
@@ -332,7 +363,7 @@ export async function handleWorkspaceAssistantChatRequest(request: Request) {
     providerOptions: {
       gateway: {
         cacheControl: "max-age=0",
-        models: [...WORKSPACE_ASSISTANT_FALLBACK_MODELS],
+        models: resolvedModel.fallbackModels,
         tags: [
           "feature:workspace-assistant",
           `org:${identity.orgId}`,
@@ -341,6 +372,7 @@ export async function handleWorkspaceAssistantChatRequest(request: Request) {
         ],
         user: identity.userId,
       },
+      ...resolvedModel.providerOptions,
     },
     stopWhen: stepCountIs(WORKSPACE_ASSISTANT_MAX_TOOL_STEPS),
     system,
@@ -391,7 +423,7 @@ export async function handleWorkspaceAssistantChatRequest(request: Request) {
     },
     messageMetadata: () => ({
       generationId: generation.publicId,
-      model: WORKSPACE_ASSISTANT_MODEL,
+      model: resolvedModel.model,
       source: "workspace-assistant" as const,
       streamId,
     }),
@@ -504,6 +536,7 @@ export async function handleWorkspaceAssistantChatRequest(request: Request) {
       ]);
     },
     originalMessages,
+    sendReasoning: resolvedModel.sendReasoning,
   });
 }
 
@@ -513,73 +546,123 @@ function createWorkspaceAssistantTools(input: {
   userId: string;
   writeMode: boolean;
 }) {
-  return {
-    ...createWorkspaceAssistantProviderRoutineTools(input),
-    callUserConnectorTool: tool({
-      description:
-        "Call one private user connector tool by routineId for the current user. Use routineIds returned by findUserConnectorTools.",
-      inputSchema: userConnectorCallInputSchema,
-      outputSchema: userConnectorCallSuccessSchema,
-      execute: async (toolInput) => {
-        const { callUserConnectorTool } = await import(
-          "@api/app/services/user-connectors/runtime"
-        );
-        return callUserConnectorTool(userConnectorContext(input), toolInput);
-      },
-    }),
-    findUserConnectorTools: tool({
-      description:
-        "Find private user connector tools available to the current user, such as Granola meeting note tools. Use this before calling callUserConnectorTool.",
-      inputSchema: userConnectorFindInputSchema,
-      outputSchema: userConnectorFindOutputSchema,
-      execute: async (toolInput) => {
-        const { findUserConnectorTools } = await import(
-          "@api/app/services/user-connectors/runtime"
-        );
-        return findUserConnectorTools(userConnectorContext(input), toolInput);
-      },
-    }),
-  };
+  const mode: ChatToolCapability = input.writeMode ? "write" : "read";
+  const definitions = [
+    ...createWorkspaceAssistantProviderRoutineToolDefinitions(input),
+    ...createWorkspaceAssistantUserConnectorToolDefinitions(input),
+  ];
+
+  return Object.fromEntries(
+    definitions
+      .filter((definition) => includeToolForMode(mode, definition))
+      .map((definition) => [definition.name, definition.create()])
+  );
 }
 
-function createWorkspaceAssistantProviderRoutineTools(input: {
+function includeToolForMode(
+  mode: ChatToolCapability,
+  definition: ChatToolDefinition
+) {
+  return mode === "write" || definition.capability === "read";
+}
+
+function createWorkspaceAssistantProviderRoutineToolDefinitions(input: {
   conversation: WorkspaceAssistantConversation;
   orgId: string;
   userId: string;
   writeMode: boolean;
-}) {
-  return {
-    callProviderRoutine: tool({
-      description:
-        "Call one connected provider routine by routineId using this workspace's enabled connector. Write routines require write mode for this turn.",
-      inputSchema: providerRoutineCallInputSchema,
-      outputSchema: providerRoutineCallSuccessSchema,
-      execute: async (toolInput) => {
-        const { callChatProviderRoutine } = await import(
-          "@api/app/services/connectors/chat-routines"
-        );
-        return callChatProviderRoutine(
-          providerRoutineContext(input),
-          toolInput
-        );
-      },
-    }),
-    findProviderRoutines: tool({
-      description:
-        "Find connected provider routines available to this workspace through enabled connectors. Returns read routines, and write routines only when write mode is enabled for this turn.",
-      inputSchema: providerRoutineFindInputSchema,
-      outputSchema: providerRoutineFindOutputSchema,
-      execute: async (toolInput) => {
-        const { findChatProviderRoutines } = await import(
-          "@api/app/services/connectors/chat-routines"
-        );
-        return findChatProviderRoutines(
-          providerRoutineContext(input),
-          toolInput
-        );
-      },
-    }),
-  };
+}): ChatToolDefinition[] {
+  return [
+    {
+      capability: "read",
+      create: () =>
+        tool({
+          description:
+            "Call one connected provider routine by routineId using this workspace's enabled connector. Write routines require write mode for this conversation.",
+          inputSchema: providerRoutineCallInputSchema,
+          outputSchema: providerRoutineCallSuccessSchema,
+          execute: async (toolInput) => {
+            const { callChatProviderRoutine } = await import(
+              "@api/app/services/connectors/chat-routines"
+            );
+            return callChatProviderRoutine(
+              providerRoutineContext(input),
+              toolInput
+            );
+          },
+        }),
+      name: "callProviderRoutine",
+    },
+    {
+      capability: "read",
+      create: () =>
+        tool({
+          description:
+            "Find connected provider routines available to this workspace through enabled connectors. Returns write routines only in Write conversations.",
+          inputSchema: providerRoutineFindInputSchema,
+          outputSchema: providerRoutineFindOutputSchema,
+          execute: async (toolInput) => {
+            const { findChatProviderRoutines } = await import(
+              "@api/app/services/connectors/chat-routines"
+            );
+            return findChatProviderRoutines(
+              providerRoutineContext(input),
+              toolInput
+            );
+          },
+        }),
+      name: "findProviderRoutines",
+    },
+  ];
+}
+
+function createWorkspaceAssistantUserConnectorToolDefinitions(input: {
+  conversation: WorkspaceAssistantConversation;
+  orgId: string;
+  userId: string;
+}): ChatToolDefinition[] {
+  return [
+    {
+      capability: "read",
+      create: () =>
+        tool({
+          description:
+            "Call one private user connector tool by routineId for the current user. Use routineIds returned by findUserConnectorTools.",
+          inputSchema: userConnectorCallInputSchema,
+          outputSchema: userConnectorCallSuccessSchema,
+          execute: async (toolInput) => {
+            const { callUserConnectorTool } = await import(
+              "@api/app/services/user-connectors/runtime"
+            );
+            return callUserConnectorTool(
+              userConnectorContext(input),
+              toolInput
+            );
+          },
+        }),
+      name: "callUserConnectorTool",
+    },
+    {
+      capability: "read",
+      create: () =>
+        tool({
+          description:
+            "Find private user connector tools available to the current user, such as Granola meeting note tools. Use this before calling callUserConnectorTool.",
+          inputSchema: userConnectorFindInputSchema,
+          outputSchema: userConnectorFindOutputSchema,
+          execute: async (toolInput) => {
+            const { findUserConnectorTools } = await import(
+              "@api/app/services/user-connectors/runtime"
+            );
+            return findUserConnectorTools(
+              userConnectorContext(input),
+              toolInput
+            );
+          },
+        }),
+      name: "findUserConnectorTools",
+    },
+  ];
 }
 
 function userConnectorContext(input: {
@@ -667,6 +750,7 @@ function hasUnsupportedUserPart(message: LightfastUIMessage) {
 }
 
 async function resolveConversation(input: {
+  chatSettings?: ChatConversationSettingsV2;
   createdByUserId: string;
   orgId: string;
   submittedMessage: LightfastUIMessage;
@@ -686,6 +770,10 @@ async function resolveConversation(input: {
       return await createWorkspaceAssistantConversation(db, {
         clerkOrgId: input.orgId,
         createdByUserId: input.createdByUserId,
+        metadata: getSettingsMetadata(
+          {},
+          input.chatSettings ?? getDefaultChatSettings()
+        ),
         publicId: input.conversationId,
         title: firstTextPart(input.submittedMessage),
       });
@@ -704,6 +792,10 @@ async function resolveConversation(input: {
   return createWorkspaceAssistantConversation(db, {
     clerkOrgId: input.orgId,
     createdByUserId: input.createdByUserId,
+    metadata: getSettingsMetadata(
+      {},
+      input.chatSettings ?? getDefaultChatSettings()
+    ),
     title: firstTextPart(input.submittedMessage),
   });
 }

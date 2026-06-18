@@ -31,6 +31,57 @@ describe("Lightfast workspace assistant message schema", () => {
     });
   });
 
+  it("validates semantic chat activity data parts", async () => {
+    const result = await safeValidateLightfastUIMessages({
+      messages: [
+        {
+          id: "msg_activity",
+          parts: [
+            {
+              data: {
+                details: ["Matched LF-142", "Skipped archived issues"],
+                icon: "search",
+                label: "Linear: searched issues",
+                provider: "linear",
+                sources: [
+                  { label: "LF-142", url: "https://linear.app/LF-142" },
+                ],
+                status: "completed",
+                summary: "Found 4 issues",
+              },
+              type: "data-activity",
+            },
+          ],
+          role: "assistant",
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects invalid semantic chat activity data parts", async () => {
+    const result = await safeValidateLightfastUIMessages({
+      messages: [
+        {
+          id: "msg_activity",
+          parts: [
+            {
+              data: {
+                label: "",
+                status: "done",
+              },
+              type: "data-activity",
+            },
+          ],
+          role: "assistant",
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   it("rejects unknown metadata fields and unknown data part names", async () => {
     await expect(
       lightfastWorkspaceAssistantMessageMetadataSchema.parseAsync({

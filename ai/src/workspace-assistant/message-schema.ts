@@ -32,6 +32,28 @@ const lightfastWorkspaceAssistantMessageMetadataObjectSchema = z
 export const lightfastWorkspaceAssistantMessageMetadataSchema =
   lightfastWorkspaceAssistantMessageMetadataObjectSchema.optional();
 
+const chatActivityDataSchema = z
+  .object({
+    id: z.string().min(1).optional(),
+    label: z.string().trim().min(1),
+    status: z.enum(["running", "completed", "failed"]).optional(),
+    icon: z.string().trim().min(1).optional(),
+    provider: z.string().trim().min(1).optional(),
+    summary: z.string().trim().min(1).optional(),
+    details: z.array(z.string().trim().min(1)).optional(),
+    sources: z
+      .array(
+        z
+          .object({
+            label: z.string().trim().min(1),
+            url: z.string().url().optional(),
+          })
+          .strict()
+      )
+      .optional(),
+  })
+  .strict();
+
 const opportunityDataSchema = z
   .object({
     count: z.number().int().min(0).optional(),
@@ -54,6 +76,7 @@ const skillDataSchema = z
   .strict();
 
 export interface LightfastWorkspaceAssistantDataParts {
+  activity?: z.infer<typeof chatActivityDataSchema>;
   opportunities?: z.infer<typeof opportunityDataSchema>;
   skills?: z.infer<typeof skillDataSchema>;
 }
@@ -62,10 +85,11 @@ type LightfastWorkspaceAssistantDataPartsWithUnknownKeys =
   LightfastWorkspaceAssistantDataParts & Record<string, unknown>;
 
 export const lightfastWorkspaceAssistantDataPartSchemas = {
+  activity: chatActivityDataSchema,
   opportunities: opportunityDataSchema,
   skills: skillDataSchema,
 } satisfies {
-  [K in "opportunities" | "skills"]: FlexibleSchema<
+  [K in "activity" | "opportunities" | "skills"]: FlexibleSchema<
     LightfastWorkspaceAssistantDataParts[K]
   >;
 };
