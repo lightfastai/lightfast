@@ -49,6 +49,24 @@ const mcpOAuthProtocolRouteExpectations = [
   },
 ] as const;
 
+const nativeOAuthFacadeRouteExpectations = [
+  {
+    staticImport:
+      'import { handleNativeOAuthClientConfigRequest } from "@api/app/native-auth/server-routes"',
+    getSource: () => source("src/routes/api/oauth/$client/config.ts"),
+  },
+  {
+    staticImport:
+      'import { handleNativeOAuthFinalizeRequest } from "@api/app/native-auth/server-routes"',
+    getSource: () => source("src/routes/api/oauth/finalize.ts"),
+  },
+  {
+    staticImport:
+      'import { handleNativeOAuthDesktopSessionRequest } from "@api/app/native-auth/server-routes"',
+    getSource: () => source("src/routes/api/oauth/desktop/session.ts"),
+  },
+] as const;
+
 describe("app OAuth protocol route migration", () => {
   it("ports MCP OAuth protocol endpoints as TanStack server routes", () => {
     const metadataSource = source(
@@ -233,6 +251,14 @@ describe("app OAuth protocol route migration", () => {
       expect(routeSource).not.toContain("next/");
       expect(routeSource).not.toContain("server-only");
       expect(routeSource).not.toContain('"use server"');
+    }
+
+    for (const expectation of nativeOAuthFacadeRouteExpectations) {
+      const routeSource = expectation.getSource();
+
+      expect(routeSource).toContain("await import(");
+      expect(routeSource).toContain('@api/app/native-auth/server-routes"');
+      expect(routeSource).not.toContain(expectation.staticImport);
     }
   });
 });
