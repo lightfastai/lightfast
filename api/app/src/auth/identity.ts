@@ -32,7 +32,7 @@ export type OrgGate = OrgSetupGate;
  * IdPs) construct one of these variants via the `authIdentity` factory.
  *
  * The `active` variant additionally carries `orgGate` — the org-level setup
- * signal — so org-scoped procedures can gate without a second round-trip.
+ * signal — so org-scoped commands can gate without a second round-trip.
  */
 export type AuthIdentity =
   | { type: "unauthenticated" }
@@ -135,7 +135,7 @@ async function tryNativeOAuthBearer({
       acceptsToken: "oauth_token",
     })) as ClerkOAuthAuthResult;
   } catch (err) {
-    console.warn("[trpc] Clerk OAuth bearer probe failed", {
+    console.warn("[auth] Clerk OAuth bearer probe failed", {
       name: err instanceof Error ? err.name : "unknown",
       message: err instanceof Error ? err.message : String(err),
     });

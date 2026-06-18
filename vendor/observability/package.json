@@ -37,17 +37,9 @@
       "types": "./src/context.ts",
       "default": "./src/context.ts"
     },
-    "./request": {
-      "types": "./src/request.ts",
-      "default": "./src/request.ts"
-    },
     "./error/next": {
       "types": "./src/error/next.ts",
       "default": "./src/error/next.ts"
-    },
-    "./trpc": {
-      "types": "./src/trpc.ts",
-      "default": "./src/trpc.ts"
     },
     "./inngest": {
       "types": "./src/inngest.ts",
@@ -73,9 +65,7 @@
     "@sentry/electron": "catalog:",
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-core": "catalog:",
-    "@trpc/server": "catalog:",
     "@vendor/inngest": "workspace:*",
-    "@vendor/lib": "workspace:*",
     "server-only": "^0.0.1",
     "zod": "catalog:"
   }

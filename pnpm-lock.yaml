@@ -207,9 +207,6 @@ catalogs:
     '@testing-library/react':
       specifier: ^16.3.2
       version: 16.3.2
-    '@trpc/server':
-      specifier: ^11.16.0
-      version: 11.16.0
     '@turbo/gen':
       specifier: ^2.9.6
       version: 2.9.6
@@ -3178,15 +3175,9 @@ importers:
       '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
-      '@trpc/server':
-        specifier: 'catalog:'
-        version: 11.16.0(typescript@5.9.3)
       '@vendor/inngest':
         specifier: workspace:*
         version: link:../inngest
-      '@vendor/lib':
-        specifier: workspace:*
-        version: link:../lib
       server-only:
         specifier: ^0.0.1
         version: 0.0.1
@@ -8926,12 +8917,6 @@ packages:
   '@traceloop/instrumentation-anthropic@0.20.0':
     resolution: {integrity: sha512-xQcPxVrKr3yT9+ZEM3skYXikJc/ocZlGDIcsBQ3mMwL3Weq1QL7jx/uGLXvrSO2Yh0DWUjWI6Q/oiRCEUM6P8w==}
     engines: {node: '>=14'}
-
-  '@trpc/server@11.16.0':
-    resolution: {integrity: sha512-XgGuUMddrUTd04+za/WE5GFuZ1/YU9XQG0t3VL5WOIu2JspkOlq6k4RYEiqS6HSJt+S0RXaPdIoE2anIP/BBRQ==}
-    hasBin: true
-    peerDependencies:
-      typescript: '>=5.7.2'
 
   '@ts-morph/common@0.27.0':
     resolution: {integrity: sha512-Wf29UqxWDpc+i61k3oIOzcUfQt79PIT9y/MWfAGlrkjg6lBC1hwDECLXPVJAhWjiGbfBCxZd65F/LIZF3+jeJQ==}
@@ -21618,10 +21603,6 @@ snapshots:
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
-
-  '@trpc/server@11.16.0(typescript@5.9.3)':
-    dependencies:
-      typescript: 5.9.3
 
   '@ts-morph/common@0.27.0':
     dependencies:
