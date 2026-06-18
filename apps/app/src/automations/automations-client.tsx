@@ -1,6 +1,7 @@
 import { useAuth } from "@clerk/tanstack-react-start";
 import { formatAutomationSchedule } from "@repo/app-validation/schemas";
 import { Button } from "@repo/ui/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Circle, CirclePause, Loader2, Plus, RefreshCcw } from "lucide-react";
 import { WorkspaceSurface } from "~/components/workspace-surface";
@@ -9,12 +10,17 @@ import {
   getAutomationSections,
   hasAutomations,
 } from "./automations-model";
-import { useAutomationsListQuery } from "./use-automations-list-query";
+import { automationsListQueryOptions } from "./automations-queries";
 
 export function AutomationsClient({ slug }: { slug: string }) {
   const { has, isLoaded } = useAuth();
   const canManageAutomations = isLoaded && !!has?.({ role: "org:admin" });
-  const automationsQuery = useAutomationsListQuery();
+  const automationsQuery = useQuery(
+    automationsListQueryOptions({
+      enabled: typeof window !== "undefined",
+      staleTime: 30_000,
+    })
+  );
   const automations = automationsQuery.data ?? [];
   const sections = getAutomationSections(automations);
 
