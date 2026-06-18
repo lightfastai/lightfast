@@ -16,17 +16,16 @@ import {
   connectorRuntimeToolName,
   type FullConnectorToolManifest,
 } from "@lightfast/connector-core";
-import { decrypt, encrypt } from "@repo/app-encryption";
+import { listXBridgeMcpTools } from "@lightfast/connector-x/mcp";
+import { getXViewerMetadata, XAppNodeError } from "@lightfast/connector-x/node";
 import {
   buildXOAuthAuthorizeUrl,
   createXPkcePair,
   exchangeXOAuthCode,
-  getXViewerMetadata,
-  listXBridgeMcpTools,
   refreshXOAuthToken,
   revokeXOAuthToken,
-  XAppNodeError,
-} from "@repo/x-app-node";
+} from "@lightfast/connector-x/oauth";
+import { decrypt, encrypt } from "@repo/app-encryption";
 import { log } from "@vendor/observability/log/next";
 import { findUserOrganizationMembership } from "../../auth/clerk-org-membership";
 import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";

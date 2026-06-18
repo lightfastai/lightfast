@@ -5,13 +5,11 @@ import {
   updateObservedConnectorTokens,
 } from "@db/app";
 import { db as appDb } from "@db/app/client";
+import { XAppNodeError } from "@lightfast/connector-x/node";
+import { refreshXOAuthToken } from "@lightfast/connector-x/oauth";
+import { getXToolDefinitionsForScopes } from "@lightfast/connector-x/operations";
+import { executeXApiTool } from "@lightfast/connector-x/tools";
 import { decrypt, encrypt } from "@repo/app-encryption";
-import {
-  executeXApiTool,
-  getXToolDefinitionsForScopes,
-  refreshXOAuthToken,
-  XAppNodeError,
-} from "@repo/x-app-node";
 import {
   McpServer,
   WebStandardStreamableHTTPServerTransport,

@@ -7,6 +7,8 @@ const oldConnectorPackage = `@repo/${"connector-contract"}`;
 const oldConnectorPath = `packages/${"connector-contract"}`;
 const oldLinearPackage = `@repo/${"linear-app-node"}`;
 const oldLinearPath = `packages/${"linear-app-node"}`;
+const oldXPackage = `@repo/${"x-app-node"}`;
+const oldXPath = `packages/${"x-app-node"}`;
 
 const ignoredDirs = new Set([
   ".git",
@@ -119,6 +121,44 @@ describe("connector workspace boundary", () => {
           contents.includes(oldLinearPackage) ||
           contents.includes(oldLinearPath)
         );
+      })
+      .map((path) => relative(repoRoot, path))
+      .sort();
+
+    expect(staleReferences).toEqual([]);
+  });
+
+  it("hosts X provider runtime code behind explicit connector entrypoints", () => {
+    const xPackage = readJson<{
+      dependencies?: Record<string, string>;
+      exports?: Record<string, unknown>;
+      name?: string;
+      private?: boolean;
+    }>("connectors/x/package.json");
+
+    expect(existsSync(resolve(repoRoot, oldXPath))).toBe(false);
+    expect(xPackage.name).toBe("@lightfast/connector-x");
+    expect(xPackage.private).toBe(true);
+    expect(xPackage.dependencies?.["@lightfast/connector-core"]).toBe(
+      "workspace:*"
+    );
+    expect(xPackage.dependencies?.["@vendor/mcp"]).toBe("workspace:*");
+    expect(xPackage.dependencies?.zod).toBe("catalog:");
+    expect(Object.keys(xPackage.exports ?? {}).sort()).toEqual([
+      "./mcp",
+      "./node",
+      "./oauth",
+      "./operations",
+      "./tools",
+    ]);
+  });
+
+  it("removes the old X app node package name from source and manifests", () => {
+    const staleReferences = workspaceFilesToScan()
+      .filter((path) => !relative(repoRoot, path).startsWith(".codex/"))
+      .filter((path) => {
+        const contents = readFileSync(path, "utf8");
+        return contents.includes(oldXPackage) || contents.includes(oldXPath);
       })
       .map((path) => relative(repoRoot, path))
       .sort();

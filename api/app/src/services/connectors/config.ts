@@ -2,7 +2,10 @@ import {
   type LinearEndpoints,
   resolveLinearEndpoints,
 } from "@lightfast/connector-linear/node";
-import { resolveXEndpoints, type XEndpoints } from "@repo/x-app-node";
+import {
+  resolveXEndpoints,
+  type XEndpoints,
+} from "@lightfast/connector-x/node";
 
 import { ConflictError } from "../../domain/errors";
 import { env as runtimeEnv } from "../../env";

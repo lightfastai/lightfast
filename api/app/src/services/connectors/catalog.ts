@@ -11,7 +11,7 @@ import {
   connectorRuntimeToolName,
   type DisplayConnectorTool,
 } from "@lightfast/connector-core";
-import { X_OAUTH_SCOPES } from "@repo/x-app-node";
+import { X_OAUTH_SCOPES } from "@lightfast/connector-x/oauth";
 import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 import { getXConnectorConfig } from "./config";
 

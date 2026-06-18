@@ -18,7 +18,8 @@ import {
 } from "@lightfast/connector-core";
 import { callLinearMcpTool } from "@lightfast/connector-linear/mcp";
 import { LinearAppNodeError } from "@lightfast/connector-linear/node";
-import { callXBridgeMcpTool, XAppNodeError } from "@repo/x-app-node";
+import { callXBridgeMcpTool } from "@lightfast/connector-x/mcp";
+import { XAppNodeError } from "@lightfast/connector-x/node";
 import { log } from "@vendor/observability/log/next";
 
 import { resolveXConnectorMcpEndpoint } from "./config";

@@ -107,14 +107,31 @@ vi.mock("@lightfast/connector-linear/oauth", async (importOriginal) => {
   };
 });
 
-vi.mock("@repo/x-app-node", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@repo/x-app-node")>();
+vi.mock("@lightfast/connector-x/mcp", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@lightfast/connector-x/mcp")>();
+  return {
+    ...actual,
+    listXBridgeMcpTools: listXBridgeMcpToolsMock,
+  };
+});
+
+vi.mock("@lightfast/connector-x/node", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@lightfast/connector-x/node")>();
+  return {
+    ...actual,
+    getXViewerMetadata: getXViewerMetadataMock,
+  };
+});
+
+vi.mock("@lightfast/connector-x/oauth", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@lightfast/connector-x/oauth")>();
   return {
     ...actual,
     createXPkcePair: createXPkcePairMock,
     exchangeXOAuthCode: exchangeXOAuthCodeMock,
-    getXViewerMetadata: getXViewerMetadataMock,
-    listXBridgeMcpTools: listXBridgeMcpToolsMock,
     refreshXOAuthToken: refreshXOAuthTokenMock,
     revokeXOAuthToken: revokeXOAuthTokenMock,
   };
@@ -149,7 +166,8 @@ vi.mock("@vendor/upstash", () => ({
 vi.mock("../env", () => ({ env: envMock }));
 
 const { LinearAppNodeError } = await import("@lightfast/connector-linear/node");
-const { XAppNodeError, X_OAUTH_SCOPE } = await import("@repo/x-app-node");
+const { XAppNodeError } = await import("@lightfast/connector-x/node");
+const { X_OAUTH_SCOPE } = await import("@lightfast/connector-x/oauth");
 const { assertCurrentSessionCanFinalizeConnectorOAuth } = await import(
   "../services/connectors/auth"
 );

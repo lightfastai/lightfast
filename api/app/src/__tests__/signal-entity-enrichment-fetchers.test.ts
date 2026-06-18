@@ -43,8 +43,9 @@ vi.mock("@repo/github-app-node", async (importOriginal) => {
     getGitHubUserByLogin: getGitHubUserByLoginMock,
   };
 });
-vi.mock("@repo/x-app-node", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@repo/x-app-node")>();
+vi.mock("@lightfast/connector-x/tools", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@lightfast/connector-x/tools")>();
   return {
     ...actual,
     executeXApiTool: executeXApiToolMock,
