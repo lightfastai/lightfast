@@ -1,7 +1,12 @@
 // @vitest-environment happy-dom
 
 import { cleanup, render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
+import {
+  cloneElement,
+  isValidElement,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@repo/ui-v2/components/ai-elements/prompt-input", () => ({
@@ -80,6 +85,41 @@ vi.mock("@repo/ui/components/ui/button", () => ({
   ),
 }));
 
+vi.mock("@repo/ui-v2/components/ui/button", () => ({
+  Button: ({ children, ...props }: { children?: ReactNode }) => (
+    <button {...props}>{children}</button>
+  ),
+}));
+
+vi.mock("@repo/ui-v2/components/ui/dropdown-menu", () => ({
+  DropdownMenu: ({ children }: { children?: ReactNode }) => <>{children}</>,
+  DropdownMenuContent: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuItem: ({
+    children,
+    onClick,
+    ...props
+  }: {
+    children?: ReactNode;
+    onClick?: () => void;
+  }) => (
+    <button onClick={onClick} type="button" {...props}>
+      {children}
+    </button>
+  ),
+  DropdownMenuTrigger: ({
+    children,
+    render,
+  }: {
+    children?: ReactNode;
+    render?: ReactElement;
+  }) =>
+    isValidElement(render) ? cloneElement(render, undefined, children) : (
+      <>{children}</>
+    ),
+}));
+
 vi.mock("@repo/ui/components/ui/toggle", () => ({
   Toggle: ({
     children,
@@ -112,14 +152,17 @@ afterEach(() => {
 });
 
 const baseProps = {
+  capabilityMode: "read" as const,
   error: undefined,
+  modelProfile: "fast" as const,
+  onCapabilityModeChange: vi.fn(),
+  onModelProfileChange: vi.fn(),
   onSubmit: vi.fn(),
   onTextChange: vi.fn(),
-  onWriteModeChange: vi.fn(),
+  settingsLocked: false,
   status: "ready" as const,
   stop: vi.fn(),
   text: "",
-  writeModeEnabled: false,
 };
 
 describe("ChatComposer", () => {
@@ -143,9 +186,13 @@ describe("ChatComposer", () => {
     expect(screen.getByLabelText("Add context").className).not.toMatch(
       /(?:^|\s)size-\d/
     );
-    expect(screen.getByLabelText("Write mode").className).not.toMatch(
+    expect(screen.getByLabelText("Read mode").className).not.toMatch(
       /(?:^|\s)size-\d/
     );
+    expect(
+      screen.getByRole("button", { name: "Model profile" }).textContent
+    ).toContain("Fast");
+    expect(screen.getByRole("button", { name: "Read mode" })).not.toBeNull();
     expect(screen.getByLabelText("Send message").className).not.toMatch(
       /(?:^|\s)size-\d/
     );
@@ -167,5 +214,18 @@ describe("ChatComposer", () => {
     expect(
       container.querySelector('[data-align="inline-end"]')?.className
     ).toContain("py-1.5");
+  });
+
+  it("disables model and mode controls when settings are locked", () => {
+    render(<ChatComposer {...baseProps} settingsLocked />);
+
+    expect(
+      (screen.getByRole("button", { name: "Model profile" }) as HTMLButtonElement)
+        .disabled
+    ).toBe(true);
+    expect(
+      (screen.getByRole("button", { name: "Read mode" }) as HTMLButtonElement)
+        .disabled
+    ).toBe(true);
   });
 });

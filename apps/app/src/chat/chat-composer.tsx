@@ -1,4 +1,7 @@
-import { Toggle } from "@repo/ui/components/ui/toggle";
+import type {
+  ChatCapabilityMode,
+  ChatModelProfile,
+} from "@repo/ai/workspace-assistant";
 import {
   Tooltip,
   TooltipContent,
@@ -16,9 +19,21 @@ import {
   PromptInputTextarea,
   PromptInputTools,
 } from "@repo/ui-v2/components/ai-elements/prompt-input";
+import { Button } from "@repo/ui-v2/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@repo/ui-v2/components/ui/dropdown-menu";
 import type { ChatStatus } from "@vendor/ai";
 import {
   ArrowUpIcon as ArrowUp,
+  Brain01Icon as Brain,
+  ChevronDownIcon as ChevronDown,
+  EyeIcon as Eye,
+  FlashIcon as Flash,
+  LockIcon as Lock,
   PencilEdit02Icon as PencilLine,
   Add01Icon as Plus,
 } from "@hugeicons/core-free-icons";
@@ -27,23 +42,29 @@ import type { ReactNode } from "react";
 import { memo, useEffect, useState } from "react";
 
 export const ChatComposer = memo(function ChatComposer({
+  capabilityMode,
   error,
+  modelProfile,
+  onCapabilityModeChange,
+  onModelProfileChange,
   onSubmit,
   onTextChange,
-  onWriteModeChange,
+  settingsLocked,
   status,
   stop,
   text,
-  writeModeEnabled,
 }: {
+  capabilityMode: ChatCapabilityMode;
   error: Error | undefined;
+  modelProfile: ChatModelProfile;
+  onCapabilityModeChange: (mode: ChatCapabilityMode) => void;
+  onModelProfileChange: (profile: ChatModelProfile) => void;
   onSubmit: (message: PromptInputMessage) => Promise<void>;
   onTextChange: (text: string) => void;
-  onWriteModeChange: (enabled: boolean) => void;
+  settingsLocked: boolean;
   status: ChatStatus;
   stop: () => void;
   text: string;
-  writeModeEnabled: boolean;
 }) {
   const [isSubmitPending, setIsSubmitPending] = useState(false);
 
@@ -92,26 +113,26 @@ export const ChatComposer = memo(function ChatComposer({
       onStop={stop}
       status={effectiveStatus}
     >
-      {effectiveStatus === "ready" ? <HugeiconsIcon icon={ArrowUp} className="size-4" /> : undefined}
+      {effectiveStatus === "ready" ? (
+        <HugeiconsIcon icon={ArrowUp} className="size-4" />
+      ) : undefined}
     </PromptInputSubmit>
   );
-  const writeModeToggle = (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Toggle
-          aria-label="Write mode"
-          className="rounded-full text-muted-foreground data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-          disabled={isBusy}
-          onPressedChange={onWriteModeChange}
-          pressed={writeModeEnabled}
-          size="sm"
-          type="button"
-        >
-          <HugeiconsIcon icon={PencilLine} className="size-3.5" />
-        </Toggle>
-      </TooltipTrigger>
-      <TooltipContent>Allow Linear writes for this turn</TooltipContent>
-    </Tooltip>
+  const settingsControls = (
+    <div className="flex items-center gap-1">
+      <ModelProfileMenu
+        disabled={isBusy || settingsLocked}
+        modelProfile={modelProfile}
+        onModelProfileChange={onModelProfileChange}
+        settingsLocked={settingsLocked}
+      />
+      <CapabilityModeMenu
+        capabilityMode={capabilityMode}
+        disabled={isBusy || settingsLocked}
+        onCapabilityModeChange={onCapabilityModeChange}
+        settingsLocked={settingsLocked}
+      />
+    </div>
   );
 
   return (
@@ -128,9 +149,9 @@ export const ChatComposer = memo(function ChatComposer({
         <ChatComposerLayout
           addContextButton={<AddContextButton />}
           onTextChange={onTextChange}
+          settingsControls={settingsControls}
           submit={submit}
           text={text}
-          writeModeToggle={writeModeToggle}
         />
       </PromptInput>
     </div>
@@ -140,15 +161,15 @@ export const ChatComposer = memo(function ChatComposer({
 function ChatComposerLayout({
   addContextButton,
   onTextChange,
+  settingsControls,
   submit,
   text,
-  writeModeToggle,
 }: {
   addContextButton: ReactNode;
   onTextChange: (text: string) => void;
+  settingsControls: ReactNode;
   submit: ReactNode;
   text: string;
-  writeModeToggle: ReactNode;
 }) {
   return (
     <>
@@ -164,10 +185,127 @@ function ChatComposerLayout({
         />
       </PromptInputBody>
       <PromptInputFooter className="py-1.5">
-        <PromptInputTools>{writeModeToggle}</PromptInputTools>
+        <PromptInputTools>{settingsControls}</PromptInputTools>
         {submit}
       </PromptInputFooter>
     </>
+  );
+}
+
+function ModelProfileMenu({
+  disabled,
+  modelProfile,
+  onModelProfileChange,
+  settingsLocked,
+}: {
+  disabled: boolean;
+  modelProfile: ChatModelProfile;
+  onModelProfileChange: (profile: ChatModelProfile) => void;
+  settingsLocked: boolean;
+}) {
+  const Icon = modelProfile === "thinking" ? Brain : Flash;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            aria-label="Model profile"
+            className="h-7 gap-1.5 rounded-full px-2.5 text-muted-foreground hover:text-foreground"
+            disabled={disabled}
+            size="sm"
+            type="button"
+            variant="ghost"
+          />
+        }
+      >
+        <HugeiconsIcon icon={Icon} aria-hidden="true" className="size-3.5" />
+        <span>{modelProfileLabel(modelProfile)}</span>
+        <HugeiconsIcon
+          icon={settingsLocked ? Lock : ChevronDown}
+          aria-hidden="true"
+          className="size-3.5 text-muted-foreground"
+        />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-40">
+        <DropdownMenuItem
+          disabled={disabled}
+          onClick={() => onModelProfileChange("fast")}
+        >
+          <HugeiconsIcon icon={Flash} aria-hidden="true" className="size-4" />
+          <span>Fast</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          disabled={disabled}
+          onClick={() => onModelProfileChange("thinking")}
+        >
+          <HugeiconsIcon icon={Brain} aria-hidden="true" className="size-4" />
+          <span>Thinking</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function CapabilityModeMenu({
+  capabilityMode,
+  disabled,
+  onCapabilityModeChange,
+  settingsLocked,
+}: {
+  capabilityMode: ChatCapabilityMode;
+  disabled: boolean;
+  onCapabilityModeChange: (mode: ChatCapabilityMode) => void;
+  settingsLocked: boolean;
+}) {
+  const Icon = capabilityMode === "write" ? PencilLine : Eye;
+
+  return (
+    <DropdownMenu>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                aria-label={capabilityModeLabel(capabilityMode)}
+                className="rounded-full text-muted-foreground hover:text-foreground"
+                disabled={disabled}
+                size="icon-sm"
+                type="button"
+                variant="ghost"
+              />
+            }
+          >
+            <HugeiconsIcon icon={Icon} aria-hidden="true" className="size-3.5" />
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent>
+          {settingsLocked
+            ? "Mode is locked for this conversation"
+            : capabilityModeLabel(capabilityMode)}
+        </TooltipContent>
+      </Tooltip>
+      <DropdownMenuContent align="end" className="w-40">
+        <DropdownMenuItem
+          disabled={disabled}
+          onClick={() => onCapabilityModeChange("read")}
+        >
+          <HugeiconsIcon icon={Eye} aria-hidden="true" className="size-4" />
+          <span>Read</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          disabled={disabled}
+          onClick={() => onCapabilityModeChange("write")}
+        >
+          <HugeiconsIcon
+            icon={PencilLine}
+            aria-hidden="true"
+            className="size-4"
+          />
+          <span>Write</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -182,4 +320,12 @@ function AddContextButton() {
       <HugeiconsIcon icon={Plus} className="size-4" />
     </PromptInputButton>
   );
+}
+
+function modelProfileLabel(profile: ChatModelProfile) {
+  return profile === "thinking" ? "Thinking" : "Fast";
+}
+
+function capabilityModeLabel(mode: ChatCapabilityMode) {
+  return mode === "write" ? "Write mode" : "Read mode";
 }
