@@ -5,7 +5,7 @@ import {
   type SourceControlRepository,
 } from "@db/app";
 import { githubLightfastRepositoryProofSchema } from "@repo/app-setup-contract";
-import { TRPCError } from "@trpc/server";
+import { ConflictError } from "../../domain/errors";
 
 export function isVerifiedLightfastSkillRepository(input: {
   binding: OrgSourceControlBinding;
@@ -47,10 +47,10 @@ export async function getVerifiedLightfastSkillSourceRepositoryId(
     isVerifiedLightfastSkillRepository(row)
   );
   if (!candidate) {
-    throw new TRPCError({
-      code: "PRECONDITION_FAILED",
-      message: "No verified Lightfast skills repository is configured.",
-    });
+    throw new ConflictError(
+      "SKILLS_REPOSITORY_NOT_CONFIGURED",
+      "No verified Lightfast skills repository is configured."
+    );
   }
   return candidate.repository.id;
 }
