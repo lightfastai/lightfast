@@ -43,8 +43,12 @@ describe("app chat API route migration", () => {
     expect(chatSource).toContain(
       "setWorkspaceAssistantConversationActiveStream"
     );
+    expect(chatSource).toContain("createWorkspaceAssistantTools");
     expect(chatSource).toContain(
-      "createWorkspaceAssistantProviderRoutineTools"
+      "createWorkspaceAssistantProviderRoutineToolDefinitions"
+    );
+    expect(chatSource).toContain(
+      "createWorkspaceAssistantUserConnectorToolDefinitions"
     );
     expect(streamSource).toContain("resumeExistingStream");
     expect(streamSource).toContain("UI_MESSAGE_STREAM_HEADERS");
