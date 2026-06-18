@@ -77,6 +77,58 @@ vi.mock("@repo/ui-v2/components/ai-elements/reasoning", () => ({
   ReasoningTrigger: () => <button type="button">Reasoning</button>,
 }));
 
+vi.mock("@repo/ui-v2/components/ai-elements/thinking-steps", () => ({
+  ThinkingStep: ({
+    children,
+    description,
+    label,
+    status,
+  }: {
+    children?: ReactNode;
+    description?: string;
+    label: string;
+    status?: string;
+  }) => (
+    <div data-status={status} data-testid="thinking-step">
+      <span>{label}</span>
+      {description ? <p>{description}</p> : null}
+      {children}
+    </div>
+  ),
+  ThinkingStepDetails: ({
+    children,
+    details,
+    summary,
+  }: {
+    children?: ReactNode;
+    details?: string[];
+    summary: string;
+  }) => (
+    <details data-testid="thinking-step-details">
+      <summary>{summary}</summary>
+      {details?.map((detail) => (
+        <p key={detail}>{detail}</p>
+      ))}
+      {children}
+    </details>
+  ),
+  ThinkingStepSource: ({ children }: { children?: ReactNode }) => (
+    <span data-testid="thinking-step-source">{children}</span>
+  ),
+  ThinkingStepSources: ({ children }: { children?: ReactNode }) => (
+    <div data-testid="thinking-step-sources">{children}</div>
+  ),
+  ThinkingSteps: ({ children }: { children?: ReactNode }) => (
+    <div data-testid="thinking-steps">{children}</div>
+  ),
+  ThinkingStepsContent: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  ThinkingStepsHeader: ({ children }: { children?: ReactNode }) => (
+    <button type="button">{children}</button>
+  ),
+}));
+
 vi.mock("@repo/ui-v2/components/ai-elements/tool", () => ({
   Tool: ({
     children,
@@ -249,7 +301,7 @@ describe("ChatMessage", () => {
     expect(messageResponseRenderCount).toBe(1);
   });
 
-  it("renders reasoning and generic tool parts through ai-elements primitives", () => {
+  it("renders reasoning and generic tool parts through chronological thinking steps", () => {
     render(
       <ChatMessage
         isStreaming={true}
@@ -271,13 +323,9 @@ describe("ChatMessage", () => {
       />
     );
 
-    expect(
-      screen.getByTestId("reasoning").getAttribute("data-default-open")
-    ).toBe("true");
-    expect(screen.getByTestId("reasoning").getAttribute("data-streaming")).toBe(
-      "true"
-    );
-    expect(screen.getByTestId("reasoning-content").textContent).toContain(
+    expect(screen.queryByTestId("reasoning")).toBeNull();
+    expect(screen.getByTestId("thinking-steps")).toBeTruthy();
+    expect(screen.getAllByTestId("thinking-step")[0]?.textContent).toContain(
       "Thinking"
     );
     expect(screen.getByTestId("tool").getAttribute("data-default-open")).toBe(
@@ -290,6 +338,86 @@ describe("ChatMessage", () => {
     ).toBe("searchDocs");
     expect(screen.getByTestId("tool-input").textContent).toContain("roadmap");
     expect(screen.getByTestId("tool-output").textContent).toContain("count");
+  });
+
+  it("renders thinking, tools, sources, and text in chronological order", () => {
+    render(
+      <ChatMessage
+        isStreaming={true}
+        message={{
+          id: "msg_assistant",
+          parts: [
+            { text: "Checking context", type: "reasoning" },
+            {
+              data: {
+                label: "Linear: searched issues",
+                status: "completed",
+                summary: "Found 4 issues",
+              },
+              type: "data-activity",
+            },
+            { text: "I found four issues.", type: "text" },
+            {
+              sourceId: "source_1",
+              title: "LF-142",
+              type: "source-url",
+              url: "https://linear.app/LF-142",
+            },
+            { text: "The main blocker is LF-142.", type: "text" },
+          ],
+          role: "assistant",
+        }}
+      />
+    );
+
+    const content = screen.getByTestId("message-content").textContent ?? "";
+    expect(content.indexOf("Thinking")).toBeLessThan(
+      content.indexOf("I found four issues.")
+    );
+    expect(content.indexOf("Linear: searched issues")).toBeLessThan(
+      content.indexOf("I found four issues.")
+    );
+    expect(content.indexOf("LF-142")).toBeGreaterThan(
+      content.indexOf("I found four issues.")
+    );
+    expect(content.indexOf("LF-142")).toBeLessThan(
+      content.indexOf("The main blocker is LF-142.")
+    );
+  });
+
+  it("maps running and failed activity rows to ThinkingStep states", () => {
+    render(
+      <ChatMessage
+        isStreaming={true}
+        message={{
+          id: "msg_assistant",
+          parts: [
+            {
+              data: {
+                label: "Searching Linear",
+                status: "running",
+              },
+              type: "data-activity",
+            },
+            {
+              data: {
+                details: ["Linear returned 403"],
+                label: "Updating Linear",
+                status: "failed",
+                summary: "Write failed",
+              },
+              type: "data-activity",
+            },
+          ],
+          role: "assistant",
+        }}
+      />
+    );
+
+    const steps = screen.getAllByTestId("thinking-step");
+    expect(steps[0]?.getAttribute("data-status")).toBe("active");
+    expect(steps[1]?.getAttribute("data-status")).toBe("complete");
+    expect(screen.getByText("Linear returned 403")).toBeTruthy();
   });
 
   it("collapses a streaming tool part when output becomes available", () => {
