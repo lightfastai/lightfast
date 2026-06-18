@@ -36,4 +36,25 @@ describe("org API key query helpers", () => {
     expect(createSource).not.toContain("useOrgApiKeyCreateAction");
     expect(createSource).not.toContain("org-api-key-create-action");
   });
+
+  it("keeps API key list mutation state in the list component", () => {
+    const listSource = readFileSync(
+      resolve(appRoot, "src/org/settings/api-keys/org-api-key-list.tsx"),
+      "utf8"
+    );
+    const actionsPath = "src/org/settings/api-keys/org-api-key-list-actions.ts";
+
+    expect(existsSync(resolve(appRoot, actionsPath))).toBe(false);
+    expect(listSource).toContain("useMutation");
+    expect(listSource).toContain("useQueryClient");
+    expect(listSource).toContain("revokeOrgApiKeyMutationOptions");
+    expect(listSource).toContain("deleteOrgApiKeyMutationOptions");
+    expect(listSource).toContain("rotateOrgApiKeyMutationOptions");
+    expect(listSource).toContain("orgApiKeyQueryKeys.list()");
+    expect(listSource).toContain("revokeApiKey");
+    expect(listSource).toContain("removeApiKey");
+    expect(listSource).toContain("restoreApiKey");
+    expect(listSource).not.toContain("useOrgApiKeyListActions");
+    expect(listSource).not.toContain("org-api-key-list-actions");
+  });
 });

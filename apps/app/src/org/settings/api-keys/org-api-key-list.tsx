@@ -28,18 +28,30 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
+import { toast } from "@repo/ui/components/ui/sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@repo/ui-v2/components/ui/dropdown-menu";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import { memo, useCallback, useState } from "react";
-import type { OrgApiKey } from "./org-api-key-cache";
-import { useOrgApiKeyListActions } from "./org-api-key-list-actions";
-import { orgApiKeysQueryOptions } from "./org-api-key-queries";
+import {
+  type OrgApiKey,
+  type OrgApiKeyListData,
+  removeApiKey,
+  restoreApiKey,
+  revokeApiKey,
+} from "./org-api-key-cache";
+import {
+  deleteOrgApiKeyMutationOptions,
+  orgApiKeyQueryKeys,
+  orgApiKeysQueryOptions,
+  revokeOrgApiKeyMutationOptions,
+  rotateOrgApiKeyMutationOptions,
+} from "./org-api-key-queries";
 
 interface AlertAction {
   keyId: string;
@@ -50,6 +62,8 @@ interface AlertAction {
 export function OrgApiKeyList() {
   const { has, isLoaded } = useAuth();
   const canManageApiKeys = isLoaded && !!has?.({ role: "org:admin" });
+  const queryClient = useQueryClient();
+  const listQueryKey = orgApiKeyQueryKeys.list();
 
   const {
     data: keys = [],
@@ -68,25 +82,112 @@ export function OrgApiKeyList() {
   } | null>(null);
   const [copiedRotatedKey, setCopiedRotatedKey] = useState(false);
 
-  const {
-    deleteKey,
-    pendingDeleteKeyId,
-    pendingRevokeKeyId,
-    pendingRotateKeyId,
-    revokeKey,
-    rotateKey,
-  } = useOrgApiKeyListActions({
-    onRotated: ({ key, keyId }) => {
+  const revokeMutation = useMutation({
+    ...revokeOrgApiKeyMutationOptions(),
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: listQueryKey });
+
+      const previous =
+        queryClient.getQueryData<OrgApiKeyListData>(listQueryKey);
+      const previousApiKey = previous?.find((key) => key.keyId === input.keyId);
+
+      queryClient.setQueryData(
+        listQueryKey,
+        (old: OrgApiKeyListData | undefined) => revokeApiKey(old, input.keyId)
+      );
+
+      return { previousApiKey };
+    },
+    onError: (_err, _input, context) => {
+      if (!context?.previousApiKey) {
+        return;
+      }
+
+      queryClient.setQueryData(
+        listQueryKey,
+        (old: OrgApiKeyListData | undefined) =>
+          restoreApiKey(old, context.previousApiKey, -1)
+      );
+    },
+    onSuccess: () => toast.success("API key revoked"),
+    onSettled: () =>
+      void queryClient.invalidateQueries({ queryKey: listQueryKey }),
+  });
+  const deleteMutation = useMutation({
+    ...deleteOrgApiKeyMutationOptions(),
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: listQueryKey });
+
+      const previous =
+        queryClient.getQueryData<OrgApiKeyListData>(listQueryKey);
+      const { removedApiKey, removedIndex } = removeApiKey(
+        previous,
+        input.keyId
+      );
+
+      queryClient.setQueryData(
+        listQueryKey,
+        (old: OrgApiKeyListData | undefined) =>
+          removeApiKey(old, input.keyId).data
+      );
+
+      return { removedApiKey, removedIndex };
+    },
+    onError: (_err, _input, context) => {
+      if (!context?.removedApiKey) {
+        return;
+      }
+
+      queryClient.setQueryData(
+        listQueryKey,
+        (old: OrgApiKeyListData | undefined) =>
+          restoreApiKey(old, context.removedApiKey, context.removedIndex)
+      );
+    },
+    onSuccess: () => toast.success("API key deleted"),
+    onSettled: () =>
+      void queryClient.invalidateQueries({ queryKey: listQueryKey }),
+  });
+  const rotateMutation = useMutation({
+    ...rotateOrgApiKeyMutationOptions(),
+    onSuccess: (data, input) => {
+      const key = data.key ?? null;
       if (!key) {
+        toast.success("API key rotated");
         return;
       }
 
       const keyName =
-        keys.find((item) => item.keyId === keyId)?.name ?? key.slice(0, 8);
+        keys.find((item) => item.keyId === input.keyId)?.name ??
+        key.slice(0, 8);
       setRotatedKey({ keyName, secret: key });
       setCopiedRotatedKey(false);
+      toast.success("API key rotated");
     },
+    onSettled: () =>
+      void queryClient.invalidateQueries({ queryKey: listQueryKey }),
   });
+  const revokeKey = useCallback(
+    (keyId: string) => revokeMutation.mutate({ keyId }),
+    [revokeMutation.mutate]
+  );
+  const deleteKey = useCallback(
+    (keyId: string) => deleteMutation.mutate({ keyId }),
+    [deleteMutation.mutate]
+  );
+  const rotateKey = useCallback(
+    (keyId: string) => rotateMutation.mutate({ keyId }),
+    [rotateMutation.mutate]
+  );
+  const pendingDeleteKeyId = deleteMutation.isPending
+    ? deleteMutation.variables?.keyId
+    : undefined;
+  const pendingRevokeKeyId = revokeMutation.isPending
+    ? revokeMutation.variables?.keyId
+    : undefined;
+  const pendingRotateKeyId = rotateMutation.isPending
+    ? rotateMutation.variables?.keyId
+    : undefined;
 
   const handleRequestRevoke = useCallback((keyId: string, keyName: string) => {
     setAlertAction({ keyId, keyName, type: "revoke" });
