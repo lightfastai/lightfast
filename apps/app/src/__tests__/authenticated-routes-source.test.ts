@@ -795,7 +795,7 @@ describe("app authenticated route migration", () => {
       "@repo/ui-v2/components/ai-elements/message"
     );
     expect(messagePartSource).toContain(
-      "@repo/ui-v2/components/ai-elements/reasoning"
+      "@repo/ui-v2/components/ai-elements/thinking-steps"
     );
     expect(messagePartSource).toContain(
       "@repo/ui-v2/components/ai-elements/tool"
