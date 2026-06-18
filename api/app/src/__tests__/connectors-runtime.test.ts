@@ -47,8 +47,9 @@ vi.mock("@lightfast/connector-linear/mcp", async (importOriginal) => {
   };
 });
 
-vi.mock("@repo/x-app-node", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@repo/x-app-node")>();
+vi.mock("@lightfast/connector-x/mcp", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@lightfast/connector-x/mcp")>();
   return {
     ...actual,
     callXBridgeMcpTool: callXBridgeMcpToolMock,
@@ -75,7 +76,7 @@ const {
   loadConnectorRuntimeTools,
 } = await import("../services/connectors/runtime");
 const { LinearAppNodeError } = await import("@lightfast/connector-linear/node");
-const { XAppNodeError } = await import("@repo/x-app-node");
+const { XAppNodeError } = await import("@lightfast/connector-x/node");
 
 function connection(
   overrides: Partial<OrgConnectorConnection> = {}

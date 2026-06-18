@@ -36,12 +36,21 @@ vi.mock("@repo/app-encryption", () => ({
   encrypt: encryptMock,
 }));
 
-vi.mock("@repo/x-app-node", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@repo/x-app-node")>();
+vi.mock("@lightfast/connector-x/oauth", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@lightfast/connector-x/oauth")>();
+  return {
+    ...actual,
+    refreshXOAuthToken: refreshXOAuthTokenMock,
+  };
+});
+
+vi.mock("@lightfast/connector-x/tools", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@lightfast/connector-x/tools")>();
   return {
     ...actual,
     executeXApiTool: executeXApiToolMock,
-    refreshXOAuthToken: refreshXOAuthTokenMock,
   };
 });
 
@@ -52,7 +61,7 @@ const { issueConnectorMcpToken } = await import(
 );
 const { getFreshXConnectorAccessToken, handleXConnectorMcpRequest } =
   await import("../services/connectors/x-mcp-bridge");
-const { X_OAUTH_SCOPES } = await import("@repo/x-app-node");
+const { X_OAUTH_SCOPES } = await import("@lightfast/connector-x/oauth");
 
 function connection(
   overrides: Partial<OrgConnectorConnection> = {}
