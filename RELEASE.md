@@ -90,12 +90,12 @@ LIGHTFAST_E2E_API_KEY=lf_... LIGHTFAST_E2E_APP_URL=https://app.lightfast.localho
 
 ## Routine SDK + MCP Releases
 
-### 1. Make oRPC or Package Changes
+### 1. Make Public API Or Package Changes
 
-Work in the oRPC contract/API surface and the public packages that consume it:
+Work in the public API contract/routes and the public packages that consume them:
 
 - `packages/api-contract/`
-- `api/app/src/orpc/`
+- `api/app/src/public-api/`
 - `core/lightfast/`
 - `vendor/mcp/`
 - `core/mcp/`
@@ -104,14 +104,14 @@ Before opening a PR, run the SDK/MCP preflight:
 
 ```bash
 pnpm --filter lightfast exec pwd
-pnpm verify:orpc
+pnpm verify:public-api
 pnpm check
 git diff --check
 ```
 
 `pnpm --filter lightfast exec pwd` must resolve to `core/lightfast`. The root package is `@lightfastai/workspace`, so `--filter=lightfast` targets only the public SDK package.
 
-`pnpm verify:orpc` is required whenever oRPC routes change. It verifies the contract, API implementation, SDK, vendor MCP adapter, and published MCP package path.
+`pnpm verify:public-api` is required whenever public API routes or MCP-exposed contract metadata change. It verifies the contract, API implementation, SDK, MCP tool registration, and published MCP package path.
 
 ### 2. Create the Implementation PR
 
@@ -121,12 +121,12 @@ Expected PR behavior:
 
 - Affected PR CI stays fast and only runs jobs for touched surfaces.
 - `merge-queue-success` passes as the required branch-protection stub.
-- oRPC contract/API changes trigger `core-public-api-ci` and include the public oRPC package test scope.
+- Public API contract/route changes trigger `core-public-api-ci` and include the SDK/MCP package test scope.
 
-For oRPC propagation changes, inspect CI logs for:
+For public API propagation changes, inspect CI logs for:
 
 ```text
-Test affected public oRPC surface
+Test affected public API surface
 ```
 
 The package scope should include:
@@ -284,7 +284,7 @@ Not signed in. Run `lightfast login`.
 
 - `core/lightfast/package.json` must not include private workspace runtime dependencies.
 - `core/mcp/package.json` must not include private workspace runtime dependencies.
-- The SDK packed manifest should only expose approved `@orpc/*` runtime dependencies.
+- The SDK packed manifest should not expose private workspace runtime dependencies.
 - The MCP packed manifest should only expose `@modelcontextprotocol/sdk` as a runtime dependency.
 - Neither SDK nor MCP stable package versions may contain a prerelease suffix.
 
@@ -343,7 +343,7 @@ Use `pnpm pack`, not `npm pack`, for local validation. `pnpm pack` understands w
 
 ```bash
 # SDK/MCP
-pnpm verify:orpc
+pnpm verify:public-api
 pnpm changeset
 pnpm turbo run build --filter lightfast --filter @lightfastai/mcp
 pnpm publish:sdk-mcp

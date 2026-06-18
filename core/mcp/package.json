@@ -56,7 +56,6 @@
     "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",
     "@vendor/mcp": "workspace:*",
-    "@vendor/orpc-mcp-adapter": "workspace:*",
     "lightfast": "workspace:*",
     "tsup": "^8.5.1",
     "typescript": "catalog:",

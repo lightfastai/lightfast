@@ -1,8 +1,11 @@
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { apiContract, lightfastMcpToolPolicy } from "@repo/api-contract";
 import { registerLightfastMcpTools } from "@repo/mcp-tools";
 import { Client, InMemoryTransport, McpServer } from "@vendor/mcp";
 import { describe, expect, it, vi } from "vitest";
 
+const repoRoot = resolve(import.meta.dirname, "../../../..");
 const signalId = "signal_123e4567-e89b-12d3-a456-426614174000";
 const queuedSignal = {
   id: signalId,
@@ -82,6 +85,29 @@ async function closeRegisteredServer(
 }
 
 describe("MCP tool registration", () => {
+  it("uses direct public MCP tool registration without the oRPC adapter package", () => {
+    const mcpPackageJson = JSON.parse(
+      readFileSync(resolve(repoRoot, "core/mcp/package.json"), "utf8")
+    ) as { devDependencies?: Record<string, string> };
+    const rootPackageJson = JSON.parse(
+      readFileSync(resolve(repoRoot, "package.json"), "utf8")
+    ) as { scripts?: Record<string, string> };
+
+    expect(
+      mcpPackageJson.devDependencies?.["@vendor/orpc-mcp-adapter"]
+    ).toBeUndefined();
+    expect(rootPackageJson.scripts?.["verify:orpc"]).toBeUndefined();
+    expect(rootPackageJson.scripts?.["verify:public-api"]).toContain(
+      "@repo/mcp-tools"
+    );
+    expect(rootPackageJson.scripts?.["verify:public-api"]).not.toContain(
+      "@vendor/orpc-mcp-adapter"
+    );
+    expect(existsSync(resolve(repoRoot, "vendor/orpc-mcp-adapter"))).toBe(
+      false
+    );
+  });
+
   it("exposes every policy-enabled public contract procedure as an MCP tool", async () => {
     const context = await connectRegisteredServer();
 
