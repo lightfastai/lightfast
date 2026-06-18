@@ -1058,9 +1058,8 @@ describe("app authenticated route migration", () => {
     );
     const memberInviteActionsPath =
       "src/org/settings/members/org-member-invite-actions.ts";
-    const memberListActionsSource = source(
-      "src/org/settings/members/org-member-list-actions.ts"
-    );
+    const memberListActionsPath =
+      "src/org/settings/members/org-member-list-actions.ts";
     const memberCacheSource = source(
       "src/org/settings/members/org-member-cache.ts"
     );
@@ -1121,13 +1120,11 @@ describe("app authenticated route migration", () => {
     expect(existsSync(resolve(appRoot, memberInviteActionsPath))).toBe(false);
     expect(memberInviteSource).toContain("inviteOrgMemberMutationOptions");
     expect(memberInviteSource).not.toContain("useOrgMemberInviteAction");
-    expect(memberListActionsSource).toContain(
-      "updateOrgMemberRoleMutationOptions"
-    );
-    expect(memberListActionsSource).toContain(
-      "revokeOrgInvitationMutationOptions"
-    );
-    expect(memberListActionsSource).toContain("removeOrgMemberMutationOptions");
+    expect(existsSync(resolve(appRoot, memberListActionsPath))).toBe(false);
+    expect(memberListSource).toContain("updateOrgMemberRoleMutationOptions");
+    expect(memberListSource).toContain("revokeOrgInvitationMutationOptions");
+    expect(memberListSource).toContain("removeOrgMemberMutationOptions");
+    expect(memberListSource).not.toContain("useOrgMemberListActions");
     expect(memberQueriesSource).toContain("orgMemberQueryKeys");
     expect(memberQueriesSource).not.toContain("useTRPC");
     expect(memberCacheSource).not.toContain("AppRouterOutputs");
@@ -1173,7 +1170,6 @@ describe("app authenticated route migration", () => {
       membersClientSource,
       memberListSource,
       memberInviteSource,
-      memberListActionsSource,
       memberCacheSource,
       apiKeyCreateSource,
       apiKeyListSource,
