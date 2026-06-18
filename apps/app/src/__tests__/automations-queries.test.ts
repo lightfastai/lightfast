@@ -4,6 +4,8 @@ import type { Automation } from "~/automations/automations-cache";
 import { automationQueryKeys } from "~/automations/automations-cache";
 import {
   automationPauseMutationOptions,
+  automationResumeMutationOptions,
+  automationRunNowMutationOptions,
   automationUpdateMutationOptions,
 } from "~/automations/automations-queries";
 
@@ -59,6 +61,61 @@ describe("automation query mutation helpers", () => {
 
     expect(automationsApi.updateAutomation).toHaveBeenCalledWith({
       data: { id: existing.publicId, name: "Renamed" },
+    });
+  });
+
+  it("uses the canonical automation id for status and run-now mutations", async () => {
+    const qc = new QueryClient();
+    const existing = automation("automation_current");
+    automationsApi.pauseAutomation.mockResolvedValueOnce(existing);
+    automationsApi.resumeAutomation.mockResolvedValueOnce(existing);
+    automationsApi.runAutomationNow.mockResolvedValueOnce({
+      publicId: "automation_run_current",
+    });
+
+    const pauseOptions = automationPauseMutationOptions({
+      automation: existing,
+      queryClient: qc,
+    });
+    const resumeOptions = automationResumeMutationOptions({
+      automation: existing,
+      queryClient: qc,
+    });
+    const runNowOptions = automationRunNowMutationOptions({
+      automationId: existing.publicId,
+      queryClient: qc,
+    });
+    if (
+      !(
+        pauseOptions.mutationFn &&
+        resumeOptions.mutationFn &&
+        runNowOptions.mutationFn
+      )
+    ) {
+      throw new Error("Expected automation mutation functions");
+    }
+
+    await pauseOptions.mutationFn(
+      { id: "automation_other" },
+      undefined as never
+    );
+    await resumeOptions.mutationFn(
+      { id: "automation_other" },
+      undefined as never
+    );
+    await runNowOptions.mutationFn(
+      { id: "automation_other" },
+      undefined as never
+    );
+
+    expect(automationsApi.pauseAutomation).toHaveBeenCalledWith({
+      data: { id: existing.publicId },
+    });
+    expect(automationsApi.resumeAutomation).toHaveBeenCalledWith({
+      data: { id: existing.publicId },
+    });
+    expect(automationsApi.runAutomationNow).toHaveBeenCalledWith({
+      data: { id: existing.publicId },
     });
   });
 

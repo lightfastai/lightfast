@@ -75,7 +75,9 @@ function deps() {
 
 function mapTanStackError(error: unknown): never {
   if (isDomainError(error)) {
-    throw new Error(error.message, { cause: error });
+    const mappedError = new Error(error.message, { cause: error });
+    mappedError.name = "DomainError";
+    throw mappedError;
   }
   throw error;
 }

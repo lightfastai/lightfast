@@ -23,6 +23,7 @@ describe("automations TanStack adapter boundary", () => {
     expect(source).toContain("createServerFn");
     expect(source).toContain("createAutomationCommand");
     expect(source).toContain("runAutomationNowCommand");
+    expect(source).toContain('mappedError.name = "DomainError"');
     expect(source).toContain("run.output === null || run.output === undefined");
     expect(source).not.toContain("output: run.output ?");
     expect(source).not.toContain("TRPCError");

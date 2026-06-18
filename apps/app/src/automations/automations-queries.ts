@@ -167,7 +167,8 @@ export function automationPauseMutationOptions(input: {
   return automationStatusMutationOptions({
     automation: input.automation,
     errorTitle: "Failed to pause",
-    mutationFn: (data) => pauseAutomation({ data }),
+    mutationFn: (_data) =>
+      pauseAutomation({ data: { id: input.automation.publicId } }),
     queryClient: input.queryClient,
     status: "paused",
   });
@@ -180,7 +181,8 @@ export function automationResumeMutationOptions(input: {
   return automationStatusMutationOptions({
     automation: input.automation,
     errorTitle: "Failed to resume",
-    mutationFn: (data) => resumeAutomation({ data }),
+    mutationFn: (_data) =>
+      resumeAutomation({ data: { id: input.automation.publicId } }),
     queryClient: input.queryClient,
     status: "active",
   });
@@ -194,7 +196,8 @@ export function automationRunNowMutationOptions(input: {
   const limit = input.limit ?? AUTOMATION_RUNS_PAGE_LIMIT;
   return mutationOptions({
     meta: { errorTitle: "Failed to enqueue run" },
-    mutationFn: (data: { id: string }) => runAutomationNow({ data }),
+    mutationFn: (data: { id: string }) =>
+      runAutomationNow({ data: { ...data, id: input.automationId } }),
     onSuccess: (run) => {
       upsertRun(input.queryClient, input.automationId, run, limit);
       void input.queryClient.invalidateQueries({
