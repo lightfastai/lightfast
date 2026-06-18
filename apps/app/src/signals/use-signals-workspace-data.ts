@@ -1,26 +1,28 @@
+import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import {
   adaptProcessingRow,
+  compareSignalsByRecency,
+  filterClassifiedSignals,
   type SignalClassificationFilters,
   type SignalListItem,
   type SignalRow,
   type SignalSection,
 } from "./signals-model";
 import {
-  useProcessingSignalsQuery,
-  useWorkingSetQuery,
-} from "./use-classified-signals-query";
-import { useSignalsFiltering } from "./use-signals-filtering";
+  processingSignalsQueryOptions,
+  workingSetSignalsQueryOptions,
+} from "./signals-queries";
 
 export function useSignalsWorkspaceData({
   filters,
 }: {
   filters: SignalClassificationFilters;
 }) {
-  const { query: workingSetQuery, queryKey: workingSetQueryKey } =
-    useWorkingSetQuery();
-  const { query: processingQuery, queryKey: processingQueryKey } =
-    useProcessingSignalsQuery();
+  const workingSetOptions = workingSetSignalsQueryOptions();
+  const processingOptions = processingSignalsQueryOptions();
+  const workingSetQuery = useQuery(workingSetOptions);
+  const processingQuery = useQuery(processingOptions);
 
   const classifiedRows = useMemo<SignalListItem[]>(
     () => workingSetQuery.data?.items ?? [],
@@ -45,12 +47,14 @@ export function useSignalsWorkspaceData({
     () => dedupedProcessingFullRows.map(adaptProcessingRow),
     [dedupedProcessingFullRows]
   );
-
-  const { classified, processing } = useSignalsFiltering({
-    classifiedRows,
-    filters,
-    processingRows,
-  });
+  const classified = useMemo(
+    () => filterClassifiedSignals(classifiedRows, filters),
+    [classifiedRows, filters]
+  );
+  const processing = useMemo(
+    () => [...processingRows].sort(compareSignalsByRecency),
+    [processingRows]
+  );
 
   const visibleListSections = useMemo<SignalSection[]>(
     () => [
@@ -94,12 +98,12 @@ export function useSignalsWorkspaceData({
     isInitialPending:
       !hasAnyRows && (workingSetQuery.isPending || processingQuery.isPending),
     limit: workingSetQuery.data?.limit ?? 2000,
-    processingQueryKey,
+    processingQueryKey: processingOptions.queryKey,
     signalsByPublicId,
     totalCount: workingSetQuery.data?.totalCount ?? classifiedRows.length,
     truncated: workingSetQuery.data?.truncated ?? false,
     visibleListSections,
     windowDays: workingSetQuery.data?.windowDays ?? 30,
-    workingSetQueryKey,
+    workingSetQueryKey: workingSetOptions.queryKey,
   };
 }

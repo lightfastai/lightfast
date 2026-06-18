@@ -406,7 +406,9 @@ describe("app authenticated route migration", () => {
     const clientSource = source("src/signals/signals-client.tsx");
     const createDialogSource = source("src/signals/signal-create-dialog.tsx");
     const searchSource = source("src/signals/signals-search-params.ts");
-    const querySource = source("src/signals/use-classified-signals-query.ts");
+    const workspaceDataSource = source(
+      "src/signals/use-signals-workspace-data.ts"
+    );
     const viewsSource = source("src/signals/signals-view-switcher.tsx");
     const viewQuerySource = viewsSource;
     const viewSwitcherSource = source("src/components/views/view-switcher.tsx");
@@ -424,8 +426,13 @@ describe("app authenticated route migration", () => {
     expect(createDialogSource).toContain("listUserOrganizationsQueryOptions");
     expect(searchSource).toContain("validateSignalsSearch");
     expect(searchSource).toContain("parseSignalDispositions");
-    expect(querySource).toContain("workingSetSignalsQueryOptions");
-    expect(querySource).toContain("processingSignalsQueryOptions");
+    expect(workspaceDataSource).toContain("workingSetSignalsQueryOptions");
+    expect(workspaceDataSource).toContain("processingSignalsQueryOptions");
+    expect(workspaceDataSource).toContain("filterClassifiedSignals");
+    expect(workspaceDataSource).toContain("compareSignalsByRecency");
+    expect(workspaceDataSource).not.toContain("useWorkingSetQuery");
+    expect(workspaceDataSource).not.toContain("useProcessingSignalsQuery");
+    expect(workspaceDataSource).not.toContain("useSignalsFiltering");
     expect(viewQuerySource).toContain('@api/app/tanstack/signal-views"');
     expect(viewQuerySource).toContain("listSignalViews");
     expect(viewQuerySource).toContain('enabled: typeof window !== "undefined"');
