@@ -1,7 +1,13 @@
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useDeferredValue, useMemo } from "react";
 import { WorkspaceSurface } from "~/components/workspace-surface";
 import { DecisionsLoading } from "./decisions-loading";
-import { type DecisionFilters, flattenDecisionPages } from "./decisions-model";
+import {
+  DECISIONS_PAGE_SIZE,
+  type DecisionFilters,
+  flattenDecisionPages,
+} from "./decisions-model";
+import { decisionsListInfiniteQueryOptions } from "./decisions-queries";
 import {
   type NormalizedDecisionsSearch,
   parseDecisionProviders,
@@ -12,7 +18,6 @@ import {
 import { DecisionsTableView } from "./decisions-table-view";
 import { DecisionsToolbar } from "./decisions-toolbar";
 import { DecisionsViewSwitcher } from "./decisions-view-switcher";
-import { useDecisionsListQuery } from "./use-decisions-list-query";
 
 export function DecisionsClient({
   search,
@@ -34,11 +39,16 @@ export function DecisionsClient({
     searchText.length > 0 ||
     filters.providers.length > 0 ||
     filters.statuses.length > 0;
+  const listInput = {
+    limit: DECISIONS_PAGE_SIZE,
+    providers: filters.providers.length ? filters.providers : undefined,
+    search: searchText || undefined,
+    statuses: filters.statuses.length ? filters.statuses : undefined,
+  };
 
-  const { query: decisionsQuery } = useDecisionsListQuery({
-    filters,
-    search: searchText,
-  });
+  const decisionsQuery = useInfiniteQuery(
+    decisionsListInfiniteQueryOptions(listInput)
+  );
   const rows = flattenDecisionPages(decisionsQuery.data);
 
   if (decisionsQuery.isPending && rows.length === 0) {

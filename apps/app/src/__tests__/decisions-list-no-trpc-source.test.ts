@@ -7,7 +7,7 @@ const appRoot = resolve(import.meta.dirname, "../..");
 describe("migrated decisions list data access", () => {
   it("uses TanStack server functions instead of tRPC", () => {
     const querySource = readFileSync(
-      resolve(appRoot, "src/decisions/use-decisions-list-query.ts"),
+      resolve(appRoot, "src/decisions/decisions-queries.ts"),
       "utf8"
     );
     const modelSource = readFileSync(
