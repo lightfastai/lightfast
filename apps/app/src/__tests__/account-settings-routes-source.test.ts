@@ -81,4 +81,17 @@ describe("app account settings routes", () => {
     expect(profileSource).toContain("const mounted = useMounted();");
     expect(profileSource).toContain("if (!mounted || isPending || !profile)");
   });
+
+  it("keeps profile name mutation state in the profile component", () => {
+    const profileSource = source(
+      "src/account/settings/profile-data-display.tsx"
+    );
+    const actionsPath = "src/account/settings/account-settings-actions.ts";
+
+    expect(existsSync(resolve(appRoot, actionsPath))).toBe(false);
+    expect(profileSource).toContain("updateAccountNameMutationOptions");
+    expect(profileSource).toContain("accountQueryKeys.profile()");
+    expect(profileSource).not.toContain("useAccountNameUpdate");
+    expect(profileSource).not.toContain("account-settings-actions");
+  });
 });
