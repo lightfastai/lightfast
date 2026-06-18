@@ -1,8 +1,14 @@
 import { useChat } from "@ai-sdk/react";
 import { createConversation } from "@api/app/tanstack/assistant";
 import {
+  CHAT_SETTINGS_STORAGE_KEYS,
+  type ChatCapabilityMode,
+  type ChatConversationSettingsV2,
+  type ChatModelProfile,
+  getDefaultChatSettings,
   lightfastWorkspaceAssistantDataPartSchemas,
   lightfastWorkspaceAssistantMessageMetadataSchema,
+  parseChatSettings,
 } from "@repo/ai/workspace-assistant";
 import {
   Conversation,
@@ -52,7 +58,11 @@ export function WorkspaceAssistantClient({
   const router = useRouter();
   const queryClient = useQueryClient();
   const createConversationMutation = useMutation({
-    mutationFn: (data: { publicId: string; title: string }) =>
+    mutationFn: (data: {
+      chatSettings?: ChatConversationSettingsV2;
+      publicId: string;
+      title: string;
+    }) =>
       createConversation({ data }),
   });
   const getConversationQueryOptions = useMemo(
@@ -63,13 +73,31 @@ export function WorkspaceAssistantClient({
     () => initialConversation?.messages.map(toUIMessage) ?? [],
     [initialConversation]
   );
+  const persistedChatSettings = useMemo(
+    () => parseChatSettings(initialConversation?.conversation.metadata ?? {}),
+    [initialConversation]
+  );
+  const [capabilityMode, setCapabilityMode] = useState<ChatCapabilityMode>(() =>
+    readStoredCapabilityMode()
+  );
+  const [modelProfile, setModelProfile] = useState<ChatModelProfile>(() =>
+    readStoredModelProfile()
+  );
+  const [lockedChatSettings, setLockedChatSettings] =
+    useState<ChatConversationSettingsV2 | null>(() =>
+      persistedChatSettings.version === "2.0.0" ? persistedChatSettings : null
+    );
   const [text, setText] = useState("");
   const [creationError, setCreationError] = useState<Error | undefined>();
   const [optimisticFirstMessage, setOptimisticFirstMessage] =
     useState<UIMessage | null>(null);
-  const [providerRoutineWriteMode, setProviderRoutineWriteMode] =
-    useState(false);
   const conversationCreatedRef = useRef(Boolean(initialConversation));
+
+  useEffect(() => {
+    setLockedChatSettings(
+      persistedChatSettings.version === "2.0.0" ? persistedChatSettings : null
+    );
+  }, [persistedChatSettings]);
 
   const transport = useMemo(
     () =>
@@ -127,6 +155,17 @@ export function WorkspaceAssistantClient({
 
       clearError();
 
+      const selectedChatSettings =
+        lockedChatSettings ??
+        (!conversationCreatedRef.current
+          ? ({
+              capabilityMode,
+              modelProfile,
+              version: "2.0.0",
+            } satisfies ChatConversationSettingsV2)
+          : persistedChatSettings.version === "2.0.0"
+            ? persistedChatSettings
+            : undefined);
       let createdConversationDuringSubmit = false;
       let createdConversation:
         | WorkspaceAssistantConversationResult["conversation"]
@@ -142,10 +181,12 @@ export function WorkspaceAssistantClient({
         }
         try {
           createdConversation = await createConversationMutation.mutateAsync({
+            chatSettings: selectedChatSettings ?? getDefaultChatSettings(),
             publicId: conversationId,
             title: conversationTitleFromPrompt(nextText),
           });
           conversationCreatedRef.current = true;
+          setLockedChatSettings(selectedChatSettings ?? getDefaultChatSettings());
           createdConversationDuringSubmit = true;
           void queryClient.invalidateQueries({
             queryKey: assistantConversationsQueryKey,
@@ -164,21 +205,21 @@ export function WorkspaceAssistantClient({
         }
       }
 
-      const writeModeForTurn = providerRoutineWriteMode;
       try {
         await sendMessage(
           { text: nextText },
           {
             body: {
+              ...(selectedChatSettings
+                ? { chatSettings: selectedChatSettings }
+                : {}),
               idempotencyKey: createWorkspaceAssistantIdempotencyKey(),
               conversationId,
-              ...(writeModeForTurn ? { providerRoutineWriteMode: true } : {}),
             },
           }
         );
       } finally {
         setOptimisticFirstMessage(null);
-        setProviderRoutineWriteMode(false);
       }
       if (createdConversationDuringSubmit && createdConversation) {
         queryClient.setQueryData(getConversationQueryOptions.queryKey, {
@@ -209,20 +250,43 @@ export function WorkspaceAssistantClient({
       router,
       sendMessage,
       clearError,
-      providerRoutineWriteMode,
+      capabilityMode,
+      lockedChatSettings,
+      modelProfile,
+      persistedChatSettings,
     ]
   );
 
+  const settingsLocked = lockedChatSettings !== null;
+  const displayedCapabilityMode =
+    lockedChatSettings?.capabilityMode ?? capabilityMode;
+  const displayedModelProfile = lockedChatSettings?.modelProfile ?? modelProfile;
+
   const renderComposer = () => (
     <ChatComposer
+      capabilityMode={displayedCapabilityMode}
       error={displayError}
+      modelProfile={displayedModelProfile}
+      onCapabilityModeChange={(mode) => {
+        if (settingsLocked) {
+          return;
+        }
+        setCapabilityMode(mode);
+        writeStoredCapabilityMode(mode);
+      }}
+      onModelProfileChange={(profile) => {
+        if (settingsLocked) {
+          return;
+        }
+        setModelProfile(profile);
+        writeStoredModelProfile(profile);
+      }}
       onSubmit={handleSubmit}
       onTextChange={setText}
-      onWriteModeChange={setProviderRoutineWriteMode}
+      settingsLocked={settingsLocked}
       status={composerStatus}
       stop={stop}
       text={text}
-      writeModeEnabled={providerRoutineWriteMode}
     />
   );
 
@@ -344,6 +408,45 @@ function createUuid() {
     return crypto.randomUUID();
   }
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2)}`;
+}
+
+function readStoredCapabilityMode(): ChatCapabilityMode {
+  if (typeof window === "undefined") {
+    return getDefaultChatSettings().capabilityMode;
+  }
+  const value = window.localStorage.getItem(
+    CHAT_SETTINGS_STORAGE_KEYS.capabilityMode
+  );
+  return value === "read" || value === "write"
+    ? value
+    : getDefaultChatSettings().capabilityMode;
+}
+
+function readStoredModelProfile(): ChatModelProfile {
+  if (typeof window === "undefined") {
+    return getDefaultChatSettings().modelProfile;
+  }
+  const value = window.localStorage.getItem(
+    CHAT_SETTINGS_STORAGE_KEYS.modelProfile
+  );
+  return value === "fast" || value === "thinking"
+    ? value
+    : getDefaultChatSettings().modelProfile;
+}
+
+function writeStoredCapabilityMode(mode: ChatCapabilityMode) {
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(CHAT_SETTINGS_STORAGE_KEYS.capabilityMode, mode);
+  }
+}
+
+function writeStoredModelProfile(profile: ChatModelProfile) {
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(
+      CHAT_SETTINGS_STORAGE_KEYS.modelProfile,
+      profile
+    );
+  }
 }
 
 function EmptyChatState({ composer }: { composer: React.ReactNode }) {
