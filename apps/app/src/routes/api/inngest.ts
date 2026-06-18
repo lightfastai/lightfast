@@ -1,12 +1,24 @@
-import { handleInngestRequest } from "@api/app/internal-api/inngest";
 import { createFileRoute } from "@tanstack/react-router";
+
+type InngestMethod = "GET" | "POST" | "PUT";
+
+async function handleInngestRouteRequest(
+  request: Request,
+  method: InngestMethod
+) {
+  const { handleInngestRequest } = await import(
+    "@api/app/internal-api/inngest"
+  );
+
+  return handleInngestRequest(request, method);
+}
 
 export const Route = createFileRoute("/api/inngest")({
   server: {
     handlers: {
-      GET: async ({ request }) => handleInngestRequest(request, "GET"),
-      POST: async ({ request }) => handleInngestRequest(request, "POST"),
-      PUT: async ({ request }) => handleInngestRequest(request, "PUT"),
+      GET: async ({ request }) => handleInngestRouteRequest(request, "GET"),
+      POST: async ({ request }) => handleInngestRouteRequest(request, "POST"),
+      PUT: async ({ request }) => handleInngestRouteRequest(request, "PUT"),
     },
   },
 });

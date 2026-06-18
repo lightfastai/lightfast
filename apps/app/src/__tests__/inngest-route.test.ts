@@ -23,7 +23,11 @@ describe("app Inngest route", () => {
 
     expect(routeSource).toContain('createFileRoute("/api/inngest")');
     expect(routeSource).toContain("handleInngestRequest");
-    expect(routeSource).toContain('from "@api/app/internal-api/inngest"');
+    expect(routeSource).toContain("await import(");
+    expect(routeSource).toContain('"@api/app/internal-api/inngest"');
+    expect(routeSource).not.toContain(
+      'import { handleInngestRequest } from "@api/app/internal-api/inngest"'
+    );
     expect(routeSource).not.toContain("@api/app/inngest");
     expect(routeSource).not.toContain("createInngestRouteContext");
     expect(routeSource).not.toContain("handler(request, {})");
