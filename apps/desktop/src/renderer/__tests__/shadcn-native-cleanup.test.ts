@@ -93,9 +93,10 @@ describe("desktop shadcn native cleanup", () => {
     expect(localSidebar).toContain("TooltipTrigger");
     expect(localSidebar).toContain("TooltipContent");
     expect(localSidebar).toContain("const sidebarMenuButtonVariants = cva(");
-    expect(localSidebar).toContain('shape: "default"');
-    expect(localSidebar).toContain("square:");
-    expect(localSidebar).toContain("[&_[data-slot=avatar]]:rounded-md");
+    expect(localSidebar).toContain("rounded-xl");
+    expect(localSidebar).not.toContain('shape: "default"');
+    expect(localSidebar).not.toContain("square:");
+    expect(localSidebar).not.toContain("[&_[data-slot=avatar]]:rounded-md");
     expect(combinedSource).toContain("SidebarMenuButton");
     expect(combinedSource).toContain('aria-label="New chat"');
     expect(combinedSource).toContain('aria-label="Recent chats"');

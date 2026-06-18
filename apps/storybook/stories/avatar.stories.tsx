@@ -9,6 +9,7 @@ import {
   AvatarImage,
 } from "@repo/ui-v2/components/ui/avatar";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect } from "storybook/test";
 
 const primaryPerson = {
   name: "Jeevan Pillay",
@@ -38,12 +39,17 @@ const meta = {
   component: Avatar,
   tags: ["autodocs"],
   argTypes: {
+    shape: {
+      control: "radio",
+      options: ["square", "circle"],
+    },
     size: {
       control: "radio",
       options: ["sm", "default", "lg"],
     },
   },
   args: {
+    shape: "square",
     size: "default",
   },
   render: (args) => (
@@ -61,7 +67,34 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {};
+export const Default: Story = {
+  play: async ({ canvas }) => {
+    const avatar =
+      canvas.queryByText(primaryPerson.fallback)?.parentElement ??
+      canvas.queryByAltText(primaryPerson.name)?.parentElement;
+
+    await expect(avatar).not.toBeNull();
+    await expect(getComputedStyle(avatar as HTMLElement).borderRadius).toBe(
+      "8px"
+    );
+  },
+};
+
+export const Circle: Story = {
+  args: {
+    shape: "circle",
+  },
+  play: async ({ canvas }) => {
+    const avatar =
+      canvas.queryByText(primaryPerson.fallback)?.parentElement ??
+      canvas.queryByAltText(primaryPerson.name)?.parentElement;
+
+    await expect(avatar).not.toBeNull();
+    await expect(
+      Number.parseFloat(getComputedStyle(avatar as HTMLElement).borderRadius)
+    ).toBeGreaterThan(1000);
+  },
+};
 
 export const Fallback: Story = {
   render: (args) => (

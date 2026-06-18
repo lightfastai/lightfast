@@ -23,8 +23,7 @@ export function TeamMenu() {
         render={
           <SidebarMenuButton
             aria-label="Open team menu"
-            className="cursor-default [-webkit-app-region:no-drag]"
-            shape="square"
+            className="cursor-default rounded-md [-webkit-app-region:no-drag]"
             size="lg"
             type="button"
           />
