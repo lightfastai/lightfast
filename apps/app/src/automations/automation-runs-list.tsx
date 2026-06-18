@@ -1,4 +1,3 @@
-import type { AppRouterOutputs } from "@api/app";
 import { cn } from "@repo/ui/lib/utils";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import {
@@ -8,9 +7,9 @@ import {
   Loader2,
   XCircle,
 } from "lucide-react";
+import type { AutomationRunListItem } from "./automations-queries";
 
-type AutomationRun =
-  AppRouterOutputs["org"]["workspace"]["automations"]["listRuns"][number];
+type AutomationRun = AutomationRunListItem;
 
 const RUN_STATUS_ICONS: Record<
   AutomationRun["status"],

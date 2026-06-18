@@ -1,10 +1,10 @@
 // @vitest-environment happy-dom
 
-import type { AppRouterOutputs } from "@api/app";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AutomationDetailClient } from "~/automations/automation-detail-client";
+import type { Automation } from "~/automations/automations-cache";
 
 const { useIsMutatingMock, useQueryMock } = vi.hoisted(() => ({
   useIsMutatingMock: vi.fn(),
@@ -22,23 +22,13 @@ vi.mock("@tanstack/react-router", () => ({
   ),
 }));
 
-vi.mock("~/trpc/react", () => ({
-  useTRPC: () => ({
-    org: {
-      workspace: {
-        automations: {
-          get: {
-            queryOptions: (input: unknown) => ({
-              queryKey: ["automation", input],
-            }),
-          },
-          update: {
-            mutationKey: () => ["automation", "update"],
-          },
-        },
-      },
-    },
+vi.mock("~/automations/automations-queries", () => ({
+  automationDetailQueryOptions: (input: unknown) => ({
+    queryKey: ["automation", input],
   }),
+  automationMutationKeys: {
+    update: () => ["automation", "update"],
+  },
 }));
 
 vi.mock("@repo/ui/components/ui/button", () => ({
@@ -70,8 +60,6 @@ vi.mock("~/automations/automation-schedule-editor", () => ({
 vi.mock("~/automations/automation-status-chip", () => ({
   AutomationStatusChip: () => <div>Active</div>,
 }));
-
-type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
 
 afterEach(() => {
   cleanup();

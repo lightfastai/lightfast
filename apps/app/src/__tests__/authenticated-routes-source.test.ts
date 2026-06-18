@@ -568,10 +568,10 @@ describe("app authenticated route migration", () => {
       'to="/$slug/automations/$automation"'
     );
     expect(automationsCreateSource).toContain(
-      "automations.create.mutationOptions"
+      "automationCreateMutationOptions"
     );
-    expect(automationsDetailSource).toContain("automations.get.queryOptions");
-    expect(automationsQuerySource).toContain("automations.list.queryOptions");
+    expect(automationsDetailSource).toContain("automationDetailQueryOptions");
+    expect(automationsQuerySource).toContain("automationsListQueryOptions");
     expect(automationsQuerySource).toContain(
       'enabled: typeof window !== "undefined"'
     );

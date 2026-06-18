@@ -1,30 +1,20 @@
 // @vitest-environment happy-dom
 
-import type { AppRouterOutputs } from "@api/app";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ComponentProps, ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AutomationRunDetailSheet } from "~/automations/automation-run-detail-sheet";
+import type { AutomationRunListItem } from "~/automations/automations-queries";
 
-type AutomationRun =
-  AppRouterOutputs["org"]["workspace"]["automations"]["listRuns"][number];
+type AutomationRun = AutomationRunListItem;
 
 vi.mock("@tanstack/react-query", () => ({
-  skipToken: Symbol("skipToken"),
   useQuery: () => ({ data: undefined, isError: false }),
 }));
 
-vi.mock("~/trpc/react", () => ({
-  useTRPC: () => ({
-    org: {
-      workspace: {
-        automations: {
-          getRun: {
-            queryOptions: () => ({}),
-          },
-        },
-      },
-    },
+vi.mock("~/automations/automations-queries", () => ({
+  automationRunQueryOptions: (input: unknown) => ({
+    queryKey: ["automation-run", input],
   }),
 }));
 

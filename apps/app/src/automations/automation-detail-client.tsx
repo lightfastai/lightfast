@@ -3,13 +3,16 @@ import { cn } from "@repo/ui/lib/utils";
 import { useIsMutating, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft, Loader2, RefreshCcw } from "lucide-react";
-import { useTRPC } from "~/trpc/react";
 import { AutomationActions } from "./automation-actions";
 import { AutomationNameEditor } from "./automation-name-editor";
 import { AutomationPromptEditor } from "./automation-prompt-editor";
 import { AutomationRunsSection } from "./automation-runs-section";
 import { AutomationScheduleEditor } from "./automation-schedule-editor";
 import { AutomationStatusChip } from "./automation-status-chip";
+import {
+  automationDetailQueryOptions,
+  automationMutationKeys,
+} from "./automations-queries";
 import { RailRow, RailSection } from "./detail-sections";
 
 const CONNECTOR_LABELS = {
@@ -68,17 +71,17 @@ export function AutomationDetailClient({
   setSelectedRunId: (publicId: string | null) => void;
   slug: string;
 }) {
-  const trpc = useTRPC();
-
-  const automationQuery = useQuery({
-    ...trpc.org.workspace.automations.get.queryOptions({ id: automationId }),
-    enabled: typeof window !== "undefined",
-    staleTime: 30_000,
-  });
+  const automationQuery = useQuery(
+    automationDetailQueryOptions({
+      enabled: typeof window !== "undefined",
+      id: automationId,
+      staleTime: 30_000,
+    })
+  );
 
   const isRecomputingSchedule =
     useIsMutating({
-      mutationKey: trpc.org.workspace.automations.update.mutationKey(),
+      mutationKey: automationMutationKeys.update(),
       predicate: (mutation) =>
         (mutation.state.variables as { schedule?: unknown } | undefined)
           ?.schedule !== undefined,

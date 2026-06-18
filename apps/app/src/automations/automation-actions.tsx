@@ -1,4 +1,3 @@
-import type { AppRouterOutputs } from "@api/app";
 import { useAuth } from "@clerk/tanstack-react-start";
 import {
   AlertDialog,
@@ -15,15 +14,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Loader2, Play, Trash } from "lucide-react";
 import { useState } from "react";
-import { useTRPC } from "~/trpc/react";
+import type { Automation } from "./automations-cache";
 import {
   AUTOMATION_RUNS_PAGE_LIMIT,
-  removeFromList,
-  upsertRun,
-} from "./automations-cache";
+  automationDeleteMutationOptions,
+  automationRunNowMutationOptions,
+} from "./automations-queries";
 import { RailSection } from "./detail-sections";
-
-type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
 
 export function AutomationActions({
   automation,
@@ -52,58 +49,26 @@ function AutomationActionsInner({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const trpc = useTRPC();
   const id = automation.publicId;
 
-  const getKey = trpc.org.workspace.automations.get.queryOptions({
-    id,
-  }).queryKey;
-  const listKey = trpc.org.workspace.automations.list.queryOptions().queryKey;
-  const listRunsKey = trpc.org.workspace.automations.listRuns.queryOptions({
-    id,
-    limit: AUTOMATION_RUNS_PAGE_LIMIT,
-  }).queryKey;
-
   const runNowMutation = useMutation(
-    trpc.org.workspace.automations.runNow.mutationOptions({
-      meta: { errorTitle: "Failed to enqueue run" },
-      onSuccess: (run) => {
-        upsertRun(qc, trpc, id, run);
-        void qc.invalidateQueries({ queryKey: listRunsKey });
-      },
+    automationRunNowMutationOptions({
+      automationId: id,
+      limit: AUTOMATION_RUNS_PAGE_LIMIT,
+      queryClient: qc,
     })
   );
 
   const deleteMutation = useMutation(
-    trpc.org.workspace.automations.delete.mutationOptions({
-      meta: { errorTitle: "Failed to delete automation" },
-      onMutate: async () => {
-        await Promise.all([
-          qc.cancelQueries({ queryKey: getKey }),
-          qc.cancelQueries({ queryKey: listKey }),
-        ]);
-        const prevGet = qc.getQueryData(getKey);
-        const prevList = qc.getQueryData(listKey);
-        removeFromList(qc, trpc, id);
-        return { prevGet, prevList };
-      },
-      onError: (_error, _variables, ctx) => {
-        if (ctx?.prevGet) {
-          qc.setQueryData(getKey, ctx.prevGet);
-        }
-        if (ctx?.prevList) {
-          qc.setQueryData(listKey, ctx.prevList);
-        }
-      },
+    automationDeleteMutationOptions({
       onSuccess: async () => {
         setDeleteDialogOpen(false);
         await navigate({
           params: { slug },
           to: "/$slug/automations",
         });
-        qc.removeQueries({ queryKey: getKey });
-        void qc.invalidateQueries({ queryKey: listKey });
       },
+      queryClient: qc,
     })
   );
 

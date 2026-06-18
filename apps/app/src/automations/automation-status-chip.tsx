@@ -1,4 +1,3 @@
-import type { AppRouterOutputs } from "@api/app";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -11,11 +10,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "~/compat/clerk";
-import { useTRPC } from "~/trpc/react";
-import { setOne, upsertInList } from "./automations-cache";
+import type { Automation } from "./automations-cache";
+import {
+  automationPauseMutationOptions,
+  automationResumeMutationOptions,
+} from "./automations-queries";
 import { RailRow } from "./detail-sections";
-
-type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
 
 function StatusDot({ active }: { active: boolean }) {
   return (
@@ -39,100 +39,20 @@ export function AutomationStatusChip({
   const [open, setOpen] = useState(false);
 
   const qc = useQueryClient();
-  const trpc = useTRPC();
   const id = automation.publicId;
   const isPaused = automation.status === "paused";
-  const withStatus = (
-    automationRow: Automation | undefined,
-    status: Automation["status"]
-  ) => ({
-    ...(automationRow ?? automation),
-    status,
-  });
 
   const pauseMutation = useMutation(
-    trpc.org.workspace.automations.pause.mutationOptions({
-      meta: { errorTitle: "Failed to pause" },
-      onMutate: async () => {
-        const getKey = trpc.org.workspace.automations.get.queryOptions({
-          id,
-        }).queryKey;
-        const listKey =
-          trpc.org.workspace.automations.list.queryOptions().queryKey;
-        await Promise.all([
-          qc.cancelQueries({ queryKey: getKey }),
-          qc.cancelQueries({ queryKey: listKey }),
-        ]);
-        const prevGet = qc.getQueryData(getKey);
-        const prevList = qc.getQueryData(listKey);
-        setOne(qc, trpc, id, (automationRow) =>
-          withStatus(automationRow, "paused")
-        );
-        upsertInList(qc, trpc, id, (automationRow) =>
-          withStatus(automationRow, "paused")
-        );
-        return { prevGet, prevList };
-      },
-      onError: (_error, _variables, ctx) => {
-        const getKey = trpc.org.workspace.automations.get.queryOptions({
-          id,
-        }).queryKey;
-        const listKey =
-          trpc.org.workspace.automations.list.queryOptions().queryKey;
-        if (ctx?.prevGet) {
-          qc.setQueryData(getKey, ctx.prevGet);
-        }
-        if (ctx?.prevList) {
-          qc.setQueryData(listKey, ctx.prevList);
-        }
-      },
-      onSuccess: (updated) => {
-        setOne(qc, trpc, id, () => updated);
-        upsertInList(qc, trpc, id, () => updated);
-      },
+    automationPauseMutationOptions({
+      automation,
+      queryClient: qc,
     })
   );
 
   const resumeMutation = useMutation(
-    trpc.org.workspace.automations.resume.mutationOptions({
-      meta: { errorTitle: "Failed to resume" },
-      onMutate: async () => {
-        const getKey = trpc.org.workspace.automations.get.queryOptions({
-          id,
-        }).queryKey;
-        const listKey =
-          trpc.org.workspace.automations.list.queryOptions().queryKey;
-        await Promise.all([
-          qc.cancelQueries({ queryKey: getKey }),
-          qc.cancelQueries({ queryKey: listKey }),
-        ]);
-        const prevGet = qc.getQueryData(getKey);
-        const prevList = qc.getQueryData(listKey);
-        setOne(qc, trpc, id, (automationRow) =>
-          withStatus(automationRow, "active")
-        );
-        upsertInList(qc, trpc, id, (automationRow) =>
-          withStatus(automationRow, "active")
-        );
-        return { prevGet, prevList };
-      },
-      onError: (_error, _variables, ctx) => {
-        const getKey = trpc.org.workspace.automations.get.queryOptions({
-          id,
-        }).queryKey;
-        const listKey =
-          trpc.org.workspace.automations.list.queryOptions().queryKey;
-        if (ctx?.prevGet) {
-          qc.setQueryData(getKey, ctx.prevGet);
-        }
-        if (ctx?.prevList) {
-          qc.setQueryData(listKey, ctx.prevList);
-        }
-      },
-      onSuccess: (updated) => {
-        setOne(qc, trpc, id, () => updated);
-        upsertInList(qc, trpc, id, () => updated);
-      },
+    automationResumeMutationOptions({
+      automation,
+      queryClient: qc,
     })
   );
 

@@ -1,15 +1,14 @@
-import type { AppRouterOutputs } from "@api/app";
 import { Button } from "@repo/ui/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, RefreshCcw } from "lucide-react";
 import { useMemo } from "react";
-import { useTRPC } from "~/trpc/react";
 import { AutomationRunDetailSheet } from "./automation-run-detail-sheet";
 import { AutomationRunsList } from "./automation-runs-list";
-import { AUTOMATION_RUNS_PAGE_LIMIT } from "./automations-cache";
-
-type AutomationRun =
-  AppRouterOutputs["org"]["workspace"]["automations"]["listRuns"][number];
+import {
+  AUTOMATION_RUNS_PAGE_LIMIT,
+  type AutomationRunListItem,
+  automationRunsQueryOptions,
+} from "./automations-queries";
 
 export function AutomationRunsSection({
   automationId,
@@ -20,23 +19,19 @@ export function AutomationRunsSection({
   selectedRunId: string | null;
   setSelectedRunId: (publicId: string | null) => void;
 }) {
-  const trpc = useTRPC();
-
-  const runsQuery = useQuery({
-    ...trpc.org.workspace.automations.listRuns.queryOptions({
+  const runsQuery = useQuery(
+    automationRunsQueryOptions({
+      enabled: typeof window !== "undefined",
       id: automationId,
       limit: AUTOMATION_RUNS_PAGE_LIMIT,
-    }),
-    // Initial runs are prefetched by the automation detail route loader; this
-    // gate only keeps background refreshes browser-side after hydration.
-    enabled: typeof window !== "undefined",
-    staleTime: 5000,
-    refetchOnWindowFocus: true,
-  });
+      refetchOnWindowFocus: true,
+      staleTime: 5000,
+    })
+  );
 
   const runs = runsQuery.data ?? [];
   const runsByPublicId = useMemo(() => {
-    const map = new Map<string, AutomationRun>();
+    const map = new Map<string, AutomationRunListItem>();
     for (const run of runs) {
       map.set(run.publicId, run);
     }

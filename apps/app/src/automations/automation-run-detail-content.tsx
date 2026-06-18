@@ -1,4 +1,3 @@
-import type { AppRouterOutputs } from "@api/app";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
@@ -18,9 +17,9 @@ import {
   AutomationRunAiOutputView,
   isAutomationRunAiOutput,
 } from "./automation-run-ai-output";
+import type { AutomationRunDetail } from "./automations-queries";
 
-type AutomationRun =
-  AppRouterOutputs["org"]["workspace"]["automations"]["getRun"];
+type AutomationRun = AutomationRunDetail;
 type RunStatus = AutomationRun["status"];
 
 const STATUS_TEXT: Record<RunStatus, string> = {
