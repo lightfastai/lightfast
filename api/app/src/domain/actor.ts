@@ -1,3 +1,4 @@
+import type { ApiKeyAuthResult } from "../auth/api-key";
 import type { AuthIdentity, OrgGate } from "../auth/identity";
 import { AuthzError } from "./errors";
 
@@ -18,8 +19,10 @@ export type Actor =
       userId: string;
     }
   | {
+      createdByUserId: string;
       keyId: string;
       kind: "apiKey";
+      orgGate?: OrgGate;
       orgId: string;
       scopes: string[];
     }
@@ -79,5 +82,19 @@ export function actorFromAuthIdentity(
     orgId: identity.orgId,
     source,
     userId: identity.userId,
+  };
+}
+
+export function actorFromApiKeyAuth(
+  auth: ApiKeyAuthResult,
+  scopes: string[] = []
+): Actor {
+  return {
+    createdByUserId: auth.identity.userId,
+    keyId: auth.apiKeyId,
+    kind: "apiKey",
+    orgGate: auth.identity.orgGate,
+    orgId: auth.identity.orgId,
+    scopes,
   };
 }

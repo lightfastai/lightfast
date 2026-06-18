@@ -187,6 +187,65 @@ describe("signal domain commands", () => {
     });
   });
 
+  it("creates a signal as an API-key actor with key attribution", async () => {
+    await expect(
+      createSignalCommand.run({
+        ctx: {
+          actor: {
+            createdByUserId: "user_test",
+            keyId: "key_test",
+            kind: "apiKey",
+            orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
+            orgId: "org_test",
+            scopes: ["api:signals:write"],
+          },
+        },
+        deps: deps(),
+        input: { input: "new signal" },
+      })
+    ).resolves.toEqual({
+      id: signalRow.publicId,
+      status: "queued",
+      visibilityScope: "user",
+    });
+
+    expect(createSignalForActorMock).toHaveBeenCalledWith(expect.anything(), {
+      actor: {
+        apiKeyId: "key_test",
+        kind: "api_key",
+        orgId: "org_test",
+        userId: "user_test",
+      },
+      input: "new signal",
+    });
+  });
+
+  it("loads signal detail as an API-key actor using creator visibility", async () => {
+    await getSignalCommand.run({
+      ctx: {
+        actor: {
+          createdByUserId: "user_test",
+          keyId: "key_test",
+          kind: "apiKey",
+          orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
+          orgId: "org_test",
+          scopes: ["api:signals:read"],
+        },
+      },
+      deps: deps(),
+      input: { publicId: signalRow.publicId },
+    });
+
+    expect(getVisibleSignalByPublicIdMock).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        clerkOrgId: "org_test",
+        createdByUserId: "user_test",
+        publicId: signalRow.publicId,
+      }
+    );
+  });
+
   it("maps queue failures to an internal domain error", async () => {
     const error = new Error("queue failed");
     error.name = "SignalCreateQueueError";

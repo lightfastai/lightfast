@@ -1,7 +1,3 @@
-import {
-  getVisibleSignalByPublicId,
-  listSignalEntityLinksForSignal,
-} from "@db/app";
 import { db } from "@db/app/client";
 import {
   createSignalInput,
@@ -9,15 +5,24 @@ import {
   getSignalInput,
   getSignalOutput,
 } from "@repo/api-contract";
-import { repairIdForSetupRequirement } from "@repo/app-setup-contract";
+import {
+  type OrgSetupRequirement,
+  orgSetupRequirementSchema,
+  repairIdForSetupRequirement,
+} from "@repo/app-setup-contract";
 
 import {
   type ApiKeyAuthResult,
   isApiKeyAuthError,
   resolveApiKeyAuth,
 } from "../../auth/api-key";
-import { isSignalCreateQueueError } from "../../signals/create-signal";
-import { createSignalForActor } from "../../signals/service";
+import { actorFromApiKeyAuth, isDomainError } from "../../domain";
+import {
+  createSignalCommand,
+  createSignalCommandDeps,
+  getSignalCommand,
+  getSignalCommandDeps,
+} from "../../domain/signals";
 
 type PublicApiStatus = 400 | 401 | 403 | 404 | 500;
 
@@ -82,6 +87,69 @@ function orgSetupErrorResponse(auth: ApiKeyAuthResult): Response {
   });
 }
 
+function requestId() {
+  return crypto.randomUUID();
+}
+
+function publicSignalContext(auth: ApiKeyAuthResult) {
+  return {
+    actor: actorFromApiKeyAuth(auth, ["api:signals:read", "api:signals:write"]),
+    request: { id: requestId(), source: "public-api" as const },
+  };
+}
+
+function setupRequirementOrDefault(requirement: unknown): OrgSetupRequirement {
+  const parsed = orgSetupRequirementSchema.safeParse(requirement);
+  return parsed.success ? parsed.data : "github_org";
+}
+
+function domainErrorResponse(
+  error: unknown,
+  fallbackMessage: string
+): Response {
+  if (!isDomainError(error)) {
+    return jsonError("internal_error", fallbackMessage, 500);
+  }
+
+  if (error.code === "SIGNAL_NOT_FOUND") {
+    return jsonError("not_found", "Signal not found.", 404);
+  }
+
+  if (error.code === "SIGNAL_QUEUE_FAILED") {
+    return jsonError("signal_enqueue_failed", error.message, 500);
+  }
+
+  if (error.code === "ORG_SETUP_REQUIRED") {
+    return jsonError("org_setup_required", error.message, 403, {
+      diagnostics: [
+        {
+          code: error.code,
+          message: error.message,
+          repair: {
+            id: repairIdForSetupRequirement(
+              setupRequirementOrDefault(error.details.nextSetupRequirement)
+            ),
+          },
+        },
+      ],
+    });
+  }
+
+  if (error.kind === "authz") {
+    return jsonError("forbidden", error.message, 403, {
+      diagnostics: [{ code: error.code, message: error.message }],
+    });
+  }
+
+  if (error.kind === "validation") {
+    return jsonError("invalid_request", error.message, 400, {
+      diagnostics: error.details.issues,
+    });
+  }
+
+  return jsonError("internal_error", fallbackMessage, 500);
+}
+
 function isResponse(value: unknown): value is Response {
   return value instanceof Response;
 }
@@ -129,21 +197,14 @@ export async function handleCreateSignalPublicApiRequest(
   }
 
   try {
-    const result = await createSignalForActor(db, {
-      actor: {
-        apiKeyId: auth.apiKeyId,
-        kind: "api_key",
-        orgId: auth.identity.orgId,
-        userId: auth.identity.userId,
-      },
-      input: parsed.data.input,
+    const result = await createSignalCommand.run({
+      ctx: publicSignalContext(auth),
+      deps: createSignalCommandDeps({ db }),
+      input: parsed.data,
     });
     return jsonResponse(createSignalOutput.parse(result), 202);
   } catch (error) {
-    if (isSignalCreateQueueError(error)) {
-      return jsonError("signal_enqueue_failed", error.message, 500);
-    }
-    return jsonError("internal_error", "Failed to create signal.", 500);
+    return domainErrorResponse(error, "Failed to create signal.");
   }
 }
 
@@ -164,19 +225,10 @@ export async function handleGetSignalPublicApiRequest(
   }
 
   try {
-    const signal = await getVisibleSignalByPublicId(db, {
-      clerkOrgId: auth.identity.orgId,
-      createdByUserId: auth.identity.userId,
-      publicId: parsed.data.id,
-    });
-
-    if (!signal) {
-      return jsonError("not_found", "Signal not found.", 404);
-    }
-
-    const entityLinks = await listSignalEntityLinksForSignal(db, {
-      clerkOrgId: auth.identity.orgId,
-      signalId: signal.publicId,
+    const signal = await getSignalCommand.run({
+      ctx: publicSignalContext(auth),
+      deps: getSignalCommandDeps({ db }),
+      input: { publicId: parsed.data.id },
     });
 
     const output = getSignalOutput.parse({
@@ -184,7 +236,7 @@ export async function handleGetSignalPublicApiRequest(
       input: signal.input,
       status: signal.status,
       classification: signal.classification,
-      entityLinks,
+      entityLinks: signal.entityLinks,
       visibilityScope: signal.visibilityScope,
       createdAt: signal.createdAt.toISOString(),
       updatedAt: signal.updatedAt.toISOString(),
@@ -192,9 +244,6 @@ export async function handleGetSignalPublicApiRequest(
 
     return jsonResponse(output, 200);
   } catch (error) {
-    if (error instanceof Response) {
-      return withPublicApiCors(error);
-    }
-    return jsonError("internal_error", "Failed to get signal.", 500);
+    return domainErrorResponse(error, "Failed to get signal.");
   }
 }
