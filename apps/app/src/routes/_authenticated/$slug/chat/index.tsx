@@ -1,5 +1,5 @@
-import { createNewWorkspaceAssistantConversationId } from "@api/app/tanstack/assistant";
 import { createFileRoute } from "@tanstack/react-router";
+import { createWorkspaceAssistantConversationId } from "~/chat/conversation-id";
 import { WorkspaceAssistantClient } from "~/chat/workspace-assistant-client";
 import {
   WorkspaceRouteErrorPanel,
@@ -7,7 +7,7 @@ import {
 } from "~/components/route-boundaries";
 
 export const Route = createFileRoute("/_authenticated/$slug/chat/")({
-  loader: () => createNewWorkspaceAssistantConversationId(),
+  loader: () => createWorkspaceAssistantConversationId(),
   pendingMs: 0,
   pendingMinMs: 0,
   pendingComponent: ChatRoutePending,

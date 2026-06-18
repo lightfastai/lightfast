@@ -807,7 +807,7 @@ describe("app authenticated route migration", () => {
     const chatStreamRouteSource = repoSource(
       "api/app/src/adapters/internal/workspace-assistant/stream-route.ts"
     );
-    const conversationIdPath = resolve(appRoot, "src/chat/conversation-id.ts");
+    const conversationIdSource = source("src/chat/conversation-id.ts");
     const resumableConfigPath = resolve(
       appRoot,
       "src/chat/resumable-stream-config.ts"
@@ -820,10 +820,15 @@ describe("app authenticated route migration", () => {
       'createFileRoute("/_authenticated/$slug/chat/")'
     );
     expect(chatIndexRouteSource).toContain(
-      "createNewWorkspaceAssistantConversationId"
+      "createWorkspaceAssistantConversationId"
     );
-    expect(chatIndexRouteSource).toContain('@api/app/tanstack/assistant"');
+    expect(chatIndexRouteSource).toContain('from "~/chat/conversation-id"');
+    expect(chatIndexRouteSource).not.toContain('@api/app/tanstack/assistant"');
     expect(chatIndexRouteSource).not.toContain("@db/app");
+    expect(conversationIdSource).toContain(
+      'WORKSPACE_ASSISTANT_CONVERSATION_ID_PREFIX = "conv_"'
+    );
+    expect(conversationIdSource).toContain("crypto.randomUUID()");
     expect(chatIndexRouteSource).toContain("WorkspaceAssistantClient");
     expect(chatIndexRouteSource).toContain("key={conversationId}");
     expect(chatRouteSource).not.toContain("WorkspacePage");
@@ -850,7 +855,9 @@ describe("app authenticated route migration", () => {
     expect(messageSource).toContain("ChatMessage");
     expect(messagePartSource).toContain("WorkspaceAssistantMessagePart");
     expect(copyButtonSource).toContain("extractMessageText");
-    expect(existsSync(conversationIdPath)).toBe(false);
+    expect(conversationIdSource).toContain(
+      "createWorkspaceAssistantConversationId"
+    );
     expect(existsSync(resumableConfigPath)).toBe(false);
     expect(assistantClientSource).toContain("isResumableStreamEnabled");
     expect(assistantClientSource).toContain("VITE_VERCEL_ENV");
