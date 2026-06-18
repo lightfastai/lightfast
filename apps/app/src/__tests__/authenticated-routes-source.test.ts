@@ -1082,6 +1082,7 @@ describe("app authenticated route migration", () => {
     const apiKeyQueriesSource = source(
       "src/org/settings/api-keys/org-api-key-queries.ts"
     );
+    const mcpQueriesPath = "src/org/settings/mcp/mcp-connections-queries.ts";
     const mcpClientSource = source(
       "src/org/settings/mcp/mcp-connections-client.tsx"
     );
@@ -1155,8 +1156,11 @@ describe("app authenticated route migration", () => {
       expect(apiKeySource).not.toContain("AppRouterOutputs");
     }
 
-    expect(mcpClientSource).toContain("orgMcpConnectionsQueryOptions");
-    expect(mcpClientSource).toContain("revokeOrgMcpConnectionMutationOptions");
+    expect(existsSync(resolve(appRoot, mcpQueriesPath))).toBe(false);
+    expect(mcpClientSource).toContain('@api/app/tanstack/mcp-connections"');
+    expect(mcpClientSource).toContain("listOrgMcpConnections");
+    expect(mcpClientSource).toContain("revokeOrgMcpConnection");
+    expect(mcpClientSource).not.toContain("mcp-connections-queries");
     expect(mcpClientSource).not.toContain("useTRPC");
     expect(mcpClientSource).not.toContain("org.settings.mcpConnections");
     expect(mcpClientSource).toContain("showConnectedUser");
