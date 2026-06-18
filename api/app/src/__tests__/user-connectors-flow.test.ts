@@ -402,6 +402,17 @@ describe("Granola user connector OAuth flow", () => {
     );
   });
 
+  it("throws a domain authz error when Granola starts without authentication", async () => {
+    await expect(
+      startGranolaUserConnectorOAuth(ctx({ identity: "unauthenticated" }))
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        code: "AUTH_REQUIRED",
+        kind: "authz",
+      })
+    );
+  });
+
   it("adds a Lightfast state when the provider authorization URL lacks state", async () => {
     listGranolaMcpToolsMock.mockImplementationOnce(
       async ({

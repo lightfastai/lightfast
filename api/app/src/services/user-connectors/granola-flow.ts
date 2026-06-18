@@ -13,11 +13,11 @@ import {
   granolaClientMetadata,
   listGranolaMcpTools,
 } from "@repo/granola-app-node";
-import { TRPCError } from "@trpc/server";
 import { auth } from "@vendor/clerk/server";
 import type { OAuthClientInformationMixed, OAuthTokens } from "@vendor/mcp";
 import { StreamableHTTPClientTransport } from "@vendor/mcp";
 import { log } from "@vendor/observability/log/next";
+import { AuthzError, InternalDomainError } from "../../domain/errors";
 import { env } from "../../env";
 import type { AuthContext } from "../../trpc";
 import {
@@ -43,10 +43,7 @@ export interface GranolaRedirectResult {
 function signedInIdentity(ctx: GranolaUserConnectorServiceContext) {
   const identity = ctx.auth.identity;
   if (identity.type === "unauthenticated") {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "Authentication required.",
-    });
+    throw new AuthzError("AUTH_REQUIRED", "Authentication required.");
   }
   return identity;
 }
@@ -245,19 +242,20 @@ export async function startGranolaUserConnectorOAuth(
     });
   } catch (error) {
     if (!isGranolaAuthRequired(error)) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Granola authorization could not be started.",
-        cause: error,
-      });
+      throw new InternalDomainError(
+        "USER_CONNECTOR_AUTH_START_FAILED",
+        "Granola authorization could not be started.",
+        {},
+        { cause: error }
+      );
     }
   }
 
   if (!authorizationUrl) {
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "Granola authorization URL was not provided.",
-    });
+    throw new InternalDomainError(
+      "USER_CONNECTOR_AUTH_URL_MISSING",
+      "Granola authorization URL was not provided."
+    );
   }
 
   const providerState = authorizationUrl.searchParams.get("state") ?? undefined;
