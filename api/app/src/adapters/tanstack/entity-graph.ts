@@ -18,7 +18,6 @@ import {
   listEntityPeopleCommand,
   retrySignalEnrichmentCommand,
 } from "../../domain/entity-graph";
-import { inngest } from "../../inngest/client";
 
 type SerializableValue =
   | SerializableValue[]
@@ -107,6 +106,7 @@ async function createTanStackEntityGraphContext() {
 }
 
 async function sendInngestEvent(event: EntityGraphInngestEvent) {
+  const { inngest } = await import("../../inngest/client");
   await inngest.send(event);
 }
 

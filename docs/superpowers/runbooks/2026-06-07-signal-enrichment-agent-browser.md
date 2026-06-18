@@ -55,11 +55,16 @@ agent-browser screenshot /tmp/signal-enrichment-verification.png
 ## Manual Retry
 
 If the signal has unresolved links and the enrichment request needs to be
-replayed in dev, call the dev-only tRPC mutation:
+replayed in dev, invoke the dev-only TanStack server function from an
+authenticated app/dev surface:
 
 ```ts
-entityGraph.dev.retrySignalEnrichment({
-  signalId: "signal_123e4567-e89b-12d3-a456-426614174000",
+import { retrySignalEnrichment } from "@api/app/tanstack/entity-graph";
+
+await retrySignalEnrichment({
+  data: {
+    signalId: "signal_123e4567-e89b-12d3-a456-426614174000",
+  },
 });
 ```
 

@@ -30,5 +30,7 @@ describe("entity graph TanStack adapter boundary", () => {
     expect(source).toContain("retrySignalEnrichmentCommand");
     expect(source).not.toContain("TRPCError");
     expect(source).not.toContain("ORPCError");
+    expect(source).not.toContain('from "../../inngest/client"');
+    expect(source).toContain('await import("../../inngest/client")');
   });
 });
