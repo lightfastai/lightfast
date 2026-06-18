@@ -3,9 +3,16 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { cn } from "@repo/ui/lib/utils";
+import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
 import * as Sentry from "@sentry/tanstackstart-react";
 import { useRouter } from "@tanstack/react-router";
 import { useEffect } from "react";
+
+function MobileSidebarFallbackTrigger() {
+  return (
+    <SidebarTrigger className="absolute top-3 left-3 size-6 rounded-lg border border-border/70 bg-muted/30 p-0 text-muted-foreground hover:bg-muted/60 hover:text-foreground md:hidden" />
+  );
+}
 
 export function WorkspaceRoutePending({
   className,
@@ -18,11 +25,12 @@ export function WorkspaceRoutePending({
     <div
       aria-label={label}
       className={cn(
-        "flex min-h-40 items-center justify-center bg-background",
+        "relative flex min-h-40 items-center justify-center bg-background",
         className
       )}
       role="status"
     >
+      <MobileSidebarFallbackTrigger />
       <HugeiconsIcon
         aria-hidden="true"
         className="size-6 animate-spin text-muted-foreground"
@@ -34,7 +42,8 @@ export function WorkspaceRoutePending({
 
 export function AutomationFormRoutePending() {
   return (
-    <div className="min-h-full bg-background text-foreground">
+    <div className="relative min-h-full bg-background text-foreground">
+      <MobileSidebarFallbackTrigger />
       <div
         aria-label="Loading new automation form"
         className="mx-auto w-full max-w-2xl px-6 py-10"
@@ -111,7 +120,8 @@ export function WorkspaceRouteErrorPanel({
   }, [error, route]);
 
   return (
-    <main className="flex min-h-full w-full items-center justify-center bg-background px-6 py-10">
+    <main className="relative flex min-h-full w-full items-center justify-center bg-background px-6 py-10">
+      <MobileSidebarFallbackTrigger />
       <section
         className={cn(
           "w-full space-y-4 rounded-sm border border-border/60 px-5 py-6",

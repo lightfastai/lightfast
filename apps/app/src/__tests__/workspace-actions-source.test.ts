@@ -331,6 +331,7 @@ describe("workspace page-owned actions", () => {
 
   it("ports former topbar left controls into route-owned page content", () => {
     const authenticatedShellSource = source("src/routes/_authenticated.tsx");
+    const routeBoundariesSource = source("src/components/route-boundaries.tsx");
     const workspaceShellSource = source(
       "src/workspace/workspace-route-shell.tsx"
     );
@@ -367,6 +368,11 @@ describe("workspace page-owned actions", () => {
     expect(authenticatedShellSource).not.toContain("TeamSwitcherSlot");
     expect(workspaceShellSource).not.toContain("TeamSwitcherSlot");
     expect(workspaceShellSource).not.toContain("SidebarTrigger");
+    expect(routeBoundariesSource).toContain("MobileSidebarFallbackTrigger");
+    expect(routeBoundariesSource).toContain("SidebarTrigger");
+    expect(routeBoundariesSource).toContain("WorkspaceRoutePending");
+    expect(routeBoundariesSource).toContain("WorkspaceRouteErrorPanel");
+    expect(routeBoundariesSource).toContain("AutomationFormRoutePending");
 
     for (const pageSource of [
       ...accountLeftControlSources,
