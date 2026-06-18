@@ -1,4 +1,4 @@
-import { revokeMcpRefreshTokenSecret } from "@api/app";
+import { revokeMcpRefreshTokenSecret } from "@api/app/mcp-oauth";
 import { db } from "@db/app/client";
 import { createFileRoute } from "@tanstack/react-router";
 import {

@@ -1,4 +1,4 @@
-import { MCP_SUPPORTED_SCOPES } from "@api/app";
+import { MCP_SUPPORTED_SCOPES } from "@api/app/mcp-oauth";
 import { createFileRoute } from "@tanstack/react-router";
 import { oauthJson, oauthUrl } from "~/server/oauth/mcp-response";
 
