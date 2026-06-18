@@ -14,8 +14,9 @@ import {
 import { z } from "zod";
 import { isSignalCreateQueueError } from "../../signals/create-signal";
 import { createSignalForActor } from "../../signals/service";
+import type { ExecutionContext } from "../actor";
 import { type CommandRunArgs, defineCommand } from "../command";
-import { InternalDomainError, NotFoundError } from "../errors";
+import { AuthzError, InternalDomainError, NotFoundError } from "../errors";
 import { requireBoundClerkOrgActor } from "../gates";
 
 export type ListProcessingSignalsResult = Awaited<
@@ -55,13 +56,49 @@ const getSignalInput = z
   })
   .strict();
 
-export interface SignalCommandDeps {
-  createSignalForActor: typeof createSignalForActor;
+interface SignalCommandBaseDeps {
   db: Database;
+}
+
+export interface SignalCreateCommandDeps extends SignalCommandBaseDeps {
+  createSignalForActor: typeof createSignalForActor;
+}
+
+export interface SignalGetCommandDeps extends SignalCommandBaseDeps {
   getVisibleSignalByPublicId: typeof getVisibleSignalByPublicId;
   listSignalEntityLinksForSignal: typeof listSignalEntityLinksForSignal;
+}
+
+export interface SignalListProcessingCommandDeps extends SignalCommandBaseDeps {
   listSignals: typeof listSignals;
+}
+
+export interface SignalListWorkingSetCommandDeps extends SignalCommandBaseDeps {
   listWorkspaceSignals: typeof listWorkspaceSignals;
+}
+
+export type SignalCommandDeps = SignalCreateCommandDeps &
+  SignalGetCommandDeps &
+  SignalListProcessingCommandDeps &
+  SignalListWorkingSetCommandDeps;
+
+export function createSignalCommandDeps(input: {
+  db: Database;
+}): SignalCreateCommandDeps {
+  return {
+    db: input.db,
+    createSignalForActor,
+  };
+}
+
+export function getSignalCommandDeps(input: {
+  db: Database;
+}): SignalGetCommandDeps {
+  return {
+    db: input.db,
+    getVisibleSignalByPublicId,
+    listSignalEntityLinksForSignal,
+  };
 }
 
 export function createDefaultSignalCommandDeps(input: {
@@ -80,11 +117,48 @@ export function createDefaultSignalCommandDeps(input: {
 const objectOutput = <T>() =>
   z.custom<T>((value) => typeof value === "object" && value !== null);
 
-type SignalCommandRunArgs<TInput, TOutput> = CommandRunArgs<
+type SignalCommandRunArgs<
   TInput,
   TOutput,
-  SignalCommandDeps
->;
+  TDeps extends object,
+> = CommandRunArgs<TInput, TOutput, TDeps>;
+
+type ResolvedSignalCommandActor =
+  | { kind: "web"; orgId: string; userId: string }
+  | { apiKeyId: string; kind: "api_key"; orgId: string; userId: string };
+
+function requireSignalCommandActor(
+  ctx: ExecutionContext
+): ResolvedSignalCommandActor {
+  if (ctx.actor.kind === "clerkUser") {
+    const actor = requireBoundClerkOrgActor(ctx);
+    return { kind: "web", orgId: actor.orgId, userId: actor.userId };
+  }
+
+  if (ctx.actor.kind === "apiKey") {
+    if (ctx.actor.orgGate?.bindingStatus !== "bound") {
+      throw new AuthzError(
+        "ORG_SETUP_REQUIRED",
+        "Organization setup required. Complete setup before using Lightfast features.",
+        {
+          nextSetupRequirement: ctx.actor.orgGate?.nextSetupRequirement,
+        }
+      );
+    }
+
+    return {
+      apiKeyId: ctx.actor.keyId,
+      kind: "api_key",
+      orgId: ctx.actor.orgId,
+      userId: ctx.actor.createdByUserId,
+    };
+  }
+
+  throw new AuthzError(
+    "SIGNAL_ACTOR_REQUIRED",
+    "A Lightfast user or API key is required."
+  );
+}
 
 export const listProcessingSignalsCommand = defineCommand({
   name: "signals.listProcessing",
@@ -96,9 +170,10 @@ export const listProcessingSignalsCommand = defineCommand({
     input,
   }: SignalCommandRunArgs<
     z.infer<typeof listProcessingSignalsInput>,
-    ListProcessingSignalsResult
+    ListProcessingSignalsResult,
+    SignalListProcessingCommandDeps
   >) => {
-    const actor = requireBoundClerkOrgActor(ctx);
+    const actor = requireSignalCommandActor(ctx);
     return deps.listSignals(deps.db, {
       clerkOrgId: actor.orgId,
       createdByUserId: actor.userId,
@@ -118,9 +193,10 @@ export const listWorkingSetSignalsCommand = defineCommand({
     deps,
   }: SignalCommandRunArgs<
     z.infer<typeof listWorkingSetSignalsInput>,
-    ListWorkingSetSignalsResult
+    ListWorkingSetSignalsResult,
+    SignalListWorkingSetCommandDeps
   >) => {
-    const actor = requireBoundClerkOrgActor(ctx);
+    const actor = requireSignalCommandActor(ctx);
     return deps.listWorkspaceSignals(deps.db, {
       clerkOrgId: actor.orgId,
       createdByUserId: actor.userId,
@@ -138,9 +214,10 @@ export const getSignalCommand = defineCommand({
     input,
   }: SignalCommandRunArgs<
     z.infer<typeof getSignalInput>,
-    SignalDetailResult
+    SignalDetailResult,
+    SignalGetCommandDeps
   >) => {
-    const actor = requireBoundClerkOrgActor(ctx);
+    const actor = requireSignalCommandActor(ctx);
     const signal = await deps.getVisibleSignalByPublicId(deps.db, {
       clerkOrgId: actor.orgId,
       createdByUserId: actor.userId,
@@ -170,12 +247,13 @@ export const createSignalCommand = defineCommand({
     input,
   }: SignalCommandRunArgs<
     z.infer<typeof createSignalInput>,
-    z.infer<typeof createSignalOutput>
+    z.infer<typeof createSignalOutput>,
+    SignalCreateCommandDeps
   >) => {
-    const actor = requireBoundClerkOrgActor(ctx);
+    const actor = requireSignalCommandActor(ctx);
     try {
       return await deps.createSignalForActor(deps.db, {
-        actor: { kind: "web", orgId: actor.orgId, userId: actor.userId },
+        actor,
         input: input.input,
       });
     } catch (error) {

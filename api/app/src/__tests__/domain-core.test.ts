@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
+import type { ApiKeyAuthResult } from "../auth/api-key";
 import type { AuthIdentity } from "../auth/identity";
 import {
+  actorFromApiKeyAuth,
   actorFromAuthIdentity,
   DomainError,
   defineCommand,
@@ -35,6 +37,24 @@ describe("actorFromAuthIdentity", () => {
       kind: "clerkUser",
       source: "web",
       userId: "user_test",
+    });
+  });
+});
+
+describe("actorFromApiKeyAuth", () => {
+  it("creates an org-scoped API-key actor with creator attribution", () => {
+    const auth: ApiKeyAuthResult = {
+      apiKeyId: "key_test",
+      identity: boundIdentity,
+    };
+
+    expect(actorFromApiKeyAuth(auth, ["api:signals:read"])).toEqual({
+      createdByUserId: "user_test",
+      keyId: "key_test",
+      kind: "apiKey",
+      orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
+      orgId: "org_test",
+      scopes: ["api:signals:read"],
     });
   });
 });
