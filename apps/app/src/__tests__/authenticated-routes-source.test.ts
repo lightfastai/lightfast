@@ -1074,9 +1074,8 @@ describe("app authenticated route migration", () => {
     const apiKeyListSource = source(
       "src/org/settings/api-keys/org-api-key-list.tsx"
     );
-    const apiKeyListActionsSource = source(
-      "src/org/settings/api-keys/org-api-key-list-actions.ts"
-    );
+    const apiKeyListActionsPath =
+      "src/org/settings/api-keys/org-api-key-list-actions.ts";
     const apiKeyCacheSource = source(
       "src/org/settings/api-keys/org-api-key-cache.ts"
     );
@@ -1137,15 +1136,16 @@ describe("app authenticated route migration", () => {
     expect(existsSync(resolve(appRoot, apiKeyCreateActionsPath))).toBe(false);
     expect(apiKeyCreateSource).toContain("createOrgApiKeyMutationOptions");
     expect(apiKeyCreateSource).not.toContain("useOrgApiKeyCreateAction");
-    expect(apiKeyListActionsSource).toContain("revokeOrgApiKeyMutationOptions");
-    expect(apiKeyListActionsSource).toContain("deleteOrgApiKeyMutationOptions");
-    expect(apiKeyListActionsSource).toContain("rotateOrgApiKeyMutationOptions");
+    expect(existsSync(resolve(appRoot, apiKeyListActionsPath))).toBe(false);
+    expect(apiKeyListSource).toContain("revokeOrgApiKeyMutationOptions");
+    expect(apiKeyListSource).toContain("deleteOrgApiKeyMutationOptions");
+    expect(apiKeyListSource).toContain("rotateOrgApiKeyMutationOptions");
+    expect(apiKeyListSource).not.toContain("useOrgApiKeyListActions");
     expect(apiKeyCacheSource).toContain("OrgApiKeyListData");
     expect(apiKeyQueriesSource).toContain('@api/app/tanstack/org-api-keys"');
 
     for (const apiKeySource of [
       apiKeyCreateSource,
-      apiKeyListActionsSource,
       apiKeyListSource,
       apiKeyCacheSource,
       apiKeyQueriesSource,
@@ -1173,7 +1173,6 @@ describe("app authenticated route migration", () => {
       memberCacheSource,
       apiKeyCreateSource,
       apiKeyListSource,
-      apiKeyListActionsSource,
       apiKeyCacheSource,
       mcpClientSource,
     ]) {
