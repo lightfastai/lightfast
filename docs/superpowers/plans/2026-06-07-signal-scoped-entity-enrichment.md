@@ -1067,59 +1067,20 @@ git commit -m "feat: emulate github user profiles"
 
 ## Task 12: Add Dev Retry Action And UI Verification Runbook
 
+> Superseded note: the original implementation used the workspace entity graph
+> tRPC router. That router was migrated to explicit entity graph domain commands
+> plus the `@api/app/tanstack/entity-graph` adapter. Use the current runbook for
+> live retry instructions.
+
 **Files:**
-- Modify: `api/app/src/router/(pending-not-allowed)/workspace-entity-graph.ts`
-- Modify: `api/app/src/__tests__/workspace-entity-graph-router.test.ts`
-- Create: `docs/superpowers/runbooks/2026-06-07-signal-enrichment-agent-browser.md`
+- Current live domain command:
+  `api/app/src/domain/entity-graph/commands.ts`
+- Current live TanStack adapter:
+  `api/app/src/adapters/tanstack/entity-graph.ts`
+- Current verification runbook:
+  `docs/superpowers/runbooks/2026-06-07-signal-enrichment-agent-browser.md`
 
-- [ ] **Step 1: Add router test**
-
-Add a dev-only mutation test:
-
-```ts
-await caller().entityGraph.dev.retrySignalEnrichment({
-  signalId: "signal_123",
-});
-expect(inngestSendMock).toHaveBeenCalledWith({
-  id: "signal-entity-enrichment-manual-org_123-signal_123",
-  name: "app/signal.entity-enrichment.requested",
-  data: {
-    clerkOrgId: "org_123",
-    reason: "manual_retry",
-    signalId: "signal_123",
-  },
-});
-```
-
-- [ ] **Step 2: Implement mutation**
-
-In dev router:
-
-```ts
-retrySignalEnrichment: boundOrgProcedure
-  .input(z.object({ signalId: z.string().trim().min(1) }).strict())
-  .mutation(async ({ ctx, input }) => {
-    if (process.env.NODE_ENV === "production") {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "Signal enrichment retry is dev-only",
-      });
-    }
-    const { inngest } = await import("../../inngest/client");
-    await inngest.send({
-      id: `signal-entity-enrichment-manual-${ctx.auth.identity.orgId}-${input.signalId}`,
-      name: "app/signal.entity-enrichment.requested",
-      data: {
-        clerkOrgId: ctx.auth.identity.orgId,
-        reason: "manual_retry" as const,
-        signalId: input.signalId,
-      },
-    });
-    return { signalId: input.signalId, status: "queued" as const };
-  })
-```
-
-- [ ] **Step 3: Write agent-browser runbook**
+- [ ] **Step 1: Write agent-browser runbook**
 
 Create a runbook with exact commands:
 
@@ -1137,20 +1098,20 @@ Then steps:
 4. Wait for links to resolve.
 5. Capture a screenshot.
 
-- [ ] **Step 4: Run focused tests**
+- [ ] **Step 2: Run focused tests**
 
 Run:
 
 ```bash
-pnpm --filter @api/app test -- workspace-entity-graph-router.test.ts
+pnpm --filter @api/app test -- entity-graph-domain-commands.test.ts entity-graph-tanstack-adapter-source.test.ts workspace-entity-graph-router-source.test.ts
 ```
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
-git add api/app/src/router/\\(pending-not-allowed\\)/workspace-entity-graph.ts api/app/src/__tests__/workspace-entity-graph-router.test.ts docs/superpowers/runbooks/2026-06-07-signal-enrichment-agent-browser.md
+git add api/app/src/domain/entity-graph api/app/src/adapters/tanstack/entity-graph.ts api/app/src/__tests__/entity-graph-domain-commands.test.ts api/app/src/__tests__/entity-graph-tanstack-adapter-source.test.ts api/app/src/__tests__/workspace-entity-graph-router-source.test.ts docs/superpowers/runbooks/2026-06-07-signal-enrichment-agent-browser.md
 git commit -m "feat: add signal enrichment retry harness"
 ```
 
@@ -1166,7 +1127,7 @@ Run:
 ```bash
 pnpm --filter @repo/app-validation test
 pnpm --filter @db/app test -- signal-entity-links.test.ts people.test.ts entity-graph.test.ts
-pnpm --filter @api/app test -- entity-index-workflow.test.ts entity-resolution-workflow.test.ts signal-entity-enrichment-workflow.test.ts signal-entity-enrichment-fetchers.test.ts entity-enrichment-adapters.test.ts workspace-entity-graph-router.test.ts inngest-route.test.ts
+pnpm --filter @api/app test -- entity-index-workflow.test.ts entity-resolution-workflow.test.ts signal-entity-enrichment-workflow.test.ts signal-entity-enrichment-fetchers.test.ts entity-enrichment-adapters.test.ts entity-graph-domain-commands.test.ts entity-graph-tanstack-adapter-source.test.ts workspace-entity-graph-router-source.test.ts inngest-route.test.ts
 pnpm --filter @repo/x-app-node test
 pnpm --filter @repo/github-app-node test
 pnpm --filter @repo/x-emulator test
