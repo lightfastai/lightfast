@@ -1056,9 +1056,8 @@ describe("app authenticated route migration", () => {
     const memberInviteSource = source(
       "src/org/settings/members/org-member-invite.tsx"
     );
-    const memberInviteActionsSource = source(
-      "src/org/settings/members/org-member-invite-actions.ts"
-    );
+    const memberInviteActionsPath =
+      "src/org/settings/members/org-member-invite-actions.ts";
     const memberListActionsSource = source(
       "src/org/settings/members/org-member-list-actions.ts"
     );
@@ -1119,10 +1118,9 @@ describe("app authenticated route migration", () => {
       'enabled: typeof window !== "undefined"'
     );
     expect(memberListSource).toContain('from "@clerk/tanstack-react-start"');
-    expect(memberInviteSource).toContain("useOrgMemberInviteAction");
-    expect(memberInviteActionsSource).toContain(
-      "inviteOrgMemberMutationOptions"
-    );
+    expect(existsSync(resolve(appRoot, memberInviteActionsPath))).toBe(false);
+    expect(memberInviteSource).toContain("inviteOrgMemberMutationOptions");
+    expect(memberInviteSource).not.toContain("useOrgMemberInviteAction");
     expect(memberListActionsSource).toContain(
       "updateOrgMemberRoleMutationOptions"
     );
@@ -1175,7 +1173,6 @@ describe("app authenticated route migration", () => {
       membersClientSource,
       memberListSource,
       memberInviteSource,
-      memberInviteActionsSource,
       memberListActionsSource,
       memberCacheSource,
       apiKeyCreateSource,
