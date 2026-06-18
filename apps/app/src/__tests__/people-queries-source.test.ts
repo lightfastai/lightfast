@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -20,13 +20,20 @@ describe("people app data access", () => {
   });
 
   it("moves people UI callers off workspace people tRPC procedures", () => {
-    const listSource = source("src/people/use-people-list-query.ts");
+    const listHookPath = resolve(
+      appRoot,
+      "src/people/use-people-list-query.ts"
+    );
+    const listSource = source("src/people/people-client.tsx");
     const detailSource = source("src/people/people-detail-sheet.tsx");
     const modelSource = source("src/people/people-model.ts");
 
+    expect(existsSync(listHookPath)).toBe(false);
     expect(listSource).not.toContain("useTRPC");
     expect(listSource).not.toContain("org.workspace.people");
     expect(listSource).toContain("peopleListInfiniteQueryOptions");
+    expect(listSource).toContain("useInfiniteQuery");
+    expect(listSource).not.toContain("./use-people-list-query");
     expect(detailSource).not.toContain("useTRPC");
     expect(detailSource).not.toContain("org.workspace.people");
     expect(detailSource).toContain("personDetailQueryOptions");

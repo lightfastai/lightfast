@@ -353,7 +353,7 @@ describe("app authenticated route migration", () => {
     const routeSource = source("src/routes/_authenticated/$slug/people.tsx");
     const clientSource = source("src/people/people-client.tsx");
     const searchSource = source("src/people/people-search-params.ts");
-    const querySource = source("src/people/use-people-list-query.ts");
+    const querySource = clientSource;
     const viewsSource = source("src/people/people-view-switcher.tsx");
     const viewQuerySource = viewsSource;
     const toolbarSource = source("src/people/people-toolbar.tsx");
@@ -374,7 +374,7 @@ describe("app authenticated route migration", () => {
     expect(clientSource).not.toContain("PeopleViewSwitcher");
     expect(clientSource).toContain("PeopleTableView");
     expect(clientSource).toContain("PeopleDetailSheet");
-    expect(clientSource).toContain("usePeopleListQuery");
+    expect(clientSource).not.toContain("usePeopleListQuery");
     expect(topbarActionsSource).toContain("PeopleViewSwitcher");
     expect(searchSource).toContain("validatePeopleSearch");
     expect(searchSource).toContain("parsePersonProviders");
