@@ -1,3 +1,9 @@
+import {
+  createPeopleView,
+  deletePeopleView,
+  listPeopleViews,
+} from "@api/app/tanstack/people-views";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ViewSwitcher } from "~/components/views/view-switcher";
 import {
   type NormalizedPeopleSearch,
@@ -6,14 +12,14 @@ import {
 } from "./people-search-params";
 import {
   allPeopleParamValues,
+  type PeopleViewConfig,
   selectionToConfig,
   viewConfigToParamValues,
 } from "./people-views-model";
-import {
-  useCreatePeopleView,
-  useDeletePeopleView,
-  usePeopleViewsQuery,
-} from "./use-people-views-query";
+
+const peopleViewQueryKeys = {
+  list: () => ["people", "views"] as const,
+};
 
 export function PeopleViewSwitcher({
   search,
@@ -22,9 +28,28 @@ export function PeopleViewSwitcher({
   search: NormalizedPeopleSearch;
   setSearchParams: (updates: Partial<NormalizedPeopleSearch>) => void;
 }) {
-  const viewsQuery = usePeopleViewsQuery();
-  const createView = useCreatePeopleView();
-  const deleteView = useDeletePeopleView();
+  const queryClient = useQueryClient();
+  const viewsQuery = useQuery({
+    enabled: typeof window !== "undefined",
+    queryFn: () => listPeopleViews(),
+    queryKey: peopleViewQueryKeys.list(),
+    staleTime: 60_000,
+  });
+  const createView = useMutation({
+    mutationFn: (data: { config: PeopleViewConfig; name: string }) =>
+      createPeopleView({ data }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: peopleViewQueryKeys.list(),
+      }),
+  });
+  const deleteView = useMutation({
+    mutationFn: (data: { publicId: string }) => deletePeopleView({ data }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: peopleViewQueryKeys.list(),
+      }),
+  });
   const views = viewsQuery.data ?? [];
 
   const currentConfig = selectionToConfig({
