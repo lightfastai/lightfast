@@ -1,37 +1,12 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, expect, it, vi } from "vitest";
-
-const createTRPCContext = vi.fn(
-  async ({ headers }: { headers: Headers }) =>
-    ({
-      auth: {
-        identity: { type: "pending" as const, userId: "user_test" },
-      },
-      db: {},
-      headers,
-    }) as const
-);
-
-vi.mock("@api/app", () => ({
-  createTRPCContext,
-}));
-
-const { createTanStackTRPCContext } = await import("../trpc/context");
+import { describe, expect, it } from "vitest";
 
 const appRoot = resolve(import.meta.dirname, "../..");
 
 describe("app tRPC context bridge", () => {
-  it("delegates context creation to the shared app API context", async () => {
-    const headers = new Headers({ cookie: "__session=test-session" });
-
-    const context = await createTanStackTRPCContext({ headers });
-
-    expect(createTRPCContext).toHaveBeenCalledWith({ headers });
-    expect(context.auth.identity).toEqual({
-      type: "pending",
-      userId: "user_test",
-    });
+  it("removes the bridge after the app tRPC route is gone", () => {
+    expect(existsSync(resolve(appRoot, "src/trpc/context.ts"))).toBe(false);
   });
 
   it("uses the TanStack Clerk server compatibility layer", () => {

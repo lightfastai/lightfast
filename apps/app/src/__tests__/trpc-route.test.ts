@@ -1,19 +1,29 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const appRoot = resolve(import.meta.dirname, "../..");
 
 describe("app tRPC route", () => {
-  it("mounts the app router through the fetch adapter with TanStack context", () => {
-    const routeSource = readFileSync(
-      resolve(appRoot, "src/routes/api/trpc.$.ts"),
+  it("removes the app tRPC catch-all route after UI migration", () => {
+    const packageJson = JSON.parse(
+      readFileSync(resolve(appRoot, "package.json"), "utf8")
+    ) as { dependencies?: Record<string, string> };
+    const routeTreeSource = readFileSync(
+      resolve(appRoot, "src/routeTree.gen.ts"),
       "utf8"
     );
 
-    expect(routeSource).toContain('endpoint: "/api/trpc"');
-    expect(routeSource).toContain('import("@api/app")');
-    expect(routeSource).toContain('import("~/trpc/context")');
-    expect(routeSource).not.toContain("createTRPCContext");
+    expect(existsSync(resolve(appRoot, "src/routes/api/trpc.$.ts"))).toBe(
+      false
+    );
+    expect(existsSync(resolve(appRoot, "src/trpc/context.ts"))).toBe(false);
+    expect(packageJson.dependencies?.["@trpc/client"]).toBeUndefined();
+    expect(packageJson.dependencies?.["@trpc/server"]).toBeUndefined();
+    expect(
+      packageJson.dependencies?.["@trpc/tanstack-react-query"]
+    ).toBeUndefined();
+    expect(routeTreeSource).not.toContain("/api/trpc");
+    expect(routeTreeSource).not.toContain("ApiTrpcSplatRoute");
   });
 });
