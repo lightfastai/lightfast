@@ -1,5 +1,4 @@
 import { signServiceJWT } from "@api/app/service-jwt";
-import type { Database } from "@db/app";
 import {
   type CreateSignalOutput,
   createMcpSignalCommandInput,
@@ -102,7 +101,6 @@ async function postAppSignalCommand(input: {
 }
 
 export async function createSignalForActorViaApp(
-  _db: Database,
   input: {
     actor: {
       clientId: string;
@@ -132,7 +130,6 @@ export async function createSignalForActorViaApp(
 }
 
 export async function getSignalForActorViaApp(
-  _db: Database,
   input: {
     actor: {
       clientId: string;

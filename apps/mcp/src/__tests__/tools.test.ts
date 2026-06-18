@@ -1,4 +1,3 @@
-import type { Database, Signal } from "@db/app";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { HostedMcpContext } from "../context";
@@ -8,7 +7,6 @@ import {
   listHostedMcpTools,
 } from "../tools/execute";
 
-const db = { kind: "mock-db" } as unknown as Database;
 const signalId = "signal_123e4567-e89b-12d3-a456-426614174000";
 const providerRoutineCallId = "provider_routine_call_123";
 
@@ -21,28 +19,6 @@ function context(overrides: Partial<HostedMcpContext> = {}): HostedMcpContext {
     requestId: "req_test",
     scopes: ["mcp:system:read", "mcp:signals:read", "mcp:signals:write"],
     userId: "user_test",
-    ...overrides,
-  };
-}
-
-function signal(overrides: Partial<Signal> = {}): Signal {
-  return {
-    id: 1,
-    classification: null,
-    classificationMetadata: null,
-    clerkOrgId: "org_test",
-    createdAt: new Date("2026-06-01T00:00:00.000Z"),
-    createdByApiKeyId: null,
-    createdByMcpClientId: "mcp_client_test",
-    createdByMcpGrantId: "mcp_grant_test",
-    createdByUserId: "user_test",
-    errorCode: null,
-    errorMessage: null,
-    input: "Review this profile",
-    publicId: signalId,
-    status: "queued",
-    updatedAt: new Date("2026-06-01T00:01:00.000Z"),
-    visibilityScope: "user",
     ...overrides,
   };
 }
@@ -65,7 +41,6 @@ function dependencies(
       status: "queued",
       visibilityScope: "user",
     }),
-    db,
     findProviderRoutines: vi.fn().mockResolvedValue({
       routines: [
         {
@@ -77,8 +52,16 @@ function dependencies(
         },
       ],
     }),
-    getVisibleSignalByPublicId: vi.fn().mockResolvedValue(signal()),
-    listSignalEntityLinksForSignal: vi.fn().mockResolvedValue([]),
+    getSignalForActor: vi.fn().mockResolvedValue({
+      classification: null,
+      createdAt: "2026-06-01T00:00:00.000Z",
+      entityLinks: [],
+      id: signalId,
+      input: "Review this profile",
+      status: "queued",
+      updatedAt: "2026-06-01T00:01:00.000Z",
+      visibilityScope: "user",
+    }),
     now: vi.fn(() => new Date("2026-06-01T00:00:00.000Z")),
     recordMcpAuditEvent: vi.fn().mockResolvedValue(undefined),
     version: "0.1.0-test",
@@ -90,8 +73,8 @@ describe("hosted MCP tools", () => {
   afterEach(() => {
     vi.doUnmock("@api/app/mcp-oauth");
     vi.doUnmock("@api/app/signals/service");
-    vi.doUnmock("@db/app");
     vi.doUnmock("@repo/provider-routines");
+    vi.doUnmock("../tools/app-audit-intake");
     vi.doUnmock("../tools/app-proxy-intake");
     vi.doUnmock("../tools/app-signal-intake");
   });
@@ -142,11 +125,11 @@ describe("hosted MCP tools", () => {
       visibilityScope: "user",
     });
 
-    expect(deps.assertOrgAccess).toHaveBeenCalledWith(db, {
+    expect(deps.assertOrgAccess).toHaveBeenCalledWith({
       orgId: "org_test",
       userId: "user_test",
     });
-    expect(deps.createSignalForActor).toHaveBeenCalledWith(db, {
+    expect(deps.createSignalForActor).toHaveBeenCalledWith({
       actor: {
         clientId: "mcp_client_test",
         grantId: "mcp_grant_test",
@@ -179,14 +162,15 @@ describe("hosted MCP tools", () => {
       visibilityScope: "user",
     });
 
-    expect(deps.getVisibleSignalByPublicId).toHaveBeenCalledWith(db, {
-      clerkOrgId: "org_test",
-      createdByUserId: "user_test",
-      publicId: signalId,
-    });
-    expect(deps.listSignalEntityLinksForSignal).toHaveBeenCalledWith(db, {
-      clerkOrgId: "org_test",
-      signalId,
+    expect(deps.getSignalForActor).toHaveBeenCalledWith({
+      actor: {
+        clientId: "mcp_client_test",
+        grantId: "mcp_grant_test",
+        kind: "mcp",
+        orgId: "org_test",
+        userId: "user_test",
+      },
+      id: signalId,
     });
   });
 
@@ -232,7 +216,6 @@ describe("hosted MCP tools", () => {
     });
 
     expect(deps.recordMcpAuditEvent).toHaveBeenCalledWith(
-      db,
       expect.objectContaining({
         outcome: "denied",
         metadata: expect.objectContaining({
@@ -269,7 +252,6 @@ describe("hosted MCP tools", () => {
     });
 
     expect(deps.recordMcpAuditEvent).toHaveBeenCalledWith(
-      db,
       expect.objectContaining({
         outcome: "error",
         metadata: expect.objectContaining({
@@ -307,7 +289,6 @@ describe("hosted MCP tools", () => {
     expect(deps.findProviderRoutines).toHaveBeenCalledWith(
       expect.objectContaining({
         actor: { orgId: "org_test", userId: "user_test" },
-        db,
         scopes: {
           providerRoutineRead: true,
           providerRoutineWrite: false,
@@ -382,7 +363,6 @@ describe("hosted MCP tools", () => {
       }
     );
     expect(deps.recordMcpAuditEvent).toHaveBeenCalledWith(
-      db,
       expect.objectContaining({
         eventName: "mcp.proxy.call",
         metadata: expect.objectContaining({
@@ -421,11 +401,8 @@ describe("hosted MCP tools", () => {
   it("does not load unrelated default dependencies for system health", async () => {
     const recordMcpAuditEvent = vi.fn().mockResolvedValue(undefined);
 
-    vi.doMock("@db/app", () => ({
-      db,
-      getVisibleSignalByPublicId: vi.fn(),
-      listSignalEntityLinksForSignal: vi.fn(),
-      recordMcpAuditEvent,
+    vi.doMock("../tools/app-audit-intake", () => ({
+      recordMcpAuditEventViaApp: recordMcpAuditEvent,
     }));
     vi.doMock("@api/app/mcp-oauth", () => {
       throw new Error("mcp-oauth should not load for system health");
@@ -452,7 +429,6 @@ describe("hosted MCP tools", () => {
     });
 
     expect(recordMcpAuditEvent).toHaveBeenCalledWith(
-      db,
       expect.objectContaining({
         eventName: "mcp.system.health",
         outcome: "success",
@@ -468,11 +444,8 @@ describe("hosted MCP tools", () => {
     });
     const recordMcpAuditEvent = vi.fn().mockResolvedValue(undefined);
 
-    vi.doMock("@db/app", () => ({
-      db,
-      getVisibleSignalByPublicId: vi.fn(),
-      listSignalEntityLinksForSignal: vi.fn(),
-      recordMcpAuditEvent,
+    vi.doMock("../tools/app-audit-intake", () => ({
+      recordMcpAuditEventViaApp: recordMcpAuditEvent,
     }));
     vi.doMock("@api/app/mcp-oauth", () => {
       throw new Error("mcp-oauth should not load for signal creation");
@@ -499,7 +472,7 @@ describe("hosted MCP tools", () => {
       visibilityScope: "user",
     });
 
-    expect(createSignalForActor).toHaveBeenCalledWith(db, {
+    expect(createSignalForActor).toHaveBeenCalledWith({
       actor: {
         clientId: "mcp_client_test",
         grantId: "mcp_grant_test",
@@ -524,11 +497,8 @@ describe("hosted MCP tools", () => {
     });
     const recordMcpAuditEvent = vi.fn().mockResolvedValue(undefined);
 
-    vi.doMock("@db/app", () => ({
-      db,
-      getVisibleSignalByPublicId: vi.fn(),
-      listSignalEntityLinksForSignal: vi.fn(),
-      recordMcpAuditEvent,
+    vi.doMock("../tools/app-audit-intake", () => ({
+      recordMcpAuditEventViaApp: recordMcpAuditEvent,
     }));
     vi.doMock("@api/app/mcp-oauth", () => {
       throw new Error("mcp-oauth should not load for signal get");
@@ -554,7 +524,7 @@ describe("hosted MCP tools", () => {
       status: "queued",
     });
 
-    expect(getSignalForActor).toHaveBeenCalledWith(db, {
+    expect(getSignalForActor).toHaveBeenCalledWith({
       actor: {
         clientId: "mcp_client_test",
         grantId: "mcp_grant_test",
@@ -578,11 +548,8 @@ describe("hosted MCP tools", () => {
     const findProviderRoutines = vi.fn();
     const recordMcpAuditEvent = vi.fn().mockResolvedValue(undefined);
 
-    vi.doMock("@db/app", () => ({
-      db,
-      getVisibleSignalByPublicId: vi.fn(),
-      listSignalEntityLinksForSignal: vi.fn(),
-      recordMcpAuditEvent,
+    vi.doMock("../tools/app-audit-intake", () => ({
+      recordMcpAuditEventViaApp: recordMcpAuditEvent,
     }));
     vi.doMock("@api/app/mcp-oauth", () => {
       throw new Error("mcp-oauth should not load for proxy calls");

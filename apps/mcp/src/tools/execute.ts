@@ -1,4 +1,3 @@
-import type { Database, RecordMcpAuditEventInput, Signal } from "@db/app";
 import {
   type ProviderRoutineCallInput,
   type ProviderRoutineCallSuccess,
@@ -30,6 +29,10 @@ import {
   type HostedMcpAuthInfo,
   type HostedMcpContext,
 } from "../context";
+import type {
+  AppMcpAuditEventInput,
+  McpAuditOutcome,
+} from "./app-audit-intake";
 
 const DEFAULT_VERSION = "0.1.0";
 
@@ -54,7 +57,7 @@ export class HostedMcpToolError extends Error {
     readonly code: HostedMcpToolErrorCode,
     message: string,
     readonly status: number,
-    readonly auditOutcome: RecordMcpAuditEventInput["outcome"] = "error",
+    readonly auditOutcome: McpAuditOutcome = "error",
     options?: ErrorOptions,
     readonly providerRoutineCallId?: string
   ) {
@@ -64,57 +67,32 @@ export class HostedMcpToolError extends Error {
 }
 
 export interface ExecuteHostedMcpToolDependencies {
-  assertOrgAccess: (
-    db: Database,
-    input: { orgId: string; userId: string }
-  ) => Promise<void>;
+  assertOrgAccess: (input: { orgId: string; userId: string }) => Promise<void>;
   callProviderRoutine: CallProviderRoutineService;
-  createSignalForActor: (
-    db: Database,
-    input: {
-      actor: {
-        clientId: string;
-        grantId: string;
-        kind: "mcp";
-        orgId: string;
-        userId: string;
-      };
-      input: string;
-    }
-  ) => Promise<unknown>;
-  db: Database;
+  createSignalForActor: (input: {
+    actor: {
+      clientId: string;
+      grantId: string;
+      kind: "mcp";
+      orgId: string;
+      userId: string;
+    };
+    input: string;
+  }) => Promise<unknown>;
   findProviderRoutines: FindProviderRoutinesService;
-  getSignalForActor?: (
-    db: Database,
-    input: {
-      actor: {
-        clientId: string;
-        grantId: string;
-        kind: "mcp";
-        orgId: string;
-        userId: string;
-      };
-      id: string;
-    }
-  ) => Promise<GetSignalOutput | null | undefined>;
-  getVisibleSignalByPublicId: (
-    db: Database,
-    input: {
-      clerkOrgId: string;
-      createdByUserId: string;
-      publicId: string;
-    }
-  ) => Promise<Signal | undefined>;
-  listSignalEntityLinksForSignal: (
-    db: Database,
-    input: { clerkOrgId: string; signalId: string }
-  ) => Promise<GetSignalOutput["entityLinks"]>;
+  getSignalForActor: (input: {
+    actor: {
+      clientId: string;
+      grantId: string;
+      kind: "mcp";
+      orgId: string;
+      userId: string;
+    };
+    id: string;
+  }) => Promise<GetSignalOutput | null | undefined>;
   now: () => Date;
   providerRoutineLog?: ProviderRoutineServiceLog;
-  recordMcpAuditEvent: (
-    db: Database,
-    input: RecordMcpAuditEventInput
-  ) => Promise<void>;
+  recordMcpAuditEvent: (input: AppMcpAuditEventInput) => Promise<void>;
   version: string;
 }
 
@@ -129,7 +107,6 @@ interface ProviderRoutineServiceContext {
     orgId: string;
     userId: string;
   };
-  db: Database;
   log: ProviderRoutineServiceLog;
   now: () => Date;
   scopes: {
@@ -251,7 +228,7 @@ export async function executeHostedMcpTool(
   try {
     ensureScope(input.context, tool.requiredScope);
     if (tool.requiresBoundOrg) {
-      await dependencies.assertOrgAccess(dependencies.db, {
+      await dependencies.assertOrgAccess({
         orgId: input.context.orgId,
         userId: input.context.userId,
       });
@@ -307,72 +284,34 @@ async function executeParsedTool(input: {
 
     case "signals.create": {
       const createInput = input.parsedInput as CreateSignalInput;
-      return await input.dependencies.createSignalForActor(
-        input.dependencies.db,
-        {
-          actor: {
-            clientId: input.context.clientId,
-            grantId: input.context.grantId,
-            kind: "mcp",
-            orgId: input.context.orgId,
-            userId: input.context.userId,
-          },
-          input: createInput.input,
-        }
-      );
+      return await input.dependencies.createSignalForActor({
+        actor: {
+          clientId: input.context.clientId,
+          grantId: input.context.grantId,
+          kind: "mcp",
+          orgId: input.context.orgId,
+          userId: input.context.userId,
+        },
+        input: createInput.input,
+      });
     }
 
     case "signals.get": {
       const getInput = input.parsedInput as GetSignalInput;
-      if (input.dependencies.getSignalForActor) {
-        const result = await input.dependencies.getSignalForActor(
-          input.dependencies.db,
-          {
-            actor: {
-              clientId: input.context.clientId,
-              grantId: input.context.grantId,
-              kind: "mcp",
-              orgId: input.context.orgId,
-              userId: input.context.userId,
-            },
-            id: getInput.id,
-          }
-        );
-        if (!result) {
-          throw new HostedMcpToolError("not_found", "Signal not found.", 404);
-        }
-        return result;
-      }
-
-      const signal = await input.dependencies.getVisibleSignalByPublicId(
-        input.dependencies.db,
-        {
-          publicId: getInput.id,
-          clerkOrgId: input.context.orgId,
-          createdByUserId: input.context.userId,
-        }
-      );
-      if (!signal) {
+      const result = await input.dependencies.getSignalForActor({
+        actor: {
+          clientId: input.context.clientId,
+          grantId: input.context.grantId,
+          kind: "mcp",
+          orgId: input.context.orgId,
+          userId: input.context.userId,
+        },
+        id: getInput.id,
+      });
+      if (!result) {
         throw new HostedMcpToolError("not_found", "Signal not found.", 404);
       }
-      const entityLinks =
-        await input.dependencies.listSignalEntityLinksForSignal(
-          input.dependencies.db,
-          {
-            clerkOrgId: input.context.orgId,
-            signalId: signal.publicId,
-          }
-        );
-      return {
-        id: signal.publicId,
-        input: signal.input,
-        status: signal.status,
-        classification: signal.classification,
-        entityLinks,
-        visibilityScope: signal.visibilityScope,
-        createdAt: signal.createdAt.toISOString(),
-        updatedAt: signal.updatedAt.toISOString(),
-      };
+      return result;
     }
 
     case "proxy.find": {
@@ -461,13 +400,13 @@ async function recordAudit(input: {
   context: HostedMcpContext;
   dependencies: ExecuteHostedMcpToolDependencies;
   error: HostedMcpToolError | null;
-  outcome: RecordMcpAuditEventInput["outcome"];
+  outcome: McpAuditOutcome;
   providerRoutineCallId?: string;
   startedAt: Date;
   tool: LightfastMcpToolDefinition;
 }): Promise<void> {
   const endedAt = input.dependencies.now();
-  await input.dependencies.recordMcpAuditEvent(input.dependencies.db, {
+  await input.dependencies.recordMcpAuditEvent({
     clientPublicId: input.context.clientId,
     clerkOrgId: input.context.orgId,
     clerkUserId: input.context.userId,
@@ -568,12 +507,11 @@ function normalizeToolError(error: unknown): HostedMcpToolError {
 async function defaultDependencies(
   contractPath: string
 ): Promise<ExecuteHostedMcpToolDependencies> {
-  const dbApp = await import("@db/app");
+  const appAuditIntake = await import("./app-audit-intake");
   const base = {
-    db: dbApp.db,
     now: () => new Date(),
     providerRoutineLog: sentryProviderRoutineLog,
-    recordMcpAuditEvent: dbApp.recordMcpAuditEvent,
+    recordMcpAuditEvent: appAuditIntake.recordMcpAuditEventViaApp,
     version: process.env.npm_package_version ?? DEFAULT_VERSION,
   };
 
@@ -584,8 +522,7 @@ async function defaultDependencies(
       callProviderRoutine: unavailableCallProviderRoutine,
       createSignalForActor: unavailableCreateSignalForActor,
       findProviderRoutines: unavailableFindProviderRoutines,
-      getVisibleSignalByPublicId: dbApp.getVisibleSignalByPublicId,
-      listSignalEntityLinksForSignal: dbApp.listSignalEntityLinksForSignal,
+      getSignalForActor: unavailableGetSignalForActor,
     };
   }
 
@@ -597,8 +534,7 @@ async function defaultDependencies(
       callProviderRoutine: unavailableCallProviderRoutine,
       createSignalForActor: appSignalIntake.createSignalForActorViaApp,
       findProviderRoutines: unavailableFindProviderRoutines,
-      getVisibleSignalByPublicId: dbApp.getVisibleSignalByPublicId,
-      listSignalEntityLinksForSignal: dbApp.listSignalEntityLinksForSignal,
+      getSignalForActor: unavailableGetSignalForActor,
     };
   }
 
@@ -611,8 +547,6 @@ async function defaultDependencies(
       createSignalForActor: unavailableCreateSignalForActor,
       findProviderRoutines: unavailableFindProviderRoutines,
       getSignalForActor: appSignalIntake.getSignalForActorViaApp,
-      getVisibleSignalByPublicId: dbApp.getVisibleSignalByPublicId,
-      listSignalEntityLinksForSignal: dbApp.listSignalEntityLinksForSignal,
     };
   }
 
@@ -624,8 +558,7 @@ async function defaultDependencies(
       callProviderRoutine: appProxyIntake.callProviderRoutineViaApp,
       createSignalForActor: unavailableCreateSignalForActor,
       findProviderRoutines: appProxyIntake.findProviderRoutinesViaApp,
-      getVisibleSignalByPublicId: dbApp.getVisibleSignalByPublicId,
-      listSignalEntityLinksForSignal: dbApp.listSignalEntityLinksForSignal,
+      getSignalForActor: unavailableGetSignalForActor,
     };
   }
 
@@ -635,8 +568,7 @@ async function defaultDependencies(
     callProviderRoutine: unavailableCallProviderRoutine,
     createSignalForActor: unavailableCreateSignalForActor,
     findProviderRoutines: unavailableFindProviderRoutines,
-    getVisibleSignalByPublicId: dbApp.getVisibleSignalByPublicId,
-    listSignalEntityLinksForSignal: dbApp.listSignalEntityLinksForSignal,
+    getSignalForActor: unavailableGetSignalForActor,
   };
 }
 
@@ -653,6 +585,10 @@ async function appOrgAccessHandledDownstream(): Promise<void> {
 }
 
 async function unavailableCreateSignalForActor(): Promise<never> {
+  throw unavailableDependencyError();
+}
+
+async function unavailableGetSignalForActor(): Promise<never> {
   throw unavailableDependencyError();
 }
 
@@ -682,7 +618,6 @@ function providerRoutineContext(
       orgId: context.orgId,
       userId: context.userId,
     },
-    db: dependencies.db,
     log: dependencies.providerRoutineLog ?? noopProviderRoutineLog,
     now: dependencies.now,
     scopes: {
@@ -746,7 +681,7 @@ function isProviderRoutineErrorLike(
 function mapProviderRoutineError(error: { code: string }): {
   code: HostedMcpToolErrorCode;
   message: string;
-  outcome: RecordMcpAuditEventInput["outcome"];
+  outcome: McpAuditOutcome;
   status: number;
 } {
   switch (error.code) {

@@ -31,7 +31,6 @@ describe("app signal intake adapter", () => {
 
     await expect(
       createSignalForActorViaApp(
-        {} as never,
         {
           actor: {
             clientId: "mcp_client_test",
@@ -96,7 +95,6 @@ describe("app signal intake adapter", () => {
 
     await expect(
       createSignalForActorViaApp(
-        {} as never,
         {
           actor: {
             clientId: "mcp_client_test",
@@ -129,7 +127,6 @@ describe("app signal intake adapter", () => {
 
     await expect(
       createSignalForActorViaApp(
-        {} as never,
         {
           actor: {
             clientId: "mcp_client_test",
@@ -166,7 +163,6 @@ describe("app signal intake adapter", () => {
 
     await expect(
       getSignalForActorViaApp(
-        {} as never,
         {
           actor: {
             clientId: "mcp_client_test",

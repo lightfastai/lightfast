@@ -41,6 +41,10 @@
       "types": "./src/adapters/internal/mcp-signals.ts",
       "default": "./src/adapters/internal/mcp-signals.ts"
     },
+    "./internal-api/mcp-audit": {
+      "types": "./src/adapters/internal/mcp-audit.ts",
+      "default": "./src/adapters/internal/mcp-audit.ts"
+    },
     "./public-api/signals": {
       "types": "./src/adapters/public/signals.ts",
       "default": "./src/adapters/public/signals.ts"

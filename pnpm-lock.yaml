@@ -1017,9 +1017,6 @@ importers:
       '@api/app':
         specifier: workspace:*
         version: link:../../api/app
-      '@db/app':
-        specifier: workspace:*
-        version: link:../../db/app
       '@lightfast/connector-core':
         specifier: workspace:*
         version: link:../../connectors/core
@@ -1047,9 +1044,6 @@ importers:
       '@vendor/mcp':
         specifier: workspace:*
         version: link:../../vendor/mcp
-      '@vendor/observability':
-        specifier: workspace:*
-        version: link:../../vendor/observability
       react:
         specifier: ^19.2.6
         version: 19.2.6
