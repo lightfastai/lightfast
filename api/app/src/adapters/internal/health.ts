@@ -1,4 +1,4 @@
-export function getHealth(request: Request): Response {
+export function handleAppHealthRequest(request: Request): Response {
   const authToken = process.env.HEALTH_CHECK_AUTH_TOKEN;
 
   if (authToken) {

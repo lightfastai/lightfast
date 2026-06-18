@@ -61,6 +61,10 @@
       "types": "./src/adapters/internal/mcp-proxy.ts",
       "default": "./src/adapters/internal/mcp-proxy.ts"
     },
+    "./internal-api/health": {
+      "types": "./src/adapters/internal/health.ts",
+      "default": "./src/adapters/internal/health.ts"
+    },
     "./internal-api/workspace-assistant": {
       "types": "./src/adapters/internal/workspace-assistant/index.ts",
       "default": "./src/adapters/internal/workspace-assistant/index.ts"
