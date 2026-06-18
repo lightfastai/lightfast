@@ -1,5 +1,6 @@
 import { db } from "@db/app/client";
 import { nativeCreateAttemptInputSchema } from "@repo/native-auth-contract";
+import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import {
   getRequest,
@@ -22,8 +23,36 @@ async function createTanStackNativeAuthContext() {
   });
 }
 
-function mapTanStackNativeAuthError(error: unknown): never {
+function oauthRequestRedirectTarget(requestUrl: string): string {
+  try {
+    const url = new URL(requestUrl);
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return requestUrl.startsWith("/") ? requestUrl : "/";
+  }
+}
+
+function redirectToSignInForOAuth(requestUrl: string): never {
+  throw redirect({
+    search: { redirect_url: oauthRequestRedirectTarget(requestUrl) },
+    throw: true,
+    to: "/sign-in",
+  });
+}
+
+function mapTanStackNativeAuthError(
+  error: unknown,
+  options: { redirectUnauthorizedToSignIn?: boolean; requestUrl?: string } = {}
+): never {
   if (isNativeAuthError(error)) {
+    if (
+      options.redirectUnauthorizedToSignIn &&
+      options.requestUrl &&
+      error.code === "UNAUTHORIZED"
+    ) {
+      redirectToSignInForOAuth(options.requestUrl);
+    }
+
     setResponseStatus(error.status);
     throw new Error(error.message, { cause: error });
   }
@@ -35,9 +64,10 @@ function noStore() {
   setResponseHeader("vary", "Cookie, Authorization");
 }
 
-export const listNativeAuthOrganizations = createServerFn({
-  method: "GET",
-}).handler(async () => {
+async function listNativeAuthOrganizationsForCurrentRequest(
+  options: { redirectUnauthorizedToSignIn?: boolean } = {}
+) {
+  const request = getRequest();
   noStore();
   try {
     return await listNativeOrganizationsForAuthContext({
@@ -45,9 +75,24 @@ export const listNativeAuthOrganizations = createServerFn({
       db,
     });
   } catch (error) {
-    mapTanStackNativeAuthError(error);
+    mapTanStackNativeAuthError(error, {
+      redirectUnauthorizedToSignIn: options.redirectUnauthorizedToSignIn,
+      requestUrl: request.url,
+    });
   }
-});
+}
+
+export const loadNativeAuthOrganizations = createServerFn({
+  method: "GET",
+}).handler(async () =>
+  listNativeAuthOrganizationsForCurrentRequest({
+    redirectUnauthorizedToSignIn: true,
+  })
+);
+
+export const listNativeAuthOrganizations = createServerFn({
+  method: "GET",
+}).handler(async () => listNativeAuthOrganizationsForCurrentRequest());
 
 export const createNativeAuthAttempt = createServerFn({ method: "POST" })
   .inputValidator(nativeCreateAttemptInputSchema)
@@ -64,6 +109,9 @@ export const createNativeAuthAttempt = createServerFn({ method: "POST" })
     }
   });
 
+export type LoadNativeAuthOrganizationsResult = Awaited<
+  ReturnType<typeof loadNativeAuthOrganizations>
+>;
 export type ListNativeAuthOrganizationsResult = Awaited<
   ReturnType<typeof listNativeAuthOrganizations>
 >;
