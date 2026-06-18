@@ -137,6 +137,10 @@
       "types": "./src/adapters/tanstack/decisions.ts",
       "default": "./src/adapters/tanstack/decisions.ts"
     },
+    "./tanstack/entity-graph": {
+      "types": "./src/adapters/tanstack/entity-graph.ts",
+      "default": "./src/adapters/tanstack/entity-graph.ts"
+    },
     "./tanstack/people": {
       "types": "./src/adapters/tanstack/people.ts",
       "default": "./src/adapters/tanstack/people.ts"
