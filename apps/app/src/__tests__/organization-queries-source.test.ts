@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -14,7 +14,7 @@ const migratedFiles = [
   "src/account/team-create-client.tsx",
   "src/signals/signal-create-dialog.tsx",
   "src/org/settings/general/team-general-settings-client.tsx",
-  "src/org/settings/general/team-general-settings-actions.ts",
+  "src/org/settings/general/team-general-settings-model.ts",
   "src/routes/_authenticated/$slug/tasks/index.tsx",
   "src/routes/_authenticated/$slug/tasks/bind/index.tsx",
   "src/routes/_authenticated/$slug/tasks/github/lightfast-repo.tsx",
@@ -50,15 +50,46 @@ describe("organization query helpers", () => {
     const clientSource = source(
       "src/org/settings/general/team-general-settings-client.tsx"
     );
-    const actionsSource = source(
-      "src/org/settings/general/team-general-settings-actions.ts"
+    const modelSource = source(
+      "src/org/settings/general/team-general-settings-model.ts"
     );
+    const actionsPath =
+      "src/org/settings/general/team-general-settings-actions.ts";
 
     expect(clientSource).not.toContain("useTRPC");
     expect(clientSource).not.toContain("org.settings.organization.listDomains");
-    expect(actionsSource).not.toContain("useTRPC");
-    expect(actionsSource).not.toContain(
+    expect(existsSync(resolve(appRoot, actionsPath))).toBe(false);
+    expect(modelSource).not.toContain("useTRPC");
+    expect(modelSource).not.toContain(
       "org.settings.organization.updateDomains"
     );
+  });
+
+  it("keeps team general mutation state in the client and pure helpers in the model", () => {
+    const clientSource = source(
+      "src/org/settings/general/team-general-settings-client.tsx"
+    );
+    const modelSource = source(
+      "src/org/settings/general/team-general-settings-model.ts"
+    );
+    const actionsPath =
+      "src/org/settings/general/team-general-settings-actions.ts";
+
+    expect(existsSync(resolve(appRoot, actionsPath))).toBe(false);
+    expect(clientSource).toContain("useMutation");
+    expect(clientSource).toContain("useQueryClient");
+    expect(clientSource).toContain("updateOrganizationNameMutationOptions");
+    expect(clientSource).toContain("updateOrganizationDomainsMutationOptions");
+    expect(clientSource).toContain("organizationQueryKeys.domains(slug)");
+    expect(clientSource).toContain("renameOrganizationSlug");
+    expect(clientSource).not.toContain("useTeamNameUpdate");
+    expect(clientSource).not.toContain("useTeamDomainsUpdate");
+    expect(clientSource).not.toContain("team-general-settings-actions");
+
+    expect(modelSource).toContain("normalizeTeamSlugInput");
+    expect(modelSource).toContain("normalizeTeamDomainList");
+    expect(modelSource).toContain("renameOrganizationSlug");
+    expect(modelSource).not.toContain("useMutation");
+    expect(modelSource).not.toContain("toast.");
   });
 });

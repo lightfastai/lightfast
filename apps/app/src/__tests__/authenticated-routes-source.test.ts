@@ -1198,9 +1198,11 @@ describe("app authenticated route migration", () => {
     const teamGeneralClientSource = source(
       "src/org/settings/general/team-general-settings-client.tsx"
     );
-    const teamGeneralActionsSource = source(
-      "src/org/settings/general/team-general-settings-actions.ts"
+    const teamGeneralModelSource = source(
+      "src/org/settings/general/team-general-settings-model.ts"
     );
+    const teamGeneralActionsPath =
+      "src/org/settings/general/team-general-settings-actions.ts";
     const identityCardSource = source(
       "src/org/settings/general/identity-soul-card.tsx"
     );
@@ -1261,15 +1263,20 @@ describe("app authenticated route migration", () => {
       "organizationDomainsQueryOptions"
     );
     expect(teamGeneralClientSource).toContain("useNavigate");
-    expect(teamGeneralActionsSource).toContain(
+    expect(existsSync(resolve(appRoot, teamGeneralActionsPath))).toBe(false);
+    expect(teamGeneralClientSource).toContain(
       "updateOrganizationNameMutationOptions"
     );
-    expect(teamGeneralActionsSource).toContain(
+    expect(teamGeneralClientSource).toContain(
       "updateOrganizationDomainsMutationOptions"
     );
-    expect(teamGeneralActionsSource).toContain(
+    expect(teamGeneralClientSource).toContain(
       "organizationQueryKeys.domains(slug)"
     );
+    expect(teamGeneralClientSource).not.toContain("useTeamNameUpdate");
+    expect(teamGeneralClientSource).not.toContain("useTeamDomainsUpdate");
+    expect(teamGeneralModelSource).toContain("normalizeTeamDomainList");
+    expect(teamGeneralModelSource).toContain("renameOrganizationSlug");
     expect(identityCardSource).toContain("orgIdentityQueryOptions");
     expect(identityCardSource).not.toContain("identity.get.queryOptions");
     expect(identityCardSource).not.toContain(
@@ -1306,7 +1313,7 @@ describe("app authenticated route migration", () => {
       generalRouteSource,
       billingRouteSource,
       teamGeneralClientSource,
-      teamGeneralActionsSource,
+      teamGeneralModelSource,
       identityCardSource,
       identitySectionSource,
       billingClientSource,
