@@ -1,7 +1,7 @@
 import {
   type FullConnectorToolManifest,
   fullConnectorToolManifestSchema,
-} from "@repo/connector-contract";
+} from "@lightfast/connector-core";
 import { z } from "zod";
 
 import { assertXEndpointAllowed, DEFAULT_X_ENDPOINTS } from "./config";

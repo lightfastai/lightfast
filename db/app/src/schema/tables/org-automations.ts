@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
+import type { ConnectableConnectorProvider } from "@lightfast/connector-core";
 import {
   AUTOMATION_ID_PREFIX,
   AUTOMATION_RUN_ID_PREFIX,
 } from "@repo/app-validation/schemas";
-import type { ConnectableConnectorProvider } from "@repo/connector-contract";
 import { sql } from "drizzle-orm";
 import {
   bigint,

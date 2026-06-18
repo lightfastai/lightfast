@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { UserConnectorProvider } from "@repo/connector-contract";
+import type { UserConnectorProvider } from "@lightfast/connector-core";
 import { sql } from "drizzle-orm";
 import {
   bigint,

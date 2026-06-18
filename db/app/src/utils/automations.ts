@@ -1,10 +1,10 @@
+import type { ConnectableConnectorProvider } from "@lightfast/connector-core";
 import {
   type AutomationScheduleInput,
   type NormalizedAutomationSchedule,
   type NormalizedSchedule,
   normalizeAutomationSchedule,
 } from "@repo/app-validation/schemas";
-import type { ConnectableConnectorProvider } from "@repo/connector-contract";
 import { and, asc, desc, eq, inArray, lte, ne, sql } from "drizzle-orm";
 
 import type { Database } from "../client";

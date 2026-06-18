@@ -1,5 +1,5 @@
 import type { Database, OrgConnectorConnection } from "@db/app";
-import type { ConnectableConnectorProvider } from "@repo/connector-contract";
+import type { ConnectableConnectorProvider } from "@lightfast/connector-core";
 import type { ProviderRoutineSourceSurface } from "@repo/provider-routine-contract";
 
 export interface ProviderRoutineServiceLog {

@@ -18,8 +18,8 @@
   },
   "dependencies": {
     "@db/app": "workspace:*",
+    "@lightfast/connector-core": "workspace:*",
     "@repo/app-encryption": "workspace:*",
-    "@repo/connector-contract": "workspace:*",
     "@repo/linear-app-node": "workspace:*",
     "@repo/provider-routine-contract": "workspace:*",
     "@vendor/observability": "workspace:*",

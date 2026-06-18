@@ -1,7 +1,7 @@
 import {
   type ConnectableConnectorProvider,
   connectableConnectorProviderSchema,
-} from "@repo/connector-contract";
+} from "@lightfast/connector-core";
 import { z } from "zod";
 
 export const providerToolNameSchema = z

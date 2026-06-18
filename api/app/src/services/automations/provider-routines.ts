@@ -1,4 +1,4 @@
-import type { ConnectableConnectorProvider } from "@repo/connector-contract";
+import type { ConnectableConnectorProvider } from "@lightfast/connector-core";
 import {
   type ProviderRoutineCallFailure,
   type ProviderRoutineCallInput,

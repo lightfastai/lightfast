@@ -12,11 +12,11 @@ import {
   updateObservedConnectorTokens,
 } from "@db/app";
 import { db as appDb } from "@db/app/client";
-import { decrypt, encrypt } from "@repo/app-encryption";
 import {
   connectorRuntimeToolName,
   type FullConnectorToolManifest,
-} from "@repo/connector-contract";
+} from "@lightfast/connector-core";
+import { decrypt, encrypt } from "@repo/app-encryption";
 import {
   buildXOAuthAuthorizeUrl,
   createXPkcePair,

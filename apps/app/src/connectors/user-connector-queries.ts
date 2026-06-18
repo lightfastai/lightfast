@@ -2,7 +2,7 @@ import {
   disconnectUserConnector,
   startUserConnector,
 } from "@api/app/tanstack/user-connectors";
-import type { UserConnectorProvider } from "@repo/connector-contract";
+import type { UserConnectorProvider } from "@lightfast/connector-core";
 import { mutationOptions } from "@tanstack/react-query";
 
 type StartUserConnectorResult = Awaited<ReturnType<typeof startUserConnector>>;
