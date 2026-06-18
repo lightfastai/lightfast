@@ -107,6 +107,36 @@ After a conversation exists:
 - Changing local defaults affects only future new chats.
 - The server rejects requests that try to change the conversation's locked mode or model.
 
+## Composer UI
+
+The composer should keep a single calm input surface inspired by the ChatGPT-style control cluster:
+
+```text
+[ + ]  Ask Lightfield...                         [ Thinking ▾ ] [ mode icon ] [ ↑ ]
+```
+
+The left side is for context. The right side is for execution settings and send/stop.
+
+The model profile control is textual because `Fast` and `Thinking` need to be scannable before send. It opens a small two-option menu:
+
+- `Fast`
+- `Thinking`
+
+The read/write control sits on the right as an icon-first button:
+
+- Read mode uses an eye or book-style icon.
+- Write mode uses a pencil-style icon.
+- The composer trigger stays icon-only, with tooltip/accessibility text providing the label.
+- Activating it opens a compact popover/modal with two icon choices.
+
+Before first send, model profile and capability mode are editable defaults read from `localStorage`. After first send, persisted conversation settings win and both controls render as locked for the current conversation. The controls should remain visible after locking so the user can see what kind of conversation they are in, but interactions should explain that the conversation cannot change modes or model profiles.
+
+On smaller viewports or when the textarea grows, the right cluster may move into a footer row, but the order remains:
+
+```text
+[ Fast/Thinking ] [ Read/Write icon ] [ Send/Stop ]
+```
+
 ## Model Profiles
 
 Expose product labels, not raw provider names.
@@ -216,13 +246,46 @@ These parts are not a replacement for native tool parts. They are semantic rows 
 
 Assistant messages render their parts in order. The UI should not force all thinking before all tools before all text.
 
+The approved interaction model is a chronological rail: reasoning summaries, semantic activity rows, native tool parts, sources, write confirmations or failures, and assistant answer text appear in the same order that AI SDK streams and persists them.
+
+Use the real Fluid Functionalism `ThinkingSteps` component pattern as the concrete UI foundation, adapting it to Lightfast's message stream rather than recreating a separate lookalike. Implementation should vendor or install the registry component into the local UI layer and adapt imports to this repo's package structure while preserving the component model. The referenced registry is:
+
+- `https://www.fluidfunctionalism.com/docs/thinking-steps`
+- `https://www.fluidfunctionalism.com/r/thinking-steps.json`
+
+The relevant component API is:
+
+- `ThinkingSteps`
+- `ThinkingStepsHeader`
+- `ThinkingStepsContent`
+- `ThinkingStep`
+- `ThinkingStepDetails`
+- `ThinkingStepSources`
+- `ThinkingStepSource`
+- `ThinkingStepImage`
+
+The relevant step statuses are:
+
+- `complete`
+- `active`
+- `pending`
+
+Lightfast should reuse this pattern's strengths: a compact accordion header, vertical step rail, active/complete states, nested details, source badges, and optional media. The adaptation should not expose private chain-of-thought. It should render only model-provided reasoning summaries, Lightfast-authored activity summaries, tool metadata, user-relevant tool outputs, sources, and final assistant text.
+
+Map Lightfast activity state to `ThinkingStep` status explicitly:
+
+- `running` maps to `active`.
+- `completed` maps to `complete`.
+- `failed` maps to `complete` with error styling and details.
+- Hidden future/planned rows, if ever needed, map to `pending`.
+
 Rendering rules:
 
-- `reasoning` renders as a compact Thinking row.
-- `data-activity` renders as a semantic activity row.
-- `tool-*` renders as an activity/tool row using tool metadata when available.
+- `reasoning` renders as a `ThinkingStep` with `active` status while streaming and `complete` status when finalized.
+- `data-activity` renders as a semantic `ThinkingStep` row.
+- `tool-*` renders as an activity/tool `ThinkingStep` row using tool metadata when available.
 - `text` renders as answer content exactly where it appears.
-- `source-*` renders as supporting source rows or badges.
+- `source-*` renders as `ThinkingStepSource` badges or supporting source rows.
 - Unknown parts render through a quiet fallback.
 
 Streaming behavior:
@@ -232,7 +295,7 @@ Streaming behavior:
 - Tool output details remain inspectable.
 - Rich standalone output appears inline when useful: search result summaries, created or updated entity confirmations, write failures, reconnect warnings, or other user-relevant artifacts.
 
-This adapts the useful parts of Fluid Functionalism's ThinkingSteps pattern: compact accordion rows, active and complete states, source badges, nested detail accordions, and optional media. It should not become a pre-answer thinking-only block.
+The renderer should prefer a single chronological flow over a single pre-answer Thinking block. A collapsible `ThinkingSteps` container may group adjacent non-text activity rows, but text parts remain interleaved in their true order. This keeps the UI honest for Lightfast's agent style, where tool calls can happen during generation instead of only before the answer starts.
 
 ## Request Flow
 
@@ -279,6 +342,8 @@ Focused tests should cover:
 - Denying write execution in read mode.
 - Validating `data-activity` parts in `safeValidateUIMessages`.
 - Rendering chronological sequences containing `reasoning`, `data-activity`, `tool-*`, `source-*`, and `text`.
+- Rendering activity states through the `ThinkingStep` status mapping.
+- Keeping model and read/write controls editable before first send and locked after persisted settings exist.
 - Loading legacy `1.0.0` persisted messages with existing generic tool rendering.
 
 ## Implementation Boundary
