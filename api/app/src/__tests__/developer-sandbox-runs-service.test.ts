@@ -61,6 +61,15 @@ function ctx() {
   };
 }
 
+function unauthenticatedCtx() {
+  return {
+    auth: {
+      identity: { type: "unauthenticated" as const },
+    },
+    db: {} as Database,
+  };
+}
+
 function sandboxRun(overrides: Record<string, unknown> = {}) {
   return {
     id: 100,
@@ -266,6 +275,37 @@ describe("developer sandbox run service", () => {
       })
     );
     expect(issueAllEnabledDeveloperConnectionLeasesMock).not.toHaveBeenCalled();
+  });
+
+  it("throws a domain authz error when creating without an active identity", async () => {
+    const fakeRuntime = runtime();
+    const service = createService(fakeRuntime);
+
+    await expect(
+      service.createDeveloperSandboxRun(unauthenticatedCtx())
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        code: "AUTH_REQUIRED",
+        kind: "authz",
+      })
+    );
+  });
+
+  it("throws a domain not-found error when a sandbox run cannot be loaded", async () => {
+    getDeveloperSandboxRunByPublicIdMock.mockResolvedValueOnce(undefined);
+    const fakeRuntime = runtime();
+    const service = createService(fakeRuntime);
+
+    await expect(
+      service.stopDeveloperSandboxRun(ctx(), {
+        sandboxRunId: "developer_sandbox_run_missing",
+      })
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        code: "DEVELOPER_SANDBOX_RUN_NOT_FOUND",
+        kind: "not_found",
+      })
+    );
   });
 
   it("blocks denied commands before loading credentials", async () => {

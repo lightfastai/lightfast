@@ -13,7 +13,7 @@ import {
   DEVELOPER_CONNECTION_PROVIDERS,
   type DeveloperConnectionIssueLeaseInput,
 } from "@repo/developer-connection-contract";
-import { TRPCError } from "@trpc/server";
+import { AuthzError, ConflictError } from "../../domain/errors";
 import type { AuthContext } from "../../trpc";
 import {
   type DeveloperConnectionMaterialization,
@@ -39,23 +39,23 @@ interface LeaseMaterializationResult {
 function activeIdentity(ctx: DeveloperConnectionServiceContext) {
   const identity = ctx.auth.identity;
   if (identity.type !== "active") {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
+    throw new AuthzError("AUTH_REQUIRED", "Authentication required.");
   }
   return identity;
 }
 
 function assertUsableConnection(connection: DeveloperConnection) {
   if (connection.status !== "connected") {
-    throw new TRPCError({
-      code: "PRECONDITION_FAILED",
-      message: `${connection.provider} needs reconnect`,
-    });
+    throw new ConflictError(
+      "DEVELOPER_CONNECTION_RECONNECT_REQUIRED",
+      `${connection.provider} needs reconnect`
+    );
   }
   if (!connection.encryptedCredential) {
-    throw new TRPCError({
-      code: "PRECONDITION_FAILED",
-      message: `${connection.provider} has no credential material`,
-    });
+    throw new ConflictError(
+      "DEVELOPER_CONNECTION_CREDENTIAL_MISSING",
+      `${connection.provider} has no credential material`
+    );
   }
 }
 
@@ -65,10 +65,10 @@ async function materializeConnection(
   assertUsableConnection(connection);
   const encryptedCredential = connection.encryptedCredential;
   if (!encryptedCredential) {
-    throw new TRPCError({
-      code: "PRECONDITION_FAILED",
-      message: `${connection.provider} has no credential material`,
-    });
+    throw new ConflictError(
+      "DEVELOPER_CONNECTION_CREDENTIAL_MISSING",
+      `${connection.provider} has no credential material`
+    );
   }
   const credentialPayload =
     await decryptDeveloperCredential<Record<string, unknown>>(
@@ -107,17 +107,17 @@ export async function issueDeveloperConnectionLeases(
   for (const provider of requested) {
     const connection = byProvider.get(provider);
     if (!connection) {
-      throw new TRPCError({
-        code: "PRECONDITION_FAILED",
-        message: `${provider} needs reconnect`,
-      });
+      throw new ConflictError(
+        "DEVELOPER_CONNECTION_RECONNECT_REQUIRED",
+        `${provider} needs reconnect`
+      );
     }
     assertUsableConnection(connection);
     if (!connection.enabledForSandboxes) {
-      throw new TRPCError({
-        code: "PRECONDITION_FAILED",
-        message: `${provider} is disabled for sandboxes`,
-      });
+      throw new ConflictError(
+        "DEVELOPER_CONNECTION_SANDBOX_DISABLED",
+        `${provider} is disabled for sandboxes`
+      );
     }
 
     const lease = await issueDeveloperConnectionLease(ctx.db, {
@@ -194,10 +194,10 @@ export async function materializeDeveloperConnectionLeasesForSandboxRun(
       lease.connectionId
     );
     if (!connection || connection.clerkOrgId !== identity.orgId) {
-      throw new TRPCError({
-        code: "PRECONDITION_FAILED",
-        message: `${lease.provider} has no credential material`,
-      });
+      throw new ConflictError(
+        "DEVELOPER_CONNECTION_CREDENTIAL_MISSING",
+        `${lease.provider} has no credential material`
+      );
     }
     materialization.push(await materializeConnection(connection));
   }

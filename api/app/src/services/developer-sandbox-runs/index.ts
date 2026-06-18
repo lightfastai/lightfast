@@ -17,7 +17,7 @@ import {
   createVercelSandboxRuntime,
   type SandboxRuntime,
 } from "@repo/sandbox-runtime";
-import { TRPCError } from "@trpc/server";
+import { AuthzError, ConflictError, NotFoundError } from "../../domain/errors";
 import type { AuthContext } from "../../trpc";
 import {
   issueAllEnabledDeveloperConnectionLeases,
@@ -63,23 +63,23 @@ export function canUseDeveloperSandboxes(
 function activeIdentity(ctx: DeveloperSandboxRunServiceContext) {
   const identity = ctx.auth.identity;
   if (!canUseDeveloperSandboxes(ctx) || identity.type !== "active") {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
+    throw new AuthzError("AUTH_REQUIRED", "Authentication required.");
   }
   return identity;
 }
 
 function ensureRunnableRun(run: DeveloperSandboxRun, now: Date) {
   if (run.status !== "running" && run.status !== "starting") {
-    throw new TRPCError({
-      code: "PRECONDITION_FAILED",
-      message: `Developer sandbox run is ${run.status}`,
-    });
+    throw new ConflictError(
+      "DEVELOPER_SANDBOX_RUN_NOT_RUNNABLE",
+      `Developer sandbox run is ${run.status}`
+    );
   }
   if (run.expiresAt <= now) {
-    throw new TRPCError({
-      code: "PRECONDITION_FAILED",
-      message: "Developer sandbox run has expired",
-    });
+    throw new ConflictError(
+      "DEVELOPER_SANDBOX_RUN_EXPIRED",
+      "Developer sandbox run has expired"
+    );
   }
 }
 
@@ -136,7 +136,10 @@ export function createDeveloperSandboxRunService(
       publicId: sandboxRunId,
     });
     if (!run) {
-      throw new TRPCError({ code: "NOT_FOUND" });
+      throw new NotFoundError(
+        "DEVELOPER_SANDBOX_RUN_NOT_FOUND",
+        "Developer sandbox run was not found."
+      );
     }
     return { identity, run };
   }

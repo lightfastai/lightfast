@@ -1,4 +1,4 @@
-import { TRPCError } from "@trpc/server";
+import { ConflictError, InternalDomainError } from "../../domain/errors";
 import { env } from "../../env";
 
 export interface SentryAuthBoxStartResult {
@@ -31,10 +31,10 @@ export interface SentryAuthBoxClient {
 
 function authBoxConfig() {
   if (!(env.DEVELOPER_AUTH_BOX_ORIGIN && env.DEVELOPER_AUTH_BOX_TOKEN)) {
-    throw new TRPCError({
-      code: "PRECONDITION_FAILED",
-      message: "Developer auth box is not configured.",
-    });
+    throw new ConflictError(
+      "DEVELOPER_AUTH_BOX_NOT_CONFIGURED",
+      "Developer auth box is not configured."
+    );
   }
   return {
     origin: env.DEVELOPER_AUTH_BOX_ORIGIN.replace(/\/$/, ""),
@@ -57,10 +57,11 @@ async function authBoxRequest<T>(
   });
 
   if (!response.ok) {
-    throw new TRPCError({
-      code: "BAD_GATEWAY",
-      message: `Developer auth box request failed with ${response.status}.`,
-    });
+    throw new InternalDomainError(
+      "DEVELOPER_AUTH_BOX_REQUEST_FAILED",
+      `Developer auth box request failed with ${response.status}.`,
+      { status: response.status }
+    );
   }
 
   return (await response.json()) as T;

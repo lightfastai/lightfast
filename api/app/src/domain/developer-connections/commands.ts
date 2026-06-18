@@ -25,6 +25,7 @@ import {
   AuthzError,
   ConflictError,
   InternalDomainError,
+  isDomainError,
   ValidationError,
 } from "../errors";
 import { requireBoundClerkOrgActor, requireClerkOrgAdminActor } from "../gates";
@@ -313,6 +314,10 @@ function mapDeveloperConnectionServiceError(
   fallbackCode: string,
   fallbackMessage: string
 ) {
+  if (isDomainError(error)) {
+    return error;
+  }
+
   const code =
     error && typeof error === "object" && "code" in error
       ? String(error.code)
