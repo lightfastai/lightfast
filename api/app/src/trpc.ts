@@ -12,14 +12,18 @@
 
 import { db } from "@db/app/client";
 import { repairIdForSetupRequirement } from "@repo/app-setup-contract";
-import { initTRPC } from "@trpc/server";
+import { initTRPC, type TRPC_ERROR_CODE_KEY, TRPCError } from "@trpc/server";
 import { createObservabilityMiddleware } from "@vendor/observability/trpc";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
 import type { AuthAccess, AuthIdentity } from "./auth/identity";
 import { resolveAuthContextFromClerk } from "./auth/identity";
-import { isDiagnosticCause, throwDiagnostic } from "./diagnostics";
+import {
+  createDiagnosticCause,
+  type Diagnostic,
+  isDiagnosticCause,
+} from "./diagnostics";
 
 /**
  * Authentication context — identity is the only auth dimension: "who is this
@@ -56,6 +60,17 @@ export const createTRPCContext = async (opts: { headers: Headers }) => ({
  * transformer.
  */
 const isProduction = process.env.NODE_ENV === "production";
+
+function throwDiagnostic(args: {
+  diagnostic: Diagnostic;
+  trpcCode: TRPC_ERROR_CODE_KEY;
+}): never {
+  throw new TRPCError({
+    code: args.trpcCode,
+    message: args.diagnostic.message,
+    cause: createDiagnosticCause(args.diagnostic),
+  });
+}
 
 const t = initTRPC.context<typeof createTRPCContext>().create({
   transformer: superjson,

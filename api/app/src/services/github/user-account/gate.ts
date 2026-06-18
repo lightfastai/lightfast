@@ -1,6 +1,6 @@
 import { type Database, getActiveUserSourceControlAccount } from "@db/app";
 
-import { throwDiagnostic } from "../../../diagnostics";
+import { AuthzError } from "../../../domain/errors";
 
 export async function requireGitHubUserAccount(input: {
   clerkUserId: string;
@@ -11,14 +11,11 @@ export async function requireGitHubUserAccount(input: {
     input.clerkUserId
   );
   if (!account) {
-    throwDiagnostic({
-      trpcCode: "FORBIDDEN",
-      diagnostic: {
-        code: "GITHUB_USER_ACCOUNT_REQUIRED",
-        message: "Connect your GitHub account before using this feature.",
-        repair: { id: "connect-github-account" },
-      },
-    });
+    throw new AuthzError(
+      "GITHUB_USER_ACCOUNT_REQUIRED",
+      "Connect your GitHub account before using this feature.",
+      { repair: { id: "connect-github-account" } }
+    );
   }
   return account;
 }
