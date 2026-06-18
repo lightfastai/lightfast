@@ -1,7 +1,7 @@
 import {
   type FullConnectorToolManifest,
   fullConnectorToolManifestSchema,
-} from "@repo/connector-contract";
+} from "@lightfast/connector-core";
 import {
   McpClient,
   type OAuthClientProvider,

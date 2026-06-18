@@ -1,4 +1,4 @@
-import { connectableConnectorProviderSchema } from "@repo/connector-contract";
+import { connectableConnectorProviderSchema } from "@lightfast/connector-core";
 import { z } from "zod";
 
 export const AUTOMATION_NAME_MAX_LENGTH = 120;

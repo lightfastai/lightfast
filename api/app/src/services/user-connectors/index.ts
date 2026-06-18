@@ -2,7 +2,7 @@ import type { Database } from "@db/app";
 import type {
   userConnectorProviderInputSchema,
   userConnectorStartConnectInputSchema,
-} from "@repo/connector-contract";
+} from "@lightfast/connector-core";
 import type { z } from "zod";
 import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 import { ValidationError } from "../../domain/errors";

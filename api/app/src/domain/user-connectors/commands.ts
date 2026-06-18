@@ -2,7 +2,7 @@ import type { Database } from "@db/app";
 import {
   userConnectorProviderInputSchema,
   userConnectorStartConnectInputSchema,
-} from "@repo/connector-contract";
+} from "@lightfast/connector-core";
 import { z } from "zod";
 
 import type { AuthIdentity } from "../../auth/identity";

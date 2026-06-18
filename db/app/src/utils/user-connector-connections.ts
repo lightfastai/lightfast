@@ -1,7 +1,7 @@
 import type {
   FullConnectorToolManifest,
   UserConnectorProvider,
-} from "@repo/connector-contract";
+} from "@lightfast/connector-core";
 import { and, eq, getTableColumns, isNotNull, isNull } from "drizzle-orm";
 import type { Database } from "../client";
 import type { UserConnectorConnection } from "../schema";

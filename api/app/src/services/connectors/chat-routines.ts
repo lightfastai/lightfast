@@ -7,7 +7,7 @@ import { db as appDb } from "@db/app/client";
 import type {
   ConnectableConnectorProvider,
   FullConnectorToolManifestItem,
-} from "@repo/connector-contract";
+} from "@lightfast/connector-core";
 import {
   type ProviderRoutineCallInput,
   type ProviderRoutineCallSuccess,

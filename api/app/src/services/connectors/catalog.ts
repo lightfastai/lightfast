@@ -10,7 +10,7 @@ import {
   type ConnectorProvider,
   connectorRuntimeToolName,
   type DisplayConnectorTool,
-} from "@repo/connector-contract";
+} from "@lightfast/connector-core";
 import { X_OAUTH_SCOPES } from "@repo/x-app-node";
 import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 import { getXConnectorConfig } from "./config";

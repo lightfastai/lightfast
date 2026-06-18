@@ -531,6 +531,9 @@ importers:
       '@db/app':
         specifier: workspace:*
         version: link:../../db/app
+      '@lightfast/connector-core':
+        specifier: workspace:*
+        version: link:../../connectors/core
       '@repo/ai':
         specifier: workspace:*
         version: link:../../ai
@@ -549,9 +552,6 @@ importers:
       '@repo/app-validation':
         specifier: workspace:^
         version: link:../../packages/app-validation
-      '@repo/connector-contract':
-        specifier: workspace:*
-        version: link:../../packages/connector-contract
       '@repo/developer-connection-contract':
         specifier: workspace:*
         version: link:../../packages/developer-connection-contract
@@ -697,6 +697,9 @@ importers:
       '@hugeicons/react':
         specifier: 'catalog:'
         version: 1.1.6(react@19.2.6)
+      '@lightfast/connector-core':
+        specifier: workspace:*
+        version: link:../../connectors/core
       '@repo/ai':
         specifier: workspace:*
         version: link:../../ai
@@ -712,9 +715,6 @@ importers:
       '@repo/app-validation':
         specifier: workspace:*
         version: link:../../packages/app-validation
-      '@repo/connector-contract':
-        specifier: workspace:*
-        version: link:../../packages/connector-contract
       '@repo/github-app-contract':
         specifier: workspace:*
         version: link:../../packages/github-app-contract
@@ -1424,6 +1424,28 @@ importers:
         specifier: 'catalog:'
         version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@24.9.1)(@vitest/browser-playwright@4.1.4)(@vitest/coverage-v8@4.1.4)(happy-dom@20.9.0)(msw@2.14.6(@types/node@24.9.1)(typescript@5.9.3))(vite@8.0.16(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
+  connectors/core:
+    dependencies:
+      zod:
+        specifier: 'catalog:'
+        version: 4.3.6
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@repo/vitest-config':
+        specifier: workspace:*
+        version: link:../../internal/vitest-config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.9.1
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@24.9.1)(@vitest/browser-playwright@4.1.4)(@vitest/coverage-v8@4.1.4)(happy-dom@20.9.0)(msw@2.14.6(@types/node@24.9.1)(typescript@5.9.3))(vite@8.0.16(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+
   core/cli:
     devDependencies:
       '@repo/native-auth-contract':
@@ -1542,6 +1564,9 @@ importers:
 
   db/app:
     dependencies:
+      '@lightfast/connector-core':
+        specifier: workspace:*
+        version: link:../../connectors/core
       '@repo/ai':
         specifier: workspace:*
         version: link:../../ai
@@ -1551,9 +1576,6 @@ importers:
       '@repo/app-validation':
         specifier: workspace:*
         version: link:../../packages/app-validation
-      '@repo/connector-contract':
-        specifier: workspace:*
-        version: link:../../packages/connector-contract
       '@repo/developer-connection-contract':
         specifier: workspace:*
         version: link:../../packages/developer-connection-contract
@@ -2005,34 +2027,12 @@ importers:
 
   packages/app-validation:
     dependencies:
+      '@lightfast/connector-core':
+        specifier: workspace:*
+        version: link:../../connectors/core
       '@repo/app-reserved-names':
         specifier: workspace:^
         version: link:../app-reserved-names
-      '@repo/connector-contract':
-        specifier: workspace:*
-        version: link:../connector-contract
-      zod:
-        specifier: 'catalog:'
-        version: 4.3.6
-    devDependencies:
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../internal/typescript
-      '@repo/vitest-config':
-        specifier: workspace:*
-        version: link:../../internal/vitest-config
-      '@types/node':
-        specifier: 'catalog:'
-        version: 24.9.1
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@24.9.1)(@vitest/browser-playwright@4.1.4)(@vitest/coverage-v8@4.1.4)(happy-dom@20.9.0)(msw@2.14.6(@types/node@24.9.1)(typescript@5.9.3))(vite@8.0.16(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
-
-  packages/connector-contract:
-    dependencies:
       zod:
         specifier: 'catalog:'
         version: 4.3.6
@@ -2177,9 +2177,9 @@ importers:
 
   packages/granola-app-node:
     dependencies:
-      '@repo/connector-contract':
+      '@lightfast/connector-core':
         specifier: workspace:*
-        version: link:../connector-contract
+        version: link:../../connectors/core
       '@vendor/mcp':
         specifier: workspace:*
         version: link:../../vendor/mcp
@@ -2227,9 +2227,9 @@ importers:
 
   packages/linear-app-node:
     dependencies:
-      '@repo/connector-contract':
+      '@lightfast/connector-core':
         specifier: workspace:*
-        version: link:../connector-contract
+        version: link:../../connectors/core
       '@vendor/mcp':
         specifier: workspace:*
         version: link:../../vendor/mcp
@@ -2355,9 +2355,9 @@ importers:
 
   packages/provider-routine-contract:
     dependencies:
-      '@repo/connector-contract':
+      '@lightfast/connector-core':
         specifier: workspace:*
-        version: link:../connector-contract
+        version: link:../../connectors/core
       zod:
         specifier: 'catalog:'
         version: 4.3.6
@@ -2383,12 +2383,12 @@ importers:
       '@db/app':
         specifier: workspace:*
         version: link:../../db/app
+      '@lightfast/connector-core':
+        specifier: workspace:*
+        version: link:../../connectors/core
       '@repo/app-encryption':
         specifier: workspace:*
         version: link:../app-encryption
-      '@repo/connector-contract':
-        specifier: workspace:*
-        version: link:../connector-contract
       '@repo/linear-app-node':
         specifier: workspace:*
         version: link:../linear-app-node
@@ -2812,9 +2812,9 @@ importers:
 
   packages/user-connector-contract:
     dependencies:
-      '@repo/connector-contract':
+      '@lightfast/connector-core':
         specifier: workspace:*
-        version: link:../connector-contract
+        version: link:../../connectors/core
       zod:
         specifier: 'catalog:'
         version: 4.3.6
@@ -2837,9 +2837,9 @@ importers:
 
   packages/x-app-node:
     dependencies:
-      '@repo/connector-contract':
+      '@lightfast/connector-core':
         specifier: workspace:*
-        version: link:../connector-contract
+        version: link:../../connectors/core
       '@vendor/mcp':
         specifier: workspace:*
         version: link:../../vendor/mcp

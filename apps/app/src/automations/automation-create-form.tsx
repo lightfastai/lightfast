@@ -1,5 +1,6 @@
 import { useAuth } from "@clerk/tanstack-react-start";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { connectableConnectorProviderSchema } from "@lightfast/connector-core";
 import {
   ChevronLeftIcon as ChevronLeft,
   Loading03Icon as Loader2,
@@ -10,7 +11,6 @@ import {
   AUTOMATION_PROMPT_MAX_LENGTH,
   type AutomationScheduleInput,
 } from "@repo/app-validation/schemas";
-import { connectableConnectorProviderSchema } from "@repo/connector-contract";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import {
