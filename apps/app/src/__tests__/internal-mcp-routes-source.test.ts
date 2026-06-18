@@ -44,15 +44,26 @@ describe("internal MCP app routes", () => {
     expect(existsSync(resolve(appRoot, "src/server/mcp-proxy.ts"))).toBe(false);
 
     expect(createRoute).toContain('@api/app/internal-api/mcp-signals"');
+    expect(createRoute).toContain("await import(");
     expect(createRoute).toContain("handleCreateMcpSignalInternalRequest");
     expect(getRoute).toContain('@api/app/internal-api/mcp-signals"');
+    expect(getRoute).toContain("await import(");
     expect(getRoute).toContain("handleGetMcpSignalInternalRequest");
     expect(auditRoute).toContain('@api/app/internal-api/mcp-audit"');
+    expect(auditRoute).toContain("await import(");
     expect(auditRoute).toContain("handleRecordMcpAuditInternalRequest");
     expect(proxyCallRoute).toContain('@api/app/internal-api/mcp-proxy"');
+    expect(proxyCallRoute).toContain("await import(");
     expect(proxyCallRoute).toContain("handleMcpProxyCallRequest");
+    expect(proxyCallRoute).not.toContain(
+      'import { handleMcpProxyCallRequest } from "@api/app/internal-api/mcp-proxy"'
+    );
     expect(proxyFindRoute).toContain('@api/app/internal-api/mcp-proxy"');
+    expect(proxyFindRoute).toContain("await import(");
     expect(proxyFindRoute).toContain("handleMcpProxyFindRequest");
+    expect(proxyFindRoute).not.toContain(
+      'import { handleMcpProxyFindRequest } from "@api/app/internal-api/mcp-proxy"'
+    );
 
     for (const source of [
       createRoute,
