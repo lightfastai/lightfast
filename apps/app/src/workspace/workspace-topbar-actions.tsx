@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import {
   getRouteApi,
   type StaticDataRouteOption,
@@ -20,7 +21,7 @@ import {
 } from "~/signals/signals-search-params";
 import { SignalsViewSwitcher } from "~/signals/signals-view-switcher";
 import { SkillsActions } from "~/skills/skills-actions";
-import { useSkillsListQuery } from "~/skills/use-skills-list-query";
+import { skillsListQueryOptions } from "~/skills/skills-queries";
 
 type WorkspaceTopbarAction = "connectors" | "people" | "signals" | "skills";
 
@@ -150,7 +151,7 @@ function PeopleTopbarActions() {
 }
 
 function SkillsTopbarActions() {
-  const { query } = useSkillsListQuery();
+  const query = useQuery(skillsListQueryOptions());
   const data = query.data;
 
   if (!data) {

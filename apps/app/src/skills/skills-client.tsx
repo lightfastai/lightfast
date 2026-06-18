@@ -1,5 +1,6 @@
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
+import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { useDeferredValue, useMemo, useState } from "react";
 import { LfSelect } from "~/components/lf-select";
@@ -8,10 +9,10 @@ import { SkillDialog } from "./skill-dialog";
 import { SkillGrid } from "./skill-grid";
 import { SkillsLoading } from "./skills-loading";
 import { getVisibleSkills, type SkillFilter } from "./skills-model";
+import { skillsListQueryOptions } from "./skills-queries";
 import type { NormalizedSkillsSearch } from "./skills-search-params";
 import type { SkillsListResult } from "./skills-types";
 import { useSkillIndexRefreshController } from "./use-skill-index-refresh-controller";
-import { useSkillsListQuery } from "./use-skills-list-query";
 
 export function SkillsClient({
   search,
@@ -20,7 +21,7 @@ export function SkillsClient({
   search: NormalizedSkillsSearch;
   setSearchParams: (updates: Partial<NormalizedSkillsSearch>) => void;
 }) {
-  const { query: skillsQuery } = useSkillsListQuery();
+  const skillsQuery = useQuery(skillsListQueryOptions());
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<SkillFilter>("all");
   const data = skillsQuery.data;

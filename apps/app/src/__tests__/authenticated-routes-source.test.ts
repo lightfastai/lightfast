@@ -481,7 +481,7 @@ describe("app authenticated route migration", () => {
     );
     const skillsClientSource = source("src/skills/skills-client.tsx");
     const skillsSearchSource = source("src/skills/skills-search-params.ts");
-    const skillsQuerySource = source("src/skills/use-skills-list-query.ts");
+    const skillsQuerySource = source("src/skills/skills-queries.ts");
     const connectorsRouteSource = source(
       "src/routes/_authenticated/$slug/connectors.tsx"
     );
@@ -537,6 +537,7 @@ describe("app authenticated route migration", () => {
     expect(skillsQuerySource).toContain(
       'enabled: typeof window !== "undefined"'
     );
+    expect(skillsClientSource).not.toContain("useSkillsListQuery");
 
     expect(connectorsRouteSource).toContain("validateConnectorsSearch");
     expect(connectorsRouteSource).toContain("setSearchParams");
