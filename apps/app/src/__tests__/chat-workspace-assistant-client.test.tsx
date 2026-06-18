@@ -430,13 +430,11 @@ describe("WorkspaceAssistantClient", () => {
 
   it("soft-replaces the browser URL before creation and syncs the router after send", async () => {
     let resolveCreate:
-      | ((
-          conversation: {
-            metadata?: Record<string, unknown>;
-            publicId: string;
-            title: string;
-          }
-        ) => void)
+      | ((conversation: {
+          metadata?: Record<string, unknown>;
+          publicId: string;
+          title: string;
+        }) => void)
       | undefined;
     const replaceStateSpy = vi
       .spyOn(History.prototype, "replaceState")
@@ -675,13 +673,12 @@ function conversationResult(
     conversation?: Partial<
       WorkspaceAssistantConversationResult["conversation"]
     >;
-    messages?: Array<
-      Partial<WorkspaceAssistantConversationResult["messages"][number]>
-    >;
+    messages?: Partial<
+      WorkspaceAssistantConversationResult["messages"][number]
+    >[];
   } = {}
 ): WorkspaceAssistantConversationResult {
-  const { conversation: conversationOverrides = {}, messages = [] } =
-    overrides;
+  const { conversation: conversationOverrides = {}, messages = [] } = overrides;
   return {
     conversation: {
       activeStreamId: null,

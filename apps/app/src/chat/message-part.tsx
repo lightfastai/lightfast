@@ -1,12 +1,5 @@
+import { mapActivityStatusToThinkingStepStatus } from "@repo/ai/workspace-assistant";
 import { MessageResponse } from "@repo/ui-v2/components/ai-elements/message";
-import {
-  type ToolPart as AiElementsToolPart,
-  Tool,
-  ToolContent,
-  ToolHeader,
-  ToolInput,
-  ToolOutput,
-} from "@repo/ui-v2/components/ai-elements/tool";
 import {
   ThinkingStep,
   ThinkingStepDetails,
@@ -16,7 +9,14 @@ import {
   ThinkingStepsContent,
   ThinkingStepsHeader,
 } from "@repo/ui-v2/components/ai-elements/thinking-steps";
-import { mapActivityStatusToThinkingStepStatus } from "@repo/ai/workspace-assistant";
+import {
+  type ToolPart as AiElementsToolPart,
+  Tool,
+  ToolContent,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+} from "@repo/ui-v2/components/ai-elements/tool";
 import type { DynamicToolUIPart, ToolUIPart, UIMessage } from "@vendor/ai";
 import { memo, useEffect, useRef, useState } from "react";
 
@@ -125,7 +125,14 @@ function WorkspaceAssistantActivityPart({
                     key={`${source.label}-${source.url ?? ""}`}
                     render={
                       source.url ? (
-                        <a href={source.url} rel="noreferrer" target="_blank" />
+                        <a
+                          aria-label={source.label}
+                          href={source.url}
+                          rel="noreferrer"
+                          target="_blank"
+                        >
+                          {source.label}
+                        </a>
                       ) : undefined
                     }
                   >
@@ -146,11 +153,7 @@ function WorkspaceAssistantActivityPart({
 
   if (isGranolaUserConnectorToolPart(part)) {
     return (
-      <ThinkingStep
-        isLast={isLast}
-        label="Used Granola"
-        status="complete"
-      />
+      <ThinkingStep isLast={isLast} label="Used Granola" status="complete" />
     );
   }
 
@@ -204,7 +207,14 @@ function WorkspaceAssistantActivityPart({
           <ThinkingStepSource
             render={
               source.url ? (
-                <a href={source.url} rel="noreferrer" target="_blank" />
+                <a
+                  aria-label={source.title ?? source.url ?? "URL"}
+                  href={source.url}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  {source.title ?? source.url ?? "URL"}
+                </a>
               ) : undefined
             }
           >
@@ -239,7 +249,16 @@ function WorkspaceAssistantActivityPart({
         {file.url ? (
           <ThinkingStepSources>
             <ThinkingStepSource
-              render={<a href={file.url} rel="noreferrer" target="_blank" />}
+              render={
+                <a
+                  aria-label="Open file"
+                  href={file.url}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  Open file
+                </a>
+              }
             >
               Open file
             </ThinkingStepSource>

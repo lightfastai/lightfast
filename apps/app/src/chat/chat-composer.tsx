@@ -219,12 +219,12 @@ function ModelProfileMenu({
           />
         }
       >
-        <HugeiconsIcon icon={Icon} aria-hidden="true" className="size-3.5" />
+        <HugeiconsIcon aria-hidden="true" className="size-3.5" icon={Icon} />
         <span>{modelProfileLabel(modelProfile)}</span>
         <HugeiconsIcon
-          icon={settingsLocked ? Lock : ChevronDown}
           aria-hidden="true"
           className="size-3.5 text-muted-foreground"
+          icon={settingsLocked ? Lock : ChevronDown}
         />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
@@ -232,14 +232,14 @@ function ModelProfileMenu({
           disabled={disabled}
           onClick={() => onModelProfileChange("fast")}
         >
-          <HugeiconsIcon icon={Flash} aria-hidden="true" className="size-4" />
+          <HugeiconsIcon aria-hidden="true" className="size-4" icon={Flash} />
           <span>Fast</span>
         </DropdownMenuItem>
         <DropdownMenuItem
           disabled={disabled}
           onClick={() => onModelProfileChange("thinking")}
         >
-          <HugeiconsIcon icon={Brain} aria-hidden="true" className="size-4" />
+          <HugeiconsIcon aria-hidden="true" className="size-4" icon={Brain} />
           <span>Thinking</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -276,7 +276,11 @@ function CapabilityModeMenu({
               />
             }
           >
-            <HugeiconsIcon icon={Icon} aria-hidden="true" className="size-3.5" />
+            <HugeiconsIcon
+              aria-hidden="true"
+              className="size-3.5"
+              icon={Icon}
+            />
           </DropdownMenuTrigger>
         </TooltipTrigger>
         <TooltipContent>
@@ -290,7 +294,7 @@ function CapabilityModeMenu({
           disabled={disabled}
           onClick={() => onCapabilityModeChange("read")}
         >
-          <HugeiconsIcon icon={Eye} aria-hidden="true" className="size-4" />
+          <HugeiconsIcon aria-hidden="true" className="size-4" icon={Eye} />
           <span>Read</span>
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -298,9 +302,9 @@ function CapabilityModeMenu({
           onClick={() => onCapabilityModeChange("write")}
         >
           <HugeiconsIcon
-            icon={PencilLine}
             aria-hidden="true"
             className="size-4"
+            icon={PencilLine}
           />
           <span>Write</span>
         </DropdownMenuItem>

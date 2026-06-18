@@ -62,8 +62,7 @@ export function WorkspaceAssistantClient({
       chatSettings?: ChatConversationSettingsV2;
       publicId: string;
       title: string;
-    }) =>
-      createConversation({ data }),
+    }) => createConversation({ data }),
   });
   const getConversationQueryOptions = useMemo(
     () => assistantConversationQueryOptions({ conversationId }),
@@ -157,15 +156,15 @@ export function WorkspaceAssistantClient({
 
       const selectedChatSettings =
         lockedChatSettings ??
-        (!conversationCreatedRef.current
-          ? ({
+        (conversationCreatedRef.current
+          ? persistedChatSettings.version === "2.0.0"
+            ? persistedChatSettings
+            : undefined
+          : ({
               capabilityMode,
               modelProfile,
               version: "2.0.0",
-            } satisfies ChatConversationSettingsV2)
-          : persistedChatSettings.version === "2.0.0"
-            ? persistedChatSettings
-            : undefined);
+            } satisfies ChatConversationSettingsV2));
       let createdConversationDuringSubmit = false;
       let createdConversation:
         | WorkspaceAssistantConversationResult["conversation"]
@@ -186,7 +185,9 @@ export function WorkspaceAssistantClient({
             title: conversationTitleFromPrompt(nextText),
           });
           conversationCreatedRef.current = true;
-          setLockedChatSettings(selectedChatSettings ?? getDefaultChatSettings());
+          setLockedChatSettings(
+            selectedChatSettings ?? getDefaultChatSettings()
+          );
           createdConversationDuringSubmit = true;
           void queryClient.invalidateQueries({
             queryKey: assistantConversationsQueryKey,
@@ -260,7 +261,8 @@ export function WorkspaceAssistantClient({
   const settingsLocked = lockedChatSettings !== null;
   const displayedCapabilityMode =
     lockedChatSettings?.capabilityMode ?? capabilityMode;
-  const displayedModelProfile = lockedChatSettings?.modelProfile ?? modelProfile;
+  const displayedModelProfile =
+    lockedChatSettings?.modelProfile ?? modelProfile;
 
   const renderComposer = () => (
     <ChatComposer
@@ -436,7 +438,10 @@ function readStoredModelProfile(): ChatModelProfile {
 
 function writeStoredCapabilityMode(mode: ChatCapabilityMode) {
   if (typeof window !== "undefined") {
-    window.localStorage.setItem(CHAT_SETTINGS_STORAGE_KEYS.capabilityMode, mode);
+    window.localStorage.setItem(
+      CHAT_SETTINGS_STORAGE_KEYS.capabilityMode,
+      mode
+    );
   }
 }
 
