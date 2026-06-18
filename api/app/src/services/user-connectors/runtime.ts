@@ -12,13 +12,13 @@ import {
   type UserConnectorToolCallRedactedPayload,
   updateObservedUserConnectorTokens,
 } from "@db/app";
-import { decrypt, encrypt } from "@repo/app-encryption";
 import {
   callGranolaMcpTool,
   GranolaAppNodeError,
   GranolaOAuthClientProvider,
   granolaClientMetadata,
-} from "@repo/granola-app-node";
+} from "@lightfast/connector-granola/node";
+import { decrypt, encrypt } from "@repo/app-encryption";
 import {
   parseUserConnectorRoutineId,
   type UserConnectorCallInput,

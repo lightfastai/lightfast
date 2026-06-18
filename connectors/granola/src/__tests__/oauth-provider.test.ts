@@ -6,7 +6,7 @@ import type {
 import { describe, expect, it, vi } from "vitest";
 
 import { DEFAULT_GRANOLA_MCP_ENDPOINT, granolaClientMetadata } from "../config";
-import { GranolaOAuthClientProvider } from "../oauth-provider";
+import { GranolaOAuthClientProvider } from "../oauth";
 
 describe("Granola OAuth client provider", () => {
   const redirectUrl =

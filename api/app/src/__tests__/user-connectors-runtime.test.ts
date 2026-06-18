@@ -86,7 +86,7 @@ vi.mock("@repo/app-encryption", () => ({
   encrypt: encryptMock,
 }));
 
-vi.mock("@repo/granola-app-node", () => ({
+vi.mock("@lightfast/connector-granola/node", () => ({
   callGranolaMcpTool: callGranolaMcpToolMock,
   GranolaAppNodeError: MockGranolaAppNodeError,
   GranolaOAuthClientProvider: MockGranolaOAuthClientProvider,

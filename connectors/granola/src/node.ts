@@ -7,4 +7,4 @@ export {
   type GranolaAppNodeErrorCode,
 } from "./errors";
 export { callGranolaMcpTool, listGranolaMcpTools } from "./mcp";
-export { GranolaOAuthClientProvider } from "./oauth-provider";
+export { GranolaOAuthClientProvider } from "./oauth";

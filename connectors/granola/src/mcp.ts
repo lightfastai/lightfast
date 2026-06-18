@@ -30,7 +30,7 @@ export async function listGranolaMcpTools(input: {
 
   try {
     client = new McpClient({
-      name: "lightfast-granola-app-node",
+      name: "lightfast-connector-granola",
       version: "0.1.0",
     });
     const transport = new StreamableHTTPClientTransport(
@@ -75,7 +75,7 @@ export async function callGranolaMcpTool(input: {
 
   try {
     client = new McpClient({
-      name: "lightfast-granola-app-node",
+      name: "lightfast-connector-granola",
       version: "0.1.0",
     });
     const transport = new StreamableHTTPClientTransport(

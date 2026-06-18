@@ -113,7 +113,7 @@ vi.mock("@repo/app-encryption", () => ({
   encrypt: encryptMock,
 }));
 
-vi.mock("@repo/granola-app-node", () => ({
+vi.mock("@lightfast/connector-granola/node", () => ({
   DEFAULT_GRANOLA_MCP_ENDPOINT: "https://mcp.granola.ai/mcp",
   GranolaAppNodeError: MockGranolaAppNodeError,
   GranolaOAuthClientProvider: MockGranolaOAuthClientProvider,

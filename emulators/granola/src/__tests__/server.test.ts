@@ -4,7 +4,7 @@ import {
   GranolaOAuthClientProvider,
   granolaClientMetadata,
   listGranolaMcpTools,
-} from "@repo/granola-app-node";
+} from "@lightfast/connector-granola/node";
 import { StreamableHTTPClientTransport } from "@vendor/mcp";
 import { afterEach, describe, expect, it } from "vitest";
 

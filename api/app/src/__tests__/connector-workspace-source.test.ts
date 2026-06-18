@@ -13,6 +13,8 @@ const oldGitHubContractPackage = `@repo/${"github-app-contract"}`;
 const oldGitHubContractPath = `packages/${"github-app-contract"}`;
 const oldGitHubNodePackage = `@repo/${"github-app-node"}`;
 const oldGitHubNodePath = `packages/${"github-app-node"}`;
+const oldGranolaPackage = `@repo/${"granola-app-node"}`;
+const oldGranolaPath = `packages/${"granola-app-node"}`;
 
 const ignoredDirs = new Set([
   ".git",
@@ -200,6 +202,45 @@ describe("connector workspace boundary", () => {
           contents.includes(oldGitHubContractPath) ||
           contents.includes(oldGitHubNodePackage) ||
           contents.includes(oldGitHubNodePath)
+        );
+      })
+      .map((path) => relative(repoRoot, path))
+      .sort();
+
+    expect(staleReferences).toEqual([]);
+  });
+
+  it("hosts Granola provider runtime code behind explicit connector entrypoints", () => {
+    const granolaPackage = readJson<{
+      dependencies?: Record<string, string>;
+      exports?: Record<string, unknown>;
+      name?: string;
+      private?: boolean;
+    }>("connectors/granola/package.json");
+
+    expect(existsSync(resolve(repoRoot, oldGranolaPath))).toBe(false);
+    expect(granolaPackage.name).toBe("@lightfast/connector-granola");
+    expect(granolaPackage.private).toBe(true);
+    expect(granolaPackage.dependencies?.["@lightfast/connector-core"]).toBe(
+      "workspace:*"
+    );
+    expect(granolaPackage.dependencies?.["@vendor/mcp"]).toBe("workspace:*");
+    expect(granolaPackage.dependencies?.zod).toBe("catalog:");
+    expect(Object.keys(granolaPackage.exports ?? {}).sort()).toEqual([
+      "./mcp",
+      "./node",
+      "./oauth",
+    ]);
+  });
+
+  it("removes the old Granola app node package name from source and manifests", () => {
+    const staleReferences = workspaceFilesToScan()
+      .filter((path) => !relative(repoRoot, path).startsWith(".codex/"))
+      .filter((path) => {
+        const contents = readFileSync(path, "utf8");
+        return (
+          contents.includes(oldGranolaPackage) ||
+          contents.includes(oldGranolaPath)
         );
       })
       .map((path) => relative(repoRoot, path))

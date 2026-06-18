@@ -1,14 +1,22 @@
 {
-  "name": "@repo/granola-app-node",
+  "name": "@lightfast/connector-granola",
   "version": "0.1.0",
   "private": true,
   "license": "Apache-2.0",
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "default": "./src/index.ts"
+    "./mcp": {
+      "types": "./src/mcp.ts",
+      "default": "./src/mcp.ts"
+    },
+    "./node": {
+      "types": "./src/node.ts",
+      "default": "./src/node.ts"
+    },
+    "./oauth": {
+      "types": "./src/oauth.ts",
+      "default": "./src/oauth.ts"
     }
   },
   "scripts": {
