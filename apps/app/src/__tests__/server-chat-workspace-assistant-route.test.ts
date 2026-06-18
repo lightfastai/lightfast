@@ -64,16 +64,25 @@ vi.mock("@db/app/client", () => ({
   db: { kind: "mock-db" },
 }));
 
-vi.mock("@repo/ai/workspace-assistant", () => ({
-  lightfastWorkspaceAssistantDataPartSchemas: {
-    opportunities: { kind: "schema" },
-  },
-  lightfastWorkspaceAssistantMessageMetadataSchema: { kind: "metadata-schema" },
-  lightfastWorkspaceAssistantTools: {
-    callProviderRoutine: { inputSchema: { kind: "call-input" } },
-    findProviderRoutines: { inputSchema: { kind: "find-input" } },
-  },
-}));
+vi.mock("@repo/ai/workspace-assistant", async () => {
+  const actual = await vi.importActual<
+    typeof import("@repo/ai/workspace-assistant")
+  >("@repo/ai/workspace-assistant");
+
+  return {
+    ...actual,
+    lightfastWorkspaceAssistantDataPartSchemas: {
+      opportunities: { kind: "schema" },
+    },
+    lightfastWorkspaceAssistantMessageMetadataSchema: {
+      kind: "metadata-schema",
+    },
+    lightfastWorkspaceAssistantTools: {
+      callProviderRoutine: { inputSchema: { kind: "call-input" } },
+      findProviderRoutines: { inputSchema: { kind: "find-input" } },
+    },
+  };
+});
 
 vi.mock("@repo/provider-routine-contract", () => ({
   providerRoutineCallInputSchema: { kind: "provider-call-input" },
@@ -206,7 +215,7 @@ beforeEach(() => {
       },
     ],
   });
-  gatewayMock.mockReturnValue("gateway:anthropic/claude-sonnet-4.6");
+  gatewayMock.mockImplementation((model) => `gateway:${String(model)}`);
   convertToModelMessagesMock.mockResolvedValue([
     { content: "Summarize my active opportunities", role: "user" },
   ]);
@@ -416,6 +425,137 @@ describe("workspace assistant chat server route", () => {
         usage: { inputTokens: 10, outputTokens: 12, totalTokens: 22 },
       })
     );
+  });
+
+  it("streams a fast v2 conversation with the fast OpenAI model and no reasoning parts", async () => {
+    getWorkspaceAssistantConversationByPublicIdMock.mockResolvedValue(
+      makeConversation({
+        metadata: {
+          chatSettings: {
+            capabilityMode: "read",
+            modelProfile: "fast",
+            version: "2.0.0",
+          },
+        },
+      })
+    );
+
+    const response = await handleWorkspaceAssistantChatRequest(
+      createJsonRequest({
+        chatSettings: {
+          capabilityMode: "read",
+          modelProfile: "fast",
+          version: "2.0.0",
+        },
+        conversationId: "conv_123",
+        messages: [
+          {
+            id: "client-message-1",
+            parts: [{ text: "Summarize", type: "text" }],
+            role: "user",
+          },
+        ],
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(gatewayMock).toHaveBeenCalledWith("openai/gpt-5.4-mini");
+    expect(streamTextMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: "gateway:openai/gpt-5.4-mini",
+        providerOptions: expect.objectContaining({
+          gateway: expect.objectContaining({ models: [] }),
+        }),
+      })
+    );
+    expect(toUIMessageStreamResponseMock).toHaveBeenCalledWith(
+      expect.objectContaining({ sendReasoning: false })
+    );
+  });
+
+  it("streams a thinking v2 conversation with medium OpenAI reasoning summaries", async () => {
+    getWorkspaceAssistantConversationByPublicIdMock.mockResolvedValue(
+      makeConversation({
+        metadata: {
+          chatSettings: {
+            capabilityMode: "write",
+            modelProfile: "thinking",
+            version: "2.0.0",
+          },
+        },
+      })
+    );
+
+    const response = await handleWorkspaceAssistantChatRequest(
+      createJsonRequest({
+        chatSettings: {
+          capabilityMode: "write",
+          modelProfile: "thinking",
+          version: "2.0.0",
+        },
+        conversationId: "conv_123",
+        messages: [
+          {
+            id: "client-message-1",
+            parts: [{ text: "Think through it", type: "text" }],
+            role: "user",
+          },
+        ],
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(gatewayMock).toHaveBeenCalledWith("openai/gpt-5.5");
+    expect(streamTextMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: "gateway:openai/gpt-5.5",
+        providerOptions: expect.objectContaining({
+          gateway: expect.objectContaining({ models: [] }),
+          openai: {
+            reasoningEffort: "medium",
+            reasoningSummary: "auto",
+          },
+        }),
+      })
+    );
+    expect(toUIMessageStreamResponseMock).toHaveBeenCalledWith(
+      expect.objectContaining({ sendReasoning: true })
+    );
+  });
+
+  it("rejects requests that try to change locked v2 settings", async () => {
+    getWorkspaceAssistantConversationByPublicIdMock.mockResolvedValue(
+      makeConversation({
+        metadata: {
+          chatSettings: {
+            capabilityMode: "read",
+            modelProfile: "fast",
+            version: "2.0.0",
+          },
+        },
+      })
+    );
+
+    const response = await handleWorkspaceAssistantChatRequest(
+      createJsonRequest({
+        chatSettings: {
+          capabilityMode: "write",
+          modelProfile: "fast",
+          version: "2.0.0",
+        },
+        conversationId: "conv_123",
+        messages: [
+          {
+            id: "client-message-1",
+            parts: [{ text: "Change mode", type: "text" }],
+            role: "user",
+          },
+        ],
+      })
+    );
+
+    expect(response.status).toBe(409);
+    expect(streamTextMock).not.toHaveBeenCalled();
   });
 
   it("passes write mode through provider routine tools and exposes user connector tools", async () => {

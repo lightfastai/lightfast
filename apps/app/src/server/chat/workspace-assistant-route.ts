@@ -21,10 +21,17 @@ import {
 } from "@db/app";
 import { db } from "@db/app/client";
 import {
+  type ChatConversationSettingsV2,
   type LightfastUIMessage,
+  chatConversationSettingsV2Schema,
+  getDefaultChatSettings,
+  getSettingsMetadata,
+  isChatSettingsRequestCompatible,
   lightfastWorkspaceAssistantDataPartSchemas,
   lightfastWorkspaceAssistantMessageMetadataSchema,
   lightfastWorkspaceAssistantTools,
+  parseChatSettings,
+  resolveChatModelProfile,
 } from "@repo/ai/workspace-assistant";
 import {
   providerRoutineCallInputSchema,
@@ -52,8 +59,6 @@ import { resolveWorkspaceAssistantAuthContext } from "~/server/chat/auth";
 import { getLightfastResumableStreamContext } from "~/server/chat/resumable-stream";
 import { log } from "~/server/log";
 
-const WORKSPACE_ASSISTANT_MODEL = "anthropic/claude-sonnet-4.6";
-const WORKSPACE_ASSISTANT_FALLBACK_MODELS = ["openai/gpt-5.4"] as const;
 const WORKSPACE_ASSISTANT_MAX_TOOL_STEPS = 5;
 const WORKSPACE_ASSISTANT_STREAM_SMOOTHING = {
   chunking: "word",
@@ -84,6 +89,7 @@ interface UserConnectorChatContext {
 
 const chatRequestSchema = z
   .object({
+    chatSettings: chatConversationSettingsV2Schema.optional(),
     idempotencyKey: z
       .string()
       .trim()
@@ -159,10 +165,11 @@ export async function handleWorkspaceAssistantChatRequest(request: Request) {
       { status: 400 }
     );
   }
-  const providerRoutineWriteMode =
+  const legacyProviderRoutineWriteMode =
     parsed.data.providerRoutineWriteMode === true;
 
   const conversation = await resolveConversation({
+    chatSettings: parsed.data.chatSettings,
     createdByUserId: identity.userId,
     orgId: identity.orgId,
     submittedMessage,
@@ -174,6 +181,20 @@ export async function handleWorkspaceAssistantChatRequest(request: Request) {
       { status: 404 }
     );
   }
+  const chatSettings = parseChatSettings(conversation.metadata);
+  if (
+    !isChatSettingsRequestCompatible(chatSettings, parsed.data.chatSettings)
+  ) {
+    return Response.json(
+      { error: "Conversation settings are locked" },
+      { status: 409 }
+    );
+  }
+  const resolvedModel = resolveChatModelProfile(chatSettings);
+  const providerRoutineWriteMode =
+    chatSettings.version === "2.0.0"
+      ? chatSettings.capabilityMode === "write"
+      : legacyProviderRoutineWriteMode;
 
   const existingMessages = await listWorkspaceAssistantMessages(db, {
     clerkOrgId: identity.orgId,
@@ -229,7 +250,7 @@ export async function handleWorkspaceAssistantChatRequest(request: Request) {
   });
   const generation = await createWorkspaceAssistantGeneration(db, {
     assistantMessage,
-    model: WORKSPACE_ASSISTANT_MODEL,
+    model: resolvedModel.model,
     requestedByUserId: identity.userId,
     requestMetadata: {
       source: "workspace-assistant",
@@ -256,7 +277,7 @@ export async function handleWorkspaceAssistantChatRequest(request: Request) {
   const generationLogMetadata = {
     clerkOrgId: identity.orgId,
     generationId: generation.publicId,
-    model: WORKSPACE_ASSISTANT_MODEL,
+    model: resolvedModel.model,
     streamId,
     conversationId: conversation.publicId,
     providerRoutineWriteMode,
@@ -289,7 +310,7 @@ export async function handleWorkspaceAssistantChatRequest(request: Request) {
     },
     experimental_transform: smoothStream(WORKSPACE_ASSISTANT_STREAM_SMOOTHING),
     messages: modelMessages,
-    model: gateway(WORKSPACE_ASSISTANT_MODEL),
+    model: gateway(resolvedModel.model),
     onError: async ({ error }) => {
       streamErrored = true;
       const message = getErrorMessage(error);
@@ -332,7 +353,7 @@ export async function handleWorkspaceAssistantChatRequest(request: Request) {
     providerOptions: {
       gateway: {
         cacheControl: "max-age=0",
-        models: [...WORKSPACE_ASSISTANT_FALLBACK_MODELS],
+        models: resolvedModel.fallbackModels,
         tags: [
           "feature:workspace-assistant",
           `org:${identity.orgId}`,
@@ -341,6 +362,7 @@ export async function handleWorkspaceAssistantChatRequest(request: Request) {
         ],
         user: identity.userId,
       },
+      ...resolvedModel.providerOptions,
     },
     stopWhen: stepCountIs(WORKSPACE_ASSISTANT_MAX_TOOL_STEPS),
     system,
@@ -391,7 +413,7 @@ export async function handleWorkspaceAssistantChatRequest(request: Request) {
     },
     messageMetadata: () => ({
       generationId: generation.publicId,
-      model: WORKSPACE_ASSISTANT_MODEL,
+      model: resolvedModel.model,
       source: "workspace-assistant" as const,
       streamId,
     }),
@@ -504,6 +526,7 @@ export async function handleWorkspaceAssistantChatRequest(request: Request) {
       ]);
     },
     originalMessages,
+    sendReasoning: resolvedModel.sendReasoning,
   });
 }
 
@@ -667,6 +690,7 @@ function hasUnsupportedUserPart(message: LightfastUIMessage) {
 }
 
 async function resolveConversation(input: {
+  chatSettings?: ChatConversationSettingsV2;
   createdByUserId: string;
   orgId: string;
   submittedMessage: LightfastUIMessage;
@@ -686,6 +710,10 @@ async function resolveConversation(input: {
       return await createWorkspaceAssistantConversation(db, {
         clerkOrgId: input.orgId,
         createdByUserId: input.createdByUserId,
+        metadata: getSettingsMetadata(
+          {},
+          input.chatSettings ?? getDefaultChatSettings()
+        ),
         publicId: input.conversationId,
         title: firstTextPart(input.submittedMessage),
       });
@@ -704,6 +732,10 @@ async function resolveConversation(input: {
   return createWorkspaceAssistantConversation(db, {
     clerkOrgId: input.orgId,
     createdByUserId: input.createdByUserId,
+    metadata: getSettingsMetadata(
+      {},
+      input.chatSettings ?? getDefaultChatSettings()
+    ),
     title: firstTextPart(input.submittedMessage),
   });
 }
