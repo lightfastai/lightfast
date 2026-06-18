@@ -35,9 +35,7 @@ describe("workspace page-owned actions", () => {
     const decisionsViewSwitcherSource = expectSource(
       "src/decisions/decisions-view-switcher.tsx"
     );
-    const decisionsViewQuerySource = expectSource(
-      "src/decisions/use-decision-views-query.ts"
-    );
+    const decisionsViewQuerySource = decisionsViewSwitcherSource;
 
     expect(existsSync(backButtonPath)).toBe(false);
     expect(createFormSource).not.toContain("~/components/back-button");

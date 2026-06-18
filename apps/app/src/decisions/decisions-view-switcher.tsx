@@ -1,3 +1,9 @@
+import {
+  createDecisionView,
+  deleteDecisionView,
+  listDecisionViews,
+} from "@api/app/tanstack/decision-views";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ViewSwitcher } from "~/components/views/view-switcher";
 import {
   type NormalizedDecisionsSearch,
@@ -6,14 +12,14 @@ import {
 } from "./decisions-search-params";
 import {
   allDecisionsParamValues,
+  type DecisionViewConfig,
   selectionToConfig,
   viewConfigToParamValues,
 } from "./decisions-views-model";
-import {
-  useCreateDecisionView,
-  useDecisionViewsQuery,
-  useDeleteDecisionView,
-} from "./use-decision-views-query";
+
+const decisionViewQueryKeys = {
+  list: () => ["decisions", "views"] as const,
+};
 
 export function DecisionsViewSwitcher({
   search,
@@ -22,9 +28,30 @@ export function DecisionsViewSwitcher({
   search: NormalizedDecisionsSearch;
   setSearchParams: (updates: Partial<NormalizedDecisionsSearch>) => void;
 }) {
-  const viewsQuery = useDecisionViewsQuery();
-  const createView = useCreateDecisionView();
-  const deleteView = useDeleteDecisionView();
+  const queryClient = useQueryClient();
+  const viewsQuery = useQuery({
+    enabled: typeof window !== "undefined",
+    queryFn: () => listDecisionViews(),
+    queryKey: decisionViewQueryKeys.list(),
+    staleTime: 60_000,
+  });
+  const createView = useMutation({
+    meta: { errorTitle: "Failed to save view" },
+    mutationFn: (data: { config: DecisionViewConfig; name: string }) =>
+      createDecisionView({ data }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: decisionViewQueryKeys.list(),
+      }),
+  });
+  const deleteView = useMutation({
+    meta: { errorTitle: "Failed to delete view" },
+    mutationFn: (data: { publicId: string }) => deleteDecisionView({ data }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: decisionViewQueryKeys.list(),
+      }),
+  });
   const views = viewsQuery.data ?? [];
 
   const currentConfig = selectionToConfig({
