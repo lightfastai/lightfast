@@ -1,4 +1,10 @@
 import {
+  approveMcpAuthorization,
+  denyMcpAuthorization,
+  type McpAuthorizationInput,
+  type McpConsentViewModel,
+} from "@api/app/tanstack/mcp-consent";
+import {
   Alert02Icon as AlertTriangle,
   ArrowLeftRightIcon as ArrowLeftRight,
   Building03Icon as Building2,
@@ -27,15 +33,6 @@ import {
 import { useServerFn } from "@tanstack/react-start";
 import type { CSSProperties, ReactNode } from "react";
 import { useRef, useState } from "react";
-
-import {
-  approveMcpAuthorization,
-  denyMcpAuthorization,
-} from "./mcp-consent-functions";
-import type {
-  McpAuthorizationInput,
-  McpConsentViewModel,
-} from "./mcp-consent-types";
 
 type CSSCustomProperties = CSSProperties & Record<`--${string}`, string>;
 

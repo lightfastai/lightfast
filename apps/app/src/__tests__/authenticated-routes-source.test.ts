@@ -101,8 +101,17 @@ describe("app authenticated route migration", () => {
   it("ports OAuth auth-boundary pages without Next.js route primitives", () => {
     const authorizeRouteSource = source("src/routes/oauth/authorize.tsx");
     const consentCardSource = source("src/oauth/mcp-consent-card.tsx");
-    const consentFunctionsSource = source("src/oauth/mcp-consent-functions.ts");
-    const consentServerSource = source("src/oauth/mcp-consent.server.ts");
+    const consentFunctionsPath = resolve(
+      appRoot,
+      "src/oauth/mcp-consent-functions.ts"
+    );
+    const consentServerPath = resolve(
+      appRoot,
+      "src/oauth/mcp-consent.server.ts"
+    );
+    const consentAdapterSource = repoSource(
+      "api/app/src/adapters/tanstack/mcp-consent.ts"
+    );
     const nativeRouteSource = source("src/routes/oauth/$client/start.tsx");
     const nativeOrgSelectSource = source(
       "src/oauth/native-auth-org-select.tsx"
@@ -122,24 +131,28 @@ describe("app authenticated route migration", () => {
       'createFileRoute("/oauth/authorize")'
     );
     expect(authorizeRouteSource).toContain("loadMcpConsentViewModel");
+    expect(authorizeRouteSource).toContain(
+      'from "@api/app/tanstack/mcp-consent"'
+    );
     expect(consentCardSource).toContain("useServerFn");
     expect(consentCardSource).toContain("approveMcpAuthorization");
     expect(consentCardSource).toContain("denyMcpAuthorization");
+    expect(consentCardSource).toContain('from "@api/app/tanstack/mcp-consent"');
     expect(consentCardSource).toContain("window.location.assign(redirectUrl)");
-    expect(consentFunctionsSource).toContain("createServerFn");
-    expect(consentFunctionsSource).toContain("redirectToSignInForOAuth");
-    expect(consentFunctionsSource).toContain(
-      "return approveMcpAuthorizationRequest("
+    expect(existsSync(consentFunctionsPath)).toBe(false);
+    expect(existsSync(consentServerPath)).toBe(false);
+    expect(consentAdapterSource).toContain(
+      "export const loadMcpConsentViewModel = createServerFn"
     );
-    expect(consentFunctionsSource).toContain(
-      "return denyMcpAuthorizationRequest("
+    expect(consentAdapterSource).toContain(
+      "export const approveMcpAuthorization = createServerFn"
     );
-    expect(consentFunctionsSource).not.toContain("redirect({ href:");
-    expect(consentServerSource).toContain(
-      'import "@tanstack/react-start/server-only"'
+    expect(consentAdapterSource).toContain(
+      "export const denyMcpAuthorization = createServerFn"
     );
-    expect(consentServerSource).toContain("issueMcpAuthorizationCode");
-    expect(consentServerSource).toContain("requireUserOrgMembership");
+    expect(consentAdapterSource).toContain("oauthRequestRedirectTarget");
+    expect(consentAdapterSource).toContain("issueMcpAuthorizationCode");
+    expect(consentAdapterSource).toContain("requireUserOrgMembership");
 
     expect(nativeRouteSource).toContain(
       'createFileRoute("/oauth/$client/start")'
@@ -165,8 +178,6 @@ describe("app authenticated route migration", () => {
     for (const routeFile of [
       authorizeRouteSource,
       consentCardSource,
-      consentFunctionsSource,
-      consentServerSource,
       nativeRouteSource,
       nativeOrgSelectSource,
       nativeValidatorsSource,

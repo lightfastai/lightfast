@@ -1,6 +1,6 @@
+import { loadMcpConsentViewModel } from "@api/app/tanstack/mcp-consent";
 import { createFileRoute } from "@tanstack/react-router";
 import { McpConsentCard } from "~/oauth/mcp-consent-card";
-import { loadMcpConsentViewModel } from "~/oauth/mcp-consent-functions";
 
 export const Route = createFileRoute("/oauth/authorize")({
   validateSearch: validateMcpAuthorizeSearch,
