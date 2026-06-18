@@ -22,7 +22,7 @@ const migratedFiles = [
 ] as const;
 
 describe("organization query helpers", () => {
-  it("centralizes organization query keys and server function calls", () => {
+  it("centralizes organization query keys and read server function calls", () => {
     const querySource = source("src/organization/organization-queries.ts");
 
     expect(querySource).toContain('@api/app/tanstack/organizations"');
@@ -30,9 +30,12 @@ describe("organization query helpers", () => {
     expect(querySource).toContain("listUserOrganizationsQueryOptions");
     expect(querySource).toContain("organizationBySlugQueryOptions");
     expect(querySource).toContain("organizationDomainsQueryOptions");
-    expect(querySource).toContain("createOrganizationMutationOptions");
-    expect(querySource).toContain("updateOrganizationDomainsMutationOptions");
-    expect(querySource).toContain("updateOrganizationNameMutationOptions");
+    expect(querySource).not.toContain("mutationOptions");
+    expect(querySource).not.toContain("createOrganizationMutationOptions");
+    expect(querySource).not.toContain(
+      "updateOrganizationDomainsMutationOptions"
+    );
+    expect(querySource).not.toContain("updateOrganizationNameMutationOptions");
     expect(querySource).not.toContain("useTRPC");
   });
 
@@ -78,8 +81,13 @@ describe("organization query helpers", () => {
     expect(existsSync(resolve(appRoot, actionsPath))).toBe(false);
     expect(clientSource).toContain("useMutation");
     expect(clientSource).toContain("useQueryClient");
-    expect(clientSource).toContain("updateOrganizationNameMutationOptions");
-    expect(clientSource).toContain("updateOrganizationDomainsMutationOptions");
+    expect(clientSource).toContain('@api/app/tanstack/organizations"');
+    expect(clientSource).toContain("updateOrganizationName");
+    expect(clientSource).toContain("updateOrganizationDomains");
+    expect(clientSource).not.toContain("updateOrganizationNameMutationOptions");
+    expect(clientSource).not.toContain(
+      "updateOrganizationDomainsMutationOptions"
+    );
     expect(clientSource).toContain("organizationQueryKeys.domains(slug)");
     expect(clientSource).toContain("renameOrganizationSlug");
     expect(clientSource).not.toContain("useTeamNameUpdate");

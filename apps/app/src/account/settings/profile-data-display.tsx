@@ -1,3 +1,4 @@
+import { updateAccountName as updateAccountNameServerFn } from "@api/app/tanstack/account";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loading03Icon as Loader2 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -27,7 +28,6 @@ import { SettingRow, SettingsGroup } from "~/components/settings-section";
 import {
   accountProfileQueryOptions,
   accountQueryKeys,
-  updateAccountNameMutationOptions,
 } from "../account-queries";
 import { ProfileDataLoading } from "./profile-data-loading";
 
@@ -51,7 +51,9 @@ export function ProfileDataDisplay() {
   });
 
   const { isPending: isUpdating, mutate: updateAccountName } = useMutation({
-    ...updateAccountNameMutationOptions(),
+    meta: { errorTitle: "Failed to update display name" },
+    mutationFn: (data: { displayName: string }) =>
+      updateAccountNameServerFn({ data }),
     onSuccess: (data) => {
       queryClient.setQueryData(accountQueryKeys.profile(), data);
       toast.success("Profile updated", {

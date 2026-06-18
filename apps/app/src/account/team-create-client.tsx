@@ -1,3 +1,4 @@
+import { createOrganization } from "@api/app/tanstack/organizations";
 import { Loading03Icon as Loader2 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Icons } from "@repo/ui/components/icons";
@@ -12,10 +13,7 @@ import {
 } from "~/account/team-name";
 import { useOrganizationList } from "~/compat/clerk";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
-import {
-  createOrganizationMutationOptions,
-  organizationQueryKeys,
-} from "~/organization/organization-queries";
+import { organizationQueryKeys } from "~/organization/organization-queries";
 
 export function CreateTeamClient() {
   return (
@@ -46,7 +44,9 @@ function TeamNameForm() {
   const navigate = useNavigate({ from: "/account/teams/new" });
 
   const mutation = useMutation({
-    ...createOrganizationMutationOptions(),
+    meta: { suppressErrorToast: true },
+    mutationFn: (data: { idempotencyKey: string; slug: string }) =>
+      createOrganization({ data }),
     onSuccess: async (data) => {
       idempotencyKeyRef.current = null;
       if (setActive) {

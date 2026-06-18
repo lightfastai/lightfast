@@ -28,7 +28,8 @@ describe("account TanStack adapter boundary", () => {
     expect(source).toContain("getGitHubAccountStatusCommand");
     expect(source).toContain("startGitHubAccountBindingCommand");
     expect(source).toContain("syncGitHubAccountCommand");
-    expect(source).toContain("disconnectGitHubAccountCommand");
+    expect(source).not.toContain("disconnectGitHubAccountCommand");
+    expect(source).not.toContain("disconnectGitHubAccount = createServerFn");
     expect(source).not.toContain("TRPCError");
     expect(source).not.toContain("ORPCError");
     expect(source).not.toContain("defineCommandSurface");

@@ -1,14 +1,11 @@
 import {
-  createOrganization,
   getOrganizationBySlug,
   type ListOrganizationDomainsResult,
   type ListUserOrganizationsResult,
   listOrganizationDomains,
   listUserOrganizations,
-  updateOrganizationDomains,
-  updateOrganizationName,
 } from "@api/app/tanstack/organizations";
-import { mutationOptions, queryOptions } from "@tanstack/react-query";
+import { queryOptions } from "@tanstack/react-query";
 
 export type UserOrganizationsData = ListUserOrganizationsResult;
 export type OrganizationDomainsData = ListOrganizationDomainsResult;
@@ -52,29 +49,5 @@ export function organizationDomainsQueryOptions(input: {
     queryFn: () => listOrganizationDomains({ data: { slug: input.slug } }),
     queryKey: organizationQueryKeys.domains(input.slug),
     staleTime: 5 * 60 * 1000,
-  });
-}
-
-export function createOrganizationMutationOptions() {
-  return mutationOptions({
-    meta: { suppressErrorToast: true },
-    mutationFn: (data: { idempotencyKey: string; slug: string }) =>
-      createOrganization({ data }),
-  });
-}
-
-export function updateOrganizationDomainsMutationOptions() {
-  return mutationOptions({
-    meta: { errorTitle: "Failed to update domains" },
-    mutationFn: (data: { domains: string[]; slug: string }) =>
-      updateOrganizationDomains({ data }),
-  });
-}
-
-export function updateOrganizationNameMutationOptions() {
-  return mutationOptions({
-    meta: { errorTitle: "Failed to update team name" },
-    mutationFn: (data: { name: string; slug: string }) =>
-      updateOrganizationName({ data }),
   });
 }

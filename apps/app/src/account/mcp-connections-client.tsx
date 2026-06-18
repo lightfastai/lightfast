@@ -1,3 +1,4 @@
+import { revokeAccountMcpConnection } from "@api/app/tanstack/mcp-connections";
 import {
   InformationCircleIcon as Info,
   SecurityCheckIcon as ShieldCheck,
@@ -31,7 +32,6 @@ import { useCallback, useState } from "react";
 import {
   accountMcpConnectionsQueryOptions,
   accountQueryKeys,
-  revokeAccountMcpConnectionMutationOptions,
 } from "./account-queries";
 
 interface McpConnection {
@@ -69,7 +69,9 @@ export function UserMcpConnectionsClient() {
     useState<McpConnection | null>(null);
 
   const revokeMutation = useMutation({
-    ...revokeAccountMcpConnectionMutationOptions(),
+    meta: { errorTitle: "Failed to revoke MCP connection" },
+    mutationFn: (data: { grantId: string }) =>
+      revokeAccountMcpConnection({ data }),
     onSuccess: () => toast.success("MCP connection revoked"),
     onSettled: () =>
       void queryClient.invalidateQueries({
