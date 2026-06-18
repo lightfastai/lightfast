@@ -1071,9 +1071,8 @@ describe("app authenticated route migration", () => {
     const apiKeyCreateSource = source(
       "src/org/settings/api-keys/org-api-key-create.tsx"
     );
-    const apiKeyCreateActionsSource = source(
-      "src/org/settings/api-keys/org-api-key-create-action.ts"
-    );
+    const apiKeyCreateActionsPath =
+      "src/org/settings/api-keys/org-api-key-create-action.ts";
     const apiKeyListSource = source(
       "src/org/settings/api-keys/org-api-key-list.tsx"
     );
@@ -1140,10 +1139,9 @@ describe("app authenticated route migration", () => {
       'enabled: typeof window !== "undefined"'
     );
     expect(apiKeyListSource).toContain('from "@clerk/tanstack-react-start"');
-    expect(apiKeyCreateSource).toContain("useOrgApiKeyCreateAction");
-    expect(apiKeyCreateActionsSource).toContain(
-      "createOrgApiKeyMutationOptions"
-    );
+    expect(existsSync(resolve(appRoot, apiKeyCreateActionsPath))).toBe(false);
+    expect(apiKeyCreateSource).toContain("createOrgApiKeyMutationOptions");
+    expect(apiKeyCreateSource).not.toContain("useOrgApiKeyCreateAction");
     expect(apiKeyListActionsSource).toContain("revokeOrgApiKeyMutationOptions");
     expect(apiKeyListActionsSource).toContain("deleteOrgApiKeyMutationOptions");
     expect(apiKeyListActionsSource).toContain("rotateOrgApiKeyMutationOptions");
@@ -1151,7 +1149,7 @@ describe("app authenticated route migration", () => {
     expect(apiKeyQueriesSource).toContain('@api/app/tanstack/org-api-keys"');
 
     for (const apiKeySource of [
-      apiKeyCreateActionsSource,
+      apiKeyCreateSource,
       apiKeyListActionsSource,
       apiKeyListSource,
       apiKeyCacheSource,
@@ -1181,7 +1179,6 @@ describe("app authenticated route migration", () => {
       memberListActionsSource,
       memberCacheSource,
       apiKeyCreateSource,
-      apiKeyCreateActionsSource,
       apiKeyListSource,
       apiKeyListActionsSource,
       apiKeyCacheSource,
