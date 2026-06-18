@@ -15,6 +15,40 @@ function repoSource(path: string) {
 
 const rootApiAppImportPattern = /from\s+["@']@api\/app["@']/;
 
+const mcpOAuthProtocolRouteExpectations = [
+  {
+    staticImport:
+      'import { handleMcpOAuthAuthorizationServerMetadataRequest } from "@api/app/mcp-oauth/server-routes"',
+    getSource: () =>
+      source("src/routes/[.]well-known/oauth-authorization-server.ts"),
+  },
+  {
+    staticImport:
+      'import { handleMcpOAuthJwksRequest } from "@api/app/mcp-oauth/server-routes"',
+    getSource: () => source("src/routes/oauth/jwks.ts"),
+  },
+  {
+    staticImport:
+      'import { handleRegisterMcpOAuthClientRequest } from "@api/app/mcp-oauth/server-routes"',
+    getSource: () => source("src/routes/oauth/register.ts"),
+  },
+  {
+    staticImport:
+      'import { handleGetRegisteredMcpOAuthClientRequest } from "@api/app/mcp-oauth/server-routes"',
+    getSource: () => source("src/routes/oauth/register/$clientId.ts"),
+  },
+  {
+    staticImport:
+      'import { handleMcpOAuthTokenRequest } from "@api/app/mcp-oauth/server-routes"',
+    getSource: () => source("src/routes/oauth/token.ts"),
+  },
+  {
+    staticImport:
+      'import { handleMcpOAuthRevokeRequest } from "@api/app/mcp-oauth/server-routes"',
+    getSource: () => source("src/routes/oauth/revoke.ts"),
+  },
+] as const;
+
 describe("app OAuth protocol route migration", () => {
   it("ports MCP OAuth protocol endpoints as TanStack server routes", () => {
     const metadataSource = source(
@@ -119,6 +153,14 @@ describe("app OAuth protocol route migration", () => {
     ]) {
       expect(appRouteSource).not.toContain("@db/app");
       expect(appRouteSource).not.toContain("~/server/oauth/mcp-response");
+    }
+
+    for (const expectation of mcpOAuthProtocolRouteExpectations) {
+      const routeSource = expectation.getSource();
+
+      expect(routeSource).toContain("await import(");
+      expect(routeSource).toContain('@api/app/mcp-oauth/server-routes"');
+      expect(routeSource).not.toContain(expectation.staticImport);
     }
   });
 
