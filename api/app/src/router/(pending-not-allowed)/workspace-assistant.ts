@@ -4,7 +4,12 @@ import {
   listWorkspaceAssistantConversations,
   listWorkspaceAssistantMessages,
 } from "@db/app";
-import { safeValidateLightfastUIMessages } from "@repo/ai/workspace-assistant";
+import {
+  chatConversationSettingsV2Schema,
+  getDefaultChatSettings,
+  getSettingsMetadata,
+  safeValidateLightfastUIMessages,
+} from "@repo/ai/workspace-assistant";
 import { TRPCError, type TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
 
@@ -27,6 +32,7 @@ const listConversationsInput = z
 
 const createConversationInput = z
   .object({
+    chatSettings: chatConversationSettingsV2Schema.optional(),
     publicId: z
       .string()
       .trim()
@@ -59,6 +65,10 @@ export const workspaceAssistantRouter = {
       createWorkspaceAssistantConversation(ctx.db, {
         clerkOrgId: ctx.auth.identity.orgId,
         createdByUserId: ctx.auth.identity.userId,
+        metadata: getSettingsMetadata(
+          {},
+          input?.chatSettings ?? getDefaultChatSettings()
+        ),
         publicId: input?.publicId,
         title: input?.title,
       })

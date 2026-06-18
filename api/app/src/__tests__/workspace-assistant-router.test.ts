@@ -103,9 +103,41 @@ describe("workspaceAssistantRouter", () => {
       {
         clerkOrgId: "org_test",
         createdByUserId: "user_test",
+        metadata: {
+          chatSettings: {
+            capabilityMode: "read",
+            modelProfile: "fast",
+            version: "2.0.0",
+          },
+        },
         publicId: "conv_client",
         title: "Summarize my active opportunities",
       }
+    );
+  });
+
+  it("creates a conversation with explicit v2 chat settings metadata", async () => {
+    await caller().assistant.createConversation({
+      chatSettings: {
+        capabilityMode: "write",
+        modelProfile: "thinking",
+        version: "2.0.0",
+      },
+      publicId: "conv_client",
+      title: "Update the Linear issue",
+    });
+
+    expect(createWorkspaceAssistantConversationMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        metadata: {
+          chatSettings: {
+            capabilityMode: "write",
+            modelProfile: "thinking",
+            version: "2.0.0",
+          },
+        },
+      })
     );
   });
 
