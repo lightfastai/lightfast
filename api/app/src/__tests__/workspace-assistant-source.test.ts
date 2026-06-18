@@ -39,8 +39,8 @@ describe("workspace assistant TanStack migration", () => {
     expect(adapterSource).toMatch(
       /export\s+const\s+createConversation\s*=\s*createServerFn/
     );
-    expect(adapterSource).toMatch(
-      /export\s+const\s+createNewWorkspaceAssistantConversationId\s*=\s*createServerFn/
+    expect(adapterSource).not.toContain(
+      "createNewWorkspaceAssistantConversationId"
     );
     expect(adapterSource).not.toContain("TRPCError");
   });

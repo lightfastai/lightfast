@@ -45,9 +45,12 @@ describe("migrated workspace assistant data access", () => {
     );
     expect(clientSource).toContain("createConversation");
     expect(clientSource).toContain("assistantConversationsQueryKey");
-    expect(newConversationRouteSource).toMatch(assistantAdapterImport);
     expect(newConversationRouteSource).toContain(
-      "createNewWorkspaceAssistantConversationId"
+      'from "~/chat/conversation-id"'
+    );
+    expect(newConversationRouteSource).not.toMatch(assistantAdapterImport);
+    expect(newConversationRouteSource).toContain(
+      "createWorkspaceAssistantConversationId"
     );
     expect(newConversationRouteSource).not.toContain("createServerFn");
     expect(newConversationRouteSource).not.toContain("@db/app");
