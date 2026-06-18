@@ -14,6 +14,32 @@ function repoSource(path: string) {
 }
 
 describe("app GitHub API routes", () => {
+  it("mounts the GitHub webhook through an explicit api/app internal handler", () => {
+    const webhookRouteSource = source("src/routes/api/github/webhook.ts");
+    const githubWebhookAdapterSource = repoSource(
+      "api/app/src/adapters/internal/github-webhook.ts"
+    );
+    const apiPackageJson = JSON.parse(repoSource("api/app/package.json")) as {
+      exports: Record<string, { default: string; types: string }>;
+    };
+
+    expect(webhookRouteSource).toContain(
+      'createFileRoute("/api/github/webhook")'
+    );
+    expect(webhookRouteSource).toContain(
+      '@api/app/internal-api/github-webhook"'
+    );
+    expect(webhookRouteSource).toContain("handleGitHubWebhookRequest");
+    expect(webhookRouteSource).not.toContain("@api/app/services/github");
+    expect(webhookRouteSource).not.toContain("handleGitHubWebhook({");
+
+    expect(apiPackageJson.exports["./internal-api/github-webhook"]).toEqual({
+      default: "./src/adapters/internal/github-webhook.ts",
+      types: "./src/adapters/internal/github-webhook.ts",
+    });
+    expect(githubWebhookAdapterSource).toContain("handleGitHubWebhook");
+  });
+
   it("mounts GitHub OAuth callbacks through explicit api/app handlers", () => {
     const setupCallbackSource = source("src/routes/api/github/setup.ts");
     const oauthCallbackSource = source(
