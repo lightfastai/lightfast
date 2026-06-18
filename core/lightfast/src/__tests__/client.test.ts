@@ -1,8 +1,32 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
 import { createLightfast } from "../index";
 
+const packageRoot = resolve(import.meta.dirname, "../..");
+
+function source(path: string) {
+  return readFileSync(resolve(packageRoot, path), "utf8");
+}
+
 describe("createLightfast", () => {
+  it("uses explicit fetch routes without oRPC client dependencies", () => {
+    const packageJson = JSON.parse(source("package.json")) as {
+      dependencies?: Record<string, string>;
+    };
+    const clientSource = source("src/index.ts");
+    const tsupSource = source("tsup.config.ts");
+
+    expect(packageJson.dependencies?.["@orpc/client"]).toBeUndefined();
+    expect(packageJson.dependencies?.["@orpc/contract"]).toBeUndefined();
+    expect(packageJson.dependencies?.["@orpc/openapi-client"]).toBeUndefined();
+    expect(clientSource).not.toContain("@orpc/");
+    expect(clientSource).not.toContain("createORPCClient");
+    expect(clientSource).not.toContain("OpenAPILink");
+    expect(tsupSource).not.toContain("@orpc/");
+  });
+
   it("rejects keys without the lf_ prefix", () => {
     expect(() => createLightfast("not-a-key")).toThrow(
       /Invalid Lightfast API key/

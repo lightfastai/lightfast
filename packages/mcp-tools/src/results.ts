@@ -1,6 +1,6 @@
 import { parseError } from "@vendor/observability/error/next";
 
-export interface LightfastMcpContent {
+interface LightfastMcpContent {
   text: string;
   type: "text";
 }

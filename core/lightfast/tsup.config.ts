@@ -9,12 +9,7 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   external: [],
-  noExternal: [
-    "@orpc/client",
-    "@orpc/contract",
-    "@orpc/openapi-client",
-    "@repo/api-contract",
-  ],
+  noExternal: ["@repo/api-contract"],
   target: "node18",
   bundle: true,
   silent: false,

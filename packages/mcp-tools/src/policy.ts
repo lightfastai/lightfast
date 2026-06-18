@@ -23,18 +23,17 @@ function getNodeAtPath(root: Record<string, unknown>, path: string): unknown {
   return node;
 }
 
-function getOrpcSchemas(node: unknown): {
+function getContractSchemas(node: unknown): {
   inputSchema?: unknown;
   outputSchema?: unknown;
 } {
-  const def = (
-    node as {
-      "~orpc"?: {
-        inputSchema?: unknown;
-        outputSchema?: unknown;
-      };
-    }
-  )["~orpc"];
+  if (!node || typeof node !== "object") {
+    return {};
+  }
+  const def = node as {
+    inputSchema?: unknown;
+    outputSchema?: unknown;
+  };
 
   return {
     inputSchema: def?.inputSchema,
@@ -66,7 +65,7 @@ export function createLightfastMcpToolDefinitions(input: {
       if (!entry.expose) {
         return [];
       }
-      const schemas = getOrpcSchemas(
+      const schemas = getContractSchemas(
         getNodeAtPath(input.contract, contractPath)
       );
       return [
