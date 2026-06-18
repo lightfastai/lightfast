@@ -25,10 +25,18 @@ describe("native RPC route boundaries", () => {
     const cliRoute = appSource("src/routes/api/cli/rpc.ts");
 
     expect(desktopRoute).toContain('createFileRoute("/api/desktop/rpc")');
-    expect(desktopRoute).toContain('@api/app/desktop-api"');
+    expect(desktopRoute).toContain("await import(");
+    expect(desktopRoute).toContain('"@api/app/desktop-api"');
+    expect(desktopRoute).not.toContain(
+      'import { handleDesktopNativeRpcRequest } from "@api/app/desktop-api"'
+    );
     expect(desktopRoute).toContain("handleDesktopNativeRpcRequest");
     expect(cliRoute).toContain('createFileRoute("/api/cli/rpc")');
-    expect(cliRoute).toContain('@api/app/cli-api"');
+    expect(cliRoute).toContain("await import(");
+    expect(cliRoute).toContain('"@api/app/cli-api"');
+    expect(cliRoute).not.toContain(
+      'import { handleCliNativeRpcRequest } from "@api/app/cli-api"'
+    );
     expect(cliRoute).toContain("handleCliNativeRpcRequest");
 
     for (const source of [desktopRoute, cliRoute]) {
@@ -79,9 +87,17 @@ describe("native RPC route boundaries", () => {
     };
 
     expect(packageJson.exports).toHaveProperty("./native-provider-proxy");
-    expect(proxyCallRoute).toContain("@api/app/native-provider-proxy");
+    expect(proxyCallRoute).toContain("await import(");
+    expect(proxyCallRoute).toContain('"@api/app/native-provider-proxy"');
+    expect(proxyCallRoute).not.toContain(
+      'import { handleNativeProviderRoutineCallRequest } from "@api/app/native-provider-proxy"'
+    );
     expect(proxyCallRoute).toContain("handleNativeProviderRoutineCallRequest");
-    expect(proxyFindRoute).toContain("@api/app/native-provider-proxy");
+    expect(proxyFindRoute).toContain("await import(");
+    expect(proxyFindRoute).toContain('"@api/app/native-provider-proxy"');
+    expect(proxyFindRoute).not.toContain(
+      'import { handleNativeProviderRoutineFindRequest } from "@api/app/native-provider-proxy"'
+    );
     expect(proxyFindRoute).toContain("handleNativeProviderRoutineFindRequest");
     expect(proxyCallRoute).not.toContain('@api/app/cli-api"');
     expect(proxyFindRoute).not.toContain('@api/app/cli-api"');
