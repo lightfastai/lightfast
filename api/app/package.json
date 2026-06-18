@@ -69,6 +69,10 @@
       "types": "./src/adapters/internal/connector-oauth.ts",
       "default": "./src/adapters/internal/connector-oauth.ts"
     },
+    "./internal-api/github-oauth": {
+      "types": "./src/adapters/internal/github-oauth.ts",
+      "default": "./src/adapters/internal/github-oauth.ts"
+    },
     "./internal-api/workspace-assistant": {
       "types": "./src/adapters/internal/workspace-assistant/index.ts",
       "default": "./src/adapters/internal/workspace-assistant/index.ts"

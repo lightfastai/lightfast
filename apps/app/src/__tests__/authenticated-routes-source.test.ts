@@ -934,8 +934,10 @@ describe("app authenticated route migration", () => {
     expect(completeRouteSource).toContain("GitHubBindCompleteClient");
     expect(completeClientSource).toContain('result.bindingStatus !== "bound"');
     expect(completeClientSource).toContain("setFailed(true)");
-    expect(setupCallbackSource).toContain("completeGitHubInstallationSetup");
-    expect(oauthCallbackSource).toContain("completeGitHubOAuthVerification");
+    expect(setupCallbackSource).toContain(
+      "handleGitHubInstallationSetupRequest"
+    );
+    expect(oauthCallbackSource).toContain("handleGitHubOAuthCallbackRequest");
 
     for (const routeFile of [
       bindRouteSource,
