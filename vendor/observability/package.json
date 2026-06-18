@@ -60,10 +60,6 @@
     "./inngest": {
       "types": "./src/inngest.ts",
       "default": "./src/inngest.ts"
-    },
-    "./orpc": {
-      "types": "./src/orpc.ts",
-      "default": "./src/orpc.ts"
     }
   },
   "license": "MIT",
@@ -81,8 +77,6 @@
     "vitest": "catalog:"
   },
   "dependencies": {
-    "@orpc/client": "^1.14.2",
-    "@orpc/server": "^1.14.2",
     "@sentry/browser": "catalog:",
     "@sentry/core": "catalog:",
     "@sentry/electron": "catalog:",
