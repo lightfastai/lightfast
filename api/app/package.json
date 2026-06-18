@@ -161,6 +161,10 @@
       "types": "./src/services/skills/index.ts",
       "default": "./src/services/skills/index.ts"
     },
+    "./services/skills/events": {
+      "types": "./src/services/skills/events.ts",
+      "default": "./src/services/skills/events.ts"
+    },
     "./services/connectors": {
       "types": "./src/services/connectors/index.ts",
       "default": "./src/services/connectors/index.ts"
