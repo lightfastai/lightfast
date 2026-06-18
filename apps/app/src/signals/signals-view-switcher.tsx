@@ -1,3 +1,9 @@
+import {
+  createSignalView,
+  deleteSignalView,
+  listSignalViews,
+} from "@api/app/tanstack/signal-views";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ViewSwitcher } from "~/components/views/view-switcher";
 import {
   type NormalizedSignalsSearch,
@@ -7,14 +13,14 @@ import {
 } from "./signals-search-params";
 import {
   allSignalsParamValues,
+  type SignalViewConfig,
   selectionToConfig,
   viewConfigToParamValues,
 } from "./signals-views-model";
-import {
-  useCreateSignalView,
-  useDeleteSignalView,
-  useSignalViewsQuery,
-} from "./use-signal-views-query";
+
+const signalViewQueryKeys = {
+  list: () => ["signals", "views"] as const,
+};
 
 export function SignalsViewSwitcher({
   search,
@@ -23,9 +29,30 @@ export function SignalsViewSwitcher({
   search: NormalizedSignalsSearch;
   setSearchParams: (updates: Partial<NormalizedSignalsSearch>) => void;
 }) {
-  const viewsQuery = useSignalViewsQuery();
-  const createView = useCreateSignalView();
-  const deleteView = useDeleteSignalView();
+  const queryClient = useQueryClient();
+  const viewsQuery = useQuery({
+    enabled: typeof window !== "undefined",
+    queryFn: () => listSignalViews(),
+    queryKey: signalViewQueryKeys.list(),
+    staleTime: 60_000,
+  });
+  const createView = useMutation({
+    meta: { errorTitle: "Failed to save view" },
+    mutationFn: (data: { config: SignalViewConfig; name: string }) =>
+      createSignalView({ data }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: signalViewQueryKeys.list(),
+      }),
+  });
+  const deleteView = useMutation({
+    meta: { errorTitle: "Failed to delete view" },
+    mutationFn: (data: { publicId: string }) => deleteSignalView({ data }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: signalViewQueryKeys.list(),
+      }),
+  });
   const views = viewsQuery.data ?? [];
 
   const currentConfig = selectionToConfig({
