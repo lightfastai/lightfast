@@ -23,7 +23,6 @@ describe("org members app data access", () => {
   it("removes org member settings UI callers from tRPC", () => {
     const files = [
       "src/org/settings/members/org-member-list.tsx",
-      "src/org/settings/members/org-member-list-actions.ts",
       "src/org/settings/members/org-member-invite.tsx",
       "src/org/settings/members/org-member-cache.ts",
       "src/signals/signals-creator-avatar.tsx",
@@ -52,6 +51,27 @@ describe("org members app data access", () => {
     expect(inviteSource).toContain("createOptimisticInvitation");
     expect(inviteSource).not.toContain("useOrgMemberInviteAction");
     expect(inviteSource).not.toContain("org-member-invite-actions");
+  });
+
+  it("keeps member list mutation state in the list component", () => {
+    const listSource = readFileSync(
+      resolve(appRoot, "src/org/settings/members/org-member-list.tsx"),
+      "utf8"
+    );
+    const actionsPath = "src/org/settings/members/org-member-list-actions.ts";
+
+    expect(existsSync(resolve(appRoot, actionsPath))).toBe(false);
+    expect(listSource).toContain("useMutation");
+    expect(listSource).toContain("useQueryClient");
+    expect(listSource).toContain("updateOrgMemberRoleMutationOptions");
+    expect(listSource).toContain("removeOrgMemberMutationOptions");
+    expect(listSource).toContain("revokeOrgInvitationMutationOptions");
+    expect(listSource).toContain("orgMemberQueryKeys.list(orgId)");
+    expect(listSource).toContain("updateMemberRole");
+    expect(listSource).toContain("restoreMember");
+    expect(listSource).toContain("restoreInvitation");
+    expect(listSource).not.toContain("useOrgMemberListActions");
+    expect(listSource).not.toContain("org-member-list-actions");
   });
 
   it("surfaces expected domain errors from TanStack mutations", () => {
