@@ -41,6 +41,10 @@
       "types": "./src/adapters/cli-api.ts",
       "default": "./src/adapters/cli-api.ts"
     },
+    "./native-provider-proxy": {
+      "types": "./src/adapters/native-provider-proxy.ts",
+      "default": "./src/adapters/native-provider-proxy.ts"
+    },
     "./internal-api/mcp-signals": {
       "types": "./src/adapters/internal/mcp-signals.ts",
       "default": "./src/adapters/internal/mcp-signals.ts"
