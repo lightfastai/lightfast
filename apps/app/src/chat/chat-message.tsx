@@ -5,9 +5,12 @@ import {
   MessageContent,
 } from "@repo/ui-v2/components/ai-elements/message";
 import type { UIMessage } from "@vendor/ai";
-import { memo } from "react";
+import { memo, type ReactNode } from "react";
 import { extractMessageText, MessageCopyButton } from "./message-copy-button";
-import { WorkspaceAssistantMessagePart } from "./message-part";
+import {
+  WorkspaceAssistantActivityGroup,
+  WorkspaceAssistantMessagePart,
+} from "./message-part";
 
 export const ChatMessage = memo(function ChatMessage({
   isStreaming,
@@ -25,13 +28,7 @@ export const ChatMessage = memo(function ChatMessage({
             "w-full max-w-none bg-transparent px-0 py-0"
         )}
       >
-        {message.parts.map((part, index) => (
-          <WorkspaceAssistantMessagePart
-            isStreaming={isStreaming}
-            key={`${message.id}-${index}`}
-            part={part}
-          />
-        ))}
+        {renderMessageParts({ isStreaming, message })}
       </MessageContent>
       {copyText ? (
         <MessageActions
@@ -46,3 +43,46 @@ export const ChatMessage = memo(function ChatMessage({
     </Message>
   );
 });
+
+function renderMessageParts({
+  isStreaming,
+  message,
+}: {
+  isStreaming: boolean;
+  message: UIMessage;
+}) {
+  const rendered: ReactNode[] = [];
+  let activityParts: UIMessage["parts"] = [];
+
+  const flushActivity = () => {
+    if (activityParts.length === 0) {
+      return;
+    }
+    rendered.push(
+      <WorkspaceAssistantActivityGroup
+        isStreaming={isStreaming}
+        key={`${message.id}-activity-${rendered.length}`}
+        parts={activityParts}
+      />
+    );
+    activityParts = [];
+  };
+
+  message.parts.forEach((part, index) => {
+    if (part.type === "text") {
+      flushActivity();
+      rendered.push(
+        <WorkspaceAssistantMessagePart
+          isStreaming={isStreaming}
+          key={`${message.id}-${index}`}
+          part={part}
+        />
+      );
+      return;
+    }
+    activityParts.push(part);
+  });
+
+  flushActivity();
+  return rendered;
+}

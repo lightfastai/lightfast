@@ -1,10 +1,5 @@
 import { MessageResponse } from "@repo/ui-v2/components/ai-elements/message";
 import {
-  Reasoning,
-  ReasoningContent,
-  ReasoningTrigger,
-} from "@repo/ui-v2/components/ai-elements/reasoning";
-import {
   type ToolPart as AiElementsToolPart,
   Tool,
   ToolContent,
@@ -12,6 +7,16 @@ import {
   ToolInput,
   ToolOutput,
 } from "@repo/ui-v2/components/ai-elements/tool";
+import {
+  ThinkingStep,
+  ThinkingStepDetails,
+  ThinkingStepSource,
+  ThinkingStepSources,
+  ThinkingSteps,
+  ThinkingStepsContent,
+  ThinkingStepsHeader,
+} from "@repo/ui-v2/components/ai-elements/thinking-steps";
+import { mapActivityStatusToThinkingStepStatus } from "@repo/ai/workspace-assistant";
 import type { DynamicToolUIPart, ToolUIPart, UIMessage } from "@vendor/ai";
 import { memo } from "react";
 
@@ -36,120 +41,220 @@ export const WorkspaceAssistantMessagePart = memo(
       return <MessageResponse>{part.text}</MessageResponse>;
     }
 
-    if (part.type === "reasoning") {
-      return (
-        <Reasoning defaultOpen={isStreaming} isStreaming={isStreaming}>
-          <ReasoningTrigger />
-          <ReasoningContent>{part.text}</ReasoningContent>
-        </Reasoning>
-      );
-    }
-
-    if (isGranolaUserConnectorToolPart(part)) {
-      return (
-        <div className="inline-flex w-fit items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 text-muted-foreground text-xs">
-          Used Granola
-        </div>
-      );
-    }
-
-    if (isToolPart(part)) {
-      const toolPart = part as unknown as WorkspaceToolPart;
-      return (
-        <Tool
-          defaultOpen={toolPart.state !== "output-available"}
-          key={toolPart.state}
-        >
-          {toolPart.type === "dynamic-tool" ? (
-            <ToolHeader
-              state={toolPart.state as DynamicToolUIPart["state"]}
-              toolName={toolPart.toolName ?? ""}
-              type="dynamic-tool"
-            />
-          ) : (
-            <ToolHeader
-              state={toolPart.state as ToolUIPart["state"]}
-              type={toolPart.type as ToolUIPart["type"]}
-            />
-          )}
-          <ToolContent>
-            <ToolInput input={toolPart.input} />
-            <ToolOutput
-              errorText={toolPart.errorText}
-              output={toolPart.output}
-            />
-          </ToolContent>
-        </Tool>
-      );
-    }
-
-    if (part.type === "source-url") {
-      const source = part as { title?: string; url?: string };
-      if (!source.url) {
-        return null;
-      }
-      return (
-        <a
-          className="text-muted-foreground text-sm underline underline-offset-4"
-          href={source.url}
-          rel="noreferrer"
-          target="_blank"
-        >
-          {source.title ?? source.url}
-        </a>
-      );
-    }
-
-    if (part.type === "source-document") {
-      const source = part as { filename?: string; title?: string };
-      return (
-        <div className="text-muted-foreground text-sm">
-          Source: {source.title ?? source.filename ?? "Document"}
-        </div>
-      );
-    }
-
-    if (part.type === "file") {
-      const file = part as {
-        filename?: string;
-        mediaType?: string;
-        url?: string;
-      };
-      const label = file.filename ?? file.mediaType ?? "File";
-      if (file.url) {
-        return (
-          <a
-            className="text-muted-foreground text-sm underline underline-offset-4"
-            href={file.url}
-            rel="noreferrer"
-            target="_blank"
-          >
-            {label}
-          </a>
-        );
-      }
-      return <div className="text-muted-foreground text-sm">{label}</div>;
-    }
-
-    if (part.type === "step-start") {
-      return null;
-    }
-
-    if (part.type.startsWith("data-")) {
-      return (
-        <div className="text-muted-foreground text-sm">
-          {formatPartLabel(part.type.slice("data-".length))} data received
-        </div>
-      );
-    }
-
     return (
-      <div className="text-muted-foreground text-sm">
-        {formatPartLabel(part.type)} received
-      </div>
+      <WorkspaceAssistantActivityGroup
+        isStreaming={isStreaming}
+        parts={[part]}
+      />
     );
   }
 );
+
+export function WorkspaceAssistantActivityGroup({
+  isStreaming,
+  parts,
+}: {
+  isStreaming: boolean;
+  parts: UIMessage["parts"];
+}) {
+  return (
+    <ThinkingSteps defaultOpen={isStreaming}>
+      <ThinkingStepsHeader>Thinking</ThinkingStepsHeader>
+      <ThinkingStepsContent>
+        {parts.map((part, index) => (
+          <WorkspaceAssistantActivityPart
+            isLast={index === parts.length - 1}
+            isStreaming={isStreaming}
+            key={`${part.type}-${index}`}
+            part={part}
+          />
+        ))}
+      </ThinkingStepsContent>
+    </ThinkingSteps>
+  );
+}
+
+function WorkspaceAssistantActivityPart({
+  isLast,
+  isStreaming,
+  part,
+}: {
+  isLast: boolean;
+  isStreaming: boolean;
+  part: UIMessage["parts"][number];
+}) {
+  if (part.type === "reasoning") {
+    return (
+      <ThinkingStep
+        description={part.text}
+        isLast={isLast}
+        label="Thinking"
+        status={isStreaming ? "active" : "complete"}
+      />
+    );
+  }
+
+  if (part.type === "data-activity") {
+    const activity = getActivityData(part);
+    const sources = activity.sources ?? [];
+    return (
+      <ThinkingStep
+        description={activity.summary}
+        isLast={isLast}
+        label={activity.label}
+        status={mapActivityStatusToThinkingStepStatus(activity.status)}
+      >
+        {activity.details?.length || sources.length ? (
+          <ThinkingStepDetails details={activity.details} summary="Details">
+            {sources.length ? (
+              <ThinkingStepSources>
+                {sources.map((source) => (
+                  <ThinkingStepSource
+                    key={`${source.label}-${source.url ?? ""}`}
+                    render={
+                      source.url ? (
+                        <a href={source.url} rel="noreferrer" target="_blank" />
+                      ) : undefined
+                    }
+                  >
+                    {source.label}
+                  </ThinkingStepSource>
+                ))}
+              </ThinkingStepSources>
+            ) : null}
+          </ThinkingStepDetails>
+        ) : null}
+      </ThinkingStep>
+    );
+  }
+
+  if (part.type === "step-start") {
+    return null;
+  }
+
+  if (isGranolaUserConnectorToolPart(part)) {
+    return (
+      <ThinkingStep
+        isLast={isLast}
+        label="Used Granola"
+        status="complete"
+      />
+    );
+  }
+
+  if (isToolPart(part)) {
+    const toolPart = part as unknown as WorkspaceToolPart;
+    const label =
+      toolPart.type === "dynamic-tool"
+        ? formatPartLabel(toolPart.toolName ?? "tool")
+        : formatPartLabel(toolPart.type.slice("tool-".length));
+    return (
+      <ThinkingStep
+        isLast={isLast}
+        label={label}
+        status={toolPart.state === "output-available" ? "complete" : "active"}
+      >
+        <ThinkingStepDetails summary="Tool details">
+          <Tool
+            defaultOpen={toolPart.state !== "output-available"}
+            key={toolPart.state}
+          >
+            {toolPart.type === "dynamic-tool" ? (
+              <ToolHeader
+                state={toolPart.state as DynamicToolUIPart["state"]}
+                toolName={toolPart.toolName ?? ""}
+                type="dynamic-tool"
+              />
+            ) : (
+              <ToolHeader
+                state={toolPart.state as ToolUIPart["state"]}
+                type={toolPart.type as ToolUIPart["type"]}
+              />
+            )}
+            <ToolContent>
+              <ToolInput input={toolPart.input} />
+              <ToolOutput
+                errorText={toolPart.errorText}
+                output={toolPart.output}
+              />
+            </ToolContent>
+          </Tool>
+        </ThinkingStepDetails>
+      </ThinkingStep>
+    );
+  }
+
+  if (part.type === "source-url") {
+    const source = part as { title?: string; url?: string };
+    return (
+      <ThinkingStep isLast={isLast} label="Source" status="complete">
+        <ThinkingStepSources>
+          <ThinkingStepSource
+            render={
+              source.url ? (
+                <a href={source.url} rel="noreferrer" target="_blank" />
+              ) : undefined
+            }
+          >
+            {source.title ?? source.url ?? "URL"}
+          </ThinkingStepSource>
+        </ThinkingStepSources>
+      </ThinkingStep>
+    );
+  }
+
+  if (part.type === "source-document") {
+    const source = part as { filename?: string; title?: string };
+    return (
+      <ThinkingStep
+        description={source.filename}
+        isLast={isLast}
+        label={source.title ?? source.filename ?? "Document source"}
+        status="complete"
+      />
+    );
+  }
+
+  if (part.type === "file") {
+    const file = part as {
+      filename?: string;
+      mediaType?: string;
+      url?: string;
+    };
+    const label = file.filename ?? file.mediaType ?? "File";
+    return (
+      <ThinkingStep isLast={isLast} label={label} status="complete">
+        {file.url ? (
+          <ThinkingStepSources>
+            <ThinkingStepSource
+              render={<a href={file.url} rel="noreferrer" target="_blank" />}
+            >
+              Open file
+            </ThinkingStepSource>
+          </ThinkingStepSources>
+        ) : null}
+      </ThinkingStep>
+    );
+  }
+
+  if (part.type.startsWith("data-")) {
+    return (
+      <ThinkingStep
+        isLast={isLast}
+        label={`${formatPartLabel(part.type.slice("data-".length))} data`}
+        status="complete"
+      />
+    );
+  }
+
+  return (
+    <ThinkingStep
+      isLast={isLast}
+      label={`${formatPartLabel(part.type)} received`}
+      status="complete"
+    />
+  );
+}
 
 function isToolPart(part: UIMessage["parts"][number]) {
   return (
@@ -176,6 +281,27 @@ function isGranolaUserConnectorToolPart(
     "provider" in output &&
     output.provider === "granola"
   );
+}
+
+function getActivityData(part: UIMessage["parts"][number]) {
+  const data =
+    "data" in part && typeof part.data === "object" && part.data !== null
+      ? (part.data as {
+          details?: string[];
+          label?: string;
+          sources?: Array<{ label: string; url?: string }>;
+          status?: "running" | "completed" | "failed";
+          summary?: string;
+        })
+      : {};
+
+  return {
+    details: Array.isArray(data.details) ? data.details : undefined,
+    label: data.label?.trim() || "Activity",
+    sources: Array.isArray(data.sources) ? data.sources : undefined,
+    status: data.status,
+    summary: data.summary,
+  };
 }
 
 function formatPartLabel(value: string) {
