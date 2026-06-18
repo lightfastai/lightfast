@@ -85,9 +85,6 @@ catalog:
   '@tanstack/react-virtual': ^3.13.12
   '@tanstack/router-plugin': ^1.168.14
   '@testing-library/react': ^16.3.2
-  '@trpc/client': ^11.16.0
-  '@trpc/server': ^11.16.0
-  '@trpc/tanstack-react-query': ^11.16.0
   '@unkey/api': 2.3.4
   '@types/node': ^24.9.1
   '@turbo/gen': ^2.9.6

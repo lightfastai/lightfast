@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const appRoot = resolve(import.meta.dirname, "../..");
+const repoRoot = resolve(appRoot, "../..");
 
 describe("app tRPC route", () => {
   it("removes the app tRPC catch-all route after UI migration", () => {
@@ -14,6 +15,10 @@ describe("app tRPC route", () => {
       "utf8"
     );
     const corsSource = readFileSync(resolve(appRoot, "src/cors.ts"), "utf8");
+    const workspaceSource = readFileSync(
+      resolve(repoRoot, "pnpm-workspace.yaml"),
+      "utf8"
+    );
 
     expect(existsSync(resolve(appRoot, "src/routes/api/trpc.$.ts"))).toBe(
       false
@@ -28,5 +33,6 @@ describe("app tRPC route", () => {
     expect(routeTreeSource).not.toContain("ApiTrpcSplatRoute");
     expect(corsSource).not.toContain("x-trpc-source");
     expect(corsSource).not.toContain("trpc-accept");
+    expect(workspaceSource).not.toContain("@trpc/");
   });
 });
