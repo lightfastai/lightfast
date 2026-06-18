@@ -13,8 +13,8 @@ describe("api/app app-facing tRPC root", () => {
     const packageJson = JSON.parse(source("../package.json")) as {
       dependencies?: Record<string, string>;
     };
-    const indexSource = source("index.ts");
     const trpcPath = resolve(apiRoot, "trpc.ts");
+    const indexPath = resolve(apiRoot, "index.ts");
     const workspaceListInputPath = resolve(
       apiRoot,
       "router/(pending-not-allowed)/workspace-list-input.ts"
@@ -27,13 +27,8 @@ describe("api/app app-facing tRPC root", () => {
     expect(existsSync(trpcPath)).toBe(false);
     expect(existsSync(workspaceListInputPath)).toBe(false);
     expect(existsSync(taskRouterPath)).toBe(false);
+    expect(existsSync(indexPath)).toBe(false);
     expect(packageJson.dependencies?.["@trpc/server"]).toBeUndefined();
-    expect(indexSource).toContain('export * from "./mcp-oauth"');
-    expect(indexSource).not.toContain("@trpc/server");
-    expect(indexSource).not.toContain("AppRouter");
-    expect(indexSource).not.toContain("appRouter");
-    expect(indexSource).not.toContain("createTRPCContext");
-    expect(indexSource).not.toContain("createCallerFactory");
 
     const rootSource = source("root.ts");
     expect(rootSource).not.toContain("createTRPCRouter");

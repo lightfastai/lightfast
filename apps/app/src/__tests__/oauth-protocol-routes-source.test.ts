@@ -8,6 +8,8 @@ function source(path: string) {
   return readFileSync(resolve(appRoot, path), "utf8");
 }
 
+const rootApiAppImportPattern = /from\s+["@']@api\/app["@']/;
+
 describe("app OAuth protocol route migration", () => {
   it("ports MCP OAuth protocol endpoints as TanStack server routes", () => {
     const metadataSource = source(
@@ -20,37 +22,60 @@ describe("app OAuth protocol route migration", () => {
     );
     const tokenSource = source("src/routes/oauth/token.ts");
     const revokeSource = source("src/routes/oauth/revoke.ts");
+    const consentSource = source("src/oauth/mcp-consent.server.ts");
     const responseSource = source("src/server/oauth/mcp-response.ts");
 
     expect(metadataSource).toContain(
       'createFileRoute("/.well-known/oauth-authorization-server")'
     );
+    expect(metadataSource).toContain('@api/app/mcp-oauth"');
     expect(metadataSource).toContain("MCP_SUPPORTED_SCOPES");
     expect(metadataSource).toContain("authorization_endpoint");
     expect(metadataSource).toContain("token_endpoint_auth_methods_supported");
     expect(jwksSource).toContain('createFileRoute("/oauth/jwks")');
+    expect(jwksSource).toContain('@api/app/mcp-oauth"');
     expect(jwksSource).toContain("getMcpOAuthJwks");
     expect(registerSource).toContain('createFileRoute("/oauth/register")');
+    expect(registerSource).toContain('@api/app/mcp-oauth"');
     expect(registerSource).toContain("registerMcpOAuthClient");
     expect(registerSource).toContain("readOAuthBody");
     expect(registerSource).toContain("POST:");
     expect(registeredClientSource).toContain(
       'createFileRoute("/oauth/register/$clientId")'
     );
+    expect(registeredClientSource).toContain('@api/app/mcp-oauth"');
     expect(registeredClientSource).toContain("getRegisteredMcpOAuthClient");
     expect(registeredClientSource).toContain("bearerToken");
     expect(registeredClientSource).toContain("params.clientId");
     expect(tokenSource).toContain('createFileRoute("/oauth/token")');
+    expect(tokenSource).toContain('@api/app/mcp-oauth"');
     expect(tokenSource).toContain("exchangeMcpAuthorizationCode");
     expect(tokenSource).toContain("rotateMcpRefreshTokenSecret");
     expect(tokenSource).toContain("requireOAuthServiceJwtSecret");
     expect(revokeSource).toContain('createFileRoute("/oauth/revoke")');
+    expect(revokeSource).toContain('@api/app/mcp-oauth"');
     expect(revokeSource).toContain("revokeMcpRefreshTokenSecret");
+    expect(consentSource).toContain('@api/app/mcp-oauth"');
+    expect(consentSource).toContain("issueMcpAuthorizationCode");
     expect(responseSource).toContain("env.VITE_LIGHTFAST_APP_URL");
+    expect(responseSource).toContain('@api/app/mcp-oauth"');
     expect(responseSource).toContain("McpOAuthError");
     expect(responseSource).toContain("cache-control");
     expect(responseSource).toContain("readOAuthBody");
     expect(responseSource).toContain("bearerToken");
+
+    for (const routeSource of [
+      metadataSource,
+      jwksSource,
+      registerSource,
+      registeredClientSource,
+      tokenSource,
+      revokeSource,
+      consentSource,
+      responseSource,
+    ]) {
+      expect(routeSource).not.toMatch(rootApiAppImportPattern);
+    }
 
     for (const routeSource of [
       metadataSource,

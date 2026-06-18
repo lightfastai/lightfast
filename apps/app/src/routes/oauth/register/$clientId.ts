@@ -1,5 +1,5 @@
 // biome-ignore-all lint/style/useFilenamingConvention: TanStack route params must be valid JavaScript identifiers.
-import { getRegisteredMcpOAuthClient, McpOAuthError } from "@api/app";
+import { getRegisteredMcpOAuthClient, McpOAuthError } from "@api/app/mcp-oauth";
 import { db } from "@db/app/client";
 import { createFileRoute } from "@tanstack/react-router";
 import {

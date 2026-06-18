@@ -1,4 +1,4 @@
-import { McpOAuthError } from "@api/app";
+import { McpOAuthError } from "@api/app/mcp-oauth";
 import { env } from "~/env";
 
 export function oauthIssuer(): string {

@@ -5,10 +5,6 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "default": "./src/index.ts"
-    },
     "./mcp-oauth": {
       "types": "./src/mcp-oauth/index.ts",
       "default": "./src/mcp-oauth/index.ts"

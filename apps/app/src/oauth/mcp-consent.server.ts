@@ -5,7 +5,7 @@ import {
   isValidMcpS256CodeChallenge,
   McpOAuthError,
   parseMcpScopes,
-} from "@api/app";
+} from "@api/app/mcp-oauth";
 import { getMcpOauthClientByClientId } from "@db/app";
 import { db } from "@db/app/client";
 import type { McpScope } from "@repo/api-contract";
