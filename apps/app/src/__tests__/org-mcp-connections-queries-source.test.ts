@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -8,27 +8,22 @@ function source(path: string) {
   return readFileSync(resolve(appRoot, path), "utf8");
 }
 
-describe("org MCP connection query helpers", () => {
-  it("centralizes org MCP settings query keys and server function calls", () => {
-    const querySource = source(
-      "src/org/settings/mcp/mcp-connections-queries.ts"
-    );
-
-    expect(querySource).toContain('@api/app/tanstack/mcp-connections"');
-    expect(querySource).toContain("orgMcpConnectionQueryKeys");
-    expect(querySource).toContain("orgMcpConnectionsQueryOptions");
-    expect(querySource).toContain("revokeOrgMcpConnectionMutationOptions");
-    expect(querySource).not.toContain("useTRPC");
-  });
-
-  it("moves the org MCP settings UI off tRPC", () => {
+describe("org MCP connection settings data access", () => {
+  it("keeps the org MCP settings query ownership in the client", () => {
     const clientSource = source(
       "src/org/settings/mcp/mcp-connections-client.tsx"
     );
+    const queryPath = "src/org/settings/mcp/mcp-connections-queries.ts";
 
+    expect(existsSync(resolve(appRoot, queryPath))).toBe(false);
+    expect(clientSource).toContain('@api/app/tanstack/mcp-connections"');
+    expect(clientSource).toContain("listOrgMcpConnections");
+    expect(clientSource).toContain("revokeOrgMcpConnection");
+    expect(clientSource).toContain('["org-mcp-connections", "list"]');
     expect(clientSource).not.toContain("useTRPC");
     expect(clientSource).not.toContain("org.settings.mcpConnections");
-    expect(clientSource).toContain("orgMcpConnectionsQueryOptions");
-    expect(clientSource).toContain("revokeOrgMcpConnectionMutationOptions");
+    expect(clientSource).not.toContain("mcp-connections-queries");
+    expect(clientSource).not.toContain("orgMcpConnectionsQueryOptions");
+    expect(clientSource).not.toContain("revokeOrgMcpConnectionMutationOptions");
   });
 });

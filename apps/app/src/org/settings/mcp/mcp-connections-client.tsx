@@ -1,4 +1,9 @@
 import {
+  type ListOrgMcpConnectionsResult,
+  listOrgMcpConnections,
+  revokeOrgMcpConnection,
+} from "@api/app/tanstack/mcp-connections";
+import {
   InformationCircleIcon as Info,
   SecurityCheckIcon as ShieldCheck,
   ShieldQuestionMarkIcon as ShieldQuestion,
@@ -29,14 +34,10 @@ import { toast } from "@repo/ui/components/ui/sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import { useCallback, useState } from "react";
-import {
-  type OrgMcpConnection,
-  orgMcpConnectionQueryKeys,
-  orgMcpConnectionsQueryOptions,
-  revokeOrgMcpConnectionMutationOptions,
-} from "./mcp-connections-queries";
 
-type McpConnection = OrgMcpConnection;
+type McpConnection = ListOrgMcpConnectionsResult[number];
+
+const orgMcpConnectionListQueryKey = ["org-mcp-connections", "list"] as const;
 
 export function McpConnectionsClient() {
   const queryClient = useQueryClient();
@@ -44,18 +45,23 @@ export function McpConnectionsClient() {
     data: connections,
     error,
     isPending,
-  } = useQuery(orgMcpConnectionsQueryOptions());
+  } = useQuery({
+    enabled: typeof window !== "undefined",
+    queryFn: () => listOrgMcpConnections(),
+    queryKey: orgMcpConnectionListQueryKey,
+  });
   const [detailsConnection, setDetailsConnection] =
     useState<McpConnection | null>(null);
   const [revokeConnection, setRevokeConnection] =
     useState<McpConnection | null>(null);
 
   const revokeMutation = useMutation({
-    ...revokeOrgMcpConnectionMutationOptions(),
+    meta: { errorTitle: "Failed to revoke MCP connection" },
+    mutationFn: (data: { grantId: string }) => revokeOrgMcpConnection({ data }),
     onSuccess: () => toast.success("MCP connection revoked"),
     onSettled: () =>
       void queryClient.invalidateQueries({
-        queryKey: orgMcpConnectionQueryKeys.list(),
+        queryKey: orgMcpConnectionListQueryKey,
       }),
   });
 
