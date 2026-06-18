@@ -80,7 +80,7 @@ export function setCorsHeaders(request: Request, response: Response) {
   response.headers.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   response.headers.set(
     "Access-Control-Allow-Headers",
-    "content-type,authorization,x-trpc-source,trpc-accept,x-lightfast-desktop,x-lightfast-native-client,x-lightfast-organization-id"
+    "content-type,authorization,x-lightfast-desktop,x-lightfast-native-client,x-lightfast-organization-id"
   );
   response.headers.set("Vary", "Origin");
   response.headers.set("Access-Control-Allow-Credentials", "true");

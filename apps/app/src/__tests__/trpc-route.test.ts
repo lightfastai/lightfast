@@ -13,6 +13,7 @@ describe("app tRPC route", () => {
       resolve(appRoot, "src/routeTree.gen.ts"),
       "utf8"
     );
+    const corsSource = readFileSync(resolve(appRoot, "src/cors.ts"), "utf8");
 
     expect(existsSync(resolve(appRoot, "src/routes/api/trpc.$.ts"))).toBe(
       false
@@ -25,5 +26,7 @@ describe("app tRPC route", () => {
     ).toBeUndefined();
     expect(routeTreeSource).not.toContain("/api/trpc");
     expect(routeTreeSource).not.toContain("ApiTrpcSplatRoute");
+    expect(corsSource).not.toContain("x-trpc-source");
+    expect(corsSource).not.toContain("trpc-accept");
   });
 });
