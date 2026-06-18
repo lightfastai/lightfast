@@ -1,3 +1,9 @@
+import {
+  Tick02Icon as Check,
+  Add01Icon as Plus,
+  UnfoldMoreIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { useMounted } from "@repo/ui/hooks/use-mounted";
 import { cn } from "@repo/ui/lib/utils";
@@ -11,12 +17,6 @@ import {
 } from "@repo/ui-v2/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import {
-  Tick02Icon as Check,
-  UnfoldMoreIcon,
-  Add01Icon as Plus,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { Suspense, useState } from "react";
 import { useOrganizationList } from "~/compat/clerk";
 import { listUserOrganizationsQueryOptions } from "~/organization/organization-queries";
@@ -173,7 +173,10 @@ export function TeamSwitcher() {
               </Avatar>
               <span className="flex-1 truncate">{org.name}</span>
               {isSelected && (
-                <HugeiconsIcon icon={Check} className="h-4 w-4 shrink-0 text-foreground" />
+                <HugeiconsIcon
+                  className="h-4 w-4 shrink-0 text-foreground"
+                  icon={Check}
+                />
               )}
             </DropdownMenuItem>
           );
@@ -183,7 +186,7 @@ export function TeamSwitcher() {
           render={<Link to="/account/teams/new" />}
         >
           <div className="flex h-5 w-5 items-center justify-center rounded-full border border-border/50 border-dashed">
-            <HugeiconsIcon icon={Plus} className="h-3 w-3" />
+            <HugeiconsIcon className="h-3 w-3" icon={Plus} />
           </div>
           <span>Create Team</span>
         </DropdownMenuItem>

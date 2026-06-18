@@ -1,19 +1,3 @@
-import { LIGHTFAST_REPOSITORY_NAME } from "@repo/app-setup-contract";
-import { Icons } from "@repo/ui/components/icons";
-import { Badge } from "@repo/ui/components/ui/badge";
-import { Button } from "@repo/ui/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@repo/ui-v2/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@repo/ui/components/ui/tooltip";
-import { Link } from "@tanstack/react-router";
 import {
   ChevronDownIcon as ChevronDown,
   ExternalLinkIcon as ExternalLink,
@@ -21,6 +5,22 @@ import {
   Unlink02Icon as Unplug,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { LIGHTFAST_REPOSITORY_NAME } from "@repo/app-setup-contract";
+import { Icons } from "@repo/ui/components/icons";
+import { Badge } from "@repo/ui/components/ui/badge";
+import { Button } from "@repo/ui/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@repo/ui-v2/components/ui/dropdown-menu";
+import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { displayValue, formatStatusSubtitle } from "./source-control-format";
 import type { SourceControlConnection } from "./source-control-queries";
@@ -118,7 +118,11 @@ function LightfastSection({
             preload="intent"
             to="/$slug/tasks/github/lightfast-repo"
           >
-            <HugeiconsIcon icon={ExternalLink} aria-hidden="true" className="size-3.5" />
+            <HugeiconsIcon
+              aria-hidden="true"
+              className="size-3.5"
+              icon={ExternalLink}
+            />
             Open setup
           </Link>
         </Button>
@@ -175,18 +179,31 @@ export function SourceControlConnectionCard({
               />
               <span className="truncate">Connected</span>
             </span>
-            <HugeiconsIcon icon={ChevronDown}
+            <HugeiconsIcon
               aria-hidden="true"
               className="size-3.5 shrink-0 text-muted-foreground"
+              icon={ChevronDown}
             />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <ImmutableConnectionMenuItem
-              icon={<HugeiconsIcon icon={Settings} aria-hidden="true" className="size-4" />}
+              icon={
+                <HugeiconsIcon
+                  aria-hidden="true"
+                  className="size-4"
+                  icon={Settings}
+                />
+              }
               label="Configure in GitHub"
             />
             <ImmutableConnectionMenuItem
-              icon={<HugeiconsIcon icon={Unplug} aria-hidden="true" className="size-4" />}
+              icon={
+                <HugeiconsIcon
+                  aria-hidden="true"
+                  className="size-4"
+                  icon={Unplug}
+                />
+              }
               label="Disconnect"
               variant="destructive"
             />

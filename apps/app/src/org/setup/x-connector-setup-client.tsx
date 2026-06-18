@@ -1,10 +1,10 @@
-import { Button } from "@repo/ui/components/ui/button";
-import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   ArrowUpRightIcon as ArrowUpRight,
   Loading03Icon as Loader2,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@repo/ui/components/ui/button";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
 import { ConnectorIcon } from "~/connectors/connector-icons";
 import {
@@ -164,13 +164,20 @@ export function XConnectorSetupClient({ orgSlug }: XConnectorSetupClientProps) {
         >
           {startConnectMutation.isPending ? (
             <>
-              <HugeiconsIcon icon={Loader2} className="mr-1.5 h-4 w-4 animate-spin" />
+              <HugeiconsIcon
+                className="mr-1.5 h-4 w-4 animate-spin"
+                icon={Loader2}
+              />
               Connecting...
             </>
           ) : (
             <>
               {actionLabel}
-              <HugeiconsIcon icon={ArrowUpRight} aria-hidden="true" className="h-4 w-4" />
+              <HugeiconsIcon
+                aria-hidden="true"
+                className="h-4 w-4"
+                icon={ArrowUpRight}
+              />
             </>
           )}
         </Button>

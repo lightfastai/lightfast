@@ -1,6 +1,11 @@
 import { useAuth } from "@clerk/tanstack-react-start";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  ChevronLeftIcon as ChevronLeft,
+  Loading03Icon as Loader2,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
   AUTOMATION_NAME_MAX_LENGTH,
   AUTOMATION_PROMPT_MAX_LENGTH,
   type AutomationScheduleInput,
@@ -30,11 +35,6 @@ import {
 import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import {
-  ChevronLeftIcon as ChevronLeft,
-  Loading03Icon as Loader2,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useMemo } from "react";
 import { z } from "zod";
 import { connectorsListQueryOptions } from "~/connectors/connectors-queries";
@@ -210,7 +210,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
             variant="ghost"
           >
             <Link params={{ slug }} preload="intent" to="/$slug/automations">
-              <HugeiconsIcon icon={ChevronLeft} className="size-3" />
+              <HugeiconsIcon className="size-3" icon={ChevronLeft} />
               Automations
             </Link>
           </Button>
@@ -503,7 +503,10 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
               >
                 {createMutation.isPending ? (
                   <>
-                    <HugeiconsIcon icon={Loader2} className="size-3.5 animate-spin" />
+                    <HugeiconsIcon
+                      className="size-3.5 animate-spin"
+                      icon={Loader2}
+                    />
                     Creating
                   </>
                 ) : (

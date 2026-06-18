@@ -1,4 +1,13 @@
 import {
+  ArrowUpRightIcon as ArrowUpRight,
+  Loading03Icon as Loader2,
+  MoreHorizontalIcon as MoreHorizontal,
+  SidebarRightIcon as PanelRight,
+  ReloadIcon as RefreshCcw,
+  Search01Icon as Search,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -10,6 +19,14 @@ import {
 } from "@repo/ui/components/ui/alert-dialog";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Switch } from "@repo/ui/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
+import { cn } from "@repo/ui/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,29 +42,12 @@ import {
   SelectValue,
 } from "@repo/ui-v2/components/ui/select";
 import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
-import { Input } from "@repo/ui/components/ui/input";
-import { Switch } from "@repo/ui/components/ui/switch";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@repo/ui/components/ui/tooltip";
-import { cn } from "@repo/ui/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  ArrowUpRightIcon as ArrowUpRight,
-  Loading03Icon as Loader2,
-  MoreHorizontalIcon as MoreHorizontal,
-  SidebarRightIcon as PanelRight,
-  ReloadIcon as RefreshCcw,
-  Search01Icon as Search,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { WorkspaceSurface } from "~/components/workspace-surface";
-import { ConnectorOwnerScopeTabs } from "./connector-owner-scope-tabs";
 import { ConnectorDetailSheet } from "./connector-detail-sheet";
 import { ConnectorIcon } from "./connector-icons";
+import { ConnectorOwnerScopeTabs } from "./connector-owner-scope-tabs";
 import {
   type ConnectorCatalogRow,
   type ConnectorStatusFilter,
@@ -300,7 +300,10 @@ export function ConnectorsClient({
         />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative min-w-0 flex-1">
-            <HugeiconsIcon icon={Search} className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <HugeiconsIcon
+              className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
+              icon={Search}
+            />
             <Input
               aria-label="Search connectors"
               className="pl-8"
@@ -576,11 +579,14 @@ function TeamConnectedConnectorCard({
                 />
               }
             >
-              <HugeiconsIcon icon={MoreHorizontal} className="size-3.5 opacity-50" />
+              <HugeiconsIcon
+                className="size-3.5 opacity-50"
+                icon={MoreHorizontal}
+              />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onViewDetails(row)}>
-                <HugeiconsIcon icon={PanelRight} className="size-3.5" />
+                <HugeiconsIcon className="size-3.5" icon={PanelRight} />
                 View details
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -589,9 +595,12 @@ function TeamConnectedConnectorCard({
                 onClick={() => onRefreshTools(row)}
               >
                 {refreshing ? (
-                  <HugeiconsIcon icon={Loader2} className="size-3.5 animate-spin" />
+                  <HugeiconsIcon
+                    className="size-3.5 animate-spin"
+                    icon={Loader2}
+                  />
                 ) : (
-                  <HugeiconsIcon icon={RefreshCcw} className="size-3.5" />
+                  <HugeiconsIcon className="size-3.5" icon={RefreshCcw} />
                 )}
                 Refresh tools
               </DropdownMenuItem>
@@ -599,7 +608,7 @@ function TeamConnectedConnectorCard({
                 disabled={connectDisabled}
                 onClick={() => onConnect(row)}
               >
-                <HugeiconsIcon icon={ArrowUpRight} className="size-3.5" />
+                <HugeiconsIcon className="size-3.5" icon={ArrowUpRight} />
                 Reconnect
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -643,7 +652,10 @@ function TeamConnectedConnectorCard({
             {connection.tools.length}
           </Badge>
           {refreshing && (
-            <HugeiconsIcon icon={Loader2} className="size-3.5 animate-spin text-muted-foreground" />
+            <HugeiconsIcon
+              className="size-3.5 animate-spin text-muted-foreground"
+              icon={Loader2}
+            />
           )}
         </div>
         <div className="mt-3 flex flex-wrap gap-1.5">
@@ -782,7 +794,7 @@ function TeamAvailableConnectorCard({
             variant="outline"
           >
             Connect
-            <HugeiconsIcon icon={ArrowUpRight} className="size-3.5" />
+            <HugeiconsIcon className="size-3.5" icon={ArrowUpRight} />
           </Button>
           {showAdminRequired && (
             <p className="text-muted-foreground text-xs">
@@ -859,11 +871,14 @@ function UserConnectedConnectorCard({
                 />
               }
             >
-              <HugeiconsIcon icon={MoreHorizontal} className="size-3.5 opacity-50" />
+              <HugeiconsIcon
+                className="size-3.5 opacity-50"
+                icon={MoreHorizontal}
+              />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onViewDetails(row)}>
-                <HugeiconsIcon icon={PanelRight} className="size-3.5" />
+                <HugeiconsIcon className="size-3.5" icon={PanelRight} />
                 View details
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -871,7 +886,7 @@ function UserConnectedConnectorCard({
                 disabled={actionDisabled}
                 onClick={() => onConnect(row)}
               >
-                <HugeiconsIcon icon={ArrowUpRight} className="size-3.5" />
+                <HugeiconsIcon className="size-3.5" icon={ArrowUpRight} />
                 Reconnect
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -980,7 +995,7 @@ function UserAvailableConnectorCard({
           variant="outline"
         >
           Connect
-          <HugeiconsIcon icon={ArrowUpRight} className="size-3.5" />
+          <HugeiconsIcon className="size-3.5" icon={ArrowUpRight} />
         </Button>
       </div>
     </section>

@@ -37,16 +37,15 @@ describe("vendor Unkey server client", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () =>
-        new Response(null, {
-          status: 302,
-          headers: { location: "http://169.254.169.254/latest/meta-data" },
-        })
+        Response.redirect("http://169.254.169.254/latest/meta-data", 302)
       )
     );
 
     const client = createUnkeyClient("root_test");
 
-    await expect(client.keys.verifyKey({ key: "lf_test" })).rejects.toMatchObject({
+    await expect(
+      client.keys.verifyKey({ key: "lf_test" })
+    ).rejects.toMatchObject({
       statusCode: 302,
     });
   });

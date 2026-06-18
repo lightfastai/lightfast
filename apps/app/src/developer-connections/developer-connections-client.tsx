@@ -1,3 +1,9 @@
+import {
+  ArrowUpRightIcon as ArrowUpRight,
+  SidebarRightIcon as PanelRight,
+  Search01Icon as Search,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
@@ -10,6 +16,7 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
 import { Switch } from "@repo/ui/components/ui/switch";
+import { cn } from "@repo/ui/lib/utils";
 import {
   Select,
   SelectContent,
@@ -18,14 +25,7 @@ import {
   SelectValue,
 } from "@repo/ui-v2/components/ui/select";
 import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
-import { cn } from "@repo/ui/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  ArrowUpRightIcon as ArrowUpRight,
-  SidebarRightIcon as PanelRight,
-  Search01Icon as Search,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useMemo, useState } from "react";
 import { DeveloperConnectionDetailSheet } from "./developer-connection-detail-sheet";
 import { DeveloperConnectionIcon } from "./developer-connection-icons";
@@ -227,7 +227,10 @@ export function DeveloperConnectionsClient({
 
       <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative min-w-0 flex-1">
-          <HugeiconsIcon icon={Search} className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <HugeiconsIcon
+            className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
+            icon={Search}
+          />
           <Input
             aria-label="Search developer connections"
             className="pl-8"
@@ -406,7 +409,10 @@ function DeveloperConnectionCard({
                   type="button"
                   variant="outline"
                 >
-                  <HugeiconsIcon icon={PanelRight} className="mr-1.5 size-3.5" />
+                  <HugeiconsIcon
+                    className="mr-1.5 size-3.5"
+                    icon={PanelRight}
+                  />
                   Details
                 </Button>
                 <Button
@@ -433,7 +439,7 @@ function DeveloperConnectionCard({
                 variant="outline"
               >
                 Connect
-                <HugeiconsIcon icon={ArrowUpRight} className="size-3.5" />
+                <HugeiconsIcon className="size-3.5" icon={ArrowUpRight} />
               </Button>
             </div>
           )}
@@ -581,7 +587,10 @@ function DeveloperConnectionConnectDialog({
                     type="button"
                     variant="outline"
                   >
-                    <HugeiconsIcon icon={ArrowUpRight} className="mr-1.5 size-3.5" />
+                    <HugeiconsIcon
+                      className="mr-1.5 size-3.5"
+                      icon={ArrowUpRight}
+                    />
                     Browser OAuth
                   </Button>
                 </div>

@@ -1,5 +1,7 @@
 import type { AppRouterOutputs } from "@api/app";
 import { useAuth } from "@clerk/tanstack-react-start";
+import { ChevronDownIcon as ChevronDown } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   type AutomationScheduleInput,
   formatAutomationSchedule,
@@ -19,10 +21,6 @@ import {
   SelectValue,
 } from "@repo/ui-v2/components/ui/select";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  ChevronDownIcon as ChevronDown,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 import { useTRPC } from "~/trpc/react";
 import { automationUpdateMutationOptions } from "./automations-cache";
@@ -208,7 +206,10 @@ export function AutomationScheduleEditor({
           <PopoverTrigger asChild>
             <Button size="lf" type="button" variant="secondary">
               {repeatsValue}
-              <HugeiconsIcon icon={ChevronDown} className="size-3.5 text-muted-foreground" />
+              <HugeiconsIcon
+                className="size-3.5 text-muted-foreground"
+                icon={ChevronDown}
+              />
             </Button>
           </PopoverTrigger>
         </RailRow>

@@ -1,6 +1,4 @@
 import type { AppRouterOutputs } from "@api/app";
-import { cn } from "@repo/ui/lib/utils";
-import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import {
   CheckmarkCircle02Icon as CheckCircle,
   ChevronRightIcon as ChevronRight,
@@ -9,6 +7,8 @@ import {
   CancelCircleIcon as XCircle,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+import { cn } from "@repo/ui/lib/utils";
+import { formatRelativeTimeToNow } from "@vendor/lib/time";
 
 type AutomationRun =
   AppRouterOutputs["org"]["workspace"]["automations"]["listRuns"][number];
@@ -45,7 +45,7 @@ function RunRow({
       onClick={() => onSelect(run.publicId)}
       type="button"
     >
-      <HugeiconsIcon icon={icon} className={`size-3.5 shrink-0 ${className}`} />
+      <HugeiconsIcon className={`size-3.5 shrink-0 ${className}`} icon={icon} />
       <span className="text-foreground text-sm capitalize">{run.status}</span>
       <span className="ml-auto text-muted-foreground text-xs capitalize">
         {run.trigger}
@@ -53,12 +53,13 @@ function RunRow({
       <span className="text-muted-foreground text-xs">
         {run.createdAt ? formatRelativeTimeToNow(run.createdAt) : "-"}
       </span>
-      <HugeiconsIcon icon={ChevronRight}
+      <HugeiconsIcon
         aria-hidden="true"
         className={cn(
           "size-3.5 shrink-0 text-muted-foreground transition-opacity",
           selected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
         )}
+        icon={ChevronRight}
       />
     </button>
   );

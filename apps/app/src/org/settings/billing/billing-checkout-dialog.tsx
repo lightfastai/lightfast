@@ -1,4 +1,6 @@
 import type { AppRouterOutputs } from "@api/app";
+import { Loading03Icon as Loader2 } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   billingStripeAppearance,
   formatMoney,
@@ -17,10 +19,6 @@ import {
   PaymentElementProvider,
   useCheckout,
 } from "@vendor/clerk";
-import {
-  Loading03Icon as Loader2,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 
 import { NewPaymentCheckout } from "./new-payment-checkout";
@@ -78,7 +76,7 @@ function CheckoutFlow({ onComplete }: { onComplete: () => void }) {
           size="sm"
         >
           {fetchStatus === "fetching" && (
-            <HugeiconsIcon icon={Loader2} className="size-4 animate-spin" />
+            <HugeiconsIcon className="size-4 animate-spin" icon={Loader2} />
           )}
           Start checkout
         </Button>

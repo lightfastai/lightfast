@@ -1,3 +1,5 @@
+import { ExternalLinkIcon as ExternalLink } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
@@ -6,10 +8,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
-import {
-  ExternalLinkIcon as ExternalLink,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { SkillGlyph } from "./skill-glyph";
 import { getSkillSourceUrl, SkillMarkdown } from "./skill-markdown";
 import type { Skill } from "./skills-types";
@@ -76,7 +74,7 @@ export function SkillDialog({
               {sourceUrl && (
                 <Button asChild size="lf" variant="outline">
                   <a href={sourceUrl} rel="noopener noreferrer" target="_blank">
-                    <HugeiconsIcon icon={ExternalLink} className="size-3.5" />
+                    <HugeiconsIcon className="size-3.5" icon={ExternalLink} />
                     View source
                   </a>
                 </Button>

@@ -1,12 +1,10 @@
+import { Loading03Icon as Loader2 } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import {
-  Loading03Icon as Loader2,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { type FormEvent, useRef, useState } from "react";
 import {
   createTeamIdempotencyKey,
@@ -103,7 +101,10 @@ function TeamNameForm() {
       <Button className="w-full" disabled={mutation.isPending} type="submit">
         {mutation.isPending ? (
           <>
-            <HugeiconsIcon icon={Loader2} className="mr-2 h-4 w-4 animate-spin" />
+            <HugeiconsIcon
+              className="mr-2 h-4 w-4 animate-spin"
+              icon={Loader2}
+            />
             Creating...
           </>
         ) : (

@@ -1,4 +1,6 @@
 import type { AppRouterOutputs } from "@api/app";
+import { Cancel01Icon as X } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Sheet,
@@ -10,10 +12,6 @@ import {
 } from "@repo/ui/components/ui/sheet";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { skipToken, useQuery } from "@tanstack/react-query";
-import {
-  Cancel01Icon as X,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect } from "react";
 import { useTRPC } from "~/trpc/react";
 import { AutomationRunDetailContent } from "./automation-run-detail-content";
@@ -101,7 +99,11 @@ export function AutomationRunDetailSheet({
                   type="button"
                   variant="ghost"
                 >
-                  <HugeiconsIcon icon={X} aria-hidden="true" className="size-4" />
+                  <HugeiconsIcon
+                    aria-hidden="true"
+                    className="size-4"
+                    icon={X}
+                  />
                 </Button>
               </SheetClose>
             }

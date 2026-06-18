@@ -1,3 +1,8 @@
+import {
+  ArrowRightIcon as ArrowRight,
+  Loading03Icon as Loader2,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type {
   NativeClient,
   NativeOrganization,
@@ -5,11 +10,6 @@ import type {
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
-import {
-  ArrowRightIcon as ArrowRight,
-  Loading03Icon as Loader2,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { useTRPC } from "~/trpc/react";
 
 const clientLabels = {
@@ -157,9 +157,15 @@ export function NativeAuthOrgSelect({
                     </span>
                   </span>
                   {createAttemptMutation.isPending ? (
-                    <HugeiconsIcon icon={Loader2} className="size-4 animate-spin text-muted-foreground" />
+                    <HugeiconsIcon
+                      className="size-4 animate-spin text-muted-foreground"
+                      icon={Loader2}
+                    />
                   ) : (
-                    <HugeiconsIcon icon={ArrowRight} className="size-4 text-muted-foreground" />
+                    <HugeiconsIcon
+                      className="size-4 text-muted-foreground"
+                      icon={ArrowRight}
+                    />
                   )}
                 </Button>
               ))}

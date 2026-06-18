@@ -95,12 +95,8 @@ describe("TanStack user menu", () => {
     );
 
     expect(dropdownSource).toContain('size?: "sm" | "md"');
-    expect(dropdownSource).toContain(
-      'size === "sm" && "w-[220px] space-y-1"'
-    );
-    expect(dropdownSource).toContain(
-      'size === "md" && "w-[280px] space-y-1"'
-    );
+    expect(dropdownSource).toContain('size === "sm" && "w-[220px] space-y-1"');
+    expect(dropdownSource).toContain('size === "md" && "w-[280px] space-y-1"');
     expect(menuSource).toContain(
       '<DropdownMenuContent align="start" side="top" size="sm">'
     );

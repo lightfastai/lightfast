@@ -1,3 +1,5 @@
+import { Search01Icon as Search } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import {
@@ -8,10 +10,6 @@ import {
   SelectValue,
 } from "@repo/ui-v2/components/ui/select";
 import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
-import {
-  Search01Icon as Search,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { useDeferredValue, useMemo, useState } from "react";
 import { WorkspaceSurface } from "~/components/workspace-surface";
 import { SkillDialog } from "./skill-dialog";
@@ -140,7 +138,10 @@ function SkillsClientContent({
 
         <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative min-w-0 flex-1">
-            <HugeiconsIcon icon={Search} className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <HugeiconsIcon
+              className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
+              icon={Search}
+            />
             <Input
               aria-label="Search skills"
               className="pl-8"

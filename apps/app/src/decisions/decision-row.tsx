@@ -1,5 +1,3 @@
-import { cn } from "@repo/ui/lib/utils";
-import { formatDuration, formatRelativeTimeToNow } from "@vendor/lib/time";
 import {
   CheckmarkCircle02Icon as CheckCircle2,
   ChevronDownIcon as ChevronDown,
@@ -7,6 +5,8 @@ import {
   Loading03Icon as Loader2,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+import { cn } from "@repo/ui/lib/utils";
+import { formatDuration, formatRelativeTimeToNow } from "@vendor/lib/time";
 import { DecisionProviderIcon } from "./decision-provider-icon";
 import { DecisionsDetail } from "./decisions-detail";
 import {
@@ -105,12 +105,13 @@ export function DecisionRow({
         </span>
 
         <span className="flex justify-end">
-          <HugeiconsIcon icon={ChevronDown}
+          <HugeiconsIcon
             aria-hidden="true"
             className={cn(
               "size-4 text-muted-foreground transition-transform",
               isExpanded && "rotate-180"
             )}
+            icon={ChevronDown}
           />
         </span>
       </button>

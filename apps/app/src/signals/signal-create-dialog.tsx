@@ -1,3 +1,5 @@
+import { Loading03Icon as Loader2 } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { SIGNAL_INPUT_MAX_LENGTH } from "@repo/api-contract";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { Button } from "@repo/ui/components/ui/button";
@@ -12,10 +14,6 @@ import { Switch } from "@repo/ui/components/ui/switch";
 import { Textarea } from "@repo/ui/components/ui/textarea";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "@tanstack/react-router";
-import {
-  Loading03Icon as Loader2,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import type { ChangeEvent, FormEvent, KeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { listUserOrganizationsQueryOptions } from "~/organization/organization-queries";
@@ -248,7 +246,11 @@ export function SignalCreateDialog({
         type="submit"
       >
         {createMutation.isPending && (
-          <HugeiconsIcon icon={Loader2} aria-hidden="true" className="size-3.5 animate-spin" />
+          <HugeiconsIcon
+            aria-hidden="true"
+            className="size-3.5 animate-spin"
+            icon={Loader2}
+          />
         )}
         {createMutation.isPending ? "Creating" : "Create signal"}
         {!createMutation.isPending && (

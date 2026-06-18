@@ -1,11 +1,9 @@
 import { useSession } from "@clerk/tanstack-react-start";
+import { Loading03Icon as Loader2 } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { pathForSetupRequirement } from "@repo/app-setup-contract";
 import { Button } from "@repo/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
-import {
-  Loading03Icon as Loader2,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
 import { useTRPC } from "~/trpc/react";
@@ -96,7 +94,7 @@ export function GitHubBindCompleteClient({
           </div>
         ) : (
           <div className="flex items-center gap-2 text-muted-foreground text-sm">
-            <HugeiconsIcon icon={Loader2} className="h-4 w-4 animate-spin" />
+            <HugeiconsIcon className="h-4 w-4 animate-spin" icon={Loader2} />
             Syncing GitHub binding
           </div>
         )}

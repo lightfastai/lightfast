@@ -1,12 +1,3 @@
-import { Badge } from "@repo/ui/components/ui/badge";
-import { Button } from "@repo/ui/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@repo/ui-v2/components/ui/dropdown-menu";
-import { cn } from "@repo/ui/lib/utils";
 import {
   ChevronDownIcon as ChevronDown,
   ChevronRightIcon as ChevronRight,
@@ -15,6 +6,15 @@ import {
   MoreHorizontalIcon as MoreHorizontal,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Badge } from "@repo/ui/components/ui/badge";
+import { Button } from "@repo/ui/components/ui/button";
+import { cn } from "@repo/ui/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@repo/ui-v2/components/ui/dropdown-menu";
 import { type ReactNode, useState } from "react";
 import type { SourceControlRepositoryRow } from "./source-control-queries";
 
@@ -93,7 +93,11 @@ function WatchedPathsTree({ summary }: { summary: WatchedPathsSummary }) {
             className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground"
             key={glob}
           >
-            <HugeiconsIcon icon={CornerDownRight} aria-hidden="true" className="size-3 opacity-50" />
+            <HugeiconsIcon
+              aria-hidden="true"
+              className="size-3 opacity-50"
+              icon={CornerDownRight}
+            />
             {glob}
           </li>
         ))}
@@ -103,7 +107,11 @@ function WatchedPathsTree({ summary }: { summary: WatchedPathsSummary }) {
 
   return (
     <li className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-      <HugeiconsIcon icon={CornerDownRight} aria-hidden="true" className="size-3 opacity-50" />
+      <HugeiconsIcon
+        aria-hidden="true"
+        className="size-3 opacity-50"
+        icon={CornerDownRight}
+      />
       {summary.kind === "all" ? "Watching all paths" : "No paths watched"}
     </li>
   );
@@ -123,7 +131,11 @@ export function RepositoryCard({
       <div className="flex items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-2.5">
           <IconTile>
-            <HugeiconsIcon icon={GitBranch} aria-hidden="true" className="size-4 text-foreground" />
+            <HugeiconsIcon
+              aria-hidden="true"
+              className="size-4 text-foreground"
+              icon={GitBranch}
+            />
           </IconTile>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -145,9 +157,17 @@ export function RepositoryCard({
               type="button"
             >
               {expanded ? (
-                <HugeiconsIcon icon={ChevronDown} aria-hidden="true" className="size-3" />
+                <HugeiconsIcon
+                  aria-hidden="true"
+                  className="size-3"
+                  icon={ChevronDown}
+                />
               ) : (
-                <HugeiconsIcon icon={ChevronRight} aria-hidden="true" className="size-3" />
+                <HugeiconsIcon
+                  aria-hidden="true"
+                  className="size-3"
+                  icon={ChevronRight}
+                />
               )}
               {watchedPathsLabel(summary)}
             </button>
@@ -168,9 +188,10 @@ export function RepositoryCard({
                 />
               }
             >
-              <HugeiconsIcon icon={MoreHorizontal}
+              <HugeiconsIcon
                 aria-hidden="true"
                 className="size-3.5 text-muted-foreground"
+                icon={MoreHorizontal}
               />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -181,7 +202,9 @@ export function RepositoryCard({
                     href={repository.webUrl}
                     rel="noreferrer"
                     target="_blank"
-                  />
+                  >
+                    Open on GitHub
+                  </a>
                 }
               >
                 Open on GitHub

@@ -23,7 +23,7 @@ export function DeveloperConnectionIcon({
 
   return (
     <div className="flex size-8 shrink-0 items-center justify-center rounded-[8px] border border-border bg-muted/35">
-      <HugeiconsIcon icon={icon} className="size-4 text-muted-foreground" />
+      <HugeiconsIcon className="size-4 text-muted-foreground" icon={icon} />
     </div>
   );
 }

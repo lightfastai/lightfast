@@ -1,23 +1,23 @@
-import { Icons } from "@repo/ui/components/icons";
-import { Button } from "@repo/ui/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@repo/ui-v2/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@repo/ui/components/ui/tooltip";
-import { Link } from "@tanstack/react-router";
 import {
   ChevronDownIcon as ChevronDown,
   Settings02Icon as Settings,
   Unlink02Icon as Unplug,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Icons } from "@repo/ui/components/icons";
+import { Button } from "@repo/ui/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@repo/ui-v2/components/ui/dropdown-menu";
+import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import type { GitHubUserAccount } from "../account-queries";
 
@@ -85,9 +85,10 @@ export function GithubAccountCard({ account }: { account: GitHubUserAccount }) {
               />
               <span className="truncate">Connected</span>
             </span>
-            <HugeiconsIcon icon={ChevronDown}
+            <HugeiconsIcon
               aria-hidden="true"
               className="size-3.5 shrink-0 text-muted-foreground"
+              icon={ChevronDown}
             />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
@@ -101,10 +102,12 @@ export function GithubAccountCard({ account }: { account: GitHubUserAccount }) {
                 />
               }
             >
-              <HugeiconsIcon icon={Settings} aria-hidden="true" className="size-4" />
-              <span className="min-w-0 flex-1 truncate">
-                View GitHub setup
-              </span>
+              <HugeiconsIcon
+                aria-hidden="true"
+                className="size-4"
+                icon={Settings}
+              />
+              <span className="min-w-0 flex-1 truncate">View GitHub setup</span>
             </DropdownMenuItem>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -114,7 +117,11 @@ export function GithubAccountCard({ account }: { account: GitHubUserAccount }) {
                     disabled
                     variant="destructive"
                   >
-                    <HugeiconsIcon icon={Unplug} aria-hidden="true" className="size-4" />
+                    <HugeiconsIcon
+                      aria-hidden="true"
+                      className="size-4"
+                      icon={Unplug}
+                    />
                     <span className="min-w-0 flex-1 truncate">Disconnect</span>
                   </DropdownMenuItem>
                 </div>

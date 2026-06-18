@@ -26,7 +26,9 @@ describe("app icon system", () => {
   it("uses Hugeicons instead of Lucide across app runtime source", () => {
     const lucideImportPattern = /from\s+["']lucide-react["']/;
     const filesWithLucideImports = collectSourceFiles(appSrcRoot)
-      .filter((filePath) => lucideImportPattern.test(readFileSync(filePath, "utf8")))
+      .filter((filePath) =>
+        lucideImportPattern.test(readFileSync(filePath, "utf8"))
+      )
       .map((filePath) => relative(appRoot, filePath));
     const packageJson = JSON.parse(
       readFileSync(resolve(appRoot, "package.json"), "utf8")
@@ -34,7 +36,9 @@ describe("app icon system", () => {
 
     expect(filesWithLucideImports).toEqual([]);
     expect(packageJson.dependencies).not.toHaveProperty("lucide-react");
-    expect(packageJson.dependencies).toHaveProperty("@hugeicons/core-free-icons");
+    expect(packageJson.dependencies).toHaveProperty(
+      "@hugeicons/core-free-icons"
+    );
     expect(packageJson.dependencies).toHaveProperty("@hugeicons/react");
   });
 });

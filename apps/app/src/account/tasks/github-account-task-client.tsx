@@ -1,12 +1,12 @@
-import type { GitHubUserAccountBindErrorCode } from "@repo/github-app-contract";
-import { Icons } from "@repo/ui/components/icons";
-import { Button } from "@repo/ui/components/ui/button";
-import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   CheckmarkCircle02Icon as CheckCircle2,
   Loading03Icon as Loader2,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import type { GitHubUserAccountBindErrorCode } from "@repo/github-app-contract";
+import { Icons } from "@repo/ui/components/icons";
+import { Button } from "@repo/ui/components/ui/button";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
 import {
@@ -100,9 +100,10 @@ export function GithubAccountTaskClient({
             {data?.account ? (
               <div className="rounded-lg border border-border bg-muted/30 p-4">
                 <div className="flex items-center gap-3 text-sm">
-                  <HugeiconsIcon icon={CheckCircle2}
+                  <HugeiconsIcon
                     aria-hidden="true"
                     className="h-4 w-4 shrink-0 text-foreground"
+                    icon={CheckCircle2}
                   />
                   <div className="min-w-0">
                     <p className="font-medium text-foreground">
@@ -123,7 +124,10 @@ export function GithubAccountTaskClient({
             >
               {isConnecting ? (
                 <>
-                  <HugeiconsIcon icon={Loader2} className="mr-1.5 h-4 w-4 animate-spin" />
+                  <HugeiconsIcon
+                    className="mr-1.5 h-4 w-4 animate-spin"
+                    icon={Loader2}
+                  />
                   Connecting...
                 </>
               ) : (

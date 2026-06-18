@@ -1,3 +1,8 @@
+import {
+  AlertCircleIcon as AlertCircle,
+  Delete02Icon as Trash2,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { cardLabel, paymentErrorMessage } from "@repo/app-billing";
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { Button } from "@repo/ui/components/ui/button";
@@ -9,11 +14,6 @@ import {
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
 import type { BillingPaymentMethodResource } from "@vendor/clerk";
-import {
-  AlertCircleIcon as AlertCircle,
-  Delete02Icon as Trash2,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useState } from "react";
 
 import { NewPaymentMethodForm } from "./new-payment-method-form";
@@ -82,7 +82,7 @@ export function PaymentMethodDialog({
 
           {errorMessage && (
             <Alert variant="destructive">
-              <HugeiconsIcon icon={AlertCircle} className="size-4" />
+              <HugeiconsIcon className="size-4" icon={AlertCircle} />
               <AlertDescription>{errorMessage}</AlertDescription>
             </Alert>
           )}
@@ -132,7 +132,7 @@ export function PaymentMethodDialog({
                             size="icon-sm"
                             variant="ghost"
                           >
-                            <HugeiconsIcon icon={Trash2} className="size-4" />
+                            <HugeiconsIcon className="size-4" icon={Trash2} />
                             <span className="sr-only">Remove</span>
                           </Button>
                         )}

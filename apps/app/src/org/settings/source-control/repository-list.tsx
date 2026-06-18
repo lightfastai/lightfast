@@ -1,4 +1,9 @@
 import { useAuth } from "@clerk/tanstack-react-start";
+import {
+  ReloadIcon as RefreshCw,
+  Search01Icon as Search,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import {
@@ -9,11 +14,6 @@ import {
   SelectValue,
 } from "@repo/ui-v2/components/ui/select";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  ReloadIcon as RefreshCw,
-  Search01Icon as Search,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { useMemo, useState } from "react";
 import { AddRepositoryDialog } from "./add-repository-dialog";
 import { RepositoryCard } from "./repository-card";
@@ -81,7 +81,11 @@ export function RepositoryList({
             type="button"
             variant="ghost"
           >
-            <HugeiconsIcon icon={RefreshCw} aria-hidden="true" className="size-3.5 opacity-50" />
+            <HugeiconsIcon
+              aria-hidden="true"
+              className="size-3.5 opacity-50"
+              icon={RefreshCw}
+            />
           </Button>
           <AddRepositoryDialog
             disabled={addDisabled}
@@ -98,7 +102,10 @@ export function RepositoryList({
         <>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative min-w-0 flex-1">
-              <HugeiconsIcon icon={Search} className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <HugeiconsIcon
+                className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
+                icon={Search}
+              />
               <Input
                 aria-label="Search repositories"
                 className="pl-8"

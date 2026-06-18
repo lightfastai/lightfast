@@ -1,11 +1,11 @@
-import { Button } from "@repo/ui/components/ui/button";
-import { cn } from "@repo/ui/lib/utils";
 import {
   ChevronDownIcon as ChevronDown,
   Loading03Icon as LoaderCircle,
   ReloadIcon as RefreshCw,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@repo/ui/components/ui/button";
+import { cn } from "@repo/ui/lib/utils";
 import { DecisionRow, ROW_GRID } from "./decision-row";
 import { DecisionsEmptyState } from "./decisions-empty-state";
 import {
@@ -51,7 +51,11 @@ export function DecisionsTableView({
           type="button"
           variant="outline"
         >
-          <HugeiconsIcon icon={RefreshCw} aria-hidden="true" className="size-3.5" />
+          <HugeiconsIcon
+            aria-hidden="true"
+            className="size-3.5"
+            icon={RefreshCw}
+          />
           Retry
         </Button>
       </div>
@@ -139,12 +143,17 @@ export function DecisionsTableView({
               variant="ghost"
             >
               {isFetchingNextPage ? (
-                <HugeiconsIcon icon={LoaderCircle}
+                <HugeiconsIcon
                   aria-hidden="true"
                   className="size-3.5 animate-spin"
+                  icon={LoaderCircle}
                 />
               ) : (
-                <HugeiconsIcon icon={ChevronDown} aria-hidden="true" className="size-3.5" />
+                <HugeiconsIcon
+                  aria-hidden="true"
+                  className="size-3.5"
+                  icon={ChevronDown}
+                />
               )}
               {isFetchingNextPage ? "Loading" : "Load more"}
             </Button>
@@ -158,7 +167,11 @@ export function DecisionsTableView({
         </span>
         {isFetching && !isFetchingNextPage ? (
           <span className="flex items-center gap-1 text-muted-foreground/70">
-            <HugeiconsIcon icon={LoaderCircle} aria-hidden="true" className="size-3 animate-spin" />
+            <HugeiconsIcon
+              aria-hidden="true"
+              className="size-3 animate-spin"
+              icon={LoaderCircle}
+            />
             Refreshing
           </span>
         ) : null}

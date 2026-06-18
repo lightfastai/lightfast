@@ -1,10 +1,3 @@
-import type { OrgSetupRequirement } from "@repo/app-setup-contract";
-import { Icons } from "@repo/ui/components/icons";
-import { Button } from "@repo/ui/components/ui/button";
-import { Skeleton } from "@repo/ui/components/ui/skeleton";
-import { cn } from "@repo/ui/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import {
   ArrowRightIcon as ArrowRight,
   CheckmarkCircle02Icon as CheckCircle2,
@@ -13,6 +6,13 @@ import {
   LockIcon as Lock,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import type { OrgSetupRequirement } from "@repo/app-setup-contract";
+import { Icons } from "@repo/ui/components/icons";
+import { Button } from "@repo/ui/components/ui/button";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import { cn } from "@repo/ui/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
 import { ConnectorIcon } from "~/connectors/connector-icons";
@@ -122,7 +122,13 @@ function SetupTasksPageContent() {
         <SetupTaskCard
           description="Create and verify the .lightfast repository in the connected GitHub organization."
           href="/$slug/tasks/github/lightfast-repo"
-          icon={<HugeiconsIcon icon={GitBranch} aria-hidden="true" className="size-4" />}
+          icon={
+            <HugeiconsIcon
+              aria-hidden="true"
+              className="size-4"
+              icon={GitBranch}
+            />
+          }
           params={{ slug }}
           status={lightfastRepoStatus}
           subtitle={
@@ -207,12 +213,16 @@ function SetupTaskCard({
           type="button"
           variant="ghost"
         >
-          <HugeiconsIcon icon={Lock} aria-hidden="true" className="size-4" />
+          <HugeiconsIcon aria-hidden="true" className="size-4" icon={Lock} />
         </Button>
       ) : (
         <Button asChild className="size-8 rounded-lg" size="icon-sm">
           <Link params={params} to={href}>
-            <HugeiconsIcon icon={ArrowRight} aria-hidden="true" className="size-4" />
+            <HugeiconsIcon
+              aria-hidden="true"
+              className="size-4"
+              icon={ArrowRight}
+            />
             <span className="sr-only">{title}</span>
           </Link>
         </Button>
@@ -237,7 +247,7 @@ function SetupTaskStatusBadge({ status }: { status: SetupTaskStatus }) {
 
   return (
     <span className="inline-flex h-5 shrink-0 items-center gap-1 rounded-md border border-border/70 px-1.5 text-muted-foreground text-xs">
-      <HugeiconsIcon icon={icon} aria-hidden="true" className="size-3" />
+      <HugeiconsIcon aria-hidden="true" className="size-3" icon={icon} />
       {label}
     </span>
   );

@@ -1,18 +1,18 @@
 import type { AppRouterOutputs } from "@api/app";
+import {
+  Tick02Icon as Check,
+  ChevronDownIcon as ChevronDown,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
+import { cn } from "@repo/ui/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@repo/ui-v2/components/ui/dropdown-menu";
-import { cn } from "@repo/ui/lib/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Tick02Icon as Check,
-  ChevronDownIcon as ChevronDown,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 import { useAuth } from "~/compat/clerk";
 import { useTRPC } from "~/trpc/react";
@@ -161,7 +161,10 @@ export function AutomationStatusChip({
         >
           <StatusDot active={automation.status === "active"} />
           <span className="capitalize">{automation.status}</span>
-          <HugeiconsIcon icon={ChevronDown} className="size-3.5 text-muted-foreground" />
+          <HugeiconsIcon
+            className="size-3.5 text-muted-foreground"
+            icon={ChevronDown}
+          />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-36">
           <DropdownMenuItem
@@ -176,9 +179,10 @@ export function AutomationStatusChip({
               Active
             </span>
             {isPaused ? null : (
-              <HugeiconsIcon icon={Check}
+              <HugeiconsIcon
                 aria-hidden="true"
                 className="size-3.5 text-muted-foreground"
+                icon={Check}
               />
             )}
           </DropdownMenuItem>
@@ -194,9 +198,10 @@ export function AutomationStatusChip({
               Paused
             </span>
             {isPaused ? (
-              <HugeiconsIcon icon={Check}
+              <HugeiconsIcon
                 aria-hidden="true"
                 className="size-3.5 text-muted-foreground"
+                icon={Check}
               />
             ) : null}
           </DropdownMenuItem>

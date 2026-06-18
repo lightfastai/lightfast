@@ -1,14 +1,14 @@
-import { Button } from "@repo/ui/components/ui/button";
-import { cn } from "@repo/ui/lib/utils";
-import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
-import { useIsMutating, useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 import {
   ChevronLeftIcon as ChevronLeft,
   Loading03Icon as Loader2,
   ReloadIcon as RefreshCcw,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@repo/ui/components/ui/button";
+import { cn } from "@repo/ui/lib/utils";
+import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
+import { useIsMutating, useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { useTRPC } from "~/trpc/react";
 import { AutomationActions } from "./automation-actions";
 import { AutomationNameEditor } from "./automation-name-editor";
@@ -51,7 +51,9 @@ function TimestampValue({
       )}
       suppressHydrationWarning
     >
-      {pending ? <HugeiconsIcon icon={Loader2} className="size-3 animate-spin" /> : null}
+      {pending ? (
+        <HugeiconsIcon className="size-3 animate-spin" icon={Loader2} />
+      ) : null}
       {formatDate(date)}
     </span>
   );
@@ -115,7 +117,7 @@ export function AutomationDetailClient({
             type="button"
             variant="secondary"
           >
-            <HugeiconsIcon icon={RefreshCcw} className="size-4" />
+            <HugeiconsIcon className="size-4" icon={RefreshCcw} />
             Refresh
           </Button>
         </section>
@@ -212,7 +214,7 @@ function AutomationDetailNav({ slug }: { slug: string }) {
         variant="ghost"
       >
         <Link params={{ slug }} preload="intent" to="/$slug/automations">
-          <HugeiconsIcon icon={ChevronLeft} className="size-3" />
+          <HugeiconsIcon className="size-3" icon={ChevronLeft} />
           Automations
         </Link>
       </Button>

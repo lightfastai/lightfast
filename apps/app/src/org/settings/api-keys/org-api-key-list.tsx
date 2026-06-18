@@ -1,5 +1,15 @@
 import { useAuth } from "@clerk/tanstack-react-start";
 import {
+  Tick02Icon as Check,
+  Copy01Icon as Copy,
+  Key01Icon as Key,
+  MoreHorizontalIcon as MoreHorizontal,
+  RotateClockwiseIcon as RotateCw,
+  ShieldBanIcon as ShieldOff,
+  Delete02Icon as Trash2,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -26,16 +36,6 @@ import {
 } from "@repo/ui-v2/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
-import {
-  Tick02Icon as Check,
-  Copy01Icon as Copy,
-  Key01Icon as Key,
-  MoreHorizontalIcon as MoreHorizontal,
-  RotateClockwiseIcon as RotateCw,
-  ShieldBanIcon as ShieldOff,
-  Delete02Icon as Trash2,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { memo, useCallback, useState } from "react";
 import type { OrgApiKey } from "./org-api-key-cache";
 import { useOrgApiKeyListActions } from "./org-api-key-list-actions";
@@ -162,7 +162,10 @@ export function OrgApiKeyList() {
       {keys.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-md border border-border/50 py-16 text-center">
           <div className="mb-4 rounded-full bg-muted/20 p-3">
-            <HugeiconsIcon icon={Key} className="h-6 w-6 text-muted-foreground" />
+            <HugeiconsIcon
+              className="h-6 w-6 text-muted-foreground"
+              icon={Key}
+            />
           </div>
           <p className="font-semibold text-sm">No API keys yet</p>
           <p className="mt-1 max-w-sm text-muted-foreground text-sm">
@@ -262,9 +265,12 @@ export function OrgApiKeyList() {
                 variant="ghost"
               >
                 {copiedRotatedKey ? (
-                  <HugeiconsIcon icon={Check} className="h-4 w-4 text-green-500" />
+                  <HugeiconsIcon
+                    className="h-4 w-4 text-green-500"
+                    icon={Check}
+                  />
                 ) : (
-                  <HugeiconsIcon icon={Copy} className="h-4 w-4" />
+                  <HugeiconsIcon className="h-4 w-4" icon={Copy} />
                 )}
               </Button>
             </div>
@@ -349,7 +355,7 @@ const OrgApiKeyRow = memo(function OrgApiKeyRow({
               />
             }
           >
-            <HugeiconsIcon icon={MoreHorizontal} className="size-3.5" />
+            <HugeiconsIcon className="size-3.5" icon={MoreHorizontal} />
             <span className="sr-only">Actions</span>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="space-y-1">

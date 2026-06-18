@@ -1,3 +1,5 @@
+import { Loading03Icon as Loader2 } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
@@ -8,10 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
-import {
-  Loading03Icon as Loader2,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 import type { ViewSwitcherItem } from "./partition-views";
 
@@ -66,7 +64,7 @@ export function ViewDeleteDialog({
           >
             {submitting ? (
               <>
-                <HugeiconsIcon icon={Loader2} className="animate-spin" />
+                <HugeiconsIcon className="animate-spin" icon={Loader2} />
                 Deleting...
               </>
             ) : (

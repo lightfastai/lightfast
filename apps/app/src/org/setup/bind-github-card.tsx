@@ -1,12 +1,12 @@
-import type { GitHubBindErrorCode } from "@repo/github-app-contract";
-import { Icons } from "@repo/ui/components/icons";
-import { Button } from "@repo/ui/components/ui/button";
-import { useMutation } from "@tanstack/react-query";
 import {
   ArrowRightIcon as ArrowRight,
   Loading03Icon as Loader2,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import type { GitHubBindErrorCode } from "@repo/github-app-contract";
+import { Icons } from "@repo/ui/components/icons";
+import { Button } from "@repo/ui/components/ui/button";
+import { useMutation } from "@tanstack/react-query";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
 import { useTRPC } from "~/trpc/react";
 
@@ -89,9 +89,10 @@ export function BindGithubCard({ githubError, orgSlug }: BindGithubCardProps) {
                 <p className="min-w-0 truncate font-mono text-muted-foreground text-sm">
                   lightfast.ai/{orgSlug}
                 </p>
-                <HugeiconsIcon icon={ArrowRight}
+                <HugeiconsIcon
                   aria-hidden="true"
                   className="h-4 w-4 text-muted-foreground"
+                  icon={ArrowRight}
                 />
                 <div className="flex min-w-0 items-center gap-2 text-muted-foreground text-sm">
                   <Icons.github
@@ -110,7 +111,10 @@ export function BindGithubCard({ githubError, orgSlug }: BindGithubCardProps) {
             >
               {bindMutation.isPending ? (
                 <>
-                  <HugeiconsIcon icon={Loader2} className="mr-1.5 h-4 w-4 animate-spin" />
+                  <HugeiconsIcon
+                    className="mr-1.5 h-4 w-4 animate-spin"
+                    icon={Loader2}
+                  />
                   Connecting...
                 </>
               ) : (

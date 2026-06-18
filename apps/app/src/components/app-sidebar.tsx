@@ -13,6 +13,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import { Button } from "@repo/ui-v2/components/ui/button";
+import { DropdownMenuTrigger } from "@repo/ui-v2/components/ui/dropdown-menu";
 import {
   Sidebar,
   SidebarContent,
@@ -26,7 +27,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@repo/ui-v2/components/ui/sidebar";
-import { DropdownMenuTrigger } from "@repo/ui-v2/components/ui/dropdown-menu";
 import { Link, useLocation } from "@tanstack/react-router";
 import { Suspense } from "react";
 import { RecentChatsMenu } from "./recent-chats-menu";

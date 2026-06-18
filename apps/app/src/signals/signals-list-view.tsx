@@ -1,6 +1,3 @@
-import { Button } from "@repo/ui/components/ui/button";
-import { cn } from "@repo/ui/lib/utils";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   ChevronDownIcon as ChevronDown,
   ChevronRightIcon as ChevronRight,
@@ -8,6 +5,9 @@ import {
   ReloadIcon as RefreshCw,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@repo/ui/components/ui/button";
+import { cn } from "@repo/ui/lib/utils";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import type { ReactNode } from "react";
 import { useMemo, useRef } from "react";
 import { SignalBadge } from "./signals-badge";
@@ -162,10 +162,11 @@ export function SignalsListView({
                     type="button"
                     variant="outline"
                   >
-                    <HugeiconsIcon icon={RefreshCw}
+                    <HugeiconsIcon
                       aria-hidden="true"
                       className="size-3.5"
                       data-testid="signals-list-section-retry-icon"
+                      icon={RefreshCw}
                     />
                     Retry
                   </Button>
@@ -213,16 +214,18 @@ function SignalListSectionHeader({
         type="button"
       >
         {collapsed ? (
-          <HugeiconsIcon icon={ChevronRight}
+          <HugeiconsIcon
             aria-hidden="true"
             className="size-3.5 shrink-0 text-muted-foreground"
             data-testid="signals-list-section-toggle-icon"
+            icon={ChevronRight}
           />
         ) : (
-          <HugeiconsIcon icon={ChevronDown}
+          <HugeiconsIcon
             aria-hidden="true"
             className="size-3.5 shrink-0 text-muted-foreground"
             data-testid="signals-list-section-toggle-icon"
+            icon={ChevronDown}
           />
         )}
         <span className="font-medium text-foreground text-sm">
@@ -233,7 +236,11 @@ function SignalListSectionHeader({
         </span>
         {section.isFetching ? (
           <span className="ml-auto flex items-center gap-1 text-muted-foreground/70 text-xs">
-            <HugeiconsIcon icon={Loader2} aria-hidden="true" className="size-3 animate-spin" />
+            <HugeiconsIcon
+              aria-hidden="true"
+              className="size-3 animate-spin"
+              icon={Loader2}
+            />
             Refreshing
           </span>
         ) : null}
