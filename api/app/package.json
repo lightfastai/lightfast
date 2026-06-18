@@ -33,6 +33,10 @@
       "types": "./src/native-auth/index.ts",
       "default": "./src/native-auth/index.ts"
     },
+    "./native-auth/server-routes": {
+      "types": "./src/native-auth/server-routes.ts",
+      "default": "./src/native-auth/server-routes.ts"
+    },
     "./desktop-api": {
       "types": "./src/adapters/desktop-api.ts",
       "default": "./src/adapters/desktop-api.ts"
