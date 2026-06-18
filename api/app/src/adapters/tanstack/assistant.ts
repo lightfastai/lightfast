@@ -1,4 +1,5 @@
 import {
+  createWorkspaceAssistantConversationId,
   createWorkspaceAssistantConversation as createWorkspaceAssistantConversationInDb,
   getWorkspaceAssistantConversationByPublicId,
   listWorkspaceAssistantConversations,
@@ -221,6 +222,18 @@ function serializeConversationList(
     items: conversations.items.map(serializeConversation),
   };
 }
+
+export const createNewWorkspaceAssistantConversationId = createServerFn({
+  method: "GET",
+}).handler(async () => {
+  noStore();
+  try {
+    await getBoundActor();
+    return createWorkspaceAssistantConversationId();
+  } catch (error) {
+    mapTanStackError(error);
+  }
+});
 
 export const createConversation = createServerFn({ method: "POST" })
   .inputValidator(createConversationInput)

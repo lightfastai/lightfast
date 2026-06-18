@@ -1,17 +1,10 @@
+import { createNewWorkspaceAssistantConversationId } from "@api/app/tanstack/assistant";
 import { createFileRoute } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 import { WorkspaceAssistantClient } from "~/chat/workspace-assistant-client";
 import {
   WorkspaceRouteErrorPanel,
   WorkspaceRoutePending,
 } from "~/components/route-boundaries";
-
-const createNewWorkspaceAssistantConversationId = createServerFn({
-  method: "GET",
-}).handler(async () => {
-  const { createWorkspaceAssistantConversationId } = await import("@db/app");
-  return createWorkspaceAssistantConversationId();
-});
 
 export const Route = createFileRoute("/_authenticated/$slug/chat/")({
   loader: () => createNewWorkspaceAssistantConversationId(),
