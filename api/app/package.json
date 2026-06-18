@@ -81,6 +81,10 @@
       "types": "./src/adapters/internal/github-webhook.ts",
       "default": "./src/adapters/internal/github-webhook.ts"
     },
+    "./internal-api/inngest": {
+      "types": "./src/adapters/internal/inngest.ts",
+      "default": "./src/adapters/internal/inngest.ts"
+    },
     "./internal-api/skills-events": {
       "types": "./src/adapters/internal/skills-events.ts",
       "default": "./src/adapters/internal/skills-events.ts"
