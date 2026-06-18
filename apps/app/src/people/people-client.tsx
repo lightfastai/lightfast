@@ -1,12 +1,15 @@
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useDeferredValue, useMemo } from "react";
 import { WorkspaceSurface } from "~/components/workspace-surface";
 import { PeopleDetailSheet } from "./people-detail-sheet";
 import { PeopleLoading } from "./people-loading";
 import {
   flattenPeoplePages,
+  PEOPLE_PAGE_SIZE,
   type PeopleClassificationFilters,
   type PersonRow,
 } from "./people-model";
+import { peopleListInfiniteQueryOptions } from "./people-queries";
 import {
   type NormalizedPeopleSearch,
   parsePersonProviders,
@@ -16,7 +19,6 @@ import {
 } from "./people-search-params";
 import { PeopleTableView } from "./people-table-view";
 import { PeopleToolbar } from "./people-toolbar";
-import { usePeopleListQuery } from "./use-people-list-query";
 
 export function PeopleClient({
   search,
@@ -40,11 +42,16 @@ export function PeopleClient({
     searchText.length > 0 ||
     filters.providers.length > 0 ||
     filters.types.length > 0;
+  const listInput = {
+    limit: PEOPLE_PAGE_SIZE,
+    providers: filters.providers.length ? filters.providers : undefined,
+    search: searchText.trim() || undefined,
+    types: filters.types.length ? filters.types : undefined,
+  };
 
-  const { query: peopleQuery } = usePeopleListQuery({
-    filters,
-    search: searchText,
-  });
+  const peopleQuery = useInfiniteQuery(
+    peopleListInfiniteQueryOptions(listInput)
+  );
   const rows = flattenPeoplePages(peopleQuery.data);
   const peopleByPublicId = useMemo(() => {
     const map = new Map<string, PersonRow>();
