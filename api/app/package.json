@@ -9,6 +9,10 @@
       "types": "./src/mcp-oauth/index.ts",
       "default": "./src/mcp-oauth/index.ts"
     },
+    "./mcp-oauth/server-routes": {
+      "types": "./src/mcp-oauth/server-routes.ts",
+      "default": "./src/mcp-oauth/server-routes.ts"
+    },
     "./mcp-oauth/resource-access": {
       "types": "./src/mcp-oauth/resource-access.ts",
       "default": "./src/mcp-oauth/resource-access.ts"
