@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { apiContract, lightfastMcpToolPolicy } from "@repo/api-contract";
 import { Client, InMemoryTransport, McpServer } from "@vendor/mcp";
 import { describe, expect, it } from "vitest";
@@ -8,7 +10,24 @@ import {
 } from "../policy";
 import { registerLightfastMcpTools } from "../register";
 
+const packageRoot = resolve(import.meta.dirname, "../..");
+
+function source(path: string) {
+  return readFileSync(resolve(packageRoot, path), "utf8");
+}
+
 describe("createLightfastMcpToolDefinitions", () => {
+  it("uses plain contract schema metadata instead of oRPC internals", () => {
+    const packageJson = JSON.parse(source("package.json")) as {
+      dependencies?: Record<string, string>;
+    };
+    const policySource = source("src/policy.ts");
+
+    expect(packageJson.dependencies?.["@orpc/contract"]).toBeUndefined();
+    expect(policySource).not.toContain("@orpc/contract");
+    expect(policySource).not.toContain("~orpc");
+  });
+
   it("creates stable exposed tool definitions from contract policy", () => {
     expect(() =>
       validateMcpPolicyCoverage(apiContract, lightfastMcpToolPolicy)

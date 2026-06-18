@@ -1,4 +1,3 @@
-import { isContractProcedure } from "@orpc/contract";
 import { describe, expect, it } from "vitest";
 
 import { apiContract } from "../contract";
@@ -47,8 +46,9 @@ describe("lightfastMcpToolPolicy", () => {
     } satisfies Partial<McpToolPolicyEntry>);
   });
 
-  it("only counts oRPC contract procedures", () => {
-    expect(isContractProcedure(apiContract.signals.create)).toBe(true);
+  it("only counts plain public API contract procedures", () => {
+    expect(apiContract.signals.create.route.path).toBe("/signals");
+    expect(getContractProcedurePaths({ misc: { value: true } })).toEqual([]);
   });
 
   it("includes provider routine MCP scopes in the public scope type", () => {

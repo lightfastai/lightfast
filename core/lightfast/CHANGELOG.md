@@ -4,10 +4,10 @@
 
 ### Minor Changes
 
-- 55e5e6c: Adopt oRPC for the public SDK and MCP surfaces.
+- 55e5e6c: Adopt explicit public API metadata for the SDK and MCP surfaces.
 
-  - SDK (`lightfast`): `createLightfast(apiKey, options)` now returns a typed `ContractRouterClient<Contract>` constructed via `@orpc/openapi-client/fetch`. Calls hit the new `/api/v1/*` REST surface on `apps/app`. The `LightfastClient` class is removed — it's now a type alias to `ContractRouterClient<Contract>`. This is a pre-1.0 incompatible API change for any consumer using `new LightfastClient(...)`.
-  - MCP (`@lightfastai/mcp`): The server auto-registers tools from `@repo/api-contract`. Current exposed tools are `lightfast_system_health`, `lightfast_signals_create`, and `lightfast_signals_get`. Adding procedures to the contract auto-registers them as MCP tools — no `core/mcp` changes required.
+  - SDK (`lightfast`): `createLightfast(apiKey, options)` now returns a direct typed fetch client with `system.health`, `signals.create`, and `signals.get` methods. Calls hit the new `/api/v1/*` REST surface on `apps/app`. The `LightfastClient` class is removed; it is now the interface returned by `createLightfast`. This is a pre-1.0 incompatible API change for any consumer using `new LightfastClient(...)`.
+  - MCP (`@lightfastai/mcp`): The server auto-registers tools from `@repo/api-contract`. Current exposed tools are `lightfast_system_health`, `lightfast_signals_create`, and `lightfast_signals_get`. Adding public API contract entries can expose them as MCP tools according to MCP policy, with no `core/mcp` changes required.
   - Publish hygiene: `@repo/api-contract` is bundled into the published `dist/` via tsup `noExternal`. Moved from `dependencies` to `devDependencies` to keep the published manifest free of private workspace references. `lightfast` (in MCP) moved the same way. Stable releases publish to the npm `latest` dist-tag.
 
   Requires: `LIGHTFAST_API_KEY` (`lf_` org API key) to authenticate. Optional: `LIGHTFAST_API_URL` to point at non-prod environments.
@@ -26,10 +26,10 @@
 
 ### Major Changes
 
-- 55e5e6c: Adopt oRPC for the public SDK and MCP surfaces.
+- 55e5e6c: Adopt explicit public API metadata for the SDK and MCP surfaces.
 
-  - SDK (`lightfast`): `createLightfast(apiKey, options)` now returns a typed `ContractRouterClient<Contract>` constructed via `@orpc/openapi-client/fetch`. Calls hit the new `/api/v1/*` REST surface on `apps/app`. The `LightfastClient` class is removed — it's now a type alias to `ContractRouterClient<Contract>`. Breaking change for any consumer using `new LightfastClient(...)`.
-  - MCP (`@lightfastai/mcp`): The server auto-registers tools from `@repo/api-contract`. Current exposed tools are `lightfast_system_health`, `lightfast_signals_create`, and `lightfast_signals_get`. Adding procedures to the contract auto-registers them as MCP tools — no `core/mcp` changes required.
+  - SDK (`lightfast`): `createLightfast(apiKey, options)` now returns a direct typed fetch client with `system.health`, `signals.create`, and `signals.get` methods. Calls hit the new `/api/v1/*` REST surface on `apps/app`. The `LightfastClient` class is removed; it is now the interface returned by `createLightfast`. Breaking change for any consumer using `new LightfastClient(...)`.
+  - MCP (`@lightfastai/mcp`): The server auto-registers tools from `@repo/api-contract`. Current exposed tools are `lightfast_system_health`, `lightfast_signals_create`, and `lightfast_signals_get`. Adding public API contract entries can expose them as MCP tools according to MCP policy, with no `core/mcp` changes required.
   - Publish hygiene: `@repo/api-contract` is bundled into the published `dist/` via tsup `noExternal`. Moved from `dependencies` to `devDependencies` to keep the published manifest free of private workspace references. `lightfast` (in MCP) moved the same way. `publishConfig.tag` changed from `"latest"` to `"alpha"` so pre-release versions no longer claim the default install slot.
 
   Requires: `LIGHTFAST_API_KEY` (`lf_` org API key) to authenticate. Optional: `LIGHTFAST_API_URL` to point at non-prod environments.

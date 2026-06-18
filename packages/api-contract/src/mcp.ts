@@ -1,6 +1,4 @@
-import { isContractProcedure } from "@orpc/contract";
-
-import type { Contract } from "./contract";
+import { type Contract, isPublicApiContractProcedure } from "./contract";
 
 export type McpScope =
   | "mcp:system:read"
@@ -36,7 +34,7 @@ export function getContractProcedurePaths(
   const paths: string[] = [];
 
   function walk(node: unknown, keyPath: string[]): void {
-    if (isContractProcedure(node)) {
+    if (isPublicApiContractProcedure(node)) {
       paths.push(keyPath.join("."));
       return;
     }

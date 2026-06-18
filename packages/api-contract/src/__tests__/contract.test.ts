@@ -1,60 +1,51 @@
-import { isContractProcedure } from "@orpc/contract";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { apiContract } from "../contract";
+import { createSignalInput, createSignalOutput } from "../schemas/signals";
+import { systemHealthOutput } from "../schemas/system";
+
+const packageRoot = resolve(import.meta.dirname, "../..");
+
+function source(path: string) {
+  return readFileSync(resolve(packageRoot, path), "utf8");
+}
 
 describe("apiContract", () => {
-  it("exposes system.health as a contract procedure", () => {
-    expect(isContractProcedure(apiContract.system.health)).toBe(true);
+  it("keeps public API route metadata as plain contract data", () => {
+    expect(apiContract.system.health.route).toMatchObject({
+      method: "GET",
+      path: "/system/health",
+    });
+    expect(apiContract.system.health.outputSchema).toBe(systemHealthOutput);
+
+    expect(apiContract.signals.create.route).toMatchObject({
+      method: "POST",
+      path: "/signals",
+      successStatus: 202,
+    });
+    expect(apiContract.signals.create.inputSchema).toBe(createSignalInput);
+    expect(apiContract.signals.create.outputSchema).toBe(createSignalOutput);
+
+    expect(apiContract.signals.get.route).toMatchObject({
+      method: "GET",
+      path: "/signals/{id}",
+    });
   });
 
-  it("exposes signals.create as a contract procedure", () => {
-    expect(isContractProcedure(apiContract.signals.create)).toBe(true);
-  });
+  it("does not expose oRPC procedure internals or package dependencies", () => {
+    const packageJson = JSON.parse(source("package.json")) as {
+      dependencies?: Record<string, string>;
+    };
+    const contractSource = source("src/contract.ts");
+    const mcpSource = source("src/mcp.ts");
 
-  it("exposes signals.get as a contract procedure", () => {
-    expect(isContractProcedure(apiContract.signals.get)).toBe(true);
-  });
-
-  it("system.health declares GET /system/health", () => {
-    const def = (
-      apiContract.system.health as {
-        "~orpc": { route?: { method?: string; path?: string } };
-      }
-    )["~orpc"];
-    expect(def.route?.method).toBe("GET");
-    expect(def.route?.path).toBe("/system/health");
-  });
-
-  it("system.health declares an output schema", () => {
-    const def = (
-      apiContract.system.health as {
-        "~orpc": { outputSchema?: unknown };
-      }
-    )["~orpc"];
-    expect(def.outputSchema).toBeDefined();
-  });
-
-  it("signals.create declares POST /signals with 202 success", () => {
-    const def = (
-      apiContract.signals.create as {
-        "~orpc": {
-          route?: { method?: string; path?: string; successStatus?: number };
-        };
-      }
-    )["~orpc"];
-    expect(def.route?.method).toBe("POST");
-    expect(def.route?.path).toBe("/signals");
-    expect(def.route?.successStatus).toBe(202);
-  });
-
-  it("signals.get declares GET /signals/{id}", () => {
-    const def = (
-      apiContract.signals.get as {
-        "~orpc": { route?: { method?: string; path?: string } };
-      }
-    )["~orpc"];
-    expect(def.route?.method).toBe("GET");
-    expect(def.route?.path).toBe("/signals/{id}");
+    expect(packageJson.dependencies?.["@orpc/contract"]).toBeUndefined();
+    expect(contractSource).not.toContain("@orpc/contract");
+    expect(contractSource).not.toContain("~orpc");
+    expect(mcpSource).not.toContain("@orpc/contract");
+    expect(mcpSource).not.toContain("isContractProcedure");
+    expect(apiContract.signals.create).not.toHaveProperty("~orpc");
   });
 });

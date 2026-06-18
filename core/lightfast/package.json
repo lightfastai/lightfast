@@ -39,11 +39,6 @@
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "@orpc/client": "^1.14.2",
-    "@orpc/contract": "^1.14.2",
-    "@orpc/openapi-client": "^1.14.2"
-  },
   "devDependencies": {
     "@repo/api-contract": "workspace:*",
     "@repo/typescript-config": "workspace:*",

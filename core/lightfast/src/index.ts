@@ -1,7 +1,10 @@
-import { createORPCClient } from "@orpc/client";
-import type { ContractRouterClient } from "@orpc/contract";
-import { OpenAPILink } from "@orpc/openapi-client/fetch";
-import { apiContract, type Contract } from "@repo/api-contract";
+import type {
+  CreateSignalInput,
+  CreateSignalOutput,
+  GetSignalInput,
+  GetSignalOutput,
+  SystemHealthOutput,
+} from "@repo/api-contract";
 
 declare const __SDK_VERSION__: string;
 
@@ -12,7 +15,81 @@ export interface LightfastOptions {
   fetch?: typeof fetch;
 }
 
-export type LightfastClient = ContractRouterClient<Contract>;
+export interface LightfastClient {
+  signals: {
+    create(input: CreateSignalInput): Promise<CreateSignalOutput>;
+    get(input: GetSignalInput): Promise<GetSignalOutput>;
+  };
+  system: {
+    health(): Promise<SystemHealthOutput>;
+  };
+}
+
+export class LightfastApiError extends Error {
+  readonly body: unknown;
+  readonly status: number;
+
+  constructor(input: { body: unknown; status: number; statusText: string }) {
+    super(`Lightfast API request failed: ${input.status} ${input.statusText}`);
+    this.name = "LightfastApiError";
+    this.body = input.body;
+    this.status = input.status;
+  }
+}
+
+function normalizeBaseUrl(baseUrl: string): string {
+  return baseUrl.replace(/\/+$/, "").replace(/\/api\/v1$/, "");
+}
+
+function apiUrl(baseUrl: string, path: string): string {
+  return `${baseUrl}/api/v1${path}`;
+}
+
+async function responseBody(response: Response): Promise<unknown> {
+  const text = await response.text();
+  if (!text) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return text;
+  }
+}
+
+async function requestJson<TOutput>(input: {
+  apiKey: string;
+  body?: unknown;
+  fetch: typeof fetch;
+  method: "GET" | "POST";
+  url: string;
+}): Promise<TOutput> {
+  const headers = new Headers({
+    authorization: `Bearer ${input.apiKey}`,
+  });
+  const init: RequestInit = {
+    headers,
+    method: input.method,
+  };
+
+  if (input.body !== undefined) {
+    headers.set("content-type", "application/json");
+    init.body = JSON.stringify(input.body);
+  }
+
+  const response = await input.fetch(new Request(input.url, init));
+  const body = await responseBody(response);
+  if (!response.ok) {
+    throw new LightfastApiError({
+      body,
+      status: response.status,
+      statusText: response.statusText,
+    });
+  }
+
+  return body as TOutput;
+}
 
 export function createLightfast(
   apiKey: string,
@@ -23,19 +100,43 @@ export function createLightfast(
   }
 
   const baseUrl = options.baseUrl ?? "https://lightfast.ai";
-  // Strip trailing slash and any trailing /api/v1 so callers can pass either form.
-  const normalizedBase = baseUrl.replace(/\/$/, "").replace(/\/api\/v1$/, "");
+  const normalizedBase = normalizeBaseUrl(baseUrl);
+  const fetchImpl = options.fetch ?? fetch;
 
-  const link = new OpenAPILink(apiContract, {
-    url: `${normalizedBase}/api/v1`,
-    headers: () => ({
-      authorization: `Bearer ${apiKey}`,
-    }),
-    ...(options.fetch && { fetch: options.fetch }),
-  });
-
-  return createORPCClient(link);
+  return {
+    signals: {
+      create(input) {
+        return requestJson({
+          apiKey,
+          body: input,
+          fetch: fetchImpl,
+          method: "POST",
+          url: apiUrl(normalizedBase, "/signals"),
+        });
+      },
+      get(input) {
+        return requestJson({
+          apiKey,
+          fetch: fetchImpl,
+          method: "GET",
+          url: apiUrl(
+            normalizedBase,
+            `/signals/${encodeURIComponent(input.id)}`
+          ),
+        });
+      },
+    },
+    system: {
+      health() {
+        return requestJson({
+          apiKey,
+          fetch: fetchImpl,
+          method: "GET",
+          url: apiUrl(normalizedBase, "/system/health"),
+        });
+      },
+    },
+  };
 }
 
 export const VERSION: string = __SDK_VERSION__;
-export type { Contract } from "@repo/api-contract";

@@ -1592,16 +1592,6 @@ importers:
         version: 4.3.6
 
   core/lightfast:
-    dependencies:
-      '@orpc/client':
-        specifier: ^1.14.2
-        version: 1.14.2(@opentelemetry/api@1.9.1)
-      '@orpc/contract':
-        specifier: ^1.14.2
-        version: 1.14.2(@opentelemetry/api@1.9.1)
-      '@orpc/openapi-client':
-        specifier: ^1.14.2
-        version: 1.14.2(@opentelemetry/api@1.9.1)
     devDependencies:
       '@repo/api-contract':
         specifier: workspace:*
@@ -1961,9 +1951,6 @@ importers:
 
   packages/api-contract:
     dependencies:
-      '@orpc/contract':
-        specifier: ^1.14.2
-        version: 1.14.2(@opentelemetry/api@1.9.1)
       zod:
         specifier: 'catalog:'
         version: 4.3.6
@@ -2255,9 +2242,6 @@ importers:
 
   packages/mcp-tools:
     dependencies:
-      '@orpc/contract':
-        specifier: ^1.14.2
-        version: 1.14.2(@opentelemetry/api@1.9.1)
       '@repo/api-contract':
         specifier: workspace:*
         version: link:../api-contract
@@ -2267,9 +2251,6 @@ importers:
       '@vendor/observability':
         specifier: workspace:*
         version: link:../../vendor/observability
-      zod:
-        specifier: 'catalog:'
-        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -6508,9 +6489,6 @@ packages:
 
   '@orpc/interop@1.14.2':
     resolution: {integrity: sha512-FkrXlR0vmhx5D0t5WA6YN7XyC1WwjGGmkaaShVUGdnFu6m0bl4v3vZZWIMcPy5fG/6wF7KCTEGx0B6+kMmLWiQ==}
-
-  '@orpc/openapi-client@1.14.2':
-    resolution: {integrity: sha512-KIXSVuGYh3JvO0lxUUztuMkEj6FV5C96QivR+H/HvqfFidC3hEH0nqi0vEWmUzlbzH3jbCaJV8KKV41HKnUNYw==}
 
   '@orpc/server@1.14.2':
     resolution: {integrity: sha512-+MkYqqI1CmR/eWsktpAxN4+Dd1rbDGO3xh9ZQae/V4zID5uz7smUnsIJL97GRDIZkwRUYlC8TDLLPAkxij22Iw==}
@@ -19263,15 +19241,6 @@ snapshots:
       - '@opentelemetry/api'
 
   '@orpc/interop@1.14.2': {}
-
-  '@orpc/openapi-client@1.14.2(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@orpc/client': 1.14.2(@opentelemetry/api@1.9.1)
-      '@orpc/contract': 1.14.2(@opentelemetry/api@1.9.1)
-      '@orpc/shared': 1.14.2(@opentelemetry/api@1.9.1)
-      '@orpc/standard-server': 1.14.2(@opentelemetry/api@1.9.1)
-    transitivePeerDependencies:
-      - '@opentelemetry/api'
 
   '@orpc/server@1.14.2(@opentelemetry/api@1.9.1)(crossws@0.4.5(srvx@0.11.16))(ws@8.20.0)':
     dependencies:
