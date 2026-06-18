@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   BillingPaymentMethodResource,
   BillingStatementResource,
@@ -6,10 +6,10 @@ import type {
 import { useAuth, usePaymentMethods, useStatements } from "@vendor/clerk";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { useCancelSubscriptionItemMutation } from "./billing-cancellation-mutation";
 import { BillingCheckoutDialog } from "./billing-checkout-dialog";
 import {
   billingOverviewQueryOptions,
+  cancelOrgBillingSubscriptionItemMutationOptions,
   orgBillingQueryKeys,
 } from "./billing-queries";
 import {
@@ -87,12 +87,16 @@ function usePricingHashDialogState() {
 export function BillingSettingsClient() {
   const auth = useAuth();
   const queryClient = useQueryClient();
+  const overviewQueryKey = useMemo(
+    () => orgBillingQueryKeys.overview(auth.orgId),
+    [auth.orgId]
+  );
   const refreshBillingOverview = useCallback(
     () =>
       queryClient.invalidateQueries({
-        queryKey: orgBillingQueryKeys.overview(auth.orgId),
+        queryKey: overviewQueryKey,
       }),
-    [auth.orgId, queryClient]
+    [overviewQueryKey, queryClient]
   );
   const {
     data: overview,
@@ -140,8 +144,60 @@ export function BillingSettingsClient() {
   const [selectedStatement, setSelectedStatement] =
     useState<BillingStatementResource | null>(null);
 
-  const { mutate: cancelSubscriptionItem } = useCancelSubscriptionItemMutation({
-    orgId: auth.orgId,
+  const { mutate: cancelSubscriptionItem } = useMutation({
+    ...cancelOrgBillingSubscriptionItemMutationOptions(),
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: overviewQueryKey });
+
+      const previousOverview =
+        queryClient.getQueryData<BillingOverview>(overviewQueryKey);
+      const canceledAt = Date.now();
+
+      queryClient.setQueryData(
+        overviewQueryKey,
+        (old: BillingOverview | undefined) =>
+          old
+            ? {
+                ...old,
+                subscription: {
+                  ...old.subscription,
+                  subscriptionItems: old.subscription.subscriptionItems.map(
+                    (item) =>
+                      item.id === input.subscriptionItemId
+                        ? { ...item, canceledAt }
+                        : item
+                  ),
+                },
+              }
+            : old
+      );
+
+      return { previousOverview };
+    },
+    onError: (_err, _input, context) => {
+      if (context?.previousOverview) {
+        queryClient.setQueryData(overviewQueryKey, context.previousOverview);
+      }
+    },
+    onSuccess: (updatedItem: BillingSubscriptionItem) => {
+      queryClient.setQueryData(
+        overviewQueryKey,
+        (old: BillingOverview | undefined) =>
+          old
+            ? {
+                ...old,
+                subscription: {
+                  ...old.subscription,
+                  subscriptionItems: old.subscription.subscriptionItems.map(
+                    (item) => (item.id === updatedItem.id ? updatedItem : item)
+                  ),
+                },
+              }
+            : old
+      );
+    },
+    onSettled: () =>
+      void queryClient.invalidateQueries({ queryKey: overviewQueryKey }),
   });
 
   const confirmDowngrade = useCallback(

@@ -1214,9 +1214,8 @@ describe("app authenticated route migration", () => {
     );
     const billingActionsPath =
       "src/org/settings/billing/billing-overview-actions.ts";
-    const billingCancellationSource = source(
-      "src/org/settings/billing/billing-cancellation-mutation.ts"
-    );
+    const billingCancellationPath =
+      "src/org/settings/billing/billing-cancellation-mutation.ts";
     const billingViewModelSource = source(
       "src/org/settings/billing/billing-view-model.ts"
     );
@@ -1297,8 +1296,12 @@ describe("app authenticated route migration", () => {
     expect(existsSync(resolve(appRoot, billingActionsPath))).toBe(false);
     expect(billingClientSource).toContain("orgBillingQueryKeys.overview");
     expect(billingClientSource).not.toContain("useBillingOverviewRefresh");
-    expect(billingCancellationSource).toContain(
+    expect(existsSync(resolve(appRoot, billingCancellationPath))).toBe(false);
+    expect(billingClientSource).toContain(
       "cancelOrgBillingSubscriptionItemMutationOptions"
+    );
+    expect(billingClientSource).not.toContain(
+      "useCancelSubscriptionItemMutation"
     );
     expect(billingViewModelSource).toContain("deriveBillingViewModel");
     expect(billingSectionsSource).toContain("PlanSection");
@@ -1317,7 +1320,6 @@ describe("app authenticated route migration", () => {
       identityCardSource,
       identitySectionSource,
       billingClientSource,
-      billingCancellationSource,
       billingViewModelSource,
       billingSectionsSource,
       paymentDialogSource,
