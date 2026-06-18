@@ -17,9 +17,9 @@ import { auth } from "@vendor/clerk/server";
 import type { OAuthClientInformationMixed, OAuthTokens } from "@vendor/mcp";
 import { StreamableHTTPClientTransport } from "@vendor/mcp";
 import { log } from "@vendor/observability/log/next";
+import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 import { AuthzError, InternalDomainError } from "../../domain/errors";
 import { env } from "../../env";
-import type { AuthContext } from "../../trpc";
 import {
   consumeUserConnectorOAuthAttempt,
   issueUserConnectorOAuthAttempt,

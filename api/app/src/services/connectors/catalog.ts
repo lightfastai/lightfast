@@ -12,7 +12,7 @@ import {
   type DisplayConnectorTool,
 } from "@repo/connector-contract";
 import { X_OAUTH_SCOPES } from "@repo/x-app-node";
-import type { AuthContext } from "../../trpc";
+import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 import { getXConnectorConfig } from "./config";
 
 interface ConnectorServiceContext {

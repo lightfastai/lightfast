@@ -17,8 +17,8 @@ import {
   createVercelSandboxRuntime,
   type SandboxRuntime,
 } from "@repo/sandbox-runtime";
+import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 import { AuthzError, ConflictError, NotFoundError } from "../../domain/errors";
-import type { AuthContext } from "../../trpc";
 import {
   issueAllEnabledDeveloperConnectionLeases,
   materializeDeveloperConnectionLeasesForSandboxRun,

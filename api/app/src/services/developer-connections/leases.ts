@@ -13,8 +13,8 @@ import {
   DEVELOPER_CONNECTION_PROVIDERS,
   type DeveloperConnectionIssueLeaseInput,
 } from "@repo/developer-connection-contract";
+import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 import { AuthzError, ConflictError } from "../../domain/errors";
-import type { AuthContext } from "../../trpc";
 import {
   type DeveloperConnectionMaterialization,
   materializeDeveloperCredential,

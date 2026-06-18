@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -18,13 +18,11 @@ describe("diagnostics boundary", () => {
     expect(diagnosticsSource).not.toContain("trpcCode");
   });
 
-  it("keeps tRPC error construction inside the tRPC adapter", () => {
-    const trpcSource = source("trpc.ts");
+  it("does not keep a tRPC diagnostic adapter after tRPC removal", () => {
+    const trpcPath = resolve(apiRoot, "trpc.ts");
     const githubGateSource = source("services/github/user-account/gate.ts");
 
-    expect(trpcSource).toContain("@trpc/server");
-    expect(trpcSource).toContain("createDiagnosticCause");
-    expect(trpcSource).toContain("new TRPCError");
+    expect(existsSync(trpcPath)).toBe(false);
     expect(githubGateSource).not.toContain("../../../diagnostics");
     expect(githubGateSource).not.toContain("throwDiagnostic");
   });

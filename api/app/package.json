@@ -228,7 +228,6 @@
     "@repo/x-app-node": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "@tanstack/react-start": "catalog:",
-    "@trpc/server": "catalog:",
     "@vendor/ai": "workspace:*",
     "@vendor/braintrust": "workspace:*",
     "@vendor/clerk": "workspace:*",

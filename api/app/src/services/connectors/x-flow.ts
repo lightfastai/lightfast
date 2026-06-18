@@ -29,9 +29,9 @@ import {
 } from "@repo/x-app-node";
 import { log } from "@vendor/observability/log/next";
 import { findUserOrganizationMembership } from "../../auth/clerk-org-membership";
+import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 import { AuthzError, NotFoundError } from "../../domain/errors";
 import { env } from "../../env";
-import type { AuthContext } from "../../trpc";
 import {
   type ConnectorOAuthAttemptRecord,
   consumeConnectorOAuthAttempt,
