@@ -9,16 +9,12 @@
  */
 
 import { taskRouter } from "./router/(pending-not-allowed)/task";
-import { workspaceEntityGraphRouter } from "./router/(pending-not-allowed)/workspace-entity-graph";
 import { createTRPCRouter } from "./trpc";
 
 export const appRouter = createTRPCRouter({
   org: createTRPCRouter({
     setup: createTRPCRouter({
       task: taskRouter,
-    }),
-    workspace: createTRPCRouter({
-      entityGraph: workspaceEntityGraphRouter,
     }),
   }),
 });
