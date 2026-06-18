@@ -23,7 +23,6 @@ describe("org billing app data access", () => {
   it("removes org billing settings UI callers from tRPC", () => {
     const files = [
       "src/org/settings/billing/billing-settings-client.tsx",
-      "src/org/settings/billing/billing-cancellation-mutation.ts",
       "src/org/settings/billing/billing-view-model.ts",
       "src/org/settings/billing/plan-selection-dialog.tsx",
       "src/org/settings/billing/plan-dialogs.tsx",
@@ -51,5 +50,24 @@ describe("org billing app data access", () => {
     expect(clientSource).toContain("orgBillingQueryKeys.overview(auth.orgId)");
     expect(clientSource).not.toContain("useBillingOverviewRefresh");
     expect(clientSource).not.toContain("billing-overview-actions");
+  });
+
+  it("keeps the billing cancellation mutation state in the billing client", () => {
+    const clientSource = readFileSync(
+      resolve(appRoot, "src/org/settings/billing/billing-settings-client.tsx"),
+      "utf8"
+    );
+    const mutationPath =
+      "src/org/settings/billing/billing-cancellation-mutation.ts";
+
+    expect(existsSync(resolve(appRoot, mutationPath))).toBe(false);
+    expect(clientSource).toContain("useMutation");
+    expect(clientSource).toContain(
+      "cancelOrgBillingSubscriptionItemMutationOptions"
+    );
+    expect(clientSource).toContain("orgBillingQueryKeys.overview(auth.orgId)");
+    expect(clientSource).toContain("previousOverview");
+    expect(clientSource).not.toContain("useCancelSubscriptionItemMutation");
+    expect(clientSource).not.toContain("billing-cancellation-mutation");
   });
 });
