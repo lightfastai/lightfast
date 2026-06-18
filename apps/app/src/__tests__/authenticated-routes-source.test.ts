@@ -1541,15 +1541,23 @@ describe("app authenticated route migration", () => {
     expect(mcpProxyCallRouteSource).toContain(
       'createFileRoute("/api/internal/mcp/proxy/call")'
     );
+    expect(mcpProxyCallRouteSource).toContain("await import(");
     expect(mcpProxyCallRouteSource).toContain(
-      'from "@api/app/internal-api/mcp-proxy"'
+      '"@api/app/internal-api/mcp-proxy"'
+    );
+    expect(mcpProxyCallRouteSource).not.toContain(
+      'import { handleMcpProxyCallRequest } from "@api/app/internal-api/mcp-proxy"'
     );
     expect(mcpProxyCallRouteSource).not.toContain("~/server/mcp-proxy");
     expect(mcpProxyFindRouteSource).toContain(
       'createFileRoute("/api/internal/mcp/proxy/find")'
     );
+    expect(mcpProxyFindRouteSource).toContain("await import(");
     expect(mcpProxyFindRouteSource).toContain(
-      'from "@api/app/internal-api/mcp-proxy"'
+      '"@api/app/internal-api/mcp-proxy"'
+    );
+    expect(mcpProxyFindRouteSource).not.toContain(
+      'import { handleMcpProxyFindRequest } from "@api/app/internal-api/mcp-proxy"'
     );
     expect(mcpProxyFindRouteSource).not.toContain("~/server/mcp-proxy");
     expect(mcpAuditRouteSource).toContain(
