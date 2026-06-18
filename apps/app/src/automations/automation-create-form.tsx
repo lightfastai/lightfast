@@ -1,11 +1,11 @@
 import { useAuth } from "@clerk/tanstack-react-start";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { connectableConnectorProviderSchema } from "@lightfast/connector-core";
 import {
   ChevronLeftIcon as ChevronLeft,
   Loading03Icon as Loader2,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { connectableConnectorProviderSchema } from "@lightfast/connector-core";
 import {
   AUTOMATION_NAME_MAX_LENGTH,
   AUTOMATION_PROMPT_MAX_LENGTH,
