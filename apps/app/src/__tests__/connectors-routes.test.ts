@@ -89,12 +89,29 @@ describe("app connector API routes", () => {
 
   it("mounts the X MCP bridge on the app API surface", () => {
     const xMcpSource = source("src/routes/api/connectors/x/mcp.ts");
+    const connectorMcpAdapterSource = repoSource(
+      "api/app/src/adapters/internal/connector-mcp.ts"
+    );
+    const apiPackageJson = JSON.parse(repoSource("api/app/package.json")) as {
+      exports: Record<string, { default: string; types: string }>;
+    };
 
     expect(xMcpSource).toContain('createFileRoute("/api/connectors/x/mcp")');
+    expect(xMcpSource).toContain('@api/app/internal-api/connector-mcp"');
     expect(xMcpSource).toContain("handleXConnectorMcpRequest");
     expect(xMcpSource).toContain("GET:");
     expect(xMcpSource).toContain("POST:");
     expect(xMcpSource).toContain("DELETE:");
-    expect(xMcpSource).not.toContain("next/");
+    expect(xMcpSource).not.toContain("@api/app/services/connectors");
+    expect(apiPackageJson.exports["./internal-api/connector-mcp"]).toEqual({
+      default: "./src/adapters/internal/connector-mcp.ts",
+      types: "./src/adapters/internal/connector-mcp.ts",
+    });
+    expect(connectorMcpAdapterSource).toContain("../../services/connectors");
+    expect(connectorMcpAdapterSource).toContain("handleXConnectorMcpRequest");
+
+    for (const routeSource of [xMcpSource, connectorMcpAdapterSource]) {
+      expect(routeSource).not.toContain("next/");
+    }
   });
 });

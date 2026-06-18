@@ -1,18 +1,12 @@
+import { handleXConnectorMcpRequest } from "@api/app/internal-api/connector-mcp";
 import { createFileRoute } from "@tanstack/react-router";
-
-async function handleXConnectorMcpRequest(request: Request) {
-  const { handleXConnectorMcpRequest: handleRequest } = await import(
-    "@api/app/services/connectors"
-  );
-  return handleRequest({ request });
-}
 
 export const Route = createFileRoute("/api/connectors/x/mcp")({
   server: {
     handlers: {
-      GET: async ({ request }) => handleXConnectorMcpRequest(request),
-      POST: async ({ request }) => handleXConnectorMcpRequest(request),
-      DELETE: async ({ request }) => handleXConnectorMcpRequest(request),
+      GET: ({ request }) => handleXConnectorMcpRequest(request),
+      POST: ({ request }) => handleXConnectorMcpRequest(request),
+      DELETE: ({ request }) => handleXConnectorMcpRequest(request),
     },
   },
 });
