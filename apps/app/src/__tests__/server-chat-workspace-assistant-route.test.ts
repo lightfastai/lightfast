@@ -622,6 +622,64 @@ describe("workspace assistant chat server route", () => {
       { query: "granola" }
     );
   });
+
+  it("uses locked read capability mode for provider routine discovery", async () => {
+    getWorkspaceAssistantConversationByPublicIdMock.mockResolvedValue(
+      makeConversation({
+        metadata: {
+          chatSettings: {
+            capabilityMode: "read",
+            modelProfile: "fast",
+            version: "2.0.0",
+          },
+        },
+      })
+    );
+
+    const response = await handleWorkspaceAssistantChatRequest(
+      createJsonRequest({
+        conversationId: "conv_123",
+        messages: [
+          {
+            id: "client-message-1",
+            parts: [{ text: "Find issues", type: "text" }],
+            role: "user",
+          },
+        ],
+        providerRoutineWriteMode: true,
+      })
+    );
+
+    expect(response.status).toBe(200);
+
+    const streamOptions = streamTextMock.mock.calls.at(-1)?.[0] as
+      | {
+          tools?: Record<
+            string,
+            {
+              description?: string;
+              execute?: (input: Record<string, unknown>) => Promise<unknown>;
+            }
+          >;
+        }
+      | undefined;
+
+    expect(streamOptions?.tools?.callProviderRoutine?.description).toContain(
+      "this conversation"
+    );
+    expect(streamOptions?.tools?.findProviderRoutines?.description).toContain(
+      "Write conversations"
+    );
+
+    await streamOptions?.tools?.findProviderRoutines?.execute?.({
+      query: "linear",
+    });
+
+    expect(findProviderRoutinesMock).toHaveBeenCalledWith(
+      expect.objectContaining({ writeMode: false }),
+      { query: "linear" }
+    );
+  });
 });
 
 function createJsonRequest(body: unknown) {
