@@ -475,9 +475,7 @@ describe("app authenticated route migration", () => {
     const decisionsSearchSource = source(
       "src/decisions/decisions-search-params.ts"
     );
-    const decisionsQuerySource = source(
-      "src/decisions/use-decisions-list-query.ts"
-    );
+    const decisionsQuerySource = source("src/decisions/decisions-queries.ts");
     const skillsRouteSource = source(
       "src/routes/_authenticated/$slug/skills.tsx"
     );
@@ -528,6 +526,7 @@ describe("app authenticated route migration", () => {
     expect(decisionsQuerySource).toContain(
       'enabled: typeof window !== "undefined"'
     );
+    expect(decisionsClientSource).not.toContain("useDecisionsListQuery");
 
     expect(skillsRouteSource).toContain("validateSkillsSearch");
     expect(skillsRouteSource).toContain("setSearchParams");
