@@ -126,40 +126,67 @@ describe("app OAuth protocol route migration", () => {
     const configSource = source("src/routes/api/oauth/$client/config.ts");
     const finalizeSource = source("src/routes/api/oauth/finalize.ts");
     const sessionSource = source("src/routes/api/oauth/desktop/session.ts");
-    const nativeServerSource = source("src/server/oauth/native-auth.ts");
+    const nativeServerPath = resolve(
+      appRoot,
+      "src/server/oauth/native-auth.ts"
+    );
+    const nativeServerRoutesSource = repoSource(
+      "api/app/src/native-auth/server-routes.ts"
+    );
+    const apiPackageJson = JSON.parse(repoSource("api/app/package.json")) as {
+      exports: Record<string, { default: string; types: string }>;
+    };
 
     expect(configSource).toContain(
       'createFileRoute("/api/oauth/$client/config")'
     );
-    expect(configSource).toContain("nativeClientSchema");
-    expect(configSource).toContain("nativeOAuthConfigSchema");
-    expect(configSource).toContain("getNativeOAuthClientConfig");
+    expect(configSource).toContain('@api/app/native-auth/server-routes"');
+    expect(configSource).toContain("handleNativeOAuthClientConfigRequest");
     expect(configSource).toContain("params.client");
+    expect(configSource).not.toContain("~/server/oauth/native-auth");
     expect(configSource).not.toContain("caller.native.auth");
     expect(finalizeSource).toContain('createFileRoute("/api/oauth/finalize")');
-    expect(finalizeSource).toContain("nativeFinalizeRequestSchema");
-    expect(finalizeSource).toContain("nativeSessionMetadataSchema");
-    expect(finalizeSource).toContain("finalizeNativeAuthAttemptForRequest");
+    expect(finalizeSource).toContain('@api/app/native-auth/server-routes"');
+    expect(finalizeSource).toContain("handleNativeOAuthFinalizeRequest");
+    expect(finalizeSource).not.toContain("~/server/oauth/native-auth");
     expect(finalizeSource).not.toContain("caller.native.auth");
     expect(sessionSource).toContain(
       'createFileRoute("/api/oauth/desktop/session")'
     );
-    expect(sessionSource).toContain("nativeSessionMetadataSchema");
-    expect(sessionSource).toContain("getNativeAuthSessionForRequest");
-    expect(sessionSource).toContain('source: "desktop"');
+    expect(sessionSource).toContain('@api/app/native-auth/server-routes"');
+    expect(sessionSource).toContain("handleNativeOAuthDesktopSessionRequest");
+    expect(sessionSource).not.toContain("~/server/oauth/native-auth");
     expect(sessionSource).not.toContain("caller.native.auth");
-    expect(nativeServerSource).toContain("@api/app/native-auth");
-    expect(nativeServerSource).not.toContain("appRouter");
-    expect(nativeServerSource).not.toContain("createTRPCContext");
-    expect(nativeServerSource).not.toContain("TRPCError");
-    expect(nativeServerSource).not.toContain("getHTTPStatusCodeFromError");
-    expect(nativeServerSource).toContain("Unexpected auth error");
+    expect(apiPackageJson.exports["./native-auth/server-routes"]).toEqual({
+      default: "./src/native-auth/server-routes.ts",
+      types: "./src/native-auth/server-routes.ts",
+    });
+    expect(nativeServerRoutesSource).toContain("nativeClientSchema");
+    expect(nativeServerRoutesSource).toContain("nativeOAuthConfigSchema");
+    expect(nativeServerRoutesSource).toContain("getNativeOAuthClientConfig");
+    expect(nativeServerRoutesSource).toContain("nativeFinalizeRequestSchema");
+    expect(nativeServerRoutesSource).toContain("nativeSessionMetadataSchema");
+    expect(nativeServerRoutesSource).toContain(
+      "finalizeNativeAuthAttemptForRequest"
+    );
+    expect(nativeServerRoutesSource).toContain(
+      "getNativeAuthSessionForRequest"
+    );
+    expect(nativeServerRoutesSource).toContain('source: "desktop"');
+    expect(nativeServerRoutesSource).not.toContain("appRouter");
+    expect(nativeServerRoutesSource).not.toContain("createTRPCContext");
+    expect(nativeServerRoutesSource).not.toContain("TRPCError");
+    expect(nativeServerRoutesSource).not.toContain(
+      "getHTTPStatusCodeFromError"
+    );
+    expect(nativeServerRoutesSource).toContain("Unexpected auth error");
+    expect(existsSync(nativeServerPath)).toBe(false);
 
     for (const routeSource of [
       configSource,
       finalizeSource,
       sessionSource,
-      nativeServerSource,
+      nativeServerRoutesSource,
     ]) {
       expect(routeSource).not.toContain("next/");
       expect(routeSource).not.toContain("server-only");
