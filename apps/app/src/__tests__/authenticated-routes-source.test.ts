@@ -34,6 +34,65 @@ function appSourceFiles(dir = resolve(appRoot, "src")): string[] {
   });
 }
 
+const internalApiRouteLazyImportExpectations = [
+  {
+    handlerName: "handleGitHubWebhookRequest",
+    moduleSpecifier: "@api/app/internal-api/github-webhook",
+    path: "src/routes/api/github/webhook.ts",
+    staticImport:
+      'import { handleGitHubWebhookRequest } from "@api/app/internal-api/github-webhook"',
+  },
+  {
+    handlerName: "handleGitHubInstallationSetupRequest",
+    moduleSpecifier: "@api/app/internal-api/github-oauth",
+    path: "src/routes/api/github/setup.ts",
+    staticImport:
+      'import { handleGitHubInstallationSetupRequest } from "@api/app/internal-api/github-oauth"',
+  },
+  {
+    handlerName: "handleGitHubOAuthCallbackRequest",
+    moduleSpecifier: "@api/app/internal-api/github-oauth",
+    path: "src/routes/api/github/oauth/callback.ts",
+    staticImport:
+      'import { handleGitHubOAuthCallbackRequest } from "@api/app/internal-api/github-oauth"',
+  },
+  {
+    handlerName: "handleGitHubUserAccountOAuthCallbackRequest",
+    moduleSpecifier: "@api/app/internal-api/github-oauth",
+    path: "src/routes/api/github/user/oauth/callback.ts",
+    staticImport:
+      'import { handleGitHubUserAccountOAuthCallbackRequest } from "@api/app/internal-api/github-oauth"',
+  },
+  {
+    handlerName: "handleXConnectorMcpRequest",
+    moduleSpecifier: "@api/app/internal-api/connector-mcp",
+    path: "src/routes/api/connectors/x/mcp.ts",
+    staticImport:
+      'import { handleXConnectorMcpRequest } from "@api/app/internal-api/connector-mcp"',
+  },
+  {
+    handlerName: "handleXConnectorOAuthCallbackRequest",
+    moduleSpecifier: "@api/app/internal-api/connector-oauth",
+    path: "src/routes/api/connectors/x/oauth/callback.ts",
+    staticImport:
+      'import { handleXConnectorOAuthCallbackRequest } from "@api/app/internal-api/connector-oauth"',
+  },
+  {
+    handlerName: "handleLinearConnectorOAuthCallbackRequest",
+    moduleSpecifier: "@api/app/internal-api/connector-oauth",
+    path: "src/routes/api/connectors/linear/oauth/callback.ts",
+    staticImport:
+      'import { handleLinearConnectorOAuthCallbackRequest } from "@api/app/internal-api/connector-oauth"',
+  },
+  {
+    handlerName: "handleGranolaUserConnectorOAuthCallbackRequest",
+    moduleSpecifier: "@api/app/internal-api/connector-oauth",
+    path: "src/routes/api/connectors/granola/oauth/callback.ts",
+    staticImport:
+      'import { handleGranolaUserConnectorOAuthCallbackRequest } from "@api/app/internal-api/connector-oauth"',
+  },
+] as const;
+
 describe("app authenticated route migration", () => {
   it("mounts a plain TanStack Query provider at the root route", () => {
     const rootSource = source("src/routes/__root.tsx");
@@ -953,6 +1012,20 @@ describe("app authenticated route migration", () => {
       accountGithubIndexRouteSource,
     ]) {
       expect(routeFile).not.toContain("next/");
+    }
+  });
+
+  it("keeps internal GitHub and connector route handlers server-only", () => {
+    for (const expectation of internalApiRouteLazyImportExpectations) {
+      const routeSource = source(expectation.path);
+
+      expect(routeSource).toContain("await import(");
+      expect(routeSource).toContain(`"${expectation.moduleSpecifier}"`);
+      expect(routeSource).toContain(expectation.handlerName);
+      expect(routeSource).not.toContain(expectation.staticImport);
+      expect(routeSource).not.toContain("@db/app");
+      expect(routeSource).not.toContain("next/");
+      expect(routeSource).not.toContain('"use server"');
     }
   });
 

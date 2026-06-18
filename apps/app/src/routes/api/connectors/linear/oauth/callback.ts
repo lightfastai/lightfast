@@ -1,10 +1,20 @@
-import { handleLinearConnectorOAuthCallbackRequest } from "@api/app/internal-api/connector-oauth";
 import { createFileRoute } from "@tanstack/react-router";
+
+async function handleLinearConnectorOAuthCallbackRouteRequest(
+  request: Request
+) {
+  const { handleLinearConnectorOAuthCallbackRequest } = await import(
+    "@api/app/internal-api/connector-oauth"
+  );
+
+  return handleLinearConnectorOAuthCallbackRequest(request);
+}
 
 export const Route = createFileRoute("/api/connectors/linear/oauth/callback")({
   server: {
     handlers: {
-      GET: ({ request }) => handleLinearConnectorOAuthCallbackRequest(request),
+      GET: ({ request }) =>
+        handleLinearConnectorOAuthCallbackRouteRequest(request),
     },
   },
 });
