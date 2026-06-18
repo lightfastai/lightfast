@@ -8,9 +8,6 @@
  * - `org.workspace`: bound-org product surface.
  */
 
-import { connectorsRouter } from "./router/(pending-not-allowed)/connectors";
-import { developerConnectionsRouter } from "./router/(pending-not-allowed)/developer-connections";
-import { orgSourceControlRouter } from "./router/(pending-not-allowed)/org-source-control";
 import { taskRouter } from "./router/(pending-not-allowed)/task";
 import { workspaceEntityGraphRouter } from "./router/(pending-not-allowed)/workspace-entity-graph";
 import { createTRPCRouter } from "./trpc";
@@ -20,12 +17,7 @@ export const appRouter = createTRPCRouter({
     setup: createTRPCRouter({
       task: taskRouter,
     }),
-    settings: createTRPCRouter({
-      sourceControl: orgSourceControlRouter,
-    }),
     workspace: createTRPCRouter({
-      connectors: connectorsRouter,
-      developerConnections: developerConnectionsRouter,
       entityGraph: workspaceEntityGraphRouter,
     }),
   }),
