@@ -1,4 +1,3 @@
-import type { AppRouterOutputs } from "@api/app";
 import { useAuth } from "@clerk/tanstack-react-start";
 import {
   type AutomationScheduleInput,
@@ -15,8 +14,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { LfSelect } from "~/components/lf-select";
-import { useTRPC } from "~/trpc/react";
-import { automationUpdateMutationOptions } from "./automations-cache";
+import type { Automation } from "./automations-cache";
+import { automationUpdateMutationOptions } from "./automations-queries";
 import { RailRow } from "./detail-sections";
 import {
   isTimeBasedKind,
@@ -24,8 +23,6 @@ import {
   type ScheduleKind,
   WEEKDAY_OPTIONS,
 } from "./schedule-options";
-
-type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
 
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
@@ -98,11 +95,10 @@ export function AutomationScheduleEditor({
   const [timezone, setTimezone] = useState(initial.timezone);
 
   const qc = useQueryClient();
-  const trpc = useTRPC();
   const id = automation.publicId;
 
   const update = useMutation(
-    automationUpdateMutationOptions(qc, trpc, id, {
+    automationUpdateMutationOptions(qc, id, {
       errorTitle: "Failed to update schedule",
     })
   );

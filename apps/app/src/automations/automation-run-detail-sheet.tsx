@@ -1,4 +1,3 @@
-import type { AppRouterOutputs } from "@api/app";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Sheet,
@@ -9,39 +8,36 @@ import {
   SheetTitle,
 } from "@repo/ui/components/ui/sheet";
 import { toast } from "@repo/ui/components/ui/sonner";
-import { skipToken, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useEffect } from "react";
-import { useTRPC } from "~/trpc/react";
 import { AutomationRunDetailContent } from "./automation-run-detail-content";
-
-type AutomationRun =
-  AppRouterOutputs["org"]["workspace"]["automations"]["listRuns"][number];
+import {
+  type AutomationRunListItem,
+  automationRunQueryOptions,
+} from "./automations-queries";
 
 export function AutomationRunDetailSheet({
   initialRun,
   onOpenChange,
   publicId,
 }: {
-  initialRun?: AutomationRun;
+  initialRun?: AutomationRunListItem;
   onOpenChange: (open: boolean) => void;
   publicId: string | null;
 }) {
-  const trpc = useTRPC();
   const open = publicId !== null;
   const hasInitial = !!initialRun && initialRun.publicId === publicId;
   const shouldFetchRun = open && !hasInitial && Boolean(publicId);
 
   const query = useQuery(
-    trpc.org.workspace.automations.getRun.queryOptions(
-      publicId ? { id: publicId } : skipToken,
-      {
-        enabled: typeof window !== "undefined" && shouldFetchRun,
-        refetchOnWindowFocus: true,
-        retry: false,
-        staleTime: 5000,
-      }
-    )
+    automationRunQueryOptions({
+      enabled: typeof window !== "undefined" && shouldFetchRun,
+      id: publicId ?? "",
+      refetchOnWindowFocus: true,
+      retry: false,
+      staleTime: 5000,
+    })
   );
 
   const run = hasInitial ? initialRun : query.data;

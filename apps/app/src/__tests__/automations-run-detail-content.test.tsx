@@ -1,13 +1,12 @@
 // @vitest-environment happy-dom
 
-import type { AppRouterOutputs } from "@api/app";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AutomationRunDetailContent } from "~/automations/automation-run-detail-content";
+import type { AutomationRunDetail } from "~/automations/automations-queries";
 
-type AutomationRun =
-  AppRouterOutputs["org"]["workspace"]["automations"]["getRun"];
+type AutomationRun = AutomationRunDetail;
 
 vi.mock("@repo/ui/components/ui/badge", () => ({
   Badge: ({ children, ...props }: ComponentProps<"span">) => (

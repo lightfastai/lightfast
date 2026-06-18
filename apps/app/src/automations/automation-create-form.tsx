@@ -27,8 +27,7 @@ import { useEffect, useMemo } from "react";
 import { z } from "zod";
 import { LfSelect } from "~/components/lf-select";
 import { connectorsListQueryOptions } from "~/connectors/connectors-queries";
-import { useTRPC } from "~/trpc/react";
-import { upsertInList } from "./automations-cache";
+import { automationCreateMutationOptions } from "./automations-queries";
 import {
   isTimeBasedKind,
   SCHEDULE_KINDS,
@@ -87,7 +86,6 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
   const navigate = useNavigate();
   const { has, isLoaded } = useAuth();
   const canManageAutomations = isLoaded && !!has?.({ role: "org:admin" });
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { data: connectors = [] } = useQuery({
     ...connectorsListQueryOptions({ staleTime: 30_000 }),
@@ -155,21 +153,14 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
   }, [connectorProvider, enabledConnectorOptions, form]);
 
   const createMutation = useMutation(
-    trpc.org.workspace.automations.create.mutationOptions({
-      meta: { errorTitle: "Failed to create automation" },
+    automationCreateMutationOptions({
       onSuccess: (automation) => {
-        upsertInList(queryClient, trpc, automation.publicId, () => automation);
-        queryClient.setQueryData(
-          trpc.org.workspace.automations.get.queryOptions({
-            id: automation.publicId,
-          }).queryKey,
-          automation
-        );
         toast.success("Automation created", {
           description: `"${automation.name}" is now scheduled.`,
         });
         void navigate({ params: { slug }, to: "/$slug/automations" });
       },
+      queryClient,
     })
   );
 

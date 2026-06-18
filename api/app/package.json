@@ -57,6 +57,10 @@
       "types": "./src/adapters/tanstack/signals.ts",
       "default": "./src/adapters/tanstack/signals.ts"
     },
+    "./tanstack/automations": {
+      "types": "./src/adapters/tanstack/automations.ts",
+      "default": "./src/adapters/tanstack/automations.ts"
+    },
     "./tanstack/native-auth": {
       "types": "./src/adapters/tanstack/native-auth.ts",
       "default": "./src/adapters/tanstack/native-auth.ts"

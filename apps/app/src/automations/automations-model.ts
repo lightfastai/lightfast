@@ -1,10 +1,8 @@
-import type { AppRouterOutputs } from "@api/app";
+import type { AutomationListItem } from "./automations-queries";
 
-export type AutomationList =
-  AppRouterOutputs["org"]["workspace"]["automations"]["list"];
-export type AutomationListItem = AutomationList[number];
+export type { AutomationListItem } from "./automations-queries";
 
-export interface AutomationSection {
+interface AutomationSection {
   automations: AutomationListItem[];
   title: "Current" | "Paused";
 }
