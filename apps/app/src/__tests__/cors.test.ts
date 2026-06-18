@@ -51,7 +51,7 @@ describe("app CORS", () => {
 
   it("allows packaged desktop requests with the native desktop marker", async () => {
     const { isPackagedDesktopRequest, setCorsHeaders } = await importCors();
-    const request = new Request("https://lightfast.localhost/api/trpc/ping", {
+    const request = new Request("https://lightfast.localhost/api/desktop/rpc", {
       headers: {
         origin: "null",
         "x-lightfast-desktop": "1",
@@ -72,9 +72,9 @@ describe("app CORS", () => {
     );
   });
 
-  it("echoes allowed origins on tRPC preflight responses", async () => {
+  it("echoes allowed origins on app API preflight responses", async () => {
     const { setCorsHeaders } = await importCors();
-    const request = new Request("https://lightfast.localhost/api/trpc/ping", {
+    const request = new Request("https://lightfast.localhost/api/v1/signals", {
       headers: { origin: "https://lightfast.localhost" },
       method: "OPTIONS",
     });

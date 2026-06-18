@@ -33,11 +33,8 @@ describe("app start middleware", () => {
     expect(isAppOwnedApiRoute("/api/v1/orgs")).toBe(true);
   });
 
-  it("keeps Clerk on browser routes, tRPC, and OAuth callbacks", () => {
+  it("keeps Clerk on browser routes, CLI/desktop RPC, and OAuth callbacks", () => {
     expect(isAppOwnedApiRoute("/lightfast/connectors")).toBe(false);
-    expect(isAppOwnedApiRoute("/api/trpc/org.workspace.connectors.list")).toBe(
-      false
-    );
     expect(isAppOwnedApiRoute("/api/cli/rpc")).toBe(false);
     expect(isAppOwnedApiRoute("/api/connectors/x/oauth/callback")).toBe(false);
     expect(isAppOwnedApiRoute("/api/connectors/linear/oauth/callback")).toBe(

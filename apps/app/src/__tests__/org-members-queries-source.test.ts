@@ -38,10 +38,13 @@ describe("org members app data access", () => {
   });
 
   it("surfaces expected domain errors from TanStack mutations", () => {
-    const source = readFileSync(resolve(appRoot, "src/trpc/react.tsx"), "utf8");
+    const source = readFileSync(
+      resolve(appRoot, "src/query/react.tsx"),
+      "utf8"
+    );
 
     expect(source).toContain("isExpectedDomainError");
     expect(source).toContain('error.name === "DomainError"');
-    expect(source).toContain("message = error.message");
+    expect(source).toContain("? error.message");
   });
 });

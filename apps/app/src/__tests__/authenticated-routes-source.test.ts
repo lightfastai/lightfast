@@ -19,21 +19,22 @@ function expectSource(path: string) {
 }
 
 describe("app authenticated route migration", () => {
-  it("mounts the tRPC React Query provider at the root route", () => {
+  it("mounts a plain TanStack Query provider at the root route", () => {
     const rootSource = source("src/routes/__root.tsx");
-    const trpcSource = source("src/trpc/react.tsx");
+    const querySource = expectSource("src/query/react.tsx");
 
-    expect(rootSource).toContain("<TRPCReactProvider>");
-    expect(trpcSource).toContain("createTRPCContext<AppRouter>");
-    expect(trpcSource).toContain("url:");
-    expect(trpcSource).toContain("/api/trpc");
-    expect(trpcSource).toContain(
-      "Server-side tRPC React fetches require request-aware auth wiring."
-    );
-    expect(trpcSource).toContain(
-      'credentials: sameOrigin ? "include" : "omit"'
-    );
-    expect(trpcSource).not.toContain('from "~/env"');
+    expect(rootSource).toContain("<QueryProvider>");
+    expect(rootSource).toContain('from "~/query/react"');
+    expect(rootSource).not.toContain("TRPCReactProvider");
+    expect(rootSource).not.toContain('from "~/trpc/react"');
+    expect(querySource).toContain("QueryClientProvider");
+    expect(querySource).toContain("MutationCache");
+    expect(querySource).toContain("isExpectedDomainError");
+    expect(querySource).toContain('error.name === "DomainError"');
+    expect(querySource).not.toContain("@trpc/");
+    expect(querySource).not.toContain("/api/trpc");
+    expect(querySource).not.toContain("AppRouter");
+    expect(querySource).not.toContain('from "~/env"');
   });
 
   it("ports team creation without Next.js router imports", () => {

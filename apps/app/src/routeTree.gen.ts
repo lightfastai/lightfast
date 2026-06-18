@@ -29,7 +29,6 @@ import { Route as AuthenticatedSlugIndexRouteImport } from './routes/_authentica
 import { Route as OauthRegisterClientIdRouteImport } from './routes/oauth/register/$clientId'
 import { Route as OauthClientStartRouteImport } from './routes/oauth/$client/start'
 import { Route as ApiV1SignalsRouteImport } from './routes/api/v1/signals'
-import { Route as ApiTrpcSplatRouteImport } from './routes/api/trpc.$'
 import { Route as ApiOauthFinalizeRouteImport } from './routes/api/oauth/finalize'
 import { Route as ApiGithubWebhookRouteImport } from './routes/api/github/webhook'
 import { Route as ApiGithubSetupRouteImport } from './routes/api/github/setup'
@@ -193,11 +192,6 @@ const OauthClientStartRoute = OauthClientStartRouteImport.update({
 const ApiV1SignalsRoute = ApiV1SignalsRouteImport.update({
   id: '/api/v1/signals',
   path: '/api/v1/signals',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
-  id: '/api/trpc/$',
-  path: '/api/trpc/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiOauthFinalizeRoute = ApiOauthFinalizeRouteImport.update({
@@ -595,7 +589,6 @@ export interface FileRoutesByFullPath {
   '/api/github/setup': typeof ApiGithubSetupRoute
   '/api/github/webhook': typeof ApiGithubWebhookRoute
   '/api/oauth/finalize': typeof ApiOauthFinalizeRoute
-  '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/api/v1/signals': typeof ApiV1SignalsRouteWithChildren
   '/oauth/$client/start': typeof OauthClientStartRoute
   '/oauth/register/$clientId': typeof OauthRegisterClientIdRoute
@@ -675,7 +668,6 @@ export interface FileRoutesByTo {
   '/api/github/setup': typeof ApiGithubSetupRoute
   '/api/github/webhook': typeof ApiGithubWebhookRoute
   '/api/oauth/finalize': typeof ApiOauthFinalizeRoute
-  '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/api/v1/signals': typeof ApiV1SignalsRouteWithChildren
   '/oauth/$client/start': typeof OauthClientStartRoute
   '/oauth/register/$clientId': typeof OauthRegisterClientIdRoute
@@ -760,7 +752,6 @@ export interface FileRoutesById {
   '/api/github/setup': typeof ApiGithubSetupRoute
   '/api/github/webhook': typeof ApiGithubWebhookRoute
   '/api/oauth/finalize': typeof ApiOauthFinalizeRoute
-  '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/api/v1/signals': typeof ApiV1SignalsRouteWithChildren
   '/oauth/$client/start': typeof OauthClientStartRoute
   '/oauth/register/$clientId': typeof OauthRegisterClientIdRoute
@@ -848,7 +839,6 @@ export interface FileRouteTypes {
     | '/api/github/setup'
     | '/api/github/webhook'
     | '/api/oauth/finalize'
-    | '/api/trpc/$'
     | '/api/v1/signals'
     | '/oauth/$client/start'
     | '/oauth/register/$clientId'
@@ -928,7 +918,6 @@ export interface FileRouteTypes {
     | '/api/github/setup'
     | '/api/github/webhook'
     | '/api/oauth/finalize'
-    | '/api/trpc/$'
     | '/api/v1/signals'
     | '/oauth/$client/start'
     | '/oauth/register/$clientId'
@@ -1012,7 +1001,6 @@ export interface FileRouteTypes {
     | '/api/github/setup'
     | '/api/github/webhook'
     | '/api/oauth/finalize'
-    | '/api/trpc/$'
     | '/api/v1/signals'
     | '/oauth/$client/start'
     | '/oauth/register/$clientId'
@@ -1086,7 +1074,6 @@ export interface RootRouteChildren {
   ApiGithubSetupRoute: typeof ApiGithubSetupRoute
   ApiGithubWebhookRoute: typeof ApiGithubWebhookRoute
   ApiOauthFinalizeRoute: typeof ApiOauthFinalizeRoute
-  ApiTrpcSplatRoute: typeof ApiTrpcSplatRoute
   ApiV1SignalsRoute: typeof ApiV1SignalsRouteWithChildren
   OauthClientStartRoute: typeof OauthClientStartRoute
   ApiConnectorsXMcpRoute: typeof ApiConnectorsXMcpRoute
@@ -1246,13 +1233,6 @@ declare module '@tanstack/react-router' {
       path: '/api/v1/signals'
       fullPath: '/api/v1/signals'
       preLoaderRoute: typeof ApiV1SignalsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/trpc/$': {
-      id: '/api/trpc/$'
-      path: '/api/trpc/$'
-      fullPath: '/api/trpc/$'
-      preLoaderRoute: typeof ApiTrpcSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/oauth/finalize': {
@@ -2010,7 +1990,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiGithubSetupRoute: ApiGithubSetupRoute,
   ApiGithubWebhookRoute: ApiGithubWebhookRoute,
   ApiOauthFinalizeRoute: ApiOauthFinalizeRoute,
-  ApiTrpcSplatRoute: ApiTrpcSplatRoute,
   ApiV1SignalsRoute: ApiV1SignalsRouteWithChildren,
   OauthClientStartRoute: OauthClientStartRoute,
   ApiConnectorsXMcpRoute: ApiConnectorsXMcpRoute,

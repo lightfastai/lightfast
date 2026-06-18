@@ -5,33 +5,10 @@ import { isDiagnosticCause } from "../diagnostics";
 
 // ----- module mocks (must precede the dynamic imports below) -----------------
 
-// Stub the shared db export so the binding helpers used by `task.*` stay
-// isolated from runtime DB env. Handlers read the fake `db` injected via tRPC
-// context, never this stub.
-vi.mock("@db/app/client", () => ({ db: {} }));
-
-const getOrganizationMock = vi.fn();
-const updateOrganizationMock = vi.fn();
 const logDebugMock = vi.fn();
 const logErrorMock = vi.fn();
 const logInfoMock = vi.fn();
 const logWarnMock = vi.fn();
-
-vi.mock("@vendor/clerk/env", () => ({
-  clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
-}));
-
-vi.mock("@vendor/clerk/server", () => ({
-  toPlainClerkResource: structuredClone,
-  clerkClient: () =>
-    Promise.resolve({
-      organizations: {
-        getOrganization: getOrganizationMock,
-        updateOrganization: updateOrganizationMock,
-      },
-    }),
-  auth: vi.fn(),
-}));
 
 vi.mock("@vendor/observability/log/next", () => ({
   log: {
@@ -50,9 +27,6 @@ vi.mock("@vendor/observability/trpc", () => ({
       next(),
 }));
 
-// `task.bind` refuses in production; pin a non-production env.
-vi.mock("../env", () => ({ env: { VERCEL_ENV: "development" } }));
-
 const {
   createTRPCRouter,
   createCallerFactory,
@@ -63,12 +37,10 @@ const {
   orgAdminProcedure,
   boundOrgAdminProcedure,
 } = await import("../trpc");
-const { taskRouter } = await import("../router/(pending-not-allowed)/task");
 
-// ----- a router that exposes the gates + the real setup/feature routers ------
+// ----- a router that exposes the gates ---------------------------------------
 
 const testRouter = createTRPCRouter({
-  task: taskRouter,
   // Bare probes: the gate is the only thing between the call and the handler.
   viewerProbe: viewerProcedure.query(() => "viewer-ok"),
   orgProbe: orgProcedure.query(() => "org-ok"),
@@ -79,61 +51,6 @@ const testRouter = createTRPCRouter({
 });
 
 const createCaller = createCallerFactory(testRouter);
-
-// ----- fake DB ---------------------------------------------------------------
-
-/**
- * A stateful stand-in for the Drizzle client, scoped to a single org per test.
- * `select` returns the current active rows; `insert` appends one. Enough for
- * `getActiveOrgBinding` to run for real against caller-visible state.
- */
-function makeStatefulDb(seedRows: Record<string, unknown>[] = []) {
-  const rows: Record<string, unknown>[] = [...seedRows];
-  const spies = { insert: vi.fn() };
-  const db = {
-    select: () => ({
-      from: () => ({
-        where: () => ({
-          limit: (n: number) =>
-            Promise.resolve(
-              rows.filter((r) => r.status === "active").slice(0, n)
-            ),
-        }),
-      }),
-    }),
-    insert: () => ({
-      values: (v: Record<string, unknown>) => ({
-        $returningId: () => {
-          spies.insert(v);
-          const row = {
-            id: rows.length + 1,
-            connectedAt: new Date("2026-05-20T00:00:00.000Z"),
-            revokedAt: null,
-            createdAt: new Date("2026-05-20T00:00:00.000Z"),
-            updatedAt: new Date("2026-05-20T00:00:00.000Z"),
-            ...v,
-          };
-          rows.push(row);
-          return Promise.resolve([{ id: row.id }]);
-        },
-      }),
-    }),
-  };
-  return { db: db as unknown as Database, rows, spies };
-}
-
-function activeGitHubBinding(overrides: Record<string, unknown> = {}) {
-  return {
-    id: 1,
-    status: "active",
-    clerkOrgId: "org_test",
-    provider: "github",
-    providerAccountLogin: "acme",
-    providerInstallationId: "1001",
-    metadata: {},
-    ...overrides,
-  };
-}
 
 // ----- caller helpers --------------------------------------------------------
 
@@ -186,10 +103,6 @@ function makeCaller(
 }
 
 beforeEach(() => {
-  getOrganizationMock.mockReset();
-  getOrganizationMock.mockResolvedValue({ publicMetadata: {} });
-  updateOrganizationMock.mockReset();
-  updateOrganizationMock.mockResolvedValue(undefined);
   logDebugMock.mockReset();
   logErrorMock.mockReset();
   logInfoMock.mockReset();
@@ -350,66 +263,6 @@ describe("boundOrgAdminProcedure", () => {
     const caller = makeCaller(active("unbound"), {} as Database, adminAccess());
     await expect(caller.boundOrgAdminProbe()).rejects.toMatchObject({
       code: "FORBIDDEN",
-    });
-  });
-});
-
-// ----- task router -----------------------------------------------------------
-
-describe("task.status", () => {
-  it("is callable before setup and reports the first missing requirement", async () => {
-    const { db } = makeStatefulDb();
-    const caller = makeCaller(active("unbound"), db);
-    await expect(caller.task.status()).resolves.toEqual({
-      bindingStatus: "unbound",
-      nextSetupRequirement: "github_org",
-    });
-  });
-
-  it("does not treat a GitHub org binding without .lightfast proof as bound", async () => {
-    const { db } = makeStatefulDb([activeGitHubBinding()]);
-    const caller = makeCaller(active("unbound"), db);
-    await expect(caller.task.status()).resolves.toEqual({
-      bindingStatus: "unbound",
-      nextSetupRequirement: "github_lightfast_repo",
-    });
-  });
-
-  it("reports bound only after both setup requirements are satisfied", async () => {
-    const { db } = makeStatefulDb([
-      activeGitHubBinding({
-        metadata: {
-          lightfastRepository: {
-            fullName: "acme/.lightfast",
-            id: "987",
-            installationId: "1001",
-            name: ".lightfast",
-            verifiedAt: "2026-05-30T10:00:00.000Z",
-          },
-        },
-      }),
-    ]);
-    const caller = makeCaller(active("bound"), db);
-    await expect(caller.task.status()).resolves.toEqual({
-      bindingStatus: "bound",
-      nextSetupRequirement: null,
-    });
-  });
-});
-
-describe("task.bind", () => {
-  it("does not create legacy placeholder bindings", async () => {
-    const { db, spies } = makeStatefulDb();
-    const caller = makeCaller(active("unbound"), db);
-
-    await expect(caller.task.bind()).rejects.toMatchObject({
-      code: "NOT_IMPLEMENTED",
-    });
-    expect(spies.insert).not.toHaveBeenCalled();
-    expect(updateOrganizationMock).not.toHaveBeenCalled();
-    await expect(caller.task.status()).resolves.toEqual({
-      bindingStatus: "unbound",
-      nextSetupRequirement: "github_org",
     });
   });
 });
