@@ -1,4 +1,9 @@
 import { useAuth } from "@clerk/tanstack-react-start";
+import {
+  Loading03Icon as Loader2,
+  UserAdd01Icon as UserPlus,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
@@ -18,7 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
-import { Loader2, UserPlus } from "lucide-react";
 import { useCallback, useState } from "react";
 import type { OrgRole } from "./org-member-cache";
 import { useOrgMemberInviteAction } from "./org-member-invite-actions";
@@ -68,7 +72,11 @@ export function OrgMemberInvite() {
     <Dialog onOpenChange={setIsOpen} open={isOpen}>
       <DialogTrigger asChild>
         <Button className="rounded-[9px]" size="lf" variant="secondary">
-          <UserPlus aria-hidden="true" className="size-3.5" />
+          <HugeiconsIcon
+            aria-hidden="true"
+            className="size-3.5"
+            icon={UserPlus}
+          />
           Invite
         </Button>
       </DialogTrigger>
@@ -123,7 +131,11 @@ export function OrgMemberInvite() {
           >
             {inviteMutation.isPending ? (
               <>
-                <Loader2 aria-hidden="true" className="animate-spin" />
+                <HugeiconsIcon
+                  aria-hidden="true"
+                  className="animate-spin"
+                  icon={Loader2}
+                />
                 Sending
               </>
             ) : (

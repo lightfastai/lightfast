@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -16,6 +16,22 @@ function repoSource(path: string) {
 function expectSource(path: string) {
   expect(existsSync(resolve(appRoot, path)), `${path} should exist`).toBe(true);
   return source(path);
+}
+
+function appSourceFiles(dir = resolve(appRoot, "src")): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const absPath = resolve(dir, entry.name);
+
+    if (entry.isDirectory()) {
+      if (entry.name === "__tests__") {
+        return [];
+      }
+
+      return appSourceFiles(absPath);
+    }
+
+    return /\.(?:ts|tsx)$/.test(entry.name) ? [absPath] : [];
+  });
 }
 
 describe("app authenticated route migration", () => {
@@ -210,13 +226,28 @@ describe("app authenticated route migration", () => {
     expect(teamSwitcherSource).not.toContain("asChild");
     expect(teamSwitcherSource).toContain("const mounted = useMounted();");
     expect(teamSwitcherSource).toContain("if (!mounted || isPending)");
-    expect(shellSource).toContain(
-      "<AuthenticatedTopbar left={<TeamSwitcherSlot />} />"
-    );
+    expect(shellSource).not.toContain("AuthenticatedTopbar");
+    expect(shellSource).not.toContain("Docs");
+    expect(shellSource).not.toContain("API Reference");
     expect(teamSwitcherSource).toContain("listUserOrganizationsQueryOptions()");
     expect(teamSwitcherSource).toContain(
       '<DropdownMenuContent align="center" size="sm">'
     );
+    expect(teamSwitcherSource).toContain(
+      'from "@repo/ui-v2/components/ui/button"'
+    );
+    expect(teamSwitcherSource).not.toContain(
+      'from "@repo/ui/components/ui/button"'
+    );
+    expect(teamSwitcherSource).toContain('aria-label="Switch team"');
+    expect(teamSwitcherSource).toContain('className="ml-auto"');
+    expect(teamSwitcherSource).toContain('size="icon-sm"');
+    expect(teamSwitcherSource).toContain('type="button"');
+    expect(teamSwitcherSource).toContain('variant="ghost"');
+    expect(teamSwitcherSource).toMatch(
+      /render=\{\s*<Button\s+aria-label="Switch team"[\s\S]*?className="ml-auto"[\s\S]*?type="button"[\s\S]*?variant="ghost"\s*\/>\s*\}[\s\S]*?>\s*<HugeiconsIcon\s+aria-hidden="true"\s+className="size-4"\s+icon=\{UnfoldMoreIcon\}\s*\/>\s*<\/DropdownMenuTrigger>/
+    );
+    expect(teamSwitcherSource).not.toContain('className="size-11 rounded-full');
     expect(teamSwitcherSource).not.toContain(
       '<DropdownMenuContent align="center" className='
     );
@@ -300,6 +331,76 @@ describe("app authenticated route migration", () => {
     expect(dropdownMenuSource).not.toContain("focus:**:text-accent-foreground");
   });
 
+  it("keeps ui-v2 select content padded once for grouped and ungrouped lists", () => {
+    const selectSource = repoSource(
+      "packages/ui-v2/src/components/ui/select.tsx"
+    );
+    const selectPopupClass =
+      selectSource.match(
+        /<SelectPrimitive\.Popup[\s\S]*?className=\{cn\(\s*"([^"]+)"/
+      )?.[1] ?? "";
+    const selectGroupClass =
+      selectSource.match(
+        /<SelectPrimitive\.Group[\s\S]*?className=\{cn\("([^"]+)"/
+      )?.[1] ?? "";
+    const selectListClass =
+      selectSource.match(/<SelectPrimitive\.List\s+className="([^"]+)"/)?.[1] ??
+      "";
+    const legacySelectSource = repoSource(
+      "packages/ui/src/components/ui/select.tsx"
+    );
+    const legacyViewportClass =
+      legacySelectSource.match(
+        /<SelectPrimitive\.Viewport[\s\S]*?className=\{cn\(\s*"([^"]+)"/
+      )?.[1] ?? "";
+
+    expect(legacyViewportClass.split(/\s+/)).toContain("p-[5px]");
+    expect(selectListClass.split(/\s+/)).toContain("p-1");
+    expect(selectPopupClass.split(/\s+/)).not.toContain("p-1");
+    expect(selectGroupClass.split(/\s+/)).not.toContain("p-1");
+  });
+
+  it("uses the ui-v2 dropdown menu everywhere in app source", () => {
+    const legacyDropdownImport = "@repo/ui/components/ui/dropdown-menu";
+    const offenders = appSourceFiles()
+      .filter((file) =>
+        readFileSync(file, "utf8").includes(legacyDropdownImport)
+      )
+      .map((file) => file.slice(appRoot.length + 1));
+
+    expect(offenders).toEqual([]);
+  });
+
+  it("uses ui-v2 select instead of the removed custom lf-select", () => {
+    const formerLfSelectCallers = [
+      "src/automations/automation-create-form.tsx",
+      "src/automations/automation-schedule-editor.tsx",
+      "src/connectors/connectors-client.tsx",
+      "src/developer-connections/developer-connections-client.tsx",
+      "src/org/settings/source-control/repository-list.tsx",
+      "src/skills/skills-client.tsx",
+    ];
+    const importOffenders = appSourceFiles()
+      .filter((file) =>
+        readFileSync(file, "utf8").includes("components/lf-select")
+      )
+      .map((file) => file.slice(appRoot.length + 1));
+
+    expect(existsSync(resolve(appRoot, "src/components/lf-select.tsx"))).toBe(
+      false
+    );
+    expect(importOffenders).toEqual([]);
+
+    for (const path of formerLfSelectCallers) {
+      const fileSource = source(path);
+
+      expect(fileSource).toContain('from "@repo/ui-v2/components/ui/select"');
+      expect(fileSource).not.toContain("LfSelect");
+      expect(fileSource).not.toContain("<SelectTrigger className=");
+      expect(fileSource).not.toMatch(/<SelectTrigger\b[^>]*\bsize="sm"/);
+    }
+  });
+
   it("ports Signals without Next.js search or link assumptions", () => {
     const routeSource = source("src/routes/_authenticated/$slug/signals.tsx");
     const clientSource = source("src/signals/signals-client.tsx");
@@ -309,20 +410,16 @@ describe("app authenticated route migration", () => {
     const viewsSource = source("src/signals/signals-view-switcher.tsx");
     const viewQuerySource = viewsSource;
     const viewSwitcherSource = source("src/components/views/view-switcher.tsx");
-    const topbarActionsSource = source(
-      "src/workspace/workspace-topbar-actions.tsx"
-    );
 
     expect(routeSource).toContain("validateSignalsSearch");
     expect(routeSource).toContain("createFileRoute");
     expect(routeSource).toContain("setSearchParams");
-    expect(routeSource).toContain(
-      'staticData: { workspaceTopbarAction: "signals" }'
-    );
+    expect(routeSource).not.toContain("workspaceTopbarAction");
     expect(clientSource).toContain("SignalCreateDialog");
-    expect(clientSource).not.toContain("SignalsViewSwitcher");
+    expect(clientSource).toContain("<SignalsViewHeader");
+    expect(clientSource).toContain("SignalsViewSwitcher");
+    expect(clientSource).not.toContain("viewsSlot=");
     expect(clientSource).toContain("signalDetailQueryOptions");
-    expect(topbarActionsSource).toContain("SignalsViewSwitcher");
     expect(createDialogSource).toContain("createSignalMutationOptions");
     expect(createDialogSource).toContain("listUserOrganizationsQueryOptions");
     expect(searchSource).toContain("validateSignalsSearch");
@@ -360,22 +457,18 @@ describe("app authenticated route migration", () => {
     const tableSource = source("src/people/people-table-view.tsx");
     const detailSource = source("src/people/people-detail-content.tsx");
     const emptySource = source("src/people/people-empty-state.tsx");
-    const topbarActionsSource = source(
-      "src/workspace/workspace-topbar-actions.tsx"
-    );
 
     expect(routeSource).toContain("validatePeopleSearch");
     expect(routeSource).toContain("createFileRoute");
     expect(routeSource).toContain("setSearchParams");
-    expect(routeSource).toContain(
-      'staticData: { workspaceTopbarAction: "people" }'
-    );
+    expect(routeSource).not.toContain("workspaceTopbarAction");
     expect(clientSource).toContain("PeopleToolbar");
-    expect(clientSource).not.toContain("PeopleViewSwitcher");
+    expect(clientSource).toContain("<PeopleViewHeader");
+    expect(clientSource).toContain("PeopleViewSwitcher");
+    expect(clientSource).not.toContain("viewsSlot=");
     expect(clientSource).toContain("PeopleTableView");
     expect(clientSource).toContain("PeopleDetailSheet");
     expect(clientSource).not.toContain("usePeopleListQuery");
-    expect(topbarActionsSource).toContain("PeopleViewSwitcher");
     expect(searchSource).toContain("validatePeopleSearch");
     expect(searchSource).toContain("parsePersonProviders");
     expect(querySource).toContain("peopleListInfiniteQueryOptions");
@@ -519,6 +612,7 @@ describe("app authenticated route migration", () => {
 
     expect(decisionsRouteSource).toContain("validateDecisionsSearch");
     expect(decisionsRouteSource).toContain("setSearchParams");
+    expect(decisionsClientSource).toContain("<DecisionsViewHeader");
     expect(decisionsClientSource).toContain("DecisionsToolbar");
     expect(decisionsClientSource).toContain("DecisionsTableView");
     expect(decisionsSearchSource).toContain("parseDecisionProviders");
@@ -766,9 +860,9 @@ describe("app authenticated route migration", () => {
 
     expect(orgRouteSource).toContain("WorkspaceRouteShell");
     expect(workspaceShellSource).toContain('bindingStatus !== "bound"');
-    expect(workspaceShellSource).toContain("useWorkspaceTopbarAction");
-    expect(workspaceShellSource).toContain("actions={workspaceTopbarAction}");
-    expect(workspaceShellSource).toContain("left={<TeamSwitcherSlot />}");
+    expect(workspaceShellSource).not.toContain("AuthenticatedTopbar");
+    expect(workspaceShellSource).not.toContain("useWorkspaceTopbarAction");
+    expect(workspaceShellSource).not.toContain("workspaceTopbarAction");
     expect(workspaceModelSource).toContain('to: "/$slug/tasks/bind"');
     expect(workspaceModelSource).toContain(
       'to: "/$slug/tasks/github/lightfast-repo"'
@@ -862,7 +956,6 @@ describe("app authenticated route migration", () => {
     const formatSource = source(
       "src/org/settings/source-control/source-control-format.ts"
     );
-    const lfSelectSource = source("src/components/lf-select.tsx");
 
     expect(settingsLayoutSource).toContain(
       'createFileRoute("/_authenticated/$slug/settings")'
@@ -900,9 +993,12 @@ describe("app authenticated route migration", () => {
       'to="/$slug/tasks/github/lightfast-repo"'
     );
     expect(repositoryListSource).toContain("useAuth");
+    expect(repositoryListSource).toContain(
+      'from "@repo/ui-v2/components/ui/select"'
+    );
     expect(repositoryListSource).toContain("AddRepositoryDialog");
     expect(repositoryListSource).toContain("RepositoryCard");
-    expect(repositoryListSource).toContain("LfSelect");
+    expect(repositoryListSource).not.toContain("LfSelect");
     expect(addRepositoryDialogSource).toContain(
       "importSourceControlRepositoryMutationOptions"
     );
@@ -910,7 +1006,9 @@ describe("app authenticated route migration", () => {
     expect(addRepositoryDialogSource).toContain("LIGHTFAST_REPOSITORY_NAME");
     expect(repositoryCardSource).toContain("Open on GitHub");
     expect(formatSource).toContain("formatStatusSubtitle");
-    expect(lfSelectSource).toContain("function LfSelect");
+    expect(existsSync(resolve(appRoot, "src/components/lf-select.tsx"))).toBe(
+      false
+    );
 
     for (const routeFile of [
       settingsLayoutSource,
@@ -922,7 +1020,6 @@ describe("app authenticated route migration", () => {
       sourceControlQueriesSource,
       repositoryCardSource,
       formatSource,
-      lfSelectSource,
     ]) {
       expect(routeFile).not.toContain("next/");
       expect(routeFile).not.toContain("@vendor/clerk");

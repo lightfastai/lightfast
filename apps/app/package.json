@@ -54,7 +54,6 @@
     "@vendor/unkey": "workspace:*",
     "@vendor/upstash": "workspace:*",
     "@vercel/microfrontends": "^2.3.2",
-    "lucide-react": "catalog:",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
     "react-hook-form": "catalog:",

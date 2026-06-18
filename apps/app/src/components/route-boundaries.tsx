@@ -1,9 +1,10 @@
+import { Loading03Icon as Loader2 } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { cn } from "@repo/ui/lib/utils";
 import * as Sentry from "@sentry/tanstackstart-react";
 import { useRouter } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 
 export function WorkspaceRoutePending({
@@ -22,9 +23,10 @@ export function WorkspaceRoutePending({
       )}
       role="status"
     >
-      <Loader2
+      <HugeiconsIcon
         aria-hidden="true"
         className="size-6 animate-spin text-muted-foreground"
+        icon={Loader2}
       />
     </div>
   );

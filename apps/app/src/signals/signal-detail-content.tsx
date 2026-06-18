@@ -1,16 +1,17 @@
-import { Badge } from "@repo/ui/components/ui/badge";
-import { Button } from "@repo/ui/components/ui/button";
-import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import {
-  CircleDot,
-  Flag,
-  Gauge,
-  KeyRound,
-  Link2,
-  LoaderCircle,
-  Tag,
-  Users,
-} from "lucide-react";
+  CircleIcon as CircleDot,
+  Flag01Icon as Flag,
+  GaugeIcon as Gauge,
+  Key01Icon as KeyRound,
+  Link02Icon as Link2,
+  Loading03Icon as LoaderCircle,
+  Tag01Icon as Tag,
+  UserGroupIcon as Users,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Badge } from "@repo/ui-v2/components/ui/badge";
+import { Button } from "@repo/ui-v2/components/ui/button";
+import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import type { ReactNode } from "react";
 import {
   formatSignalConfidence,
@@ -98,20 +99,20 @@ export function SignalDetailContent({
           {formatSignalIdentifier(item)}
         </span>
         {classification ? (
-          <Badge className="text-muted-foreground" variant="outline">
+          <Badge variant="outline">
             {getSignalDispositionLabel(classification.disposition)}
           </Badge>
         ) : null}
         <div className="ml-auto flex items-center gap-1">
           <Button
             aria-label="Copy link"
-            className="size-7 rounded-full text-muted-foreground hover:text-foreground"
             onClick={onCopyLink}
             size="icon-sm"
+            title="Copy link"
             type="button"
             variant="ghost"
           >
-            <Link2 aria-hidden="true" className="size-4" />
+            <HugeiconsIcon aria-hidden="true" icon={Link2} />
           </Button>
           {closeSlot}
         </div>
@@ -125,45 +126,54 @@ export function SignalDetailContent({
         <div className="flex flex-col">
           {classification ? (
             <PropertyRow
-              icon={<CircleDot className={iconClass} />}
+              icon={<HugeiconsIcon className={iconClass} icon={CircleDot} />}
               label="Disposition"
             >
               {getSignalDispositionLabel(classification.disposition)}
             </PropertyRow>
           ) : null}
           {classification ? (
-            <PropertyRow icon={<Tag className={iconClass} />} label="Kind">
+            <PropertyRow
+              icon={<HugeiconsIcon className={iconClass} icon={Tag} />}
+              label="Kind"
+            >
               {getSignalKindLabel(classification.kind)}
             </PropertyRow>
           ) : null}
           {classification ? (
-            <PropertyRow icon={<Flag className={iconClass} />} label="Priority">
+            <PropertyRow
+              icon={<HugeiconsIcon className={iconClass} icon={Flag} />}
+              label="Priority"
+            >
               {getSignalPriorityLabel(classification.priority)}
             </PropertyRow>
           ) : null}
           {classification ? (
             <PropertyRow
-              icon={<Gauge className={iconClass} />}
+              icon={<HugeiconsIcon className={iconClass} icon={Gauge} />}
               label="Confidence"
             >
               {formatSignalConfidence(classification.confidence)}
             </PropertyRow>
           ) : null}
           <PropertyRow
-            icon={<LoaderCircle className={iconClass} />}
+            icon={<HugeiconsIcon className={iconClass} icon={LoaderCircle} />}
             label="Status"
           >
             {getSignalStatusLabel(item.status)}
           </PropertyRow>
           {peopleRouting ? (
             <PropertyRow
-              icon={<Users className={iconClass} />}
+              icon={<HugeiconsIcon className={iconClass} icon={Users} />}
               label="People routing"
             >
               {peopleRouting.shouldRun ? "Yes" : "No"}
             </PropertyRow>
           ) : null}
-          <PropertyRow icon={<KeyRound className={iconClass} />} label="Source">
+          <PropertyRow
+            icon={<HugeiconsIcon className={iconClass} icon={KeyRound} />}
+            label="Source"
+          >
             {source.label}
           </PropertyRow>
         </div>

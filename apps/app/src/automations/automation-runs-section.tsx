@@ -1,6 +1,10 @@
+import {
+  Loading03Icon as Loader2,
+  ReloadIcon as RefreshCcw,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, RefreshCcw } from "lucide-react";
 import { useMemo } from "react";
 import { AutomationRunDetailSheet } from "./automation-run-detail-sheet";
 import { AutomationRunsList } from "./automation-runs-list";
@@ -41,7 +45,7 @@ export function AutomationRunsSection({
   if (runsQuery.isPending) {
     return (
       <p className="inline-flex items-center gap-2 text-muted-foreground text-sm">
-        <Loader2 className="size-3.5 animate-spin" />
+        <HugeiconsIcon className="size-3.5 animate-spin" icon={Loader2} />
         Loading
       </p>
     );
@@ -58,7 +62,7 @@ export function AutomationRunsSection({
           type="button"
           variant="secondary"
         >
-          <RefreshCcw className="size-3.5" />
+          <HugeiconsIcon className="size-3.5" icon={RefreshCcw} />
           Refresh
         </Button>
       </div>

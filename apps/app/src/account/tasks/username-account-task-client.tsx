@@ -1,9 +1,11 @@
+import { Loading03Icon as Loader2 } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { TeamSwitcherSlot } from "~/components/team-switcher";
 import {
   accountProfileQueryOptions,
   createAccountUsernameMutationOptions,
@@ -117,6 +119,7 @@ export function UsernameAccountTaskClient({
   return (
     <div className="flex min-h-full flex-1 items-center justify-center px-4 pb-32">
       <div className="w-full max-w-md space-y-4">
+        <TeamSwitcherSlot />
         <div className="w-fit rounded-sm bg-card p-3">
           <Icons.logoShort className="h-5 w-5 text-foreground" />
         </div>
@@ -174,7 +177,10 @@ export function UsernameAccountTaskClient({
             <Button className="w-full" disabled={!canContinue} type="submit">
               {createUsernameMutation.isPending ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <HugeiconsIcon
+                    className="mr-2 h-4 w-4 animate-spin"
+                    icon={Loader2}
+                  />
                   Creating...
                 </>
               ) : (

@@ -1,8 +1,14 @@
+import {
+  ChevronLeftIcon as ChevronLeft,
+  Loading03Icon as Loader2,
+  ReloadIcon as RefreshCcw,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
+import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
 import { useIsMutating, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ChevronLeft, Loader2, RefreshCcw } from "lucide-react";
 import { AutomationActions } from "./automation-actions";
 import { AutomationNameEditor } from "./automation-name-editor";
 import { AutomationPromptEditor } from "./automation-prompt-editor";
@@ -48,7 +54,9 @@ function TimestampValue({
       )}
       suppressHydrationWarning
     >
-      {pending ? <Loader2 className="size-3 animate-spin" /> : null}
+      {pending ? (
+        <HugeiconsIcon className="size-3 animate-spin" icon={Loader2} />
+      ) : null}
       {formatDate(date)}
     </span>
   );
@@ -95,17 +103,7 @@ export function AutomationDetailClient({
     return (
       <div className="flex min-h-full items-center justify-center px-4 pb-24">
         <section className="w-full max-w-lg space-y-4">
-          <Button
-            asChild
-            className="-ml-1 h-6 gap-1 rounded-lg px-2 font-normal text-muted-foreground text-sm hover:bg-muted/60 hover:text-foreground"
-            size="sm"
-            variant="ghost"
-          >
-            <Link params={{ slug }} preload="intent" to="/$slug/automations">
-              <ChevronLeft className="size-3" />
-              Automations
-            </Link>
-          </Button>
+          <AutomationDetailNav slug={slug} />
           <p className="font-mono text-muted-foreground text-sm">
             {automationId}
           </p>
@@ -122,7 +120,7 @@ export function AutomationDetailClient({
             type="button"
             variant="secondary"
           >
-            <RefreshCcw className="size-4" />
+            <HugeiconsIcon className="size-4" icon={RefreshCcw} />
             Refresh
           </Button>
         </section>
@@ -136,17 +134,7 @@ export function AutomationDetailClient({
     <div className="grid grid-cols-1 lg:h-full lg:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="min-w-0 px-8 py-10 lg:min-h-0 lg:overflow-y-auto lg:px-12 lg:py-12">
         <div className="mb-6">
-          <Button
-            asChild
-            className="-ml-1 h-6 gap-1 rounded-lg px-2 font-normal text-muted-foreground text-sm hover:bg-muted/60 hover:text-foreground"
-            size="sm"
-            variant="ghost"
-          >
-            <Link params={{ slug }} preload="intent" to="/$slug/automations">
-              <ChevronLeft className="size-3" />
-              Automations
-            </Link>
-          </Button>
+          <AutomationDetailNav slug={slug} />
         </div>
         <AutomationNameEditor automation={automation} />
         <div className="mt-6">
@@ -195,17 +183,7 @@ function AutomationDetailSkeleton({ slug }: { slug: string }) {
   return (
     <div className="grid grid-cols-1 lg:h-full lg:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="space-y-6 px-8 py-10 lg:px-12 lg:py-12">
-        <Button
-          asChild
-          className="-ml-1 h-6 gap-1 rounded-lg px-2 font-normal text-muted-foreground text-sm hover:bg-muted/60 hover:text-foreground"
-          size="sm"
-          variant="ghost"
-        >
-          <Link params={{ slug }} preload="intent" to="/$slug/automations">
-            <ChevronLeft className="size-3" />
-            Automations
-          </Link>
-        </Button>
+        <AutomationDetailNav slug={slug} />
         <div className="h-9 w-72 animate-pulse rounded bg-muted" />
         <div className="space-y-3">
           <div className="h-4 w-full max-w-3xl animate-pulse rounded bg-muted" />
@@ -224,6 +202,25 @@ function AutomationDetailSkeleton({ slug }: { slug: string }) {
           <div className="h-7 w-full animate-pulse rounded bg-muted" />
         </div>
       </div>
+    </div>
+  );
+}
+
+function AutomationDetailNav({ slug }: { slug: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <SidebarTrigger className="size-6 rounded-lg border border-border/70 bg-muted/30 p-0 text-muted-foreground hover:bg-muted/60 hover:text-foreground md:hidden" />
+      <Button
+        asChild
+        className="-ml-1 h-6 gap-1 rounded-lg px-2 font-normal text-muted-foreground text-sm hover:bg-muted/60 hover:text-foreground"
+        size="sm"
+        variant="ghost"
+      >
+        <Link params={{ slug }} preload="intent" to="/$slug/automations">
+          <HugeiconsIcon className="size-3" icon={ChevronLeft} />
+          Automations
+        </Link>
+      </Button>
     </div>
   );
 }

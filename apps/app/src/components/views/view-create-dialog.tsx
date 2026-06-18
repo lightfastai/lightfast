@@ -1,3 +1,5 @@
+import { Loading03Icon as Loader2 } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
@@ -9,7 +11,6 @@ import {
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
 import { Input } from "@repo/ui/components/ui/input";
-import { Loader2 } from "lucide-react";
 import { useState } from "react";
 
 export function ViewCreateDialog({
@@ -83,7 +84,7 @@ export function ViewCreateDialog({
           >
             {submitting ? (
               <>
-                <Loader2 className="animate-spin" />
+                <HugeiconsIcon className="animate-spin" icon={Loader2} />
                 Saving...
               </>
             ) : (

@@ -1,19 +1,20 @@
+import {
+  CheckmarkCircle02Icon as CheckCircle,
+  ChevronRightIcon as ChevronRight,
+  Clock01Icon as Clock,
+  Loading03Icon as Loader2,
+  CancelCircleIcon as XCircle,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import { cn } from "@repo/ui/lib/utils";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
-import {
-  CheckCircle,
-  ChevronRight,
-  Clock,
-  Loader2,
-  XCircle,
-} from "lucide-react";
 import type { AutomationRunListItem } from "./automations-queries";
 
 type AutomationRun = AutomationRunListItem;
 
 const RUN_STATUS_ICONS: Record<
   AutomationRun["status"],
-  { icon: React.ElementType; className: string }
+  { icon: IconSvgElement; className: string }
 > = {
   completed: { icon: CheckCircle, className: "text-emerald-500" },
   failed: { icon: XCircle, className: "text-destructive" },
@@ -32,7 +33,7 @@ function RunRow({
   run: AutomationRun;
   selected: boolean;
 }) {
-  const { icon: Icon, className } = RUN_STATUS_ICONS[run.status];
+  const { icon, className } = RUN_STATUS_ICONS[run.status];
 
   return (
     <button
@@ -43,7 +44,7 @@ function RunRow({
       onClick={() => onSelect(run.publicId)}
       type="button"
     >
-      <Icon className={`size-3.5 shrink-0 ${className}`} />
+      <HugeiconsIcon className={`size-3.5 shrink-0 ${className}`} icon={icon} />
       <span className="text-foreground text-sm capitalize">{run.status}</span>
       <span className="ml-auto text-muted-foreground text-xs capitalize">
         {run.trigger}
@@ -51,12 +52,13 @@ function RunRow({
       <span className="text-muted-foreground text-xs">
         {run.createdAt ? formatRelativeTimeToNow(run.createdAt) : "-"}
       </span>
-      <ChevronRight
+      <HugeiconsIcon
         aria-hidden="true"
         className={cn(
           "size-3.5 shrink-0 text-muted-foreground transition-opacity",
           selected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
         )}
+        icon={ChevronRight}
       />
     </button>
   );

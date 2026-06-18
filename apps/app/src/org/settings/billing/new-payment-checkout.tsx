@@ -1,9 +1,13 @@
+import {
+  AlertCircleIcon as AlertCircle,
+  Loading03Icon as Loader2,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { checkoutErrorMessage } from "@repo/app-billing";
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { Button } from "@repo/ui/components/ui/button";
 import type { CheckoutErrors as ClerkCheckoutErrors } from "@vendor/clerk";
 import { PaymentElement, useCheckout, usePaymentElement } from "@vendor/clerk";
-import { AlertCircle, Loader2 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
 
@@ -69,7 +73,9 @@ export function NewPaymentCheckout({ onComplete }: { onComplete: () => void }) {
       />
       <CheckoutErrors errorMessage={errorMessage} errors={errors.global} />
       <Button disabled={!isFormReady || isSubmitting} size="sm" type="submit">
-        {isSubmitting && <Loader2 className="size-4 animate-spin" />}
+        {isSubmitting && (
+          <HugeiconsIcon className="size-4 animate-spin" icon={Loader2} />
+        )}
         Pay with new card
       </Button>
     </form>
@@ -95,7 +101,7 @@ function CheckoutErrors({
 
   return (
     <Alert variant="destructive">
-      <AlertCircle className="size-4" />
+      <HugeiconsIcon className="size-4" icon={AlertCircle} />
       <AlertDescription>
         {messages.map((message, index) => (
           <p key={index}>{message}</p>

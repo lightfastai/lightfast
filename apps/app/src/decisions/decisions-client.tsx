@@ -1,5 +1,6 @@
+import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useDeferredValue, useMemo } from "react";
+import { type ReactNode, useMemo } from "react";
 import { WorkspaceSurface } from "~/components/workspace-surface";
 import { DecisionsLoading } from "./decisions-loading";
 import {
@@ -26,8 +27,6 @@ export function DecisionsClient({
   search: NormalizedDecisionsSearch;
   setSearchParams: (updates: Partial<NormalizedDecisionsSearch>) => void;
 }) {
-  const deferredQuery = useDeferredValue(search.q);
-  const searchText = deferredQuery.trim();
   const filters = useMemo<DecisionFilters>(
     () => ({
       providers: parseDecisionProviders(search.provider),
@@ -36,13 +35,10 @@ export function DecisionsClient({
     [search.provider, search.status]
   );
   const hasActiveFilters =
-    searchText.length > 0 ||
-    filters.providers.length > 0 ||
-    filters.statuses.length > 0;
+    filters.providers.length > 0 || filters.statuses.length > 0;
   const listInput = {
     limit: DECISIONS_PAGE_SIZE,
     providers: filters.providers.length ? filters.providers : undefined,
-    search: searchText || undefined,
     statuses: filters.statuses.length ? filters.statuses : undefined,
   };
 
@@ -69,6 +65,12 @@ export function DecisionsClient({
       variant="flush"
     >
       <h1 className="sr-only">Decisions</h1>
+      <DecisionsViewHeader>
+        <DecisionsViewSwitcher
+          search={search}
+          setSearchParams={setSearchParams}
+        />
+      </DecisionsViewHeader>
       <DecisionsToolbar
         filters={filters}
         onClearFilterGroup={(group) => {
@@ -78,7 +80,6 @@ export function DecisionsClient({
             setSearchParams({ status: "", view: null });
           }
         }}
-        onQueryChange={(value) => setSearchParams({ q: value })}
         onToggleProvider={(value) =>
           setSearchParams({
             provider: serializeDecisionValues(
@@ -94,13 +95,6 @@ export function DecisionsClient({
             ),
             view: null,
           })
-        }
-        query={search.q}
-        viewsSlot={
-          <DecisionsViewSwitcher
-            search={search}
-            setSearchParams={setSearchParams}
-          />
         }
       />
 
@@ -122,5 +116,19 @@ export function DecisionsClient({
         rows={rows}
       />
     </WorkspaceSurface>
+  );
+}
+
+function DecisionsViewHeader({ children }: { children: ReactNode }) {
+  return (
+    <header
+      className="flex shrink-0 flex-wrap items-center gap-1.5 px-3 py-3"
+      data-testid="decisions-view-header"
+    >
+      <SidebarTrigger className="size-6 rounded-lg border border-border/70 bg-muted/30 p-0 text-muted-foreground hover:bg-muted/60 hover:text-foreground md:hidden" />
+      <div className="flex min-w-[12rem] flex-1 items-center overflow-hidden">
+        {children}
+      </div>
+    </header>
   );
 }

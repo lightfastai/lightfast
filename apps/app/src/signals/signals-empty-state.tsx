@@ -1,5 +1,6 @@
+import { SignalIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { IsoFigure, signalsScene } from "@repo/ui/components/iso-figure";
-import { Signal as SignalIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 export function SignalsEmptyState({
@@ -52,7 +53,10 @@ export function SignalsEmptyState({
     <div className="pt-1">
       <div className="flex min-h-24 flex-col items-center justify-center rounded-lg border border-border/70 bg-background px-6 text-center">
         <div className="mb-2 flex size-8 items-center justify-center rounded-full border border-border/70 bg-muted/20">
-          <SignalIcon className="size-3.5 text-muted-foreground" />
+          <HugeiconsIcon
+            className="size-3.5 text-muted-foreground"
+            icon={SignalIcon}
+          />
         </div>
         <p className="font-medium text-sm">{title}</p>
         <p className="mt-1 max-w-sm text-muted-foreground text-sm">

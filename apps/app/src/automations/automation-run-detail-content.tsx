@@ -1,17 +1,18 @@
+import {
+  Activity01Icon as Activity,
+  CheckmarkCircle02Icon as CheckCircle2,
+  Clock01Icon as Clock,
+  HashIcon as Hash,
+  Link02Icon as Link2,
+  PlayIcon as Play,
+  Timer01Icon as Timer,
+  ZapIcon as Zap,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 import { formatDuration, formatRelativeTimeToNow } from "@vendor/lib/time";
-import {
-  Activity,
-  CheckCircle2,
-  Clock,
-  Hash,
-  Link2,
-  Play,
-  Timer,
-  Zap,
-} from "lucide-react";
 import type { ReactNode } from "react";
 import {
   AutomationRunAiOutputView,
@@ -110,7 +111,7 @@ export function AutomationRunDetailContent({
             type="button"
             variant="ghost"
           >
-            <Link2 aria-hidden="true" className="size-4" />
+            <HugeiconsIcon aria-hidden="true" className="size-4" icon={Link2} />
           </Button>
           {closeSlot}
         </div>
@@ -122,39 +123,60 @@ export function AutomationRunDetailContent({
         </h2>
 
         <div className="flex flex-col">
-          <PropertyRow icon={<Activity className={iconClass} />} label="Status">
+          <PropertyRow
+            icon={<HugeiconsIcon className={iconClass} icon={Activity} />}
+            label="Status"
+          >
             <span className={cn("capitalize", STATUS_TEXT[run.status])}>
               {run.status}
             </span>
           </PropertyRow>
-          <PropertyRow icon={<Zap className={iconClass} />} label="Trigger">
+          <PropertyRow
+            icon={<HugeiconsIcon className={iconClass} icon={Zap} />}
+            label="Trigger"
+          >
             <span className="capitalize">{run.trigger}</span>
           </PropertyRow>
-          <PropertyRow icon={<Clock className={iconClass} />} label="Queued">
+          <PropertyRow
+            icon={<HugeiconsIcon className={iconClass} icon={Clock} />}
+            label="Queued"
+          >
             <span suppressHydrationWarning>{formatDateTime(createdAt)}</span>
           </PropertyRow>
-          <PropertyRow icon={<Play className={iconClass} />} label="Started">
+          <PropertyRow
+            icon={<HugeiconsIcon className={iconClass} icon={Play} />}
+            label="Started"
+          >
             <span suppressHydrationWarning>
               {formatDateTime(run.startedAt)}
             </span>
           </PropertyRow>
           <PropertyRow
-            icon={<CheckCircle2 className={iconClass} />}
+            icon={<HugeiconsIcon className={iconClass} icon={CheckCircle2} />}
             label="Finished"
           >
             <span suppressHydrationWarning>
               {formatDateTime(run.finishedAt)}
             </span>
           </PropertyRow>
-          <PropertyRow icon={<Timer className={iconClass} />} label="Duration">
+          <PropertyRow
+            icon={<HugeiconsIcon className={iconClass} icon={Timer} />}
+            label="Duration"
+          >
             {runDuration(run)}
           </PropertyRow>
-          <PropertyRow icon={<Hash className={iconClass} />} label="Schedule">
+          <PropertyRow
+            icon={<HugeiconsIcon className={iconClass} icon={Hash} />}
+            label="Schedule"
+          >
             <span className="font-mono text-muted-foreground">
               v{run.scheduleVersion}
             </span>
           </PropertyRow>
-          <PropertyRow icon={<Hash className={iconClass} />} label="Run ID">
+          <PropertyRow
+            icon={<HugeiconsIcon className={iconClass} icon={Hash} />}
+            label="Run ID"
+          >
             <span className="font-mono text-muted-foreground text-xs">
               {run.publicId}
             </span>

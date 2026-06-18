@@ -1,3 +1,5 @@
+import { Loading03Icon as Loader2 } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   billingStripeAppearance,
   formatMoney,
@@ -16,7 +18,6 @@ import {
   PaymentElementProvider,
   useCheckout,
 } from "@vendor/clerk";
-import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import type { BillingPlan } from "./billing-queries";
 import { NewPaymentCheckout } from "./new-payment-checkout";
@@ -71,7 +72,7 @@ function CheckoutFlow({ onComplete }: { onComplete: () => void }) {
           size="sm"
         >
           {fetchStatus === "fetching" && (
-            <Loader2 className="size-4 animate-spin" />
+            <HugeiconsIcon className="size-4 animate-spin" icon={Loader2} />
           )}
           Start checkout
         </Button>

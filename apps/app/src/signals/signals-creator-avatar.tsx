@@ -1,11 +1,15 @@
 import { useAuth } from "@clerk/tanstack-react-start";
 import {
+  Key01Icon as KeyRound,
+  UserIcon as User,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@repo/ui/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
-import { KeyRound, User } from "lucide-react";
 import { orgMembersQueryOptions } from "~/org/settings/members/org-member-queries";
 import type { SignalListItem } from "./signals-model";
 
@@ -42,7 +46,7 @@ export function SignalCreatorAvatar({
     return (
       <Avatar className="size-5" title="Created by API key">
         <AvatarFallback className="bg-muted text-muted-foreground">
-          <KeyRound className="size-2.5" />
+          <HugeiconsIcon className="size-2.5" icon={KeyRound} />
         </AvatarFallback>
       </Avatar>
     );
@@ -56,7 +60,7 @@ export function SignalCreatorAvatar({
     return (
       <Avatar className="size-5" title="Unknown member">
         <AvatarFallback className="bg-muted text-muted-foreground">
-          <User className="size-2.5" />
+          <HugeiconsIcon className="size-2.5" icon={User} />
         </AvatarFallback>
       </Avatar>
     );

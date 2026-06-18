@@ -1,3 +1,9 @@
+import {
+  ArrowUpRightIcon as ArrowUpRight,
+  SidebarRightIcon as PanelRight,
+  Search01Icon as Search,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
@@ -11,10 +17,16 @@ import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
 import { Switch } from "@repo/ui/components/ui/switch";
 import { cn } from "@repo/ui/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui-v2/components/ui/select";
+import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpRight, PanelRight, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { LfSelect } from "~/components/lf-select";
 import { DeveloperConnectionDetailSheet } from "./developer-connection-detail-sheet";
 import { DeveloperConnectionIcon } from "./developer-connection-icons";
 import {
@@ -190,9 +202,12 @@ export function DeveloperConnectionsClient({
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-10">
       <header>
-        <h1 className="font-semibold text-2xl text-foreground tracking-[-0.02em]">
-          Developer Connections
-        </h1>
+        <div className="flex items-center gap-2">
+          <SidebarTrigger className="size-8 rounded-lg border border-border/70 bg-muted/30 p-0 text-muted-foreground hover:bg-muted/60 hover:text-foreground md:hidden" />
+          <h1 className="font-semibold text-2xl text-foreground tracking-[-0.02em]">
+            Developer Connections
+          </h1>
+        </div>
         <p className="mt-2 max-w-xl text-muted-foreground text-sm">
           Connect provider CLIs for Lightfast-controlled sandbox workflows.
         </p>
@@ -212,7 +227,10 @@ export function DeveloperConnectionsClient({
 
       <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <HugeiconsIcon
+            className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
+            icon={Search}
+          />
           <Input
             aria-label="Search developer connections"
             className="pl-8"
@@ -222,20 +240,25 @@ export function DeveloperConnectionsClient({
             variant="lf"
           />
         </div>
-        <LfSelect
-          align="end"
-          aria-label="Status"
-          className="shrink-0 sm:w-44"
-          onValueChange={(value) => setStatusFilter(value as StatusFilter)}
-          options={[
-            { label: "All statuses", value: "all" },
-            { label: "Connected", value: "connected" },
-            { label: "Disabled", value: "disabled" },
-            { label: "Needs reconnect", value: "needs_reconnect" },
-            { label: "Available", value: "available" },
-          ]}
+        <Select
+          onValueChange={(value) => {
+            if (value !== null) {
+              setStatusFilter(value as StatusFilter);
+            }
+          }}
           value={statusFilter}
-        />
+        >
+          <SelectTrigger aria-label="Status">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent align="end">
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="connected">Connected</SelectItem>
+            <SelectItem value="disabled">Disabled</SelectItem>
+            <SelectItem value="needs_reconnect">Needs reconnect</SelectItem>
+            <SelectItem value="available">Available</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {listQuery.isPending ? (
@@ -386,7 +409,10 @@ function DeveloperConnectionCard({
                   type="button"
                   variant="outline"
                 >
-                  <PanelRight className="mr-1.5 size-3.5" />
+                  <HugeiconsIcon
+                    className="mr-1.5 size-3.5"
+                    icon={PanelRight}
+                  />
                   Details
                 </Button>
                 <Button
@@ -413,7 +439,7 @@ function DeveloperConnectionCard({
                 variant="outline"
               >
                 Connect
-                <ArrowUpRight className="size-3.5" />
+                <HugeiconsIcon className="size-3.5" icon={ArrowUpRight} />
               </Button>
             </div>
           )}
@@ -561,7 +587,10 @@ function DeveloperConnectionConnectDialog({
                     type="button"
                     variant="outline"
                   >
-                    <ArrowUpRight className="mr-1.5 size-3.5" />
+                    <HugeiconsIcon
+                      className="mr-1.5 size-3.5"
+                      icon={ArrowUpRight}
+                    />
                     Browser OAuth
                   </Button>
                 </div>

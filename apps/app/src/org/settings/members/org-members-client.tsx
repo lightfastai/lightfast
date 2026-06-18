@@ -1,5 +1,6 @@
+import { Search01Icon as Search } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Input } from "@repo/ui/components/ui/input";
-import { Search } from "lucide-react";
 import { useCallback, useDeferredValue, useState } from "react";
 import { OrgMemberInvite } from "./org-member-invite";
 import { OrgMemberList } from "./org-member-list";
@@ -24,7 +25,10 @@ export function OrgMembersClient() {
       </div>
 
       <div className="relative min-w-0">
-        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+        <HugeiconsIcon
+          className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
+          icon={Search}
+        />
         <Input
           aria-label="Search members"
           className="pl-8"

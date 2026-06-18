@@ -21,7 +21,6 @@ describe("decisions search params", () => {
     ).toEqual({
       decision: "decision_123",
       provider: "linear,x",
-      q: "incident",
       status: "failed",
       view: "decview_123",
     });
@@ -37,7 +36,6 @@ describe("decisions search params", () => {
     ).toEqual({
       decision: null,
       provider: "",
-      q: "",
       status: "",
       view: null,
     });
@@ -65,7 +63,6 @@ describe("decisions search params", () => {
     ).toEqual({
       decision: "decision_123",
       provider: "linear",
-      q: "incident",
       status: "failed",
       view: "decview_123",
     });

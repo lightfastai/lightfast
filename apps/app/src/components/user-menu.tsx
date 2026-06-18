@@ -143,7 +143,7 @@ export function UserMenu() {
 function UserMenuSkeleton() {
   return (
     <div className="flex h-11 items-center gap-2 rounded-xl px-2">
-      <Skeleton className="size-7 rounded-full" />
+      <Skeleton className="size-7 rounded-md" />
       <Skeleton className="h-4 min-w-0 flex-1 rounded-xl" />
     </div>
   );

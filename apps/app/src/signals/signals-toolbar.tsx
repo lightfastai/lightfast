@@ -1,17 +1,25 @@
-import { Button } from "@repo/ui/components/ui/button";
+import {
+  Cancel01Icon,
+  CheckListIcon,
+  FilterHorizontalIcon,
+  Flag01Icon,
+  Tag01Icon,
+  UserCheck01Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+import { Button } from "@repo/ui-v2/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@repo/ui/components/ui/dropdown-menu";
-import { Flag, ListFilter, Tag, UserRoundCheck, X } from "lucide-react";
-import type { ComponentType } from "react";
+} from "@repo/ui-v2/components/ui/dropdown-menu";
 import {
   getSignalDispositionLabel,
   getSignalKindLabel,
@@ -26,11 +34,10 @@ import {
 } from "./signals-model";
 
 type FilterGroupId = "disposition" | "kind" | "people" | "priority";
-type IconComponent = ComponentType<{ className?: string }>;
 
 interface FilterGroup {
   count: number;
-  icon: IconComponent;
+  icon: IconSvgElement;
   id: FilterGroupId;
   label: string;
 }
@@ -44,7 +51,6 @@ interface FilterValueOption {
 
 export function SignalsToolbar({
   filters,
-  onAddSignal,
   onClearFilterGroup,
   onPeopleRoutedChange,
   onToggleDisposition,
@@ -52,7 +58,6 @@ export function SignalsToolbar({
   onTogglePriority,
 }: {
   filters: SignalClassificationFilters;
-  onAddSignal: () => void;
   onClearFilterGroup: (
     group: "disposition" | "kind" | "people" | "priority"
   ) => void;
@@ -65,25 +70,25 @@ export function SignalsToolbar({
     {
       count: filters.kinds.length,
       id: "kind",
-      icon: Tag,
+      icon: Tag01Icon,
       label: "Kind",
     },
     {
       count: filters.priorities.length,
       id: "priority",
-      icon: Flag,
+      icon: Flag01Icon,
       label: "Priority",
     },
     {
       count: filters.dispositions.length,
       id: "disposition",
-      icon: ListFilter,
+      icon: CheckListIcon,
       label: "Disposition",
     },
     {
       count: filters.peopleRouted ? 1 : 0,
       id: "people",
-      icon: UserRoundCheck,
+      icon: UserCheck01Icon,
       label: "People routing",
     },
   ];
@@ -100,29 +105,30 @@ export function SignalsToolbar({
     >
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              aria-label="Filters"
-              className="relative size-6 rounded-lg border border-border/70 bg-muted/30 p-0 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              size="icon-sm"
-              title="Filters"
-              type="button"
-              variant="ghost"
-            >
-              <ListFilter
-                aria-hidden="true"
-                className="size-3"
-                data-testid="signals-filter-icon"
+          <DropdownMenuTrigger
+            render={
+              <Button
+                aria-label={
+                  activeFilterCount > 0
+                    ? `${activeFilterCount} active filters`
+                    : "Filters"
+                }
+                size={activeFilterCount > 0 ? "xs" : "icon-xs"}
+                title="Filters"
+                type="button"
+                variant="outline"
               />
-              {activeFilterCount > 0 ? (
-                <span
-                  aria-hidden="true"
-                  className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full border border-background bg-muted font-medium text-muted-foreground text-xs leading-none"
-                >
-                  {activeFilterCount}
-                </span>
-              ) : null}
-            </Button>
+            }
+          >
+            <HugeiconsIcon
+              aria-hidden="true"
+              data-icon="inline-start"
+              data-testid="signals-filter-icon"
+              icon={FilterHorizontalIcon}
+            />
+            {activeFilterCount > 0 ? (
+              <span aria-hidden="true">{activeFilterCount}</span>
+            ) : null}
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="start"
@@ -145,7 +151,7 @@ export function SignalsToolbar({
 
         <FilterChip
           count={filters.kinds.length}
-          icon={Tag}
+          icon={Tag01Icon}
           label="Kind"
           onClear={() => onClearFilterGroup("kind")}
           value={formatChipValue(
@@ -154,7 +160,7 @@ export function SignalsToolbar({
         />
         <FilterChip
           count={filters.priorities.length}
-          icon={Flag}
+          icon={Flag01Icon}
           label="Priority"
           onClear={() => onClearFilterGroup("priority")}
           value={formatChipValue(
@@ -163,7 +169,7 @@ export function SignalsToolbar({
         />
         <FilterChip
           count={filters.dispositions.length}
-          icon={ListFilter}
+          icon={CheckListIcon}
           label="Disposition"
           onClear={() => onClearFilterGroup("disposition")}
           value={formatChipValue(
@@ -174,23 +180,11 @@ export function SignalsToolbar({
         />
         <FilterChip
           count={filters.peopleRouted ? 1 : 0}
-          icon={UserRoundCheck}
+          icon={UserCheck01Icon}
           label="People routing"
           onClear={() => onClearFilterGroup("people")}
           value="Routed"
         />
-      </div>
-
-      <div className="ml-auto flex min-w-0 items-center justify-end gap-1.5">
-        <Button
-          className="h-6 rounded-lg border border-border/70 bg-muted/30 px-2.5 font-normal text-muted-foreground text-sm hover:bg-muted/60 hover:text-foreground"
-          onClick={onAddSignal}
-          size="sm"
-          type="button"
-          variant="ghost"
-        >
-          Add Signal
-        </Button>
       </div>
     </div>
   );
@@ -211,7 +205,6 @@ function FilterSubMenu({
   onToggleKind: (value: SignalKind) => void;
   onTogglePriority: (value: SignalPriority) => void;
 }) {
-  const Icon = group.icon;
   const options = getFilterValueOptions({
     activeFilter: group.id,
     filters,
@@ -224,7 +217,7 @@ function FilterSubMenu({
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger className="gap-2">
-        <Icon aria-hidden="true" className="size-3.5 text-muted-foreground" />
+        <HugeiconsIcon aria-hidden="true" icon={group.icon} />
         <span className="min-w-0 flex-1 truncate">{group.label}</span>
         {group.count > 0 ? (
           <span className="rounded bg-muted px-1.5 text-muted-foreground text-xs">
@@ -233,22 +226,28 @@ function FilterSubMenu({
         ) : null}
       </DropdownMenuSubTrigger>
       <DropdownMenuSubContent className="w-52">
-        <DropdownMenuLabel className="flex h-7 items-center gap-2 text-muted-foreground text-xs">
-          <Icon aria-hidden="true" className="size-3.5" />
-          <span>{group.label}</span>
-          <span className="ml-auto">is any of</span>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {options.map((option) => (
-          <DropdownMenuCheckboxItem
-            checked={option.checked}
-            key={option.value}
-            onCheckedChange={option.onToggle}
-            onSelect={(event) => event.preventDefault()}
-          >
-            {option.label}
-          </DropdownMenuCheckboxItem>
-        ))}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="flex h-7 items-center gap-2 text-muted-foreground text-xs">
+            <HugeiconsIcon
+              aria-hidden="true"
+              className="size-3.5"
+              icon={group.icon}
+            />
+            <span>{group.label}</span>
+            <span className="ml-auto">is any of</span>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {options.map((option) => (
+            <DropdownMenuCheckboxItem
+              checked={option.checked}
+              closeOnClick={false}
+              key={option.value}
+              onCheckedChange={option.onToggle}
+            >
+              {option.label}
+            </DropdownMenuCheckboxItem>
+          ))}
+        </DropdownMenuGroup>
       </DropdownMenuSubContent>
     </DropdownMenuSub>
   );
@@ -256,13 +255,13 @@ function FilterSubMenu({
 
 function FilterChip({
   count,
-  icon: Icon,
+  icon,
   label,
   onClear,
   value,
 }: {
   count: number;
-  icon: IconComponent;
+  icon: IconSvgElement;
   label: string;
   onClear: () => void;
   value: string;
@@ -272,25 +271,24 @@ function FilterChip({
   }
 
   return (
-    <button
-      className="flex h-6 max-w-full shrink-0 items-center overflow-hidden rounded-lg border border-border/70 bg-muted/25 text-sm"
+    <Button
+      aria-label={`Clear ${label} filter`}
       onClick={onClear}
+      size="xs"
+      title={`Clear ${label} filter`}
       type="button"
+      variant="outline"
     >
-      <span className="flex h-full shrink-0 items-center gap-2 border-border/70 border-r px-3 text-foreground">
-        <Icon aria-hidden="true" className="size-3.5 text-muted-foreground" />
-        {label}
-      </span>
-      <span className="hidden h-full shrink-0 items-center border-border/70 border-r px-3 text-muted-foreground sm:flex">
-        is any of
-      </span>
-      <span className="min-w-0 truncate px-3 text-muted-foreground">
-        {value}
-      </span>
-      <span className="flex h-full shrink-0 items-center border-border/70 border-l px-2 text-muted-foreground hover:text-foreground">
-        <X aria-hidden="true" className="size-3.5" />
-      </span>
-    </button>
+      <HugeiconsIcon aria-hidden="true" data-icon="inline-start" icon={icon} />
+      <span>{label}</span>
+      <span>is any of</span>
+      <span>{value}</span>
+      <HugeiconsIcon
+        aria-hidden="true"
+        data-icon="inline-end"
+        icon={Cancel01Icon}
+      />
+    </Button>
   );
 }
 

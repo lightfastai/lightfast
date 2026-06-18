@@ -65,5 +65,6 @@ describe("app route prefetch policy", () => {
     expect(sidebarSource).toContain('aria-label="New chat"');
     expect(sidebarSource).toContain('to="/$slug/chat"');
     expect(sidebarSource).toContain("preload={false}");
+    expect(sidebarSource).not.toContain("const navigate = useNavigate();");
   });
 });

@@ -1,4 +1,9 @@
 import { createNativeAuthAttempt } from "@api/app/tanstack/native-auth";
+import {
+  ArrowRightIcon as ArrowRight,
+  Loading03Icon as Loader2,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type {
   NativeClient,
   NativeCreateAttemptInput,
@@ -7,7 +12,6 @@ import type {
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { mutationOptions, useMutation } from "@tanstack/react-query";
-import { ArrowRight, Loader2 } from "lucide-react";
 
 const clientLabels = {
   cli: "Lightfast CLI",
@@ -156,9 +160,15 @@ export function NativeAuthOrgSelect({
                     </span>
                   </span>
                   {createAttemptMutation.isPending ? (
-                    <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                    <HugeiconsIcon
+                      className="size-4 animate-spin text-muted-foreground"
+                      icon={Loader2}
+                    />
                   ) : (
-                    <ArrowRight className="size-4 text-muted-foreground" />
+                    <HugeiconsIcon
+                      className="size-4 text-muted-foreground"
+                      icon={ArrowRight}
+                    />
                   )}
                 </Button>
               ))}

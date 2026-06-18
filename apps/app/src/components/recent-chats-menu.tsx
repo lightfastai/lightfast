@@ -4,10 +4,8 @@ import {
   Message01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Button } from "@repo/ui/components/ui/button";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
-import { Skeleton } from "@repo/ui/components/ui/skeleton";
-import { cn } from "@repo/ui/lib/utils";
+import { Button } from "@repo/ui-v2/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +14,8 @@ import {
   DropdownMenuLabel,
 } from "@repo/ui-v2/components/ui/dropdown-menu";
 import { ScrollEdgeCues } from "@repo/ui-v2/components/ui/scroll-edge-cue";
+import { Skeleton } from "@repo/ui-v2/components/ui/skeleton";
+import { cn } from "@repo/ui-v2/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { type ReactNode, useState } from "react";
