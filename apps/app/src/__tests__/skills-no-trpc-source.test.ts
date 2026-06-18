@@ -11,7 +11,7 @@ function source(path: string) {
 describe("migrated skills data access", () => {
   it("uses TanStack server functions instead of tRPC", () => {
     const skillsAdapterImport = /from\s+["']@api\/app\/tanstack\/skills["']/;
-    const querySource = source("src/skills/use-skills-list-query.ts");
+    const querySource = source("src/skills/skills-queries.ts");
     const controllerSource = source(
       "src/skills/use-skill-index-refresh-controller.ts"
     );

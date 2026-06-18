@@ -1,8 +1,8 @@
 import { requestSkillRefresh } from "@api/app/tanstack/skills";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
+import { skillsListQueryKey } from "./skills-queries";
 import type { SkillsListResult } from "./skills-types";
-import { skillsListQueryKey } from "./use-skills-list-query";
 
 const REFRESHABLE_STATUSES = new Set(["stale", "unavailable"]);
 const POLLABLE_STATUSES = new Set(["refreshing", "stale", "unavailable"]);
