@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -6,6 +6,7 @@ const appRoot = resolve(import.meta.dirname, "../..");
 
 const migratedFiles = [
   "src/automations/automation-actions.tsx",
+  "src/automations/automations-client.tsx",
   "src/automations/automation-create-form.tsx",
   "src/automations/automation-detail-client.tsx",
   "src/automations/automation-name-editor.tsx",
@@ -18,7 +19,6 @@ const migratedFiles = [
   "src/automations/automation-status-chip.tsx",
   "src/automations/automations-cache.ts",
   "src/automations/automations-model.ts",
-  "src/automations/use-automations-list-query.ts",
 ] as const;
 
 describe("migrated automation UI data access", () => {
@@ -31,5 +31,22 @@ describe("migrated automation UI data access", () => {
         'AppRouterOutputs["org"]["workspace"]["automations"]'
       );
     }
+  });
+
+  it("inlines the single-use automations list query hook", () => {
+    const hookPath = resolve(
+      appRoot,
+      "src/automations/use-automations-list-query.ts"
+    );
+    const source = readFileSync(
+      resolve(appRoot, "src/automations/automations-client.tsx"),
+      "utf8"
+    );
+
+    expect(existsSync(hookPath)).toBe(false);
+    expect(source).toContain("automationsListQueryOptions");
+    expect(source).toContain("useQuery");
+    expect(source).toContain('enabled: typeof window !== "undefined"');
+    expect(source).not.toContain("./use-automations-list-query");
   });
 });

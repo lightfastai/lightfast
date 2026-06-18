@@ -517,9 +517,7 @@ describe("app authenticated route migration", () => {
     const automationsDetailSource = source(
       "src/automations/automation-detail-client.tsx"
     );
-    const automationsQuerySource = source(
-      "src/automations/use-automations-list-query.ts"
-    );
+    const automationsQuerySource = automationsClientSource;
 
     expect(decisionsRouteSource).toContain("validateDecisionsSearch");
     expect(decisionsRouteSource).toContain("setSearchParams");
