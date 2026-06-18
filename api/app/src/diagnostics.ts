@@ -1,28 +1,12 @@
 /**
- * Diagnostic envelope for tRPC errors.
+ * Diagnostic payloads for gate-style auth and identity failures.
  *
- * Every gate-style failure (auth, identity, …) attaches a structured `cause`
- * here so the `errorFormatter` in `./trpc.ts` can flatten it onto
- * `data.diagnostics` generically. Bearer transports (desktop, CLI, agents)
- * pattern-match on `code` and dispatch on `repair.id` instead of parsing
- * prose messages.
- *
- * Wire shape (inside the existing tRPC `data` envelope):
- *
- *   data: {
- *     ...,
- *     diagnostics: [
- *       { code: "ORG_REQUIRED", message: "...", repair: { id: "create-or-join-org" } }
- *     ]
- *   }
- *
- * `diagnostics` is always an array — empty `[]` when the error did not
- * originate from `throwDiagnostic`. The array shape is forward-compatible
- * with future compound errors (e.g. "session expired AND org missing").
+ * Transports can attach this neutral cause shape to their own error envelope so
+ * clients can pattern-match on `code` and dispatch on `repair.id` instead of
+ * parsing prose messages.
  */
 
 import type { OrgSetupRepairId } from "@repo/app-setup-contract";
-import { type TRPC_ERROR_CODE_KEY, TRPCError } from "@trpc/server";
 
 export const DIAGNOSTIC_CAUSE_KIND = "lightfast.diagnostic" as const;
 
@@ -57,9 +41,16 @@ export interface Diagnostic {
   repair?: Repair;
 }
 
-interface DiagnosticCause {
+export interface DiagnosticCause {
   diagnostics: Diagnostic[];
   kind: typeof DIAGNOSTIC_CAUSE_KIND;
+}
+
+export function createDiagnosticCause(diagnostic: Diagnostic): DiagnosticCause {
+  return {
+    kind: DIAGNOSTIC_CAUSE_KIND,
+    diagnostics: [diagnostic],
+  };
 }
 
 export function isDiagnosticCause(cause: unknown): cause is DiagnosticCause {
@@ -69,19 +60,4 @@ export function isDiagnosticCause(cause: unknown): cause is DiagnosticCause {
     "kind" in cause &&
     (cause as { kind?: unknown }).kind === DIAGNOSTIC_CAUSE_KIND
   );
-}
-
-export function throwDiagnostic(args: {
-  trpcCode: TRPC_ERROR_CODE_KEY;
-  diagnostic: Diagnostic;
-}): never {
-  const cause: DiagnosticCause = {
-    kind: DIAGNOSTIC_CAUSE_KIND,
-    diagnostics: [args.diagnostic],
-  };
-  throw new TRPCError({
-    code: args.trpcCode,
-    message: args.diagnostic.message,
-    cause,
-  });
 }
