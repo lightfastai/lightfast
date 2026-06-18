@@ -1,3 +1,4 @@
+import { listSkills } from "@api/app/tanstack/skills";
 import { Search01Icon as Search } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -18,7 +19,7 @@ import { SkillGrid } from "./skill-grid";
 import { SkillsActions } from "./skills-actions";
 import { SkillsLoading } from "./skills-loading";
 import { getVisibleSkills, type SkillFilter } from "./skills-model";
-import { skillsListQueryOptions } from "./skills-queries";
+import { skillsListQueryKey } from "./skills-queries";
 import type { NormalizedSkillsSearch } from "./skills-search-params";
 import type { SkillsListResult } from "./skills-types";
 import { useSkillIndexRefreshController } from "./use-skill-index-refresh-controller";
@@ -30,7 +31,13 @@ export function SkillsClient({
   search: NormalizedSkillsSearch;
   setSearchParams: (updates: Partial<NormalizedSkillsSearch>) => void;
 }) {
-  const skillsQuery = useQuery(skillsListQueryOptions());
+  const skillsQuery = useQuery({
+    enabled: typeof window !== "undefined",
+    queryFn: async (): Promise<SkillsListResult> =>
+      (await listSkills()) as SkillsListResult,
+    queryKey: skillsListQueryKey,
+    staleTime: 0,
+  });
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<SkillFilter>("all");
   const data = skillsQuery.data;

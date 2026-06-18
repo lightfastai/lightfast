@@ -9,12 +9,13 @@ function source(path: string) {
 }
 
 describe("skills app data access", () => {
-  it("uses local TanStack query helpers backed by api/app server functions", () => {
+  it("keeps only the shared skills list query key in the query module", () => {
     const querySource = source("src/skills/skills-queries.ts");
 
-    expect(querySource).toContain('@api/app/tanstack/skills"');
     expect(querySource).toContain("skillsListQueryKey");
-    expect(querySource).toContain("skillsListQueryOptions");
+    expect(querySource).not.toContain("skillsListQueryOptions");
+    expect(querySource).not.toContain("@api/app/tanstack/skills");
+    expect(querySource).not.toContain("queryOptions");
     expect(querySource).not.toContain("useTRPC");
   });
 
@@ -35,7 +36,10 @@ describe("skills app data access", () => {
     expect(existsSync(listHookPath)).toBe(false);
     expect(existsSync(topbarActionsPath)).toBe(false);
     expect(clientSource).toContain("useQuery");
-    expect(clientSource).toContain("skillsListQueryOptions");
+    expect(clientSource).toContain('@api/app/tanstack/skills"');
+    expect(clientSource).toContain("listSkills");
+    expect(clientSource).toContain("skillsListQueryKey");
+    expect(clientSource).not.toContain("skillsListQueryOptions");
     expect(clientSource).toContain("<SkillsActions");
     expect(clientSource).not.toContain("useSkillsListQuery");
     expect(clientSource).not.toContain("./use-skills-list-query");
