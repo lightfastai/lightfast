@@ -4,21 +4,22 @@ import {
 } from "@db/app";
 import { db } from "@db/app/client";
 import { UI_MESSAGE_STREAM_HEADERS } from "@vendor/ai";
-import { resolveWorkspaceAssistantAuthContext } from "~/server/chat/auth";
-import { getLightfastResumableStreamContext } from "~/server/chat/resumable-stream";
-import { log } from "~/server/log";
+import { resolveIdentityFromClerk } from "../../../auth/identity";
+import { log } from "./log";
+import { getLightfastResumableStreamContext } from "./resumable-stream";
 
 const isResumableStreamEnabled =
-  (import.meta.env.VITE_VERCEL_ENV ?? "development") !== "development";
+  (process.env.VITE_VERCEL_ENV ?? process.env.VERCEL_ENV ?? "development") !==
+  "development";
 
 export async function handleWorkspaceAssistantStreamRequest(
-  _request: Request,
+  request: Request,
   id: string
 ) {
-  const authContext = await resolveWorkspaceAssistantAuthContext({
+  const identity = await resolveIdentityFromClerk({
     db,
+    headers: request.headers,
   });
-  const identity = authContext.identity;
 
   if (identity.type === "unauthenticated") {
     return Response.json({ error: "Unauthorized" }, { status: 401 });

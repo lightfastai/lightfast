@@ -57,6 +57,10 @@
       "types": "./src/adapters/internal/mcp-proxy.ts",
       "default": "./src/adapters/internal/mcp-proxy.ts"
     },
+    "./internal-api/workspace-assistant": {
+      "types": "./src/adapters/internal/workspace-assistant/index.ts",
+      "default": "./src/adapters/internal/workspace-assistant/index.ts"
+    },
     "./public-api/signals": {
       "types": "./src/adapters/public/signals.ts",
       "default": "./src/adapters/public/signals.ts"

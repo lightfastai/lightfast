@@ -56,9 +56,9 @@ import {
   tool,
 } from "@vendor/ai";
 import { z } from "zod";
-import { resolveWorkspaceAssistantAuthContext } from "~/server/chat/auth";
-import { getLightfastResumableStreamContext } from "~/server/chat/resumable-stream";
-import { log } from "~/server/log";
+import { resolveIdentityFromClerk } from "../../../auth/identity";
+import { log } from "./log";
+import { getLightfastResumableStreamContext } from "./resumable-stream";
 
 const WORKSPACE_ASSISTANT_MAX_TOOL_STEPS = 5;
 const WORKSPACE_ASSISTANT_STREAM_SMOOTHING = {
@@ -66,7 +66,8 @@ const WORKSPACE_ASSISTANT_STREAM_SMOOTHING = {
   delayInMs: 20,
 } as const;
 const isResumableStreamEnabled =
-  (import.meta.env.VITE_VERCEL_ENV ?? "development") !== "development";
+  (process.env.VITE_VERCEL_ENV ?? process.env.VERCEL_ENV ?? "development") !==
+  "development";
 
 interface ChatProviderRoutineContext {
   clerkOrgId: string;
@@ -131,10 +132,10 @@ const baseSystemPrompt = [
 ].join(" ");
 
 export async function handleWorkspaceAssistantChatRequest(request: Request) {
-  const authContext = await resolveWorkspaceAssistantAuthContext({
+  const identity = await resolveIdentityFromClerk({
     db,
+    headers: request.headers,
   });
-  const identity = authContext.identity;
 
   if (identity.type === "unauthenticated") {
     return Response.json({ error: "Unauthorized" }, { status: 401 });

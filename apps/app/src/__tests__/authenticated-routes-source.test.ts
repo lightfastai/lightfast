@@ -742,11 +742,11 @@ describe("app authenticated route migration", () => {
     const messageSource = source("src/chat/chat-message.tsx");
     const messagePartSource = source("src/chat/message-part.tsx");
     const copyButtonSource = source("src/chat/message-copy-button.tsx");
-    const chatRequestRouteSource = source(
-      "src/server/chat/workspace-assistant-route.ts"
+    const chatRequestRouteSource = repoSource(
+      "api/app/src/adapters/internal/workspace-assistant/chat-route.ts"
     );
-    const chatStreamRouteSource = source(
-      "src/server/chat/workspace-assistant-stream-route.ts"
+    const chatStreamRouteSource = repoSource(
+      "api/app/src/adapters/internal/workspace-assistant/stream-route.ts"
     );
     const conversationIdPath = resolve(appRoot, "src/chat/conversation-id.ts");
     const resumableConfigPath = resolve(

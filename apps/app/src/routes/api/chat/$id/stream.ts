@@ -5,7 +5,7 @@ export const Route = createFileRoute("/api/chat/$id/stream")({
     handlers: {
       GET: async ({ request, params }) => {
         const { handleWorkspaceAssistantStreamRequest } = await import(
-          "~/server/chat/workspace-assistant-stream-route"
+          "@api/app/internal-api/workspace-assistant"
         );
 
         return handleWorkspaceAssistantStreamRequest(request, params.id);
