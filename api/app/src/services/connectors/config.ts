@@ -1,7 +1,7 @@
 import {
   type LinearEndpoints,
   resolveLinearEndpoints,
-} from "@repo/linear-app-node";
+} from "@lightfast/connector-linear/node";
 import { resolveXEndpoints, type XEndpoints } from "@repo/x-app-node";
 
 import { ConflictError } from "../../domain/errors";

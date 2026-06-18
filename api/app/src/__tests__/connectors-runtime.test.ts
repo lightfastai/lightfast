@@ -38,8 +38,9 @@ vi.mock("@db/app", () => ({
     markCurrentOrgConnectorConnectionErrorMock,
 }));
 
-vi.mock("@repo/linear-app-node", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@repo/linear-app-node")>();
+vi.mock("@lightfast/connector-linear/mcp", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@lightfast/connector-linear/mcp")>();
   return {
     ...actual,
     callLinearMcpTool: callLinearMcpToolMock,
@@ -73,7 +74,7 @@ const {
   loadChatConnectorRuntimeTools,
   loadConnectorRuntimeTools,
 } = await import("../services/connectors/runtime");
-const { LinearAppNodeError } = await import("@repo/linear-app-node");
+const { LinearAppNodeError } = await import("@lightfast/connector-linear/node");
 const { XAppNodeError } = await import("@repo/x-app-node");
 
 function connection(

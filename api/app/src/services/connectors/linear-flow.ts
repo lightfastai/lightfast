@@ -12,17 +12,19 @@ import {
   updateObservedConnectorTokens,
 } from "@db/app";
 import { db as appDb } from "@db/app/client";
-import { decrypt, encrypt } from "@repo/app-encryption";
+import { listLinearMcpTools } from "@lightfast/connector-linear/mcp";
+import {
+  getLinearViewerMetadata,
+  LinearAppNodeError,
+} from "@lightfast/connector-linear/node";
 import {
   buildLinearOAuthAuthorizeUrl,
   createLinearPkcePair,
   exchangeLinearOAuthCode,
-  getLinearViewerMetadata,
-  LinearAppNodeError,
-  listLinearMcpTools,
   refreshLinearOAuthToken,
   revokeLinearOAuthToken,
-} from "@repo/linear-app-node";
+} from "@lightfast/connector-linear/oauth";
+import { decrypt, encrypt } from "@repo/app-encryption";
 import { log } from "@vendor/observability/log/next";
 import { findUserOrganizationMembership } from "../../auth/clerk-org-membership";
 import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";

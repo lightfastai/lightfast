@@ -16,7 +16,8 @@ import {
   type ConnectableConnectorProvider,
   connectorRuntimeToolName,
 } from "@lightfast/connector-core";
-import { callLinearMcpTool, LinearAppNodeError } from "@repo/linear-app-node";
+import { callLinearMcpTool } from "@lightfast/connector-linear/mcp";
+import { LinearAppNodeError } from "@lightfast/connector-linear/node";
 import { callXBridgeMcpTool, XAppNodeError } from "@repo/x-app-node";
 import { log } from "@vendor/observability/log/next";
 

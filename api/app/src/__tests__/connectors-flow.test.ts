@@ -77,14 +77,31 @@ vi.mock("@repo/app-encryption", () => ({
   encrypt: encryptMock,
 }));
 
-vi.mock("@repo/linear-app-node", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@repo/linear-app-node")>();
+vi.mock("@lightfast/connector-linear/mcp", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@lightfast/connector-linear/mcp")>();
+  return {
+    ...actual,
+    listLinearMcpTools: listLinearMcpToolsMock,
+  };
+});
+
+vi.mock("@lightfast/connector-linear/node", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@lightfast/connector-linear/node")>();
+  return {
+    ...actual,
+    getLinearViewerMetadata: getLinearViewerMetadataMock,
+  };
+});
+
+vi.mock("@lightfast/connector-linear/oauth", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@lightfast/connector-linear/oauth")>();
   return {
     ...actual,
     createLinearPkcePair: createLinearPkcePairMock,
     exchangeLinearOAuthCode: exchangeLinearOAuthCodeMock,
-    getLinearViewerMetadata: getLinearViewerMetadataMock,
-    listLinearMcpTools: listLinearMcpToolsMock,
     refreshLinearOAuthToken: refreshLinearOAuthTokenMock,
     revokeLinearOAuthToken: revokeLinearOAuthTokenMock,
   };
@@ -131,7 +148,7 @@ vi.mock("@vendor/upstash", () => ({
 
 vi.mock("../env", () => ({ env: envMock }));
 
-const { LinearAppNodeError } = await import("@repo/linear-app-node");
+const { LinearAppNodeError } = await import("@lightfast/connector-linear/node");
 const { XAppNodeError, X_OAUTH_SCOPE } = await import("@repo/x-app-node");
 const { assertCurrentSessionCanFinalizeConnectorOAuth } = await import(
   "../services/connectors/auth"

@@ -1,4 +1,4 @@
-import { listLinearMcpTools } from "@repo/linear-app-node";
+import { listLinearMcpTools } from "@lightfast/connector-linear/mcp";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { LINEAR_EMULATOR_FIXTURES, LINEAR_EMULATOR_TOOLS } from "../fixtures";
