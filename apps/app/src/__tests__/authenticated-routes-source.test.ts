@@ -1465,8 +1465,12 @@ describe("app authenticated route migration", () => {
     expect(skillsIndexEventsRouteSource).toContain(
       "handleSkillIndexEventsRequest"
     );
+    expect(skillsIndexEventsRouteSource).toContain("await import(");
     expect(skillsIndexEventsRouteSource).toContain(
-      'from "@api/app/internal-api/skills-events"'
+      '"@api/app/internal-api/skills-events"'
+    );
+    expect(skillsIndexEventsRouteSource).not.toContain(
+      'import { handleSkillIndexEventsRequest } from "@api/app/internal-api/skills-events"'
     );
     expect(skillsIndexEventsRouteSource).not.toContain(
       "@api/app/services/skills/events"

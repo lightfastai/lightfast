@@ -1,10 +1,17 @@
-import { handleAppHealthRequest } from "@api/app/internal-api/health";
 import { createFileRoute } from "@tanstack/react-router";
+
+async function handleAppHealthRouteRequest(request: Request) {
+  const { handleAppHealthRequest } = await import(
+    "@api/app/internal-api/health"
+  );
+
+  return handleAppHealthRequest(request);
+}
 
 export const Route = createFileRoute("/api/health")({
   server: {
     handlers: {
-      GET: ({ request }) => handleAppHealthRequest(request),
+      GET: ({ request }) => handleAppHealthRouteRequest(request),
     },
   },
 });
