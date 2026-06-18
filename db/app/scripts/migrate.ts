@@ -1,6 +1,7 @@
 import { createDatabase } from "@vendor/db";
 import { migrate } from "drizzle-orm/planetscale-serverless/migrator";
-import { env } from "./env";
+
+import { env } from "../src/env";
 
 const db = createDatabase({
   host: env.DATABASE_HOST,

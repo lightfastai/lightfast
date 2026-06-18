@@ -10,6 +10,8 @@ const host = process.env.HOST;
 const port = process.env.PORT ? Number(process.env.PORT) : undefined;
 const portlessUrl = process.env.PORTLESS_URL;
 const hmrHost = portlessUrl ? new URL(portlessUrl).hostname : undefined;
+const serverExternalPackages = ["drizzle-orm"] as const;
+const serverExternalPackagePatterns = [/^drizzle-orm(?:\/.*)?$/] as const;
 
 type SentryBuildOptions = NonNullable<
   Parameters<typeof sentryTanstackStart>[0]
@@ -95,6 +97,14 @@ export default defineConfig(({ command }) => ({
     ),
     "import.meta.env.VITE_SENTRY_DSN": JSON.stringify(sentryClientDsn ?? ""),
     "import.meta.env.VITE_VERCEL_ENV": JSON.stringify(env.VITE_VERCEL_ENV),
+  },
+  ssr: {
+    external: [...serverExternalPackages],
+  },
+  build: {
+    rolldownOptions: {
+      external: [...serverExternalPackagePatterns],
+    },
   },
   server: {
     ...(host ? { host } : {}),

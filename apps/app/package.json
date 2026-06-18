@@ -7,7 +7,7 @@
   "portless": "app.lightfast",
   "scripts": {
     "build": "pnpm with-env vite build",
-    "clean": "git clean -xdf .cache .output .tanstack .turbo .vercel dist node_modules src/routeTree.gen.ts",
+    "clean": "git clean -xdf .cache .next .output .tanstack .turbo .vercel dist node_modules src/routeTree.gen.ts",
     "dev": "portless run pnpm with-related-projects pnpm with-env vite dev",
     "mfe:proxy": "portless run --name lightfast sh -c 'pnpm exec microfrontends proxy ./microfrontends.json --port \"$PORT\" --local-apps lightfast-app lightfast-www --local-app-url lightfast-app=$(portless get app.lightfast) --local-app-url lightfast-www=$(portless get www.lightfast)'",
     "preview": "pnpm with-env vite preview",

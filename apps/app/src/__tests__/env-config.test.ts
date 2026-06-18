@@ -79,6 +79,21 @@ describe("app environment validation wiring", () => {
     expect(viteConfigSource).toContain("sentryTanstackStart");
   });
 
+  it("keeps Drizzle external to the app server artifact", () => {
+    const viteConfigSource = readFileSync(
+      resolve(appRoot, "vite.config.ts"),
+      "utf8"
+    );
+
+    expect(viteConfigSource).toContain("serverExternalPackages");
+    expect(viteConfigSource).toContain('"drizzle-orm"');
+    expect(viteConfigSource).toContain("ssr:");
+    expect(viteConfigSource).toContain("external: [...serverExternalPackages]");
+    expect(viteConfigSource).toContain("rolldownOptions");
+    expect(viteConfigSource).toContain("serverExternalPackagePatterns");
+    expect(viteConfigSource).toContain("/^drizzle-orm(?:\\/.*)?$/");
+  });
+
   it("keeps Turbo build caching sensitive to cutover URL env", () => {
     const turboJson = JSON.parse(
       readFileSync(resolve(appRoot, "turbo.json"), "utf8")

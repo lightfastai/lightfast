@@ -33,7 +33,7 @@
     "db:audit": "pnpm test src/__tests__/migrations.test.ts src/__tests__/schema-conventions.test.ts && pnpm typecheck && SKIP_ENV_VALIDATION=1 drizzle-kit check --config=./src/drizzle.config.ts",
     "db:push": "pnpm with-env drizzle-kit push --config=./src/drizzle.config.ts",
     "db:generate": "SKIP_ENV_VALIDATION=1 drizzle-kit generate --config=./src/drizzle.config.ts",
-    "db:migrate": "pnpm with-env tsx ./src/migrate.ts",
+    "db:migrate": "pnpm with-env tsx ./scripts/migrate.ts",
     "entity-graph:simulated": "pnpm with-env tsx ./src/scripts/entity-graph-simulated.ts",
     "db:baseline": "pnpm with-env tsx ./src/baseline.ts",
     "db:studio": "portless run --name db.lightfast sh -c 'pnpm with-env drizzle-kit studio --config=./src/drizzle.config.ts --host \"$HOST\" --port \"$PORT\"'",
