@@ -204,6 +204,7 @@
   "dependencies": {
     "@db/app": "workspace:*",
     "@lightfast/connector-core": "workspace:*",
+    "@lightfast/connector-github": "workspace:*",
     "@lightfast/connector-linear": "workspace:*",
     "@lightfast/connector-x": "workspace:*",
     "@repo/ai": "workspace:*",
@@ -215,8 +216,6 @@
     "@repo/developer-connection-contract": "workspace:*",
     "@repo/entity-graph-contract": "workspace:*",
     "@repo/entity-resolution": "workspace:*",
-    "@repo/github-app-contract": "workspace:*",
-    "@repo/github-app-node": "workspace:*",
     "@repo/granola-app-node": "workspace:*",
     "@repo/identity-contract": "workspace:*",
     "@repo/native-auth-contract": "workspace:*",

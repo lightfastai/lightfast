@@ -19,9 +19,9 @@ import {
   normalizeGitHubPrWebhookPayload,
   normalizeGitHubPushWebhookPayload,
   normalizeGitHubUserAccountReturnTo,
-} from "../github-app";
+} from "../contract";
 
-describe("@repo/github-app-contract", () => {
+describe("@lightfast/connector-github/contract", () => {
   it("exports stable product callback route constants", () => {
     expect(GITHUB_SETUP_PATH).toBe("/api/github/setup");
     expect(GITHUB_OAUTH_CALLBACK_PATH).toBe("/api/github/oauth/callback");

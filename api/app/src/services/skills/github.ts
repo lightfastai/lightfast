@@ -4,7 +4,7 @@ import {
   getGitHubCommit,
   getGitHubReference,
   getGitHubTree,
-} from "@repo/github-app-node";
+} from "@lightfast/connector-github/node";
 
 import { getGitHubAppConfig } from "../github/config";
 import { getCachedGitHubInstallationToken } from "../github/installation-token-cache";

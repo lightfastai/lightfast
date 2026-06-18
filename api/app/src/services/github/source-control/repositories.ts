@@ -1,13 +1,13 @@
 import type { SourceControlRepository } from "@db/app/schema";
 import {
-  githubLightfastRepositoryProofSchema,
-  LIGHTFAST_REPOSITORY_NAME,
-} from "@repo/app-setup-contract";
-import {
   buildGitHubRepositoryUrl,
   type GitHubInstallationRepository,
   listGitHubInstallationRepositories,
-} from "@repo/github-app-node";
+} from "@lightfast/connector-github/node";
+import {
+  githubLightfastRepositoryProofSchema,
+  LIGHTFAST_REPOSITORY_NAME,
+} from "@repo/app-setup-contract";
 
 export interface SourceControlRepositoryRow {
   fullName: string;

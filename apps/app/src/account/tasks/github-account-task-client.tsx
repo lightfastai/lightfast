@@ -3,7 +3,7 @@ import {
   Loading03Icon as Loader2,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import type { GitHubUserAccountBindErrorCode } from "@repo/github-app-contract";
+import type { GitHubUserAccountBindErrorCode } from "@lightfast/connector-github/contract";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";

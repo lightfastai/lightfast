@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
+import { createGitHubInstallationToken } from "../installation-tokens";
 import {
   GitHubAppNodeError,
   getGitHubBlobText,
   getGitHubReference,
-  getGitHubTree as getGitHubTreeFromIndex,
-} from "../index";
-import { createGitHubInstallationToken } from "../installation-tokens";
+  getGitHubTree as getGitHubTreeFromNode,
+} from "../node";
 import {
   getGitHubCommit,
   getGitHubRepository,
@@ -547,7 +547,7 @@ describe("skill index GitHub repository helpers", () => {
         )
     );
 
-    const tree = await getGitHubTreeFromIndex({
+    const tree = await getGitHubTreeFromNode({
       apiBaseUrl: "https://api.github.test",
       fetch: fetchMock,
       installationToken: "token",

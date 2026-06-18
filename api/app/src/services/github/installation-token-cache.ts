@@ -1,7 +1,7 @@
 import {
   createGitHubAppJwt,
   createGitHubInstallationToken,
-} from "@repo/github-app-node";
+} from "@lightfast/connector-github/node";
 
 import { getGitHubAppConfig } from "./config";
 

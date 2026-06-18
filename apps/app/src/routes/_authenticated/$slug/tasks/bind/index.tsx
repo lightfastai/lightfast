@@ -1,4 +1,4 @@
-import { githubBindErrorCodeSchema } from "@repo/github-app-contract";
+import { githubBindErrorCodeSchema } from "@lightfast/connector-github/contract";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Navigate, useSearch } from "@tanstack/react-router";
 import { BindGithubCard } from "~/org/setup/bind-github-card";

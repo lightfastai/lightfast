@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { githubUserAccountReturnToSchema } from "@repo/github-app-contract";
+import { githubUserAccountReturnToSchema } from "@lightfast/connector-github/contract";
 import { nanoid } from "@vendor/lib";
 import { redis } from "@vendor/upstash";
 import { z } from "zod";

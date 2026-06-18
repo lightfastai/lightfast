@@ -25,7 +25,7 @@ vi.mock("@db/app", () => ({
   markSourceControlWebhookDeliveryStatus: markDeliveryMock,
 }));
 
-vi.mock("@repo/github-app-node", () => ({
+vi.mock("@lightfast/connector-github/node", () => ({
   createGitHubAppJwt: createJwtMock,
   createGitHubInstallationToken: createTokenMock,
   getGitHubCommit: getCommitMock,

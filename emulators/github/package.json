@@ -13,8 +13,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@repo/emulator-kit": "workspace:*",
-    "@repo/github-app-contract": "workspace:*"
+    "@lightfast/connector-github": "workspace:*",
+    "@repo/emulator-kit": "workspace:*"
   },
   "devDependencies": {
     "@emulators/core": "catalog:",

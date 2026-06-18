@@ -6,14 +6,14 @@ import { db } from "@db/app/client";
 import {
   GITHUB_USER_ACCOUNT_OAUTH_CALLBACK_PATH,
   normalizeGitHubUserAccountReturnTo,
-} from "@repo/github-app-contract";
+} from "@lightfast/connector-github/contract";
 import {
   buildGitHubOAuthAuthorizeUrl,
   createGitHubPkcePair,
   exchangeGitHubOAuthCode,
   getGitHubAuthenticatedUser,
   revokeGitHubOAuthGrant,
-} from "@repo/github-app-node";
+} from "@lightfast/connector-github/node";
 import { auth } from "@vendor/clerk/server";
 import { log } from "@vendor/observability/log/next";
 

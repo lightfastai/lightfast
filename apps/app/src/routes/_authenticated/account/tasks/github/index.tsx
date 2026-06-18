@@ -1,4 +1,4 @@
-import { githubUserAccountBindErrorCodeSchema } from "@repo/github-app-contract";
+import { githubUserAccountBindErrorCodeSchema } from "@lightfast/connector-github/contract";
 import { createFileRoute } from "@tanstack/react-router";
 import { GithubAccountTaskClient } from "~/account/tasks/github-account-task-client";
 

@@ -1,6 +1,6 @@
 import { Loading03Icon as Loader2 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { normalizeGitHubUserAccountReturnTo } from "@repo/github-app-contract";
+import { normalizeGitHubUserAccountReturnTo } from "@lightfast/connector-github/contract";
 import { Button } from "@repo/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";

@@ -1,5 +1,5 @@
 import type { SkillIndexEntry, SkillIndexState } from "@db/app";
-import { buildGitHubRepositoryUrl } from "@repo/github-app-node";
+import { buildGitHubRepositoryUrl } from "@lightfast/connector-github/node";
 import type { SkillDiagnostic } from "@repo/skills-contract";
 
 import { getGitHubAppConfig } from "../github/config";
