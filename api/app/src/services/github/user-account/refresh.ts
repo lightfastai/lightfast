@@ -5,11 +5,11 @@ import {
   markObservedUserSourceControlAccountRevoked,
   updateObservedUserSourceControlAccountTokens,
 } from "@db/app";
-import { decrypt, encrypt } from "@repo/app-encryption";
 import {
   GitHubAppNodeError,
   refreshGitHubUserAccessToken,
-} from "@repo/github-app-node";
+} from "@lightfast/connector-github/node";
+import { decrypt, encrypt } from "@repo/app-encryption";
 import { log } from "@vendor/observability/log/next";
 
 import { env } from "../../../env";

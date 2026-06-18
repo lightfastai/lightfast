@@ -4,8 +4,8 @@ import {
   type SignalEntityEnrichmentTargetsResult,
 } from "@db/app";
 import { db } from "@db/app/client";
+import { getGitHubUserByLogin } from "@lightfast/connector-github/node";
 import { executeXApiTool } from "@lightfast/connector-x/tools";
-import { getGitHubUserByLogin } from "@repo/github-app-node";
 
 import { env } from "../../env";
 import { requireXConnectorConfig } from "../connectors/config";

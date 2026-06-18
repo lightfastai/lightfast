@@ -29,7 +29,7 @@ vi.mock("@repo/app-encryption", () => ({
   encrypt: encryptMock,
 }));
 
-vi.mock("@repo/github-app-node", () => ({
+vi.mock("@lightfast/connector-github/node", () => ({
   refreshGitHubUserAccessToken: refreshGitHubUserAccessTokenMock,
   GitHubAppNodeError: class GitHubAppNodeError extends Error {
     constructor(
@@ -69,7 +69,7 @@ vi.mock("../services/github/config", () => ({
 const { getFreshGitHubUserAccessToken } = await import(
   "../services/github/user-account/refresh"
 );
-const { GitHubAppNodeError } = await import("@repo/github-app-node");
+const { GitHubAppNodeError } = await import("@lightfast/connector-github/node");
 
 function mockDb() {
   return {} as Database;

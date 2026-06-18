@@ -6,16 +6,16 @@ import {
   upsertWatchedSourceControlRepository,
 } from "@db/app";
 import {
-  githubLightfastRepositoryProofSchema,
-  LIGHTFAST_REPOSITORY_NAME,
-  type OrgSetupGate,
-} from "@repo/app-setup-contract";
-import {
   createGitHubAppJwt,
   createGitHubInstallationToken,
   getGitHubRepository,
   verifyGitHubInstallationRepository,
-} from "@repo/github-app-node";
+} from "@lightfast/connector-github/node";
+import {
+  githubLightfastRepositoryProofSchema,
+  LIGHTFAST_REPOSITORY_NAME,
+  type OrgSetupGate,
+} from "@repo/app-setup-contract";
 import { IDENTITY_WATCHED_PATH_GLOBS } from "@repo/identity-contract";
 import { log } from "@vendor/observability/log/next";
 

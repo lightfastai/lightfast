@@ -1,10 +1,10 @@
-import { GITHUB_OAUTH_CALLBACK_PATH } from "@repo/github-app-contract";
+import { GITHUB_OAUTH_CALLBACK_PATH } from "@lightfast/connector-github/contract";
 import {
   buildGitHubOAuthAuthorizeUrl,
   createGitHubPkcePair,
   exchangeGitHubOAuthCode,
   verifyGitHubUserInstallation,
-} from "@repo/github-app-node";
+} from "@lightfast/connector-github/node";
 import { log } from "@vendor/observability/log/next";
 
 import { assertCurrentUserIsOrgAdmin } from "../../../auth/clerk-org-membership";

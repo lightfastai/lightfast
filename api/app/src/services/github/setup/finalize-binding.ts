@@ -1,6 +1,6 @@
 import { finalizeActiveOrgProviderBinding } from "@db/app";
 import { db } from "@db/app/client";
-import { githubInstallationMetadataSchema } from "@repo/github-app-contract";
+import { githubInstallationMetadataSchema } from "@lightfast/connector-github/contract";
 import { log } from "@vendor/observability/log/next";
 
 import { mirrorOrgSetupGate } from "../../../auth/org-binding-mirror";

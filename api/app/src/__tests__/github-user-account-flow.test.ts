@@ -41,7 +41,7 @@ vi.mock("@repo/app-encryption", () => ({
   encrypt: encryptMock,
 }));
 
-vi.mock("@repo/github-app-node", () => ({
+vi.mock("@lightfast/connector-github/node", () => ({
   buildGitHubOAuthAuthorizeUrl: vi.fn(
     ({
       clientId,

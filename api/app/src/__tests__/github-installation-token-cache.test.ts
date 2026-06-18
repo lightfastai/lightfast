@@ -14,7 +14,7 @@ const envMock = {
   VERCEL_ENV: "development" as const,
 };
 
-vi.mock("@repo/github-app-node", () => ({
+vi.mock("@lightfast/connector-github/node", () => ({
   createGitHubAppJwt: createGitHubAppJwtMock,
   createGitHubInstallationToken: createGitHubInstallationTokenMock,
 }));

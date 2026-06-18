@@ -9,6 +9,10 @@ const oldLinearPackage = `@repo/${"linear-app-node"}`;
 const oldLinearPath = `packages/${"linear-app-node"}`;
 const oldXPackage = `@repo/${"x-app-node"}`;
 const oldXPath = `packages/${"x-app-node"}`;
+const oldGitHubContractPackage = `@repo/${"github-app-contract"}`;
+const oldGitHubContractPath = `packages/${"github-app-contract"}`;
+const oldGitHubNodePackage = `@repo/${"github-app-node"}`;
+const oldGitHubNodePath = `packages/${"github-app-node"}`;
 
 const ignoredDirs = new Set([
   ".git",
@@ -159,6 +163,44 @@ describe("connector workspace boundary", () => {
       .filter((path) => {
         const contents = readFileSync(path, "utf8");
         return contents.includes(oldXPackage) || contents.includes(oldXPath);
+      })
+      .map((path) => relative(repoRoot, path))
+      .sort();
+
+    expect(staleReferences).toEqual([]);
+  });
+
+  it("hosts GitHub contract and node code behind explicit connector entrypoints", () => {
+    const githubPackage = readJson<{
+      dependencies?: Record<string, string>;
+      exports?: Record<string, unknown>;
+      name?: string;
+      private?: boolean;
+    }>("connectors/github/package.json");
+
+    expect(existsSync(resolve(repoRoot, oldGitHubContractPath))).toBe(false);
+    expect(existsSync(resolve(repoRoot, oldGitHubNodePath))).toBe(false);
+    expect(githubPackage.name).toBe("@lightfast/connector-github");
+    expect(githubPackage.private).toBe(true);
+    expect(githubPackage.dependencies?.jose).toBe("catalog:");
+    expect(githubPackage.dependencies?.zod).toBe("catalog:");
+    expect(Object.keys(githubPackage.exports ?? {}).sort()).toEqual([
+      "./contract",
+      "./node",
+    ]);
+  });
+
+  it("removes the old GitHub app package names from source and manifests", () => {
+    const staleReferences = workspaceFilesToScan()
+      .filter((path) => !relative(repoRoot, path).startsWith(".codex/"))
+      .filter((path) => {
+        const contents = readFileSync(path, "utf8");
+        return (
+          contents.includes(oldGitHubContractPackage) ||
+          contents.includes(oldGitHubContractPath) ||
+          contents.includes(oldGitHubNodePackage) ||
+          contents.includes(oldGitHubNodePath)
+        );
       })
       .map((path) => relative(repoRoot, path))
       .sort();

@@ -9,7 +9,7 @@ import {
   createGitHubInstallationToken,
   getGitHubCommit,
   getGitHubTree,
-} from "@repo/github-app-node";
+} from "@lightfast/connector-github/node";
 import { splitRepositoryFullName } from "@repo/source-control-contract";
 
 import { getGitHubAppConfig } from "../../services/github/config";

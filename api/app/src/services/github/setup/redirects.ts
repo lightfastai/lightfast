@@ -1,4 +1,4 @@
-import type { GitHubBindErrorCode } from "@repo/github-app-contract";
+import type { GitHubBindErrorCode } from "@lightfast/connector-github/contract";
 
 export interface GitHubRedirectResult {
   redirectUrl: string;

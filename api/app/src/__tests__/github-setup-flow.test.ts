@@ -43,7 +43,7 @@ vi.mock("@db/app", () => ({
   },
 }));
 
-vi.mock("@repo/github-app-node", () => ({
+vi.mock("@lightfast/connector-github/node", () => ({
   buildGitHubOAuthAuthorizeUrl: vi.fn(
     ({
       clientId,
@@ -132,7 +132,7 @@ const { parseGitHubInstallationSetupCallback, parseGitHubOAuthCallback } =
   await import("../services/github/setup/callbacks");
 const { completeGitHubInstallationSetup, completeGitHubOAuthVerification } =
   await import("../services/github/setup/flow");
-const { GitHubAppNodeError } = await import("@repo/github-app-node");
+const { GitHubAppNodeError } = await import("@lightfast/connector-github/node");
 const { OrgSourceControlBindingConflictError } = await import("@db/app");
 
 function installAttempt() {

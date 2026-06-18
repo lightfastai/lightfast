@@ -1,8 +1,8 @@
 import type { Database } from "@db/app";
+import { githubBindStartOutputSchema } from "@lightfast/connector-github/contract";
+import { buildGitHubInstallationUrl } from "@lightfast/connector-github/node";
 import { orgSetupGateSchema } from "@repo/app-setup-contract";
 import { clerkOrgSlugSchema } from "@repo/app-validation";
-import { githubBindStartOutputSchema } from "@repo/github-app-contract";
-import { buildGitHubInstallationUrl } from "@repo/github-app-node";
 import { z } from "zod";
 
 import {

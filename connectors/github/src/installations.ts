@@ -1,8 +1,8 @@
+import { z } from "zod";
 import {
   type GitHubNormalizedInstallation,
   githubNormalizedInstallationSchema,
-} from "@repo/github-app-contract";
-import { z } from "zod";
+} from "./contract";
 
 import { GitHubAppNodeError } from "./errors";
 import {

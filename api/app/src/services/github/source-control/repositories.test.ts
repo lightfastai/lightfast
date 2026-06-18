@@ -2,7 +2,7 @@ import type { SourceControlRepository } from "@db/app/schema";
 import {
   type GitHubInstallationRepository,
   listGitHubInstallationRepositories,
-} from "@repo/github-app-node";
+} from "@lightfast/connector-github/node";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildSourceControlRepositoryResponse,
@@ -11,8 +11,9 @@ import {
   listAllGitHubInstallationRepositories,
 } from "./repositories";
 
-vi.mock("@repo/github-app-node", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@repo/github-app-node")>();
+vi.mock("@lightfast/connector-github/node", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@lightfast/connector-github/node")>();
   return {
     ...actual,
     listGitHubInstallationRepositories: vi.fn(),

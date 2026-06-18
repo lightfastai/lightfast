@@ -14,8 +14,8 @@ import {
   githubWebhookHeadersSchema,
   normalizeGitHubPrWebhookPayload,
   normalizeGitHubPushWebhookPayload,
-} from "@repo/github-app-contract";
-import { verifyGitHubWebhookSignature } from "@repo/github-app-node";
+} from "@lightfast/connector-github/contract";
+import { verifyGitHubWebhookSignature } from "@lightfast/connector-github/node";
 import {
   matchesAnyWatchedPath,
   sourceControlRepositoryPushEventSchema,

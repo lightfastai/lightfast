@@ -7,11 +7,11 @@ import {
   reserveNamespaceForOperation,
   startNamespaceOperation,
 } from "@db/app";
+import { githubUserAccountReturnToSchema } from "@lightfast/connector-github/contract";
 import {
   accountSettingsFormSchema,
   lightfastHandleSchema,
 } from "@repo/app-validation";
-import { githubUserAccountReturnToSchema } from "@repo/github-app-contract";
 import { clerkClient } from "@vendor/clerk/server";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";

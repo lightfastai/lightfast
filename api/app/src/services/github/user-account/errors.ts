@@ -1,6 +1,6 @@
 import { UserSourceControlAccountConflictError } from "@db/app";
-import type { GitHubUserAccountBindErrorCode } from "@repo/github-app-contract";
-import { GitHubAppNodeError } from "@repo/github-app-node";
+import type { GitHubUserAccountBindErrorCode } from "@lightfast/connector-github/contract";
+import { GitHubAppNodeError } from "@lightfast/connector-github/node";
 
 export function mapGitHubUserAccountError(
   error: unknown

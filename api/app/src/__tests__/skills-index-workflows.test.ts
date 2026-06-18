@@ -98,7 +98,7 @@ vi.mock("@db/app", () => ({
     upsertWatchedSourceControlRepositoryMock,
 }));
 
-vi.mock("@repo/github-app-node", () => ({
+vi.mock("@lightfast/connector-github/node", () => ({
   createGitHubAppJwt: createGitHubAppJwtMock,
   createGitHubInstallationToken: createGitHubInstallationTokenMock,
   getGitHubRepository: getGitHubRepositoryMock,

@@ -4,13 +4,13 @@ import {
   insertWatchedSourceControlRepository,
   listWatchedSourceControlRepositories,
 } from "@db/app";
-import { LIGHTFAST_REPOSITORY_NAME } from "@repo/app-setup-contract";
 import {
   buildGitHubNewRepositoryUrl,
   createGitHubAppJwt,
   createGitHubInstallationToken,
   getGitHubAppInstallation,
-} from "@repo/github-app-node";
+} from "@lightfast/connector-github/node";
+import { LIGHTFAST_REPOSITORY_NAME } from "@repo/app-setup-contract";
 import { sourceControlRepositorySyncStatusSchema } from "@repo/source-control-contract";
 import { z } from "zod";
 

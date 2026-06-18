@@ -36,8 +36,9 @@ vi.mock("@db/app", async (importOriginal) => {
   };
 });
 vi.mock("@db/app/client", () => ({ db }));
-vi.mock("@repo/github-app-node", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@repo/github-app-node")>();
+vi.mock("@lightfast/connector-github/node", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@lightfast/connector-github/node")>();
   return {
     ...actual,
     getGitHubUserByLogin: getGitHubUserByLoginMock,
