@@ -14,21 +14,26 @@ import {
   useFormCompat,
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
+import { toast } from "@repo/ui/components/ui/sonner";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
 import { useMounted } from "@repo/ui/hooks/use-mounted";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import { SettingRow, SettingsGroup } from "~/components/settings-section";
-import { accountProfileQueryOptions } from "../account-queries";
-import { useAccountNameUpdate } from "./account-settings-actions";
+import {
+  accountProfileQueryOptions,
+  accountQueryKeys,
+  updateAccountNameMutationOptions,
+} from "../account-queries";
 import { ProfileDataLoading } from "./profile-data-loading";
 
 export function ProfileDataDisplay() {
   const mounted = useMounted();
+  const queryClient = useQueryClient();
   const accountQuery = accountProfileQueryOptions();
   const { data: profile, isPending } = useQuery({
     ...accountQuery,
@@ -45,7 +50,20 @@ export function ProfileDataDisplay() {
     mode: "onChange",
   });
 
-  const { isUpdating, updateDisplayName } = useAccountNameUpdate();
+  const { isPending: isUpdating, mutate: updateAccountName } = useMutation({
+    ...updateAccountNameMutationOptions(),
+    onSuccess: (data) => {
+      queryClient.setQueryData(accountQueryKeys.profile(), data);
+      toast.success("Profile updated", {
+        description: `Display name changed to "${data.fullName ?? ""}"`,
+      });
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({
+        queryKey: accountQueryKeys.profile(),
+      });
+    },
+  });
   const { reset } = form;
   const watchedName = form.watch("displayName");
   const hasNameChanges = (watchedName ?? "").trim() !== currentDisplayName;
@@ -56,9 +74,9 @@ export function ProfileDataDisplay() {
 
   const onNameSubmit = useCallback(
     (values: AccountSettingsFormValues) => {
-      updateDisplayName(values.displayName);
+      updateAccountName({ displayName: values.displayName });
     },
-    [updateDisplayName]
+    [updateAccountName]
   );
 
   if (!mounted || isPending || !profile) {
