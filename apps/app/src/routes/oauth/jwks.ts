@@ -1,11 +1,10 @@
-import { getMcpOAuthJwks } from "@api/app/mcp-oauth";
+import { handleMcpOAuthJwksRequest } from "@api/app/mcp-oauth/server-routes";
 import { createFileRoute } from "@tanstack/react-router";
-import { oauthJson } from "~/server/oauth/mcp-response";
 
 export const Route = createFileRoute("/oauth/jwks")({
   server: {
     handlers: {
-      GET: async () => oauthJson(getMcpOAuthJwks()),
+      GET: () => handleMcpOAuthJwksRequest(),
     },
   },
 });
