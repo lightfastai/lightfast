@@ -782,6 +782,25 @@ describe("Linear connector flow", () => {
     );
   });
 
+  it("throws a domain authz error when Linear starts without an active organization", async () => {
+    const context = ctx();
+
+    await expect(
+      startLinearConnectorOAuth({
+        ...context,
+        auth: {
+          ...context.auth,
+          identity: { type: "pending" as const, userId: "user_current" },
+        },
+      })
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        code: "ORG_REQUIRED",
+        kind: "authz",
+      })
+    );
+  });
+
   it("completes OAuth with the public oauth callback path", async () => {
     const issued = await issueConnectorOAuthAttempt({
       clerkOrgId: "org_acme",
@@ -1195,6 +1214,19 @@ describe("Linear connector flow", () => {
     );
   });
 
+  it("throws a domain not-found error when Linear enablement has no current connection", async () => {
+    setConnectorAgentEnabledDbMock.mockResolvedValueOnce(false);
+
+    await expect(
+      linearFlow.setLinearConnectorAgentEnabled?.(ctx(), { enabled: true })
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        code: "CONNECTOR_NOT_CONNECTED",
+        kind: "not_found",
+      })
+    );
+  });
+
   it("wipes local tokens and manifest even when provider revoke fails", async () => {
     getCurrentOrgConnectorConnectionMock.mockResolvedValue(connection());
     revokeLinearOAuthTokenMock.mockRejectedValue(
@@ -1395,6 +1427,25 @@ describe("X connector flow", () => {
       "connector-oauth-attempt:x:attempt_123456789012345678901234",
       expect.objectContaining({ mode: "reconnect", provider: "x" }),
       { ex: 900 }
+    );
+  });
+
+  it("throws a domain authz error when X starts without an active organization", async () => {
+    const context = ctx();
+
+    await expect(
+      startXConnectorOAuth({
+        ...context,
+        auth: {
+          ...context.auth,
+          identity: { type: "pending" as const, userId: "user_current" },
+        },
+      })
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        code: "ORG_REQUIRED",
+        kind: "authz",
+      })
     );
   });
 

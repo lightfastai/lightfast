@@ -22,4 +22,18 @@ describe("connector service domain errors", () => {
       expect(fileSource, file).not.toContain("TRPCError");
     }
   });
+
+  it("keeps connector provider flow errors framework-neutral", () => {
+    for (const file of [
+      "services/connectors/linear-flow.ts",
+      "services/connectors/x-flow.ts",
+      "services/user-connectors/granola-flow.ts",
+    ]) {
+      const fileSource = source(file);
+
+      expect(fileSource, file).toContain("../../domain/errors");
+      expect(fileSource, file).not.toContain("@trpc/server");
+      expect(fileSource, file).not.toContain("TRPCError");
+    }
+  });
 });

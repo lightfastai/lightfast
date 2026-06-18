@@ -27,9 +27,9 @@ import {
   revokeXOAuthToken,
   XAppNodeError,
 } from "@repo/x-app-node";
-import { TRPCError } from "@trpc/server";
 import { log } from "@vendor/observability/log/next";
 import { findUserOrganizationMembership } from "../../auth/clerk-org-membership";
+import { AuthzError, NotFoundError } from "../../domain/errors";
 import { env } from "../../env";
 import type { AuthContext } from "../../trpc";
 import {
@@ -57,10 +57,7 @@ export interface XRedirectResult {
 
 function activeIdentity(ctx: ConnectorServiceContext) {
   if (ctx.auth.identity.type !== "active") {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "An active organization is required.",
-    });
+    throw new AuthzError("ORG_REQUIRED", "An active organization is required.");
   }
   return ctx.auth.identity;
 }
@@ -75,10 +72,10 @@ async function getOrgSlug(input: {
   });
   const slug = membership?.organization.slug;
   if (!slug) {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "Organization access is required.",
-    });
+    throw new AuthzError(
+      "ORG_ACCESS_REQUIRED",
+      "Organization access is required."
+    );
   }
   return slug;
 }
@@ -758,10 +755,10 @@ export async function setXConnectorAutomationEnabled(
     provider: "x",
   });
   if (!updated) {
-    throw new TRPCError({
-      code: "NOT_FOUND",
-      message: "X connector is not connected.",
-    });
+    throw new NotFoundError(
+      "CONNECTOR_NOT_CONNECTED",
+      "X connector is not connected."
+    );
   }
   return { enabled: input.enabled };
 }
@@ -777,10 +774,10 @@ export async function setXConnectorAgentEnabled(
     provider: "x",
   });
   if (!updated) {
-    throw new TRPCError({
-      code: "NOT_FOUND",
-      message: "X connector is not connected.",
-    });
+    throw new NotFoundError(
+      "CONNECTOR_NOT_CONNECTED",
+      "X connector is not connected."
+    );
   }
   return { enabled: input.enabled };
 }
