@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -7,7 +7,7 @@ const appRoot = resolve(import.meta.dirname, "../..");
 const migratedFiles = [
   "src/signals/signals-client.tsx",
   "src/signals/use-classified-signals-query.ts",
-  "src/signals/use-signal-views-query.ts",
+  "src/signals/signals-view-switcher.tsx",
   "src/signals/signal-detail-sheet.tsx",
   "src/signals/signal-create-dialog.tsx",
 ] as const;
@@ -32,12 +32,16 @@ describe("migrated signal UI data access", () => {
   });
 
   it("uses TanStack server functions for signal views", () => {
+    const hookPath = resolve(appRoot, "src/signals/use-signal-views-query.ts");
     const source = readFileSync(
-      resolve(appRoot, "src/signals/use-signal-views-query.ts"),
+      resolve(appRoot, "src/signals/signals-view-switcher.tsx"),
       "utf8"
     );
+
+    expect(existsSync(hookPath)).toBe(false);
     expect(source).toContain('@api/app/tanstack/signal-views"');
     expect(source).not.toContain("useTRPC");
     expect(source).not.toContain("trpc.org.workspace.signals.views");
+    expect(source).not.toContain("./use-signal-views-query");
   });
 });

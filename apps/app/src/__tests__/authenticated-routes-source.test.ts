@@ -307,7 +307,7 @@ describe("app authenticated route migration", () => {
     const searchSource = source("src/signals/signals-search-params.ts");
     const querySource = source("src/signals/use-classified-signals-query.ts");
     const viewsSource = source("src/signals/signals-view-switcher.tsx");
-    const viewQuerySource = source("src/signals/use-signal-views-query.ts");
+    const viewQuerySource = viewsSource;
     const viewSwitcherSource = source("src/components/views/view-switcher.tsx");
     const topbarActionsSource = source(
       "src/workspace/workspace-topbar-actions.tsx"
