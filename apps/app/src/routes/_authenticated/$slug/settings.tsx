@@ -1,3 +1,4 @@
+import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { SettingsSidebar } from "~/components/settings-sidebar";
 
@@ -29,9 +30,12 @@ function WorkspaceSettingsLayout() {
     <div className="flex w-full flex-col">
       <div className="mx-auto w-full max-w-7xl pr-6 pb-16 pl-3 lg:px-8">
         <div className="pt-2 pb-8">
-          <h1 className="pl-3 font-medium font-pp text-3xl text-foreground tracking-tight">
-            Settings
-          </h1>
+          <div className="flex items-center gap-2 pl-3">
+            <SidebarTrigger className="size-8 rounded-lg border border-border/70 bg-muted/30 p-0 text-muted-foreground hover:bg-muted/60 hover:text-foreground md:hidden" />
+            <h1 className="font-medium font-pp text-3xl text-foreground tracking-tight">
+              Settings
+            </h1>
+          </div>
         </div>
 
         <div className="flex flex-col gap-8 md:flex-row md:gap-12">

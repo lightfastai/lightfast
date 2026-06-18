@@ -1,5 +1,8 @@
 import { cn } from "@repo/ui/lib/utils";
-import { Box } from "lucide-react";
+import {
+  BoxIcon as Box,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 export function SkillGlyph({ className }: { className?: string }) {
   return (
@@ -9,7 +12,7 @@ export function SkillGlyph({ className }: { className?: string }) {
         className
       )}
     >
-      <Box aria-hidden="true" className="size-[18px]" strokeWidth={1.6} />
+      <HugeiconsIcon icon={Box} aria-hidden="true" className="size-[18px]" strokeWidth={1.6} />
     </span>
   );
 }

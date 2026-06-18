@@ -2,7 +2,10 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ExternalLink } from "lucide-react";
+import {
+  ExternalLinkIcon as ExternalLink,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { RepositoryList } from "./repository-list";
 import { SourceControlConnectionCard } from "./source-control-connection-card";
 import {
@@ -77,7 +80,7 @@ export function SourceControlSettingsClient({
               variant="secondary"
             >
               <Link params={{ slug }} preload="intent" to="/$slug/tasks/bind">
-                <ExternalLink aria-hidden="true" className="size-4" />
+                <HugeiconsIcon icon={ExternalLink} aria-hidden="true" className="size-4" />
                 Open setup
               </Link>
             </Button>

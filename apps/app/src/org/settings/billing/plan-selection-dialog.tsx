@@ -9,7 +9,10 @@ import {
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
 import { cn } from "@repo/ui/lib/utils";
-import { Check } from "lucide-react";
+import {
+  Tick02Icon as Check,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 type BillingPlan =
   AppRouterOutputs["org"]["settings"]["orgBilling"]["overview"]["plans"][number];
@@ -184,7 +187,7 @@ function PlanChoiceCard({
       <div className="mt-6 flex-1 space-y-3">
         {features.map((feature) => (
           <div className="flex items-start gap-3" key={feature}>
-            <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-foreground" />
+            <HugeiconsIcon icon={Check} className="mt-0.5 h-4 w-4 flex-shrink-0 text-foreground" />
             <span className="text-foreground text-sm">{feature}</span>
           </div>
         ))}

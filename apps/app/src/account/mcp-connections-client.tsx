@@ -20,7 +20,13 @@ import {
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Info, ShieldCheck, ShieldQuestion, Unplug } from "lucide-react";
+import {
+  InformationCircleIcon as Info,
+  SecurityCheckIcon as ShieldCheck,
+  ShieldQuestionMarkIcon as ShieldQuestion,
+  Unlink02Icon as Unplug,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useState } from "react";
 import {
   accountMcpConnectionsQueryOptions,
@@ -150,7 +156,7 @@ function McpConnectionsList({
     return (
       <div className="flex flex-col items-center justify-center rounded-md border border-border/50 py-16 text-center">
         <div className="mb-4 rounded-full bg-muted/20 p-3">
-          <Unplug className="size-5 text-muted-foreground" />
+          <HugeiconsIcon icon={Unplug} className="size-5 text-muted-foreground" />
         </div>
         <p className="font-medium text-sm">No MCP connections</p>
         <p className="mt-1 max-w-md text-muted-foreground text-sm">
@@ -216,7 +222,7 @@ function McpConnectionRow({
           size="sm"
           variant="outline"
         >
-          <Info className="size-3.5" />
+          <HugeiconsIcon icon={Info} className="size-3.5" />
           Details
         </Button>
         {isActive ? (
@@ -227,7 +233,7 @@ function McpConnectionRow({
             size="sm"
             variant="destructive"
           >
-            <Unplug className="size-3.5" />
+            <HugeiconsIcon icon={Unplug} className="size-3.5" />
             Revoke
           </Button>
         ) : null}
@@ -244,14 +250,14 @@ function VerificationBadge({
   if (status === "verified") {
     return (
       <Badge className="gap-1" variant="secondary">
-        <ShieldCheck className="size-3" />
+        <HugeiconsIcon icon={ShieldCheck} className="size-3" />
         Verified
       </Badge>
     );
   }
   return (
     <Badge className="gap-1" variant="outline">
-      <ShieldQuestion className="size-3" />
+      <HugeiconsIcon icon={ShieldQuestion} className="size-3" />
       Unverified
     </Badge>
   );

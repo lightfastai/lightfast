@@ -9,7 +9,11 @@ import {
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
 import type { BillingPaymentMethodResource } from "@vendor/clerk";
-import { AlertCircle, Trash2 } from "lucide-react";
+import {
+  AlertCircleIcon as AlertCircle,
+  Delete02Icon as Trash2,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useState } from "react";
 
 import { NewPaymentMethodForm } from "./new-payment-method-form";
@@ -78,7 +82,7 @@ export function PaymentMethodDialog({
 
           {errorMessage && (
             <Alert variant="destructive">
-              <AlertCircle className="size-4" />
+              <HugeiconsIcon icon={AlertCircle} className="size-4" />
               <AlertDescription>{errorMessage}</AlertDescription>
             </Alert>
           )}
@@ -128,7 +132,7 @@ export function PaymentMethodDialog({
                             size="icon-sm"
                             variant="ghost"
                           >
-                            <Trash2 className="size-4" />
+                            <HugeiconsIcon icon={Trash2} className="size-4" />
                             <span className="sr-only">Remove</span>
                           </Button>
                         )}

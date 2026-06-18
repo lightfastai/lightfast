@@ -7,14 +7,20 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@repo/ui/components/ui/dropdown-menu";
+} from "@repo/ui-v2/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, ExternalLink, Settings, Unplug } from "lucide-react";
+import {
+  ChevronDownIcon as ChevronDown,
+  ExternalLinkIcon as ExternalLink,
+  Settings02Icon as Settings,
+  Unlink02Icon as Unplug,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { ReactNode } from "react";
 import { displayValue, formatStatusSubtitle } from "./source-control-format";
 import type { SourceControlConnection } from "./source-control-queries";
@@ -112,7 +118,7 @@ function LightfastSection({
             preload="intent"
             to="/$slug/tasks/github/lightfast-repo"
           >
-            <ExternalLink aria-hidden="true" className="size-3.5" />
+            <HugeiconsIcon icon={ExternalLink} aria-hidden="true" className="size-3.5" />
             Open setup
           </Link>
         </Button>
@@ -151,37 +157,36 @@ export function SourceControlConnectionCard({
         </div>
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              aria-label="Connection status"
-              className="h-7 shrink-0 justify-between gap-1.5 rounded-[9px] border border-input bg-card px-2.5 font-normal text-foreground text-sm hover:bg-accent"
-              size="sm"
-              type="button"
-              variant="ghost"
-            >
-              <span className="inline-flex min-w-0 items-center gap-1.5">
-                <span
-                  aria-hidden="true"
-                  className="size-1.5 rounded-full bg-emerald-500"
-                />
-                <span className="truncate">Connected</span>
-              </span>
-              <ChevronDown
-                aria-hidden="true"
-                className="size-3.5 shrink-0 text-muted-foreground"
+          <DropdownMenuTrigger
+            render={
+              <Button
+                aria-label="Connection status"
+                className="h-7 shrink-0 justify-between gap-1.5 rounded-[9px] border border-input bg-card px-2.5 font-normal text-foreground text-sm hover:bg-accent"
+                size="sm"
+                type="button"
+                variant="ghost"
               />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="w-56 min-w-[var(--radix-dropdown-menu-trigger-width)]"
+            }
           >
+            <span className="inline-flex min-w-0 items-center gap-1.5">
+              <span
+                aria-hidden="true"
+                className="size-1.5 rounded-full bg-emerald-500"
+              />
+              <span className="truncate">Connected</span>
+            </span>
+            <HugeiconsIcon icon={ChevronDown}
+              aria-hidden="true"
+              className="size-3.5 shrink-0 text-muted-foreground"
+            />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
             <ImmutableConnectionMenuItem
-              icon={<Settings aria-hidden="true" className="size-4" />}
+              icon={<HugeiconsIcon icon={Settings} aria-hidden="true" className="size-4" />}
               label="Configure in GitHub"
             />
             <ImmutableConnectionMenuItem
-              icon={<Unplug aria-hidden="true" className="size-4" />}
+              icon={<HugeiconsIcon icon={Unplug} aria-hidden="true" className="size-4" />}
               label="Disconnect"
               variant="destructive"
             />

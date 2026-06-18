@@ -7,7 +7,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@repo/ui/components/ui/dropdown-menu";
+} from "@repo/ui-v2/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -19,13 +19,14 @@ import { cn } from "@repo/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import {
-  Mail,
-  MoreHorizontal,
-  Search,
-  Trash2,
-  UserRoundX,
-  Users,
-} from "lucide-react";
+  Mail01Icon as Mail,
+  MoreHorizontalIcon as MoreHorizontal,
+  Search01Icon as Search,
+  Delete02Icon as Trash2,
+  UserRemove01Icon as UserRoundX,
+  UserGroupIcon as Users,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { memo, type ReactNode, useMemo } from "react";
 import { useTRPC } from "~/trpc/react";
 import {
@@ -205,7 +206,7 @@ export function OrgMemberList({ searchQuery = "" }: { searchQuery?: string }) {
     return (
       <EmptyState
         icon={
-          <Users aria-hidden="true" className="size-4 text-muted-foreground" />
+          <HugeiconsIcon icon={Users} aria-hidden="true" className="size-4 text-muted-foreground" />
         }
         title="No members yet"
       >
@@ -218,7 +219,7 @@ export function OrgMemberList({ searchQuery = "" }: { searchQuery?: string }) {
     return (
       <EmptyState
         icon={
-          <Search aria-hidden="true" className="size-4 text-muted-foreground" />
+          <HugeiconsIcon icon={Search} aria-hidden="true" className="size-4 text-muted-foreground" />
         }
         title="No members found"
       >
@@ -317,20 +318,22 @@ const MemberRow = memo(function MemberRow({
 
         {canManage ? (
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                aria-label={`Member actions for ${member.name}`}
-                className="size-7 rounded-[9px]"
-                disabled={isPending}
-                size="sm"
-                type="button"
-                variant="ghost"
-              >
-                <MoreHorizontal
-                  aria-hidden="true"
-                  className="size-3.5 text-muted-foreground"
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  aria-label={`Member actions for ${member.name}`}
+                  className="size-7 rounded-[9px]"
+                  disabled={isPending}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
                 />
-              </Button>
+              }
+            >
+              <HugeiconsIcon icon={MoreHorizontal}
+                aria-hidden="true"
+                className="size-3.5 text-muted-foreground"
+              />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
@@ -338,7 +341,7 @@ const MemberRow = memo(function MemberRow({
                 onClick={() => onRemove(member.userId)}
                 variant="destructive"
               >
-                <UserRoundX aria-hidden="true" className="size-4" />
+                <HugeiconsIcon icon={UserRoundX} aria-hidden="true" className="size-4" />
                 Remove member
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -372,7 +375,7 @@ const InvitationRow = memo(function InvitationRow({
     >
       <div className="flex min-w-0 items-center gap-2.5">
         <IconTile>
-          <Mail aria-hidden="true" className="size-4 text-muted-foreground" />
+          <HugeiconsIcon icon={Mail} aria-hidden="true" className="size-4 text-muted-foreground" />
         </IconTile>
         <div className="min-w-0">
           <p className="truncate text-foreground text-sm">
@@ -391,20 +394,22 @@ const InvitationRow = memo(function InvitationRow({
 
         {canManage ? (
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                aria-label={`Invitation actions for ${invitation.emailAddress}`}
-                className="size-7 rounded-[9px]"
-                disabled={isPending}
-                size="sm"
-                type="button"
-                variant="ghost"
-              >
-                <MoreHorizontal
-                  aria-hidden="true"
-                  className="size-3.5 text-muted-foreground"
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  aria-label={`Invitation actions for ${invitation.emailAddress}`}
+                  className="size-7 rounded-[9px]"
+                  disabled={isPending}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
                 />
-              </Button>
+              }
+            >
+              <HugeiconsIcon icon={MoreHorizontal}
+                aria-hidden="true"
+                className="size-3.5 text-muted-foreground"
+              />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
@@ -412,7 +417,7 @@ const InvitationRow = memo(function InvitationRow({
                 onClick={() => onRevoke(invitation.id)}
                 variant="destructive"
               >
-                <Trash2 aria-hidden="true" className="size-4" />
+                <HugeiconsIcon icon={Trash2} aria-hidden="true" className="size-4" />
                 Revoke invitation
               </DropdownMenuItem>
             </DropdownMenuContent>

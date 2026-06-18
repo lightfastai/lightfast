@@ -4,13 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import {
-  AtSign,
-  Hash,
-  Link2,
-  Signal as SignalIcon,
-  Sparkles,
-  Tag,
-} from "lucide-react";
+  AtSignIcon as AtSign,
+  HashIcon as Hash,
+  Link02Icon as Link2,
+  SignalIcon,
+  SparklesIcon as Sparkles,
+  Tag01Icon as Tag,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { ReactNode } from "react";
 import { signalDetailQueryOptions } from "~/signals/signals-queries";
 import {
@@ -84,7 +85,7 @@ function PersonSignalLink({
       search={{ signal: signalId }}
       to="/$slug/signals"
     >
-      <SignalIcon
+      <HugeiconsIcon icon={SignalIcon}
         aria-hidden="true"
         className="size-3.5 text-muted-foreground"
       />
@@ -143,7 +144,7 @@ export function PeopleDetailContent({
             type="button"
             variant="ghost"
           >
-            <Link2 aria-hidden="true" className="size-4" />
+            <HugeiconsIcon icon={Link2} aria-hidden="true" className="size-4" />
           </Button>
           {closeSlot}
         </div>
@@ -155,18 +156,18 @@ export function PeopleDetailContent({
         </h2>
 
         <div className="flex flex-col">
-          <PropertyRow icon={<AtSign className={iconClass} />} label="Provider">
+          <PropertyRow icon={<HugeiconsIcon icon={AtSign} className={iconClass} />} label="Provider">
             {getPersonProviderLabel(person.identityProvider)}
           </PropertyRow>
-          <PropertyRow icon={<Tag className={iconClass} />} label="Type">
+          <PropertyRow icon={<HugeiconsIcon icon={Tag} className={iconClass} />} label="Type">
             {getPersonTypeLabel(person.identityType)}
           </PropertyRow>
-          <PropertyRow icon={<Hash className={iconClass} />} label="Identity">
+          <PropertyRow icon={<HugeiconsIcon icon={Hash} className={iconClass} />} label="Identity">
             <span className="font-mono">{person.identityValue}</span>
           </PropertyRow>
           {person.normalizedIdentityValue === person.identityValue ? null : (
             <PropertyRow
-              icon={<Hash className={iconClass} />}
+              icon={<HugeiconsIcon icon={Hash} className={iconClass} />}
               label="Normalized"
             >
               <span className="font-mono text-muted-foreground">
@@ -174,12 +175,12 @@ export function PeopleDetailContent({
               </span>
             </PropertyRow>
           )}
-          <PropertyRow icon={<SignalIcon className={iconClass} />} label="Seen">
+          <PropertyRow icon={<HugeiconsIcon icon={SignalIcon} className={iconClass} />} label="Seen">
             {person.seenCount} {person.seenCount === 1 ? "signal" : "signals"}
           </PropertyRow>
           {typeof metadata.confidence === "number" ? (
             <PropertyRow
-              icon={<Sparkles className={iconClass} />}
+              icon={<HugeiconsIcon icon={Sparkles} className={iconClass} />}
               label="Confidence"
             >
               {Math.round(metadata.confidence * 100)}%

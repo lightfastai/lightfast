@@ -13,7 +13,7 @@ export function ProfileDataLoading() {
 
       <SettingsGroup title="Profile">
         <SettingRow label="Avatar">
-          <Skeleton className="size-7 rounded-full" />
+          <Skeleton className="size-7 rounded-md" />
         </SettingRow>
         <SettingRow
           description="Please enter your full name, or a display name you are comfortable with."

@@ -13,7 +13,12 @@ import {
 import { Button } from "@repo/ui/components/ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Loader2, Play, Trash } from "lucide-react";
+import {
+  Loading03Icon as Loader2,
+  PlayIcon as Play,
+  Delete02Icon as Trash,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 import { useTRPC } from "~/trpc/react";
 import {
@@ -118,9 +123,9 @@ function AutomationActionsInner({
           variant="secondary"
         >
           {runNowMutation.isPending ? (
-            <Loader2 className="size-4 animate-spin" />
+            <HugeiconsIcon icon={Loader2} className="size-4 animate-spin" />
           ) : (
-            <Play className="size-4" />
+            <HugeiconsIcon icon={Play} className="size-4" />
           )}
           Run now
         </Button>
@@ -134,9 +139,9 @@ function AutomationActionsInner({
             variant="secondary"
           >
             {deleteMutation.isPending ? (
-              <Loader2 className="size-4 animate-spin" />
+              <HugeiconsIcon icon={Loader2} className="size-4 animate-spin" />
             ) : (
-              <Trash className="size-4" />
+              <HugeiconsIcon icon={Trash} className="size-4" />
             )}
             Delete
           </Button>
@@ -160,7 +165,7 @@ function AutomationActionsInner({
                 }}
               >
                 {deleteMutation.isPending ? (
-                  <Loader2 className="size-4 animate-spin" />
+                  <HugeiconsIcon icon={Loader2} className="size-4 animate-spin" />
                 ) : null}
                 Delete
               </AlertDialogAction>

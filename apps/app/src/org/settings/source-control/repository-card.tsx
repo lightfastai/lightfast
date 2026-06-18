@@ -5,15 +5,16 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@repo/ui/components/ui/dropdown-menu";
+} from "@repo/ui-v2/components/ui/dropdown-menu";
 import { cn } from "@repo/ui/lib/utils";
 import {
-  ChevronDown,
-  ChevronRight,
-  CornerDownRight,
-  GitBranch,
-  MoreHorizontal,
-} from "lucide-react";
+  ChevronDownIcon as ChevronDown,
+  ChevronRightIcon as ChevronRight,
+  CornerDownRightIcon as CornerDownRight,
+  GitBranchIcon as GitBranch,
+  MoreHorizontalIcon as MoreHorizontal,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { type ReactNode, useState } from "react";
 import type { SourceControlRepositoryRow } from "./source-control-queries";
 
@@ -92,7 +93,7 @@ function WatchedPathsTree({ summary }: { summary: WatchedPathsSummary }) {
             className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground"
             key={glob}
           >
-            <CornerDownRight aria-hidden="true" className="size-3 opacity-50" />
+            <HugeiconsIcon icon={CornerDownRight} aria-hidden="true" className="size-3 opacity-50" />
             {glob}
           </li>
         ))}
@@ -102,7 +103,7 @@ function WatchedPathsTree({ summary }: { summary: WatchedPathsSummary }) {
 
   return (
     <li className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-      <CornerDownRight aria-hidden="true" className="size-3 opacity-50" />
+      <HugeiconsIcon icon={CornerDownRight} aria-hidden="true" className="size-3 opacity-50" />
       {summary.kind === "all" ? "Watching all paths" : "No paths watched"}
     </li>
   );
@@ -122,7 +123,7 @@ export function RepositoryCard({
       <div className="flex items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-2.5">
           <IconTile>
-            <GitBranch aria-hidden="true" className="size-4 text-foreground" />
+            <HugeiconsIcon icon={GitBranch} aria-hidden="true" className="size-4 text-foreground" />
           </IconTile>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -144,9 +145,9 @@ export function RepositoryCard({
               type="button"
             >
               {expanded ? (
-                <ChevronDown aria-hidden="true" className="size-3" />
+                <HugeiconsIcon icon={ChevronDown} aria-hidden="true" className="size-3" />
               ) : (
-                <ChevronRight aria-hidden="true" className="size-3" />
+                <HugeiconsIcon icon={ChevronRight} aria-hidden="true" className="size-3" />
               )}
               {watchedPathsLabel(summary)}
             </button>
@@ -156,25 +157,34 @@ export function RepositoryCard({
         <div className="flex shrink-0 items-center gap-2">
           <SyncStatusBadge status={repository.syncStatus} />
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                aria-label={`Repository actions for ${repository.fullName}`}
-                className="size-7 rounded-[9px]"
-                size="sm"
-                type="button"
-                variant="ghost"
-              >
-                <MoreHorizontal
-                  aria-hidden="true"
-                  className="size-3.5 text-muted-foreground"
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  aria-label={`Repository actions for ${repository.fullName}`}
+                  className="size-7 rounded-[9px]"
+                  size="sm"
+                  type="button"
+                  variant="ghost"
                 />
-              </Button>
+              }
+            >
+              <HugeiconsIcon icon={MoreHorizontal}
+                aria-hidden="true"
+                className="size-3.5 text-muted-foreground"
+              />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <a href={repository.webUrl} rel="noreferrer" target="_blank">
-                  Open on GitHub
-                </a>
+              <DropdownMenuItem
+                render={
+                  <a
+                    aria-label={`Open ${repository.fullName} on GitHub`}
+                    href={repository.webUrl}
+                    rel="noreferrer"
+                    target="_blank"
+                  />
+                }
+              >
+                Open on GitHub
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

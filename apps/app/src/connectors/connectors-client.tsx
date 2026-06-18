@@ -16,7 +16,15 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@repo/ui/components/ui/dropdown-menu";
+} from "@repo/ui-v2/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui-v2/components/ui/select";
+import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
 import { Input } from "@repo/ui/components/ui/input";
 import { Switch } from "@repo/ui/components/ui/switch";
 import {
@@ -27,16 +35,17 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowUpRight,
-  Loader2,
-  MoreHorizontal,
-  PanelRight,
-  RefreshCcw,
-  Search,
-} from "lucide-react";
+  ArrowUpRightIcon as ArrowUpRight,
+  Loading03Icon as Loader2,
+  MoreHorizontalIcon as MoreHorizontal,
+  SidebarRightIcon as PanelRight,
+  ReloadIcon as RefreshCcw,
+  Search01Icon as Search,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
-import { LfSelect } from "~/components/lf-select";
 import { WorkspaceSurface } from "~/components/workspace-surface";
+import { ConnectorOwnerScopeTabs } from "./connector-owner-scope-tabs";
 import { ConnectorDetailSheet } from "./connector-detail-sheet";
 import { ConnectorIcon } from "./connector-icons";
 import {
@@ -191,6 +200,9 @@ export function ConnectorsClient({
           panelId: "personal-connectors-panel",
           title: "Personal connectors",
         };
+  const setOwnerScope = (scope: ConnectorOwnerScope) => {
+    setSearchParams({ scope });
+  };
 
   function connect(row: TeamConnectorCatalogRow) {
     if (isConnectableProvider(row.provider)) {
@@ -257,9 +269,12 @@ export function ConnectorsClient({
   return (
     <WorkspaceSurface className="max-w-3xl px-6 py-10">
       <header>
-        <h1 className="font-semibold text-2xl text-foreground tracking-[-0.02em]">
-          Connectors
-        </h1>
+        <div className="flex items-center gap-2">
+          <SidebarTrigger className="size-8 rounded-lg border border-border/70 bg-muted/30 p-0 text-muted-foreground hover:bg-muted/60 hover:text-foreground md:hidden" />
+          <h1 className="font-semibold text-2xl text-foreground tracking-[-0.02em]">
+            Connectors
+          </h1>
+        </div>
         <p className="mt-2 max-w-xl text-muted-foreground text-sm">
           Allow Lightfast to reference other apps for more context and actions
           through MCP connectors.
@@ -275,34 +290,46 @@ export function ConnectorsClient({
         </div>
       )}
 
-      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            aria-label="Search connectors"
-            className="pl-8"
-            onChange={(event) => setQuery(event.currentTarget.value)}
-            placeholder="Search connectors"
-            size="lf"
-            value={query}
-            variant="lf"
-          />
-        </div>
-        <LfSelect
-          align="end"
-          aria-label="Status"
-          className="shrink-0 sm:w-44"
-          onValueChange={(value) =>
-            setStatusFilter(value as ConnectorStatusFilter)
-          }
-          options={[
-            { label: "All statuses", value: "all" },
-            { label: "Connected", value: "connected" },
-            { label: "Available", value: "available" },
-            { label: "Needs reconnect", value: "needs_reconnect" },
-          ]}
-          value={statusFilter}
+      <div
+        className="mt-8 flex flex-col gap-3"
+        data-testid="connectors-actions-row"
+      >
+        <ConnectorOwnerScopeTabs
+          onOwnerScopeChange={setOwnerScope}
+          ownerScope={ownerView}
         />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative min-w-0 flex-1">
+            <HugeiconsIcon icon={Search} className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              aria-label="Search connectors"
+              className="pl-8"
+              onChange={(event) => setQuery(event.currentTarget.value)}
+              placeholder="Search connectors"
+              size="lf"
+              value={query}
+              variant="lf"
+            />
+          </div>
+          <Select
+            onValueChange={(value) => {
+              if (value !== null) {
+                setStatusFilter(value as ConnectorStatusFilter);
+              }
+            }}
+            value={statusFilter}
+          >
+            <SelectTrigger aria-label="Status">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="end">
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="connected">Connected</SelectItem>
+              <SelectItem value="available">Available</SelectItem>
+              <SelectItem value="needs_reconnect">Needs reconnect</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {connectorsQuery.isPending ? (
@@ -538,39 +565,41 @@ function TeamConnectedConnectorCard({
             {status.label}
           </span>
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                aria-label="Connector actions"
-                className="h-6 w-6 rounded-full"
-                size="sm"
-                type="button"
-                variant="ghost"
-              >
-                <MoreHorizontal className="size-3.5 opacity-50" />
-              </Button>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  aria-label="Connector actions"
+                  className="h-6 w-6 rounded-full"
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                />
+              }
+            >
+              <HugeiconsIcon icon={MoreHorizontal} className="size-3.5 opacity-50" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => onViewDetails(row)}>
-                <PanelRight className="size-3.5" />
+              <DropdownMenuItem onClick={() => onViewDetails(row)}>
+                <HugeiconsIcon icon={PanelRight} className="size-3.5" />
                 View details
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 disabled={actionDisabled || refreshing}
-                onSelect={() => onRefreshTools(row)}
+                onClick={() => onRefreshTools(row)}
               >
                 {refreshing ? (
-                  <Loader2 className="size-3.5 animate-spin" />
+                  <HugeiconsIcon icon={Loader2} className="size-3.5 animate-spin" />
                 ) : (
-                  <RefreshCcw className="size-3.5" />
+                  <HugeiconsIcon icon={RefreshCcw} className="size-3.5" />
                 )}
                 Refresh tools
               </DropdownMenuItem>
               <DropdownMenuItem
                 disabled={connectDisabled}
-                onSelect={() => onConnect(row)}
+                onClick={() => onConnect(row)}
               >
-                <ArrowUpRight className="size-3.5" />
+                <HugeiconsIcon icon={ArrowUpRight} className="size-3.5" />
                 Reconnect
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -581,9 +610,10 @@ function TeamConnectedConnectorCard({
                     className={cn(
                       actionDisabled && "cursor-not-allowed opacity-50"
                     )}
-                    onSelect={(event) => {
-                      event.preventDefault();
+                    closeOnClick={!actionDisabled}
+                    onClick={(event) => {
                       if (actionDisabled) {
+                        event.preventDefault();
                         return;
                       }
                       setConfirmOpen(true);
@@ -613,7 +643,7 @@ function TeamConnectedConnectorCard({
             {connection.tools.length}
           </Badge>
           {refreshing && (
-            <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
+            <HugeiconsIcon icon={Loader2} className="size-3.5 animate-spin text-muted-foreground" />
           )}
         </div>
         <div className="mt-3 flex flex-wrap gap-1.5">
@@ -752,7 +782,7 @@ function TeamAvailableConnectorCard({
             variant="outline"
           >
             Connect
-            <ArrowUpRight className="size-3.5" />
+            <HugeiconsIcon icon={ArrowUpRight} className="size-3.5" />
           </Button>
           {showAdminRequired && (
             <p className="text-muted-foreground text-xs">
@@ -818,34 +848,36 @@ function UserConnectedConnectorCard({
             {status.label}
           </span>
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                aria-label="Connector actions"
-                className="h-6 w-6 rounded-full"
-                size="sm"
-                type="button"
-                variant="ghost"
-              >
-                <MoreHorizontal className="size-3.5 opacity-50" />
-              </Button>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  aria-label="Connector actions"
+                  className="h-6 w-6 rounded-full"
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                />
+              }
+            >
+              <HugeiconsIcon icon={MoreHorizontal} className="size-3.5 opacity-50" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => onViewDetails(row)}>
-                <PanelRight className="size-3.5" />
+              <DropdownMenuItem onClick={() => onViewDetails(row)}>
+                <HugeiconsIcon icon={PanelRight} className="size-3.5" />
                 View details
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 disabled={actionDisabled}
-                onSelect={() => onConnect(row)}
+                onClick={() => onConnect(row)}
               >
-                <ArrowUpRight className="size-3.5" />
+                <HugeiconsIcon icon={ArrowUpRight} className="size-3.5" />
                 Reconnect
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 disabled={actionDisabled}
-                onSelect={() => setConfirmOpen(true)}
+                onClick={() => setConfirmOpen(true)}
                 variant="destructive"
               >
                 Disconnect
@@ -948,7 +980,7 @@ function UserAvailableConnectorCard({
           variant="outline"
         >
           Connect
-          <ArrowUpRight className="size-3.5" />
+          <HugeiconsIcon icon={ArrowUpRight} className="size-3.5" />
         </Button>
       </div>
     </section>

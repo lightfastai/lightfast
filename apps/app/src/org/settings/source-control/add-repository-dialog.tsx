@@ -12,7 +12,12 @@ import {
 } from "@repo/ui/components/ui/dialog";
 import { Input } from "@repo/ui/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { GitBranch, Loader2, Search } from "lucide-react";
+import {
+  GitBranchIcon as GitBranch,
+  Loading03Icon as Loader2,
+  Search01Icon as Search,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useMemo, useState } from "react";
 import {
   importSourceControlRepositoryMutationOptions,
@@ -103,7 +108,7 @@ export function AddRepositoryDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div className="relative">
-            <Search
+            <HugeiconsIcon icon={Search}
               aria-hidden="true"
               className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
             />
@@ -130,7 +135,7 @@ export function AddRepositoryDialog({
                       {repository.fullName}
                     </span>
                     <span className="mt-1 flex items-center gap-2 text-muted-foreground text-xs">
-                      <GitBranch aria-hidden="true" className="size-3" />
+                      <HugeiconsIcon icon={GitBranch} aria-hidden="true" className="size-3" />
                       {repository.imported
                         ? "Already added"
                         : selectedRepositoryId === repository.id
@@ -166,7 +171,7 @@ export function AddRepositoryDialog({
             type="button"
           >
             {importRepository.isPending ? (
-              <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+              <HugeiconsIcon icon={Loader2} aria-hidden="true" className="size-4 animate-spin" />
             ) : null}
             Add selected repository
           </Button>

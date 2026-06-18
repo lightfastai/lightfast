@@ -15,16 +15,12 @@ type DecisionsListInput = ServerFunctionData<typeof listDecisions>;
 
 export function useDecisionsListQuery({
   filters,
-  search,
 }: {
   filters: DecisionFilters;
-  search: string;
 }) {
-  const normalizedSearch = search.trim() || undefined;
   const input = {
     limit: DECISIONS_PAGE_SIZE,
     providers: filters.providers.length ? filters.providers : undefined,
-    search: normalizedSearch,
     statuses: filters.statuses.length ? filters.statuses : undefined,
   };
   const queryKey = ["decisions", "list", input] as const;

@@ -6,7 +6,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
-import { ExternalLink } from "lucide-react";
+import {
+  ExternalLinkIcon as ExternalLink,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { SkillGlyph } from "./skill-glyph";
 import { getSkillSourceUrl, SkillMarkdown } from "./skill-markdown";
 import type { Skill } from "./skills-types";
@@ -73,7 +76,7 @@ export function SkillDialog({
               {sourceUrl && (
                 <Button asChild size="lf" variant="outline">
                   <a href={sourceUrl} rel="noopener noreferrer" target="_blank">
-                    <ExternalLink className="size-3.5" />
+                    <HugeiconsIcon icon={ExternalLink} className="size-3.5" />
                     View source
                   </a>
                 </Button>

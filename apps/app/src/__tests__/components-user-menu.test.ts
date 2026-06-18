@@ -10,13 +10,14 @@ function source(path: string) {
 
 describe("TanStack user menu", () => {
   it("uses the extracted sidebar menu instead of Clerk's packaged UserButton", () => {
-    const topbarSource = source("src/components/authenticated-topbar.tsx");
+    const topbarPath = resolve(
+      appRoot,
+      "src/components/authenticated-topbar.tsx"
+    );
     const sidebarSource = source("src/components/app-sidebar.tsx");
     const menuSource = source("src/components/user-menu.tsx");
 
-    expect(topbarSource).not.toContain('from "~/components/user-menu"');
-    expect(topbarSource).not.toContain("<UserMenu />");
-    expect(topbarSource).not.toContain("UserButton");
+    expect(existsSync(topbarPath)).toBe(false);
     expect(sidebarSource).toContain("<SidebarFooter");
     expect(sidebarSource).toContain('import { UserMenu } from "./user-menu";');
     expect(sidebarSource).toContain("<UserMenu />");
@@ -94,8 +95,12 @@ describe("TanStack user menu", () => {
     );
 
     expect(dropdownSource).toContain('size?: "sm" | "md"');
-    expect(dropdownSource).toContain('sm: "w-[220px] space-y-1"');
-    expect(dropdownSource).toContain('md: "w-[280px] space-y-1"');
+    expect(dropdownSource).toContain(
+      'size === "sm" && "w-[220px] space-y-1"'
+    );
+    expect(dropdownSource).toContain(
+      'size === "md" && "w-[280px] space-y-1"'
+    );
     expect(menuSource).toContain(
       '<DropdownMenuContent align="start" side="top" size="sm">'
     );
@@ -115,6 +120,18 @@ describe("TanStack user menu", () => {
     expect(menuSource).toContain('className="h-11 w-full justify-start');
     expect(menuSource).toContain('<Avatar className="size-7');
     expect(menuSource).toContain("{primaryIdentity}");
+  });
+
+  it("keeps the team switcher and user menu trigger avatars the same size", () => {
+    const menuSource = source("src/components/user-menu.tsx");
+    const teamSwitcherSource = source("src/components/team-switcher.tsx");
+
+    expect(menuSource).toMatch(
+      /aria-label="Open user menu"[\s\S]*?<Avatar className="size-7">/
+    );
+    expect(teamSwitcherSource).toContain('<Avatar className="size-7">');
+    expect(teamSwitcherSource).not.toContain('<Avatar className="size-6">');
+    expect(teamSwitcherSource).not.toContain("lg:size-6");
   });
 
   it("keeps identity and settings logic inline in the user menu component", () => {

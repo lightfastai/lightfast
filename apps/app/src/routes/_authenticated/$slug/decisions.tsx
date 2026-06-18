@@ -62,9 +62,6 @@ function DecisionsPage() {
           if ("provider" in updates) {
             next.provider = updates.provider || undefined;
           }
-          if ("q" in updates) {
-            next.q = updates.q || undefined;
-          }
           if ("status" in updates) {
             next.status = updates.status || undefined;
           }

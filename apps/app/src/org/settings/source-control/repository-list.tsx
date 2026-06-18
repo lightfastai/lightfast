@@ -1,10 +1,20 @@
 import { useAuth } from "@clerk/tanstack-react-start";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui-v2/components/ui/select";
 import { useQueryClient } from "@tanstack/react-query";
-import { RefreshCw, Search } from "lucide-react";
+import {
+  ReloadIcon as RefreshCw,
+  Search01Icon as Search,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useMemo, useState } from "react";
-import { LfSelect } from "~/components/lf-select";
 import { AddRepositoryDialog } from "./add-repository-dialog";
 import { RepositoryCard } from "./repository-card";
 import {
@@ -71,7 +81,7 @@ export function RepositoryList({
             type="button"
             variant="ghost"
           >
-            <RefreshCw aria-hidden="true" className="size-3.5 opacity-50" />
+            <HugeiconsIcon icon={RefreshCw} aria-hidden="true" className="size-3.5 opacity-50" />
           </Button>
           <AddRepositoryDialog
             disabled={addDisabled}
@@ -88,7 +98,7 @@ export function RepositoryList({
         <>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative min-w-0 flex-1">
-              <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <HugeiconsIcon icon={Search} className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 aria-label="Search repositories"
                 className="pl-8"
@@ -99,18 +109,23 @@ export function RepositoryList({
                 variant="lf"
               />
             </div>
-            <LfSelect
-              align="end"
-              aria-label="Sync status"
-              className="shrink-0 sm:w-44"
-              onValueChange={(value) => setSyncFilter(value as SyncFilter)}
-              options={[
-                { label: "All statuses", value: "all" },
-                { label: "Enabled", value: "enabled" },
-                { label: "Disabled", value: "disabled" },
-              ]}
+            <Select
+              onValueChange={(value) => {
+                if (value !== null) {
+                  setSyncFilter(value as SyncFilter);
+                }
+              }}
               value={syncFilter}
-            />
+            >
+              <SelectTrigger aria-label="Sync status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align="end">
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="enabled">Enabled</SelectItem>
+                <SelectItem value="disabled">Disabled</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {filteredRepositories.length > 0 ? (

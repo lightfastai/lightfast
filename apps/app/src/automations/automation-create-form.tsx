@@ -20,12 +20,23 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { Textarea } from "@repo/ui/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui-v2/components/ui/select";
+import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, Loader2 } from "lucide-react";
+import {
+  ChevronLeftIcon as ChevronLeft,
+  Loading03Icon as Loader2,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useMemo } from "react";
 import { z } from "zod";
-import { LfSelect } from "~/components/lf-select";
 import { connectorsListQueryOptions } from "~/connectors/connectors-queries";
 import { useTRPC } from "~/trpc/react";
 import { upsertInList } from "./automations-cache";
@@ -190,7 +201,8 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
   return (
     <div className="min-h-full bg-background text-foreground">
       <div className="mx-auto w-full max-w-xl px-6 py-12">
-        <div className="mb-6">
+        <div className="mb-6 flex items-center gap-2">
+          <SidebarTrigger className="size-6 rounded-lg border border-border/70 bg-muted/30 p-0 text-muted-foreground hover:bg-muted/60 hover:text-foreground md:hidden" />
           <Button
             asChild
             className="-ml-1 h-6 gap-1 rounded-lg px-2 font-normal text-muted-foreground text-sm hover:bg-muted/60 hover:text-foreground"
@@ -198,7 +210,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
             variant="ghost"
           >
             <Link params={{ slug }} preload="intent" to="/$slug/automations">
-              <ChevronLeft className="size-3" />
+              <HugeiconsIcon icon={ChevronLeft} className="size-3" />
               Automations
             </Link>
           </Button>
@@ -269,16 +281,27 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
                 Schedule
               </FormLabel>
               <div className="flex flex-wrap items-center gap-2.5">
-                <LfSelect
-                  className="w-36"
-                  onValueChange={(value) =>
-                    form.setValue("scheduleKind", value as ScheduleKind, {
-                      shouldValidate: true,
-                    })
-                  }
-                  options={SCHEDULE_KINDS}
+                <Select
+                  onValueChange={(value) => {
+                    if (value !== null) {
+                      form.setValue("scheduleKind", value as ScheduleKind, {
+                        shouldValidate: true,
+                      });
+                    }
+                  }}
                   value={scheduleKind}
-                />
+                >
+                  <SelectTrigger aria-label="Schedule">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SCHEDULE_KINDS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {scheduleKind === "manual" ? (
                   <p className="text-muted-foreground text-xs">
                     Runs only when triggered - no automatic schedule.
@@ -364,19 +387,30 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
                           <span className="text-muted-foreground text-xs">
                             On
                           </span>
-                          <LfSelect
-                            className="w-36"
-                            onValueChange={(value) =>
-                              form.setValue("dayOfWeek", Number(value), {
-                                shouldValidate: true,
-                              })
-                            }
-                            options={WEEKDAY_OPTIONS.map((day) => ({
-                              label: day.label,
-                              value: String(day.value),
-                            }))}
+                          <Select
+                            onValueChange={(value) => {
+                              if (value !== null) {
+                                form.setValue("dayOfWeek", Number(value), {
+                                  shouldValidate: true,
+                                });
+                              }
+                            }}
                             value={String(dayOfWeek)}
-                          />
+                          >
+                            <SelectTrigger aria-label="Day of week">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {WEEKDAY_OPTIONS.map((day) => (
+                                <SelectItem
+                                  key={day.value}
+                                  value={String(day.value)}
+                                >
+                                  {day.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <span className="text-muted-foreground text-xs">
                             at
                           </span>
@@ -401,14 +435,27 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
                 <FormLabel className="font-normal text-muted-foreground text-sm">
                   Timezone
                 </FormLabel>
-                <LfSelect
-                  className="w-full"
-                  onValueChange={(value) =>
-                    form.setValue("timezone", value, { shouldValidate: true })
-                  }
-                  options={TIMEZONES.map((tz) => ({ label: tz, value: tz }))}
+                <Select
+                  onValueChange={(value) => {
+                    if (value !== null) {
+                      form.setValue("timezone", value, {
+                        shouldValidate: true,
+                      });
+                    }
+                  }}
                   value={timezone}
-                />
+                >
+                  <SelectTrigger aria-label="Timezone">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIMEZONES.map((tz) => (
+                      <SelectItem key={tz} value={tz}>
+                        {tz}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             ) : null}
 
@@ -416,21 +463,31 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
               <FormLabel className="font-normal text-muted-foreground text-sm">
                 Connector
               </FormLabel>
-              <LfSelect
-                aria-label="Connector"
-                className="w-48"
+              <Select
                 onValueChange={(value) => {
-                  const nextProvider =
-                    value === NO_CONNECTOR_VALUE
-                      ? null
-                      : connectableConnectorProviderSchema.parse(value);
-                  form.setValue("connectorProvider", nextProvider, {
-                    shouldValidate: true,
-                  });
+                  if (value !== null) {
+                    const nextProvider =
+                      value === NO_CONNECTOR_VALUE
+                        ? null
+                        : connectableConnectorProviderSchema.parse(value);
+                    form.setValue("connectorProvider", nextProvider, {
+                      shouldValidate: true,
+                    });
+                  }
                 }}
-                options={connectorOptions}
                 value={connectorProvider ?? NO_CONNECTOR_VALUE}
-              />
+              >
+                <SelectTrigger aria-label="Connector">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {connectorOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex items-center justify-end gap-2.5 border-border border-t pt-5">
@@ -446,7 +503,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
               >
                 {createMutation.isPending ? (
                   <>
-                    <Loader2 className="size-3.5 animate-spin" />
+                    <HugeiconsIcon icon={Loader2} className="size-3.5 animate-spin" />
                     Creating
                   </>
                 ) : (

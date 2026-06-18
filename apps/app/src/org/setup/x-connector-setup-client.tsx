@@ -1,6 +1,11 @@
 import { Button } from "@repo/ui/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ArrowUpRight, Loader2 } from "lucide-react";
+import {
+  ArrowUpRightIcon as ArrowUpRight,
+  Loading03Icon as Loader2,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { TeamSwitcherSlot } from "~/components/team-switcher";
 import { ConnectorIcon } from "~/connectors/connector-icons";
 import {
   type ConnectorCatalogRow,
@@ -67,6 +72,7 @@ export function XConnectorSetupClient({ orgSlug }: XConnectorSetupClientProps) {
     return (
       <main className="flex min-h-full flex-1 items-center justify-center px-4 pb-32">
         <section className="w-full max-w-md space-y-3">
+          <TeamSwitcherSlot />
           <h1 className="font-medium font-pp text-2xl text-foreground">
             Connect X
           </h1>
@@ -80,6 +86,7 @@ export function XConnectorSetupClient({ orgSlug }: XConnectorSetupClientProps) {
     return (
       <main className="flex min-h-full flex-1 items-center justify-center px-4 pb-32">
         <section className="w-full max-w-md space-y-3">
+          <TeamSwitcherSlot />
           <h1 className="font-medium font-pp text-2xl text-foreground">
             Connect X
           </h1>
@@ -103,6 +110,7 @@ export function XConnectorSetupClient({ orgSlug }: XConnectorSetupClientProps) {
   return (
     <main className="flex min-h-full flex-1 items-center justify-center px-4 pb-32">
       <section className="w-full max-w-md space-y-5">
+        <TeamSwitcherSlot />
         <div className="w-fit rounded-sm bg-card p-3">
           <ConnectorIcon provider="x" />
         </div>
@@ -156,13 +164,13 @@ export function XConnectorSetupClient({ orgSlug }: XConnectorSetupClientProps) {
         >
           {startConnectMutation.isPending ? (
             <>
-              <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+              <HugeiconsIcon icon={Loader2} className="mr-1.5 h-4 w-4 animate-spin" />
               Connecting...
             </>
           ) : (
             <>
               {actionLabel}
-              <ArrowUpRight aria-hidden="true" className="h-4 w-4" />
+              <HugeiconsIcon icon={ArrowUpRight} aria-hidden="true" className="h-4 w-4" />
             </>
           )}
         </Button>

@@ -12,20 +12,20 @@ import {
   WorkflowSquare07Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
-import { Button } from "@repo/ui/components/ui/button";
+import { Button } from "@repo/ui-v2/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@repo/ui/components/ui/sidebar";
-import { cn } from "@repo/ui/lib/utils";
+} from "@repo/ui-v2/components/ui/sidebar";
 import { DropdownMenuTrigger } from "@repo/ui-v2/components/ui/dropdown-menu";
 import { Link, useLocation } from "@tanstack/react-router";
 import { Suspense } from "react";
@@ -139,28 +139,24 @@ export function AppSidebar({ orgSlug }: { orgSlug: string }) {
         <div className="ml-auto flex items-center gap-1">
           <Button
             aria-label="New chat"
-            asChild
-            className="size-11 rounded-full lg:h-6 lg:w-6"
-            size="sm"
+            className="ml-auto"
+            render={
+              <Link
+                onClick={() => {
+                  if (isMobile) {
+                    setOpenMobile(false);
+                  }
+                }}
+                params={{ slug: orgSlug }}
+                preload={false}
+                to="/$slug/chat"
+              />
+            }
+            size="icon-sm"
             title="New chat"
             variant="ghost"
           >
-            <Link
-              onClick={() => {
-                if (isMobile) {
-                  setOpenMobile(false);
-                }
-              }}
-              params={{ slug: orgSlug }}
-              preload={false}
-              to="/$slug/chat"
-            >
-              <HugeiconsIcon
-                aria-hidden="true"
-                className="size-3.5"
-                icon={MessageCirclePlus}
-              />
-            </Link>
+            <HugeiconsIcon aria-hidden="true" icon={MessageCirclePlus} />
           </Button>
           {isMobile ? (
             <Button
@@ -192,14 +188,10 @@ export function AppSidebar({ orgSlug }: { orgSlug: string }) {
           trigger={<RecentChatsMenuTrigger />}
         />
         {navSections.map((section) => (
-          <SidebarGroup
-            collapsible={Boolean(section.label)}
-            defaultOpen
-            key={section.label ?? "primary"}
-            label={section.label}
-          >
+          <SidebarGroup key={section.label}>
+            <SidebarGroupLabel>{section.label}</SidebarGroupLabel>
             <SidebarGroupContent>
-              <nav aria-label={section.label ?? "Workspace navigation"}>
+              <nav aria-label={section.label}>
                 <SidebarMenu>
                   <NavItems
                     items={section.items}
@@ -221,28 +213,20 @@ export function AppSidebar({ orgSlug }: { orgSlug: string }) {
 
 function RecentChatsMenuTrigger() {
   return (
-    <div className="px-2">
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <DropdownMenuTrigger
-            render={
-              <SidebarMenuButton
-                aria-label="Open recents"
-                className="h-11 rounded-xl text-muted-foreground lg:h-7 [&>svg]:size-3.5"
-                size="sm"
-              />
-            }
-          >
-            <HugeiconsIcon
-              aria-hidden="true"
-              className="size-3.5"
-              icon={Message01Icon}
-            />
-            <span>Recents</span>
-          </DropdownMenuTrigger>
-        </SidebarMenuItem>
-      </SidebarMenu>
-    </div>
+    <SidebarGroup>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenuTrigger
+              render={<SidebarMenuButton aria-label="Open recents" />}
+            >
+              <HugeiconsIcon aria-hidden="true" icon={Message01Icon} />
+              <span>Recents</span>
+            </DropdownMenuTrigger>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
   );
 }
 
@@ -265,34 +249,23 @@ function NavItems({
     return (
       <SidebarMenuItem key={item.title}>
         <SidebarMenuButton
-          asChild
-          className={cn(
-            "h-11 rounded-xl lg:h-7 [&>svg]:size-3.5",
-            isActive
-              ? "text-foreground data-[active=true]:text-foreground"
-              : "text-muted-foreground"
-          )}
           isActive={isActive}
-          size="sm"
-        >
-          <Link
-            aria-current={isActive ? "page" : undefined}
-            onClick={() => {
-              if (isMobile) {
-                setOpenMobile(false);
-              }
-            }}
-            params={{ slug: orgSlug }}
-            preload="intent"
-            to={item.to}
-          >
-            <HugeiconsIcon
-              aria-hidden="true"
-              className="size-3.5"
-              icon={icon}
+          render={
+            <Link
+              aria-current={isActive ? "page" : undefined}
+              onClick={() => {
+                if (isMobile) {
+                  setOpenMobile(false);
+                }
+              }}
+              params={{ slug: orgSlug }}
+              preload="intent"
+              to={item.to}
             />
-            <span>{item.title}</span>
-          </Link>
+          }
+        >
+          <HugeiconsIcon aria-hidden="true" icon={icon} />
+          <span>{item.title}</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
     );

@@ -21,7 +21,10 @@ import type {
   BillingStatementResource,
 } from "@vendor/clerk";
 import { formatUtcCalendarDate as formatDate } from "@vendor/lib/time";
-import { CreditCard } from "lucide-react";
+import {
+  CreditCardIcon as CreditCard,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { memo } from "react";
 
 type BillingSubscription =
@@ -108,7 +111,7 @@ export const PaymentSection = memo(function PaymentSection({
       <div>
         <h3 className="font-semibold text-foreground text-lg">Payment</h3>
         <div className="mt-5 flex items-center gap-3 text-sm">
-          <CreditCard className="size-4 text-muted-foreground" />
+          <HugeiconsIcon icon={CreditCard} className="size-4 text-muted-foreground" />
           {isLoading ? (
             <span className="text-muted-foreground">
               Loading payment method

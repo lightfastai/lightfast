@@ -3,13 +3,17 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
+import {
+  Loading03Icon as Loader2,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { type FormEvent, useRef, useState } from "react";
 import {
   createTeamIdempotencyKey,
   normalizeTeamSlug,
 } from "~/account/team-name";
 import { useOrganizationList } from "~/compat/clerk";
+import { TeamSwitcherSlot } from "~/components/team-switcher";
 import {
   createOrganizationMutationOptions,
   organizationQueryKeys,
@@ -19,6 +23,7 @@ export function CreateTeamClient() {
   return (
     <main className="flex flex-1 items-center justify-center px-4 pb-32">
       <div className="w-full max-w-md space-y-4">
+        <TeamSwitcherSlot />
         <div className="w-fit rounded-sm bg-card p-3">
           <Icons.logoShort className="h-5 w-5 text-foreground" />
         </div>
@@ -98,7 +103,7 @@ function TeamNameForm() {
       <Button className="w-full" disabled={mutation.isPending} type="submit">
         {mutation.isPending ? (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <HugeiconsIcon icon={Loader2} className="mr-2 h-4 w-4 animate-spin" />
             Creating...
           </>
         ) : (

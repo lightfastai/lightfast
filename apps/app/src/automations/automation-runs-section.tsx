@@ -1,7 +1,11 @@
 import type { AppRouterOutputs } from "@api/app";
 import { Button } from "@repo/ui/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, RefreshCcw } from "lucide-react";
+import {
+  Loading03Icon as Loader2,
+  ReloadIcon as RefreshCcw,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useMemo } from "react";
 import { useTRPC } from "~/trpc/react";
 import { AutomationRunDetailSheet } from "./automation-run-detail-sheet";
@@ -46,7 +50,7 @@ export function AutomationRunsSection({
   if (runsQuery.isPending) {
     return (
       <p className="inline-flex items-center gap-2 text-muted-foreground text-sm">
-        <Loader2 className="size-3.5 animate-spin" />
+        <HugeiconsIcon icon={Loader2} className="size-3.5 animate-spin" />
         Loading
       </p>
     );
@@ -63,7 +67,7 @@ export function AutomationRunsSection({
           type="button"
           variant="secondary"
         >
-          <RefreshCcw className="size-3.5" />
+          <HugeiconsIcon icon={RefreshCcw} className="size-3.5" />
           Refresh
         </Button>
       </div>

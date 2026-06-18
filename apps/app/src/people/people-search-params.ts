@@ -6,7 +6,6 @@ import {
 } from "./people-model";
 
 export interface PeopleSearch {
-  peopleQuery?: string;
   person?: string;
   provider?: string;
   type?: string;
@@ -14,7 +13,6 @@ export interface PeopleSearch {
 }
 
 export interface NormalizedPeopleSearch {
-  peopleQuery: string;
   person: string | null;
   provider: string;
   type: string;
@@ -33,7 +31,6 @@ export function normalizePeopleSearch(
   search: Record<string, unknown>
 ): NormalizedPeopleSearch {
   return {
-    peopleQuery: stringSearchParam(search.peopleQuery),
     person: nullableStringSearchParam(search.person),
     provider: stringSearchParam(search.provider),
     type: stringSearchParam(search.type),
@@ -46,7 +43,6 @@ export function validatePeopleSearch(
 ): PeopleSearch {
   const normalized = normalizePeopleSearch(search);
   return {
-    ...(normalized.peopleQuery ? { peopleQuery: normalized.peopleQuery } : {}),
     ...(normalized.person ? { person: normalized.person } : {}),
     ...(normalized.provider ? { provider: normalized.provider } : {}),
     ...(normalized.type ? { type: normalized.type } : {}),

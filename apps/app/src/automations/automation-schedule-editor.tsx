@@ -11,10 +11,19 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@repo/ui/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui-v2/components/ui/select";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown } from "lucide-react";
+import {
+  ChevronDownIcon as ChevronDown,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
-import { LfSelect } from "~/components/lf-select";
 import { useTRPC } from "~/trpc/react";
 import { automationUpdateMutationOptions } from "./automations-cache";
 import { RailRow } from "./detail-sections";
@@ -199,7 +208,7 @@ export function AutomationScheduleEditor({
           <PopoverTrigger asChild>
             <Button size="lf" type="button" variant="secondary">
               {repeatsValue}
-              <ChevronDown className="size-3.5 text-muted-foreground" />
+              <HugeiconsIcon icon={ChevronDown} className="size-3.5 text-muted-foreground" />
             </Button>
           </PopoverTrigger>
         </RailRow>
@@ -207,12 +216,25 @@ export function AutomationScheduleEditor({
           align="end"
           className="w-56 space-y-1 rounded-[13px] p-[5px]"
         >
-          <LfSelect
-            className="w-full"
-            onValueChange={handleKindChange}
-            options={SCHEDULE_KINDS}
+          <Select
+            onValueChange={(value) => {
+              if (value !== null) {
+                handleKindChange(value);
+              }
+            }}
             value={kind}
-          />
+          >
+            <SelectTrigger aria-label="Schedule kind">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SCHEDULE_KINDS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {kind === "hourly" ? (
             <div className="flex items-center gap-2.5">
@@ -233,15 +255,25 @@ export function AutomationScheduleEditor({
           ) : null}
 
           {kind === "weekly" ? (
-            <LfSelect
-              className="w-full"
-              onValueChange={handleDayChange}
-              options={WEEKDAY_OPTIONS.map((day) => ({
-                label: day.label,
-                value: String(day.value),
-              }))}
+            <Select
+              onValueChange={(value) => {
+                if (value !== null) {
+                  handleDayChange(value);
+                }
+              }}
               value={String(dayOfWeek)}
-            />
+            >
+              <SelectTrigger aria-label="Day of week">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {WEEKDAY_OPTIONS.map((day) => (
+                  <SelectItem key={day.value} value={String(day.value)}>
+                    {day.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           ) : null}
 
           {kind === "daily" || kind === "weekdays" || kind === "weekly" ? (

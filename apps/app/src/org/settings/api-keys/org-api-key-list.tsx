@@ -23,18 +23,19 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@repo/ui/components/ui/dropdown-menu";
+} from "@repo/ui-v2/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import {
-  Check,
-  Copy,
-  Key,
-  MoreHorizontal,
-  RotateCw,
-  ShieldOff,
-  Trash2,
-} from "lucide-react";
+  Tick02Icon as Check,
+  Copy01Icon as Copy,
+  Key01Icon as Key,
+  MoreHorizontalIcon as MoreHorizontal,
+  RotateClockwiseIcon as RotateCw,
+  ShieldBanIcon as ShieldOff,
+  Delete02Icon as Trash2,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { memo, useCallback, useState } from "react";
 import type { OrgApiKey } from "./org-api-key-cache";
 import { useOrgApiKeyListActions } from "./org-api-key-list-actions";
@@ -161,7 +162,7 @@ export function OrgApiKeyList() {
       {keys.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-md border border-border/50 py-16 text-center">
           <div className="mb-4 rounded-full bg-muted/20 p-3">
-            <Key className="h-6 w-6 text-muted-foreground" />
+            <HugeiconsIcon icon={Key} className="h-6 w-6 text-muted-foreground" />
           </div>
           <p className="font-semibold text-sm">No API keys yet</p>
           <p className="mt-1 max-w-sm text-muted-foreground text-sm">
@@ -261,9 +262,9 @@ export function OrgApiKeyList() {
                 variant="ghost"
               >
                 {copiedRotatedKey ? (
-                  <Check className="h-4 w-4 text-green-500" />
+                  <HugeiconsIcon icon={Check} className="h-4 w-4 text-green-500" />
                 ) : (
-                  <Copy className="h-4 w-4" />
+                  <HugeiconsIcon icon={Copy} className="h-4 w-4" />
                 )}
               </Button>
             </div>
@@ -337,17 +338,19 @@ const OrgApiKeyRow = memo(function OrgApiKeyRow({
 
       {canManageApiKeys ? (
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              className="text-muted-foreground hover:text-foreground"
-              disabled={isPending}
-              onClick={(e) => e.stopPropagation()}
-              size="icon-sm"
-              variant="ghost"
-            >
-              <MoreHorizontal className="size-3.5" />
-              <span className="sr-only">Actions</span>
-            </Button>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                className="text-muted-foreground hover:text-foreground"
+                disabled={isPending}
+                onClick={(e) => e.stopPropagation()}
+                size="icon-sm"
+                variant="ghost"
+              />
+            }
+          >
+            <HugeiconsIcon icon={MoreHorizontal} className="size-3.5" />
+            <span className="sr-only">Actions</span>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="space-y-1">
             {isActive && (
@@ -355,7 +358,7 @@ const OrgApiKeyRow = memo(function OrgApiKeyRow({
                 className="cursor-pointer rounded-xl px-2"
                 onClick={() => onRequestRevoke(keyItem.keyId, keyName)}
               >
-                <ShieldOff />
+                <HugeiconsIcon icon={ShieldOff} />
                 Revoke
               </DropdownMenuItem>
             )}
@@ -364,7 +367,7 @@ const OrgApiKeyRow = memo(function OrgApiKeyRow({
                 className="cursor-pointer rounded-xl px-2"
                 onClick={() => onRequestRotate(keyItem.keyId, keyName)}
               >
-                <RotateCw />
+                <HugeiconsIcon icon={RotateCw} />
                 Rotate
               </DropdownMenuItem>
             )}
@@ -373,7 +376,7 @@ const OrgApiKeyRow = memo(function OrgApiKeyRow({
               onClick={() => onRequestDelete(keyItem.keyId, keyName)}
               variant="destructive"
             >
-              <Trash2 />
+              <HugeiconsIcon icon={Trash2} />
               Delete
             </DropdownMenuItem>
           </DropdownMenuContent>

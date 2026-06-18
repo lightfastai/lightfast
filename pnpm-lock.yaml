@@ -805,9 +805,6 @@ importers:
       '@vercel/microfrontends':
         specifier: ^2.3.2
         version: 2.3.2(patch_hash=dfd1e0948197c7c01d7901af510e6d7d508a91d95d28b530932e16f8cd03f658)(@vercel/analytics@2.0.1(next@16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6))(@vercel/speed-insights@2.0.0(next@16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6))(next@16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vite@8.0.16(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
-      lucide-react:
-        specifier: 'catalog:'
-        version: 1.8.0(react@19.2.6)
       react:
         specifier: ^19.2.6
         version: 19.2.6

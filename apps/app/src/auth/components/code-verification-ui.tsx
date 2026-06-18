@@ -5,7 +5,11 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@repo/ui/components/ui/input-otp";
-import { AlertCircle, ArrowLeft } from "lucide-react";
+import {
+  AlertCircleIcon as AlertCircle,
+  ArrowLeftIcon as ArrowLeft,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 interface CodeVerificationUIProps {
   code: string;
@@ -95,7 +99,7 @@ export function CodeVerificationUI({
               className="flex items-center gap-2 text-destructive text-sm"
               id="verification-code-error"
             >
-              <AlertCircle className="h-4 w-4" />
+              <HugeiconsIcon icon={AlertCircle} className="h-4 w-4" />
               <span>{inlineError}</span>
             </div>
           )}
@@ -115,7 +119,7 @@ export function CodeVerificationUI({
           size="lg"
           variant="link-blue"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <HugeiconsIcon icon={ArrowLeft} className="h-4 w-4" />
           Back
         </Button>
 

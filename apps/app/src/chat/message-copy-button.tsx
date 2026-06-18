@@ -1,6 +1,10 @@
 import { Button } from "@repo/ui/components/ui/button";
 import type { UIMessage } from "@vendor/ai";
-import { Check, Copy } from "lucide-react";
+import {
+  Tick02Icon as Check,
+  Copy01Icon as Copy,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useRef, useState } from "react";
 
 export function extractMessageText(message: UIMessage): string {
@@ -52,9 +56,9 @@ export function MessageCopyButton({ text }: { text: string }) {
       variant="ghost"
     >
       {copied ? (
-        <Check className="size-3.5" />
+        <HugeiconsIcon icon={Check} className="size-3.5" />
       ) : (
-        <Copy className="size-3.5 opacity-50" />
+        <HugeiconsIcon icon={Copy} className="size-3.5 opacity-50" />
       )}
     </Button>
   );

@@ -1,18 +1,15 @@
 import type { OrgSetupRequirement } from "@repo/app-setup-contract";
 import { Button } from "@repo/ui/components/ui/button";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import {
   SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
-} from "@repo/ui/components/ui/sidebar";
-import { Skeleton } from "@repo/ui/components/ui/skeleton";
+} from "@repo/ui-v2/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
 import { Link, Navigate, Outlet, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth, useOrganizationList } from "~/compat/clerk";
 import { AppSidebar } from "~/components/app-sidebar";
-import { AuthenticatedTopbar } from "~/components/authenticated-topbar";
-import { TeamSwitcherSlot } from "~/components/team-switcher";
 import { organizationBySlugQueryOptions } from "~/organization/organization-queries";
 import {
   getSetupRequirementRedirect,
@@ -20,7 +17,6 @@ import {
   isOrgSetupExemptPath,
   isOrgSetupPath,
 } from "./workspace-route-model";
-import { useWorkspaceTopbarAction } from "./workspace-topbar-actions";
 
 function SetupRequirementNavigate({
   requirement,
@@ -38,7 +34,6 @@ export function WorkspaceRouteShell({ slug }: { slug: string }) {
   const location = useLocation();
   const { orgId } = useAuth();
   const { setActive } = useOrganizationList();
-  const workspaceTopbarAction = useWorkspaceTopbarAction();
   const [activeOrgSync, setActiveOrgSync] = useState<{
     orgId: string;
     status: "error" | "pending" | "synced";
@@ -135,10 +130,6 @@ export function WorkspaceRouteShell({ slug }: { slug: string }) {
   if (isOrgSetupPath(slug, location.pathname)) {
     return (
       <div className="flex h-screen flex-col overflow-hidden bg-background">
-        <AuthenticatedTopbar
-          actions={workspaceTopbarAction}
-          left={<TeamSwitcherSlot />}
-        />
         <main className="min-h-0 flex-1 overflow-y-auto">
           <Outlet />
         </main>
@@ -150,10 +141,6 @@ export function WorkspaceRouteShell({ slug }: { slug: string }) {
     <SidebarProvider className="!h-full !min-h-0 overflow-hidden bg-background">
       <AppSidebar orgSlug={slug} />
       <SidebarInset className="min-h-0 overflow-hidden">
-        <AuthenticatedTopbar
-          actions={workspaceTopbarAction}
-          left={<SidebarTrigger className="size-11 rounded-xl lg:hidden" />}
-        />
         <div className="min-h-0 flex-1 overflow-y-auto">
           <Outlet />
         </div>

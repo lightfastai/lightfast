@@ -1,12 +1,13 @@
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 import {
-  ChevronDown,
-  LoaderCircle,
-  RefreshCw,
-  Signal as SignalIcon,
-  UserRound,
-} from "lucide-react";
+  ChevronDownIcon as ChevronDown,
+  Loading03Icon as LoaderCircle,
+  ReloadIcon as RefreshCw,
+  SignalIcon,
+  UserCircleIcon as UserRound,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { PeopleEmptyState } from "./people-empty-state";
 import {
   formatPersonSignalRef,
@@ -58,7 +59,7 @@ export function PeopleTableView({
           type="button"
           variant="outline"
         >
-          <RefreshCw aria-hidden="true" className="size-3.5" />
+          <HugeiconsIcon icon={RefreshCw} aria-hidden="true" className="size-3.5" />
           Retry
         </Button>
       </div>
@@ -124,12 +125,12 @@ export function PeopleTableView({
               variant="ghost"
             >
               {isFetchingNextPage ? (
-                <LoaderCircle
+                <HugeiconsIcon icon={LoaderCircle}
                   aria-hidden="true"
                   className="size-3.5 animate-spin"
                 />
               ) : (
-                <ChevronDown aria-hidden="true" className="size-3.5" />
+                <HugeiconsIcon icon={ChevronDown} aria-hidden="true" className="size-3.5" />
               )}
               {isFetchingNextPage ? "Loading" : "Load more"}
             </Button>
@@ -143,7 +144,7 @@ export function PeopleTableView({
         </span>
         {isFetching && !isFetchingNextPage ? (
           <span className="flex items-center gap-1 text-muted-foreground/70">
-            <LoaderCircle aria-hidden="true" className="size-3 animate-spin" />
+            <HugeiconsIcon icon={LoaderCircle} aria-hidden="true" className="size-3 animate-spin" />
             Refreshing
           </span>
         ) : null}
@@ -176,7 +177,7 @@ function PeopleTableRow({
       type="button"
     >
       <span className="flex min-w-0 items-center gap-2.5">
-        <UserRound
+        <HugeiconsIcon icon={UserRound}
           aria-hidden="true"
           className="size-3.5 shrink-0 text-muted-foreground/70"
         />
@@ -209,7 +210,7 @@ function PeopleTableRow({
       <span className="flex min-w-0 items-center gap-2">
         {ref ? (
           <span className="inline-flex h-6 items-center gap-1.5 rounded-md border border-border/70 bg-muted/25 px-2 font-mono text-muted-foreground text-xs">
-            <SignalIcon aria-hidden="true" className="size-3" />
+            <HugeiconsIcon icon={SignalIcon} aria-hidden="true" className="size-3" />
             {formatPersonSignalRef(ref)}
           </span>
         ) : (

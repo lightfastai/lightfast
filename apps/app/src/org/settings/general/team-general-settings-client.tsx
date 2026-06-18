@@ -15,7 +15,11 @@ import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Loader2, X } from "lucide-react";
+import {
+  Loading03Icon as Loader2,
+  Cancel01Icon as X,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth, useOrganizationList } from "~/compat/clerk";
 import { SettingRow, SettingsGroup } from "~/components/settings-section";
@@ -286,7 +290,7 @@ export function TeamGeneralSettingsClient({
                         >
                           {isUpdating ? (
                             <>
-                              <Loader2 className="size-3.5 animate-spin" />
+                              <HugeiconsIcon icon={Loader2} className="size-3.5 animate-spin" />
                               Saving
                             </>
                           ) : (
@@ -325,7 +329,7 @@ export function TeamGeneralSettingsClient({
                     onClick={() => removeDomain(domain)}
                     type="button"
                   >
-                    <X className="size-3.5" />
+                    <HugeiconsIcon icon={X} className="size-3.5" />
                   </button>
                 </span>
               ))}
@@ -342,7 +346,7 @@ export function TeamGeneralSettingsClient({
                 value={domainInput}
               />
               {isUpdatingDomains ? (
-                <Loader2
+                <HugeiconsIcon icon={Loader2}
                   aria-label="Saving domains"
                   className="size-3.5 animate-spin text-muted-foreground"
                 />

@@ -12,7 +12,10 @@ import { Switch } from "@repo/ui/components/ui/switch";
 import { Textarea } from "@repo/ui/components/ui/textarea";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
+import {
+  Loading03Icon as Loader2,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { ChangeEvent, FormEvent, KeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { listUserOrganizationsQueryOptions } from "~/organization/organization-queries";
@@ -245,7 +248,7 @@ export function SignalCreateDialog({
         type="submit"
       >
         {createMutation.isPending && (
-          <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
+          <HugeiconsIcon icon={Loader2} aria-hidden="true" className="size-3.5 animate-spin" />
         )}
         {createMutation.isPending ? "Creating" : "Create signal"}
         {!createMutation.isPending && (

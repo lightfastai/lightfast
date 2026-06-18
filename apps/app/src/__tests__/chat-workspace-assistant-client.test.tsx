@@ -79,6 +79,12 @@ vi.mock("@repo/ui-v2/components/ai-elements/conversation", () => ({
   ConversationScrollButton: () => null,
 }));
 
+vi.mock("@repo/ui-v2/components/ui/sidebar", () => ({
+  SidebarTrigger: ({ className }: { className?: string }) => (
+    <button aria-label="Toggle Sidebar" className={className} type="button" />
+  ),
+}));
+
 vi.mock("@tanstack/react-query", () => ({
   useMutation: () => ({
     isPending: false,
@@ -226,7 +232,7 @@ describe("WorkspaceAssistantClient", () => {
       screen
         .getByRole("heading", { name: "Ready when you are." })
         .closest("section")?.className
-    ).toContain("min-h-[calc(100svh-3.5rem)]");
+    ).toContain("min-h-full");
     expect(
       screen
         .getByRole("heading", { name: "Ready when you are." })
@@ -259,6 +265,7 @@ describe("WorkspaceAssistantClient", () => {
     expect(
       screen.queryByText("Lightfast can make mistakes. Check important info.")
     ).toBeNull();
+    expect(screen.getByRole("button", { name: "Toggle Sidebar" })).not.toBeNull();
   });
 
   it("pins the existing chat composer below a bounded scrollable message region", () => {
@@ -277,9 +284,7 @@ describe("WorkspaceAssistantClient", () => {
       />
     );
 
-    expect(container.querySelector("main")?.className).toContain(
-      "h-[calc(100svh-3.5rem)]"
-    );
+    expect(container.querySelector("main")?.className).toContain("h-full");
     expect(container.querySelector("main")?.className).toContain(
       "overflow-hidden"
     );

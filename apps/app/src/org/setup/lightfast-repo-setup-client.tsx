@@ -6,8 +6,13 @@ import {
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
-import { ExternalLink, Loader2 } from "lucide-react";
+import {
+  ExternalLinkIcon as ExternalLink,
+  Loading03Icon as Loader2,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
+import { TeamSwitcherSlot } from "~/components/team-switcher";
 import { useTRPC } from "~/trpc/react";
 
 interface LightfastRepoSetupClientProps {
@@ -58,6 +63,7 @@ export function LightfastRepoSetupClient({
   return (
     <div className="flex min-h-full flex-1 items-center justify-center px-4 pb-32">
       <div className="w-full max-w-md space-y-4">
+        <TeamSwitcherSlot />
         <div className="w-fit rounded-sm bg-card p-3">
           <Icons.logoShort className="h-5 w-5 text-foreground" />
         </div>
@@ -101,7 +107,7 @@ export function LightfastRepoSetupClient({
                   rel="noreferrer noopener"
                   target="_blank"
                 >
-                  <ExternalLink aria-hidden="true" className="h-4 w-4" />
+                  <HugeiconsIcon icon={ExternalLink} aria-hidden="true" className="h-4 w-4" />
                   Open GitHub
                 </a>
               </Button>
@@ -111,7 +117,7 @@ export function LightfastRepoSetupClient({
               >
                 {verifyMutation.isPending ? (
                   <>
-                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                    <HugeiconsIcon icon={Loader2} className="mr-1.5 h-4 w-4 animate-spin" />
                     Verifying...
                   </>
                 ) : (

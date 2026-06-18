@@ -17,7 +17,12 @@ import {
   PromptInputTools,
 } from "@repo/ui-v2/components/ai-elements/prompt-input";
 import type { ChatStatus } from "@vendor/ai";
-import { ArrowUp, PencilLine, Plus } from "lucide-react";
+import {
+  ArrowUpIcon as ArrowUp,
+  PencilEdit02Icon as PencilLine,
+  Add01Icon as Plus,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { ReactNode } from "react";
 import { memo, useEffect, useState } from "react";
 
@@ -87,7 +92,7 @@ export const ChatComposer = memo(function ChatComposer({
       onStop={stop}
       status={effectiveStatus}
     >
-      {effectiveStatus === "ready" ? <ArrowUp className="size-4" /> : undefined}
+      {effectiveStatus === "ready" ? <HugeiconsIcon icon={ArrowUp} className="size-4" /> : undefined}
     </PromptInputSubmit>
   );
   const writeModeToggle = (
@@ -102,7 +107,7 @@ export const ChatComposer = memo(function ChatComposer({
           size="sm"
           type="button"
         >
-          <PencilLine className="size-3.5" />
+          <HugeiconsIcon icon={PencilLine} className="size-3.5" />
         </Toggle>
       </TooltipTrigger>
       <TooltipContent>Allow Linear writes for this turn</TooltipContent>
@@ -174,7 +179,7 @@ function AddContextButton() {
       disabled
       title="Add context"
     >
-      <Plus className="size-4" />
+      <HugeiconsIcon icon={Plus} className="size-4" />
     </PromptInputButton>
   );
 }

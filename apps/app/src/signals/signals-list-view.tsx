@@ -1,7 +1,13 @@
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ChevronDown, ChevronRight, Loader2, RefreshCw } from "lucide-react";
+import {
+  ChevronDownIcon as ChevronDown,
+  ChevronRightIcon as ChevronRight,
+  Loading03Icon as Loader2,
+  ReloadIcon as RefreshCw,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { ReactNode } from "react";
 import { useMemo, useRef } from "react";
 import { SignalBadge } from "./signals-badge";
@@ -156,7 +162,7 @@ export function SignalsListView({
                     type="button"
                     variant="outline"
                   >
-                    <RefreshCw
+                    <HugeiconsIcon icon={RefreshCw}
                       aria-hidden="true"
                       className="size-3.5"
                       data-testid="signals-list-section-retry-icon"
@@ -207,13 +213,13 @@ function SignalListSectionHeader({
         type="button"
       >
         {collapsed ? (
-          <ChevronRight
+          <HugeiconsIcon icon={ChevronRight}
             aria-hidden="true"
             className="size-3.5 shrink-0 text-muted-foreground"
             data-testid="signals-list-section-toggle-icon"
           />
         ) : (
-          <ChevronDown
+          <HugeiconsIcon icon={ChevronDown}
             aria-hidden="true"
             className="size-3.5 shrink-0 text-muted-foreground"
             data-testid="signals-list-section-toggle-icon"
@@ -227,7 +233,7 @@ function SignalListSectionHeader({
         </span>
         {section.isFetching ? (
           <span className="ml-auto flex items-center gap-1 text-muted-foreground/70 text-xs">
-            <Loader2 aria-hidden="true" className="size-3 animate-spin" />
+            <HugeiconsIcon icon={Loader2} aria-hidden="true" className="size-3 animate-spin" />
             Refreshing
           </span>
         ) : null}

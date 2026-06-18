@@ -1,5 +1,8 @@
 import { IsoFigure, signalsScene } from "@repo/ui/components/iso-figure";
-import { ScrollText } from "lucide-react";
+import {
+  ScrollIcon as ScrollText,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { ReactNode } from "react";
 
 export function DecisionsEmptyState({
@@ -46,7 +49,7 @@ export function DecisionsEmptyState({
     <div className="pt-1">
       <div className="flex min-h-24 flex-col items-center justify-center rounded-lg border border-border/70 bg-background px-6 text-center">
         <div className="mb-2 flex size-8 items-center justify-center rounded-full border border-border/70 bg-muted/20">
-          <ScrollText className="size-3.5 text-muted-foreground" />
+          <HugeiconsIcon icon={ScrollText} className="size-3.5 text-muted-foreground" />
         </div>
         <p className="font-medium text-sm">{title}</p>
         <p className="mt-1 max-w-sm text-muted-foreground text-sm">

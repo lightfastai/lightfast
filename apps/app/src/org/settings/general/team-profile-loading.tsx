@@ -7,7 +7,7 @@ export function TeamProfileLoading() {
       <div className="mt-2 divide-y divide-border/55">
         <div className="flex items-center justify-between gap-6 py-4">
           <Skeleton className="h-4 w-16" />
-          <Skeleton className="size-7 rounded-full" />
+          <Skeleton className="size-7 rounded-md" />
         </div>
         <div className="flex items-center justify-between gap-6 py-4">
           <div className="space-y-2">

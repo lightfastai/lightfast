@@ -3,7 +3,11 @@ import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 import { Link } from "@tanstack/react-router";
-import { ExternalLink, FileText } from "lucide-react";
+import {
+  ExternalLinkIcon as ExternalLink,
+  File02Icon as FileText,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 type IdentitySettingsData = Extract<
   AppRouterOutputs["org"]["settings"]["identity"]["get"],
@@ -56,7 +60,7 @@ function IdentityFileRow({ file }: { file: IdentitySettingsFile }) {
     <div className="flex items-center justify-between gap-4 p-3">
       <div className="flex min-w-0 items-center gap-2.5">
         <IconTile>
-          <FileText aria-hidden="true" className="size-4 text-foreground" />
+          <HugeiconsIcon icon={FileText} aria-hidden="true" className="size-4 text-foreground" />
         </IconTile>
         <div className="min-w-0">
           <p className="truncate text-foreground text-sm">{file.path}</p>
@@ -74,7 +78,7 @@ function IdentityFileRow({ file }: { file: IdentitySettingsFile }) {
             variant="ghost"
           >
             <a href={file.githubUrl} rel="noreferrer" target="_blank">
-              <ExternalLink aria-hidden="true" className="size-3.5" />
+              <HugeiconsIcon icon={ExternalLink} aria-hidden="true" className="size-3.5" />
               View
             </a>
           </Button>
@@ -120,7 +124,7 @@ export function IdentitySoulEmptyState({ slug }: { slug: string }) {
           >
             <div className="flex min-w-0 items-center gap-2.5">
               <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-[9px] border border-border border-dashed text-muted-foreground">
-                <FileText aria-hidden="true" className="size-4" />
+                <HugeiconsIcon icon={FileText} aria-hidden="true" className="size-4" />
               </span>
               <div className="min-w-0">
                 <p className="truncate text-foreground text-sm">

@@ -10,7 +10,10 @@ import {
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
 import { formatUtcCalendarDate as formatDate } from "@vendor/lib/time";
-import { Check } from "lucide-react";
+import {
+  Tick02Icon as Check,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 type BillingOverview =
   AppRouterOutputs["org"]["settings"]["orgBilling"]["overview"];
@@ -54,13 +57,13 @@ export function ConfirmDowngradeDialog({
           </div>
           <div className="mt-4 flex-1 space-y-2">
             <div className="flex items-start gap-3">
-              <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-foreground" />
+              <HugeiconsIcon icon={Check} className="mt-0.5 h-4 w-4 flex-shrink-0 text-foreground" />
               <span className="text-foreground text-sm">
                 Free organization workspace
               </span>
             </div>
             <div className="flex items-start gap-3">
-              <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-foreground" />
+              <HugeiconsIcon icon={Check} className="mt-0.5 h-4 w-4 flex-shrink-0 text-foreground" />
               <span className="text-foreground text-sm">
                 Billing changes at the end of your current Team period
               </span>
@@ -128,13 +131,13 @@ export function ConfirmUpgradeDialog({
             </div>
             <div className="mt-4 flex-1 space-y-2">
               <div className="flex items-start gap-3">
-                <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-foreground" />
+                <HugeiconsIcon icon={Check} className="mt-0.5 h-4 w-4 flex-shrink-0 text-foreground" />
                 <span className="text-foreground text-sm">
                   Team workspace billing
                 </span>
               </div>
               <div className="flex items-start gap-3">
-                <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-foreground" />
+                <HugeiconsIcon icon={Check} className="mt-0.5 h-4 w-4 flex-shrink-0 text-foreground" />
                 <span className="text-foreground text-sm">
                   Billing starts after checkout is complete
                 </span>
@@ -201,13 +204,13 @@ export function ConfirmBusinessDialog({
           </div>
           <div className="mt-4 flex-1 space-y-2">
             <div className="flex items-start gap-3">
-              <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-foreground" />
+              <HugeiconsIcon icon={Check} className="mt-0.5 h-4 w-4 flex-shrink-0 text-foreground" />
               <span className="text-foreground text-sm">
                 We will open an email to continue the Business conversation
               </span>
             </div>
             <div className="flex items-start gap-3">
-              <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-foreground" />
+              <HugeiconsIcon icon={Check} className="mt-0.5 h-4 w-4 flex-shrink-0 text-foreground" />
               <span className="text-foreground text-sm">
                 Custom pricing and onboarding
               </span>

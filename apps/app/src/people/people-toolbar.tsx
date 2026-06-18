@@ -1,18 +1,23 @@
-import { Button } from "@repo/ui/components/ui/button";
+import {
+  AtSignIcon,
+  Cancel01Icon,
+  FilterHorizontalIcon,
+  Tag01Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+import { Button } from "@repo/ui-v2/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@repo/ui/components/ui/dropdown-menu";
-import { Input } from "@repo/ui/components/ui/input";
-import { AtSign, ListFilter, Search, Tag, X } from "lucide-react";
-import type { ComponentType } from "react";
+} from "@repo/ui-v2/components/ui/dropdown-menu";
 import {
   getPersonProviderLabel,
   getPersonTypeLabel,
@@ -24,11 +29,10 @@ import {
 } from "./people-model";
 
 type FilterGroupId = "provider" | "type";
-type IconComponent = ComponentType<{ className?: string }>;
 
 interface FilterGroup {
   count: number;
-  icon: IconComponent;
+  icon: IconSvgElement;
   id: FilterGroupId;
   label: string;
 }
@@ -36,29 +40,25 @@ interface FilterGroup {
 export function PeopleToolbar({
   filters,
   onClearFilterGroup,
-  onQueryChange,
   onToggleProvider,
   onToggleType,
-  query,
 }: {
   filters: PeopleClassificationFilters;
   onClearFilterGroup: (group: FilterGroupId) => void;
-  onQueryChange: (value: string) => void;
   onToggleProvider: (value: PersonProvider) => void;
   onToggleType: (value: PersonType) => void;
-  query: string;
 }) {
   const filterGroups: FilterGroup[] = [
     {
       count: filters.providers.length,
       id: "provider",
-      icon: AtSign,
+      icon: AtSignIcon,
       label: "Provider",
     },
     {
       count: filters.types.length,
       id: "type",
-      icon: Tag,
+      icon: Tag01Icon,
       label: "Type",
     },
   ];
@@ -71,29 +71,30 @@ export function PeopleToolbar({
     >
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              aria-label="Filters"
-              className="relative size-6 rounded-lg border border-border/70 bg-muted/30 p-0 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              size="icon-sm"
-              title="Filters"
-              type="button"
-              variant="ghost"
-            >
-              <ListFilter
-                aria-hidden="true"
-                className="size-3"
-                data-testid="people-filter-icon"
+          <DropdownMenuTrigger
+            render={
+              <Button
+                aria-label={
+                  activeFilterCount > 0
+                    ? `${activeFilterCount} active filters`
+                    : "Filters"
+                }
+                size={activeFilterCount > 0 ? "xs" : "icon-xs"}
+                title="Filters"
+                type="button"
+                variant="outline"
               />
-              {activeFilterCount > 0 ? (
-                <span
-                  aria-hidden="true"
-                  className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full border border-background bg-muted font-medium text-muted-foreground text-xs leading-none"
-                >
-                  {activeFilterCount}
-                </span>
-              ) : null}
-            </Button>
+            }
+          >
+            <HugeiconsIcon
+              aria-hidden="true"
+              data-icon="inline-start"
+              data-testid="people-filter-icon"
+              icon={FilterHorizontalIcon}
+            />
+            {activeFilterCount > 0 ? (
+              <span aria-hidden="true">{activeFilterCount}</span>
+            ) : null}
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="start"
@@ -114,7 +115,7 @@ export function PeopleToolbar({
 
         <PeopleFilterChip
           count={filters.providers.length}
-          icon={AtSign}
+          icon={AtSignIcon}
           label="Provider"
           onClear={() => onClearFilterGroup("provider")}
           value={formatChipValue(
@@ -123,32 +124,13 @@ export function PeopleToolbar({
         />
         <PeopleFilterChip
           count={filters.types.length}
-          icon={Tag}
+          icon={Tag01Icon}
           label="Type"
           onClear={() => onClearFilterGroup("type")}
           value={formatChipValue(
             filters.types.map((value) => getPersonTypeLabel(value))
           )}
         />
-      </div>
-
-      <div className="ml-auto flex w-full min-w-0 items-center justify-end gap-1.5 sm:w-auto">
-        <div className="relative w-full sm:w-56">
-          <Search
-            aria-hidden="true"
-            className="absolute top-1/2 left-2.5 size-3 -translate-y-1/2 text-muted-foreground"
-          />
-          <Input
-            aria-label="Search people"
-            className="pl-7"
-            onChange={(event) => onQueryChange(event.currentTarget.value)}
-            placeholder="Search people"
-            role="searchbox"
-            size="lf-sm"
-            value={query}
-            variant="lf"
-          />
-        </div>
       </div>
     </div>
   );
@@ -165,7 +147,6 @@ function PeopleFilterSubMenu({
   onToggleProvider: (value: PersonProvider) => void;
   onToggleType: (value: PersonType) => void;
 }) {
-  const Icon = group.icon;
   const options =
     group.id === "provider"
       ? peopleProviderOptions.map((option) => ({
@@ -184,7 +165,7 @@ function PeopleFilterSubMenu({
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger className="gap-2">
-        <Icon aria-hidden="true" className="size-3.5 text-muted-foreground" />
+        <HugeiconsIcon aria-hidden="true" icon={group.icon} />
         <span className="min-w-0 flex-1 truncate">{group.label}</span>
         {group.count > 0 ? (
           <span className="rounded bg-muted px-1.5 text-muted-foreground text-xs">
@@ -193,22 +174,28 @@ function PeopleFilterSubMenu({
         ) : null}
       </DropdownMenuSubTrigger>
       <DropdownMenuSubContent className="w-52">
-        <DropdownMenuLabel className="flex h-7 items-center gap-2 text-muted-foreground text-xs">
-          <Icon aria-hidden="true" className="size-3.5" />
-          <span>{group.label}</span>
-          <span className="ml-auto">is any of</span>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {options.map((option) => (
-          <DropdownMenuCheckboxItem
-            checked={option.checked}
-            key={option.value}
-            onCheckedChange={option.onToggle}
-            onSelect={(event) => event.preventDefault()}
-          >
-            {option.label}
-          </DropdownMenuCheckboxItem>
-        ))}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="flex h-7 items-center gap-2 text-muted-foreground text-xs">
+            <HugeiconsIcon
+              aria-hidden="true"
+              className="size-3.5"
+              icon={group.icon}
+            />
+            <span>{group.label}</span>
+            <span className="ml-auto">is any of</span>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {options.map((option) => (
+            <DropdownMenuCheckboxItem
+              checked={option.checked}
+              closeOnClick={false}
+              key={option.value}
+              onCheckedChange={option.onToggle}
+            >
+              {option.label}
+            </DropdownMenuCheckboxItem>
+          ))}
+        </DropdownMenuGroup>
       </DropdownMenuSubContent>
     </DropdownMenuSub>
   );
@@ -216,13 +203,13 @@ function PeopleFilterSubMenu({
 
 function PeopleFilterChip({
   count,
-  icon: Icon,
+  icon,
   label,
   onClear,
   value,
 }: {
   count: number;
-  icon: IconComponent;
+  icon: IconSvgElement;
   label: string;
   onClear: () => void;
   value: string;
@@ -232,25 +219,24 @@ function PeopleFilterChip({
   }
 
   return (
-    <button
-      className="flex h-6 max-w-full shrink-0 items-center overflow-hidden rounded-lg border border-border/70 bg-muted/25 text-sm"
+    <Button
+      aria-label={`Clear ${label} filter`}
       onClick={onClear}
+      size="xs"
+      title={`Clear ${label} filter`}
       type="button"
+      variant="outline"
     >
-      <span className="flex h-full shrink-0 items-center gap-2 border-border/70 border-r px-3 text-foreground">
-        <Icon aria-hidden="true" className="size-3.5 text-muted-foreground" />
-        {label}
-      </span>
-      <span className="hidden h-full shrink-0 items-center border-border/70 border-r px-3 text-muted-foreground sm:flex">
-        is any of
-      </span>
-      <span className="min-w-0 truncate px-3 text-muted-foreground">
-        {value}
-      </span>
-      <span className="flex h-full shrink-0 items-center border-border/70 border-l px-2 text-muted-foreground hover:text-foreground">
-        <X aria-hidden="true" className="size-3.5" />
-      </span>
-    </button>
+      <HugeiconsIcon aria-hidden="true" data-icon="inline-start" icon={icon} />
+      <span>{label}</span>
+      <span>is any of</span>
+      <span>{value}</span>
+      <HugeiconsIcon
+        aria-hidden="true"
+        data-icon="inline-end"
+        icon={Cancel01Icon}
+      />
+    </Button>
   );
 }
 

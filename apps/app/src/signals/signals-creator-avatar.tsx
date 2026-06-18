@@ -4,7 +4,11 @@ import {
   AvatarImage,
 } from "@repo/ui/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
-import { KeyRound, User } from "lucide-react";
+import {
+  Key01Icon as KeyRound,
+  UserIcon as User,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useTRPC } from "~/trpc/react";
 import type { SignalListItem } from "./signals-model";
 
@@ -43,7 +47,7 @@ export function SignalCreatorAvatar({
     return (
       <Avatar className="size-5" title="Created by API key">
         <AvatarFallback className="bg-muted text-muted-foreground">
-          <KeyRound className="size-2.5" />
+          <HugeiconsIcon icon={KeyRound} className="size-2.5" />
         </AvatarFallback>
       </Avatar>
     );
@@ -57,7 +61,7 @@ export function SignalCreatorAvatar({
     return (
       <Avatar className="size-5" title="Unknown member">
         <AvatarFallback className="bg-muted text-muted-foreground">
-          <User className="size-2.5" />
+          <HugeiconsIcon icon={User} className="size-2.5" />
         </AvatarFallback>
       </Avatar>
     );

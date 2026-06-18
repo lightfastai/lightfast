@@ -47,6 +47,12 @@ vi.mock("@repo/ui/components/ui/button", () => ({
   ),
 }));
 
+vi.mock("@repo/ui-v2/components/ui/sidebar", () => ({
+  SidebarTrigger: ({ className }: { className?: string }) => (
+    <button aria-label="Toggle Sidebar" className={className} type="button" />
+  ),
+}));
+
 vi.mock("~/automations/automation-actions", () => ({
   AutomationActions: () => <div data-testid="automation-actions" />,
 }));

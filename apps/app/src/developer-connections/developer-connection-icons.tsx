@@ -1,4 +1,10 @@
-import { Database, KeyRound, RadioTower, ShieldCheck } from "lucide-react";
+import {
+  DatabaseIcon as Database,
+  Key01Icon as KeyRound,
+  CellularNetworkIcon as RadioTower,
+  SecurityCheckIcon as ShieldCheck,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { DeveloperConnectionProvider } from "./developer-connections-model";
 
 export function DeveloperConnectionIcon({
@@ -6,7 +12,7 @@ export function DeveloperConnectionIcon({
 }: {
   provider: DeveloperConnectionProvider;
 }) {
-  const Icon =
+  const icon =
     provider === "pscale"
       ? Database
       : provider === "upstash"
@@ -17,7 +23,7 @@ export function DeveloperConnectionIcon({
 
   return (
     <div className="flex size-8 shrink-0 items-center justify-center rounded-[8px] border border-border bg-muted/35">
-      <Icon className="size-4 text-muted-foreground" />
+      <HugeiconsIcon icon={icon} className="size-4 text-muted-foreground" />
     </div>
   );
 }

@@ -11,7 +11,6 @@ import {
 
 export const Route = createFileRoute("/_authenticated/$slug/people")({
   validateSearch: validatePeopleSearch,
-  staticData: { workspaceTopbarAction: "people" },
   head: ({ params }) => ({
     meta: [{ title: `People - ${params.slug} - Lightfast` }],
   }),
@@ -58,9 +57,6 @@ function PeoplePage() {
         replace: true,
         search: (previous) => {
           const next = { ...previous };
-          if ("peopleQuery" in updates) {
-            next.peopleQuery = updates.peopleQuery || undefined;
-          }
           if ("provider" in updates) {
             next.provider = updates.provider || undefined;
           }

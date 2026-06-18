@@ -8,7 +8,11 @@ import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import type { CheckoutErrors as ClerkCheckoutErrors } from "@vendor/clerk";
 import { useCheckout, usePaymentMethods } from "@vendor/clerk";
-import { AlertCircle, Loader2 } from "lucide-react";
+import {
+  AlertCircleIcon as AlertCircle,
+  Loading03Icon as Loader2,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useMemo, useRef, useState } from "react";
 
 export function SavedPaymentCheckout({
@@ -114,7 +118,7 @@ export function SavedPaymentCheckout({
         size="sm"
       >
         {(fetchStatus === "fetching" || isSubmitting) && (
-          <Loader2 className="size-4 animate-spin" />
+          <HugeiconsIcon icon={Loader2} className="size-4 animate-spin" />
         )}
         Complete Purchase
       </Button>
@@ -141,7 +145,7 @@ function CheckoutErrors({
 
   return (
     <Alert variant="destructive">
-      <AlertCircle className="size-4" />
+      <HugeiconsIcon icon={AlertCircle} className="size-4" />
       <AlertDescription>
         {messages.map((message, index) => (
           <p key={index}>{message}</p>

@@ -1,8 +1,12 @@
 import { normalizeGitHubUserAccountReturnTo } from "@repo/github-app-contract";
 import { Button } from "@repo/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import {
+  Loading03Icon as Loader2,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { TeamSwitcherSlot } from "~/components/team-switcher";
 import { syncGitHubAccountMutationOptions } from "../account-queries";
 
 interface GithubAccountCompleteClientProps {
@@ -52,6 +56,7 @@ export function GithubAccountCompleteClient({
   return (
     <div className="flex min-h-full flex-1 items-center justify-center px-4 pb-32">
       <div className="w-full max-w-md space-y-4">
+        <TeamSwitcherSlot />
         <h1 className="font-medium font-pp text-2xl text-foreground">
           Finishing GitHub connection...
         </h1>
@@ -69,7 +74,7 @@ export function GithubAccountCompleteClient({
           </div>
         ) : (
           <div className="flex items-center gap-2 text-muted-foreground text-sm">
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <HugeiconsIcon icon={Loader2} className="h-4 w-4 animate-spin" />
             Syncing GitHub account
           </div>
         )}

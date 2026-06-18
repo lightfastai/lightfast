@@ -2,7 +2,10 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ExternalLink } from "lucide-react";
+import {
+  ExternalLinkIcon as ExternalLink,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { githubAccountStatusQueryOptions } from "../account-queries";
 import { GithubAccountCard } from "./github-account-card";
 
@@ -51,7 +54,7 @@ export function AccountSourceControlClient() {
                 search={{ github_error: undefined }}
                 to="/account/tasks/github"
               >
-                <ExternalLink aria-hidden="true" className="size-4" />
+                <HugeiconsIcon icon={ExternalLink} aria-hidden="true" className="size-4" />
                 Connect GitHub account
               </Link>
             </Button>

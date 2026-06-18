@@ -3,16 +3,17 @@ import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import {
-  Activity,
-  Bot,
-  Building2,
-  CalendarDays,
-  Link2,
-  MessageCircle,
-  RefreshCcw,
-  User,
-  Workflow,
-} from "lucide-react";
+  Activity01Icon as Activity,
+  BotIcon as Bot,
+  Building03Icon as Building2,
+  Calendar03Icon as CalendarDays,
+  Link02Icon as Link2,
+  Message01Icon as MessageCircle,
+  ReloadIcon as RefreshCcw,
+  UserIcon as User,
+  WorkflowSquare07Icon as Workflow,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { ReactNode } from "react";
 import { ConnectorIcon } from "./connector-icons";
 import {
@@ -113,7 +114,7 @@ export function ConnectorDetailContent({
             type="button"
             variant="ghost"
           >
-            <Link2 aria-hidden="true" className="size-4" />
+            <HugeiconsIcon icon={Link2} aria-hidden="true" className="size-4" />
           </Button>
           {closeSlot}
         </div>
@@ -126,7 +127,7 @@ export function ConnectorDetailContent({
         <p className="pb-5 text-muted-foreground text-sm">{row.description}</p>
 
         <div className="flex flex-col">
-          <PropertyRow icon={<Activity className={iconClass} />} label="Status">
+          <PropertyRow icon={<HugeiconsIcon icon={Activity} className={iconClass} />} label="Status">
             <span className="inline-flex items-center gap-1.5">
               <span className={cn("size-1.5 rounded-full", status.dotClass)} />
               {status.label}
@@ -135,7 +136,7 @@ export function ConnectorDetailContent({
           {isUserConnection ? (
             <>
               <PropertyRow
-                icon={<MessageCircle className={iconClass} />}
+                icon={<HugeiconsIcon icon={MessageCircle} className={iconClass} />}
                 label="Availability"
               >
                 <div className="flex flex-col items-start gap-1">
@@ -149,7 +150,7 @@ export function ConnectorDetailContent({
               </PropertyRow>
               {connection.providerAccountName ? (
                 <PropertyRow
-                  icon={<User className={iconClass} />}
+                  icon={<HugeiconsIcon icon={User} className={iconClass} />}
                   label="Account"
                 >
                   {connection.providerAccountName}
@@ -160,7 +161,7 @@ export function ConnectorDetailContent({
             <>
               {connection.providerWorkspaceName ? (
                 <PropertyRow
-                  icon={<Building2 className={iconClass} />}
+                  icon={<HugeiconsIcon icon={Building2} className={iconClass} />}
                   label="Workspace"
                 >
                   {connection.providerWorkspaceName}
@@ -168,7 +169,7 @@ export function ConnectorDetailContent({
               ) : null}
               {connection.providerActorName ? (
                 <PropertyRow
-                  icon={<User className={iconClass} />}
+                  icon={<HugeiconsIcon icon={User} className={iconClass} />}
                   label="Account"
                 >
                   {connection.providerActorName}
@@ -177,7 +178,7 @@ export function ConnectorDetailContent({
             </>
           )}
           <PropertyRow
-            icon={<CalendarDays className={iconClass} />}
+            icon={<HugeiconsIcon icon={CalendarDays} className={iconClass} />}
             label="Connected"
           >
             <span title={connectedAt.toISOString()}>
@@ -187,14 +188,14 @@ export function ConnectorDetailContent({
           {isUserConnection ? null : (
             <>
               <PropertyRow
-                icon={<Workflow className={iconClass} />}
+                icon={<HugeiconsIcon icon={Workflow} className={iconClass} />}
                 label="Automations"
               >
                 <Badge className="text-muted-foreground" variant="outline">
                   {connection.enabledForAutomations ? "Enabled" : "Disabled"}
                 </Badge>
               </PropertyRow>
-              <PropertyRow icon={<Bot className={iconClass} />} label="Agents">
+              <PropertyRow icon={<HugeiconsIcon icon={Bot} className={iconClass} />} label="Agents">
                 <Badge className="text-muted-foreground" variant="outline">
                   {connection.enabledForAgents ? "Enabled" : "Disabled"}
                 </Badge>
@@ -203,7 +204,7 @@ export function ConnectorDetailContent({
           )}
           {lastRefreshAt ? (
             <PropertyRow
-              icon={<RefreshCcw className={iconClass} />}
+              icon={<HugeiconsIcon icon={RefreshCcw} className={iconClass} />}
               label="Tools refreshed"
             >
               {hasRefreshError ? (

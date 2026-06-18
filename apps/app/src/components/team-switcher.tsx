@@ -1,8 +1,8 @@
-import { Button } from "@repo/ui/components/ui/button";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { useMounted } from "@repo/ui/hooks/use-mounted";
 import { cn } from "@repo/ui/lib/utils";
 import { Avatar, AvatarFallback } from "@repo/ui-v2/components/ui/avatar";
+import { Button } from "@repo/ui-v2/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +11,12 @@ import {
 } from "@repo/ui-v2/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import {
+  Tick02Icon as Check,
+  UnfoldMoreIcon,
+  Add01Icon as Plus,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Suspense, useState } from "react";
 import { useOrganizationList } from "~/compat/clerk";
 import { listUserOrganizationsQueryOptions } from "~/organization/organization-queries";
@@ -93,7 +98,7 @@ export function TeamSwitcher() {
             params={{ slug: currentOrg.slug }}
             to="/$slug"
           >
-            <Avatar className="size-7 lg:size-6">
+            <Avatar className="size-7">
               <AvatarFallback className="bg-foreground text-[10px] text-background">
                 {displayInitials}
               </AvatarFallback>
@@ -104,7 +109,7 @@ export function TeamSwitcher() {
           </Link>
         ) : (
           <div className="flex min-w-0 items-center gap-2">
-            <Avatar className="size-6">
+            <Avatar className="size-7">
               <AvatarFallback className="bg-foreground text-[10px] text-background">
                 {displayInitials}
               </AvatarFallback>
@@ -118,13 +123,18 @@ export function TeamSwitcher() {
           render={
             <Button
               aria-label="Switch team"
-              className="size-11 rounded-full lg:h-6 lg:w-6"
-              size="sm"
+              className="ml-auto"
+              size="icon-sm"
+              type="button"
               variant="ghost"
             />
           }
         >
-          <ChevronsUpDown className="size-3.5 opacity-50" />
+          <HugeiconsIcon
+            aria-hidden="true"
+            className="size-4"
+            icon={UnfoldMoreIcon}
+          />
         </DropdownMenuTrigger>
       </div>
       <DropdownMenuContent align="center" size="sm">
@@ -163,7 +173,7 @@ export function TeamSwitcher() {
               </Avatar>
               <span className="flex-1 truncate">{org.name}</span>
               {isSelected && (
-                <Check className="h-4 w-4 shrink-0 text-foreground" />
+                <HugeiconsIcon icon={Check} className="h-4 w-4 shrink-0 text-foreground" />
               )}
             </DropdownMenuItem>
           );
@@ -173,7 +183,7 @@ export function TeamSwitcher() {
           render={<Link to="/account/teams/new" />}
         >
           <div className="flex h-5 w-5 items-center justify-center rounded-full border border-border/50 border-dashed">
-            <Plus className="h-3 w-3" />
+            <HugeiconsIcon icon={Plus} className="h-3 w-3" />
           </div>
           <span>Create Team</span>
         </DropdownMenuItem>
@@ -185,7 +195,7 @@ export function TeamSwitcher() {
 export function TeamSwitcherSkeleton() {
   return (
     <div className="flex items-center gap-2">
-      <Skeleton className="size-6 rounded-full" />
+      <Skeleton className="size-7 rounded-md" />
       <Skeleton className="h-4 w-24 rounded-xl" />
     </div>
   );

@@ -1,6 +1,11 @@
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
-import { ChevronDown, LoaderCircle, RefreshCw } from "lucide-react";
+import {
+  ChevronDownIcon as ChevronDown,
+  Loading03Icon as LoaderCircle,
+  ReloadIcon as RefreshCw,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { DecisionRow, ROW_GRID } from "./decision-row";
 import { DecisionsEmptyState } from "./decisions-empty-state";
 import {
@@ -46,7 +51,7 @@ export function DecisionsTableView({
           type="button"
           variant="outline"
         >
-          <RefreshCw aria-hidden="true" className="size-3.5" />
+          <HugeiconsIcon icon={RefreshCw} aria-hidden="true" className="size-3.5" />
           Retry
         </Button>
       </div>
@@ -134,12 +139,12 @@ export function DecisionsTableView({
               variant="ghost"
             >
               {isFetchingNextPage ? (
-                <LoaderCircle
+                <HugeiconsIcon icon={LoaderCircle}
                   aria-hidden="true"
                   className="size-3.5 animate-spin"
                 />
               ) : (
-                <ChevronDown aria-hidden="true" className="size-3.5" />
+                <HugeiconsIcon icon={ChevronDown} aria-hidden="true" className="size-3.5" />
               )}
               {isFetchingNextPage ? "Loading" : "Load more"}
             </Button>
@@ -153,7 +158,7 @@ export function DecisionsTableView({
         </span>
         {isFetching && !isFetchingNextPage ? (
           <span className="flex items-center gap-1 text-muted-foreground/70">
-            <LoaderCircle aria-hidden="true" className="size-3 animate-spin" />
+            <HugeiconsIcon icon={LoaderCircle} aria-hidden="true" className="size-3 animate-spin" />
             Refreshing
           </span>
         ) : null}

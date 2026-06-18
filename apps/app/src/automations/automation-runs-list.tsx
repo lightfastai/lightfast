@@ -2,19 +2,20 @@ import type { AppRouterOutputs } from "@api/app";
 import { cn } from "@repo/ui/lib/utils";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import {
-  CheckCircle,
-  ChevronRight,
-  Clock,
-  Loader2,
-  XCircle,
-} from "lucide-react";
+  CheckmarkCircle02Icon as CheckCircle,
+  ChevronRightIcon as ChevronRight,
+  Clock01Icon as Clock,
+  Loading03Icon as Loader2,
+  CancelCircleIcon as XCircle,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 
 type AutomationRun =
   AppRouterOutputs["org"]["workspace"]["automations"]["listRuns"][number];
 
 const RUN_STATUS_ICONS: Record<
   AutomationRun["status"],
-  { icon: React.ElementType; className: string }
+  { icon: IconSvgElement; className: string }
 > = {
   completed: { icon: CheckCircle, className: "text-emerald-500" },
   failed: { icon: XCircle, className: "text-destructive" },
@@ -33,7 +34,7 @@ function RunRow({
   run: AutomationRun;
   selected: boolean;
 }) {
-  const { icon: Icon, className } = RUN_STATUS_ICONS[run.status];
+  const { icon, className } = RUN_STATUS_ICONS[run.status];
 
   return (
     <button
@@ -44,7 +45,7 @@ function RunRow({
       onClick={() => onSelect(run.publicId)}
       type="button"
     >
-      <Icon className={`size-3.5 shrink-0 ${className}`} />
+      <HugeiconsIcon icon={icon} className={`size-3.5 shrink-0 ${className}`} />
       <span className="text-foreground text-sm capitalize">{run.status}</span>
       <span className="ml-auto text-muted-foreground text-xs capitalize">
         {run.trigger}
@@ -52,7 +53,7 @@ function RunRow({
       <span className="text-muted-foreground text-xs">
         {run.createdAt ? formatRelativeTimeToNow(run.createdAt) : "-"}
       </span>
-      <ChevronRight
+      <HugeiconsIcon icon={ChevronRight}
         aria-hidden="true"
         className={cn(
           "size-3.5 shrink-0 text-muted-foreground transition-opacity",

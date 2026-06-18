@@ -19,7 +19,10 @@ import {
 } from "@repo/ui/components/ui/tooltip";
 import { useMounted } from "@repo/ui/hooks/use-mounted";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import {
+  Loading03Icon as Loader2,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect } from "react";
 import { SettingRow, SettingsGroup } from "~/components/settings-section";
 import { accountProfileQueryOptions } from "../account-queries";
@@ -116,7 +119,7 @@ export function ProfileDataDisplay() {
                         >
                           {isUpdating ? (
                             <>
-                              <Loader2 className="size-3.5 animate-spin" />
+                              <HugeiconsIcon icon={Loader2} className="size-3.5 animate-spin" />
                               Saving
                             </>
                           ) : (

@@ -10,7 +10,13 @@ import {
   DialogTrigger,
 } from "@repo/ui/components/ui/dialog";
 import { Input } from "@repo/ui/components/ui/input";
-import { Check, Copy, Loader2, Plus } from "lucide-react";
+import {
+  Tick02Icon as Check,
+  Copy01Icon as Copy,
+  Loading03Icon as Loader2,
+  Add01Icon as Plus,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useRef, useState } from "react";
 import { useOrgApiKeyCreateAction } from "./org-api-key-create-action";
 
@@ -82,7 +88,7 @@ export function OrgApiKeyCreate() {
     <Dialog onOpenChange={handleOpenChange} open={isOpen}>
       <DialogTrigger asChild>
         <Button size="sm" variant="secondary">
-          <Plus className="mr-1.5 h-4 w-4" />
+          <HugeiconsIcon icon={Plus} className="mr-1.5 h-4 w-4" />
           Create Key
         </Button>
       </DialogTrigger>
@@ -111,9 +117,9 @@ export function OrgApiKeyCreate() {
                 variant="ghost"
               >
                 {copied ? (
-                  <Check className="h-4 w-4 text-green-500" />
+                  <HugeiconsIcon icon={Check} className="h-4 w-4 text-green-500" />
                 ) : (
-                  <Copy className="h-4 w-4" />
+                  <HugeiconsIcon icon={Copy} className="h-4 w-4" />
                 )}
               </Button>
             </div>
@@ -141,7 +147,7 @@ export function OrgApiKeyCreate() {
               >
                 {createMutation.isPending ? (
                   <>
-                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                    <HugeiconsIcon icon={Loader2} className="mr-1.5 h-4 w-4 animate-spin" />
                     Creating...
                   </>
                 ) : (

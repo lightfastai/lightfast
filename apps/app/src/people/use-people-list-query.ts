@@ -7,16 +7,12 @@ import { peopleListInfiniteQueryOptions } from "./people-queries";
 
 export function usePeopleListQuery({
   filters,
-  search,
 }: {
   filters: PeopleClassificationFilters;
-  search: string;
 }) {
-  const normalizedSearch = search.trim() || undefined;
   const input = {
     limit: PEOPLE_PAGE_SIZE,
     providers: filters.providers.length ? filters.providers : undefined,
-    search: normalizedSearch,
     types: filters.types.length ? filters.types : undefined,
   };
 

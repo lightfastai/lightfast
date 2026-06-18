@@ -8,7 +8,10 @@ import {
 } from "@repo/ui/components/ui/sheet";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useQuery } from "@tanstack/react-query";
-import { X } from "lucide-react";
+import {
+  Cancel01Icon as X,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { PeopleDetailContent } from "./people-detail-content";
 import { getPersonName, type PersonRow } from "./people-model";
 import { personDetailQueryOptions } from "./people-queries";
@@ -81,7 +84,7 @@ export function PeopleDetailSheet({
                   type="button"
                   variant="ghost"
                 >
-                  <X aria-hidden="true" className="size-4" />
+                  <HugeiconsIcon icon={X} aria-hidden="true" className="size-4" />
                 </Button>
               </SheetClose>
             }
