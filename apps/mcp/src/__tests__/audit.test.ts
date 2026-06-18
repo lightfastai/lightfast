@@ -1,4 +1,3 @@
-import type { Database } from "@db/app";
 import { describe, expect, it, vi } from "vitest";
 
 import type { HostedMcpContext } from "../context";
@@ -6,8 +5,6 @@ import {
   type ExecuteHostedMcpToolDependencies,
   executeHostedMcpTool,
 } from "../tools/execute";
-
-const db = { kind: "mock-db" } as unknown as Database;
 
 const context = {
   clientId: "mcp_client_test",
@@ -31,10 +28,8 @@ function dependencies(): ExecuteHostedMcpToolDependencies {
       status: "succeeded",
     }),
     createSignalForActor: vi.fn(),
-    db,
     findProviderRoutines: vi.fn(),
-    getVisibleSignalByPublicId: vi.fn(),
-    listSignalEntityLinksForSignal: vi.fn().mockResolvedValue([]),
+    getSignalForActor: vi.fn(),
     now: vi
       .fn()
       .mockReturnValueOnce(new Date("2026-06-01T00:00:00.000Z"))
@@ -72,7 +67,6 @@ describe("hosted MCP audit", () => {
     expect(deps.recordMcpAuditEvent).toHaveBeenCalledTimes(2);
     expect(deps.recordMcpAuditEvent).toHaveBeenNthCalledWith(
       1,
-      db,
       expect.objectContaining({
         clientPublicId: "mcp_client_test",
         clerkOrgId: "org_test",
@@ -92,7 +86,6 @@ describe("hosted MCP audit", () => {
     );
     expect(deps.recordMcpAuditEvent).toHaveBeenNthCalledWith(
       2,
-      db,
       expect.objectContaining({
         outcome: "denied",
         metadata: expect.objectContaining({
@@ -130,7 +123,6 @@ describe("hosted MCP audit", () => {
     });
 
     expect(deps.recordMcpAuditEvent).toHaveBeenCalledWith(
-      db,
       expect.objectContaining({
         eventName: "mcp.proxy.call",
         metadata: expect.objectContaining({

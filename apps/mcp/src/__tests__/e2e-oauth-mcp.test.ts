@@ -1,18 +1,79 @@
-import type {
-  Database,
-  McpOauthAuthorizationCode,
-  McpOauthClientWithRedirectUris,
-  McpOauthGrant,
-  McpOauthRefreshToken,
-  RecordMcpAuditEventInput,
-  Signal,
-} from "@db/app";
 import type { McpScope } from "@repo/api-contract";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ExecuteHostedMcpToolDependencies } from "../tools/execute";
 
+interface Database {
+  kind: "e2e-mock-db";
+}
+
+interface McpOauthClientWithRedirectUris {
+  clientName: string;
+  clientUri: string | null;
+  contacts: string[] | null;
+  createdAt: Date;
+  id: number;
+  logoUri: string | null;
+  metadata: Record<string, unknown> | null;
+  publicClientId: string;
+  redirectUris: string[];
+  status: "active";
+  updatedAt: Date;
+}
+
+interface McpOauthAuthorizationCode {
+  clerkOrgId: string;
+  clerkUserId: string;
+  clientPublicId: string;
+  codeChallenge: string;
+  codeChallengeMethod: "S256";
+  codeHash: string;
+  consumedAt: Date | null;
+  createdAt: Date;
+  expiresAt: Date;
+  id: number;
+  redirectUri: string;
+  resource: string;
+  resourceHash: string;
+  scopes: McpScope[];
+  updatedAt: Date;
+}
+
+interface McpOauthGrant {
+  clerkOrgId: string;
+  clerkUserId: string;
+  clientPublicId: string;
+  createdAt: Date;
+  id: number;
+  lastUsedAt: Date | null;
+  metadata: Record<string, unknown> | null;
+  publicId: string;
+  resource: string;
+  resourceHash: string;
+  revokedAt: Date | null;
+  scopes: McpScope[];
+  status: "active" | "revoked";
+  updatedAt: Date;
+}
+
+interface McpOauthRefreshToken {
+  clerkOrgId: string;
+  clerkUserId: string;
+  clientPublicId: string;
+  createdAt: Date;
+  expiresAt: Date;
+  grantPublicId: string;
+  id: number;
+  parentTokenHash: string | null;
+  reuseDetectedAt: Date | null;
+  rotatedToTokenHash: string | null;
+  status: "active" | "reuse_detected" | "revoked" | "rotated";
+  tokenHash: string;
+  updatedAt: Date;
+}
+
 vi.mock("server-only", () => ({}));
+vi.mock("@tanstack/react-start/server-only", () => ({}));
 
 const consumeMcpAuthorizationCodeMock = vi.fn();
 const createMcpAuthorizationCodeMock = vi.fn();
@@ -45,12 +106,29 @@ vi.mock("@db/app", () => ({
   rotateMcpRefreshToken: rotateMcpRefreshTokenMock,
 }));
 
+vi.mock("../../../../db/app/src/index.ts", () => ({
+  consumeMcpAuthorizationCode: consumeMcpAuthorizationCodeMock,
+  createMcpAuthorizationCode: createMcpAuthorizationCodeMock,
+  createMcpOauthClient: createMcpOauthClientMock,
+  createMcpOauthGrant: createMcpOauthGrantMock,
+  createMcpRefreshToken: createMcpRefreshTokenMock,
+  getActiveMcpOauthGrant: getActiveMcpOauthGrantMock,
+  getActiveOrgBinding: getActiveOrgBindingMock,
+  getMcpOauthClientByClientId: getMcpOauthClientByClientIdMock,
+  getMcpOauthClientByRegistrationTokenHash:
+    getMcpOauthClientByRegistrationTokenHashMock,
+  getMcpOauthGrantByPublicId: getMcpOauthGrantByPublicIdMock,
+  revokeMcpOauthGrant: revokeMcpOauthGrantMock,
+  revokeMcpRefreshTokenByHash: revokeMcpRefreshTokenByHashMock,
+  rotateMcpRefreshToken: rotateMcpRefreshTokenMock,
+}));
+
 vi.mock("@vendor/clerk/server", () => ({
   auth: vi.fn(),
   clerkClient: vi.fn(),
 }));
 
-const db = { kind: "e2e-mock-db" } as unknown as Database;
+const db = { kind: "e2e-mock-db" } as never;
 const now = new Date("2026-06-01T00:00:00.000Z");
 const issuer = "https://app.lightfast.localhost";
 const jwtSecret = "test-mcp-jwt-secret-test-mcp-jwt-secret";
@@ -395,7 +473,7 @@ describe("hosted MCP OAuth integration smoke", () => {
       status: "queued",
       visibilityScope: "user",
     });
-    expect(toolDependencies.createSignalForActor).toHaveBeenCalledWith(db, {
+    expect(toolDependencies.createSignalForActor).toHaveBeenCalledWith({
       actor: {
         clientId: registeredClient.client_id,
         grantId: "mcp_grant_test",
@@ -571,16 +649,10 @@ function mcpToolDependencies(): ExecuteHostedMcpToolDependencies {
       status: "succeeded",
     }),
     createSignalForActor,
-    db,
     findProviderRoutines: vi.fn().mockResolvedValue({ routines: [] }),
-    getVisibleSignalByPublicId: vi
-      .fn()
-      .mockResolvedValue(undefined as Signal | undefined),
-    listSignalEntityLinksForSignal: vi.fn().mockResolvedValue([]),
+    getSignalForActor: vi.fn().mockResolvedValue(undefined),
     now: vi.fn(() => now),
-    recordMcpAuditEvent: vi
-      .fn()
-      .mockResolvedValue(undefined as RecordMcpAuditEventInput | undefined),
+    recordMcpAuditEvent: vi.fn().mockResolvedValue(undefined),
     version: "0.1.0-test",
   };
 }

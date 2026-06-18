@@ -15,7 +15,6 @@ const proxyContext = {
     orgId: "org_test",
     userId: "user_test",
   },
-  db: {} as never,
   log: {
     error: vi.fn(),
     info: vi.fn(),

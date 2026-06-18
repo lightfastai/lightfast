@@ -1,11 +1,9 @@
 import "@tanstack/react-start/server-only";
 
-import { env as dbEnv } from "@db/app/env";
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 export const env = createEnv({
-  extends: [dbEnv],
   clientPrefix: "VITE_",
   client: {
     VITE_SENTRY_DSN: z.string().url().optional(),
@@ -26,9 +24,6 @@ export const env = createEnv({
       .default("development"),
   },
   runtimeEnv: {
-    DATABASE_HOST: process.env.DATABASE_HOST,
-    DATABASE_USERNAME: process.env.DATABASE_USERNAME,
-    DATABASE_PASSWORD: process.env.DATABASE_PASSWORD,
     NODE_ENV: process.env.NODE_ENV,
     MCP_AUTH_ISSUER: process.env.MCP_AUTH_ISSUER,
     MCP_RESOURCE_URL: process.env.MCP_RESOURCE_URL,

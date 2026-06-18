@@ -6,14 +6,16 @@ import { createSentryBuildOptions } from "../../vite.config";
 const appRoot = resolve(import.meta.dirname, "../..");
 
 describe("MCP environment validation wiring", () => {
-  it("validates DB env requirements in the MCP env schema", () => {
+  it("keeps DB env requirements out of the MCP env schema", () => {
     const envSource = readFileSync(resolve(appRoot, "src/env.ts"), "utf8");
 
     expect(envSource).toContain('import "@tanstack/react-start/server-only"');
-    expect(envSource).toContain('from "@db/app/env"');
+    expect(envSource).not.toContain("@db/app/env");
+    expect(envSource).not.toContain("DATABASE_HOST");
+    expect(envSource).not.toContain("DATABASE_USERNAME");
+    expect(envSource).not.toContain("DATABASE_PASSWORD");
     expect(envSource).not.toContain("@vendor/observability/sentry-env");
     expect(envSource).toContain('from "@t3-oss/env-core"');
-    expect(envSource).toContain("extends: [dbEnv]");
   });
 
   it("evaluates the MCP env schema during Vite config loading", () => {

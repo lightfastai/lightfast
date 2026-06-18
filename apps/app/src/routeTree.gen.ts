@@ -59,6 +59,7 @@ import { Route as ApiOauthClientConfigRouteImport } from './routes/api/oauth/$cl
 import { Route as ApiNativeProxyRoutinesRouteImport } from './routes/api/native/proxy/routines'
 import { Route as ApiNativeProxyCallRouteImport } from './routes/api/native/proxy/call'
 import { Route as ApiInternalMcpSignalsRouteImport } from './routes/api/internal/mcp/signals'
+import { Route as ApiInternalMcpAuditRouteImport } from './routes/api/internal/mcp/audit'
 import { Route as ApiGithubOauthCallbackRouteImport } from './routes/api/github/oauth/callback'
 import { Route as ApiConnectorsXMcpRouteImport } from './routes/api/connectors/x/mcp'
 import { Route as ApiChatIdStreamRouteImport } from './routes/api/chat/$id/stream'
@@ -356,6 +357,11 @@ const ApiInternalMcpSignalsRoute = ApiInternalMcpSignalsRouteImport.update({
   path: '/api/internal/mcp/signals',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiInternalMcpAuditRoute = ApiInternalMcpAuditRouteImport.update({
+  id: '/api/internal/mcp/audit',
+  path: '/api/internal/mcp/audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiGithubOauthCallbackRoute = ApiGithubOauthCallbackRouteImport.update({
   id: '/api/github/oauth/callback',
   path: '/api/github/oauth/callback',
@@ -612,6 +618,7 @@ export interface FileRoutesByFullPath {
   '/api/chat/$id/stream': typeof ApiChatIdStreamRoute
   '/api/connectors/x/mcp': typeof ApiConnectorsXMcpRoute
   '/api/github/oauth/callback': typeof ApiGithubOauthCallbackRoute
+  '/api/internal/mcp/audit': typeof ApiInternalMcpAuditRoute
   '/api/internal/mcp/signals': typeof ApiInternalMcpSignalsRouteWithChildren
   '/api/native/proxy/call': typeof ApiNativeProxyCallRoute
   '/api/native/proxy/routines': typeof ApiNativeProxyRoutinesRoute
@@ -689,6 +696,7 @@ export interface FileRoutesByTo {
   '/api/chat/$id/stream': typeof ApiChatIdStreamRoute
   '/api/connectors/x/mcp': typeof ApiConnectorsXMcpRoute
   '/api/github/oauth/callback': typeof ApiGithubOauthCallbackRoute
+  '/api/internal/mcp/audit': typeof ApiInternalMcpAuditRoute
   '/api/internal/mcp/signals': typeof ApiInternalMcpSignalsRouteWithChildren
   '/api/native/proxy/call': typeof ApiNativeProxyCallRoute
   '/api/native/proxy/routines': typeof ApiNativeProxyRoutinesRoute
@@ -775,6 +783,7 @@ export interface FileRoutesById {
   '/api/chat/$id/stream': typeof ApiChatIdStreamRoute
   '/api/connectors/x/mcp': typeof ApiConnectorsXMcpRoute
   '/api/github/oauth/callback': typeof ApiGithubOauthCallbackRoute
+  '/api/internal/mcp/audit': typeof ApiInternalMcpAuditRoute
   '/api/internal/mcp/signals': typeof ApiInternalMcpSignalsRouteWithChildren
   '/api/native/proxy/call': typeof ApiNativeProxyCallRoute
   '/api/native/proxy/routines': typeof ApiNativeProxyRoutinesRoute
@@ -862,6 +871,7 @@ export interface FileRouteTypes {
     | '/api/chat/$id/stream'
     | '/api/connectors/x/mcp'
     | '/api/github/oauth/callback'
+    | '/api/internal/mcp/audit'
     | '/api/internal/mcp/signals'
     | '/api/native/proxy/call'
     | '/api/native/proxy/routines'
@@ -939,6 +949,7 @@ export interface FileRouteTypes {
     | '/api/chat/$id/stream'
     | '/api/connectors/x/mcp'
     | '/api/github/oauth/callback'
+    | '/api/internal/mcp/audit'
     | '/api/internal/mcp/signals'
     | '/api/native/proxy/call'
     | '/api/native/proxy/routines'
@@ -1024,6 +1035,7 @@ export interface FileRouteTypes {
     | '/api/chat/$id/stream'
     | '/api/connectors/x/mcp'
     | '/api/github/oauth/callback'
+    | '/api/internal/mcp/audit'
     | '/api/internal/mcp/signals'
     | '/api/native/proxy/call'
     | '/api/native/proxy/routines'
@@ -1078,6 +1090,7 @@ export interface RootRouteChildren {
   OauthClientStartRoute: typeof OauthClientStartRoute
   ApiConnectorsXMcpRoute: typeof ApiConnectorsXMcpRoute
   ApiGithubOauthCallbackRoute: typeof ApiGithubOauthCallbackRoute
+  ApiInternalMcpAuditRoute: typeof ApiInternalMcpAuditRoute
   ApiInternalMcpSignalsRoute: typeof ApiInternalMcpSignalsRouteWithChildren
   ApiNativeProxyCallRoute: typeof ApiNativeProxyCallRoute
   ApiNativeProxyRoutinesRoute: typeof ApiNativeProxyRoutinesRoute
@@ -1443,6 +1456,13 @@ declare module '@tanstack/react-router' {
       path: '/api/internal/mcp/signals'
       fullPath: '/api/internal/mcp/signals'
       preLoaderRoute: typeof ApiInternalMcpSignalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/internal/mcp/audit': {
+      id: '/api/internal/mcp/audit'
+      path: '/api/internal/mcp/audit'
+      fullPath: '/api/internal/mcp/audit'
+      preLoaderRoute: typeof ApiInternalMcpAuditRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/github/oauth/callback': {
@@ -1994,6 +2014,7 @@ const rootRouteChildren: RootRouteChildren = {
   OauthClientStartRoute: OauthClientStartRoute,
   ApiConnectorsXMcpRoute: ApiConnectorsXMcpRoute,
   ApiGithubOauthCallbackRoute: ApiGithubOauthCallbackRoute,
+  ApiInternalMcpAuditRoute: ApiInternalMcpAuditRoute,
   ApiInternalMcpSignalsRoute: ApiInternalMcpSignalsRouteWithChildren,
   ApiNativeProxyCallRoute: ApiNativeProxyCallRoute,
   ApiNativeProxyRoutinesRoute: ApiNativeProxyRoutinesRoute,

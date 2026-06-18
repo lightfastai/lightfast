@@ -53,6 +53,7 @@ const migratedNextAppRoutes = [
   "/api/github/webhook",
   "/api/health",
   "/api/inngest",
+  "/api/internal/mcp/audit",
   "/api/internal/mcp/proxy/call",
   "/api/internal/mcp/proxy/find",
   "/api/internal/mcp/signals",
@@ -129,7 +130,7 @@ describe("app migration readiness", () => {
   it("declares TanStack routes for every migrated legacy Next route", () => {
     const tanstackRoutes = new Set(tanstackRouteDeclarations());
 
-    expect(migratedNextAppRoutes.length).toBe(69);
+    expect(migratedNextAppRoutes.length).toBe(70);
     expect(tanstackRoutes.size).toBeGreaterThan(0);
     expect(
       migratedNextAppRoutes.filter((route) => !tanstackRoutes.has(route))

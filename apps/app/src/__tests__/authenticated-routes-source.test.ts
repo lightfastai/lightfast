@@ -1376,6 +1376,7 @@ describe("app authenticated route migration", () => {
     const mcpProxyFindRouteSource = source(
       "src/routes/api/internal/mcp/proxy/find.ts"
     );
+    const mcpAuditRouteSource = source("src/routes/api/internal/mcp/audit.ts");
     const mcpSignalsRouteSource = source(
       "src/routes/api/internal/mcp/signals.ts"
     );
@@ -1453,6 +1454,12 @@ describe("app authenticated route migration", () => {
     expect(mcpProxyFindRouteSource).toContain(
       'createFileRoute("/api/internal/mcp/proxy/find")'
     );
+    expect(mcpAuditRouteSource).toContain(
+      'createFileRoute("/api/internal/mcp/audit")'
+    );
+    expect(mcpAuditRouteSource).toContain(
+      "handleRecordMcpAuditInternalRequest"
+    );
     expect(mcpSignalsRouteSource).toContain(
       'createFileRoute("/api/internal/mcp/signals")'
     );
@@ -1495,6 +1502,7 @@ describe("app authenticated route migration", () => {
       mcpProxyServerSource,
       mcpProxyCallRouteSource,
       mcpProxyFindRouteSource,
+      mcpAuditRouteSource,
       mcpSignalsRouteSource,
       mcpSignalsGetRouteSource,
     ]) {

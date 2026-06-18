@@ -13,6 +13,7 @@ import { applySecurityHeaders } from "~/security/headers";
 export const APP_OWNED_API_PREFIXES = [
   "/api/connectors/x/mcp",
   "/api/inngest",
+  "/api/internal/mcp/audit",
   "/api/internal/mcp/proxy",
   "/api/internal/mcp/signals",
   "/api/v1",
