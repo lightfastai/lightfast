@@ -1504,8 +1504,12 @@ describe("app authenticated route migration", () => {
     expect(nativeProxyCallRouteSource).toContain(
       "handleNativeProviderRoutineCallRequest"
     );
+    expect(nativeProxyCallRouteSource).toContain("await import(");
     expect(nativeProxyCallRouteSource).toContain(
-      'from "@api/app/native-provider-proxy"'
+      '"@api/app/native-provider-proxy"'
+    );
+    expect(nativeProxyCallRouteSource).not.toContain(
+      'import { handleNativeProviderRoutineCallRequest } from "@api/app/native-provider-proxy"'
     );
     expect(nativeProxyCallRouteSource).not.toContain(
       "providerRoutineCallInputSchema"
@@ -1516,8 +1520,12 @@ describe("app authenticated route migration", () => {
     expect(nativeProxyRoutinesRouteSource).toContain(
       "handleNativeProviderRoutineFindRequest"
     );
+    expect(nativeProxyRoutinesRouteSource).toContain("await import(");
     expect(nativeProxyRoutinesRouteSource).toContain(
-      'from "@api/app/native-provider-proxy"'
+      '"@api/app/native-provider-proxy"'
+    );
+    expect(nativeProxyRoutinesRouteSource).not.toContain(
+      'import { handleNativeProviderRoutineFindRequest } from "@api/app/native-provider-proxy"'
     );
     expect(nativeProxyRoutinesRouteSource).not.toContain(
       "providerRoutineFindInputSchema"
