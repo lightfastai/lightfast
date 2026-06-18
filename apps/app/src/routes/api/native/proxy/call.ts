@@ -1,7 +1,7 @@
 import {
   providerRoutineCallInputSchema,
   providerRoutineCallSuccessSchema,
-} from "@repo/provider-routine-contract";
+} from "@lightfast/connector-core/provider-routines";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   createNativeProviderRoutineContext,

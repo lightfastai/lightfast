@@ -6,7 +6,7 @@ import {
   mcpProviderRoutineFindCommandInputSchema,
   providerRoutineCallSuccessSchema,
   providerRoutineFindOutputSchema,
-} from "@repo/provider-routine-contract";
+} from "@lightfast/connector-core/provider-routines";
 
 import { jsonError, verifyMcpServiceRequest } from "./mcp-service-auth";
 

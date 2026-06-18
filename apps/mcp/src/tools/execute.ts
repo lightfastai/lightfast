@@ -1,5 +1,14 @@
 import type { Database, RecordMcpAuditEventInput, Signal } from "@db/app";
 import {
+  type ProviderRoutineCallInput,
+  type ProviderRoutineCallSuccess,
+  type ProviderRoutineFindInput,
+  type ProviderRoutineFindOutput,
+  type ProviderRoutineSourceSurface,
+  providerRoutineCallInputSchema,
+  providerRoutineFindInputSchema,
+} from "@lightfast/connector-core/provider-routines";
+import {
   apiContract,
   type CreateSignalInput,
   type GetSignalInput,
@@ -13,15 +22,6 @@ import {
   formatMcpSuccess,
   type LightfastMcpToolDefinition,
 } from "@repo/mcp-tools";
-import {
-  type ProviderRoutineCallInput,
-  type ProviderRoutineCallSuccess,
-  type ProviderRoutineFindInput,
-  type ProviderRoutineFindOutput,
-  type ProviderRoutineSourceSurface,
-  providerRoutineCallInputSchema,
-  providerRoutineFindInputSchema,
-} from "@repo/provider-routine-contract";
 import * as Sentry from "@sentry/tanstackstart-react";
 import { z } from "zod";
 

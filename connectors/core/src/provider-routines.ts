@@ -1,8 +1,8 @@
+import { z } from "zod";
 import {
   type ConnectableConnectorProvider,
   connectableConnectorProviderSchema,
-} from "@lightfast/connector-core";
-import { z } from "zod";
+} from "./index";
 
 export const providerToolNameSchema = z
   .string()

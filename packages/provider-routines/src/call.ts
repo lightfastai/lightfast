@@ -16,7 +16,7 @@ import {
   type ProviderRoutineId,
   parseProviderRoutineId,
   providerRoutineCallInputSchema,
-} from "@repo/provider-routine-contract";
+} from "@lightfast/connector-core/provider-routines";
 import type {
   ConnectorProviderRoutineTool,
   LinearProviderRoutineAdapter,

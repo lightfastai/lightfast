@@ -9,7 +9,7 @@ import {
   type ProviderRoutineSummary,
   providerRoutineFindInputSchema,
   providerRoutineId,
-} from "@repo/provider-routine-contract";
+} from "@lightfast/connector-core/provider-routines";
 import type {
   ConnectorProviderRoutineTool,
   ProviderRoutineServiceContext,

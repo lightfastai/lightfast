@@ -1,4 +1,3 @@
-import type { NativeSession } from "@repo/native-auth-contract";
 import {
   type ProviderRoutineCallInput,
   type ProviderRoutineCallSuccess,
@@ -6,7 +5,8 @@ import {
   providerRoutineCallInputSchema,
   providerRoutineCallSuccessSchema,
   providerRoutineFindOutputSchema,
-} from "@repo/provider-routine-contract";
+} from "@lightfast/connector-core/provider-routines";
+import type { NativeSession } from "@repo/native-auth-contract";
 import { z } from "zod";
 
 import { buildNativeAuthHeaders } from "../auth/session";

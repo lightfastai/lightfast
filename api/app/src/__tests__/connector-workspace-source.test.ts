@@ -15,6 +15,8 @@ const oldGitHubNodePackage = `@repo/${"github-app-node"}`;
 const oldGitHubNodePath = `packages/${"github-app-node"}`;
 const oldGranolaPackage = `@repo/${"granola-app-node"}`;
 const oldGranolaPath = `packages/${"granola-app-node"}`;
+const oldProviderRoutineContractPackage = `@repo/${"provider-routine-contract"}`;
+const oldProviderRoutineContractPath = `packages/${"provider-routine-contract"}`;
 
 const ignoredDirs = new Set([
   ".git",
@@ -70,7 +72,10 @@ describe("connector workspace boundary", () => {
     expect(connectorCorePackage.name).toBe("@lightfast/connector-core");
     expect(connectorCorePackage.private).toBe(true);
     expect(connectorCorePackage.dependencies?.zod).toBe("catalog:");
-    expect(Object.keys(connectorCorePackage.exports ?? {})).toEqual(["."]);
+    expect(Object.keys(connectorCorePackage.exports ?? {}).sort()).toEqual([
+      ".",
+      "./provider-routines",
+    ]);
   });
 
   it("removes the old connector-contract package name from source and manifests", () => {
@@ -81,6 +86,47 @@ describe("connector workspace boundary", () => {
         return (
           contents.includes(oldConnectorPackage) ||
           contents.includes(oldConnectorPath)
+        );
+      })
+      .map((path) => relative(repoRoot, path))
+      .sort();
+
+    expect(staleReferences).toEqual([]);
+  });
+
+  it("collapses provider routine contracts into connector-core entrypoints", () => {
+    const connectorCorePackage = readJson<{
+      dependencies?: Record<string, string>;
+      exports?: Record<string, unknown>;
+      name?: string;
+      private?: boolean;
+    }>("connectors/core/package.json");
+    const providerRoutinesPackage = readJson<{
+      dependencies?: Record<string, string>;
+      exports?: Record<string, unknown>;
+    }>("packages/provider-routines/package.json");
+
+    expect(existsSync(resolve(repoRoot, oldProviderRoutineContractPath))).toBe(
+      false
+    );
+    expect(connectorCorePackage.name).toBe("@lightfast/connector-core");
+    expect(connectorCorePackage.private).toBe(true);
+    expect(Object.keys(connectorCorePackage.exports ?? {}).sort()).toEqual([
+      ".",
+      "./provider-routines",
+    ]);
+    expect(
+      providerRoutinesPackage.dependencies?.[oldProviderRoutineContractPackage]
+    ).toBeUndefined();
+    expect(providerRoutinesPackage.exports).not.toHaveProperty("./contract");
+
+    const staleReferences = workspaceFilesToScan()
+      .filter((path) => !relative(repoRoot, path).startsWith(".codex/"))
+      .filter((path) => {
+        const contents = readFileSync(path, "utf8");
+        return (
+          contents.includes(oldProviderRoutineContractPackage) ||
+          contents.includes(oldProviderRoutineContractPath)
         );
       })
       .map((path) => relative(repoRoot, path))

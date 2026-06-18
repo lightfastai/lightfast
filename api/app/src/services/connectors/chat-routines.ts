@@ -22,7 +22,7 @@ import {
   providerRoutineCallInputSchema,
   providerRoutineFindInputSchema,
   providerRoutineId,
-} from "@repo/provider-routine-contract";
+} from "@lightfast/connector-core/provider-routines";
 import { classifyRoutine } from "@repo/provider-routines";
 import { log } from "@vendor/observability/log/next";
 

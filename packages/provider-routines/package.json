@@ -20,10 +20,7 @@
     "@db/app": "workspace:*",
     "@lightfast/connector-core": "workspace:*",
     "@lightfast/connector-linear": "workspace:*",
-    "@repo/app-encryption": "workspace:*",
-    "@repo/provider-routine-contract": "workspace:*",
-    "@vendor/observability": "workspace:*",
-    "zod": "catalog:"
+    "@repo/app-encryption": "workspace:*"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
