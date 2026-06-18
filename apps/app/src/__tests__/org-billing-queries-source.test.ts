@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -24,7 +24,6 @@ describe("org billing app data access", () => {
     const files = [
       "src/org/settings/billing/billing-settings-client.tsx",
       "src/org/settings/billing/billing-cancellation-mutation.ts",
-      "src/org/settings/billing/billing-overview-actions.ts",
       "src/org/settings/billing/billing-view-model.ts",
       "src/org/settings/billing/plan-selection-dialog.tsx",
       "src/org/settings/billing/plan-dialogs.tsx",
@@ -38,5 +37,19 @@ describe("org billing app data access", () => {
       expect(source, file).not.toContain("org.settings.orgBilling");
       expect(source, file).not.toContain("AppRouterOutputs");
     }
+  });
+
+  it("keeps the billing overview refresh mutation state in the billing client", () => {
+    const clientSource = readFileSync(
+      resolve(appRoot, "src/org/settings/billing/billing-settings-client.tsx"),
+      "utf8"
+    );
+    const actionsPath = "src/org/settings/billing/billing-overview-actions.ts";
+
+    expect(existsSync(resolve(appRoot, actionsPath))).toBe(false);
+    expect(clientSource).toContain("useQueryClient");
+    expect(clientSource).toContain("orgBillingQueryKeys.overview(auth.orgId)");
+    expect(clientSource).not.toContain("useBillingOverviewRefresh");
+    expect(clientSource).not.toContain("billing-overview-actions");
   });
 });

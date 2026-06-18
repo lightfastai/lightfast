@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   BillingPaymentMethodResource,
   BillingStatementResource,
@@ -8,8 +8,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useCancelSubscriptionItemMutation } from "./billing-cancellation-mutation";
 import { BillingCheckoutDialog } from "./billing-checkout-dialog";
-import { useBillingOverviewRefresh } from "./billing-overview-actions";
-import { billingOverviewQueryOptions } from "./billing-queries";
+import {
+  billingOverviewQueryOptions,
+  orgBillingQueryKeys,
+} from "./billing-queries";
 import {
   CancellationSection,
   InvoicesSection,
@@ -84,7 +86,14 @@ function usePricingHashDialogState() {
 
 export function BillingSettingsClient() {
   const auth = useAuth();
-  const refreshBillingOverview = useBillingOverviewRefresh();
+  const queryClient = useQueryClient();
+  const refreshBillingOverview = useCallback(
+    () =>
+      queryClient.invalidateQueries({
+        queryKey: orgBillingQueryKeys.overview(auth.orgId),
+      }),
+    [auth.orgId, queryClient]
+  );
   const {
     data: overview,
     error: overviewError,
