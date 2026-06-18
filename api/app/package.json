@@ -53,6 +53,10 @@
       "types": "./src/adapters/internal/mcp-audit.ts",
       "default": "./src/adapters/internal/mcp-audit.ts"
     },
+    "./internal-api/mcp-proxy": {
+      "types": "./src/adapters/internal/mcp-proxy.ts",
+      "default": "./src/adapters/internal/mcp-proxy.ts"
+    },
     "./public-api/signals": {
       "types": "./src/adapters/public/signals.ts",
       "default": "./src/adapters/public/signals.ts"
