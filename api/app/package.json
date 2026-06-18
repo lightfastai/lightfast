@@ -81,6 +81,10 @@
       "types": "./src/adapters/internal/github-webhook.ts",
       "default": "./src/adapters/internal/github-webhook.ts"
     },
+    "./internal-api/skills-events": {
+      "types": "./src/adapters/internal/skills-events.ts",
+      "default": "./src/adapters/internal/skills-events.ts"
+    },
     "./internal-api/workspace-assistant": {
       "types": "./src/adapters/internal/workspace-assistant/index.ts",
       "default": "./src/adapters/internal/workspace-assistant/index.ts"
@@ -196,10 +200,6 @@
     "./services/skills": {
       "types": "./src/services/skills/index.ts",
       "default": "./src/services/skills/index.ts"
-    },
-    "./services/skills/events": {
-      "types": "./src/services/skills/events.ts",
-      "default": "./src/services/skills/events.ts"
     },
     "./services/connectors": {
       "types": "./src/services/connectors/index.ts",
