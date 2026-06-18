@@ -106,6 +106,7 @@ describe("desktop Tailwind setup", () => {
       '[role="button"]:not(:disabled) {',
       "html {",
       ".font-mono {",
+      ".font-wordmark-features {",
     ]);
     expect(uiV2Styles).not.toContain("color-mix(");
     expect(uiV2Styles).not.toContain("-webkit-app-region");

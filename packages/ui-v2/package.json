@@ -8,8 +8,11 @@
     "*.css"
   ],
   "exports": {
+    "./components/brand/*": "./src/components/brand/*",
     "./components/ai-elements/*": "./src/components/ai-elements/*",
     "./components/ui/*": "./src/components/ui/*",
+    "./fonts.css": "./src/fonts.css",
+    "./fonts/*": "./public/fonts/*",
     "./hooks/*": "./src/hooks/*",
     "./lib/*": "./src/lib/*",
     "./postcss.config": "./postcss.config.mjs",

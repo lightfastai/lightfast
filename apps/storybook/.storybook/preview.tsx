@@ -1,5 +1,4 @@
 import type { Preview } from "@storybook/react-vite";
-import "@fontsource-variable/geist";
 import { initialize, mswLoader } from "msw-storybook-addon";
 import "@repo/ui-v2/globals.css";
 import { TooltipProvider } from "@repo/ui-v2/components/ui/tooltip";

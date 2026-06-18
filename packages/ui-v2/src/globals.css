@@ -1,3 +1,4 @@
+@import "./fonts.css";
 @import "tailwindcss/index.css";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -8,9 +9,18 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-heading: var(--font-sans);
-  --font-sans: "Geist Variable", sans-serif;
-  --font-mono: "SF Mono", ui-monospace, Menlo, monospace;
+  --font-geist-sans: "Geist Variable", "Geist", sans-serif;
+  --font-geist-mono:
+    "Geist Mono Variable", "Geist Mono", "SF Mono", ui-monospace, Menlo,
+    monospace;
+  --font-pp-neue-montreal: "PP Neue Montreal", var(--font-geist-sans);
+  --font-roobert: "Roobert-TRIAL", var(--font-geist-sans);
+  --font-heading: var(--font-title);
+  --font-title: var(--font-pp-neue-montreal);
+  --font-wordmark:
+    "Roobert-TRIAL-Medium", "Roobert-TRIAL", var(--font-geist-sans);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -160,5 +170,11 @@
   samp,
   .font-mono {
     letter-spacing: normal;
+  }
+}
+
+@layer utilities {
+  .font-wordmark-features {
+    font-feature-settings: "ss01", "ss04", "ss06", "ss11", "ss14";
   }
 }

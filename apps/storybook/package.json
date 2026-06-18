@@ -13,7 +13,6 @@
     "clean": "git clean -xdf .cache .turbo storybook-static node_modules"
   },
   "dependencies": {
-    "@fontsource-variable/geist": "catalog:",
     "@hugeicons/core-free-icons": "catalog:",
     "@hugeicons/react": "catalog:",
     "@repo/ui-v2": "workspace:*",

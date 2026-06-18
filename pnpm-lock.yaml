@@ -1108,9 +1108,6 @@ importers:
 
   apps/storybook:
     dependencies:
-      '@fontsource-variable/geist':
-        specifier: 'catalog:'
-        version: 5.2.9
       '@hugeicons/core-free-icons':
         specifier: 'catalog:'
         version: 4.2.0
