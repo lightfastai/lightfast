@@ -112,6 +112,7 @@ vi.mock("../inngest/workflow/queue-skill-refresh-from-source-control", () => ({
 }));
 
 const { createInngestRouteContext, inngest } = await import("../inngest");
+const { handleInngestRequest } = await import("../adapters/internal/inngest");
 
 describe("createInngestRouteContext", () => {
   it("serves the app Inngest client with automation and production health workflows", () => {
@@ -173,5 +174,15 @@ describe("createInngestRouteContext", () => {
       serveOrigin: "https://lightfast.localhost",
       servePath: "/api/inngest",
     });
+  });
+
+  it("adapts app route requests to the selected Inngest handler", async () => {
+    const request = new Request("https://lightfast.localhost/api/inngest");
+    const response = new Response("ok");
+    routeHandlers.POST.mockResolvedValueOnce(response);
+
+    await expect(handleInngestRequest(request, "POST")).resolves.toBe(response);
+
+    expect(routeHandlers.POST).toHaveBeenCalledWith(request, {});
   });
 });
