@@ -22,11 +22,11 @@ import {
 import { db } from "@db/app/client";
 import {
   type ChatConversationSettingsV2,
-  type LightfastUIMessage,
   chatConversationSettingsV2Schema,
   getDefaultChatSettings,
   getSettingsMetadata,
   isChatSettingsRequestCompatible,
+  type LightfastUIMessage,
   lightfastWorkspaceAssistantDataPartSchemas,
   lightfastWorkspaceAssistantMessageMetadataSchema,
   lightfastWorkspaceAssistantTools,
@@ -52,8 +52,8 @@ import {
   smoothStream,
   stepCountIs,
   streamText,
-  tool,
   type Tool,
+  tool,
 } from "@vendor/ai";
 import { z } from "zod";
 import { resolveWorkspaceAssistantAuthContext } from "~/server/chat/auth";
@@ -634,7 +634,10 @@ function createWorkspaceAssistantUserConnectorToolDefinitions(input: {
             const { callUserConnectorTool } = await import(
               "@api/app/services/user-connectors/runtime"
             );
-            return callUserConnectorTool(userConnectorContext(input), toolInput);
+            return callUserConnectorTool(
+              userConnectorContext(input),
+              toolInput
+            );
           },
         }),
       name: "callUserConnectorTool",
@@ -651,7 +654,10 @@ function createWorkspaceAssistantUserConnectorToolDefinitions(input: {
             const { findUserConnectorTools } = await import(
               "@api/app/services/user-connectors/runtime"
             );
-            return findUserConnectorTools(userConnectorContext(input), toolInput);
+            return findUserConnectorTools(
+              userConnectorContext(input),
+              toolInput
+            );
           },
         }),
       name: "findUserConnectorTools",

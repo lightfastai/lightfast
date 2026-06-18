@@ -115,9 +115,9 @@ vi.mock("@repo/ui-v2/components/ui/dropdown-menu", () => ({
     children?: ReactNode;
     render?: ReactElement;
   }) =>
-    isValidElement(render) ? cloneElement(render, undefined, children) : (
-      <>{children}</>
-    ),
+    isValidElement(render)
+      ? cloneElement(render, undefined, children)
+      : (children ?? null),
 }));
 
 vi.mock("@repo/ui/components/ui/toggle", () => ({
@@ -220,8 +220,11 @@ describe("ChatComposer", () => {
     render(<ChatComposer {...baseProps} settingsLocked />);
 
     expect(
-      (screen.getByRole("button", { name: "Model profile" }) as HTMLButtonElement)
-        .disabled
+      (
+        screen.getByRole("button", {
+          name: "Model profile",
+        }) as HTMLButtonElement
+      ).disabled
     ).toBe(true);
     expect(
       (screen.getByRole("button", { name: "Read mode" }) as HTMLButtonElement)

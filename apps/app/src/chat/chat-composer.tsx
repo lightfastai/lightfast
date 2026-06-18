@@ -1,3 +1,14 @@
+import {
+  ArrowUpIcon as ArrowUp,
+  Brain01Icon as Brain,
+  ChevronDownIcon as ChevronDown,
+  EyeIcon as Eye,
+  FlashIcon as Flash,
+  LockIcon as Lock,
+  PencilEdit02Icon as PencilLine,
+  Add01Icon as Plus,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type {
   ChatCapabilityMode,
   ChatModelProfile,
@@ -27,17 +38,6 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui-v2/components/ui/dropdown-menu";
 import type { ChatStatus } from "@vendor/ai";
-import {
-  ArrowUpIcon as ArrowUp,
-  Brain01Icon as Brain,
-  ChevronDownIcon as ChevronDown,
-  EyeIcon as Eye,
-  FlashIcon as Flash,
-  LockIcon as Lock,
-  PencilEdit02Icon as PencilLine,
-  Add01Icon as Plus,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import type { ReactNode } from "react";
 import { memo, useEffect, useState } from "react";
 
@@ -114,7 +114,7 @@ export const ChatComposer = memo(function ChatComposer({
       status={effectiveStatus}
     >
       {effectiveStatus === "ready" ? (
-        <HugeiconsIcon icon={ArrowUp} className="size-4" />
+        <HugeiconsIcon className="size-4" icon={ArrowUp} />
       ) : undefined}
     </PromptInputSubmit>
   );
@@ -219,12 +219,12 @@ function ModelProfileMenu({
           />
         }
       >
-        <HugeiconsIcon icon={Icon} aria-hidden="true" className="size-3.5" />
+        <HugeiconsIcon aria-hidden="true" className="size-3.5" icon={Icon} />
         <span>{modelProfileLabel(modelProfile)}</span>
         <HugeiconsIcon
-          icon={settingsLocked ? Lock : ChevronDown}
           aria-hidden="true"
           className="size-3.5 text-muted-foreground"
+          icon={settingsLocked ? Lock : ChevronDown}
         />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
@@ -232,14 +232,14 @@ function ModelProfileMenu({
           disabled={disabled}
           onClick={() => onModelProfileChange("fast")}
         >
-          <HugeiconsIcon icon={Flash} aria-hidden="true" className="size-4" />
+          <HugeiconsIcon aria-hidden="true" className="size-4" icon={Flash} />
           <span>Fast</span>
         </DropdownMenuItem>
         <DropdownMenuItem
           disabled={disabled}
           onClick={() => onModelProfileChange("thinking")}
         >
-          <HugeiconsIcon icon={Brain} aria-hidden="true" className="size-4" />
+          <HugeiconsIcon aria-hidden="true" className="size-4" icon={Brain} />
           <span>Thinking</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -276,7 +276,11 @@ function CapabilityModeMenu({
               />
             }
           >
-            <HugeiconsIcon icon={Icon} aria-hidden="true" className="size-3.5" />
+            <HugeiconsIcon
+              aria-hidden="true"
+              className="size-3.5"
+              icon={Icon}
+            />
           </DropdownMenuTrigger>
         </TooltipTrigger>
         <TooltipContent>
@@ -290,7 +294,7 @@ function CapabilityModeMenu({
           disabled={disabled}
           onClick={() => onCapabilityModeChange("read")}
         >
-          <HugeiconsIcon icon={Eye} aria-hidden="true" className="size-4" />
+          <HugeiconsIcon aria-hidden="true" className="size-4" icon={Eye} />
           <span>Read</span>
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -298,9 +302,9 @@ function CapabilityModeMenu({
           onClick={() => onCapabilityModeChange("write")}
         >
           <HugeiconsIcon
-            icon={PencilLine}
             aria-hidden="true"
             className="size-4"
+            icon={PencilLine}
           />
           <span>Write</span>
         </DropdownMenuItem>
@@ -317,7 +321,7 @@ function AddContextButton() {
       disabled
       title="Add context"
     >
-      <HugeiconsIcon icon={Plus} className="size-4" />
+      <HugeiconsIcon className="size-4" icon={Plus} />
     </PromptInputButton>
   );
 }

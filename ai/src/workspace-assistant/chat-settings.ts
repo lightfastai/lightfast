@@ -45,8 +45,8 @@ const LEGACY_WORKSPACE_ASSISTANT_MODEL = "anthropic/claude-sonnet-4.6";
 const LEGACY_FALLBACK_MODELS = ["openai/gpt-5.4"] as const;
 
 export interface ResolvedChatModelProfile {
-  model: string;
   fallbackModels: string[];
+  model: string;
   providerOptions: Record<string, unknown>;
   sendReasoning: boolean;
 }
@@ -59,9 +59,7 @@ export function getDefaultChatSettings(): ChatConversationSettingsV2 {
   };
 }
 
-export function parseChatSettings(
-  metadata: unknown
-): ChatConversationSettings {
+export function parseChatSettings(metadata: unknown): ChatConversationSettings {
   if (metadata && typeof metadata === "object" && "chatSettings" in metadata) {
     const parsed = chatConversationSettingsSchema.safeParse(
       (metadata as { chatSettings?: unknown }).chatSettings

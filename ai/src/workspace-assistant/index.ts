@@ -1,5 +1,10 @@
 export {
   CHAT_SETTINGS_STORAGE_KEYS,
+  type ChatActivityStatus,
+  type ChatCapabilityMode,
+  type ChatConversationSettings,
+  type ChatConversationSettingsV2,
+  type ChatModelProfile,
   chatCapabilityModeSchema,
   chatConversationSettingsSchema,
   chatConversationSettingsV1Schema,
@@ -10,13 +15,8 @@ export {
   isChatSettingsRequestCompatible,
   mapActivityStatusToThinkingStepStatus,
   parseChatSettings,
-  resolveChatModelProfile,
-  type ChatActivityStatus,
-  type ChatCapabilityMode,
-  type ChatConversationSettings,
-  type ChatConversationSettingsV2,
-  type ChatModelProfile,
   type ResolvedChatModelProfile,
+  resolveChatModelProfile,
   type ThinkingStepStatus,
 } from "./chat-settings";
 export {
