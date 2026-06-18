@@ -27,8 +27,12 @@ describe("app health route", () => {
     };
 
     expect(routeSource).not.toContain('from "~/env"');
+    expect(routeSource).toContain("await import(");
     expect(routeSource).toContain('@api/app/internal-api/health"');
     expect(routeSource).toContain("handleAppHealthRequest");
+    expect(routeSource).not.toContain(
+      'import { handleAppHealthRequest } from "@api/app/internal-api/health"'
+    );
     expect(routeSource).not.toContain('import("~/server/health")');
     expect(existsSync(serverPath)).toBe(false);
     expect(apiPackageJson.exports["./internal-api/health"]).toEqual({
