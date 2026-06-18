@@ -18,7 +18,7 @@ import {
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/components/ui/sonner";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth, useOrganizationList } from "~/compat/clerk";
@@ -26,14 +26,17 @@ import { SettingRow, SettingsGroup } from "~/components/settings-section";
 import {
   listUserOrganizationsQueryOptions,
   organizationDomainsQueryOptions,
+  organizationQueryKeys,
+  type UserOrganizationsData,
+  updateOrganizationDomainsMutationOptions,
+  updateOrganizationNameMutationOptions,
 } from "~/organization/organization-queries";
 import {
   normalizeTeamDomainList,
   normalizeTeamSlugInput,
   parseTeamDomainInput,
-  useTeamDomainsUpdate,
-  useTeamNameUpdate,
-} from "./team-general-settings-actions";
+  renameOrganizationSlug,
+} from "./team-general-settings-model";
 import { TeamProfileLoading } from "./team-profile-loading";
 
 interface TeamGeneralSettingsClientProps {
@@ -51,6 +54,7 @@ export function TeamGeneralSettingsClient({
   slug,
 }: TeamGeneralSettingsClientProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { has, isLoaded } = useAuth();
   const { setActive } = useOrganizationList();
   const canManageDomains = isLoaded && !!has?.({ role: "org:admin" });
@@ -124,18 +128,64 @@ export function TeamGeneralSettingsClient({
     },
     [navigate, setActive]
   );
-  const { isUpdating, updateTeamName } = useTeamNameUpdate({
-    onUpdated: handleTeamUpdated,
+  const updateNameMutation = useMutation({
+    ...updateOrganizationNameMutationOptions(),
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({
+        queryKey: organizationQueryKeys.list(),
+      });
+      const previousOrgs = queryClient.getQueryData<UserOrganizationsData>(
+        organizationQueryKeys.list()
+      );
+      queryClient.setQueryData<UserOrganizationsData>(
+        organizationQueryKeys.list(),
+        (old) => renameOrganizationSlug(old, input)
+      );
+      return { previousOrgs };
+    },
+    onError: (_err, _input, context) => {
+      if (context?.previousOrgs) {
+        queryClient.setQueryData(
+          organizationQueryKeys.list(),
+          context.previousOrgs
+        );
+      }
+    },
+    onSuccess: async (data) => {
+      toast.success("Team updated!", {
+        description: `Team name changed to "${data.name}"`,
+      });
+      await handleTeamUpdated(data);
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({
+        queryKey: organizationQueryKeys.list(),
+      });
+    },
   });
-  const { isUpdatingDomains, updateTeamDomains } = useTeamDomainsUpdate({
+  const updateDomainsMutation = useMutation({
+    ...updateOrganizationDomainsMutationOptions(),
     onError: () => {
       setDraftDomains(currentDomainNames);
     },
-    onUpdated: (domains) => {
+    onSuccess: (domains) => {
+      toast.success("Domains updated!", {
+        description: "Matching email domains will auto-join this team.",
+      });
       setDraftDomains(domains.map((domain) => domain.name));
     },
-    slug,
+    onSettled: () => {
+      void queryClient.invalidateQueries({
+        queryKey: organizationQueryKeys.domains(slug),
+      });
+    },
   });
+  const updateTeamDomains = useCallback(
+    (domains: string[]) => updateDomainsMutation.mutate({ domains, slug }),
+    [slug, updateDomainsMutation.mutate]
+  );
+  const isUpdating = updateNameMutation.isPending;
+  const isUpdatingDomains = updateDomainsMutation.isPending;
   const isDomainEditorDisabled = isUpdatingDomains || !canManageDomains;
 
   const onSubmit = useCallback(
@@ -149,9 +199,9 @@ export function TeamGeneralSettingsClient({
         return;
       }
 
-      updateTeamName(values.teamName, slug);
+      updateNameMutation.mutate({ name: values.teamName, slug });
     },
-    [form, slug, updateTeamName]
+    [form, slug, updateNameMutation.mutate]
   );
 
   const handleTeamNameChange = useCallback(
