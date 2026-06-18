@@ -39,6 +39,16 @@ const activeIdentity: ActiveAuthIdentity = {
   orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
 };
 
+const pendingIdentity: AuthIdentity = {
+  type: "pending",
+  userId: "user_pending",
+};
+
+const otherOrgIdentity: ActiveAuthIdentity = {
+  ...activeIdentity,
+  orgId: "org_other",
+};
+
 const runDate = new Date("2026-05-27T00:05:00.000Z");
 
 const automation: Automation = {
@@ -237,6 +247,141 @@ describe("automation domain commands", () => {
     });
   });
 
+  it("rejects pending users before org-scoped automation writes", async () => {
+    const pendingCtx = ctx({ identity: pendingIdentity });
+
+    await expect(
+      createAutomationCommand.run({
+        ctx: pendingCtx,
+        deps: deps(),
+        input: {
+          connectorProvider: null,
+          name: "Morning check",
+          prompt: "Check the workspace",
+          schedule: { kind: "manual", config: {} },
+          timezone: "UTC",
+        },
+      })
+    ).rejects.toMatchObject({
+      code: "ORG_REQUIRED",
+      kind: "authz",
+    });
+    await expect(
+      updateAutomationCommand.run({
+        ctx: pendingCtx,
+        deps: deps(),
+        input: { id: automation.publicId, name: "Updated" },
+      })
+    ).rejects.toMatchObject({
+      code: "ORG_REQUIRED",
+      kind: "authz",
+    });
+    await expect(
+      deleteAutomationCommand.run({
+        ctx: pendingCtx,
+        deps: deps(),
+        input: { id: automation.publicId },
+      })
+    ).rejects.toMatchObject({
+      code: "ORG_REQUIRED",
+      kind: "authz",
+    });
+    await expect(
+      pauseAutomationCommand.run({
+        ctx: pendingCtx,
+        deps: deps(),
+        input: { id: automation.publicId },
+      })
+    ).rejects.toMatchObject({
+      code: "ORG_REQUIRED",
+      kind: "authz",
+    });
+    await expect(
+      resumeAutomationCommand.run({
+        ctx: pendingCtx,
+        deps: deps(),
+        input: { id: automation.publicId },
+      })
+    ).rejects.toMatchObject({
+      code: "ORG_REQUIRED",
+      kind: "authz",
+    });
+    await expect(
+      runAutomationNowCommand.run({
+        ctx: pendingCtx,
+        deps: deps(),
+        input: { id: automation.publicId },
+      })
+    ).rejects.toMatchObject({
+      code: "ORG_REQUIRED",
+      kind: "authz",
+    });
+
+    expect(createAutomationMock).not.toHaveBeenCalled();
+    expect(updateAutomationMock).not.toHaveBeenCalled();
+    expect(deleteAutomationMock).not.toHaveBeenCalled();
+    expect(setAutomationStatusMock).not.toHaveBeenCalled();
+    expect(getAutomationByPublicIdMock).not.toHaveBeenCalled();
+    expect(createAutomationRunMock).not.toHaveBeenCalled();
+  });
+
+  it("treats automation records from a different organization as not found", async () => {
+    const otherOrgCtx = ctx({ identity: otherOrgIdentity });
+
+    await expect(
+      getAutomationCommand.run({
+        ctx: otherOrgCtx,
+        deps: deps(),
+        input: { id: automation.publicId },
+      })
+    ).rejects.toMatchObject({
+      code: "AUTOMATION_NOT_FOUND",
+      kind: "not_found",
+    });
+    await expect(
+      updateAutomationCommand.run({
+        ctx: otherOrgCtx,
+        deps: deps(),
+        input: { id: automation.publicId, name: "Updated" },
+      })
+    ).rejects.toMatchObject({
+      code: "AUTOMATION_NOT_FOUND",
+      kind: "not_found",
+    });
+    await expect(
+      pauseAutomationCommand.run({
+        ctx: otherOrgCtx,
+        deps: deps(),
+        input: { id: automation.publicId },
+      })
+    ).rejects.toMatchObject({
+      code: "AUTOMATION_NOT_FOUND",
+      kind: "not_found",
+    });
+    await expect(
+      resumeAutomationCommand.run({
+        ctx: otherOrgCtx,
+        deps: deps(),
+        input: { id: automation.publicId },
+      })
+    ).rejects.toMatchObject({
+      code: "AUTOMATION_NOT_FOUND",
+      kind: "not_found",
+    });
+    await expect(
+      runAutomationNowCommand.run({
+        ctx: otherOrgCtx,
+        deps: deps(),
+        input: { id: automation.publicId },
+      })
+    ).rejects.toMatchObject({
+      code: "AUTOMATION_NOT_FOUND",
+      kind: "not_found",
+    });
+
+    expect(createAutomationRunMock).not.toHaveBeenCalled();
+  });
+
   it("pauses and resumes automations through the status command", async () => {
     await pauseAutomationCommand.run({
       ctx: ctx(),
@@ -346,6 +491,75 @@ describe("automation domain commands", () => {
         error: enqueueError,
         runId: run.publicId,
       }
+    );
+  });
+
+  it("preserves the enqueue error when marking the run failed also fails", async () => {
+    const enqueueError = new Error("queue unavailable");
+    sendAutomationRunRequestedMock.mockRejectedValueOnce(enqueueError);
+    markAutomationRunFailedMock.mockRejectedValueOnce(
+      new Error("database unavailable")
+    );
+
+    await expect(
+      runAutomationNowCommand.run({
+        ctx: ctx(),
+        deps: deps(),
+        input: { id: automation.publicId },
+      })
+    ).rejects.toMatchObject({
+      code: "AUTOMATION_RUN_ENQUEUE_FAILED",
+      kind: "internal",
+      message: "Failed to queue automation run.",
+    });
+
+    expect(warnMock).toHaveBeenCalledWith(
+      "[automations] manual run enqueue failed",
+      {
+        automationId: automation.publicId,
+        clerkOrgId: automation.clerkOrgId,
+        error: enqueueError,
+        runId: run.publicId,
+      }
+    );
+  });
+
+  it("times out stalled manual enqueue attempts", async () => {
+    sendAutomationRunRequestedMock.mockReturnValueOnce(
+      new Promise(() => {
+        // Intentionally never resolves to exercise the command timeout.
+      })
+    );
+
+    await expect(
+      Promise.race([
+        runAutomationNowCommand.run({
+          ctx: ctx(),
+          deps: {
+            ...deps(),
+            sendAutomationRunRequestedTimeoutMs: 1,
+          },
+          input: { id: automation.publicId },
+        }),
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error("test timeout waiting for enqueue timeout")),
+            50
+          )
+        ),
+      ])
+    ).rejects.toMatchObject({
+      code: "AUTOMATION_RUN_ENQUEUE_FAILED",
+      kind: "internal",
+      message: "Failed to queue automation run.",
+    });
+
+    expect(markAutomationRunFailedMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        errorCode: "AUTOMATION_RUN_ENQUEUE_FAILED",
+        publicId: run.publicId,
+      })
     );
   });
 

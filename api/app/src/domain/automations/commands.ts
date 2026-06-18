@@ -37,6 +37,8 @@ interface AutomationRunRequestedEventData {
   scheduleVersion: number;
 }
 
+const AUTOMATION_RUN_ENQUEUE_TIMEOUT_MS = 10_000;
+
 interface AutomationCommandDeps {
   createAutomation: typeof createAutomation;
   createAutomationRun: typeof createAutomationRun;
@@ -52,6 +54,7 @@ interface AutomationCommandDeps {
   sendAutomationRunRequested: (
     data: AutomationRunRequestedEventData
   ) => Promise<void>;
+  sendAutomationRunRequestedTimeoutMs: number;
   setAutomationStatus: typeof setAutomationStatus;
   updateAutomation: typeof updateAutomation;
 }
@@ -76,6 +79,9 @@ export function createDefaultAutomationCommandDeps(
     now: input.now ?? (() => new Date()),
     sendAutomationRunRequested:
       input.sendAutomationRunRequested ?? sendAutomationRunRequested,
+    sendAutomationRunRequestedTimeoutMs:
+      input.sendAutomationRunRequestedTimeoutMs ??
+      AUTOMATION_RUN_ENQUEUE_TIMEOUT_MS,
     setAutomationStatus: input.setAutomationStatus ?? setAutomationStatus,
     updateAutomation: input.updateAutomation ?? updateAutomation,
   };
@@ -114,12 +120,12 @@ export const getAutomationCommand = defineCommand<
   output: automationOutput,
   run: async ({ ctx, deps, input }) => {
     const actor = requireBoundClerkOrgActor(ctx);
-    return (
+    const automation =
       (await deps.getAutomationByPublicId(deps.db, {
         clerkOrgId: actor.orgId,
         publicId: input.id,
-      })) ?? automationNotFound()
-    );
+      })) ?? automationNotFound();
+    return requireAutomationVisibleToActor(automation, actor);
   },
 });
 
@@ -157,7 +163,7 @@ export const updateAutomationCommand = defineCommand<
   output: automationOutput,
   run: async ({ ctx, deps, input }) => {
     const actor = requireBoundClerkOrgAdminActor(ctx);
-    return (
+    const automation =
       (await deps.updateAutomation(deps.db, {
         clerkOrgId: actor.orgId,
         publicId: input.id,
@@ -165,8 +171,8 @@ export const updateAutomationCommand = defineCommand<
         prompt: input.prompt,
         schedule: input.schedule,
         timezone: input.timezone,
-      })) ?? automationNotFound()
-    );
+      })) ?? automationNotFound();
+    return requireAutomationVisibleToActor(automation, actor);
   },
 });
 
@@ -229,11 +235,13 @@ export const runAutomationNowCommand = defineCommand<
   output: automationRunOutput,
   run: async ({ ctx, deps, input }) => {
     const actor = requireBoundClerkOrgAdminActor(ctx);
-    const automation =
+    const automation = requireAutomationVisibleToActor(
       (await deps.getAutomationByPublicId(deps.db, {
         clerkOrgId: actor.orgId,
         publicId: input.id,
-      })) ?? automationNotFound();
+      })) ?? automationNotFound(),
+      actor
+    );
 
     if (automation.status !== "active") {
       throw new ValidationError("AUTOMATION_PAUSED", "Automation is paused.");
@@ -246,19 +254,32 @@ export const runAutomationNowCommand = defineCommand<
     });
 
     try {
-      await deps.sendAutomationRunRequested({
-        automationId: automation.publicId,
-        clerkOrgId: automation.clerkOrgId,
-        runId: run.publicId,
-        scheduleVersion: automation.scheduleVersion,
-      });
+      await withTimeout(
+        deps.sendAutomationRunRequested({
+          automationId: automation.publicId,
+          clerkOrgId: automation.clerkOrgId,
+          runId: run.publicId,
+          scheduleVersion: automation.scheduleVersion,
+        }),
+        deps.sendAutomationRunRequestedTimeoutMs
+      );
     } catch (error) {
-      await deps.markAutomationRunFailed(deps.db, {
-        clerkOrgId: automation.clerkOrgId,
-        publicId: run.publicId,
-        errorCode: "AUTOMATION_RUN_ENQUEUE_FAILED",
-        errorMessage: getErrorMessage(error),
-      });
+      try {
+        await deps.markAutomationRunFailed(deps.db, {
+          clerkOrgId: automation.clerkOrgId,
+          publicId: run.publicId,
+          errorCode: "AUTOMATION_RUN_ENQUEUE_FAILED",
+          errorMessage: getErrorMessage(error),
+        });
+      } catch (markError) {
+        deps.log.warn("[automations] failed to mark manual run failed", {
+          automationId: automation.publicId,
+          clerkOrgId: automation.clerkOrgId,
+          error: markError,
+          originalError: error,
+          runId: run.publicId,
+        });
+      }
       deps.log.warn("[automations] manual run enqueue failed", {
         automationId: automation.publicId,
         clerkOrgId: automation.clerkOrgId,
@@ -336,17 +357,27 @@ async function setAutomationStatusForActor(
   status: "active" | "paused"
 ) {
   const actor = requireBoundClerkOrgAdminActor(ctx);
-  return (
+  const automation =
     (await deps.setAutomationStatus(deps.db, {
       clerkOrgId: actor.orgId,
       publicId,
       status,
-    })) ?? automationNotFound()
-  );
+    })) ?? automationNotFound();
+  return requireAutomationVisibleToActor(automation, actor);
 }
 
 function automationNotFound(): never {
   throw new NotFoundError("AUTOMATION_NOT_FOUND", "Automation not found");
+}
+
+function requireAutomationVisibleToActor(
+  automation: Automation,
+  actor: BoundClerkOrgActor
+): Automation {
+  if (automation.clerkOrgId !== actor.orgId) {
+    automationNotFound();
+  }
+  return automation;
 }
 
 function automationRunNotFound(): never {
@@ -358,6 +389,29 @@ function automationRunNotFound(): never {
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+async function withTimeout<T>(
+  operation: Promise<T>,
+  timeoutMs: number
+): Promise<T> {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<never>((_resolve, reject) => {
+        timeout = setTimeout(() => {
+          reject(
+            new Error(`Automation run enqueue timed out after ${timeoutMs}ms.`)
+          );
+        }, timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

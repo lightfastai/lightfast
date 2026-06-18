@@ -130,7 +130,7 @@ export function automationUpdateMutationOptions(
   return mutationOptions({
     meta: { errorTitle: opts.errorTitle },
     mutationFn: (patch: UpdateAutomationInput) =>
-      updateAutomation({ data: patch }),
+      updateAutomation({ data: { ...patch, id } }),
     mutationKey: automationMutationKeys.update(),
     onMutate: async (patch) => {
       await Promise.all([
@@ -268,16 +268,23 @@ function automationStatusMutationOptions(input: {
       ]);
       const prevGet = input.queryClient.getQueryData(getKey);
       const prevList = input.queryClient.getQueryData(listKey);
+      const hadPrevGet = input.queryClient.getQueryState(getKey) !== undefined;
+      const hadPrevList =
+        input.queryClient.getQueryState(listKey) !== undefined;
       setOne(input.queryClient, id, withStatus);
       upsertInList(input.queryClient, id, withStatus);
-      return { prevGet, prevList };
+      return { hadPrevGet, hadPrevList, prevGet, prevList };
     },
     onError: (_error, _variables, ctx) => {
-      if (ctx?.prevGet) {
+      if (ctx?.hadPrevGet) {
         input.queryClient.setQueryData(getKey, ctx.prevGet);
+      } else {
+        input.queryClient.removeQueries({ exact: true, queryKey: getKey });
       }
-      if (ctx?.prevList) {
+      if (ctx?.hadPrevList) {
         input.queryClient.setQueryData(listKey, ctx.prevList);
+      } else {
+        input.queryClient.removeQueries({ exact: true, queryKey: listKey });
       }
     },
     onSuccess: (updated) => {

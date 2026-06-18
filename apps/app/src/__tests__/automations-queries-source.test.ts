@@ -11,7 +11,7 @@ describe("automations query helpers", () => {
       "utf8"
     );
 
-    expect(source).toContain('@api/app/tanstack/automations"');
+    expect(source).toContain('from "@api/app/tanstack/automations"');
     expect(source).toContain("automationQueryKeys");
     expect(source).toContain("automationsListQueryOptions");
     expect(source).toContain("automationDetailQueryOptions");

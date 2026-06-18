@@ -2,6 +2,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import {
   automationQueryKeys,
+  removeFromList,
   setOne,
   upsertInList,
 } from "~/automations/automations-cache";
@@ -21,7 +22,15 @@ describe("automation cache helpers", () => {
 
     upsertInList(qc, "automation_1", () => undefined);
 
-    expect(qc.getQueryData(listKey)).toEqual([]);
+    expect(qc.getQueryData(listKey)).toBeUndefined();
+  });
+
+  it("leaves missing list caches unchanged when removing a row", () => {
+    const qc = new QueryClient();
+
+    removeFromList(qc, "automation_1");
+
+    expect(qc.getQueryData(listKey)).toBeUndefined();
   });
 
   it("keeps existing list rows when a transform declines an update", () => {

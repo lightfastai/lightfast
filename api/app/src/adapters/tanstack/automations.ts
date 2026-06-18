@@ -250,7 +250,10 @@ export type AutomationRunDetailResult = AutomationRunResult;
 function serializeAutomationRun(run: AutomationRun): AutomationRunResult {
   return {
     ...run,
-    output: run.output ? toSerializableValue(run.output) : null,
+    output:
+      run.output === null || run.output === undefined
+        ? null
+        : toSerializableValue(run.output),
   };
 }
 

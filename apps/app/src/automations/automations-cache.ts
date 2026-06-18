@@ -31,7 +31,10 @@ export function upsertInList(
 ): void {
   const key = automationQueryKeys.list();
   qc.setQueryData(key, (old: Automation[] | undefined) => {
-    const list = old ?? [];
+    if (old === undefined) {
+      return old;
+    }
+    const list = old;
     const idx = list.findIndex((automation) => automation.publicId === id);
     if (idx === -1) {
       const next = transform(undefined);
@@ -49,9 +52,12 @@ export function upsertInList(
 
 export function removeFromList(qc: QueryClient, id: string): void {
   const key = automationQueryKeys.list();
-  qc.setQueryData(key, (old: Automation[] | undefined) =>
-    (old ?? []).filter((automation) => automation.publicId !== id)
-  );
+  qc.setQueryData(key, (old: Automation[] | undefined) => {
+    if (old === undefined) {
+      return old;
+    }
+    return old.filter((automation) => automation.publicId !== id);
+  });
 }
 
 export function setOne(
