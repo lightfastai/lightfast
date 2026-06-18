@@ -1385,8 +1385,14 @@ describe("app authenticated route migration", () => {
       "src/server/skills/skill-index-event-stream.ts"
     );
     const skillsEventsAdapterSource = repoSource(
+      "api/app/src/adapters/internal/skills-events.ts"
+    );
+    const skillsEventsServiceSource = repoSource(
       "api/app/src/services/skills/events.ts"
     );
+    const apiPackageJson = JSON.parse(repoSource("api/app/package.json")) as {
+      exports: Record<string, { default: string; types: string }>;
+    };
     const nativeProxyServerPath = resolve(
       appRoot,
       "src/server/native-proxy.ts"
@@ -1460,20 +1466,29 @@ describe("app authenticated route migration", () => {
       "handleSkillIndexEventsRequest"
     );
     expect(skillsIndexEventsRouteSource).toContain(
-      'from "@api/app/services/skills/events"'
+      'from "@api/app/internal-api/skills-events"'
+    );
+    expect(skillsIndexEventsRouteSource).not.toContain(
+      "@api/app/services/skills/events"
     );
     expect(skillsIndexEventsRouteSource).not.toContain("@db/app");
     expect(skillsIndexEventsRouteSource).not.toContain(
       "resolveAuthContextFromClerk"
     );
+    expect(apiPackageJson.exports["./internal-api/skills-events"]).toEqual({
+      default: "./src/adapters/internal/skills-events.ts",
+      types: "./src/adapters/internal/skills-events.ts",
+    });
+    expect(apiPackageJson.exports["./services/skills/events"]).toBeUndefined();
     expect(existsSync(skillsIndexEventStreamPath)).toBe(false);
     expect(skillsEventsAdapterSource).toContain(
       "handleSkillIndexEventsRequest"
     );
-    expect(skillsEventsAdapterSource).toContain("resolveAuthContextFromClerk");
-    expect(skillsEventsAdapterSource).toContain("@db/app/client");
-    expect(skillsEventsAdapterSource).toContain("createSkillIndexEventStream");
-    expect(skillsEventsAdapterSource).toContain("redis.subscribe");
+    expect(skillsEventsAdapterSource).toContain("../../services/skills/events");
+    expect(skillsEventsServiceSource).toContain("resolveAuthContextFromClerk");
+    expect(skillsEventsServiceSource).toContain("@db/app/client");
+    expect(skillsEventsServiceSource).toContain("createSkillIndexEventStream");
+    expect(skillsEventsServiceSource).toContain("redis.subscribe");
     expect(existsSync(nativeProxyServerPath)).toBe(false);
     expect(nativeProxyAdapterSource).toContain(
       "createNativeProviderRoutineContext"
