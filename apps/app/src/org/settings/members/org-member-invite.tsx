@@ -1,9 +1,11 @@
+import { inviteOrgMember } from "@api/app/tanstack/org-members";
 import { useAuth } from "@clerk/tanstack-react-start";
 import {
   Loading03Icon as Loader2,
   UserAdd01Icon as UserPlus,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import type { inviteOrgMemberSchema } from "@repo/app-validation/schemas";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
@@ -26,6 +28,7 @@ import {
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
+import type { z } from "zod";
 import {
   createOptimisticInvitation,
   insertInvitation,
@@ -34,10 +37,9 @@ import {
   removeInvitation,
   replaceInvitation,
 } from "./org-member-cache";
-import {
-  inviteOrgMemberMutationOptions,
-  orgMemberQueryKeys,
-} from "./org-member-queries";
+import { orgMemberQueryKeys } from "./org-member-queries";
+
+type InviteOrgMemberInput = z.input<typeof inviteOrgMemberSchema>;
 
 export function OrgMemberInvite() {
   const { has, isLoaded, orgId } = useAuth();
@@ -65,7 +67,8 @@ export function OrgMemberInvite() {
   }, []);
 
   const inviteMutation = useMutation({
-    ...inviteOrgMemberMutationOptions(),
+    meta: { errorTitle: "Failed to send invitation" },
+    mutationFn: (data: InviteOrgMemberInput) => inviteOrgMember({ data }),
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: listQueryKey });
 
