@@ -1,6 +1,7 @@
 import { db } from "@db/app/client";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest, setResponseHeader } from "@tanstack/react-start/server";
+import type { z } from "zod";
 
 import { resolveAuthContextFromClerk } from "../../auth/identity";
 import { actorFromAuthIdentity, isDomainError } from "../../domain";
@@ -11,6 +12,9 @@ import {
   getPersonCommand,
   listPeopleCommand,
 } from "../../domain/people";
+
+export type ListPeopleInput = z.input<typeof listPeopleCommand.input>;
+export type GetPersonInput = z.input<typeof getPersonCommand.input>;
 
 type SerializableValue =
   | SerializableValue[]

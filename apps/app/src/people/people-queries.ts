@@ -1,5 +1,7 @@
 import {
+  type GetPersonInput,
   getPerson,
+  type ListPeopleInput,
   type ListPeopleResult,
   listPeople,
   type PersonDetailResult,
@@ -10,15 +12,6 @@ import {
   queryOptions,
 } from "@tanstack/react-query";
 
-type ServerFunctionData<TFn> = TFn extends (args: {
-  data: infer TData;
-}) => unknown
-  ? TData
-  : never;
-
-type PeopleListInput = ServerFunctionData<typeof listPeople>;
-type PersonDetailInput = ServerFunctionData<typeof getPerson>;
-
 export type PeopleList = ListPeopleResult;
 export type PersonRow = PeopleList["items"][number];
 export type PersonDetail = PersonDetailResult;
@@ -26,17 +19,17 @@ export type PersonDetail = PersonDetailResult;
 export const peopleQueryKeys = {
   all: ["people"] as const,
   detail: (publicId: string) => ["people", "detail", publicId] as const,
-  list: (input: Omit<PeopleListInput, "cursor">) =>
+  list: (input: Omit<ListPeopleInput, "cursor">) =>
     ["people", "list", input] as const,
 };
 
 export function peopleListInfiniteQueryOptions(
-  input: Omit<PeopleListInput, "cursor">
+  input: Omit<ListPeopleInput, "cursor">
 ) {
   return infiniteQueryOptions({
     enabled: typeof window !== "undefined",
     getNextPageParam: (lastPage: PeopleList) => lastPage.nextCursor,
-    initialPageParam: undefined as PeopleListInput["cursor"],
+    initialPageParam: undefined as ListPeopleInput["cursor"],
     placeholderData: keepPreviousData,
     queryFn: ({ pageParam }) =>
       listPeople({
@@ -58,7 +51,7 @@ export function personDetailQueryOptions(input: {
     enabled: typeof window !== "undefined" && input.enabled,
     queryFn: () =>
       getPerson({
-        data: { publicId: input.publicId } satisfies PersonDetailInput,
+        data: { publicId: input.publicId } satisfies GetPersonInput,
       }),
     queryKey: peopleQueryKeys.detail(input.publicId),
   });

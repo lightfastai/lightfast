@@ -1,6 +1,7 @@
 import { db } from "@db/app/client";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest, setResponseHeader } from "@tanstack/react-start/server";
+import type { z } from "zod";
 
 import { resolveAuthContextFromClerk } from "../../auth/identity";
 import type { Actor } from "../../domain";
@@ -15,6 +16,22 @@ import {
   setConnectorAutomationEnabledCommand,
   startConnectorOAuthCommand,
 } from "../../domain/connectors";
+
+export type StartConnectorInput = z.input<
+  typeof startConnectorOAuthCommand.input
+>;
+export type RefreshConnectorToolsInput = z.input<
+  typeof refreshConnectorToolsCommand.input
+>;
+export type SetConnectorAutomationEnabledInput = z.input<
+  typeof setConnectorAutomationEnabledCommand.input
+>;
+export type SetConnectorAgentEnabledInput = z.input<
+  typeof setConnectorAgentEnabledCommand.input
+>;
+export type DisconnectConnectorInput = z.input<
+  typeof disconnectConnectorCommand.input
+>;
 
 function requestId() {
   return crypto.randomUUID();
@@ -192,3 +209,4 @@ export type ListConnectorsResult = Awaited<ReturnType<typeof listConnectors>>;
 export type ConnectorSectionsResult = Awaited<
   ReturnType<typeof listConnectorSections>
 >;
+export type StartConnectorResult = Awaited<ReturnType<typeof startConnector>>;

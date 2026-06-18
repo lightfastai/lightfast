@@ -1,31 +1,21 @@
 import {
   type ConnectorSectionsResult,
+  type DisconnectConnectorInput,
   disconnectConnector,
   type ListConnectorsResult,
   listConnectorSections,
   listConnectors,
+  type RefreshConnectorToolsInput,
   refreshConnectorTools,
+  type SetConnectorAgentEnabledInput,
+  type SetConnectorAutomationEnabledInput,
+  type StartConnectorInput,
+  type StartConnectorResult,
   setConnectorAgentEnabled,
   setConnectorAutomationEnabled,
   startConnector,
 } from "@api/app/tanstack/connectors";
 import { mutationOptions, queryOptions } from "@tanstack/react-query";
-
-type ServerFunctionData<TFn> = TFn extends (args: {
-  data: infer TData;
-}) => unknown
-  ? TData
-  : never;
-
-type ConnectorProviderInput = ServerFunctionData<typeof disconnectConnector>;
-type ConnectorStartInput = ServerFunctionData<typeof startConnector>;
-type ConnectorSetAutomationEnabledInput = ServerFunctionData<
-  typeof setConnectorAutomationEnabled
->;
-type ConnectorSetAgentEnabledInput = ServerFunctionData<
-  typeof setConnectorAgentEnabled
->;
-type StartConnectorResult = Awaited<ReturnType<typeof startConnector>>;
 
 export type ConnectorSections = ConnectorSectionsResult;
 export type TeamConnectorCatalogRow =
@@ -64,7 +54,7 @@ export function startConnectorMutationOptions(input?: {
 }) {
   return mutationOptions({
     meta: { errorTitle: "Failed to connect provider" },
-    mutationFn: (data: ConnectorStartInput) => startConnector({ data }),
+    mutationFn: (data: StartConnectorInput) => startConnector({ data }),
     onSuccess: input?.onSuccess,
   });
 }
@@ -74,7 +64,7 @@ export function refreshConnectorToolsMutationOptions(input?: {
 }) {
   return mutationOptions({
     meta: { errorTitle: "Failed to refresh connector tools" },
-    mutationFn: (data: ConnectorProviderInput) =>
+    mutationFn: (data: RefreshConnectorToolsInput) =>
       refreshConnectorTools({ data }),
     onSuccess: input?.onSuccess,
   });
@@ -85,7 +75,7 @@ export function setConnectorAutomationEnabledMutationOptions(input?: {
 }) {
   return mutationOptions({
     meta: { errorTitle: "Failed to update connector automation access" },
-    mutationFn: (data: ConnectorSetAutomationEnabledInput) =>
+    mutationFn: (data: SetConnectorAutomationEnabledInput) =>
       setConnectorAutomationEnabled({ data }),
     onSuccess: input?.onSuccess,
   });
@@ -96,7 +86,7 @@ export function setConnectorAgentEnabledMutationOptions(input?: {
 }) {
   return mutationOptions({
     meta: { errorTitle: "Failed to update connector agent access" },
-    mutationFn: (data: ConnectorSetAgentEnabledInput) =>
+    mutationFn: (data: SetConnectorAgentEnabledInput) =>
       setConnectorAgentEnabled({ data }),
     onSuccess: input?.onSuccess,
   });
@@ -107,7 +97,8 @@ export function disconnectConnectorMutationOptions(input?: {
 }) {
   return mutationOptions({
     meta: { errorTitle: "Failed to disconnect provider" },
-    mutationFn: (data: ConnectorProviderInput) => disconnectConnector({ data }),
+    mutationFn: (data: DisconnectConnectorInput) =>
+      disconnectConnector({ data }),
     onSuccess: input?.onSuccess,
   });
 }

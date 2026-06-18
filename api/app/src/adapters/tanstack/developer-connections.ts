@@ -1,6 +1,7 @@
 import { db } from "@db/app/client";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest, setResponseHeader } from "@tanstack/react-start/server";
+import type { z } from "zod";
 
 import { resolveAuthContextFromClerk } from "../../auth/identity";
 import type { Actor } from "../../domain";
@@ -14,6 +15,22 @@ import {
   setDeveloperConnectionSandboxEnabledCommand,
   startSentryDeveloperConnectionAuthCommand,
 } from "../../domain/developer-connections";
+
+export type ConnectDeveloperConnectionInput = z.input<
+  typeof connectDeveloperConnectionCommand.input
+>;
+export type StartSentryDeveloperConnectionAuthInput = z.input<
+  typeof startSentryDeveloperConnectionAuthCommand.input
+>;
+export type CompleteSentryDeveloperConnectionAuthInput = z.input<
+  typeof completeSentryDeveloperConnectionAuthCommand.input
+>;
+export type SetDeveloperConnectionSandboxEnabledInput = z.input<
+  typeof setDeveloperConnectionSandboxEnabledCommand.input
+>;
+export type DisconnectDeveloperConnectionInput = z.input<
+  typeof disconnectDeveloperConnectionCommand.input
+>;
 
 function requestId() {
   return crypto.randomUUID();
@@ -186,4 +203,7 @@ export const disconnectDeveloperConnection = createServerFn({ method: "POST" })
 
 export type ListDeveloperConnectionsResult = Awaited<
   ReturnType<typeof listDeveloperConnections>
+>;
+export type StartSentryDeveloperConnectionAuthResult = Awaited<
+  ReturnType<typeof startSentryDeveloperConnectionAuth>
 >;

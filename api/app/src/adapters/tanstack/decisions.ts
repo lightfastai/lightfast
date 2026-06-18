@@ -53,6 +53,8 @@ const listDecisionsInput = z.object({
     .optional(),
 });
 
+export type ListDecisionsInput = z.input<typeof listDecisionsInput>;
+
 type DecisionListPage = Awaited<ReturnType<typeof listProviderRoutineCalls>>;
 type DecisionRow = DecisionListPage["items"][number];
 
