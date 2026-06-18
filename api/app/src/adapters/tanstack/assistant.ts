@@ -227,12 +227,7 @@ export const createNewWorkspaceAssistantConversationId = createServerFn({
   method: "GET",
 }).handler(async () => {
   noStore();
-  try {
-    await getBoundActor();
-    return createWorkspaceAssistantConversationId();
-  } catch (error) {
-    mapTanStackError(error);
-  }
+  return createWorkspaceAssistantConversationId();
 });
 
 export const createConversation = createServerFn({ method: "POST" })
