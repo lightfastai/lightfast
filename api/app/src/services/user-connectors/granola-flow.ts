@@ -5,14 +5,14 @@ import {
   markCurrentUserConnectorConnectionRevoked,
 } from "@db/app";
 import { db as appDb } from "@db/app/client";
-import { encrypt } from "@repo/app-encryption";
 import {
   DEFAULT_GRANOLA_MCP_ENDPOINT,
   GranolaAppNodeError,
   GranolaOAuthClientProvider,
   granolaClientMetadata,
   listGranolaMcpTools,
-} from "@repo/granola-app-node";
+} from "@lightfast/connector-granola/node";
+import { encrypt } from "@repo/app-encryption";
 import { auth } from "@vendor/clerk/server";
 import type { OAuthClientInformationMixed, OAuthTokens } from "@vendor/mcp";
 import { StreamableHTTPClientTransport } from "@vendor/mcp";

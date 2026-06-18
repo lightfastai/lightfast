@@ -14,8 +14,8 @@
   },
   "dependencies": {
     "@emulators/core": "catalog:",
+    "@lightfast/connector-granola": "workspace:*",
     "@repo/emulator-kit": "workspace:*",
-    "@repo/granola-app-node": "workspace:*",
     "@vendor/mcp": "workspace:*"
   },
   "devDependencies": {
