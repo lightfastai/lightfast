@@ -28,10 +28,11 @@ export type Actor =
     }
   | {
       clientId: string;
-      connectionId: string;
+      grantId: string;
       kind: "mcpClient";
       orgId: string;
       scopes: string[];
+      userId: string;
     }
   | {
       kind: "service";
