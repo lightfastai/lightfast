@@ -1,21 +1,74 @@
-import "@tanstack/react-start/server-only";
+import { getMcpOauthClientByClientId } from "@db/app";
+import { db } from "@db/app/client";
+import type { McpScope } from "@repo/api-contract";
+import { notFound, redirect } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
+import { getRequest, setResponseHeader } from "@tanstack/react-start/server";
+import { auth, clerkClient, currentUser } from "@vendor/clerk/server";
+import { z } from "zod";
 
 import {
   issueMcpAuthorizationCode,
   isValidMcpS256CodeChallenge,
   McpOAuthError,
   parseMcpScopes,
-} from "@api/app/mcp-oauth";
-import { getMcpOauthClientByClientId } from "@db/app";
-import { db } from "@db/app/client";
-import type { McpScope } from "@repo/api-contract";
-import { notFound } from "@tanstack/react-router";
-import { auth, clerkClient, currentUser } from "@vendor/clerk/server";
-import { z } from "zod";
-import type {
-  McpAuthorizationInput,
-  McpConsentViewModel,
-} from "./mcp-consent-types";
+} from "../../mcp-oauth";
+
+export interface McpConsentViewModel {
+  client: {
+    id: string;
+    name: string;
+    redirectUri: string;
+    verified: boolean;
+  };
+  organizations: Array<{
+    id: string;
+    name: string;
+    slug: string | null;
+  }>;
+  permissions: Array<{
+    description: string;
+    kind: "read" | "write";
+    label: string;
+    scope: McpScope;
+  }>;
+  request: {
+    clientId: string;
+    codeChallenge: string;
+    codeChallengeMethod: "S256";
+    redirectUri: string;
+    resource: string;
+    scope: string;
+    state?: string;
+  };
+  user: {
+    email: string;
+    id: string;
+    name: string;
+  };
+}
+
+export interface McpAuthorizationInput {
+  clientId: string;
+  codeChallenge: string;
+  codeChallengeMethod: "S256";
+  organizationId: string;
+  redirectUri: string;
+  resource: string;
+  scope?: string;
+  state?: string;
+}
+
+const mcpAuthorizationInputSchema = z.object({
+  clientId: z.string().min(1),
+  codeChallenge: z.string().min(1),
+  codeChallengeMethod: z.literal("S256"),
+  organizationId: z.string().min(1),
+  redirectUri: z.string().url(),
+  resource: z.string().url(),
+  scope: z.string().optional(),
+  state: z.string().optional(),
+});
 
 const authorizeSearchParamsSchema = z.object({
   client_id: z.string().min(1),
@@ -27,7 +80,32 @@ const authorizeSearchParamsSchema = z.object({
   state: z.string().optional(),
 });
 
-export async function getMcpConsentViewModel(
+export const loadMcpConsentViewModel = createServerFn({ method: "GET" })
+  .inputValidator(validateMcpAuthorizeSearchInput)
+  .handler(async ({ data }) => {
+    const request = getRequest();
+    const authState = await auth({ treatPendingAsSignedOut: false });
+    if (!authState.userId) {
+      redirectToSignInForOAuth(request.url);
+    }
+
+    noStore();
+    return getMcpConsentViewModel(data);
+  });
+
+export const approveMcpAuthorization = createServerFn({ method: "POST" })
+  .inputValidator(mcpAuthorizationInputSchema)
+  .handler(async ({ data }) =>
+    approveMcpAuthorizationRequest(data satisfies McpAuthorizationInput)
+  );
+
+export const denyMcpAuthorization = createServerFn({ method: "POST" })
+  .inputValidator(mcpAuthorizationInputSchema)
+  .handler(async ({ data }) =>
+    denyMcpAuthorizationRequest(data satisfies McpAuthorizationInput)
+  );
+
+async function getMcpConsentViewModel(
   searchParams: Record<string, string | undefined>
 ): Promise<McpConsentViewModel> {
   const parsed = authorizeSearchParamsSchema.safeParse(searchParams);
@@ -90,9 +168,7 @@ export async function getMcpConsentViewModel(
   };
 }
 
-export async function approveMcpAuthorizationRequest(
-  input: McpAuthorizationInput
-) {
+async function approveMcpAuthorizationRequest(input: McpAuthorizationInput) {
   const authState = await auth({ treatPendingAsSignedOut: false });
   if (!authState.userId) {
     throw new McpOAuthError("access_denied", "Authentication required.", 401);
@@ -122,9 +198,7 @@ export async function approveMcpAuthorizationRequest(
   return url.toString();
 }
 
-export async function denyMcpAuthorizationRequest(
-  input: McpAuthorizationInput
-) {
+async function denyMcpAuthorizationRequest(input: McpAuthorizationInput) {
   const authState = await auth({ treatPendingAsSignedOut: false });
   if (!authState.userId) {
     throw new McpOAuthError("access_denied", "Authentication required.", 401);
@@ -137,6 +211,41 @@ export async function denyMcpAuthorizationRequest(
     url.searchParams.set("state", input.state);
   }
   return url.toString();
+}
+
+function validateMcpAuthorizeSearchInput(input: unknown) {
+  if (!(input && typeof input === "object")) {
+    throw new Error("Invalid OAuth authorization search input");
+  }
+
+  const record = input as Record<string, unknown>;
+  return Object.fromEntries(
+    Object.entries(record).flatMap(([key, value]) =>
+      typeof value === "string" && value.length > 0 ? [[key, value]] : []
+    )
+  ) as Record<string, string | undefined>;
+}
+
+function oauthRequestRedirectTarget(requestUrl: string): string {
+  try {
+    const url = new URL(requestUrl);
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return requestUrl.startsWith("/") ? requestUrl : "/";
+  }
+}
+
+function redirectToSignInForOAuth(requestUrl: string): never {
+  throw redirect({
+    search: { redirect_url: oauthRequestRedirectTarget(requestUrl) },
+    throw: true,
+    to: "/sign-in",
+  });
+}
+
+function noStore() {
+  setResponseHeader("cache-control", "private, no-store");
+  setResponseHeader("vary", "Cookie, Authorization");
 }
 
 function parseConsentScopes(scope: string | undefined): McpScope[] {

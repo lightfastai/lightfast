@@ -101,6 +101,10 @@
       "types": "./src/adapters/tanstack/mcp-connections.ts",
       "default": "./src/adapters/tanstack/mcp-connections.ts"
     },
+    "./tanstack/mcp-consent": {
+      "types": "./src/adapters/tanstack/mcp-consent.ts",
+      "default": "./src/adapters/tanstack/mcp-consent.ts"
+    },
     "./tanstack/user-connectors": {
       "types": "./src/adapters/tanstack/user-connectors.ts",
       "default": "./src/adapters/tanstack/user-connectors.ts"

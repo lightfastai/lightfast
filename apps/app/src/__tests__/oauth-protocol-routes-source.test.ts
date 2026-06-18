@@ -3,9 +3,14 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const appRoot = resolve(import.meta.dirname, "../..");
+const repoRoot = resolve(appRoot, "../..");
 
 function source(path: string) {
   return readFileSync(resolve(appRoot, path), "utf8");
+}
+
+function repoSource(path: string) {
+  return readFileSync(resolve(repoRoot, path), "utf8");
 }
 
 const rootApiAppImportPattern = /from\s+["@']@api\/app["@']/;
@@ -22,7 +27,9 @@ describe("app OAuth protocol route migration", () => {
     );
     const tokenSource = source("src/routes/oauth/token.ts");
     const revokeSource = source("src/routes/oauth/revoke.ts");
-    const consentSource = source("src/oauth/mcp-consent.server.ts");
+    const consentSource = repoSource(
+      "api/app/src/adapters/tanstack/mcp-consent.ts"
+    );
     const responseSource = source("src/server/oauth/mcp-response.ts");
 
     expect(metadataSource).toContain(
@@ -55,7 +62,6 @@ describe("app OAuth protocol route migration", () => {
     expect(revokeSource).toContain('createFileRoute("/oauth/revoke")');
     expect(revokeSource).toContain('@api/app/mcp-oauth"');
     expect(revokeSource).toContain("revokeMcpRefreshTokenSecret");
-    expect(consentSource).toContain('@api/app/mcp-oauth"');
     expect(consentSource).toContain("issueMcpAuthorizationCode");
     expect(responseSource).toContain("env.VITE_LIGHTFAST_APP_URL");
     expect(responseSource).toContain('@api/app/mcp-oauth"');
