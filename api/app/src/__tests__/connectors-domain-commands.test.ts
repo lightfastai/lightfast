@@ -13,6 +13,7 @@ import {
   setConnectorAutomationEnabledCommand,
   startConnectorOAuthCommand,
 } from "../domain/connectors";
+import { ValidationError } from "../domain/errors";
 
 const serviceMocks = vi.hoisted(() => ({
   disconnectConnector: vi.fn(),
@@ -170,6 +171,28 @@ describe("connector domain commands", () => {
     expect(serviceMocks.startConnectorOAuth).toHaveBeenCalledWith(
       expect.anything(),
       { provider: "x" }
+    );
+  });
+
+  it("preserves domain errors raised by connector services", async () => {
+    serviceMocks.startConnectorOAuth.mockRejectedValueOnce(
+      new ValidationError(
+        "CONNECTOR_UNSUPPORTED_PROVIDER",
+        "Unsupported connector provider: fake"
+      )
+    );
+
+    await expect(
+      startConnectorOAuthCommand.run({
+        ctx: ctx({ admin: true, identity: xSetupIdentity }),
+        deps: deps(),
+        input: { provider: "x" },
+      })
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        code: "CONNECTOR_UNSUPPORTED_PROVIDER",
+        kind: "validation",
+      })
     );
   });
 

@@ -12,7 +12,12 @@ import {
 } from "../../services/user-connectors";
 import type { Actor } from "../actor";
 import { defineCommand } from "../command";
-import { AuthzError, InternalDomainError, ValidationError } from "../errors";
+import {
+  AuthzError,
+  InternalDomainError,
+  isDomainError,
+  ValidationError,
+} from "../errors";
 import { requireClerkUserActor } from "../gates";
 
 interface UserConnectorServiceContext {
@@ -141,6 +146,10 @@ function mapUserConnectorServiceError(
   fallbackCode: string,
   fallbackMessage: string
 ) {
+  if (isDomainError(error)) {
+    return error;
+  }
+
   const code =
     error && typeof error === "object" && "code" in error
       ? String(error.code)

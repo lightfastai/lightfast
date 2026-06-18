@@ -3,8 +3,8 @@ import {
   resolveLinearEndpoints,
 } from "@repo/linear-app-node";
 import { resolveXEndpoints, type XEndpoints } from "@repo/x-app-node";
-import { TRPCError } from "@trpc/server";
 
+import { ConflictError } from "../../domain/errors";
 import { env as runtimeEnv } from "../../env";
 
 export const LINEAR_OAUTH_CALLBACK_PATH =
@@ -190,11 +190,11 @@ export function requireXConnectorConfig(
     return result.config;
   }
 
-  throw new TRPCError({
-    code: "PRECONDITION_FAILED",
-    message: "X connector is not configured.",
-    cause: result,
-  });
+  throw new ConflictError(
+    "CONNECTOR_NOT_CONFIGURED",
+    "X connector is not configured.",
+    { result }
+  );
 }
 
 export function resolveXConnectorMcpEndpoint(

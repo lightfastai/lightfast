@@ -3,8 +3,8 @@ import type {
   userConnectorProviderInputSchema,
   userConnectorStartConnectInputSchema,
 } from "@repo/connector-contract";
-import { TRPCError } from "@trpc/server";
 import type { z } from "zod";
+import { ValidationError } from "../../domain/errors";
 import type { AuthContext } from "../../trpc";
 import {
   disconnectGranolaUserConnector,
@@ -32,10 +32,10 @@ export {
 } from "./granola-flow";
 
 function unsupportedProvider(provider: string): never {
-  throw new TRPCError({
-    code: "BAD_REQUEST",
-    message: `Unsupported user connector provider: ${provider}`,
-  });
+  throw new ValidationError(
+    "USER_CONNECTOR_UNSUPPORTED_PROVIDER",
+    `Unsupported user connector provider: ${provider}`
+  );
 }
 
 export async function startUserConnectorOAuth(

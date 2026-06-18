@@ -5,8 +5,8 @@ import type {
   connectorSetAutomationEnabledInputSchema,
   connectorStartConnectInputSchema,
 } from "@repo/connector-contract";
-import { TRPCError } from "@trpc/server";
 import type { z } from "zod";
+import { ValidationError } from "../../domain/errors";
 import type { AuthContext } from "../../trpc";
 import { listConnectorsForOrg } from "./catalog";
 import {
@@ -67,10 +67,10 @@ export { handleXConnectorMcpRequest } from "./x-mcp-bridge";
 export { listConnectorsForOrg };
 
 function unsupportedProvider(provider: string): never {
-  throw new TRPCError({
-    code: "BAD_REQUEST",
-    message: `Unsupported connector provider: ${provider}`,
-  });
+  throw new ValidationError(
+    "CONNECTOR_UNSUPPORTED_PROVIDER",
+    `Unsupported connector provider: ${provider}`
+  );
 }
 
 export async function startConnectorOAuth(

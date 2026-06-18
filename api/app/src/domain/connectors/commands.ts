@@ -23,6 +23,7 @@ import {
   AuthzError,
   ConflictError,
   InternalDomainError,
+  isDomainError,
   NotFoundError,
   ValidationError,
 } from "../errors";
@@ -344,6 +345,10 @@ function mapConnectorServiceError(
   fallbackCode: string,
   fallbackMessage: string
 ) {
+  if (isDomainError(error)) {
+    return error;
+  }
+
   const code =
     error && typeof error === "object" && "code" in error
       ? String(error.code)
