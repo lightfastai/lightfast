@@ -128,9 +128,7 @@ describe("desktop Tailwind setup", () => {
     expect(getCssVariable(darkBlock, "--sidebar")).toBe(
       getCssVariable(darkBlock, "--background")
     );
-    expect(getCssVariable(darkBlock, "--sidebar")).toBe(
-      "oklch(0.1339 0.0026 106.74)"
-    );
+    expect(getCssVariable(darkBlock, "--sidebar")).toBe("oklch(0.2178 0 0)");
     expect(getCssBlock(".dark")).toContain(
       "--sidebar-ring: oklch(0.626 0.205 254.947);"
     );

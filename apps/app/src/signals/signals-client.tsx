@@ -1,6 +1,15 @@
-import { Button } from "@repo/ui/components/ui/button";
+import { Add01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@repo/ui-v2/components/ui/button";
+import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useDeferredValue, useMemo, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useDeferredValue,
+  useMemo,
+  useState,
+} from "react";
 import { WorkspaceSurface } from "~/components/workspace-surface";
 import { SignalCreateDialog } from "./signal-create-dialog";
 import { SignalDetailSheet } from "./signal-detail-sheet";
@@ -19,6 +28,7 @@ import {
 import { SignalsToolbar } from "./signals-toolbar";
 import { SignalsTruncationBanner } from "./signals-truncation-banner";
 import { useSignalsUiStore } from "./signals-ui-store";
+import { SignalsViewSwitcher } from "./signals-view-switcher";
 import { useSignalsWorkspaceData } from "./use-signals-workspace-data";
 
 export function SignalsClient({
@@ -80,17 +90,7 @@ export function SignalsClient({
     [queryClient, signalsByPublicId]
   );
 
-  const emptyCreateAction = (
-    <Button
-      className="h-6 rounded-lg border border-border/70 bg-muted/30 px-2.5 font-normal text-muted-foreground text-sm hover:bg-muted/60 hover:text-foreground"
-      onClick={openCreateSignal}
-      size="sm"
-      type="button"
-      variant="ghost"
-    >
-      Add Signal
-    </Button>
-  );
+  const emptyCreateAction = <SignalAddButton onClick={openCreateSignal} />;
 
   if (isInitialPending) {
     return (
@@ -110,9 +110,14 @@ export function SignalsClient({
       variant="flush"
     >
       <h1 className="sr-only">Signals</h1>
+      <SignalsViewHeader onAddSignal={openCreateSignal}>
+        <SignalsViewSwitcher
+          search={search}
+          setSearchParams={setSearchParams}
+        />
+      </SignalsViewHeader>
       <SignalsToolbar
         filters={filters}
-        onAddSignal={openCreateSignal}
         onClearFilterGroup={(group) => {
           if (group === "disposition") {
             setSearchParams({ disposition: "", view: null });
@@ -184,5 +189,41 @@ export function SignalsClient({
       />
       <SignalCreateDialog onOpenChange={setCreateOpen} open={createOpen} />
     </WorkspaceSurface>
+  );
+}
+
+function SignalsViewHeader({
+  children,
+  onAddSignal,
+}: {
+  children: ReactNode;
+  onAddSignal: () => void;
+}) {
+  return (
+    <header
+      className="flex shrink-0 flex-wrap items-center gap-1.5 px-3 py-3"
+      data-testid="signals-view-header"
+    >
+      <div className="flex min-w-0 flex-1 items-center gap-1.5">
+        <SidebarTrigger className="size-6 rounded-lg border border-border/70 bg-muted/30 p-0 text-muted-foreground hover:bg-muted/60 hover:text-foreground md:hidden" />
+        <div className="flex min-w-[12rem] flex-1 items-center overflow-hidden">
+          {children}
+        </div>
+      </div>
+      <SignalAddButton onClick={onAddSignal} />
+    </header>
+  );
+}
+
+function SignalAddButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button onClick={onClick} size="xs" type="button" variant="outline">
+      <HugeiconsIcon
+        aria-hidden="true"
+        data-icon="inline-start"
+        icon={Add01Icon}
+      />
+      <span>Add Signal</span>
+    </Button>
   );
 }

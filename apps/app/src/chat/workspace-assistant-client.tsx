@@ -10,6 +10,7 @@ import {
   ConversationScrollButton,
 } from "@repo/ui-v2/components/ai-elements/conversation";
 import type { PromptInputMessage } from "@repo/ui-v2/components/ai-elements/prompt-input";
+import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "@tanstack/react-router";
 import {
@@ -226,7 +227,8 @@ export function WorkspaceAssistantClient({
   );
 
   return (
-    <main className="flex h-[calc(100svh-3.5rem)] min-h-0 flex-1 flex-col overflow-hidden bg-background text-foreground">
+    <main className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background text-foreground">
+      <SidebarTrigger className="absolute top-3 left-3 z-20 size-8 rounded-lg border border-border/70 bg-background/85 p-0 text-muted-foreground shadow-sm backdrop-blur hover:bg-muted/60 hover:text-foreground md:hidden" />
       {hasMessages ? (
         <>
           <div className="relative min-h-0 flex-1 overflow-hidden">
@@ -346,7 +348,7 @@ function createUuid() {
 
 function EmptyChatState({ composer }: { composer: React.ReactNode }) {
   return (
-    <section className="flex min-h-[calc(100svh-3.5rem)] w-full flex-col justify-start px-4 pt-[clamp(8rem,26svh,18rem)] pb-10 md:px-8">
+    <section className="flex min-h-full w-full flex-col justify-start px-4 pt-[clamp(8rem,26svh,18rem)] pb-10 md:px-8">
       <div className="mx-auto mb-6 w-full max-w-3xl text-center">
         <h1 className="font-medium text-2xl text-foreground tracking-normal md:text-3xl">
           Ready when you are.

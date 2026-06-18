@@ -1,4 +1,7 @@
-import { Button } from "@repo/ui/components/ui/button";
+import { Cancel01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { toast } from "@repo/ui/components/ui/sonner";
+import { Button } from "@repo/ui-v2/components/ui/button";
 import {
   Sheet,
   SheetClose,
@@ -6,10 +9,8 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@repo/ui/components/ui/sheet";
-import { toast } from "@repo/ui/components/ui/sonner";
+} from "@repo/ui-v2/components/ui/sheet";
 import { useQuery } from "@tanstack/react-query";
-import { X } from "lucide-react";
 import { SignalDetailContent } from "./signal-detail-content";
 import {
   getSignalSummary,
@@ -19,6 +20,27 @@ import {
   type SignalRow,
 } from "./signals-model";
 import { signalDetailQueryOptions } from "./signals-queries";
+
+function copySignalLink() {
+  if (typeof window === "undefined") {
+    return;
+  }
+  const clipboard = navigator.clipboard;
+  if (!clipboard) {
+    toast.error("Unable to copy link");
+    return;
+  }
+  void clipboard
+    .writeText(window.location.href)
+    .then(() => {
+      toast.success("Link copied", {
+        description: "Anyone with access can open this signal.",
+      });
+    })
+    .catch(() => {
+      toast.error("Unable to copy link");
+    });
+}
 
 export function SignalDetailSheet({
   initialItem,
@@ -36,7 +58,11 @@ export function SignalDetailSheet({
   // body needs no `get`. Classified projection rows do.
   const hasBody = !!seededItem && "input" in seededItem;
 
-  const query = useQuery(
+  const {
+    data: fetchedDetail,
+    isError,
+    isLoading,
+  } = useQuery(
     signalDetailQueryOptions({
       enabled: open && !hasBody && Boolean(publicId),
       publicId: publicId ?? "",
@@ -44,44 +70,19 @@ export function SignalDetailSheet({
   );
 
   // Header seed: the projection (or, for deep-links not in cache, the fetched row).
-  const headerItem: SignalListItem | undefined = seededItem ?? query.data;
+  const headerItem: SignalListItem | undefined = seededItem ?? fetchedDetail;
   // Body: the full row if seeded, else the fetched row.
   const detail: SignalDetailRow | undefined = hasBody
     ? ({
         ...(seededItem as SignalRow),
         entityLinks: [],
       } as SignalDetailRow)
-    : query.data;
-  const bodyLoading = !detail && query.isLoading;
-
-  function handleCopyLink() {
-    if (typeof window === "undefined") {
-      return;
-    }
-    const clipboard = navigator.clipboard;
-    if (!clipboard) {
-      toast.error("Unable to copy link");
-      return;
-    }
-    void clipboard
-      .writeText(window.location.href)
-      .then(() => {
-        toast.success("Link copied", {
-          description: "Anyone with access can open this signal.",
-        });
-      })
-      .catch(() => {
-        toast.error("Unable to copy link");
-      });
-  }
+    : fetchedDetail;
+  const bodyLoading = !detail && isLoading;
 
   return (
     <Sheet onOpenChange={onOpenChange} open={open}>
-      <SheetContent
-        className="inset-y-3 right-3 left-auto h-auto w-full max-w-[calc(100%-1.5rem)] gap-0 overflow-hidden rounded-2xl border p-0 sm:max-w-md"
-        showCloseButton={!headerItem}
-        side="right"
-      >
+      <SheetContent showCloseButton={!headerItem} side="right">
         <SheetHeader className="sr-only">
           <SheetTitle>
             {headerItem ? getSignalTitle(headerItem) : "Signal details"}
@@ -96,23 +97,25 @@ export function SignalDetailSheet({
           <SignalDetailContent
             bodyLoading={bodyLoading}
             closeSlot={
-              <SheetClose asChild>
-                <Button
-                  aria-label="Close"
-                  className="size-7 rounded-full text-muted-foreground hover:text-foreground"
-                  size="icon-sm"
-                  type="button"
-                  variant="ghost"
-                >
-                  <X aria-hidden="true" className="size-4" />
-                </Button>
+              <SheetClose
+                render={
+                  <Button
+                    aria-label="Close"
+                    size="icon-sm"
+                    title="Close"
+                    type="button"
+                    variant="ghost"
+                  />
+                }
+              >
+                <HugeiconsIcon aria-hidden="true" icon={Cancel01Icon} />
               </SheetClose>
             }
             detail={detail}
             item={headerItem}
-            onCopyLink={handleCopyLink}
+            onCopyLink={copySignalLink}
           />
-        ) : query.isError ? (
+        ) : isError ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-1 p-8 text-center">
             <p className="font-medium text-foreground text-sm">
               Signal not found

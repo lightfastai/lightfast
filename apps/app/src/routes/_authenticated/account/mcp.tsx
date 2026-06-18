@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { UserMcpConnectionsClient } from "~/account/mcp-connections-client";
+import { TeamSwitcherSlot } from "~/components/team-switcher";
 
 export const Route = createFileRoute("/_authenticated/account/mcp")({
   head: () => ({
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/_authenticated/account/mcp")({
 function AccountMcpPage() {
   return (
     <div className="mx-auto w-full max-w-4xl space-y-8 px-4 py-8">
+      <TeamSwitcherSlot />
       <div>
         <h1 className="font-medium font-pp text-2xl text-foreground">
           MCP Connections

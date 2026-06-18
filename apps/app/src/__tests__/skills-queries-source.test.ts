@@ -23,21 +23,22 @@ describe("skills app data access", () => {
       appRoot,
       "src/skills/use-skills-list-query.ts"
     );
+    const topbarActionsPath = resolve(
+      appRoot,
+      "src/workspace/workspace-topbar-actions.tsx"
+    );
     const clientSource = source("src/skills/skills-client.tsx");
-    const topbarSource = source("src/workspace/workspace-topbar-actions.tsx");
     const controllerSource = source(
       "src/skills/use-skill-index-refresh-controller.ts"
     );
 
     expect(existsSync(listHookPath)).toBe(false);
+    expect(existsSync(topbarActionsPath)).toBe(false);
     expect(clientSource).toContain("useQuery");
     expect(clientSource).toContain("skillsListQueryOptions");
+    expect(clientSource).toContain("<SkillsActions");
     expect(clientSource).not.toContain("useSkillsListQuery");
     expect(clientSource).not.toContain("./use-skills-list-query");
-    expect(topbarSource).toContain("useQuery");
-    expect(topbarSource).toContain("skillsListQueryOptions");
-    expect(topbarSource).not.toContain("useSkillsListQuery");
-    expect(topbarSource).not.toContain("~/skills/use-skills-list-query");
     expect(controllerSource).toContain('from "./skills-queries"');
   });
 });

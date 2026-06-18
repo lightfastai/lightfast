@@ -1,7 +1,12 @@
+import {
+  CheckmarkCircle02Icon as CheckCircle2,
+  ChevronDownIcon as ChevronDown,
+  CancelCircleIcon as CircleX,
+  Loading03Icon as Loader2,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import { cn } from "@repo/ui/lib/utils";
 import { formatDuration, formatRelativeTimeToNow } from "@vendor/lib/time";
-import { CheckCircle2, ChevronDown, CircleX, Loader2 } from "lucide-react";
-import type { ComponentType } from "react";
 import { DecisionProviderIcon } from "./decision-provider-icon";
 import { DecisionsDetail } from "./decisions-detail";
 import {
@@ -16,10 +21,7 @@ import {
 export const ROW_GRID =
   "grid grid-cols-[7.5rem_minmax(0,1.6fr)_minmax(0,1.3fr)_8rem_7rem_5.5rem_2rem] items-center gap-3";
 
-const STATUS_ICONS: Record<
-  DecisionStatus,
-  ComponentType<{ className?: string }>
-> = {
+const STATUS_ICONS: Record<DecisionStatus, IconSvgElement> = {
   failed: CircleX,
   running: Loader2,
   succeeded: CheckCircle2,
@@ -35,7 +37,7 @@ export function DecisionRow({
   onToggle: () => void;
 }) {
   const status = getDecisionStatusMeta(decision.status);
-  const StatusIcon = STATUS_ICONS[decision.status];
+  const statusIcon = STATUS_ICONS[decision.status];
   const durationLabel = decision.finishedAt
     ? formatDuration(
         decision.finishedAt.getTime() - decision.startedAt.getTime()
@@ -60,9 +62,10 @@ export function DecisionRow({
         type="button"
       >
         <span className="flex min-w-0 items-center gap-1.5">
-          <StatusIcon
+          <HugeiconsIcon
             aria-hidden="true"
             className={cn("size-3.5 shrink-0", status.tone)}
+            icon={statusIcon}
           />
           <span className="truncate text-muted-foreground text-xs">
             {status.label}
@@ -102,12 +105,13 @@ export function DecisionRow({
         </span>
 
         <span className="flex justify-end">
-          <ChevronDown
+          <HugeiconsIcon
             aria-hidden="true"
             className={cn(
               "size-4 text-muted-foreground transition-transform",
               isExpanded && "rotate-180"
             )}
+            icon={ChevronDown}
           />
         </span>
       </button>

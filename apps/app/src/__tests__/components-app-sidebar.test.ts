@@ -74,6 +74,76 @@ describe("workspace sidebar", () => {
     expect(sidebarSource).toContain("navIcons");
   });
 
+  it("uses ui-v2 sidebar primitives across the workspace shell", () => {
+    const sidebarSource = source("src/components/app-sidebar.tsx");
+    const workspaceShellSource = source(
+      "src/workspace/workspace-route-shell.tsx"
+    );
+    const connectorsClientSource = source(
+      "src/connectors/connectors-client.tsx"
+    );
+    const decisionsClientSource = source("src/decisions/decisions-client.tsx");
+    const peopleClientSource = source("src/people/people-client.tsx");
+    const signalsClientSource = source("src/signals/signals-client.tsx");
+    const skillsClientSource = source("src/skills/skills-client.tsx");
+
+    expect(sidebarSource).toContain('from "@repo/ui-v2/components/ui/sidebar"');
+    expect(sidebarSource).not.toContain(
+      'from "@repo/ui/components/ui/sidebar"'
+    );
+    expect(workspaceShellSource).toContain(
+      'from "@repo/ui-v2/components/ui/sidebar"'
+    );
+    expect(workspaceShellSource).not.toContain(
+      'from "@repo/ui/components/ui/sidebar"'
+    );
+    expect(sidebarSource).toContain("render={");
+    expect(sidebarSource).not.toContain("<SidebarMenuButton asChild");
+    expect(sidebarSource).toContain("<SidebarGroupLabel>");
+    expect(sidebarSource).toContain(
+      'import { Button } from "@repo/ui-v2/components/ui/button";'
+    );
+    expect(sidebarSource).toContain(
+      'import { Link, useLocation } from "@tanstack/react-router";'
+    );
+    expect(sidebarSource).toContain(
+      '<SidebarHeader className="h-14 flex-row items-center px-4 py-0">'
+    );
+    expect(sidebarSource).toContain(
+      'className="ml-auto flex items-center gap-1"'
+    );
+    expect(sidebarSource).toContain('className="ml-auto"');
+    expect(sidebarSource).toContain('size="icon-sm"');
+    expect(sidebarSource).toContain('type="button"');
+    expect(sidebarSource).toContain('variant="ghost"');
+    expect(sidebarSource).toMatch(
+      /<Button\s+aria-label="New chat"[\s\S]*?className="ml-auto"[\s\S]*?render=\{[\s\S]*?<Link[\s\S]*?preload=\{false\}[\s\S]*?to="\/\$slug\/chat"[\s\S]*?\/>[\s\S]*?\}[\s\S]*?size="icon-sm"[\s\S]*?variant="ghost"[\s\S]*?>\s*<HugeiconsIcon\s+aria-hidden="true"\s+icon=\{MessageCirclePlus\}\s+\/>\s*<\/Button>/
+    );
+    expect(sidebarSource).not.toContain('className="size-11 rounded-full');
+    expect(sidebarSource).not.toContain('className="size-3.5"');
+    expect(sidebarSource).not.toContain('from "@repo/ui-v2/lib/utils"');
+    expect(sidebarSource).not.toContain("cn(");
+    expect(sidebarSource).not.toContain("collapsible={Boolean(section.label)}");
+    expect(sidebarSource).not.toContain("defaultOpen");
+    expect(sidebarSource).not.toContain("            label={section.label}");
+    expect(workspaceShellSource).not.toContain("SidebarTrigger");
+    expect(workspaceShellSource).not.toContain(
+      'className="size-11 rounded-xl lg:hidden"'
+    );
+    for (const pageSource of [
+      connectorsClientSource,
+      decisionsClientSource,
+      peopleClientSource,
+      signalsClientSource,
+      skillsClientSource,
+    ]) {
+      expect(pageSource).toContain("SidebarTrigger");
+      expect(pageSource).toContain("md:hidden");
+    }
+    expect(sidebarSource).not.toContain("lg:h-7");
+    expect(sidebarSource).not.toContain("lg:h-6");
+  });
+
   it("renders recent chats as a standalone medium dropdown above workspace groups", () => {
     const sidebarSource = source("src/components/app-sidebar.tsx");
     const recentChatsMenuSource = source(
@@ -150,6 +220,20 @@ describe("workspace sidebar", () => {
     expect(recentChatsMenuSource).not.toContain("ArrowDown01Icon");
     expect(recentChatsMenuSource).not.toContain("ArrowUp01Icon");
     expect(recentChatsMenuSource).toContain("setExpanded((value) => !value)");
+    expect(recentChatsMenuSource).toContain(
+      'from "@repo/ui-v2/components/ui/button"'
+    );
+    expect(recentChatsMenuSource).not.toContain(
+      'from "@repo/ui/components/ui/button"'
+    );
+    expect(recentChatsMenuSource).toContain(
+      'from "@repo/ui-v2/components/ui/skeleton"'
+    );
+    expect(recentChatsMenuSource).not.toContain(
+      'from "@repo/ui/components/ui/skeleton"'
+    );
+    expect(recentChatsMenuSource).toContain('from "@repo/ui-v2/lib/utils"');
+    expect(recentChatsMenuSource).not.toContain('from "@repo/ui/lib/utils"');
     expect(recentChatsMenuSource).toContain(
       'from "@repo/ui/components/ui/scroll-area"'
     );

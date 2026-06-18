@@ -1,4 +1,11 @@
 import { useAuth } from "@clerk/tanstack-react-start";
+import {
+  Tick02Icon as Check,
+  Copy01Icon as Copy,
+  Loading03Icon as Loader2,
+  Add01Icon as Plus,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
@@ -10,7 +17,6 @@ import {
   DialogTrigger,
 } from "@repo/ui/components/ui/dialog";
 import { Input } from "@repo/ui/components/ui/input";
-import { Check, Copy, Loader2, Plus } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { useOrgApiKeyCreateAction } from "./org-api-key-create-action";
 
@@ -82,7 +88,7 @@ export function OrgApiKeyCreate() {
     <Dialog onOpenChange={handleOpenChange} open={isOpen}>
       <DialogTrigger asChild>
         <Button size="sm" variant="secondary">
-          <Plus className="mr-1.5 h-4 w-4" />
+          <HugeiconsIcon className="mr-1.5 h-4 w-4" icon={Plus} />
           Create Key
         </Button>
       </DialogTrigger>
@@ -111,9 +117,12 @@ export function OrgApiKeyCreate() {
                 variant="ghost"
               >
                 {copied ? (
-                  <Check className="h-4 w-4 text-green-500" />
+                  <HugeiconsIcon
+                    className="h-4 w-4 text-green-500"
+                    icon={Check}
+                  />
                 ) : (
-                  <Copy className="h-4 w-4" />
+                  <HugeiconsIcon className="h-4 w-4" icon={Copy} />
                 )}
               </Button>
             </div>
@@ -141,7 +150,10 @@ export function OrgApiKeyCreate() {
               >
                 {createMutation.isPending ? (
                   <>
-                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                    <HugeiconsIcon
+                      className="mr-1.5 h-4 w-4 animate-spin"
+                      icon={Loader2}
+                    />
                     Creating...
                   </>
                 ) : (

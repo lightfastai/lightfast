@@ -6,8 +6,6 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { AuthenticatedTopbar } from "~/components/authenticated-topbar";
-import { TeamSwitcherSlot } from "~/components/team-switcher";
 
 const BASIC_SHELL_PREFIXES = ["/account", "/accounts"] as const;
 const AUTH_ROUTE_PATHS = new Set(["/sign-in", "/sign-up"]);
@@ -52,7 +50,6 @@ function AuthenticatedLayout() {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background">
-      <AuthenticatedTopbar left={<TeamSwitcherSlot />} />
       <div className="relative flex flex-1 flex-col overflow-y-auto bg-background">
         <Outlet />
       </div>
@@ -65,7 +62,7 @@ function AuthenticatedShellSkeleton() {
     <div className="flex h-screen flex-col overflow-hidden bg-background">
       <div className="flex h-14 shrink-0 items-center justify-between px-4">
         <div className="h-5 w-32 rounded-md bg-muted" />
-        <div className="size-8 rounded-full bg-muted" />
+        <div className="size-8 rounded-md bg-muted" />
       </div>
       <div className="grid flex-1 place-items-center px-4">
         <div className="h-5 w-48 rounded-md bg-muted" />

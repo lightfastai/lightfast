@@ -4,17 +4,20 @@ import type * as React from "react";
 
 function Avatar({
   className,
+  shape = "square",
   size = "default",
   ...props
 }: AvatarPrimitive.Root.Props & {
+  shape?: "circle" | "square";
   size?: "default" | "sm" | "lg";
 }) {
   return (
     <AvatarPrimitive.Root
       className={cn(
-        "group/avatar relative flex size-8 shrink-0 select-none rounded-full after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten",
+        "group/avatar relative flex size-8 shrink-0 select-none rounded-md after:absolute after:inset-0 after:rounded-md after:border after:border-border after:mix-blend-darken data-[shape=circle]:rounded-full data-[shape=circle]:after:rounded-full data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten",
         className
       )}
+      data-shape={shape}
       data-size={size}
       data-slot="avatar"
       {...props}
@@ -26,7 +29,7 @@ function AvatarImage({ className, ...props }: AvatarPrimitive.Image.Props) {
   return (
     <AvatarPrimitive.Image
       className={cn(
-        "aspect-square size-full rounded-full object-cover",
+        "aspect-square size-full rounded-md object-cover group-data-[shape=circle]/avatar:rounded-full",
         className
       )}
       data-slot="avatar-image"
@@ -42,7 +45,7 @@ function AvatarFallback({
   return (
     <AvatarPrimitive.Fallback
       className={cn(
-        "flex size-full items-center justify-center rounded-full bg-muted text-muted-foreground text-sm group-data-[size=sm]/avatar:text-xs",
+        "flex size-full items-center justify-center rounded-md bg-muted text-muted-foreground text-sm group-data-[shape=circle]/avatar:rounded-full group-data-[size=sm]/avatar:text-xs",
         className
       )}
       data-slot="avatar-fallback"
@@ -87,7 +90,7 @@ function AvatarGroupCount({
   return (
     <div
       className={cn(
-        "relative flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground text-sm ring-2 ring-background group-has-data-[size=lg]/avatar-group:size-10 group-has-data-[size=sm]/avatar-group:size-6 [&>svg]:size-4 group-has-data-[size=lg]/avatar-group:[&>svg]:size-5 group-has-data-[size=sm]/avatar-group:[&>svg]:size-3",
+        "relative flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground text-sm ring-2 ring-background group-has-data-[shape=circle]/avatar-group:rounded-full group-has-data-[size=lg]/avatar-group:size-10 group-has-data-[size=sm]/avatar-group:size-6 [&>svg]:size-4 group-has-data-[size=lg]/avatar-group:[&>svg]:size-5 group-has-data-[size=sm]/avatar-group:[&>svg]:size-3",
         className
       )}
       data-slot="avatar-group-count"

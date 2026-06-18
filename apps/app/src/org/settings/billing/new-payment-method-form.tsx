@@ -1,4 +1,9 @@
 import {
+  AlertCircleIcon as AlertCircle,
+  Loading03Icon as Loader2,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
   billingStripeAppearance,
   paymentErrorMessage,
 } from "@repo/app-billing";
@@ -11,7 +16,6 @@ import {
   useOrganization,
   usePaymentElement,
 } from "@vendor/clerk";
-import { AlertCircle, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 export function NewPaymentMethodForm({
@@ -82,7 +86,7 @@ function NewPaymentMethodFields({
       />
       {errorMessage && (
         <Alert variant="destructive">
-          <AlertCircle className="size-4" />
+          <HugeiconsIcon className="size-4" icon={AlertCircle} />
           <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       )}
@@ -95,7 +99,9 @@ function NewPaymentMethodFields({
           onClick={() => void savePaymentMethod()}
           type="button"
         >
-          {isSaving && <Loader2 className="size-4 animate-spin" />}
+          {isSaving && (
+            <HugeiconsIcon className="size-4 animate-spin" icon={Loader2} />
+          )}
           Save card
         </Button>
       </DialogFooter>

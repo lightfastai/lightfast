@@ -58,9 +58,9 @@ describe("desktop sidebar menus", () => {
     expect(teamMenu).toContain("render={");
     expect(teamMenu).toContain("<SidebarMenuButton");
     expect(teamMenu).toContain(
-      'className="cursor-default [-webkit-app-region:no-drag]"'
+      'className="cursor-default rounded-md [-webkit-app-region:no-drag]"'
     );
-    expect(teamMenu).toContain('shape="square"');
+    expect(teamMenu).not.toContain('shape="square"');
     expect(teamMenu).toContain('size="lg"');
     expect(teamMenu).toContain('className="z-100 w-56"');
     expect(teamMenu).toContain("organizationName");
@@ -74,7 +74,7 @@ describe("desktop sidebar menus", () => {
     expect(teamMenu).not.toContain("@repo/ui-v2/components/ui/button");
     expect(teamMenu).not.toContain('variant="square"');
     expect(teamMenu).not.toContain("size={");
-    expect(teamMenu).not.toContain("rounded-");
+    expect(teamMenu).not.toContain("rounded-full");
     expect(teamMenu).not.toContain("bg-");
     expect(teamMenu).not.toContain("text-");
     expect(teamMenu).not.toContain("listUserOrganizations");
@@ -90,9 +90,9 @@ describe("desktop sidebar menus", () => {
     expect(userMenu).toContain("render={");
     expect(userMenu).toContain("<SidebarMenuButton");
     expect(userMenu).toContain(
-      'className="cursor-default [-webkit-app-region:no-drag]"'
+      'className="cursor-default rounded-md [-webkit-app-region:no-drag]"'
     );
-    expect(userMenu).toContain('shape="square"');
+    expect(userMenu).not.toContain('shape="square"');
     expect(userMenu).toContain('size="lg"');
     expect(userMenu).toContain('className="z-100 w-56"');
     expect(userMenu).toContain("AvatarFallback");
@@ -136,7 +136,6 @@ describe("desktop sidebar menus", () => {
     expect(userMenu).not.toContain('variant="destructive"');
     expect(userMenu).not.toContain("[&_svg]:text-destructive");
     expect(userMenu).not.toContain("rounded-full");
-    expect(userMenu).not.toContain("rounded-md");
   });
 
   it("opens desktop settings and web app paths from menu items", () => {

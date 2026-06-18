@@ -1,13 +1,17 @@
+import {
+  Tick02Icon as Check,
+  ChevronDownIcon as ChevronDown,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
+import { cn } from "@repo/ui/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@repo/ui/components/ui/dropdown-menu";
-import { cn } from "@repo/ui/lib/utils";
+} from "@repo/ui-v2/components/ui/dropdown-menu";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Check, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "~/compat/clerk";
 import type { Automation } from "./automations-cache";
@@ -72,17 +76,20 @@ export function AutomationStatusChip({
   return (
     <RailRow label="Status">
       <DropdownMenu onOpenChange={setOpen} open={open}>
-        <DropdownMenuTrigger asChild>
-          <Button size="lf" type="button" variant="secondary">
-            <StatusDot active={automation.status === "active"} />
-            <span className="capitalize">{automation.status}</span>
-            <ChevronDown className="size-3.5 text-muted-foreground" />
-          </Button>
+        <DropdownMenuTrigger
+          render={<Button size="lf" type="button" variant="secondary" />}
+        >
+          <StatusDot active={automation.status === "active"} />
+          <span className="capitalize">{automation.status}</span>
+          <HugeiconsIcon
+            className="size-3.5 text-muted-foreground"
+            icon={ChevronDown}
+          />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-36">
           <DropdownMenuItem
             disabled={isMutating}
-            onSelect={() => {
+            onClick={() => {
               if (isPaused) {
                 resumeMutation.mutate({ id });
               }
@@ -92,15 +99,16 @@ export function AutomationStatusChip({
               Active
             </span>
             {isPaused ? null : (
-              <Check
+              <HugeiconsIcon
                 aria-hidden="true"
                 className="size-3.5 text-muted-foreground"
+                icon={Check}
               />
             )}
           </DropdownMenuItem>
           <DropdownMenuItem
             disabled={isMutating}
-            onSelect={() => {
+            onClick={() => {
               if (!isPaused) {
                 pauseMutation.mutate({ id });
               }
@@ -110,9 +118,10 @@ export function AutomationStatusChip({
               Paused
             </span>
             {isPaused ? (
-              <Check
+              <HugeiconsIcon
                 aria-hidden="true"
                 className="size-3.5 text-muted-foreground"
+                icon={Check}
               />
             ) : null}
           </DropdownMenuItem>

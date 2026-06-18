@@ -1,3 +1,12 @@
+import {
+  Alert02Icon as AlertTriangle,
+  ArrowLeftRightIcon as ArrowLeftRight,
+  Building03Icon as Building2,
+  InformationCircleIcon as Info,
+  SecurityCheckIcon as ShieldCheck,
+  UserIcon as User,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Icons } from "@repo/ui/components/icons";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
@@ -16,14 +25,6 @@ import {
   SheetTrigger,
 } from "@repo/ui/components/ui/sheet";
 import { useServerFn } from "@tanstack/react-start";
-import {
-  AlertTriangle,
-  ArrowLeftRight,
-  Building2,
-  Info,
-  ShieldCheck,
-  User,
-} from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import { useRef, useState } from "react";
 
@@ -168,7 +169,7 @@ export function McpConsentCard({ model }: { model: McpConsentViewModel }) {
           <div className="grid gap-3 sm:grid-cols-2">
             <ContextPanel
               description={model.user.email}
-              icon={<User className="size-4" />}
+              icon={<HugeiconsIcon className="size-4" icon={User} />}
               label="Signed in as"
               value={model.user.name}
             />
@@ -180,7 +181,7 @@ export function McpConsentCard({ model }: { model: McpConsentViewModel }) {
                     className="flex items-center gap-2 text-muted-foreground text-xs"
                     htmlFor="organizationId"
                   >
-                    <Building2 className="size-3.5" />
+                    <HugeiconsIcon className="size-3.5" icon={Building2} />
                     Organization
                   </label>
                   <input
@@ -222,7 +223,7 @@ export function McpConsentCard({ model }: { model: McpConsentViewModel }) {
                   />
                   <ContextPanelContent
                     description={selectedOrganization?.slug ?? "No slug"}
-                    icon={<Building2 className="size-4" />}
+                    icon={<HugeiconsIcon className="size-4" icon={Building2} />}
                     label="Organization"
                     value={selectedOrganization?.name ?? "No organization"}
                   />
@@ -234,13 +235,13 @@ export function McpConsentCard({ model }: { model: McpConsentViewModel }) {
           <div className="grid gap-2 sm:grid-cols-2">
             {model.client.verified ? null : (
               <WarningRow
-                icon={<AlertTriangle className="size-4" />}
+                icon={<HugeiconsIcon className="size-4" icon={AlertTriangle} />}
                 label="Unverified client"
               />
             )}
             {hasWriteScope ? (
               <WarningRow
-                icon={<AlertTriangle className="size-4" />}
+                icon={<HugeiconsIcon className="size-4" icon={AlertTriangle} />}
                 label="Can write to your workspace"
               />
             ) : null}
@@ -317,7 +318,10 @@ function ConnectionMarks({ clientName }: { clientName: string }) {
       <div className="flex size-14 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-xs">
         <Icons.logoShort className="size-8" />
       </div>
-      <ArrowLeftRight className="size-4 text-muted-foreground" />
+      <HugeiconsIcon
+        className="size-4 text-muted-foreground"
+        icon={ArrowLeftRight}
+      />
       <div className="flex size-14 items-center justify-center rounded-lg bg-foreground font-semibold text-background text-lg shadow-xs">
         {clientName.slice(0, 1).toUpperCase()}
       </div>
@@ -427,7 +431,7 @@ function DetailsSheet({ model }: { model: McpConsentViewModel }) {
     <Sheet>
       <SheetTrigger asChild>
         <Button type="button" variant="ghost">
-          <Info className="size-4" />
+          <HugeiconsIcon className="size-4" icon={Info} />
           View details
         </Button>
       </SheetTrigger>
@@ -440,7 +444,10 @@ function DetailsSheet({ model }: { model: McpConsentViewModel }) {
             <div className="flex size-9 items-center justify-center rounded-lg border border-border bg-background text-foreground">
               <Icons.logoShort className="size-5" />
             </div>
-            <ArrowLeftRight className="size-3.5 text-muted-foreground" />
+            <HugeiconsIcon
+              className="size-3.5 text-muted-foreground"
+              icon={ArrowLeftRight}
+            />
             <div className="flex size-9 items-center justify-center rounded-lg bg-foreground font-semibold text-background text-sm">
               {model.client.name.slice(0, 1).toUpperCase()}
             </div>
@@ -454,17 +461,17 @@ function DetailsSheet({ model }: { model: McpConsentViewModel }) {
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
           <dl className="space-y-0">
             <PropertyRow
-              icon={<ShieldCheck className="size-4" />}
+              icon={<HugeiconsIcon className="size-4" icon={ShieldCheck} />}
               label="Client"
               value={model.client.name}
             />
             <PropertyRow
-              icon={<User className="size-4" />}
+              icon={<HugeiconsIcon className="size-4" icon={User} />}
               label="User"
               value={`${model.user.name} (${model.user.email})`}
             />
             <PropertyRow
-              icon={<Building2 className="size-4" />}
+              icon={<HugeiconsIcon className="size-4" icon={Building2} />}
               label="Organization"
               value={selectedOrganization?.name ?? "No organization"}
             />

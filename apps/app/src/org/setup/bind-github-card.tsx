@@ -1,8 +1,13 @@
+import {
+  ArrowRightIcon as ArrowRight,
+  Loading03Icon as Loader2,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { GitHubBindErrorCode } from "@repo/github-app-contract";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { TeamSwitcherSlot } from "~/components/team-switcher";
 import { startGitHubOrgSetupMutationOptions } from "./github-setup-queries";
 
 interface BindGithubCardProps {
@@ -49,6 +54,7 @@ export function BindGithubCard({ githubError, orgSlug }: BindGithubCardProps) {
   return (
     <div className="flex min-h-full flex-1 items-center justify-center px-4 pb-32">
       <div className="w-full max-w-md space-y-4">
+        <TeamSwitcherSlot />
         <div className="w-fit rounded-sm bg-card p-3">
           <Icons.logoShort className="h-5 w-5 text-foreground" />
         </div>
@@ -78,9 +84,10 @@ export function BindGithubCard({ githubError, orgSlug }: BindGithubCardProps) {
                 <p className="min-w-0 truncate font-mono text-muted-foreground text-sm">
                   lightfast.ai/{orgSlug}
                 </p>
-                <ArrowRight
+                <HugeiconsIcon
                   aria-hidden="true"
                   className="h-4 w-4 text-muted-foreground"
+                  icon={ArrowRight}
                 />
                 <div className="flex min-w-0 items-center gap-2 text-muted-foreground text-sm">
                   <Icons.github
@@ -99,7 +106,10 @@ export function BindGithubCard({ githubError, orgSlug }: BindGithubCardProps) {
             >
               {bindMutation.isPending ? (
                 <>
-                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                  <HugeiconsIcon
+                    className="mr-1.5 h-4 w-4 animate-spin"
+                    icon={Loader2}
+                  />
                   Connecting...
                 </>
               ) : (

@@ -1,5 +1,6 @@
+import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useDeferredValue, useMemo } from "react";
+import { type ReactNode, useMemo } from "react";
 import { WorkspaceSurface } from "~/components/workspace-surface";
 import { PeopleDetailSheet } from "./people-detail-sheet";
 import { PeopleLoading } from "./people-loading";
@@ -19,6 +20,7 @@ import {
 } from "./people-search-params";
 import { PeopleTableView } from "./people-table-view";
 import { PeopleToolbar } from "./people-toolbar";
+import { PeopleViewSwitcher } from "./people-view-switcher";
 
 export function PeopleClient({
   search,
@@ -29,8 +31,6 @@ export function PeopleClient({
   setSearchParams: (updates: Partial<NormalizedPeopleSearch>) => void;
   slug: string;
 }) {
-  const deferredQuery = useDeferredValue(search.peopleQuery);
-  const searchText = deferredQuery.trim();
   const filters = useMemo<PeopleClassificationFilters>(
     () => ({
       providers: parsePersonProviders(search.provider),
@@ -39,13 +39,10 @@ export function PeopleClient({
     [search.provider, search.type]
   );
   const hasActiveFilters =
-    searchText.length > 0 ||
-    filters.providers.length > 0 ||
-    filters.types.length > 0;
+    filters.providers.length > 0 || filters.types.length > 0;
   const listInput = {
     limit: PEOPLE_PAGE_SIZE,
     providers: filters.providers.length ? filters.providers : undefined,
-    search: searchText.trim() || undefined,
     types: filters.types.length ? filters.types : undefined,
   };
 
@@ -79,6 +76,9 @@ export function PeopleClient({
       variant="flush"
     >
       <h1 className="sr-only">People</h1>
+      <PeopleViewHeader>
+        <PeopleViewSwitcher search={search} setSearchParams={setSearchParams} />
+      </PeopleViewHeader>
       <PeopleToolbar
         filters={filters}
         onClearFilterGroup={(group) => {
@@ -88,7 +88,6 @@ export function PeopleClient({
             setSearchParams({ type: "", view: null });
           }
         }}
-        onQueryChange={(value) => setSearchParams({ peopleQuery: value })}
         onToggleProvider={(value) => {
           setSearchParams({
             provider: serializePersonValues(
@@ -105,7 +104,6 @@ export function PeopleClient({
             view: null,
           });
         }}
-        query={search.peopleQuery}
       />
 
       <PeopleTableView
@@ -135,5 +133,19 @@ export function PeopleClient({
         slug={slug}
       />
     </WorkspaceSurface>
+  );
+}
+
+function PeopleViewHeader({ children }: { children: ReactNode }) {
+  return (
+    <header
+      className="flex shrink-0 flex-wrap items-center gap-1.5 px-3 py-3"
+      data-testid="people-view-header"
+    >
+      <SidebarTrigger className="size-6 rounded-lg border border-border/70 bg-muted/30 p-0 text-muted-foreground hover:bg-muted/60 hover:text-foreground md:hidden" />
+      <div className="flex min-w-[12rem] flex-1 items-center overflow-hidden">
+        {children}
+      </div>
+    </header>
   );
 }

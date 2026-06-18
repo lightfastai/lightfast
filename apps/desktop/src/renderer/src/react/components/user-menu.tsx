@@ -38,8 +38,7 @@ export function UserMenu() {
         render={
           <SidebarMenuButton
             aria-label="Open user menu"
-            className="cursor-default [-webkit-app-region:no-drag]"
-            shape="square"
+            className="cursor-default rounded-md [-webkit-app-region:no-drag]"
             size="lg"
             type="button"
           />

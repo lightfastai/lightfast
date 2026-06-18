@@ -9,7 +9,6 @@ import {
 
 export const Route = createFileRoute("/_authenticated/$slug/connectors")({
   validateSearch: validateConnectorsSearch,
-  staticData: { workspaceTopbarAction: "connectors" },
   head: ({ params }) => ({
     meta: [{ title: `Connectors - ${params.slug} - Lightfast` }],
   }),

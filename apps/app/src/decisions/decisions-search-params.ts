@@ -8,7 +8,6 @@ import {
 export interface DecisionsSearch {
   decision?: string;
   provider?: string;
-  q?: string;
   status?: string;
   view?: string;
 }
@@ -16,7 +15,6 @@ export interface DecisionsSearch {
 export interface NormalizedDecisionsSearch {
   decision: string | null;
   provider: string;
-  q: string;
   status: string;
   view: string | null;
 }
@@ -35,7 +33,6 @@ export function normalizeDecisionsSearch(
   return {
     decision: nullableStringSearchParam(search.decision),
     provider: stringSearchParam(search.provider),
-    q: stringSearchParam(search.q),
     status: stringSearchParam(search.status),
     view: nullableStringSearchParam(search.view),
   };
@@ -48,7 +45,6 @@ export function validateDecisionsSearch(
   return {
     ...(normalized.decision ? { decision: normalized.decision } : {}),
     ...(normalized.provider ? { provider: normalized.provider } : {}),
-    ...(normalized.q ? { q: normalized.q } : {}),
     ...(normalized.status ? { status: normalized.status } : {}),
     ...(normalized.view ? { view: normalized.view } : {}),
   };

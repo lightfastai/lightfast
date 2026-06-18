@@ -1,11 +1,14 @@
-import { AtSign, Briefcase, Code, Globe, Mail } from "lucide-react";
-import type { ComponentType } from "react";
+import {
+  AtSignIcon as AtSign,
+  BriefcaseIcon as Briefcase,
+  CodeIcon as Code,
+  GlobalIcon as Globe,
+  Mail01Icon as Mail,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import type { PersonProvider } from "./people-model";
 
-const PROVIDER_ICONS: Record<
-  PersonProvider,
-  ComponentType<{ className?: string }>
-> = {
+const PROVIDER_ICONS: Record<PersonProvider, IconSvgElement> = {
   email: Mail,
   github: Code,
   linkedin: Briefcase,
@@ -20,6 +23,6 @@ export function PersonProviderIcon({
   className?: string;
   provider: PersonProvider;
 }) {
-  const Icon = PROVIDER_ICONS[provider] ?? Globe;
-  return <Icon aria-hidden="true" className={className} />;
+  const icon = PROVIDER_ICONS[provider] ?? Globe;
+  return <HugeiconsIcon aria-hidden="true" className={className} icon={icon} />;
 }

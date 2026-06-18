@@ -44,4 +44,49 @@ describe("migrated signal UI data access", () => {
     expect(source).not.toContain("trpc.org.workspace.signals.views");
     expect(source).not.toContain("./use-signal-views-query");
   });
+
+  it("uses ui-v2 sheet primitives for signal details", () => {
+    const detailSheetSource = readFileSync(
+      resolve(appRoot, "src/signals/signal-detail-sheet.tsx"),
+      "utf8"
+    );
+    const detailContentSource = readFileSync(
+      resolve(appRoot, "src/signals/signal-detail-content.tsx"),
+      "utf8"
+    );
+    const buttonOpenTags =
+      `${detailSheetSource}\n${detailContentSource}`.match(
+        /<Button\b[^>]*>/g
+      ) ?? [];
+
+    expect(detailSheetSource).toContain(
+      'from "@repo/ui-v2/components/ui/button"'
+    );
+    expect(detailSheetSource).toContain(
+      'from "@repo/ui-v2/components/ui/sheet"'
+    );
+    expect(detailContentSource).toContain(
+      'from "@repo/ui-v2/components/ui/badge"'
+    );
+    expect(detailContentSource).toContain(
+      'from "@repo/ui-v2/components/ui/button"'
+    );
+
+    for (const source of [detailSheetSource, detailContentSource]) {
+      expect(source).not.toContain('from "@repo/ui/components/ui/button"');
+      expect(source).not.toContain('from "@repo/ui/components/ui/badge"');
+      expect(source).not.toContain('from "@repo/ui/components/ui/sheet"');
+      expect(source).not.toContain('from "lucide-react"');
+    }
+
+    expect(detailSheetSource).not.toContain("SheetClose asChild");
+    expect(detailSheetSource).not.toMatch(/<SheetContent\b[^>]*className=/);
+    expect(detailSheetSource).not.toContain("const query = useQuery");
+    expect(detailSheetSource).not.toContain("function handleCopyLink");
+    expect(detailSheetSource).toContain("onCopyLink={copySignalLink}");
+    expect(buttonOpenTags.length).toBeGreaterThan(0);
+    for (const buttonOpenTag of buttonOpenTags) {
+      expect(buttonOpenTag).not.toContain("className=");
+    }
+  });
 });

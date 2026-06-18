@@ -1,12 +1,21 @@
+import { Search01Icon as Search } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui-v2/components/ui/select";
+import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
-import { Search } from "lucide-react";
 import { useDeferredValue, useMemo, useState } from "react";
-import { LfSelect } from "~/components/lf-select";
 import { WorkspaceSurface } from "~/components/workspace-surface";
 import { SkillDialog } from "./skill-dialog";
 import { SkillGrid } from "./skill-grid";
+import { SkillsActions } from "./skills-actions";
 import { SkillsLoading } from "./skills-loading";
 import { getVisibleSkills, type SkillFilter } from "./skills-model";
 import { skillsListQueryOptions } from "./skills-queries";
@@ -106,18 +115,34 @@ function SkillsClientContent({
     <WorkspaceSurface className="overflow-y-auto bg-background" variant="flush">
       <div className="mx-auto w-full max-w-3xl px-6 py-10">
         <div className="pt-6 text-center">
-          <h1 className="font-semibold text-3xl text-foreground tracking-[-0.02em]">
-            Make Lightfast work your way
-          </h1>
+          <div className="grid grid-cols-[2rem_1fr_2rem] items-center gap-2">
+            <SidebarTrigger className="size-8 rounded-lg border border-border/70 bg-muted/30 p-0 text-muted-foreground hover:bg-muted/60 hover:text-foreground md:hidden" />
+            <h1 className="col-start-2 font-semibold text-3xl text-foreground tracking-[-0.02em]">
+              Make Lightfast work your way
+            </h1>
+          </div>
           <p className="mx-auto mt-3 max-w-[30rem] text-muted-foreground text-sm">
             Reusable instructions your agents load on demand, indexed from your
             team&apos;s connected GitHub repository.
           </p>
         </div>
 
+        <div
+          className="mt-8 flex justify-center"
+          data-testid="skills-actions-row"
+        >
+          <SkillsActions
+            freshness={data.freshness}
+            repositoryUrl={data.repositoryUrl}
+          />
+        </div>
+
         <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <HugeiconsIcon
+              className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
+              icon={Search}
+            />
             <Input
               aria-label="Search skills"
               className="pl-8"
@@ -128,18 +153,23 @@ function SkillsClientContent({
               variant="lf"
             />
           </div>
-          <LfSelect
-            align="end"
-            aria-label="Filter skills"
-            className="shrink-0 sm:w-32"
-            onValueChange={(value) => setFilter(toSkillFilter(value))}
-            options={[
-              { label: "All", value: "all" },
-              { label: "Valid", value: "valid" },
-              { label: "Invalid", value: "invalid" },
-            ]}
+          <Select
+            onValueChange={(value) => {
+              if (value !== null) {
+                setFilter(toSkillFilter(value));
+              }
+            }}
             value={filter}
-          />
+          >
+            <SelectTrigger aria-label="Filter skills">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="end">
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="valid">Valid</SelectItem>
+              <SelectItem value="invalid">Invalid</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {data.indexDiagnostics.length > 0 && (

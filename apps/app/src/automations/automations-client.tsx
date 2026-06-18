@@ -1,9 +1,17 @@
 import { useAuth } from "@clerk/tanstack-react-start";
+import {
+  CircleIcon as Circle,
+  PauseCircleIcon as CirclePause,
+  Loading03Icon as Loader2,
+  Add01Icon as Plus,
+  ReloadIcon as RefreshCcw,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { formatAutomationSchedule } from "@repo/app-validation/schemas";
 import { Button } from "@repo/ui/components/ui/button";
+import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Circle, CirclePause, Loader2, Plus, RefreshCcw } from "lucide-react";
 import { WorkspaceSurface } from "~/components/workspace-surface";
 import {
   type AutomationListItem,
@@ -27,10 +35,13 @@ export function AutomationsClient({ slug }: { slug: string }) {
   return (
     <WorkspaceSurface className="max-w-4xl py-10">
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-semibold text-2xl text-foreground tracking-[-0.02em]">
-            Automations
-          </h1>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <SidebarTrigger className="size-8 rounded-lg border border-border/70 bg-muted/30 p-0 text-muted-foreground hover:bg-muted/60 hover:text-foreground md:hidden" />
+            <h1 className="font-semibold text-2xl text-foreground tracking-[-0.02em]">
+              Automations
+            </h1>
+          </div>
           <p className="mt-1 text-muted-foreground text-sm">
             Cloud schedules that record scaffold runs.
           </p>
@@ -38,7 +49,7 @@ export function AutomationsClient({ slug }: { slug: string }) {
         {canManageAutomations ? (
           <Button asChild size="lf" variant="secondary">
             <Link params={{ slug }} to="/$slug/automations/new">
-              <Plus className="size-4" />
+              <HugeiconsIcon className="size-4" icon={Plus} />
               New automation
             </Link>
           </Button>
@@ -47,7 +58,7 @@ export function AutomationsClient({ slug }: { slug: string }) {
 
       {automationsQuery.isPending ? (
         <div className="mt-10 flex items-center gap-2 border-border border-t pt-6 text-muted-foreground text-sm">
-          <Loader2 className="size-4 animate-spin" />
+          <HugeiconsIcon className="size-4 animate-spin" icon={Loader2} />
           Loading automations
         </div>
       ) : automationsQuery.isError ? (
@@ -63,7 +74,7 @@ export function AutomationsClient({ slug }: { slug: string }) {
             type="button"
             variant="secondary"
           >
-            <RefreshCcw className="size-4" />
+            <HugeiconsIcon className="size-4" icon={RefreshCcw} />
             Refresh
           </Button>
         </div>
@@ -123,7 +134,7 @@ function AutomationRow({
   slug: string;
 }) {
   const isPaused = automation.status === "paused";
-  const Icon = isPaused ? CirclePause : Circle;
+  const icon = isPaused ? CirclePause : Circle;
 
   return (
     <Link
@@ -133,9 +144,10 @@ function AutomationRow({
       to="/$slug/automations/$automation"
     >
       <div className="flex min-w-0 items-center gap-3">
-        <Icon
+        <HugeiconsIcon
           aria-hidden="true"
           className="size-4 shrink-0 text-muted-foreground"
+          icon={icon}
           strokeWidth={2}
         />
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
