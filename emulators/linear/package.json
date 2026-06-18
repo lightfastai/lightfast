@@ -14,8 +14,8 @@
   },
   "dependencies": {
     "@emulators/core": "catalog:",
-    "@repo/emulator-kit": "workspace:*",
-    "@repo/linear-app-node": "workspace:*"
+    "@lightfast/connector-linear": "workspace:*",
+    "@repo/emulator-kit": "workspace:*"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

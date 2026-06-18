@@ -9,7 +9,7 @@ import type {
   ProviderRoutineServiceContext,
 } from "./context";
 
-const LINEAR_APP_NODE_PACKAGE: string = "@repo/linear-app-node";
+const LINEAR_APP_NODE_PACKAGE: string = "@lightfast/connector-linear/node";
 
 interface LinearEndpoints {
   mcpEndpoint: string;
