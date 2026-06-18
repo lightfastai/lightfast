@@ -107,7 +107,13 @@ describe("app authenticated route migration", () => {
     const nativeOrgSelectSource = source(
       "src/oauth/native-auth-org-select.tsx"
     );
-    const nativeFunctionsSource = source("src/oauth/native-auth-functions.ts");
+    const nativeFunctionsPath = resolve(
+      appRoot,
+      "src/oauth/native-auth-functions.ts"
+    );
+    const nativeAdapterSource = repoSource(
+      "api/app/src/adapters/tanstack/native-auth.ts"
+    );
     const nativeValidatorsSource = source(
       "src/oauth/native-auth-validators.ts"
     );
@@ -140,18 +146,20 @@ describe("app authenticated route migration", () => {
     );
     expect(nativeRouteSource).toContain("validateNativeAuthStartSearch");
     expect(nativeRouteSource).toContain("loadNativeAuthOrganizations");
+    expect(nativeRouteSource).toContain('from "@api/app/tanstack/native-auth"');
+    expect(nativeRouteSource).not.toContain("~/oauth/native-auth-functions");
     expect(nativeRouteSource).toContain("NativeAuthOrgSelect");
     expect(nativeOrgSelectSource).toContain('@api/app/tanstack/native-auth"');
     expect(nativeOrgSelectSource).toContain("createNativeAuthAttempt");
     expect(nativeOrgSelectSource).not.toContain("useTRPC");
     expect(nativeOrgSelectSource).not.toContain("native.auth");
     expect(nativeOrgSelectSource).toContain("withClerkDevBrowserContext");
-    expect(nativeFunctionsSource).toContain('@api/app/tanstack/native-auth"');
-    expect(nativeFunctionsSource).toContain("listNativeAuthOrganizations");
-    expect(nativeFunctionsSource).toContain("redirectToSignInForOAuth");
-    expect(nativeFunctionsSource).not.toContain("createTRPCOptionsProxy");
-    expect(nativeFunctionsSource).not.toContain("appRouter");
-    expect(nativeFunctionsSource).not.toContain("trpc.native");
+    expect(existsSync(nativeFunctionsPath)).toBe(false);
+    expect(nativeAdapterSource).toContain(
+      "export const loadNativeAuthOrganizations = createServerFn"
+    );
+    expect(nativeAdapterSource).toContain("oauthRequestRedirectTarget");
+    expect(nativeAdapterSource).toContain('to: "/sign-in"');
     expect(nativeValidatorsSource).toContain("isLoopbackRedirectUri");
 
     for (const routeFile of [
@@ -161,7 +169,6 @@ describe("app authenticated route migration", () => {
       consentServerSource,
       nativeRouteSource,
       nativeOrgSelectSource,
-      nativeFunctionsSource,
       nativeValidatorsSource,
     ]) {
       expect(routeFile).not.toContain("next/");

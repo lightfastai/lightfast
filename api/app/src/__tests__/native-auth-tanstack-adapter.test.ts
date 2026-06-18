@@ -22,6 +22,7 @@ const mocks = vi.hoisted(() => {
     getRequest: vi.fn(),
     listNativeOrganizationsForAuthContext: vi.fn(),
     NativeAuthError,
+    redirect: vi.fn((input) => input),
     resolveAuthContextFromClerk: vi.fn(),
     setResponseHeader: vi.fn(),
     setResponseStatus: vi.fn(),
@@ -49,6 +50,10 @@ vi.mock("@tanstack/react-start/server", () => ({
   setResponseStatus: mocks.setResponseStatus,
 }));
 
+vi.mock("@tanstack/react-router", () => ({
+  redirect: mocks.redirect,
+}));
+
 vi.mock("../auth/identity", () => ({
   resolveAuthContextFromClerk: mocks.resolveAuthContextFromClerk,
 }));
@@ -61,9 +66,8 @@ vi.mock("../native-auth", () => ({
     mocks.listNativeOrganizationsForAuthContext,
 }));
 
-const { listNativeAuthOrganizations } = await import(
-  "../adapters/tanstack/native-auth"
-);
+const { listNativeAuthOrganizations, loadNativeAuthOrganizations } =
+  await import("../adapters/tanstack/native-auth");
 
 describe("native auth TanStack adapter", () => {
   beforeEach(() => {
@@ -113,5 +117,31 @@ describe("native auth TanStack adapter", () => {
     await expect(listNativeAuthOrganizations()).rejects.toThrow(message);
 
     expect(mocks.setResponseStatus).toHaveBeenCalledWith(status);
+  });
+
+  it("redirects the OAuth start loader to sign in when unauthenticated", async () => {
+    mocks.getRequest.mockReturnValue(
+      new Request("https://lightfast.localhost/oauth/cli/start?state=abc")
+    );
+    mocks.listNativeOrganizationsForAuthContext.mockRejectedValue(
+      new mocks.NativeAuthError({
+        code: "UNAUTHORIZED",
+        message: "Authentication required. Please sign in.",
+        status: 401,
+      })
+    );
+
+    await expect(loadNativeAuthOrganizations()).rejects.toMatchObject({
+      search: { redirect_url: "/oauth/cli/start?state=abc" },
+      throw: true,
+      to: "/sign-in",
+    });
+
+    expect(mocks.redirect).toHaveBeenCalledWith({
+      search: { redirect_url: "/oauth/cli/start?state=abc" },
+      throw: true,
+      to: "/sign-in",
+    });
+    expect(mocks.setResponseStatus).not.toHaveBeenCalled();
   });
 });

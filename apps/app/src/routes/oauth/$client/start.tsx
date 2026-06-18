@@ -1,9 +1,9 @@
+import { loadNativeAuthOrganizations } from "@api/app/tanstack/native-auth";
 import {
   type NativeClient,
   nativeClientSchema,
 } from "@repo/native-auth-contract";
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { loadNativeAuthOrganizations } from "~/oauth/native-auth-functions";
 import { NativeAuthOrgSelect } from "~/oauth/native-auth-org-select";
 import { validateNativeAuthStartSearch } from "~/oauth/native-auth-validators";
 
@@ -12,9 +12,7 @@ export const Route = createFileRoute("/oauth/$client/start")({
   loaderDeps: ({ search }) => search,
   loader: async ({ deps, params }) => {
     const client = parseNativeClient(params.client);
-    const organizations = await loadNativeAuthOrganizations({
-      data: { ...deps, client },
-    });
+    const organizations = await loadNativeAuthOrganizations();
     return {
       client,
       codeChallenge: deps.code_challenge,
