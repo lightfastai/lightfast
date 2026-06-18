@@ -1,1 +1,1 @@
-export { captureException, init } from "@sentry/browser";
+export { captureException } from "@sentry/browser";

@@ -124,5 +124,3 @@ export const log = {
   error: enriched("error"),
   debug: enriched("debug"),
 };
-
-export type Logger = typeof log;
