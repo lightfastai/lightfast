@@ -18,7 +18,7 @@ import {
 } from "@repo/ui-v2/components/ai-elements/thinking-steps";
 import { mapActivityStatusToThinkingStepStatus } from "@repo/ai/workspace-assistant";
 import type { DynamicToolUIPart, ToolUIPart, UIMessage } from "@vendor/ai";
-import { memo } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 
 interface WorkspaceToolPart {
   errorText?: AiElementsToolPart["errorText"];
@@ -57,8 +57,20 @@ export function WorkspaceAssistantActivityGroup({
   isStreaming: boolean;
   parts: UIMessage["parts"];
 }) {
+  const [open, setOpen] = useState(isStreaming);
+  const wasStreamingRef = useRef(isStreaming);
+
+  useEffect(() => {
+    if (isStreaming) {
+      setOpen(true);
+    } else if (wasStreamingRef.current) {
+      setOpen(false);
+    }
+    wasStreamingRef.current = isStreaming;
+  }, [isStreaming]);
+
   return (
-    <ThinkingSteps defaultOpen={isStreaming}>
+    <ThinkingSteps onOpenChange={setOpen} open={open}>
       <ThinkingStepsHeader>Thinking</ThinkingStepsHeader>
       <ThinkingStepsContent>
         {parts.map((part, index) => (
