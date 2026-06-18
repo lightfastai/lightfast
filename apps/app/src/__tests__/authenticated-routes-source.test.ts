@@ -1378,8 +1378,12 @@ describe("app authenticated route migration", () => {
     const skillsIndexEventsRouteSource = source(
       "src/routes/api/skills/index/events.ts"
     );
-    const skillsIndexEventStreamSource = source(
+    const skillsIndexEventStreamPath = resolve(
+      appRoot,
       "src/server/skills/skill-index-event-stream.ts"
+    );
+    const skillsEventsAdapterSource = repoSource(
+      "api/app/src/services/skills/events.ts"
     );
     const nativeProxyServerSource = source("src/server/native-proxy.ts");
     const nativeProxyCallRouteSource = source(
@@ -1439,11 +1443,23 @@ describe("app authenticated route migration", () => {
       'createFileRoute("/api/skills/index/events")'
     );
     expect(skillsIndexEventsRouteSource).toContain(
-      "createSkillIndexEventStream"
+      "handleSkillIndexEventsRequest"
     );
-    expect(skillsIndexEventStreamSource).toContain(
-      "createSkillIndexEventStream"
+    expect(skillsIndexEventsRouteSource).toContain(
+      'from "@api/app/services/skills/events"'
     );
+    expect(skillsIndexEventsRouteSource).not.toContain("@db/app");
+    expect(skillsIndexEventsRouteSource).not.toContain(
+      "resolveAuthContextFromClerk"
+    );
+    expect(existsSync(skillsIndexEventStreamPath)).toBe(false);
+    expect(skillsEventsAdapterSource).toContain(
+      "handleSkillIndexEventsRequest"
+    );
+    expect(skillsEventsAdapterSource).toContain("resolveAuthContextFromClerk");
+    expect(skillsEventsAdapterSource).toContain("@db/app/client");
+    expect(skillsEventsAdapterSource).toContain("createSkillIndexEventStream");
+    expect(skillsEventsAdapterSource).toContain("redis.subscribe");
     expect(nativeProxyServerSource).toContain(
       "createNativeProviderRoutineContext"
     );
@@ -1494,7 +1510,6 @@ describe("app authenticated route migration", () => {
     );
 
     for (const startupSensitiveFile of [
-      skillsIndexEventsRouteSource,
       nativeProxyServerSource,
       mcpServiceAuthSource,
       mcpProxyServerSource,
@@ -1514,7 +1529,7 @@ describe("app authenticated route migration", () => {
       xCompleteClientSource,
       githubWebhookRouteSource,
       skillsIndexEventsRouteSource,
-      skillsIndexEventStreamSource,
+      skillsEventsAdapterSource,
       nativeProxyServerSource,
       nativeProxyCallRouteSource,
       nativeProxyRoutinesRouteSource,
