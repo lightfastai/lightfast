@@ -5,7 +5,7 @@ export const Route = createFileRoute("/api/chat")({
     handlers: {
       POST: async ({ request }) => {
         const { handleWorkspaceAssistantChatRequest } = await import(
-          "~/server/chat/workspace-assistant-route"
+          "@api/app/internal-api/workspace-assistant"
         );
 
         return handleWorkspaceAssistantChatRequest(request);

@@ -18,7 +18,7 @@ const markWorkspaceAssistantMessageCompletedMock = vi.fn();
 const markWorkspaceAssistantMessageFailedMock = vi.fn();
 const callProviderRoutineMock = vi.fn();
 const findProviderRoutinesMock = vi.fn();
-const resolveWorkspaceAssistantAuthContextMock = vi.fn();
+const resolveIdentityFromClerkMock = vi.fn();
 const safeValidateUIMessagesMock = vi.fn();
 const setWorkspaceAssistantConversationActiveStreamMock = vi.fn();
 const smoothStreamMock = vi.fn();
@@ -27,9 +27,8 @@ const streamTextMock = vi.fn();
 const toUIMessageStreamResponseMock = vi.fn();
 const toolMock = vi.fn();
 
-vi.mock("~/server/chat/auth", () => ({
-  resolveWorkspaceAssistantAuthContext:
-    resolveWorkspaceAssistantAuthContextMock,
+vi.mock("../auth/identity", () => ({
+  resolveIdentityFromClerk: resolveIdentityFromClerkMock,
 }));
 
 vi.mock("@api/app/services/skills", () => ({
@@ -118,13 +117,13 @@ vi.mock("@vendor/ai", () => ({
   tool: toolMock,
 }));
 
-vi.mock("~/server/chat/resumable-stream", () => ({
+vi.mock("../adapters/internal/workspace-assistant/resumable-stream", () => ({
   getLightfastResumableStreamContext: () => ({
     createNewResumableStream: vi.fn(),
   }),
 }));
 
-vi.mock("~/server/log", () => ({
+vi.mock("../adapters/internal/workspace-assistant/log", () => ({
   log: {
     error: vi.fn(),
     info: vi.fn(),
@@ -133,7 +132,7 @@ vi.mock("~/server/log", () => ({
 }));
 
 const { handleWorkspaceAssistantChatRequest } = await import(
-  "~/server/chat/workspace-assistant-route"
+  "../adapters/internal/workspace-assistant/chat-route"
 );
 
 beforeEach(() => {
@@ -155,7 +154,7 @@ beforeEach(() => {
   markWorkspaceAssistantMessageFailedMock.mockReset();
   callProviderRoutineMock.mockReset();
   findProviderRoutinesMock.mockReset();
-  resolveWorkspaceAssistantAuthContextMock.mockReset();
+  resolveIdentityFromClerkMock.mockReset();
   safeValidateUIMessagesMock.mockReset();
   setWorkspaceAssistantConversationActiveStreamMock.mockReset();
   smoothStreamMock.mockReset();
@@ -164,13 +163,11 @@ beforeEach(() => {
   toUIMessageStreamResponseMock.mockReset();
   toolMock.mockReset();
 
-  resolveWorkspaceAssistantAuthContextMock.mockResolvedValue({
-    identity: {
-      orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
-      orgId: "org_123",
-      type: "active",
-      userId: "user_123",
-    },
+  resolveIdentityFromClerkMock.mockResolvedValue({
+    orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
+    orgId: "org_123",
+    type: "active",
+    userId: "user_123",
   });
   safeValidateUIMessagesMock.mockImplementation(async ({ messages }) => ({
     data: messages,
@@ -256,8 +253,8 @@ beforeEach(() => {
 
 describe("workspace assistant chat server route", () => {
   it("rejects unauthenticated chat requests", async () => {
-    resolveWorkspaceAssistantAuthContextMock.mockResolvedValueOnce({
-      identity: { type: "unauthenticated" },
+    resolveIdentityFromClerkMock.mockResolvedValueOnce({
+      type: "unauthenticated",
     });
 
     const response = await handleWorkspaceAssistantChatRequest(
@@ -269,8 +266,8 @@ describe("workspace assistant chat server route", () => {
   });
 
   it("rejects write-mode chat requests with an unauthenticated identity (expired token)", async () => {
-    resolveWorkspaceAssistantAuthContextMock.mockResolvedValueOnce({
-      identity: { type: "unauthenticated" },
+    resolveIdentityFromClerkMock.mockResolvedValueOnce({
+      type: "unauthenticated",
     });
 
     const response = await handleWorkspaceAssistantChatRequest(
@@ -284,8 +281,9 @@ describe("workspace assistant chat server route", () => {
   });
 
   it("rejects write-mode chat requests without an active organization", async () => {
-    resolveWorkspaceAssistantAuthContextMock.mockResolvedValueOnce({
-      identity: { type: "pending", userId: "user_123" },
+    resolveIdentityFromClerkMock.mockResolvedValueOnce({
+      type: "pending",
+      userId: "user_123",
     });
 
     const response = await handleWorkspaceAssistantChatRequest(
@@ -299,13 +297,11 @@ describe("workspace assistant chat server route", () => {
   });
 
   it("rejects write-mode chat requests when the active organization is not bound", async () => {
-    resolveWorkspaceAssistantAuthContextMock.mockResolvedValueOnce({
-      identity: {
-        orgGate: { bindingStatus: "unbound", nextSetupRequirement: "bind" },
-        orgId: "org_123",
-        type: "active",
-        userId: "user_123",
-      },
+    resolveIdentityFromClerkMock.mockResolvedValueOnce({
+      orgGate: { bindingStatus: "unbound", nextSetupRequirement: "bind" },
+      orgId: "org_123",
+      type: "active",
+      userId: "user_123",
     });
 
     const response = await handleWorkspaceAssistantChatRequest(

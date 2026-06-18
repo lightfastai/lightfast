@@ -1,13 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const getWorkspaceAssistantConversationByPublicIdMock = vi.fn();
-const resolveWorkspaceAssistantAuthContextMock = vi.fn();
+const resolveIdentityFromClerkMock = vi.fn();
 const resumeExistingStreamMock = vi.fn();
 const setWorkspaceAssistantConversationActiveStreamMock = vi.fn();
 
-vi.mock("~/server/chat/auth", () => ({
-  resolveWorkspaceAssistantAuthContext:
-    resolveWorkspaceAssistantAuthContextMock,
+vi.mock("../auth/identity", () => ({
+  resolveIdentityFromClerk: resolveIdentityFromClerkMock,
 }));
 
 vi.mock("@db/app", () => ({
@@ -27,13 +26,13 @@ vi.mock("@vendor/ai", () => ({
   },
 }));
 
-vi.mock("~/server/chat/resumable-stream", () => ({
+vi.mock("../adapters/internal/workspace-assistant/resumable-stream", () => ({
   getLightfastResumableStreamContext: () => ({
     resumeExistingStream: resumeExistingStreamMock,
   }),
 }));
 
-vi.mock("~/server/log", () => ({
+vi.mock("../adapters/internal/workspace-assistant/log", () => ({
   log: {
     info: vi.fn(),
     warn: vi.fn(),
@@ -42,17 +41,15 @@ vi.mock("~/server/log", () => ({
 
 beforeEach(() => {
   getWorkspaceAssistantConversationByPublicIdMock.mockReset();
-  resolveWorkspaceAssistantAuthContextMock.mockReset();
+  resolveIdentityFromClerkMock.mockReset();
   resumeExistingStreamMock.mockReset();
   setWorkspaceAssistantConversationActiveStreamMock.mockReset();
 
-  resolveWorkspaceAssistantAuthContextMock.mockResolvedValue({
-    identity: {
-      orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
-      orgId: "org_123",
-      type: "active",
-      userId: "user_123",
-    },
+  resolveIdentityFromClerkMock.mockResolvedValue({
+    orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
+    orgId: "org_123",
+    type: "active",
+    userId: "user_123",
   });
   getWorkspaceAssistantConversationByPublicIdMock.mockResolvedValue(
     makeConversation()
@@ -126,8 +123,8 @@ describe("workspace assistant stream resume route", () => {
     vi.resetModules();
     vi.stubEnv("VITE_VERCEL_ENV", "production");
     const handler = await importStreamHandler();
-    resolveWorkspaceAssistantAuthContextMock.mockResolvedValueOnce({
-      identity: { type: "unauthenticated" },
+    resolveIdentityFromClerkMock.mockResolvedValueOnce({
+      type: "unauthenticated",
     });
 
     const response = await handler(createRequest(), "conv_123");
@@ -139,7 +136,7 @@ describe("workspace assistant stream resume route", () => {
 
 async function importStreamHandler() {
   const { handleWorkspaceAssistantStreamRequest } = await import(
-    "~/server/chat/workspace-assistant-stream-route"
+    "../adapters/internal/workspace-assistant/stream-route"
   );
   return handleWorkspaceAssistantStreamRequest;
 }
