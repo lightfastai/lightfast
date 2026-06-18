@@ -1,36 +1,18 @@
 import {
+  type CompleteSentryDeveloperConnectionAuthInput,
+  type ConnectDeveloperConnectionInput,
   completeSentryDeveloperConnectionAuth,
   connectDeveloperConnection,
+  type DisconnectDeveloperConnectionInput,
   disconnectDeveloperConnection,
   listDeveloperConnections,
+  type SetDeveloperConnectionSandboxEnabledInput,
+  type StartSentryDeveloperConnectionAuthInput,
+  type StartSentryDeveloperConnectionAuthResult,
   setDeveloperConnectionSandboxEnabled,
   startSentryDeveloperConnectionAuth,
 } from "@api/app/tanstack/developer-connections";
 import { mutationOptions, queryOptions } from "@tanstack/react-query";
-
-type ServerFunctionData<TFn> = TFn extends (args: {
-  data: infer TData;
-}) => unknown
-  ? TData
-  : never;
-type DeveloperConnectionConnectInput = ServerFunctionData<
-  typeof connectDeveloperConnection
->;
-type DeveloperConnectionStartAuthInput = ServerFunctionData<
-  typeof startSentryDeveloperConnectionAuth
->;
-type DeveloperConnectionCompleteAuthInput = ServerFunctionData<
-  typeof completeSentryDeveloperConnectionAuth
->;
-type DeveloperConnectionSetSandboxEnabledInput = ServerFunctionData<
-  typeof setDeveloperConnectionSandboxEnabled
->;
-type DeveloperConnectionProviderInput = ServerFunctionData<
-  typeof disconnectDeveloperConnection
->;
-type StartSentryDeveloperConnectionAuthResult = Awaited<
-  ReturnType<typeof startSentryDeveloperConnectionAuth>
->;
 
 export const developerConnectionQueryKeys = {
   all: ["developer-connections"] as const,
@@ -52,7 +34,7 @@ export function connectDeveloperConnectionMutationOptions(input?: {
 }) {
   return mutationOptions({
     meta: { errorTitle: "Failed to connect developer provider" },
-    mutationFn: (data: DeveloperConnectionConnectInput) =>
+    mutationFn: (data: ConnectDeveloperConnectionInput) =>
       connectDeveloperConnection({ data }),
     onSuccess: input?.onSuccess,
   });
@@ -63,7 +45,7 @@ export function startSentryDeveloperConnectionAuthMutationOptions(input?: {
 }) {
   return mutationOptions({
     meta: { errorTitle: "Failed to start Sentry authorization" },
-    mutationFn: (data: DeveloperConnectionStartAuthInput) =>
+    mutationFn: (data: StartSentryDeveloperConnectionAuthInput) =>
       startSentryDeveloperConnectionAuth({ data }),
     onSuccess: input?.onSuccess,
   });
@@ -74,7 +56,7 @@ export function completeSentryDeveloperConnectionAuthMutationOptions(input?: {
 }) {
   return mutationOptions({
     meta: { errorTitle: "Failed to complete Sentry authorization" },
-    mutationFn: (data: DeveloperConnectionCompleteAuthInput) =>
+    mutationFn: (data: CompleteSentryDeveloperConnectionAuthInput) =>
       completeSentryDeveloperConnectionAuth({ data }),
     onSuccess: input?.onSuccess,
   });
@@ -85,7 +67,7 @@ export function setDeveloperConnectionSandboxEnabledMutationOptions(input?: {
 }) {
   return mutationOptions({
     meta: { errorTitle: "Failed to update sandbox access" },
-    mutationFn: (data: DeveloperConnectionSetSandboxEnabledInput) =>
+    mutationFn: (data: SetDeveloperConnectionSandboxEnabledInput) =>
       setDeveloperConnectionSandboxEnabled({ data }),
     onSuccess: input?.onSuccess,
   });
@@ -96,7 +78,7 @@ export function disconnectDeveloperConnectionMutationOptions(input?: {
 }) {
   return mutationOptions({
     meta: { errorTitle: "Failed to disconnect developer provider" },
-    mutationFn: (data: DeveloperConnectionProviderInput) =>
+    mutationFn: (data: DisconnectDeveloperConnectionInput) =>
       disconnectDeveloperConnection({ data }),
     onSuccess: input?.onSuccess,
   });
