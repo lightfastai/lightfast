@@ -6,7 +6,7 @@ const appRoot = resolve(import.meta.dirname, "../..");
 
 const migratedFiles = [
   "src/signals/signals-client.tsx",
-  "src/signals/use-classified-signals-query.ts",
+  "src/signals/use-signals-workspace-data.ts",
   "src/signals/signals-view-switcher.tsx",
   "src/signals/signal-detail-sheet.tsx",
   "src/signals/signal-create-dialog.tsx",
@@ -23,12 +23,36 @@ describe("migrated signal UI data access", () => {
   it("removes tRPC hooks from fully migrated signal read components", () => {
     for (const file of [
       "src/signals/signals-client.tsx",
-      "src/signals/use-classified-signals-query.ts",
+      "src/signals/use-signals-workspace-data.ts",
       "src/signals/signal-detail-sheet.tsx",
     ] as const) {
       const source = readFileSync(resolve(appRoot, file), "utf8");
       expect(source, file).not.toContain("useTRPC");
     }
+  });
+
+  it("inlines shallow signal data hooks into the workspace data hook", () => {
+    const removedHookPaths = [
+      "src/signals/use-classified-signals-query.ts",
+      "src/signals/use-signals-filtering.ts",
+    ] as const;
+    const workspaceDataSource = readFileSync(
+      resolve(appRoot, "src/signals/use-signals-workspace-data.ts"),
+      "utf8"
+    );
+
+    for (const removedHookPath of removedHookPaths) {
+      expect(existsSync(resolve(appRoot, removedHookPath))).toBe(false);
+    }
+    expect(workspaceDataSource).toContain('from "@tanstack/react-query"');
+    expect(workspaceDataSource).toContain("useQuery");
+    expect(workspaceDataSource).toContain("workingSetSignalsQueryOptions");
+    expect(workspaceDataSource).toContain("processingSignalsQueryOptions");
+    expect(workspaceDataSource).toContain("filterClassifiedSignals");
+    expect(workspaceDataSource).toContain("compareSignalsByRecency");
+    expect(workspaceDataSource).not.toContain("useWorkingSetQuery");
+    expect(workspaceDataSource).not.toContain("useProcessingSignalsQuery");
+    expect(workspaceDataSource).not.toContain("useSignalsFiltering");
   });
 
   it("uses TanStack server functions for signal views", () => {
