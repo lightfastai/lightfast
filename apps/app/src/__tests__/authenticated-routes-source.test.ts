@@ -1398,8 +1398,14 @@ describe("app authenticated route migration", () => {
     const nativeProxyRoutinesRouteSource = source(
       "src/routes/api/native/proxy/routines.ts"
     );
-    const mcpServiceAuthSource = source("src/server/mcp-service-auth.ts");
-    const mcpProxyServerSource = source("src/server/mcp-proxy.ts");
+    const mcpServiceAuthPath = resolve(
+      appRoot,
+      "src/server/mcp-service-auth.ts"
+    );
+    const mcpProxyServerPath = resolve(appRoot, "src/server/mcp-proxy.ts");
+    const mcpProxyAdapterSource = repoSource(
+      "api/app/src/adapters/internal/mcp-proxy.ts"
+    );
     const mcpProxyCallRouteSource = source(
       "src/routes/api/internal/mcp/proxy/call.ts"
     );
@@ -1499,18 +1505,28 @@ describe("app authenticated route migration", () => {
     expect(nativeProxyRoutinesRouteSource).not.toContain(
       "providerRoutineFindInputSchema"
     );
-    expect(mcpServiceAuthSource).toContain("verifyMcpServiceRequest");
-    expect(mcpProxyServerSource).toContain("handleMcpProxyFindRequest");
-    expect(mcpProxyServerSource).toContain("handleMcpProxyCallRequest");
-    expect(mcpProxyServerSource).toContain("loadAgentConnectorRuntimeTools");
-    expect(mcpProxyServerSource).toContain("adapters");
-    expect(mcpProxyServerSource).toContain('sourceSurface: "hosted_mcp"');
+    expect(existsSync(mcpServiceAuthPath)).toBe(false);
+    expect(existsSync(mcpProxyServerPath)).toBe(false);
+    expect(mcpProxyAdapterSource).toContain("handleMcpProxyFindRequest");
+    expect(mcpProxyAdapterSource).toContain("handleMcpProxyCallRequest");
+    expect(mcpProxyAdapterSource).toContain("loadAgentConnectorRuntimeTools");
+    expect(mcpProxyAdapterSource).toContain("adapters");
+    expect(mcpProxyAdapterSource).toContain('sourceSurface: "hosted_mcp"');
+    expect(mcpProxyAdapterSource).toContain("process.env.SERVICE_JWT_SECRET");
     expect(mcpProxyCallRouteSource).toContain(
       'createFileRoute("/api/internal/mcp/proxy/call")'
     );
+    expect(mcpProxyCallRouteSource).toContain(
+      'from "@api/app/internal-api/mcp-proxy"'
+    );
+    expect(mcpProxyCallRouteSource).not.toContain("~/server/mcp-proxy");
     expect(mcpProxyFindRouteSource).toContain(
       'createFileRoute("/api/internal/mcp/proxy/find")'
     );
+    expect(mcpProxyFindRouteSource).toContain(
+      'from "@api/app/internal-api/mcp-proxy"'
+    );
+    expect(mcpProxyFindRouteSource).not.toContain("~/server/mcp-proxy");
     expect(mcpAuditRouteSource).toContain(
       'createFileRoute("/api/internal/mcp/audit")'
     );
@@ -1531,14 +1547,12 @@ describe("app authenticated route migration", () => {
     );
 
     for (const startupSensitiveFile of [
-      mcpServiceAuthSource,
-      mcpProxyServerSource,
       mcpSignalsRouteSource,
       mcpSignalsGetRouteSource,
     ]) {
       expect(startupSensitiveFile).not.toContain('from "@api/app');
     }
-    expect(mcpProxyServerSource).not.toContain(
+    expect(mcpProxyAdapterSource).not.toContain(
       'from "@repo/provider-routines"'
     );
 
@@ -1553,8 +1567,7 @@ describe("app authenticated route migration", () => {
       nativeProxyAdapterSource,
       nativeProxyCallRouteSource,
       nativeProxyRoutinesRouteSource,
-      mcpServiceAuthSource,
-      mcpProxyServerSource,
+      mcpProxyAdapterSource,
       mcpProxyCallRouteSource,
       mcpProxyFindRouteSource,
       mcpAuditRouteSource,

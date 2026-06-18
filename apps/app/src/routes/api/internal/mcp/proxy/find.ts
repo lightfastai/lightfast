@@ -1,5 +1,5 @@
+import { handleMcpProxyFindRequest } from "@api/app/internal-api/mcp-proxy";
 import { createFileRoute } from "@tanstack/react-router";
-import { handleMcpProxyFindRequest } from "~/server/mcp-proxy";
 
 export const Route = createFileRoute("/api/internal/mcp/proxy/find")({
   server: {

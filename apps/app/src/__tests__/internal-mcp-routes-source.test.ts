@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -18,9 +18,18 @@ describe("internal MCP app routes", () => {
     const createRoute = appSource("src/routes/api/internal/mcp/signals.ts");
     const getRoute = appSource("src/routes/api/internal/mcp/signals/get.ts");
     const auditRoute = appSource("src/routes/api/internal/mcp/audit.ts");
+    const proxyCallRoute = appSource(
+      "src/routes/api/internal/mcp/proxy/call.ts"
+    );
+    const proxyFindRoute = appSource(
+      "src/routes/api/internal/mcp/proxy/find.ts"
+    );
     const adapter = repoSource("api/app/src/adapters/internal/mcp-signals.ts");
     const auditAdapter = repoSource(
       "api/app/src/adapters/internal/mcp-audit.ts"
+    );
+    const proxyAdapter = repoSource(
+      "api/app/src/adapters/internal/mcp-proxy.ts"
     );
     const packageJson = JSON.parse(repoSource("api/app/package.json")) as {
       exports: Record<string, unknown>;
@@ -28,6 +37,11 @@ describe("internal MCP app routes", () => {
 
     expect(packageJson.exports).toHaveProperty("./internal-api/mcp-signals");
     expect(packageJson.exports).toHaveProperty("./internal-api/mcp-audit");
+    expect(packageJson.exports).toHaveProperty("./internal-api/mcp-proxy");
+    expect(existsSync(resolve(appRoot, "src/server/mcp-service-auth.ts"))).toBe(
+      false
+    );
+    expect(existsSync(resolve(appRoot, "src/server/mcp-proxy.ts"))).toBe(false);
 
     expect(createRoute).toContain('@api/app/internal-api/mcp-signals"');
     expect(createRoute).toContain("handleCreateMcpSignalInternalRequest");
@@ -35,11 +49,22 @@ describe("internal MCP app routes", () => {
     expect(getRoute).toContain("handleGetMcpSignalInternalRequest");
     expect(auditRoute).toContain('@api/app/internal-api/mcp-audit"');
     expect(auditRoute).toContain("handleRecordMcpAuditInternalRequest");
+    expect(proxyCallRoute).toContain('@api/app/internal-api/mcp-proxy"');
+    expect(proxyCallRoute).toContain("handleMcpProxyCallRequest");
+    expect(proxyFindRoute).toContain('@api/app/internal-api/mcp-proxy"');
+    expect(proxyFindRoute).toContain("handleMcpProxyFindRequest");
 
-    for (const source of [createRoute, getRoute, auditRoute]) {
+    for (const source of [
+      createRoute,
+      getRoute,
+      auditRoute,
+      proxyCallRoute,
+      proxyFindRoute,
+    ]) {
       expect(source).not.toContain("@db/app");
       expect(source).not.toContain("@repo/api-contract");
       expect(source).not.toContain("~/server/mcp-service-auth");
+      expect(source).not.toContain("~/server/mcp-proxy");
       expect(source).not.toContain("verifyMcpServiceRequest");
       expect(source).not.toContain("jsonError");
       expect(source).not.toContain("@api/app/mcp-oauth/resource-access");
@@ -58,5 +83,11 @@ describe("internal MCP app routes", () => {
     expect(auditAdapter).toContain("process.env.SERVICE_JWT_SECRET");
     expect(auditAdapter).toContain("recordMcpAuditEvent");
     expect(auditAdapter).not.toContain('from "../../env"');
+
+    expect(proxyAdapter).toContain("process.env.SERVICE_JWT_SECRET");
+    expect(proxyAdapter).toContain("loadAgentConnectorRuntimeTools");
+    expect(proxyAdapter).toContain('sourceSurface: "hosted_mcp"');
+    expect(proxyAdapter).not.toContain('from "../../../apps/app"');
+    expect(proxyAdapter).not.toContain('from "../../env"');
   });
 });
