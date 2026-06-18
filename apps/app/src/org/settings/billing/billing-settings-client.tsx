@@ -1,3 +1,4 @@
+import { cancelOrgBillingSubscriptionItem } from "@api/app/tanstack/org-billing";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   BillingPaymentMethodResource,
@@ -9,7 +10,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { BillingCheckoutDialog } from "./billing-checkout-dialog";
 import {
   billingOverviewQueryOptions,
-  cancelOrgBillingSubscriptionItemMutationOptions,
   orgBillingQueryKeys,
 } from "./billing-queries";
 import {
@@ -35,6 +35,9 @@ import { StatementDetailsDialog } from "./statement-details-dialog";
 type BillingPlan = BillingOverview["plans"][number];
 type BillingSubscriptionItem =
   BillingOverview["subscription"]["subscriptionItems"][number];
+interface CancelOrgBillingSubscriptionItemInput {
+  subscriptionItemId: string;
+}
 
 const PRICING_HASH = "#pricing";
 const EMPTY_PAYMENT_METHODS: BillingPaymentMethodResource[] = [];
@@ -145,7 +148,9 @@ export function BillingSettingsClient() {
     useState<BillingStatementResource | null>(null);
 
   const { mutate: cancelSubscriptionItem } = useMutation({
-    ...cancelOrgBillingSubscriptionItemMutationOptions(),
+    meta: { errorTitle: "Failed to schedule cancellation" },
+    mutationFn: (data: CancelOrgBillingSubscriptionItemInput) =>
+      cancelOrgBillingSubscriptionItem({ data }),
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: overviewQueryKey });
 

@@ -13,7 +13,10 @@ describe("org billing app data access", () => {
 
     expect(source).toContain('@api/app/tanstack/org-billing"');
     expect(source).toContain("queryOptions");
-    expect(source).toContain("mutationOptions");
+    expect(source).not.toContain("mutationOptions");
+    expect(source).not.toContain(
+      "cancelOrgBillingSubscriptionItemMutationOptions"
+    );
     expect(source).toContain('["org-billing", "overview", orgId ?? "no-org"]');
     expect(source).toContain("enabled: Boolean(input.orgId)");
     expect(source).not.toContain("useTRPC");
@@ -61,8 +64,10 @@ describe("org billing app data access", () => {
       "src/org/settings/billing/billing-cancellation-mutation.ts";
 
     expect(existsSync(resolve(appRoot, mutationPath))).toBe(false);
+    expect(clientSource).toContain('@api/app/tanstack/org-billing"');
+    expect(clientSource).toContain("cancelOrgBillingSubscriptionItem");
     expect(clientSource).toContain("useMutation");
-    expect(clientSource).toContain(
+    expect(clientSource).not.toContain(
       "cancelOrgBillingSubscriptionItemMutationOptions"
     );
     expect(clientSource).toContain("orgBillingQueryKeys.overview(auth.orgId)");

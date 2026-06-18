@@ -14,10 +14,11 @@ describe("org API key query helpers", () => {
     expect(source).toContain('@api/app/tanstack/org-api-keys"');
     expect(source).toContain("orgApiKeyQueryKeys");
     expect(source).toContain("orgApiKeysQueryOptions");
-    expect(source).toContain("createOrgApiKeyMutationOptions");
-    expect(source).toContain("revokeOrgApiKeyMutationOptions");
-    expect(source).toContain("deleteOrgApiKeyMutationOptions");
-    expect(source).toContain("rotateOrgApiKeyMutationOptions");
+    expect(source).not.toContain("mutationOptions");
+    expect(source).not.toContain("createOrgApiKeyMutationOptions");
+    expect(source).not.toContain("revokeOrgApiKeyMutationOptions");
+    expect(source).not.toContain("deleteOrgApiKeyMutationOptions");
+    expect(source).not.toContain("rotateOrgApiKeyMutationOptions");
     expect(source).not.toContain("useTRPC");
   });
 
@@ -30,9 +31,11 @@ describe("org API key query helpers", () => {
       "src/org/settings/api-keys/org-api-key-create-action.ts";
 
     expect(existsSync(resolve(appRoot, actionsPath))).toBe(false);
+    expect(createSource).toContain('@api/app/tanstack/org-api-keys"');
+    expect(createSource).toContain("createOrgApiKey");
     expect(createSource).toContain("useMutation");
     expect(createSource).toContain("useQueryClient");
-    expect(createSource).toContain("createOrgApiKeyMutationOptions");
+    expect(createSource).not.toContain("createOrgApiKeyMutationOptions");
     expect(createSource).not.toContain("useOrgApiKeyCreateAction");
     expect(createSource).not.toContain("org-api-key-create-action");
   });
@@ -45,11 +48,15 @@ describe("org API key query helpers", () => {
     const actionsPath = "src/org/settings/api-keys/org-api-key-list-actions.ts";
 
     expect(existsSync(resolve(appRoot, actionsPath))).toBe(false);
+    expect(listSource).toContain('@api/app/tanstack/org-api-keys"');
+    expect(listSource).toContain("revokeOrgApiKey");
+    expect(listSource).toContain("deleteOrgApiKey");
+    expect(listSource).toContain("rotateOrgApiKey");
     expect(listSource).toContain("useMutation");
     expect(listSource).toContain("useQueryClient");
-    expect(listSource).toContain("revokeOrgApiKeyMutationOptions");
-    expect(listSource).toContain("deleteOrgApiKeyMutationOptions");
-    expect(listSource).toContain("rotateOrgApiKeyMutationOptions");
+    expect(listSource).not.toContain("revokeOrgApiKeyMutationOptions");
+    expect(listSource).not.toContain("deleteOrgApiKeyMutationOptions");
+    expect(listSource).not.toContain("rotateOrgApiKeyMutationOptions");
     expect(listSource).toContain("orgApiKeyQueryKeys.list()");
     expect(listSource).toContain("revokeApiKey");
     expect(listSource).toContain("removeApiKey");

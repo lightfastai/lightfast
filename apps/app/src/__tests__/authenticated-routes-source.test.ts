@@ -1227,12 +1227,22 @@ describe("app authenticated route migration", () => {
     );
     expect(memberListSource).toContain('from "@clerk/tanstack-react-start"');
     expect(existsSync(resolve(appRoot, memberInviteActionsPath))).toBe(false);
-    expect(memberInviteSource).toContain("inviteOrgMemberMutationOptions");
+    expect(memberInviteSource).toContain('@api/app/tanstack/org-members"');
+    expect(memberInviteSource).toContain("inviteOrgMember");
+    expect(memberInviteSource).not.toContain("inviteOrgMemberMutationOptions");
     expect(memberInviteSource).not.toContain("useOrgMemberInviteAction");
     expect(existsSync(resolve(appRoot, memberListActionsPath))).toBe(false);
-    expect(memberListSource).toContain("updateOrgMemberRoleMutationOptions");
-    expect(memberListSource).toContain("revokeOrgInvitationMutationOptions");
-    expect(memberListSource).toContain("removeOrgMemberMutationOptions");
+    expect(memberListSource).toContain('@api/app/tanstack/org-members"');
+    expect(memberListSource).toContain("updateOrgMemberRole");
+    expect(memberListSource).toContain("revokeOrgInvitation");
+    expect(memberListSource).toContain("removeOrgMember");
+    expect(memberListSource).not.toContain(
+      "updateOrgMemberRoleMutationOptions"
+    );
+    expect(memberListSource).not.toContain(
+      "revokeOrgInvitationMutationOptions"
+    );
+    expect(memberListSource).not.toContain("removeOrgMemberMutationOptions");
     expect(memberListSource).not.toContain("useOrgMemberListActions");
     expect(memberQueriesSource).toContain("orgMemberQueryKeys");
     expect(memberQueriesSource).not.toContain("useTRPC");
@@ -1244,12 +1254,18 @@ describe("app authenticated route migration", () => {
     );
     expect(apiKeyListSource).toContain('from "@clerk/tanstack-react-start"');
     expect(existsSync(resolve(appRoot, apiKeyCreateActionsPath))).toBe(false);
-    expect(apiKeyCreateSource).toContain("createOrgApiKeyMutationOptions");
+    expect(apiKeyCreateSource).toContain('@api/app/tanstack/org-api-keys"');
+    expect(apiKeyCreateSource).toContain("createOrgApiKey");
+    expect(apiKeyCreateSource).not.toContain("createOrgApiKeyMutationOptions");
     expect(apiKeyCreateSource).not.toContain("useOrgApiKeyCreateAction");
     expect(existsSync(resolve(appRoot, apiKeyListActionsPath))).toBe(false);
-    expect(apiKeyListSource).toContain("revokeOrgApiKeyMutationOptions");
-    expect(apiKeyListSource).toContain("deleteOrgApiKeyMutationOptions");
-    expect(apiKeyListSource).toContain("rotateOrgApiKeyMutationOptions");
+    expect(apiKeyListSource).toContain('@api/app/tanstack/org-api-keys"');
+    expect(apiKeyListSource).toContain("revokeOrgApiKey");
+    expect(apiKeyListSource).toContain("deleteOrgApiKey");
+    expect(apiKeyListSource).toContain("rotateOrgApiKey");
+    expect(apiKeyListSource).not.toContain("revokeOrgApiKeyMutationOptions");
+    expect(apiKeyListSource).not.toContain("deleteOrgApiKeyMutationOptions");
+    expect(apiKeyListSource).not.toContain("rotateOrgApiKeyMutationOptions");
     expect(apiKeyListSource).not.toContain("useOrgApiKeyListActions");
     expect(apiKeyCacheSource).toContain("OrgApiKeyListData");
     expect(apiKeyQueriesSource).toContain('@api/app/tanstack/org-api-keys"');
@@ -1415,7 +1431,9 @@ describe("app authenticated route migration", () => {
     expect(billingClientSource).toContain("orgBillingQueryKeys.overview");
     expect(billingClientSource).not.toContain("useBillingOverviewRefresh");
     expect(existsSync(resolve(appRoot, billingCancellationPath))).toBe(false);
-    expect(billingClientSource).toContain(
+    expect(billingClientSource).toContain('@api/app/tanstack/org-billing"');
+    expect(billingClientSource).toContain("cancelOrgBillingSubscriptionItem");
+    expect(billingClientSource).not.toContain(
       "cancelOrgBillingSubscriptionItemMutationOptions"
     );
     expect(billingClientSource).not.toContain(
