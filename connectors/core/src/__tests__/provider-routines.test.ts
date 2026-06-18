@@ -1,3 +1,4 @@
+import { providerRoutineId as providerRoutineIdFromPublicSubpath } from "@lightfast/connector-core/provider-routines";
 import { describe, expect, it } from "vitest";
 import {
   mcpProviderRoutineCallCommandInputSchema,
@@ -10,9 +11,15 @@ import {
   providerRoutineId,
   providerRoutineIdSchema,
   providerRoutineSourceSurfaceSchema,
-} from "../index";
+} from "../provider-routines";
 
 describe("provider routine ids", () => {
+  it("exposes provider routines through the public package subpath", () => {
+    expect(providerRoutineIdFromPublicSubpath("linear", "create_issue")).toBe(
+      "linear__create_issue"
+    );
+  });
+
   it("formats and parses provider routine ids", () => {
     const routineId = providerRoutineId("linear", "create_issue");
 

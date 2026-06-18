@@ -35,7 +35,6 @@
     "@repo/app-setup-contract": "workspace:*",
     "@repo/app-validation": "workspace:*",
     "@repo/native-auth-contract": "workspace:*",
-    "@repo/provider-routine-contract": "workspace:*",
     "@repo/provider-routines": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/ui-v2": "workspace:*",

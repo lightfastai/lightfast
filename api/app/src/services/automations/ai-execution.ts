@@ -12,7 +12,7 @@ import {
   providerRoutineCallSuccessSchema,
   providerRoutineFindInputSchema,
   providerRoutineFindOutputSchema,
-} from "@repo/provider-routine-contract";
+} from "@lightfast/connector-core/provider-routines";
 import { gateway, generateText, stepCountIs, tool } from "@vendor/ai";
 import { log } from "@vendor/observability/log/next";
 import { z } from "zod";

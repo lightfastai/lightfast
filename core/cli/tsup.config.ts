@@ -7,9 +7,9 @@ export default defineConfig({
   target: "node22",
   bundle: true,
   noExternal: [
+    "@lightfast/connector-core",
     "@repo/native-auth-contract",
     "@repo/native-auth-node",
-    "@repo/provider-routine-contract",
     "@t3-oss/env-core",
     "commander",
     "zod",

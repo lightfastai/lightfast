@@ -4,7 +4,7 @@ import type {
   ProviderRoutineCallSuccess,
   ProviderRoutineFindInput,
   ProviderRoutineFindOutput,
-} from "@repo/provider-routine-contract";
+} from "@lightfast/connector-core/provider-routines";
 import type { ProviderRoutineServiceContext } from "@repo/provider-routines";
 import { z } from "zod";
 

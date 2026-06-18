@@ -1,7 +1,7 @@
 import type {
   ProviderRoutineClassification,
   ProviderToolName,
-} from "@repo/provider-routine-contract";
+} from "@lightfast/connector-core/provider-routines";
 
 const LINEAR_READ_ROUTINES = new Set([
   "get_issue",

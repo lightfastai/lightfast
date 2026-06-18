@@ -3,7 +3,7 @@ import {
   providerRoutineCallSuccessSchema,
   providerRoutineFindInputSchema,
   providerRoutineFindOutputSchema,
-} from "@repo/provider-routine-contract";
+} from "@lightfast/connector-core/provider-routines";
 import {
   userConnectorCallInputSchema,
   userConnectorCallSuccessSchema,

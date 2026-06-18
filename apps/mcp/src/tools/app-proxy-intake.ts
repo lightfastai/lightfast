@@ -10,7 +10,7 @@ import {
   type ProviderRoutineFindOutput,
   providerRoutineCallSuccessSchema,
   providerRoutineFindOutputSchema,
-} from "@repo/provider-routine-contract";
+} from "@lightfast/connector-core/provider-routines";
 
 import { env } from "../env";
 
