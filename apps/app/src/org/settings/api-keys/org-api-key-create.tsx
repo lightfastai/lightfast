@@ -17,11 +17,13 @@ import {
   DialogTrigger,
 } from "@repo/ui/components/ui/dialog";
 import { Input } from "@repo/ui/components/ui/input";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
-import { useOrgApiKeyCreateAction } from "./org-api-key-create-action";
+import { createOrgApiKeyMutationOptions } from "./org-api-key-queries";
 
 export function OrgApiKeyCreate() {
   const { has, isLoaded } = useAuth();
+  const queryClient = useQueryClient();
   const canManageApiKeys = isLoaded && !!has?.({ role: "org:admin" });
 
   const [isOpen, setIsOpen] = useState(false);
@@ -43,9 +45,12 @@ export function OrgApiKeyCreate() {
     setName("");
   }, []);
 
-  const createMutation = useOrgApiKeyCreateAction({
-    onCreated: handleCreated,
-  });
+  const createMutation = useMutation(
+    createOrgApiKeyMutationOptions({
+      onCreated: handleCreated,
+      queryClient,
+    })
+  );
 
   const handleCreate = useCallback(() => {
     const trimmed = name.trim();

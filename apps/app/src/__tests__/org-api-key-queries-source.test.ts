@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -19,5 +19,21 @@ describe("org API key query helpers", () => {
     expect(source).toContain("deleteOrgApiKeyMutationOptions");
     expect(source).toContain("rotateOrgApiKeyMutationOptions");
     expect(source).not.toContain("useTRPC");
+  });
+
+  it("keeps API key create mutation state in the create component", () => {
+    const createSource = readFileSync(
+      resolve(appRoot, "src/org/settings/api-keys/org-api-key-create.tsx"),
+      "utf8"
+    );
+    const actionsPath =
+      "src/org/settings/api-keys/org-api-key-create-action.ts";
+
+    expect(existsSync(resolve(appRoot, actionsPath))).toBe(false);
+    expect(createSource).toContain("useMutation");
+    expect(createSource).toContain("useQueryClient");
+    expect(createSource).toContain("createOrgApiKeyMutationOptions");
+    expect(createSource).not.toContain("useOrgApiKeyCreateAction");
+    expect(createSource).not.toContain("org-api-key-create-action");
   });
 });
