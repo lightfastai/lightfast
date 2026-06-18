@@ -743,8 +743,10 @@ describe("app authenticated route migration", () => {
       'createFileRoute("/_authenticated/$slug/chat/")'
     );
     expect(chatIndexRouteSource).toContain(
-      "createWorkspaceAssistantConversationId"
+      "createNewWorkspaceAssistantConversationId"
     );
+    expect(chatIndexRouteSource).toContain('@api/app/tanstack/assistant"');
+    expect(chatIndexRouteSource).not.toContain("@db/app");
     expect(chatIndexRouteSource).toContain("WorkspaceAssistantClient");
     expect(chatIndexRouteSource).toContain("key={conversationId}");
     expect(chatRouteSource).not.toContain("WorkspacePage");

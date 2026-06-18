@@ -17,6 +17,9 @@ describe("migrated workspace assistant data access", () => {
       "src/components/recent-chats-menu.tsx"
     );
     const clientSource = source("src/chat/workspace-assistant-client.tsx");
+    const newConversationRouteSource = source(
+      "src/routes/_authenticated/$slug/chat/index.tsx"
+    );
     const conversationRouteSource = source(
       "src/routes/_authenticated/$slug/chat/$conversationId.tsx"
     );
@@ -42,6 +45,12 @@ describe("migrated workspace assistant data access", () => {
     );
     expect(clientSource).toContain("createConversation");
     expect(clientSource).toContain("assistantConversationsQueryKey");
+    expect(newConversationRouteSource).toMatch(assistantAdapterImport);
+    expect(newConversationRouteSource).toContain(
+      "createNewWorkspaceAssistantConversationId"
+    );
+    expect(newConversationRouteSource).not.toContain("createServerFn");
+    expect(newConversationRouteSource).not.toContain("@db/app");
     expect(conversationRouteSource).toContain(
       "assistantConversationQueryOptions"
     );
