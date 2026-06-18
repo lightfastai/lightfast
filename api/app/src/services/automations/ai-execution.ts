@@ -5,7 +5,7 @@ import type {
   AutomationScheduleConfig,
   AutomationScheduleKind,
 } from "@db/app";
-import type { ConnectableConnectorProvider } from "@repo/connector-contract";
+import type { ConnectableConnectorProvider } from "@lightfast/connector-core";
 import {
   providerRoutineCallFailureSchema,
   providerRoutineCallInputSchema,

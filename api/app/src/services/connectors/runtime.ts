@@ -15,7 +15,7 @@ import { db as appDb } from "@db/app/client";
 import {
   type ConnectableConnectorProvider,
   connectorRuntimeToolName,
-} from "@repo/connector-contract";
+} from "@lightfast/connector-core";
 import { callLinearMcpTool, LinearAppNodeError } from "@repo/linear-app-node";
 import { callXBridgeMcpTool, XAppNodeError } from "@repo/x-app-node";
 import { log } from "@vendor/observability/log/next";

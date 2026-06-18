@@ -1,5 +1,5 @@
 {
-  "name": "@repo/connector-contract",
+  "name": "@lightfast/connector-core",
   "version": "0.1.0",
   "private": true,
   "license": "Apache-2.0",

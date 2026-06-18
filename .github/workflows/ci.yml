@@ -1,7 +1,7 @@
 name: repo-ci
 run-name: repo-ci / ${{ github.event_name }} / ${{ github.head_ref || github.ref_name }}
 
-# Runs on PRs touching app, package, core, or workspace files that need the
+# Runs on PRs touching app, package, connector, core, or workspace files that need the
 # affected lint/typecheck/test/boundary suite.
 on:
   push:
@@ -9,6 +9,7 @@ on:
     paths:
       - 'apps/**'
       - 'packages/**'
+      - 'connectors/**'
       - 'core/**'
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
@@ -19,6 +20,7 @@ on:
     paths:
       - 'apps/**'
       - 'packages/**'
+      - 'connectors/**'
       - 'core/**'
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'

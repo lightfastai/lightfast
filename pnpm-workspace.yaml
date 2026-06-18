@@ -2,6 +2,7 @@ packages:
   - ai
   - api/*
   - apps/*
+  - connectors/*
   - core/*
   - db/*
   - e2e

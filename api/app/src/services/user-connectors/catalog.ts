@@ -1,6 +1,6 @@
 import type { Database, UserConnectorConnection } from "@db/app";
 import { listCurrentUserConnectorConnections } from "@db/app";
-import { USER_CONNECTOR_CATALOG } from "@repo/connector-contract";
+import { USER_CONNECTOR_CATALOG } from "@lightfast/connector-core";
 import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 
 export interface UserConnectorServiceContext {

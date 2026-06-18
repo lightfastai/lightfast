@@ -4,7 +4,7 @@ import {
   connectorSetAgentEnabledInputSchema,
   connectorSetAutomationEnabledInputSchema,
   connectorStartConnectInputSchema,
-} from "@repo/connector-contract";
+} from "@lightfast/connector-core";
 import { z } from "zod";
 
 import type { AuthAccess, AuthIdentity } from "../../auth/identity";

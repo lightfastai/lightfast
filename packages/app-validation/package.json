@@ -25,8 +25,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@lightfast/connector-core": "workspace:*",
     "@repo/app-reserved-names": "workspace:^",
-    "@repo/connector-contract": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {

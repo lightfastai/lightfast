@@ -2,7 +2,7 @@ import type {
   FullConnectorToolManifest,
   UserConnectorConnectionStatus,
   UserConnectorProvider,
-} from "@repo/connector-contract";
+} from "@lightfast/connector-core";
 import { sql } from "drizzle-orm";
 import {
   bigint,

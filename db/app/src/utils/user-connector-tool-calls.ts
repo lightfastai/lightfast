@@ -1,4 +1,4 @@
-import type { UserConnectorProvider } from "@repo/connector-contract";
+import type { UserConnectorProvider } from "@lightfast/connector-core";
 import { and, eq } from "drizzle-orm";
 import type { Database } from "../client";
 import {

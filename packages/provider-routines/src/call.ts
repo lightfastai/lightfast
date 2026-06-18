@@ -8,7 +8,7 @@ import {
   type OrgConnectorConnection,
   type ProviderRoutineCallRedactedPayload,
 } from "@db/app";
-import type { FullConnectorToolManifestItem } from "@repo/connector-contract";
+import type { FullConnectorToolManifestItem } from "@lightfast/connector-core";
 import {
   type ProviderRoutineCallInput,
   type ProviderRoutineCallSuccess,
