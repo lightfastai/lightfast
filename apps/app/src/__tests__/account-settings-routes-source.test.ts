@@ -49,7 +49,9 @@ describe("app account settings routes", () => {
 
     expect(clientSource).toContain("normalizeTeamSlug");
     expect(clientSource).toContain("createTeamIdempotencyKey");
-    expect(clientSource).toContain("createOrganizationMutationOptions");
+    expect(clientSource).toContain('@api/app/tanstack/organizations"');
+    expect(clientSource).toContain("createOrganization");
+    expect(clientSource).not.toContain("createOrganizationMutationOptions");
     expect(clientSource).toContain("organizationQueryKeys");
     expect(clientSource).not.toContain("viewer.organization.create");
     expect(clientSource).toContain('await navigate({ to: "/$slug"');
@@ -89,7 +91,9 @@ describe("app account settings routes", () => {
     const actionsPath = "src/account/settings/account-settings-actions.ts";
 
     expect(existsSync(resolve(appRoot, actionsPath))).toBe(false);
-    expect(profileSource).toContain("updateAccountNameMutationOptions");
+    expect(profileSource).toContain('@api/app/tanstack/account"');
+    expect(profileSource).toContain("updateAccountName");
+    expect(profileSource).not.toContain("updateAccountNameMutationOptions");
     expect(profileSource).toContain("accountQueryKeys.profile()");
     expect(profileSource).not.toContain("useAccountNameUpdate");
     expect(profileSource).not.toContain("account-settings-actions");

@@ -7,7 +7,6 @@ import { actorFromAuthIdentity, isDomainError } from "../../domain";
 import {
   createAccountUsernameCommand,
   createDefaultAccountCommandDeps,
-  disconnectGitHubAccountCommand,
   getAccountProfileCommand,
   getGitHubAccountStatusCommand,
   startGitHubAccountBindingCommand,
@@ -133,21 +132,6 @@ export const syncGitHubAccount = createServerFn({ method: "POST" }).handler(
     }
   }
 );
-
-export const disconnectGitHubAccount = createServerFn({
-  method: "POST",
-}).handler(async () => {
-  noStore();
-  try {
-    return await disconnectGitHubAccountCommand.run({
-      ctx: await createTanStackAccountContext(),
-      deps: await createDefaultAccountCommandDeps({ db }),
-      input: {},
-    });
-  } catch (error) {
-    mapTanStackError(error);
-  }
-});
 
 export type GitHubAccountStatusResult = Awaited<
   ReturnType<typeof getGitHubAccountStatus>

@@ -1,3 +1,7 @@
+import {
+  updateOrganizationDomains,
+  updateOrganizationName,
+} from "@api/app/tanstack/organizations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Loading03Icon as Loader2,
@@ -28,8 +32,6 @@ import {
   organizationDomainsQueryOptions,
   organizationQueryKeys,
   type UserOrganizationsData,
-  updateOrganizationDomainsMutationOptions,
-  updateOrganizationNameMutationOptions,
 } from "~/organization/organization-queries";
 import {
   normalizeTeamDomainList,
@@ -129,7 +131,9 @@ export function TeamGeneralSettingsClient({
     [navigate, setActive]
   );
   const updateNameMutation = useMutation({
-    ...updateOrganizationNameMutationOptions(),
+    meta: { errorTitle: "Failed to update team name" },
+    mutationFn: (data: { name: string; slug: string }) =>
+      updateOrganizationName({ data }),
     onMutate: async (input) => {
       await queryClient.cancelQueries({
         queryKey: organizationQueryKeys.list(),
@@ -164,7 +168,9 @@ export function TeamGeneralSettingsClient({
     },
   });
   const updateDomainsMutation = useMutation({
-    ...updateOrganizationDomainsMutationOptions(),
+    meta: { errorTitle: "Failed to update domains" },
+    mutationFn: (data: { domains: string[]; slug: string }) =>
+      updateOrganizationDomains({ data }),
     onError: () => {
       setDraftDomains(currentDomainNames);
     },

@@ -1,3 +1,4 @@
+import { syncGitHubAccount } from "@api/app/tanstack/account";
 import { Loading03Icon as Loader2 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { normalizeGitHubUserAccountReturnTo } from "@lightfast/connector-github/contract";
@@ -5,7 +6,6 @@ import { Button } from "@repo/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
-import { syncGitHubAccountMutationOptions } from "../account-queries";
 
 interface GithubAccountCompleteClientProps {
   returnTo?: string;
@@ -23,7 +23,10 @@ export function GithubAccountCompleteClient({
   const [failed, setFailed] = useState(false);
   const hasStartedRef = useRef(false);
 
-  const syncMutation = useMutation(syncGitHubAccountMutationOptions());
+  const syncMutation = useMutation({
+    meta: { errorTitle: "Failed to finish GitHub connection" },
+    mutationFn: () => syncGitHubAccount(),
+  });
   const { mutateAsync } = syncMutation;
 
   const finish = useCallback(async () => {

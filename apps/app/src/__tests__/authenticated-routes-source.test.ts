@@ -122,7 +122,9 @@ describe("app authenticated route migration", () => {
       'createFileRoute("/_authenticated/account/teams/new")'
     );
     expect(routeSource).toContain("CreateTeamClient");
-    expect(clientSource).toContain("createOrganizationMutationOptions");
+    expect(clientSource).toContain('@api/app/tanstack/organizations"');
+    expect(clientSource).toContain("createOrganization");
+    expect(clientSource).not.toContain("createOrganizationMutationOptions");
     expect(clientSource).toContain("organizationQueryKeys");
     expect(clientSource).toContain("normalizeTeamSlug");
     expect(clientSource).toContain("createTeamIdempotencyKey");
@@ -1375,9 +1377,14 @@ describe("app authenticated route migration", () => {
     expect(teamGeneralClientSource).toContain("useNavigate");
     expect(existsSync(resolve(appRoot, teamGeneralActionsPath))).toBe(false);
     expect(teamGeneralClientSource).toContain(
+      '@api/app/tanstack/organizations"'
+    );
+    expect(teamGeneralClientSource).toContain("updateOrganizationName");
+    expect(teamGeneralClientSource).toContain("updateOrganizationDomains");
+    expect(teamGeneralClientSource).not.toContain(
       "updateOrganizationNameMutationOptions"
     );
-    expect(teamGeneralClientSource).toContain(
+    expect(teamGeneralClientSource).not.toContain(
       "updateOrganizationDomainsMutationOptions"
     );
     expect(teamGeneralClientSource).toContain(

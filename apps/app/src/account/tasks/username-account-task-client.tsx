@@ -1,3 +1,4 @@
+import { createAccountUsername } from "@api/app/tanstack/account";
 import { Loading03Icon as Loader2 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Icons } from "@repo/ui/components/icons";
@@ -6,10 +7,7 @@ import { Input } from "@repo/ui/components/ui/input";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
-import {
-  accountProfileQueryOptions,
-  createAccountUsernameMutationOptions,
-} from "../account-queries";
+import { accountProfileQueryOptions } from "../account-queries";
 
 interface UsernameAccountTaskClientProps {
   returnTo?: string;
@@ -75,7 +73,9 @@ export function UsernameAccountTaskClient({
   const targetPath = normalizeReturnTo(returnTo);
 
   const createUsernameMutation = useMutation({
-    ...createAccountUsernameMutationOptions(),
+    meta: { suppressErrorToast: true },
+    mutationFn: (data: { idempotencyKey: string; username: string }) =>
+      createAccountUsername({ data }),
     onSuccess: (data) => {
       idempotencyKeyRef.current = null;
       queryClient.setQueryData(accountQuery.queryKey, data);
