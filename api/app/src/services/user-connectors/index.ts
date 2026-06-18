@@ -4,8 +4,8 @@ import type {
   userConnectorStartConnectInputSchema,
 } from "@repo/connector-contract";
 import type { z } from "zod";
+import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 import { ValidationError } from "../../domain/errors";
-import type { AuthContext } from "../../trpc";
 import {
   disconnectGranolaUserConnector,
   startGranolaUserConnectorOAuth,

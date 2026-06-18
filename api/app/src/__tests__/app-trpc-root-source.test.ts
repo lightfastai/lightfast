@@ -10,14 +10,24 @@ function source(path: string) {
 
 describe("api/app app-facing tRPC root", () => {
   it("removes the final product tRPC router surface", () => {
+    const packageJson = JSON.parse(source("../package.json")) as {
+      dependencies?: Record<string, string>;
+    };
     const indexSource = source("index.ts");
-    const rootPath = resolve(apiRoot, "root.ts");
+    const trpcPath = resolve(apiRoot, "trpc.ts");
+    const workspaceListInputPath = resolve(
+      apiRoot,
+      "router/(pending-not-allowed)/workspace-list-input.ts"
+    );
     const taskRouterPath = resolve(
       apiRoot,
       "router/(pending-not-allowed)/task.ts"
     );
 
+    expect(existsSync(trpcPath)).toBe(false);
+    expect(existsSync(workspaceListInputPath)).toBe(false);
     expect(existsSync(taskRouterPath)).toBe(false);
+    expect(packageJson.dependencies?.["@trpc/server"]).toBeUndefined();
     expect(indexSource).toContain('export * from "./mcp-oauth"');
     expect(indexSource).not.toContain("@trpc/server");
     expect(indexSource).not.toContain("AppRouter");
@@ -25,11 +35,31 @@ describe("api/app app-facing tRPC root", () => {
     expect(indexSource).not.toContain("createTRPCContext");
     expect(indexSource).not.toContain("createCallerFactory");
 
-    if (existsSync(rootPath)) {
-      const rootSource = source("root.ts");
-      expect(rootSource).not.toContain("taskRouter");
-      expect(rootSource).not.toContain("createTRPCRouter");
-      expect(rootSource).not.toContain("appRouter");
+    const rootSource = source("root.ts");
+    expect(rootSource).not.toContain("createTRPCRouter");
+    expect(rootSource).not.toContain("appRouter");
+  });
+
+  it("keeps service auth context imports independent of tRPC", () => {
+    for (const file of [
+      "services/connectors/catalog.ts",
+      "services/connectors/index.ts",
+      "services/connectors/linear-flow.ts",
+      "services/connectors/x-flow.ts",
+      "services/developer-connections/catalog.ts",
+      "services/developer-connections/index.ts",
+      "services/developer-connections/leases.ts",
+      "services/developer-sandbox-runs/index.ts",
+      "services/user-connectors/catalog.ts",
+      "services/user-connectors/granola-flow.ts",
+      "services/user-connectors/index.ts",
+    ]) {
+      const fileSource = source(file);
+
+      expect(fileSource, file).not.toContain("../../trpc");
+      expect(fileSource, file).not.toContain("../trpc");
+      expect(fileSource, file).toContain("../../auth/identity");
+      expect(fileSource, file).toContain("ResolvedAuthContext");
     }
   });
 });

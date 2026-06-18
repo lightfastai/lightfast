@@ -11,8 +11,8 @@ import type {
   DeveloperConnectionSetSandboxEnabledInput,
   DeveloperConnectionStartAuthInput,
 } from "@repo/developer-connection-contract";
+import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 import { AuthzError } from "../../domain/errors";
-import type { AuthContext } from "../../trpc";
 import { verifyDeveloperConnectionInput } from "./adapters";
 import { sentryAuthBoxClient } from "./auth-box";
 import { listDeveloperConnectionsForOrg } from "./catalog";

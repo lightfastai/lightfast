@@ -1,7 +1,7 @@
 import type { Database, UserConnectorConnection } from "@db/app";
 import { listCurrentUserConnectorConnections } from "@db/app";
 import { USER_CONNECTOR_CATALOG } from "@repo/connector-contract";
-import type { AuthContext } from "../../trpc";
+import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 
 export interface UserConnectorServiceContext {
   auth: AuthContext;

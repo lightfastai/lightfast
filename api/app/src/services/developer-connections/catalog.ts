@@ -4,7 +4,7 @@ import {
   DEVELOPER_CONNECTION_CATALOG,
   type DeveloperConnectionProvider,
 } from "@repo/developer-connection-contract";
-import type { AuthContext } from "../../trpc";
+import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 
 interface DeveloperConnectionServiceContext {
   auth: AuthContext;
