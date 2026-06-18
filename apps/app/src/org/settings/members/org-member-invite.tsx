@@ -23,12 +23,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
+import { toast } from "@repo/ui/components/ui/sonner";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
-import type { OrgRole } from "./org-member-cache";
-import { useOrgMemberInviteAction } from "./org-member-invite-actions";
+import {
+  createOptimisticInvitation,
+  insertInvitation,
+  type OrgMembersData,
+  type OrgRole,
+  removeInvitation,
+  replaceInvitation,
+} from "./org-member-cache";
+import {
+  inviteOrgMemberMutationOptions,
+  orgMemberQueryKeys,
+} from "./org-member-queries";
 
 export function OrgMemberInvite() {
   const { has, isLoaded, orgId } = useAuth();
+  const queryClient = useQueryClient();
+  const listQueryKey = orgMemberQueryKeys.list(orgId);
   const canManageMembers = isLoaded && !!has?.({ role: "org:admin" });
 
   const [isOpen, setIsOpen] = useState(false);
@@ -50,10 +64,58 @@ export function OrgMemberInvite() {
     setIsOpen(false);
   }, []);
 
-  const inviteMutation = useOrgMemberInviteAction({
-    onErrorRestore: restoreInviteForm,
-    onOptimisticInvite: resetInviteForm,
-    orgId,
+  const inviteMutation = useMutation({
+    ...inviteOrgMemberMutationOptions(),
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: listQueryKey });
+
+      const inputRole = input.role ?? "org:member";
+      const optimisticInvitation = createOptimisticInvitation({
+        emailAddress: input.emailAddress,
+        role: inputRole,
+      });
+      queryClient.setQueryData(
+        listQueryKey,
+        (old: OrgMembersData | undefined) =>
+          insertInvitation(old, optimisticInvitation)
+      );
+
+      resetInviteForm();
+
+      return {
+        emailAddress: input.emailAddress,
+        optimisticInvitationId: optimisticInvitation.id,
+        role: inputRole,
+      };
+    },
+    onError: (_err, _input, context) => {
+      if (!context) {
+        return;
+      }
+
+      queryClient.setQueryData(
+        listQueryKey,
+        (old: OrgMembersData | undefined) =>
+          removeInvitation(old, context.optimisticInvitationId)
+      );
+      restoreInviteForm({
+        emailAddress: context.emailAddress,
+        role: context.role,
+      });
+    },
+    onSuccess: (invitation, _input, context) => {
+      if (context) {
+        queryClient.setQueryData(
+          listQueryKey,
+          (old: OrgMembersData | undefined) =>
+            replaceInvitation(old, context.optimisticInvitationId, invitation)
+        );
+      }
+      toast.success("Invitation sent");
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: listQueryKey });
+    },
   });
 
   const handleInvite = useCallback(() => {

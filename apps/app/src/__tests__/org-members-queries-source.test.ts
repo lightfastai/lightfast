@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -24,7 +24,7 @@ describe("org members app data access", () => {
     const files = [
       "src/org/settings/members/org-member-list.tsx",
       "src/org/settings/members/org-member-list-actions.ts",
-      "src/org/settings/members/org-member-invite-actions.ts",
+      "src/org/settings/members/org-member-invite.tsx",
       "src/org/settings/members/org-member-cache.ts",
       "src/signals/signals-creator-avatar.tsx",
     ];
@@ -35,6 +35,23 @@ describe("org members app data access", () => {
       expect(source, file).not.toContain("org.settings.orgMembers");
       expect(source, file).not.toContain("AppRouterOutputs");
     }
+  });
+
+  it("keeps member invite mutation state in the invite component", () => {
+    const inviteSource = readFileSync(
+      resolve(appRoot, "src/org/settings/members/org-member-invite.tsx"),
+      "utf8"
+    );
+    const actionsPath = "src/org/settings/members/org-member-invite-actions.ts";
+
+    expect(existsSync(resolve(appRoot, actionsPath))).toBe(false);
+    expect(inviteSource).toContain("useMutation");
+    expect(inviteSource).toContain("useQueryClient");
+    expect(inviteSource).toContain("inviteOrgMemberMutationOptions");
+    expect(inviteSource).toContain("orgMemberQueryKeys.list(orgId)");
+    expect(inviteSource).toContain("createOptimisticInvitation");
+    expect(inviteSource).not.toContain("useOrgMemberInviteAction");
+    expect(inviteSource).not.toContain("org-member-invite-actions");
   });
 
   it("surfaces expected domain errors from TanStack mutations", () => {
