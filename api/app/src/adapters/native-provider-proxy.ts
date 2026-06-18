@@ -1,9 +1,13 @@
 import { db } from "@db/app/client";
-import type {
-  ProviderRoutineCallInput,
-  ProviderRoutineCallSuccess,
-  ProviderRoutineFindInput,
-  ProviderRoutineFindOutput,
+import {
+  type ProviderRoutineCallInput,
+  type ProviderRoutineCallSuccess,
+  type ProviderRoutineFindInput,
+  type ProviderRoutineFindOutput,
+  providerRoutineCallInputSchema,
+  providerRoutineCallSuccessSchema,
+  providerRoutineFindInputSchema,
+  providerRoutineFindOutputSchema,
 } from "@lightfast/connector-core/provider-routines";
 import type { ProviderRoutineServiceContext } from "@repo/provider-routines";
 import { z } from "zod";
@@ -17,14 +21,14 @@ const log = {
     console.warn(message, metadata),
 };
 
-export type NativeProviderRoutineServiceContext = ProviderRoutineServiceContext;
+type NativeProviderRoutineServiceContext = ProviderRoutineServiceContext;
 
-export type NativeFindProviderRoutines = (
+type NativeFindProviderRoutines = (
   context: NativeProviderRoutineServiceContext,
   input: ProviderRoutineFindInput
 ) => Promise<ProviderRoutineFindOutput>;
 
-export type NativeCallProviderRoutine = (
+type NativeCallProviderRoutine = (
   context: NativeProviderRoutineServiceContext,
   input: ProviderRoutineCallInput
 ) => Promise<ProviderRoutineCallSuccess>;
@@ -46,7 +50,7 @@ class NativeProxyRouteError extends Error {
   }
 }
 
-export function jsonResponse(data: unknown, init: ResponseInit = {}) {
+function jsonResponse(data: unknown, init: ResponseInit = {}) {
   const headers = new Headers(init.headers);
   headers.set("cache-control", "no-store");
   headers.set("content-type", "application/json");
@@ -54,7 +58,7 @@ export function jsonResponse(data: unknown, init: ResponseInit = {}) {
   return Response.json(data, { ...init, headers });
 }
 
-export function errorResponse(error: unknown) {
+function errorResponse(error: unknown) {
   const normalized = normalizeRouteError(error);
   return jsonResponse(
     {
@@ -67,7 +71,7 @@ export function errorResponse(error: unknown) {
   );
 }
 
-export async function createNativeProviderRoutineContext(
+async function createNativeProviderRoutineContext(
   req: Request
 ): Promise<NativeProviderRoutineServiceContext> {
   const { resolveAuthContextFromClerk } = await import(
@@ -129,10 +133,51 @@ export async function createNativeProviderRoutineContext(
   };
 }
 
-export async function loadNativeProviderRoutineServices() {
+async function loadNativeProviderRoutineServices() {
   return (await import(
     "@repo/provider-routines"
   )) as NativeProviderRoutineServices;
+}
+
+export async function handleNativeProviderRoutineCallRequest(
+  request: Request
+): Promise<Response> {
+  try {
+    const input = providerRoutineCallInputSchema.parse(
+      await request.json().catch(() => null)
+    );
+    const context = await createNativeProviderRoutineContext(request);
+    const { callProviderRoutine } = await loadNativeProviderRoutineServices();
+    const result = await callProviderRoutine(context, input);
+    return jsonResponse(providerRoutineCallSuccessSchema.parse(result));
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
+
+export async function handleNativeProviderRoutineFindRequest(
+  request: Request
+): Promise<Response> {
+  try {
+    const searchParams = new URL(request.url).searchParams;
+    const input = providerRoutineFindInputSchema.parse({
+      includeSchema:
+        searchParams.get("includeSchema") === "true" ? true : undefined,
+      limit: searchParams.get("limit")
+        ? Number(searchParams.get("limit"))
+        : undefined,
+      provider: searchParams.get("provider") ?? undefined,
+      query: searchParams.get("query") ?? undefined,
+      readOnly: searchParams.get("readOnly") === "true" ? true : undefined,
+      routineId: searchParams.get("routineId") ?? undefined,
+    });
+    const context = await createNativeProviderRoutineContext(request);
+    const { findProviderRoutines } = await loadNativeProviderRoutineServices();
+    const result = await findProviderRoutines(context, input);
+    return jsonResponse(providerRoutineFindOutputSchema.parse(result));
+  } catch (error) {
+    return errorResponse(error);
+  }
 }
 
 function normalizeRouteError(error: unknown): {

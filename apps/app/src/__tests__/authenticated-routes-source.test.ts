@@ -1385,7 +1385,13 @@ describe("app authenticated route migration", () => {
     const skillsEventsAdapterSource = repoSource(
       "api/app/src/services/skills/events.ts"
     );
-    const nativeProxyServerSource = source("src/server/native-proxy.ts");
+    const nativeProxyServerPath = resolve(
+      appRoot,
+      "src/server/native-proxy.ts"
+    );
+    const nativeProxyAdapterSource = repoSource(
+      "api/app/src/adapters/native-provider-proxy.ts"
+    );
     const nativeProxyCallRouteSource = source(
       "src/routes/api/native/proxy/call.ts"
     );
@@ -1460,22 +1466,37 @@ describe("app authenticated route migration", () => {
     expect(skillsEventsAdapterSource).toContain("@db/app/client");
     expect(skillsEventsAdapterSource).toContain("createSkillIndexEventStream");
     expect(skillsEventsAdapterSource).toContain("redis.subscribe");
-    expect(nativeProxyServerSource).toContain(
+    expect(existsSync(nativeProxyServerPath)).toBe(false);
+    expect(nativeProxyAdapterSource).toContain(
       "createNativeProviderRoutineContext"
     );
-    expect(nativeProxyServerSource).toContain("loadAgentConnectorRuntimeTools");
-    expect(nativeProxyServerSource).toContain("adapters");
-    expect(nativeProxyServerSource).toContain('sourceSurface: "native_cli"');
+    expect(nativeProxyAdapterSource).toContain(
+      "loadAgentConnectorRuntimeTools"
+    );
+    expect(nativeProxyAdapterSource).toContain("adapters");
+    expect(nativeProxyAdapterSource).toContain('sourceSurface: "native_cli"');
     expect(nativeProxyCallRouteSource).toContain(
       'createFileRoute("/api/native/proxy/call")'
     );
     expect(nativeProxyCallRouteSource).toContain(
+      "handleNativeProviderRoutineCallRequest"
+    );
+    expect(nativeProxyCallRouteSource).toContain(
+      'from "@api/app/native-provider-proxy"'
+    );
+    expect(nativeProxyCallRouteSource).not.toContain(
       "providerRoutineCallInputSchema"
     );
     expect(nativeProxyRoutinesRouteSource).toContain(
       'createFileRoute("/api/native/proxy/routines")'
     );
     expect(nativeProxyRoutinesRouteSource).toContain(
+      "handleNativeProviderRoutineFindRequest"
+    );
+    expect(nativeProxyRoutinesRouteSource).toContain(
+      'from "@api/app/native-provider-proxy"'
+    );
+    expect(nativeProxyRoutinesRouteSource).not.toContain(
       "providerRoutineFindInputSchema"
     );
     expect(mcpServiceAuthSource).toContain("verifyMcpServiceRequest");
@@ -1510,7 +1531,6 @@ describe("app authenticated route migration", () => {
     );
 
     for (const startupSensitiveFile of [
-      nativeProxyServerSource,
       mcpServiceAuthSource,
       mcpProxyServerSource,
       mcpSignalsRouteSource,
@@ -1530,7 +1550,7 @@ describe("app authenticated route migration", () => {
       githubWebhookRouteSource,
       skillsIndexEventsRouteSource,
       skillsEventsAdapterSource,
-      nativeProxyServerSource,
+      nativeProxyAdapterSource,
       nativeProxyCallRouteSource,
       nativeProxyRoutinesRouteSource,
       mcpServiceAuthSource,
