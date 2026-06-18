@@ -53,6 +53,7 @@ import {
   stepCountIs,
   streamText,
   tool,
+  type Tool,
 } from "@vendor/ai";
 import { z } from "zod";
 import { resolveWorkspaceAssistantAuthContext } from "~/server/chat/auth";
@@ -88,7 +89,7 @@ interface UserConnectorChatContext {
 }
 
 type ChatToolCapability = "read" | "write";
-type WorkspaceAssistantTool = ReturnType<typeof tool>;
+type WorkspaceAssistantTool = Tool<any, any>;
 
 interface ChatToolDefinition {
   capability: ChatToolCapability;

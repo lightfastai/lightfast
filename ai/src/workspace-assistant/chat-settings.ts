@@ -94,11 +94,14 @@ export function isChatSettingsRequestCompatible(
   if (!requested) {
     return true;
   }
-  if (stored.version !== requested.version) {
-    return false;
-  }
   if (stored.version === "1.0.0") {
+    if (requested.version !== "1.0.0") {
+      return false;
+    }
     return stored.model === requested.model;
+  }
+  if (requested.version !== "2.0.0") {
+    return false;
   }
   return (
     stored.capabilityMode === requested.capabilityMode &&
