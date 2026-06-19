@@ -1,14 +1,18 @@
+import { getOrgIdentity } from "@api/app/tanstack/org-identity";
 import { useQuery } from "@tanstack/react-query";
 import { IdentitySoulLoading } from "./identity-soul-loading";
-import { orgIdentityQueryOptions } from "./identity-soul-queries";
 import {
   IdentitySoulEmptyState,
   IdentitySoulSection,
 } from "./identity-soul-section";
 
+const orgIdentityQueryKey = ["org-identity", "get"] as const;
+
 export function IdentitySoulCard({ slug }: { slug: string }) {
   const { data, error, isPending } = useQuery({
-    ...orgIdentityQueryOptions(),
+    queryFn: () => getOrgIdentity(),
+    queryKey: orgIdentityQueryKey,
+    staleTime: 5 * 60 * 1000,
   });
 
   if (isPending) {

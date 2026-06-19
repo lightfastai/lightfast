@@ -1435,7 +1435,11 @@ describe("app authenticated route migration", () => {
     expect(teamGeneralClientSource).not.toContain("useTeamDomainsUpdate");
     expect(teamGeneralModelSource).toContain("normalizeTeamDomainList");
     expect(teamGeneralModelSource).toContain("renameOrganizationSlug");
-    expect(identityCardSource).toContain("orgIdentityQueryOptions");
+    expect(identityCardSource).toContain('@api/app/tanstack/org-identity"');
+    expect(identityCardSource).toContain("orgIdentityQueryKey");
+    expect(identityCardSource).toContain("getOrgIdentity");
+    expect(identityCardSource).not.toContain("orgIdentityQueryOptions");
+    expect(identityCardSource).not.toContain("identity-soul-queries");
     expect(identityCardSource).not.toContain("identity.get.queryOptions");
     expect(identityCardSource).not.toContain(
       'enabled: typeof window !== "undefined"'
