@@ -27,7 +27,7 @@ import { env } from "../../env";
 import {
   formatOrgIdentitySystemSection,
   getOrgIdentityContext,
-} from "../../services/identity";
+} from "../../services/identity/runtime-context";
 import { inngest } from "../client";
 import { appEvents } from "../schemas/app";
 
