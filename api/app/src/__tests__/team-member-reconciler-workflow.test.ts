@@ -34,7 +34,7 @@ vi.mock("@vendor/observability/log/next", () => ({
   },
 }));
 
-vi.mock("../services/team-members", () => ({
+vi.mock("../services/team-members/people-sync", () => ({
   syncTeamMembersForOrg: syncTeamMembersForOrgMock,
 }));
 
