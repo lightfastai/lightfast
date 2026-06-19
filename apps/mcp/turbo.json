@@ -6,6 +6,7 @@
     "build": {
       "dependsOn": ["^build"],
       "env": [
+        "APP_INTERNAL_URL",
         "MCP_AUTH_ISSUER",
         "MCP_RESOURCE_URL",
         "SERVICE_JWT_SECRET",

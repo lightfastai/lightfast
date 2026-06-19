@@ -8,7 +8,7 @@ import {
 } from "@repo/api-contract";
 import { signServiceJWT } from "@repo/service-jwt";
 
-import { env } from "../env";
+import { appInternalUrl, env } from "../env";
 
 type Fetch = typeof fetch;
 
@@ -32,7 +32,7 @@ async function readJson(response: Response): Promise<unknown> {
 }
 
 function appSignalUrl(pathname = "/api/internal/mcp/signals"): string {
-  return new URL(pathname, env.MCP_AUTH_ISSUER).toString();
+  return new URL(pathname, appInternalUrl).toString();
 }
 
 function messageFromBody(body: unknown): string {
