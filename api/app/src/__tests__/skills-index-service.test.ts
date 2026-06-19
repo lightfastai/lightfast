@@ -12,16 +12,20 @@ vi.mock("@vendor/observability/log/next", () => ({
   },
 }));
 
+import { buildSkillIndexEntriesFromTree } from "../services/skills/build";
+import {
+  ensureFreshSkillIndexForRead,
+  getSkillIndexSnapshot,
+} from "../services/skills/read";
+import {
+  findChangedSkillIndexSources,
+  reconcileSkillIndexSources,
+} from "../services/skills/reconcile";
 import {
   checkSkillIndexSourceRef,
-  ensureFreshSkillIndexForRead,
-  findChangedSkillIndexSources,
-  getSkillIndexSnapshot,
-  reconcileSkillIndexSources,
   refreshSkillIndexSource,
-  requestSkillIndexRefresh,
-} from "../services/skills";
-import { buildSkillIndexEntriesFromTree } from "../services/skills/build";
+} from "../services/skills/refresh";
+import { requestSkillIndexRefresh } from "../services/skills/refresh-request";
 import type { SkillIndexServiceDeps } from "../services/skills/types";
 
 const now = new Date("2026-06-01T00:00:00.000Z");

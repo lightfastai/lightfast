@@ -144,9 +144,12 @@ vi.mock("../inngest/client", () => ({
   },
 }));
 
-vi.mock("../services/skills", () => ({
+vi.mock("../services/skills/reconcile", () => ({
   findChangedSkillIndexSources: findChangedSkillIndexSourcesMock,
   reconcileSkillIndexSources: reconcileSkillIndexSourcesMock,
+}));
+
+vi.mock("../services/skills/refresh", () => ({
   refreshSkillIndexSource: refreshSkillIndexSourceMock,
 }));
 

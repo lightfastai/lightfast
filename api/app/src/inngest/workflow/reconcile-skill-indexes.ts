@@ -1,4 +1,4 @@
-import { findChangedSkillIndexSources } from "../../services/skills";
+import { findChangedSkillIndexSources } from "../../services/skills/reconcile";
 import { inngest } from "../client";
 import { createSkillRefreshDedupeKey } from "./skill-refresh-event";
 

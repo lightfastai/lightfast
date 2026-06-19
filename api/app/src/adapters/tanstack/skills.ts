@@ -10,11 +10,9 @@ import { z } from "zod";
 import { resolveAuthContextFromClerk } from "../../auth/identity";
 import { actorFromAuthIdentity, isDomainError } from "../../domain";
 import { requireBoundClerkOrgActor } from "../../domain/gates";
-import {
-  getSkillIndexSnapshot,
-  getVerifiedLightfastSkillSourceRepositoryId,
-  requestSkillIndexRefresh,
-} from "../../services/skills";
+import { getVerifiedLightfastSkillSourceRepositoryId } from "../../services/skills/eligibility";
+import { getSkillIndexSnapshot } from "../../services/skills/read";
+import { requestSkillIndexRefresh } from "../../services/skills/refresh-request";
 
 const listSkillsInput = z
   .object({
