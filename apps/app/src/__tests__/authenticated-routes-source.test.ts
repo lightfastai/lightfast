@@ -308,7 +308,8 @@ describe("app authenticated route migration", () => {
     expect(shellSource).not.toContain("AuthenticatedTopbar");
     expect(shellSource).not.toContain("Docs");
     expect(shellSource).not.toContain("API Reference");
-    expect(teamSwitcherSource).toContain("listUserOrganizationsQueryOptions()");
+    expect(teamSwitcherSource).toContain("listUserOrganizations()");
+    expect(teamSwitcherSource).toContain("organizationQueryKeys.list()");
     expect(teamSwitcherSource).toContain(
       '<DropdownMenuContent align="center" size="sm">'
     );
@@ -342,8 +343,9 @@ describe("app authenticated route migration", () => {
     expect(recentChatsMenuSource).toContain('to="/$slug/chat/$conversationId"');
     expect(appSidebarSource).not.toContain("showChatHistory");
     expect(orgRouteSource).toContain("WorkspaceRouteShell");
+    expect(workspaceShellSource).toContain("getOrganizationBySlug");
     expect(workspaceShellSource).toContain(
-      "organizationBySlugQueryOptions({ slug })"
+      "organizationQueryKeys.bySlug(slug)"
     );
     expect(workspaceShellSource).toContain("useAuth");
     expect(workspaceShellSource).toContain("useOrganizationList");
@@ -507,7 +509,8 @@ describe("app authenticated route migration", () => {
     expect(createDialogSource).toContain("createSignal");
     expect(createDialogSource).toContain("signalQueryKeys");
     expect(createDialogSource).not.toContain("createSignalMutationOptions");
-    expect(createDialogSource).toContain("listUserOrganizationsQueryOptions");
+    expect(createDialogSource).toContain("listUserOrganizations");
+    expect(createDialogSource).toContain("organizationQueryKeys.list()");
     expect(searchSource).toContain("validateSignalsSearch");
     expect(searchSource).toContain("parseSignalDispositions");
     expect(workspaceDataSource).toContain("listWorkingSetSignals");
@@ -1449,12 +1452,8 @@ describe("app authenticated route migration", () => {
     );
     expect(billingRouteSource).toContain("BillingSettingsClient");
 
-    expect(teamGeneralClientSource).toContain(
-      "listUserOrganizationsQueryOptions"
-    );
-    expect(teamGeneralClientSource).toContain(
-      "organizationDomainsQueryOptions"
-    );
+    expect(teamGeneralClientSource).toContain("listUserOrganizations");
+    expect(teamGeneralClientSource).toContain("listOrganizationDomains");
     expect(teamGeneralClientSource).toContain("useNavigate");
     expect(existsSync(resolve(appRoot, teamGeneralActionsPath))).toBe(false);
     expect(teamGeneralClientSource).toContain(

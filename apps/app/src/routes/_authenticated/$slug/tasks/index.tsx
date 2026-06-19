@@ -1,3 +1,4 @@
+import { getOrganizationBySlug } from "@api/app/tanstack/organizations";
 import { getSourceControlConnection } from "@api/app/tanstack/source-control";
 import {
   ArrowRightIcon as ArrowRight,
@@ -18,7 +19,10 @@ import type { ReactNode } from "react";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
 import { ConnectorIcon } from "~/connectors/connector-icons";
 import { sourceControlConnectionQueryKey } from "~/org/settings/source-control/source-control-cache";
-import { organizationBySlugQueryOptions } from "~/organization/organization-queries";
+import {
+  ORGANIZATION_STALE_TIME,
+  organizationQueryKeys,
+} from "~/organization/organization-cache";
 
 type SetupTaskStatus = "complete" | "current" | "locked";
 const SETUP_REQUIREMENT_ORDER: OrgSetupRequirement[] = [
@@ -57,7 +61,10 @@ function SetupTasksPage() {
 function SetupTasksPageContent() {
   const { slug } = Route.useParams();
   const { data: gate, isPending: isGatePending } = useQuery({
-    ...organizationBySlugQueryOptions({ slug }),
+    enabled: typeof window !== "undefined",
+    queryFn: () => getOrganizationBySlug({ data: { slug } }),
+    queryKey: organizationQueryKeys.bySlug(slug),
+    staleTime: ORGANIZATION_STALE_TIME,
   });
   const { data: sourceControl, isPending: isSourceControlPending } = useQuery({
     queryFn: () => getSourceControlConnection(),

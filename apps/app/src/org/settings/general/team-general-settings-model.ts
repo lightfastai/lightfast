@@ -1,4 +1,4 @@
-import type { UserOrganizationsData } from "~/organization/organization-queries";
+import type { UserOrganizationsData } from "~/organization/organization-cache";
 
 const DOMAIN_PATTERN =
   /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;

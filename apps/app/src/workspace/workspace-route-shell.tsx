@@ -1,3 +1,4 @@
+import { getOrganizationBySlug } from "@api/app/tanstack/organizations";
 import type { OrgSetupRequirement } from "@repo/app-setup-contract";
 import { Button } from "@repo/ui/components/ui/button";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
@@ -10,7 +11,10 @@ import { Link, Navigate, Outlet, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth, useOrganizationList } from "~/compat/clerk";
 import { AppSidebar } from "~/components/app-sidebar";
-import { organizationBySlugQueryOptions } from "~/organization/organization-queries";
+import {
+  ORGANIZATION_STALE_TIME,
+  organizationQueryKeys,
+} from "~/organization/organization-cache";
 import {
   getSetupRequirementRedirect,
   isOrgSetupCompletePath,
@@ -43,7 +47,10 @@ export function WorkspaceRouteShell({ slug }: { slug: string }) {
     error,
     isPending,
   } = useQuery({
-    ...organizationBySlugQueryOptions({ slug }),
+    enabled: typeof window !== "undefined",
+    queryFn: () => getOrganizationBySlug({ data: { slug } }),
+    queryKey: organizationQueryKeys.bySlug(slug),
+    staleTime: ORGANIZATION_STALE_TIME,
   });
 
   useEffect(() => {
