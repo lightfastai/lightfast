@@ -31,4 +31,25 @@ describe("connectors TanStack adapter boundary", () => {
     expect(source).not.toContain("TRPCError");
     expect(source).not.toContain("ORPCError");
   });
+
+  it("does not rebuild auth-shaped service contexts in connector commands", () => {
+    const source = readFileSync(
+      resolve(repoRoot, "api/app/src/domain/connectors/commands.ts"),
+      "utf8"
+    );
+
+    expect(source).not.toContain("../../auth/identity");
+    expect(source).not.toContain("AuthAccess");
+    expect(source).not.toContain("AuthIdentity");
+    expect(source).not.toContain("accessForActor");
+    for (const forbiddenToken of [
+      "@vendor/clerk/server",
+      "Headers",
+      "getRequest",
+      "headers",
+      "request.headers",
+    ]) {
+      expect(source, forbiddenToken).not.toContain(forbiddenToken);
+    }
+  });
 });

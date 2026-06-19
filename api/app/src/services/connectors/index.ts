@@ -1,6 +1,5 @@
 import type { Database } from "@db/app";
 import type { ConnectableConnectorProvider } from "@repo/api-contract";
-import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 import { ValidationError } from "../../domain/errors";
 import { listConnectorsForOrg } from "./catalog";
 import {
@@ -19,9 +18,13 @@ import {
 } from "./x-flow";
 
 interface ConnectorServiceContext {
-  auth: AuthContext;
+  actor: {
+    userId: string;
+  };
   db: Database;
-  headers: Headers;
+  organization: {
+    orgId: string;
+  };
 }
 
 interface ConnectorProviderInput {

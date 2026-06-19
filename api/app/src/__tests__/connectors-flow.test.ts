@@ -219,28 +219,11 @@ const {
 } = await import("../services/connectors");
 const { listConnectorsForOrg } = await import("../services/connectors/catalog");
 
-function ctx(input: { isAdmin?: boolean } = {}) {
+function ctx() {
   return {
-    auth: {
-      access: {
-        has: ({ role }: { role?: string }) =>
-          (input.isAdmin ?? true) ? role === "org:admin" : false,
-        kind: "clerk-session" as const,
-        orgId: "org_acme",
-        userId: "user_current",
-      },
-      identity: {
-        orgGate: {
-          bindingStatus: "bound" as const,
-          nextSetupRequirement: null,
-        },
-        orgId: "org_acme",
-        type: "active" as const,
-        userId: "user_current",
-      },
-    },
+    actor: { userId: "user_current" },
     db: {} as Database,
-    headers: new Headers(),
+    organization: { orgId: "org_acme" },
   };
 }
 
@@ -849,25 +832,6 @@ describe("Linear connector flow", () => {
 
     await expect(startLinearConnectorOAuth(ctx())).rejects.toThrow(
       "Linear connector environment is incomplete."
-    );
-  });
-
-  it("throws a domain authz error when Linear starts without an active organization", async () => {
-    const context = ctx();
-
-    await expect(
-      startLinearConnectorOAuth({
-        ...context,
-        auth: {
-          ...context.auth,
-          identity: { type: "pending" as const, userId: "user_current" },
-        },
-      })
-    ).rejects.toThrowError(
-      expect.objectContaining({
-        code: "ORG_REQUIRED",
-        kind: "authz",
-      })
     );
   });
 
@@ -1497,25 +1461,6 @@ describe("X connector flow", () => {
       "connector-oauth-attempt:x:attempt_123456789012345678901234",
       expect.objectContaining({ mode: "reconnect", provider: "x" }),
       { ex: 900 }
-    );
-  });
-
-  it("throws a domain authz error when X starts without an active organization", async () => {
-    const context = ctx();
-
-    await expect(
-      startXConnectorOAuth({
-        ...context,
-        auth: {
-          ...context.auth,
-          identity: { type: "pending" as const, userId: "user_current" },
-        },
-      })
-    ).rejects.toThrowError(
-      expect.objectContaining({
-        code: "ORG_REQUIRED",
-        kind: "authz",
-      })
     );
   });
 

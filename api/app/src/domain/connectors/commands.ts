@@ -2,7 +2,6 @@ import type { Database } from "@db/app";
 import { connectableConnectorProviderSchema } from "@repo/api-contract";
 import { z } from "zod";
 
-import type { AuthAccess, AuthIdentity } from "../../auth/identity";
 import {
   disconnectConnector,
   listConnectorsForOrg,
@@ -12,7 +11,7 @@ import {
   startConnectorOAuth,
 } from "../../services/connectors";
 import { listUserConnectorsForViewer } from "../../services/user-connectors";
-import type { Actor, ExecutionContext } from "../actor";
+import type { ExecutionContext } from "../actor";
 import { defineCommand } from "../command";
 import {
   AuthzError,
@@ -23,6 +22,7 @@ import {
   ValidationError,
 } from "../errors";
 import {
+  type ClerkOrgAdminActor,
   requireActiveClerkOrgActor,
   requireBoundClerkOrgActor,
   requireClerkOrgAdminActor,
@@ -40,18 +40,18 @@ type RefreshConnectorToolsResult = Awaited<
 >;
 
 interface ConnectorMutationServiceContext {
-  auth: {
-    access: Extract<AuthAccess, { kind: "clerk-session" }>;
-    identity: Extract<AuthIdentity, { type: "active" }>;
+  actor: {
+    userId: string;
   };
   db: Database;
-  headers: Headers;
+  organization: {
+    orgId: string;
+  };
 }
 
 interface ConnectorCommandDeps {
   db: Database;
   disconnectConnector: typeof disconnectConnector;
-  headers: Headers;
   listConnectorsForOrg: typeof listConnectorsForOrg;
   listUserConnectorsForViewer: typeof listUserConnectorsForViewer;
   refreshConnectorTools: typeof refreshConnectorTools;
@@ -63,7 +63,6 @@ interface ConnectorCommandDeps {
 export function createDefaultConnectorCommandDeps(input: {
   db: Database;
   disconnectConnector?: typeof disconnectConnector;
-  headers: Headers;
   listConnectorsForOrg?: typeof listConnectorsForOrg;
   listUserConnectorsForViewer?: typeof listUserConnectorsForViewer;
   refreshConnectorTools?: typeof refreshConnectorTools;
@@ -74,7 +73,6 @@ export function createDefaultConnectorCommandDeps(input: {
   return {
     db: input.db,
     disconnectConnector: input.disconnectConnector ?? disconnectConnector,
-    headers: input.headers,
     listConnectorsForOrg: input.listConnectorsForOrg ?? listConnectorsForOrg,
     listUserConnectorsForViewer:
       input.listUserConnectorsForViewer ?? listUserConnectorsForViewer,
@@ -310,47 +308,19 @@ export const disconnectConnectorCommand = defineCommand<
 });
 
 function serviceContextForActor(
-  actor: Extract<Actor, { kind: "clerkUser" }> & {
-    orgGate: NonNullable<Extract<Actor, { kind: "clerkUser" }>["orgGate"]>;
-    orgId: string;
-  },
+  actor: ClerkOrgAdminActor,
   deps: ConnectorCommandDeps
 ): ConnectorMutationServiceContext {
   return {
-    auth: {
-      access: accessForActor(actor),
-      identity: {
-        type: "active",
-        userId: actor.userId,
-        orgId: actor.orgId,
-        orgGate: actor.orgGate,
-      },
-    },
+    actor: { userId: actor.userId },
     db: deps.db,
-    headers: deps.headers,
+    organization: { orgId: actor.orgId },
   };
 }
 
 function requireBoundClerkOrgAdminActor(ctx: ExecutionContext) {
   requireBoundClerkOrgActor(ctx);
   return requireClerkOrgAdminActor(ctx);
-}
-
-function accessForActor(
-  actor: Extract<Actor, { kind: "clerkUser" }> & { orgId: string }
-): Extract<AuthAccess, { kind: "clerk-session" }> {
-  const has = ((params: { role?: string }) =>
-    actor.orgRole === "admin" && params.role === "org:admin") as Extract<
-    AuthAccess,
-    { kind: "clerk-session" }
-  >["has"];
-
-  return {
-    kind: "clerk-session",
-    userId: actor.userId,
-    orgId: actor.orgId,
-    has,
-  };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
