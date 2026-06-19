@@ -1,9 +1,13 @@
+import { getOrganizationBySlug } from "@api/app/tanstack/organizations";
 import { getSourceControlConnection } from "@api/app/tanstack/source-control";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { sourceControlConnectionQueryKey } from "~/org/settings/source-control/source-control-cache";
 import { LightfastRepoSetupClient } from "~/org/setup/lightfast-repo-setup-client";
-import { organizationBySlugQueryOptions } from "~/organization/organization-queries";
+import {
+  ORGANIZATION_STALE_TIME,
+  organizationQueryKeys,
+} from "~/organization/organization-cache";
 
 export const Route = createFileRoute(
   "/_authenticated/$slug/tasks/github/lightfast-repo"
@@ -21,7 +25,10 @@ function LightfastRepoSetupPage() {
 function LightfastRepoSetupPageContent() {
   const { slug } = Route.useParams();
   const { data: gate, isPending: isGatePending } = useQuery({
-    ...organizationBySlugQueryOptions({ slug }),
+    enabled: typeof window !== "undefined",
+    queryFn: () => getOrganizationBySlug({ data: { slug } }),
+    queryKey: organizationQueryKeys.bySlug(slug),
+    staleTime: ORGANIZATION_STALE_TIME,
   });
   const { data: sourceControl, isPending: isSourceControlPending } = useQuery({
     queryFn: () => getSourceControlConnection(),

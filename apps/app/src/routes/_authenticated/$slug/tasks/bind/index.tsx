@@ -1,8 +1,12 @@
+import { getOrganizationBySlug } from "@api/app/tanstack/organizations";
 import { githubBindErrorCodeSchema } from "@lightfast/connector-github/contract";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Navigate, useSearch } from "@tanstack/react-router";
 import { BindGithubCard } from "~/org/setup/bind-github-card";
-import { organizationBySlugQueryOptions } from "~/organization/organization-queries";
+import {
+  ORGANIZATION_STALE_TIME,
+  organizationQueryKeys,
+} from "~/organization/organization-cache";
 
 export const Route = createFileRoute("/_authenticated/$slug/tasks/bind/")({
   head: ({ params }) => ({
@@ -29,7 +33,10 @@ function BindTaskPageContent() {
   const parsedError = githubBindErrorCodeSchema.safeParse(search.github_error);
   const githubError = parsedError.success ? parsedError.data : undefined;
   const { data: gate, isPending } = useQuery({
-    ...organizationBySlugQueryOptions({ slug }),
+    enabled: typeof window !== "undefined",
+    queryFn: () => getOrganizationBySlug({ data: { slug } }),
+    queryKey: organizationQueryKeys.bySlug(slug),
+    staleTime: ORGANIZATION_STALE_TIME,
   });
 
   if (isPending) {

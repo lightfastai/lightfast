@@ -1,3 +1,4 @@
+import { listUserOrganizations } from "@api/app/tanstack/organizations";
 import {
   type CreateSignalInput,
   createSignal,
@@ -20,7 +21,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "@tanstack/react-router";
 import type { ChangeEvent, FormEvent, KeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
-import { listUserOrganizationsQueryOptions } from "~/organization/organization-queries";
+import {
+  ORGANIZATION_STALE_TIME,
+  organizationQueryKeys,
+} from "~/organization/organization-cache";
 import { signalQueryKeys } from "./signals-queries";
 
 interface SignalCreateDialogProps {
@@ -110,7 +114,10 @@ export function SignalCreateDialog({
   const { pathname } = useLocation();
   const slug = getPathSlug(pathname);
   const { data: organizations = [] } = useQuery({
-    ...listUserOrganizationsQueryOptions({ enabled: open }),
+    enabled: open && typeof window !== "undefined",
+    queryFn: () => listUserOrganizations(),
+    queryKey: organizationQueryKeys.list(),
+    staleTime: ORGANIZATION_STALE_TIME,
   });
   const org = slug
     ? (organizations.find((organization) => organization.slug === slug) ?? null)

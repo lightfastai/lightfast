@@ -1,8 +1,12 @@
+import { getOrganizationBySlug } from "@api/app/tanstack/organizations";
 import { pathForSetupRequirement } from "@repo/app-setup-contract";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { XConnectorSetupClient } from "~/org/setup/x-connector-setup-client";
-import { organizationBySlugQueryOptions } from "~/organization/organization-queries";
+import {
+  ORGANIZATION_STALE_TIME,
+  organizationQueryKeys,
+} from "~/organization/organization-cache";
 
 export const Route = createFileRoute(
   "/_authenticated/$slug/tasks/connectors/x/"
@@ -20,7 +24,10 @@ function XConnectorSetupPage() {
 function XConnectorSetupPageContent() {
   const { slug } = Route.useParams();
   const { data: gate, isPending } = useQuery({
-    ...organizationBySlugQueryOptions({ slug }),
+    enabled: typeof window !== "undefined",
+    queryFn: () => getOrganizationBySlug({ data: { slug } }),
+    queryKey: organizationQueryKeys.bySlug(slug),
+    staleTime: ORGANIZATION_STALE_TIME,
   });
 
   if (isPending) {

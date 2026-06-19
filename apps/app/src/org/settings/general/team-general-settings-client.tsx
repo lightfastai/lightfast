@@ -1,4 +1,6 @@
 import {
+  listOrganizationDomains,
+  listUserOrganizations,
   updateOrganizationDomains,
   updateOrganizationName,
 } from "@api/app/tanstack/organizations";
@@ -28,11 +30,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth, useOrganizationList } from "~/compat/clerk";
 import { SettingRow, SettingsGroup } from "~/components/settings-section";
 import {
-  listUserOrganizationsQueryOptions,
-  organizationDomainsQueryOptions,
+  ORGANIZATION_STALE_TIME,
   organizationQueryKeys,
   type UserOrganizationsData,
-} from "~/organization/organization-queries";
+} from "~/organization/organization-cache";
 import {
   normalizeTeamDomainList,
   normalizeTeamSlugInput,
@@ -66,14 +67,20 @@ export function TeamGeneralSettingsClient({
     error: organizationsError,
     isPending: isOrganizationsPending,
   } = useQuery({
-    ...listUserOrganizationsQueryOptions(),
+    enabled: typeof window !== "undefined",
+    queryFn: () => listUserOrganizations(),
+    queryKey: organizationQueryKeys.list(),
+    staleTime: ORGANIZATION_STALE_TIME,
   });
   const {
     data: organizationDomains,
     error: organizationDomainsError,
     isPending: isOrganizationDomainsPending,
   } = useQuery({
-    ...organizationDomainsQueryOptions({ slug }),
+    enabled: typeof window !== "undefined",
+    queryFn: () => listOrganizationDomains({ data: { slug } }),
+    queryKey: organizationQueryKeys.domains(slug),
+    staleTime: ORGANIZATION_STALE_TIME,
   });
   const currentOrg = useMemo(
     () => organizations.find((org) => org.slug === slug),

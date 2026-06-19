@@ -13,7 +13,7 @@ import {
 } from "~/account/team-name";
 import { useOrganizationList } from "~/compat/clerk";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
-import { organizationQueryKeys } from "~/organization/organization-queries";
+import { organizationQueryKeys } from "~/organization/organization-cache";
 
 export function CreateTeamClient() {
   return (

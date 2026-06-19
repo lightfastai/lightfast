@@ -1,3 +1,4 @@
+import { listUserOrganizations } from "@api/app/tanstack/organizations";
 import {
   Tick02Icon as Check,
   Add01Icon as Plus,
@@ -19,7 +20,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Suspense, useState } from "react";
 import { useOrganizationList } from "~/compat/clerk";
-import { listUserOrganizationsQueryOptions } from "~/organization/organization-queries";
+import {
+  ORGANIZATION_STALE_TIME,
+  organizationQueryKeys,
+} from "~/organization/organization-cache";
 
 const RESERVED_ROUTES = new Set([
   "new",
@@ -45,7 +49,10 @@ export function TeamSwitcher() {
   const mounted = useMounted();
 
   const { data: organizations = [], isPending } = useQuery({
-    ...listUserOrganizationsQueryOptions(),
+    enabled: typeof window !== "undefined",
+    queryFn: () => listUserOrganizations(),
+    queryKey: organizationQueryKeys.list(),
+    staleTime: ORGANIZATION_STALE_TIME,
   });
 
   const firstSegment = location.pathname.split("/").filter(Boolean)[0];
