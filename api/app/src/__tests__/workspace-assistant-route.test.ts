@@ -31,7 +31,7 @@ vi.mock("../auth/identity", () => ({
   resolveIdentityFromClerk: resolveIdentityFromClerkMock,
 }));
 
-vi.mock("@api/app/services/skills", () => ({
+vi.mock("../services/skills", () => ({
   getSkillIndexSnapshot: getSkillIndexSnapshotMock,
   getVerifiedLightfastSkillSourceRepositoryId:
     getVerifiedLightfastSkillSourceRepositoryIdMock,
@@ -94,12 +94,12 @@ vi.mock("@repo/api-contract", () => ({
   userConnectorFindOutputSchema: { kind: "user-connector-find-output" },
 }));
 
-vi.mock("@api/app/services/connectors/chat-routines", () => ({
+vi.mock("../services/connectors/chat-routines", () => ({
   callChatProviderRoutine: callProviderRoutineMock,
   findChatProviderRoutines: findProviderRoutinesMock,
 }));
 
-vi.mock("@api/app/services/user-connectors/runtime", () => ({
+vi.mock("../services/user-connectors/runtime", () => ({
   callUserConnectorTool: callUserConnectorToolMock,
   findUserConnectorTools: findUserConnectorToolsMock,
 }));

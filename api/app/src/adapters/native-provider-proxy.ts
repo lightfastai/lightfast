@@ -63,7 +63,7 @@ async function createNativeProviderRoutineContext(
     "@api/app/auth/identity"
   );
   const { loadAgentConnectorRuntimeTools } = await import(
-    "@api/app/services/connectors/runtime"
+    "../services/connectors/runtime"
   );
   const auth = await resolveAuthContextFromClerk({
     db,

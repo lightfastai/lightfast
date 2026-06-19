@@ -27,6 +27,7 @@
     "@db/app": "workspace:*",
     "@repo/api-contract": "workspace:*",
     "@repo/app-encryption": "workspace:*",
+    "@repo/service-jwt": "workspace:*",
     "drizzle-orm": "catalog:",
     "lightfast": "workspace:*"
   },

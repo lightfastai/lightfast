@@ -582,7 +582,7 @@ function createWorkspaceAssistantProviderRoutineToolDefinitions(input: {
           outputSchema: providerRoutineCallSuccessSchema,
           execute: async (toolInput) => {
             const { callChatProviderRoutine } = await import(
-              "@api/app/services/connectors/chat-routines"
+              "../../../services/connectors/chat-routines"
             );
             return callChatProviderRoutine(
               providerRoutineContext(input),
@@ -602,7 +602,7 @@ function createWorkspaceAssistantProviderRoutineToolDefinitions(input: {
           outputSchema: providerRoutineFindOutputSchema,
           execute: async (toolInput) => {
             const { findChatProviderRoutines } = await import(
-              "@api/app/services/connectors/chat-routines"
+              "../../../services/connectors/chat-routines"
             );
             return findChatProviderRoutines(
               providerRoutineContext(input),
@@ -631,7 +631,7 @@ function createWorkspaceAssistantUserConnectorToolDefinitions(input: {
           outputSchema: userConnectorCallSuccessSchema,
           execute: async (toolInput) => {
             const { callUserConnectorTool } = await import(
-              "@api/app/services/user-connectors/runtime"
+              "../../../services/user-connectors/runtime"
             );
             return callUserConnectorTool(
               userConnectorContext(input),
@@ -651,7 +651,7 @@ function createWorkspaceAssistantUserConnectorToolDefinitions(input: {
           outputSchema: userConnectorFindOutputSchema,
           execute: async (toolInput) => {
             const { findUserConnectorTools } = await import(
-              "@api/app/services/user-connectors/runtime"
+              "../../../services/user-connectors/runtime"
             );
             return findUserConnectorTools(
               userConnectorContext(input),
@@ -857,7 +857,7 @@ async function getSkillContext(clerkOrgId: string) {
     const {
       getSkillIndexSnapshot,
       getVerifiedLightfastSkillSourceRepositoryId,
-    } = await import("@api/app/services/skills");
+    } = await import("../../../services/skills");
     const sourceControlRepositoryId =
       await getVerifiedLightfastSkillSourceRepositoryId(db, { clerkOrgId });
     const result = await getSkillIndexSnapshot({
