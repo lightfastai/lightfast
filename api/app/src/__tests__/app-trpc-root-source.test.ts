@@ -51,8 +51,6 @@ describe("api/app app-facing tRPC root", () => {
       "services/developer-connections/leases.ts",
       "services/developer-sandbox-runs/index.ts",
       "services/user-connectors/catalog.ts",
-      "services/user-connectors/granola-flow.ts",
-      "services/user-connectors/index.ts",
     ]) {
       const fileSource = source(file);
 
@@ -60,6 +58,18 @@ describe("api/app app-facing tRPC root", () => {
       expect(fileSource, file).not.toContain("../trpc");
       expect(fileSource, file).toContain("../../auth/identity");
       expect(fileSource, file).toContain("ResolvedAuthContext");
+    }
+
+    for (const file of [
+      "services/user-connectors/granola-flow.ts",
+      "services/user-connectors/index.ts",
+    ]) {
+      const fileSource = source(file);
+
+      expect(fileSource, file).not.toContain("../../trpc");
+      expect(fileSource, file).not.toContain("../trpc");
+      expect(fileSource, file).not.toContain("../../auth/identity");
+      expect(fileSource, file).not.toContain("ResolvedAuthContext");
     }
   });
 });

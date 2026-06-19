@@ -14,8 +14,7 @@ function requestId() {
   return crypto.randomUUID();
 }
 
-async function createTanStackUserConnectorContext() {
-  const request = getRequest();
+async function createTanStackUserConnectorContext(request: Request) {
   const auth = await resolveAuthContextFromClerk({
     db,
     headers: new Headers(request.headers),
@@ -46,10 +45,10 @@ export const startUserConnector = createServerFn({ method: "POST" })
     noStore();
     try {
       return await startUserConnectorCommand.run({
-        ctx: await createTanStackUserConnectorContext(),
+        ctx: await createTanStackUserConnectorContext(request),
         deps: createDefaultUserConnectorCommandDeps({
           db,
-          headers: new Headers(request.headers),
+          request: { referer: request.headers.get("referer") },
         }),
         input: data,
       });
@@ -65,10 +64,10 @@ export const disconnectUserConnector = createServerFn({ method: "POST" })
     noStore();
     try {
       return await disconnectUserConnectorCommand.run({
-        ctx: await createTanStackUserConnectorContext(),
+        ctx: await createTanStackUserConnectorContext(request),
         deps: createDefaultUserConnectorCommandDeps({
           db,
-          headers: new Headers(request.headers),
+          request: { referer: request.headers.get("referer") },
         }),
         input: data,
       });

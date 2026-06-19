@@ -13,7 +13,6 @@ describe("connector service domain errors", () => {
     for (const file of [
       "services/connectors/index.ts",
       "services/connectors/config.ts",
-      "services/user-connectors/index.ts",
     ]) {
       const fileSource = source(file);
 
@@ -21,6 +20,13 @@ describe("connector service domain errors", () => {
       expect(fileSource, file).not.toContain("@trpc/server");
       expect(fileSource, file).not.toContain("TRPCError");
     }
+
+    const userConnectorIndexSource = source(
+      "services/user-connectors/index.ts"
+    );
+    expect(userConnectorIndexSource).not.toContain("../../domain/errors");
+    expect(userConnectorIndexSource).not.toContain("switch");
+    expect(userConnectorIndexSource).not.toContain("unsupportedProvider");
   });
 
   it("keeps connector provider flow errors framework-neutral", () => {
