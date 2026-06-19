@@ -18,9 +18,16 @@ describe("desktop native auth boundary", () => {
     expect(ipcSource).not.toContain("getToken:");
     expect(ipcSource).not.toContain("getRequestHeaders:");
     expect(ipcSource).not.toContain("Authorization?:");
+    expect(ipcSource).not.toContain("signIn: () => Promise<string | null>");
     expect(preloadSource).not.toContain("authGetToken");
     expect(preloadSource).not.toContain("authGetRequestHeaders");
     expect(preloadSource).not.toContain("getRequestHeaders");
+
+    const flowSource = source("src/main/native-auth/flow.ts");
+    const appShellSource = source("src/renderer/src/react/app-shell.tsx");
+    expect(flowSource).not.toContain("return tokens.accessToken");
+    expect(flowSource).not.toContain("Promise<string | null>");
+    expect(appShellSource).not.toContain(".then((token)");
   });
 
   it("exposes a typed desktop API bridge over IPC", () => {

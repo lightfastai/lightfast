@@ -127,10 +127,6 @@ export function getSession(): DesktopNativeSession | null {
   return globalStore.getSession();
 }
 
-export function getToken(): string | null {
-  return getSession()?.tokens.accessToken ?? null;
-}
-
 export function setSession(session: NativeSession): boolean {
   const ok = globalStore.setSession(session);
   if (ok) {

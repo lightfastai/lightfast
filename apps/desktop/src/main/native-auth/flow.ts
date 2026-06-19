@@ -16,7 +16,12 @@ import { shell } from "electron";
 import { logger } from "../logger";
 import { getRuntimeConfig } from "../runtime-config";
 import { createDesktopNativeAuthClient } from "./app-client";
-import { getSession, setSession } from "./store";
+import {
+  type AuthSnapshot,
+  getAuthSnapshot,
+  getSession,
+  setSession,
+} from "./store";
 
 const DEFAULT_SIGNIN_TIMEOUT_MS = 5 * 60_000;
 
@@ -55,7 +60,7 @@ function emitAgentEvent(payload: AuthEvent): void {
   process.stdout.write(`${JSON.stringify(payload)}\n`);
 }
 
-let inflight: Promise<string | null> | null = null;
+let inflight: Promise<AuthSnapshot> | null = null;
 let pendingSigninUrl: string | null = null;
 const urlListeners = new Set<(url: string | null) => void>();
 
@@ -117,7 +122,7 @@ function agentFailureReason(error: unknown): AgentAuthFailureReason {
   }
 }
 
-export function beginSignIn(): Promise<string | null> {
+export function beginSignIn(): Promise<AuthSnapshot> {
   if (inflight) {
     return inflight;
   }
@@ -143,7 +148,7 @@ export function maybeAutoBeginSignIn(): void {
   void beginSignIn();
 }
 
-async function runSignIn(): Promise<string | null> {
+async function runSignIn(): Promise<AuthSnapshot> {
   const appUrl = getRuntimeConfig().appOrigin;
   const client = createDesktopNativeAuthClient();
   const config = await client.getOAuthConfig();
@@ -199,17 +204,17 @@ async function runSignIn(): Promise<string | null> {
     };
     if (!setSession(session)) {
       emitAgentEvent({ event: "auth_signin_failed", reason: "persist_failed" });
-      return null;
+      return getAuthSnapshot();
     }
     emitAgentEvent({ event: "auth_signed_in" });
-    return tokens.accessToken;
+    return getAuthSnapshot();
   } catch (error) {
     logger.error("[native-auth] sign-in failed", error);
     emitAgentEvent({
       event: "auth_signin_failed",
       reason: agentFailureReason(error),
     });
-    return null;
+    return getAuthSnapshot();
   } finally {
     try {
       await loopback.close();

@@ -53,7 +53,8 @@ export function buildBridge(): LightfastBridge {
     appOrigin: runtimeConfig.appOrigin,
     auth: {
       snapshot: authSnapshot,
-      signIn: () => ipcRenderer.invoke(IpcChannels.authSignIn),
+      signIn: () =>
+        ipcRenderer.invoke(IpcChannels.authSignIn) as Promise<AuthSnapshot>,
       signOut: () => ipcRenderer.invoke(IpcChannels.authSignOut),
       onChanged: (listener) => {
         const handler = (_event: IpcRendererEvent, snap: AuthSnapshot) =>
