@@ -93,7 +93,7 @@ export async function handleMcpProxyFindRequest(
 
   try {
     const { assertHostedMcpOrgAccess } = await import(
-      "@api/app/mcp-oauth/resource-access"
+      "../../mcp-oauth/resource-access"
     );
     await assertHostedMcpOrgAccess(db, {
       orgId: parsed.data.actor.orgId,
@@ -131,7 +131,7 @@ export async function handleMcpProxyCallRequest(
 
   try {
     const { assertHostedMcpOrgAccess } = await import(
-      "@api/app/mcp-oauth/resource-access"
+      "../../mcp-oauth/resource-access"
     );
     await assertHostedMcpOrgAccess(db, {
       orgId: parsed.data.actor.orgId,

@@ -13,18 +13,6 @@
       "types": "./src/mcp-oauth/server-routes.ts",
       "default": "./src/mcp-oauth/server-routes.ts"
     },
-    "./mcp-oauth/resource-access": {
-      "types": "./src/mcp-oauth/resource-access.ts",
-      "default": "./src/mcp-oauth/resource-access.ts"
-    },
-    "./env": {
-      "types": "./src/env.ts",
-      "default": "./src/env.ts"
-    },
-    "./domain": {
-      "types": "./src/domain/index.ts",
-      "default": "./src/domain/index.ts"
-    },
     "./native-auth": {
       "types": "./src/native-auth/index.ts",
       "default": "./src/native-auth/index.ts"
@@ -188,22 +176,6 @@
     "./tanstack/people": {
       "types": "./src/adapters/tanstack/people.ts",
       "default": "./src/adapters/tanstack/people.ts"
-    },
-    "./signals/service": {
-      "types": "./src/signals/service.ts",
-      "default": "./src/signals/service.ts"
-    },
-    "./inngest": {
-      "types": "./src/inngest/index.ts",
-      "default": "./src/inngest/index.ts"
-    },
-    "./inngest/client": {
-      "types": "./src/inngest/client.ts",
-      "default": "./src/inngest/client.ts"
-    },
-    "./auth/identity": {
-      "types": "./src/auth/identity.ts",
-      "default": "./src/auth/identity.ts"
     }
   },
   "license": "Apache-2.0",

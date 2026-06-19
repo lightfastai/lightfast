@@ -59,9 +59,7 @@ function errorResponse(error: unknown) {
 async function createNativeProviderRoutineContext(
   req: Request
 ): Promise<NativeProviderRoutineServiceContext> {
-  const { resolveAuthContextFromClerk } = await import(
-    "@api/app/auth/identity"
-  );
+  const { resolveAuthContextFromClerk } = await import("../auth/identity");
   const { loadAgentConnectorRuntimeTools } = await import(
     "../services/connectors/runtime"
   );

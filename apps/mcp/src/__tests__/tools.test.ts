@@ -72,7 +72,6 @@ function dependencies(
 describe("hosted MCP tools", () => {
   afterEach(() => {
     vi.doUnmock("@api/app/mcp-oauth");
-    vi.doUnmock("@api/app/signals/service");
     vi.doUnmock("../tools/app-audit-intake");
     vi.doUnmock("../tools/app-proxy-intake");
     vi.doUnmock("../tools/app-signal-intake");
@@ -406,9 +405,6 @@ describe("hosted MCP tools", () => {
     vi.doMock("@api/app/mcp-oauth", () => {
       throw new Error("mcp-oauth should not load for system health");
     });
-    vi.doMock("@api/app/signals/service", () => {
-      throw new Error("signal service should not load for system health");
-    });
     vi.doMock("../tools/app-signal-intake", () => {
       throw new Error("app signal intake should not load for system health");
     });
@@ -432,7 +428,7 @@ describe("hosted MCP tools", () => {
     );
   });
 
-  it("does not load app signal service or OAuth for signal creation", async () => {
+  it("does not load app OAuth for signal creation", async () => {
     const createSignalForActor = vi.fn().mockResolvedValue({
       id: signalId,
       status: "queued",
@@ -445,9 +441,6 @@ describe("hosted MCP tools", () => {
     }));
     vi.doMock("@api/app/mcp-oauth", () => {
       throw new Error("mcp-oauth should not load for signal creation");
-    });
-    vi.doMock("@api/app/signals/service", () => {
-      throw new Error("signal service should not load for signal creation");
     });
     vi.doMock("../tools/app-signal-intake", () => ({
       createSignalForActorViaApp: createSignalForActor,
@@ -496,9 +489,6 @@ describe("hosted MCP tools", () => {
     vi.doMock("@api/app/mcp-oauth", () => {
       throw new Error("mcp-oauth should not load for signal get");
     });
-    vi.doMock("@api/app/signals/service", () => {
-      throw new Error("signal service should not load for signal get");
-    });
     vi.doMock("../tools/app-signal-intake", () => ({
       getSignalForActorViaApp: getSignalForActor,
     }));
@@ -543,9 +533,6 @@ describe("hosted MCP tools", () => {
     }));
     vi.doMock("@api/app/mcp-oauth", () => {
       throw new Error("mcp-oauth should not load for proxy calls");
-    });
-    vi.doMock("@api/app/signals/service", () => {
-      throw new Error("signal service should not load for proxy calls");
     });
     vi.doMock("../tools/app-signal-intake", () => {
       throw new Error("app signal intake should not load for proxy calls");
