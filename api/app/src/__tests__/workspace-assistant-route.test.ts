@@ -31,8 +31,11 @@ vi.mock("../auth/identity", () => ({
   resolveIdentityFromClerk: resolveIdentityFromClerkMock,
 }));
 
-vi.mock("../services/skills", () => ({
+vi.mock("../services/skills/read", () => ({
   getSkillIndexSnapshot: getSkillIndexSnapshotMock,
+}));
+
+vi.mock("../services/skills/eligibility", () => ({
   getVerifiedLightfastSkillSourceRepositoryId:
     getVerifiedLightfastSkillSourceRepositoryIdMock,
 }));

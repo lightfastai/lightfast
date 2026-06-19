@@ -854,10 +854,12 @@ async function buildSystemPrompt(clerkOrgId: string) {
 
 async function getSkillContext(clerkOrgId: string) {
   try {
-    const {
-      getSkillIndexSnapshot,
-      getVerifiedLightfastSkillSourceRepositoryId,
-    } = await import("../../../services/skills");
+    const { getVerifiedLightfastSkillSourceRepositoryId } = await import(
+      "../../../services/skills/eligibility"
+    );
+    const { getSkillIndexSnapshot } = await import(
+      "../../../services/skills/read"
+    );
     const sourceControlRepositoryId =
       await getVerifiedLightfastSkillSourceRepositoryId(db, { clerkOrgId });
     const result = await getSkillIndexSnapshot({

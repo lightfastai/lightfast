@@ -71,7 +71,15 @@ describe("app chat API route migration", () => {
     expect(chatSource).toContain("safeValidateUIMessages");
     expect(chatSource).toContain("streamText");
     expect(chatSource).toContain("toUIMessageStreamResponse");
-    expect(chatSource).toContain('await import("../../../services/skills")');
+    expect(chatSource).toMatch(
+      /await\s+import\(\s*"\.\.\/\.\.\/\.\.\/services\/skills\/read"\s*\)/
+    );
+    expect(chatSource).toMatch(
+      /await\s+import\(\s*"\.\.\/\.\.\/\.\.\/services\/skills\/eligibility"\s*\)/
+    );
+    expect(chatSource).not.toMatch(
+      /await\s+import\(\s*"\.\.\/\.\.\/\.\.\/services\/skills"\s*\)/
+    );
     expect(chatSource).toContain(
       "setWorkspaceAssistantConversationActiveStream"
     );
