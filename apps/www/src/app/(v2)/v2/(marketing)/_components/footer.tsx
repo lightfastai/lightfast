@@ -1,9 +1,9 @@
 import { Button } from "@repo/ui-v2/components/ui/button";
+import { FooterArcade } from "@repo/space-invaders-react";
 import { ArrowRight, ArrowUp } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { About } from "./about";
-import { FooterArcade } from "./footer-arcade";
 
 export function Footer() {
   return (
