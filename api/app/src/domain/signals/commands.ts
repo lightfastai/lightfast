@@ -44,7 +44,7 @@ export const listProcessingSignalsInput = z
   .object({
     cursor: workspaceListCursorInput,
     limit: workspaceListLimitInput,
-    statuses: z.array(signalStatusSchema).max(2).optional(),
+    statuses: z.array(signalStatusSchema).max(4).optional(),
   })
   .strict();
 
@@ -98,6 +98,15 @@ export function getSignalCommandDeps(input: {
     db: input.db,
     getVisibleSignalByPublicId,
     listSignalEntityLinksForSignal,
+  };
+}
+
+export function listProcessingSignalsCommandDeps(input: {
+  db: Database;
+}): SignalListProcessingCommandDeps {
+  return {
+    db: input.db,
+    listSignals,
   };
 }
 

@@ -4,6 +4,7 @@ import {
   createSignalInput,
   createSignalOutput,
   getSignalOutput,
+  listSignalsOutput,
   normalizeSignalClassification,
   SIGNAL_ID_PREFIX,
   signalClassificationBaseSchema,
@@ -122,6 +123,28 @@ describe("signal schemas", () => {
       classification: null,
       entityLinks: [],
       visibilityScope: "user",
+    });
+  });
+
+  it("validates public signal list output with an opaque cursor", () => {
+    expect(
+      listSignalsOutput.parse({
+        items: [
+          {
+            id: "signal_123e4567-e89b-12d3-a456-426614174000",
+            input: "Review this profile",
+            status: "queued",
+            classification: null,
+            visibilityScope: "team",
+            createdAt: "2026-05-30T00:00:00.000Z",
+            updatedAt: "2026-05-30T00:00:00.000Z",
+          },
+        ],
+        nextCursor: "opaque_cursor",
+      })
+    ).toMatchObject({
+      items: [{ id: "signal_123e4567-e89b-12d3-a456-426614174000" }],
+      nextCursor: "opaque_cursor",
     });
   });
 

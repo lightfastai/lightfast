@@ -5,6 +5,8 @@ import {
   createSignalOutput,
   getSignalInput,
   getSignalOutput,
+  listSignalsInput,
+  listSignalsOutput,
 } from "./schemas/signals";
 import { systemHealthOutput } from "./schemas/system";
 
@@ -71,6 +73,18 @@ const system = {
 };
 
 const signals = {
+  list: publicApiProcedure({
+    inputSchema: listSignalsInput,
+    outputSchema: listSignalsOutput,
+    route: {
+      method: "GET",
+      path: "/signals",
+      summary: "List signals",
+      description:
+        "Returns visible signals for the API key organization, newest first.",
+    },
+  }),
+
   create: publicApiProcedure({
     inputSchema: createSignalInput,
     outputSchema: createSignalOutput,

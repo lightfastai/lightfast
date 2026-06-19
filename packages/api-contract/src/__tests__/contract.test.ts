@@ -3,7 +3,12 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { apiContract } from "../contract";
-import { createSignalInput, createSignalOutput } from "../schemas/signals";
+import {
+  createSignalInput,
+  createSignalOutput,
+  listSignalsInput,
+  listSignalsOutput,
+} from "../schemas/signals";
 import { systemHealthOutput } from "../schemas/system";
 
 const packageRoot = resolve(import.meta.dirname, "../..");
@@ -19,6 +24,13 @@ describe("apiContract", () => {
       path: "/system/health",
     });
     expect(apiContract.system.health.outputSchema).toBe(systemHealthOutput);
+
+    expect(apiContract.signals.list.route).toMatchObject({
+      method: "GET",
+      path: "/signals",
+    });
+    expect(apiContract.signals.list.inputSchema).toBe(listSignalsInput);
+    expect(apiContract.signals.list.outputSchema).toBe(listSignalsOutput);
 
     expect(apiContract.signals.create.route).toMatchObject({
       method: "POST",

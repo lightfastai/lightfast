@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   getCurrentOrgConnectorConnection: vi.fn(),
   getVisibleSignalByPublicId: vi.fn(),
   listSignalEntityLinksForSignal: vi.fn(),
+  listSignals: vi.fn(),
   verifyKey: vi.fn(),
 }));
 
@@ -21,6 +22,7 @@ vi.mock("@db/app", () => ({
   getCurrentOrgConnectorConnection: mocks.getCurrentOrgConnectorConnection,
   getVisibleSignalByPublicId: mocks.getVisibleSignalByPublicId,
   listSignalEntityLinksForSignal: mocks.listSignalEntityLinksForSignal,
+  listSignals: mocks.listSignals,
 }));
 
 vi.mock("../signals/service", () => ({
@@ -30,6 +32,7 @@ vi.mock("../signals/service", () => ({
 const {
   handleCreateSignalPublicApiRequest,
   handleGetSignalPublicApiRequest,
+  handleListSignalsPublicApiRequest,
   handlePublicApiOptionsRequest,
 } = await import("../adapters/public/signals");
 const { SignalCreateQueueError } = await import("../signals/create-signal");
@@ -76,6 +79,13 @@ async function responseJson(response: Response) {
   return (await response.json()) as Record<string, unknown>;
 }
 
+function decodeCursor(cursor: unknown) {
+  expect(typeof cursor).toBe("string");
+  return JSON.parse(
+    Buffer.from(cursor as string, "base64url").toString("utf8")
+  );
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
 
@@ -98,6 +108,31 @@ beforeEach(() => {
     providerInstallationId: "1001",
   });
   mocks.listSignalEntityLinksForSignal.mockResolvedValue([]);
+  mocks.listSignals.mockResolvedValue({
+    items: [
+      {
+        classification: null,
+        clerkOrgId: "org_test",
+        createdAt: new Date("2026-05-21T00:00:00.000Z"),
+        createdByApiKeyId: "key_test",
+        createdByMcpClientId: null,
+        createdByMcpGrantId: null,
+        createdByUserId: "user_test",
+        errorCode: null,
+        errorMessage: null,
+        id: 1,
+        input: "Run the test plan",
+        publicId: signalId,
+        status: "classified",
+        updatedAt: new Date("2026-05-21T00:01:00.000Z"),
+        visibilityScope: "team",
+      },
+    ],
+    nextCursor: {
+      createdAt: new Date("2026-05-21T00:00:00.000Z"),
+      id: 1,
+    },
+  });
   mocks.createSignalForActor.mockResolvedValue({
     id: signalId,
     status: "queued",
@@ -124,6 +159,41 @@ describe("public signal API adapter", () => {
       error: "auth_required",
     });
     expect(mocks.createSignalForActor).not.toHaveBeenCalled();
+  });
+
+  it("lists visible signals with API-key auth and an opaque cursor", async () => {
+    const response = await handleListSignalsPublicApiRequest(
+      publicApiRequest({
+        method: "GET",
+        token: validKey,
+        url: "https://lightfast.test/api/v1/signals?limit=25&status=classified",
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("access-control-allow-origin")).toBe("*");
+    const body = await responseJson(response);
+    expect(body).toMatchObject({
+      items: [
+        {
+          id: signalId,
+          input: "Run the test plan",
+          status: "classified",
+          visibilityScope: "team",
+        },
+      ],
+    });
+    expect(decodeCursor(body.nextCursor)).toEqual({
+      createdAt: "2026-05-21T00:00:00.000Z",
+      id: 1,
+    });
+    expect(mocks.listSignals).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+      cursor: undefined,
+      limit: 25,
+      statuses: ["classified"],
+    });
   });
 
   it("creates a queued signal with API-key attribution", async () => {
