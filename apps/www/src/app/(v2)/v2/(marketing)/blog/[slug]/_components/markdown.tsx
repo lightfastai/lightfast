@@ -1,0 +1,147 @@
+import {
+  isValidElement,
+  type AnchorHTMLAttributes,
+  type BlockquoteHTMLAttributes,
+  type HTMLAttributes,
+  type LiHTMLAttributes,
+  type OlHTMLAttributes,
+  type ReactNode,
+} from "react";
+
+export const markdownComponents = {
+  a({
+    href,
+    children,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement>) {
+    const isExternal = href?.startsWith("http");
+
+    return (
+      <a
+        className="text-foreground underline underline-offset-4 transition-colors hover:text-muted-foreground"
+        href={href}
+        rel={isExternal ? "noopener noreferrer" : undefined}
+        target={isExternal ? "_blank" : undefined}
+        {...props}
+      >
+        {children}
+      </a>
+    );
+  },
+  blockquote({
+    children,
+    ...props
+  }: BlockquoteHTMLAttributes<HTMLQuoteElement>) {
+    return (
+      <blockquote
+        className="my-10 border-border border-l-2 pl-6 text-muted-foreground text-xl leading-8"
+        {...props}
+      >
+        {children}
+      </blockquote>
+    );
+  },
+  code({ children, ...props }: HTMLAttributes<HTMLElement>) {
+    return (
+      <code className="rounded-sm bg-muted px-1.5 py-0.5 font-mono" {...props}>
+        {children}
+      </code>
+    );
+  },
+  em({ children, ...props }: HTMLAttributes<HTMLElement>) {
+    return (
+      <em className="italic" {...props}>
+        {children}
+      </em>
+    );
+  },
+  h2({ children, id, ...props }: HTMLAttributes<HTMLHeadingElement>) {
+    return (
+      <h2
+        className="mt-16 mb-6 scroll-m-28 font-medium text-2xl leading-tight tracking-normal first:mt-0"
+        id={id ?? slugifyHeading(children)}
+        {...props}
+      >
+        {children}
+      </h2>
+    );
+  },
+  h3({ children, id, ...props }: HTMLAttributes<HTMLHeadingElement>) {
+    return (
+      <h3
+        className="mt-12 mb-5 scroll-m-28 font-medium text-xl leading-tight tracking-normal"
+        id={id ?? slugifyHeading(children)}
+        {...props}
+      >
+        {children}
+      </h3>
+    );
+  },
+  li({ children, ...props }: LiHTMLAttributes<HTMLLIElement>) {
+    return (
+      <li className="mt-2 leading-8" {...props}>
+        {children}
+      </li>
+    );
+  },
+  ol({ children, ...props }: OlHTMLAttributes<HTMLOListElement>) {
+    return (
+      <ol className="my-8 ml-6 list-decimal text-base leading-8" {...props}>
+        {children}
+      </ol>
+    );
+  },
+  p({ children, ...props }: HTMLAttributes<HTMLParagraphElement>) {
+    return (
+      <p
+        className="max-w-[72ch] text-base leading-8 text-foreground [&:not(:first-child)]:mt-5"
+        {...props}
+      >
+        {children}
+      </p>
+    );
+  },
+  strong({ children, ...props }: HTMLAttributes<HTMLElement>) {
+    return (
+      <strong className="font-medium" {...props}>
+        {children}
+      </strong>
+    );
+  },
+  ul({ children, ...props }: HTMLAttributes<HTMLUListElement>) {
+    return (
+      <ul className="my-8 ml-6 list-disc text-base leading-8" {...props}>
+        {children}
+      </ul>
+    );
+  },
+};
+
+function slugifyHeading(children: ReactNode): string {
+  return flattenText(children)
+    .toLowerCase()
+    .replace(/['']/g, "")
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function flattenText(node: ReactNode): string {
+  if (node === null || node === undefined || typeof node === "boolean") {
+    return "";
+  }
+
+  if (typeof node === "string" || typeof node === "number") {
+    return String(node);
+  }
+
+  if (Array.isArray(node)) {
+    return node.map(flattenText).join("");
+  }
+
+  if (isValidElement<{ children?: ReactNode }>(node)) {
+    return flattenText(node.props.children);
+  }
+
+  return "";
+}

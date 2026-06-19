@@ -1,53 +1,16 @@
-import type { Metadata } from "next";
+import type { Metadata, Route } from "next";
+import Link from "next/link";
+import { getBlogPages } from "~/app/(v1)/(content)/_lib/source";
 import { createMetadata } from "~/lib/content-seo";
 
 export const dynamic = "force-static";
 
-interface MockBlogPost {
-  date: string;
-  datetime: string;
-  href: string;
-  title: string;
-}
-
-const mockBlogPosts: MockBlogPost[] = [
-  {
-    date: "June 18, 2026",
-    datetime: "2026-06-18",
-    href: "/v2/blog/workspace-memory-for-agent-teams",
-    title: "Workspace memory for agent teams",
-  },
-  {
-    date: "June 10, 2026",
-    datetime: "2026-06-10",
-    href: "/v2/blog/orchestrating-human-agent-handoffs",
-    title: "Orchestrating human-agent handoffs",
-  },
-  {
-    date: "May 28, 2026",
-    datetime: "2026-05-28",
-    href: "/v2/blog/durable-history-for-operational-ai",
-    title: "Durable history for operational AI",
-  },
-  {
-    date: "May 14, 2026",
-    datetime: "2026-05-14",
-    href: "/v2/blog/designing-readable-agent-runs",
-    title: "Designing readable agent runs",
-  },
-  {
-    date: "April 30, 2026",
-    datetime: "2026-04-30",
-    href: "/v2/blog/interfaces-for-trustworthy-automation",
-    title: "Interfaces for trustworthy automation",
-  },
-  {
-    date: "April 16, 2026",
-    datetime: "2026-04-16",
-    href: "/v2/blog/the-agent-operating-layer",
-    title: "The agent operating layer",
-  },
-];
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  day: "numeric",
+  month: "long",
+  timeZone: "UTC",
+  year: "numeric",
+});
 
 export const metadata: Metadata = createMetadata({
   title: "Blog | Lightfast",
@@ -76,9 +39,20 @@ export const metadata: Metadata = createMetadata({
 });
 
 export default function BlogPage() {
+  const blogPosts = getBlogPages()
+    .map((page) => ({
+      date: dateFormatter.format(new Date(page.data.publishedAt)),
+      datetime: page.data.publishedAt,
+      href: `/v2/blog/${page.slugs.join("/")}` as Route,
+      title: page.data.title,
+    }))
+    .sort(
+      (a, b) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime()
+    );
+
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <section className="px-6 pt-32 pb-20 sm:px-10 sm:pt-36 md:pb-24">
+    <main className="bg-background text-foreground">
+      <section className="px-6 pt-32 pb-20 sm:px-10 sm:pt-32 md:pb-16">
         <div className="mx-auto max-w-[1960px]">
           <h1 className="font-medium font-title text-3xl tracking-normal sm:text-4xl">
             Blog
@@ -91,14 +65,14 @@ export default function BlogPage() {
           Latest blog posts
         </h2>
         <ol className="mx-auto max-w-[1960px] border-border border-t">
-          {mockBlogPosts.map((post) => (
+          {blogPosts.map((post) => (
             <li key={post.href} className="border-border border-b">
-              <a
-                className="group/blog grid gap-5 bg-transparent py-7 outline-none transition-[background-color,color] duration-[650ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-primary hover:text-primary-foreground hover:duration-300 focus-visible:bg-primary focus-visible:text-primary-foreground focus-visible:duration-300 sm:grid-cols-[minmax(10rem,0.34fr)_minmax(0,1fr)] sm:py-8"
+              <Link
+                className="group/blog grid gap-5 bg-transparent py-4 outline-none transition-[background-color,color] duration-[650ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-primary hover:text-primary-foreground hover:duration-300 focus-visible:bg-primary focus-visible:text-primary-foreground focus-visible:duration-300 sm:grid-cols-[minmax(10rem,0.34fr)_minmax(0,1fr)] sm:py-6"
                 href={post.href}
               >
                 <time
-                  className="self-center pl-4 text-muted-foreground text-sm leading-6 transition-colors duration-[650ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/blog:text-primary-foreground group-focus-visible/blog:text-primary-foreground sm:pl-6 sm:text-base"
+                  className="self-center translate-x-0 text-muted-foreground text-sm leading-6 transition-[color,transform,translate,scale,rotate] duration-[650ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/blog:translate-x-2 group-hover/blog:text-primary-foreground group-focus-visible/blog:translate-x-2 group-focus-visible/blog:text-primary-foreground sm:text-base"
                   dateTime={post.datetime}
                 >
                   {post.date}
@@ -108,7 +82,7 @@ export default function BlogPage() {
                     {post.title}
                   </span>
                 </span>
-              </a>
+              </Link>
             </li>
           ))}
         </ol>

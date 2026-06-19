@@ -12,7 +12,7 @@ import { enableCssLoaders } from "./webpack-override";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "../../.."); // monorepo root
-const UI_V2_PUBLIC_DIR = path.resolve(ROOT, "packages/ui-v2/public");
+const REMOTION_PUBLIC_DIR = path.resolve(ROOT, "apps/www/public");
 
 /** Resolve a manifest dest path to an absolute path */
 function resolveDest(dest: string, filename: string): string {
@@ -84,7 +84,7 @@ async function main() {
   console.log("Bundling compositions...");
   const bundled = await bundle({
     entryPoint,
-    publicDir: UI_V2_PUBLIC_DIR,
+    publicDir: REMOTION_PUBLIC_DIR,
     webpackOverride: enableCssLoaders,
   });
 
@@ -144,21 +144,21 @@ async function main() {
       console.log(`Rendering ${id} (${entry.width}×${entry.height})...`);
       const composition = await selectComposition({ serveUrl: bundled, id });
 
-      // Render once to tmp, then distribute to all destinations
-      const firstOutput = entry.outputs[0]!;
-      const filename = firstOutput.filename ?? `${id}.${firstOutput.format}`;
-      const tmpPath = path.join(tmpDir, filename);
-      await renderStill({
-        composition,
-        serveUrl: bundled,
-        output: tmpPath,
-        imageFormat: firstOutput.format as "png" | "webp",
-        scale: firstOutput.scale ?? 1,
-        overwrite: true,
-      });
-      await distribute(tmpPath, entry.outputs, filename);
-      const dests = [...new Set(entry.outputs.map((o) => o.dest))];
-      console.log(`  ✔ ${filename} → ${dests.join(", ")}`);
+      for (const output of entry.outputs) {
+        const filename = output.filename ?? `${id}.${output.format}`;
+        const tmpPath = path.join(tmpDir, filename);
+
+        await renderStill({
+          composition,
+          serveUrl: bundled,
+          output: tmpPath,
+          imageFormat: output.format as "png" | "webp",
+          scale: output.scale ?? 1,
+          overwrite: true,
+        });
+        await distribute(tmpPath, [output], filename);
+        console.log(`  ✔ ${filename} → ${output.dest}`);
+      }
     }
   }
 

@@ -1,166 +1,121 @@
+import { Logo as BrandLogo } from "@repo/ui-v2/components/brand/logo";
 import {
-  lissajousPoints as computeLissajousPoints,
-  LOGO_CURVE,
-} from "@repo/ui/lib/brand";
-import type { Box3D, Vec2 } from "@repo/ui/lib/iso";
-import { createBox, facePath, project, shapeBounds } from "@repo/ui/lib/iso";
-import { AbsoluteFill, continueRender, delayRender } from "@vendor/remotion";
+  AbsoluteFill,
+  continueRender,
+  delayRender,
+  staticFile,
+} from "@vendor/remotion";
+import { loadFont } from "@vendor/remotion/fonts";
 import type React from "react";
-import { useEffect, useMemo, useState } from "react";
-import { ensureFontsLoaded } from "../landing-hero/shared/fonts";
+import { useEffect, useState } from "react";
 
 const CANVAS_W = 1200;
 const CANVAS_H = 675;
 
-const BOX: Box3D = { x: 0, y: 0, z: 0, w: 220, h: 220, d: 22 };
-const LISSAJOUS_RADIUS = 76;
-const STEPS = 512;
+const PAPER_W = 1512;
+const PAPER_H = 982;
+const BACKGROUND_ZOOM = 1;
+const BACKGROUND_SCALE =
+  Math.max(CANVAS_W / PAPER_W, CANVAS_H / PAPER_H) * BACKGROUND_ZOOM;
 
-const shape = createBox(BOX);
-const bounds = shapeBounds(shape);
+const BRAND_SCALE = 1;
 
-const PAD = 4;
-const vx = bounds.minX - PAD;
-const vy = bounds.minY - PAD;
-const vw = bounds.maxX - bounds.minX + PAD * 2;
-const vh = bounds.maxY - bounds.minY + PAD * 2;
+let brandFontsLoaded = false;
 
-// Golden-ratio framing. The focal point of the subject — the lissajous center
-// on the top face — is anchored at the upper-left golden power point:
-//   x = W · (1 − 1/φ) ≈ W · 0.382
-//   y = H · (1 − 1/φ) ≈ H · 0.382
-const PHI_INV_SQ = 0.381_966_011_250_105_1;
-const ANCHOR_X = CANVAS_W * PHI_INV_SQ;
-const ANCHOR_Y = CANVAS_H * PHI_INV_SQ;
+async function ensureBrandFontsLoaded() {
+  if (brandFontsLoaded) {
+    return;
+  }
 
-// Focal point in iso space: center of the top face (where the lissajous sits).
-const focalIso = project(BOX.x + BOX.w / 2, BOX.y + BOX.h / 2, BOX.z + BOX.d);
+  await loadFont({
+    family: "Roobert-TRIAL-Medium",
+    url: staticFile("fonts/roobert/Roobert-TRIAL-Medium.woff2"),
+    weight: "500",
+  });
 
-function isoToCanvas([ix, iy]: Vec2): Vec2 {
-  return [ANCHOR_X + (ix - focalIso[0]), ANCHOR_Y + (iy - focalIso[1])];
+  brandFontsLoaded = true;
 }
 
-// The four extreme corners of the iso projection:
-//  • left/right: bottom-square front-left / back-right corners (same y)
-//  • bottom-most: bottom-square front corner
-//  • top-most:    top-square back corner
-const bottomZ = BOX.z;
-const topZB = BOX.z + BOX.d;
-const leftCorner = isoToCanvas(project(BOX.x, BOX.y + BOX.h, bottomZ));
-const rightCorner = isoToCanvas(project(BOX.x + BOX.w, BOX.y, bottomZ));
-const bottomCorner = isoToCanvas(
-  project(BOX.x + BOX.w, BOX.y + BOX.h, bottomZ)
-);
-const topCorner = isoToCanvas(project(BOX.x, BOX.y, topZB));
+function WorkBackground() {
+  return (
+    <>
+      <AbsoluteFill style={{ backgroundColor: "#14120B" }} />
+      <div
+        style={{
+          height: PAPER_H,
+          left: "50%",
+          overflow: "hidden",
+          position: "absolute",
+          top: "50%",
+          transform: `translate(-50%, -50%) scale(${BACKGROUND_SCALE})`,
+          transformOrigin: "center",
+          width: PAPER_W,
+        }}
+      >
+        <img
+          alt=""
+          src={staticFile("images/remotion/webgl-background-work-preset.png")}
+          style={{
+            height: "100%",
+            objectFit: "cover",
+            width: "100%",
+          }}
+        />
 
-// Pixel offset for the box SVG so its focal point lands on the anchor.
-// SVG top-left in canvas = anchor − (focalIso − viewBox origin).
-const BOX_LEFT = ANCHOR_X - (focalIso[0] - vx);
-const BOX_TOP = ANCHOR_Y - (focalIso[1] - vy);
+        <div
+          style={{
+            backgroundColor: "rgba(0, 0, 0, 0.34)",
+            height: "100%",
+            position: "absolute",
+            width: "100%",
+          }}
+        />
+      </div>
 
-const topZ = BOX.z + BOX.d;
-const cx = BOX.x + BOX.w / 2;
-const cy = BOX.y + BOX.h / 2;
-
-const lissajousProjected: Vec2[] = computeLissajousPoints(
-  LOGO_CURVE.a,
-  LOGO_CURVE.b,
-  LOGO_CURVE.delta,
-  STEPS
-)
-  .slice(0, STEPS)
-  .map(([px, py]) =>
-    project(cx + LISSAJOUS_RADIUS * px, cy + LISSAJOUS_RADIUS * py, topZ)
+      <AbsoluteFill
+        style={{
+          background:
+            "radial-gradient(circle at center, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0) 34%, rgba(0, 0, 0, 0.5) 100%)",
+        }}
+      />
+    </>
   );
+}
 
-const lissajousPath = `${lissajousProjected
-  .map((v, i) => `${i === 0 ? "M" : "L"}${v[0].toFixed(2)},${v[1].toFixed(2)}`)
-  .join(" ")} Z`;
-
-const FACE_FILL: Record<string, string> = {
-  top: "var(--card)",
-  front: "var(--card)",
-  right: "var(--card)",
-};
+function CenterBrand() {
+  return (
+    <div
+      style={{
+        color: "#EDECEC",
+        filter: "drop-shadow(0 0 36px rgba(237, 236, 236, 0.18))",
+        left: "50%",
+        position: "absolute",
+        top: "50%",
+        transform: `translate(-50%, -50%) scale(${BRAND_SCALE})`,
+        transformOrigin: "center",
+      }}
+    >
+      <BrandLogo className="text-current" showWordmark size="xl" />
+    </div>
+  );
+}
 
 export const BlogWhyWeBuiltFeatured: React.FC = () => {
-  const [handle] = useState(() => delayRender("Loading fonts"));
+  const [handle] = useState(() => delayRender("Loading brand fonts"));
 
   useEffect(() => {
-    void ensureFontsLoaded()
+    void ensureBrandFontsLoaded()
       .then(() => continueRender(handle))
       .catch((err: unknown) => {
-        console.error("Font loading failed:", err);
+        console.error("Brand font loading failed:", err);
         continueRender(handle);
       });
   }, [handle]);
 
-  const faces = useMemo(() => shape.faces, []);
-
   return (
-    <AbsoluteFill className="bg-card">
-      <svg
-        height={CANVAS_H}
-        style={{ position: "absolute", inset: 0 }}
-        viewBox={`0 0 ${CANVAS_W} ${CANVAS_H}`}
-        width={CANVAS_W}
-      >
-        {/* left edge → bottom-square left corner */}
-        <line
-          stroke="var(--border)"
-          strokeWidth={1}
-          x1={0}
-          x2={leftCorner[0]}
-          y1={leftCorner[1]}
-          y2={leftCorner[1]}
-        />
-        {/* bottom-square right corner → right edge */}
-        <line
-          stroke="var(--border)"
-          strokeWidth={1}
-          x1={rightCorner[0]}
-          x2={CANVAS_W}
-          y1={rightCorner[1]}
-          y2={rightCorner[1]}
-        />
-        {/* top-most corner → top edge */}
-        <line
-          stroke="var(--border)"
-          strokeWidth={1}
-          x1={topCorner[0]}
-          x2={topCorner[0]}
-          y1={0}
-          y2={topCorner[1]}
-        />
-        {/* bottom-most corner → bottom edge */}
-        <line
-          stroke="var(--border)"
-          strokeWidth={1}
-          x1={bottomCorner[0]}
-          x2={bottomCorner[0]}
-          y1={bottomCorner[1]}
-          y2={CANVAS_H}
-        />
-      </svg>
-      <div style={{ position: "absolute", left: BOX_LEFT, top: BOX_TOP }}>
-        <svg height={vh} viewBox={`${vx} ${vy} ${vw} ${vh}`} width={vw}>
-          {faces.map((face, i) => (
-            <path
-              d={facePath(face)}
-              fillRule="evenodd"
-              key={`${face.type}-${i}`}
-              strokeWidth={1}
-              style={{ fill: FACE_FILL[face.type], stroke: "var(--border)" }}
-            />
-          ))}
-          <path
-            d={lissajousPath}
-            fill="none"
-            strokeWidth={1}
-            style={{ stroke: "var(--border)" }}
-          />
-        </svg>
-      </div>
+    <AbsoluteFill>
+      <WorkBackground />
+      <CenterBrand />
     </AbsoluteFill>
   );
 };
