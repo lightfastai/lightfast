@@ -12,6 +12,7 @@ export {
   completeGitHubInstallationSetup,
   completeGitHubOAuthVerification,
   type GitHubRedirectResult,
+  type GitHubSetupRedirectPaths,
   syncGitHubBindingClaim,
 } from "./setup/flow";
 export {

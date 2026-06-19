@@ -1,8 +1,15 @@
 import {
   completeLinearConnectorOAuth,
   completeXConnectorOAuth,
+  type XConnectorOAuthRedirectPaths,
 } from "../../services/connectors";
 import { completeGranolaUserConnectorOAuth } from "../../services/user-connectors";
+
+export type { XConnectorOAuthRedirectPaths };
+
+interface XConnectorOAuthRouteOptions {
+  redirectPaths: XConnectorOAuthRedirectPaths;
+}
 
 export async function handleLinearConnectorOAuthCallbackRequest(
   request: Request
@@ -14,9 +21,11 @@ export async function handleLinearConnectorOAuthCallbackRequest(
 }
 
 export async function handleXConnectorOAuthCallbackRequest(
-  request: Request
+  request: Request,
+  options: XConnectorOAuthRouteOptions
 ): Promise<Response> {
   const result = await completeXConnectorOAuth({
+    redirectPaths: options.redirectPaths,
     requestUrl: request.url,
   });
   return Response.redirect(result.redirectUrl);

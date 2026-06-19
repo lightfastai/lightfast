@@ -1,5 +1,5 @@
 import { getOrganizationBySlug } from "@api/app/tanstack/organizations";
-import type { OrgSetupRequirement } from "@repo/app-setup-contract";
+import type { OrgSetupRequirement } from "@repo/api-contract";
 import { Button } from "@repo/ui/components/ui/button";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import {

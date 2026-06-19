@@ -54,6 +54,13 @@ export interface XRedirectResult {
   redirectUrl: string;
 }
 
+export interface XConnectorOAuthRedirectPaths {
+  accountTeams(): string;
+  connectorPage(input: { orgSlug: string }): string;
+  setupComplete(input: { orgSlug: string }): string;
+  signIn(): string;
+}
+
 function activeIdentity(ctx: ConnectorServiceContext) {
   if (ctx.auth.identity.type !== "active") {
     throw new AuthzError("ORG_REQUIRED", "An active organization is required.");
@@ -83,8 +90,12 @@ function connectorPageUrl(input: {
   appOrigin: string;
   error?: string;
   orgSlug: string;
+  redirectPaths: XConnectorOAuthRedirectPaths;
 }) {
-  const url = new URL(`/${input.orgSlug}/connectors`, input.appOrigin);
+  const url = new URL(
+    input.redirectPaths.connectorPage({ orgSlug: input.orgSlug }),
+    input.appOrigin
+  );
   url.searchParams.set("connector", "x");
   if (input.error) {
     url.searchParams.set("error", input.error);
@@ -95,15 +106,19 @@ function connectorPageUrl(input: {
 function connectorSetupCompleteUrl(input: {
   appOrigin: string;
   orgSlug: string;
+  redirectPaths: XConnectorOAuthRedirectPaths;
 }) {
   return new URL(
-    `/${input.orgSlug}/tasks/connectors/x/complete`,
+    input.redirectPaths.setupComplete({ orgSlug: input.orgSlug }),
     input.appOrigin
   ).toString();
 }
 
-function missingAttemptRedirect(input: { appOrigin: string }): XRedirectResult {
-  const url = new URL("/account/teams", input.appOrigin);
+function missingAttemptRedirect(input: {
+  appOrigin: string;
+  redirectPaths: XConnectorOAuthRedirectPaths;
+}): XRedirectResult {
+  const url = new URL(input.redirectPaths.accountTeams(), input.appOrigin);
   url.searchParams.set("connector", "x");
   url.searchParams.set("error", "expired_state");
   return { redirectUrl: url.toString() };
@@ -113,22 +128,25 @@ function errorRedirect(input: {
   appOrigin: string;
   code: string;
   orgSlug: string;
+  redirectPaths: XConnectorOAuthRedirectPaths;
 }): XRedirectResult {
   return {
     redirectUrl: connectorPageUrl({
       appOrigin: input.appOrigin,
       error: input.code,
       orgSlug: input.orgSlug,
+      redirectPaths: input.redirectPaths,
     }),
   };
 }
 
 function signInRedirect(input: {
   appOrigin: string;
+  redirectPaths: XConnectorOAuthRedirectPaths;
   requestUrl: string;
 }): XRedirectResult {
   const callbackUrl = new URL(input.requestUrl);
-  const signInUrl = new URL("/sign-in", input.appOrigin);
+  const signInUrl = new URL(input.redirectPaths.signIn(), input.appOrigin);
   signInUrl.searchParams.set(
     "redirect_url",
     `${callbackUrl.pathname}${callbackUrl.search}`
@@ -571,13 +589,17 @@ async function finalizeXConnection(input: {
 
 export async function completeXConnectorOAuth(input: {
   appOrigin?: string;
+  redirectPaths: XConnectorOAuthRedirectPaths;
   requestUrl: string;
 }): Promise<XRedirectResult> {
   const appOrigin = input.appOrigin ?? resolveConnectorAppOrigin();
   const parsed = parseXCallback(input.requestUrl);
 
   if (!(parsed.state && (parsed.code || parsed.denied))) {
-    return missingAttemptRedirect({ appOrigin });
+    return missingAttemptRedirect({
+      appOrigin,
+      redirectPaths: input.redirectPaths,
+    });
   }
 
   const pendingAttempt = await lookupConnectorOAuthAttempt({
@@ -585,7 +607,10 @@ export async function completeXConnectorOAuth(input: {
     state: parsed.state,
   });
   if (!pendingAttempt) {
-    return missingAttemptRedirect({ appOrigin });
+    return missingAttemptRedirect({
+      appOrigin,
+      redirectPaths: input.redirectPaths,
+    });
   }
 
   try {
@@ -595,12 +620,17 @@ export async function completeXConnectorOAuth(input: {
     });
   } catch (error) {
     if (isUnauthenticatedFinalizeError(error)) {
-      return signInRedirect({ appOrigin, requestUrl: input.requestUrl });
+      return signInRedirect({
+        appOrigin,
+        redirectPaths: input.redirectPaths,
+        requestUrl: input.requestUrl,
+      });
     }
     return errorRedirect({
       appOrigin,
       code: mapXOAuthError(error),
       orgSlug: pendingAttempt.orgSlug,
+      redirectPaths: input.redirectPaths,
     });
   }
 
@@ -609,7 +639,10 @@ export async function completeXConnectorOAuth(input: {
     state: parsed.state,
   });
   if (!attempt) {
-    return missingAttemptRedirect({ appOrigin });
+    return missingAttemptRedirect({
+      appOrigin,
+      redirectPaths: input.redirectPaths,
+    });
   }
 
   if (parsed.denied || !parsed.code) {
@@ -617,6 +650,7 @@ export async function completeXConnectorOAuth(input: {
       appOrigin,
       code: "x_authorization_denied",
       orgSlug: attempt.orgSlug,
+      redirectPaths: input.redirectPaths,
     });
   }
 
@@ -629,10 +663,15 @@ export async function completeXConnectorOAuth(input: {
     return {
       redirectUrl:
         attempt.mode === "reconnect"
-          ? connectorPageUrl({ appOrigin, orgSlug: attempt.orgSlug })
+          ? connectorPageUrl({
+              appOrigin,
+              orgSlug: attempt.orgSlug,
+              redirectPaths: input.redirectPaths,
+            })
           : connectorSetupCompleteUrl({
               appOrigin,
               orgSlug: attempt.orgSlug,
+              redirectPaths: input.redirectPaths,
             }),
     };
   } catch (error) {
@@ -640,6 +679,7 @@ export async function completeXConnectorOAuth(input: {
       appOrigin,
       code: mapXOAuthError(error),
       orgSlug: attempt.orgSlug,
+      redirectPaths: input.redirectPaths,
     });
   }
 }

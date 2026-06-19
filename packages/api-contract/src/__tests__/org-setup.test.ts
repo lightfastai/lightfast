@@ -6,11 +6,10 @@ import {
   LIGHTFAST_REPOSITORY_NAME,
   ORG_SETUP_REQUIREMENTS,
   orgSetupGateSchema,
-  pathForSetupRequirement,
   repairIdForSetupRequirement,
 } from "../index";
 
-describe("@repo/app-setup-contract", () => {
+describe("org setup contract", () => {
   it("defines the setup requirements in order", () => {
     expect(ORG_SETUP_REQUIREMENTS).toEqual([
       "github_org",
@@ -23,7 +22,7 @@ describe("@repo/app-setup-contract", () => {
     expect(LIGHTFAST_REPOSITORY_NAME).toBe(".lightfast");
   });
 
-  it("maps setup requirements to repair ids", () => {
+  it("maps setup requirements to public repair ids", () => {
     expect(repairIdForSetupRequirement("github_org")).toBe("setup-github-org");
     expect(repairIdForSetupRequirement("github_lightfast_repo")).toBe(
       "setup-github-lightfast-repo"
@@ -31,27 +30,6 @@ describe("@repo/app-setup-contract", () => {
     expect(repairIdForSetupRequirement("x_connector")).toBe(
       "setup-x-connector"
     );
-  });
-
-  it("maps setup requirements to org setup paths", () => {
-    expect(
-      pathForSetupRequirement({
-        orgSlug: "acme",
-        requirement: "github_org",
-      })
-    ).toBe("/acme/tasks/bind");
-    expect(
-      pathForSetupRequirement({
-        orgSlug: "acme",
-        requirement: "github_lightfast_repo",
-      })
-    ).toBe("/acme/tasks/github/lightfast-repo");
-    expect(
-      pathForSetupRequirement({
-        orgSlug: "acme",
-        requirement: "x_connector",
-      })
-    ).toBe("/acme/tasks/connectors/x");
   });
 
   it("models setup gate states without impossible nullable combinations", () => {

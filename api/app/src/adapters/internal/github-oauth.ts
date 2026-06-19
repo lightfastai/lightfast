@@ -2,21 +2,32 @@ import {
   completeGitHubInstallationSetup,
   completeGitHubOAuthVerification,
   completeGitHubUserAccountOAuth,
+  type GitHubSetupRedirectPaths,
 } from "../../services/github";
 
+export type { GitHubSetupRedirectPaths };
+
+interface GitHubSetupRouteOptions {
+  redirectPaths: GitHubSetupRedirectPaths;
+}
+
 export async function handleGitHubInstallationSetupRequest(
-  request: Request
+  request: Request,
+  options: GitHubSetupRouteOptions
 ): Promise<Response> {
   const result = await completeGitHubInstallationSetup({
+    redirectPaths: options.redirectPaths,
     requestUrl: request.url,
   });
   return Response.redirect(result.redirectUrl);
 }
 
 export async function handleGitHubOAuthCallbackRequest(
-  request: Request
+  request: Request,
+  options: GitHubSetupRouteOptions
 ): Promise<Response> {
   const result = await completeGitHubOAuthVerification({
+    redirectPaths: options.redirectPaths,
     requestUrl: request.url,
   });
   return Response.redirect(result.redirectUrl);

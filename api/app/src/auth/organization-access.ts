@@ -1,5 +1,5 @@
 import type { Database } from "@db/app";
-import type { OrgSetupGate } from "@repo/app-setup-contract";
+import type { OrgSetupGate } from "@repo/api-contract";
 import { findUserOrganizationMembership } from "./clerk-org-membership";
 import { resolveOrgSetupGate } from "./org-setup-gate";
 

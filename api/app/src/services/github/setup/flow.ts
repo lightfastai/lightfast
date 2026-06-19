@@ -26,28 +26,39 @@ import {
   completionPageUrl,
   errorRedirect,
   type GitHubRedirectResult,
+  type GitHubSetupRedirectPaths,
   missingAttemptRedirect,
   signInRedirect,
 } from "./redirects";
 
 export { syncGitHubBindingClaim } from "./finalize-binding";
-export type { GitHubRedirectResult } from "./redirects";
+export type {
+  GitHubRedirectResult,
+  GitHubSetupRedirectPaths,
+} from "./redirects";
 
 export async function completeGitHubInstallationSetup(input: {
   appOrigin?: string;
+  redirectPaths: GitHubSetupRedirectPaths;
   requestUrl: string;
 }): Promise<GitHubRedirectResult> {
   const appOrigin = input.appOrigin ?? resolveGitHubAppOrigin();
   const parsed = parseGitHubInstallationSetupCallback(input.requestUrl);
   if (!parsed) {
-    return missingAttemptRedirect({ appOrigin });
+    return missingAttemptRedirect({
+      appOrigin,
+      redirectPaths: input.redirectPaths,
+    });
   }
 
   const pendingAttempt = await lookupGitHubInstallAttempt({
     state: parsed.state,
   });
   if (!pendingAttempt) {
-    return missingAttemptRedirect({ appOrigin });
+    return missingAttemptRedirect({
+      appOrigin,
+      redirectPaths: input.redirectPaths,
+    });
   }
 
   try {
@@ -57,18 +68,26 @@ export async function completeGitHubInstallationSetup(input: {
     });
   } catch (error) {
     if (isUnauthenticatedSetupError(error)) {
-      return signInRedirect({ appOrigin, requestUrl: input.requestUrl });
+      return signInRedirect({
+        appOrigin,
+        redirectPaths: input.redirectPaths,
+        requestUrl: input.requestUrl,
+      });
     }
     return errorRedirect({
       appOrigin,
       code: mapGitHubSetupError(error),
       orgSlug: pendingAttempt.orgSlug,
+      redirectPaths: input.redirectPaths,
     });
   }
 
   const attempt = await consumeGitHubInstallAttempt({ state: parsed.state });
   if (!attempt) {
-    return missingAttemptRedirect({ appOrigin });
+    return missingAttemptRedirect({
+      appOrigin,
+      redirectPaths: input.redirectPaths,
+    });
   }
 
   try {
@@ -103,22 +122,30 @@ export async function completeGitHubInstallationSetup(input: {
       appOrigin,
       code: mapGitHubSetupError(error),
       orgSlug: attempt.orgSlug,
+      redirectPaths: input.redirectPaths,
     });
   }
 }
 
 async function consumeDeniedOAuthCallback(input: {
   appOrigin: string;
+  redirectPaths: GitHubSetupRedirectPaths;
   requestUrl: string;
   state: string | null;
 }): Promise<GitHubRedirectResult> {
   if (!input.state) {
-    return missingAttemptRedirect({ appOrigin: input.appOrigin });
+    return missingAttemptRedirect({
+      appOrigin: input.appOrigin,
+      redirectPaths: input.redirectPaths,
+    });
   }
 
   const pendingAttempt = await lookupGitHubOAuthAttempt({ state: input.state });
   if (!pendingAttempt) {
-    return missingAttemptRedirect({ appOrigin: input.appOrigin });
+    return missingAttemptRedirect({
+      appOrigin: input.appOrigin,
+      redirectPaths: input.redirectPaths,
+    });
   }
 
   try {
@@ -130,6 +157,7 @@ async function consumeDeniedOAuthCallback(input: {
     if (isUnauthenticatedSetupError(error)) {
       return signInRedirect({
         appOrigin: input.appOrigin,
+        redirectPaths: input.redirectPaths,
         requestUrl: input.requestUrl,
       });
     }
@@ -137,6 +165,7 @@ async function consumeDeniedOAuthCallback(input: {
       appOrigin: input.appOrigin,
       code: mapGitHubSetupError(error),
       orgSlug: pendingAttempt.orgSlug,
+      redirectPaths: input.redirectPaths,
     });
   }
 
@@ -146,12 +175,17 @@ async function consumeDeniedOAuthCallback(input: {
         appOrigin: input.appOrigin,
         code: "github_authorization_denied",
         orgSlug: attempt.orgSlug,
+        redirectPaths: input.redirectPaths,
       })
-    : missingAttemptRedirect({ appOrigin: input.appOrigin });
+    : missingAttemptRedirect({
+        appOrigin: input.appOrigin,
+        redirectPaths: input.redirectPaths,
+      });
 }
 
 export async function completeGitHubOAuthVerification(input: {
   appOrigin?: string;
+  redirectPaths: GitHubSetupRedirectPaths;
   requestUrl: string;
 }): Promise<GitHubRedirectResult> {
   const appOrigin = input.appOrigin ?? resolveGitHubAppOrigin();
@@ -160,20 +194,27 @@ export async function completeGitHubOAuthVerification(input: {
   if (parsed.denied) {
     return consumeDeniedOAuthCallback({
       appOrigin,
+      redirectPaths: input.redirectPaths,
       requestUrl: input.requestUrl,
       state: parsed.state,
     });
   }
 
   if (!(parsed.code && parsed.state)) {
-    return missingAttemptRedirect({ appOrigin });
+    return missingAttemptRedirect({
+      appOrigin,
+      redirectPaths: input.redirectPaths,
+    });
   }
 
   const pendingAttempt = await lookupGitHubOAuthAttempt({
     state: parsed.state,
   });
   if (!pendingAttempt) {
-    return missingAttemptRedirect({ appOrigin });
+    return missingAttemptRedirect({
+      appOrigin,
+      redirectPaths: input.redirectPaths,
+    });
   }
 
   try {
@@ -183,18 +224,26 @@ export async function completeGitHubOAuthVerification(input: {
     });
   } catch (error) {
     if (isUnauthenticatedSetupError(error)) {
-      return signInRedirect({ appOrigin, requestUrl: input.requestUrl });
+      return signInRedirect({
+        appOrigin,
+        redirectPaths: input.redirectPaths,
+        requestUrl: input.requestUrl,
+      });
     }
     return errorRedirect({
       appOrigin,
       code: mapGitHubSetupError(error),
       orgSlug: pendingAttempt.orgSlug,
+      redirectPaths: input.redirectPaths,
     });
   }
 
   const attempt = await consumeGitHubOAuthAttempt({ state: parsed.state });
   if (!attempt) {
-    return missingAttemptRedirect({ appOrigin });
+    return missingAttemptRedirect({
+      appOrigin,
+      redirectPaths: input.redirectPaths,
+    });
   }
 
   try {
@@ -226,6 +275,7 @@ export async function completeGitHubOAuthVerification(input: {
       redirectUrl: completionPageUrl({
         appOrigin,
         orgSlug: attempt.orgSlug,
+        redirectPaths: input.redirectPaths,
       }),
     };
   } catch (error) {
@@ -233,6 +283,7 @@ export async function completeGitHubOAuthVerification(input: {
       appOrigin,
       code: mapGitHubSetupError(error),
       orgSlug: attempt.orgSlug,
+      redirectPaths: input.redirectPaths,
     });
   }
 }

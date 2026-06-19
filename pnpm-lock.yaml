@@ -549,9 +549,6 @@ importers:
       '@repo/app-encryption':
         specifier: workspace:*
         version: link:../../packages/app-encryption
-      '@repo/app-setup-contract':
-        specifier: workspace:*
-        version: link:../../packages/app-setup-contract
       '@repo/app-validation':
         specifier: workspace:^
         version: link:../../packages/app-validation
@@ -688,9 +685,6 @@ importers:
       '@repo/app-billing':
         specifier: workspace:*
         version: link:../../packages/app-billing
-      '@repo/app-setup-contract':
-        specifier: workspace:*
-        version: link:../../packages/app-setup-contract
       '@repo/app-validation':
         specifier: workspace:*
         version: link:../../packages/app-validation
@@ -2034,28 +2028,6 @@ importers:
         version: 5.9.3
 
   packages/app-reserved-names:
-    devDependencies:
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../internal/typescript
-      '@repo/vitest-config':
-        specifier: workspace:*
-        version: link:../../internal/vitest-config
-      '@types/node':
-        specifier: 'catalog:'
-        version: 24.9.1
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@24.9.1)(@vitest/browser-playwright@4.1.4)(@vitest/coverage-v8@4.1.4)(happy-dom@20.9.0)(msw@2.14.6(@types/node@24.9.1)(typescript@5.9.3))(vite@8.0.16(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
-
-  packages/app-setup-contract:
-    dependencies:
-      zod:
-        specifier: 'catalog:'
-        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*

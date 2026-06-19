@@ -5,11 +5,11 @@ import {
 import { useSession } from "@clerk/tanstack-react-start";
 import { Loading03Icon as Loader2 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { pathForSetupRequirement } from "@repo/app-setup-contract";
 import { Button } from "@repo/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
+import { pathForSetupRequirement } from "~/org/setup/setup-paths";
 
 interface GitHubBindCompleteClientProps {
   orgSlug: string;

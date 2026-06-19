@@ -10,7 +10,7 @@ import {
   createGitHubInstallationToken,
   getGitHubAppInstallation,
 } from "@lightfast/connector-github/node";
-import { LIGHTFAST_REPOSITORY_NAME } from "@repo/app-setup-contract";
+import { LIGHTFAST_REPOSITORY_NAME } from "@repo/api-contract";
 import { sourceControlRepositorySyncStatusSchema } from "@repo/source-control-contract";
 import { z } from "zod";
 

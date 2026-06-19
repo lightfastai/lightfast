@@ -31,7 +31,6 @@
     "@repo/ai": "workspace:*",
     "@repo/api-contract": "workspace:*",
     "@repo/app-billing": "workspace:*",
-    "@repo/app-setup-contract": "workspace:*",
     "@repo/app-validation": "workspace:*",
     "@repo/native-auth-contract": "workspace:*",
     "@repo/ui": "workspace:*",

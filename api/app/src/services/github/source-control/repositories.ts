@@ -7,7 +7,7 @@ import {
 import {
   githubLightfastRepositoryProofSchema,
   LIGHTFAST_REPOSITORY_NAME,
-} from "@repo/app-setup-contract";
+} from "@repo/api-contract";
 
 export interface SourceControlRepositoryRow {
   fullName: string;

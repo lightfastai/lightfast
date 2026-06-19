@@ -56,6 +56,7 @@ export {
   setXConnectorAgentEnabled,
   setXConnectorAutomationEnabled,
   startXConnectorOAuth,
+  type XConnectorOAuthRedirectPaths,
 } from "./x-flow";
 export { handleXConnectorMcpRequest } from "./x-mcp-bridge";
 export { listConnectorsForOrg };

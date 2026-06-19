@@ -256,7 +256,6 @@
     "@repo/api-contract": "workspace:*",
     "@repo/app-clerk-claim": "workspace:*",
     "@repo/app-encryption": "workspace:*",
-    "@repo/app-setup-contract": "workspace:*",
     "@repo/app-validation": "workspace:^",
     "@repo/entity-resolution": "workspace:*",
     "@repo/identity-contract": "workspace:*",
