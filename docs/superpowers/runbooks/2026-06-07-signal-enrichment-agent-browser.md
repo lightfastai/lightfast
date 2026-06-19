@@ -55,18 +55,9 @@ agent-browser screenshot /tmp/signal-enrichment-verification.png
 ## Manual Retry
 
 If the signal has unresolved links and the enrichment request needs to be
-replayed in dev, invoke the dev-only TanStack server function from an
-authenticated app/dev surface:
-
-```ts
-import { retrySignalEnrichment } from "@api/app/tanstack/entity-graph";
-
-await retrySignalEnrichment({
-  data: {
-    signalId: "signal_123e4567-e89b-12d3-a456-426614174000",
-  },
-});
-```
+replayed in dev, use the local Inngest dev UI to replay or send the event
+directly. Entity graph retry is intentionally not exposed as an app TanStack
+server-function surface.
 
 Expected Inngest event:
 
