@@ -144,7 +144,7 @@ const {
   startGranolaUserConnectorOAuth,
 } = await import("../services/user-connectors/granola-flow");
 const { listUserConnectorsForViewer } = await import(
-  "../services/user-connectors"
+  "../services/user-connectors/catalog"
 );
 
 function userConnection(

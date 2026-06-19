@@ -34,7 +34,7 @@ vi.mock("../services/connectors", () => ({
   startConnectorOAuth: serviceMocks.startConnectorOAuth,
 }));
 
-vi.mock("../services/user-connectors", () => ({
+vi.mock("../services/user-connectors/catalog", () => ({
   listUserConnectorsForViewer: serviceMocks.listUserConnectorsForViewer,
 }));
 

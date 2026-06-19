@@ -1,1 +1,0 @@
-export { listUserConnectorsForViewer } from "./catalog";

@@ -10,7 +10,7 @@ import {
   setConnectorAutomationEnabled,
   startConnectorOAuth,
 } from "../../services/connectors";
-import { listUserConnectorsForViewer } from "../../services/user-connectors";
+import { listUserConnectorsForViewer } from "../../services/user-connectors/catalog";
 import type { ExecutionContext } from "../actor";
 import { defineCommand } from "../command";
 import {
