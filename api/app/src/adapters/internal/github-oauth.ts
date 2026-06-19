@@ -1,9 +1,9 @@
 import {
   completeGitHubInstallationSetup,
   completeGitHubOAuthVerification,
-  completeGitHubUserAccountOAuth,
   type GitHubSetupRedirectPaths,
-} from "../../services/github";
+} from "../../services/github/setup/flow";
+import { completeGitHubUserAccountOAuth } from "../../services/github/user-account/flow";
 
 export type { GitHubSetupRedirectPaths };
 
