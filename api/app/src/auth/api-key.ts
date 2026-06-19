@@ -10,8 +10,8 @@ import { resolveOrgSetupGate } from "./org-setup-gate";
 export type ApiKeyAuthIdentity = Extract<AuthIdentity, { type: "active" }>;
 
 export const PUBLIC_API_KEY_SCOPES = [
-  "api:signals:read",
-  "api:signals:write",
+  "api.signals.read",
+  "api.signals.write",
 ] as const;
 
 export type PublicApiKeyScope = (typeof PUBLIC_API_KEY_SCOPES)[number];

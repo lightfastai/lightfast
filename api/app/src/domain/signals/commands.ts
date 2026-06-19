@@ -221,7 +221,7 @@ export const listProcessingSignalsCommand = defineCommand({
     SignalListProcessingCommandDeps
   >) => {
     const actor = requireSignalCommandActor(ctx, {
-      apiKeyScope: "api:signals:read",
+      apiKeyScope: "api.signals.read",
     });
     return deps.listSignals(deps.db, {
       clerkOrgId: actor.orgId,
@@ -246,7 +246,7 @@ export const listWorkingSetSignalsCommand = defineCommand({
     SignalListWorkingSetCommandDeps
   >) => {
     const actor = requireSignalCommandActor(ctx, {
-      apiKeyScope: "api:signals:read",
+      apiKeyScope: "api.signals.read",
     });
     return deps.listWorkspaceSignals(deps.db, {
       clerkOrgId: actor.orgId,
@@ -269,7 +269,7 @@ export const getSignalCommand = defineCommand({
     SignalGetCommandDeps
   >) => {
     const actor = requireSignalCommandActor(ctx, {
-      apiKeyScope: "api:signals:read",
+      apiKeyScope: "api.signals.read",
     });
     const signal = await deps.getVisibleSignalByPublicId(deps.db, {
       clerkOrgId: actor.orgId,
@@ -304,7 +304,7 @@ export const createSignalCommand = defineCommand({
     SignalCreateCommandDeps
   >) => {
     const actor = requireSignalCommandActor(ctx, {
-      apiKeyScope: "api:signals:write",
+      apiKeyScope: "api.signals.write",
     });
     try {
       return await deps.createSignalForActor(deps.db, {

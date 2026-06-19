@@ -47,7 +47,7 @@ function verifyResult(overrides: Partial<Record<string, unknown>> = {}) {
       identity: { externalId: "org_test", id: "identity_test" },
       keyId: "key_test",
       meta: { createdByUserId: "user_test" },
-      permissions: ["api:signals:read", "api:signals:write"],
+      permissions: ["api.signals.read", "api.signals.write"],
       valid: true,
       ...overrides,
     },
@@ -199,7 +199,7 @@ describe("public signal API adapter", () => {
 
   it("rejects signal list requests from write-only API keys", async () => {
     mocks.verifyKey.mockResolvedValueOnce(
-      verifyResult({ permissions: ["api:signals:write"] })
+      verifyResult({ permissions: ["api.signals.write"] })
     );
 
     const response = await handleListSignalsPublicApiRequest(
@@ -245,7 +245,7 @@ describe("public signal API adapter", () => {
 
   it("rejects signal creation from read-only API keys", async () => {
     mocks.verifyKey.mockResolvedValueOnce(
-      verifyResult({ permissions: ["api:signals:read"] })
+      verifyResult({ permissions: ["api.signals.read"] })
     );
 
     const response = await handleCreateSignalPublicApiRequest(
