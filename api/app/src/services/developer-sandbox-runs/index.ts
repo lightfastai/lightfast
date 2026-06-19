@@ -41,6 +41,11 @@ interface DeveloperSandboxRunServiceOptions {
   runtime?: SandboxRuntime;
 }
 
+type ActiveDeveloperSandboxIdentity = Extract<
+  AuthContext["identity"],
+  { type: "active" }
+>;
+
 interface DeveloperSandboxCommandInput {
   args?: string[];
   cmd: string;
@@ -126,6 +131,16 @@ export function createDeveloperSandboxRunService(
   const runtime = options.runtime ?? createVercelSandboxRuntime();
   const now = options.now ?? (() => new Date());
 
+  function developerConnectionLeaseContext(
+    identity: ActiveDeveloperSandboxIdentity
+  ) {
+    return {
+      actor: { userId: identity.userId },
+      db: options.db,
+      organization: { orgId: identity.orgId },
+    };
+  }
+
   async function loadRun(
     ctx: DeveloperSandboxRunServiceContext,
     sandboxRunId: string
@@ -145,14 +160,19 @@ export function createDeveloperSandboxRunService(
   }
 
   async function materializeCredentials(
-    ctx: DeveloperSandboxRunServiceContext,
+    identity: ActiveDeveloperSandboxIdentity,
     run: DeveloperSandboxRun
   ): Promise<MaterializedCredentials> {
+    const leaseContext = developerConnectionLeaseContext(identity);
+
     async function issueAndWriteCredentials() {
-      const issued = await issueAllEnabledDeveloperConnectionLeases(ctx, {
-        sandboxRunId: run.publicId,
-        workflowRunId: run.workflowRunId,
-      });
+      const issued = await issueAllEnabledDeveloperConnectionLeases(
+        leaseContext,
+        {
+          sandboxRunId: run.publicId,
+          workflowRunId: run.workflowRunId,
+        }
+      );
       const sandbox = await runtime.get(run.vercelSandboxId);
       const files = issued.materialization.flatMap((entry, index) => {
         const lease = issued.leases[index];
@@ -188,7 +208,7 @@ export function createDeveloperSandboxRunService(
 
     if (run.credentialsLoadedAt) {
       const existing = await materializeDeveloperConnectionLeasesForSandboxRun(
-        ctx,
+        leaseContext,
         { sandboxRunId: run.publicId }
       );
       if (existing.leases.length === 0) {
@@ -281,7 +301,7 @@ export function createDeveloperSandboxRunService(
         };
       }
 
-      const credentials = await materializeCredentials(ctx, run);
+      const credentials = await materializeCredentials(identity, run);
       const sandbox = await runtime.get(run.vercelSandboxId);
       const runtimeCommand = await sandbox.exec({
         cmd: input.command.cmd,

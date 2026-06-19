@@ -13,17 +13,21 @@ import {
   DEVELOPER_CONNECTION_PROVIDERS,
   type DeveloperConnectionIssueLeaseInput,
 } from "@repo/api-contract";
-import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
-import { AuthzError, ConflictError } from "../../domain/errors";
+import { ConflictError } from "../../domain/errors";
 import {
   type DeveloperConnectionMaterialization,
   materializeDeveloperCredential,
 } from "./adapters";
 import { decryptDeveloperCredential } from "./credentials";
 
-interface DeveloperConnectionServiceContext {
-  auth: AuthContext;
+interface DeveloperConnectionLeaseServiceContext {
+  actor: {
+    userId: string;
+  };
   db: Database;
+  organization: {
+    orgId: string;
+  };
 }
 
 interface SandboxRunLeaseInput {
@@ -34,14 +38,6 @@ interface SandboxRunLeaseInput {
 interface LeaseMaterializationResult {
   leases: DeveloperConnectionLease[];
   materialization: DeveloperConnectionMaterialization[];
-}
-
-function activeIdentity(ctx: DeveloperConnectionServiceContext) {
-  const identity = ctx.auth.identity;
-  if (identity.type !== "active") {
-    throw new AuthzError("AUTH_REQUIRED", "Authentication required.");
-  }
-  return identity;
 }
 
 function assertUsableConnection(connection: DeveloperConnection) {
@@ -89,13 +85,12 @@ function activeLease(lease: DeveloperConnectionLease, now: Date) {
 }
 
 export async function issueDeveloperConnectionLeases(
-  ctx: DeveloperConnectionServiceContext,
+  ctx: DeveloperConnectionLeaseServiceContext,
   input: DeveloperConnectionIssueLeaseInput
 ): Promise<LeaseMaterializationResult> {
-  const identity = activeIdentity(ctx);
   const requested = new Set(input.providers);
   const current = await listCurrentDeveloperConnections(ctx.db, {
-    clerkOrgId: identity.orgId,
+    clerkOrgId: ctx.organization.orgId,
   });
   const byProvider = new Map(
     current.map((connection) => [connection.provider, connection])
@@ -122,8 +117,8 @@ export async function issueDeveloperConnectionLeases(
 
     const lease = await issueDeveloperConnectionLease(ctx.db, {
       connectionId: connection.id,
-      clerkOrgId: identity.orgId,
-      actorUserId: identity.userId,
+      clerkOrgId: ctx.organization.orgId,
+      actorUserId: ctx.actor.userId,
       sandboxRunId: input.sandboxRunId,
       workflowRunId: input.workflowRunId,
       provider,
@@ -137,12 +132,11 @@ export async function issueDeveloperConnectionLeases(
 }
 
 export async function issueAllEnabledDeveloperConnectionLeases(
-  ctx: DeveloperConnectionServiceContext,
+  ctx: DeveloperConnectionLeaseServiceContext,
   input: SandboxRunLeaseInput
 ): Promise<LeaseMaterializationResult> {
-  const identity = activeIdentity(ctx);
   const current = await listCurrentDeveloperConnections(ctx.db, {
-    clerkOrgId: identity.orgId,
+    clerkOrgId: ctx.organization.orgId,
   });
   const byProvider = new Map(
     current.map((connection) => [connection.provider, connection])
@@ -160,8 +154,8 @@ export async function issueAllEnabledDeveloperConnectionLeases(
     assertUsableConnection(connection);
     const lease = await issueDeveloperConnectionLease(ctx.db, {
       connectionId: connection.id,
-      clerkOrgId: identity.orgId,
-      actorUserId: identity.userId,
+      clerkOrgId: ctx.organization.orgId,
+      actorUserId: ctx.actor.userId,
       sandboxRunId: input.sandboxRunId,
       workflowRunId: input.workflowRunId ?? input.sandboxRunId,
       provider,
@@ -175,14 +169,13 @@ export async function issueAllEnabledDeveloperConnectionLeases(
 }
 
 export async function materializeDeveloperConnectionLeasesForSandboxRun(
-  ctx: DeveloperConnectionServiceContext,
+  ctx: DeveloperConnectionLeaseServiceContext,
   input: { sandboxRunId: string; now?: Date }
 ): Promise<LeaseMaterializationResult> {
-  const identity = activeIdentity(ctx);
   const now = input.now ?? new Date();
   const leases = (
     await listDeveloperConnectionLeasesForSandboxRun(ctx.db, {
-      clerkOrgId: identity.orgId,
+      clerkOrgId: ctx.organization.orgId,
       sandboxRunId: input.sandboxRunId,
     })
   ).filter((lease) => activeLease(lease, now));
@@ -193,7 +186,7 @@ export async function materializeDeveloperConnectionLeasesForSandboxRun(
       ctx.db,
       lease.connectionId
     );
-    if (!connection || connection.clerkOrgId !== identity.orgId) {
+    if (!connection || connection.clerkOrgId !== ctx.organization.orgId) {
       throw new ConflictError(
         "DEVELOPER_CONNECTION_CREDENTIAL_MISSING",
         `${lease.provider} has no credential material`

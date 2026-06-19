@@ -95,6 +95,14 @@ function catalogCtx(input: { canManage?: boolean } = {}) {
   };
 }
 
+function leaseCtx() {
+  return {
+    actor: { userId: "user_admin" },
+    db: {} as Database,
+    organization: { orgId: "org_acme" },
+  };
+}
+
 describe("developer connection services", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -328,7 +336,7 @@ describe("developer connection services", () => {
     ]);
 
     await expect(
-      issueDeveloperConnectionLeases(ctx(), {
+      issueDeveloperConnectionLeases(leaseCtx(), {
         providers: ["sentry"],
         sandboxRunId: "sandbox_run_1",
         workflowRunId: "workflow_run_1",
@@ -353,7 +361,7 @@ describe("developer connection services", () => {
     listCurrentDeveloperConnectionsMock.mockResolvedValue([]);
 
     await expect(
-      issueDeveloperConnectionLeases(ctx(), {
+      issueDeveloperConnectionLeases(leaseCtx(), {
         providers: ["sentry"],
         sandboxRunId: "sandbox_run_1",
         workflowRunId: "workflow_run_1",
@@ -442,7 +450,7 @@ describe("developer connection services", () => {
     );
 
     await expect(
-      issueAllEnabledDeveloperConnectionLeases(ctx(), {
+      issueAllEnabledDeveloperConnectionLeases(leaseCtx(), {
         sandboxRunId: "developer_sandbox_run_1",
       })
     ).resolves.toEqual({
@@ -514,7 +522,7 @@ describe("developer connection services", () => {
     });
 
     await expect(
-      materializeDeveloperConnectionLeasesForSandboxRun(ctx(), {
+      materializeDeveloperConnectionLeasesForSandboxRun(leaseCtx(), {
         now: new Date("2026-06-03T00:05:00.000Z"),
         sandboxRunId: "developer_sandbox_run_1",
       })
