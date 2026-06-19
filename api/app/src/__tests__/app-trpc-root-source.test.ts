@@ -81,4 +81,20 @@ describe("api/app app-facing tRPC root", () => {
       }
     }
   });
+
+  it("keeps skill events service independent of request auth and HTTP mapping", () => {
+    const serviceSource = source("services/skills/events.ts");
+
+    for (const forbiddenToken of [
+      "Request",
+      "Response",
+      "resolveAuthContextFromClerk",
+      "getRequest",
+      "request.headers",
+      "@vendor/clerk/server",
+      "@db/app/client",
+    ]) {
+      expect(serviceSource, forbiddenToken).not.toContain(forbiddenToken);
+    }
+  });
 });
