@@ -4,7 +4,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const jwtSecret = "test-service-jwt-secret-at-least-32-chars";
 
 async function importAdapter() {
-  vi.stubEnv("MCP_AUTH_ISSUER", "https://lightfast.ai");
+  vi.stubEnv("APP_INTERNAL_URL", "https://app-internal.lightfast.ai");
+  vi.stubEnv("MCP_AUTH_ISSUER", "https://issuer.lightfast.ai");
   vi.stubEnv("MCP_RESOURCE_URL", "https://mcp.lightfast.ai/mcp");
   vi.stubEnv("SERVICE_JWT_SECRET", jwtSecret);
   return await import("../tools/app-signal-intake");
@@ -50,7 +51,7 @@ describe("app signal intake adapter", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://lightfast.ai/api/internal/mcp/signals",
+      "https://app-internal.lightfast.ai/api/internal/mcp/signals",
       expect.objectContaining({
         method: "POST",
       })
@@ -187,7 +188,7 @@ describe("app signal intake adapter", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://lightfast.ai/api/internal/mcp/signals/get",
+      "https://app-internal.lightfast.ai/api/internal/mcp/signals/get",
       expect.objectContaining({
         method: "POST",
       })

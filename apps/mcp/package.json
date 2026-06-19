@@ -16,7 +16,7 @@
     "with-env": "dotenv -e ./.vercel/.env.development.local --",
     "with-env:local": "dotenv -e ./.vercel/.env.development.local --",
     "with-env:vercel": "dotenv -e ./.vercel/.env.development.local --",
-    "with-related-projects": "MCP_RESOURCE_URL=$(portless get mcp.lightfast)/mcp MCP_AUTH_ISSUER=$(portless get lightfast)"
+    "with-related-projects": "APP_INTERNAL_URL=$(portless get lightfast) MCP_RESOURCE_URL=$(portless get mcp.lightfast)/mcp MCP_AUTH_ISSUER=$(portless get lightfast)"
   },
   "dependencies": {
     "@lightfast/connector-core": "workspace:*",

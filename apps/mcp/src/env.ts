@@ -12,6 +12,7 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
+    APP_INTERNAL_URL: z.string().url().optional(),
     MCP_AUTH_ISSUER: z.string().url(),
     MCP_RESOURCE_URL: z.string().url(),
     SERVICE_JWT_SECRET: z.string().min(32),
@@ -25,6 +26,7 @@ export const env = createEnv({
   },
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
+    APP_INTERNAL_URL: process.env.APP_INTERNAL_URL,
     MCP_AUTH_ISSUER: process.env.MCP_AUTH_ISSUER,
     MCP_RESOURCE_URL: process.env.MCP_RESOURCE_URL,
     SERVICE_JWT_SECRET: process.env.SERVICE_JWT_SECRET,
@@ -40,3 +42,5 @@ export const env = createEnv({
     process.env.npm_lifecycle_event === "lint",
   emptyStringAsUndefined: true,
 });
+
+export const appInternalUrl = env.APP_INTERNAL_URL ?? env.MCP_AUTH_ISSUER;

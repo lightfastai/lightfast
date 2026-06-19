@@ -36,6 +36,7 @@ describe("MCP environment validation wiring", () => {
     expect(envSource).not.toContain("@db/app/env");
     expect(envSource).not.toContain("@vendor/observability/sentry-env");
     expect(envSource).toContain('from "@t3-oss/env-core"');
+    expect(envSource).toContain("APP_INTERNAL_URL");
     expectNoForbiddenAppRuntimeEnv(envSource);
   });
 
@@ -95,6 +96,7 @@ describe("MCP environment validation wiring", () => {
         "SENTRY_ORG",
         "SENTRY_PROJECT",
         "VITE_*",
+        "APP_INTERNAL_URL",
       ])
     );
   });
@@ -125,9 +127,22 @@ describe("MCP environment validation wiring", () => {
     const relatedProjectsScript = packageJson.scripts["with-related-projects"];
 
     expect(relatedProjectsScript).toBe(
-      "MCP_RESOURCE_URL=$(portless get mcp.lightfast)/mcp MCP_AUTH_ISSUER=$(portless get lightfast)"
+      "APP_INTERNAL_URL=$(portless get lightfast) MCP_RESOURCE_URL=$(portless get mcp.lightfast)/mcp MCP_AUTH_ISSUER=$(portless get lightfast)"
     );
     expectNoForbiddenAppRuntimeEnv(relatedProjectsScript ?? "");
+  });
+
+  it("uses a distinct app internal URL for app-owned MCP intake calls", () => {
+    const intakeSource = [
+      "src/tools/app-audit-intake.ts",
+      "src/tools/app-proxy-intake.ts",
+      "src/tools/app-signal-intake.ts",
+    ]
+      .map((path) => readFileSync(resolve(appRoot, path), "utf8"))
+      .join("\n");
+
+    expect(intakeSource).toContain("appInternalUrl");
+    expect(intakeSource).not.toContain("env.MCP_AUTH_ISSUER");
   });
 
   it("keeps app runtime envs out of the Turbo build boundary", () => {

@@ -12,7 +12,7 @@ import {
 } from "@lightfast/connector-core/provider-routines";
 import { signServiceJWT } from "@repo/service-jwt";
 
-import { env } from "../env";
+import { appInternalUrl, env } from "../env";
 
 type Fetch = typeof fetch;
 
@@ -61,7 +61,7 @@ async function readJson(response: Response): Promise<unknown> {
 }
 
 function appProxyUrl(pathname: string): string {
-  return new URL(pathname, env.MCP_AUTH_ISSUER).toString();
+  return new URL(pathname, appInternalUrl).toString();
 }
 
 function commandActorFromContext(
