@@ -17,19 +17,8 @@
         "VITE_*",
         "VERCEL_ENV"
       ],
-      "passThroughEnv": [
-        "DATABASE_HOST",
-        "DATABASE_USERNAME",
-        "DATABASE_PASSWORD",
-        "HOST",
-        "PORT"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "../app/.env.overrides.local",
-        "../app/.vercel/.env*",
-        ".vercel/.env*"
-      ],
+      "passThroughEnv": ["HOST", "PORT"],
+      "inputs": ["$TURBO_DEFAULT$", ".vercel/.env*"],
       "outputs": [".output/**", "dist/**", "src/routeTree.gen.ts"]
     },
     "dev": {
