@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -12,10 +12,6 @@ describe("GitHub webhook request boundary", () => {
     );
     const serviceSource = readFileSync(
       resolve(apiRoot, "services/github/webhook/handler.ts"),
-      "utf8"
-    );
-    const serviceIndexSource = readFileSync(
-      resolve(apiRoot, "services/github/index.ts"),
       "utf8"
     );
 
@@ -37,6 +33,8 @@ describe("GitHub webhook request boundary", () => {
     expect(serviceSource).not.toContain("x-hub-signature-256");
     expect(serviceSource).not.toContain("input.request");
 
-    expect(serviceIndexSource).not.toContain("handleVerifiedGitHubWebhook");
+    expect(existsSync(resolve(apiRoot, "services/github/index.ts"))).toBe(
+      false
+    );
   });
 });
