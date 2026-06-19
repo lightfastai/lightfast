@@ -163,7 +163,7 @@ function providerRoutineContext(
       connectors: {
         loadTools: async () => {
           const { loadAgentConnectorRuntimeTools } = await import(
-            "@api/app/services/connectors/runtime"
+            "../../services/connectors/runtime"
           );
           return await loadAgentConnectorRuntimeTools({
             calledByUserId: command.actor.userId,

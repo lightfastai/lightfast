@@ -189,34 +189,6 @@
       "types": "./src/adapters/tanstack/people.ts",
       "default": "./src/adapters/tanstack/people.ts"
     },
-    "./services/github": {
-      "types": "./src/services/github/index.ts",
-      "default": "./src/services/github/index.ts"
-    },
-    "./services/skills": {
-      "types": "./src/services/skills/index.ts",
-      "default": "./src/services/skills/index.ts"
-    },
-    "./services/connectors": {
-      "types": "./src/services/connectors/index.ts",
-      "default": "./src/services/connectors/index.ts"
-    },
-    "./services/connectors/chat-routines": {
-      "types": "./src/services/connectors/chat-routines.ts",
-      "default": "./src/services/connectors/chat-routines.ts"
-    },
-    "./services/connectors/runtime": {
-      "types": "./src/services/connectors/runtime.ts",
-      "default": "./src/services/connectors/runtime.ts"
-    },
-    "./services/user-connectors": {
-      "types": "./src/services/user-connectors/index.ts",
-      "default": "./src/services/user-connectors/index.ts"
-    },
-    "./services/user-connectors/runtime": {
-      "types": "./src/services/user-connectors/runtime.ts",
-      "default": "./src/services/user-connectors/runtime.ts"
-    },
     "./signals/service": {
       "types": "./src/signals/service.ts",
       "default": "./src/signals/service.ts"
