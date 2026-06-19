@@ -3,7 +3,7 @@ import { verifyGitHubWebhookSignature } from "@lightfast/connector-github/node";
 import { log } from "@vendor/observability/log/next";
 
 import { env } from "../../env";
-import { handleVerifiedGitHubWebhook } from "../../services/github";
+import { handleVerifiedGitHubWebhook } from "../../services/github/webhook/handler";
 
 function response(status: number, body: Record<string, unknown>) {
   return Response.json(body, { status });
