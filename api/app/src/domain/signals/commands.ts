@@ -13,8 +13,11 @@ import {
 } from "@repo/api-contract";
 import { z } from "zod";
 import type { PublicApiKeyScope } from "../../auth/api-key";
-import { isSignalCreateQueueError } from "../../signals/create-signal";
-import { createSignalForActor } from "../../signals/service";
+import {
+  type CreateAndQueueSignalInput,
+  createAndQueueSignal,
+  isSignalCreateQueueError,
+} from "../../signals/create-signal";
 import type { ExecutionContext } from "../actor";
 import { type CommandRunArgs, defineCommand } from "../command";
 import { AuthzError, InternalDomainError, NotFoundError } from "../errors";
@@ -62,7 +65,7 @@ interface SignalCommandBaseDeps {
 }
 
 export interface SignalCreateCommandDeps extends SignalCommandBaseDeps {
-  createSignalForActor: typeof createSignalForActor;
+  createAndQueueSignal: typeof createAndQueueSignal;
 }
 
 export interface SignalGetCommandDeps extends SignalCommandBaseDeps {
@@ -88,7 +91,7 @@ export function createSignalCommandDeps(input: {
 }): SignalCreateCommandDeps {
   return {
     db: input.db,
-    createSignalForActor,
+    createAndQueueSignal,
   };
 }
 
@@ -116,7 +119,7 @@ export function createDefaultSignalCommandDeps(input: {
 }): SignalCommandDeps {
   return {
     db: input.db,
-    createSignalForActor,
+    createAndQueueSignal,
     getVisibleSignalByPublicId,
     listSignalEntityLinksForSignal,
     listSignals,
@@ -133,24 +136,26 @@ type SignalCommandRunArgs<
   TDeps extends object,
 > = CommandRunArgs<TInput, TOutput, TDeps>;
 
-type ResolvedSignalCommandActor =
-  | { kind: "web"; orgId: string; userId: string }
-  | { apiKeyId: string; kind: "api_key"; orgId: string; userId: string }
-  | {
-      clientId: string;
-      grantId: string;
-      kind: "mcp";
-      orgId: string;
-      userId: string;
-    };
+type ResolvedSignalCommandAuthority = Pick<
+  CreateAndQueueSignalInput,
+  | "clerkOrgId"
+  | "createdByApiKeyId"
+  | "createdByMcpClientId"
+  | "createdByMcpGrantId"
+  | "createdByUserId"
+>;
 
-function requireSignalCommandActor(
+function requireSignalCommandAuthority(
   ctx: ExecutionContext,
   input: { apiKeyScope?: PublicApiKeyScope } = {}
-): ResolvedSignalCommandActor {
+): ResolvedSignalCommandAuthority {
   if (ctx.actor.kind === "clerkUser") {
     const actor = requireBoundClerkOrgActor(ctx);
-    return { kind: "web", orgId: actor.orgId, userId: actor.userId };
+    return {
+      clerkOrgId: actor.orgId,
+      createdByApiKeyId: null,
+      createdByUserId: actor.userId,
+    };
   }
 
   if (ctx.actor.kind === "apiKey") {
@@ -173,10 +178,9 @@ function requireSignalCommandActor(
     }
 
     return {
-      apiKeyId: ctx.actor.keyId,
-      kind: "api_key",
-      orgId: ctx.actor.orgId,
-      userId: ctx.actor.createdByUserId,
+      clerkOrgId: ctx.actor.orgId,
+      createdByApiKeyId: ctx.actor.keyId,
+      createdByUserId: ctx.actor.createdByUserId,
     };
   }
 
@@ -193,11 +197,11 @@ function requireSignalCommandActor(
     }
 
     return {
-      clientId: ctx.actor.clientId,
-      grantId: ctx.actor.grantId,
-      kind: "mcp",
-      orgId: ctx.actor.orgId,
-      userId: ctx.actor.userId,
+      clerkOrgId: ctx.actor.orgId,
+      createdByApiKeyId: null,
+      createdByMcpClientId: ctx.actor.clientId,
+      createdByMcpGrantId: ctx.actor.grantId,
+      createdByUserId: ctx.actor.userId,
     };
   }
 
@@ -220,12 +224,12 @@ export const listProcessingSignalsCommand = defineCommand({
     ListProcessingSignalsResult,
     SignalListProcessingCommandDeps
   >) => {
-    const actor = requireSignalCommandActor(ctx, {
+    const authority = requireSignalCommandAuthority(ctx, {
       apiKeyScope: "api.signals.read",
     });
     return deps.listSignals(deps.db, {
-      clerkOrgId: actor.orgId,
-      createdByUserId: actor.userId,
+      clerkOrgId: authority.clerkOrgId,
+      createdByUserId: authority.createdByUserId,
       cursor: input.cursor,
       limit: input.limit,
       statuses: input.statuses?.length ? input.statuses : undefined,
@@ -245,12 +249,12 @@ export const listWorkingSetSignalsCommand = defineCommand({
     ListWorkingSetSignalsResult,
     SignalListWorkingSetCommandDeps
   >) => {
-    const actor = requireSignalCommandActor(ctx, {
+    const authority = requireSignalCommandAuthority(ctx, {
       apiKeyScope: "api.signals.read",
     });
     return deps.listWorkspaceSignals(deps.db, {
-      clerkOrgId: actor.orgId,
-      createdByUserId: actor.userId,
+      clerkOrgId: authority.clerkOrgId,
+      createdByUserId: authority.createdByUserId,
     });
   },
 });
@@ -268,12 +272,12 @@ export const getSignalCommand = defineCommand({
     SignalDetailResult,
     SignalGetCommandDeps
   >) => {
-    const actor = requireSignalCommandActor(ctx, {
+    const authority = requireSignalCommandAuthority(ctx, {
       apiKeyScope: "api.signals.read",
     });
     const signal = await deps.getVisibleSignalByPublicId(deps.db, {
-      clerkOrgId: actor.orgId,
-      createdByUserId: actor.userId,
+      clerkOrgId: authority.clerkOrgId,
+      createdByUserId: authority.createdByUserId,
       publicId: input.publicId,
     });
 
@@ -282,7 +286,7 @@ export const getSignalCommand = defineCommand({
     }
 
     const entityLinks = await deps.listSignalEntityLinksForSignal(deps.db, {
-      clerkOrgId: actor.orgId,
+      clerkOrgId: authority.clerkOrgId,
       signalId: signal.publicId,
     });
 
@@ -303,12 +307,12 @@ export const createSignalCommand = defineCommand({
     z.infer<typeof createSignalOutput>,
     SignalCreateCommandDeps
   >) => {
-    const actor = requireSignalCommandActor(ctx, {
+    const authority = requireSignalCommandAuthority(ctx, {
       apiKeyScope: "api.signals.write",
     });
     try {
-      return await deps.createSignalForActor(deps.db, {
-        actor,
+      return await deps.createAndQueueSignal(deps.db, {
+        ...authority,
         input: input.input,
       });
     } catch (error) {

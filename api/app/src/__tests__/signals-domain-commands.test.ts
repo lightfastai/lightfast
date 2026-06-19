@@ -11,7 +11,7 @@ import {
 } from "../domain/signals";
 
 const mocks = vi.hoisted(() => ({
-  createSignalForActorMock: vi.fn(),
+  createAndQueueSignalMock: vi.fn(),
   getVisibleSignalByPublicIdMock: vi.fn(),
   listSignalEntityLinksForSignalMock: vi.fn(),
   listSignalsMock: vi.fn(),
@@ -19,7 +19,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 const {
-  createSignalForActorMock,
+  createAndQueueSignalMock,
   getVisibleSignalByPublicIdMock,
   listSignalEntityLinksForSignalMock,
   listSignalsMock,
@@ -32,10 +32,8 @@ vi.mock("@db/app", () => ({
   listSignals: mocks.listSignalsMock,
   listWorkspaceSignals: mocks.listWorkspaceSignalsMock,
 }));
-vi.mock("../signals/service", () => ({
-  createSignalForActor: mocks.createSignalForActorMock,
-}));
 vi.mock("../signals/create-signal", () => ({
+  createAndQueueSignal: mocks.createAndQueueSignalMock,
   isSignalCreateQueueError: (error: unknown) =>
     error instanceof Error && error.name === "SignalCreateQueueError",
 }));
@@ -82,7 +80,7 @@ beforeEach(() => {
   listWorkspaceSignalsMock.mockReset();
   getVisibleSignalByPublicIdMock.mockReset();
   listSignalEntityLinksForSignalMock.mockReset();
-  createSignalForActorMock.mockReset();
+  createAndQueueSignalMock.mockReset();
   listSignalsMock.mockResolvedValue({ items: [signalRow], nextCursor: null });
   listWorkspaceSignalsMock.mockResolvedValue({
     items: [],
@@ -93,7 +91,7 @@ beforeEach(() => {
   });
   getVisibleSignalByPublicIdMock.mockResolvedValue(signalRow);
   listSignalEntityLinksForSignalMock.mockResolvedValue([]);
-  createSignalForActorMock.mockResolvedValue({
+  createAndQueueSignalMock.mockResolvedValue({
     id: signalRow.publicId,
     status: "queued",
     visibilityScope: "user",
@@ -181,8 +179,10 @@ describe("signal domain commands", () => {
       visibilityScope: "user",
     });
 
-    expect(createSignalForActorMock).toHaveBeenCalledWith(expect.anything(), {
-      actor: { kind: "web", orgId: "org_test", userId: "user_test" },
+    expect(createAndQueueSignalMock).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_test",
+      createdByApiKeyId: null,
+      createdByUserId: "user_test",
       input: "new signal",
     });
   });
@@ -209,13 +209,10 @@ describe("signal domain commands", () => {
       visibilityScope: "user",
     });
 
-    expect(createSignalForActorMock).toHaveBeenCalledWith(expect.anything(), {
-      actor: {
-        apiKeyId: "key_test",
-        kind: "api_key",
-        orgId: "org_test",
-        userId: "user_test",
-      },
+    expect(createAndQueueSignalMock).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_test",
+      createdByApiKeyId: "key_test",
+      createdByUserId: "user_test",
       input: "new signal",
     });
   });
@@ -243,7 +240,7 @@ describe("signal domain commands", () => {
       })
     );
 
-    expect(createSignalForActorMock).not.toHaveBeenCalled();
+    expect(createAndQueueSignalMock).not.toHaveBeenCalled();
   });
 
   it("creates a signal as an MCP client actor with grant attribution", async () => {
@@ -270,14 +267,12 @@ describe("signal domain commands", () => {
       visibilityScope: "user",
     });
 
-    expect(createSignalForActorMock).toHaveBeenCalledWith(expect.anything(), {
-      actor: {
-        clientId: "client_test",
-        grantId: "grant_test",
-        kind: "mcp",
-        orgId: "org_test",
-        userId: "user_test",
-      },
+    expect(createAndQueueSignalMock).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_test",
+      createdByApiKeyId: null,
+      createdByMcpClientId: "client_test",
+      createdByMcpGrantId: "grant_test",
+      createdByUserId: "user_test",
       input: "new signal",
     });
   });
@@ -365,7 +360,7 @@ describe("signal domain commands", () => {
   it("maps queue failures to an internal domain error", async () => {
     const error = new Error("queue failed");
     error.name = "SignalCreateQueueError";
-    createSignalForActorMock.mockRejectedValueOnce(error);
+    createAndQueueSignalMock.mockRejectedValueOnce(error);
 
     await expect(
       createSignalCommand.run({

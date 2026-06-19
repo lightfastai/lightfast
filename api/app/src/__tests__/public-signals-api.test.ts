@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  createSignalForActor: vi.fn(),
+  createAndQueueSignal: vi.fn(),
   getActiveOrgBinding: vi.fn(),
   getCurrentOrgConnectorConnection: vi.fn(),
   getVisibleSignalByPublicId: vi.fn(),
@@ -25,9 +25,14 @@ vi.mock("@db/app", () => ({
   listSignals: mocks.listSignals,
 }));
 
-vi.mock("../signals/service", () => ({
-  createSignalForActor: mocks.createSignalForActor,
-}));
+vi.mock("../signals/create-signal", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../signals/create-signal")>();
+  return {
+    ...actual,
+    createAndQueueSignal: mocks.createAndQueueSignal,
+  };
+});
 
 const {
   handleCreateSignalPublicApiRequest,
@@ -134,7 +139,7 @@ beforeEach(() => {
       id: 1,
     },
   });
-  mocks.createSignalForActor.mockResolvedValue({
+  mocks.createAndQueueSignal.mockResolvedValue({
     id: signalId,
     status: "queued",
     visibilityScope: "user",
@@ -159,7 +164,7 @@ describe("public signal API adapter", () => {
     await expect(responseJson(response)).resolves.toMatchObject({
       error: "auth_required",
     });
-    expect(mocks.createSignalForActor).not.toHaveBeenCalled();
+    expect(mocks.createAndQueueSignal).not.toHaveBeenCalled();
   });
 
   it("lists visible signals with API-key auth and an opaque cursor", async () => {
@@ -232,13 +237,10 @@ describe("public signal API adapter", () => {
       status: "queued",
       visibilityScope: "user",
     });
-    expect(mocks.createSignalForActor).toHaveBeenCalledWith(expect.anything(), {
-      actor: {
-        apiKeyId: "key_test",
-        kind: "api_key",
-        orgId: "org_test",
-        userId: "user_test",
-      },
+    expect(mocks.createAndQueueSignal).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_test",
+      createdByApiKeyId: "key_test",
+      createdByUserId: "user_test",
       input: "Reply to this relevant post",
     });
   });
@@ -259,7 +261,7 @@ describe("public signal API adapter", () => {
     await expect(responseJson(response)).resolves.toMatchObject({
       error: "forbidden",
     });
-    expect(mocks.createSignalForActor).not.toHaveBeenCalled();
+    expect(mocks.createAndQueueSignal).not.toHaveBeenCalled();
   });
 
   it("rejects signal creation for unbound organizations", async () => {
@@ -276,11 +278,11 @@ describe("public signal API adapter", () => {
     await expect(responseJson(response)).resolves.toMatchObject({
       error: "org_setup_required",
     });
-    expect(mocks.createSignalForActor).not.toHaveBeenCalled();
+    expect(mocks.createAndQueueSignal).not.toHaveBeenCalled();
   });
 
   it("maps signal queue failures to a public internal error", async () => {
-    mocks.createSignalForActor.mockRejectedValueOnce(
+    mocks.createAndQueueSignal.mockRejectedValueOnce(
       new SignalCreateQueueError(new Error("inngest unavailable"))
     );
 
