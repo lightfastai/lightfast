@@ -17,8 +17,7 @@ import { auth } from "@vendor/clerk/server";
 import type { OAuthClientInformationMixed, OAuthTokens } from "@vendor/mcp";
 import { StreamableHTTPClientTransport } from "@vendor/mcp";
 import { log } from "@vendor/observability/log/next";
-import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
-import { AuthzError, InternalDomainError } from "../../domain/errors";
+import { InternalDomainError } from "../../domain/errors";
 import { env } from "../../env";
 import {
   consumeUserConnectorOAuthAttempt,
@@ -31,21 +30,17 @@ export const GRANOLA_OAUTH_CALLBACK_PATH =
   "/api/connectors/granola/oauth/callback";
 
 interface GranolaUserConnectorServiceContext {
-  auth: AuthContext;
   db: Database;
-  headers: Headers;
+  request: {
+    referer?: string | null;
+  };
+  viewer: {
+    userId: string;
+  };
 }
 
 export interface GranolaRedirectResult {
   redirectUrl: string;
-}
-
-function signedInIdentity(ctx: GranolaUserConnectorServiceContext) {
-  const identity = ctx.auth.identity;
-  if (identity.type === "unauthenticated") {
-    throw new AuthzError("AUTH_REQUIRED", "Authentication required.");
-  }
-  return identity;
 }
 
 function resolveUserConnectorAppOrigin() {
@@ -83,8 +78,8 @@ function signInRedirect(input: {
   return { redirectUrl: signInUrl.toString() };
 }
 
-function safeReturnTo(input: { appOrigin: string; headers: Headers }) {
-  const referer = input.headers.get("referer");
+function safeReturnTo(input: { appOrigin: string; referer?: string | null }) {
+  const referer = input.referer;
   if (!referer) {
     return "/account/settings?connector=granola";
   }
@@ -214,14 +209,13 @@ function createGranolaOAuthProvider(input: {
 export async function startGranolaUserConnectorOAuth(
   ctx: GranolaUserConnectorServiceContext
 ): Promise<{ authorizationUrl: string; mode: "connect" | "reconnect" }> {
-  const identity = signedInIdentity(ctx);
   const appOrigin = resolveUserConnectorAppOrigin();
   const redirectUrl = new URL(
     GRANOLA_OAUTH_CALLBACK_PATH,
     appOrigin
   ).toString();
   const current = await getCurrentUserConnectorConnection(ctx.db, {
-    clerkUserId: identity.userId,
+    clerkUserId: ctx.viewer.userId,
     provider: "granola",
   });
   const mode = current ? "reconnect" : "connect";
@@ -261,12 +255,15 @@ export async function startGranolaUserConnectorOAuth(
   const providerState = authorizationUrl.searchParams.get("state") ?? undefined;
   const snapshot = provider.snapshot();
   const attempt = await issueUserConnectorOAuthAttempt({
-    clerkUserId: identity.userId,
+    clerkUserId: ctx.viewer.userId,
     clientInformation: snapshot.clientInformation,
     codeVerifier: snapshot.codeVerifier,
     provider: "granola",
     redirectUrl,
-    returnTo: safeReturnTo({ appOrigin, headers: ctx.headers }),
+    returnTo: safeReturnTo({
+      appOrigin,
+      referer: ctx.request.referer,
+    }),
     state: providerState,
   });
 
@@ -275,7 +272,7 @@ export async function startGranolaUserConnectorOAuth(
   }
 
   log.info("[user-connectors] granola oauth started", {
-    clerkUserId: identity.userId,
+    clerkUserId: ctx.viewer.userId,
     mode,
     provider: "granola",
   });
@@ -416,12 +413,10 @@ export async function completeGranolaUserConnectorOAuth(input: {
 export async function disconnectGranolaUserConnector(
   ctx: GranolaUserConnectorServiceContext
 ): Promise<{ disconnected: boolean }> {
-  const identity = signedInIdentity(ctx);
-
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const connection: UserConnectorConnection | undefined =
       await getCurrentUserConnectorConnection(ctx.db, {
-        clerkUserId: identity.userId,
+        clerkUserId: ctx.viewer.userId,
         provider: "granola",
       });
     if (!connection) {
@@ -429,7 +424,7 @@ export async function disconnectGranolaUserConnector(
     }
 
     const revoked = await markCurrentUserConnectorConnectionRevoked(ctx.db, {
-      clerkUserId: identity.userId,
+      clerkUserId: ctx.viewer.userId,
       observedCurrentConnectionId: connection.id,
       observedEncryptedAccessToken: connection.encryptedAccessToken,
       observedEncryptedRefreshToken: connection.encryptedRefreshToken,

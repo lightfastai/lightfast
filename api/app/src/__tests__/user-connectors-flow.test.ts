@@ -182,17 +182,9 @@ function userConnection(
   };
 }
 
-function ctx(
-  input: {
-    identity?: "active" | "pending" | "unauthenticated";
-    referer?: string;
-  } = {}
-) {
-  const headers = new Headers();
-  if (input.referer) {
-    headers.set("referer", input.referer);
-  }
-
+function authIdentity(input: {
+  identity?: "active" | "pending" | "unauthenticated";
+}) {
   const identity =
     input.identity === "unauthenticated"
       ? ({ type: "unauthenticated" } as const)
@@ -205,10 +197,25 @@ function ctx(
             userId: "user_current",
           } as const);
 
+  return identity;
+}
+
+function catalogCtx(
+  input: { identity?: "active" | "pending" | "unauthenticated" } = {}
+) {
+  const identity = authIdentity(input);
+
   return {
     auth: { identity },
     db: {} as Database,
-    headers,
+  };
+}
+
+function oauthCtx(input: { referer?: string; userId?: string } = {}) {
+  return {
+    db: {} as Database,
+    request: { referer: input.referer },
+    viewer: { userId: input.userId ?? "user_current" },
   };
 }
 
@@ -235,7 +242,7 @@ describe("user connector catalog services", () => {
 
   it("returns an empty user connector catalog for unauthenticated viewers", async () => {
     await expect(
-      listUserConnectorsForViewer(ctx({ identity: "unauthenticated" }))
+      listUserConnectorsForViewer(catalogCtx({ identity: "unauthenticated" }))
     ).resolves.toEqual([]);
 
     expect(listCurrentUserConnectorConnectionsMock).not.toHaveBeenCalled();
@@ -243,7 +250,7 @@ describe("user connector catalog services", () => {
 
   it("lists Granola as a private user connector for signed-in pending viewers", async () => {
     await expect(
-      listUserConnectorsForViewer(ctx({ identity: "pending" }))
+      listUserConnectorsForViewer(catalogCtx({ identity: "pending" }))
     ).resolves.toEqual([
       expect.objectContaining({
         canManage: true,
@@ -267,7 +274,7 @@ describe("user connector catalog services", () => {
       userConnection({ providerAccountName: "Granola" }),
     ]);
 
-    const rows = await listUserConnectorsForViewer(ctx());
+    const rows = await listUserConnectorsForViewer(catalogCtx());
 
     expect(rows).toEqual([
       expect.objectContaining({
@@ -370,7 +377,7 @@ describe("Granola user connector OAuth flow", () => {
   it("starts OAuth and stores the attempt under the provider-generated state", async () => {
     await expect(
       startGranolaUserConnectorOAuth(
-        ctx({
+        oauthCtx({
           referer:
             "https://app.lightfast.localhost/account/settings?section=connectors",
         })
@@ -402,17 +409,6 @@ describe("Granola user connector OAuth flow", () => {
     );
   });
 
-  it("throws a domain authz error when Granola starts without authentication", async () => {
-    await expect(
-      startGranolaUserConnectorOAuth(ctx({ identity: "unauthenticated" }))
-    ).rejects.toThrowError(
-      expect.objectContaining({
-        code: "AUTH_REQUIRED",
-        kind: "authz",
-      })
-    );
-  });
-
   it("adds a Lightfast state when the provider authorization URL lacks state", async () => {
     listGranolaMcpToolsMock.mockImplementationOnce(
       async ({
@@ -432,7 +428,7 @@ describe("Granola user connector OAuth flow", () => {
       }
     );
 
-    const result = await startGranolaUserConnectorOAuth(ctx());
+    const result = await startGranolaUserConnectorOAuth(oauthCtx());
 
     expect(result.authorizationUrl).toBe(
       "https://granola.test/oauth/authorize?state=attempt_123456789012345678901234"
@@ -447,7 +443,9 @@ describe("Granola user connector OAuth flow", () => {
   it("returns reconnect mode when Granola is already connected", async () => {
     getCurrentUserConnectorConnectionMock.mockResolvedValue(userConnection());
 
-    await expect(startGranolaUserConnectorOAuth(ctx())).resolves.toMatchObject({
+    await expect(
+      startGranolaUserConnectorOAuth(oauthCtx())
+    ).resolves.toMatchObject({
       mode: "reconnect",
     });
   });
@@ -561,7 +559,7 @@ describe("Granola user connector OAuth flow", () => {
   it("disconnects the current Granola connector with observed-current guards", async () => {
     getCurrentUserConnectorConnectionMock.mockResolvedValue(userConnection());
 
-    await expect(disconnectGranolaUserConnector(ctx())).resolves.toEqual({
+    await expect(disconnectGranolaUserConnector(oauthCtx())).resolves.toEqual({
       disconnected: true,
     });
 

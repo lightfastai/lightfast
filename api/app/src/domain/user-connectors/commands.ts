@@ -1,12 +1,10 @@
 import type { Database } from "@db/app";
-import { userConnectorProviderSchema } from "@repo/api-contract";
 import { z } from "zod";
 
-import type { AuthIdentity } from "../../auth/identity";
 import {
-  disconnectUserConnector,
-  startUserConnectorOAuth,
-} from "../../services/user-connectors";
+  disconnectGranolaUserConnector,
+  startGranolaUserConnectorOAuth,
+} from "../../services/user-connectors/granola-flow";
 import type { Actor } from "../actor";
 import { defineCommand } from "../command";
 import {
@@ -17,32 +15,36 @@ import {
 } from "../errors";
 import { requireClerkUserActor } from "../gates";
 
+interface UserConnectorRequestContext {
+  referer?: string | null;
+}
+
 interface UserConnectorServiceContext {
-  auth: { identity: Exclude<AuthIdentity, { type: "unauthenticated" }> };
   db: Database;
-  headers: Headers;
+  request: UserConnectorRequestContext;
+  viewer: { userId: string };
 }
 
 interface UserConnectorCommandDeps {
   db: Database;
-  disconnectUserConnector: typeof disconnectUserConnector;
-  headers: Headers;
-  startUserConnectorOAuth: typeof startUserConnectorOAuth;
+  disconnectGranolaUserConnector: typeof disconnectGranolaUserConnector;
+  request: UserConnectorRequestContext;
+  startGranolaUserConnectorOAuth: typeof startGranolaUserConnectorOAuth;
 }
 
 export function createDefaultUserConnectorCommandDeps(input: {
   db: Database;
-  disconnectUserConnector?: typeof disconnectUserConnector;
-  headers: Headers;
-  startUserConnectorOAuth?: typeof startUserConnectorOAuth;
+  disconnectGranolaUserConnector?: typeof disconnectGranolaUserConnector;
+  request: UserConnectorRequestContext;
+  startGranolaUserConnectorOAuth?: typeof startGranolaUserConnectorOAuth;
 }): UserConnectorCommandDeps {
   return {
     db: input.db,
-    disconnectUserConnector:
-      input.disconnectUserConnector ?? disconnectUserConnector,
-    headers: input.headers,
-    startUserConnectorOAuth:
-      input.startUserConnectorOAuth ?? startUserConnectorOAuth,
+    disconnectGranolaUserConnector:
+      input.disconnectGranolaUserConnector ?? disconnectGranolaUserConnector,
+    request: input.request,
+    startGranolaUserConnectorOAuth:
+      input.startGranolaUserConnectorOAuth ?? startGranolaUserConnectorOAuth,
   };
 }
 
@@ -55,10 +57,10 @@ const disconnectUserConnectorOutput = z.object({
   disconnected: z.boolean(),
 });
 const userConnectorStartConnectInputSchema = z.object({
-  provider: userConnectorProviderSchema,
+  provider: z.literal("granola"),
 });
 const userConnectorProviderInputSchema = z.object({
-  provider: userConnectorProviderSchema,
+  provider: z.literal("granola"),
 });
 
 export const startUserConnectorCommand = defineCommand<
@@ -70,13 +72,12 @@ export const startUserConnectorCommand = defineCommand<
   name: "userConnectors.start",
   input: userConnectorStartConnectInputSchema,
   output: startUserConnectorOutput,
-  run: async ({ ctx, deps, input }) => {
+  run: async ({ ctx, deps }) => {
     const actor = requireClerkUserActor(ctx);
 
     try {
-      return await deps.startUserConnectorOAuth(
-        serviceContextForActor(actor, deps),
-        input
+      return await deps.startGranolaUserConnectorOAuth(
+        serviceContextForActor(actor, deps)
       );
     } catch (error) {
       throw mapUserConnectorServiceError(
@@ -97,13 +98,12 @@ export const disconnectUserConnectorCommand = defineCommand<
   name: "userConnectors.disconnect",
   input: userConnectorProviderInputSchema,
   output: disconnectUserConnectorOutput,
-  run: async ({ ctx, deps, input }) => {
+  run: async ({ ctx, deps }) => {
     const actor = requireClerkUserActor(ctx);
 
     try {
-      return await deps.disconnectUserConnector(
-        serviceContextForActor(actor, deps),
-        input
+      return await deps.disconnectGranolaUserConnector(
+        serviceContextForActor(actor, deps)
       );
     } catch (error) {
       throw mapUserConnectorServiceError(
@@ -120,27 +120,9 @@ function serviceContextForActor(
   deps: UserConnectorCommandDeps
 ): UserConnectorServiceContext {
   return {
-    auth: { identity: identityForActor(actor) },
     db: deps.db,
-    headers: deps.headers,
-  };
-}
-
-function identityForActor(
-  actor: Extract<Actor, { kind: "clerkUser" }>
-): Exclude<AuthIdentity, { type: "unauthenticated" }> {
-  if (actor.orgId && actor.orgGate) {
-    return {
-      type: "active",
-      userId: actor.userId,
-      orgId: actor.orgId,
-      orgGate: actor.orgGate,
-    };
-  }
-
-  return {
-    type: "pending",
-    userId: actor.userId,
+    request: deps.request,
+    viewer: { userId: actor.userId },
   };
 }
 
