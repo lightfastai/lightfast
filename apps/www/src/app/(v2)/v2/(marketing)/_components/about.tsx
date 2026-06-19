@@ -6,6 +6,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@repo/ui-v2/components/ui/sheet";
+import type { ReactElement, ReactNode } from "react";
 
 const introParagraphs = [
   [
@@ -42,14 +43,20 @@ const principles = [
   },
 ];
 
-export function About() {
+export function About({
+  children = "About",
+  trigger,
+}: {
+  children?: ReactNode;
+  trigger?: ReactElement;
+}) {
   return (
     <Sheet>
       <SheetTrigger
         data-about-trigger
-        render={<Button className="px-0" variant="link" />}
+        render={trigger ?? <Button className="px-0" variant="link" />}
       >
-        About
+        {children}
       </SheetTrigger>
       <SheetContent
         className="group/about-sheet z-[60] overflow-y-auto"
@@ -79,7 +86,7 @@ export function About() {
                   {paragraph.map((line, index) => (
                     <span className="block overflow-hidden" key={line}>
                       <span
-                        className="block translate-y-[150%] opacity-0 transition-[opacity,translate] duration-[1250ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-data-open/about-sheet:translate-y-0 group-data-open/about-sheet:opacity-100 group-data-starting-style/about-sheet:!translate-y-[150%] group-data-starting-style/about-sheet:!opacity-0"
+                        className="group-data-starting-style/about-sheet:!translate-y-[150%] group-data-starting-style/about-sheet:!opacity-0 block translate-y-[150%] opacity-0 transition-[opacity,translate] duration-[1250ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-data-open/about-sheet:translate-y-0 group-data-open/about-sheet:opacity-100"
                         style={{
                           transitionDelay: `${(lineOffset + index) * 30 + 20}ms`,
                         }}
@@ -126,10 +133,10 @@ export function About() {
                   className="mb-[38px] grid gap-[23px] border-border border-b pb-[38px] last:mb-0 last:border-b-0"
                   key={item.label}
                 >
-                  <dt className="font-medium text-foreground text-base leading-none tracking-normal sm:text-[17.5px]">
+                  <dt className="font-medium text-base text-foreground leading-none tracking-normal sm:text-[17.5px]">
                     {item.label}
                   </dt>
-                  <dd className="text-foreground text-base leading-[1.3] tracking-normal sm:text-[17.5px]">
+                  <dd className="text-base text-foreground leading-[1.3] tracking-normal sm:text-[17.5px]">
                     {item.text}
                   </dd>
                 </div>
