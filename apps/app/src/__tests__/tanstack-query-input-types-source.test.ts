@@ -44,10 +44,10 @@ describe("TanStack query input type boundaries", () => {
       "type RefreshConnectorToolsInput"
     );
     expect(
-      appSource("src/developer-connections/developer-connections-queries.ts")
+      appSource("src/developer-connections/developer-connections-client.tsx")
     ).toContain("type ConnectDeveloperConnectionInput");
     expect(
-      appSource("src/developer-connections/developer-connections-queries.ts")
+      appSource("src/developer-connections/developer-connections-client.tsx")
     ).toContain("type StartSentryDeveloperConnectionAuthInput");
     expect(appSource("src/decisions/decisions-queries.ts")).toContain(
       "type ListDecisionsInput"
