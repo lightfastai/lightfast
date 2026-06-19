@@ -86,16 +86,13 @@ export function actorFromAuthIdentity(
   };
 }
 
-export function actorFromApiKeyAuth(
-  auth: ApiKeyAuthResult,
-  scopes: string[] = []
-): Actor {
+export function actorFromApiKeyAuth(auth: ApiKeyAuthResult): Actor {
   return {
     createdByUserId: auth.identity.userId,
     keyId: auth.apiKeyId,
     kind: "apiKey",
     orgGate: auth.identity.orgGate,
     orgId: auth.identity.orgId,
-    scopes,
+    scopes: auth.scopes,
   };
 }

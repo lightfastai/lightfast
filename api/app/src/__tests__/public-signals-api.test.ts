@@ -47,6 +47,7 @@ function verifyResult(overrides: Partial<Record<string, unknown>> = {}) {
       identity: { externalId: "org_test", id: "identity_test" },
       keyId: "key_test",
       meta: { createdByUserId: "user_test" },
+      permissions: ["api:signals:read", "api:signals:write"],
       valid: true,
       ...overrides,
     },
@@ -196,6 +197,26 @@ describe("public signal API adapter", () => {
     });
   });
 
+  it("rejects signal list requests from write-only API keys", async () => {
+    mocks.verifyKey.mockResolvedValueOnce(
+      verifyResult({ permissions: ["api:signals:write"] })
+    );
+
+    const response = await handleListSignalsPublicApiRequest(
+      publicApiRequest({
+        method: "GET",
+        token: validKey,
+        url: "https://lightfast.test/api/v1/signals",
+      })
+    );
+
+    expect(response.status).toBe(403);
+    await expect(responseJson(response)).resolves.toMatchObject({
+      error: "forbidden",
+    });
+    expect(mocks.listSignals).not.toHaveBeenCalled();
+  });
+
   it("creates a queued signal with API-key attribution", async () => {
     const response = await handleCreateSignalPublicApiRequest(
       publicApiRequest({
@@ -220,6 +241,25 @@ describe("public signal API adapter", () => {
       },
       input: "Reply to this relevant post",
     });
+  });
+
+  it("rejects signal creation from read-only API keys", async () => {
+    mocks.verifyKey.mockResolvedValueOnce(
+      verifyResult({ permissions: ["api:signals:read"] })
+    );
+
+    const response = await handleCreateSignalPublicApiRequest(
+      publicApiRequest({
+        body: { input: "Run the test plan" },
+        token: validKey,
+      })
+    );
+
+    expect(response.status).toBe(403);
+    await expect(responseJson(response)).resolves.toMatchObject({
+      error: "forbidden",
+    });
+    expect(mocks.createSignalForActor).not.toHaveBeenCalled();
   });
 
   it("rejects signal creation for unbound organizations", async () => {

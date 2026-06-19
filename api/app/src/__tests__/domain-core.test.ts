@@ -46,9 +46,10 @@ describe("actorFromApiKeyAuth", () => {
     const auth: ApiKeyAuthResult = {
       apiKeyId: "key_test",
       identity: boundIdentity,
+      scopes: ["api:signals:read"],
     };
 
-    expect(actorFromApiKeyAuth(auth, ["api:signals:read"])).toEqual({
+    expect(actorFromApiKeyAuth(auth)).toEqual({
       createdByUserId: "user_test",
       keyId: "key_test",
       kind: "apiKey",

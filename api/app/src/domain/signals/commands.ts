@@ -12,6 +12,7 @@ import {
   signalStatusSchema,
 } from "@repo/api-contract";
 import { z } from "zod";
+import type { PublicApiKeyScope } from "../../auth/api-key";
 import { isSignalCreateQueueError } from "../../signals/create-signal";
 import { createSignalForActor } from "../../signals/service";
 import type { ExecutionContext } from "../actor";
@@ -144,7 +145,8 @@ type ResolvedSignalCommandActor =
     };
 
 function requireSignalCommandActor(
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
+  input: { apiKeyScope?: PublicApiKeyScope } = {}
 ): ResolvedSignalCommandActor {
   if (ctx.actor.kind === "clerkUser") {
     const actor = requireBoundClerkOrgActor(ctx);
@@ -152,6 +154,14 @@ function requireSignalCommandActor(
   }
 
   if (ctx.actor.kind === "apiKey") {
+    if (input.apiKeyScope && !ctx.actor.scopes.includes(input.apiKeyScope)) {
+      throw new AuthzError(
+        "API_KEY_SCOPE_REQUIRED",
+        `API key requires the ${input.apiKeyScope} scope.`,
+        { requiredScope: input.apiKeyScope }
+      );
+    }
+
     if (ctx.actor.orgGate?.bindingStatus !== "bound") {
       throw new AuthzError(
         "ORG_SETUP_REQUIRED",
@@ -210,7 +220,9 @@ export const listProcessingSignalsCommand = defineCommand({
     ListProcessingSignalsResult,
     SignalListProcessingCommandDeps
   >) => {
-    const actor = requireSignalCommandActor(ctx);
+    const actor = requireSignalCommandActor(ctx, {
+      apiKeyScope: "api:signals:read",
+    });
     return deps.listSignals(deps.db, {
       clerkOrgId: actor.orgId,
       createdByUserId: actor.userId,
@@ -233,7 +245,9 @@ export const listWorkingSetSignalsCommand = defineCommand({
     ListWorkingSetSignalsResult,
     SignalListWorkingSetCommandDeps
   >) => {
-    const actor = requireSignalCommandActor(ctx);
+    const actor = requireSignalCommandActor(ctx, {
+      apiKeyScope: "api:signals:read",
+    });
     return deps.listWorkspaceSignals(deps.db, {
       clerkOrgId: actor.orgId,
       createdByUserId: actor.userId,
@@ -254,7 +268,9 @@ export const getSignalCommand = defineCommand({
     SignalDetailResult,
     SignalGetCommandDeps
   >) => {
-    const actor = requireSignalCommandActor(ctx);
+    const actor = requireSignalCommandActor(ctx, {
+      apiKeyScope: "api:signals:read",
+    });
     const signal = await deps.getVisibleSignalByPublicId(deps.db, {
       clerkOrgId: actor.orgId,
       createdByUserId: actor.userId,
@@ -287,7 +303,9 @@ export const createSignalCommand = defineCommand({
     z.infer<typeof createSignalOutput>,
     SignalCreateCommandDeps
   >) => {
-    const actor = requireSignalCommandActor(ctx);
+    const actor = requireSignalCommandActor(ctx, {
+      apiKeyScope: "api:signals:write",
+    });
     try {
       return await deps.createSignalForActor(deps.db, {
         actor,

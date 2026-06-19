@@ -98,7 +98,7 @@ function requestId() {
 
 function publicSignalContext(auth: ApiKeyAuthResult) {
   return {
-    actor: actorFromApiKeyAuth(auth, ["api:signals:read", "api:signals:write"]),
+    actor: actorFromApiKeyAuth(auth),
     request: { id: requestId(), source: "public-api" as const },
   };
 }

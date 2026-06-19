@@ -9,6 +9,7 @@ import type { KeyResponseData, UnkeyClient } from "@vendor/unkey";
 import { getUnkeyClient, unkeyEnv } from "@vendor/unkey/server";
 import { z } from "zod";
 
+import { PUBLIC_API_KEY_SCOPES } from "../../auth/api-key";
 import { UNKEY_API_KEY_PREFIX } from "../../auth/api-key-prefix";
 import { defineCommand } from "../command";
 import { NotFoundError } from "../errors";
@@ -169,6 +170,7 @@ export const createOrgApiKeyCommand = defineCommand<
         source: "dashboard",
       },
       name: input.name,
+      permissions: [...PUBLIC_API_KEY_SCOPES],
       prefix: UNKEY_API_KEY_PREFIX,
       recoverable: false,
     });
