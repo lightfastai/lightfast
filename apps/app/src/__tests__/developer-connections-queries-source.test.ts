@@ -17,17 +17,20 @@ describe("developer-connections app data access", () => {
     expect(querySource).toContain('@api/app/tanstack/developer-connections"');
     expect(querySource).toContain("developerConnectionQueryKeys");
     expect(querySource).toContain("developerConnectionsQueryOptions");
-    expect(querySource).toContain("connectDeveloperConnectionMutationOptions");
-    expect(querySource).toContain(
+    expect(querySource).not.toContain("mutationOptions");
+    expect(querySource).not.toContain(
+      "connectDeveloperConnectionMutationOptions"
+    );
+    expect(querySource).not.toContain(
       "startSentryDeveloperConnectionAuthMutationOptions"
     );
-    expect(querySource).toContain(
+    expect(querySource).not.toContain(
       "completeSentryDeveloperConnectionAuthMutationOptions"
     );
-    expect(querySource).toContain(
+    expect(querySource).not.toContain(
       "setDeveloperConnectionSandboxEnabledMutationOptions"
     );
-    expect(querySource).toContain(
+    expect(querySource).not.toContain(
       "disconnectDeveloperConnectionMutationOptions"
     );
     expect(querySource).not.toContain("useTRPC");
@@ -43,18 +46,26 @@ describe("developer-connections app data access", () => {
 
     expect(clientSource).not.toContain("useTRPC");
     expect(clientSource).not.toContain("org.workspace.developerConnections");
+    expect(clientSource).toContain('@api/app/tanstack/developer-connections"');
     expect(clientSource).toContain("developerConnectionsQueryOptions");
-    expect(clientSource).toContain("connectDeveloperConnectionMutationOptions");
-    expect(clientSource).toContain(
+    expect(clientSource).toContain("connectDeveloperConnection");
+    expect(clientSource).toContain("startSentryDeveloperConnectionAuth");
+    expect(clientSource).toContain("completeSentryDeveloperConnectionAuth");
+    expect(clientSource).toContain("setDeveloperConnectionSandboxEnabled");
+    expect(clientSource).toContain("disconnectDeveloperConnection");
+    expect(clientSource).not.toContain(
+      "connectDeveloperConnectionMutationOptions"
+    );
+    expect(clientSource).not.toContain(
       "startSentryDeveloperConnectionAuthMutationOptions"
     );
-    expect(clientSource).toContain(
+    expect(clientSource).not.toContain(
       "completeSentryDeveloperConnectionAuthMutationOptions"
     );
-    expect(clientSource).toContain(
+    expect(clientSource).not.toContain(
       "setDeveloperConnectionSandboxEnabledMutationOptions"
     );
-    expect(clientSource).toContain(
+    expect(clientSource).not.toContain(
       "disconnectDeveloperConnectionMutationOptions"
     );
     expect(modelSource).not.toContain("AppRouterOutputs");

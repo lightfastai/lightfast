@@ -612,17 +612,25 @@ describe("app authenticated route migration", () => {
     );
     expect(routeSource).toContain("setSearchParams");
     expect(clientSource).toContain("developerConnectionsQueryOptions");
-    expect(clientSource).toContain("connectDeveloperConnectionMutationOptions");
-    expect(clientSource).toContain(
+    expect(clientSource).toContain('@api/app/tanstack/developer-connections"');
+    expect(clientSource).toContain("connectDeveloperConnection");
+    expect(clientSource).toContain("startSentryDeveloperConnectionAuth");
+    expect(clientSource).toContain("completeSentryDeveloperConnectionAuth");
+    expect(clientSource).toContain("setDeveloperConnectionSandboxEnabled");
+    expect(clientSource).toContain("disconnectDeveloperConnection");
+    expect(clientSource).not.toContain(
+      "connectDeveloperConnectionMutationOptions"
+    );
+    expect(clientSource).not.toContain(
       "startSentryDeveloperConnectionAuthMutationOptions"
     );
-    expect(clientSource).toContain(
+    expect(clientSource).not.toContain(
       "completeSentryDeveloperConnectionAuthMutationOptions"
     );
-    expect(clientSource).toContain(
+    expect(clientSource).not.toContain(
       "setDeveloperConnectionSandboxEnabledMutationOptions"
     );
-    expect(clientSource).toContain(
+    expect(clientSource).not.toContain(
       "disconnectDeveloperConnectionMutationOptions"
     );
     expect(searchSource).toContain("validateDeveloperConnectionsSearch");

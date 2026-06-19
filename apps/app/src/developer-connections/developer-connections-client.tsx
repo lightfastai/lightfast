@@ -1,4 +1,17 @@
 import {
+  type CompleteSentryDeveloperConnectionAuthInput,
+  type ConnectDeveloperConnectionInput,
+  completeSentryDeveloperConnectionAuth,
+  connectDeveloperConnection,
+  type DisconnectDeveloperConnectionInput,
+  disconnectDeveloperConnection,
+  type SetDeveloperConnectionSandboxEnabledInput,
+  type StartSentryDeveloperConnectionAuthInput,
+  type StartSentryDeveloperConnectionAuthResult,
+  setDeveloperConnectionSandboxEnabled,
+  startSentryDeveloperConnectionAuth,
+} from "@api/app/tanstack/developer-connections";
+import {
   ArrowUpRightIcon as ArrowUpRight,
   SidebarRightIcon as PanelRight,
   Search01Icon as Search,
@@ -35,13 +48,8 @@ import {
   displayDeveloperConnectionProvider,
 } from "./developer-connections-model";
 import {
-  completeSentryDeveloperConnectionAuthMutationOptions,
-  connectDeveloperConnectionMutationOptions,
   developerConnectionQueryKeys,
   developerConnectionsQueryOptions,
-  disconnectDeveloperConnectionMutationOptions,
-  setDeveloperConnectionSandboxEnabledMutationOptions,
-  startSentryDeveloperConnectionAuthMutationOptions,
 } from "./developer-connections-queries";
 import type { NormalizedDeveloperConnectionsSearch } from "./developer-connections-search-params";
 
@@ -125,44 +133,49 @@ export function DeveloperConnectionsClient({
     });
   };
 
-  const connectMutation = useMutation(
-    connectDeveloperConnectionMutationOptions({
-      onSuccess: () => {
-        setConnectRow(null);
-        invalidateList();
-      },
-    })
-  );
-  const startSentryAuthMutation = useMutation(
-    startSentryDeveloperConnectionAuthMutationOptions({
-      onSuccess: (result) => {
-        setSentryAuthAttempt({
-          attemptId: result.attemptId,
-          userCode: result.userCode,
-          verificationUri: result.verificationUri,
-        });
-      },
-    })
-  );
-  const completeSentryAuthMutation = useMutation(
-    completeSentryDeveloperConnectionAuthMutationOptions({
-      onSuccess: () => {
-        setConnectRow(null);
-        setSentryAuthAttempt(null);
-        invalidateList();
-      },
-    })
-  );
-  const setSandboxEnabledMutation = useMutation(
-    setDeveloperConnectionSandboxEnabledMutationOptions({
-      onSuccess: invalidateList,
-    })
-  );
-  const disconnectMutation = useMutation(
-    disconnectDeveloperConnectionMutationOptions({
-      onSuccess: invalidateList,
-    })
-  );
+  const connectMutation = useMutation({
+    meta: { errorTitle: "Failed to connect developer provider" },
+    mutationFn: (data: ConnectDeveloperConnectionInput) =>
+      connectDeveloperConnection({ data }),
+    onSuccess: () => {
+      setConnectRow(null);
+      invalidateList();
+    },
+  });
+  const startSentryAuthMutation = useMutation({
+    meta: { errorTitle: "Failed to start Sentry authorization" },
+    mutationFn: (data: StartSentryDeveloperConnectionAuthInput) =>
+      startSentryDeveloperConnectionAuth({ data }),
+    onSuccess: (result: StartSentryDeveloperConnectionAuthResult) => {
+      setSentryAuthAttempt({
+        attemptId: result.attemptId,
+        userCode: result.userCode,
+        verificationUri: result.verificationUri,
+      });
+    },
+  });
+  const completeSentryAuthMutation = useMutation({
+    meta: { errorTitle: "Failed to complete Sentry authorization" },
+    mutationFn: (data: CompleteSentryDeveloperConnectionAuthInput) =>
+      completeSentryDeveloperConnectionAuth({ data }),
+    onSuccess: () => {
+      setConnectRow(null);
+      setSentryAuthAttempt(null);
+      invalidateList();
+    },
+  });
+  const setSandboxEnabledMutation = useMutation({
+    meta: { errorTitle: "Failed to update sandbox access" },
+    mutationFn: (data: SetDeveloperConnectionSandboxEnabledInput) =>
+      setDeveloperConnectionSandboxEnabled({ data }),
+    onSuccess: invalidateList,
+  });
+  const disconnectMutation = useMutation({
+    meta: { errorTitle: "Failed to disconnect developer provider" },
+    mutationFn: (data: DisconnectDeveloperConnectionInput) =>
+      disconnectDeveloperConnection({ data }),
+    onSuccess: invalidateList,
+  });
 
   useEffect(() => {
     if (!search.error) {
