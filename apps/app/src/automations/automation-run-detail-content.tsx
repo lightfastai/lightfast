@@ -18,7 +18,7 @@ import {
   AutomationRunAiOutputView,
   isAutomationRunAiOutput,
 } from "./automation-run-ai-output";
-import type { AutomationRunDetail } from "./automations-queries";
+import type { AutomationRunDetail } from "./automations-cache";
 
 type AutomationRun = AutomationRunDetail;
 type RunStatus = AutomationRun["status"];

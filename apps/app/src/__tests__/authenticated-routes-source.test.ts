@@ -801,8 +801,16 @@ describe("app authenticated route migration", () => {
     expect(automationsCreateSource).toContain(
       "automationCreateMutationOptions"
     );
-    expect(automationsDetailSource).toContain("automationDetailQueryOptions");
-    expect(automationsQuerySource).toContain("automationsListQueryOptions");
+    expect(automationsDetailSource).toContain('@api/app/tanstack/automations"');
+    expect(automationsDetailSource).toContain("getAutomation");
+    expect(automationsDetailSource).toContain("automationQueryKeys.detail");
+    expect(automationsDetailSource).not.toContain(
+      "automationDetailQueryOptions"
+    );
+    expect(automationsQuerySource).toContain('@api/app/tanstack/automations"');
+    expect(automationsQuerySource).toContain("listAutomations");
+    expect(automationsQuerySource).toContain("automationQueryKeys.list()");
+    expect(automationsQuerySource).not.toContain("automationsListQueryOptions");
     expect(automationsQuerySource).toContain(
       'enabled: typeof window !== "undefined"'
     );

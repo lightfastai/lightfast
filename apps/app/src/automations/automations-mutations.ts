@@ -1,14 +1,7 @@
 import {
-  type AutomationRunDetailResult,
   type CreateAutomationResult,
   createAutomation,
   deleteAutomation,
-  getAutomation,
-  getAutomationRun,
-  type ListAutomationRunsResult,
-  type ListAutomationsResult,
-  listAutomationRuns,
-  listAutomations,
   pauseAutomation,
   resumeAutomation,
   runAutomationNow,
@@ -18,11 +11,7 @@ import type {
   CreateAutomationInput,
   UpdateAutomationInput,
 } from "@repo/app-validation/schemas";
-import {
-  mutationOptions,
-  type QueryClient,
-  queryOptions,
-} from "@tanstack/react-query";
+import { mutationOptions, type QueryClient } from "@tanstack/react-query";
 import {
   AUTOMATION_RUNS_PAGE_LIMIT,
   type Automation,
@@ -34,75 +23,6 @@ import {
   upsertInList,
   upsertRun,
 } from "./automations-cache";
-
-export type AutomationList = ListAutomationsResult;
-export type AutomationListItem = AutomationList[number];
-export type AutomationRunList = ListAutomationRunsResult;
-export type AutomationRunListItem = AutomationRunList[number];
-export type AutomationRunDetail = AutomationRunDetailResult;
-
-export {
-  AUTOMATION_RUNS_PAGE_LIMIT,
-  automationMutationKeys,
-} from "./automations-cache";
-
-export function automationsListQueryOptions(
-  input: { enabled?: boolean; staleTime?: number } = {}
-) {
-  return queryOptions({
-    enabled: input.enabled,
-    queryFn: () => listAutomations(),
-    queryKey: automationQueryKeys.list(),
-    staleTime: input.staleTime ?? 30_000,
-  });
-}
-
-export function automationDetailQueryOptions(input: {
-  enabled?: boolean;
-  id: string;
-  staleTime?: number;
-}) {
-  return queryOptions({
-    enabled: input.enabled,
-    queryFn: () => getAutomation({ data: { id: input.id } }),
-    queryKey: automationQueryKeys.detail(input.id),
-    staleTime: input.staleTime ?? 30_000,
-  });
-}
-
-export function automationRunsQueryOptions(input: {
-  enabled?: boolean;
-  id: string;
-  limit?: number;
-  refetchOnWindowFocus?: boolean;
-  staleTime?: number;
-}) {
-  const limit = input.limit ?? AUTOMATION_RUNS_PAGE_LIMIT;
-  return queryOptions({
-    enabled: input.enabled,
-    queryFn: () => listAutomationRuns({ data: { id: input.id, limit } }),
-    queryKey: automationQueryKeys.runs(input.id, limit),
-    refetchOnWindowFocus: input.refetchOnWindowFocus,
-    staleTime: input.staleTime ?? 5000,
-  });
-}
-
-export function automationRunQueryOptions(input: {
-  enabled?: boolean;
-  id: string;
-  refetchOnWindowFocus?: boolean;
-  retry?: false | number;
-  staleTime?: number;
-}) {
-  return queryOptions({
-    enabled: input.enabled,
-    queryFn: () => getAutomationRun({ data: { id: input.id } }),
-    queryKey: automationQueryKeys.run(input.id),
-    refetchOnWindowFocus: input.refetchOnWindowFocus,
-    retry: input.retry,
-    staleTime: input.staleTime ?? 5000,
-  });
-}
 
 export function automationCreateMutationOptions(input: {
   onSuccess?: (automation: CreateAutomationResult) => Promise<void> | void;

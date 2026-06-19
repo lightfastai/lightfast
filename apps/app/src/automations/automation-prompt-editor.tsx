@@ -3,7 +3,7 @@ import { AUTOMATION_PROMPT_MAX_LENGTH } from "@repo/app-validation/schemas";
 import { MarkdownContent } from "@repo/ui/components/markdown-content";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Automation } from "./automations-cache";
-import { automationUpdateMutationOptions } from "./automations-queries";
+import { automationUpdateMutationOptions } from "./automations-mutations";
 import { useAutosaveField } from "./use-autosave-field";
 
 export function AutomationPromptEditor({

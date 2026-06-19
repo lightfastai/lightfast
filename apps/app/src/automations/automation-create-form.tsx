@@ -39,7 +39,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 import { z } from "zod";
 import { connectorQueryKeys } from "~/connectors/connectors-cache";
-import { automationCreateMutationOptions } from "./automations-queries";
+import { automationCreateMutationOptions } from "./automations-mutations";
 import {
   isTimeBasedKind,
   SCHEDULE_KINDS,

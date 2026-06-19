@@ -19,12 +19,14 @@ import { Button } from "@repo/ui/components/ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import type { Automation } from "./automations-cache";
 import {
   AUTOMATION_RUNS_PAGE_LIMIT,
+  type Automation,
+} from "./automations-cache";
+import {
   automationDeleteMutationOptions,
   automationRunNowMutationOptions,
-} from "./automations-queries";
+} from "./automations-mutations";
 import { RailSection } from "./detail-sections";
 
 export function AutomationActions({

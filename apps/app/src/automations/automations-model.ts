@@ -1,6 +1,6 @@
-import type { AutomationListItem } from "./automations-queries";
+import type { AutomationListItem } from "./automations-cache";
 
-export type { AutomationListItem } from "./automations-queries";
+export type { AutomationListItem } from "./automations-cache";
 
 interface AutomationSection {
   automations: AutomationListItem[];
