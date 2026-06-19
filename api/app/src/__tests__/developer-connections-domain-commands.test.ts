@@ -60,7 +60,6 @@ function deps() {
     connectDeveloperConnection: serviceMocks.connectDeveloperConnection,
     db: {} as Database,
     disconnectDeveloperConnection: serviceMocks.disconnectDeveloperConnection,
-    headers: new Headers(),
     listDeveloperConnectionsForOrg: serviceMocks.listDeveloperConnectionsForOrg,
     setDeveloperConnectionSandboxEnabled:
       serviceMocks.setDeveloperConnectionSandboxEnabled,
@@ -212,6 +211,15 @@ describe("developer connection domain commands", () => {
         },
       })
     ).resolves.toEqual({ provider: "sentry", status: "connected" });
+    const connectContext =
+      serviceMocks.connectDeveloperConnection.mock.calls[0]?.[0];
+    expect(connectContext).toEqual({
+      actor: { userId: "user_current" },
+      db: expect.anything(),
+      organization: { orgId: "org_acme" },
+    });
+    expect(connectContext).not.toHaveProperty("auth");
+    expect(connectContext).not.toHaveProperty("headers");
 
     await expect(
       setDeveloperConnectionSandboxEnabledCommand.run({

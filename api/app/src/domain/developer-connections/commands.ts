@@ -10,7 +10,6 @@ import {
 } from "@repo/api-contract";
 import { z } from "zod";
 
-import type { AuthAccess, AuthIdentity } from "../../auth/identity";
 import {
   completeSentryDeveloperConnectionAuth,
   connectDeveloperConnection,
@@ -19,7 +18,7 @@ import {
   setDeveloperConnectionSandboxEnabled,
   startSentryDeveloperConnectionAuth,
 } from "../../services/developer-connections";
-import type { Actor, ExecutionContext } from "../actor";
+import type { ExecutionContext } from "../actor";
 import { defineCommand } from "../command";
 import {
   AuthzError,
@@ -28,19 +27,24 @@ import {
   isDomainError,
   ValidationError,
 } from "../errors";
-import { requireBoundClerkOrgActor, requireClerkOrgAdminActor } from "../gates";
+import {
+  type ClerkOrgAdminActor,
+  requireBoundClerkOrgActor,
+  requireClerkOrgAdminActor,
+} from "../gates";
 
 type ListDeveloperConnectionsResult = Awaited<
   ReturnType<typeof listDeveloperConnectionsForOrg>
 >;
 
 interface DeveloperConnectionMutationServiceContext {
-  auth: {
-    access: Extract<AuthAccess, { kind: "clerk-session" }>;
-    identity: Extract<AuthIdentity, { type: "active" }>;
+  actor: {
+    userId: string;
   };
   db: Database;
-  headers: Headers;
+  organization: {
+    orgId: string;
+  };
 }
 
 interface DeveloperConnectionCommandDeps {
@@ -48,7 +52,6 @@ interface DeveloperConnectionCommandDeps {
   connectDeveloperConnection: typeof connectDeveloperConnection;
   db: Database;
   disconnectDeveloperConnection: typeof disconnectDeveloperConnection;
-  headers: Headers;
   listDeveloperConnectionsForOrg: typeof listDeveloperConnectionsForOrg;
   setDeveloperConnectionSandboxEnabled: typeof setDeveloperConnectionSandboxEnabled;
   startSentryDeveloperConnectionAuth: typeof startSentryDeveloperConnectionAuth;
@@ -59,7 +62,6 @@ export function createDefaultDeveloperConnectionCommandDeps(input: {
   connectDeveloperConnection?: typeof connectDeveloperConnection;
   db: Database;
   disconnectDeveloperConnection?: typeof disconnectDeveloperConnection;
-  headers: Headers;
   listDeveloperConnectionsForOrg?: typeof listDeveloperConnectionsForOrg;
   setDeveloperConnectionSandboxEnabled?: typeof setDeveloperConnectionSandboxEnabled;
   startSentryDeveloperConnectionAuth?: typeof startSentryDeveloperConnectionAuth;
@@ -73,7 +75,6 @@ export function createDefaultDeveloperConnectionCommandDeps(input: {
     db: input.db,
     disconnectDeveloperConnection:
       input.disconnectDeveloperConnection ?? disconnectDeveloperConnection,
-    headers: input.headers,
     listDeveloperConnectionsForOrg:
       input.listDeveloperConnectionsForOrg ?? listDeveloperConnectionsForOrg,
     setDeveloperConnectionSandboxEnabled:
@@ -268,47 +269,19 @@ export const disconnectDeveloperConnectionCommand = defineCommand<
 });
 
 function serviceContextForActor(
-  actor: Extract<Actor, { kind: "clerkUser" }> & {
-    orgGate: NonNullable<Extract<Actor, { kind: "clerkUser" }>["orgGate"]>;
-    orgId: string;
-  },
+  actor: ClerkOrgAdminActor,
   deps: DeveloperConnectionCommandDeps
 ): DeveloperConnectionMutationServiceContext {
   return {
-    auth: {
-      access: accessForActor(actor),
-      identity: {
-        type: "active",
-        userId: actor.userId,
-        orgId: actor.orgId,
-        orgGate: actor.orgGate,
-      },
-    },
+    actor: { userId: actor.userId },
     db: deps.db,
-    headers: deps.headers,
+    organization: { orgId: actor.orgId },
   };
 }
 
 function requireBoundClerkOrgAdminActor(ctx: ExecutionContext) {
   requireBoundClerkOrgActor(ctx);
   return requireClerkOrgAdminActor(ctx);
-}
-
-function accessForActor(
-  actor: Extract<Actor, { kind: "clerkUser" }> & { orgId: string }
-): Extract<AuthAccess, { kind: "clerk-session" }> {
-  const has = ((params: { role?: string }) =>
-    actor.orgRole === "admin" && params.role === "org:admin") as Extract<
-    AuthAccess,
-    { kind: "clerk-session" }
-  >["has"];
-
-  return {
-    kind: "clerk-session",
-    userId: actor.userId,
-    orgId: actor.orgId,
-    has,
-  };
 }
 
 function mapDeveloperConnectionServiceError(

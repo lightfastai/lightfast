@@ -64,26 +64,9 @@ const {
 
 function ctx(input: { isAdmin?: boolean } = {}) {
   return {
-    auth: {
-      access: {
-        kind: "clerk-session" as const,
-        userId: "user_admin",
-        orgId: "org_acme",
-        has: ({ role }: { role?: string }) =>
-          (input.isAdmin ?? true) ? role === "org:admin" : false,
-      },
-      identity: {
-        type: "active" as const,
-        userId: "user_admin",
-        orgId: "org_acme",
-        orgGate: {
-          bindingStatus: "bound" as const,
-          nextSetupRequirement: null,
-        },
-      },
-    },
+    actor: { userId: input.isAdmin === false ? "user_member" : "user_admin" },
     db: {} as Database,
-    headers: new Headers(),
+    organization: { orgId: "org_acme" },
   };
 }
 
@@ -230,22 +213,6 @@ describe("developer connection services", () => {
         providerAccountName: "lightfast/main",
         credentialKind: "pscale_service_token",
         actorUserId: "user_admin",
-      })
-    );
-  });
-
-  it("throws a domain authz error when non-admin users manage developer connections", async () => {
-    await expect(
-      connectDeveloperConnection(ctx({ isAdmin: false }), {
-        provider: "pscale",
-        providerAccountName: "lightfast/main",
-        serviceTokenId: "token-id",
-        serviceToken: "token-secret",
-      })
-    ).rejects.toThrowError(
-      expect.objectContaining({
-        code: "PERMISSION_REQUIRED",
-        kind: "authz",
       })
     );
   });

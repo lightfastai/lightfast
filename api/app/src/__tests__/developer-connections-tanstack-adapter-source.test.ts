@@ -35,4 +35,17 @@ describe("developer-connections TanStack adapter boundary", () => {
     expect(source).not.toContain("TRPCError");
     expect(source).not.toContain("ORPCError");
   });
+
+  it("does not rebuild auth-shaped service contexts in developer-connection commands", () => {
+    const source = readFileSync(
+      resolve(repoRoot, "api/app/src/domain/developer-connections/commands.ts"),
+      "utf8"
+    );
+
+    expect(source).not.toContain("../../auth/identity");
+    expect(source).not.toContain("AuthAccess");
+    expect(source).not.toContain("AuthIdentity");
+    expect(source).not.toContain("headers: Headers");
+    expect(source).not.toContain("accessForActor");
+  });
 });
