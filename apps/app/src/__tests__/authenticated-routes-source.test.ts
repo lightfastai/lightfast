@@ -560,10 +560,10 @@ describe("app authenticated route migration", () => {
     expect(clientSource).not.toContain("usePeopleListQuery");
     expect(searchSource).toContain("validatePeopleSearch");
     expect(searchSource).toContain("parsePersonProviders");
-    expect(querySource).toContain("peopleListInfiniteQueryOptions");
-    expect(source("src/people/people-queries.ts")).toContain(
-      'enabled: typeof window !== "undefined"'
-    );
+    expect(querySource).toContain("listPeople");
+    expect(querySource).toContain("peopleQueryKeys.list(listInput)");
+    expect(querySource).not.toContain("peopleListInfiniteQueryOptions");
+    expect(querySource).toContain('enabled: typeof window !== "undefined"');
     expect(viewsSource).toContain("viewConfigToParamValues");
     expect(viewQuerySource).toContain('@api/app/tanstack/people-views"');
     expect(viewQuerySource).toContain("listPeopleViews");

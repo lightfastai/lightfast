@@ -17,7 +17,8 @@ describe("TanStack query input type boundaries", () => {
   const queryFiles = [
     "src/connectors/connectors-client.tsx",
     "src/decisions/decisions-client.tsx",
-    "src/people/people-queries.ts",
+    "src/people/people-client.tsx",
+    "src/people/people-detail-sheet.tsx",
   ];
 
   it("does not infer app query input types from server function call shape", () => {
@@ -30,10 +31,10 @@ describe("TanStack query input type boundaries", () => {
   });
 
   it("imports explicit input contracts from api/app TanStack adapters", () => {
-    expect(appSource("src/people/people-queries.ts")).toContain(
+    expect(appSource("src/people/people-client.tsx")).toContain(
       "type ListPeopleInput"
     );
-    expect(appSource("src/people/people-queries.ts")).toContain(
+    expect(appSource("src/people/people-detail-sheet.tsx")).toContain(
       "type GetPersonInput"
     );
     expect(appSource("src/connectors/connectors-client.tsx")).toContain(

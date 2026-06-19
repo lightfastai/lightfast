@@ -1,6 +1,6 @@
-import type { PeopleList, PersonRow } from "./people-queries";
+import type { PeopleList, PersonRow } from "./people-cache";
 
-export type { PeopleList, PersonRow } from "./people-queries";
+export type { PeopleList, PersonRow } from "./people-cache";
 
 export type PersonProvider = PersonRow["identityProvider"];
 export type PersonType = PersonRow["identityType"];

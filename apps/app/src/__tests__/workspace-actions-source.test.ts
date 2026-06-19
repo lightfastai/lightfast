@@ -295,7 +295,6 @@ describe("workspace page-owned actions", () => {
     );
     const peopleSearchSource = source("src/people/people-search-params.ts");
     const peopleToolbarSource = source("src/people/people-toolbar.tsx");
-    const peopleQuerySource = source("src/people/people-queries.ts");
 
     for (const toolbarSource of [peopleToolbarSource, decisionsToolbarSource]) {
       expect(toolbarSource).not.toContain("onQueryChange");
@@ -314,8 +313,8 @@ describe("workspace page-owned actions", () => {
     expect(peopleClientSource).not.toContain("peopleQuery: value");
     expect(peopleRouteSource).not.toContain("peopleQuery");
     expect(peopleSearchSource).not.toContain("peopleQuery");
-    expect(peopleQuerySource).not.toContain("normalizedSearch");
-    expect(peopleQuerySource).not.toContain("search:");
+    expect(peopleClientSource).not.toContain("normalizedSearch");
+    expect(peopleClientSource).not.toContain("search: search");
 
     expect(decisionsClientSource).not.toContain("useDeferredValue");
     expect(decisionsClientSource).not.toContain("searchText");
