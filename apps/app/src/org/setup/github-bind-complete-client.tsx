@@ -1,3 +1,7 @@
+import {
+  type SyncGitHubBindingClaimResult,
+  syncGitHubBindingClaim,
+} from "@api/app/tanstack/github-setup";
 import { useSession } from "@clerk/tanstack-react-start";
 import { Loading03Icon as Loader2 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -6,7 +10,6 @@ import { Button } from "@repo/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
-import { syncGitHubBindingClaimMutationOptions } from "./github-setup-queries";
 
 interface GitHubBindCompleteClientProps {
   orgSlug: string;
@@ -19,7 +22,10 @@ export function GitHubBindCompleteClient({
   const [failed, setFailed] = useState(false);
   const hasStartedRef = useRef(false);
 
-  const syncMutation = useMutation(syncGitHubBindingClaimMutationOptions());
+  const syncMutation = useMutation({
+    meta: { errorTitle: "Failed to finish GitHub connection" },
+    mutationFn: () => syncGitHubBindingClaim({ data: {} }),
+  });
   const { mutateAsync } = syncMutation;
 
   const finish = useCallback(async () => {
@@ -31,7 +37,7 @@ export function GitHubBindCompleteClient({
     }
 
     try {
-      const result = await mutateAsync();
+      const result: SyncGitHubBindingClaimResult = await mutateAsync();
       if (result.bindingStatus !== "bound" && !result.nextSetupRequirement) {
         setFailed(true);
         return;

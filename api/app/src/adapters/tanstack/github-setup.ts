@@ -1,6 +1,7 @@
 import { db } from "@db/app/client";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest, setResponseHeader } from "@tanstack/react-start/server";
+import type { z } from "zod";
 
 import { resolveAuthContextFromClerk } from "../../auth/identity";
 import type { Actor } from "../../domain";
@@ -11,6 +12,19 @@ import {
   syncGitHubBindingClaimCommand,
   verifyGitHubLightfastRepoCommand,
 } from "../../domain/github-setup";
+
+export type StartGitHubOrgSetupInput = z.input<
+  typeof startGitHubOrgSetupCommand.input
+>;
+export type StartGitHubOrgSetupResult = z.output<
+  typeof startGitHubOrgSetupCommand.output
+>;
+export type SyncGitHubBindingClaimResult = z.output<
+  typeof syncGitHubBindingClaimCommand.output
+>;
+export type VerifyGitHubLightfastRepoResult = z.output<
+  typeof verifyGitHubLightfastRepoCommand.output
+>;
 
 function requestId() {
   return crypto.randomUUID();

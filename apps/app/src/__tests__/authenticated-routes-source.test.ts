@@ -1010,13 +1010,17 @@ describe("app authenticated route migration", () => {
     expect(bindIndexRouteSource).toContain("useSearch({ strict: false })");
     expect(bindIndexRouteSource).not.toContain("useRouterState");
     expect(bindIndexRouteSource).toContain("BindGithubCard");
-    expect(bindCardSource).toContain("startGitHubOrgSetupMutationOptions");
+    expect(bindCardSource).toContain('@api/app/tanstack/github-setup"');
+    expect(bindCardSource).toContain("startGitHubOrgSetup");
+    expect(bindCardSource).not.toContain("startGitHubOrgSetupMutationOptions");
     expect(lightfastRepoRouteSource).toContain(
       "sourceControlConnectionQueryOptions"
     );
     expect(lightfastRepoRouteSource).toContain("newLightfastRepositoryUrl");
     expect(lightfastRepoRouteSource).not.toContain("getGitHubNewRepositoryUrl");
-    expect(repoClientSource).toContain(
+    expect(repoClientSource).toContain('@api/app/tanstack/github-setup"');
+    expect(repoClientSource).toContain("verifyGitHubLightfastRepo");
+    expect(repoClientSource).not.toContain(
       "verifyGitHubLightfastRepoMutationOptions"
     );
     expect(repoClientSource).toContain("newRepositoryUrl");
@@ -1579,7 +1583,9 @@ describe("app authenticated route migration", () => {
     expect(xSetupClientSource).toContain("window.location.assign");
     expect(xCompleteClientSource).toContain("useSession");
     expect(xCompleteClientSource).toContain("useNavigate");
-    expect(xCompleteClientSource).toContain(
+    expect(xCompleteClientSource).toContain('@api/app/tanstack/github-setup"');
+    expect(xCompleteClientSource).toContain("syncGitHubBindingClaim");
+    expect(xCompleteClientSource).not.toContain(
       "syncGitHubBindingClaimMutationOptions"
     );
     expect(xCompleteClientSource).toContain("pathForSetupRequirement");
