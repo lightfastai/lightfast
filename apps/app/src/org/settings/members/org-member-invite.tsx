@@ -34,17 +34,17 @@ import {
   insertInvitation,
   type OrgMembersData,
   type OrgRole,
+  orgMemberListQueryKey,
   removeInvitation,
   replaceInvitation,
 } from "./org-member-cache";
-import { orgMemberQueryKeys } from "./org-member-queries";
 
 type InviteOrgMemberInput = z.input<typeof inviteOrgMemberSchema>;
 
 export function OrgMemberInvite() {
   const { has, isLoaded, orgId } = useAuth();
   const queryClient = useQueryClient();
-  const listQueryKey = orgMemberQueryKeys.list(orgId);
+  const listQueryKey = orgMemberListQueryKey(orgId);
   const canManageMembers = isLoaded && !!has?.({ role: "org:admin" });
 
   const [isOpen, setIsOpen] = useState(false);

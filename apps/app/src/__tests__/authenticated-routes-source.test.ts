@@ -1197,9 +1197,7 @@ describe("app authenticated route migration", () => {
     const memberCacheSource = source(
       "src/org/settings/members/org-member-cache.ts"
     );
-    const memberQueriesSource = source(
-      "src/org/settings/members/org-member-queries.ts"
-    );
+    const memberQueriesPath = "src/org/settings/members/org-member-queries.ts";
     const apiKeyCreateSource = source(
       "src/org/settings/api-keys/org-api-key-create.tsx"
     );
@@ -1244,7 +1242,10 @@ describe("app authenticated route migration", () => {
 
     expect(membersClientSource).toContain("OrgMemberInvite");
     expect(membersClientSource).toContain("OrgMemberList");
-    expect(memberListSource).toContain("orgMembersQueryOptions");
+    expect(existsSync(resolve(appRoot, memberQueriesPath))).toBe(false);
+    expect(memberListSource).toContain("listOrgMembers");
+    expect(memberListSource).toContain("queryKey: listQueryKey");
+    expect(memberListSource).not.toContain("orgMembersQueryOptions");
     expect(memberListSource).not.toContain("orgMembers.list.queryOptions");
     expect(memberListSource).not.toContain(
       'enabled: typeof window !== "undefined"'
@@ -1268,8 +1269,12 @@ describe("app authenticated route migration", () => {
     );
     expect(memberListSource).not.toContain("removeOrgMemberMutationOptions");
     expect(memberListSource).not.toContain("useOrgMemberListActions");
-    expect(memberQueriesSource).toContain("orgMemberQueryKeys");
-    expect(memberQueriesSource).not.toContain("useTRPC");
+    expect(memberCacheSource).toContain("orgMemberListQueryKey");
+    expect(memberCacheSource).toContain(
+      'import type { ListOrgMembersResult } from "@api/app/tanstack/org-members"'
+    );
+    expect(memberCacheSource).not.toContain("queryOptions");
+    expect(memberCacheSource).not.toContain("useTRPC");
     expect(memberCacheSource).not.toContain("AppRouterOutputs");
 
     expect(existsSync(resolve(appRoot, apiKeyQueriesPath))).toBe(false);
