@@ -72,7 +72,7 @@ vi.mock("@repo/ai/signal-classifier", () => ({
   getSignalClassificationFailure: getSignalClassificationFailureMock,
 }));
 
-vi.mock("../services/identity", () => ({
+vi.mock("../services/identity/runtime-context", () => ({
   formatOrgIdentitySystemSection: formatOrgIdentitySystemSectionMock,
   getOrgIdentityContext: getOrgIdentityContextMock,
 }));

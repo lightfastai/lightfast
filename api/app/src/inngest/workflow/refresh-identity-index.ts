@@ -1,4 +1,4 @@
-import { refreshIdentityIndexSource } from "../../services/identity";
+import { refreshIdentityIndexSource } from "../../services/identity/refresh";
 import { inngest } from "../client";
 import { appEvents } from "../schemas/app";
 

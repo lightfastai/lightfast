@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   formatOrgIdentitySystemSection,
   getOrgIdentityContext,
-} from "../services/identity";
+} from "../services/identity/runtime-context";
 import type { IdentityIndexServiceDeps } from "../services/identity/types";
 
 const now = new Date("2026-06-01T00:00:00.000Z");

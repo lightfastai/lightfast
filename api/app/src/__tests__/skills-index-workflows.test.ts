@@ -153,8 +153,11 @@ vi.mock("../services/skills/refresh", () => ({
   refreshSkillIndexSource: refreshSkillIndexSourceMock,
 }));
 
-vi.mock("../services/identity", () => ({
+vi.mock("../services/identity/reconcile", () => ({
   findChangedIdentityIndexSources: findChangedIdentityIndexSourcesMock,
+}));
+
+vi.mock("../services/identity/refresh", () => ({
   refreshIdentityIndexSource: refreshIdentityIndexSourceMock,
 }));
 

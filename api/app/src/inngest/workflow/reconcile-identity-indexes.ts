@@ -1,4 +1,4 @@
-import { findChangedIdentityIndexSources } from "../../services/identity";
+import { findChangedIdentityIndexSources } from "../../services/identity/reconcile";
 import { inngest } from "../client";
 import { createIdentityRefreshDedupeKey } from "./identity-refresh-event";
 
