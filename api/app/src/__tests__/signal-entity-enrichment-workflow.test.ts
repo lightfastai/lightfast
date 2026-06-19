@@ -41,11 +41,15 @@ vi.mock("../inngest/client", () => ({
     createFunction: createFunctionMock,
   },
 }));
-vi.mock("../services/entity-enrichment", () => ({
-  fetchSignalEntityProfiles: fetchSignalEntityProfilesMock,
+vi.mock("../services/entity-enrichment/adapters", () => ({
   githubUserPayloadToObservation: githubUserPayloadToObservationMock,
-  signalProfileObservationIds: signalProfileObservationIdsMock,
   xUserPayloadToObservation: xUserPayloadToObservationMock,
+}));
+vi.mock("../services/entity-enrichment/ids", () => ({
+  signalProfileObservationIds: signalProfileObservationIdsMock,
+}));
+vi.mock("../services/entity-enrichment/provider-fetchers", () => ({
+  fetchSignalEntityProfiles: fetchSignalEntityProfilesMock,
 }));
 
 const { enrichSignalEntities } = await import(
