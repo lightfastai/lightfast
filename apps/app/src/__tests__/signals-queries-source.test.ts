@@ -6,7 +6,7 @@ const appRoot = resolve(import.meta.dirname, "../..");
 const repoRoot = resolve(appRoot, "../..");
 
 describe("signals query helpers", () => {
-  it("centralizes migrated signal query keys and read server function calls", () => {
+  it("keeps signal keys, result types, and shared detail query options", () => {
     const source = readFileSync(
       resolve(appRoot, "src/signals/signals-queries.ts"),
       "utf8"
@@ -14,9 +14,11 @@ describe("signals query helpers", () => {
 
     expect(source).toContain('@api/app/tanstack/signals"');
     expect(source).toContain("signalQueryKeys");
-    expect(source).toContain("workingSetSignalsQueryOptions");
-    expect(source).toContain("processingSignalsQueryOptions");
     expect(source).toContain("signalDetailQueryOptions");
+    expect(source).not.toContain("workingSetSignalsQueryOptions");
+    expect(source).not.toContain("processingSignalsQueryOptions");
+    expect(source).not.toContain("listWorkingSetSignals,");
+    expect(source).not.toContain("listProcessingSignals,");
     expect(source).not.toContain("createSignalMutationOptions");
     expect(source).not.toContain("createSignal,");
     expect(source).not.toContain("useTRPC");

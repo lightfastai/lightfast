@@ -1,28 +1,54 @@
-import { useQuery } from "@tanstack/react-query";
+import {
+  listProcessingSignals,
+  listWorkingSetSignals,
+} from "@api/app/tanstack/signals";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import {
   adaptProcessingRow,
   compareSignalsByRecency,
   filterClassifiedSignals,
+  PROCESSING_SIGNALS_LIMIT,
   type SignalClassificationFilters,
   type SignalListItem,
   type SignalRow,
   type SignalSection,
+  signalProcessingStatuses,
 } from "./signals-model";
-import {
-  processingSignalsQueryOptions,
-  workingSetSignalsQueryOptions,
-} from "./signals-queries";
+import { signalQueryKeys } from "./signals-queries";
+
+const WORKING_SET_REFETCH_MS = 30_000;
+const PROCESSING_REFETCH_MS = 5000;
 
 export function useSignalsWorkspaceData({
   filters,
 }: {
   filters: SignalClassificationFilters;
 }) {
-  const workingSetOptions = workingSetSignalsQueryOptions();
-  const processingOptions = processingSignalsQueryOptions();
-  const workingSetQuery = useQuery(workingSetOptions);
-  const processingQuery = useQuery(processingOptions);
+  const workingSetQueryKey = signalQueryKeys.workingSet();
+  const processingQueryKey = signalQueryKeys.processing();
+  const workingSetQuery = useQuery({
+    enabled: typeof window !== "undefined",
+    placeholderData: keepPreviousData,
+    queryFn: () => listWorkingSetSignals(),
+    queryKey: workingSetQueryKey,
+    refetchInterval: WORKING_SET_REFETCH_MS,
+    staleTime: WORKING_SET_REFETCH_MS,
+  });
+  const processingQuery = useQuery({
+    enabled: typeof window !== "undefined",
+    placeholderData: keepPreviousData,
+    queryFn: () =>
+      listProcessingSignals({
+        data: {
+          limit: PROCESSING_SIGNALS_LIMIT,
+          statuses: [...signalProcessingStatuses],
+        },
+      }),
+    queryKey: processingQueryKey,
+    refetchInterval: PROCESSING_REFETCH_MS,
+    staleTime: PROCESSING_REFETCH_MS,
+  });
 
   const classifiedRows = useMemo<SignalListItem[]>(
     () => workingSetQuery.data?.items ?? [],
@@ -98,12 +124,12 @@ export function useSignalsWorkspaceData({
     isInitialPending:
       !hasAnyRows && (workingSetQuery.isPending || processingQuery.isPending),
     limit: workingSetQuery.data?.limit ?? 2000,
-    processingQueryKey: processingOptions.queryKey,
+    processingQueryKey,
     signalsByPublicId,
     totalCount: workingSetQuery.data?.totalCount ?? classifiedRows.length,
     truncated: workingSetQuery.data?.truncated ?? false,
     visibleListSections,
     windowDays: workingSetQuery.data?.windowDays ?? 30,
-    workingSetQueryKey: workingSetOptions.queryKey,
+    workingSetQueryKey,
   };
 }
