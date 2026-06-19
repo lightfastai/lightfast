@@ -73,7 +73,6 @@ describe("hosted MCP tools", () => {
   afterEach(() => {
     vi.doUnmock("@api/app/mcp-oauth");
     vi.doUnmock("@api/app/signals/service");
-    vi.doUnmock("@repo/provider-routines");
     vi.doUnmock("../tools/app-audit-intake");
     vi.doUnmock("../tools/app-proxy-intake");
     vi.doUnmock("../tools/app-signal-intake");
@@ -413,9 +412,6 @@ describe("hosted MCP tools", () => {
     vi.doMock("../tools/app-signal-intake", () => {
       throw new Error("app signal intake should not load for system health");
     });
-    vi.doMock("@repo/provider-routines", () => {
-      throw new Error("provider routines should not load for system health");
-    });
 
     await expect(
       executeHostedMcpTool({
@@ -436,7 +432,7 @@ describe("hosted MCP tools", () => {
     );
   });
 
-  it("does not load app signal service, OAuth, or provider routine defaults for signal creation", async () => {
+  it("does not load app signal service or OAuth for signal creation", async () => {
     const createSignalForActor = vi.fn().mockResolvedValue({
       id: signalId,
       status: "queued",
@@ -456,9 +452,6 @@ describe("hosted MCP tools", () => {
     vi.doMock("../tools/app-signal-intake", () => ({
       createSignalForActorViaApp: createSignalForActor,
     }));
-    vi.doMock("@repo/provider-routines", () => {
-      throw new Error("provider routines should not load for signal creation");
-    });
 
     await expect(
       executeHostedMcpTool({
@@ -509,9 +502,6 @@ describe("hosted MCP tools", () => {
     vi.doMock("../tools/app-signal-intake", () => ({
       getSignalForActorViaApp: getSignalForActor,
     }));
-    vi.doMock("@repo/provider-routines", () => {
-      throw new Error("provider routines should not load for signal get");
-    });
 
     await expect(
       executeHostedMcpTool({
@@ -536,7 +526,7 @@ describe("hosted MCP tools", () => {
     });
   });
 
-  it("does not load app OAuth or provider routine defaults for proxy calls", async () => {
+  it("does not load app OAuth and uses app proxy intake for proxy calls", async () => {
     const callProviderRoutine = vi.fn().mockResolvedValue({
       provider: "linear",
       providerRoutineCallId,
@@ -564,9 +554,6 @@ describe("hosted MCP tools", () => {
       callProviderRoutineViaApp: callProviderRoutine,
       findProviderRoutinesViaApp: findProviderRoutines,
     }));
-    vi.doMock("@repo/provider-routines", () => {
-      throw new Error("provider routines should not load for proxy calls");
-    });
 
     await expect(
       executeHostedMcpTool({

@@ -8,6 +8,10 @@ import {
   providerRoutineFindOutputSchema,
 } from "@repo/api-contract";
 import { verifyServiceJWT } from "@repo/service-jwt";
+import {
+  callProviderRoutine,
+  findProviderRoutines,
+} from "../../services/provider-routines";
 
 const noopProviderRoutineLog = {
   error: () => undefined,
@@ -88,11 +92,9 @@ export async function handleMcpProxyFindRequest(
   }
 
   try {
-    const [{ assertHostedMcpOrgAccess }, { findProviderRoutines }] =
-      await Promise.all([
-        import("@api/app/mcp-oauth/resource-access"),
-        import("@repo/provider-routines"),
-      ]);
+    const { assertHostedMcpOrgAccess } = await import(
+      "@api/app/mcp-oauth/resource-access"
+    );
     await assertHostedMcpOrgAccess(db, {
       orgId: parsed.data.actor.orgId,
       userId: parsed.data.actor.userId,
@@ -128,11 +130,9 @@ export async function handleMcpProxyCallRequest(
   }
 
   try {
-    const [{ assertHostedMcpOrgAccess }, { callProviderRoutine }] =
-      await Promise.all([
-        import("@api/app/mcp-oauth/resource-access"),
-        import("@repo/provider-routines"),
-      ]);
+    const { assertHostedMcpOrgAccess } = await import(
+      "@api/app/mcp-oauth/resource-access"
+    );
     await assertHostedMcpOrgAccess(db, {
       orgId: parsed.data.actor.orgId,
       userId: parsed.data.actor.userId,

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 const appRoot = resolve(import.meta.dirname, "../..");
 const repoRoot = resolve(appRoot, "../..");
+const oldProviderRoutinesPackage = `@repo/${"provider-routines"}`;
 
 function source(path: string) {
   return readFileSync(resolve(appRoot, path), "utf8");
@@ -1798,7 +1799,7 @@ describe("app authenticated route migration", () => {
       expect(startupSensitiveFile).not.toContain('from "@api/app');
     }
     expect(mcpProxyAdapterSource).not.toContain(
-      'from "@repo/provider-routines"'
+      `from "${oldProviderRoutinesPackage}"`
     );
 
     for (const routeFile of [

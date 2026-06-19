@@ -261,7 +261,6 @@
     "@repo/entity-resolution": "workspace:*",
     "@repo/identity-contract": "workspace:*",
     "@repo/native-auth-contract": "workspace:*",
-    "@repo/provider-routines": "workspace:*",
     "@repo/sandbox-runtime": "workspace:*",
     "@repo/service-jwt": "workspace:*",
     "@repo/skills-contract": "workspace:*",

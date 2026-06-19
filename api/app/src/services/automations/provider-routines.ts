@@ -12,12 +12,12 @@ import {
   providerRoutineFindInputSchema,
   providerRoutineId,
 } from "@repo/api-contract";
-import { classifyRoutine, hasRoutineScope } from "@repo/provider-routines";
 import {
   ConnectorRuntimeToolCallError,
   type ConnectorRuntimeToolSource,
   loadConnectorRuntimeTools,
 } from "../connectors/runtime";
+import { classifyRoutine, hasRoutineScope } from "../provider-routines";
 
 const DEFAULT_FIND_LIMIT = 10;
 

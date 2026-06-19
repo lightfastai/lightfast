@@ -17,6 +17,8 @@ const oldGranolaPackage = `@repo/${"granola-app-node"}`;
 const oldGranolaPath = `packages/${"granola-app-node"}`;
 const oldProviderRoutineContractPackage = `@repo/${"provider-routine-contract"}`;
 const oldProviderRoutineContractPath = `packages/${"provider-routine-contract"}`;
+const oldProviderRoutinesPackage = `@repo/${"provider-routines"}`;
+const oldProviderRoutinesPath = `packages/${"provider-routines"}`;
 const oldConnectorCoreProviderRoutinesSubpath = `@lightfast/connector-core/${"provider-routines"}`;
 const oldUserConnectorContractPackage = `@repo/${"user-connector-contract"}`;
 const oldUserConnectorContractPath = `packages/${"user-connector-contract"}`;
@@ -101,7 +103,10 @@ describe("connector workspace boundary", () => {
     expect(staleReferences).toEqual([]);
   });
 
-  it("keeps provider routine contracts out of connector-core", () => {
+  it("keeps provider routine services in api/app", () => {
+    const apiAppPackage = readJson<{
+      dependencies?: Record<string, string>;
+    }>("api/app/package.json");
     const connectorCorePackage = readJson<{
       dependencies?: Record<string, string>;
       exports?: Record<string, unknown>;
@@ -112,14 +117,14 @@ describe("connector workspace boundary", () => {
       dependencies?: Record<string, string>;
       exports?: Record<string, unknown>;
     }>("packages/api-contract/package.json");
-    const providerRoutinesPackage = readJson<{
-      dependencies?: Record<string, string>;
-      exports?: Record<string, unknown>;
-    }>("packages/provider-routines/package.json");
 
     expect(existsSync(resolve(repoRoot, oldProviderRoutineContractPath))).toBe(
       false
     );
+    expect(existsSync(resolve(repoRoot, oldProviderRoutinesPath))).toBe(false);
+    expect(
+      apiAppPackage.dependencies?.[oldProviderRoutinesPackage]
+    ).toBeUndefined();
     expect(connectorCorePackage.name).toBe("@lightfast/connector-core");
     expect(connectorCorePackage.private).toBe(true);
     expect(connectorCorePackage.exports).not.toHaveProperty(
@@ -134,10 +139,6 @@ describe("connector workspace boundary", () => {
     expect(connectorCorePackage.dependencies?.["@repo/api-contract"]).toBe(
       "workspace:*"
     );
-    expect(
-      providerRoutinesPackage.dependencies?.[oldProviderRoutineContractPackage]
-    ).toBeUndefined();
-    expect(providerRoutinesPackage.exports).not.toHaveProperty("./contract");
 
     const connectorCoreSource = source("connectors/core/src/index.ts");
     expect(connectorCoreSource).not.toContain("CONNECTOR_CATALOG");
@@ -162,6 +163,8 @@ describe("connector workspace boundary", () => {
         return (
           contents.includes(oldProviderRoutineContractPackage) ||
           contents.includes(oldProviderRoutineContractPath) ||
+          contents.includes(oldProviderRoutinesPackage) ||
+          contents.includes(oldProviderRoutinesPath) ||
           contents.includes(oldConnectorCoreProviderRoutinesSubpath)
         );
       })
