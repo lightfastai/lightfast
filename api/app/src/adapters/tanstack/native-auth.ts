@@ -10,9 +10,10 @@ import {
 
 import { resolveAuthContextFromClerk } from "../../auth/identity";
 import {
-  createNativeAuthAttemptForAuthContext,
+  createNativeAuthAttemptForUser,
   isNativeAuthError,
-  listNativeOrganizationsForAuthContext,
+  listNativeOrganizationsForUser,
+  NativeAuthError,
 } from "../../native-auth";
 
 async function createTanStackNativeAuthContext() {
@@ -21,6 +22,19 @@ async function createTanStackNativeAuthContext() {
     db,
     headers: new Headers(request.headers),
   });
+}
+
+function requireSignedInNativeAuthIdentity(
+  auth: Awaited<ReturnType<typeof createTanStackNativeAuthContext>>
+) {
+  if (auth.identity.type === "unauthenticated") {
+    throw new NativeAuthError(
+      "UNAUTHORIZED",
+      "Authentication required. Please sign in."
+    );
+  }
+
+  return auth.identity;
 }
 
 function oauthRequestRedirectTarget(requestUrl: string): string {
@@ -70,9 +84,12 @@ async function listNativeAuthOrganizationsForCurrentRequest(
   const request = getRequest();
   noStore();
   try {
-    return await listNativeOrganizationsForAuthContext({
-      auth: await createTanStackNativeAuthContext(),
+    const identity = requireSignedInNativeAuthIdentity(
+      await createTanStackNativeAuthContext()
+    );
+    return await listNativeOrganizationsForUser({
       db,
+      userId: identity.userId,
     });
   } catch (error) {
     mapTanStackNativeAuthError(error, {
@@ -99,10 +116,13 @@ export const createNativeAuthAttempt = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     noStore();
     try {
-      return await createNativeAuthAttemptForAuthContext({
-        auth: await createTanStackNativeAuthContext(),
+      const identity = requireSignedInNativeAuthIdentity(
+        await createTanStackNativeAuthContext()
+      );
+      return await createNativeAuthAttemptForUser({
         data,
         db,
+        userId: identity.userId,
       });
     } catch (error) {
       mapTanStackNativeAuthError(error);

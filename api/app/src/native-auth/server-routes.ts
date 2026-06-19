@@ -1,16 +1,55 @@
+import { db } from "@db/app/client";
 import {
+  NATIVE_AUTH_HEADERS,
+  type NativeClient,
   nativeClientSchema,
   nativeFinalizeRequestSchema,
   nativeOAuthConfigSchema,
   nativeSessionMetadataSchema,
 } from "@repo/native-auth-contract";
 
+import { resolveAuthContextFromClerk } from "../auth/identity";
 import {
-  finalizeNativeAuthAttemptForRequest,
-  getNativeAuthSessionForRequest,
+  finalizeNativeAuthAttemptForNativeOAuth,
+  getNativeAuthSessionForNativeOAuth,
   getNativeOAuthClientConfig,
   isNativeAuthError,
+  NativeAuthError,
 } from ".";
+
+async function resolveNativeOAuthRequestAuth(input: {
+  headers: Headers;
+  source: NativeClient;
+}) {
+  const headers = new Headers(input.headers);
+  headers.set(NATIVE_AUTH_HEADERS.client, input.source);
+
+  return resolveAuthContextFromClerk({
+    db,
+    headers,
+  });
+}
+
+async function requireNativeOAuthRequestAccess(input: {
+  headers: Headers;
+  source: NativeClient;
+}) {
+  const auth = await resolveNativeOAuthRequestAuth(input);
+  if (
+    auth.identity.type === "unauthenticated" ||
+    auth.access?.kind !== "clerk-oauth"
+  ) {
+    throw new NativeAuthError(
+      "UNAUTHORIZED",
+      "Lightfast native OAuth authentication required."
+    );
+  }
+
+  return {
+    access: auth.access,
+    identity: auth.identity,
+  };
+}
 
 export function handleNativeOAuthClientConfigRequest(client: string): Response {
   try {
@@ -31,10 +70,14 @@ export async function handleNativeOAuthFinalizeRequest(
     const body = nativeFinalizeRequestSchema.parse(
       await request.json().catch(() => null)
     );
-    const session = await finalizeNativeAuthAttemptForRequest({
-      data: body,
+    const { access } = await requireNativeOAuthRequestAccess({
       headers: request.headers,
       source: body.client,
+    });
+    const session = await finalizeNativeAuthAttemptForNativeOAuth({
+      data: body,
+      db,
+      userId: access.userId,
     });
     return nativeOAuthJson(nativeSessionMetadataSchema.parse(session));
   } catch (error) {
@@ -46,9 +89,21 @@ export async function handleNativeOAuthDesktopSessionRequest(
   request: Request
 ): Promise<Response> {
   try {
-    const session = await getNativeAuthSessionForRequest({
+    const { access, identity } = await requireNativeOAuthRequestAccess({
       headers: request.headers,
       source: "desktop",
+    });
+    if (identity.type !== "active") {
+      throw new NativeAuthError(
+        "FORBIDDEN",
+        "Native session organization required"
+      );
+    }
+    const session = await getNativeAuthSessionForNativeOAuth({
+      client: access.client,
+      db,
+      organizationId: identity.orgId,
+      userId: identity.userId,
     });
     return nativeOAuthJson(nativeSessionMetadataSchema.parse(session));
   } catch (error) {
