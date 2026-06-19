@@ -1,4 +1,4 @@
-import { signServiceJWT } from "@api/app/service-jwt";
+import { signServiceJWT } from "@repo/service-jwt";
 import { env } from "../env";
 
 type Fetch = typeof fetch;

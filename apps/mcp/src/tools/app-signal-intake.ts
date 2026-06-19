@@ -1,4 +1,3 @@
-import { signServiceJWT } from "@api/app/service-jwt";
 import {
   type CreateSignalOutput,
   createMcpSignalCommandInput,
@@ -7,6 +6,7 @@ import {
   getMcpSignalCommandInput,
   getSignalOutput,
 } from "@repo/api-contract";
+import { signServiceJWT } from "@repo/service-jwt";
 
 import { env } from "../env";
 

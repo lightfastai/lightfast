@@ -1,7 +1,7 @@
 import { SignJWT } from "@vendor/jose";
 import { describe, expect, it } from "vitest";
 
-import { signServiceJWT, verifyServiceJWT } from "../service-jwt";
+import { signServiceJWT, verifyServiceJWT } from "..";
 
 const jwtSecret = "test-service-jwt-secret-at-least-32-chars";
 
@@ -18,6 +18,18 @@ async function tokenWithAudience(audience: string): Promise<string> {
     .setAudience(audience)
     .setIssuedAt(now)
     .setExpirationTime(now + 60)
+    .sign(secretKey());
+}
+
+async function expiredToken(): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+
+  return await new SignJWT({ token_use: "service_access" })
+    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+    .setIssuer("mcp")
+    .setAudience("lightfast-app")
+    .setIssuedAt(now - 120)
+    .setExpirationTime(now - 60)
     .sign(secretKey());
 }
 
@@ -75,6 +87,36 @@ describe("service JWT", () => {
     ).rejects.toMatchObject({
       code: "disallowed_caller",
       status: 403,
+    });
+  });
+
+  it("rejects expired tokens", async () => {
+    const token = await expiredToken();
+
+    await expect(
+      verifyServiceJWT({
+        allowedCallers: ["mcp"],
+        audience: "lightfast-app",
+        jwtSecret,
+        token,
+      })
+    ).rejects.toMatchObject({
+      code: "invalid_token",
+      status: 401,
+    });
+  });
+
+  it("rejects malformed tokens", async () => {
+    await expect(
+      verifyServiceJWT({
+        allowedCallers: ["mcp"],
+        audience: "lightfast-app",
+        jwtSecret,
+        token: "not-a-jwt",
+      })
+    ).rejects.toMatchObject({
+      code: "invalid_token",
+      status: 401,
     });
   });
 });

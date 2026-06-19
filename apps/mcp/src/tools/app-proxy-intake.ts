@@ -1,4 +1,3 @@
-import { signServiceJWT } from "@api/app/service-jwt";
 import {
   type McpProviderRoutineCallCommandInput,
   type McpProviderRoutineFindCommandInput,
@@ -11,6 +10,7 @@ import {
   providerRoutineCallSuccessSchema,
   providerRoutineFindOutputSchema,
 } from "@lightfast/connector-core/provider-routines";
+import { signServiceJWT } from "@repo/service-jwt";
 
 import { env } from "../env";
 

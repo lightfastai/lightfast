@@ -6,6 +6,7 @@ import {
   getMcpSignalCommandInput,
   getSignalOutput,
 } from "@repo/api-contract";
+import { verifyServiceJWT } from "@repo/service-jwt";
 
 import { type ExecutionContext, isDomainError } from "../../domain";
 import {
@@ -15,7 +16,6 @@ import {
   getSignalCommandDeps,
 } from "../../domain/signals";
 import { assertHostedMcpOrgAccess } from "../../mcp-oauth/resource-access";
-import { verifyServiceJWT } from "../../service-jwt";
 
 function bearerToken(request: Request): string | undefined {
   const authorization = request.headers.get("authorization");

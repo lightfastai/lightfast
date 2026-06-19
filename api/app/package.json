@@ -21,10 +21,6 @@
       "types": "./src/env.ts",
       "default": "./src/env.ts"
     },
-    "./service-jwt": {
-      "types": "./src/service-jwt.ts",
-      "default": "./src/service-jwt.ts"
-    },
     "./domain": {
       "types": "./src/domain/index.ts",
       "default": "./src/domain/index.ts"
@@ -273,6 +269,7 @@
     "@repo/native-auth-contract": "workspace:*",
     "@repo/provider-routines": "workspace:*",
     "@repo/sandbox-runtime": "workspace:*",
+    "@repo/service-jwt": "workspace:*",
     "@repo/skills-contract": "workspace:*",
     "@repo/source-control-contract": "workspace:*",
     "@repo/user-connector-contract": "workspace:*",
