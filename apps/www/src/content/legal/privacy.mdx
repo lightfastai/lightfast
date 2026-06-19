@@ -1,192 +1,221 @@
 ---
 title: "Privacy Policy"
-description: "Lightfast Privacy Policy — how we collect, use, and protect your data when you use the Lightfast platform and services."
-keywords: ["lightfast privacy policy", "data protection", "privacy", "ai platform privacy", "australian privacy"]
+description: "Lightfast Privacy Policy for the website, waitlist, newsletter, analytics, diagnostics, and research updates."
+keywords: ["lightfast privacy policy", "australian privacy", "waitlist privacy", "newsletter privacy", "analytics privacy"]
 canonicalUrl: "https://lightfast.ai/v2/legal/privacy"
-ogTitle: "Privacy Policy — Lightfast"
-ogDescription: "How Lightfast collects, uses, and protects your data. Read our full privacy policy."
+ogTitle: "Privacy Policy - Lightfast"
+ogDescription: "How Lightfast handles personal information across the website, waitlist, newsletter, analytics, and research updates."
 noindex: false
 nofollow: false
-updatedAt: "2026-05-21T00:00:00Z"
-effectiveAt: "2026-05-21T00:00:00Z"
+updatedAt: "2026-06-19T00:00:00Z"
+effectiveAt: "2026-06-19T00:00:00Z"
 ---
 
 # Privacy Policy
 
-**Lightfast Pty Ltd** ABN 35 690 889 984 ("**Lightfast**", "**we**", "**us**", "**our**") operates the Lightfast platform at [lightfast.ai](https://lightfast.ai).
+Last updated: 19 June 2026
 
-This Privacy Policy explains how we collect, use, disclose, and protect personal information in accordance with the _Privacy Act 1988_ (Cth) and the Australian Privacy Principles (APPs). It applies to all users of the Lightfast platform, website, and related services (the "**Service**").
+**Lightfast Pty Ltd** ABN 35 690 889 984 ("**Lightfast**", "**we**", "**us**", "**our**") is an Australian AI research lab.
 
-By using the Service, you acknowledge that you have read and understood this Privacy Policy. If you do not agree, please do not use the Service.
+This Privacy Policy explains how we collect, use, disclose, and protect personal information when you visit [lightfast.ai](https://lightfast.ai), join a waitlist, subscribe to our newsletter, or communicate with us (together, the "**Site**").
+
+Lightfast is based in Australia and is open to people around the world. We use the Australian Privacy Principles under the _Privacy Act 1988_ (Cth) as our baseline for handling personal information. Depending on where you live, additional privacy or data protection rights may also apply.
+
+Lightfast currently operates this public website, waitlist, newsletter, and related communications. If we later offer apps, APIs, hosted services, or private previews, we may update this policy or provide additional privacy notices.
 
 ---
 
 ## 1. Information We Collect
 
-### 1.1 Account Information
+### 1.1 Information You Provide
 
-When you create an account, we collect personal information through our authentication provider, Clerk, including:
+We collect personal information you choose to provide, including:
 
-- Email address
-- Full name
-- Profile photograph (if provided)
-- Email verification and session data
+- **Waitlist information**: email address, waitlist status, timestamps, invitation status, and related metadata. We use Clerk to manage waitlist entries.
+- **Newsletter information**: email address, subscription status, preferences, unsubscribe status, and email delivery metadata. We use Resend to send email.
+- **Communications**: name, email address, social handle, organisation, role, message content, and any other information you include when contacting us.
+- **Feedback**: comments, ideas, screenshots, bug reports, or other materials you send us.
 
-This information is managed by Clerk and is not stored in Lightfast's own databases. We reference your account via unique identifiers only.
+Waitlist signup and newsletter subscription are separate choices. Joining the waitlist does not automatically subscribe you to the newsletter.
 
-### 1.2 Organisation Information
+### 1.2 Information Collected Automatically
 
-When you create or join an organisation on Lightfast, we collect:
+When you use the Site, we and our service providers may collect:
 
-- Organisation name and identifier
-- Team membership and roles
-- Billing and subscription information (processed by Clerk)
+- **Hosting and security data**: IP address, user agent, request URL, referrer, timestamps, headers, approximate location, device and browser information, and server logs.
+- **Vercel Analytics and Speed Insights data**: page views, routes, referrers, filtered query parameters, device type, browser, operating system, approximate geography, and performance metrics such as Core Web Vitals.
+- **Vercel Observability data**: traffic, performance, function, routing, and error information used to monitor the Site.
+- **Sentry diagnostics data**: error messages, stack traces, performance traces, browser and device details, request context, logs, IP address, user context where available, and sampled session replays. We configure Sentry session replay to mask all text and block media.
+- **PostHog analytics data**: page views, navigation events, referrers, device and browser information, approximate location, anonymous or pseudonymous identifiers, and other website analytics events. Our PostHog integration is designed for first-party analytics and uses a Lightfast `/ingest` proxy to PostHog's US cloud endpoints.
 
-### 1.3 Product Data
+We do not use analytics tools for third-party advertising.
 
-When you use Lightfast, we collect and process information you provide through the Service, including organization settings, API key metadata, prompts, messages, files, outputs, and other content submitted through Lightfast interfaces or APIs.
+### 1.3 Cookies and Similar Technologies
 
-### 1.4 Usage and Analytics Data
+The Site may use cookies, local storage, pixels, or similar technologies for:
 
-We automatically collect:
+- Essential site operation, security, and fraud prevention.
+- Analytics and performance measurement.
+- Error tracking and diagnostics.
+- Remembering privacy or communication preferences.
 
-- **Page views and navigation data** via PostHog, including URLs visited and anonymous usage identifiers.
-- **Error and performance data** via Sentry, including error traces, browser information, and session replays (with all text masked and media blocked).
-- **User agent strings** and request metadata recorded in activity audit logs.
-- **IP addresses** recorded when API keys are used.
+Vercel Web Analytics is designed to work without third-party cookies and uses aggregated statistics. PostHog may use cookies or local storage depending on how it is configured. Where practical, we configure analytics to minimise personal information and respect consent or opt-out requirements that apply in your location.
 
-### 1.5 Information You Provide
+### 1.4 Sensitive Information
 
-- Feedback submitted through our in-app feedback tool (which may include screenshots).
-- Communications you send to us, such as support requests or emails.
+We do not intentionally collect sensitive personal information through the Site, waitlist, or newsletter. Please do not send us sensitive information unless we specifically ask for it and explain why.
 
----
+If we ever ask you to provide sensitive information, we will explain why and seek consent where required.
 
-## 2. How We Use Your Information
+### 1.5 No Product Workspace Data
 
-We use the information we collect to:
-
-- **Provide the Service**: Operate Lightfast workspaces, APIs, agent tools, search, and AI-powered reasoning.
-- **Authenticate and authorise**: Verify your identity and manage access to your organisation's data.
-- **Maintain and improve**: Monitor performance, diagnose errors, and improve the Service.
-- **Communicate**: Send transactional emails (e.g., invitations, notifications) via our email provider.
-- **Analyse usage**: Understand how the Service is used to inform product decisions.
-- **Ensure security**: Detect and prevent fraud, abuse, and security incidents. Maintain audit logs of user activities.
-- **Comply with law**: Meet our legal obligations, including under the _Privacy Act 1988_ (Cth).
+Because Lightfast is not currently operating a public product, we do not currently collect production workspace data, organisation data, API payloads, prompts, files, messages, or agent outputs through a public Lightfast app.
 
 ---
 
-## 3. How We Share Your Information
+## 2. How We Use Information
 
-We do not sell your personal information. We share information only in the following circumstances:
+We use personal information to:
 
-### 3.1 Sub-Processors
+- Operate, secure, monitor, and improve the Site.
+- Manage waitlist entries and early access communications.
+- Send newsletter emails if you subscribe.
+- Respond to messages, questions, feedback, and requests.
+- Send research updates, technical writing, and related communications where you have asked to receive them.
+- Understand how people discover and use the Site.
+- Debug errors, measure performance, and protect against abuse.
+- Maintain records of consent, unsubscribe requests, and privacy requests.
+- Comply with legal obligations and protect our rights, users, and the public.
 
-We use third-party service providers ("sub-processors") to operate the Service. These providers process data on our behalf and are contractually required to protect your information:
+We do not sell personal information.
 
-| Provider | Purpose | Data Processed | Location |
+We do not use personal information collected through the Site, waitlist, newsletter, or direct communications to train general-purpose AI models.
+
+We do not use personal information to make automated decisions that we expect to have legal or similarly significant effects on individuals. If this changes, we will update this policy.
+
+---
+
+## 3. Direct Marketing and Email
+
+We may send marketing or newsletter emails only where we have consent or are otherwise permitted by law. Each marketing email will identify Lightfast and include a way to unsubscribe.
+
+For Australian recipients, we aim to comply with the _Spam Act 2003_ (Cth), including by making unsubscribe instructions clear and honouring unsubscribe requests within the required timeframe.
+
+Unsubscribing from marketing emails may not stop non-marketing messages, such as waitlist confirmations, administrative messages, security notices, or direct replies to messages you send us.
+
+---
+
+## 4. How We Share Information
+
+We disclose personal information only as needed for the purposes in this policy.
+
+### 4.1 Service Providers
+
+We use service providers to operate the Site, manage communications, and monitor reliability. These providers process information on our behalf or as otherwise described in their terms.
+
+| Provider | Purpose | Information Processed | Likely Processing Locations |
 |---|---|---|---|
-| Clerk | Authentication and user management | Account details, sessions, billing | United States |
-| Sentry | Error tracking and session replay | Error data, masked session replays | United States |
-| PostHog | Product analytics | Page views, anonymous usage data | United States / EU |
-| Pinecone | Vector search and embeddings | Event content embeddings | United States |
-| Upstash | Caching and real-time data | Cached organisation data | United States / EU |
-| Resend | Transactional email | Email addresses, email content | United States |
-| Vercel | Hosting and deployment | Server logs, request data | United States |
-| OpenAI | AI model processing | Event content for AI analysis | United States |
-| Inngest | Background job orchestration | Event payloads, workflow state | United States |
+| Clerk | Waitlist management and future access control | Email address, waitlist status, identifiers, timestamps, invitation metadata | United States and other locations used by Clerk |
+| Resend | Email delivery for waitlist, transactional, and newsletter emails | Email addresses, message content, delivery metadata, unsubscribe events | United States and other locations used by Resend |
+| Vercel | Hosting, deployments, Web Analytics, Speed Insights, Observability, logs | Request data, page views, performance metrics, logs, approximate location, device and browser data | United States, European Union, and global infrastructure locations |
+| Sentry | Error tracking, performance monitoring, logs, session replay | Error data, stack traces, request context, device and browser data, IP address, masked session replays | United States, European Union, and other locations used by Sentry |
+| PostHog | Website analytics | Page views, events, referrers, identifiers, device and browser data, approximate location | United States by current configuration, or European Union if later configured |
+| Better Stack / Logtail | Application logging and observability | Application logs, request context, operational metadata | United States, European Union, or configured data location |
 
-### 3.2 Legal Requirements
+### 4.2 Legal, Safety, and Security
 
-We may disclose information if required by law, regulation, legal process, or governmental request, or to protect the rights, property, or safety of Lightfast, our users, or the public.
+We may disclose information if we reasonably believe disclosure is necessary to:
 
-### 3.3 Business Transfers
+- Comply with law, regulation, legal process, or a government request.
+- Protect the rights, property, or safety of Lightfast, users, or the public.
+- Detect, prevent, or address fraud, abuse, security incidents, or technical issues.
+- Enforce our [Terms of Use](/v2/legal/terms).
 
-In the event of a merger, acquisition, or sale of assets, your information may be transferred as part of that transaction. We will notify you of any such change.
+### 4.3 Business Transfers
 
----
-
-## 4. Cross-Border Data Transfers
-
-Lightfast is an Australian company, but our sub-processors are primarily located in the United States and the European Union. In accordance with APP 8, before disclosing personal information to an overseas recipient, we take reasonable steps to ensure that the recipient handles your information consistently with the APPs. This includes entering into contractual arrangements that require equivalent protections.
+If Lightfast is involved in a merger, acquisition, financing, restructuring, or sale of assets, personal information may be transferred as part of that transaction. We will take reasonable steps to ensure the information remains protected.
 
 ---
 
-## 5. Data Security
+## 5. International Transfers
 
-We implement appropriate technical and organisational measures to protect your information, including:
+Lightfast is an Australian company. Our service providers may process information in Australia, the United States, the European Union, and other countries.
 
-- **Encryption at rest**: API keys are stored as SHA-256 hashes, and sensitive application data is encrypted where appropriate.
-- **Encryption in transit**: All data transmitted between your browser and our servers uses TLS encryption.
-- **Access controls**: Organisation-scoped data isolation ensures that your data is accessible only to authorised members of your organisation.
-- **Session replay masking**: Sentry session replays mask all text and block all media to minimise data exposure.
-- **Token scrubbing**: Authentication tokens are redacted from diagnostic breadcrumbs and logs.
-- **Audit logging**: User activities are logged for security monitoring and compliance.
+Where Australian privacy law applies to an overseas disclosure, we take reasonable steps designed to ensure overseas recipients handle personal information consistently with the Australian Privacy Principles. Where other privacy laws apply, we use appropriate safeguards where required.
 
-No method of transmission or storage is completely secure. If we become aware of a data breach that is likely to result in serious harm, we will notify affected individuals and the Office of the Australian Information Commissioner (OAIC) in accordance with the Notifiable Data Breaches scheme.
+Different countries may have privacy laws that are not equivalent to those in your location.
 
 ---
 
-## 6. Data Retention
+## 6. Security
 
-We retain your information for as long as your account is active or as needed to provide the Service. Specifically:
+We use technical and organisational measures designed to protect personal information, including:
 
-- **Account data**: Retained while your account exists. Managed by Clerk and deleted upon account closure.
-- **Organisation data**: Retained while the organisation is active. Events, entities, and related data are retained for the lifetime of the organisation.
-- **Audit logs**: Retained for compliance and security purposes.
-- **Analytics data**: Retained in accordance with our analytics providers' retention policies.
+- TLS encryption for data transmitted to the Site.
+- Access controls for systems that store personal information.
+- Limited access to service provider dashboards.
+- Logging and monitoring for reliability and security.
+- Session replay masking for Sentry, with text masked and media blocked.
+- Data minimisation where practical.
 
-You may request deletion of your personal information at any time (see Section 8).
-
----
-
-## 7. Cookies and Tracking Technologies
-
-We use the following tracking technologies:
-
-- **Essential cookies**: Set by Clerk for authentication and session management. These are necessary for the Service to function.
-- **Analytics cookies**: Set by PostHog for product analytics. These help us understand how the Service is used.
-- **Error tracking**: Sentry uses cookies and local storage for error reporting and session replay.
+No method of transmission or storage is completely secure. If we become aware of a data breach that is likely to result in serious harm and the Notifiable Data Breaches scheme applies, we will notify affected individuals and the Office of the Australian Information Commissioner as required.
 
 ---
 
-## 8. Your Rights
+## 7. Retention
 
-Under the Australian Privacy Principles, you have the right to:
+We keep personal information only for as long as reasonably needed for the purposes described in this policy, unless a longer period is required or permitted by law.
 
-- **Access**: Request access to the personal information we hold about you.
-- **Correction**: Request correction of inaccurate or incomplete personal information.
-- **Complaint**: Lodge a complaint if you believe we have breached the APPs.
-- **Deletion**: Request deletion of your personal information, subject to our legal obligations.
+In general:
 
-To exercise any of these rights, please contact us at **support@lightfast.ai**.
+- **Waitlist information** is retained while the waitlist or early access process remains active, unless you ask us to delete it earlier and we are able to do so.
+- **Newsletter information** is retained while you remain subscribed. If you unsubscribe, we may keep limited information on a suppression list to avoid emailing you again.
+- **Communications** are retained while needed to respond, maintain business records, resolve disputes, or protect our rights.
+- **Analytics, logs, diagnostics, and observability data** are retained according to our settings and provider retention periods.
 
-If you are not satisfied with our response, you may lodge a complaint with the [Office of the Australian Information Commissioner (OAIC)](https://www.oaic.gov.au/).
+---
+
+## 8. Your Choices and Rights
+
+You may ask us to:
+
+- Access personal information we hold about you.
+- Correct inaccurate or incomplete personal information.
+- Delete personal information where we are able or required to do so.
+- Opt out of newsletter or marketing communications.
+- Withdraw consent where processing is based on consent.
+- Make a privacy complaint.
+
+Depending on where you live, you may have additional rights under local privacy laws, such as rights to access, correct, delete, object to, restrict, or receive a copy of personal information. We will respond to requests as required by applicable law. We do not sell personal information or use it for third-party advertising.
+
+To exercise privacy rights, contact [legal@lightfast.ai](mailto:legal@lightfast.ai). We may need to verify your identity before responding.
+
+If you are in Australia and are not satisfied with our response to a privacy complaint, you may contact the [Office of the Australian Information Commissioner](https://www.oaic.gov.au/).
 
 ---
 
 ## 9. Third-Party Links
 
-The Service may contain links to third-party websites or services that are not operated by us. We are not responsible for the privacy practices of those third parties. We encourage you to review their privacy policies.
+The Site may contain links to third-party websites, communities, repositories, or services. We are not responsible for the privacy practices of those third parties. Review their privacy policies before providing them with personal information.
 
 ---
 
 ## 10. Children's Privacy
 
-The Service is not directed to individuals under the age of 16. We do not knowingly collect personal information from children. If we become aware that we have collected information from a child, we will take steps to delete it.
+The Site is not directed to children under 16. We do not knowingly collect personal information from children under 16. If you believe a child has provided us with personal information, contact us and we will take reasonable steps to delete it.
 
 ---
 
 ## 11. Changes to This Policy
 
-We may update this Privacy Policy from time to time. We will notify you of material changes by updating the "Last updated" date at the top of this page. Your continued use of the Service after any changes constitutes acceptance of the updated policy.
+We may update this Privacy Policy from time to time. If we make material changes, we will update the "Last updated" date and may provide additional notice where appropriate.
 
 ---
 
-## 12. Contact Us
+## 12. Contact
 
-If you have questions about this Privacy Policy or our data practices, please contact us:
+For questions, privacy requests, or complaints, contact:
 
 **Lightfast Pty Ltd**
-Email: [support@lightfast.ai](mailto:support@lightfast.ai)
+Email: [legal@lightfast.ai](mailto:legal@lightfast.ai)
 Website: [lightfast.ai](https://lightfast.ai)

@@ -122,6 +122,13 @@ function HeroContent({
               />
             </button>
           </div>
+          <p className="mt-3 max-w-[520px] text-[#edecec]/75 text-xs leading-5">
+            By joining, you agree to receive early access updates. See our{" "}
+            <a className="underline underline-offset-2" href="/v2/legal/privacy">
+              Privacy Policy
+            </a>
+            .
+          </p>
         </form>
       </div>
     </section>
