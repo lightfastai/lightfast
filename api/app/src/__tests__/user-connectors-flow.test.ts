@@ -1,7 +1,6 @@
 import type { Database, UserConnectorConnection } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const authMock = vi.fn();
 const nanoidMock = vi.fn();
 const redisGetMock = vi.fn();
 const redisGetdelMock = vi.fn();
@@ -119,10 +118,6 @@ vi.mock("@lightfast/connector-granola/node", () => ({
   GranolaOAuthClientProvider: MockGranolaOAuthClientProvider,
   granolaClientMetadata: granolaClientMetadataMock,
   listGranolaMcpTools: listGranolaMcpToolsMock,
-}));
-
-vi.mock("@vendor/clerk/server", () => ({
-  auth: authMock,
 }));
 
 vi.mock("@vendor/lib", () => ({
@@ -271,8 +266,6 @@ describe("user connector catalog services", () => {
 describe("Granola user connector OAuth flow", () => {
   beforeEach(() => {
     vi.useRealTimers();
-    authMock.mockReset();
-    authMock.mockResolvedValue({ userId: "user_current" });
     process.env.VITE_LIGHTFAST_APP_URL = envMock.VITE_LIGHTFAST_APP_URL;
     nanoidMock.mockReset();
     nanoidMock.mockReturnValue("attempt_123456789012345678901234");
@@ -437,6 +430,7 @@ describe("Granola user connector OAuth flow", () => {
 
     await expect(
       completeGranolaUserConnectorOAuth({
+        callbackUserId: "user_current",
         code: "oauth_code",
         requestUrl:
           "https://app.lightfast.localhost/api/connectors/granola/oauth/callback?code=oauth_code&state=provider_state",
@@ -453,7 +447,6 @@ describe("Granola user connector OAuth flow", () => {
     expect(redisGetdelMock).toHaveBeenCalledWith(
       "user-connector-oauth-attempt:provider_state"
     );
-    expect(authMock).toHaveBeenCalledWith({ treatPendingAsSignedOut: false });
     expect(finishAuthMock).toHaveBeenCalledWith("oauth_code");
     expect(streamableHTTPClientTransportMock).toHaveBeenCalledWith(
       new URL("https://granola.test/mcp"),
@@ -506,10 +499,10 @@ describe("Granola user connector OAuth flow", () => {
 
   it("does not consume an OAuth attempt for a different Clerk user", async () => {
     redisGetMock.mockResolvedValue(oauthAttempt());
-    authMock.mockResolvedValue({ userId: "user_other" });
 
     await expect(
       completeGranolaUserConnectorOAuth({
+        callbackUserId: "user_other",
         code: "oauth_code",
         requestUrl:
           "https://app.lightfast.localhost/api/connectors/granola/oauth/callback?code=oauth_code&state=provider_state",
@@ -518,6 +511,26 @@ describe("Granola user connector OAuth flow", () => {
     ).resolves.toEqual({
       redirectUrl:
         "https://app.lightfast.localhost/account/settings?connector=granola&error=permission_required",
+    });
+
+    expect(redisGetdelMock).not.toHaveBeenCalled();
+    expect(finalizeCurrentUserConnectorConnectionMock).not.toHaveBeenCalled();
+  });
+
+  it("redirects to sign in without consuming an OAuth attempt when the callback has no Clerk user", async () => {
+    redisGetMock.mockResolvedValue(oauthAttempt());
+
+    await expect(
+      completeGranolaUserConnectorOAuth({
+        callbackUserId: null,
+        code: "oauth_code",
+        requestUrl:
+          "https://app.lightfast.localhost/api/connectors/granola/oauth/callback?code=oauth_code&state=provider_state",
+        state: "provider_state",
+      })
+    ).resolves.toEqual({
+      redirectUrl:
+        "https://app.lightfast.localhost/sign-in?redirect_url=%2Fapi%2Fconnectors%2Fgranola%2Foauth%2Fcallback%3Fcode%3Doauth_code%26state%3Dprovider_state",
     });
 
     expect(redisGetdelMock).not.toHaveBeenCalled();

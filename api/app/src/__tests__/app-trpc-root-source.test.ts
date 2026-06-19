@@ -54,10 +54,6 @@ describe("api/app app-facing tRPC root", () => {
       "services/user-connectors/granola-flow.ts",
       "services/user-connectors/index.ts",
     ];
-    const transportAuthFreeServiceFiles = rawAuthFreeServiceFiles.filter(
-      (file) => file !== "services/user-connectors/granola-flow.ts"
-    );
-
     for (const file of rawAuthFreeServiceFiles) {
       const fileSource = source(file);
 
@@ -74,7 +70,7 @@ describe("api/app app-facing tRPC root", () => {
       "request.headers",
       "headers:",
     ]) {
-      for (const file of transportAuthFreeServiceFiles) {
+      for (const file of rawAuthFreeServiceFiles) {
         expect(source(file), `${file}: ${forbiddenToken}`).not.toContain(
           forbiddenToken
         );

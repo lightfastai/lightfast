@@ -1,3 +1,5 @@
+import { auth } from "@vendor/clerk/server";
+
 import {
   completeLinearConnectorOAuth,
   completeXConnectorOAuth,
@@ -47,7 +49,9 @@ export async function handleGranolaUserConnectorOAuthCallbackRequest(
     return accountSettingsRedirect(request.url, "missing_oauth_code");
   }
 
+  const session = await auth({ treatPendingAsSignedOut: false });
   const result = await completeGranolaUserConnectorOAuth({
+    callbackUserId: session.userId ?? null,
     code,
     requestUrl: request.url,
     state,
