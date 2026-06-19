@@ -29,7 +29,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChatComposer } from "./chat-composer";
 import { ChatMessage } from "./chat-message";
 import {
-  assistantConversationQueryOptions,
+  assistantConversationQueryKey,
   assistantConversationsQueryKey,
   type WorkspaceAssistantConversationResult,
 } from "./workspace-assistant-queries";
@@ -64,8 +64,8 @@ export function WorkspaceAssistantClient({
       title: string;
     }) => createConversation({ data }),
   });
-  const getConversationQueryOptions = useMemo(
-    () => assistantConversationQueryOptions({ conversationId }),
+  const conversationQueryKey = useMemo(
+    () => assistantConversationQueryKey(conversationId),
     [conversationId]
   );
   const initialMessages = useMemo(
@@ -223,7 +223,7 @@ export function WorkspaceAssistantClient({
         setOptimisticFirstMessage(null);
       }
       if (createdConversationDuringSubmit && createdConversation) {
-        queryClient.setQueryData(getConversationQueryOptions.queryKey, {
+        queryClient.setQueryData(conversationQueryKey, {
           conversation: createdConversation,
           messages: toSeededConversationMessages(
             messagesRef.current,
@@ -245,7 +245,7 @@ export function WorkspaceAssistantClient({
     [
       conversationId,
       createConversationMutation.mutateAsync,
-      getConversationQueryOptions.queryKey,
+      conversationQueryKey,
       orgSlug,
       queryClient,
       router,

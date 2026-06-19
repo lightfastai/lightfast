@@ -25,8 +25,17 @@ describe("migrated workspace assistant data access", () => {
     );
 
     expect(queryHelperSource).toMatch(assistantAdapterImport);
-    expect(queryHelperSource).toContain("assistantConversationsQueryOptions");
-    expect(queryHelperSource).toContain("assistantConversationQueryOptions");
+    expect(queryHelperSource).toContain("assistantConversationsQueryKey");
+    expect(queryHelperSource).toContain("assistantConversationQueryKey");
+    expect(queryHelperSource).not.toContain("queryOptions");
+    expect(queryHelperSource).not.toContain(
+      "assistantConversationsQueryOptions"
+    );
+    expect(queryHelperSource).not.toContain(
+      "assistantConversationQueryOptions"
+    );
+    expect(queryHelperSource).not.toContain("listConversations");
+    expect(queryHelperSource).not.toContain("getConversation");
 
     for (const fileSource of [
       queryHelperSource,
@@ -40,11 +49,11 @@ describe("migrated workspace assistant data access", () => {
       expect(fileSource).not.toContain("AppRouterOutputs");
     }
 
-    expect(recentChatsMenuSource).toContain(
-      "assistantConversationsQueryOptions"
-    );
+    expect(recentChatsMenuSource).toContain("listConversations");
+    expect(recentChatsMenuSource).toContain("assistantConversationsQueryKey");
     expect(clientSource).toContain("createConversation");
     expect(clientSource).toContain("assistantConversationsQueryKey");
+    expect(clientSource).toContain("assistantConversationQueryKey");
     expect(newConversationRouteSource).toContain(
       'from "~/chat/conversation-id"'
     );
@@ -54,7 +63,9 @@ describe("migrated workspace assistant data access", () => {
     );
     expect(newConversationRouteSource).not.toContain("createServerFn");
     expect(newConversationRouteSource).not.toContain("@db/app");
-    expect(conversationRouteSource).toContain(
+    expect(conversationRouteSource).toContain("getConversation");
+    expect(conversationRouteSource).toContain("assistantConversationQueryKey");
+    expect(conversationRouteSource).not.toContain(
       "assistantConversationQueryOptions"
     );
   });

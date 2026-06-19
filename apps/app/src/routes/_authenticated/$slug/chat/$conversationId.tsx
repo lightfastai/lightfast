@@ -1,10 +1,11 @@
 // biome-ignore-all lint/style/useFilenamingConvention: TanStack route params use camelCase file names for camelCase params.
 
+import { getConversation } from "@api/app/tanstack/assistant";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { ChatLoading } from "~/chat/chat-loading";
 import { WorkspaceAssistantClient } from "~/chat/workspace-assistant-client";
-import { assistantConversationQueryOptions } from "~/chat/workspace-assistant-queries";
+import { assistantConversationQueryKey } from "~/chat/workspace-assistant-queries";
 import { WorkspaceRouteErrorPanel } from "~/components/route-boundaries";
 
 const conversationNotFoundCode = "WORKSPACE_ASSISTANT_CONVERSATION_NOT_FOUND";
@@ -53,7 +54,10 @@ function ChatRouteError({
 function WorkspaceConversationPage() {
   const { conversationId } = Route.useParams();
   const conversationQuery = useQuery({
-    ...assistantConversationQueryOptions({ conversationId }),
+    enabled: typeof window !== "undefined",
+    queryFn: () => getConversation({ data: { id: conversationId } }),
+    queryKey: assistantConversationQueryKey(conversationId),
+    retry: false,
   });
 
   if (conversationQuery.isPending) {
