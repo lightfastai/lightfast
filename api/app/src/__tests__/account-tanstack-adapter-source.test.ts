@@ -70,13 +70,13 @@ describe("account TanStack adapter boundary", () => {
   });
 
   it("removes migrated org MCP settings procedures from tRPC", () => {
-    const rootSource = readFileSync(resolve(apiRoot, "src/root.ts"), "utf8");
+    const rootPath = resolve(apiRoot, "src/root.ts");
     const routerPath = resolve(
       apiRoot,
       "src/router/(pending-not-allowed)/mcp-connections.ts"
     );
 
-    expect(rootSource).not.toContain("mcpConnections: orgMcpConnectionsRouter");
+    expect(existsSync(rootPath)).toBe(false);
 
     if (existsSync(routerPath)) {
       const routerSource = readFileSync(routerPath, "utf8");
@@ -86,16 +86,13 @@ describe("account TanStack adapter boundary", () => {
   });
 
   it("removes migrated account procedures and connector routers from tRPC", () => {
-    const rootSource = readFileSync(resolve(apiRoot, "src/root.ts"), "utf8");
+    const rootPath = resolve(apiRoot, "src/root.ts");
     const routerPath = resolve(
       apiRoot,
       "src/router/(pending-allowed)/account.ts"
     );
 
-    expect(rootSource).not.toContain(
-      "mcpConnections: accountMcpConnectionsRouter"
-    );
-    expect(rootSource).not.toContain("userConnectors: userConnectorsRouter");
+    expect(existsSync(rootPath)).toBe(false);
 
     if (existsSync(routerPath)) {
       const routerSource = readFileSync(routerPath, "utf8");
@@ -107,13 +104,13 @@ describe("account TanStack adapter boundary", () => {
   });
 
   it("removes migrated GitHub account procedures from tRPC", () => {
-    const rootSource = readFileSync(resolve(apiRoot, "src/root.ts"), "utf8");
+    const rootPath = resolve(apiRoot, "src/root.ts");
     const routerPath = resolve(
       apiRoot,
       "src/router/(pending-allowed)/github-account.ts"
     );
 
-    expect(rootSource).not.toContain("githubAccount: githubAccountRouter");
+    expect(existsSync(rootPath)).toBe(false);
 
     if (existsSync(routerPath)) {
       const routerSource = readFileSync(routerPath, "utf8");

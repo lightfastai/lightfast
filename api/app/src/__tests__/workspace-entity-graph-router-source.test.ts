@@ -23,7 +23,6 @@ describe("workspace entity graph transport surfaces", () => {
       "domain/entity-graph/commands.ts"
     );
     const domainIndexPath = resolve(srcRoot, "domain/entity-graph/index.ts");
-    const rootSource = readFileSync(resolve(srcRoot, "root.ts"), "utf8");
     const domainIndexSource = readFileSync(
       resolve(srcRoot, "domain/index.ts"),
       "utf8"
@@ -33,12 +32,8 @@ describe("workspace entity graph transport surfaces", () => {
     expect(existsSync(tanstackAdapterPath)).toBe(false);
     expect(existsSync(domainCommandsPath)).toBe(false);
     expect(existsSync(domainIndexPath)).toBe(false);
+    expect(existsSync(resolve(srcRoot, "root.ts"))).toBe(false);
     expect(packageJson.exports).not.toHaveProperty("./tanstack/entity-graph");
-    expect(rootSource).not.toContain("workspaceEntityGraphRouter");
-    expect(rootSource).not.toContain("entityGraph:");
-    expect(rootSource).not.toContain(
-      "router/(pending-not-allowed)/workspace-entity-graph"
-    );
     expect(domainIndexSource).not.toContain("./entity-graph");
   });
 });

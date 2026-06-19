@@ -32,14 +32,13 @@ describe("org billing TanStack adapter boundary", () => {
   });
 
   it("removes migrated org billing procedures from tRPC", () => {
-    const rootSource = readFileSync(resolve(apiRoot, "src/root.ts"), "utf8");
+    const rootPath = resolve(apiRoot, "src/root.ts");
     const routerPath = resolve(
       apiRoot,
       "src/router/(pending-not-allowed)/org-billing.ts"
     );
 
-    expect(rootSource).not.toContain("orgBillingRouter");
-    expect(rootSource).not.toContain("orgBilling:");
+    expect(existsSync(rootPath)).toBe(false);
 
     if (existsSync(routerPath)) {
       const routerSource = readFileSync(routerPath, "utf8");

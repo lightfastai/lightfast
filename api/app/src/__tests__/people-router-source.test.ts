@@ -7,10 +7,8 @@ const repoRoot = resolve(import.meta.dirname, "../../../..");
 describe("workspace people tRPC router after TanStack migration", () => {
   it("does not expose migrated people data or views over tRPC", () => {
     const apiRoot = resolve(repoRoot, "api/app/src");
-    const rootSource = readFileSync(resolve(apiRoot, "root.ts"), "utf8");
 
-    expect(rootSource).not.toContain("workspacePeopleRouter");
-    expect(rootSource).not.toContain("people: workspacePeopleRouter");
+    expect(existsSync(resolve(apiRoot, "root.ts"))).toBe(false);
     expect(
       existsSync(
         resolve(apiRoot, "router/(pending-not-allowed)/workspace-people.ts")
