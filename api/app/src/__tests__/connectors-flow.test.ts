@@ -244,6 +244,14 @@ function ctx(input: { isAdmin?: boolean } = {}) {
   };
 }
 
+function catalogCtx(input: { canManage?: boolean } = {}) {
+  return {
+    db: {} as Database,
+    organization: { orgId: "org_acme" },
+    viewer: { canManage: input.canManage ?? true },
+  };
+}
+
 function connection(
   overrides: Partial<OrgConnectorConnection> = {}
 ): OrgConnectorConnection {
@@ -326,7 +334,7 @@ describe("connector catalog services", () => {
       connection({ enabledForAutomations: true }),
     ]);
 
-    const rows = await listConnectorsForOrg(ctx());
+    const rows = await listConnectorsForOrg(catalogCtx());
 
     expect(rows).toEqual(
       expect.arrayContaining([
@@ -362,9 +370,13 @@ describe("connector catalog services", () => {
       connectAvailability: { status: "available" },
       provider: "x",
     });
+    expect(listCurrentOrgConnectorConnectionsMock).toHaveBeenCalledWith(
+      expect.anything(),
+      { clerkOrgId: "org_acme" }
+    );
 
     envMock.X_CLIENT_SECRET = undefined as unknown as string;
-    const missingXConfigRows = await listConnectorsForOrg(ctx());
+    const missingXConfigRows = await listConnectorsForOrg(catalogCtx());
     expect(
       missingXConfigRows.find((row) => row.provider === "x")
     ).toMatchObject({
@@ -374,6 +386,21 @@ describe("connector catalog services", () => {
         status: "unavailable",
       },
     });
+  });
+
+  it("marks connectors unavailable when the viewer cannot manage them", async () => {
+    const rows = await listConnectorsForOrg(catalogCtx({ canManage: false }));
+
+    expect(rows).toContainEqual(
+      expect.objectContaining({
+        canManage: false,
+        connectAvailability: {
+          reason: "permission_required",
+          status: "unavailable",
+        },
+        provider: "linear",
+      })
+    );
   });
 
   it("marks X connections with missing requested scopes for reconnect", async () => {
@@ -388,7 +415,7 @@ describe("connector catalog services", () => {
       }),
     ]);
 
-    const rows = await listConnectorsForOrg(ctx());
+    const rows = await listConnectorsForOrg(catalogCtx());
     const xRow = rows.find((row) => row.provider === "x");
 
     expect(xRow?.connection).toMatchObject({
