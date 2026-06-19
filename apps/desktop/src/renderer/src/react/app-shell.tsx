@@ -44,8 +44,8 @@ export function AppShell() {
         <SignedOutShell
           onLearnMore={() => void window.lightfastBridge.openApp()}
           onSignIn={() => {
-            void window.lightfastBridge.auth.signIn().then((token) => {
-              if (token) {
+            void window.lightfastBridge.auth.signIn().then((snapshot) => {
+              if (snapshot.isSignedIn) {
                 signoutFailureReported = false;
                 return;
               }

@@ -1,8 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const openExternalMock = vi.fn(async () => undefined);
-const setSessionMock = vi.fn(() => true);
+const setSessionMock = vi.fn((_session: unknown) => true);
 const getSessionMock = vi.fn(() => null);
+const getAuthSnapshotMock = vi.fn(
+  (): {
+    isSignedIn: boolean;
+    organizationId?: string;
+    organizationName?: string;
+    organizationSlug?: string | null;
+    userEmail?: string | null;
+  } => ({ isSignedIn: false })
+);
 const createDesktopNativeAuthClientMock = vi.fn();
 const startLoopbackServerMock = vi.fn();
 const exchangeAuthorizationCodeMock = vi.fn();
@@ -33,6 +42,7 @@ vi.mock("../app-client", () => ({
 }));
 
 vi.mock("../store", () => ({
+  getAuthSnapshot: getAuthSnapshotMock,
   getSession: getSessionMock,
   setSession: setSessionMock,
 }));
@@ -53,6 +63,21 @@ describe("desktop native auth flow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getSessionMock.mockReturnValue(null);
+    getAuthSnapshotMock.mockReturnValue({ isSignedIn: false });
+    setSessionMock.mockImplementation((session: unknown) => {
+      const nativeSession = session as {
+        organization: { id: string; name: string; slug?: string | null };
+        user: { email?: string | null };
+      };
+      getAuthSnapshotMock.mockReturnValue({
+        isSignedIn: true,
+        organizationId: nativeSession.organization.id,
+        organizationName: nativeSession.organization.name,
+        organizationSlug: nativeSession.organization.slug,
+        userEmail: nativeSession.user.email,
+      });
+      return true;
+    });
     createDesktopNativeAuthClientMock.mockReturnValue({
       getOAuthConfig: vi.fn(async () => ({
         authorizationEndpoint: "https://clerk.example.com/oauth/authorize",
@@ -92,7 +117,13 @@ describe("desktop native auth flow", () => {
       waitForCallback: vi.fn(async () => ({ code: "code_123", state })),
     });
 
-    await expect(beginSignIn()).resolves.toBe("access");
+    await expect(beginSignIn()).resolves.toMatchObject({
+      isSignedIn: true,
+      organizationId: "org_1",
+      organizationName: "Acme",
+      organizationSlug: "acme",
+      userEmail: "dev@example.com",
+    });
 
     const openCalls = openExternalMock.mock.calls as unknown as [string][];
     const signinUrl = new URL(openCalls[0]?.[0] ?? "");
@@ -120,7 +151,7 @@ describe("desktop native auth flow", () => {
   it.each([
     ["missing organization", "Native auth organization required"],
     ["wrong organization", "Native auth organization mismatch"],
-  ])("returns null when finalize rejects %s", async (_name, message) => {
+  ])("returns a signed-out snapshot when finalize rejects %s", async (_name, message) => {
     const state = Buffer.from(
       JSON.stringify({
         attemptId: "attempt_123456789",
@@ -150,12 +181,12 @@ describe("desktop native auth flow", () => {
       waitForCallback: vi.fn(async () => ({ code: "code_123", state })),
     });
 
-    await expect(beginSignIn()).resolves.toBeNull();
+    await expect(beginSignIn()).resolves.toEqual({ isSignedIn: false });
     expect(setSessionMock).not.toHaveBeenCalled();
     expect(close).toHaveBeenCalledOnce();
   });
 
-  it("returns null when token exchange yields an expired token", async () => {
+  it("returns a signed-out snapshot when token exchange yields an expired token", async () => {
     const state = Buffer.from(
       JSON.stringify({
         attemptId: "attempt_123456789",
@@ -176,7 +207,7 @@ describe("desktop native auth flow", () => {
       tokenType: "Bearer",
     });
 
-    await expect(beginSignIn()).resolves.toBeNull();
+    await expect(beginSignIn()).resolves.toEqual({ isSignedIn: false });
     expect(setSessionMock).not.toHaveBeenCalled();
     expect(close).toHaveBeenCalledOnce();
   });
@@ -198,7 +229,7 @@ describe("desktop native auth flow", () => {
       }),
     });
 
-    await expect(beginSignIn()).resolves.toBeNull();
+    await expect(beginSignIn()).resolves.toEqual({ isSignedIn: false });
 
     const events = stdout.mock.calls.map(([line]) =>
       JSON.parse(String(line))
@@ -227,7 +258,10 @@ describe("desktop native auth flow", () => {
       waitForCallback: vi.fn(async () => ({ code: "code_123", state })),
     });
 
-    await expect(beginSignIn()).resolves.toBe("access");
+    await expect(beginSignIn()).resolves.toMatchObject({
+      isSignedIn: true,
+      organizationId: "org_1",
+    });
     expect(close).toHaveBeenCalledOnce();
   });
 });
