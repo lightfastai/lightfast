@@ -10,11 +10,15 @@ Replace the large centered logo slot in the v2 marketing footer with a native-ra
 
 The approved v1 is a desktop-only, isolated canvas game. It uses simple white blobs, native arcade geometry, keyboard controls, alien shots, lives, and wave reset. XState owns the coarse UI/workflow lifecycle so future transitions can become more expressive without moving the per-frame game simulation into React state. V1 does not include shields, saucer, score HUD, visible control labels, sound, mobile controls, or final sprite art.
 
+Detailed engine design lives in:
+
+- `docs/superpowers/specs/2026-06-19-footer-arcade-engine-design.md`
+
 ## Current Shape
 
 The footer lives in:
 
-- `apps/www/src/app/(v2)/v2/(marketing)/_components/footer.tsx`
+- `apps/www/src/app/(v2)/(marketing)/_components/footer.tsx`
 
 The current center slot is:
 
@@ -491,11 +495,11 @@ Reduced motion:
 Suggested first implementation shape:
 
 ```text
-apps/www/src/app/(v2)/v2/(marketing)/_components/footer.tsx
-apps/www/src/app/(v2)/v2/(marketing)/_components/footer-arcade.tsx
-apps/www/src/app/(v2)/v2/(marketing)/_components/footer-arcade-machine.ts
-apps/www/src/app/(v2)/v2/(marketing)/_components/footer-arcade-engine.ts
-apps/www/src/app/(v2)/v2/(marketing)/_components/footer-arcade-renderer.ts
+apps/www/src/app/(v2)/(marketing)/_components/footer.tsx
+apps/www/src/app/(v2)/(marketing)/_components/footer-arcade.tsx
+apps/www/src/app/(v2)/(marketing)/_components/footer-arcade-machine.ts
+apps/www/src/app/(v2)/(marketing)/_components/footer-arcade-engine.ts
+apps/www/src/app/(v2)/(marketing)/_components/footer-arcade-renderer.ts
 ```
 
 Responsibilities:
