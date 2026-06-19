@@ -1,4 +1,6 @@
+import { db } from "@db/app/client";
 import {
+  NATIVE_AUTH_HEADERS,
   type NativeClient,
   type NativeRpcCommand,
   type NativeRpcErrorCode,
@@ -8,9 +10,11 @@ import {
   nativeRpcRequestSchema,
 } from "@repo/native-auth-contract";
 
+import { resolveAuthContextFromClerk } from "../auth/identity";
 import {
-  getNativeAuthSessionForRequest,
+  getNativeAuthSessionForNativeOAuth,
   isNativeAuthError,
+  NativeAuthError,
 } from "../native-auth";
 
 type NativeRpcStatus = 400 | 401 | 403 | 404 | 500;
@@ -45,6 +49,50 @@ function errorResponse(
 
 function invalidRequestResponse() {
   return errorResponse("BAD_REQUEST", "Native RPC request is invalid.", 400);
+}
+
+async function resolveNativeRpcAuth(input: {
+  headers: Headers;
+  source: NativeClient;
+}) {
+  const headers = new Headers(input.headers);
+  headers.set(NATIVE_AUTH_HEADERS.client, input.source);
+
+  return resolveAuthContextFromClerk({
+    db,
+    headers,
+  });
+}
+
+async function loadNativeRpcAuthSession(input: {
+  headers: Headers;
+  source: NativeClient;
+}) {
+  const auth = await resolveNativeRpcAuth(input);
+  if (
+    auth.identity.type === "unauthenticated" ||
+    auth.access?.kind !== "clerk-oauth" ||
+    auth.access.client !== input.source
+  ) {
+    throw new NativeAuthError(
+      "UNAUTHORIZED",
+      "Lightfast native OAuth authentication required."
+    );
+  }
+
+  if (auth.identity.type !== "active") {
+    throw new NativeAuthError(
+      "FORBIDDEN",
+      "Native session organization required"
+    );
+  }
+
+  return getNativeAuthSessionForNativeOAuth({
+    client: auth.access.client,
+    db,
+    organizationId: auth.identity.orgId,
+    userId: auth.identity.userId,
+  });
 }
 
 function normalizeErrorResponse(error: unknown) {
@@ -93,7 +141,7 @@ export async function handleNativeRpcRequest(
           return invalidRequestResponse();
         }
 
-        const result = await getNativeAuthSessionForRequest({
+        const result = await loadNativeRpcAuthSession({
           headers: request.headers,
           source: surface.source,
         });

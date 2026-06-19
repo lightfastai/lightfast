@@ -63,7 +63,10 @@ describe("native RPC route boundaries", () => {
     expect(cliAdapter).toContain("cliNativeRpcCommands");
     expect(cliAdapter).toContain('"auth.session"');
     expect(cliAdapter).toContain('source: "cli"');
-    expect(sharedAdapter).toContain("getNativeAuthSessionForRequest");
+    expect(sharedAdapter).toContain("resolveAuthContextFromClerk");
+    expect(sharedAdapter).toContain("NATIVE_AUTH_HEADERS");
+    expect(sharedAdapter).toContain("getNativeAuthSessionForNativeOAuth");
+    expect(sharedAdapter).not.toContain("getNativeAuthSessionForRequest");
     expect(sharedAdapter).toContain("nativeRpcRequestSchema");
     expect(sharedAdapter).toContain("nativeRpcAuthSessionInputSchema");
     expect(sharedAdapter).not.toContain("/api/v1/rpc");

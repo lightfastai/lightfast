@@ -39,4 +39,15 @@ describe("native auth boundary exports", () => {
     expect(rootSource).not.toContain("nativeAuthRouter");
     expect(rootSource).not.toContain("native:");
   });
+
+  it("keeps native auth core free of request and auth-context adapters", () => {
+    const nativeAuthSource = source("src/native-auth/index.ts");
+
+    expect(nativeAuthSource).not.toContain("ResolvedAuthContext");
+    expect(nativeAuthSource).not.toContain("headers: Headers");
+    expect(nativeAuthSource).not.toContain("NATIVE_AUTH_HEADERS");
+    expect(nativeAuthSource).not.toContain("resolveAuthContextFromClerk");
+    expect(nativeAuthSource).not.toContain("ForAuthContext");
+    expect(nativeAuthSource).not.toContain("ForRequest");
+  });
 });

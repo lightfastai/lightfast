@@ -5,22 +5,19 @@ const mocks = vi.hoisted(() => {
     readonly code: "FORBIDDEN" | "UNAUTHORIZED";
     readonly status: number;
 
-    constructor(input: {
-      code: "FORBIDDEN" | "UNAUTHORIZED";
-      message: string;
-      status: number;
-    }) {
-      super(input.message);
+    constructor(code: "FORBIDDEN" | "UNAUTHORIZED", message: string) {
+      super(message);
       this.name = "NativeAuthError";
-      this.code = input.code;
-      this.status = input.status;
+      this.code = code;
+      this.status = code === "UNAUTHORIZED" ? 401 : 403;
     }
   }
 
   return {
-    createNativeAuthAttemptForAuthContext: vi.fn(),
+    createNativeAuthAttemptForUser: vi.fn(),
+    db: {},
     getRequest: vi.fn(),
-    listNativeOrganizationsForAuthContext: vi.fn(),
+    listNativeOrganizationsForUser: vi.fn(),
     NativeAuthError,
     redirect: vi.fn((input) => input),
     resolveAuthContextFromClerk: vi.fn(),
@@ -29,7 +26,7 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock("@db/app/client", () => ({ db: {} }));
+vi.mock("@db/app/client", () => ({ db: mocks.db }));
 
 vi.mock("@tanstack/react-start", () => ({
   createServerFn: () => ({
@@ -59,15 +56,17 @@ vi.mock("../auth/identity", () => ({
 }));
 
 vi.mock("../native-auth", () => ({
-  createNativeAuthAttemptForAuthContext:
-    mocks.createNativeAuthAttemptForAuthContext,
+  createNativeAuthAttemptForUser: mocks.createNativeAuthAttemptForUser,
   isNativeAuthError: (error: unknown) => error instanceof mocks.NativeAuthError,
-  listNativeOrganizationsForAuthContext:
-    mocks.listNativeOrganizationsForAuthContext,
+  listNativeOrganizationsForUser: mocks.listNativeOrganizationsForUser,
+  NativeAuthError: mocks.NativeAuthError,
 }));
 
-const { listNativeAuthOrganizations, loadNativeAuthOrganizations } =
-  await import("../adapters/tanstack/native-auth");
+const {
+  createNativeAuthAttempt,
+  listNativeAuthOrganizations,
+  loadNativeAuthOrganizations,
+} = await import("../adapters/tanstack/native-auth");
 
 describe("native auth TanStack adapter", () => {
   beforeEach(() => {
@@ -77,6 +76,46 @@ describe("native auth TanStack adapter", () => {
     );
     mocks.resolveAuthContextFromClerk.mockResolvedValue({
       identity: { type: "pending", userId: "user_1" },
+    });
+    mocks.createNativeAuthAttemptForUser.mockResolvedValue({
+      attemptId: "native_attempt_test",
+      authorizationUrl: "https://clerk.example.com/oauth/authorize",
+    });
+    mocks.listNativeOrganizationsForUser.mockResolvedValue([]);
+  });
+
+  it("lists native auth organizations for the resolved signed-in user", async () => {
+    await expect(listNativeAuthOrganizations()).resolves.toEqual([]);
+
+    expect(mocks.resolveAuthContextFromClerk).toHaveBeenCalledWith({
+      db: mocks.db,
+      headers: expect.any(Headers),
+    });
+    expect(mocks.listNativeOrganizationsForUser).toHaveBeenCalledWith({
+      db: mocks.db,
+      userId: "user_1",
+    });
+  });
+
+  it("creates native auth attempts for the resolved signed-in user", async () => {
+    const data = {
+      client: "cli",
+      codeChallenge: "a".repeat(43),
+      codeChallengeMethod: "S256",
+      organizationId: "org_1",
+      redirectUri: "http://127.0.0.1:54321/callback",
+      stateNonce: "state_nonce_test1",
+    } as const;
+
+    await expect(createNativeAuthAttempt({ data })).resolves.toEqual({
+      attemptId: "native_attempt_test",
+      authorizationUrl: "https://clerk.example.com/oauth/authorize",
+    });
+
+    expect(mocks.createNativeAuthAttemptForUser).toHaveBeenCalledWith({
+      data,
+      db: mocks.db,
+      userId: "user_1",
     });
   });
 
@@ -110,8 +149,8 @@ describe("native auth TanStack adapter", () => {
     message,
     status,
   }) => {
-    mocks.listNativeOrganizationsForAuthContext.mockRejectedValue(
-      new mocks.NativeAuthError({ code, message, status })
+    mocks.listNativeOrganizationsForUser.mockRejectedValue(
+      new mocks.NativeAuthError(code, message)
     );
 
     await expect(listNativeAuthOrganizations()).rejects.toThrow(message);
@@ -123,13 +162,9 @@ describe("native auth TanStack adapter", () => {
     mocks.getRequest.mockReturnValue(
       new Request("https://lightfast.localhost/oauth/cli/start?state=abc")
     );
-    mocks.listNativeOrganizationsForAuthContext.mockRejectedValue(
-      new mocks.NativeAuthError({
-        code: "UNAUTHORIZED",
-        message: "Authentication required. Please sign in.",
-        status: 401,
-      })
-    );
+    mocks.resolveAuthContextFromClerk.mockResolvedValue({
+      identity: { type: "unauthenticated" },
+    });
 
     await expect(loadNativeAuthOrganizations()).rejects.toMatchObject({
       search: { redirect_url: "/oauth/cli/start?state=abc" },
@@ -143,5 +178,6 @@ describe("native auth TanStack adapter", () => {
       to: "/sign-in",
     });
     expect(mocks.setResponseStatus).not.toHaveBeenCalled();
+    expect(mocks.listNativeOrganizationsForUser).not.toHaveBeenCalled();
   });
 });
