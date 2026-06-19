@@ -1,10 +1,11 @@
 import type { Database, UserConnectorConnection } from "@db/app";
 import { listCurrentUserConnectorConnections } from "@db/app";
-import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 
 export interface UserConnectorServiceContext {
-  auth: AuthContext;
   db: Database;
+  viewer: {
+    userId: string;
+  };
 }
 
 export interface UserConnectorCatalogRow {
@@ -56,13 +57,8 @@ const USER_CONNECTOR_CATALOG = [
 export async function listUserConnectorsForViewer(
   ctx: UserConnectorServiceContext
 ): Promise<UserConnectorCatalogRow[]> {
-  const identity = ctx.auth.identity;
-  if (identity.type === "unauthenticated") {
-    return [];
-  }
-
   const connections = await listCurrentUserConnectorConnections(ctx.db, {
-    clerkUserId: identity.userId,
+    clerkUserId: ctx.viewer.userId,
   });
   const byProvider = new Map(connections.map((row) => [row.provider, row]));
 

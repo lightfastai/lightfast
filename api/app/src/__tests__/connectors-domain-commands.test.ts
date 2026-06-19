@@ -140,9 +140,10 @@ describe("connector domain commands", () => {
         }),
       })
     );
-    expect(serviceMocks.listUserConnectorsForViewer).toHaveBeenCalledWith(
-      expect.anything()
-    );
+    expect(serviceMocks.listUserConnectorsForViewer).toHaveBeenCalledWith({
+      db: expect.anything(),
+      viewer: { userId: "user_current" },
+    });
   });
 
   it("marks admin actors as matching Clerk-session admins for catalog canManage checks", async () => {

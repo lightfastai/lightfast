@@ -50,7 +50,6 @@ describe("api/app app-facing tRPC root", () => {
       "services/developer-connections/index.ts",
       "services/developer-connections/leases.ts",
       "services/developer-sandbox-runs/index.ts",
-      "services/user-connectors/catalog.ts",
     ]) {
       const fileSource = source(file);
 
@@ -61,6 +60,7 @@ describe("api/app app-facing tRPC root", () => {
     }
 
     for (const file of [
+      "services/user-connectors/catalog.ts",
       "services/user-connectors/granola-flow.ts",
       "services/user-connectors/index.ts",
     ]) {
