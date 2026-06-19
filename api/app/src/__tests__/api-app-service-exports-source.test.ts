@@ -17,27 +17,51 @@ function apiSourceFiles(dir = resolve(apiAppRoot, "src")): string[] {
 }
 
 describe("api app service internals", () => {
-  it("does not expose backend services as package entrypoints", () => {
+  it("does not expose backend internals as package entrypoints", () => {
     const packageJson = JSON.parse(
       readFileSync(resolve(apiAppRoot, "package.json"), "utf8")
     ) as { exports?: Record<string, unknown> };
+    const privateExports = new Set([
+      "./auth/identity",
+      "./domain",
+      "./env",
+      "./inngest",
+      "./inngest/client",
+      "./mcp-oauth/resource-access",
+      "./signals/service",
+    ]);
 
-    const serviceExports = Object.keys(packageJson.exports ?? {}).filter(
+    const forbiddenExports = Object.keys(packageJson.exports ?? {}).filter(
       (entrypoint) =>
-        entrypoint === "./services" || entrypoint.startsWith("./services/")
+        entrypoint === "./services" ||
+        entrypoint.startsWith("./services/") ||
+        privateExports.has(entrypoint)
     );
 
-    expect(serviceExports).toEqual([]);
+    expect(forbiddenExports).toEqual([]);
   });
 
-  it("keeps service imports relative inside api/app", () => {
+  it("keeps private imports relative inside api/app", () => {
+    const privateSpecifiers = [
+      "@api/app/auth/identity",
+      "@api/app/domain",
+      "@api/app/env",
+      "@api/app/inngest",
+      "@api/app/mcp-oauth/resource-access",
+      "@api/app/services/",
+      "@api/app/signals/service",
+    ];
     const offenders = apiSourceFiles()
       .map((path) => ({
         path: relative(apiAppRoot, path),
         source: readFileSync(path, "utf8"),
       }))
-      .filter(({ source }) => source.includes("@api/app/services/"));
+      .flatMap(({ path, source }) =>
+        privateSpecifiers
+          .filter((specifier) => source.includes(specifier))
+          .map((specifier) => ({ path, specifier }))
+      );
 
-    expect(offenders.map(({ path }) => path)).toEqual([]);
+    expect(offenders).toEqual([]);
   });
 });
