@@ -1017,8 +1017,9 @@ describe("app authenticated route migration", () => {
     expect(bindCardSource).toContain('@api/app/tanstack/github-setup"');
     expect(bindCardSource).toContain("startGitHubOrgSetup");
     expect(bindCardSource).not.toContain("startGitHubOrgSetupMutationOptions");
+    expect(lightfastRepoRouteSource).toContain("getSourceControlConnection");
     expect(lightfastRepoRouteSource).toContain(
-      "sourceControlConnectionQueryOptions"
+      "sourceControlConnectionQueryKey"
     );
     expect(lightfastRepoRouteSource).toContain("newLightfastRepositoryUrl");
     expect(lightfastRepoRouteSource).not.toContain("getGitHubNewRepositoryUrl");
@@ -1088,9 +1089,11 @@ describe("app authenticated route migration", () => {
     const addRepositoryDialogSource = source(
       "src/org/settings/source-control/add-repository-dialog.tsx"
     );
-    const sourceControlQueriesSource = source(
-      "src/org/settings/source-control/source-control-queries.ts"
+    const sourceControlCacheSource = source(
+      "src/org/settings/source-control/source-control-cache.ts"
     );
+    const sourceControlQueriesPath =
+      "src/org/settings/source-control/source-control-queries.ts";
     const repositoryCardSource = source(
       "src/org/settings/source-control/repository-card.tsx"
     );
@@ -1115,18 +1118,22 @@ describe("app authenticated route migration", () => {
     );
     expect(sourceControlRouteSource).toContain("SourceControlSettingsClient");
     expect(sidebarSource).toContain("params");
-    expect(settingsClientSource).toContain(
+    expect(existsSync(resolve(appRoot, sourceControlQueriesPath))).toBe(false);
+    expect(settingsClientSource).toContain("getSourceControlConnection");
+    expect(settingsClientSource).toContain("listSourceControlRepositories");
+    expect(settingsClientSource).toContain("sourceControlConnectionQueryKey");
+    expect(settingsClientSource).toContain("sourceControlRepositoriesQueryKey");
+    expect(settingsClientSource).not.toContain(
       "sourceControlConnectionQueryOptions"
     );
-    expect(settingsClientSource).toContain(
+    expect(settingsClientSource).not.toContain(
       "sourceControlRepositoriesQueryOptions"
     );
-    expect(sourceControlQueriesSource).toContain(
+    expect(sourceControlCacheSource).toContain(
       '@api/app/tanstack/source-control"'
     );
-    expect(sourceControlQueriesSource).not.toContain(
-      'enabled: typeof window !== "undefined"'
-    );
+    expect(sourceControlCacheSource).not.toContain("queryOptions");
+    expect(sourceControlCacheSource).not.toContain("mutationOptions");
     expect(settingsClientSource).toContain("SourceControlConnectionCard");
     expect(settingsClientSource).toContain("RepositoryList");
     expect(settingsClientSource).toContain('to="/$slug/tasks/bind"');
@@ -1141,9 +1148,12 @@ describe("app authenticated route migration", () => {
     expect(repositoryListSource).toContain("RepositoryCard");
     expect(repositoryListSource).not.toContain("LfSelect");
     expect(addRepositoryDialogSource).toContain(
+      "importSourceControlRepository"
+    );
+    expect(addRepositoryDialogSource).toContain("setQueryData");
+    expect(addRepositoryDialogSource).not.toContain(
       "importSourceControlRepositoryMutationOptions"
     );
-    expect(sourceControlQueriesSource).toContain("setQueryData");
     expect(addRepositoryDialogSource).toContain("LIGHTFAST_REPOSITORY_NAME");
     expect(repositoryCardSource).toContain("Open on GitHub");
     expect(formatSource).toContain("formatStatusSubtitle");
@@ -1158,7 +1168,7 @@ describe("app authenticated route migration", () => {
       connectionCardSource,
       repositoryListSource,
       addRepositoryDialogSource,
-      sourceControlQueriesSource,
+      sourceControlCacheSource,
       repositoryCardSource,
       formatSource,
     ]) {

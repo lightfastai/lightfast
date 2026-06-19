@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui-v2/components/ui/dropdown-menu";
 import { type ReactNode, useState } from "react";
-import type { SourceControlRepositoryRow } from "./source-control-queries";
+import type { SourceControlRepositoryRow } from "./source-control-cache";
 
 const ALL_PATHS_GLOB = "**";
 

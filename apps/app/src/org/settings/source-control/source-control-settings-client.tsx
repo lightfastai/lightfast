@@ -1,3 +1,7 @@
+import {
+  getSourceControlConnection,
+  listSourceControlRepositories,
+} from "@api/app/tanstack/source-control";
 import { ExternalLinkIcon as ExternalLink } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -5,11 +9,11 @@ import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { RepositoryList } from "./repository-list";
-import { SourceControlConnectionCard } from "./source-control-connection-card";
 import {
-  sourceControlConnectionQueryOptions,
-  sourceControlRepositoriesQueryOptions,
-} from "./source-control-queries";
+  sourceControlConnectionQueryKey,
+  sourceControlRepositoriesQueryKey,
+} from "./source-control-cache";
+import { SourceControlConnectionCard } from "./source-control-connection-card";
 
 interface SourceControlSettingsClientProps {
   slug: string;
@@ -22,12 +26,19 @@ export function SourceControlSettingsClient({
     data: sourceControlConnection,
     error: connectionError,
     isPending: isConnectionPending,
-  } = useQuery(sourceControlConnectionQueryOptions());
+  } = useQuery({
+    queryFn: () => getSourceControlConnection(),
+    queryKey: sourceControlConnectionQueryKey,
+    staleTime: 30_000,
+  });
   const {
     data: sourceControlRepositories,
     error: repositoriesError,
     isPending: isRepositoriesPending,
-  } = useQuery(sourceControlRepositoriesQueryOptions());
+  } = useQuery({
+    queryFn: () => listSourceControlRepositories(),
+    queryKey: sourceControlRepositoriesQueryKey,
+  });
 
   const connection = sourceControlConnection?.binding ?? null;
   const isPending = isConnectionPending || isRepositoriesPending;
