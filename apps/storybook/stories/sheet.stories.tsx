@@ -24,9 +24,23 @@ const meta = {
       control: "radio",
       options: ["top", "right", "bottom", "left"],
     },
+    motion: {
+      control: "radio",
+      options: ["subtle", "slide"],
+    },
+    size: {
+      control: "radio",
+      options: ["default", "wide"],
+    },
+    showCloseButton: {
+      control: "boolean",
+    },
   },
   args: {
     side: "right",
+    motion: "subtle",
+    size: "default",
+    showCloseButton: true,
   },
   render: (args) => (
     <Sheet>
@@ -80,7 +94,30 @@ export const Left: Story = {
   },
 };
 
+export const Slide: Story = {
+  args: {
+    motion: "slide",
+  },
+};
+
+export const Wide: Story = {
+  args: {
+    size: "wide",
+  },
+};
+
+export const WideSlide: Story = {
+  args: {
+    motion: "slide",
+    size: "wide",
+  },
+};
+
 export const Open: Story = {
+  args: {
+    motion: "slide",
+    size: "wide",
+  },
   render: (args) => (
     <Sheet defaultOpen>
       <SheetContent {...args}>
