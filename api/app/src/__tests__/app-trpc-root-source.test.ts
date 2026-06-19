@@ -50,7 +50,6 @@ describe("api/app app-facing tRPC root", () => {
       "services/developer-sandbox-runs/index.ts",
       "services/user-connectors/catalog.ts",
       "services/user-connectors/granola-flow.ts",
-      "services/user-connectors/index.ts",
     ];
     for (const file of rawAuthFreeServiceFiles) {
       const fileSource = source(file);

@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -27,8 +27,8 @@ describe("connector OAuth request boundary", () => {
 
   it("does not expose OAuth callback completion helpers from broad service barrels", () => {
     const connectorIndexSource = source("services/connectors/index.ts");
-    const userConnectorIndexSource = source(
-      "services/user-connectors/index.ts"
+    const userConnectorCatalogSource = source(
+      "services/user-connectors/catalog.ts"
     );
 
     expect(connectorIndexSource).not.toContain("completeLinearConnectorOAuth");
@@ -36,15 +36,18 @@ describe("connector OAuth request boundary", () => {
     expect(connectorIndexSource).toContain("startConnectorOAuth");
     expect(connectorIndexSource).toContain("refreshConnectorTools");
 
-    expect(userConnectorIndexSource).not.toContain(
+    expect(
+      existsSync(resolve(apiRoot, "services/user-connectors/index.ts"))
+    ).toBe(false);
+    expect(userConnectorCatalogSource).not.toContain(
       "completeGranolaUserConnectorOAuth"
     );
-    expect(userConnectorIndexSource).not.toContain(
+    expect(userConnectorCatalogSource).not.toContain(
       "startGranolaUserConnectorOAuth"
     );
-    expect(userConnectorIndexSource).not.toContain(
+    expect(userConnectorCatalogSource).not.toContain(
       "disconnectGranolaUserConnector"
     );
-    expect(userConnectorIndexSource).toContain("listUserConnectorsForViewer");
+    expect(userConnectorCatalogSource).toContain("listUserConnectorsForViewer");
   });
 });
