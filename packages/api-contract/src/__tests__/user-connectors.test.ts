@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
+
 import {
   userConnectorCallInputSchema,
   userConnectorFindInputSchema,
   userConnectorRoutineId,
   userConnectorRoutineIdSchema,
-} from "../index";
+} from "../user-connectors";
 
-describe("user connector contract", () => {
+describe("user connector contracts", () => {
   it("formats Granola routine ids", () => {
     expect(userConnectorRoutineId("granola", "search_notes")).toBe(
       "granola__search_notes"

@@ -1,8 +1,9 @@
+import { z } from "zod";
+
 import {
   type UserConnectorProvider,
   userConnectorProviderSchema,
-} from "@repo/api-contract";
-import { z } from "zod";
+} from "./connectors";
 
 export const userConnectorToolNameSchema = z
   .string()

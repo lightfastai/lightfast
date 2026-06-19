@@ -88,18 +88,15 @@ vi.mock("@repo/api-contract", () => ({
   providerRoutineCallSuccessSchema: { kind: "provider-call-success" },
   providerRoutineFindInputSchema: { kind: "provider-find-input" },
   providerRoutineFindOutputSchema: { kind: "provider-find-output" },
+  userConnectorCallInputSchema: { kind: "user-connector-call-input" },
+  userConnectorCallSuccessSchema: { kind: "user-connector-call-success" },
+  userConnectorFindInputSchema: { kind: "user-connector-find-input" },
+  userConnectorFindOutputSchema: { kind: "user-connector-find-output" },
 }));
 
 vi.mock("@api/app/services/connectors/chat-routines", () => ({
   callChatProviderRoutine: callProviderRoutineMock,
   findChatProviderRoutines: findProviderRoutinesMock,
-}));
-
-vi.mock("@repo/user-connector-contract", () => ({
-  userConnectorCallInputSchema: { kind: "user-connector-call-input" },
-  userConnectorCallSuccessSchema: { kind: "user-connector-call-success" },
-  userConnectorFindInputSchema: { kind: "user-connector-find-input" },
-  userConnectorFindOutputSchema: { kind: "user-connector-find-output" },
 }));
 
 vi.mock("@api/app/services/user-connectors/runtime", () => ({
