@@ -1,14 +1,20 @@
+import { getGitHubAccountStatus } from "@api/app/tanstack/account";
 import { ExternalLinkIcon as ExternalLink } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { githubAccountStatusQueryOptions } from "../account-queries";
+import { accountGitHubAccountQueryKey } from "../account-cache";
 import { GithubAccountCard } from "./github-account-card";
 
 export function AccountSourceControlClient() {
-  const { data, isPending } = useQuery(githubAccountStatusQueryOptions());
+  const { data, isPending } = useQuery({
+    enabled: typeof window !== "undefined",
+    queryFn: () => getGitHubAccountStatus(),
+    queryKey: accountGitHubAccountQueryKey,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const account = data?.account;
 

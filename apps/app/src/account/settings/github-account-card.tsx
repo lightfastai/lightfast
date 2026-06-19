@@ -19,7 +19,7 @@ import {
 } from "@repo/ui-v2/components/ui/dropdown-menu";
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import type { GitHubUserAccount } from "../account-queries";
+import type { GitHubUserAccount } from "../account-cache";
 
 const DISCONNECT_TOOLTIP = "Connection is managed from the GitHub setup task.";
 
