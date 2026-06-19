@@ -185,10 +185,6 @@
       "types": "./src/adapters/tanstack/decisions.ts",
       "default": "./src/adapters/tanstack/decisions.ts"
     },
-    "./tanstack/entity-graph": {
-      "types": "./src/adapters/tanstack/entity-graph.ts",
-      "default": "./src/adapters/tanstack/entity-graph.ts"
-    },
     "./tanstack/people": {
       "types": "./src/adapters/tanstack/people.ts",
       "default": "./src/adapters/tanstack/people.ts"
@@ -263,7 +259,6 @@
     "@repo/app-setup-contract": "workspace:*",
     "@repo/app-validation": "workspace:^",
     "@repo/developer-connection-contract": "workspace:*",
-    "@repo/entity-graph-contract": "workspace:*",
     "@repo/entity-resolution": "workspace:*",
     "@repo/identity-contract": "workspace:*",
     "@repo/native-auth-contract": "workspace:*",

@@ -561,9 +561,6 @@ importers:
       '@repo/developer-connection-contract':
         specifier: workspace:*
         version: link:../../packages/developer-connection-contract
-      '@repo/entity-graph-contract':
-        specifier: workspace:*
-        version: link:../../packages/entity-graph-contract
       '@repo/entity-resolution':
         specifier: workspace:*
         version: link:../../packages/entity-resolution
