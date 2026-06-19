@@ -18,7 +18,7 @@ import type { Automation } from "./automations-cache";
 import {
   automationPauseMutationOptions,
   automationResumeMutationOptions,
-} from "./automations-queries";
+} from "./automations-mutations";
 import { RailRow } from "./detail-sections";
 
 function StatusDot({ active }: { active: boolean }) {

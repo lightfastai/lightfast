@@ -1,11 +1,18 @@
 import type {
   AutomationDetailResult,
+  AutomationRunDetailResult,
   ListAutomationRunsResult,
+  ListAutomationsResult,
 } from "@api/app/tanstack/automations";
 import type { AutomationScheduleInput } from "@repo/app-validation/schemas";
 import type { QueryClient } from "@tanstack/react-query";
 
 export type Automation = AutomationDetailResult;
+export type AutomationList = ListAutomationsResult;
+export type AutomationListItem = AutomationList[number];
+export type AutomationRunDetail = AutomationRunDetailResult;
+export type AutomationRunList = ListAutomationRunsResult;
+export type AutomationRunListItem = AutomationRunList[number];
 type AutomationRun = ListAutomationRunsResult[number];
 
 export const AUTOMATION_RUNS_PAGE_LIMIT = 20;

@@ -1,3 +1,4 @@
+import { listAutomations } from "@api/app/tanstack/automations";
 import { useAuth } from "@clerk/tanstack-react-start";
 import {
   CircleIcon as Circle,
@@ -13,22 +14,22 @@ import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { WorkspaceSurface } from "~/components/workspace-surface";
+import { automationQueryKeys } from "./automations-cache";
 import {
   type AutomationListItem,
   getAutomationSections,
   hasAutomations,
 } from "./automations-model";
-import { automationsListQueryOptions } from "./automations-queries";
 
 export function AutomationsClient({ slug }: { slug: string }) {
   const { has, isLoaded } = useAuth();
   const canManageAutomations = isLoaded && !!has?.({ role: "org:admin" });
-  const automationsQuery = useQuery(
-    automationsListQueryOptions({
-      enabled: typeof window !== "undefined",
-      staleTime: 30_000,
-    })
-  );
+  const automationsQuery = useQuery({
+    enabled: typeof window !== "undefined",
+    queryFn: () => listAutomations(),
+    queryKey: automationQueryKeys.list(),
+    staleTime: 30_000,
+  });
   const automations = automationsQuery.data ?? [];
   const sections = getAutomationSections(automations);
 

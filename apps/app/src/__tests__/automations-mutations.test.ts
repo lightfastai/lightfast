@@ -7,7 +7,7 @@ import {
   automationResumeMutationOptions,
   automationRunNowMutationOptions,
   automationUpdateMutationOptions,
-} from "~/automations/automations-queries";
+} from "~/automations/automations-mutations";
 
 const automationsApi = vi.hoisted(() => ({
   createAutomation: vi.fn(),

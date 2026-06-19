@@ -22,7 +22,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import type { Automation } from "./automations-cache";
-import { automationUpdateMutationOptions } from "./automations-queries";
+import { automationUpdateMutationOptions } from "./automations-mutations";
 import { RailRow } from "./detail-sections";
 import {
   isTimeBasedKind,

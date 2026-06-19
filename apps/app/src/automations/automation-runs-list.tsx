@@ -8,7 +8,7 @@ import {
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import { cn } from "@repo/ui/lib/utils";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
-import type { AutomationRunListItem } from "./automations-queries";
+import type { AutomationRunListItem } from "./automations-cache";
 
 type AutomationRun = AutomationRunListItem;
 
