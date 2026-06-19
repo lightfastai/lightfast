@@ -61,48 +61,6 @@ export type DeveloperConnectionUnavailableReason = z.infer<
   typeof developerConnectionUnavailableReasonSchema
 >;
 
-export const DEVELOPER_CONNECTION_CATALOG = [
-  {
-    provider: "pscale",
-    displayName: "PlanetScale",
-    description: "Provision and inspect PlanetScale development databases.",
-    builder: "Lightfast",
-    category: "Database",
-    catalogStatus: "available",
-  },
-  {
-    provider: "upstash",
-    displayName: "Upstash",
-    description: "Provision and inspect Upstash Redis development resources.",
-    builder: "Lightfast",
-    category: "Infrastructure",
-    catalogStatus: "available",
-  },
-  {
-    provider: "sentry",
-    displayName: "Sentry",
-    description: "Inspect Sentry issues and manage release artifacts.",
-    builder: "Lightfast",
-    category: "Observability",
-    catalogStatus: "available",
-  },
-  {
-    provider: "clerk",
-    displayName: "Clerk",
-    description: "Inspect and manage a connected Clerk instance.",
-    builder: "Lightfast",
-    category: "Authentication",
-    catalogStatus: "available",
-  },
-] as const satisfies ReadonlyArray<{
-  provider: DeveloperConnectionProvider;
-  displayName: string;
-  description: string;
-  builder: "Lightfast";
-  category: string;
-  catalogStatus: DeveloperConnectionCatalogStatus;
-}>;
-
 export const developerConnectionProviderInputSchema = z.object({
   provider: developerConnectionProviderSchema,
 });

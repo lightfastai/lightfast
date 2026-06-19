@@ -1,4 +1,5 @@
 import type { Database } from "@db/app";
+import { DEVELOPER_CONNECTION_PROVIDERS } from "@repo/api-contract";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const encryptMock = vi.fn(async (value: string) => `encrypted:${value}`);
@@ -158,6 +159,13 @@ describe("developer connection services", () => {
       expect.objectContaining({ provider: "upstash", canManage: true }),
       expect.objectContaining({ provider: "sentry", canManage: true }),
       expect.objectContaining({ provider: "clerk", canManage: true }),
+    ]);
+  });
+
+  it("keeps the local catalog in sync with the canonical provider list", async () => {
+    const rows = await listDeveloperConnectionsForOrg(ctx());
+    expect(rows.map((row) => row.provider)).toEqual([
+      ...DEVELOPER_CONNECTION_PROVIDERS,
     ]);
   });
 

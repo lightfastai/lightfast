@@ -258,7 +258,6 @@
     "@repo/app-encryption": "workspace:*",
     "@repo/app-setup-contract": "workspace:*",
     "@repo/app-validation": "workspace:^",
-    "@repo/developer-connection-contract": "workspace:*",
     "@repo/entity-resolution": "workspace:*",
     "@repo/identity-contract": "workspace:*",
     "@repo/native-auth-contract": "workspace:*",
