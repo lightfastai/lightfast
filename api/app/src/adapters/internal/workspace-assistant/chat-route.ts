@@ -21,12 +21,6 @@ import {
 } from "@db/app";
 import { db } from "@db/app/client";
 import {
-  providerRoutineCallInputSchema,
-  providerRoutineCallSuccessSchema,
-  providerRoutineFindInputSchema,
-  providerRoutineFindOutputSchema,
-} from "@lightfast/connector-core/provider-routines";
-import {
   type ChatConversationSettingsV2,
   chatConversationSettingsV2Schema,
   getDefaultChatSettings,
@@ -39,6 +33,12 @@ import {
   parseChatSettings,
   resolveChatModelProfile,
 } from "@repo/ai/workspace-assistant";
+import {
+  providerRoutineCallInputSchema,
+  providerRoutineCallSuccessSchema,
+  providerRoutineFindInputSchema,
+  providerRoutineFindOutputSchema,
+} from "@repo/api-contract";
 import {
   userConnectorCallInputSchema,
   userConnectorCallSuccessSchema,

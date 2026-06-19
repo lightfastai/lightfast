@@ -2,7 +2,7 @@ import { z } from "zod";
 import {
   type ConnectableConnectorProvider,
   connectableConnectorProviderSchema,
-} from "./index";
+} from "./connectors";
 
 export const providerToolNameSchema = z
   .string()

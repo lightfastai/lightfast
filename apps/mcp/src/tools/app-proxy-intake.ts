@@ -9,7 +9,7 @@ import {
   type ProviderRoutineFindOutput,
   providerRoutineCallSuccessSchema,
   providerRoutineFindOutputSchema,
-} from "@lightfast/connector-core/provider-routines";
+} from "@repo/api-contract";
 import { signServiceJWT } from "@repo/service-jwt";
 
 import { appInternalUrl, env } from "../env";

@@ -5,14 +5,14 @@ import type {
   AutomationScheduleConfig,
   AutomationScheduleKind,
 } from "@db/app";
-import type { ConnectableConnectorProvider } from "@lightfast/connector-core";
 import {
+  type ConnectableConnectorProvider,
   providerRoutineCallFailureSchema,
   providerRoutineCallInputSchema,
   providerRoutineCallSuccessSchema,
   providerRoutineFindInputSchema,
   providerRoutineFindOutputSchema,
-} from "@lightfast/connector-core/provider-routines";
+} from "@repo/api-contract";
 import { gateway, generateText, stepCountIs, tool } from "@vendor/ai";
 import { log } from "@vendor/observability/log/next";
 import { z } from "zod";

@@ -9,7 +9,7 @@ import {
   type ProviderRoutineSummary,
   providerRoutineFindInputSchema,
   providerRoutineId,
-} from "@lightfast/connector-core/provider-routines";
+} from "@repo/api-contract";
 import type {
   ConnectorProviderRoutineTool,
   ProviderRoutineServiceContext,
@@ -85,7 +85,7 @@ function isAgentEnabledConnection(connection: OrgConnectorConnection) {
 
 function summarizeTool(input: {
   includeSchema: boolean;
-  provider: import("@lightfast/connector-core").ConnectableConnectorProvider;
+  provider: import("@repo/api-contract").ConnectableConnectorProvider;
   tool: FullConnectorToolManifestItem;
 }): ProviderRoutineSummary[] {
   const routineId = safeRoutineId(input.provider, input.tool.name);
@@ -175,7 +175,7 @@ function matchesFilters(
 }
 
 function safeRoutineId(
-  provider: import("@lightfast/connector-core").ConnectableConnectorProvider,
+  provider: import("@repo/api-contract").ConnectableConnectorProvider,
   providerToolName: string
 ) {
   try {

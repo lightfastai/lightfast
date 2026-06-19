@@ -1,7 +1,7 @@
 import type {
   ProviderRoutineClassification,
   ProviderToolName,
-} from "@lightfast/connector-core/provider-routines";
+} from "@repo/api-contract";
 
 const LINEAR_READ_ROUTINES = new Set([
   "get_issue",
@@ -136,7 +136,7 @@ export function classifyLinearRoutine(
 }
 
 export function classifyRoutine(input: {
-  provider: import("@lightfast/connector-core").ConnectableConnectorProvider;
+  provider: import("@repo/api-contract").ConnectableConnectorProvider;
   providerToolName: ProviderToolName | string;
 }): ProviderRoutineClassification {
   switch (input.provider) {

@@ -1,5 +1,5 @@
-import type { ConnectableConnectorProvider } from "@lightfast/connector-core";
 import {
+  type ConnectableConnectorProvider,
   type ProviderRoutineCallFailure,
   type ProviderRoutineCallInput,
   type ProviderRoutineCallSuccess,
@@ -11,7 +11,7 @@ import {
   providerRoutineCallInputSchema,
   providerRoutineFindInputSchema,
   providerRoutineId,
-} from "@lightfast/connector-core/provider-routines";
+} from "@repo/api-contract";
 import { classifyRoutine, hasRoutineScope } from "@repo/provider-routines";
 import {
   ConnectorRuntimeToolCallError,

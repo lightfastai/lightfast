@@ -37,7 +37,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@lightfast/connector-core": "workspace:*",
+    "@repo/api-contract": "workspace:*",
     "@repo/native-auth-contract": "workspace:*",
     "@repo/native-auth-node": "workspace:*",
     "@repo/typescript-config": "workspace:*",

@@ -3,15 +3,13 @@ import {
   listCurrentOrgConnectorConnections,
   type OrgConnectorConnection,
 } from "@db/app";
+import { connectorRuntimeToolName } from "@lightfast/connector-core";
+import { X_OAUTH_SCOPES } from "@lightfast/connector-x/oauth";
 import {
   CONNECTABLE_CONNECTOR_PROVIDERS,
-  CONNECTOR_CATALOG,
   type ConnectableConnectorProvider,
   type ConnectorProvider,
-  connectorRuntimeToolName,
-  type DisplayConnectorTool,
-} from "@lightfast/connector-core";
-import { X_OAUTH_SCOPES } from "@lightfast/connector-x/oauth";
+} from "@repo/api-contract";
 import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 import { getXConnectorConfig } from "./config";
 
@@ -27,6 +25,13 @@ type ConnectAvailability =
       reason: "coming_soon" | "missing_config" | "permission_required";
       missing?: string[];
     };
+
+interface DisplayConnectorTool {
+  availableForAgents: boolean;
+  availableForAutomations: boolean;
+  description?: string;
+  name: string;
+}
 
 export interface ConnectorCatalogRow {
   availableForAgents: boolean;
@@ -54,6 +59,35 @@ export interface ConnectorCatalogRow {
   displayName: string;
   provider: ConnectorProvider;
 }
+
+const CONNECTOR_CATALOG = [
+  {
+    provider: "linear",
+    displayName: "Linear",
+    description:
+      "Find, create, and manage issues, projects, and comments in Linear.",
+    builder: "Lightfast",
+    category: "Project management",
+    catalogStatus: "available",
+  },
+  {
+    provider: "x",
+    displayName: "X",
+    description:
+      "Search posts, manage engagement, send messages, and publish through X from Lightfast agents and automations.",
+    builder: "Lightfast",
+    category: "Social",
+    catalogStatus: "available",
+  },
+] as const satisfies readonly Pick<
+  ConnectorCatalogRow,
+  | "builder"
+  | "catalogStatus"
+  | "category"
+  | "description"
+  | "displayName"
+  | "provider"
+>[];
 
 function canManageConnectors(ctx: ConnectorServiceContext): boolean {
   const identity = ctx.auth.identity;

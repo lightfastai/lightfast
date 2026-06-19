@@ -2,74 +2,50 @@ import { describe, expect, it } from "vitest";
 import type { z } from "zod";
 import {
   CONNECTABLE_CONNECTOR_PROVIDERS,
-  CONNECTOR_CATALOG,
   CONNECTOR_PROVIDERS,
-  connectorOwnerTypeSchema,
   connectorRuntimeToolName,
   connectorRuntimeToolNameSchema,
   connectorToolNameSchema,
   parseConnectorRuntimeToolName,
   USER_CONNECTOR_PROVIDERS,
   userConnectorProviderSchema,
-  userConnectorStartConnectInputSchema,
 } from "../index";
 
-describe("connector catalog", () => {
-  it("includes X as a connectable provider", () => {
+describe("provider primitives", () => {
+  it("re-exports the client-safe provider lists", () => {
     expect(CONNECTOR_PROVIDERS).toEqual(["linear", "x"]);
     expect(CONNECTABLE_CONNECTOR_PROVIDERS).toEqual(["linear", "x"]);
-    expect(CONNECTOR_CATALOG.map((entry) => entry.provider)).toEqual([
-      "linear",
-      "x",
-    ]);
-    expect(
-      CONNECTOR_CATALOG.every((entry) => entry.catalogStatus === "available")
-    ).toBe(true);
+    expect(USER_CONNECTOR_PROVIDERS).toEqual(["granola"]);
+    expect(userConnectorProviderSchema.parse("granola")).toBe("granola");
+    expect(userConnectorProviderSchema.safeParse("linear").success).toBe(false);
   });
 
-  it("uses Lightfast as the v1 builder", () => {
-    expect(
-      CONNECTOR_CATALOG.every((entry) => entry.builder === "Lightfast")
-    ).toBe(true);
-  });
-});
-
-describe("connector inputs", () => {
-  it("validates agent enablement input separately from automation enablement", async () => {
+  it("does not export app-owned catalog or workflow command schemas", async () => {
     const contract = (await import("../index")) as {
+      CONNECTOR_CATALOG?: unknown;
+      USER_CONNECTOR_CATALOG?: unknown;
+      connectorProviderInputSchema?: z.ZodType<unknown>;
       connectorSetAgentEnabledInputSchema?: z.ZodType<unknown>;
+      connectorSetAutomationEnabledInputSchema?: z.ZodType<unknown>;
+      connectorStartConnectInputSchema?: z.ZodType<unknown>;
+      userConnectorProviderInputSchema?: z.ZodType<unknown>;
+      userConnectorStartConnectInputSchema?: z.ZodType<unknown>;
     };
 
-    expect("connectorSetAgentEnabledInputSchema" in contract).toBe(true);
-    expect(
-      contract.connectorSetAgentEnabledInputSchema?.parse({
-        enabled: true,
-        provider: "linear",
-      })
-    ).toEqual({
-      enabled: true,
-      provider: "linear",
-    });
+    expect("CONNECTOR_CATALOG" in contract).toBe(false);
+    expect("USER_CONNECTOR_CATALOG" in contract).toBe(false);
+    expect("connectorProviderInputSchema" in contract).toBe(false);
+    expect("connectorSetAgentEnabledInputSchema" in contract).toBe(false);
+    expect("connectorSetAutomationEnabledInputSchema" in contract).toBe(false);
+    expect("connectorStartConnectInputSchema" in contract).toBe(false);
+    expect("userConnectorProviderInputSchema" in contract).toBe(false);
+    expect("userConnectorStartConnectInputSchema" in contract).toBe(false);
   });
 });
 
 describe("connector ownership", () => {
   it("keeps existing org connector providers stable", () => {
     expect(CONNECTABLE_CONNECTOR_PROVIDERS).toEqual(["linear", "x"]);
-  });
-
-  it("adds Granola as a user connector provider", () => {
-    expect(USER_CONNECTOR_PROVIDERS).toEqual(["granola"]);
-    expect(userConnectorProviderSchema.parse("granola")).toBe("granola");
-    expect(userConnectorProviderSchema.safeParse("linear").success).toBe(false);
-  });
-
-  it("parses connector owner types and user start inputs", () => {
-    expect(connectorOwnerTypeSchema.parse("org")).toBe("org");
-    expect(connectorOwnerTypeSchema.parse("user")).toBe("user");
-    expect(
-      userConnectorStartConnectInputSchema.parse({ provider: "granola" })
-    ).toEqual({ provider: "granola" });
   });
 });
 

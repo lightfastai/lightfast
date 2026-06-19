@@ -5,7 +5,7 @@ import {
   providerRoutineCallInputSchema,
   providerRoutineCallSuccessSchema,
   providerRoutineFindOutputSchema,
-} from "@lightfast/connector-core/provider-routines";
+} from "@repo/api-contract";
 import type { NativeSession } from "@repo/native-auth-contract";
 import { z } from "zod";
 
