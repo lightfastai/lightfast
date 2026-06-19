@@ -31,25 +31,24 @@ type XBridgeRequestKind =
   | { purpose: null };
 
 const permissiveToolInputSchema = z.object({}).passthrough();
-const MALFORMED_JSON_REQUEST = Symbol("malformed-json");
 
 type XToolArgs = Record<string, unknown>;
 
 export async function handleXConnectorMcpRequest(input: {
+  appOrigin: string;
+  parsedBody: unknown;
   request: Request;
+  token: string | null;
 }): Promise<Response> {
-  const parsedBody = await parseRequestBody(input.request);
-  if (parsedBody === MALFORMED_JSON_REQUEST) {
-    return invalidRequestResponse();
-  }
-
-  const token = bearerToken(input.request.headers);
-  if (!token) {
+  if (!input.token) {
     return unauthorizedResponse();
   }
 
-  const requestKind = deriveRequestKind(parsedBody);
-  const claims = await verifyXBridgeToken({ requestKind, token });
+  const requestKind = deriveRequestKind(input.parsedBody);
+  const claims = await verifyXBridgeToken({
+    requestKind,
+    token: input.token,
+  });
   if (!claims) {
     return unauthorizedResponse();
   }
@@ -67,7 +66,7 @@ export async function handleXConnectorMcpRequest(input: {
     version: "0.1.0",
   });
   registerXTools(server, {
-    appOrigin: new URL(input.request.url).origin,
+    appOrigin: input.appOrigin,
     claims,
     connection,
   });
@@ -79,7 +78,9 @@ export async function handleXConnectorMcpRequest(input: {
 
   try {
     await server.connect(transport);
-    return await transport.handleRequest(input.request, { parsedBody });
+    return await transport.handleRequest(input.request, {
+      parsedBody: input.parsedBody,
+    });
   } finally {
     await server.close();
   }
@@ -310,23 +311,6 @@ async function getAuthorizedXConnection(input: {
   return connection;
 }
 
-async function parseRequestBody(request: Request): Promise<unknown> {
-  if (request.method !== "POST") {
-    return;
-  }
-
-  const text = await request.clone().text();
-  if (!text) {
-    return;
-  }
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    return MALFORMED_JSON_REQUEST;
-  }
-}
-
 function deriveRequestKind(parsedBody: unknown): XBridgeRequestKind {
   const messages = Array.isArray(parsedBody) ? parsedBody : [parsedBody];
   const methods = messages.flatMap((message) =>
@@ -358,18 +342,8 @@ function toolNameFromParams(params: unknown): string | undefined {
   return typeof name === "string" ? name : undefined;
 }
 
-function bearerToken(headers: Headers): string | null {
-  const authorization = headers.get("authorization");
-  const match = authorization?.match(/^Bearer\s+(.+)$/i);
-  return match?.[1] ?? null;
-}
-
 function unauthorizedResponse() {
   return new Response("Unauthorized", { status: 401 });
-}
-
-function invalidRequestResponse() {
-  return new Response("Invalid request body", { status: 400 });
 }
 
 function shouldRefreshAccessToken(connection: OrgConnectorConnection) {
