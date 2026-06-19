@@ -19,7 +19,7 @@ import {
   useCheckout,
 } from "@vendor/clerk";
 import { useState } from "react";
-import type { BillingPlan } from "./billing-queries";
+import type { BillingPlan } from "./billing-view-model";
 import { NewPaymentCheckout } from "./new-payment-checkout";
 import { SavedPaymentCheckout } from "./saved-payment-checkout";
 

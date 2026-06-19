@@ -24,7 +24,7 @@ import type {
 import { formatUtcCalendarDate as formatDate } from "@vendor/lib/time";
 import { memo } from "react";
 
-import type { BillingSubscription } from "./billing-queries";
+import type { BillingSubscription } from "./billing-view-model";
 
 export function LoadingLine({ label }: { label: string }) {
   return (

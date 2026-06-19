@@ -20,7 +20,12 @@
       ],
       "passThroughEnv": ["HOST", "PORT"],
       "inputs": ["$TURBO_DEFAULT$", ".vercel/.env*"],
-      "outputs": [".output/**", "dist/**", "src/routeTree.gen.ts"]
+      "outputs": [
+        ".output/**",
+        ".vercel/output/**",
+        "dist/**",
+        "src/routeTree.gen.ts"
+      ]
     },
     "dev": {
       "cache": false,

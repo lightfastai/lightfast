@@ -5,22 +5,28 @@ import { describe, expect, it } from "vitest";
 const appRoot = resolve(import.meta.dirname, "../..");
 
 describe("org billing app data access", () => {
-  it("uses local TanStack query helpers backed by api/app server functions", () => {
-    const source = readFileSync(
-      resolve(appRoot, "src/org/settings/billing/billing-queries.ts"),
+  it("keeps billing overview query wiring local to the billing client", () => {
+    const queriesPath = "src/org/settings/billing/billing-queries.ts";
+    const clientSource = readFileSync(
+      resolve(appRoot, "src/org/settings/billing/billing-settings-client.tsx"),
       "utf8"
     );
 
-    expect(source).toContain('@api/app/tanstack/org-billing"');
-    expect(source).toContain("queryOptions");
-    expect(source).not.toContain("mutationOptions");
-    expect(source).not.toContain(
+    expect(existsSync(resolve(appRoot, queriesPath))).toBe(false);
+    expect(clientSource).toContain('@api/app/tanstack/org-billing"');
+    expect(clientSource).toContain("getOrgBillingOverview");
+    expect(clientSource).toContain("orgBillingOverviewQueryKey(auth.orgId)");
+    expect(clientSource).toContain("queryFn: () => getOrgBillingOverview()");
+    expect(clientSource).toContain("enabled: Boolean(auth.orgId)");
+    expect(clientSource).not.toContain("billingOverviewQueryOptions");
+    expect(clientSource).not.toContain("orgBillingQueryKeys");
+    expect(clientSource).not.toContain(
       "cancelOrgBillingSubscriptionItemMutationOptions"
     );
-    expect(source).toContain('["org-billing", "overview", orgId ?? "no-org"]');
-    expect(source).toContain("enabled: Boolean(input.orgId)");
-    expect(source).not.toContain("useTRPC");
-    expect(source).not.toContain('enabled: typeof window !== "undefined"');
+    expect(clientSource).not.toContain("useTRPC");
+    expect(clientSource).not.toContain(
+      'enabled: typeof window !== "undefined"'
+    );
   });
 
   it("removes org billing settings UI callers from tRPC", () => {
@@ -50,7 +56,7 @@ describe("org billing app data access", () => {
 
     expect(existsSync(resolve(appRoot, actionsPath))).toBe(false);
     expect(clientSource).toContain("useQueryClient");
-    expect(clientSource).toContain("orgBillingQueryKeys.overview(auth.orgId)");
+    expect(clientSource).toContain("orgBillingOverviewQueryKey(auth.orgId)");
     expect(clientSource).not.toContain("useBillingOverviewRefresh");
     expect(clientSource).not.toContain("billing-overview-actions");
   });
@@ -70,7 +76,7 @@ describe("org billing app data access", () => {
     expect(clientSource).not.toContain(
       "cancelOrgBillingSubscriptionItemMutationOptions"
     );
-    expect(clientSource).toContain("orgBillingQueryKeys.overview(auth.orgId)");
+    expect(clientSource).toContain("orgBillingOverviewQueryKey(auth.orgId)");
     expect(clientSource).toContain("previousOverview");
     expect(clientSource).not.toContain("useCancelSubscriptionItemMutation");
     expect(clientSource).not.toContain("billing-cancellation-mutation");
