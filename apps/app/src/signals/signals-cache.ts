@@ -1,10 +1,8 @@
-import {
-  getSignal,
-  type ListProcessingSignalsResult,
-  type ListWorkingSetSignalsResult,
-  type SignalDetailResult,
+import type {
+  ListProcessingSignalsResult,
+  ListWorkingSetSignalsResult,
+  SignalDetailResult,
 } from "@api/app/tanstack/signals";
-import { queryOptions } from "@tanstack/react-query";
 import {
   PROCESSING_SIGNALS_LIMIT,
   signalProcessingStatuses,
@@ -25,14 +23,3 @@ export const signalQueryKeys = {
     ] as const,
   workingSet: () => ["signals", "working-set"] as const,
 };
-
-export function signalDetailQueryOptions(input: {
-  enabled: boolean;
-  publicId: string;
-}) {
-  return queryOptions({
-    enabled: typeof window !== "undefined" && input.enabled,
-    queryFn: () => getSignal({ data: { publicId: input.publicId } }),
-    queryKey: signalQueryKeys.detail(input.publicId),
-  });
-}

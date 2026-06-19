@@ -1,3 +1,4 @@
+import { getSignal } from "@api/app/tanstack/signals";
 import {
   AtSignIcon as AtSign,
   HashIcon as Hash,
@@ -13,7 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import type { ReactNode } from "react";
-import { signalDetailQueryOptions } from "~/signals/signals-queries";
+import { signalQueryKeys } from "~/signals/signals-cache";
 import {
   formatPersonSignalRef,
   getPersonName,
@@ -71,9 +72,11 @@ function PersonSignalLink({
   signalId: string;
   slug: string;
 }) {
-  const query = useQuery(
-    signalDetailQueryOptions({ enabled: Boolean(signalId), publicId: signalId })
-  );
+  const query = useQuery({
+    enabled: typeof window !== "undefined" && Boolean(signalId),
+    queryFn: () => getSignal({ data: { publicId: signalId } }),
+    queryKey: signalQueryKeys.detail(signalId),
+  });
   const title = query.data
     ? (query.data.classification?.title ?? query.data.input)
     : null;

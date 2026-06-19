@@ -25,7 +25,7 @@ import {
   ORGANIZATION_STALE_TIME,
   organizationQueryKeys,
 } from "~/organization/organization-cache";
-import { signalQueryKeys } from "./signals-queries";
+import { signalQueryKeys } from "./signals-cache";
 
 interface SignalCreateDialogProps {
   onOpenChange: (open: boolean) => void;

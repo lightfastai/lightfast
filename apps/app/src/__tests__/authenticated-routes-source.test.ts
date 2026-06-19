@@ -488,6 +488,7 @@ describe("app authenticated route migration", () => {
     const routeSource = source("src/routes/_authenticated/$slug/signals.tsx");
     const clientSource = source("src/signals/signals-client.tsx");
     const createDialogSource = source("src/signals/signal-create-dialog.tsx");
+    const detailSheetSource = source("src/signals/signal-detail-sheet.tsx");
     const searchSource = source("src/signals/signals-search-params.ts");
     const workspaceDataSource = source(
       "src/signals/use-signals-workspace-data.ts"
@@ -504,13 +505,20 @@ describe("app authenticated route migration", () => {
     expect(clientSource).toContain("<SignalsViewHeader");
     expect(clientSource).toContain("SignalsViewSwitcher");
     expect(clientSource).not.toContain("viewsSlot=");
-    expect(clientSource).toContain("signalDetailQueryOptions");
+    expect(clientSource).toContain('@api/app/tanstack/signals"');
+    expect(clientSource).toContain("getSignal");
+    expect(clientSource).toContain("signalQueryKeys.detail");
+    expect(clientSource).not.toContain("signalDetailQueryOptions");
     expect(createDialogSource).toContain('@api/app/tanstack/signals"');
     expect(createDialogSource).toContain("createSignal");
     expect(createDialogSource).toContain("signalQueryKeys");
     expect(createDialogSource).not.toContain("createSignalMutationOptions");
     expect(createDialogSource).toContain("listUserOrganizations");
     expect(createDialogSource).toContain("organizationQueryKeys.list()");
+    expect(detailSheetSource).toContain('@api/app/tanstack/signals"');
+    expect(detailSheetSource).toContain("getSignal");
+    expect(detailSheetSource).toContain("signalQueryKeys.detail");
+    expect(detailSheetSource).not.toContain("signalDetailQueryOptions");
     expect(searchSource).toContain("validateSignalsSearch");
     expect(searchSource).toContain("parseSignalDispositions");
     expect(workspaceDataSource).toContain("listWorkingSetSignals");

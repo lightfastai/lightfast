@@ -4,6 +4,7 @@ import {
 } from "@api/app/tanstack/signals";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { signalQueryKeys } from "./signals-cache";
 import {
   adaptProcessingRow,
   compareSignalsByRecency,
@@ -15,7 +16,6 @@ import {
   type SignalSection,
   signalProcessingStatuses,
 } from "./signals-model";
-import { signalQueryKeys } from "./signals-queries";
 
 const WORKING_SET_REFETCH_MS = 30_000;
 const PROCESSING_REFETCH_MS = 5000;

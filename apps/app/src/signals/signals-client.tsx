@@ -1,3 +1,4 @@
+import { getSignal } from "@api/app/tanstack/signals";
 import { Add01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui-v2/components/ui/button";
@@ -13,10 +14,10 @@ import {
 import { WorkspaceSurface } from "~/components/workspace-surface";
 import { SignalCreateDialog } from "./signal-create-dialog";
 import { SignalDetailSheet } from "./signal-detail-sheet";
+import { signalQueryKeys } from "./signals-cache";
 import { SignalsListView } from "./signals-list-view";
 import { SignalsLoading } from "./signals-loading";
 import type { SignalClassificationFilters } from "./signals-model";
-import { signalDetailQueryOptions } from "./signals-queries";
 import {
   type NormalizedSignalsSearch,
   parseSignalDispositions,
@@ -83,9 +84,10 @@ export function SignalsClient({
       if (cached && "input" in cached) {
         return; // processing/full rows already carry the body
       }
-      void queryClient.prefetchQuery(
-        signalDetailQueryOptions({ enabled: true, publicId })
-      );
+      void queryClient.prefetchQuery({
+        queryFn: () => getSignal({ data: { publicId } }),
+        queryKey: signalQueryKeys.detail(publicId),
+      });
     },
     [queryClient, signalsByPublicId]
   );
