@@ -1696,8 +1696,16 @@ describe("app authenticated route migration", () => {
       "handleSkillIndexEventsRequest"
     );
     expect(skillsEventsAdapterSource).toContain("../../services/skills/events");
-    expect(skillsEventsServiceSource).toContain("resolveAuthContextFromClerk");
-    expect(skillsEventsServiceSource).toContain("@db/app/client");
+    expect(skillsEventsAdapterSource).toContain("resolveAuthContextFromClerk");
+    expect(skillsEventsAdapterSource).toContain("@db/app/client");
+    expect(skillsEventsAdapterSource).toContain("Request");
+    expect(skillsEventsAdapterSource).toContain("Response");
+    expect(skillsEventsServiceSource).not.toContain(
+      "resolveAuthContextFromClerk"
+    );
+    expect(skillsEventsServiceSource).not.toContain("@db/app/client");
+    expect(skillsEventsServiceSource).not.toContain("Request");
+    expect(skillsEventsServiceSource).not.toContain("Response");
     expect(skillsEventsServiceSource).toContain("createSkillIndexEventStream");
     expect(skillsEventsServiceSource).toContain("redis.subscribe");
     expect(existsSync(nativeProxyServerPath)).toBe(false);
