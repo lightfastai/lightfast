@@ -8,7 +8,7 @@ Area: `apps/www` v2 marketing footer
 
 Replace the large centered logo slot in the v2 marketing footer with a native-ratio Space Invaders-style mini game after the user clicks the Lightfast logo. The first implementation should prioritize correct core game logic over final art polish.
 
-The approved v1 is a desktop-only, isolated canvas game. It uses simple white blobs, native arcade geometry, keyboard controls, alien shots, lives, and wave reset. It does not include shields, saucer, score HUD, visible control labels, sound, mobile controls, or final sprite art.
+The approved v1 is a desktop-only, isolated canvas game. It uses simple white blobs, native arcade geometry, keyboard controls, alien shots, lives, and wave reset. XState owns the coarse UI/workflow lifecycle so future transitions can become more expressive without moving the per-frame game simulation into React state. V1 does not include shields, saucer, score HUD, visible control labels, sound, mobile controls, or final sprite art.
 
 ## Current Shape
 
@@ -57,6 +57,7 @@ Important research outcomes:
 - Keep gameplay isolated to the footer center slot, not full width.
 - Implement the core arcade loop with simple blobs.
 - Keep game logic pure and testable outside React.
+- Use XState for coarse UI/workflow lifecycle states and transition effects.
 - Avoid changing footer navigation, newsletter, and legal-link behavior outside the center logo slot.
 
 ## Non-Goals
@@ -126,6 +127,84 @@ V1 game-over handling:
 - Leave the final canvas state visible.
 - Allow click or `Enter` on the focused game area to reset and replay.
 - Do not add a polished game-over overlay yet. A tiny in-canvas blob/text marker is acceptable if needed for clarity.
+
+## XState Lifecycle
+
+Use XState for the footer arcade's coarse user-interface and workflow lifecycle. Do not model per-frame movement, collision, shot motion, or rack stepping inside the state machine.
+
+`xstate` already exists in the workspace catalog and should be added to `apps/www/package.json` with the workspace pattern:
+
+```json
+"xstate": "catalog:"
+```
+
+V1 does not require `@xstate/react`. The client component can create an actor with `xstate` directly and subscribe through React state or `useSyncExternalStore`. If implementation ergonomics strongly favor `@xstate/react`, add it to the workspace catalog first and then depend on it from `apps/www`.
+
+### Lifecycle States
+
+The machine should own these states:
+
+```ts
+type FooterArcadeLifecycleState =
+  | "idle"
+  | "booting"
+  | "running"
+  | "paused"
+  | "life_lost"
+  | "game_over";
+```
+
+State responsibilities:
+
+- `idle`: logo button is visible; no canvas loop is running.
+- `booting`: canvas has replaced the logo and focus is being established.
+- `running`: RAF loop advances the pure game engine.
+- `paused`: canvas remains visible, but simulation does not advance because focus or document visibility was lost.
+- `life_lost`: short transition after player hit; simulation waits before resuming.
+- `game_over`: simulation is stopped; click or `Enter` resets the engine and returns to `running`.
+
+### Lifecycle Events
+
+Initial event set:
+
+```ts
+type FooterArcadeLifecycleEvent =
+  | { type: "START" }
+  | { type: "READY" }
+  | { type: "BLUR" }
+  | { type: "FOCUS" }
+  | { type: "DOCUMENT_HIDDEN" }
+  | { type: "DOCUMENT_VISIBLE" }
+  | { type: "PLAYER_HIT" }
+  | { type: "LIFE_LOST_DELAY_DONE" }
+  | { type: "GAME_OVER" }
+  | { type: "REPLAY" };
+```
+
+The machine context should track focus and visibility so resume behavior is not guessed from the last event alone:
+
+```ts
+type FooterArcadeLifecycleContext = {
+  hasFocus: boolean;
+  documentVisible: boolean;
+};
+```
+
+`FOCUS` sets `hasFocus: true`; `BLUR` sets `hasFocus: false`; `DOCUMENT_VISIBLE` sets `documentVisible: true`; `DOCUMENT_HIDDEN` sets `documentVisible: false`. The machine returns from `paused` to `running` only when both values are true.
+
+The pure engine should report coarse outcomes to the machine rather than mutate lifecycle directly. For example, an update can return `{ kind: "player_hit" }`, `{ kind: "game_over" }`, or `{ kind: "wave_cleared" }`; the React component translates those outcomes into machine events.
+
+### Why XState Here
+
+XState is valuable for this feature because the lifecycle will likely grow more expressive: logo-to-canvas swaps, boot transitions, replay affordances, future pause overlays, future sound prompts, and animation timing can all live in a readable statechart.
+
+XState should not own the high-frequency game loop because that state changes every frame and is better represented by a pure reducer-style simulation function:
+
+```ts
+nextGameState = updateGame(gameState, inputSnapshot, dt);
+```
+
+This split keeps future UI transitions flexible without making collision and timing logic harder to test.
 
 ## Geometry
 
@@ -201,17 +280,11 @@ Danger zone:
 
 - If the bottom of any live invader reaches `PLAYER_Y - 8`, the game ends.
 
-## Game State
+## Game Engine State
 
-Keep the core state independent of React.
+Keep the core simulation state independent of React and XState. The machine owns lifecycle; the engine owns the current board state.
 
 ```ts
-type GamePhase =
-  | "idle"
-  | "running"
-  | "life_lost"
-  | "game_over";
-
 type Direction = -1 | 1;
 
 type Invader = {
@@ -230,7 +303,6 @@ type Shot = {
 };
 
 type GameState = {
-  phase: GamePhase;
   lives: number;
   wave: number;
   elapsedMs: number;
@@ -243,17 +315,17 @@ type GameState = {
   rackDirection: Direction;
   rackStepAccumulatorMs: number;
   alienShotAccumulatorMs: number;
-  lifeLostRemainingMs: number;
 };
 ```
 
 The concrete implementation can refine names, but the boundaries should stay:
 
 - Pure state factory: create initial game state.
-- Pure update function: takes state, input snapshot, elapsed time, returns next state.
+- Pure update function: takes state, input snapshot, elapsed time, returns next state plus coarse outcomes.
 - Pure collision helpers.
 - Canvas renderer: reads state and draws blobs.
-- React component: owns focus, input listeners, animation frame, and canvas lifecycle.
+- XState machine: owns lifecycle, pause/resume, life-loss delay, replay, and future transition hooks.
+- React component: owns focus, input listeners, animation frame, canvas lifecycle, and machine actor wiring.
 
 ## Input Model
 
@@ -274,9 +346,9 @@ Input rules:
 
 Pause rules:
 
-- Pause simulation on blur.
-- Pause simulation when `document.visibilityState !== "visible"`.
-- Resume when focused and visible.
+- Send `BLUR` and pause simulation on blur.
+- Send `DOCUMENT_HIDDEN` and pause simulation when `document.visibilityState !== "visible"`.
+- Resume only after focus and document visibility are both restored.
 
 ## Movement And Timing
 
@@ -421,6 +493,7 @@ Suggested first implementation shape:
 ```text
 apps/www/src/app/(v2)/v2/(marketing)/_components/footer.tsx
 apps/www/src/app/(v2)/v2/(marketing)/_components/footer-arcade.tsx
+apps/www/src/app/(v2)/v2/(marketing)/_components/footer-arcade-machine.ts
 apps/www/src/app/(v2)/v2/(marketing)/_components/footer-arcade-engine.ts
 apps/www/src/app/(v2)/v2/(marketing)/_components/footer-arcade-renderer.ts
 ```
@@ -429,10 +502,11 @@ Responsibilities:
 
 - `footer.tsx`: replaces the center link/logo with the arcade client component.
 - `footer-arcade.tsx`: client component, focus management, canvas ref, input, RAF loop.
+- `footer-arcade-machine.ts`: XState lifecycle machine, lifecycle events, and transition timing.
 - `footer-arcade-engine.ts`: pure state, update, collision, constants.
 - `footer-arcade-renderer.ts`: canvas drawing from state.
 
-The implementation can choose fewer files if the code remains small, but engine logic should stay independent enough to test without React.
+The implementation can choose fewer files if the code remains small, but engine logic should stay independent enough to test without React or XState.
 
 ## Testing
 
@@ -449,6 +523,19 @@ Focused tests should cover pure engine behavior:
 - Game over when lives reach zero.
 - Game over when invaders reach the danger zone.
 - Wave reset rebuilds the rack and preserves lives.
+
+Focused lifecycle tests should cover XState behavior:
+
+- `START` moves from `idle` to `booting`.
+- `READY` moves from `booting` to `running`.
+- Blur or hidden document moves from `running` to `paused`.
+- Focus alone does not resume if the document is still hidden.
+- Visible document alone does not resume if focus is still absent.
+- Focus plus visible document resumes to `running`.
+- `PLAYER_HIT` moves to `life_lost`.
+- `LIFE_LOST_DELAY_DONE` returns to `running` when lives remain.
+- `GAME_OVER` moves to `game_over`.
+- `REPLAY` resets lifecycle toward `running`.
 
 Manual/browser verification:
 
