@@ -101,9 +101,10 @@ export async function handleGitHubWebhookRequest(
     return response(401, { ok: false });
   }
 
-  return handleVerifiedGitHubWebhook({
+  const result = await handleVerifiedGitHubWebhook({
     body,
     deliveryId: headers.deliveryId,
     event: headers.event,
   });
+  return response(result.status, result.body);
 }

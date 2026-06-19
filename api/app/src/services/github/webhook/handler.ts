@@ -25,8 +25,16 @@ import { inngest } from "../../../inngest/client";
 
 const ZERO_SHA = "0".repeat(40);
 
-function response(status: number, body: Record<string, unknown>) {
-  return Response.json(body, { status });
+export interface GitHubWebhookResult {
+  body: Record<string, unknown>;
+  status: number;
+}
+
+function webhookResult(
+  status: number,
+  body: Record<string, unknown>
+): GitHubWebhookResult {
+  return { body, status };
 }
 
 function webhookRejectionMeta(input: {
@@ -61,10 +69,10 @@ async function handleGitHubPrWebhook(input: {
   deliveryId: string;
   event: string;
   json: unknown;
-}): Promise<Response> {
+}): Promise<GitHubWebhookResult> {
   const parsedEvent = githubPrWebhookEventSchema.safeParse(input.event);
   if (!parsedEvent.success) {
-    return response(202, { ok: true, ignored: true });
+    return webhookResult(202, { ok: true, ignored: true });
   }
 
   const parsedPayload = githubPrWebhookPayloadSchema.safeParse(input.json);
@@ -75,7 +83,7 @@ async function handleGitHubPrWebhook(input: {
       reason: "invalid_pr_payload",
       status: 400,
     });
-    return response(400, { ok: false });
+    return webhookResult(400, { ok: false });
   }
   const rawPayload = input.json as Record<string, unknown>;
 
@@ -92,11 +100,11 @@ async function handleGitHubPrWebhook(input: {
       reason: "invalid_pr_payload_normalization",
       status: 400,
     });
-    return response(400, { ok: false });
+    return webhookResult(400, { ok: false });
   }
 
   if (!normalized) {
-    return response(202, { ok: true, ignored: true });
+    return webhookResult(202, { ok: true, ignored: true });
   }
 
   const binding = await getOrgBindingByProviderInstallation(db, {
@@ -104,7 +112,7 @@ async function handleGitHubPrWebhook(input: {
     providerInstallationId: normalized.providerInstallationId,
   });
   if (!binding || binding.status !== "active") {
-    return response(202, { ok: true, ignored: true });
+    return webhookResult(202, { ok: true, ignored: true });
   }
 
   const watch = await getWatchedSourceControlRepository(db, {
@@ -112,11 +120,11 @@ async function handleGitHubPrWebhook(input: {
     providerRepositoryId: normalized.providerRepositoryId,
   });
   if (!watch) {
-    return response(202, { ok: true, ignored: true });
+    return webhookResult(202, { ok: true, ignored: true });
   }
 
   if (!watchesWebhookEvent(watch.watchedWebhookEvents, normalized.event)) {
-    return response(202, { ok: true, ignored: true });
+    return webhookResult(202, { ok: true, ignored: true });
   }
 
   await recordSourceControlPrWebhookDelivery(db, {
@@ -133,19 +141,19 @@ async function handleGitHubPrWebhook(input: {
     sourceControlRepositoryId: watch.id,
   });
 
-  return response(202, { ok: true });
+  return webhookResult(202, { ok: true });
 }
 
 export async function handleVerifiedGitHubWebhook(input: {
   body: string;
   deliveryId: string;
   event: string;
-}): Promise<Response> {
+}): Promise<GitHubWebhookResult> {
   const isPrWebhookEvent = githubPrWebhookEventSchema.safeParse(
     input.event
   ).success;
   if (input.event !== "ping" && input.event !== "push" && !isPrWebhookEvent) {
-    return response(202, { ok: true, ignored: true });
+    return webhookResult(202, { ok: true, ignored: true });
   }
 
   let json: unknown;
@@ -158,7 +166,7 @@ export async function handleVerifiedGitHubWebhook(input: {
       reason: "malformed_json",
       status: 400,
     });
-    return response(400, { ok: false });
+    return webhookResult(400, { ok: false });
   }
 
   if (input.event === "ping") {
@@ -170,9 +178,9 @@ export async function handleVerifiedGitHubWebhook(input: {
         reason: "invalid_ping_payload",
         status: 400,
       });
-      return response(400, { ok: false });
+      return webhookResult(400, { ok: false });
     }
-    return response(202, { ok: true });
+    return webhookResult(202, { ok: true });
   }
 
   if (isPrWebhookEvent) {
@@ -191,7 +199,7 @@ export async function handleVerifiedGitHubWebhook(input: {
       reason: "invalid_push_payload",
       status: 400,
     });
-    return response(400, { ok: false });
+    return webhookResult(400, { ok: false });
   }
 
   const push = normalizeGitHubPushWebhookPayload(parsedPush.data);
@@ -204,7 +212,7 @@ export async function handleVerifiedGitHubWebhook(input: {
   const delivery = deliveryRecord.delivery;
 
   if (delivery.status !== "received") {
-    return response(202, { ok: true, duplicate: true });
+    return webhookResult(202, { ok: true, duplicate: true });
   }
 
   if (push.afterSha === ZERO_SHA) {
@@ -212,7 +220,7 @@ export async function handleVerifiedGitHubWebhook(input: {
       deliveryId: input.deliveryId,
       status: "ignored",
     });
-    return response(202, { ok: true, ignored: true });
+    return webhookResult(202, { ok: true, ignored: true });
   }
 
   const binding = await getOrgBindingByProviderInstallation(db, {
@@ -224,7 +232,7 @@ export async function handleVerifiedGitHubWebhook(input: {
       deliveryId: input.deliveryId,
       status: "ignored",
     });
-    return response(202, { ok: true, ignored: true });
+    return webhookResult(202, { ok: true, ignored: true });
   }
 
   const watch = await getWatchedSourceControlRepository(db, {
@@ -236,7 +244,7 @@ export async function handleVerifiedGitHubWebhook(input: {
       deliveryId: input.deliveryId,
       status: "ignored",
     });
-    return response(202, { ok: true, ignored: true });
+    return webhookResult(202, { ok: true, ignored: true });
   }
 
   if (watch.syncStatus !== "enabled") {
@@ -244,7 +252,7 @@ export async function handleVerifiedGitHubWebhook(input: {
       deliveryId: input.deliveryId,
       status: "ignored",
     });
-    return response(202, { ok: true, ignored: true });
+    return webhookResult(202, { ok: true, ignored: true });
   }
 
   if (watch.watchedPathGlobs === null) {
@@ -252,7 +260,7 @@ export async function handleVerifiedGitHubWebhook(input: {
       deliveryId: input.deliveryId,
       status: "ignored",
     });
-    return response(202, { ok: true, ignored: true });
+    return webhookResult(202, { ok: true, ignored: true });
   }
 
   const changedPathsMatch = matchesAnyWatchedPath(
@@ -267,7 +275,7 @@ export async function handleVerifiedGitHubWebhook(input: {
       deliveryId: input.deliveryId,
       status: "ignored",
     });
-    return response(202, { ok: true, ignored: true });
+    return webhookResult(202, { ok: true, ignored: true });
   }
 
   const event = sourceControlRepositoryPushEventSchema.parse({
@@ -285,5 +293,5 @@ export async function handleVerifiedGitHubWebhook(input: {
     status: "queued",
   });
 
-  return response(202, { ok: true });
+  return webhookResult(202, { ok: true });
 }

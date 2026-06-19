@@ -23,6 +23,9 @@ describe("GitHub webhook request boundary", () => {
 
     expect(serviceSource).toContain("handleVerifiedGitHubWebhook");
     expect(serviceSource).not.toContain("request: Request");
+    expect(serviceSource).not.toContain("Promise<Response>");
+    expect(serviceSource).not.toContain("Response.json");
+    expect(serviceSource).not.toContain("new Response");
     expect(serviceSource).not.toContain("env");
     expect(serviceSource).not.toContain("verifyGitHubWebhookSignature");
     expect(serviceSource).not.toContain("x-hub-signature-256");
