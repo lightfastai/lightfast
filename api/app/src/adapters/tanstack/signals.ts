@@ -1,6 +1,7 @@
 import { db } from "@db/app/client";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest, setResponseHeader } from "@tanstack/react-start/server";
+import type { z } from "zod";
 import { resolveAuthContextFromClerk } from "../../auth/identity";
 import { actorFromAuthIdentity, isDomainError } from "../../domain";
 import {
@@ -106,4 +107,5 @@ export type ListWorkingSetSignalsResult = Awaited<
   ReturnType<typeof listWorkingSetSignals>
 >;
 export type SignalDetailResult = Awaited<ReturnType<typeof getSignal>>;
+export type CreateSignalInput = z.input<typeof createSignalCommand.input>;
 export type CreateSignalResult = Awaited<ReturnType<typeof createSignal>>;

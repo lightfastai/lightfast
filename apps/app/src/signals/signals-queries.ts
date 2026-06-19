@@ -1,5 +1,4 @@
 import {
-  createSignal,
   getSignal,
   type ListProcessingSignalsResult,
   type ListWorkingSetSignalsResult,
@@ -7,11 +6,7 @@ import {
   listWorkingSetSignals,
   type SignalDetailResult,
 } from "@api/app/tanstack/signals";
-import {
-  keepPreviousData,
-  type QueryClient,
-  queryOptions,
-} from "@tanstack/react-query";
+import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 import {
   PROCESSING_SIGNALS_LIMIT,
   signalProcessingStatuses,
@@ -73,36 +68,4 @@ export function signalDetailQueryOptions(input: {
     queryFn: () => getSignal({ data: { publicId: input.publicId } }),
     queryKey: signalQueryKeys.detail(input.publicId),
   });
-}
-
-export function createSignalMutationOptions(input: {
-  draftStorageKey: string;
-  onClose: () => void;
-  onCreateMore: () => void;
-  queryClient: QueryClient;
-  removeDraft: (storageKey: string) => void;
-  resetInput: () => void;
-  shouldCreateMore: () => boolean;
-  toastSuccess: () => void;
-}) {
-  return {
-    meta: { errorTitle: "Failed to create signal" },
-    mutationFn: (data: { input: string }) => createSignal({ data }),
-    onSuccess: () => {
-      input.removeDraft(input.draftStorageKey);
-      void input.queryClient.invalidateQueries({
-        queryKey: signalQueryKeys.workingSet(),
-      });
-      void input.queryClient.invalidateQueries({
-        queryKey: signalQueryKeys.processing(),
-      });
-      input.toastSuccess();
-      input.resetInput();
-      if (input.shouldCreateMore()) {
-        input.onCreateMore();
-        return;
-      }
-      input.onClose();
-    },
-  };
 }
