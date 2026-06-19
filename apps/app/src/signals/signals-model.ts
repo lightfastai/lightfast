@@ -2,7 +2,7 @@ import type {
   ProcessingSignalsResult,
   SignalDetailQueryResult,
   WorkingSetSignalsResult,
-} from "./signals-queries";
+} from "./signals-cache";
 
 /** Full row from the cursor `list` query (processing path) — carries body fields. */
 export type SignalList = ProcessingSignalsResult;
