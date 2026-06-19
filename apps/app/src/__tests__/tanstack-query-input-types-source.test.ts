@@ -15,8 +15,8 @@ function repoSource(path: string) {
 
 describe("TanStack query input type boundaries", () => {
   const queryFiles = [
-    "src/connectors/connectors-queries.ts",
-    "src/decisions/decisions-queries.ts",
+    "src/connectors/connectors-client.tsx",
+    "src/decisions/decisions-client.tsx",
     "src/people/people-queries.ts",
   ];
 
@@ -48,7 +48,7 @@ describe("TanStack query input type boundaries", () => {
     expect(
       appSource("src/developer-connections/developer-connections-client.tsx")
     ).toContain("type StartSentryDeveloperConnectionAuthInput");
-    expect(appSource("src/decisions/decisions-queries.ts")).toContain(
+    expect(appSource("src/decisions/decisions-client.tsx")).toContain(
       "type ListDecisionsInput"
     );
   });

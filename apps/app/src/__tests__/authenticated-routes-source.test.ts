@@ -666,7 +666,7 @@ describe("app authenticated route migration", () => {
     const decisionsSearchSource = source(
       "src/decisions/decisions-search-params.ts"
     );
-    const decisionsQuerySource = source("src/decisions/decisions-queries.ts");
+    const decisionsQuerySource = decisionsClientSource;
     const skillsRouteSource = source(
       "src/routes/_authenticated/$slug/skills.tsx"
     );
@@ -715,9 +715,14 @@ describe("app authenticated route migration", () => {
     expect(decisionsClientSource).toContain("DecisionsTableView");
     expect(decisionsSearchSource).toContain("parseDecisionProviders");
     expect(decisionsQuerySource).toContain('@api/app/tanstack/decisions"');
+    expect(decisionsQuerySource).toContain("listDecisions");
     expect(decisionsQuerySource).toContain(
       'enabled: typeof window !== "undefined"'
     );
+    expect(decisionsQuerySource).not.toContain(
+      "decisionsListInfiniteQueryOptions"
+    );
+    expect(decisionsQuerySource).not.toContain("./decisions-queries");
     expect(decisionsClientSource).not.toContain("useDecisionsListQuery");
 
     expect(skillsRouteSource).toContain("validateSkillsSearch");
@@ -738,8 +743,12 @@ describe("app authenticated route migration", () => {
 
     expect(connectorsRouteSource).toContain("validateConnectorsSearch");
     expect(connectorsRouteSource).toContain("setSearchParams");
-    expect(connectorsClientSource).toContain("connectorSectionsQueryOptions");
     expect(connectorsClientSource).toContain('@api/app/tanstack/connectors"');
+    expect(connectorsClientSource).toContain("listConnectorSections");
+    expect(connectorsClientSource).toContain("connectorQueryKeys.sections()");
+    expect(connectorsClientSource).not.toContain(
+      "connectorSectionsQueryOptions"
+    );
     expect(connectorsClientSource).toContain(
       '@api/app/tanstack/user-connectors"'
     );
@@ -1607,7 +1616,9 @@ describe("app authenticated route migration", () => {
       '"/_authenticated/$slug/tasks/connectors/x/complete"'
     );
     expect(xCompleteRouteSource).toContain("XConnectorSetupCompleteClient");
-    expect(xSetupClientSource).toContain("connectorsListQueryOptions");
+    expect(xSetupClientSource).toContain("listConnectors");
+    expect(xSetupClientSource).toContain("connectorQueryKeys.list()");
+    expect(xSetupClientSource).not.toContain("connectorsListQueryOptions");
     expect(xSetupClientSource).toContain(
       'enabled: typeof window !== "undefined"'
     );

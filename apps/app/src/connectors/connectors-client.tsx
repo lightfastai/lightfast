@@ -1,6 +1,7 @@
 import {
   type DisconnectConnectorInput,
   disconnectConnector,
+  listConnectorSections,
   type RefreshConnectorToolsInput,
   refreshConnectorTools,
   type SetConnectorAgentEnabledInput,
@@ -65,6 +66,7 @@ import { WorkspaceSurface } from "~/components/workspace-surface";
 import { ConnectorDetailSheet } from "./connector-detail-sheet";
 import { ConnectorIcon } from "./connector-icons";
 import { ConnectorOwnerScopeTabs } from "./connector-owner-scope-tabs";
+import { connectorQueryKeys } from "./connectors-cache";
 import {
   type ConnectorCatalogRow,
   type ConnectorStatusFilter,
@@ -80,10 +82,6 @@ import {
   type UserConnectorCatalogRow,
   userConnectionStatus,
 } from "./connectors-model";
-import {
-  connectorQueryKeys,
-  connectorSectionsQueryOptions,
-} from "./connectors-queries";
 import type {
   ConnectorOwnerScope,
   NormalizedConnectorsSearch,
@@ -114,8 +112,10 @@ export function ConnectorsClient({
 }) {
   const queryClient = useQueryClient();
   const connectorsQuery = useQuery({
-    ...connectorSectionsQueryOptions({ staleTime: 30_000 }),
     enabled: typeof window !== "undefined",
+    queryFn: () => listConnectorSections(),
+    queryKey: connectorQueryKeys.sections(),
+    staleTime: 30_000,
   });
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] =

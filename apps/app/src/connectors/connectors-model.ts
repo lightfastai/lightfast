@@ -2,7 +2,7 @@ import type {
   ConnectorSections as ConnectorSectionsResult,
   TeamConnectorCatalogRow as TeamConnectorCatalogRowResult,
   UserConnectorCatalogRow as UserConnectorCatalogRowResult,
-} from "./connectors-queries";
+} from "./connectors-cache";
 
 export type ConnectorCatalogRow =
   | TeamConnectorCatalogRow
