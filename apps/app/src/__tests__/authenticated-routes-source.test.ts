@@ -1448,7 +1448,14 @@ describe("app authenticated route migration", () => {
       'to="/$slug/settings/source-control"'
     );
 
-    expect(billingClientSource).toContain("billingOverviewQueryOptions");
+    expect(billingClientSource).toContain("getOrgBillingOverview");
+    expect(billingClientSource).toContain("orgBillingOverviewQueryKey");
+    expect(billingClientSource).not.toContain("billingOverviewQueryOptions");
+    expect(
+      existsSync(
+        resolve(appRoot, "src/org/settings/billing/billing-queries.ts")
+      )
+    ).toBe(false);
     expect(billingClientSource).not.toContain("useTRPC");
     expect(billingClientSource).not.toContain(
       'enabled: typeof window !== "undefined"'
@@ -1457,7 +1464,8 @@ describe("app authenticated route migration", () => {
     expect(billingClientSource).toContain("useStatements");
     expect(billingClientSource).toContain("BillingCheckoutDialog");
     expect(existsSync(resolve(appRoot, billingActionsPath))).toBe(false);
-    expect(billingClientSource).toContain("orgBillingQueryKeys.overview");
+    expect(billingClientSource).toContain("orgBillingOverviewQueryKey");
+    expect(billingClientSource).not.toContain("orgBillingQueryKeys");
     expect(billingClientSource).not.toContain("useBillingOverviewRefresh");
     expect(existsSync(resolve(appRoot, billingCancellationPath))).toBe(false);
     expect(billingClientSource).toContain('@api/app/tanstack/org-billing"');
