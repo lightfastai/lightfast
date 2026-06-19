@@ -16,7 +16,6 @@ const {
   createAndQueueSignal,
   isSignalCreateQueueError,
 } = await import("../signals/create-signal");
-const { createSignalForActor } = await import("../signals/service");
 
 const db = { kind: "mock-db" } as unknown as Database;
 
@@ -93,6 +92,32 @@ describe("createAndQueueSignal", () => {
     });
   });
 
+  it("preserves MCP attribution for MCP-created signals", async () => {
+    await createAndQueueSignal(
+      db,
+      {
+        clerkOrgId: "org_test",
+        createdByApiKeyId: null,
+        createdByMcpClientId: "mcp_client_test",
+        createdByMcpGrantId: "mcp_grant_test",
+        createdByUserId: "user_test",
+        input: "Create a signal from MCP",
+      },
+      {
+        sendSignalCreatedEvent: sendMock,
+      }
+    );
+
+    expect(createSignalMock).toHaveBeenCalledWith(db, {
+      clerkOrgId: "org_test",
+      createdByApiKeyId: null,
+      createdByMcpClientId: "mcp_client_test",
+      createdByMcpGrantId: "mcp_grant_test",
+      createdByUserId: "user_test",
+      input: "Create a signal from MCP",
+    });
+  });
+
   it("marks the created signal failed and throws a typed error when enqueue fails", async () => {
     sendMock.mockRejectedValueOnce(new Error("inngest unavailable"));
 
@@ -144,49 +169,6 @@ describe("createAndQueueSignal", () => {
     expect(error).toMatchObject({
       cause: enqueueError,
       message: "Failed to queue signal for classification.",
-    });
-  });
-});
-
-describe("createSignalForActor", () => {
-  it("preserves MCP attribution for MCP-created signals", async () => {
-    createSignalMock.mockResolvedValue({
-      publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
-      clerkOrgId: "org_test",
-      status: "queued",
-      visibilityScope: "user",
-    });
-
-    await expect(
-      createSignalForActor(
-        db,
-        {
-          actor: {
-            clientId: "mcp_client_test",
-            grantId: "mcp_grant_test",
-            kind: "mcp",
-            orgId: "org_test",
-            userId: "user_test",
-          },
-          input: "Create a signal from MCP",
-        },
-        {
-          sendSignalCreatedEvent: sendMock,
-        }
-      )
-    ).resolves.toEqual({
-      id: "signal_123e4567-e89b-12d3-a456-426614174000",
-      status: "queued",
-      visibilityScope: "user",
-    });
-
-    expect(createSignalMock).toHaveBeenCalledWith(db, {
-      clerkOrgId: "org_test",
-      createdByApiKeyId: null,
-      createdByMcpClientId: "mcp_client_test",
-      createdByMcpGrantId: "mcp_grant_test",
-      createdByUserId: "user_test",
-      input: "Create a signal from MCP",
     });
   });
 });
