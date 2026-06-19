@@ -105,9 +105,15 @@ describe("MCP environment validation wiring", () => {
     const vercelConfig = JSON.parse(
       readFileSync(resolve(appRoot, "vercel.json"), "utf8")
     ) as { framework?: string; outputDirectory?: string };
+    const turboConfig = JSON.parse(
+      readFileSync(resolve(appRoot, "turbo.json"), "utf8")
+    ) as { tasks: { build: { outputs?: string[] } } };
 
     expect(vercelConfig.framework).toBe("tanstack-start");
     expect(vercelConfig.outputDirectory).toBe(".vercel/output");
+    expect(turboConfig.tasks.build.outputs ?? []).toContain(
+      ".vercel/output/**"
+    );
   });
 
   it("loads only MCP-owned env files", () => {
