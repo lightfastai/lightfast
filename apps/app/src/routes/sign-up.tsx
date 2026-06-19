@@ -324,7 +324,7 @@ function SignUpView() {
     <div className="w-full max-w-md space-y-8">
       {view === "email" && !hasError && (
         <div className="text-center">
-          <h1 className="font-medium font-pp text-3xl text-foreground">
+          <h1 className="font-medium font-title text-3xl text-foreground">
             Sign up for Lightfast
           </h1>
         </div>

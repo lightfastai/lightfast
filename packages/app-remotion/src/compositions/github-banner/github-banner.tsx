@@ -16,7 +16,7 @@ const ensureFontsLoaded = async () => {
   }
   await loadFont({
     family: "PP Neue Montreal",
-    url: staticFile("fonts/PPNeueMontreal-Book.woff2"),
+    url: staticFile("fonts/pp-neue-montreal/PPNeueMontreal-Book.woff2"),
     weight: "400",
   });
   fontsLoaded = true;
@@ -36,26 +36,8 @@ export const GitHubBanner: React.FC = () => {
   }, [handle]);
 
   return (
-    <AbsoluteFill
-      style={{
-        backgroundColor: "#000000",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <div
-        style={{
-          fontFamily:
-            '"PP Neue Montreal", ui-sans-serif, system-ui, sans-serif',
-          fontWeight: 400,
-          fontSize: 48,
-          color: "#ffffff",
-          letterSpacing: "-0.03em",
-          lineHeight: 1.1,
-          textAlign: "center",
-        }}
-      >
+    <AbsoluteFill className="flex items-center justify-center bg-background text-foreground">
+      <div className="text-center font-normal font-title text-5xl">
         Superintelligence layer for founders
       </div>
     </AbsoluteFill>

@@ -98,7 +98,7 @@ export function XConnectorSetupCompleteClient({
     <div className="flex min-h-full flex-1 items-center justify-center px-4 pb-32">
       <div className="w-full max-w-md space-y-4">
         <TeamSwitcherSlot />
-        <h1 className="font-medium font-pp text-2xl text-foreground">
+        <h1 className="font-medium font-title text-2xl text-foreground">
           Finishing X connection...
         </h1>
         <p className="text-muted-foreground text-sm">

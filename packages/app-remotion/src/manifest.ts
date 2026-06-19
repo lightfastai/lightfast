@@ -77,10 +77,31 @@ export interface CompositionManifest {
   postProcess: PostProcess[];
 }
 
+const LOGO_BASE_MARK_SIZE = 56;
+const logoAssetScale = (targetMarkSize: number) =>
+  targetMarkSize / LOGO_BASE_MARK_SIZE;
+
 // ── Manifest ─────────────────────────────────────────────────────────
 
 export const MANIFEST: CompositionManifest = {
   compositions: {
+    // ── Brand Guidelines ───────────────────────────────────────────
+    "brand-geometry": {
+      type: "still",
+      component: "BrandGeometry",
+      width: 1600,
+      height: 900,
+      props: {},
+      outputs: [
+        {
+          format: "png",
+          dest: "packages/app-remotion/out/brand",
+          filename: "brand-geometry.png",
+          scale: 2,
+        },
+      ],
+    },
+
     // ── App Empty States (isometric) ───────────────────────────────
     "signals-empty": {
       type: "still",
@@ -443,7 +464,7 @@ export const MANIFEST: CompositionManifest = {
       component: "Logo",
       width: 16,
       height: 16,
-      props: { strokeWidth: 1 },
+      props: { assetScale: logoAssetScale(16) },
       outputs: [
         {
           format: "png",
@@ -462,7 +483,7 @@ export const MANIFEST: CompositionManifest = {
       component: "Logo",
       width: 32,
       height: 32,
-      props: { strokeWidth: 1.5 },
+      props: { assetScale: logoAssetScale(32) },
       outputs: [
         {
           format: "png",
@@ -481,7 +502,7 @@ export const MANIFEST: CompositionManifest = {
       component: "Logo",
       width: 48,
       height: 48,
-      props: { strokeWidth: 2 },
+      props: { assetScale: logoAssetScale(48) },
       outputs: [
         {
           format: "png",
@@ -502,7 +523,7 @@ export const MANIFEST: CompositionManifest = {
       component: "Logo",
       width: 180,
       height: 180,
-      props: {},
+      props: { assetScale: logoAssetScale(128) },
       outputs: [
         {
           format: "png",
@@ -521,7 +542,7 @@ export const MANIFEST: CompositionManifest = {
       component: "Logo",
       width: 192,
       height: 192,
-      props: {},
+      props: { assetScale: logoAssetScale(128) },
       outputs: [
         {
           format: "png",
@@ -540,7 +561,7 @@ export const MANIFEST: CompositionManifest = {
       component: "Logo",
       width: 512,
       height: 512,
-      props: {},
+      props: { assetScale: logoAssetScale(256) },
       outputs: [
         {
           format: "png",
@@ -561,7 +582,7 @@ export const MANIFEST: CompositionManifest = {
       component: "Logo",
       width: 1024,
       height: 1024,
-      props: {},
+      props: { assetScale: logoAssetScale(512) },
       outputs: [
         {
           format: "png",
@@ -570,56 +591,13 @@ export const MANIFEST: CompositionManifest = {
         },
       ],
     },
-    "logo-1024-transparent": {
-      type: "still",
-      component: "Logo",
-      width: 1024,
-      height: 1024,
-      props: { transparent: true },
-      outputs: [
-        {
-          format: "png",
-          dest: "packages/app-remotion/out/logos",
-          filename: "logo-1024-transparent.png",
-        },
-      ],
-    },
-    "logo-1024-light": {
-      type: "still",
-      component: "Logo",
-      width: 1024,
-      height: 1024,
-      props: { variant: "light" },
-      outputs: [
-        {
-          format: "png",
-          dest: "packages/app-remotion/out/logos",
-          filename: "logo-1024-light.png",
-        },
-      ],
-    },
-    "logo-1024-transparent-light": {
-      type: "still",
-      component: "Logo",
-      width: 1024,
-      height: 1024,
-      props: { transparent: true, variant: "light" },
-      outputs: [
-        {
-          format: "png",
-          dest: "packages/app-remotion/out/logos",
-          filename: "logo-1024-transparent-light.png",
-        },
-      ],
-    },
-
     // ── Social Banners ─────────────────────────────────────────────
-    "logo-linkedin-banner": {
+    "linkedin-banner": {
       type: "still",
-      component: "Logo",
+      component: "LinkedInBanner",
       width: 1584,
       height: 396,
-      props: { strokeWidth: 0 },
+      props: {},
       outputs: [
         {
           format: "png",

@@ -58,6 +58,31 @@ describe("app workspace wiring", () => {
     expect(packageJson.dependencies["@vercel/microfrontends"]).toBeDefined();
   });
 
+  it("routes public v2 pages through the www marketing microfrontend", () => {
+    const microfrontends = JSON.parse(
+      readFileSync(resolve(appRoot, "microfrontends.json"), "utf8")
+    ) as {
+      applications: Record<
+        string,
+        { routing?: Array<{ group?: string; paths?: string[] }> }
+      >;
+    };
+
+    const wwwMarketingPaths =
+      microfrontends.applications["lightfast-www"]?.routing?.find(
+        (routeGroup) => routeGroup.group === "marketing"
+      )?.paths ?? [];
+    const wwwV2RouteGroup =
+      microfrontends.applications["lightfast-www"]?.routing?.find(
+        (routeGroup) => routeGroup.group === "v2"
+      );
+
+    expect(wwwMarketingPaths).toContain("/brand");
+    expect(wwwMarketingPaths).toContain("/v2/:path*");
+    expect(wwwMarketingPaths).not.toContain("/v2/brand");
+    expect(wwwV2RouteGroup).toBeUndefined();
+  });
+
   it("injects aggregate app URLs into the direct TanStack dev server", () => {
     const packageJson = JSON.parse(
       readFileSync(resolve(appRoot, "package.json"), "utf8")

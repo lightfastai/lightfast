@@ -30,6 +30,7 @@
     "@remotion/cli": "^4.0.448",
     "@repo/typescript-config": "workspace:*",
     "@repo/ui": "workspace:*",
+    "@repo/ui-v2": "workspace:*",
     "@tailwindcss/postcss": "catalog:tailwind4",
     "@types/node": "catalog:",
     "@types/react": "catalog:react19",

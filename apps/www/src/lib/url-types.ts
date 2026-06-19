@@ -4,5 +4,3 @@ export type LightfastUrl<P extends string = string> =
 export type BlogPostUrl = LightfastUrl<`blog/${string}`>;
 export type ChangelogUrl = LightfastUrl<`changelog/${string}`>;
 export type LegalUrl = LightfastUrl<`legal/${string}`>;
-export type DocsUrl = LightfastUrl<`docs/${string}`>;
-export type ApiRefUrl = LightfastUrl<`docs/api-reference/${string}`>;

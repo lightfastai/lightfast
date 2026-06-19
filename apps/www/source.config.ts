@@ -1,24 +1,10 @@
-import {
-  defineCollections,
-  defineConfig,
-  defineDocs,
-} from "fumadocs-mdx/config";
+import { defineCollections, defineConfig } from "fumadocs-mdx/config";
 import {
   BlogPostSchema,
+  BrandPageSchema,
   ChangelogEntrySchema,
-  DocsPageSchema,
   LegalPageSchema,
 } from "./src/lib/content-schemas";
-
-export const { docs, meta } = defineDocs({
-  dir: "src/content/docs",
-  docs: { schema: DocsPageSchema },
-});
-
-export const { docs: apiDocs, meta: apiMeta } = defineDocs({
-  dir: "src/content/api",
-  docs: { schema: DocsPageSchema },
-});
 
 export const blogCollection = defineCollections({
   type: "doc",
@@ -30,6 +16,12 @@ export const changelogCollection = defineCollections({
   type: "doc",
   dir: "src/content/changelog",
   schema: ChangelogEntrySchema,
+});
+
+export const brandCollection = defineCollections({
+  type: "doc",
+  dir: "src/content/brand",
+  schema: BrandPageSchema,
 });
 
 export const legalCollection = defineCollections({

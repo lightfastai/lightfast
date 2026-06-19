@@ -20,7 +20,7 @@ function AccountMcpPage() {
     <div className="mx-auto w-full max-w-4xl space-y-8 px-4 py-8">
       <TeamSwitcherSlot />
       <div>
-        <h1 className="font-medium font-pp text-2xl text-foreground">
+        <h1 className="font-medium font-title text-2xl text-foreground">
           MCP Connections
         </h1>
         <p className="mt-1 text-muted-foreground text-sm">

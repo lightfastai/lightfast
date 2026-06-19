@@ -1,44 +1,68 @@
-import { lissajousPath } from "@repo/ui/lib/brand";
-import { AbsoluteFill, useVideoConfig } from "@vendor/remotion";
+import {
+  Logo as BrandLogo,
+  type LogoProps as BrandLogoProps,
+} from "@repo/ui-v2/components/brand/logo";
+import {
+  AbsoluteFill,
+  continueRender,
+  delayRender,
+  staticFile,
+  useVideoConfig,
+} from "@vendor/remotion";
+import { loadFont } from "@vendor/remotion/fonts";
 import type React from "react";
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 
 interface LogoProps {
-  strokeWidth?: number;
-  transparent?: boolean;
-  variant?: "dark" | "light";
+  assetScale?: number;
+  showWordmark?: boolean;
+  size?: NonNullable<BrandLogoProps["size"]>;
 }
 
+let fontsLoaded = false;
+
+const ensureLogoFontsLoaded = async () => {
+  if (fontsLoaded) {
+    return;
+  }
+
+  await loadFont({
+    family: "Roobert-TRIAL-Medium",
+    url: staticFile("fonts/roobert/Roobert-TRIAL-Medium.woff2"),
+    weight: "500",
+  });
+
+  fontsLoaded = true;
+};
+
 export const Logo: React.FC<LogoProps> = ({
-  transparent = false,
-  strokeWidth: swOverride,
-  variant = "dark",
+  assetScale = 1,
+  showWordmark,
+  size = "xl",
 }) => {
   const { width, height } = useVideoConfig();
-  const size = Math.min(width, height);
+  const [handle] = useState(() => delayRender("Loading logo fonts"));
 
-  const padding = 0.28;
-  const sw = swOverride ?? Math.max(1, Math.round(size * 0.035));
+  useEffect(() => {
+    void ensureLogoFontsLoaded()
+      .then(() => continueRender(handle))
+      .catch(() => continueRender(handle));
+  }, [handle]);
 
-  const path = useMemo(() => lissajousPath(size, padding), [size]);
-
-  const bgColor = variant === "light" ? "#ffffff" : "#000000";
-  const strokeColor = variant === "light" ? "#000000" : "#ffffff";
+  const shouldShowWordmark = showWordmark ?? width / height >= 2.25;
 
   return (
-    <AbsoluteFill
-      style={transparent ? undefined : { backgroundColor: bgColor }}
-    >
-      <svg height={height} viewBox={`0 0 ${width} ${height}`} width={width}>
-        <path
-          d={path}
-          fill="none"
-          stroke={strokeColor}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={sw}
+    <AbsoluteFill className="bg-background text-foreground">
+      <div
+        className="flex h-full w-full items-center justify-center"
+        style={{ transform: `scale(${assetScale})` }}
+      >
+        <BrandLogo
+          className="text-current"
+          showWordmark={shouldShowWordmark}
+          size={size}
         />
-      </svg>
+      </div>
     </AbsoluteFill>
   );
 };

@@ -76,6 +76,11 @@
 }
 
 :root {
+  --font-title-letter-spacing: -0.03em;
+  --font-title-line-height: 1.1;
+}
+
+:root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.277 0 0);
   --card: oklch(1 0 0);
@@ -112,8 +117,8 @@
 }
 
 .dark {
-  --background: oklch(0.2178 0 0);
-  --foreground: oklch(0.894 0 0);
+  --background: oklch(0 0 0);
+  --foreground: oklch(0.9461 0 0);
   --card: oklch(0.248 0 0);
   --card-foreground: oklch(0.894 0 0);
   --popover: oklch(0.309 0 0);
@@ -174,6 +179,12 @@
 }
 
 @layer utilities {
+  .font-title {
+    font-family: var(--font-title);
+    line-height: var(--font-title-line-height);
+    letter-spacing: var(--font-title-letter-spacing);
+  }
+
   .font-wordmark-features {
     font-feature-settings: "ss01", "ss04", "ss06", "ss11", "ss14";
   }

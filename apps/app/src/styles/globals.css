@@ -46,6 +46,8 @@
 }
 
 .dark {
+  --background: oklch(0.2178 0 0);
+  --foreground: oklch(0.894 0 0);
   --destructive-foreground: oklch(1 0 0);
   --scrollbar-thumb-bg: oklch(1 0 0 / 0.2);
   --scrollbar-thumb-bg-hover: oklch(1 0 0 / 0.3);
@@ -187,9 +189,5 @@
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background: var(--scrollbar-thumb-bg-hover);
-  }
-
-  .font-pp {
-    font-family: var(--font-pp-neue-montreal);
   }
 }

@@ -73,7 +73,7 @@ export function XConnectorSetupClient({ orgSlug }: XConnectorSetupClientProps) {
       <main className="flex min-h-full flex-1 items-center justify-center px-4 pb-32">
         <section className="w-full max-w-md space-y-3">
           <TeamSwitcherSlot />
-          <h1 className="font-medium font-pp text-2xl text-foreground">
+          <h1 className="font-medium font-title text-2xl text-foreground">
             Connect X
           </h1>
           <p className="text-destructive text-sm">{error.message}</p>
@@ -87,7 +87,7 @@ export function XConnectorSetupClient({ orgSlug }: XConnectorSetupClientProps) {
       <main className="flex min-h-full flex-1 items-center justify-center px-4 pb-32">
         <section className="w-full max-w-md space-y-3">
           <TeamSwitcherSlot />
-          <h1 className="font-medium font-pp text-2xl text-foreground">
+          <h1 className="font-medium font-title text-2xl text-foreground">
             Connect X
           </h1>
           <p className="text-muted-foreground text-sm">
@@ -116,7 +116,7 @@ export function XConnectorSetupClient({ orgSlug }: XConnectorSetupClientProps) {
         </div>
 
         <div className="space-y-3">
-          <h1 className="font-medium font-pp text-2xl text-foreground">
+          <h1 className="font-medium font-title text-2xl text-foreground">
             Connect X
           </h1>
           <p className="text-muted-foreground text-sm">

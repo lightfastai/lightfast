@@ -1,6 +1,3 @@
-import { AbsoluteFill } from "@vendor/remotion";
-import type React from "react";
+import { Logo } from "../logo";
 
-export const TwitterBanner: React.FC = () => (
-  <AbsoluteFill className="bg-black" />
-);
+export const TwitterBanner = () => <Logo assetScale={72 / 56} showWordmark />;

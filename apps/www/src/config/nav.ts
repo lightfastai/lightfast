@@ -9,7 +9,6 @@ import { defineNavItems } from "~/types/nav";
 
 export const INTERNAL_NAV = defineNavItems([
   { title: "Pricing", href: "/pricing" },
-  { title: "Docs", href: "/docs/get-started/overview" },
 ]);
 
 export const SOCIAL_NAV = defineNavItems([
@@ -48,6 +47,5 @@ export const PITCH_DECK_NAV = defineNavItems([
   { title: "Pricing", href: "/pricing" },
   { title: "Blog", href: "/blog" },
   { title: "Changelog", href: "/changelog" },
-  { title: "Docs", href: "/docs/get-started/overview" },
   { title: "Contact", href: "mailto:jp@lightfast.ai", external: true },
 ]);

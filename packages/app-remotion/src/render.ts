@@ -12,6 +12,7 @@ import { enableCssLoaders } from "./webpack-override";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "../../.."); // monorepo root
+const UI_V2_PUBLIC_DIR = path.resolve(ROOT, "packages/ui-v2/public");
 
 /** Resolve a manifest dest path to an absolute path */
 function resolveDest(dest: string, filename: string): string {
@@ -83,7 +84,7 @@ async function main() {
   console.log("Bundling compositions...");
   const bundled = await bundle({
     entryPoint,
-    publicDir: path.resolve(__dirname, "../public"),
+    publicDir: UI_V2_PUBLIC_DIR,
     webpackOverride: enableCssLoaders,
   });
 

@@ -68,6 +68,12 @@ const composedMiddleware = createNEMO(
 // =============================================================================
 
 export default async function proxy(req: NextRequest, event: NextFetchEvent) {
+  if (req.nextUrl.pathname === "/brand") {
+    const url = req.nextUrl.clone();
+    url.pathname = "/v2/brand";
+    return withSecurityHeaders(NextResponse.redirect(url, 308));
+  }
+
   // Run NEMO middleware chain (sets x-pathname, etc.)
   const nemoResponse = await composedMiddleware(req, event);
 

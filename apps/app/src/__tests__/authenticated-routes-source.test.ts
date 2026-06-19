@@ -394,7 +394,8 @@ describe("app authenticated route migration", () => {
       '@source "../../../../packages/ui-v2/src/**/*.{ts,tsx}";'
     );
     expect(globalCss).toContain("--font-geist-sans");
-    expect(globalCss).toContain(".font-pp");
+    expect(globalCss).toContain("--font-pp-neue-montreal");
+    expect(globalCss).not.toContain(".font-pp");
     expect(postcssConfig).toContain("@repo/ui-v2/postcss.config");
     expect(postcssConfig).not.toContain("@repo/ui/postcss.config");
   });

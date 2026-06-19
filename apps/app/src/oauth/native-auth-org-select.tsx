@@ -115,7 +115,7 @@ export function NativeAuthOrgSelect({
           <p className="font-mono text-muted-foreground text-sm">
             {clientLabels[client]}
           </p>
-          <h1 className="pb-2 font-medium font-pp text-2xl text-foreground">
+          <h1 className="pb-2 font-medium font-title text-2xl text-foreground">
             Choose a Lightfast organization
           </h1>
         </div>

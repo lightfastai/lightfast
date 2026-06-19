@@ -1,28 +1,23 @@
 import type { GraphContext } from "@vendor/seo/json-ld";
 import type { Metadata } from "next";
 import type { BlogCategoryMeta } from "~/config/blog-categories";
-import type { BlogCategoryPost, Crumb } from "./builders";
+import type { BlogCategoryPost } from "./builders";
 import {
-  buildApiRefJsonLd,
   buildBlogCategoryJsonLd,
   buildBlogPostJsonLd,
   buildChangelogEntryJsonLd,
-  buildDocsJsonLd,
   buildLegalJsonLd,
 } from "./builders";
 import type {
   BlogPostData,
   ChangelogEntryData,
   ContentSeoData,
-  DocsPageData,
   LegalPageData,
 } from "./content-schemas";
 import { createArticleMetadata, createMetadata } from "./content-seo";
 import type {
-  ApiRefUrl,
   BlogPostUrl,
   ChangelogUrl,
-  DocsUrl,
   LegalUrl,
 } from "./url-types";
 
@@ -182,25 +177,6 @@ export function emitChangelogEntrySeo(
   };
 }
 
-export function emitDocsSeo(
-  data: DocsPageData,
-  url: DocsUrl,
-  breadcrumbs: Crumb[]
-): SeoBundle {
-  const canonicalUrl = data.canonicalUrl ?? url;
-  const ogImageUrl = url.replace("/docs/", "/docs/og/");
-  return {
-    metadata: buildArticleMetadata(
-      data,
-      canonicalUrl,
-      "Lightfast Docs",
-      "Lightfast Documentation",
-      ogImageUrl
-    ),
-    jsonLd: buildDocsJsonLd(data, url, breadcrumbs),
-  };
-}
-
 export function emitLegalSeo(data: LegalPageData, url: LegalUrl): SeoBundle {
   const canonicalUrl = data.canonicalUrl ?? url;
   return {
@@ -239,27 +215,5 @@ export function emitLegalSeo(data: LegalPageData, url: LegalUrl): SeoBundle {
       },
     }),
     jsonLd: buildLegalJsonLd(data, url),
-  };
-}
-
-export function emitApiRefSeo(
-  data: DocsPageData,
-  url: ApiRefUrl,
-  breadcrumbs: Crumb[]
-): SeoBundle {
-  const canonicalUrl = data.canonicalUrl ?? url;
-  const ogImageUrl = url.replace(
-    "/docs/api-reference/",
-    "/docs/api-reference/og/"
-  );
-  return {
-    metadata: buildArticleMetadata(
-      data,
-      canonicalUrl,
-      "Lightfast API Reference",
-      "Lightfast API Reference",
-      ogImageUrl
-    ),
-    jsonLd: buildApiRefJsonLd(data, url, breadcrumbs),
   };
 }

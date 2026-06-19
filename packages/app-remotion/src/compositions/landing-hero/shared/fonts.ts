@@ -13,13 +13,8 @@ export const ensureFontsLoaded = async () => {
   await Promise.all([
     loadFont({
       family: FONT_FAMILY,
-      url: staticFile("fonts/Geist-Regular.woff2"),
-      weight: "400",
-    }),
-    loadFont({
-      family: FONT_FAMILY,
-      url: staticFile("fonts/Geist-Medium.woff2"),
-      weight: "500",
+      url: staticFile("fonts/geist/Geist-Variable.woff2"),
+      weight: "100 900",
     }),
   ]);
 

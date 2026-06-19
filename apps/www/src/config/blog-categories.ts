@@ -154,9 +154,9 @@ export const BLOG_CATEGORY_META: Record<BlogCategory, BlogCategoryMeta> = {
           "Tutorials are written against the current version of Lightfast and tested before publication. When a breaking change lands, we update affected tutorials rather than letting them drift.",
       },
       {
-        question: "Where can I find the reference documentation?",
+        question: "Where can I find deeper implementation notes?",
         answer:
-          "Reference lives at /docs — concepts, API reference, and configuration. Tutorials here complement the docs by walking through complete end-to-end workflows.",
+          "Tutorials and technical posts live here on the blog, where we publish end-to-end workflows, implementation notes, and platform updates.",
       },
     ],
   },

@@ -1,9 +1,10 @@
 import type { MetadataRoute } from "next";
 import {
   getBlogPages,
+  getBrandPage,
   getChangelogPages,
   getLegalPages,
-} from "~/app/(app)/(content)/_lib/source";
+} from "~/app/(v1)/(content)/_lib/source";
 import { BlogPostSchema } from "~/lib/content-schemas";
 
 function getCategoryPriority(category: string): number {
@@ -30,6 +31,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       new Date(b.data.publishedAt).getTime() -
       new Date(a.data.publishedAt).getTime()
   );
+  const brandPage = getBrandPage();
   const changelogEntries = getChangelogPages().sort(
     (a, b) =>
       new Date(b.data.publishedAt).getTime() -
@@ -56,6 +58,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 0.9,
     },
+    {
+      url: `${base}/v2/brand`,
+      ...(brandPage?.data.updatedAt && {
+        lastModified: new Date(brandPage.data.updatedAt),
+      }),
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
     // Use case pages
     {
       url: `${base}/use-cases/technical-founders`,
@@ -76,27 +86,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${base}/use-cases/agent-builders`,
       changeFrequency: "monthly",
       priority: 0.85,
-    },
-    // Documentation
-    {
-      url: `${base}/docs`,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    },
-    {
-      url: `${base}/docs/get-started/quickstart`,
-      changeFrequency: "weekly",
-      priority: 0.7,
-    },
-    {
-      url: `${base}/docs/get-started/config`,
-      changeFrequency: "weekly",
-      priority: 0.7,
-    },
-    {
-      url: `${base}/docs/api-reference`,
-      changeFrequency: "weekly",
-      priority: 0.7,
     },
     // Blog listing
     {

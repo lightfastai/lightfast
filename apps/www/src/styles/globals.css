@@ -1,31 +1,5 @@
-/* Import the base UI globals */
-@import "@repo/ui/globals.css";
+@import "@repo/ui-v2/globals.css";
 
-/* Custom font family CSS variables - provided by next/font/local */
-/* Default font-sans remains Geist - use these explicitly when needed */
-/* Usage: font-[family-name:var(--font-pp-neue-montreal)] */
-
-:root {
-  /* PP Neue Montreal Typography Settings */
-  --font-pp-letter-spacing: -0.03em;
-  --font-pp-line-height: 1.1;
-}
-
-@layer utilities {
-  .font-pp {
-    font-family: var(--font-pp-neue-montreal);
-    line-height: var(--font-pp-line-height);
-    letter-spacing: var(--font-pp-letter-spacing);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
+@source "../**/*.{ts,tsx}";
+@source "../../../../packages/ui/src/**/*.{ts,tsx}";
+@source "../../../../packages/ui-v2/src/**/*.{ts,tsx}";

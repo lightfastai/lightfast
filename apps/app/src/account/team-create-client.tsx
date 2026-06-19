@@ -25,7 +25,7 @@ export function CreateTeamClient() {
         </div>
 
         <div className="space-y-4">
-          <h1 className="pb-4 font-medium font-pp text-2xl text-foreground">
+          <h1 className="pb-4 font-medium font-title text-2xl text-foreground">
             Create your team
           </h1>
           <TeamNameForm />

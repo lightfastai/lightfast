@@ -2,6 +2,8 @@ import { Logo } from "@repo/ui-v2/components/brand/logo";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect } from "storybook/test";
 
+const LOGO_SIZE_OPTIONS = ["xs", "sm", "md", "lg", "xl"] as const;
+
 const meta = {
   title: "Brand/Logo",
   component: Logo,
@@ -12,7 +14,7 @@ const meta = {
     },
     size: {
       control: "radio",
-      options: ["xs", "sm", "md", "lg", "xl"],
+      options: LOGO_SIZE_OPTIONS,
     },
     variant: {
       control: "radio",
@@ -38,7 +40,7 @@ export const Default: Story = {};
 export const Sizes: Story = {
   render: () => (
     <div className="flex flex-col gap-5">
-      {(["xs", "sm", "md", "lg", "xl"] as const).map((size) => (
+      {LOGO_SIZE_OPTIONS.map((size) => (
         <div className="flex items-center gap-6" key={size}>
           <span className="w-8 font-mono text-muted-foreground text-xs">
             {size}
@@ -49,7 +51,9 @@ export const Sizes: Story = {
     </div>
   ),
   play: async ({ canvas }) => {
-    await expect(canvas.getAllByText("Lightfast")).toHaveLength(5);
+    await expect(canvas.getAllByText("Lightfast")).toHaveLength(
+      LOGO_SIZE_OPTIONS.length
+    );
   },
 };
 

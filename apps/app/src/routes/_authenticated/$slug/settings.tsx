@@ -32,7 +32,7 @@ function WorkspaceSettingsLayout() {
         <div className="pt-2 pb-8">
           <div className="flex items-center gap-2 pl-3">
             <SidebarTrigger className="size-8 rounded-lg border border-border/70 bg-muted/30 p-0 text-muted-foreground hover:bg-muted/60 hover:text-foreground md:hidden" />
-            <h1 className="font-medium font-pp text-3xl text-foreground tracking-tight">
+            <h1 className="font-medium font-title text-3xl text-foreground tracking-tight">
               Settings
             </h1>
           </div>

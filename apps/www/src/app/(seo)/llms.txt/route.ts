@@ -3,7 +3,7 @@ import {
   getBlogPages,
   getChangelogPages,
   getLegalPages,
-} from "~/app/(app)/(content)/_lib/source";
+} from "~/app/(v1)/(content)/_lib/source";
 
 export const revalidate = false;
 
@@ -90,8 +90,6 @@ export const { GET } = createLlmsTxtHandler(
     sectionOrder: [
       "Marketing",
       "Use Cases",
-      "Docs",
-      "API Reference",
       "Blog",
       "Changelog",
       "Legal",
@@ -102,12 +100,6 @@ export const { GET } = createLlmsTxtHandler(
       }
       if (url.includes("/use-cases/")) {
         return "Use Cases";
-      }
-      if (url.includes("/docs/api-reference")) {
-        return "API Reference";
-      }
-      if (url.includes("/docs")) {
-        return "Docs";
       }
       return; // fall through to defaultSection
     },

@@ -66,6 +66,14 @@ export const ChangelogEntrySchema = ContentPageSchema.extend({
   improvements: z.array(z.string().min(1)).optional(),
 });
 
+export const BrandPageSchema = BasePageSchema.extend({
+  canonicalUrl: z
+    .url()
+    .refine((val) => val === "https://lightfast.ai/v2/brand")
+    .optional(),
+  updatedAt: z.iso.datetime(),
+});
+
 export const LegalPageSchema = BasePageSchema.extend({
   canonicalUrl: z
     .url()
@@ -75,27 +83,14 @@ export const LegalPageSchema = BasePageSchema.extend({
   effectiveAt: z.iso.datetime(),
 });
 
-export const DocsPageSchema = BasePageSchema.extend({
-  canonicalUrl: z
-    .url()
-    .refine((val) => val.startsWith("https://lightfast.ai/docs/"))
-    .optional(),
-  authors: z.array(AuthorSchema).min(1),
-  publishedAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
-  proficiencyLevel: z
-    .enum(["Beginner", "Intermediate", "Advanced", "Expert"])
-    .optional(),
-});
-
 // Inferred TypeScript types
 export type BlogPostData = z.infer<typeof BlogPostSchema>;
 export type ChangelogEntryData = z.infer<typeof ChangelogEntrySchema>;
+export type BrandPageData = z.infer<typeof BrandPageSchema>;
 export type LegalPageData = z.infer<typeof LegalPageSchema>;
-export type DocsPageData = z.infer<typeof DocsPageSchema>;
 
 // Fields required by the SEO layer — satisfied structurally by BlogPostData,
-// ChangelogEntryData, and DocsPageData. Derived from BlogPostData so schema
+// and ChangelogEntryData. Derived from BlogPostData so schema
 // renames propagate here automatically.
 export type ContentSeoData = Pick<
   BlogPostData,

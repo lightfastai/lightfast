@@ -10,7 +10,7 @@ export function AccountSettingsLayout() {
           <div className="mb-6 pl-3">
             <TeamSwitcherSlot />
           </div>
-          <h1 className="pl-3 font-medium font-pp text-3xl text-foreground tracking-tight">
+          <h1 className="pl-3 font-medium font-title text-3xl text-foreground tracking-tight">
             Your Account
           </h1>
         </div>
