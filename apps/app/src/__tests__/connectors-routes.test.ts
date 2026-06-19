@@ -74,6 +74,11 @@ describe("app connector API routes", () => {
     expect(connectorOAuthAdapterSource).toContain(
       "completeGranolaUserConnectorOAuth"
     );
+    expect(connectorOAuthAdapterSource).toContain("@vendor/clerk/server");
+    expect(connectorOAuthAdapterSource).toContain(
+      "auth({ treatPendingAsSignedOut: false })"
+    );
+    expect(connectorOAuthAdapterSource).toContain("callbackUserId");
     expect(connectorOAuthAdapterSource).toContain("missing_oauth_code");
     expect(connectorOAuthAdapterSource).toContain("Response.redirect");
 

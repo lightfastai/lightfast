@@ -13,7 +13,6 @@ import {
   listGranolaMcpTools,
 } from "@lightfast/connector-granola/node";
 import { encrypt } from "@repo/app-encryption";
-import { auth } from "@vendor/clerk/server";
 import type { OAuthClientInformationMixed, OAuthTokens } from "@vendor/mcp";
 import { StreamableHTTPClientTransport } from "@vendor/mcp";
 import { log } from "@vendor/observability/log/next";
@@ -345,6 +344,7 @@ async function finalizeGranolaConnection(input: {
 }
 
 export async function completeGranolaUserConnectorOAuth(input: {
+  callbackUserId: string | null;
   code: string;
   requestUrl: string;
   state: string;
@@ -362,11 +362,10 @@ export async function completeGranolaUserConnectorOAuth(input: {
     };
   }
 
-  const session = await auth({ treatPendingAsSignedOut: false });
-  if (!session.userId) {
+  if (!input.callbackUserId) {
     return signInRedirect({ appOrigin, requestUrl: input.requestUrl });
   }
-  if (session.userId !== pendingAttempt.clerkUserId) {
+  if (input.callbackUserId !== pendingAttempt.clerkUserId) {
     return {
       redirectUrl: granolaAccountSettingsUrl({
         appOrigin,
