@@ -65,7 +65,6 @@ function deps() {
   return createDefaultConnectorCommandDeps({
     db: {} as Database,
     disconnectConnector: serviceMocks.disconnectConnector,
-    headers: new Headers(),
     listConnectorsForOrg: serviceMocks.listConnectorsForOrg,
     listUserConnectorsForViewer: serviceMocks.listUserConnectorsForViewer,
     refreshConnectorTools: serviceMocks.refreshConnectorTools,
@@ -166,9 +165,16 @@ describe("connector domain commands", () => {
     });
 
     expect(serviceMocks.startConnectorOAuth).toHaveBeenCalledWith(
-      expect.anything(),
+      {
+        actor: { userId: "user_current" },
+        db: expect.anything(),
+        organization: { orgId: "org_acme" },
+      },
       { provider: "x" }
     );
+    const serviceContext = serviceMocks.startConnectorOAuth.mock.calls[0]?.[0];
+    expect(serviceContext).not.toHaveProperty("auth");
+    expect(serviceContext).not.toHaveProperty("headers");
   });
 
   it("preserves domain errors raised by connector services", async () => {

@@ -66,7 +66,6 @@ async function createTanStackConnectorRequest() {
       actor: maybeMarkOrgAdmin({ actor, auth }),
       request: { id: requestId(), source: "tanstack" as const },
     },
-    headers,
   };
 }
 
@@ -82,10 +81,9 @@ function noStore() {
   setResponseHeader("vary", "Cookie, Authorization");
 }
 
-function deps(input: { headers: Headers }) {
+function deps() {
   return createDefaultConnectorCommandDeps({
     db,
-    headers: input.headers,
   });
 }
 
@@ -96,7 +94,7 @@ export const listConnectors = createServerFn({ method: "GET" }).handler(
       const request = await createTanStackConnectorRequest();
       return await listConnectorsCommand.run({
         ctx: request.ctx,
-        deps: deps({ headers: request.headers }),
+        deps: deps(),
         input: {},
       });
     } catch (error) {
@@ -112,7 +110,7 @@ export const listConnectorSections = createServerFn({ method: "GET" }).handler(
       const request = await createTanStackConnectorRequest();
       return await listConnectorSectionsCommand.run({
         ctx: request.ctx,
-        deps: deps({ headers: request.headers }),
+        deps: deps(),
         input: {},
       });
     } catch (error) {
@@ -129,7 +127,7 @@ export const startConnector = createServerFn({ method: "POST" })
       const request = await createTanStackConnectorRequest();
       return await startConnectorOAuthCommand.run({
         ctx: request.ctx,
-        deps: deps({ headers: request.headers }),
+        deps: deps(),
         input: data,
       });
     } catch (error) {
@@ -145,7 +143,7 @@ export const refreshConnectorTools = createServerFn({ method: "POST" })
       const request = await createTanStackConnectorRequest();
       const result = await refreshConnectorToolsCommand.run({
         ctx: request.ctx,
-        deps: deps({ headers: request.headers }),
+        deps: deps(),
         input: data,
       });
       return {
@@ -165,7 +163,7 @@ export const setConnectorAutomationEnabled = createServerFn({ method: "POST" })
       const request = await createTanStackConnectorRequest();
       return await setConnectorAutomationEnabledCommand.run({
         ctx: request.ctx,
-        deps: deps({ headers: request.headers }),
+        deps: deps(),
         input: data,
       });
     } catch (error) {
@@ -181,7 +179,7 @@ export const setConnectorAgentEnabled = createServerFn({ method: "POST" })
       const request = await createTanStackConnectorRequest();
       return await setConnectorAgentEnabledCommand.run({
         ctx: request.ctx,
-        deps: deps({ headers: request.headers }),
+        deps: deps(),
         input: data,
       });
     } catch (error) {
@@ -197,7 +195,7 @@ export const disconnectConnector = createServerFn({ method: "POST" })
       const request = await createTanStackConnectorRequest();
       return await disconnectConnectorCommand.run({
         ctx: request.ctx,
-        deps: deps({ headers: request.headers }),
+        deps: deps(),
         input: data,
       });
     } catch (error) {

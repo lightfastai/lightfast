@@ -41,21 +41,11 @@ describe("api/app app-facing tRPC root", () => {
     expect(identitySource).not.toContain("tRPC");
     expect(identitySource).not.toContain("trpc");
 
-    for (const file of [
+    const rawAuthFreeServiceFiles = [
+      "services/connectors/catalog.ts",
       "services/connectors/index.ts",
       "services/connectors/linear-flow.ts",
       "services/connectors/x-flow.ts",
-    ]) {
-      const fileSource = source(file);
-
-      expect(fileSource, file).not.toContain("../../trpc");
-      expect(fileSource, file).not.toContain("../trpc");
-      expect(fileSource, file).toContain("../../auth/identity");
-      expect(fileSource, file).toContain("ResolvedAuthContext");
-    }
-
-    const rawAuthFreeServiceFiles = [
-      "services/connectors/catalog.ts",
       "services/developer-connections/catalog.ts",
       "services/developer-connections/index.ts",
       "services/developer-connections/leases.ts",

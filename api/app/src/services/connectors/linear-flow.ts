@@ -27,7 +27,6 @@ import {
 import { decrypt, encrypt } from "@repo/app-encryption";
 import { log } from "@vendor/observability/log/next";
 import { findUserOrganizationMembership } from "../../auth/clerk-org-membership";
-import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 import { AuthzError, NotFoundError } from "../../domain/errors";
 import { env } from "../../env";
 import {
@@ -44,8 +43,13 @@ import {
 } from "./config";
 
 interface ConnectorServiceContext {
-  auth: AuthContext;
+  actor: {
+    userId: string;
+  };
   db: Database;
+  organization: {
+    orgId: string;
+  };
 }
 
 export interface LinearRedirectResult {
@@ -53,10 +57,10 @@ export interface LinearRedirectResult {
 }
 
 function activeIdentity(ctx: ConnectorServiceContext) {
-  if (ctx.auth.identity.type !== "active") {
-    throw new AuthzError("ORG_REQUIRED", "An active organization is required.");
-  }
-  return ctx.auth.identity;
+  return {
+    orgId: ctx.organization.orgId,
+    userId: ctx.actor.userId,
+  };
 }
 
 async function getOrgSlug(input: {
