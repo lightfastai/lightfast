@@ -1,10 +1,7 @@
-import {
-  type GetConversationResult,
-  getConversation,
-  type ListConversationsResult,
-  listConversations,
+import type {
+  GetConversationResult,
+  ListConversationsResult,
 } from "@api/app/tanstack/assistant";
-import { queryOptions } from "@tanstack/react-query";
 
 export type WorkspaceAssistantConversationResult = GetConversationResult;
 export type WorkspaceAssistantConversationList = ListConversationsResult;
@@ -16,27 +13,11 @@ export const assistantConversationsQueryKey = [
   "conversations",
 ] as const;
 
-const assistantConversationQueryKey = [
+const assistantConversationQueryKeyPrefix = [
   "workspace-assistant",
   "conversation",
 ] as const;
 
-export function assistantConversationsQueryOptions(input: { limit: number }) {
-  return queryOptions({
-    enabled: typeof window !== "undefined",
-    queryFn: () => listConversations({ data: input }),
-    queryKey: [...assistantConversationsQueryKey, input] as const,
-    staleTime: 0,
-  });
-}
-
-export function assistantConversationQueryOptions(input: {
-  conversationId: string;
-}) {
-  return queryOptions({
-    enabled: typeof window !== "undefined",
-    queryFn: () => getConversation({ data: { id: input.conversationId } }),
-    queryKey: [...assistantConversationQueryKey, input.conversationId] as const,
-    retry: false,
-  });
+export function assistantConversationQueryKey(conversationId: string) {
+  return [...assistantConversationQueryKeyPrefix, conversationId] as const;
 }

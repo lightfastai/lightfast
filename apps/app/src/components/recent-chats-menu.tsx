@@ -1,3 +1,4 @@
+import { listConversations } from "@api/app/tanstack/assistant";
 import {
   CollapseIcon,
   ExpandIcon,
@@ -20,9 +21,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { type ReactNode, useState } from "react";
 import {
-  assistantConversationsQueryOptions,
+  assistantConversationsQueryKey,
   type WorkspaceAssistantConversationListItem,
 } from "~/chat/workspace-assistant-queries";
+
+const recentChatsInput = { limit: 20 } as const;
 
 export function RecentChatsMenu({
   onConversationSelect,
@@ -37,8 +40,10 @@ export function RecentChatsMenu({
 }) {
   const [expanded, setExpanded] = useState(false);
   const { data, error, isPending } = useQuery({
-    ...assistantConversationsQueryOptions({ limit: 20 }),
     enabled: typeof window !== "undefined" && Boolean(orgSlug),
+    queryFn: () => listConversations({ data: recentChatsInput }),
+    queryKey: [...assistantConversationsQueryKey, recentChatsInput] as const,
+    staleTime: 0,
   });
 
   const conversations = data?.items ?? [];
