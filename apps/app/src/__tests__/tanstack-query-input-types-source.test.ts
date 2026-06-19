@@ -17,7 +17,6 @@ describe("TanStack query input type boundaries", () => {
   const queryFiles = [
     "src/connectors/connectors-queries.ts",
     "src/decisions/decisions-queries.ts",
-    "src/developer-connections/developer-connections-queries.ts",
     "src/people/people-queries.ts",
   ];
 

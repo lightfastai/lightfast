@@ -614,7 +614,8 @@ describe("app authenticated route migration", () => {
       '"/_authenticated/$slug/developer-connections"'
     );
     expect(routeSource).toContain("setSearchParams");
-    expect(clientSource).toContain("developerConnectionsQueryOptions");
+    expect(clientSource).toContain("listDeveloperConnections");
+    expect(clientSource).toContain("developerConnectionListQueryKey");
     expect(clientSource).toContain('@api/app/tanstack/developer-connections"');
     expect(clientSource).toContain("connectDeveloperConnection");
     expect(clientSource).toContain("startSentryDeveloperConnectionAuth");
