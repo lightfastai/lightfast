@@ -1,7 +1,13 @@
+import {
+  type ListPeopleInput,
+  type ListPeopleResult,
+  listPeople,
+} from "@api/app/tanstack/people";
 import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { type ReactNode, useMemo } from "react";
 import { WorkspaceSurface } from "~/components/workspace-surface";
+import { peopleQueryKeys } from "./people-cache";
 import { PeopleDetailSheet } from "./people-detail-sheet";
 import { PeopleLoading } from "./people-loading";
 import {
@@ -10,7 +16,6 @@ import {
   type PeopleClassificationFilters,
   type PersonRow,
 } from "./people-model";
-import { peopleListInfiniteQueryOptions } from "./people-queries";
 import {
   type NormalizedPeopleSearch,
   parsePersonProviders,
@@ -44,11 +49,23 @@ export function PeopleClient({
     limit: PEOPLE_PAGE_SIZE,
     providers: filters.providers.length ? filters.providers : undefined,
     types: filters.types.length ? filters.types : undefined,
-  };
+  } satisfies Omit<ListPeopleInput, "cursor">;
 
-  const peopleQuery = useInfiniteQuery(
-    peopleListInfiniteQueryOptions(listInput)
-  );
+  const peopleQuery = useInfiniteQuery({
+    enabled: typeof window !== "undefined",
+    getNextPageParam: (lastPage: ListPeopleResult) => lastPage.nextCursor,
+    initialPageParam: undefined as ListPeopleInput["cursor"],
+    placeholderData: keepPreviousData,
+    queryFn: async ({ pageParam }): Promise<ListPeopleResult> =>
+      (await listPeople({
+        data: {
+          ...listInput,
+          cursor: pageParam,
+        },
+      })) as ListPeopleResult,
+    queryKey: peopleQueryKeys.list(listInput),
+    staleTime: 60_000,
+  });
   const rows = flattenPeoplePages(peopleQuery.data);
   const peopleByPublicId = useMemo(() => {
     const map = new Map<string, PersonRow>();

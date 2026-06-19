@@ -9,14 +9,18 @@ function source(path: string) {
 }
 
 describe("people app data access", () => {
-  it("uses local TanStack query helpers backed by api/app server functions", () => {
-    const querySource = source("src/people/people-queries.ts");
+  it("keeps only people cache primitives, not query-option wrappers", () => {
+    const cacheSource = source("src/people/people-cache.ts");
 
-    expect(querySource).toContain('@api/app/tanstack/people"');
-    expect(querySource).toContain("peopleQueryKeys");
-    expect(querySource).toContain("peopleListInfiniteQueryOptions");
-    expect(querySource).toContain("personDetailQueryOptions");
-    expect(querySource).not.toContain("useTRPC");
+    expect(existsSync(resolve(appRoot, "src/people/people-queries.ts"))).toBe(
+      false
+    );
+    expect(cacheSource).toContain('@api/app/tanstack/people"');
+    expect(cacheSource).toContain("peopleQueryKeys");
+    expect(cacheSource).not.toContain("queryOptions");
+    expect(cacheSource).not.toContain("peopleListInfiniteQueryOptions");
+    expect(cacheSource).not.toContain("personDetailQueryOptions");
+    expect(cacheSource).not.toContain("useTRPC");
   });
 
   it("moves people UI callers off workspace people tRPC procedures", () => {
@@ -31,12 +35,21 @@ describe("people app data access", () => {
     expect(existsSync(listHookPath)).toBe(false);
     expect(listSource).not.toContain("useTRPC");
     expect(listSource).not.toContain("org.workspace.people");
-    expect(listSource).toContain("peopleListInfiniteQueryOptions");
+    expect(listSource).toContain('@api/app/tanstack/people"');
+    expect(listSource).toContain("listPeople");
+    expect(listSource).toContain("type ListPeopleInput");
+    expect(listSource).toContain("type ListPeopleResult");
+    expect(listSource).toContain("peopleQueryKeys.list(listInput)");
+    expect(listSource).not.toContain("peopleListInfiniteQueryOptions");
     expect(listSource).toContain("useInfiniteQuery");
     expect(listSource).not.toContain("./use-people-list-query");
     expect(detailSource).not.toContain("useTRPC");
     expect(detailSource).not.toContain("org.workspace.people");
-    expect(detailSource).toContain("personDetailQueryOptions");
+    expect(detailSource).toContain('@api/app/tanstack/people"');
+    expect(detailSource).toContain("getPerson");
+    expect(detailSource).toContain("type GetPersonInput");
+    expect(detailSource).toContain("peopleQueryKeys.detail(");
+    expect(detailSource).not.toContain("personDetailQueryOptions");
     expect(modelSource).not.toContain("AppRouterOutputs");
   });
 });
