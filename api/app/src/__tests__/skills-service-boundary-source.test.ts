@@ -30,8 +30,8 @@ describe("skills service boundary", () => {
 
     expect(chatRouteSource).toContain("../../../services/skills/read");
     expect(chatRouteSource).toContain("../../../services/skills/eligibility");
-    expect(chatRouteSource).not.toContain(
-      'await import("../../../services/skills")'
+    expect(chatRouteSource).not.toMatch(
+      /await\s+import\(\s*["']\.\.\/\.\.\/\.\.\/services\/skills["']\s*\)/
     );
 
     expect(refreshWorkflowSource).toContain("../../services/skills/refresh");
