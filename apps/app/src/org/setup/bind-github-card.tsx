@@ -1,4 +1,9 @@
 import {
+  type StartGitHubOrgSetupInput,
+  type StartGitHubOrgSetupResult,
+  startGitHubOrgSetup,
+} from "@api/app/tanstack/github-setup";
+import {
   ArrowRightIcon as ArrowRight,
   Loading03Icon as Loader2,
 } from "@hugeicons/core-free-icons";
@@ -8,7 +13,6 @@ import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
-import { startGitHubOrgSetupMutationOptions } from "./github-setup-queries";
 
 interface BindGithubCardProps {
   githubError?: GitHubBindErrorCode;
@@ -36,7 +40,11 @@ const GITHUB_ERROR_MESSAGES: Record<GitHubBindErrorCode, string> = {
 };
 
 export function BindGithubCard({ githubError, orgSlug }: BindGithubCardProps) {
-  const bindMutation = useMutation(startGitHubOrgSetupMutationOptions());
+  const bindMutation = useMutation({
+    meta: { errorTitle: "Failed to connect GitHub" },
+    mutationFn: (data: StartGitHubOrgSetupInput) =>
+      startGitHubOrgSetup({ data }),
+  });
 
   async function handleConnect() {
     if (bindMutation.isPending) {
@@ -44,7 +52,9 @@ export function BindGithubCard({ githubError, orgSlug }: BindGithubCardProps) {
     }
 
     try {
-      const result = await bindMutation.mutateAsync({ orgSlug });
+      const result: StartGitHubOrgSetupResult = await bindMutation.mutateAsync({
+        orgSlug,
+      });
       window.location.assign(result.installationUrl);
     } catch {
       // Surfaced by the mutation error toast.
