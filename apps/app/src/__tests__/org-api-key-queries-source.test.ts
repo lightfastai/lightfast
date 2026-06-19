@@ -5,21 +5,29 @@ import { describe, expect, it } from "vitest";
 const appRoot = resolve(import.meta.dirname, "../..");
 
 describe("org API key query helpers", () => {
-  it("centralizes org API key query keys and server function calls", () => {
-    const source = readFileSync(
-      resolve(appRoot, "src/org/settings/api-keys/org-api-key-queries.ts"),
+  it("keeps the list query local while sharing cache key and row types", () => {
+    const queriesPath = "src/org/settings/api-keys/org-api-key-queries.ts";
+    const cacheSource = readFileSync(
+      resolve(appRoot, "src/org/settings/api-keys/org-api-key-cache.ts"),
+      "utf8"
+    );
+    const listSource = readFileSync(
+      resolve(appRoot, "src/org/settings/api-keys/org-api-key-list.tsx"),
       "utf8"
     );
 
-    expect(source).toContain('@api/app/tanstack/org-api-keys"');
-    expect(source).toContain("orgApiKeyQueryKeys");
-    expect(source).toContain("orgApiKeysQueryOptions");
-    expect(source).not.toContain("mutationOptions");
-    expect(source).not.toContain("createOrgApiKeyMutationOptions");
-    expect(source).not.toContain("revokeOrgApiKeyMutationOptions");
-    expect(source).not.toContain("deleteOrgApiKeyMutationOptions");
-    expect(source).not.toContain("rotateOrgApiKeyMutationOptions");
-    expect(source).not.toContain("useTRPC");
+    expect(existsSync(resolve(appRoot, queriesPath))).toBe(false);
+    expect(cacheSource).toContain(
+      'import type { ListOrgApiKeysResult } from "@api/app/tanstack/org-api-keys"'
+    );
+    expect(cacheSource).toContain("orgApiKeyListQueryKey");
+    expect(listSource).toContain('@api/app/tanstack/org-api-keys"');
+    expect(listSource).toContain("listOrgApiKeys");
+    expect(listSource).toContain("queryFn: () => listOrgApiKeys()");
+    expect(listSource).toContain("queryKey: orgApiKeyListQueryKey");
+    expect(listSource).not.toContain("orgApiKeysQueryOptions");
+    expect(listSource).not.toContain("orgApiKeyQueryKeys");
+    expect(listSource).not.toContain("useTRPC");
   });
 
   it("keeps API key create mutation state in the create component", () => {
@@ -57,7 +65,7 @@ describe("org API key query helpers", () => {
     expect(listSource).not.toContain("revokeOrgApiKeyMutationOptions");
     expect(listSource).not.toContain("deleteOrgApiKeyMutationOptions");
     expect(listSource).not.toContain("rotateOrgApiKeyMutationOptions");
-    expect(listSource).toContain("orgApiKeyQueryKeys.list()");
+    expect(listSource).toContain("orgApiKeyListQueryKey");
     expect(listSource).toContain("revokeApiKey");
     expect(listSource).toContain("removeApiKey");
     expect(listSource).toContain("restoreApiKey");

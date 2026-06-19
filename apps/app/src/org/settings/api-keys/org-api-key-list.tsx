@@ -1,5 +1,6 @@
 import {
   deleteOrgApiKey,
+  listOrgApiKeys,
   revokeOrgApiKey,
   rotateOrgApiKey,
 } from "@api/app/tanstack/org-api-keys";
@@ -52,14 +53,11 @@ import type { z } from "zod";
 import {
   type OrgApiKey,
   type OrgApiKeyListData,
+  orgApiKeyListQueryKey,
   removeApiKey,
   restoreApiKey,
   revokeApiKey,
 } from "./org-api-key-cache";
-import {
-  orgApiKeyQueryKeys,
-  orgApiKeysQueryOptions,
-} from "./org-api-key-queries";
 
 interface AlertAction {
   keyId: string;
@@ -74,15 +72,15 @@ export function OrgApiKeyList() {
   const { has, isLoaded } = useAuth();
   const canManageApiKeys = isLoaded && !!has?.({ role: "org:admin" });
   const queryClient = useQueryClient();
-  const listQueryKey = orgApiKeyQueryKeys.list();
+  const listQueryKey = orgApiKeyListQueryKey;
 
   const {
     data: keys = [],
     error,
     isPending,
   } = useQuery({
-    ...orgApiKeysQueryOptions(),
-    enabled: typeof window !== "undefined",
+    queryFn: () => listOrgApiKeys(),
+    queryKey: orgApiKeyListQueryKey,
     staleTime: 5 * 60 * 1000,
   });
 

@@ -22,7 +22,7 @@ import { Input } from "@repo/ui/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
 import type { z } from "zod";
-import { orgApiKeyQueryKeys } from "./org-api-key-queries";
+import { orgApiKeyListQueryKey } from "./org-api-key-cache";
 
 type CreateOrgApiKeyInput = z.infer<typeof createOrgApiKeySchema>;
 
@@ -56,7 +56,7 @@ export function OrgApiKeyCreate() {
     onSuccess: (data) => {
       handleCreated(data.key ?? null);
       void queryClient.invalidateQueries({
-        queryKey: orgApiKeyQueryKeys.list(),
+        queryKey: orgApiKeyListQueryKey,
       });
     },
   });
