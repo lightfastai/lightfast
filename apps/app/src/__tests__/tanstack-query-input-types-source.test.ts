@@ -37,10 +37,10 @@ describe("TanStack query input type boundaries", () => {
     expect(appSource("src/people/people-queries.ts")).toContain(
       "type GetPersonInput"
     );
-    expect(appSource("src/connectors/connectors-queries.ts")).toContain(
+    expect(appSource("src/connectors/connectors-client.tsx")).toContain(
       "type StartConnectorInput"
     );
-    expect(appSource("src/connectors/connectors-queries.ts")).toContain(
+    expect(appSource("src/connectors/connectors-client.tsx")).toContain(
       "type RefreshConnectorToolsInput"
     );
     expect(
