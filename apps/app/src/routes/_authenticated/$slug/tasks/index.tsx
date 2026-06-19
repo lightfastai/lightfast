@@ -1,3 +1,4 @@
+import { getSourceControlConnection } from "@api/app/tanstack/source-control";
 import {
   ArrowRightIcon as ArrowRight,
   CheckmarkCircle02Icon as CheckCircle2,
@@ -16,7 +17,7 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
 import { ConnectorIcon } from "~/connectors/connector-icons";
-import { sourceControlConnectionQueryOptions } from "~/org/settings/source-control/source-control-queries";
+import { sourceControlConnectionQueryKey } from "~/org/settings/source-control/source-control-cache";
 import { organizationBySlugQueryOptions } from "~/organization/organization-queries";
 
 type SetupTaskStatus = "complete" | "current" | "locked";
@@ -59,7 +60,8 @@ function SetupTasksPageContent() {
     ...organizationBySlugQueryOptions({ slug }),
   });
   const { data: sourceControl, isPending: isSourceControlPending } = useQuery({
-    ...sourceControlConnectionQueryOptions(),
+    queryFn: () => getSourceControlConnection(),
+    queryKey: sourceControlConnectionQueryKey,
     staleTime: 30_000,
   });
 

@@ -1,6 +1,7 @@
+import { getSourceControlConnection } from "@api/app/tanstack/source-control";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
-import { sourceControlConnectionQueryOptions } from "~/org/settings/source-control/source-control-queries";
+import { sourceControlConnectionQueryKey } from "~/org/settings/source-control/source-control-cache";
 import { LightfastRepoSetupClient } from "~/org/setup/lightfast-repo-setup-client";
 import { organizationBySlugQueryOptions } from "~/organization/organization-queries";
 
@@ -23,7 +24,8 @@ function LightfastRepoSetupPageContent() {
     ...organizationBySlugQueryOptions({ slug }),
   });
   const { data: sourceControl, isPending: isSourceControlPending } = useQuery({
-    ...sourceControlConnectionQueryOptions(),
+    queryFn: () => getSourceControlConnection(),
+    queryKey: sourceControlConnectionQueryKey,
     staleTime: 30_000,
   });
   const accountLogin = sourceControl?.binding?.accountLogin;

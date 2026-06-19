@@ -22,8 +22,8 @@ import {
 } from "@repo/ui-v2/components/ui/dropdown-menu";
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import type { SourceControlConnection } from "./source-control-cache";
 import { displayValue, formatStatusSubtitle } from "./source-control-format";
-import type { SourceControlConnection } from "./source-control-queries";
 
 const IMMUTABLE_CONNECTION_TOOLTIP =
   "Connection is set up once and can't be disconnected.";
