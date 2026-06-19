@@ -46,27 +46,8 @@ const { createDeveloperSandboxRunService } = await import(
 
 function ctx() {
   return {
-    auth: {
-      identity: {
-        type: "active" as const,
-        userId: "user_admin",
-        orgId: "org_acme",
-        orgGate: {
-          bindingStatus: "bound" as const,
-          nextSetupRequirement: null,
-        },
-      },
-    },
-    db: {} as Database,
-  };
-}
-
-function unauthenticatedCtx() {
-  return {
-    auth: {
-      identity: { type: "unauthenticated" as const },
-    },
-    db: {} as Database,
+    actor: { userId: "user_admin" },
+    organization: { orgId: "org_acme" },
   };
 }
 
@@ -275,20 +256,6 @@ describe("developer sandbox run service", () => {
       })
     );
     expect(issueAllEnabledDeveloperConnectionLeasesMock).not.toHaveBeenCalled();
-  });
-
-  it("throws a domain authz error when creating without an active identity", async () => {
-    const fakeRuntime = runtime();
-    const service = createService(fakeRuntime);
-
-    await expect(
-      service.createDeveloperSandboxRun(unauthenticatedCtx())
-    ).rejects.toThrowError(
-      expect.objectContaining({
-        code: "AUTH_REQUIRED",
-        kind: "authz",
-      })
-    );
   });
 
   it("throws a domain not-found error when a sandbox run cannot be loaded", async () => {
