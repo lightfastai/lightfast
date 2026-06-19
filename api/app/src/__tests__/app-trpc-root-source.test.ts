@@ -36,6 +36,11 @@ describe("api/app app-facing tRPC root", () => {
   });
 
   it("keeps service auth context imports independent of tRPC", () => {
+    const identitySource = source("auth/identity.ts");
+
+    expect(identitySource).not.toContain("tRPC");
+    expect(identitySource).not.toContain("trpc");
+
     for (const file of [
       "services/connectors/catalog.ts",
       "services/connectors/index.ts",
