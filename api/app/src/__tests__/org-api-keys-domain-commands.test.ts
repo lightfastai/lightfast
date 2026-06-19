@@ -151,7 +151,7 @@ describe("org API key domain commands", () => {
       externalId: "org_test",
       meta: { createdByUserId: "user_test", source: "dashboard" },
       name: "Test key",
-      permissions: ["api:signals:read", "api:signals:write"],
+      permissions: ["api.signals.read", "api.signals.write"],
       prefix: "lf",
       recoverable: false,
     });

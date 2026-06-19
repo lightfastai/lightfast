@@ -21,7 +21,7 @@ vi.mock("@vendor/unkey/server", () => ({
 const { resolveApiKeyAuth } = await import("../auth/api-key");
 
 const validKey = `lf_${"a".repeat(40)}`;
-const publicApiPermissionCheck = "api:signals:read OR api:signals:write";
+const publicApiPermissionCheck = "api.signals.read OR api.signals.write";
 
 function verifyResult(
   overrides: Partial<{
@@ -39,7 +39,7 @@ function verifyResult(
       identity: { externalId: "org_test", id: "identity_test" },
       keyId: "key_test",
       meta: { createdByUserId: "user_test" },
-      permissions: ["api:signals:read", "api:signals:write"],
+      permissions: ["api.signals.read", "api.signals.write"],
       valid: true,
       ...overrides,
     },
@@ -198,7 +198,7 @@ describe("resolveApiKeyAuth", () => {
         type: "active",
         userId: "user_test",
       },
-      scopes: ["api:signals:read", "api:signals:write"],
+      scopes: ["api.signals.read", "api.signals.write"],
     });
     expect(mocks.verifyKey).toHaveBeenCalledWith({
       key: validKey,
@@ -212,13 +212,13 @@ describe("resolveApiKeyAuth", () => {
 
   it("exposes only the granted public API scopes returned by Unkey", async () => {
     mocks.verifyKey.mockResolvedValueOnce(
-      verifyResult({ permissions: ["api:signals:read", "unrelated.scope"] })
+      verifyResult({ permissions: ["api.signals.read", "unrelated.scope"] })
     );
 
     await expect(
       resolveApiKeyAuth({ headers: headers(`Bearer ${validKey}`) })
     ).resolves.toMatchObject({
-      scopes: ["api:signals:read"],
+      scopes: ["api.signals.read"],
     });
   });
 
