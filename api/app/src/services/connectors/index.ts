@@ -44,23 +44,6 @@ export {
   callChatProviderRoutine,
   findChatProviderRoutines,
 } from "./chat-routines";
-export {
-  completeLinearConnectorOAuth,
-  disconnectLinearConnector,
-  refreshLinearConnectorTools,
-  setLinearConnectorAgentEnabled,
-  setLinearConnectorAutomationEnabled,
-  startLinearConnectorOAuth,
-} from "./linear-flow";
-export {
-  completeXConnectorOAuth,
-  disconnectXConnector,
-  refreshXConnectorTools,
-  setXConnectorAgentEnabled,
-  setXConnectorAutomationEnabled,
-  startXConnectorOAuth,
-  type XConnectorOAuthRedirectPaths,
-} from "./x-flow";
 export { listConnectorsForOrg };
 
 function unsupportedProvider(provider: string): never {
