@@ -356,7 +356,17 @@ describe("developer sandbox run service", () => {
       stdout: "[redacted] ok\n",
     });
 
-    expect(issueAllEnabledDeveloperConnectionLeasesMock).toHaveBeenCalled();
+    expect(issueAllEnabledDeveloperConnectionLeasesMock).toHaveBeenCalledWith(
+      {
+        actor: { userId: "user_admin" },
+        db: expect.anything(),
+        organization: { orgId: "org_acme" },
+      },
+      {
+        sandboxRunId: "developer_sandbox_run_1",
+        workflowRunId: null,
+      }
+    );
     expect(fakeRuntime.calls.writeFiles).toEqual([
       [
         {
@@ -406,9 +416,16 @@ describe("developer sandbox run service", () => {
     expect(issueAllEnabledDeveloperConnectionLeasesMock).not.toHaveBeenCalled();
     expect(
       materializeDeveloperConnectionLeasesForSandboxRunMock
-    ).toHaveBeenCalledWith(expect.anything(), {
-      sandboxRunId: "developer_sandbox_run_1",
-    });
+    ).toHaveBeenCalledWith(
+      {
+        actor: { userId: "user_admin" },
+        db: expect.anything(),
+        organization: { orgId: "org_acme" },
+      },
+      {
+        sandboxRunId: "developer_sandbox_run_1",
+      }
+    );
   });
 
   it("reissues credentials when a loaded run has no active leases left", async () => {
@@ -428,7 +445,11 @@ describe("developer sandbox run service", () => {
     });
 
     expect(issueAllEnabledDeveloperConnectionLeasesMock).toHaveBeenCalledWith(
-      expect.anything(),
+      {
+        actor: { userId: "user_admin" },
+        db: expect.anything(),
+        organization: { orgId: "org_acme" },
+      },
       {
         sandboxRunId: "developer_sandbox_run_1",
         workflowRunId: null,
