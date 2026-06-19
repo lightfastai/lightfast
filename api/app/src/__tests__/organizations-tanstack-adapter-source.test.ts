@@ -34,14 +34,13 @@ describe("organizations TanStack adapter boundary", () => {
   });
 
   it("removes migrated organization procedures from tRPC", () => {
-    const rootSource = readFileSync(resolve(apiRoot, "src/root.ts"), "utf8");
+    const rootPath = resolve(apiRoot, "src/root.ts");
     const routerPath = resolve(
       apiRoot,
       "src/router/(pending-allowed)/organization.ts"
     );
 
-    expect(rootSource).not.toContain("orgSettingsOrganizationRouter");
-    expect(rootSource).not.toContain("organization:");
+    expect(existsSync(rootPath)).toBe(false);
 
     if (existsSync(routerPath)) {
       const routerSource = readFileSync(routerPath, "utf8");

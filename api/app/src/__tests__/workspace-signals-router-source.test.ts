@@ -6,10 +6,7 @@ const apiRoot = resolve(import.meta.dirname, "..");
 
 describe("workspace signals tRPC router", () => {
   it("does not expose migrated signal data or views over tRPC", () => {
-    const rootSource = readFileSync(resolve(apiRoot, "root.ts"), "utf8");
-
-    expect(rootSource).not.toContain("workspaceSignalsRouter");
-    expect(rootSource).not.toContain("signals: workspaceSignalsRouter");
+    expect(existsSync(resolve(apiRoot, "root.ts"))).toBe(false);
     expect(
       existsSync(
         resolve(apiRoot, "router/(pending-not-allowed)/workspace-signals.ts")

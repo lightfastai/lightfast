@@ -29,14 +29,13 @@ describe("org API keys TanStack adapter boundary", () => {
   });
 
   it("removes migrated org API key management from the tRPC router", () => {
-    const rootSource = readFileSync(resolve(apiRoot, "src/root.ts"), "utf8");
+    const rootPath = resolve(apiRoot, "src/root.ts");
     const routerPath = resolve(
       apiRoot,
       "src/router/(pending-not-allowed)/org-api-keys.ts"
     );
 
-    expect(rootSource).not.toContain("orgApiKeysRouter");
-    expect(rootSource).not.toContain("orgApiKeys:");
+    expect(existsSync(rootPath)).toBe(false);
 
     if (existsSync(routerPath)) {
       const routerSource = readFileSync(routerPath, "utf8");

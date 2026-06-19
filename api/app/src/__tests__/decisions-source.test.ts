@@ -15,10 +15,7 @@ describe("decisions TanStack migration", () => {
   });
 
   it("does not expose decision list over tRPC", () => {
-    const rootSource = readFileSync(resolve(apiRoot, "root.ts"), "utf8");
-
-    expect(rootSource).not.toContain("decisionsRouter");
-    expect(rootSource).not.toContain("decisions:");
+    expect(existsSync(resolve(apiRoot, "root.ts"))).toBe(false);
     expect(
       existsSync(resolve(apiRoot, "router/(pending-not-allowed)/decisions.ts"))
     ).toBe(false);

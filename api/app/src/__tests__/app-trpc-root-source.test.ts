@@ -23,16 +23,14 @@ describe("api/app app-facing tRPC root", () => {
       apiRoot,
       "router/(pending-not-allowed)/task.ts"
     );
+    const rootPath = resolve(apiRoot, "root.ts");
 
     expect(existsSync(trpcPath)).toBe(false);
     expect(existsSync(workspaceListInputPath)).toBe(false);
     expect(existsSync(taskRouterPath)).toBe(false);
     expect(existsSync(indexPath)).toBe(false);
+    expect(existsSync(rootPath)).toBe(false);
     expect(packageJson.dependencies?.["@trpc/server"]).toBeUndefined();
-
-    const rootSource = source("root.ts");
-    expect(rootSource).not.toContain("createTRPCRouter");
-    expect(rootSource).not.toContain("appRouter");
   });
 
   it("keeps service auth context imports independent of tRPC", () => {

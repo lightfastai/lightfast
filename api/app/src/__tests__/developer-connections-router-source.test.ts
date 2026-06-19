@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -10,13 +10,9 @@ describe("developer-connections tRPC router", () => {
       apiRoot,
       "router/(pending-not-allowed)/developer-connections.ts"
     );
-    const rootSource = readFileSync(resolve(apiRoot, "root.ts"), "utf8");
+    const rootPath = resolve(apiRoot, "root.ts");
 
     expect(existsSync(routerPath)).toBe(false);
-    expect(rootSource).not.toContain("developerConnectionsRouter");
-    expect(rootSource).not.toContain("developerConnections:");
-    expect(rootSource).not.toContain(
-      "router/(pending-not-allowed)/developer-connections"
-    );
+    expect(existsSync(rootPath)).toBe(false);
   });
 });

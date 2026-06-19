@@ -15,10 +15,7 @@ describe("workspace assistant TanStack migration", () => {
   });
 
   it("does not expose workspace assistant over tRPC", () => {
-    const rootSource = readFileSync(resolve(apiRoot, "root.ts"), "utf8");
-
-    expect(rootSource).not.toContain("workspaceAssistantRouter");
-    expect(rootSource).not.toMatch(/assistant\s*:\s*workspaceAssistantRouter/);
+    expect(existsSync(resolve(apiRoot, "root.ts"))).toBe(false);
   });
 
   it("defines assistant server functions in the api/app adapter layer", () => {
