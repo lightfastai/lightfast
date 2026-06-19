@@ -1,10 +1,231 @@
+import {
+  providerRoutineCallInputSchema,
+  providerRoutineCallSuccessSchema,
+  providerRoutineFindInputSchema,
+  providerRoutineFindOutputSchema,
+} from "@repo/api-contract";
+import { z } from "zod";
+import type { ProviderRoutineServiceContext } from "../services/provider-routines";
 import { handleNativeRpcRequest } from "./native-rpc";
 
 const cliNativeRpcCommands = ["auth.session"] as const;
+
+const log = {
+  error: (message: string, metadata?: Record<string, unknown>) =>
+    console.error(message, metadata),
+  info: (message: string, metadata?: Record<string, unknown>) =>
+    console.info(message, metadata),
+  warn: (message: string, metadata?: Record<string, unknown>) =>
+    console.warn(message, metadata),
+};
+
+type CliProviderRoutineServiceContext = ProviderRoutineServiceContext;
+
+class CliProviderRoutineRouteError extends Error {
+  constructor(
+    readonly code: "BAD_REQUEST" | "FORBIDDEN" | "UNAUTHORIZED",
+    message: string,
+    readonly status: number,
+    options?: ErrorOptions
+  ) {
+    super(message, options);
+    this.name = "CliProviderRoutineRouteError";
+  }
+}
 
 export function handleCliNativeRpcRequest(request: Request) {
   return handleNativeRpcRequest(request, {
     allowedCommands: cliNativeRpcCommands,
     source: "cli",
   });
+}
+
+function jsonResponse(data: unknown, init: ResponseInit = {}) {
+  const headers = new Headers(init.headers);
+  headers.set("cache-control", "no-store");
+  headers.set("content-type", "application/json");
+
+  return Response.json(data, { ...init, headers });
+}
+
+function errorResponse(error: unknown) {
+  const normalized = normalizeRouteError(error);
+  return jsonResponse(
+    {
+      error: {
+        code: normalized.code,
+        message: normalized.message,
+      },
+    },
+    { status: normalized.status }
+  );
+}
+
+async function createCliProviderRoutineContext(
+  req: Request
+): Promise<CliProviderRoutineServiceContext> {
+  const { db } = await import("@db/app/client");
+  const { resolveAuthContextFromClerk } = await import("../auth/identity");
+  const { loadAgentConnectorRuntimeTools } = await import(
+    "../services/connectors/runtime"
+  );
+  const auth = await resolveAuthContextFromClerk({
+    db,
+    headers: req.headers,
+  });
+  const access = auth.access;
+  const identity = auth.identity;
+  if (access?.kind !== "clerk-oauth" || access.client !== "cli") {
+    throw new CliProviderRoutineRouteError(
+      "UNAUTHORIZED",
+      "Lightfast native CLI OAuth authentication required.",
+      401
+    );
+  }
+  if (identity.type !== "active") {
+    throw new CliProviderRoutineRouteError(
+      "FORBIDDEN",
+      "Lightfast native CLI organization binding required.",
+      403
+    );
+  }
+
+  return {
+    actor: {
+      orgId: identity.orgId,
+      userId: identity.userId,
+    },
+    adapters: {
+      connectors: {
+        loadTools: async () =>
+          await loadAgentConnectorRuntimeTools({
+            calledByUserId: identity.userId,
+            clerkOrgId: identity.orgId,
+            sourceClientId: access.clientId,
+            sourceRef: identity.orgId,
+            sourceSurface: "native_cli",
+          }),
+      },
+    },
+    db,
+    log,
+    now: () => new Date(),
+    scopes: {
+      providerRoutineRead: true,
+      providerRoutineWrite: true,
+    },
+    source: {
+      clientId: access.clientId,
+      ref: identity.orgId,
+      surface: "native_cli",
+    },
+  };
+}
+
+export async function handleCliProviderRoutineCallRequest(
+  request: Request
+): Promise<Response> {
+  try {
+    const { callProviderRoutine } = await import(
+      "../services/provider-routines"
+    );
+    const input = providerRoutineCallInputSchema.parse(
+      await request.json().catch(() => null)
+    );
+    const context = await createCliProviderRoutineContext(request);
+    const result = await callProviderRoutine(context, input);
+    return jsonResponse(providerRoutineCallSuccessSchema.parse(result));
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
+
+export async function handleCliProviderRoutineFindRequest(
+  request: Request
+): Promise<Response> {
+  try {
+    const { findProviderRoutines } = await import(
+      "../services/provider-routines"
+    );
+    const searchParams = new URL(request.url).searchParams;
+    const input = providerRoutineFindInputSchema.parse({
+      includeSchema:
+        searchParams.get("includeSchema") === "true" ? true : undefined,
+      limit: searchParams.get("limit")
+        ? Number(searchParams.get("limit"))
+        : undefined,
+      provider: searchParams.get("provider") ?? undefined,
+      query: searchParams.get("query") ?? undefined,
+      readOnly: searchParams.get("readOnly") === "true" ? true : undefined,
+      routineId: searchParams.get("routineId") ?? undefined,
+    });
+    const context = await createCliProviderRoutineContext(request);
+    const result = await findProviderRoutines(context, input);
+    return jsonResponse(providerRoutineFindOutputSchema.parse(result));
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
+
+function normalizeRouteError(error: unknown): {
+  code: string;
+  message: string;
+  status: number;
+} {
+  if (error instanceof CliProviderRoutineRouteError) {
+    return {
+      code: error.code,
+      message: error.message,
+      status: error.status,
+    };
+  }
+  if (error instanceof z.ZodError) {
+    return {
+      code: "BAD_REQUEST",
+      message: "CLI provider routine request is invalid.",
+      status: 400,
+    };
+  }
+  if (isProviderRoutineError(error)) {
+    return {
+      code: error.code,
+      message: error.publicMessage,
+      status: statusFromProviderRoutineError(error.code),
+    };
+  }
+
+  console.error("[cli-provider-routines] Unexpected route error", error);
+  return {
+    code: "INTERNAL_SERVER_ERROR",
+    message: "Unexpected CLI provider routine error",
+    status: 500,
+  };
+}
+
+function isProviderRoutineError(
+  error: unknown
+): error is Error & { code: string; publicMessage: string } {
+  return (
+    error instanceof Error &&
+    "code" in error &&
+    typeof error.code === "string" &&
+    error.code.startsWith("PROVIDER_ROUTINE_") &&
+    "publicMessage" in error &&
+    typeof error.publicMessage === "string"
+  );
+}
+
+function statusFromProviderRoutineError(code: string) {
+  switch (code) {
+    case "PROVIDER_ROUTINE_INSUFFICIENT_SCOPE":
+      return 403;
+    case "PROVIDER_ROUTINE_INVALID_INPUT":
+      return 400;
+    case "PROVIDER_ROUTINE_CONNECTION_REQUIRED":
+    case "PROVIDER_ROUTINE_NOT_ENABLED":
+    case "PROVIDER_ROUTINE_NOT_FOUND":
+      return 404;
+    default:
+      return 502;
+  }
 }

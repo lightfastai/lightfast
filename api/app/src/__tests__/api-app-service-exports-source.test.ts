@@ -28,6 +28,7 @@ describe("api app service internals", () => {
       "./inngest",
       "./inngest/client",
       "./mcp-oauth/resource-access",
+      "./native-provider-proxy",
       "./signals/service",
     ]);
 
@@ -48,6 +49,7 @@ describe("api app service internals", () => {
       "@api/app/env",
       "@api/app/inngest",
       "@api/app/mcp-oauth/resource-access",
+      "@api/app/native-provider-proxy",
       "@api/app/services/",
       "@api/app/signals/service",
     ];
