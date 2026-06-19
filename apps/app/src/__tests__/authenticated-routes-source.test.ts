@@ -508,8 +508,12 @@ describe("app authenticated route migration", () => {
     expect(createDialogSource).toContain("listUserOrganizationsQueryOptions");
     expect(searchSource).toContain("validateSignalsSearch");
     expect(searchSource).toContain("parseSignalDispositions");
-    expect(workspaceDataSource).toContain("workingSetSignalsQueryOptions");
-    expect(workspaceDataSource).toContain("processingSignalsQueryOptions");
+    expect(workspaceDataSource).toContain("listWorkingSetSignals");
+    expect(workspaceDataSource).toContain("listProcessingSignals");
+    expect(workspaceDataSource).toContain("signalQueryKeys.workingSet()");
+    expect(workspaceDataSource).toContain("signalQueryKeys.processing()");
+    expect(workspaceDataSource).not.toContain("workingSetSignalsQueryOptions");
+    expect(workspaceDataSource).not.toContain("processingSignalsQueryOptions");
     expect(workspaceDataSource).toContain("filterClassifiedSignals");
     expect(workspaceDataSource).toContain("compareSignalsByRecency");
     expect(workspaceDataSource).not.toContain("useWorkingSetQuery");
