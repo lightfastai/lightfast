@@ -501,7 +501,10 @@ describe("app authenticated route migration", () => {
     expect(clientSource).toContain("SignalsViewSwitcher");
     expect(clientSource).not.toContain("viewsSlot=");
     expect(clientSource).toContain("signalDetailQueryOptions");
-    expect(createDialogSource).toContain("createSignalMutationOptions");
+    expect(createDialogSource).toContain('@api/app/tanstack/signals"');
+    expect(createDialogSource).toContain("createSignal");
+    expect(createDialogSource).toContain("signalQueryKeys");
+    expect(createDialogSource).not.toContain("createSignalMutationOptions");
     expect(createDialogSource).toContain("listUserOrganizationsQueryOptions");
     expect(searchSource).toContain("validateSignalsSearch");
     expect(searchSource).toContain("parseSignalDispositions");

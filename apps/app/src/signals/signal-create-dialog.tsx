@@ -1,3 +1,7 @@
+import {
+  type CreateSignalInput,
+  createSignal,
+} from "@api/app/tanstack/signals";
 import { Loading03Icon as Loader2 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { SIGNAL_INPUT_MAX_LENGTH } from "@repo/api-contract";
@@ -17,7 +21,7 @@ import { useLocation } from "@tanstack/react-router";
 import type { ChangeEvent, FormEvent, KeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { listUserOrganizationsQueryOptions } from "~/organization/organization-queries";
-import { createSignalMutationOptions } from "./signals-queries";
+import { signalQueryKeys } from "./signals-queries";
 
 interface SignalCreateDialogProps {
   onOpenChange: (open: boolean) => void;
@@ -124,22 +128,28 @@ export function SignalCreateDialog({
   const formattedInputLength = inputLength.toLocaleString();
   const formattedInputLimit = SIGNAL_INPUT_MAX_LENGTH.toLocaleString();
 
-  const createMutation = useMutation(
-    createSignalMutationOptions({
-      draftStorageKey,
-      onClose: () => onOpenChange(false),
-      onCreateMore: () =>
-        requestAnimationFrame(() => textareaRef.current?.focus()),
-      queryClient,
-      removeDraft: removeSignalDraft,
-      resetInput: () => setInput(""),
-      shouldCreateMore: () => createMore,
-      toastSuccess: () =>
-        toast.success("Signal queued", {
-          description: "Classification will start shortly.",
-        }),
-    })
-  );
+  const createMutation = useMutation({
+    meta: { errorTitle: "Failed to create signal" },
+    mutationFn: (data: CreateSignalInput) => createSignal({ data }),
+    onSuccess: () => {
+      removeSignalDraft(draftStorageKey);
+      void queryClient.invalidateQueries({
+        queryKey: signalQueryKeys.workingSet(),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: signalQueryKeys.processing(),
+      });
+      toast.success("Signal queued", {
+        description: "Classification will start shortly.",
+      });
+      setInput("");
+      if (createMore) {
+        requestAnimationFrame(() => textareaRef.current?.focus());
+        return;
+      }
+      onOpenChange(false);
+    },
+  });
 
   useEffect(() => {
     setCreateMore(readCreateMore());
