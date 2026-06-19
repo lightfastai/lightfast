@@ -62,6 +62,8 @@ describe("connector service domain errors", () => {
     expect(adapterSource).toContain("appOrigin");
     expect(adapterSource).toContain("token");
     expect(adapterSource).toContain("../../services/connectors/x-mcp-bridge");
-    expect(adapterSource).not.toContain('from "../../services/connectors"');
+    expect(adapterSource).not.toMatch(
+      /\bfrom\s*["']\.\.\/\.\.\/services\/connectors["']/
+    );
   });
 });

@@ -116,8 +116,8 @@ describe("app connector API routes", () => {
       "../../services/connectors/x-mcp-bridge"
     );
     expect(connectorMcpAdapterSource).toContain("handleXConnectorMcpRequest");
-    expect(connectorMcpAdapterSource).not.toContain(
-      '../../services/connectors"'
+    expect(connectorMcpAdapterSource).not.toMatch(
+      /\bfrom\s*["']\.\.\/\.\.\/services\/connectors["']/
     );
 
     for (const routeSource of [xMcpSource, connectorMcpAdapterSource]) {
