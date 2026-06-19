@@ -23,4 +23,4 @@ export {
 } from "./user-account/flow";
 export { requireGitHubUserAccount } from "./user-account/gate";
 export { getFreshGitHubUserAccessToken } from "./user-account/refresh";
-export { handleGitHubWebhook } from "./webhook";
+export { handleVerifiedGitHubWebhook } from "./webhook";

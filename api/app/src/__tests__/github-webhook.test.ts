@@ -60,6 +60,15 @@ function signedRequest(
   });
 }
 
+async function handleGitHubWebhook(input: {
+  request: Request;
+}): Promise<Response> {
+  const { handleGitHubWebhookRequest } = await import(
+    "../adapters/internal/github-webhook"
+  );
+  return handleGitHubWebhookRequest(input.request);
+}
+
 const pushPayload = {
   after: "a".repeat(40),
   before: "b".repeat(40),
@@ -138,9 +147,6 @@ describe("handleGitHubWebhook", () => {
     ).GITHUB_APP_WEBHOOK_SECRET = "";
 
     try {
-      const { handleGitHubWebhook } = await import(
-        "../services/github/webhook"
-      );
       const res = await handleGitHubWebhook({
         request: signedRequest(pushPayload),
       });
@@ -163,7 +169,6 @@ describe("handleGitHubWebhook", () => {
   });
 
   it("rejects invalid signatures before durable work", async () => {
-    const { handleGitHubWebhook } = await import("../services/github/webhook");
     const res = await handleGitHubWebhook({
       request: new Request(
         "https://app.lightfast.localhost/api/github/webhook",
@@ -190,7 +195,6 @@ describe("handleGitHubWebhook", () => {
   });
 
   it("rejects missing signatures as unauthorized before durable work", async () => {
-    const { handleGitHubWebhook } = await import("../services/github/webhook");
     const res = await handleGitHubWebhook({
       request: new Request(
         "https://app.lightfast.localhost/api/github/webhook",
@@ -220,7 +224,6 @@ describe("handleGitHubWebhook", () => {
     const signature = `sha256=${createHmac("sha256", "secret")
       .update(body)
       .digest("hex")}`;
-    const { handleGitHubWebhook } = await import("../services/github/webhook");
 
     const res = await handleGitHubWebhook({
       request: new Request(
@@ -248,8 +251,6 @@ describe("handleGitHubWebhook", () => {
   });
 
   it("rejects signed push payloads with malformed routing fields before durable work", async () => {
-    const { handleGitHubWebhook } = await import("../services/github/webhook");
-
     const res = await handleGitHubWebhook({
       request: signedRequest({
         ...pushPayload,
@@ -263,8 +264,6 @@ describe("handleGitHubWebhook", () => {
   });
 
   it("ignores signed unsupported events without durable work", async () => {
-    const { handleGitHubWebhook } = await import("../services/github/webhook");
-
     const res = await handleGitHubWebhook({
       request: signedRequest({ action: "opened" }, "delivery-issues", "issues"),
     });
@@ -275,7 +274,6 @@ describe("handleGitHubWebhook", () => {
   });
 
   it("does not enqueue a duplicate queued delivery", async () => {
-    const { handleGitHubWebhook } = await import("../services/github/webhook");
     recordDeliveryMock.mockResolvedValue({
       created: false,
       delivery: { status: "queued" },
@@ -295,7 +293,6 @@ describe("handleGitHubWebhook", () => {
     "failed",
     "processed",
   ] as const)("does not enqueue a duplicate terminal %s delivery", async (status) => {
-    const { handleGitHubWebhook } = await import("../services/github/webhook");
     recordDeliveryMock.mockResolvedValue({
       created: false,
       delivery: { status },
@@ -312,7 +309,6 @@ describe("handleGitHubWebhook", () => {
   });
 
   it("continues processing a duplicate received delivery retry", async () => {
-    const { handleGitHubWebhook } = await import("../services/github/webhook");
     recordDeliveryMock.mockResolvedValue({
       created: false,
       delivery: { status: "received" },
@@ -361,7 +357,6 @@ describe("handleGitHubWebhook", () => {
   });
 
   it("marks unbound installation deliveries ignored", async () => {
-    const { handleGitHubWebhook } = await import("../services/github/webhook");
     recordDeliveryMock.mockResolvedValue({
       created: true,
       delivery: { status: "received" },
@@ -384,7 +379,6 @@ describe("handleGitHubWebhook", () => {
   });
 
   it("marks unwatched repository deliveries ignored", async () => {
-    const { handleGitHubWebhook } = await import("../services/github/webhook");
     recordDeliveryMock.mockResolvedValue({
       created: true,
       delivery: { status: "received" },
@@ -412,7 +406,6 @@ describe("handleGitHubWebhook", () => {
   });
 
   it("queues watched repository pushes once", async () => {
-    const { handleGitHubWebhook } = await import("../services/github/webhook");
     recordDeliveryMock.mockResolvedValue({
       created: true,
       delivery: { status: "received" },
@@ -454,7 +447,6 @@ describe("handleGitHubWebhook", () => {
   });
 
   it("ignores watched repository pushes that do not touch watched paths", async () => {
-    const { handleGitHubWebhook } = await import("../services/github/webhook");
     recordDeliveryMock.mockResolvedValue({
       created: true,
       delivery: { status: "received" },
@@ -497,7 +489,6 @@ describe("handleGitHubWebhook", () => {
   });
 
   it("queues watched main pushes when GitHub omits part of the commit list", async () => {
-    const { handleGitHubWebhook } = await import("../services/github/webhook");
     recordDeliveryMock.mockResolvedValue({
       created: true,
       delivery: { status: "received" },
@@ -542,7 +533,6 @@ describe("handleGitHubWebhook", () => {
   });
 
   it("ignores disabled registered repository pushes without enqueueing", async () => {
-    const { handleGitHubWebhook } = await import("../services/github/webhook");
     recordDeliveryMock.mockResolvedValue({
       created: true,
       delivery: { status: "received" },
@@ -576,7 +566,6 @@ describe("handleGitHubWebhook", () => {
   });
 
   it("ignores PR events when the repository does not watch the event family", async () => {
-    const { handleGitHubWebhook } = await import("../services/github/webhook");
     getBindingMock.mockResolvedValue({
       clerkOrgId: "org_123",
       id: 7,
@@ -607,7 +596,6 @@ describe("handleGitHubWebhook", () => {
   });
 
   it("stores watched PR event raw payloads without checking sync status or path globs", async () => {
-    const { handleGitHubWebhook } = await import("../services/github/webhook");
     getBindingMock.mockResolvedValue({
       clerkOrgId: "org_123",
       id: 7,
@@ -657,7 +645,6 @@ describe("handleGitHubWebhook", () => {
   });
 
   it("stores watched PR-attached issue comments with nullable PR id", async () => {
-    const { handleGitHubWebhook } = await import("../services/github/webhook");
     getBindingMock.mockResolvedValue({
       clerkOrgId: "org_123",
       id: 7,
@@ -697,7 +684,6 @@ describe("handleGitHubWebhook", () => {
   });
 
   it("ignores issue comments that are not attached to PRs", async () => {
-    const { handleGitHubWebhook } = await import("../services/github/webhook");
     const res = await handleGitHubWebhook({
       request: signedRequest(
         {
@@ -715,7 +701,6 @@ describe("handleGitHubWebhook", () => {
   });
 
   it("returns 400 for malformed signed PR payloads before persistence", async () => {
-    const { handleGitHubWebhook } = await import("../services/github/webhook");
     const res = await handleGitHubWebhook({
       request: signedRequest(
         {
@@ -733,7 +718,6 @@ describe("handleGitHubWebhook", () => {
   });
 
   it("does not mark queued when enqueue fails", async () => {
-    const { handleGitHubWebhook } = await import("../services/github/webhook");
     recordDeliveryMock.mockResolvedValue({
       created: true,
       delivery: { status: "received" },
@@ -768,7 +752,6 @@ describe("handleGitHubWebhook", () => {
   });
 
   it("ignores deleted branch pushes without enqueueing", async () => {
-    const { handleGitHubWebhook } = await import("../services/github/webhook");
     recordDeliveryMock.mockResolvedValue({
       created: true,
       delivery: { status: "received" },
