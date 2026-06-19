@@ -712,18 +712,12 @@ importers:
       '@repo/native-auth-contract':
         specifier: workspace:*
         version: link:../../packages/native-auth-contract
-      '@repo/provider-routines':
-        specifier: workspace:*
-        version: link:../../packages/provider-routines
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       '@repo/ui-v2':
         specifier: workspace:*
         version: link:../../packages/ui-v2
-      '@repo/user-connector-contract':
-        specifier: workspace:*
-        version: link:../../packages/user-connector-contract
       '@sentry/tanstackstart-react':
         specifier: 'catalog:'
         version: 10.56.0(@opentelemetry/exporter-trace-otlp-http@0.218.0(@opentelemetry/api@1.9.1))(react@19.2.6)
