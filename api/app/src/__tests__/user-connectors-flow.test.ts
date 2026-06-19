@@ -141,9 +141,11 @@ vi.mock("../env", () => ({ env: envMock }));
 const {
   completeGranolaUserConnectorOAuth,
   disconnectGranolaUserConnector,
-  listUserConnectorsForViewer,
   startGranolaUserConnectorOAuth,
-} = await import("../services/user-connectors");
+} = await import("../services/user-connectors/granola-flow");
+const { listUserConnectorsForViewer } = await import(
+  "../services/user-connectors"
+);
 
 function userConnection(
   overrides: Partial<UserConnectorConnection> = {}

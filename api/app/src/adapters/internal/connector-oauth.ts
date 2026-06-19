@@ -1,11 +1,11 @@
 import { auth } from "@vendor/clerk/server";
 
+import { completeLinearConnectorOAuth } from "../../services/connectors/linear-flow";
 import {
-  completeLinearConnectorOAuth,
   completeXConnectorOAuth,
   type XConnectorOAuthRedirectPaths,
-} from "../../services/connectors";
-import { completeGranolaUserConnectorOAuth } from "../../services/user-connectors";
+} from "../../services/connectors/x-flow";
+import { completeGranolaUserConnectorOAuth } from "../../services/user-connectors/granola-flow";
 
 export type { XConnectorOAuthRedirectPaths };
 

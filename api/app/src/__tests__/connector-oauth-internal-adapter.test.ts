@@ -7,12 +7,15 @@ vi.mock("@vendor/clerk/server", () => ({
   auth: authMock,
 }));
 
-vi.mock("../services/connectors", () => ({
+vi.mock("../services/connectors/linear-flow", () => ({
   completeLinearConnectorOAuth: vi.fn(),
+}));
+
+vi.mock("../services/connectors/x-flow", () => ({
   completeXConnectorOAuth: vi.fn(),
 }));
 
-vi.mock("../services/user-connectors", () => ({
+vi.mock("../services/user-connectors/granola-flow", () => ({
   completeGranolaUserConnectorOAuth: completeGranolaUserConnectorOAuthMock,
 }));
 
