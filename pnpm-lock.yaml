@@ -1239,9 +1239,15 @@ importers:
       '@radix-ui/react-popover':
         specifier: ^1.1.14
         version: 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@repo/game-engine':
+        specifier: workspace:*
+        version: link:../../packages/game-engine
       '@repo/og':
         specifier: workspace:*
         version: link:../../packages/og
+      '@repo/space-invaders':
+        specifier: workspace:*
+        version: link:../../packages/space-invaders
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -1335,6 +1341,9 @@ importers:
       swr:
         specifier: ^2.4.1
         version: 2.4.1(react@19.2.6)
+      xstate:
+        specifier: 'catalog:'
+        version: 5.32.0
       zod:
         specifier: 'catalog:'
         version: 4.3.6

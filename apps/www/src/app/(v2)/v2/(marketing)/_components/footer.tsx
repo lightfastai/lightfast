@@ -1,9 +1,9 @@
-import { Logo } from "@repo/ui-v2/components/brand/logo";
 import { Button } from "@repo/ui-v2/components/ui/button";
 import { ArrowRight, ArrowUp } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { About } from "./about";
+import { FooterArcade } from "./footer-arcade";
 
 export function Footer() {
   return (
@@ -28,8 +28,7 @@ export function Footer() {
                   trigger={
                     <Button
                       className="h-auto justify-start px-0 py-0.5 font-normal text-base leading-tight"
-                      nativeButton={false}
-                      render={<a href="#about">About</a>}
+                      render={<button type="button" />}
                       variant="link"
                     />
                   }
@@ -127,7 +126,7 @@ export function Footer() {
 
             <FooterColumn className="col-span-2" label="Newsletter">
               <p className="w-full text-base leading-tight max-[479px]:w-[13.13rem]">
-                Subscribe to get updates on new projects and insights
+                Subscribe to research notes and project updates
               </p>
               <div className="w-full">
                 <form className="relative flex items-center" method="get">
@@ -160,16 +159,18 @@ export function Footer() {
                     Please enter your email
                   </p>
                 </div>
+                <p className="mt-2 text-muted-foreground text-xs leading-tight">
+                  Separate from the waitlist. Unsubscribe anytime. See our{" "}
+                  <Link className="underline" href="/v2/legal/privacy">
+                    Privacy Policy
+                  </Link>
+                  .
+                </p>
               </div>
             </FooterColumn>
           </div>
 
-          <Link aria-label="Lightfast home" href="/v2">
-            <Logo
-              className="text-foreground transition-opacity hover:opacity-70 focus-visible:opacity-70 focus-visible:outline-none"
-              size="md"
-            />
-          </Link>
+          <FooterArcade />
 
           <div className="grid w-full grid-cols-4 place-items-center gap-5 text-xs leading-tight max-[991px]:grid-cols-2 max-[991px]:grid-rows-2 max-[479px]:gap-3">
             <div className="max-[991px]:order-[9999] max-[991px]:justify-self-end">

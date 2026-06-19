@@ -26,7 +26,9 @@
     "@next/bundle-analyzer": "^16.2.6",
     "@paper-design/shaders-react": "^0.0.76",
     "@radix-ui/react-popover": "^1.1.14",
+    "@repo/game-engine": "workspace:*",
     "@repo/og": "workspace:*",
+    "@repo/space-invaders": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/ui-v2": "workspace:*",
     "@rescale/nemo": "catalog:",
@@ -58,6 +60,7 @@
     "react-dom": "catalog:react19",
     "remove-markdown": "^0.6.3",
     "swr": "^2.4.1",
+    "xstate": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
