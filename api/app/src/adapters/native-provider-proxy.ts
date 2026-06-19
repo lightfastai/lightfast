@@ -1,16 +1,16 @@
 import { db } from "@db/app/client";
 import {
-  type ProviderRoutineCallInput,
-  type ProviderRoutineCallSuccess,
-  type ProviderRoutineFindInput,
-  type ProviderRoutineFindOutput,
   providerRoutineCallInputSchema,
   providerRoutineCallSuccessSchema,
   providerRoutineFindInputSchema,
   providerRoutineFindOutputSchema,
 } from "@repo/api-contract";
-import type { ProviderRoutineServiceContext } from "@repo/provider-routines";
 import { z } from "zod";
+import {
+  callProviderRoutine,
+  findProviderRoutines,
+  type ProviderRoutineServiceContext,
+} from "../services/provider-routines";
 
 const log = {
   error: (message: string, metadata?: Record<string, unknown>) =>
@@ -22,21 +22,6 @@ const log = {
 };
 
 type NativeProviderRoutineServiceContext = ProviderRoutineServiceContext;
-
-type NativeFindProviderRoutines = (
-  context: NativeProviderRoutineServiceContext,
-  input: ProviderRoutineFindInput
-) => Promise<ProviderRoutineFindOutput>;
-
-type NativeCallProviderRoutine = (
-  context: NativeProviderRoutineServiceContext,
-  input: ProviderRoutineCallInput
-) => Promise<ProviderRoutineCallSuccess>;
-
-interface NativeProviderRoutineServices {
-  callProviderRoutine: NativeCallProviderRoutine;
-  findProviderRoutines: NativeFindProviderRoutines;
-}
 
 class NativeProxyRouteError extends Error {
   constructor(
@@ -133,12 +118,6 @@ async function createNativeProviderRoutineContext(
   };
 }
 
-async function loadNativeProviderRoutineServices() {
-  return (await import(
-    "@repo/provider-routines"
-  )) as NativeProviderRoutineServices;
-}
-
 export async function handleNativeProviderRoutineCallRequest(
   request: Request
 ): Promise<Response> {
@@ -147,7 +126,6 @@ export async function handleNativeProviderRoutineCallRequest(
       await request.json().catch(() => null)
     );
     const context = await createNativeProviderRoutineContext(request);
-    const { callProviderRoutine } = await loadNativeProviderRoutineServices();
     const result = await callProviderRoutine(context, input);
     return jsonResponse(providerRoutineCallSuccessSchema.parse(result));
   } catch (error) {
@@ -172,7 +150,6 @@ export async function handleNativeProviderRoutineFindRequest(
       routineId: searchParams.get("routineId") ?? undefined,
     });
     const context = await createNativeProviderRoutineContext(request);
-    const { findProviderRoutines } = await loadNativeProviderRoutineServices();
     const result = await findProviderRoutines(context, input);
     return jsonResponse(providerRoutineFindOutputSchema.parse(result));
   } catch (error) {

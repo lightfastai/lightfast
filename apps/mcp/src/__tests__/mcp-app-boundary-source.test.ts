@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 const appRoot = resolve(import.meta.dirname, "../..");
 const oldConnectorCoreProviderRoutinesSubpath = `^@lightfast/connector-core/${"provider-routines"}$`;
+const oldProviderRoutinesPackage = `@repo/${"provider-routines"}`;
 
 const ignoredDirs = new Set([".next", ".turbo", "coverage", "node_modules"]);
 
@@ -88,13 +89,13 @@ describe("hosted MCP app boundary", () => {
       packageJson.dependencies?.["@lightfast/connector-core"]
     ).toBeUndefined();
     expect(
-      packageJson.dependencies?.["@repo/provider-routines"]
+      packageJson.dependencies?.[oldProviderRoutinesPackage]
     ).toBeUndefined();
 
     const forbiddenRuntimeImport = new RegExp(
       [
         oldConnectorCoreProviderRoutinesSubpath,
-        "^@repo/provider-routines($|/)",
+        `^${oldProviderRoutinesPackage}($|/)`,
         "^@lightfast/connector-(github|granola|linear|x)/(node|oauth|mcp|operations|tools)($|/)",
       ].join("|")
     );

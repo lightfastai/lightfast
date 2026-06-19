@@ -21,9 +21,9 @@ import {
   providerRoutineFindInputSchema,
   providerRoutineId,
 } from "@repo/api-contract";
-import { classifyRoutine } from "@repo/provider-routines";
 import { log } from "@vendor/observability/log/next";
 
+import { classifyRoutine } from "../provider-routines";
 import {
   ConnectorRuntimeToolCallError,
   loadChatConnectorRuntimeTools,
