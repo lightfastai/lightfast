@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+
+import * as developerConnectionContract from "../developer-connections";
 import {
-  DEVELOPER_CONNECTION_CATALOG,
   DEVELOPER_CONNECTION_PROVIDERS,
   developerConnectionCompleteAuthInputSchema,
   developerConnectionConnectInputSchema,
@@ -8,24 +9,19 @@ import {
   developerConnectionProviderInputSchema,
   developerConnectionSetSandboxEnabledInputSchema,
   developerConnectionStartAuthInputSchema,
-} from "../index";
+} from "../developer-connections";
 
-describe("@repo/developer-connection-contract", () => {
-  it("defines the v1 provider catalog", () => {
+describe("developer connection contracts", () => {
+  it("defines the v1 provider schema without product catalog copy", () => {
     expect(DEVELOPER_CONNECTION_PROVIDERS).toEqual([
       "pscale",
       "upstash",
       "sentry",
       "clerk",
     ]);
-    expect(DEVELOPER_CONNECTION_CATALOG.map((entry) => entry.provider)).toEqual(
-      ["pscale", "upstash", "sentry", "clerk"]
+    expect("DEVELOPER_CONNECTION_CATALOG" in developerConnectionContract).toBe(
+      false
     );
-    expect(
-      DEVELOPER_CONNECTION_CATALOG.every(
-        (entry) => entry.builder === "Lightfast"
-      )
-    ).toBe(true);
   });
 
   it("validates provider input", () => {

@@ -7,7 +7,7 @@ import {
   developerConnectionSetSandboxEnabledInputSchema,
   developerConnectionStartAuthInputSchema,
   developerConnectionStatusSchema,
-} from "@repo/developer-connection-contract";
+} from "@repo/api-contract";
 import { z } from "zod";
 
 import type { AuthAccess, AuthIdentity } from "../../auth/identity";

@@ -1,7 +1,7 @@
 import type {
   DeveloperConnectionCredentialKind,
   DeveloperConnectionProvider,
-} from "@repo/developer-connection-contract";
+} from "@repo/api-contract";
 import { and, eq, getTableColumns, inArray, isNotNull } from "drizzle-orm";
 import type { Database } from "../client";
 import type { DeveloperConnection, DeveloperConnectionLease } from "../schema";

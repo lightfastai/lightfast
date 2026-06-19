@@ -15,6 +15,32 @@ export {
 } from "./connectors";
 export { apiContract, type Contract } from "./contract";
 export {
+  DEVELOPER_CONNECTION_PROVIDERS,
+  type DeveloperConnectionCatalogStatus,
+  type DeveloperConnectionCompleteAuthInput,
+  type DeveloperConnectionConnectInput,
+  type DeveloperConnectionCredentialKind,
+  type DeveloperConnectionIssueLeaseInput,
+  type DeveloperConnectionLeaseStatus,
+  type DeveloperConnectionProvider,
+  type DeveloperConnectionSetSandboxEnabledInput,
+  type DeveloperConnectionStartAuthInput,
+  type DeveloperConnectionStatus,
+  type DeveloperConnectionUnavailableReason,
+  developerConnectionCatalogStatusSchema,
+  developerConnectionCompleteAuthInputSchema,
+  developerConnectionConnectInputSchema,
+  developerConnectionCredentialKindSchema,
+  developerConnectionIssueLeaseInputSchema,
+  developerConnectionLeaseStatusSchema,
+  developerConnectionProviderInputSchema,
+  developerConnectionProviderSchema,
+  developerConnectionSetSandboxEnabledInputSchema,
+  developerConnectionStartAuthInputSchema,
+  developerConnectionStatusSchema,
+  developerConnectionUnavailableReasonSchema,
+} from "./developer-connections";
+export {
   type ExposedMcpToolPolicyEntry,
   getContractProcedurePaths,
   type HiddenMcpToolPolicyEntry,

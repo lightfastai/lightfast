@@ -10,7 +10,7 @@ import type {
   DeveloperConnectionProvider,
   DeveloperConnectionSetSandboxEnabledInput,
   DeveloperConnectionStartAuthInput,
-} from "@repo/developer-connection-contract";
+} from "@repo/api-contract";
 import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 import { AuthzError } from "../../domain/errors";
 import { verifyDeveloperConnectionInput } from "./adapters";
