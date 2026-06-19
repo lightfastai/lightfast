@@ -4,11 +4,15 @@ import type {
   DeveloperConnectionCatalogStatus,
   DeveloperConnectionProvider,
 } from "@repo/api-contract";
-import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 
 interface DeveloperConnectionServiceContext {
-  auth: AuthContext;
   db: Database;
+  organization: {
+    orgId: string;
+  };
+  viewer: {
+    canManage: boolean;
+  };
 }
 
 type ConnectAvailability =
@@ -77,20 +81,6 @@ export interface DeveloperConnectionCatalogRow {
   provider: DeveloperConnectionProvider;
 }
 
-export function canManageDeveloperConnections(
-  ctx: DeveloperConnectionServiceContext
-) {
-  const identity = ctx.auth.identity;
-  const access = ctx.auth.access;
-  return (
-    identity.type === "active" &&
-    access?.kind === "clerk-session" &&
-    access.userId === identity.userId &&
-    access.orgId === identity.orgId &&
-    access.has({ role: "org:admin" })
-  );
-}
-
 function availabilityFor(canManage: boolean): ConnectAvailability {
   if (!canManage) {
     return { status: "unavailable", reason: "permission_required" };
@@ -116,18 +106,13 @@ function shapeConnection(connection: DeveloperConnection | undefined) {
 export async function listDeveloperConnectionsForOrg(
   ctx: DeveloperConnectionServiceContext
 ): Promise<DeveloperConnectionCatalogRow[]> {
-  const identity = ctx.auth.identity;
-  if (identity.type !== "active") {
-    return [];
-  }
-
   const connections = await listCurrentDeveloperConnections(ctx.db, {
-    clerkOrgId: identity.orgId,
+    clerkOrgId: ctx.organization.orgId,
   });
   const byProvider = new Map<DeveloperConnectionProvider, DeveloperConnection>(
     connections.map((connection) => [connection.provider, connection])
   );
-  const canManage = canManageDeveloperConnections(ctx);
+  const canManage = ctx.viewer.canManage;
 
   return DEVELOPER_CONNECTION_CATALOG.map((catalogItem) => ({
     ...catalogItem,

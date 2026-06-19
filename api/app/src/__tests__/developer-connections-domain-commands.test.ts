@@ -106,16 +106,25 @@ describe("developer connection domain commands", () => {
       })
     ).resolves.toEqual([expect.objectContaining({ provider: "sentry" })]);
 
-    expect(serviceMocks.listDeveloperConnectionsForOrg).toHaveBeenCalledWith(
-      expect.objectContaining({
-        auth: expect.objectContaining({
-          identity: expect.objectContaining({
-            orgId: "org_acme",
-            userId: "user_current",
-          }),
-        }),
-      })
-    );
+    expect(serviceMocks.listDeveloperConnectionsForOrg).toHaveBeenCalledWith({
+      db: expect.anything(),
+      organization: { orgId: "org_acme" },
+      viewer: { canManage: false },
+    });
+  });
+
+  it("passes admin manage authority to developer connection catalog listing", async () => {
+    await listDeveloperConnectionsCommand.run({
+      ctx: ctx({ admin: true }),
+      deps: deps(),
+      input: {},
+    });
+
+    expect(serviceMocks.listDeveloperConnectionsForOrg).toHaveBeenCalledWith({
+      db: expect.anything(),
+      organization: { orgId: "org_acme" },
+      viewer: { canManage: true },
+    });
   });
 
   it("requires bound organizations to list developer connections", async () => {
