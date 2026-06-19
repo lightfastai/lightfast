@@ -23,7 +23,7 @@ import {
 } from "@repo/api-contract";
 import { log } from "@vendor/observability/log/next";
 
-import { classifyRoutine } from "../provider-routines";
+import { classifyRoutine } from "../provider-routines/policy";
 import {
   ConnectorRuntimeToolCallError,
   loadChatConnectorRuntimeTools,

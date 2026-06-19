@@ -5,7 +5,7 @@ import {
   providerRoutineFindOutputSchema,
 } from "@repo/api-contract";
 import { z } from "zod";
-import type { ProviderRoutineServiceContext } from "../services/provider-routines";
+import type { ProviderRoutineServiceContext } from "../services/provider-routines/context";
 import { handleNativeRpcRequest } from "./native-rpc";
 
 const cliNativeRpcCommands = ["auth.session"] as const;
@@ -127,7 +127,7 @@ export async function handleCliProviderRoutineCallRequest(
 ): Promise<Response> {
   try {
     const { callProviderRoutine } = await import(
-      "../services/provider-routines"
+      "../services/provider-routines/call"
     );
     const input = providerRoutineCallInputSchema.parse(
       await request.json().catch(() => null)
@@ -145,7 +145,7 @@ export async function handleCliProviderRoutineFindRequest(
 ): Promise<Response> {
   try {
     const { findProviderRoutines } = await import(
-      "../services/provider-routines"
+      "../services/provider-routines/find"
     );
     const searchParams = new URL(request.url).searchParams;
     const input = providerRoutineFindInputSchema.parse({

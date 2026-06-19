@@ -17,7 +17,7 @@ import {
   type ConnectorRuntimeToolSource,
   loadConnectorRuntimeTools,
 } from "../connectors/runtime";
-import { classifyRoutine, hasRoutineScope } from "../provider-routines";
+import { classifyRoutine, hasRoutineScope } from "../provider-routines/policy";
 
 const DEFAULT_FIND_LIMIT = 10;
 

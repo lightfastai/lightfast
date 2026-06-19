@@ -8,10 +8,8 @@ import {
   providerRoutineFindOutputSchema,
 } from "@repo/api-contract";
 import { verifyServiceJWT } from "@repo/service-jwt";
-import {
-  callProviderRoutine,
-  findProviderRoutines,
-} from "../../services/provider-routines";
+import { callProviderRoutine } from "../../services/provider-routines/call";
+import { findProviderRoutines } from "../../services/provider-routines/find";
 
 const noopProviderRoutineLog = {
   error: () => undefined,
