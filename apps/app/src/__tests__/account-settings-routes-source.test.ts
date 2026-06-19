@@ -79,7 +79,8 @@ describe("app account settings routes", () => {
     );
 
     expect(profileSource).toContain('from "@repo/ui/hooks/use-mounted"');
-    expect(profileSource).toContain("accountProfileQueryOptions()");
+    expect(profileSource).toContain("getAccountProfile");
+    expect(profileSource).toContain("accountProfileQueryKey");
     expect(profileSource).toContain("const mounted = useMounted();");
     expect(profileSource).toContain("if (!mounted || isPending || !profile)");
   });
@@ -94,7 +95,7 @@ describe("app account settings routes", () => {
     expect(profileSource).toContain('@api/app/tanstack/account"');
     expect(profileSource).toContain("updateAccountName");
     expect(profileSource).not.toContain("updateAccountNameMutationOptions");
-    expect(profileSource).toContain("accountQueryKeys.profile()");
+    expect(profileSource).toContain("accountProfileQueryKey");
     expect(profileSource).not.toContain("useAccountNameUpdate");
     expect(profileSource).not.toContain("account-settings-actions");
   });
