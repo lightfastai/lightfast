@@ -1,3 +1,4 @@
+import type { OrgIdentityResult } from "@api/app/tanstack/org-identity";
 import {
   ExternalLinkIcon as ExternalLink,
   File02Icon as FileText,
@@ -7,12 +8,9 @@ import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 import { Link } from "@tanstack/react-router";
-import type {
-  ConfiguredOrgIdentitySettings,
-  OrgIdentitySettingsFile,
-} from "./identity-soul-queries";
 
-type IdentitySettingsData = ConfiguredOrgIdentitySettings;
+type IdentitySettingsData = Extract<OrgIdentityResult, { configured: true }>;
+type OrgIdentitySettingsFile = IdentitySettingsData["files"][number];
 type IdentitySettingsFile = OrgIdentitySettingsFile;
 
 function SectionHeader() {
