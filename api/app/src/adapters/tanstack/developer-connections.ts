@@ -65,7 +65,6 @@ async function createTanStackDeveloperConnectionRequest() {
       actor: maybeMarkOrgAdmin({ actor, auth }),
       request: { id: requestId(), source: "tanstack" as const },
     },
-    headers,
   };
 }
 
@@ -91,7 +90,6 @@ export const listDeveloperConnections = createServerFn({
       ctx: request.ctx,
       deps: createDefaultDeveloperConnectionCommandDeps({
         db,
-        headers: request.headers,
       }),
       input: {},
     });
@@ -110,7 +108,6 @@ export const connectDeveloperConnection = createServerFn({ method: "POST" })
         ctx: request.ctx,
         deps: createDefaultDeveloperConnectionCommandDeps({
           db,
-          headers: request.headers,
         }),
         input: data,
       });
@@ -131,7 +128,6 @@ export const startSentryDeveloperConnectionAuth = createServerFn({
         ctx: request.ctx,
         deps: createDefaultDeveloperConnectionCommandDeps({
           db,
-          headers: request.headers,
         }),
         input: data,
       });
@@ -152,7 +148,6 @@ export const completeSentryDeveloperConnectionAuth = createServerFn({
         ctx: request.ctx,
         deps: createDefaultDeveloperConnectionCommandDeps({
           db,
-          headers: request.headers,
         }),
         input: data,
       });
@@ -173,7 +168,6 @@ export const setDeveloperConnectionSandboxEnabled = createServerFn({
         ctx: request.ctx,
         deps: createDefaultDeveloperConnectionCommandDeps({
           db,
-          headers: request.headers,
         }),
         input: data,
       });
@@ -192,7 +186,6 @@ export const disconnectDeveloperConnection = createServerFn({ method: "POST" })
         ctx: request.ctx,
         deps: createDefaultDeveloperConnectionCommandDeps({
           db,
-          headers: request.headers,
         }),
         input: data,
       });

@@ -45,7 +45,6 @@ describe("api/app app-facing tRPC root", () => {
       "services/connectors/index.ts",
       "services/connectors/linear-flow.ts",
       "services/connectors/x-flow.ts",
-      "services/developer-connections/index.ts",
     ]) {
       const fileSource = source(file);
 
@@ -58,6 +57,7 @@ describe("api/app app-facing tRPC root", () => {
     const rawAuthFreeServiceFiles = [
       "services/connectors/catalog.ts",
       "services/developer-connections/catalog.ts",
+      "services/developer-connections/index.ts",
       "services/developer-connections/leases.ts",
       "services/developer-sandbox-runs/index.ts",
       "services/user-connectors/catalog.ts",
