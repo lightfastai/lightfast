@@ -182,32 +182,10 @@ function userConnection(
   };
 }
 
-function authIdentity(input: {
-  identity?: "active" | "pending" | "unauthenticated";
-}) {
-  const identity =
-    input.identity === "unauthenticated"
-      ? ({ type: "unauthenticated" } as const)
-      : input.identity === "pending"
-        ? ({ type: "pending", userId: "user_current" } as const)
-        : ({
-            orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
-            orgId: "org_acme",
-            type: "active",
-            userId: "user_current",
-          } as const);
-
-  return identity;
-}
-
-function catalogCtx(
-  input: { identity?: "active" | "pending" | "unauthenticated" } = {}
-) {
-  const identity = authIdentity(input);
-
+function catalogCtx(input: { userId?: string } = {}) {
   return {
-    auth: { identity },
     db: {} as Database,
+    viewer: { userId: input.userId ?? "user_current" },
   };
 }
 
@@ -240,18 +218,8 @@ describe("user connector catalog services", () => {
     listCurrentUserConnectorConnectionsMock.mockResolvedValue([]);
   });
 
-  it("returns an empty user connector catalog for unauthenticated viewers", async () => {
-    await expect(
-      listUserConnectorsForViewer(catalogCtx({ identity: "unauthenticated" }))
-    ).resolves.toEqual([]);
-
-    expect(listCurrentUserConnectorConnectionsMock).not.toHaveBeenCalled();
-  });
-
-  it("lists Granola as a private user connector for signed-in pending viewers", async () => {
-    await expect(
-      listUserConnectorsForViewer(catalogCtx({ identity: "pending" }))
-    ).resolves.toEqual([
+  it("lists Granola as a private user connector for the viewer", async () => {
+    await expect(listUserConnectorsForViewer(catalogCtx())).resolves.toEqual([
       expect.objectContaining({
         canManage: true,
         catalogStatus: "available",

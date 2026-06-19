@@ -159,7 +159,10 @@ export const listConnectorSectionsCommand = defineCommand<
     try {
       return {
         teamConnectors: await deps.listConnectorsForOrg(serviceContext),
-        yourConnectors: await deps.listUserConnectorsForViewer(serviceContext),
+        yourConnectors: await deps.listUserConnectorsForViewer({
+          db: deps.db,
+          viewer: { userId: actor.userId },
+        }),
       };
     } catch (error) {
       throw mapConnectorServiceError(
