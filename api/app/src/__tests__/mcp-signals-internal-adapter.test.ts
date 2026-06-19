@@ -1,7 +1,7 @@
+import { signServiceJWT } from "@repo/service-jwt";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { NotFoundError } from "../domain/errors";
-import { signServiceJWT } from "../service-jwt";
 
 const mocks = vi.hoisted(() => ({
   assertHostedMcpOrgAccess: vi.fn(),

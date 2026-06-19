@@ -33,6 +33,19 @@ function productionSources() {
 }
 
 describe("hosted MCP app boundary", () => {
+  it("does not import app backend packages in production MCP code", () => {
+    const packageJson = JSON.parse(source("package.json")) as {
+      dependencies?: Record<string, string>;
+    };
+    const staleSources = productionSources()
+      .filter((path) => readFileSync(path, "utf8").includes("@api/app"))
+      .map((path) => relative(appRoot, path))
+      .sort();
+
+    expect(packageJson.dependencies?.["@api/app"]).toBeUndefined();
+    expect(staleSources).toEqual([]);
+  });
+
   it("keeps DB env and persistence out of apps/mcp", () => {
     const packageJson = JSON.parse(source("package.json")) as {
       dependencies?: Record<string, string>;

@@ -1,7 +1,7 @@
 import { recordMcpAuditEvent } from "@db/app";
 import { db } from "@db/app/client";
+import { verifyServiceJWT } from "@repo/service-jwt";
 import { z } from "zod";
-import { verifyServiceJWT } from "../../service-jwt";
 
 const mcpAuditEventInputSchema = z
   .object({

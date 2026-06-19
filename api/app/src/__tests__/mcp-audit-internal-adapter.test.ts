@@ -1,6 +1,5 @@
+import { signServiceJWT } from "@repo/service-jwt";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
-import { signServiceJWT } from "../service-jwt";
 
 const mocks = vi.hoisted(() => ({
   db: { kind: "mock-db" },

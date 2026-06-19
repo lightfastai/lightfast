@@ -7,8 +7,7 @@ import {
   providerRoutineCallSuccessSchema,
   providerRoutineFindOutputSchema,
 } from "@lightfast/connector-core/provider-routines";
-
-import { verifyServiceJWT } from "../../service-jwt";
+import { verifyServiceJWT } from "@repo/service-jwt";
 
 const noopProviderRoutineLog = {
   error: () => undefined,
