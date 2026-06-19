@@ -1213,9 +1213,8 @@ describe("app authenticated route migration", () => {
     const apiKeyCacheSource = source(
       "src/org/settings/api-keys/org-api-key-cache.ts"
     );
-    const apiKeyQueriesSource = source(
-      "src/org/settings/api-keys/org-api-key-queries.ts"
-    );
+    const apiKeyQueriesPath =
+      "src/org/settings/api-keys/org-api-key-queries.ts";
     const mcpQueriesPath = "src/org/settings/mcp/mcp-connections-queries.ts";
     const mcpClientSource = source(
       "src/org/settings/mcp/mcp-connections-client.tsx"
@@ -1273,8 +1272,12 @@ describe("app authenticated route migration", () => {
     expect(memberQueriesSource).not.toContain("useTRPC");
     expect(memberCacheSource).not.toContain("AppRouterOutputs");
 
-    expect(apiKeyListSource).toContain("orgApiKeysQueryOptions");
-    expect(apiKeyListSource).toContain(
+    expect(existsSync(resolve(appRoot, apiKeyQueriesPath))).toBe(false);
+    expect(apiKeyListSource).toContain("listOrgApiKeys");
+    expect(apiKeyListSource).toContain("orgApiKeyListQueryKey");
+    expect(apiKeyListSource).not.toContain("orgApiKeysQueryOptions");
+    expect(apiKeyListSource).not.toContain("orgApiKeyQueryKeys");
+    expect(apiKeyListSource).not.toContain(
       'enabled: typeof window !== "undefined"'
     );
     expect(apiKeyListSource).toContain('from "@clerk/tanstack-react-start"');
@@ -1293,13 +1296,14 @@ describe("app authenticated route migration", () => {
     expect(apiKeyListSource).not.toContain("rotateOrgApiKeyMutationOptions");
     expect(apiKeyListSource).not.toContain("useOrgApiKeyListActions");
     expect(apiKeyCacheSource).toContain("OrgApiKeyListData");
-    expect(apiKeyQueriesSource).toContain('@api/app/tanstack/org-api-keys"');
+    expect(apiKeyCacheSource).toContain(
+      'import type { ListOrgApiKeysResult } from "@api/app/tanstack/org-api-keys"'
+    );
 
     for (const apiKeySource of [
       apiKeyCreateSource,
       apiKeyListSource,
       apiKeyCacheSource,
-      apiKeyQueriesSource,
     ]) {
       expect(apiKeySource).not.toContain("useTRPC");
       expect(apiKeySource).not.toContain("orgApiKeys.");

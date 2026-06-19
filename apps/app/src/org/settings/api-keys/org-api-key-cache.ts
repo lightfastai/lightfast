@@ -1,6 +1,9 @@
-import type { OrgApiKey, OrgApiKeyListData } from "./org-api-key-queries";
+import type { ListOrgApiKeysResult } from "@api/app/tanstack/org-api-keys";
 
-export type { OrgApiKey, OrgApiKeyListData };
+export type OrgApiKeyListData = ListOrgApiKeysResult;
+export type OrgApiKey = OrgApiKeyListData[number];
+
+export const orgApiKeyListQueryKey = ["org-api-keys", "list"] as const;
 
 function insertAt<T>(items: T[], item: T, index: number) {
   const next = [...items];
