@@ -54,7 +54,7 @@ export const BLOG_CATEGORY_META: Record<BlogCategory, BlogCategoryMeta> = {
     title: "Product",
     heading: "Blog — Product",
     tagline:
-      "Launches, changelog highlights, and the reasoning behind the product decisions we ship.",
+      "Launches, feature deep-dives, and the reasoning behind the product decisions we ship.",
     description:
       "Product updates from Lightfast — launch announcements, feature deep-dives, and the thinking behind the decisions we make on our superintelligence layer for founders.",
     ogTitle: "Blog — Product",
@@ -75,14 +75,14 @@ export const BLOG_CATEGORY_META: Record<BlogCategory, BlogCategoryMeta> = {
           "Feature launches, new surfaces in the Lightfast console, API and MCP improvements, and the reasoning behind product decisions we've shipped.",
       },
       {
-        question: "How do product posts differ from the changelog?",
+        question: "What makes something worth a product post?",
         answer:
-          "The changelog is a terse list of what changed in each release. Product posts unpack the why — the motivation, tradeoffs, and the design thinking behind major launches.",
+          "Product posts unpack launches that need context: the motivation, tradeoffs, and design thinking behind significant changes.",
       },
       {
-        question: "Where should I go to see the full release history?",
+        question: "Where should I look for smaller updates?",
         answer:
-          "The /changelog page is the canonical feed for every release. Product blog posts are reserved for launches significant enough to warrant a longer-form explanation.",
+          "For now, the blog covers launches significant enough to warrant a longer-form explanation. Smaller updates ship directly in the product.",
       },
     ],
   },

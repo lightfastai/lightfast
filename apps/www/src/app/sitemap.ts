@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getBlogPages } from "~/lib/content/source";
+import { getBlogPages, getLegalPages } from "~/lib/content/source";
 
 const BASE_URL = "https://lightfast.ai";
 
@@ -9,6 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       new Date(b.data.publishedAt).getTime() -
       new Date(a.data.publishedAt).getTime()
   );
+  const legalPages = getLegalPages();
 
   const mostRecentBlog = blogPosts[0]?.data.reviewedAt ??
     blogPosts[0]?.data.updatedAt ??
@@ -38,6 +39,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       ),
       changeFrequency: "monthly" as const,
       priority: 0.75,
+    })),
+    ...legalPages.map((page) => ({
+      url: `${BASE_URL}/v2/legal/${page.slugs[0]}`,
+      lastModified: new Date(page.data.reviewedAt ?? page.data.updatedAt),
+      changeFrequency: "monthly" as const,
+      priority: 0.4,
     })),
   ];
 }

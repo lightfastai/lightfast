@@ -32,7 +32,7 @@ export function createMetadata(
 
 /**
  * Like createMetadata but forces og:type to "article" with publish/modify times.
- * Use for blog posts and changelog entries.
+ * Use for blog posts.
  */
 export function createArticleMetadata(
   metadata: Partial<Metadata>,

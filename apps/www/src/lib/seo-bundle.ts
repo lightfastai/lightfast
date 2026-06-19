@@ -5,21 +5,15 @@ import type { BlogCategoryPost } from "./builders";
 import {
   buildBlogCategoryJsonLd,
   buildBlogPostJsonLd,
-  buildChangelogEntryJsonLd,
   buildLegalJsonLd,
 } from "./builders";
 import type {
   BlogPostData,
-  ChangelogEntryData,
   ContentSeoData,
   LegalPageData,
 } from "./content-schemas";
 import { createArticleMetadata, createMetadata } from "./content-seo";
-import type {
-  BlogPostUrl,
-  ChangelogUrl,
-  LegalUrl,
-} from "./url-types";
+import type { BlogPostUrl, LegalUrl } from "./url-types";
 
 interface SeoBundle {
   readonly jsonLd: GraphContext;
@@ -110,7 +104,7 @@ export function emitBlogCategorySeo(
   meta: BlogCategoryMeta,
   posts: readonly BlogCategoryPost[]
 ): SeoBundle {
-  const url = `https://lightfast.ai/blog/topic/${meta.slug}`;
+  const url = `https://lightfast.ai/v2/blog`;
   return {
     metadata: createMetadata({
       title: `${meta.heading} | Lightfast`,
@@ -158,22 +152,6 @@ export function emitBlogCategorySeo(
       category: meta.title,
     }),
     jsonLd: buildBlogCategoryJsonLd(meta, posts, url),
-  };
-}
-
-export function emitChangelogEntrySeo(
-  data: ChangelogEntryData,
-  url: ChangelogUrl
-): SeoBundle {
-  const canonicalUrl = data.canonicalUrl ?? url;
-  return {
-    metadata: buildArticleMetadata(
-      data,
-      canonicalUrl,
-      "Lightfast Changelog",
-      "Lightfast Changelog"
-    ),
-    jsonLd: buildChangelogEntryJsonLd(data, url),
   };
 }
 

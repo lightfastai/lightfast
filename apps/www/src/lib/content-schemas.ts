@@ -57,11 +57,7 @@ const ContentPageSchema = BasePageSchema.extend({
 export const BlogPostSchema = ContentPageSchema.extend({
   canonicalUrl: z
     .url()
-    .refine(
-      (val) =>
-        val.startsWith("https://lightfast.ai/blog/") ||
-        val.startsWith("https://lightfast.ai/v2/blog/")
-    )
+    .refine((val) => val.startsWith("https://lightfast.ai/v2/blog/"))
     .optional(),
   category: z.enum([
     "engineering",
@@ -76,17 +72,6 @@ export const BlogPostSchema = ContentPageSchema.extend({
   howToSteps: z.array(HowToStepSchema).min(2).optional(),
 });
 
-export const ChangelogEntrySchema = ContentPageSchema.extend({
-  canonicalUrl: z
-    .url()
-    .refine((val) => val.startsWith("https://lightfast.ai/changelog/"))
-    .optional(),
-  version: z.string().min(1),
-  type: z.enum(["feature", "improvement", "fix", "breaking"]),
-  tldr: z.string().min(20).max(300),
-  improvements: z.array(z.string().min(1)).optional(),
-});
-
 export const BrandPageSchema = BasePageSchema.extend({
   canonicalUrl: z
     .url()
@@ -98,7 +83,7 @@ export const BrandPageSchema = BasePageSchema.extend({
 export const LegalPageSchema = BasePageSchema.extend({
   canonicalUrl: z
     .url()
-    .refine((val) => val.startsWith("https://lightfast.ai/legal/"))
+    .refine((val) => val.startsWith("https://lightfast.ai/v2/legal/"))
     .optional(),
   updatedAt: z.iso.datetime(),
   effectiveAt: z.iso.datetime(),
@@ -106,12 +91,10 @@ export const LegalPageSchema = BasePageSchema.extend({
 
 // Inferred TypeScript types
 export type BlogPostData = z.infer<typeof BlogPostSchema>;
-export type ChangelogEntryData = z.infer<typeof ChangelogEntrySchema>;
 export type BrandPageData = z.infer<typeof BrandPageSchema>;
 export type LegalPageData = z.infer<typeof LegalPageSchema>;
 
-// Fields required by the SEO layer — satisfied structurally by BlogPostData,
-// and ChangelogEntryData. Derived from BlogPostData so schema
+// Fields required by the SEO layer. Derived from BlogPostData so schema
 // renames propagate here automatically.
 export type ContentSeoData = Pick<
   BlogPostData,
@@ -130,6 +113,3 @@ export type ContentSeoData = Pick<
 // Derived from Zod — Zod is the sole source of truth for these unions
 export type BlogCategory = BlogPostData["category"];
 // → "engineering" | "product" | "company" | "tutorial" | "research"
-
-export type ChangelogType = ChangelogEntryData["type"];
-// → "feature" | "improvement" | "fix" | "breaking"

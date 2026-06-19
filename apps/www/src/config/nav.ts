@@ -38,7 +38,6 @@ export const SOCIAL_NAV = defineNavItems([
 // Resources sub-navigation used for the marketing header dropdown
 export const RESOURCES_NAV = defineNavItems([
   { title: "Blog", href: "/blog" },
-  { title: "Changelog", href: "/changelog" },
 ]);
 
 // Navigation for the pitch-deck pages
@@ -46,6 +45,5 @@ export const PITCH_DECK_NAV = defineNavItems([
   { title: "Home", href: "/" },
   { title: "Pricing", href: "/pricing" },
   { title: "Blog", href: "/blog" },
-  { title: "Changelog", href: "/changelog" },
   { title: "Contact", href: "mailto:jp@lightfast.ai", external: true },
 ]);

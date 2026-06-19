@@ -89,18 +89,13 @@ const wwwConfig: NextConfig = merge({}, baseConfig, {
         permanent: false,
       },
       {
-        source: "/changelog",
-        destination: "/v2/blog",
+        source: "/v2/legal/terms-of-service",
+        destination: "/v2/legal/terms",
         permanent: false,
       },
       {
-        source: "/changelog/:path*",
-        destination: "/v2/blog",
-        permanent: false,
-      },
-      {
-        source: "/legal/:path*",
-        destination: "/v2/brand",
+        source: "/v2/legal/privacy-policy",
+        destination: "/v2/legal/privacy",
         permanent: false,
       },
       {

@@ -33,7 +33,7 @@ export function buildLegalJsonLd(
       buildWebSiteEntity(),
       { ...entity, "@id": `${url}#webpage`, url },
       buildBreadcrumbList([
-        { name: "Home", url: "https://lightfast.ai" },
+        { name: "Home", url: "https://lightfast.ai/v2" },
         { name: data.title, url },
       ]),
     ],

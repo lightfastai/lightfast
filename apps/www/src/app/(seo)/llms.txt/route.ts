@@ -1,5 +1,5 @@
 import { createLlmsTxtHandler, type PageEntry } from "@vendor/aeo";
-import { getBlogPages } from "~/lib/content/source";
+import { getBlogPages, getLegalPages } from "~/lib/content/source";
 
 export const revalidate = false;
 
@@ -40,6 +40,17 @@ const providers: Array<() => Promise<PageEntry[]>> = [
       });
     }
 
+    for (const page of getLegalPages()) {
+      entries.push({
+        url: `${BASE_URL}/v2/legal/${page.slugs[0]}`,
+        title: page.data.title,
+        description: page.data.description,
+        lastModified: page.data.reviewedAt ?? page.data.updatedAt,
+        section: "Legal",
+        optional: true,
+      });
+    }
+
     entries.push(
       {
         url: "https://github.com/lightfastai",
@@ -75,7 +86,13 @@ export const { GET } = createLlmsTxtHandler(
     description:
       "Lightfast is the operating layer for AI agents and engineering teams. Agents and developers use Lightfast to observe events, build semantic memory, and act across their tool stack with source-cited context.",
     baseUrl: `${BASE_URL}/v2`,
-    sectionOrder: ["Marketing", "Company", "Blog", "External Authority"],
+    sectionOrder: [
+      "Marketing",
+      "Company",
+      "Blog",
+      "Legal",
+      "External Authority",
+    ],
     defaultSection: "Marketing",
     footer: [
       "## Contact & Support",

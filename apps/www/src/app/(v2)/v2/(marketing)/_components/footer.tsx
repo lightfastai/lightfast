@@ -181,22 +181,20 @@ export function Footer() {
               </Link>
             </div>
             <div className="max-[991px]:order-[-9999]">
-              <a
+              <Link
                 className="block py-0.5 hover:underline"
-                href="mailto:hello@lightfast.ai"
+                href="/v2/legal/terms"
               >
-                Contact
-              </a>
+                Terms of Use
+              </Link>
             </div>
             <div className="flex items-center justify-between justify-self-end max-[991px]:justify-self-start">
-              <a
+              <Link
                 className="block py-0.5 hover:underline"
-                href="https://github.com/lightfastai"
-                rel="noopener noreferrer"
-                target="_blank"
+                href="/v2/legal/privacy"
               >
-                GitHub
-              </a>
+                Privacy Policy
+              </Link>
               <a
                 className="ml-5 hidden items-center justify-end gap-1 border-background border-b py-0.5 no-underline hover:underline max-[479px]:justify-start"
                 href="#top"
