@@ -1,18 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-async function handleNativeProviderRoutineFindRouteRequest(request: Request) {
-  const { handleNativeProviderRoutineFindRequest } = await import(
-    "@api/app/native-provider-proxy"
+async function handleCliProviderRoutineFindRouteRequest(request: Request) {
+  const { handleCliProviderRoutineFindRequest } = await import(
+    "@api/app/cli-api"
   );
 
-  return handleNativeProviderRoutineFindRequest(request);
+  return handleCliProviderRoutineFindRequest(request);
 }
 
 export const Route = createFileRoute("/api/native/proxy/routines")({
   server: {
     handlers: {
-      GET: ({ request }) =>
-        handleNativeProviderRoutineFindRouteRequest(request),
+      GET: ({ request }) => handleCliProviderRoutineFindRouteRequest(request),
     },
   },
 });
