@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -16,13 +16,16 @@ describe("connectors app data access", () => {
     expect(querySource).toContain("connectorQueryKeys");
     expect(querySource).toContain("connectorsListQueryOptions");
     expect(querySource).toContain("connectorSectionsQueryOptions");
-    expect(querySource).toContain("startConnectorMutationOptions");
-    expect(querySource).toContain("refreshConnectorToolsMutationOptions");
-    expect(querySource).toContain(
+    expect(querySource).not.toContain("mutationOptions");
+    expect(querySource).not.toContain("startConnectorMutationOptions");
+    expect(querySource).not.toContain("refreshConnectorToolsMutationOptions");
+    expect(querySource).not.toContain(
       "setConnectorAutomationEnabledMutationOptions"
     );
-    expect(querySource).toContain("setConnectorAgentEnabledMutationOptions");
-    expect(querySource).toContain("disconnectConnectorMutationOptions");
+    expect(querySource).not.toContain(
+      "setConnectorAgentEnabledMutationOptions"
+    );
+    expect(querySource).not.toContain("disconnectConnectorMutationOptions");
     expect(querySource).not.toContain("useTRPC");
   });
 
@@ -36,20 +39,43 @@ describe("connectors app data access", () => {
 
     expect(clientSource).not.toContain("useTRPC");
     expect(clientSource).not.toContain("org.workspace.connectors");
+    expect(clientSource).toContain('@api/app/tanstack/connectors"');
+    expect(clientSource).toContain('@api/app/tanstack/user-connectors"');
     expect(clientSource).toContain("connectorSectionsQueryOptions");
-    expect(clientSource).toContain("startConnectorMutationOptions");
-    expect(clientSource).toContain("refreshConnectorToolsMutationOptions");
-    expect(clientSource).toContain(
+    expect(clientSource).toContain("startConnector");
+    expect(clientSource).toContain("startUserConnector");
+    expect(clientSource).toContain("refreshConnectorTools");
+    expect(clientSource).toContain("setConnectorAutomationEnabled");
+    expect(clientSource).toContain("setConnectorAgentEnabled");
+    expect(clientSource).toContain("disconnectConnector");
+    expect(clientSource).toContain("disconnectUserConnector");
+    expect(clientSource).not.toContain("startConnectorMutationOptions");
+    expect(clientSource).not.toContain("refreshConnectorToolsMutationOptions");
+    expect(clientSource).not.toContain(
       "setConnectorAutomationEnabledMutationOptions"
     );
-    expect(clientSource).toContain("setConnectorAgentEnabledMutationOptions");
-    expect(clientSource).toContain("disconnectConnectorMutationOptions");
+    expect(clientSource).not.toContain(
+      "setConnectorAgentEnabledMutationOptions"
+    );
+    expect(clientSource).not.toContain("disconnectConnectorMutationOptions");
+    expect(clientSource).not.toContain("startUserConnectorMutationOptions");
+    expect(clientSource).not.toContain(
+      "disconnectUserConnectorMutationOptions"
+    );
     expect(modelSource).not.toContain("AppRouterOutputs");
     expect(xSetupSource).not.toContain("useTRPC");
     expect(xSetupSource).not.toContain("org.workspace.connectors");
+    expect(xSetupSource).toContain('@api/app/tanstack/connectors"');
     expect(xSetupSource).toContain("connectorsListQueryOptions");
-    expect(xSetupSource).toContain("startConnectorMutationOptions");
+    expect(xSetupSource).toContain("startConnector");
+    expect(xSetupSource).not.toContain("startConnectorMutationOptions");
     expect(automationCreateSource).not.toContain("org.workspace.connectors");
     expect(automationCreateSource).toContain("connectorsListQueryOptions");
+  });
+
+  it("removes the user connector mutation-only helper module", () => {
+    expect(
+      existsSync(resolve(appRoot, "src/connectors/user-connector-queries.ts"))
+    ).toBe(false);
   });
 });

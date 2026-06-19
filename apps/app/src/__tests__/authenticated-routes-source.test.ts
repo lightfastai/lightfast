@@ -735,11 +735,20 @@ describe("app authenticated route migration", () => {
     expect(connectorsRouteSource).toContain("validateConnectorsSearch");
     expect(connectorsRouteSource).toContain("setSearchParams");
     expect(connectorsClientSource).toContain("connectorSectionsQueryOptions");
-    expect(connectorsClientSource).toContain("startConnectorMutationOptions");
+    expect(connectorsClientSource).toContain('@api/app/tanstack/connectors"');
     expect(connectorsClientSource).toContain(
+      '@api/app/tanstack/user-connectors"'
+    );
+    expect(connectorsClientSource).toContain("startConnector");
+    expect(connectorsClientSource).toContain("startUserConnector");
+    expect(connectorsClientSource).toContain("disconnectUserConnector");
+    expect(connectorsClientSource).not.toContain(
+      "startConnectorMutationOptions"
+    );
+    expect(connectorsClientSource).not.toContain(
       "startUserConnectorMutationOptions"
     );
-    expect(connectorsClientSource).toContain(
+    expect(connectorsClientSource).not.toContain(
       "disconnectUserConnectorMutationOptions"
     );
     expect(connectorsClientSource).toContain("window.location.assign");
@@ -1564,7 +1573,9 @@ describe("app authenticated route migration", () => {
       'enabled: typeof window !== "undefined"'
     );
     expect(xSetupClientSource).toContain("ConnectorIcon");
-    expect(xSetupClientSource).toContain("startConnectorMutationOptions");
+    expect(xSetupClientSource).toContain('@api/app/tanstack/connectors"');
+    expect(xSetupClientSource).toContain("startConnector");
+    expect(xSetupClientSource).not.toContain("startConnectorMutationOptions");
     expect(xSetupClientSource).toContain("window.location.assign");
     expect(xCompleteClientSource).toContain("useSession");
     expect(xCompleteClientSource).toContain("useNavigate");

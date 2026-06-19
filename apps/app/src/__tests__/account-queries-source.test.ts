@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -64,9 +64,6 @@ describe("account query helpers", () => {
       "src/account/mcp-connections-client.tsx"
     );
     const connectorsSource = source("src/connectors/connectors-client.tsx");
-    const userConnectorQuerySource = source(
-      "src/connectors/user-connector-queries.ts"
-    );
 
     expect(querySource).toContain("@api/app/tanstack/mcp-connections");
     expect(querySource).toContain("accountMcpConnectionsQueryOptions");
@@ -80,21 +77,18 @@ describe("account query helpers", () => {
     expect(mcpConnectionsSource).not.toContain(
       "revokeAccountMcpConnectionMutationOptions"
     );
-    expect(userConnectorQuerySource).toContain(
-      "@api/app/tanstack/user-connectors"
-    );
-    expect(userConnectorQuerySource).toContain(
-      "startUserConnectorMutationOptions"
-    );
-    expect(userConnectorQuerySource).toContain(
+    expect(
+      existsSync(resolve(appRoot, "src/connectors/user-connector-queries.ts"))
+    ).toBe(false);
+    expect(connectorsSource).toContain('@api/app/tanstack/user-connectors"');
+    expect(connectorsSource).toContain("startUserConnector");
+    expect(connectorsSource).toContain("disconnectUserConnector");
+    expect(connectorsSource).not.toContain("startUserConnectorMutationOptions");
+    expect(connectorsSource).not.toContain(
       "disconnectUserConnectorMutationOptions"
     );
 
-    for (const fileSource of [
-      mcpConnectionsSource,
-      connectorsSource,
-      userConnectorQuerySource,
-    ]) {
+    for (const fileSource of [mcpConnectionsSource, connectorsSource]) {
       expect(fileSource).not.toContain("viewer.account.mcpConnections");
       expect(fileSource).not.toContain("viewer.account.userConnectors");
     }
