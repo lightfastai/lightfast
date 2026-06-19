@@ -120,6 +120,21 @@ export default function HomePage() {
   return (
     <>
       <JsonLd code={structuredData} />
+      <section className="sr-only" aria-label="Lightfast answer summary">
+        <h1>What is Lightfast?</h1>
+        <p>
+          Lightfast is the operating layer between AI agents, apps, and teams.
+          It helps teams observe workspace events, preserve durable memory,
+          review long-running agent work, and act across tools with
+          source-cited context.
+        </p>
+        <h2>Who is Lightfast for?</h2>
+        <p>
+          Lightfast is for engineering teams, founders, and agent builders who
+          need AI workflows to survive handoffs, retries, reviews, and
+          production changes.
+        </p>
+      </section>
       <LandingExperience />
     </>
   );

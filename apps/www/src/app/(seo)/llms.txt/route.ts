@@ -1,83 +1,71 @@
 import { createLlmsTxtHandler, type PageEntry } from "@vendor/aeo";
-import {
-  getBlogPages,
-  getChangelogPages,
-  getLegalPages,
-} from "~/app/(v1)/(content)/_lib/source";
+import { getBlogPages } from "~/lib/content/source";
 
 export const revalidate = false;
 
 const BASE_URL = "https://lightfast.ai";
 
 const providers: Array<() => Promise<PageEntry[]>> = [
-  // Home page override — richer title/description than what extractMeta gets from HTML
-  () =>
-    Promise.resolve([
+  () => {
+    const entries: PageEntry[] = [
       {
-        url: BASE_URL,
-        title: "The Operating Layer for Agents and Apps",
+        url: `${BASE_URL}/v2`,
+        title: "Lightfast",
         description:
-          "Lightfast is the operating layer between your agents and apps. Observe what's happening across your tools, remember what happened, and give agents and people a single system to reason and act through.",
+          "Lightfast is the operating layer between AI agents, apps, and teams responsible for real work.",
         section: "Marketing",
       },
-    ]),
-
-  // Blog listing + posts
-  () => {
-    const pages = getBlogPages();
-    const entries: PageEntry[] = [
       {
-        url: `${BASE_URL}/blog`,
+        url: `${BASE_URL}/v2/brand`,
+        title: "Brand",
+        description: "Official Lightfast brand resources and company details.",
+        section: "Company",
+      },
+      {
+        url: `${BASE_URL}/v2/blog`,
         title: "Blog",
         description:
-          "Insights, guides, and product updates from the Lightfast team.",
+          "Notes from Lightfast on agent infrastructure, workspace memory, and reliable AI operations.",
         section: "Blog",
       },
     ];
-    for (const page of pages) {
+
+    for (const page of getBlogPages()) {
       entries.push({
-        url: `${BASE_URL}/blog/${page.slugs[0]}`,
+        url: `${BASE_URL}/v2/blog/${page.slugs[0]}`,
         title: page.data.title,
-        description: page.data.description,
+        description: page.data.answerSummary ?? page.data.description,
+        lastModified: page.data.reviewedAt ?? page.data.updatedAt,
         section: "Blog",
       });
     }
-    return Promise.resolve(entries);
-  },
 
-  // Changelog listing + entries
-  () => {
-    const pages = getChangelogPages();
-    const entries: PageEntry[] = [
+    entries.push(
       {
-        url: `${BASE_URL}/changelog`,
-        title: "Changelog",
-        description:
-          "What's new in Lightfast — product updates and improvements.",
-        section: "Changelog",
+        url: "https://github.com/lightfastai",
+        title: "Lightfast on GitHub",
+        description: "Official Lightfast GitHub organization.",
+        section: "External Authority",
+        optional: true,
       },
-    ];
-    for (const page of pages) {
-      entries.push({
-        url: `${BASE_URL}/changelog/${page.slugs[0]}`,
-        title: page.data.title,
-        section: "Changelog",
-      });
-    }
+      {
+        url: "https://www.npmjs.com/package/lightfast",
+        title: "Lightfast SDK on npm",
+        description: "The Lightfast TypeScript SDK package.",
+        section: "External Authority",
+        optional: true,
+      },
+      {
+        url: "https://www.npmjs.com/package/@lightfastai/mcp",
+        title: "Lightfast MCP server on npm",
+        description: "The Lightfast MCP server package for AI agents.",
+        section: "External Authority",
+        optional: true,
+      }
+    );
+
     return Promise.resolve(entries);
   },
-
-  // Legal pages
-  () =>
-    Promise.resolve(
-      getLegalPages().map((page) => ({
-        url: `${BASE_URL}/legal/${page.slugs[0]}`,
-        title: page.data.title,
-        description: page.data.description,
-        section: "Legal",
-        optional: true as const,
-      }))
-    ),
 ];
 
 export const { GET } = createLlmsTxtHandler(
@@ -85,37 +73,19 @@ export const { GET } = createLlmsTxtHandler(
   {
     title: "Lightfast",
     description:
-      "The operating layer for AI agents and engineering teams. Agents and developers use Lightfast to observe events, build semantic memory, and act across their entire tool stack — giving AI systems persistent, source-cited knowledge of everything that happens across code, deployments, incidents, and decisions.",
-    baseUrl: BASE_URL,
-    sectionOrder: [
-      "Marketing",
-      "Use Cases",
-      "Blog",
-      "Changelog",
-      "Legal",
-    ],
-    sectionResolver: (url) => {
-      if (url === BASE_URL || /\/(pricing)($|\/)/.test(url)) {
-        return "Marketing";
-      }
-      if (url.includes("/use-cases/")) {
-        return "Use Cases";
-      }
-      return; // fall through to defaultSection
-    },
+      "Lightfast is the operating layer for AI agents and engineering teams. Agents and developers use Lightfast to observe events, build semantic memory, and act across their tool stack with source-cited context.",
+    baseUrl: `${BASE_URL}/v2`,
+    sectionOrder: ["Marketing", "Company", "Blog", "External Authority"],
     defaultSection: "Marketing",
     footer: [
       "## Contact & Support",
       "",
       "- Email: hello@lightfast.ai",
       "- Founder: Jeevan Pillay — jp@lightfast.ai — https://twitter.com/jeevanpillay",
-      "- Support: support@lightfast.ai",
       "- Twitter: https://twitter.com/lightfastai",
-      "- Discord: https://discord.gg/YqPDfcar2C",
-      "- GitHub (org): https://github.com/lightfastai",
-      "- GitHub (SDK + MCP): https://github.com/lightfastai/lightfast",
-      "- npm (SDK): https://www.npmjs.com/package/lightfast",
-      "- npm (MCP server): https://www.npmjs.com/package/@lightfastai/mcp",
+      "- GitHub: https://github.com/lightfastai",
+      "- npm SDK: https://www.npmjs.com/package/lightfast",
+      "- npm MCP server: https://www.npmjs.com/package/@lightfastai/mcp",
     ],
   },
   { cacheControl: "public, max-age=86400, s-maxage=86400" },

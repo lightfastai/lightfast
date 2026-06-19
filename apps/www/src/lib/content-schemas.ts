@@ -18,6 +18,20 @@ const HowToStepSchema = z.object({
   url: z.url().optional(),
 });
 
+const AeoPlanningSchema = z
+  .object({
+    targetPrompts: z.array(z.string().min(10)).default([]),
+    fanoutQueries: z.array(z.string().min(3)).default([]),
+    entities: z.array(z.string().min(1)).default([]),
+    citationTargets: z.array(z.url()).default([]),
+  })
+  .default({
+    targetPrompts: [],
+    fanoutQueries: [],
+    entities: [],
+    citationTargets: [],
+  });
+
 const BasePageSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(50).max(160),
@@ -27,6 +41,9 @@ const BasePageSchema = z.object({
   ogDescription: z.string().min(50).max(160),
   noindex: z.boolean().default(false),
   nofollow: z.boolean().default(false),
+  reviewedAt: z.iso.datetime().optional(),
+  answerSummary: z.string().min(40).max(320).optional(),
+  aeo: AeoPlanningSchema,
 });
 
 const ContentPageSchema = BasePageSchema.extend({
@@ -40,7 +57,11 @@ const ContentPageSchema = BasePageSchema.extend({
 export const BlogPostSchema = ContentPageSchema.extend({
   canonicalUrl: z
     .url()
-    .refine((val) => val.startsWith("https://lightfast.ai/blog/"))
+    .refine(
+      (val) =>
+        val.startsWith("https://lightfast.ai/blog/") ||
+        val.startsWith("https://lightfast.ai/v2/blog/")
+    )
     .optional(),
   category: z.enum([
     "engineering",

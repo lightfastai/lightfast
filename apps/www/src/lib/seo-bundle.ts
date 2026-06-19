@@ -133,10 +133,10 @@ export function emitBlogCategorySeo(
         canonical: url,
         types: {
           "application/rss+xml": [
-            { url: "https://lightfast.ai/blog/rss.xml", title: "RSS 2.0" },
+            { url: "https://lightfast.ai/v2/blog", title: "Blog" },
           ],
           "application/atom+xml": [
-            { url: "https://lightfast.ai/blog/atom.xml", title: "Atom 1.0" },
+            { url: "https://lightfast.ai/v2/blog", title: "Blog" },
           ],
         },
       },

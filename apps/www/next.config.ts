@@ -16,6 +16,106 @@ const localDevUrls = [env.NEXT_PUBLIC_APP_URL, env.NEXT_PUBLIC_WWW_URL];
 const wwwConfig: NextConfig = merge({}, baseConfig, {
   allowedDevOrigins: localAllowedDevOrigins(localDevUrls),
 
+  async redirects() {
+    return [
+      {
+        source: "/",
+        destination: "/v2",
+        permanent: false,
+      },
+      {
+        source: "/blog",
+        destination: "/v2/blog",
+        permanent: false,
+      },
+      {
+        source: "/brand",
+        destination: "/v2/brand",
+        permanent: false,
+      },
+      {
+        source: "/company",
+        destination: "/v2/brand",
+        permanent: false,
+      },
+      {
+        source: "/company/:path*",
+        destination: "/v2/brand",
+        permanent: false,
+      },
+      {
+        source: "/pricing",
+        destination: "/v2",
+        permanent: false,
+      },
+      {
+        source: "/use-cases/:path*",
+        destination: "/v2",
+        permanent: false,
+      },
+      {
+        source: "/careers",
+        destination: "/v2/brand",
+        permanent: false,
+      },
+      {
+        source: "/careers/:path*",
+        destination: "/v2/brand",
+        permanent: false,
+      },
+      {
+        source: "/blog/rss.xml",
+        destination: "/v2/blog",
+        permanent: false,
+      },
+      {
+        source: "/blog/atom.xml",
+        destination: "/v2/blog",
+        permanent: false,
+      },
+      {
+        source: "/blog/feed.xml",
+        destination: "/v2/blog",
+        permanent: false,
+      },
+      {
+        source: "/blog/topic/:path*",
+        destination: "/v2/blog",
+        permanent: false,
+      },
+      {
+        source: "/blog/:path*",
+        destination: "/v2/blog/:path*",
+        permanent: false,
+      },
+      {
+        source: "/changelog",
+        destination: "/v2/blog",
+        permanent: false,
+      },
+      {
+        source: "/changelog/:path*",
+        destination: "/v2/blog",
+        permanent: false,
+      },
+      {
+        source: "/legal/:path*",
+        destination: "/v2/brand",
+        permanent: false,
+      },
+      {
+        source: "/search",
+        destination: "/v2/blog",
+        permanent: false,
+      },
+      {
+        source: "/pitch-deck",
+        destination: "/v2",
+        permanent: false,
+      },
+    ];
+  },
+
   images: {
     qualities: [10, 75, 100],
   },

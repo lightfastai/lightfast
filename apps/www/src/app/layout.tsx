@@ -121,16 +121,8 @@ export default function RootLayout({
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "Lightfast – The Operating Layer for Agents and Apps",
+    name: "Lightfast",
     url: "https://lightfast.ai",
-    potentialAction: {
-      "@type": "SearchAction",
-      target: {
-        "@type": "EntryPoint",
-        urlTemplate: "https://lightfast.ai/search?q={search_term_string}",
-      },
-      "query-input": "required name=search_term_string",
-    },
   } as const;
 
   return (

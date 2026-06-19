@@ -5,10 +5,10 @@ import { JsonLd } from "@vendor/seo/json-ld";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { ComponentProps } from "react";
-import { mdxComponents } from "~/app/(v1)/(content)/_lib/mdx-components";
-import { getBrandPage } from "~/app/(v1)/(content)/_lib/source";
 import { buildOrganizationEntity, buildWebSiteEntity } from "~/lib/builders";
 import { createMetadata } from "~/lib/content-seo";
+import { mdxComponents } from "~/lib/content/mdx-components";
+import { getBrandPage } from "~/lib/content/source";
 
 export const dynamic = "force-static";
 

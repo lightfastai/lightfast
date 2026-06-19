@@ -103,7 +103,7 @@ export function buildBlogPostJsonLd(
         : []),
       buildBreadcrumbList([
         { name: "Home", url: "https://lightfast.ai" },
-        { name: "Blog", url: "https://lightfast.ai/blog" },
+        { name: "Blog", url: "https://lightfast.ai/v2/blog" },
         { name: data.title, url },
       ]),
     ],
@@ -123,7 +123,7 @@ export function buildBlogCategoryJsonLd(
     "@type": "BlogPosting",
     headline: p.title,
     description: p.description,
-    url: `https://lightfast.ai/blog/${p.slug}`,
+    url: `https://lightfast.ai/v2/blog/${p.slug}`,
     datePublished: p.publishedAt,
     dateModified: p.updatedAt,
     articleSection: meta.title,
@@ -138,7 +138,7 @@ export function buildBlogCategoryJsonLd(
       (p, idx): ListItem => ({
         "@type": "ListItem",
         position: idx + 1,
-        url: `https://lightfast.ai/blog/${p.slug}`,
+        url: `https://lightfast.ai/v2/blog/${p.slug}`,
         name: p.title,
       })
     ),
@@ -175,7 +175,7 @@ export function buildBlogCategoryJsonLd(
       buildFaqEntity([...meta.faq], url),
       buildBreadcrumbList([
         { name: "Home", url: "https://lightfast.ai" },
-        { name: "Blog", url: "https://lightfast.ai/blog" },
+        { name: "Blog", url: "https://lightfast.ai/v2/blog" },
         { name: meta.title, url },
       ]),
     ],

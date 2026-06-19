@@ -1,7 +1,7 @@
 import type { Metadata, Route } from "next";
 import Link from "next/link";
-import { getBlogPages } from "~/app/(v1)/(content)/_lib/source";
 import { createMetadata } from "~/lib/content-seo";
+import { getBlogPages } from "~/lib/content/source";
 
 export const dynamic = "force-static";
 

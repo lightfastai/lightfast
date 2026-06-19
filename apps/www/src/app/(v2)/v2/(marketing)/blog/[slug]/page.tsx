@@ -1,10 +1,12 @@
+import { JsonLd } from "@vendor/seo/json-ld";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import {
   getBlogPage,
   getBlogPages,
-} from "~/app/(v1)/(content)/_lib/source";
-import { createArticleMetadata } from "~/lib/content-seo";
+} from "~/lib/content/source";
+import { emitBlogPostSeo } from "~/lib/seo-bundle";
+import type { BlogPostUrl } from "~/lib/url-types";
 import { Landing } from "./_components/landing";
 import { markdownComponents } from "./_components/markdown";
 import { Toc, type TocItem } from "./_components/toc";
@@ -56,53 +58,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {};
   }
 
-  const canonicalUrl = `https://lightfast.ai/v2/blog/${slug}`;
+  const canonicalUrl = `https://lightfast.ai/v2/blog/${slug}` as BlogPostUrl;
 
-  return createArticleMetadata(
-    {
-      title: `${page.data.title} | Lightfast`,
-      description: page.data.description,
-      keywords: page.data.keywords,
-      authors: page.data.authors.map((author) => ({
-        name: author.name,
-        url: author.url,
-      })),
-      creator: "Lightfast",
-      publisher: "Lightfast",
-      robots: {
-        index: !page.data.noindex,
-        follow: !page.data.nofollow,
-        googleBot: {
-          index: !page.data.noindex,
-          follow: !page.data.nofollow,
-          "max-video-preview": -1,
-          "max-image-preview": "large",
-          "max-snippet": -1,
-        },
-      },
-      alternates: { canonical: canonicalUrl },
-      openGraph: {
-        title: page.data.ogTitle,
-        description: page.data.ogDescription,
-        url: canonicalUrl,
-        siteName: "Lightfast",
-        locale: "en_US",
-        authors: page.data.authors.map((author) => author.url),
-      },
-      twitter: {
-        card: "summary_large_image",
-        title: page.data.ogTitle,
-        description: page.data.ogDescription,
-        site: "@lightfastai",
-        creator: "@lightfastai",
-      },
-      category: "Technology",
-    },
-    {
-      publishedAt: page.data.publishedAt,
-      updatedAt: page.data.updatedAt,
-    }
-  );
+  return emitBlogPostSeo(page.data, canonicalUrl).metadata;
 }
 
 export default async function BlogPostPage({ params }: Props) {
@@ -112,11 +70,14 @@ export default async function BlogPostPage({ params }: Props) {
     notFound();
   }
 
+  const canonicalUrl = `https://lightfast.ai/v2/blog/${slug}` as BlogPostUrl;
   const MDXContent = page.data.body;
-  const { title, description, featuredImage, tldr } = page.data;
+  const { title, description, featuredImage, tldr, answerSummary } = page.data;
+  const { jsonLd } = emitBlogPostSeo(page.data, canonicalUrl);
 
   return (
     <main className="bg-background text-foreground">
+      <JsonLd code={jsonLd} />
       <Landing
         description={description}
         featuredImage={featuredImage}
@@ -131,6 +92,16 @@ export default async function BlogPostPage({ params }: Props) {
           </aside>
 
           <article className="max-w-none lg:col-span-7 lg:col-start-5">
+            {answerSummary ? (
+              <aside className="mb-10 border-border border-l pl-5">
+                <h2 className="font-medium text-foreground text-sm">
+                  Quick answer
+                </h2>
+                <p className="mt-3 text-muted-foreground text-sm leading-6">
+                  {answerSummary}
+                </p>
+              </aside>
+            ) : null}
             <MDXContent components={markdownComponents} />
           </article>
         </div>
