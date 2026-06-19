@@ -87,6 +87,14 @@ function ctx(input: { isAdmin?: boolean } = {}) {
   };
 }
 
+function catalogCtx(input: { canManage?: boolean } = {}) {
+  return {
+    db: {} as Database,
+    organization: { orgId: "org_acme" },
+    viewer: { canManage: input.canManage ?? true },
+  };
+}
+
 describe("developer connection services", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -154,16 +162,38 @@ describe("developer connection services", () => {
   });
 
   it("lists the four provider catalog rows with admin manage state", async () => {
-    await expect(listDeveloperConnectionsForOrg(ctx())).resolves.toEqual([
-      expect.objectContaining({ provider: "pscale", canManage: true }),
-      expect.objectContaining({ provider: "upstash", canManage: true }),
-      expect.objectContaining({ provider: "sentry", canManage: true }),
-      expect.objectContaining({ provider: "clerk", canManage: true }),
-    ]);
+    await expect(listDeveloperConnectionsForOrg(catalogCtx())).resolves.toEqual(
+      [
+        expect.objectContaining({ provider: "pscale", canManage: true }),
+        expect.objectContaining({ provider: "upstash", canManage: true }),
+        expect.objectContaining({ provider: "sentry", canManage: true }),
+        expect.objectContaining({ provider: "clerk", canManage: true }),
+      ]
+    );
+
+    expect(listCurrentDeveloperConnectionsMock).toHaveBeenCalledWith(
+      expect.anything(),
+      { clerkOrgId: "org_acme" }
+    );
+  });
+
+  it("marks developer connections unavailable when the viewer cannot manage them", async () => {
+    await expect(
+      listDeveloperConnectionsForOrg(catalogCtx({ canManage: false }))
+    ).resolves.toContainEqual(
+      expect.objectContaining({
+        canManage: false,
+        connectAvailability: {
+          reason: "permission_required",
+          status: "unavailable",
+        },
+        provider: "sentry",
+      })
+    );
   });
 
   it("keeps the local catalog in sync with the canonical provider list", async () => {
-    const rows = await listDeveloperConnectionsForOrg(ctx());
+    const rows = await listDeveloperConnectionsForOrg(catalogCtx());
     expect(rows.map((row) => row.provider)).toEqual([
       ...DEVELOPER_CONNECTION_PROVIDERS,
     ]);

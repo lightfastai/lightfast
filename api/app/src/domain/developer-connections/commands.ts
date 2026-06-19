@@ -34,7 +34,7 @@ type ListDeveloperConnectionsResult = Awaited<
   ReturnType<typeof listDeveloperConnectionsForOrg>
 >;
 
-interface DeveloperConnectionServiceContext {
+interface DeveloperConnectionMutationServiceContext {
   auth: {
     access: Extract<AuthAccess, { kind: "clerk-session" }>;
     identity: Extract<AuthIdentity, { type: "active" }>;
@@ -122,9 +122,11 @@ export const listDeveloperConnectionsCommand = defineCommand<
   run: async ({ ctx, deps }) => {
     const actor = requireBoundClerkOrgActor(ctx);
     try {
-      return await deps.listDeveloperConnectionsForOrg(
-        serviceContextForActor(actor, deps)
-      );
+      return await deps.listDeveloperConnectionsForOrg({
+        db: deps.db,
+        organization: { orgId: actor.orgId },
+        viewer: { canManage: actor.orgRole === "admin" },
+      });
     } catch (error) {
       throw mapDeveloperConnectionServiceError(
         error,
@@ -271,7 +273,7 @@ function serviceContextForActor(
     orgId: string;
   },
   deps: DeveloperConnectionCommandDeps
-): DeveloperConnectionServiceContext {
+): DeveloperConnectionMutationServiceContext {
   return {
     auth: {
       access: accessForActor(actor),
