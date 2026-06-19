@@ -11,11 +11,9 @@ import {
   githubPrWebhookEventSchema,
   githubPrWebhookPayloadSchema,
   githubPushWebhookPayloadSchema,
-  githubWebhookHeadersSchema,
   normalizeGitHubPrWebhookPayload,
   normalizeGitHubPushWebhookPayload,
 } from "@lightfast/connector-github/contract";
-import { verifyGitHubWebhookSignature } from "@lightfast/connector-github/node";
 import {
   matchesAnyWatchedPath,
   sourceControlRepositoryPushEventSchema,
@@ -23,28 +21,12 @@ import {
 } from "@repo/source-control-contract";
 import { log } from "@vendor/observability/log/next";
 
-import { env } from "../../../env";
 import { inngest } from "../../../inngest/client";
 
 const ZERO_SHA = "0".repeat(40);
 
 function response(status: number, body: Record<string, unknown>) {
   return Response.json(body, { status });
-}
-
-function readHeaders(request: Request) {
-  return githubWebhookHeadersSchema.safeParse({
-    deliveryId: request.headers.get("x-github-delivery"),
-    event: request.headers.get("x-github-event"),
-    signature256: request.headers.get("x-hub-signature-256"),
-  });
-}
-
-function readWebhookLogHeaders(request: Request) {
-  return {
-    deliveryId: request.headers.get("x-github-delivery"),
-    event: request.headers.get("x-github-event"),
-  };
 }
 
 function webhookRejectionMeta(input: {
@@ -154,89 +136,37 @@ async function handleGitHubPrWebhook(input: {
   return response(202, { ok: true });
 }
 
-export async function handleGitHubWebhook(input: {
-  request: Request;
+export async function handleVerifiedGitHubWebhook(input: {
+  body: string;
+  deliveryId: string;
+  event: string;
 }): Promise<Response> {
-  const secret = env.GITHUB_APP_WEBHOOK_SECRET;
-  if (!secret) {
-    log.error(
-      "[github-webhook] rejected",
-      webhookRejectionMeta({
-        ...readWebhookLogHeaders(input.request),
-        reason: "missing_webhook_secret",
-        status: 500,
-      })
-    );
-    return response(500, { ok: false });
-  }
-
-  const body = await input.request.text();
-  const signature256 = input.request.headers.get("x-hub-signature-256");
-  if (!signature256) {
-    logWebhookRejection({
-      ...readWebhookLogHeaders(input.request),
-      reason: "missing_signature",
-      status: 401,
-    });
-    return response(401, { ok: false });
-  }
-
-  const parsedHeaders = readHeaders(input.request);
-  if (!parsedHeaders.success) {
-    logWebhookRejection({
-      ...readWebhookLogHeaders(input.request),
-      reason: "invalid_headers",
-      status: 400,
-    });
-    return response(400, { ok: false });
-  }
-
-  const headers = parsedHeaders.data;
-  const signatureOk = verifyGitHubWebhookSignature({
-    body,
-    secret,
-    signature256: headers.signature256,
-  });
-  if (!signatureOk) {
-    logWebhookRejection({
-      deliveryId: headers.deliveryId,
-      event: headers.event,
-      reason: "invalid_signature",
-      status: 401,
-    });
-    return response(401, { ok: false });
-  }
-
   const isPrWebhookEvent = githubPrWebhookEventSchema.safeParse(
-    headers.event
+    input.event
   ).success;
-  if (
-    headers.event !== "ping" &&
-    headers.event !== "push" &&
-    !isPrWebhookEvent
-  ) {
+  if (input.event !== "ping" && input.event !== "push" && !isPrWebhookEvent) {
     return response(202, { ok: true, ignored: true });
   }
 
   let json: unknown;
   try {
-    json = JSON.parse(body);
+    json = JSON.parse(input.body);
   } catch {
     logWebhookRejection({
-      deliveryId: headers.deliveryId,
-      event: headers.event,
+      deliveryId: input.deliveryId,
+      event: input.event,
       reason: "malformed_json",
       status: 400,
     });
     return response(400, { ok: false });
   }
 
-  if (headers.event === "ping") {
+  if (input.event === "ping") {
     const parsedPing = githubPingWebhookPayloadSchema.safeParse(json);
     if (!parsedPing.success) {
       logWebhookRejection({
-        deliveryId: headers.deliveryId,
-        event: headers.event,
+        deliveryId: input.deliveryId,
+        event: input.event,
         reason: "invalid_ping_payload",
         status: 400,
       });
@@ -247,8 +177,8 @@ export async function handleGitHubWebhook(input: {
 
   if (isPrWebhookEvent) {
     return await handleGitHubPrWebhook({
-      deliveryId: headers.deliveryId,
-      event: headers.event,
+      deliveryId: input.deliveryId,
+      event: input.event,
       json,
     });
   }
@@ -256,8 +186,8 @@ export async function handleGitHubWebhook(input: {
   const parsedPush = githubPushWebhookPayloadSchema.safeParse(json);
   if (!parsedPush.success) {
     logWebhookRejection({
-      deliveryId: headers.deliveryId,
-      event: headers.event,
+      deliveryId: input.deliveryId,
+      event: input.event,
       reason: "invalid_push_payload",
       status: 400,
     });
@@ -266,8 +196,8 @@ export async function handleGitHubWebhook(input: {
 
   const push = normalizeGitHubPushWebhookPayload(parsedPush.data);
   const deliveryRecord = await recordSourceControlWebhookDeliveryReceived(db, {
-    deliveryId: headers.deliveryId,
-    event: headers.event,
+    deliveryId: input.deliveryId,
+    event: input.event,
     providerInstallationId: push.providerInstallationId,
     providerRepositoryId: push.providerRepositoryId,
   });
@@ -279,7 +209,7 @@ export async function handleGitHubWebhook(input: {
 
   if (push.afterSha === ZERO_SHA) {
     await markSourceControlWebhookDeliveryStatus(db, {
-      deliveryId: headers.deliveryId,
+      deliveryId: input.deliveryId,
       status: "ignored",
     });
     return response(202, { ok: true, ignored: true });
@@ -291,7 +221,7 @@ export async function handleGitHubWebhook(input: {
   });
   if (!binding || binding.status !== "active") {
     await markSourceControlWebhookDeliveryStatus(db, {
-      deliveryId: headers.deliveryId,
+      deliveryId: input.deliveryId,
       status: "ignored",
     });
     return response(202, { ok: true, ignored: true });
@@ -303,7 +233,7 @@ export async function handleGitHubWebhook(input: {
   });
   if (!watch) {
     await markSourceControlWebhookDeliveryStatus(db, {
-      deliveryId: headers.deliveryId,
+      deliveryId: input.deliveryId,
       status: "ignored",
     });
     return response(202, { ok: true, ignored: true });
@@ -311,7 +241,7 @@ export async function handleGitHubWebhook(input: {
 
   if (watch.syncStatus !== "enabled") {
     await markSourceControlWebhookDeliveryStatus(db, {
-      deliveryId: headers.deliveryId,
+      deliveryId: input.deliveryId,
       status: "ignored",
     });
     return response(202, { ok: true, ignored: true });
@@ -319,7 +249,7 @@ export async function handleGitHubWebhook(input: {
 
   if (watch.watchedPathGlobs === null) {
     await markSourceControlWebhookDeliveryStatus(db, {
-      deliveryId: headers.deliveryId,
+      deliveryId: input.deliveryId,
       status: "ignored",
     });
     return response(202, { ok: true, ignored: true });
@@ -334,7 +264,7 @@ export async function handleGitHubWebhook(input: {
 
   if (!(changedPathsMatch || shouldConservativelyQueue)) {
     await markSourceControlWebhookDeliveryStatus(db, {
-      deliveryId: headers.deliveryId,
+      deliveryId: input.deliveryId,
       status: "ignored",
     });
     return response(202, { ok: true, ignored: true });
@@ -342,7 +272,7 @@ export async function handleGitHubWebhook(input: {
 
   const event = sourceControlRepositoryPushEventSchema.parse({
     ...push,
-    deliveryId: headers.deliveryId,
+    deliveryId: input.deliveryId,
     orgSourceControlBindingId: binding.id,
     repositoryWatchId: watch.id,
   });
@@ -351,7 +281,7 @@ export async function handleGitHubWebhook(input: {
     data: event,
   });
   await markSourceControlWebhookDeliveryStatus(db, {
-    deliveryId: headers.deliveryId,
+    deliveryId: input.deliveryId,
     status: "queued",
   });
 
