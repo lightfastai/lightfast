@@ -220,6 +220,32 @@ describe("signal domain commands", () => {
     });
   });
 
+  it("rejects API-key signal creation without the write scope", async () => {
+    await expect(
+      createSignalCommand.run({
+        ctx: {
+          actor: {
+            createdByUserId: "user_test",
+            keyId: "key_test",
+            kind: "apiKey",
+            orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
+            orgId: "org_test",
+            scopes: ["api:signals:read"],
+          },
+        },
+        deps: deps(),
+        input: { input: "new signal" },
+      })
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        code: "API_KEY_SCOPE_REQUIRED",
+        kind: "authz",
+      })
+    );
+
+    expect(createSignalForActorMock).not.toHaveBeenCalled();
+  });
+
   it("creates a signal as an MCP client actor with grant attribution", async () => {
     await expect(
       createSignalCommand.run({
@@ -280,6 +306,32 @@ describe("signal domain commands", () => {
         publicId: signalRow.publicId,
       }
     );
+  });
+
+  it("rejects API-key signal reads without the read scope", async () => {
+    await expect(
+      getSignalCommand.run({
+        ctx: {
+          actor: {
+            createdByUserId: "user_test",
+            keyId: "key_test",
+            kind: "apiKey",
+            orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
+            orgId: "org_test",
+            scopes: ["api:signals:write"],
+          },
+        },
+        deps: deps(),
+        input: { publicId: signalRow.publicId },
+      })
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        code: "API_KEY_SCOPE_REQUIRED",
+        kind: "authz",
+      })
+    );
+
+    expect(getVisibleSignalByPublicIdMock).not.toHaveBeenCalled();
   });
 
   it("loads signal detail as an MCP client actor using creator visibility", async () => {

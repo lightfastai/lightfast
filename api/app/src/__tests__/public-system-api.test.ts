@@ -30,6 +30,7 @@ function verifyResult(overrides: Partial<Record<string, unknown>> = {}) {
       identity: { externalId: "org_test", id: "identity_test" },
       keyId: "key_test",
       meta: { createdByUserId: "user_test" },
+      permissions: ["api:signals:read", "api:signals:write"],
       valid: true,
       ...overrides,
     },
