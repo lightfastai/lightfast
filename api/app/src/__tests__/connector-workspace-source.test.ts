@@ -18,6 +18,8 @@ const oldGranolaPath = `packages/${"granola-app-node"}`;
 const oldProviderRoutineContractPackage = `@repo/${"provider-routine-contract"}`;
 const oldProviderRoutineContractPath = `packages/${"provider-routine-contract"}`;
 const oldConnectorCoreProviderRoutinesSubpath = `@lightfast/connector-core/${"provider-routines"}`;
+const oldUserConnectorContractPackage = `@repo/${"user-connector-contract"}`;
+const oldUserConnectorContractPath = `packages/${"user-connector-contract"}`;
 
 const ignoredDirs = new Set([
   ".git",
@@ -159,6 +161,46 @@ describe("connector workspace boundary", () => {
           contents.includes(oldProviderRoutineContractPackage) ||
           contents.includes(oldProviderRoutineContractPath) ||
           contents.includes(oldConnectorCoreProviderRoutinesSubpath)
+        );
+      })
+      .map((path) => relative(repoRoot, path))
+      .sort();
+
+    expect(staleReferences).toEqual([]);
+  });
+
+  it("keeps user connector chat tool contracts in api-contract", () => {
+    const aiPackage = readJson<{
+      dependencies?: Record<string, string>;
+    }>("ai/package.json");
+    const apiAppPackage = readJson<{
+      dependencies?: Record<string, string>;
+    }>("api/app/package.json");
+    const apiContractPackage = readJson<{
+      exports?: Record<string, unknown>;
+    }>("packages/api-contract/package.json");
+    const apiContractIndexSource = source("packages/api-contract/src/index.ts");
+
+    expect(existsSync(resolve(repoRoot, oldUserConnectorContractPath))).toBe(
+      false
+    );
+    expect(
+      aiPackage.dependencies?.[oldUserConnectorContractPackage]
+    ).toBeUndefined();
+    expect(
+      apiAppPackage.dependencies?.[oldUserConnectorContractPackage]
+    ).toBeUndefined();
+    expect(apiContractPackage.exports).not.toHaveProperty("./user-connectors");
+    expect(apiContractIndexSource).toContain("userConnectorCallInputSchema");
+    expect(apiContractIndexSource).toContain("userConnectorFindInputSchema");
+
+    const staleReferences = workspaceFilesToScan()
+      .filter((path) => !relative(repoRoot, path).startsWith(".codex/"))
+      .filter((path) => {
+        const contents = readFileSync(path, "utf8");
+        return (
+          contents.includes(oldUserConnectorContractPackage) ||
+          contents.includes(oldUserConnectorContractPath)
         );
       })
       .map((path) => relative(repoRoot, path))

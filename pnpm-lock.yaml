@@ -482,9 +482,6 @@ importers:
       '@repo/identity-contract':
         specifier: workspace:*
         version: link:../packages/identity-contract
-      '@repo/user-connector-contract':
-        specifier: workspace:*
-        version: link:../packages/user-connector-contract
       '@vendor/ai':
         specifier: workspace:*
         version: link:../vendor/ai
@@ -585,9 +582,6 @@ importers:
       '@repo/source-control-contract':
         specifier: workspace:*
         version: link:../../packages/source-control-contract
-      '@repo/user-connector-contract':
-        specifier: workspace:*
-        version: link:../../packages/user-connector-contract
       '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
@@ -2754,31 +2748,6 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
-
-  packages/user-connector-contract:
-    dependencies:
-      '@repo/api-contract':
-        specifier: workspace:*
-        version: link:../api-contract
-      zod:
-        specifier: 'catalog:'
-        version: 4.3.6
-    devDependencies:
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../internal/typescript
-      '@repo/vitest-config':
-        specifier: workspace:*
-        version: link:../../internal/vitest-config
-      '@types/node':
-        specifier: 'catalog:'
-        version: 24.9.1
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@24.9.1)(@vitest/browser-playwright@4.1.4)(@vitest/coverage-v8@4.1.4)(happy-dom@20.9.0)(msw@2.14.6(@types/node@24.9.1)(typescript@5.9.3))(vite@8.0.16(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   vendor/aeo:
     devDependencies:

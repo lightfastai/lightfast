@@ -121,3 +121,21 @@ export {
   signalVisibilityScopeSchema,
 } from "./schemas/signals";
 export { type SystemHealthOutput, systemHealthOutput } from "./schemas/system";
+export {
+  parseUserConnectorRoutineId,
+  type UserConnectorCallInput,
+  type UserConnectorCallSuccess,
+  type UserConnectorFindInput,
+  type UserConnectorFindOutput,
+  type UserConnectorRoutineId,
+  type UserConnectorRoutineSummary,
+  type UserConnectorToolName,
+  userConnectorCallInputSchema,
+  userConnectorCallSuccessSchema,
+  userConnectorFindInputSchema,
+  userConnectorFindOutputSchema,
+  userConnectorRoutineId,
+  userConnectorRoutineIdSchema,
+  userConnectorRoutineSummarySchema,
+  userConnectorToolNameSchema,
+} from "./user-connectors";

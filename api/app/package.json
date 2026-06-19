@@ -267,7 +267,6 @@
     "@repo/service-jwt": "workspace:*",
     "@repo/skills-contract": "workspace:*",
     "@repo/source-control-contract": "workspace:*",
-    "@repo/user-connector-contract": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "catalog:",

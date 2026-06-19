@@ -3,13 +3,11 @@ import {
   providerRoutineCallSuccessSchema,
   providerRoutineFindInputSchema,
   providerRoutineFindOutputSchema,
-} from "@repo/api-contract";
-import {
   userConnectorCallInputSchema,
   userConnectorCallSuccessSchema,
   userConnectorFindInputSchema,
   userConnectorFindOutputSchema,
-} from "@repo/user-connector-contract";
+} from "@repo/api-contract";
 import {
   type FlexibleSchema,
   type InferUITools,
