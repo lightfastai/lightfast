@@ -1,4 +1,4 @@
-import type { OrgSetupRequirement } from "@repo/app-setup-contract";
+import type { OrgSetupRequirement } from "@repo/api-contract";
 
 export function isOrgSetupPath(slug: string, pathname: string) {
   if (pathname === `/${slug}/tasks`) {

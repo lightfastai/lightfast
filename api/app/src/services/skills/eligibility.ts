@@ -4,7 +4,7 @@ import {
   type OrgSourceControlBinding,
   type SourceControlRepository,
 } from "@db/app";
-import { githubLightfastRepositoryProofSchema } from "@repo/app-setup-contract";
+import { githubLightfastRepositoryProofSchema } from "@repo/api-contract";
 import { ConflictError } from "../../domain/errors";
 
 export function isVerifiedLightfastSkillRepository(input: {

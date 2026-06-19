@@ -6,12 +6,10 @@ import {
   getSignalOutput,
   listSignalsInput,
   listSignalsOutput,
-} from "@repo/api-contract";
-import {
   type OrgSetupRequirement,
   orgSetupRequirementSchema,
   repairIdForSetupRequirement,
-} from "@repo/app-setup-contract";
+} from "@repo/api-contract";
 import { z } from "zod";
 
 import {

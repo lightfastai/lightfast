@@ -6,7 +6,7 @@
  * parsing prose messages.
  */
 
-import type { OrgSetupRepairId } from "@repo/app-setup-contract";
+import type { OrgSetupRepairId } from "@repo/api-contract";
 
 export const DIAGNOSTIC_CAUSE_KIND = "lightfast.diagnostic" as const;
 

@@ -5,7 +5,7 @@ import {
   Unlink02Icon as Unplug,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { LIGHTFAST_REPOSITORY_NAME } from "@repo/app-setup-contract";
+import { LIGHTFAST_REPOSITORY_NAME } from "@repo/api-contract";
 import { Icons } from "@repo/ui/components/icons";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";

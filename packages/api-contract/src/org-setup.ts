@@ -47,24 +47,6 @@ export function repairIdForSetupRequirement(
   }
 }
 
-export function pathForSetupRequirement(input: {
-  orgSlug: string;
-  requirement: OrgSetupRequirement;
-}): string {
-  switch (input.requirement) {
-    case "github_org":
-      return `/${input.orgSlug}/tasks/bind`;
-    case "github_lightfast_repo":
-      return `/${input.orgSlug}/tasks/github/lightfast-repo`;
-    case "x_connector":
-      return `/${input.orgSlug}/tasks/connectors/x`;
-    default: {
-      const exhaustive: never = input.requirement;
-      return exhaustive;
-    }
-  }
-}
-
 export const githubLightfastRepositoryProofSchema = z.object({
   fullName: z.string().min(1),
   id: z.string().min(1),

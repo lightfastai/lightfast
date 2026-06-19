@@ -11,8 +11,8 @@
  * stale web-session routing UX should fail or be repaired asynchronously.
  */
 
+import type { OrgSetupGate } from "@repo/api-contract";
 import type { LightfastSessionClaims } from "@repo/app-clerk-claim";
-import type { OrgSetupGate } from "@repo/app-setup-contract";
 import { clerkClient } from "@vendor/clerk/server";
 import { log } from "@vendor/observability/log/next";
 

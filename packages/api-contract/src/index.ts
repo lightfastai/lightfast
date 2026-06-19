@@ -51,6 +51,21 @@ export {
   type McpToolPolicyEntry,
 } from "./mcp";
 export {
+  APP_SETUP_ERROR_CODES,
+  type AppSetupErrorCode,
+  appSetupErrorCodeSchema,
+  type GitHubLightfastRepositoryProof,
+  githubLightfastRepositoryProofSchema,
+  LIGHTFAST_REPOSITORY_NAME,
+  ORG_SETUP_REQUIREMENTS,
+  type OrgSetupGate,
+  type OrgSetupRepairId,
+  type OrgSetupRequirement,
+  orgSetupGateSchema,
+  orgSetupRequirementSchema,
+  repairIdForSetupRequirement,
+} from "./org-setup";
+export {
   type McpProviderRoutineActor,
   type McpProviderRoutineCallCommandInput,
   type McpProviderRoutineFindCommandInput,

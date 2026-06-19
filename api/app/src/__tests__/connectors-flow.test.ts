@@ -52,6 +52,14 @@ const envMock = {
   X_OAUTH_ORIGIN: "https://x.test",
 };
 
+const testXConnectorOAuthRedirectPaths = {
+  accountTeams: () => "/account/teams",
+  connectorPage: ({ orgSlug }: { orgSlug: string }) => `/${orgSlug}/connectors`,
+  setupComplete: ({ orgSlug }: { orgSlug: string }) =>
+    `/${orgSlug}/tasks/connectors/x/complete`,
+  signIn: () => "/sign-in",
+};
+
 vi.mock("@db/app/client", () => ({ db: {} }));
 
 vi.mock("@db/app", () => ({
@@ -1528,6 +1536,7 @@ describe("X connector flow", () => {
     await expect(
       completeXConnectorOAuth({
         appOrigin: "https://app.lightfast.localhost",
+        redirectPaths: testXConnectorOAuthRedirectPaths,
         requestUrl: `https://app.lightfast.localhost/api/connectors/x/oauth/callback?code=code_123&state=${issued.state}`,
       })
     ).resolves.toEqual({
@@ -1621,6 +1630,7 @@ describe("X connector flow", () => {
     await expect(
       completeXConnectorOAuth({
         appOrigin: "https://app.lightfast.localhost",
+        redirectPaths: testXConnectorOAuthRedirectPaths,
         requestUrl: `https://app.lightfast.localhost/api/connectors/x/oauth/callback?code=code_123&state=${issued.state}`,
       })
     ).resolves.toEqual({
@@ -1675,6 +1685,7 @@ describe("X connector flow", () => {
     await expect(
       completeXConnectorOAuth({
         appOrigin: "https://app.lightfast.localhost",
+        redirectPaths: testXConnectorOAuthRedirectPaths,
         requestUrl: `https://app.lightfast.localhost/api/connectors/x/oauth/callback?code=code_123&state=${issued.state}`,
       })
     ).resolves.toEqual({
@@ -1731,6 +1742,7 @@ describe("X connector flow", () => {
     await expect(
       completeXConnectorOAuth({
         appOrigin: "https://app.lightfast.localhost",
+        redirectPaths: testXConnectorOAuthRedirectPaths,
         requestUrl: `https://app.lightfast.localhost/api/connectors/x/oauth/callback?code=code_123&state=${issued.state}`,
       })
     ).resolves.toEqual({

@@ -8,7 +8,7 @@ import {
   LockIcon as Lock,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import type { OrgSetupRequirement } from "@repo/app-setup-contract";
+import type { OrgSetupRequirement } from "@repo/api-contract";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";

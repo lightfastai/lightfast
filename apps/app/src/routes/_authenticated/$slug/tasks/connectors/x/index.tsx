@@ -1,7 +1,7 @@
 import { getOrganizationBySlug } from "@api/app/tanstack/organizations";
-import { pathForSetupRequirement } from "@repo/app-setup-contract";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { pathForSetupRequirement } from "~/org/setup/setup-paths";
 import { XConnectorSetupClient } from "~/org/setup/x-connector-setup-client";
 import {
   ORGANIZATION_STALE_TIME,
