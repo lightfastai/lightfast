@@ -1,4 +1,10 @@
 import {
+  apiContract,
+  type CreateSignalInput,
+  type GetSignalInput,
+  type GetSignalOutput,
+  lightfastMcpToolPolicy,
+  type McpScope,
   type ProviderRoutineCallInput,
   type ProviderRoutineCallSuccess,
   type ProviderRoutineFindInput,
@@ -6,14 +12,6 @@ import {
   type ProviderRoutineSourceSurface,
   providerRoutineCallInputSchema,
   providerRoutineFindInputSchema,
-} from "@lightfast/connector-core/provider-routines";
-import {
-  apiContract,
-  type CreateSignalInput,
-  type GetSignalInput,
-  type GetSignalOutput,
-  lightfastMcpToolPolicy,
-  type McpScope,
 } from "@repo/api-contract";
 import {
   createLightfastMcpToolDefinitions,

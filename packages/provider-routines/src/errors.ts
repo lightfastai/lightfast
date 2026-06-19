@@ -1,7 +1,7 @@
 import type {
   ProviderRoutineErrorCode,
   ProviderRoutineId,
-} from "@lightfast/connector-core/provider-routines";
+} from "@repo/api-contract";
 
 export class ProviderRoutineError extends Error {
   code: ProviderRoutineErrorCode;

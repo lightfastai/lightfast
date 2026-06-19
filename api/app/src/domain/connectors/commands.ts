@@ -1,10 +1,5 @@
 import type { Database } from "@db/app";
-import {
-  connectorProviderInputSchema,
-  connectorSetAgentEnabledInputSchema,
-  connectorSetAutomationEnabledInputSchema,
-  connectorStartConnectInputSchema,
-} from "@lightfast/connector-core";
+import { connectableConnectorProviderSchema } from "@repo/api-contract";
 import { z } from "zod";
 
 import type { AuthAccess, AuthIdentity } from "../../auth/identity";
@@ -109,6 +104,20 @@ const refreshConnectorToolsOutput =
   z.custom<RefreshConnectorToolsResult>(isRecord);
 const booleanFlagOutput = z.object({ enabled: z.boolean() });
 const disconnectConnectorOutput = z.object({ disconnected: z.boolean() });
+const connectorStartConnectInputSchema = z.object({
+  provider: connectableConnectorProviderSchema,
+});
+const connectorProviderInputSchema = z.object({
+  provider: connectableConnectorProviderSchema,
+});
+const connectorSetAutomationEnabledInputSchema = z.object({
+  provider: connectableConnectorProviderSchema,
+  enabled: z.boolean(),
+});
+const connectorSetAgentEnabledInputSchema = z.object({
+  provider: connectableConnectorProviderSchema,
+  enabled: z.boolean(),
+});
 
 export const listConnectorsCommand = defineCommand<
   "connectors.list",

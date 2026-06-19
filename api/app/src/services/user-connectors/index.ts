@@ -1,9 +1,5 @@
 import type { Database } from "@db/app";
-import type {
-  userConnectorProviderInputSchema,
-  userConnectorStartConnectInputSchema,
-} from "@lightfast/connector-core";
-import type { z } from "zod";
+import type { UserConnectorProvider } from "@repo/api-contract";
 import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 import { ValidationError } from "../../domain/errors";
 import {
@@ -17,12 +13,10 @@ interface UserConnectorOAuthServiceContext {
   headers: Headers;
 }
 
-type UserConnectorProviderInput = z.infer<
-  typeof userConnectorProviderInputSchema
->;
-type UserConnectorStartConnectInput = z.infer<
-  typeof userConnectorStartConnectInputSchema
->;
+interface UserConnectorProviderInput {
+  provider: UserConnectorProvider;
+}
+type UserConnectorStartConnectInput = UserConnectorProviderInput;
 
 export { listUserConnectorsForViewer } from "./catalog";
 export {

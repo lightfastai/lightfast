@@ -83,7 +83,7 @@ vi.mock("@repo/ai/workspace-assistant", async () => {
   };
 });
 
-vi.mock("@lightfast/connector-core/provider-routines", () => ({
+vi.mock("@repo/api-contract", () => ({
   providerRoutineCallInputSchema: { kind: "provider-call-input" },
   providerRoutineCallSuccessSchema: { kind: "provider-call-success" },
   providerRoutineFindInputSchema: { kind: "provider-find-input" },

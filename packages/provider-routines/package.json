@@ -20,6 +20,7 @@
     "@db/app": "workspace:*",
     "@lightfast/connector-core": "workspace:*",
     "@lightfast/connector-linear": "workspace:*",
+    "@repo/api-contract": "workspace:*",
     "@repo/app-encryption": "workspace:*"
   },
   "devDependencies": {

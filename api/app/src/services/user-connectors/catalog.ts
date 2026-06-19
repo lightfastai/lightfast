@@ -1,6 +1,5 @@
 import type { Database, UserConnectorConnection } from "@db/app";
 import { listCurrentUserConnectorConnections } from "@db/app";
-import { USER_CONNECTOR_CATALOG } from "@lightfast/connector-core";
 import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 
 export interface UserConnectorServiceContext {
@@ -33,6 +32,26 @@ export interface UserConnectorCatalogRow {
   ownerType: "user";
   provider: "granola";
 }
+
+const USER_CONNECTOR_CATALOG = [
+  {
+    provider: "granola",
+    displayName: "Granola",
+    description:
+      "Search and reference your private Granola meeting notes in Lightfast chats.",
+    builder: "Granola",
+    category: "Meeting notes",
+    catalogStatus: "available",
+  },
+] as const satisfies readonly Pick<
+  UserConnectorCatalogRow,
+  | "builder"
+  | "catalogStatus"
+  | "category"
+  | "description"
+  | "displayName"
+  | "provider"
+>[];
 
 export async function listUserConnectorsForViewer(
   ctx: UserConnectorServiceContext

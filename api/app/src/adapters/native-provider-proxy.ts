@@ -8,7 +8,7 @@ import {
   providerRoutineCallSuccessSchema,
   providerRoutineFindInputSchema,
   providerRoutineFindOutputSchema,
-} from "@lightfast/connector-core/provider-routines";
+} from "@repo/api-contract";
 import type { ProviderRoutineServiceContext } from "@repo/provider-routines";
 import { z } from "zod";
 

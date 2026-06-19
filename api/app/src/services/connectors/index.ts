@@ -1,11 +1,5 @@
 import type { Database } from "@db/app";
-import type {
-  connectorProviderInputSchema,
-  connectorSetAgentEnabledInputSchema,
-  connectorSetAutomationEnabledInputSchema,
-  connectorStartConnectInputSchema,
-} from "@lightfast/connector-core";
-import type { z } from "zod";
+import type { ConnectableConnectorProvider } from "@repo/api-contract";
 import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 import { ValidationError } from "../../domain/errors";
 import { listConnectorsForOrg } from "./catalog";
@@ -30,16 +24,16 @@ interface ConnectorServiceContext {
   headers: Headers;
 }
 
-type ConnectorProviderInput = z.infer<typeof connectorProviderInputSchema>;
-type ConnectorStartConnectInput = z.infer<
-  typeof connectorStartConnectInputSchema
->;
-type ConnectorSetAutomationEnabledInput = z.infer<
-  typeof connectorSetAutomationEnabledInputSchema
->;
-type ConnectorSetAgentEnabledInput = z.infer<
-  typeof connectorSetAgentEnabledInputSchema
->;
+interface ConnectorProviderInput {
+  provider: ConnectableConnectorProvider;
+}
+type ConnectorStartConnectInput = ConnectorProviderInput;
+type ConnectorSetAutomationEnabledInput = ConnectorProviderInput & {
+  enabled: boolean;
+};
+type ConnectorSetAgentEnabledInput = ConnectorProviderInput & {
+  enabled: boolean;
+};
 
 export {
   type ChatProviderRoutineContext,

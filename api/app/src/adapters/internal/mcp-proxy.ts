@@ -6,7 +6,7 @@ import {
   mcpProviderRoutineFindCommandInputSchema,
   providerRoutineCallSuccessSchema,
   providerRoutineFindOutputSchema,
-} from "@lightfast/connector-core/provider-routines";
+} from "@repo/api-contract";
 import { verifyServiceJWT } from "@repo/service-jwt";
 
 const noopProviderRoutineLog = {

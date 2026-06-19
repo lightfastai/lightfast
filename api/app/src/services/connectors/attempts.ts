@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { ConnectableConnectorProvider } from "@lightfast/connector-core";
+import type { ConnectableConnectorProvider } from "@repo/api-contract";
 import { nanoid } from "@vendor/lib";
 import { redis } from "@vendor/upstash";
 import { z } from "zod";

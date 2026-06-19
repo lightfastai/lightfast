@@ -1,6 +1,8 @@
 import type { Database, OrgConnectorConnection } from "@db/app";
-import type { ConnectableConnectorProvider } from "@lightfast/connector-core";
-import type { ProviderRoutineSourceSurface } from "@lightfast/connector-core/provider-routines";
+import type {
+  ConnectableConnectorProvider,
+  ProviderRoutineSourceSurface,
+} from "@repo/api-contract";
 
 export interface ProviderRoutineServiceLog {
   error(message: string, metadata?: Record<string, unknown>): void;

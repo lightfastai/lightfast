@@ -1,8 +1,5 @@
 import type { Database } from "@db/app";
-import {
-  userConnectorProviderInputSchema,
-  userConnectorStartConnectInputSchema,
-} from "@lightfast/connector-core";
+import { userConnectorProviderSchema } from "@repo/api-contract";
 import { z } from "zod";
 
 import type { AuthIdentity } from "../../auth/identity";
@@ -56,6 +53,12 @@ const startUserConnectorOutput = z.object({
 
 const disconnectUserConnectorOutput = z.object({
   disconnected: z.boolean(),
+});
+const userConnectorStartConnectInputSchema = z.object({
+  provider: userConnectorProviderSchema,
+});
+const userConnectorProviderInputSchema = z.object({
+  provider: userConnectorProviderSchema,
 });
 
 export const startUserConnectorCommand = defineCommand<

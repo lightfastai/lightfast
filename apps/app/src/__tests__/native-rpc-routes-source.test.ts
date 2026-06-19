@@ -101,12 +101,8 @@ describe("native RPC route boundaries", () => {
     expect(proxyFindRoute).toContain("handleNativeProviderRoutineFindRequest");
     expect(proxyCallRoute).not.toContain('@api/app/cli-api"');
     expect(proxyFindRoute).not.toContain('@api/app/cli-api"');
-    expect(proxyCallRoute).not.toContain(
-      "@lightfast/connector-core/provider-routines"
-    );
-    expect(proxyFindRoute).not.toContain(
-      "@lightfast/connector-core/provider-routines"
-    );
+    expect(proxyCallRoute).not.toContain("@repo/api-contract");
+    expect(proxyFindRoute).not.toContain("@repo/api-contract");
     expect(proxyCallRoute).not.toContain("~/server/native-proxy");
     expect(proxyFindRoute).not.toContain("~/server/native-proxy");
     expect(nativeProviderProxyAdapter).toContain(

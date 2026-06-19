@@ -27,7 +27,6 @@
     "@hookform/resolvers": "catalog:",
     "@hugeicons/core-free-icons": "catalog:",
     "@hugeicons/react": "catalog:",
-    "@lightfast/connector-core": "workspace:*",
     "@lightfast/connector-github": "workspace:*",
     "@repo/ai": "workspace:*",
     "@repo/api-contract": "workspace:*",
