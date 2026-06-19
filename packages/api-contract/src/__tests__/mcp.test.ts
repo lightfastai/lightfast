@@ -13,11 +13,13 @@ describe("lightfastMcpToolPolicy", () => {
     expect(getContractProcedurePaths(apiContract)).toEqual([
       "signals.create",
       "signals.get",
+      "signals.list",
       "system.health",
     ]);
     expect(Object.keys(lightfastMcpToolPolicy).sort()).toEqual([
       "signals.create",
       "signals.get",
+      "signals.list",
       "system.health",
     ]);
   });
@@ -43,6 +45,11 @@ describe("lightfastMcpToolPolicy", () => {
       scope: "mcp:signals:read",
       kind: "read",
       requiresBoundOrg: true,
+    } satisfies Partial<McpToolPolicyEntry>);
+    expect(lightfastMcpToolPolicy["signals.list"]).toMatchObject({
+      expose: false,
+      reason:
+        "The public SDK can list signals, but hosted MCP does not expose a broad signal-listing tool yet.",
     } satisfies Partial<McpToolPolicyEntry>);
   });
 

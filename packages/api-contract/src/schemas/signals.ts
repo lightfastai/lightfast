@@ -358,6 +358,23 @@ export const getSignalOutput = z.object({
   updatedAt: z.string(),
 });
 
+export const listSignalsInput = z
+  .object({
+    cursor: z.string().trim().min(1).optional(),
+    limit: z.coerce.number().int().min(1).max(100).default(50),
+    statuses: z.array(signalStatusSchema).max(4).optional(),
+  })
+  .strict();
+
+export const listSignalsOutputItem = getSignalOutput.omit({
+  entityLinks: true,
+});
+
+export const listSignalsOutput = z.object({
+  items: z.array(listSignalsOutputItem),
+  nextCursor: z.string().nullable(),
+});
+
 export type SignalVisibilityScope = z.infer<typeof signalVisibilityScopeSchema>;
 export type SignalReviewReason = z.infer<typeof signalReviewReasonSchema>;
 export type SignalClassification = z.infer<typeof signalClassificationSchema>;
@@ -386,3 +403,6 @@ export type CreateSignalOutput = z.infer<typeof createSignalOutput>;
 export type GetMcpSignalCommandInput = z.infer<typeof getMcpSignalCommandInput>;
 export type GetSignalInput = z.infer<typeof getSignalInput>;
 export type GetSignalOutput = z.infer<typeof getSignalOutput>;
+export type ListSignalsInput = z.infer<typeof listSignalsInput>;
+export type ListSignalsOutput = z.infer<typeof listSignalsOutput>;
+export type ListSignalsOutputItem = z.infer<typeof listSignalsOutputItem>;

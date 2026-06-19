@@ -4,12 +4,15 @@ import {
   createSignalOutput,
   getSignalInput,
   getSignalOutput,
+  listSignalsInput,
+  listSignalsOutput,
 } from "@repo/api-contract";
 import {
   type OrgSetupRequirement,
   orgSetupRequirementSchema,
   repairIdForSetupRequirement,
 } from "@repo/app-setup-contract";
+import { z } from "zod";
 
 import {
   type ApiKeyAuthResult,
@@ -22,6 +25,8 @@ import {
   createSignalCommandDeps,
   getSignalCommand,
   getSignalCommandDeps,
+  listProcessingSignalsCommand,
+  listProcessingSignalsCommandDeps,
 } from "../../domain/signals";
 
 type PublicApiStatus = 400 | 401 | 403 | 404 | 500;
@@ -95,6 +100,84 @@ function publicSignalContext(auth: ApiKeyAuthResult) {
   return {
     actor: actorFromApiKeyAuth(auth, ["api:signals:read", "api:signals:write"]),
     request: { id: requestId(), source: "public-api" as const },
+  };
+}
+
+const publicSignalListCursor = z
+  .object({
+    createdAt: z.string().datetime(),
+    id: z.number().int().positive(),
+  })
+  .strict();
+
+function encodePublicSignalListCursor(
+  cursor: { createdAt: Date; id: number } | null
+): string | null {
+  if (!cursor) {
+    return null;
+  }
+
+  return Buffer.from(
+    JSON.stringify({
+      createdAt: cursor.createdAt.toISOString(),
+      id: cursor.id,
+    }),
+    "utf8"
+  ).toString("base64url");
+}
+
+function decodePublicSignalListCursor(
+  cursor: string
+): { createdAt: Date; id: number } | null {
+  try {
+    const value = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8"));
+    const parsed = publicSignalListCursor.safeParse(value);
+    if (!parsed.success) {
+      return null;
+    }
+    return {
+      createdAt: new Date(parsed.data.createdAt),
+      id: parsed.data.id,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function parseListSignalsQuery(request: Request) {
+  const params = new URL(request.url).searchParams;
+  const statusValues = [
+    ...params.getAll("status"),
+    ...params.getAll("statuses"),
+  ]
+    .flatMap((value) => value.split(","))
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  return listSignalsInput.safeParse({
+    cursor: params.get("cursor") ?? undefined,
+    limit: params.get("limit") ?? undefined,
+    statuses: statusValues.length ? statusValues : undefined,
+  });
+}
+
+function serializeListedSignal(signal: {
+  classification: unknown;
+  createdAt: Date;
+  input: string;
+  publicId: string;
+  status: string;
+  updatedAt: Date;
+  visibilityScope: string;
+}) {
+  return {
+    id: signal.publicId,
+    input: signal.input,
+    status: signal.status,
+    classification: signal.classification,
+    visibilityScope: signal.visibilityScope,
+    createdAt: signal.createdAt.toISOString(),
+    updatedAt: signal.updatedAt.toISOString(),
   };
 }
 
@@ -173,6 +256,65 @@ async function requireBoundApiKeyAuth(
 
 export function handlePublicApiOptionsRequest(): Response {
   return withPublicApiCors(new Response(null, { status: 204 }));
+}
+
+export async function handleListSignalsPublicApiRequest(
+  request: Request
+): Promise<Response> {
+  const auth = await requireBoundApiKeyAuth(request);
+  if (isResponse(auth)) {
+    return auth;
+  }
+
+  const parsed = parseListSignalsQuery(request);
+  if (!parsed.success) {
+    return jsonError("invalid_request", "Signal list query is invalid.", 400, {
+      diagnostics: parsed.error.issues,
+    });
+  }
+
+  let cursor: { createdAt: Date; id: number } | undefined;
+  if (parsed.data.cursor) {
+    const decodedCursor = decodePublicSignalListCursor(parsed.data.cursor);
+    if (!decodedCursor) {
+      return jsonError(
+        "invalid_request",
+        "Signal list cursor is invalid.",
+        400,
+        {
+          diagnostics: [
+            {
+              code: "invalid_cursor",
+              message: "Signal list cursor is invalid.",
+              path: ["cursor"],
+            },
+          ],
+        }
+      );
+    }
+    cursor = decodedCursor;
+  }
+
+  try {
+    const result = await listProcessingSignalsCommand.run({
+      ctx: publicSignalContext(auth),
+      deps: listProcessingSignalsCommandDeps({ db }),
+      input: {
+        cursor,
+        limit: parsed.data.limit,
+        statuses: parsed.data.statuses,
+      },
+    });
+
+    const output = listSignalsOutput.parse({
+      items: result.items.map(serializeListedSignal),
+      nextCursor: encodePublicSignalListCursor(result.nextCursor),
+    });
+
+    return jsonResponse(output, 200);
+  } catch (error) {
+    return domainErrorResponse(error, "Failed to list signals.");
+  }
 }
 
 export async function handleCreateSignalPublicApiRequest(

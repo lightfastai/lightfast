@@ -26,6 +26,7 @@ describe("public API route boundaries", () => {
 
     expect(createRoute).toContain('createFileRoute("/api/v1/signals")');
     expect(createRoute).toContain('@api/app/public-api/signals"');
+    expect(createRoute).toContain("handleListSignalsPublicApiRequest");
     expect(createRoute).toContain("handleCreateSignalPublicApiRequest");
     expect(createRoute).toContain("handlePublicApiOptionsRequest");
     expect(getRoute).toContain('createFileRoute("/api/v1/signals/$id")');
