@@ -101,6 +101,15 @@ describe("MCP environment validation wiring", () => {
     );
   });
 
+  it("pins the Vercel output directory to the Nitro Build Output API artifact", () => {
+    const vercelConfig = JSON.parse(
+      readFileSync(resolve(appRoot, "vercel.json"), "utf8")
+    ) as { framework?: string; outputDirectory?: string };
+
+    expect(vercelConfig.framework).toBe("tanstack-start");
+    expect(vercelConfig.outputDirectory).toBe(".vercel/output");
+  });
+
   it("loads only MCP-owned env files", () => {
     const packageJson = JSON.parse(
       readFileSync(resolve(appRoot, "package.json"), "utf8")
