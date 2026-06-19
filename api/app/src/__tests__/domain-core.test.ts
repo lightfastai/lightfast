@@ -46,7 +46,7 @@ describe("actorFromApiKeyAuth", () => {
     const auth: ApiKeyAuthResult = {
       apiKeyId: "key_test",
       identity: boundIdentity,
-      scopes: ["api:signals:read"],
+      scopes: ["api.signals.read"],
     };
 
     expect(actorFromApiKeyAuth(auth)).toEqual({
@@ -55,7 +55,7 @@ describe("actorFromApiKeyAuth", () => {
       kind: "apiKey",
       orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
       orgId: "org_test",
-      scopes: ["api:signals:read"],
+      scopes: ["api.signals.read"],
     });
   });
 });
