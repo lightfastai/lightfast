@@ -1,5 +1,10 @@
+import {
+  type ListDecisionsInput,
+  type ListDecisionsResult,
+  listDecisions,
+} from "@api/app/tanstack/decisions";
 import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { type ReactNode, useMemo } from "react";
 import { WorkspaceSurface } from "~/components/workspace-surface";
 import { DecisionsLoading } from "./decisions-loading";
@@ -8,7 +13,6 @@ import {
   type DecisionFilters,
   flattenDecisionPages,
 } from "./decisions-model";
-import { decisionsListInfiniteQueryOptions } from "./decisions-queries";
 import {
   type NormalizedDecisionsSearch,
   parseDecisionProviders,
@@ -40,11 +44,24 @@ export function DecisionsClient({
     limit: DECISIONS_PAGE_SIZE,
     providers: filters.providers.length ? filters.providers : undefined,
     statuses: filters.statuses.length ? filters.statuses : undefined,
-  };
+  } satisfies Omit<ListDecisionsInput, "cursor">;
+  const decisionsListQueryKey = ["decisions", "list", listInput] as const;
 
-  const decisionsQuery = useInfiniteQuery(
-    decisionsListInfiniteQueryOptions(listInput)
-  );
+  const decisionsQuery = useInfiniteQuery({
+    enabled: typeof window !== "undefined",
+    getNextPageParam: (lastPage: ListDecisionsResult) => lastPage.nextCursor,
+    initialPageParam: undefined as ListDecisionsInput["cursor"],
+    placeholderData: keepPreviousData,
+    queryFn: async ({ pageParam }): Promise<ListDecisionsResult> =>
+      (await listDecisions({
+        data: {
+          ...listInput,
+          cursor: pageParam,
+        },
+      })) as ListDecisionsResult,
+    queryKey: decisionsListQueryKey,
+    staleTime: 60_000,
+  });
   const rows = flattenDecisionPages(decisionsQuery.data);
 
   if (decisionsQuery.isPending && rows.length === 0) {

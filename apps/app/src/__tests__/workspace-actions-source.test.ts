@@ -289,7 +289,6 @@ describe("workspace page-owned actions", () => {
     const decisionsToolbarSource = source(
       "src/decisions/decisions-toolbar.tsx"
     );
-    const decisionsQuerySource = source("src/decisions/decisions-queries.ts");
     const peopleClientSource = source("src/people/people-client.tsx");
     const peopleRouteSource = source(
       "src/routes/_authenticated/$slug/people.tsx"
@@ -325,8 +324,9 @@ describe("workspace page-owned actions", () => {
     expect(decisionsSearchSource).not.toContain("q?:");
     expect(decisionsSearchSource).not.toContain("q: string");
     expect(decisionsSearchSource).not.toContain("search.q");
-    expect(decisionsQuerySource).not.toContain("normalizedSearch");
-    expect(decisionsQuerySource).not.toContain("search:");
+    expect(decisionsClientSource).not.toContain("normalizedSearch");
+    expect(decisionsClientSource).not.toContain("searchText");
+    expect(decisionsClientSource).not.toContain("search: search");
   });
 
   it("ports former topbar left controls into route-owned page content", () => {

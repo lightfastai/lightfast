@@ -1,4 +1,5 @@
 import {
+  listConnectors,
   type StartConnectorInput,
   type StartConnectorResult,
   startConnector,
@@ -12,11 +13,11 @@ import { Button } from "@repo/ui/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
 import { ConnectorIcon } from "~/connectors/connector-icons";
+import { connectorQueryKeys } from "~/connectors/connectors-cache";
 import {
   type ConnectorCatalogRow,
   connectionStatus,
 } from "~/connectors/connectors-model";
-import { connectorsListQueryOptions } from "~/connectors/connectors-queries";
 
 interface XConnectorSetupClientProps {
   orgSlug: string;
@@ -53,8 +54,10 @@ export function XConnectorSetupClient({ orgSlug }: XConnectorSetupClientProps) {
     error,
     isPending,
   } = useQuery({
-    ...connectorsListQueryOptions({ staleTime: 30_000 }),
     enabled: typeof window !== "undefined",
+    queryFn: () => listConnectors(),
+    queryKey: connectorQueryKeys.list(),
+    staleTime: 30_000,
   });
   const xConnector = connectors.find((row) => row.provider === "x");
 

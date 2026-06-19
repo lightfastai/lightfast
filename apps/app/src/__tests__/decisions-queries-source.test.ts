@@ -9,13 +9,19 @@ function source(path: string) {
 }
 
 describe("decisions app data access", () => {
-  it("uses local TanStack query helpers backed by api/app server functions", () => {
-    const querySource = source("src/decisions/decisions-queries.ts");
+  it("inlines the single-use decisions query options into the client", () => {
+    const queryPath = resolve(appRoot, "src/decisions/decisions-queries.ts");
+    const clientSource = source("src/decisions/decisions-client.tsx");
 
-    expect(querySource).toContain('@api/app/tanstack/decisions"');
-    expect(querySource).toContain("decisionsQueryKeys");
-    expect(querySource).toContain("decisionsListInfiniteQueryOptions");
-    expect(querySource).not.toContain("useTRPC");
+    expect(existsSync(queryPath)).toBe(false);
+    expect(clientSource).toContain('@api/app/tanstack/decisions"');
+    expect(clientSource).toContain("listDecisions");
+    expect(clientSource).toContain("type ListDecisionsInput");
+    expect(clientSource).toContain("type ListDecisionsResult");
+    expect(clientSource).toContain("useInfiniteQuery");
+    expect(clientSource).not.toContain("decisionsListInfiniteQueryOptions");
+    expect(clientSource).not.toContain("./decisions-queries");
+    expect(clientSource).not.toContain("useTRPC");
   });
 
   it("inlines the single-use decisions list hook into the client", () => {
@@ -27,7 +33,7 @@ describe("decisions app data access", () => {
 
     expect(existsSync(listHookPath)).toBe(false);
     expect(clientSource).toContain("useInfiniteQuery");
-    expect(clientSource).toContain("decisionsListInfiniteQueryOptions");
+    expect(clientSource).toContain("queryKey: decisionsListQueryKey");
     expect(clientSource).not.toContain("useDecisionsListQuery");
     expect(clientSource).not.toContain("./use-decisions-list-query");
   });

@@ -1,3 +1,4 @@
+import { listConnectors } from "@api/app/tanstack/connectors";
 import { useAuth } from "@clerk/tanstack-react-start";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -37,7 +38,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 import { z } from "zod";
-import { connectorsListQueryOptions } from "~/connectors/connectors-queries";
+import { connectorQueryKeys } from "~/connectors/connectors-cache";
 import { automationCreateMutationOptions } from "./automations-queries";
 import {
   isTimeBasedKind,
@@ -99,8 +100,10 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
   const canManageAutomations = isLoaded && !!has?.({ role: "org:admin" });
   const queryClient = useQueryClient();
   const { data: connectors = [] } = useQuery({
-    ...connectorsListQueryOptions({ staleTime: 30_000 }),
     enabled: typeof window !== "undefined",
+    queryFn: () => listConnectors(),
+    queryKey: connectorQueryKeys.list(),
+    staleTime: 30_000,
   });
 
   useEffect(() => {
