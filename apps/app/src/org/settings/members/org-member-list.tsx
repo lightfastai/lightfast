@@ -1,4 +1,5 @@
 import {
+  listOrgMembers,
   removeOrgMember as removeOrgMemberServerFn,
   revokeOrgInvitation,
   updateOrgMemberRole,
@@ -46,16 +47,13 @@ import {
   type OrgMember,
   type OrgMembersData,
   type OrgRole,
+  orgMemberListQueryKey,
   removeInvitation,
   removeMember,
   restoreInvitation,
   restoreMember,
   updateMemberRole,
 } from "./org-member-cache";
-import {
-  orgMemberQueryKeys,
-  orgMembersQueryOptions,
-} from "./org-member-queries";
 
 type UpdateOrgMemberRoleInput = z.infer<typeof updateOrgMemberRoleSchema>;
 type RemoveOrgMemberInput = z.infer<typeof removeOrgMemberSchema>;
@@ -151,10 +149,13 @@ export function OrgMemberList({ searchQuery = "" }: { searchQuery?: string }) {
   const { has, isLoaded, orgId } = useAuth();
   const canManageMembers = isLoaded && !!has?.({ role: "org:admin" });
   const queryClient = useQueryClient();
-  const listQueryKey = orgMemberQueryKeys.list(orgId);
+  const listQueryKey = orgMemberListQueryKey(orgId);
 
   const { data, error, isLoading } = useQuery({
-    ...orgMembersQueryOptions({ orgId }),
+    enabled: Boolean(orgId),
+    queryFn: () => listOrgMembers(),
+    queryKey: listQueryKey,
+    staleTime: 5 * 60 * 1000,
   });
   const updateRoleMutation = useMutation({
     meta: { errorTitle: "Failed to update role" },
