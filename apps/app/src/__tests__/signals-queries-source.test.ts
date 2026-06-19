@@ -17,8 +17,8 @@ describe("signals query helpers", () => {
     expect(source).toContain("signalDetailQueryOptions");
     expect(source).not.toContain("workingSetSignalsQueryOptions");
     expect(source).not.toContain("processingSignalsQueryOptions");
-    expect(source).not.toContain("listWorkingSetSignals,");
-    expect(source).not.toContain("listProcessingSignals,");
+    expect(source).not.toContain("listWorkingSetSignals");
+    expect(source).not.toContain("listProcessingSignals");
     expect(source).not.toContain("createSignalMutationOptions");
     expect(source).not.toContain("createSignal,");
     expect(source).not.toContain("useTRPC");
