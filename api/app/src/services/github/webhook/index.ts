@@ -1,1 +1,0 @@
-export { handleVerifiedGitHubWebhook } from "./handler";
