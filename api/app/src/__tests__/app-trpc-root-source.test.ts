@@ -42,7 +42,6 @@ describe("api/app app-facing tRPC root", () => {
     expect(identitySource).not.toContain("trpc");
 
     for (const file of [
-      "services/connectors/catalog.ts",
       "services/connectors/index.ts",
       "services/connectors/linear-flow.ts",
       "services/connectors/x-flow.ts",
@@ -59,6 +58,7 @@ describe("api/app app-facing tRPC root", () => {
     }
 
     for (const file of [
+      "services/connectors/catalog.ts",
       "services/developer-connections/catalog.ts",
       "services/user-connectors/catalog.ts",
       "services/user-connectors/granola-flow.ts",
@@ -70,6 +70,19 @@ describe("api/app app-facing tRPC root", () => {
       expect(fileSource, file).not.toContain("../trpc");
       expect(fileSource, file).not.toContain("../../auth/identity");
       expect(fileSource, file).not.toContain("ResolvedAuthContext");
+    }
+
+    const connectorCatalogSource = source("services/connectors/catalog.ts");
+    for (const forbiddenToken of [
+      "@vendor/clerk/server",
+      "Headers",
+      "getRequest",
+      "request.headers",
+      "headers:",
+    ]) {
+      expect(connectorCatalogSource, forbiddenToken).not.toContain(
+        forbiddenToken
+      );
     }
   });
 });

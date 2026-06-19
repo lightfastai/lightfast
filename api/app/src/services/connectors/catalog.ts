@@ -10,12 +10,16 @@ import {
   type ConnectableConnectorProvider,
   type ConnectorProvider,
 } from "@repo/api-contract";
-import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 import { getXConnectorConfig } from "./config";
 
-interface ConnectorServiceContext {
-  auth: AuthContext;
+interface ConnectorCatalogServiceContext {
   db: Database;
+  organization: {
+    orgId: string;
+  };
+  viewer: {
+    canManage: boolean;
+  };
 }
 
 type ConnectAvailability =
@@ -88,18 +92,6 @@ const CONNECTOR_CATALOG = [
   | "displayName"
   | "provider"
 >[];
-
-function canManageConnectors(ctx: ConnectorServiceContext): boolean {
-  const identity = ctx.auth.identity;
-  const access = ctx.auth.access;
-  return (
-    identity.type === "active" &&
-    access?.kind === "clerk-session" &&
-    access.userId === identity.userId &&
-    access.orgId === identity.orgId &&
-    access.has({ role: "org:admin" })
-  );
-}
 
 function isConnectableProvider(
   provider: ConnectorProvider
@@ -232,20 +224,15 @@ function missingRequestedScopes(connection: OrgConnectorConnection): string[] {
 }
 
 export async function listConnectorsForOrg(
-  ctx: ConnectorServiceContext
+  ctx: ConnectorCatalogServiceContext
 ): Promise<ConnectorCatalogRow[]> {
-  const identity = ctx.auth.identity;
-  if (identity.type !== "active") {
-    return [];
-  }
-
   const connections = await listCurrentOrgConnectorConnections(ctx.db, {
-    clerkOrgId: identity.orgId,
+    clerkOrgId: ctx.organization.orgId,
   });
   const byProvider = new Map<ConnectorProvider, OrgConnectorConnection>(
     connections.map((connection) => [connection.provider, connection])
   );
-  const canManage = canManageConnectors(ctx);
+  const canManage = ctx.viewer.canManage;
 
   return CONNECTOR_CATALOG.map((catalogItem) => {
     const connection = byProvider.get(catalogItem.provider);

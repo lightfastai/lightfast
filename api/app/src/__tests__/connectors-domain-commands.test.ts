@@ -128,33 +128,29 @@ describe("connector domain commands", () => {
       ],
     });
 
-    expect(serviceMocks.listConnectorsForOrg).toHaveBeenCalledWith(
-      expect.objectContaining({
-        auth: expect.objectContaining({
-          access: expect.objectContaining({ kind: "clerk-session" }),
-          identity: expect.objectContaining({
-            orgGate: expect.objectContaining({ bindingStatus: "unbound" }),
-            orgId: "org_acme",
-            userId: "user_current",
-          }),
-        }),
-      })
-    );
+    expect(serviceMocks.listConnectorsForOrg).toHaveBeenCalledWith({
+      db: expect.anything(),
+      organization: { orgId: "org_acme" },
+      viewer: { canManage: false },
+    });
     expect(serviceMocks.listUserConnectorsForViewer).toHaveBeenCalledWith({
       db: expect.anything(),
       viewer: { userId: "user_current" },
     });
   });
 
-  it("marks admin actors as matching Clerk-session admins for catalog canManage checks", async () => {
+  it("passes admin manage authority to connector catalog listing", async () => {
     await listConnectorsCommand.run({
       ctx: ctx({ admin: true }),
       deps: deps(),
       input: {},
     });
 
-    const serviceContext = serviceMocks.listConnectorsForOrg.mock.calls[0]?.[0];
-    expect(serviceContext.auth.access.has({ role: "org:admin" })).toBe(true);
+    expect(serviceMocks.listConnectorsForOrg).toHaveBeenCalledWith({
+      db: expect.anything(),
+      organization: { orgId: "org_acme" },
+      viewer: { canManage: true },
+    });
   });
 
   it("allows org admins to start connector OAuth before binding", async () => {

@@ -39,7 +39,7 @@ type RefreshConnectorToolsResult = Awaited<
   ReturnType<typeof refreshConnectorTools>
 >;
 
-interface ConnectorServiceContext {
+interface ConnectorMutationServiceContext {
   auth: {
     access: Extract<AuthAccess, { kind: "clerk-session" }>;
     identity: Extract<AuthIdentity, { type: "active" }>;
@@ -131,9 +131,11 @@ export const listConnectorsCommand = defineCommand<
   run: async ({ ctx, deps }) => {
     const actor = requireActiveClerkOrgActor(ctx);
     try {
-      return await deps.listConnectorsForOrg(
-        serviceContextForActor(actor, deps)
-      );
+      return await deps.listConnectorsForOrg({
+        db: deps.db,
+        organization: { orgId: actor.orgId },
+        viewer: { canManage: actor.orgRole === "admin" },
+      });
     } catch (error) {
       throw mapConnectorServiceError(
         error,
@@ -155,10 +157,13 @@ export const listConnectorSectionsCommand = defineCommand<
   output: listConnectorSectionsOutput,
   run: async ({ ctx, deps }) => {
     const actor = requireActiveClerkOrgActor(ctx);
-    const serviceContext = serviceContextForActor(actor, deps);
     try {
       return {
-        teamConnectors: await deps.listConnectorsForOrg(serviceContext),
+        teamConnectors: await deps.listConnectorsForOrg({
+          db: deps.db,
+          organization: { orgId: actor.orgId },
+          viewer: { canManage: actor.orgRole === "admin" },
+        }),
         yourConnectors: await deps.listUserConnectorsForViewer({
           db: deps.db,
           viewer: { userId: actor.userId },
@@ -310,7 +315,7 @@ function serviceContextForActor(
     orgId: string;
   },
   deps: ConnectorCommandDeps
-): ConnectorServiceContext {
+): ConnectorMutationServiceContext {
   return {
     auth: {
       access: accessForActor(actor),
