@@ -8,6 +8,7 @@ import {
   nativeRpcAuthSessionSuccessResponseSchema,
   nativeRpcErrorResponseSchema,
   nativeRpcRequestSchema,
+  nativeRpcSuccessResponseSchema,
 } from "@repo/native-auth-contract";
 
 import { resolveAuthContextFromClerk } from "../auth/identity";
@@ -17,11 +18,33 @@ import {
   NativeAuthError,
 } from "../native-auth";
 
-type NativeRpcStatus = 400 | 401 | 403 | 404 | 500;
+type NativeRpcStatus = 400 | 401 | 403 | 404 | 500 | 502;
+
+type NativeRpcCommandHandler = (input: {
+  commandInput: unknown;
+  request: Request;
+}) => Promise<unknown>;
+
+interface NativeRpcCommandHandlers {
+  providerRoutineCall?: NativeRpcCommandHandler;
+  providerRoutineFind?: NativeRpcCommandHandler;
+}
 
 interface NativeRpcSurface {
   allowedCommands: readonly NativeRpcCommand[];
+  handlers?: NativeRpcCommandHandlers;
   source: NativeClient;
+}
+
+export class NativeRpcRouteError extends Error {
+  constructor(
+    readonly code: NativeRpcErrorCode,
+    message: string,
+    readonly status: NativeRpcStatus
+  ) {
+    super(message);
+    this.name = "NativeRpcRouteError";
+  }
 }
 
 function jsonResponse(data: unknown, init: ResponseInit = {}) {
@@ -49,6 +72,14 @@ function errorResponse(
 
 function invalidRequestResponse() {
   return errorResponse("BAD_REQUEST", "Native RPC request is invalid.", 400);
+}
+
+function commandNotFoundResponse() {
+  return errorResponse(
+    "COMMAND_NOT_FOUND",
+    "Native RPC command was not found.",
+    404
+  );
 }
 
 async function resolveNativeRpcAuth(input: {
@@ -96,6 +127,10 @@ async function loadNativeRpcAuthSession(input: {
 }
 
 function normalizeErrorResponse(error: unknown) {
+  if (error instanceof NativeRpcRouteError) {
+    return errorResponse(error.code, error.message, error.status);
+  }
+
   if (isNativeAuthError(error)) {
     return errorResponse(
       error.code,
@@ -152,12 +187,42 @@ export async function handleNativeRpcRequest(
           })
         );
       }
-      default:
-        return errorResponse(
-          "COMMAND_NOT_FOUND",
-          "Native RPC command was not found.",
-          404
+      case "providerRoutines.find": {
+        const handler = surface.handlers?.providerRoutineFind;
+        if (!handler) {
+          return commandNotFoundResponse();
+        }
+        const result = await handler({
+          commandInput:
+            "input" in parsedRequest.data ? parsedRequest.data.input : {},
+          request,
+        });
+        return jsonResponse(
+          nativeRpcSuccessResponseSchema.parse({
+            ok: true,
+            result,
+          })
         );
+      }
+      case "providerRoutines.call": {
+        const handler = surface.handlers?.providerRoutineCall;
+        if (!handler) {
+          return commandNotFoundResponse();
+        }
+        const result = await handler({
+          commandInput:
+            "input" in parsedRequest.data ? parsedRequest.data.input : null,
+          request,
+        });
+        return jsonResponse(
+          nativeRpcSuccessResponseSchema.parse({
+            ok: true,
+            result,
+          })
+        );
+      }
+      default:
+        return commandNotFoundResponse();
     }
   } catch (error) {
     return normalizeErrorResponse(error);

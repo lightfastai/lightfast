@@ -46,9 +46,9 @@ function store(currentSession: NativeSession | null = session()) {
 }
 
 describe("CLI proxy commands", () => {
-  it("sends native auth headers and query for proxy find", async () => {
+  it("sends native auth headers and query through CLI RPC for proxy find", async () => {
     const fetchMock = vi.fn(async (..._args: Parameters<typeof fetch>) =>
-      Response.json({ routines: [] })
+      Response.json({ ok: true, result: { routines: [] } })
     );
     const output = createOutput();
 
@@ -63,17 +63,49 @@ describe("CLI proxy commands", () => {
     const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
     const headers = new Headers(init.headers);
 
-    expect(requestUrl.pathname).toBe("/api/native/proxy/routines");
-    expect(requestUrl.searchParams.get("query")).toBe("create issue");
+    expect(requestUrl.pathname).toBe("/api/cli/rpc");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(String(init.body))).toEqual({
+      command: "providerRoutines.find",
+      input: { query: "create issue" },
+    });
     expect(headers.get("authorization")).toBe("Bearer access_token_test");
     expect(headers.get(NATIVE_AUTH_HEADERS.client)).toBe("cli");
     expect(headers.get(NATIVE_AUTH_HEADERS.organizationId)).toBe("org_1");
     expect(JSON.parse(output.read())).toEqual({ routines: [] });
   });
 
+  it("surfaces CLI RPC error envelopes for proxy find", async () => {
+    const fetchMock = vi.fn(async (..._args: Parameters<typeof fetch>) =>
+      Response.json(
+        {
+          ok: false,
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Lightfast native CLI OAuth authentication required.",
+          },
+        },
+        { status: 401 }
+      )
+    );
+
+    await expect(
+      createProgram({
+        appUrl: "https://app.lightfast.test",
+        fetchImpl: fetchMock,
+        store: store(),
+      }).parseAsync(["node", "lightfast", "proxy", "find", "create"])
+    ).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+      message: "Lightfast native CLI OAuth authentication required.",
+      name: "ProxyClientError",
+      status: 401,
+    });
+  });
+
   it("sets provider and includeSchema for proxy find", async () => {
     const fetchMock = vi.fn(async (..._args: Parameters<typeof fetch>) =>
-      Response.json({ routines: [] })
+      Response.json({ ok: true, result: { routines: [] } })
     );
     const output = createOutput();
 
@@ -94,21 +126,29 @@ describe("CLI proxy commands", () => {
       "issue",
     ]);
 
-    const requestUrl = new URL(String(fetchMock.mock.calls[0]?.[0]));
-    expect(requestUrl.searchParams.get("provider")).toBe("linear");
-    expect(requestUrl.searchParams.get("includeSchema")).toBe("true");
-    expect(requestUrl.searchParams.get("query")).toBe("create issue");
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(JSON.parse(String(init.body))).toEqual({
+      command: "providerRoutines.find",
+      input: {
+        includeSchema: true,
+        provider: "linear",
+        query: "create issue",
+      },
+    });
   });
 
   it("sends routine id and JSON-object input for proxy call", async () => {
     const fetchMock = vi.fn(async (..._args: Parameters<typeof fetch>) =>
       Response.json({
-        provider: "linear",
-        providerRoutineCallId: "provider_routine_call_123",
-        providerToolName: "create_issue",
-        result: { id: "issue_123" },
-        routineId: "linear__create_issue",
-        status: "succeeded",
+        ok: true,
+        result: {
+          provider: "linear",
+          providerRoutineCallId: "provider_routine_call_123",
+          providerToolName: "create_issue",
+          result: { id: "issue_123" },
+          routineId: "linear__create_issue",
+          status: "succeeded",
+        },
       })
     );
     const output = createOutput();
@@ -131,11 +171,14 @@ describe("CLI proxy commands", () => {
     const requestUrl = new URL(String(fetchMock.mock.calls[0]?.[0]));
     const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
 
-    expect(requestUrl.pathname).toBe("/api/native/proxy/call");
+    expect(requestUrl.pathname).toBe("/api/cli/rpc");
     expect(init.method).toBe("POST");
     expect(JSON.parse(String(init.body))).toEqual({
-      input: { title: "Bug" },
-      routineId: "linear__create_issue",
+      command: "providerRoutines.call",
+      input: {
+        input: { title: "Bug" },
+        routineId: "linear__create_issue",
+      },
     });
     expect(JSON.parse(output.read())).toMatchObject({
       providerRoutineCallId: "provider_routine_call_123",

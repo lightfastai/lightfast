@@ -56,8 +56,6 @@ import { Route as ApiV1SignalsIdRouteImport } from './routes/api/v1/signals/$id'
 import { Route as ApiSkillsIndexEventsRouteImport } from './routes/api/skills/index/events'
 import { Route as ApiOauthDesktopSessionRouteImport } from './routes/api/oauth/desktop/session'
 import { Route as ApiOauthClientConfigRouteImport } from './routes/api/oauth/$client/config'
-import { Route as ApiNativeProxyRoutinesRouteImport } from './routes/api/native/proxy/routines'
-import { Route as ApiNativeProxyCallRouteImport } from './routes/api/native/proxy/call'
 import { Route as ApiInternalMcpSignalsRouteImport } from './routes/api/internal/mcp/signals'
 import { Route as ApiInternalMcpAuditRouteImport } from './routes/api/internal/mcp/audit'
 import { Route as ApiGithubOauthCallbackRouteImport } from './routes/api/github/oauth/callback'
@@ -342,16 +340,6 @@ const ApiOauthClientConfigRoute = ApiOauthClientConfigRouteImport.update({
   path: '/api/oauth/$client/config',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiNativeProxyRoutinesRoute = ApiNativeProxyRoutinesRouteImport.update({
-  id: '/api/native/proxy/routines',
-  path: '/api/native/proxy/routines',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiNativeProxyCallRoute = ApiNativeProxyCallRouteImport.update({
-  id: '/api/native/proxy/call',
-  path: '/api/native/proxy/call',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiInternalMcpSignalsRoute = ApiInternalMcpSignalsRouteImport.update({
   id: '/api/internal/mcp/signals',
   path: '/api/internal/mcp/signals',
@@ -620,8 +608,6 @@ export interface FileRoutesByFullPath {
   '/api/github/oauth/callback': typeof ApiGithubOauthCallbackRoute
   '/api/internal/mcp/audit': typeof ApiInternalMcpAuditRoute
   '/api/internal/mcp/signals': typeof ApiInternalMcpSignalsRouteWithChildren
-  '/api/native/proxy/call': typeof ApiNativeProxyCallRoute
-  '/api/native/proxy/routines': typeof ApiNativeProxyRoutinesRoute
   '/api/oauth/$client/config': typeof ApiOauthClientConfigRoute
   '/api/oauth/desktop/session': typeof ApiOauthDesktopSessionRoute
   '/api/skills/index/events': typeof ApiSkillsIndexEventsRoute
@@ -698,8 +684,6 @@ export interface FileRoutesByTo {
   '/api/github/oauth/callback': typeof ApiGithubOauthCallbackRoute
   '/api/internal/mcp/audit': typeof ApiInternalMcpAuditRoute
   '/api/internal/mcp/signals': typeof ApiInternalMcpSignalsRouteWithChildren
-  '/api/native/proxy/call': typeof ApiNativeProxyCallRoute
-  '/api/native/proxy/routines': typeof ApiNativeProxyRoutinesRoute
   '/api/oauth/$client/config': typeof ApiOauthClientConfigRoute
   '/api/oauth/desktop/session': typeof ApiOauthDesktopSessionRoute
   '/api/skills/index/events': typeof ApiSkillsIndexEventsRoute
@@ -785,8 +769,6 @@ export interface FileRoutesById {
   '/api/github/oauth/callback': typeof ApiGithubOauthCallbackRoute
   '/api/internal/mcp/audit': typeof ApiInternalMcpAuditRoute
   '/api/internal/mcp/signals': typeof ApiInternalMcpSignalsRouteWithChildren
-  '/api/native/proxy/call': typeof ApiNativeProxyCallRoute
-  '/api/native/proxy/routines': typeof ApiNativeProxyRoutinesRoute
   '/api/oauth/$client/config': typeof ApiOauthClientConfigRoute
   '/api/oauth/desktop/session': typeof ApiOauthDesktopSessionRoute
   '/api/skills/index/events': typeof ApiSkillsIndexEventsRoute
@@ -873,8 +855,6 @@ export interface FileRouteTypes {
     | '/api/github/oauth/callback'
     | '/api/internal/mcp/audit'
     | '/api/internal/mcp/signals'
-    | '/api/native/proxy/call'
-    | '/api/native/proxy/routines'
     | '/api/oauth/$client/config'
     | '/api/oauth/desktop/session'
     | '/api/skills/index/events'
@@ -951,8 +931,6 @@ export interface FileRouteTypes {
     | '/api/github/oauth/callback'
     | '/api/internal/mcp/audit'
     | '/api/internal/mcp/signals'
-    | '/api/native/proxy/call'
-    | '/api/native/proxy/routines'
     | '/api/oauth/$client/config'
     | '/api/oauth/desktop/session'
     | '/api/skills/index/events'
@@ -1037,8 +1015,6 @@ export interface FileRouteTypes {
     | '/api/github/oauth/callback'
     | '/api/internal/mcp/audit'
     | '/api/internal/mcp/signals'
-    | '/api/native/proxy/call'
-    | '/api/native/proxy/routines'
     | '/api/oauth/$client/config'
     | '/api/oauth/desktop/session'
     | '/api/skills/index/events'
@@ -1092,8 +1068,6 @@ export interface RootRouteChildren {
   ApiGithubOauthCallbackRoute: typeof ApiGithubOauthCallbackRoute
   ApiInternalMcpAuditRoute: typeof ApiInternalMcpAuditRoute
   ApiInternalMcpSignalsRoute: typeof ApiInternalMcpSignalsRouteWithChildren
-  ApiNativeProxyCallRoute: typeof ApiNativeProxyCallRoute
-  ApiNativeProxyRoutinesRoute: typeof ApiNativeProxyRoutinesRoute
   ApiOauthClientConfigRoute: typeof ApiOauthClientConfigRoute
   ApiOauthDesktopSessionRoute: typeof ApiOauthDesktopSessionRoute
   ApiSkillsIndexEventsRoute: typeof ApiSkillsIndexEventsRoute
@@ -1435,20 +1409,6 @@ declare module '@tanstack/react-router' {
       path: '/api/oauth/$client/config'
       fullPath: '/api/oauth/$client/config'
       preLoaderRoute: typeof ApiOauthClientConfigRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/native/proxy/routines': {
-      id: '/api/native/proxy/routines'
-      path: '/api/native/proxy/routines'
-      fullPath: '/api/native/proxy/routines'
-      preLoaderRoute: typeof ApiNativeProxyRoutinesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/native/proxy/call': {
-      id: '/api/native/proxy/call'
-      path: '/api/native/proxy/call'
-      fullPath: '/api/native/proxy/call'
-      preLoaderRoute: typeof ApiNativeProxyCallRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/internal/mcp/signals': {
@@ -2016,8 +1976,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiGithubOauthCallbackRoute: ApiGithubOauthCallbackRoute,
   ApiInternalMcpAuditRoute: ApiInternalMcpAuditRoute,
   ApiInternalMcpSignalsRoute: ApiInternalMcpSignalsRouteWithChildren,
-  ApiNativeProxyCallRoute: ApiNativeProxyCallRoute,
-  ApiNativeProxyRoutinesRoute: ApiNativeProxyRoutinesRoute,
   ApiOauthClientConfigRoute: ApiOauthClientConfigRoute,
   ApiOauthDesktopSessionRoute: ApiOauthDesktopSessionRoute,
   ApiSkillsIndexEventsRoute: ApiSkillsIndexEventsRoute,

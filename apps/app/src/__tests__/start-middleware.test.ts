@@ -44,7 +44,6 @@ describe("app start middleware", () => {
     expect(isAppOwnedApiRoute("/api/desktop/rpc")).toBe(false);
     expect(isAppOwnedApiRoute("/api/github/oauth/callback")).toBe(false);
     expect(isAppOwnedApiRoute("/api/github/webhook")).toBe(false);
-    expect(isAppOwnedApiRoute("/api/native/proxy/routines")).toBe(false);
     expect(isAppOwnedApiRoute("/api/internal/other")).toBe(false);
   });
 });

@@ -4,11 +4,19 @@ import {
   providerRoutineFindInputSchema,
   providerRoutineFindOutputSchema,
 } from "@repo/api-contract";
-import { z } from "zod";
+import {
+  NATIVE_AUTH_HEADERS,
+  type NativeRpcProviderRoutineErrorCode,
+  nativeRpcProviderRoutineErrorCodeSchema,
+} from "@repo/native-auth-contract";
 import type { ProviderRoutineServiceContext } from "../services/provider-routines/context";
-import { handleNativeRpcRequest } from "./native-rpc";
+import { handleNativeRpcRequest, NativeRpcRouteError } from "./native-rpc";
 
-const cliNativeRpcCommands = ["auth.session"] as const;
+const cliNativeRpcCommands = [
+  "auth.session",
+  "providerRoutines.find",
+  "providerRoutines.call",
+] as const;
 
 const log = {
   error: (message: string, metadata?: Record<string, unknown>) =>
@@ -21,44 +29,15 @@ const log = {
 
 type CliProviderRoutineServiceContext = ProviderRoutineServiceContext;
 
-class CliProviderRoutineRouteError extends Error {
-  constructor(
-    readonly code: "BAD_REQUEST" | "FORBIDDEN" | "UNAUTHORIZED",
-    message: string,
-    readonly status: number,
-    options?: ErrorOptions
-  ) {
-    super(message, options);
-    this.name = "CliProviderRoutineRouteError";
-  }
-}
-
 export function handleCliNativeRpcRequest(request: Request) {
   return handleNativeRpcRequest(request, {
     allowedCommands: cliNativeRpcCommands,
+    handlers: {
+      providerRoutineCall: handleCliProviderRoutineCallCommand,
+      providerRoutineFind: handleCliProviderRoutineFindCommand,
+    },
     source: "cli",
   });
-}
-
-function jsonResponse(data: unknown, init: ResponseInit = {}) {
-  const headers = new Headers(init.headers);
-  headers.set("cache-control", "no-store");
-  headers.set("content-type", "application/json");
-
-  return Response.json(data, { ...init, headers });
-}
-
-function errorResponse(error: unknown) {
-  const normalized = normalizeRouteError(error);
-  return jsonResponse(
-    {
-      error: {
-        code: normalized.code,
-        message: normalized.message,
-      },
-    },
-    { status: normalized.status }
-  );
 }
 
 async function createCliProviderRoutineContext(
@@ -69,21 +48,23 @@ async function createCliProviderRoutineContext(
   const { loadAgentConnectorRuntimeTools } = await import(
     "../services/connectors/runtime"
   );
+  const headers = new Headers(req.headers);
+  headers.set(NATIVE_AUTH_HEADERS.client, "cli");
   const auth = await resolveAuthContextFromClerk({
     db,
-    headers: req.headers,
+    headers,
   });
   const access = auth.access;
   const identity = auth.identity;
   if (access?.kind !== "clerk-oauth" || access.client !== "cli") {
-    throw new CliProviderRoutineRouteError(
+    throw new NativeRpcRouteError(
       "UNAUTHORIZED",
       "Lightfast native CLI OAuth authentication required.",
       401
     );
   }
   if (identity.type !== "active") {
-    throw new CliProviderRoutineRouteError(
+    throw new NativeRpcRouteError(
       "FORBIDDEN",
       "Lightfast native CLI organization binding required.",
       403
@@ -122,100 +103,108 @@ async function createCliProviderRoutineContext(
   };
 }
 
-export async function handleCliProviderRoutineCallRequest(
-  request: Request
-): Promise<Response> {
+async function handleCliProviderRoutineCallCommand({
+  commandInput,
+  request,
+}: {
+  commandInput: unknown;
+  request: Request;
+}) {
   try {
     const { callProviderRoutine } = await import(
       "../services/provider-routines/call"
     );
-    const input = providerRoutineCallInputSchema.parse(
-      await request.json().catch(() => null)
-    );
+    const input = parseProviderRoutineCallInput(commandInput);
     const context = await createCliProviderRoutineContext(request);
     const result = await callProviderRoutine(context, input);
-    return jsonResponse(providerRoutineCallSuccessSchema.parse(result));
+    return providerRoutineCallSuccessSchema.parse(result);
   } catch (error) {
-    return errorResponse(error);
+    throw normalizeCommandError(error);
   }
 }
 
-export async function handleCliProviderRoutineFindRequest(
-  request: Request
-): Promise<Response> {
+async function handleCliProviderRoutineFindCommand({
+  commandInput,
+  request,
+}: {
+  commandInput: unknown;
+  request: Request;
+}) {
   try {
     const { findProviderRoutines } = await import(
       "../services/provider-routines/find"
     );
-    const searchParams = new URL(request.url).searchParams;
-    const input = providerRoutineFindInputSchema.parse({
-      includeSchema:
-        searchParams.get("includeSchema") === "true" ? true : undefined,
-      limit: searchParams.get("limit")
-        ? Number(searchParams.get("limit"))
-        : undefined,
-      provider: searchParams.get("provider") ?? undefined,
-      query: searchParams.get("query") ?? undefined,
-      readOnly: searchParams.get("readOnly") === "true" ? true : undefined,
-      routineId: searchParams.get("routineId") ?? undefined,
-    });
+    const input = parseProviderRoutineFindInput(commandInput);
     const context = await createCliProviderRoutineContext(request);
     const result = await findProviderRoutines(context, input);
-    return jsonResponse(providerRoutineFindOutputSchema.parse(result));
+    return providerRoutineFindOutputSchema.parse(result);
   } catch (error) {
-    return errorResponse(error);
+    throw normalizeCommandError(error);
   }
 }
 
-function normalizeRouteError(error: unknown): {
-  code: string;
-  message: string;
-  status: number;
-} {
-  if (error instanceof CliProviderRoutineRouteError) {
-    return {
-      code: error.code,
-      message: error.message,
-      status: error.status,
-    };
+function parseProviderRoutineCallInput(input: unknown) {
+  const parsed = providerRoutineCallInputSchema.safeParse(input);
+  if (!parsed.success) {
+    throw invalidCommandInput();
   }
-  if (error instanceof z.ZodError) {
-    return {
-      code: "BAD_REQUEST",
-      message: "CLI provider routine request is invalid.",
-      status: 400,
-    };
+  return parsed.data;
+}
+
+function parseProviderRoutineFindInput(input: unknown) {
+  const parsed = providerRoutineFindInputSchema.safeParse(
+    input === undefined ? {} : input
+  );
+  if (!parsed.success) {
+    throw invalidCommandInput();
   }
+  return parsed.data;
+}
+
+function invalidCommandInput() {
+  return new NativeRpcRouteError(
+    "BAD_REQUEST",
+    "Native RPC request is invalid.",
+    400
+  );
+}
+
+function normalizeCommandError(error: unknown) {
+  if (error instanceof NativeRpcRouteError) {
+    return error;
+  }
+
   if (isProviderRoutineError(error)) {
-    return {
-      code: error.code,
-      message: error.publicMessage,
-      status: statusFromProviderRoutineError(error.code),
-    };
+    return new NativeRpcRouteError(
+      error.code,
+      error.publicMessage,
+      statusFromProviderRoutineError(error.code)
+    );
   }
 
   console.error("[cli-provider-routines] Unexpected route error", error);
-  return {
-    code: "INTERNAL_SERVER_ERROR",
-    message: "Unexpected CLI provider routine error",
-    status: 500,
-  };
+  return new NativeRpcRouteError(
+    "INTERNAL_SERVER_ERROR",
+    "Unexpected CLI provider routine error",
+    500
+  );
 }
 
-function isProviderRoutineError(
-  error: unknown
-): error is Error & { code: string; publicMessage: string } {
+function isProviderRoutineError(error: unknown): error is Error & {
+  code: NativeRpcProviderRoutineErrorCode;
+  publicMessage: string;
+} {
   return (
     error instanceof Error &&
     "code" in error &&
     typeof error.code === "string" &&
-    error.code.startsWith("PROVIDER_ROUTINE_") &&
+    nativeRpcProviderRoutineErrorCodeSchema.safeParse(error.code).success &&
     "publicMessage" in error &&
     typeof error.publicMessage === "string"
   );
 }
 
-function statusFromProviderRoutineError(code: string) {
+function statusFromProviderRoutineError(code: string): 400 | 403 | 404 | 502 {
   switch (code) {
     case "PROVIDER_ROUTINE_INSUFFICIENT_SCOPE":
       return 403;
