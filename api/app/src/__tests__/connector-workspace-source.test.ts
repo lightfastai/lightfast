@@ -436,8 +436,13 @@ describe("connector workspace boundary", () => {
       name?: string;
       private?: boolean;
     }>("connectors/granola/package.json");
+    const granolaContractSource = source("connectors/granola/src/contract.ts");
+    const granolaConfigSource = source("connectors/granola/src/config.ts");
 
     expect(existsSync(resolve(repoRoot, oldGranolaPath))).toBe(false);
+    expect(
+      existsSync(resolve(repoRoot, "connectors/granola/src/contract.ts"))
+    ).toBe(true);
     expect(granolaPackage.name).toBe("@lightfast/connector-granola");
     expect(granolaPackage.private).toBe(true);
     expect(granolaPackage.dependencies?.["@lightfast/connector-core"]).toBe(
@@ -446,10 +451,14 @@ describe("connector workspace boundary", () => {
     expect(granolaPackage.dependencies?.["@vendor/mcp"]).toBe("workspace:*");
     expect(granolaPackage.dependencies?.zod).toBe("catalog:");
     expect(Object.keys(granolaPackage.exports ?? {}).sort()).toEqual([
+      "./contract",
       "./mcp",
       "./node",
       "./oauth",
     ]);
+    expect(granolaContractSource).toContain("DEFAULT_GRANOLA_MCP_ENDPOINT");
+    expect(granolaContractSource).toContain("granolaClientMetadata");
+    expect(granolaConfigSource).toContain('from "./contract"');
   });
 
   it("removes the old Granola app node package name from source and manifests", () => {

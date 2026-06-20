@@ -5,7 +5,10 @@ import type {
 } from "@vendor/mcp";
 import { describe, expect, it, vi } from "vitest";
 
-import { DEFAULT_GRANOLA_MCP_ENDPOINT, granolaClientMetadata } from "../config";
+import {
+  DEFAULT_GRANOLA_MCP_ENDPOINT,
+  granolaClientMetadata,
+} from "../contract";
 import { GranolaOAuthClientProvider } from "../oauth";
 
 describe("Granola OAuth client provider", () => {
