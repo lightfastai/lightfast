@@ -25,7 +25,6 @@ import {
   ORGANIZATION_STALE_TIME,
   organizationQueryKeys,
 } from "~/organization/organization-cache";
-import { signalQueryKeys } from "./signals-cache";
 
 interface SignalCreateDialogProps {
   onOpenChange: (open: boolean) => void;
@@ -141,10 +140,7 @@ export function SignalCreateDialog({
     onSuccess: () => {
       removeSignalDraft(draftStorageKey);
       void queryClient.invalidateQueries({
-        queryKey: signalQueryKeys.workingSet(),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: signalQueryKeys.processing(),
+        queryKey: ["signals"] as const,
       });
       toast.success("Signal queued", {
         description: "Classification will start shortly.",

@@ -4,7 +4,6 @@ import {
 } from "@api/app/tanstack/signals";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { signalQueryKeys } from "./signals-cache";
 import {
   adaptProcessingRow,
   compareSignalsByRecency,
@@ -25,8 +24,12 @@ export function useSignalsWorkspaceData({
 }: {
   filters: SignalClassificationFilters;
 }) {
-  const workingSetQueryKey = signalQueryKeys.workingSet();
-  const processingQueryKey = signalQueryKeys.processing();
+  const workingSetQueryKey = ["signals", "working-set"] as const;
+  const processingQueryKey = [
+    "signals",
+    "processing",
+    { limit: PROCESSING_SIGNALS_LIMIT, statuses: signalProcessingStatuses },
+  ] as const;
   const workingSetQuery = useQuery({
     enabled: typeof window !== "undefined",
     placeholderData: keepPreviousData,

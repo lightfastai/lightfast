@@ -49,8 +49,12 @@ describe("migrated signal UI data access", () => {
     expect(workspaceDataSource).toContain('@api/app/tanstack/signals"');
     expect(workspaceDataSource).toContain("listWorkingSetSignals");
     expect(workspaceDataSource).toContain("listProcessingSignals");
-    expect(workspaceDataSource).toContain("signalQueryKeys.workingSet()");
-    expect(workspaceDataSource).toContain("signalQueryKeys.processing()");
+    expect(workspaceDataSource).toContain(
+      'const workingSetQueryKey = ["signals", "working-set"] as const'
+    );
+    expect(workspaceDataSource).toContain("const processingQueryKey = [");
+    expect(workspaceDataSource).not.toContain("signalQueryKeys");
+    expect(workspaceDataSource).not.toContain("signals-cache");
     expect(workspaceDataSource).not.toContain("workingSetSignalsQueryOptions");
     expect(workspaceDataSource).not.toContain("processingSignalsQueryOptions");
     expect(workspaceDataSource).toContain("filterClassifiedSignals");

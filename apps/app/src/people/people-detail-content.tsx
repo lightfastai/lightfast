@@ -14,7 +14,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import type { ReactNode } from "react";
-import { signalQueryKeys } from "~/signals/signals-cache";
 import {
   formatPersonSignalRef,
   getPersonName,
@@ -75,7 +74,7 @@ function PersonSignalLink({
   const query = useQuery({
     enabled: typeof window !== "undefined" && Boolean(signalId),
     queryFn: () => getSignal({ data: { publicId: signalId } }),
-    queryKey: signalQueryKeys.detail(signalId),
+    queryKey: ["signals", "detail", signalId] as const,
   });
   const title = query.data
     ? (query.data.classification?.title ?? query.data.input)

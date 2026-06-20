@@ -13,7 +13,6 @@ import {
 } from "@repo/ui-v2/components/ui/sheet";
 import { useQuery } from "@tanstack/react-query";
 import { SignalDetailContent } from "./signal-detail-content";
-import { signalQueryKeys } from "./signals-cache";
 import {
   getSignalSummary,
   getSignalTitle,
@@ -68,7 +67,7 @@ export function SignalDetailSheet({
   } = useQuery({
     enabled: typeof window !== "undefined" && shouldFetchDetail,
     queryFn: () => getSignal({ data: { publicId: detailPublicId } }),
-    queryKey: signalQueryKeys.detail(detailPublicId),
+    queryKey: ["signals", "detail", detailPublicId] as const,
   });
 
   // Header seed: the projection (or, for deep-links not in cache, the fetched row).
