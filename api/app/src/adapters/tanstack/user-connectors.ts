@@ -42,11 +42,29 @@ function noStore() {
   setResponseHeader("vary", "Cookie, Authorization");
 }
 
+function sameOriginReferer(request: Request) {
+  const referer = request.headers.get("referer");
+  if (!referer) {
+    return null;
+  }
+
+  try {
+    const requestOrigin = new URL(request.url).origin;
+    const refererUrl = new URL(referer);
+    if (refererUrl.origin !== requestOrigin) {
+      return null;
+    }
+    return refererUrl.toString();
+  } catch {
+    return null;
+  }
+}
+
 function deps(request: Request): UserConnectorCommandDeps {
   return {
     db,
     disconnectGranolaUserConnector,
-    request: { referer: request.headers.get("referer") },
+    request: { referer: sameOriginReferer(request) },
     startGranolaUserConnectorOAuth,
   };
 }

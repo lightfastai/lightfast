@@ -11,6 +11,7 @@ import {
 import {
   disconnectUserConnectorCommand,
   startUserConnectorCommand,
+  type UserConnectorCommandDeps,
 } from "../domain/user-connectors";
 
 const listMcpOauthGrantConnectionsForUserMock = vi.fn();
@@ -97,7 +98,7 @@ function userConnectorDeps(referer?: string | null) {
     disconnectGranolaUserConnector: disconnectGranolaUserConnectorMock,
     request: { referer },
     startGranolaUserConnectorOAuth: startGranolaUserConnectorOAuthMock,
-  };
+  } satisfies UserConnectorCommandDeps;
 }
 
 beforeEach(() => {

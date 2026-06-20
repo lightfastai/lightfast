@@ -9,6 +9,7 @@ import { ValidationError } from "../domain/errors";
 import {
   disconnectUserConnectorCommand,
   startUserConnectorCommand,
+  type UserConnectorCommandDeps,
 } from "../domain/user-connectors";
 
 const serviceMocks = vi.hoisted(() => ({
@@ -34,7 +35,7 @@ function deps() {
     disconnectGranolaUserConnector: serviceMocks.disconnectGranolaUserConnector,
     request: {},
     startGranolaUserConnectorOAuth: serviceMocks.startGranolaUserConnectorOAuth,
-  };
+  } satisfies UserConnectorCommandDeps;
 }
 
 describe("user connector domain commands", () => {

@@ -6,6 +6,7 @@ import {
 import { db } from "@db/app/client";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest, setResponseHeader } from "@tanstack/react-start/server";
+import { log } from "@vendor/observability/log/next";
 
 import { resolveAuthContextFromClerk } from "../../auth/identity";
 import { actorFromAuthIdentity, isDomainError } from "../../domain";
@@ -60,7 +61,11 @@ async function requestIdentityRefresh(sourceControlRepositoryId: number) {
       },
       name: "app/identity.index.refresh.requested",
     });
-  } catch {
+  } catch (error) {
+    log.error("[org-identity] refresh enqueue failed", {
+      error,
+      sourceControlRepositoryId,
+    });
     return;
   }
 }
