@@ -113,6 +113,7 @@ export default function BrandPage() {
             </h1>
             <Button
               className="mt-10"
+              nativeButton={false}
               render={<a href="#contact" />}
               size="lg"
               variant="secondary"
