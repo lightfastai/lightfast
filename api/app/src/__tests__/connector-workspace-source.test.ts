@@ -78,9 +78,9 @@ describe("connector workspace boundary", () => {
     expect(existsSync(resolve(repoRoot, oldConnectorPath))).toBe(false);
     expect(connectorCorePackage.name).toBe("@lightfast/connector-core");
     expect(connectorCorePackage.private).toBe(true);
-    expect(connectorCorePackage.dependencies?.["@repo/api-contract"]).toBe(
-      "workspace:*"
-    );
+    expect(
+      connectorCorePackage.dependencies?.["@repo/api-contract"]
+    ).toBeUndefined();
     expect(connectorCorePackage.dependencies?.zod).toBe("catalog:");
     expect(Object.keys(connectorCorePackage.exports ?? {}).sort()).toEqual([
       ".",
@@ -133,14 +133,20 @@ describe("connector workspace boundary", () => {
     expect(
       existsSync(resolve(repoRoot, "connectors/core/src/provider-routines.ts"))
     ).toBe(false);
-    expect(
-      apiContractPackage.dependencies?.["@lightfast/connector-core"]
-    ).toBeUndefined();
-    expect(connectorCorePackage.dependencies?.["@repo/api-contract"]).toBe(
+    expect(apiContractPackage.dependencies?.["@lightfast/connector-core"]).toBe(
       "workspace:*"
     );
+    expect(
+      connectorCorePackage.dependencies?.["@repo/api-contract"]
+    ).toBeUndefined();
 
     const connectorCoreSource = source("connectors/core/src/index.ts");
+    const apiContractConnectorsSource = source(
+      "packages/api-contract/src/connectors.ts"
+    );
+
+    expect(connectorCoreSource).not.toContain("@repo/api-contract");
+    expect(apiContractConnectorsSource).toContain("@lightfast/connector-core");
     expect(connectorCoreSource).not.toContain("CONNECTOR_CATALOG");
     expect(connectorCoreSource).not.toContain("USER_CONNECTOR_CATALOG");
     expect(connectorCoreSource).not.toContain(
@@ -272,6 +278,19 @@ describe("connector workspace boundary", () => {
     const repoCiWorkflow = source(".github/workflows/ci.yml");
 
     expect(repoCiWorkflow.match(/'connectors\/\*\*'/g) ?? []).toHaveLength(2);
+  });
+
+  it("bundles connector core with public packages that inline api-contract", () => {
+    for (const path of [
+      "core/cli/tsup.config.ts",
+      "core/lightfast/tsup.config.ts",
+      "core/mcp/tsup.config.ts",
+    ]) {
+      const tsupSource = source(path);
+
+      expect(tsupSource).toContain('"@repo/api-contract"');
+      expect(tsupSource).toContain('"@lightfast/connector-core"');
+    }
   });
 
   it("hosts Linear provider runtime code behind explicit connector entrypoints", () => {
