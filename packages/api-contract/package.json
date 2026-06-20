@@ -17,6 +17,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@lightfast/connector-core": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {

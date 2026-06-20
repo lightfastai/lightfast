@@ -9,7 +9,7 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   external: [],
-  noExternal: ["@repo/api-contract"],
+  noExternal: ["@lightfast/connector-core", "@repo/api-contract"],
   target: "node18",
   bundle: true,
   silent: false,

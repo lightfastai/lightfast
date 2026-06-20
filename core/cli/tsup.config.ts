@@ -7,6 +7,7 @@ export default defineConfig({
   target: "node22",
   bundle: true,
   noExternal: [
+    "@lightfast/connector-core",
     "@repo/api-contract",
     "@repo/native-auth-contract",
     "@repo/native-auth-node",

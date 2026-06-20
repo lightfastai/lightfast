@@ -17,7 +17,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@repo/api-contract": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {

@@ -1,20 +1,20 @@
-export {
-  CONNECTABLE_CONNECTOR_PROVIDERS,
-  CONNECTOR_PROVIDERS,
-  type ConnectableConnectorProvider,
-  type ConnectorProvider,
-  connectableConnectorProviderSchema,
-  connectorProviderSchema,
-  USER_CONNECTOR_PROVIDERS,
-  type UserConnectorProvider,
-  userConnectorProviderSchema,
-} from "@repo/api-contract";
-
-import {
-  type ConnectableConnectorProvider,
-  connectableConnectorProviderSchema,
-} from "@repo/api-contract";
 import { z } from "zod";
+
+export const CONNECTOR_PROVIDERS = ["linear", "x"] as const;
+export const connectorProviderSchema = z.enum(CONNECTOR_PROVIDERS);
+export type ConnectorProvider = z.infer<typeof connectorProviderSchema>;
+
+export const CONNECTABLE_CONNECTOR_PROVIDERS = ["linear", "x"] as const;
+export const connectableConnectorProviderSchema = z.enum(
+  CONNECTABLE_CONNECTOR_PROVIDERS
+);
+export type ConnectableConnectorProvider = z.infer<
+  typeof connectableConnectorProviderSchema
+>;
+
+export const USER_CONNECTOR_PROVIDERS = ["granola"] as const;
+export const userConnectorProviderSchema = z.enum(USER_CONNECTOR_PROVIDERS);
+export type UserConnectorProvider = z.infer<typeof userConnectorProviderSchema>;
 
 export const connectorToolNameSchema = z
   .string()
