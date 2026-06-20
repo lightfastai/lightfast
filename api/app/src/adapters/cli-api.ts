@@ -9,7 +9,11 @@ import {
   type NativeRpcProviderRoutineErrorCode,
   nativeRpcProviderRoutineErrorCodeSchema,
 } from "@repo/native-auth-contract";
-import type { ProviderRoutineServiceContext } from "../services/provider-routines/context";
+import {
+  createProviderRoutineCommandDeps,
+  providerRoutineCallCommand,
+  providerRoutineFindCommand,
+} from "../domain/provider-routines";
 import { handleNativeRpcRequest, NativeRpcRouteError } from "./native-rpc";
 
 const cliNativeRpcCommands = [
@@ -27,8 +31,6 @@ const log = {
     console.warn(message, metadata),
 };
 
-type CliProviderRoutineServiceContext = ProviderRoutineServiceContext;
-
 export function handleCliNativeRpcRequest(request: Request) {
   return handleNativeRpcRequest(request, {
     allowedCommands: cliNativeRpcCommands,
@@ -40,9 +42,7 @@ export function handleCliNativeRpcRequest(request: Request) {
   });
 }
 
-async function createCliProviderRoutineContext(
-  req: Request
-): Promise<CliProviderRoutineServiceContext> {
+async function createCliProviderRoutineCommandContext(req: Request) {
   const { db } = await import("@db/app/client");
   const { resolveAuthContextFromClerk } = await import("../auth/identity");
   const { loadAgentConnectorRuntimeTools } = await import(
@@ -72,34 +72,24 @@ async function createCliProviderRoutineContext(
   }
 
   return {
-    actor: {
-      orgId: identity.orgId,
-      userId: identity.userId,
-    },
-    adapters: {
-      connectors: {
-        loadTools: async () =>
-          await loadAgentConnectorRuntimeTools({
-            calledByUserId: identity.userId,
-            clerkOrgId: identity.orgId,
-            sourceClientId: access.clientId,
-            sourceRef: identity.orgId,
-            sourceSurface: "native_cli",
-          }),
+    ctx: {
+      actor: {
+        client: "cli" as const,
+        clientId: access.clientId,
+        kind: "nativeClient" as const,
+        orgId: identity.orgId,
+        source: "cli" as const,
+        userId: identity.userId,
       },
+      caller: { client: "cli" as const, kind: "firstPartyClient" as const },
+      request: { id: crypto.randomUUID(), source: "cli-rpc" as const },
     },
-    db,
-    log,
-    now: () => new Date(),
-    scopes: {
-      providerRoutineRead: true,
-      providerRoutineWrite: true,
-    },
-    source: {
-      clientId: access.clientId,
-      ref: identity.orgId,
-      surface: "native_cli",
-    },
+    deps: createProviderRoutineCommandDeps({
+      db,
+      loadConnectorRuntimeTools: loadAgentConnectorRuntimeTools,
+      log,
+      now: () => new Date(),
+    }),
   };
 }
 
@@ -111,12 +101,13 @@ async function handleCliProviderRoutineCallCommand({
   request: Request;
 }) {
   try {
-    const { callProviderRoutine } = await import(
-      "../services/provider-routines/call"
-    );
     const input = parseProviderRoutineCallInput(commandInput);
-    const context = await createCliProviderRoutineContext(request);
-    const result = await callProviderRoutine(context, input);
+    const commandContext =
+      await createCliProviderRoutineCommandContext(request);
+    const result = await providerRoutineCallCommand.run({
+      ...commandContext,
+      input: { input },
+    });
     return providerRoutineCallSuccessSchema.parse(result);
   } catch (error) {
     throw normalizeCommandError(error);
@@ -131,12 +122,13 @@ async function handleCliProviderRoutineFindCommand({
   request: Request;
 }) {
   try {
-    const { findProviderRoutines } = await import(
-      "../services/provider-routines/find"
-    );
     const input = parseProviderRoutineFindInput(commandInput);
-    const context = await createCliProviderRoutineContext(request);
-    const result = await findProviderRoutines(context, input);
+    const commandContext =
+      await createCliProviderRoutineCommandContext(request);
+    const result = await providerRoutineFindCommand.run({
+      ...commandContext,
+      input: { input },
+    });
     return providerRoutineFindOutputSchema.parse(result);
   } catch (error) {
     throw normalizeCommandError(error);

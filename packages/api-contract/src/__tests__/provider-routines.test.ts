@@ -129,6 +129,7 @@ describe("provider routine contract", () => {
           grantId: "mcp_grant_test",
           kind: "mcp",
           orgId: "org_test",
+          scopes: ["mcp:provider_routines:read"],
           userId: "user_test",
         },
         input: {
@@ -145,6 +146,7 @@ describe("provider routine contract", () => {
         grantId: "mcp_grant_test",
         kind: "mcp",
         orgId: "org_test",
+        scopes: ["mcp:provider_routines:read"],
         userId: "user_test",
       },
       input: {
@@ -163,12 +165,30 @@ describe("provider routine contract", () => {
           grantId: "mcp_grant_test",
           kind: "mcp",
           orgId: "org_test",
+          scopes: ["mcp:provider_routines:read"],
           userId: "user_test",
         },
         input: {
           input: ["not", "an", "object"],
           routineId: "linear__create_issue",
         },
+        scopes: {
+          providerRoutineRead: true,
+          providerRoutineWrite: false,
+        },
+      })
+    ).toThrow();
+
+    expect(() =>
+      mcpProviderRoutineFindCommandInputSchema.parse({
+        actor: {
+          clientId: "mcp_client_test",
+          grantId: "mcp_grant_test",
+          kind: "mcp",
+          orgId: "org_test",
+          userId: "user_test",
+        },
+        input: {},
         scopes: {
           providerRoutineRead: true,
           providerRoutineWrite: false,

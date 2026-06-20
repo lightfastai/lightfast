@@ -101,19 +101,17 @@ function requestId() {
   return crypto.randomUUID();
 }
 
-type McpSignalActor =
-  | CreateMcpSignalCommandInput["actor"]
-  | GetMcpSignalCommandInput["actor"];
+type McpSignalCommand = CreateMcpSignalCommandInput | GetMcpSignalCommandInput;
 
-function mcpSignalContext(actor: McpSignalActor): ExecutionContext {
+function mcpSignalContext(command: McpSignalCommand): ExecutionContext {
   return {
     actor: {
-      clientId: actor.clientId,
-      grantId: actor.grantId,
+      clientId: command.actor.clientId,
+      grantId: command.actor.grantId,
       kind: "mcpClient",
-      orgId: actor.orgId,
-      scopes: [],
-      userId: actor.userId,
+      orgId: command.actor.orgId,
+      scopes: command.scopes,
+      userId: command.actor.userId,
     },
     caller: { kind: "service", service: "apps-mcp" },
     request: { id: requestId(), source: "mcp" },
@@ -187,7 +185,7 @@ export async function handleCreateMcpSignalInternalRequest(
       userId: parsed.data.actor.userId,
     });
     const result = await createSignalCommand.run({
-      ctx: mcpSignalContext(parsed.data.actor),
+      ctx: mcpSignalContext(parsed.data),
       deps: createSignalDeps(),
       input: { input: parsed.data.input },
     });
@@ -228,7 +226,7 @@ export async function handleGetMcpSignalInternalRequest(
       userId: parsed.data.actor.userId,
     });
     const signal = await getSignalCommand.run({
-      ctx: mcpSignalContext(parsed.data.actor),
+      ctx: mcpSignalContext(parsed.data),
       deps: getSignalDeps(),
       input: { publicId: parsed.data.id },
     });

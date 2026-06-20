@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { McpScope } from "../mcp";
 
 export const SIGNAL_INPUT_MAX_LENGTH = 4000;
 export const SIGNAL_ID_PREFIX = "signal_";
@@ -327,9 +328,19 @@ const mcpSignalActorInput = z.object({
   userId: z.string().min(1),
 });
 
+export const mcpSignalScopeSchema = z.enum([
+  "mcp:signals:read",
+  "mcp:signals:write",
+]);
+export type McpSignalScope = Extract<
+  McpScope,
+  z.infer<typeof mcpSignalScopeSchema>
+>;
+
 export const createMcpSignalCommandInput = z.object({
   actor: mcpSignalActorInput,
   input: createSignalInput.shape.input,
+  scopes: z.array(mcpSignalScopeSchema).min(1),
 });
 
 export const createSignalOutput = z.object({
@@ -345,6 +356,7 @@ export const getSignalInput = z.object({
 export const getMcpSignalCommandInput = z.object({
   actor: mcpSignalActorInput,
   id: getSignalInput.shape.id,
+  scopes: z.array(mcpSignalScopeSchema).min(1),
 });
 
 export const getSignalOutput = z.object({

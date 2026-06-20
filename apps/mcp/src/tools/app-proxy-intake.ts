@@ -1,6 +1,7 @@
 import {
   type McpProviderRoutineCallCommandInput,
   type McpProviderRoutineFindCommandInput,
+  type McpProviderRoutineScope,
   mcpProviderRoutineCallCommandInputSchema,
   mcpProviderRoutineFindCommandInputSchema,
   type ProviderRoutineCallInput,
@@ -19,6 +20,7 @@ type Fetch = typeof fetch;
 interface ProviderRoutineProxyContext {
   actor: {
     orgId: string;
+    scopes: readonly McpProviderRoutineScope[];
     userId: string;
   };
   scopes: {
@@ -72,6 +74,7 @@ function commandActorFromContext(
     grantId: context.source.ref ?? "",
     kind: "mcp",
     orgId: context.actor.orgId,
+    scopes: [...context.actor.scopes],
     userId: context.actor.userId,
   };
 }

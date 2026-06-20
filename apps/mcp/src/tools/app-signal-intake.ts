@@ -5,6 +5,7 @@ import {
   type GetSignalOutput,
   getMcpSignalCommandInput,
   getSignalOutput,
+  type McpSignalScope,
 } from "@repo/api-contract";
 import { signServiceJWT } from "@repo/service-jwt";
 
@@ -110,6 +111,7 @@ export async function createSignalForActorViaApp(
       userId: string;
     };
     input: string;
+    scopes: McpSignalScope[];
   },
   dependencies: { fetch?: Fetch } = {}
 ): Promise<CreateSignalOutput> {
@@ -139,6 +141,7 @@ export async function getSignalForActorViaApp(
       userId: string;
     };
     id: string;
+    scopes: McpSignalScope[];
   },
   dependencies: { fetch?: Fetch } = {}
 ): Promise<GetSignalOutput> {

@@ -1,3 +1,4 @@
+import type { McpScope } from "@repo/api-contract";
 import type { AuthIdentity, OrgGate } from "../auth/identity";
 import { AuthzError } from "./errors";
 
@@ -12,6 +13,7 @@ export type Actor =
     }
   | {
       client: "cli" | "desktop";
+      clientId: string;
       kind: "nativeClient";
       orgId: string;
       source: "cli" | "desktop-main";
@@ -30,7 +32,7 @@ export type Actor =
       grantId: string;
       kind: "mcpClient";
       orgId: string;
-      scopes: string[];
+      scopes: McpScope[];
       userId: string;
     }
   | {
