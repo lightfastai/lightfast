@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { LINEAR_OAUTH_SCOPE } from "../contract";
 import {
   buildLinearOAuthAuthorizeUrl,
   exchangeLinearOAuthCode,
@@ -25,7 +26,7 @@ describe("buildLinearOAuthAuthorizeUrl", () => {
     );
     expect(url.searchParams.get("actor")).toBe("app");
     expect(url.searchParams.get("response_type")).toBe("code");
-    expect(url.searchParams.get("scope")).toBe("read,write");
+    expect(url.searchParams.get("scope")).toBe(LINEAR_OAUTH_SCOPE);
     expect(url.searchParams.get("state")).toBe("state_123");
     expect(url.searchParams.get("code_challenge")).toBe("challenge_123");
     expect(url.searchParams.get("code_challenge_method")).toBe("S256");
