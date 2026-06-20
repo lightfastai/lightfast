@@ -1,12 +1,18 @@
 import {
   type ProviderRoutineCallInput,
   type ProviderRoutineCallSuccess,
+  type ProviderRoutineFindInput,
   type ProviderRoutineFindOutput,
   providerRoutineCallInputSchema,
   providerRoutineCallSuccessSchema,
+  providerRoutineFindInputSchema,
   providerRoutineFindOutputSchema,
 } from "@repo/api-contract";
-import type { NativeSession } from "@repo/native-auth-contract";
+import {
+  type NativeRpcCommand,
+  type NativeSession,
+  nativeRpcSuccessResponseSchema,
+} from "@repo/native-auth-contract";
 import { z } from "zod";
 
 import { buildNativeAuthHeaders } from "../auth/session";
@@ -60,6 +66,49 @@ async function readJson<T>(
   return schema.parse(body);
 }
 
+function createCliRpcInput(input: {
+  includeSchema?: boolean;
+  limit?: number;
+  provider?: string;
+  query?: string;
+  readOnly?: boolean;
+  routineId?: string;
+}): ProviderRoutineFindInput {
+  return providerRoutineFindInputSchema.parse({
+    includeSchema: input.includeSchema ? true : undefined,
+    limit: input.limit,
+    provider: input.provider,
+    query: input.query,
+    readOnly: input.readOnly ? true : undefined,
+    routineId: input.routineId,
+  });
+}
+
+async function postCliRpc<T>(input: {
+  appUrl: string;
+  command: NativeRpcCommand;
+  commandInput: unknown;
+  fetchImpl?: typeof fetch;
+  resultSchema: z.ZodType<T>;
+  session: NativeSession;
+}): Promise<T> {
+  const fetchImpl = input.fetchImpl ?? fetch;
+  const response = await fetchImpl(new URL("/api/cli/rpc", input.appUrl), {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "content-type": "application/json",
+      ...buildNativeAuthHeaders(input.session),
+    },
+    body: JSON.stringify({
+      command: input.command,
+      input: input.commandInput,
+    }),
+  });
+  const envelope = await readJson(response, nativeRpcSuccessResponseSchema);
+  return input.resultSchema.parse(envelope.result);
+}
+
 export async function findProxyRoutines(input: {
   appUrl: string;
   fetchImpl?: typeof fetch;
@@ -71,35 +120,14 @@ export async function findProxyRoutines(input: {
   routineId?: string;
   session: NativeSession;
 }): Promise<ProviderRoutineFindOutput> {
-  const url = new URL("/api/native/proxy/routines", input.appUrl);
-  if (input.query) {
-    url.searchParams.set("query", input.query);
-  }
-  if (input.provider) {
-    url.searchParams.set("provider", input.provider);
-  }
-  if (input.includeSchema) {
-    url.searchParams.set("includeSchema", "true");
-  }
-  if (input.readOnly) {
-    url.searchParams.set("readOnly", "true");
-  }
-  if (input.routineId) {
-    url.searchParams.set("routineId", input.routineId);
-  }
-  if (input.limit) {
-    url.searchParams.set("limit", String(input.limit));
-  }
-
-  const fetchImpl = input.fetchImpl ?? fetch;
-  const response = await fetchImpl(url, {
-    headers: {
-      accept: "application/json",
-      ...buildNativeAuthHeaders(input.session),
-    },
+  return postCliRpc({
+    appUrl: input.appUrl,
+    command: "providerRoutines.find",
+    commandInput: createCliRpcInput(input),
+    fetchImpl: input.fetchImpl,
+    resultSchema: providerRoutineFindOutputSchema,
+    session: input.session,
   });
-
-  return readJson(response, providerRoutineFindOutputSchema);
 }
 
 export async function callProxyRoutine(input: {
@@ -109,19 +137,12 @@ export async function callProxyRoutine(input: {
   session: NativeSession;
 }): Promise<ProviderRoutineCallSuccess> {
   const payload = providerRoutineCallInputSchema.parse(input.payload);
-  const fetchImpl = input.fetchImpl ?? fetch;
-  const response = await fetchImpl(
-    new URL("/api/native/proxy/call", input.appUrl),
-    {
-      method: "POST",
-      headers: {
-        accept: "application/json",
-        "content-type": "application/json",
-        ...buildNativeAuthHeaders(input.session),
-      },
-      body: JSON.stringify(payload),
-    }
-  );
-
-  return readJson(response, providerRoutineCallSuccessSchema);
+  return postCliRpc({
+    appUrl: input.appUrl,
+    command: "providerRoutines.call",
+    commandInput: payload,
+    fetchImpl: input.fetchImpl,
+    resultSchema: providerRoutineCallSuccessSchema,
+    session: input.session,
+  });
 }
