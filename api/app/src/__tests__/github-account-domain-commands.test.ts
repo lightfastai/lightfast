@@ -1,4 +1,3 @@
-import type { Database } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AuthIdentity } from "../auth/identity";
@@ -33,24 +32,24 @@ function ctx(identity: AuthIdentity = pendingIdentity) {
 
 function deps() {
   return {
-    clerk: {
-      users: {
-        getUser: vi.fn(),
-        updateUser: vi.fn(),
-      },
-    },
-    db: {} as Database,
-    deletePreClerkNamespaceReservation: vi.fn(),
     disconnectGitHubUserAccount: disconnectGitHubUserAccountMock,
-    finalizeNamespaceOperation: vi.fn(),
     getGitHubUserAccountStatus: getGitHubUserAccountStatusMock,
-    isClerkConflictError: vi.fn(),
     log: { error: vi.fn() },
-    markNamespaceOperationClerkApplied: vi.fn(),
     parseError: (error: unknown) => error,
-    reserveNamespaceForOperation: vi.fn(),
     startGitHubUserAccountBinding: startGitHubUserAccountBindingMock,
-    startNamespaceOperation: vi.fn(),
+    usernameNamespace: {
+      deletePreClerkReservation: vi.fn(),
+      finalize: vi.fn(),
+      isConflict: vi.fn(),
+      markClerkApplied: vi.fn(),
+      reserve: vi.fn(),
+      start: vi.fn(),
+    },
+    users: {
+      getUser: vi.fn(),
+      isUsernameConflictError: vi.fn(),
+      updateUser: vi.fn(),
+    },
   } satisfies AccountCommandDeps;
 }
 

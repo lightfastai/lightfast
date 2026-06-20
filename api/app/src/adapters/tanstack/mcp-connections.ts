@@ -1,3 +1,9 @@
+import {
+  getMcpOauthGrantByPublicId,
+  listMcpOauthGrantConnectionsForOrg,
+  listMcpOauthGrantConnectionsForUser,
+  revokeMcpOauthGrant,
+} from "@db/app";
 import { db } from "@db/app/client";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest, setResponseHeader } from "@tanstack/react-start/server";
@@ -6,9 +12,9 @@ import { resolveAuthContextFromClerk } from "../../auth/identity";
 import type { Actor } from "../../domain";
 import { actorFromAuthIdentity, isDomainError } from "../../domain";
 import {
-  createDefaultMcpConnectionCommandDeps,
   listAccountMcpConnectionsCommand,
   listOrgMcpConnectionsCommand,
+  type McpConnectionCommandDeps,
   revokeAccountMcpConnectionCommand,
   revokeOrgMcpConnectionCommand,
 } from "../../domain/mcp-connections";
@@ -61,6 +67,18 @@ function noStore() {
   setResponseHeader("vary", "Cookie, Authorization");
 }
 
+function commandDeps(): McpConnectionCommandDeps {
+  return {
+    getGrantByPublicId: async (input) =>
+      (await getMcpOauthGrantByPublicId(db, input)) ?? null,
+    listGrantConnectionsForOrg: (input) =>
+      listMcpOauthGrantConnectionsForOrg(db, input),
+    listGrantConnectionsForUser: (input) =>
+      listMcpOauthGrantConnectionsForUser(db, input),
+    revokeGrant: (input) => revokeMcpOauthGrant(db, input),
+  };
+}
+
 export const listAccountMcpConnections = createServerFn({
   method: "GET",
 }).handler(async () => {
@@ -68,7 +86,7 @@ export const listAccountMcpConnections = createServerFn({
   try {
     return await listAccountMcpConnectionsCommand.run({
       ctx: await createTanStackMcpConnectionContext(),
-      deps: createDefaultMcpConnectionCommandDeps({ db }),
+      deps: commandDeps(),
       input: {},
     });
   } catch (error) {
@@ -83,7 +101,7 @@ export const revokeAccountMcpConnection = createServerFn({ method: "POST" })
     try {
       return await revokeAccountMcpConnectionCommand.run({
         ctx: await createTanStackMcpConnectionContext(),
-        deps: createDefaultMcpConnectionCommandDeps({ db }),
+        deps: commandDeps(),
         input: data,
       });
     } catch (error) {
@@ -98,7 +116,7 @@ export const listOrgMcpConnections = createServerFn({
   try {
     return await listOrgMcpConnectionsCommand.run({
       ctx: await createTanStackMcpConnectionContext(),
-      deps: createDefaultMcpConnectionCommandDeps({ db }),
+      deps: commandDeps(),
       input: {},
     });
   } catch (error) {
@@ -113,7 +131,7 @@ export const revokeOrgMcpConnection = createServerFn({ method: "POST" })
     try {
       return await revokeOrgMcpConnectionCommand.run({
         ctx: await createTanStackMcpConnectionContext(),
-        deps: createDefaultMcpConnectionCommandDeps({ db }),
+        deps: commandDeps(),
         input: data,
       });
     } catch (error) {

@@ -1,11 +1,12 @@
-import type { Database, McpOauthGrant } from "@db/app";
+import type { Database } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AuthIdentity } from "../auth/identity";
 import { actorFromAuthIdentity } from "../domain";
 import {
-  createDefaultMcpConnectionCommandDeps,
   listAccountMcpConnectionsCommand,
+  type McpConnectionCommandDeps,
+  type McpConnectionGrant,
   revokeAccountMcpConnectionCommand,
 } from "../domain/mcp-connections";
 import {
@@ -34,27 +35,25 @@ const activeIdentity: AuthIdentity = {
 
 const now = new Date("2026-06-01T00:00:00.000Z");
 
-function grant(overrides: Partial<McpOauthGrant> = {}): McpOauthGrant {
+function grant(
+  overrides: Partial<McpConnectionGrant> = {}
+): McpConnectionGrant {
   return {
-    id: 1,
     clientPublicId: "mcp_client_test",
     clerkOrgId: "org_acme",
     clerkUserId: "user_current",
     createdAt: now,
     lastUsedAt: null,
-    metadata: null,
     publicId: "mcp_grant_test",
     resource: "https://mcp.lightfast.localhost/mcp",
-    resourceHash: "resource_hash",
     revokedAt: null,
     scopes: ["mcp:signals:read"],
     status: "active",
-    updatedAt: now,
     ...overrides,
   };
 }
 
-function connection(overrides: Partial<McpOauthGrant> = {}) {
+function connection(overrides: Partial<McpConnectionGrant> = {}) {
   return {
     client: {
       clientName: "Lightfield",
@@ -83,13 +82,12 @@ function ctx(identity: AuthIdentity = pendingIdentity) {
 }
 
 function mcpDeps() {
-  return createDefaultMcpConnectionCommandDeps({
-    db: {} as Database,
-    getMcpOauthGrantByPublicId: getMcpOauthGrantByPublicIdMock,
-    listMcpOauthGrantConnectionsForUser:
-      listMcpOauthGrantConnectionsForUserMock,
-    revokeMcpOauthGrant: revokeMcpOauthGrantMock,
-  });
+  return {
+    getGrantByPublicId: getMcpOauthGrantByPublicIdMock,
+    listGrantConnectionsForOrg: vi.fn(),
+    listGrantConnectionsForUser: listMcpOauthGrantConnectionsForUserMock,
+    revokeGrant: revokeMcpOauthGrantMock,
+  } satisfies McpConnectionCommandDeps;
 }
 
 function userConnectorDeps(referer?: string | null) {
@@ -138,10 +136,9 @@ describe("account MCP connection domain commands", () => {
       }),
     ]);
 
-    expect(listMcpOauthGrantConnectionsForUserMock).toHaveBeenCalledWith(
-      expect.anything(),
-      { clerkUserId: "user_current" }
-    );
+    expect(listMcpOauthGrantConnectionsForUserMock).toHaveBeenCalledWith({
+      clerkUserId: "user_current",
+    });
   });
 
   it("revokes only the signed-in user's MCP grant", async () => {
@@ -153,11 +150,10 @@ describe("account MCP connection domain commands", () => {
       })
     ).resolves.toEqual({ success: true });
 
-    expect(getMcpOauthGrantByPublicIdMock).toHaveBeenCalledWith(
-      expect.anything(),
-      { publicId: "mcp_grant_test" }
-    );
-    expect(revokeMcpOauthGrantMock).toHaveBeenCalledWith(expect.anything(), {
+    expect(getMcpOauthGrantByPublicIdMock).toHaveBeenCalledWith({
+      publicId: "mcp_grant_test",
+    });
+    expect(revokeMcpOauthGrantMock).toHaveBeenCalledWith({
       publicId: "mcp_grant_test",
     });
   });
