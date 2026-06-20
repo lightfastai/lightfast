@@ -26,7 +26,6 @@ describe("provider routine service boundary", () => {
     expect(cliApiSource).not.toContain("../services/provider-routines/context");
     expect(cliApiSource).not.toContain("../services/provider-routines/call");
     expect(cliApiSource).not.toContain("../services/provider-routines/find");
-    expect(cliApiSource).not.toContain("../services/provider-routines");
     expect(cliApiSource).not.toMatch(
       /\bfrom\s*["']\.\.\/services\/provider-routines["']/
     );

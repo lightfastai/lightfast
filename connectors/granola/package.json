@@ -30,8 +30,7 @@
   },
   "dependencies": {
     "@lightfast/connector-core": "workspace:*",
-    "@vendor/mcp": "workspace:*",
-    "zod": "catalog:"
+    "@vendor/mcp": "workspace:*"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

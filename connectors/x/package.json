@@ -38,7 +38,6 @@
   },
   "dependencies": {
     "@lightfast/connector-core": "workspace:*",
-    "@vendor/mcp": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {

@@ -1,13 +1,9 @@
-import type { Database, Person } from "@db/app";
+import type { Person } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AuthIdentity } from "../auth/identity";
 import { actorFromAuthIdentity } from "../domain";
-import {
-  createDefaultPeopleCommandDeps,
-  getPersonCommand,
-  listPeopleCommand,
-} from "../domain/people";
+import { getPersonCommand, listPeopleCommand } from "../domain/people";
 
 const mocks = vi.hoisted(() => ({
   getPersonByPublicId: vi.fn(),
@@ -62,7 +58,10 @@ function ctx(identity: AuthIdentity = activeIdentity) {
 }
 
 function deps() {
-  return createDefaultPeopleCommandDeps({ db: {} as Database });
+  return {
+    getPersonByPublicId: mocks.getPersonByPublicId,
+    listPeople: mocks.listPeople,
+  };
 }
 
 describe("people domain commands", () => {
@@ -95,7 +94,7 @@ describe("people domain commands", () => {
       nextCursor: { createdAt: personRow.createdAt, id: personRow.id },
     });
 
-    expect(mocks.listPeople).toHaveBeenCalledWith(expect.anything(), {
+    expect(mocks.listPeople).toHaveBeenCalledWith({
       clerkOrgId: "org_test",
       cursor: { createdAt: personRow.createdAt, id: personRow.id },
       limit: 25,
@@ -120,7 +119,7 @@ describe("people domain commands", () => {
       },
     });
 
-    expect(mocks.listPeople).toHaveBeenCalledWith(expect.anything(), {
+    expect(mocks.listPeople).toHaveBeenCalledWith({
       clerkOrgId: "org_test",
       cursor: undefined,
       limit: undefined,
@@ -141,7 +140,7 @@ describe("people domain commands", () => {
       })
     ).resolves.toEqual(personRow);
 
-    expect(mocks.getPersonByPublicId).toHaveBeenCalledWith(expect.anything(), {
+    expect(mocks.getPersonByPublicId).toHaveBeenCalledWith({
       clerkOrgId: "org_test",
       publicId: personRow.publicId,
     });

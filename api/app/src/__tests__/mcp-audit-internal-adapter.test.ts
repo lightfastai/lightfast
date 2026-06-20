@@ -96,6 +96,28 @@ describe("MCP audit internal adapter", () => {
     expect(mocks.recordMcpAuditEvent).not.toHaveBeenCalled();
   });
 
+  it("rejects service JWTs from non-MCP callers", async () => {
+    const response = await handleRecordMcpAuditInternalRequest(
+      jsonRequest({
+        body: {
+          eventName: "mcp.system.health",
+          outcome: "success",
+        },
+        token: await signServiceJWT({
+          audience: "lightfast-app",
+          caller: "app",
+          jwtSecret,
+        }),
+      })
+    );
+
+    expect(response.status).toBe(403);
+    await expect(responseJson(response)).resolves.toMatchObject({
+      error: "disallowed_caller",
+    });
+    expect(mocks.recordMcpAuditEvent).not.toHaveBeenCalled();
+  });
+
   it("records valid audit events through app-owned persistence", async () => {
     const response = await handleRecordMcpAuditInternalRequest(
       jsonRequest({
@@ -124,6 +146,15 @@ describe("MCP audit internal adapter", () => {
       eventName: "mcp.system.health",
       grantPublicId: "mcp_grant_test",
       metadata: {
+        caller: {
+          credential: {
+            audience: "lightfast-app",
+            caller: "mcp",
+            kind: "service_jwt",
+          },
+          kind: "service",
+          service: "apps-mcp",
+        },
         contractPath: "system.health",
         latencyMs: 10,
       },

@@ -1,11 +1,10 @@
-import type { Automation, AutomationRun, Database } from "@db/app";
+import type { Automation, AutomationRun } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AuthIdentity } from "../auth/identity";
 import { actorFromAuthIdentity } from "../domain";
 import {
   createAutomationCommand,
-  createDefaultAutomationCommandDeps,
   deleteAutomationCommand,
   getAutomationCommand,
   getAutomationRunCommand,
@@ -102,10 +101,9 @@ function ctx(input: { admin?: boolean; identity?: AuthIdentity } = {}) {
 }
 
 function deps() {
-  return createDefaultAutomationCommandDeps({
+  return {
     createAutomation: createAutomationMock,
     createAutomationRun: createAutomationRunMock,
-    db: {} as Database,
     deleteAutomation: deleteAutomationMock,
     getAutomationByPublicId: getAutomationByPublicIdMock,
     getAutomationRunByPublicId: getAutomationRunByPublicIdMock,
@@ -115,9 +113,10 @@ function deps() {
     markAutomationRunFailed: markAutomationRunFailedMock,
     now: () => runDate,
     sendAutomationRunRequested: sendAutomationRunRequestedMock,
+    sendAutomationRunRequestedTimeoutMs: 10_000,
     setAutomationStatus: setAutomationStatusMock,
     updateAutomation: updateAutomationMock,
-  });
+  };
 }
 
 beforeEach(() => {
@@ -160,7 +159,7 @@ describe("automation domain commands", () => {
       })
     ).resolves.toEqual([automation]);
 
-    expect(listAutomationsMock).toHaveBeenCalledWith(expect.anything(), {
+    expect(listAutomationsMock).toHaveBeenCalledWith({
       clerkOrgId: "org_acme",
     });
   });
@@ -180,7 +179,7 @@ describe("automation domain commands", () => {
       })
     ).resolves.toEqual(automation);
 
-    expect(createAutomationMock).toHaveBeenCalledWith(expect.anything(), {
+    expect(createAutomationMock).toHaveBeenCalledWith({
       clerkOrgId: "org_acme",
       connectorProvider: "linear",
       createdByUserId: "user_current",
@@ -394,24 +393,16 @@ describe("automation domain commands", () => {
       input: { id: automation.publicId },
     });
 
-    expect(setAutomationStatusMock).toHaveBeenNthCalledWith(
-      1,
-      expect.anything(),
-      {
-        clerkOrgId: "org_acme",
-        publicId: automation.publicId,
-        status: "paused",
-      }
-    );
-    expect(setAutomationStatusMock).toHaveBeenNthCalledWith(
-      2,
-      expect.anything(),
-      {
-        clerkOrgId: "org_acme",
-        publicId: automation.publicId,
-        status: "active",
-      }
-    );
+    expect(setAutomationStatusMock).toHaveBeenNthCalledWith(1, {
+      clerkOrgId: "org_acme",
+      publicId: automation.publicId,
+      status: "paused",
+    });
+    expect(setAutomationStatusMock).toHaveBeenNthCalledWith(2, {
+      clerkOrgId: "org_acme",
+      publicId: automation.publicId,
+      status: "active",
+    });
   });
 
   it("creates and enqueues a manual run for active automations", async () => {
@@ -423,7 +414,7 @@ describe("automation domain commands", () => {
       })
     ).resolves.toEqual(run);
 
-    expect(createAutomationRunMock).toHaveBeenCalledWith(expect.anything(), {
+    expect(createAutomationRunMock).toHaveBeenCalledWith({
       automation,
       dueAt: runDate,
       trigger: "manual",
@@ -474,15 +465,12 @@ describe("automation domain commands", () => {
       message: "Failed to queue automation run.",
     });
 
-    expect(markAutomationRunFailedMock).toHaveBeenCalledWith(
-      expect.anything(),
-      {
-        clerkOrgId: automation.clerkOrgId,
-        errorCode: "AUTOMATION_RUN_ENQUEUE_FAILED",
-        errorMessage: "queue unavailable",
-        publicId: run.publicId,
-      }
-    );
+    expect(markAutomationRunFailedMock).toHaveBeenCalledWith({
+      clerkOrgId: automation.clerkOrgId,
+      errorCode: "AUTOMATION_RUN_ENQUEUE_FAILED",
+      errorMessage: "queue unavailable",
+      publicId: run.publicId,
+    });
     expect(warnMock).toHaveBeenCalledWith(
       "[automations] manual run enqueue failed",
       {
@@ -555,7 +543,6 @@ describe("automation domain commands", () => {
     });
 
     expect(markAutomationRunFailedMock).toHaveBeenCalledWith(
-      expect.anything(),
       expect.objectContaining({
         errorCode: "AUTOMATION_RUN_ENQUEUE_FAILED",
         publicId: run.publicId,
@@ -572,7 +559,7 @@ describe("automation domain commands", () => {
       })
     ).resolves.toEqual([run]);
 
-    expect(listAutomationRunsMock).toHaveBeenCalledWith(expect.anything(), {
+    expect(listAutomationRunsMock).toHaveBeenCalledWith({
       automationPublicId: automation.publicId,
       clerkOrgId: "org_acme",
       limit: 25,

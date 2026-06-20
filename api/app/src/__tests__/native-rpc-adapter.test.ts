@@ -42,12 +42,15 @@ vi.mock("../native-auth", () => ({
   NativeAuthError: mocks.NativeAuthError,
 }));
 
-vi.mock("../domain/provider-routines", () => ({
+vi.mock("../services/provider-routines/command-deps", () => ({
   createProviderRoutineCommandDeps: vi.fn((input) => ({
     ...input,
     callProviderRoutine: mocks.callProviderRoutine,
     findProviderRoutines: mocks.findProviderRoutines,
   })),
+}));
+
+vi.mock("../domain/provider-routines", () => ({
   providerRoutineCallCommand: {
     run: mocks.providerRoutineCallCommandRun,
   },

@@ -1,9 +1,8 @@
 import { createOpenAPI } from "fumadocs-openapi/server";
 
-// Placeholder spec — the app-api-contract package was removed in the v2
-// barebones reset. Endpoint docs will be regenerated post-v2 once the new
-// API contract lands. The empty `paths` object means no virtual pages
-// are generated; manual MDX pages under content/api/ are unaffected.
+// Minimal public API spec for the resource-oriented /api/v1 surface.
+// Keep this aligned with @repo/api-contract until contract-driven generation
+// replaces the hand-maintained document.
 export const openapi = createOpenAPI({
-  input: ["./src/openapi.empty.json"],
+  input: ["./src/openapi.json"],
 });

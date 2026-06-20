@@ -1,0 +1,409 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Lightfast API",
+    "version": "0.1.0",
+    "description": "Public resource API for Lightfast. Authentication uses organization-scoped API keys."
+  },
+  "servers": [
+    {
+      "url": "https://lightfast.ai/api/v1"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyBearer": []
+    }
+  ],
+  "paths": {
+    "/signals": {
+      "get": {
+        "operationId": "listSignals",
+        "summary": "List signals",
+        "description": "List recently created signals for the API key organization.",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "statuses",
+            "in": "query",
+            "description": "Comma-separated signal statuses.",
+            "schema": {
+              "type": "string",
+              "example": "queued,processing"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Signals returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListSignalsOutput"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createSignal",
+        "summary": "Create a signal",
+        "description": "Queue a new signal for processing.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSignalInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Signal queued.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSignalOutput"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/signals/{id}": {
+      "get": {
+        "operationId": "getSignal",
+        "summary": "Get a signal",
+        "description": "Fetch a single signal by public id.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^signal_"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Signal returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSignalOutput"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/system/health": {
+      "get": {
+        "operationId": "systemHealth",
+        "summary": "Check API health",
+        "description": "Returns the public API health payload for authenticated callers.",
+        "responses": {
+          "200": {
+            "description": "API health.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemHealthOutput"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Organization-scoped Lightfast API key with the `lf_` prefix."
+      }
+    },
+    "responses": {
+      "AuthRequired": {
+        "description": "Authentication is required or the API key is invalid.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "The API key is not allowed to perform this operation.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "InvalidRequest": {
+        "description": "The request body, path, or query parameters are invalid.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "The requested resource was not found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "CreateSignalInput": {
+        "type": "object",
+        "required": ["input"],
+        "additionalProperties": false,
+        "properties": {
+          "input": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          }
+        }
+      },
+      "CreateSignalOutput": {
+        "type": "object",
+        "required": ["id", "status", "visibilityScope"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^signal_"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["queued"]
+          },
+          "visibilityScope": {
+            "type": "string",
+            "enum": ["user"]
+          }
+        }
+      },
+      "GetSignalOutput": {
+        "type": "object",
+        "required": [
+          "id",
+          "input",
+          "status",
+          "classification",
+          "entityLinks",
+          "visibilityScope",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^signal_"
+          },
+          "input": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SignalStatus"
+          },
+          "classification": {
+            "type": ["object", "null"],
+            "additionalProperties": true
+          },
+          "entityLinks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "visibilityScope": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ListSignalsOutput": {
+        "type": "object",
+        "required": ["items", "nextCursor"],
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ListSignalsOutputItem"
+            }
+          },
+          "nextCursor": {
+            "type": ["string", "null"]
+          }
+        }
+      },
+      "ListSignalsOutputItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "input",
+          "status",
+          "classification",
+          "visibilityScope",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^signal_"
+          },
+          "input": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SignalStatus"
+          },
+          "classification": {
+            "type": ["object", "null"],
+            "additionalProperties": true
+          },
+          "visibilityScope": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SignalStatus": {
+        "type": "string",
+        "enum": ["queued", "processing", "classified", "failed"]
+      },
+      "SystemHealthOutput": {
+        "type": "object",
+        "required": ["status", "timestamp", "version"],
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["ok"]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["error", "message"],
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}

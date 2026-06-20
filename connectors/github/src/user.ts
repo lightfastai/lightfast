@@ -35,7 +35,7 @@ export interface GitHubAuthenticatedUser {
   type: "User";
 }
 
-export interface GetGitHubAuthenticatedUserInput {
+interface GetGitHubAuthenticatedUserInput {
   apiBaseUrl?: string;
   apiVersion?: string;
   fetch?: typeof fetch;

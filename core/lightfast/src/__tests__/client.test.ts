@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { createSignalOutput, getSignalOutput } from "@repo/api-contract";
 import { describe, expect, it, vi } from "vitest";
-
 import { createLightfast } from "../index";
 
 const packageRoot = resolve(import.meta.dirname, "../..");
@@ -107,6 +107,7 @@ describe("createLightfast", () => {
         JSON.stringify({
           id: "signal_123e4567-e89b-12d3-a456-426614174000",
           status: "queued",
+          visibilityScope: "user",
         }),
         { status: 202, headers: { "content-type": "application/json" } }
       );
@@ -121,7 +122,9 @@ describe("createLightfast", () => {
     expect(result).toEqual({
       id: "signal_123e4567-e89b-12d3-a456-426614174000",
       status: "queued",
+      visibilityScope: "user",
     });
+    expect(createSignalOutput.parse(result)).toEqual(result);
     expect(lastRequest).toEqual({
       body: { input: "Classify this" },
       method: "POST",
@@ -198,8 +201,10 @@ describe("createLightfast", () => {
           createdAt: "2026-05-21T00:00:00.000Z",
           id: "signal_123e4567-e89b-12d3-a456-426614174000",
           input: "Classify this",
+          entityLinks: [],
           status: "queued",
           updatedAt: "2026-05-21T00:01:00.000Z",
+          visibilityScope: "team",
         }),
         { status: 200, headers: { "content-type": "application/json" } }
       );
@@ -217,6 +222,7 @@ describe("createLightfast", () => {
       id: "signal_123e4567-e89b-12d3-a456-426614174000",
       status: "queued",
     });
+    expect(getSignalOutput.parse(result)).toEqual(result);
     expect(lastRequest).toEqual({
       method: "GET",
       url: "https://example.test/api/v1/signals/signal_123e4567-e89b-12d3-a456-426614174000",

@@ -1428,9 +1428,6 @@ importers:
       '@vendor/mcp':
         specifier: workspace:*
         version: link:../../vendor/mcp
-      zod:
-        specifier: 'catalog:'
-        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -1481,9 +1478,6 @@ importers:
       '@lightfast/connector-core':
         specifier: workspace:*
         version: link:../core
-      '@vendor/mcp':
-        specifier: workspace:*
-        version: link:../../vendor/mcp
       zod:
         specifier: 'catalog:'
         version: 4.3.6

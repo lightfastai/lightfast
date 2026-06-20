@@ -361,7 +361,7 @@ describe("connector workspace boundary", () => {
     expect(xPackage.dependencies?.["@lightfast/connector-core"]).toBe(
       "workspace:*"
     );
-    expect(xPackage.dependencies?.["@vendor/mcp"]).toBe("workspace:*");
+    expect(xPackage.dependencies).not.toHaveProperty("@vendor/mcp");
     expect(xPackage.dependencies?.zod).toBe("catalog:");
     expect(Object.keys(xPackage.exports ?? {}).sort()).toEqual([
       "./contract",
@@ -449,7 +449,7 @@ describe("connector workspace boundary", () => {
       "workspace:*"
     );
     expect(granolaPackage.dependencies?.["@vendor/mcp"]).toBe("workspace:*");
-    expect(granolaPackage.dependencies?.zod).toBe("catalog:");
+    expect(granolaPackage.dependencies).not.toHaveProperty("zod");
     expect(Object.keys(granolaPackage.exports ?? {}).sort()).toEqual([
       "./contract",
       "./mcp",
