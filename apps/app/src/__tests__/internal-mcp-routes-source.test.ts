@@ -28,6 +28,9 @@ describe("internal MCP app routes", () => {
     const auditAdapter = repoSource(
       "api/app/src/adapters/internal/mcp-audit.ts"
     );
+    const serviceAuthAdapter = repoSource(
+      "api/app/src/adapters/internal/mcp-service-auth.ts"
+    );
     const proxyAdapter = repoSource(
       "api/app/src/adapters/internal/mcp-proxy.ts"
     );
@@ -82,7 +85,7 @@ describe("internal MCP app routes", () => {
       expect(source).not.toContain("@api/app/signals/service");
     }
 
-    expect(adapter).toContain("process.env.SERVICE_JWT_SECRET");
+    expect(adapter).toContain('from "./mcp-service-auth"');
     expect(adapter).toContain('from "../../domain/signals"');
     expect(adapter).toContain("createSignalCommand.run");
     expect(adapter).toContain("getSignalCommand.run");
@@ -91,13 +94,16 @@ describe("internal MCP app routes", () => {
     expect(adapter).not.toContain('from "../../signals/service"');
     expect(adapter).not.toContain("createSignalForActor");
 
-    expect(auditAdapter).toContain("process.env.SERVICE_JWT_SECRET");
+    expect(auditAdapter).toContain('from "./mcp-service-auth"');
     expect(auditAdapter).toContain("recordMcpAuditEvent");
     expect(auditAdapter).not.toContain('from "../../env"');
 
-    expect(proxyAdapter).toContain("process.env.SERVICE_JWT_SECRET");
+    expect(proxyAdapter).toContain('from "./mcp-service-auth"');
     expect(proxyAdapter).toContain("loadAgentConnectorRuntimeTools");
     expect(proxyAdapter).toContain('sourceSurface: "hosted_mcp"');
+    expect(serviceAuthAdapter).toContain("process.env.SERVICE_JWT_SECRET");
+    expect(serviceAuthAdapter).toContain("verifyServiceJWT");
+    expect(serviceAuthAdapter).toContain('service: "apps-mcp"');
     expect(proxyAdapter).not.toContain('from "../../../apps/app"');
     expect(proxyAdapter).not.toContain('from "../../env"');
   });

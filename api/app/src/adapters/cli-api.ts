@@ -10,11 +10,11 @@ import {
   nativeRpcProviderRoutineErrorCodeSchema,
 } from "@repo/native-auth-contract";
 import {
-  createProviderRoutineCommandDeps,
   type ProviderRoutineCommandDeps,
   providerRoutineCallCommand,
   providerRoutineFindCommand,
 } from "../domain/provider-routines";
+import { createProviderRoutineCommandDeps } from "../services/provider-routines/command-deps";
 import { handleNativeRpcRequest, NativeRpcRouteError } from "./native-rpc";
 
 const cliNativeRpcCommands = [

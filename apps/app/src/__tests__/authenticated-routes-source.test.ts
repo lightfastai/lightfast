@@ -1652,6 +1652,9 @@ describe("app authenticated route migration", () => {
       "src/server/mcp-service-auth.ts"
     );
     const mcpProxyServerPath = resolve(appRoot, "src/server/mcp-proxy.ts");
+    const mcpServiceAuthAdapterSource = repoSource(
+      "api/app/src/adapters/internal/mcp-service-auth.ts"
+    );
     const mcpProxyAdapterSource = repoSource(
       "api/app/src/adapters/internal/mcp-proxy.ts"
     );
@@ -1774,7 +1777,11 @@ describe("app authenticated route migration", () => {
     expect(mcpProxyAdapterSource).toContain("loadAgentConnectorRuntimeTools");
     expect(mcpProxyAdapterSource).toContain("adapters");
     expect(mcpProxyAdapterSource).toContain('sourceSurface: "hosted_mcp"');
-    expect(mcpProxyAdapterSource).toContain("process.env.SERVICE_JWT_SECRET");
+    expect(mcpProxyAdapterSource).toContain('from "./mcp-service-auth"');
+    expect(mcpServiceAuthAdapterSource).toContain(
+      "process.env.SERVICE_JWT_SECRET"
+    );
+    expect(mcpServiceAuthAdapterSource).toContain("verifyServiceJWT");
     expect(mcpProxyCallRouteSource).toContain(
       'createFileRoute("/api/internal/mcp/proxy/call")'
     );

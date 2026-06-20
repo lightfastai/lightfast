@@ -38,6 +38,14 @@
     "core/*": {
       "project": ["src/**/*.ts"]
     },
+    "connectors/core": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "connectors/*": {
+      "entry": ["src/{contract,mcp,node,oauth,operations,tools}.ts"],
+      "project": ["src/**/*.ts"]
+    },
     "core/mcp": {
       "project": ["src/**/*.ts"],
       "ignoreDependencies": ["@modelcontextprotocol/sdk"]

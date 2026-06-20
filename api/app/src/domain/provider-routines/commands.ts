@@ -1,9 +1,12 @@
+import type { Database } from "@db/app";
 import {
+  type ConnectableConnectorProvider,
   type ProviderRoutineCallInput,
   type ProviderRoutineCallSuccess,
   type ProviderRoutineFindInput,
   type ProviderRoutineFindOutput,
   type ProviderRoutineScopeContext,
+  type ProviderRoutineSourceSurface,
   providerRoutineCallInputSchema,
   providerRoutineCallSuccessSchema,
   providerRoutineFindInputSchema,
@@ -11,13 +14,6 @@ import {
   providerRoutineScopeContextSchema,
 } from "@repo/api-contract";
 import { z } from "zod";
-import { callProviderRoutine as defaultCallProviderRoutine } from "../../services/provider-routines/call";
-import type {
-  ConnectorProviderRoutineTool,
-  ProviderRoutineServiceContext,
-  ProviderRoutineServiceLog,
-} from "../../services/provider-routines/context";
-import { findProviderRoutines as defaultFindProviderRoutines } from "../../services/provider-routines/find";
 import type { ExecutionContext } from "../actor";
 import { type CommandRunArgs, defineCommand } from "../command";
 import { AuthzError } from "../errors";
@@ -36,14 +32,57 @@ const providerRoutineCallCommandInput = z
   })
   .strict();
 
+export interface ProviderRoutineCommandServiceLog {
+  error(message: string, metadata?: Record<string, unknown>): void;
+  info(message: string, metadata?: Record<string, unknown>): void;
+  warn(message: string, metadata?: Record<string, unknown>): void;
+}
+
+export interface ProviderRoutineCommandConnectorTool {
+  callWithMetadata(input: unknown): Promise<{
+    provider: ConnectableConnectorProvider;
+    providerRoutineCallId: string | null;
+    providerToolName: string;
+    result: unknown;
+    routineId: string;
+    runtimeToolName: string;
+  }>;
+  description?: string;
+  inputSchema?: unknown;
+  provider: ConnectableConnectorProvider;
+  providerToolName: string;
+  runtimeToolName: string;
+}
+
+export interface ProviderRoutineCommandServiceContext {
+  actor: {
+    orgId: string;
+    userId: string;
+  };
+  adapters: {
+    connectors: {
+      loadTools(): Promise<ProviderRoutineCommandConnectorTool[]>;
+    };
+  };
+  db: Database;
+  log: ProviderRoutineCommandServiceLog;
+  now: () => Date;
+  scopes: ProviderRoutineScopeContext;
+  source: {
+    clientId?: string | null;
+    ref?: string | null;
+    surface: ProviderRoutineSourceSurface;
+  };
+}
+
 export interface ProviderRoutineCommandDeps {
   callProviderRoutine: (
-    context: ProviderRoutineServiceContext,
+    context: ProviderRoutineCommandServiceContext,
     input: ProviderRoutineCallInput
   ) => Promise<ProviderRoutineCallSuccess>;
-  db: ProviderRoutineServiceContext["db"];
+  db: Database;
   findProviderRoutines: (
-    context: ProviderRoutineServiceContext,
+    context: ProviderRoutineCommandServiceContext,
     input: ProviderRoutineFindInput
   ) => Promise<ProviderRoutineFindOutput>;
   loadConnectorRuntimeTools: (input: {
@@ -52,22 +91,9 @@ export interface ProviderRoutineCommandDeps {
     sourceClientId?: string | null;
     sourceRef?: string | null;
     sourceSurface: "hosted_mcp" | "native_cli";
-  }) => Promise<ConnectorProviderRoutineTool[]>;
-  log: ProviderRoutineServiceLog;
+  }) => Promise<ProviderRoutineCommandConnectorTool[]>;
+  log: ProviderRoutineCommandServiceLog;
   now: () => Date;
-}
-
-export function createProviderRoutineCommandDeps(
-  input: Omit<
-    ProviderRoutineCommandDeps,
-    "callProviderRoutine" | "findProviderRoutines"
-  >
-): ProviderRoutineCommandDeps {
-  return {
-    ...input,
-    callProviderRoutine: defaultCallProviderRoutine,
-    findProviderRoutines: defaultFindProviderRoutines,
-  };
 }
 
 type ProviderRoutineCommandRunArgs<TInput, TOutput> = CommandRunArgs<
@@ -77,8 +103,8 @@ type ProviderRoutineCommandRunArgs<TInput, TOutput> = CommandRunArgs<
 >;
 
 interface ProviderRoutineCommandAuthority
-  extends Pick<ProviderRoutineServiceContext, "actor" | "scopes"> {
-  source: ProviderRoutineServiceContext["source"] & {
+  extends Pick<ProviderRoutineCommandServiceContext, "actor" | "scopes"> {
+  source: ProviderRoutineCommandServiceContext["source"] & {
     surface: "hosted_mcp" | "native_cli";
   };
 }
@@ -131,7 +157,7 @@ function providerRoutineServiceContext(input: {
   ctx: ExecutionContext;
   deps: ProviderRoutineCommandDeps;
   scopes?: ProviderRoutineScopeContext;
-}): ProviderRoutineServiceContext {
+}): ProviderRoutineCommandServiceContext {
   const authority = requireProviderRoutineAuthority(input.ctx, input.scopes);
   return {
     actor: authority.actor,

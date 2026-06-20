@@ -1,26 +1,26 @@
 ---
 title: TypeScript SDK
-description: TypeScript SDK API reference for the Lightfast search API — type-safe client for Node.js applications.
+description: TypeScript SDK API reference for the Lightfast public API.
 keywords:
   - TypeScript SDK
   - API reference
   - npm package
-  - type-safe client
-  - search API
+  - public API
+  - signals
 canonicalUrl: https://lightfast.ai/docs/api-reference/sdks-tools/typescript-sdk
-ogTitle: TypeScript SDK API Reference – Lightfast
-ogDescription: TypeScript SDK API reference for the Lightfast search API — type-safe client for Node.js applications.
+ogTitle: TypeScript SDK API Reference - Lightfast
+ogDescription: TypeScript SDK API reference for the Lightfast public API.
 authors:
   - name: Lightfast Team
     url: https://lightfast.ai
     twitterHandle: "@lightfastai"
 publishedAt: "2024-12-01T00:00:00Z"
-updatedAt: "2026-04-04T00:00:00Z"
+updatedAt: "2026-06-20T00:00:00Z"
 ---
 
 # TypeScript SDK Reference
 
-The `lightfast` npm package provides a type-safe client for the Lightfast API.
+The `lightfast` package provides a type-safe client for the public `/api/v1` resource API.
 
 ## Installation
 
@@ -28,122 +28,114 @@ The `lightfast` npm package provides a type-safe client for the Lightfast API.
 npm install lightfast
 ```
 
-## Client Configuration
+## Client
 
 ```typescript
-import { Lightfast } from "lightfast";
+import { createLightfast } from "lightfast";
 
-const client = new Lightfast(config: LightfastConfig);
+const lightfast = createLightfast(process.env.LIGHTFAST_API_KEY);
 ```
 
-### LightfastConfig
+### createLightfast(apiKey, options)
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| `apiKey` | `string` | Yes | - | API key (starts with `lf_`) |
-| `baseUrl` | `string` | No | `https://lightfast.ai` | API base URL |
-| `timeout` | `number` | No | `30000` | Request timeout in milliseconds |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `apiKey` | `string` | Yes | Organization API key. Must start with `lf_` and include characters after the prefix. |
+| `options.baseUrl` | `string` | No | API origin. Defaults to `https://lightfast.ai`. |
+| `options.fetch` | `typeof fetch` | No | Custom fetch implementation for tests or proxies. |
 
----
+## Signals
 
-## Methods
+### signals.create()
 
-### search()
-
-Search through your organization's knowledge — decisions, observations, and documents.
+Queue a new signal for processing.
 
 ```typescript
-const response = await client.search(input: SearchInput): Promise<SearchResponse>
-```
-
-#### SearchInput & Response
-
-`SearchInput` accepts a natural-language `query`, optional pagination, optional search `mode`, and optional filters. `SearchResponse` returns ranked results, metadata, and a request id for support.
-
-#### SearchFilters
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `observationTypes` | `string[]` | Observation types to include (e.g., `["decision", "incident"]`) |
-| `entityTypes` | `string[]` | Entity types to filter by (e.g., `["service", "repository"]`) |
-| `dateRange` | `{ start?: string; end?: string }` | Date range filter with ISO datetime strings |
-
-#### Example
-
-```typescript
-const results = await client.search({
-  query: "authentication implementation",
-  limit: 10,
-  mode: "balanced",
-  filters: {
-    entityTypes: ["service", "repository"],
-    dateRange: {
-      start: "2024-01-01T00:00:00Z",
-      end: "2024-12-31T23:59:59Z",
-    },
-  },
+const signal = await lightfast.signals.create({
+  input: "Review the latest authentication architecture changes",
 });
-
-console.log(results.data); // Array of search results
-console.log(results.meta.total); // Total matching documents
 ```
 
----
-
-## Error Classes
-
-The SDK exports typed error classes for handling specific error conditions.
+Returns:
 
 ```typescript
-import {
-  AuthenticationError,
-  ValidationError,
-  NotFoundError,
-  RateLimitError,
-  NetworkError,
-  ServerError,
-} from "lightfast";
+{
+  id: "signal_...",
+  status: "queued",
+  visibilityScope: "user"
+}
 ```
 
-| Error Class | HTTP Status | Description |
-|-------------|-------------|-------------|
-| `AuthenticationError` | 401 | Invalid or expired API key |
-| `ValidationError` | 400 | Invalid request parameters. Access `error.details` for field-specific errors |
-| `NotFoundError` | 404 | Resource not found |
-| `RateLimitError` | 429 | Too many requests. Access `error.retryAfter` for retry delay in seconds |
-| `ServerError` | 500, 502, 503, 504 | Internal server error or service unavailable |
-| `NetworkError` | - | Connection or timeout error |
+### signals.list()
 
----
+List signals for the API key organization.
+
+```typescript
+const page = await lightfast.signals.list({
+  limit: 25,
+  statuses: ["queued", "processing"],
+});
+```
+
+`signals.list()` accepts an optional `cursor`, `limit`, and `statuses` array. The response includes `items` and `nextCursor`; pass `nextCursor` back as `cursor` to request the next page.
+
+### signals.get()
+
+Fetch a single signal by id.
+
+```typescript
+const signal = await lightfast.signals.get({
+  id: "signal_...",
+});
+```
+
+The response includes the signal input, status, classification, entity links, visibility scope, and timestamps.
+
+## System
+
+### system.health()
+
+Check the authenticated public API health endpoint.
+
+```typescript
+const health = await lightfast.system.health();
+```
+
+## Errors
+
+The SDK throws `LightfastApiError` for non-2xx responses.
+
+```typescript
+import { LightfastApiError, createLightfast } from "lightfast";
+
+try {
+  await createLightfast("lf_...").signals.create({ input: "" });
+} catch (error) {
+  if (error instanceof LightfastApiError) {
+    console.log(error.status);
+    console.log(error.body);
+  }
+}
+```
 
 ## Type Exports
 
-All request and response types are exported:
-
 ```typescript
 import type {
-  LightfastConfig,
-  SearchInput,
-  SearchFilters,
-  SearchRequest,
-  SearchResponse,
-  SearchResult,
-  RerankMode,
-  SearchContext,
-  SearchLatency,
-  ProxySearchResponse,
-  ProxyConnection,
-  ProxyAction,
-  ProxyResource,
-  ProxyCall,
-  ProxyCallResponse,
+  CreateSignalInput,
+  CreateSignalOutput,
+  GetSignalInput,
+  GetSignalOutput,
+  LightfastClient,
+  LightfastOptions,
+  ListSignalsInput,
+  ListSignalsOutput,
+  SystemHealthOutput,
 } from "lightfast";
 ```
 
----
-
 ## Related
 
-- [TypeScript SDK Tutorial](/docs/integrate/sdk) - Getting started guide with examples
-- [POST /v1/search](/docs/api-reference/endpoints/search) - REST API endpoint reference
-- [GitHub Repository](https://github.com/lightfastai/lightfast/tree/main/core/lightfast) - SDK source code
+- [TypeScript SDK Tutorial](/docs/integrate/sdk)
+- [API Endpoints](/docs/api-reference/endpoints)
+- [GitHub Repository](https://github.com/lightfastai/lightfast/tree/main/core/lightfast)

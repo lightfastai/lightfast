@@ -7,7 +7,7 @@ export type LinearAppNodeErrorCode =
   | "LINEAR_METADATA_FAILED"
   | "LINEAR_MCP_FAILED";
 
-export interface LinearAppNodeErrorCause {
+interface LinearAppNodeErrorCause {
   name: string;
 }
 

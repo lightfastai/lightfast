@@ -6,12 +6,12 @@ import type { z } from "zod";
 import { resolveAuthContextFromClerk } from "../../auth/identity";
 import { actorFromAuthIdentity, isDomainError } from "../../domain";
 import {
-  createDefaultPeopleCommandDeps,
   type ListPeopleResult as DomainListPeopleResult,
   type PersonDetailResult as DomainPersonDetailResult,
   getPersonCommand,
   listPeopleCommand,
 } from "../../domain/people";
+import { createDefaultPeopleCommandDeps } from "../../services/people/command-deps";
 
 export type ListPeopleInput = z.input<typeof listPeopleCommand.input>;
 export type GetPersonInput = z.input<typeof getPersonCommand.input>;

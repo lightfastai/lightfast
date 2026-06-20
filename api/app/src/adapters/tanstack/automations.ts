@@ -8,7 +8,6 @@ import type { Actor } from "../../domain";
 import { actorFromAuthIdentity, isDomainError } from "../../domain";
 import {
   createAutomationCommand,
-  createDefaultAutomationCommandDeps,
   deleteAutomationCommand,
   getAutomationCommand,
   getAutomationRunCommand,
@@ -19,6 +18,7 @@ import {
   runAutomationNowCommand,
   updateAutomationCommand,
 } from "../../domain/automations";
+import { createDefaultAutomationCommandDeps } from "../../services/automations/command-deps";
 
 type SerializableValue =
   | SerializableValue[]

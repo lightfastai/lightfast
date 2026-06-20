@@ -23,6 +23,14 @@ describe("domain command dependency boundaries", () => {
         ],
       },
       {
+        command: "src/domain/automations/commands.ts",
+        factory: "createDefaultAutomationCommandDeps",
+        runtimeImports: [
+          "@vendor/observability/log/next",
+          "../../inngest/client",
+        ],
+      },
+      {
         command: "src/domain/org-api-keys/commands.ts",
         factory: "createDefaultOrgApiKeyCommandDeps",
         runtimeImports: [
@@ -87,6 +95,20 @@ describe("domain command dependency boundaries", () => {
         ],
       },
       {
+        command: "src/domain/people/commands.ts",
+        factory: "createDefaultPeopleCommandDeps",
+        runtimeImports: [],
+      },
+      {
+        command: "src/domain/provider-routines/commands.ts",
+        factory: "createProviderRoutineCommandDeps",
+        runtimeImports: [
+          "../../services/provider-routines/call",
+          "../../services/provider-routines/context",
+          "../../services/provider-routines/find",
+        ],
+      },
+      {
         command: "src/domain/signals/commands.ts",
         factory: "createDefaultSignalCommandDeps",
         runtimeImports: ["@db/app", "../../signals/create-signal"],
@@ -109,6 +131,10 @@ describe("domain command dependency boundaries", () => {
 
   it("keeps concrete app wiring explicit in the TanStack adapter modules", () => {
     const adapterExpectations = [
+      {
+        adapter: "src/adapters/tanstack/automations.ts",
+        runtimeImports: ["@db/app", "../../services/automations/command-deps"],
+      },
       {
         adapter: "src/adapters/tanstack/account.ts",
         runtimeImports: [
@@ -173,6 +199,10 @@ describe("domain command dependency boundaries", () => {
         ],
       },
       {
+        adapter: "src/adapters/tanstack/people.ts",
+        runtimeImports: ["@db/app", "../../services/people/command-deps"],
+      },
+      {
         adapter: "src/adapters/tanstack/signals.ts",
         runtimeImports: ["@db/app", "../../signals/create-signal"],
       },
@@ -185,5 +215,14 @@ describe("domain command dependency boundaries", () => {
         expect(adapterSource).toContain(runtimeImport);
       }
     }
+  });
+
+  it("keeps provider routine command deps typed without service-context casts", () => {
+    const commandDepsSource = source(
+      "src/services/provider-routines/command-deps.ts"
+    );
+
+    expect(commandDepsSource).not.toContain("as ProviderRoutineServiceContext");
+    expect(commandDepsSource).not.toContain("serviceContext(");
   });
 });
