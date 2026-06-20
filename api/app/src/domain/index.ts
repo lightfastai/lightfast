@@ -13,6 +13,7 @@ export * from "./org-identity";
 export * from "./org-members";
 export * from "./organizations";
 export * from "./people";
+export * from "./provider-routines";
 export * from "./signals";
 export * from "./source-control";
 export * from "./user-connectors";

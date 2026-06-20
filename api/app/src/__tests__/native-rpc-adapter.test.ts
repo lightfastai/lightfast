@@ -24,6 +24,8 @@ const mocks = vi.hoisted(() => {
     findProviderRoutines: vi.fn(),
     loadAgentConnectorRuntimeTools: vi.fn(),
     NativeAuthError,
+    providerRoutineCallCommandRun: vi.fn(),
+    providerRoutineFindCommandRun: vi.fn(),
     resolveAuthContextFromClerk: vi.fn(),
   };
 });
@@ -38,6 +40,20 @@ vi.mock("../native-auth", () => ({
   getNativeAuthSessionForNativeOAuth: mocks.getNativeAuthSessionForNativeOAuth,
   isNativeAuthError: (error: unknown) => error instanceof mocks.NativeAuthError,
   NativeAuthError: mocks.NativeAuthError,
+}));
+
+vi.mock("../domain/provider-routines", () => ({
+  createProviderRoutineCommandDeps: vi.fn((input) => ({
+    ...input,
+    callProviderRoutine: mocks.callProviderRoutine,
+    findProviderRoutines: mocks.findProviderRoutines,
+  })),
+  providerRoutineCallCommand: {
+    run: mocks.providerRoutineCallCommandRun,
+  },
+  providerRoutineFindCommand: {
+    run: mocks.providerRoutineFindCommandRun,
+  },
 }));
 
 vi.mock("../services/provider-routines/call", () => ({
@@ -120,7 +136,16 @@ describe("native RPC adapters", () => {
     });
     mocks.getNativeAuthSessionForNativeOAuth.mockResolvedValue(session);
     mocks.findProviderRoutines.mockResolvedValue({ routines: [] });
+    mocks.providerRoutineFindCommandRun.mockResolvedValue({ routines: [] });
     mocks.callProviderRoutine.mockResolvedValue({
+      provider: "linear",
+      providerRoutineCallId: "provider_routine_call_123",
+      providerToolName: "create_issue",
+      result: { id: "issue_123" },
+      routineId: "linear__create_issue",
+      status: "succeeded",
+    });
+    mocks.providerRoutineCallCommandRun.mockResolvedValue({
       provider: "linear",
       providerRoutineCallId: "provider_routine_call_123",
       providerToolName: "create_issue",
@@ -200,16 +225,29 @@ describe("native RPC adapters", () => {
       result: { routines: [] },
     });
     expect(response.status).toBe(200);
-    expect(mocks.findProviderRoutines).toHaveBeenCalledWith(
+    expect(mocks.providerRoutineFindCommandRun).toHaveBeenCalledWith(
       expect.objectContaining({
-        actor: { orgId: "org_1", userId: "user_1" },
-        source: {
-          clientId: "cli_client_test",
-          ref: "org_1",
-          surface: "native_cli",
+        ctx: {
+          actor: {
+            client: "cli",
+            clientId: "cli_client_test",
+            kind: "nativeClient",
+            orgId: "org_1",
+            source: "cli",
+            userId: "user_1",
+          },
+          caller: { client: "cli", kind: "firstPartyClient" },
+          request: { id: expect.any(String), source: "cli-rpc" },
         },
-      }),
-      { includeSchema: true, provider: "linear", query: "create" }
+        deps: expect.objectContaining({
+          db: mocks.db,
+          findProviderRoutines: expect.any(Function),
+          loadConnectorRuntimeTools: expect.any(Function),
+        }),
+        input: {
+          input: { includeSchema: true, provider: "linear", query: "create" },
+        },
+      })
     );
   });
 
@@ -238,18 +276,27 @@ describe("native RPC adapters", () => {
       },
     });
     expect(response.status).toBe(200);
-    expect(mocks.callProviderRoutine).toHaveBeenCalledWith(
+    expect(mocks.providerRoutineCallCommandRun).toHaveBeenCalledWith(
       expect.objectContaining({
-        actor: { orgId: "org_1", userId: "user_1" },
-        scopes: {
-          providerRoutineRead: true,
-          providerRoutineWrite: true,
+        ctx: {
+          actor: {
+            client: "cli",
+            clientId: "cli_client_test",
+            kind: "nativeClient",
+            orgId: "org_1",
+            source: "cli",
+            userId: "user_1",
+          },
+          caller: { client: "cli", kind: "firstPartyClient" },
+          request: { id: expect.any(String), source: "cli-rpc" },
         },
-      }),
-      {
-        input: { title: "Bug" },
-        routineId: "linear__create_issue",
-      }
+        input: {
+          input: {
+            input: { title: "Bug" },
+            routineId: "linear__create_issue",
+          },
+        },
+      })
     );
   });
 
@@ -269,7 +316,7 @@ describe("native RPC adapters", () => {
       },
     });
     expect(response.status).toBe(404);
-    expect(mocks.findProviderRoutines).not.toHaveBeenCalled();
+    expect(mocks.providerRoutineFindCommandRun).not.toHaveBeenCalled();
   });
 
   it("rejects invalid CLI provider routine command input", async () => {
@@ -290,7 +337,7 @@ describe("native RPC adapters", () => {
       },
     });
     expect(response.status).toBe(400);
-    expect(mocks.findProviderRoutines).not.toHaveBeenCalled();
+    expect(mocks.providerRoutineFindCommandRun).not.toHaveBeenCalled();
   });
 
   it("rejects explicit null CLI provider routine find input", async () => {
@@ -311,7 +358,7 @@ describe("native RPC adapters", () => {
       },
     });
     expect(response.status).toBe(400);
-    expect(mocks.findProviderRoutines).not.toHaveBeenCalled();
+    expect(mocks.providerRoutineFindCommandRun).not.toHaveBeenCalled();
   });
 
   it("downgrades malformed provider routine error codes to internal RPC errors", async () => {
@@ -322,6 +369,7 @@ describe("native RPC adapters", () => {
       publicMessage: "Malformed provider routine code",
     });
     mocks.findProviderRoutines.mockRejectedValue(error);
+    mocks.providerRoutineFindCommandRun.mockRejectedValue(error);
 
     const response = await handleCliNativeRpcRequest(
       rpcRequest({

@@ -4,7 +4,9 @@ import {
   type GetSignalInput,
   type GetSignalOutput,
   lightfastMcpToolPolicy,
+  type McpProviderRoutineScope,
   type McpScope,
+  type McpSignalScope,
   type ProviderRoutineCallInput,
   type ProviderRoutineCallSuccess,
   type ProviderRoutineFindInput,
@@ -76,6 +78,7 @@ export interface ExecuteHostedMcpToolDependencies {
       userId: string;
     };
     input: string;
+    scopes: McpSignalScope[];
   }) => Promise<unknown>;
   findProviderRoutines: FindProviderRoutinesService;
   getSignalForActor: (input: {
@@ -87,6 +90,7 @@ export interface ExecuteHostedMcpToolDependencies {
       userId: string;
     };
     id: string;
+    scopes: McpSignalScope[];
   }) => Promise<GetSignalOutput | null | undefined>;
   now: () => Date;
   providerRoutineLog?: ProviderRoutineServiceLog;
@@ -103,6 +107,7 @@ interface ProviderRoutineServiceLog {
 interface ProviderRoutineServiceContext {
   actor: {
     orgId: string;
+    scopes: McpProviderRoutineScope[];
     userId: string;
   };
   log: ProviderRoutineServiceLog;
@@ -291,6 +296,7 @@ async function executeParsedTool(input: {
           userId: input.context.userId,
         },
         input: createInput.input,
+        scopes: signalScopes(input.context.scopes, "mcp:signals:write"),
       });
     }
 
@@ -305,6 +311,7 @@ async function executeParsedTool(input: {
           userId: input.context.userId,
         },
         id: getInput.id,
+        scopes: signalScopes(input.context.scopes, "mcp:signals:read"),
       });
       if (!result) {
         throw new HostedMcpToolError("not_found", "Signal not found.", 404);
@@ -351,6 +358,21 @@ function ensureScope(context: HostedMcpContext, requiredScope: McpScope): void {
       "denied"
     );
   }
+}
+
+function signalScopes(
+  scopes: McpScope[],
+  required: McpSignalScope
+): McpSignalScope[] {
+  return scopes.includes(required) ? [required] : [];
+}
+
+function providerRoutineScopes(scopes: McpScope[]): McpProviderRoutineScope[] {
+  return scopes.filter(
+    (scope): scope is McpProviderRoutineScope =>
+      scope === "mcp:provider_routines:read" ||
+      scope === "mcp:provider_routines:write"
+  );
 }
 
 function parseToolInput(
@@ -614,6 +636,7 @@ function providerRoutineContext(
   return {
     actor: {
       orgId: context.orgId,
+      scopes: providerRoutineScopes(context.scopes),
       userId: context.userId,
     },
     log: dependencies.providerRoutineLog ?? noopProviderRoutineLog,

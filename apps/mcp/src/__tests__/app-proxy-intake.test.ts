@@ -14,6 +14,7 @@ async function importAdapter() {
 const proxyContext = {
   actor: {
     orgId: "org_test",
+    scopes: ["mcp:provider_routines:read"],
     userId: "user_test",
   },
   log: {
@@ -98,6 +99,7 @@ describe("app proxy intake adapter", () => {
         grantId: "mcp_grant_test",
         kind: "mcp",
         orgId: "org_test",
+        scopes: ["mcp:provider_routines:read"],
         userId: "user_test",
       },
       input: {
@@ -147,6 +149,25 @@ describe("app proxy intake adapter", () => {
         method: "POST",
       })
     );
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toEqual({
+      actor: {
+        clientId: "mcp_client_test",
+        grantId: "mcp_grant_test",
+        kind: "mcp",
+        orgId: "org_test",
+        scopes: ["mcp:provider_routines:read"],
+        userId: "user_test",
+      },
+      input: {
+        input: { query: "ABC" },
+        routineId: "linear__list_issues",
+      },
+      scopes: {
+        providerRoutineRead: true,
+        providerRoutineWrite: false,
+      },
+    });
   });
 
   it("preserves app-side provider routine failures", async () => {

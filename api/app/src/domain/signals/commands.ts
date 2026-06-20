@@ -2,6 +2,7 @@ import {
   type CreateSignalOutput,
   createSignalInput,
   createSignalOutput,
+  type McpScope,
   type SignalClassification,
   type SignalEntityLink,
   type SignalStatus,
@@ -159,7 +160,7 @@ type ResolvedSignalCommandAuthority = Omit<SignalCreateCommandInput, "input">;
 
 function requireSignalCommandAuthority(
   ctx: ExecutionContext,
-  input: { apiKeyScope?: PublicApiKeyScope } = {}
+  input: { apiKeyScope?: PublicApiKeyScope; mcpScope?: McpScope } = {}
 ): ResolvedSignalCommandAuthority {
   if (ctx.actor.kind === "clerkUser") {
     const actor = requireBoundClerkOrgActor(ctx);
@@ -208,6 +209,14 @@ function requireSignalCommandAuthority(
       );
     }
 
+    if (input.mcpScope && !ctx.actor.scopes.includes(input.mcpScope)) {
+      throw new AuthzError(
+        "MCP_SCOPE_REQUIRED",
+        `MCP token requires the ${input.mcpScope} scope.`,
+        { requiredScope: input.mcpScope }
+      );
+    }
+
     return {
       clerkOrgId: ctx.actor.orgId,
       createdByApiKeyId: null,
@@ -238,6 +247,7 @@ export const listProcessingSignalsCommand = defineCommand({
   >) => {
     const authority = requireSignalCommandAuthority(ctx, {
       apiKeyScope: "api.signals.read",
+      mcpScope: "mcp:signals:read",
     });
     return deps.listSignals({
       clerkOrgId: authority.clerkOrgId,
@@ -263,6 +273,7 @@ export const listWorkingSetSignalsCommand = defineCommand({
   >) => {
     const authority = requireSignalCommandAuthority(ctx, {
       apiKeyScope: "api.signals.read",
+      mcpScope: "mcp:signals:read",
     });
     return deps.listWorkspaceSignals({
       clerkOrgId: authority.clerkOrgId,
@@ -286,6 +297,7 @@ export const getSignalCommand = defineCommand({
   >) => {
     const authority = requireSignalCommandAuthority(ctx, {
       apiKeyScope: "api.signals.read",
+      mcpScope: "mcp:signals:read",
     });
     const signal = await deps.getVisibleSignalByPublicId({
       clerkOrgId: authority.clerkOrgId,
@@ -321,6 +333,7 @@ export const createSignalCommand = defineCommand({
   >) => {
     const authority = requireSignalCommandAuthority(ctx, {
       apiKeyScope: "api.signals.write",
+      mcpScope: "mcp:signals:write",
     });
     try {
       return await deps.createAndQueueSignal({

@@ -8,8 +8,11 @@ import {
   providerRoutineFindOutputSchema,
 } from "@repo/api-contract";
 import { verifyServiceJWT } from "@repo/service-jwt";
-import { callProviderRoutine } from "../../services/provider-routines/call";
-import { findProviderRoutines } from "../../services/provider-routines/find";
+import {
+  createProviderRoutineCommandDeps,
+  providerRoutineCallCommand,
+  providerRoutineFindCommand,
+} from "../../domain/provider-routines";
 
 const noopProviderRoutineLog = {
   error: () => undefined,
@@ -97,10 +100,14 @@ export async function handleMcpProxyFindRequest(
       orgId: parsed.data.actor.orgId,
       userId: parsed.data.actor.userId,
     });
-    const result = await findProviderRoutines(
-      providerRoutineContext(parsed.data),
-      parsed.data.input
-    );
+    const result = await providerRoutineFindCommand.run({
+      ctx: providerRoutineContext(parsed.data),
+      deps: providerRoutineDeps(),
+      input: {
+        input: parsed.data.input,
+        scopes: parsed.data.scopes,
+      },
+    });
     return Response.json(providerRoutineFindOutputSchema.parse(result), {
       status: 200,
     });
@@ -135,10 +142,14 @@ export async function handleMcpProxyCallRequest(
       orgId: parsed.data.actor.orgId,
       userId: parsed.data.actor.userId,
     });
-    const result = await callProviderRoutine(
-      providerRoutineContext(parsed.data),
-      parsed.data.input
-    );
+    const result = await providerRoutineCallCommand.run({
+      ctx: providerRoutineContext(parsed.data),
+      deps: providerRoutineDeps(),
+      input: {
+        input: parsed.data.input,
+        scopes: parsed.data.scopes,
+      },
+    });
     return Response.json(providerRoutineCallSuccessSchema.parse(result), {
       status: 200,
     });
@@ -154,35 +165,30 @@ function providerRoutineContext(
 ) {
   return {
     actor: {
+      clientId: command.actor.clientId,
+      grantId: command.actor.grantId,
+      kind: "mcpClient" as const,
       orgId: command.actor.orgId,
+      scopes: command.actor.scopes,
       userId: command.actor.userId,
     },
-    adapters: {
-      connectors: {
-        loadTools: async () => {
-          const { loadAgentConnectorRuntimeTools } = await import(
-            "../../services/connectors/runtime"
-          );
-          return await loadAgentConnectorRuntimeTools({
-            calledByUserId: command.actor.userId,
-            clerkOrgId: command.actor.orgId,
-            sourceClientId: command.actor.clientId,
-            sourceRef: command.actor.grantId,
-            sourceSurface: "hosted_mcp",
-          });
-        },
-      },
-    },
+    caller: { kind: "service" as const, service: "apps-mcp" as const },
+    request: { id: crypto.randomUUID(), source: "mcp" as const },
+  };
+}
+
+function providerRoutineDeps() {
+  return createProviderRoutineCommandDeps({
     db,
+    loadConnectorRuntimeTools: async (input) => {
+      const { loadAgentConnectorRuntimeTools } = await import(
+        "../../services/connectors/runtime"
+      );
+      return await loadAgentConnectorRuntimeTools(input);
+    },
     log: noopProviderRoutineLog,
     now: () => new Date(),
-    scopes: command.scopes,
-    source: {
-      clientId: command.actor.clientId,
-      ref: command.actor.grantId,
-      surface: "hosted_mcp" as const,
-    },
-  };
+  });
 }
 
 function errorResponse(error: unknown, fallbackMessage: string): Response {

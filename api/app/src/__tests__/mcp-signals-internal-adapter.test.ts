@@ -166,7 +166,7 @@ describe("MCP signal internal adapter", () => {
 
     const response = await handleCreateMcpSignalInternalRequest(
       jsonRequest({
-        body: { actor, input: "hello" },
+        body: { actor, input: "hello", scopes: ["mcp:signals:write"] },
         token: await serviceToken(),
       })
     );
@@ -187,7 +187,7 @@ describe("MCP signal internal adapter", () => {
 
     const response = await handleGetMcpSignalInternalRequest(
       jsonRequest({
-        body: { actor, id: invisibleSignalId },
+        body: { actor, id: invisibleSignalId, scopes: ["mcp:signals:read"] },
         token: await serviceToken(),
       })
     );
@@ -203,7 +203,7 @@ describe("MCP signal internal adapter", () => {
   it("creates signals through the domain command as an apps-mcp service caller", async () => {
     const response = await handleCreateMcpSignalInternalRequest(
       jsonRequest({
-        body: { actor, input: "hello" },
+        body: { actor, input: "hello", scopes: ["mcp:signals:write"] },
         token: await serviceToken(),
       })
     );
@@ -221,7 +221,7 @@ describe("MCP signal internal adapter", () => {
           grantId: "grant_1",
           kind: "mcpClient",
           orgId: "org_1",
-          scopes: [],
+          scopes: ["mcp:signals:write"],
           userId: "user_1",
         },
         caller: { kind: "service", service: "apps-mcp" },
@@ -238,7 +238,7 @@ describe("MCP signal internal adapter", () => {
   it("gets signals through the domain command and maps public MCP output", async () => {
     const response = await handleGetMcpSignalInternalRequest(
       jsonRequest({
-        body: { actor, id: invisibleSignalId },
+        body: { actor, id: invisibleSignalId, scopes: ["mcp:signals:read"] },
         token: await serviceToken(),
       })
     );
@@ -261,7 +261,7 @@ describe("MCP signal internal adapter", () => {
           grantId: "grant_1",
           kind: "mcpClient",
           orgId: "org_1",
-          scopes: [],
+          scopes: ["mcp:signals:read"],
           userId: "user_1",
         },
         caller: { kind: "service", service: "apps-mcp" },
@@ -282,7 +282,7 @@ describe("MCP signal internal adapter", () => {
 
     const response = await handleGetMcpSignalInternalRequest(
       jsonRequest({
-        body: { actor, id: invisibleSignalId },
+        body: { actor, id: invisibleSignalId, scopes: ["mcp:signals:read"] },
         token: await serviceToken(),
       })
     );

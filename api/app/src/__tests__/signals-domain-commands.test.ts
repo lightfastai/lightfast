@@ -250,7 +250,7 @@ describe("signal domain commands", () => {
             grantId: "grant_test",
             kind: "mcpClient",
             orgId: "org_test",
-            scopes: [],
+            scopes: ["mcp:signals:write"],
             userId: "user_test",
           },
           caller: { kind: "service", service: "apps-mcp" },
@@ -273,6 +273,34 @@ describe("signal domain commands", () => {
       createdByUserId: "user_test",
       input: "new signal",
     });
+  });
+
+  it("rejects MCP signal creation without the write scope", async () => {
+    await expect(
+      createSignalCommand.run({
+        ctx: {
+          actor: {
+            clientId: "client_test",
+            grantId: "grant_test",
+            kind: "mcpClient",
+            orgId: "org_test",
+            scopes: ["mcp:signals:read"],
+            userId: "user_test",
+          },
+          caller: { kind: "service", service: "apps-mcp" },
+          request: { id: "req_mcp_test", source: "mcp" },
+        },
+        deps: deps(),
+        input: { input: "new signal" },
+      })
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        code: "MCP_SCOPE_REQUIRED",
+        kind: "authz",
+      })
+    );
+
+    expect(createAndQueueSignalMock).not.toHaveBeenCalled();
   });
 
   it("loads signal detail as an API-key actor using creator visibility", async () => {
@@ -332,7 +360,7 @@ describe("signal domain commands", () => {
           grantId: "grant_test",
           kind: "mcpClient",
           orgId: "org_test",
-          scopes: [],
+          scopes: ["mcp:signals:read"],
           userId: "user_test",
         },
         caller: { kind: "service", service: "apps-mcp" },
@@ -347,6 +375,34 @@ describe("signal domain commands", () => {
       createdByUserId: "user_test",
       publicId: signalRow.publicId,
     });
+  });
+
+  it("rejects MCP signal reads without the read scope", async () => {
+    await expect(
+      getSignalCommand.run({
+        ctx: {
+          actor: {
+            clientId: "client_test",
+            grantId: "grant_test",
+            kind: "mcpClient",
+            orgId: "org_test",
+            scopes: ["mcp:signals:write"],
+            userId: "user_test",
+          },
+          caller: { kind: "service", service: "apps-mcp" },
+          request: { id: "req_mcp_test", source: "mcp" },
+        },
+        deps: deps(),
+        input: { publicId: signalRow.publicId },
+      })
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        code: "MCP_SCOPE_REQUIRED",
+        kind: "authz",
+      })
+    );
+
+    expect(getVisibleSignalByPublicIdMock).not.toHaveBeenCalled();
   });
 
   it("maps queue failures to an internal domain error", async () => {

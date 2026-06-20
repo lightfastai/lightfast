@@ -41,6 +41,7 @@ describe("app signal intake adapter", () => {
             userId: "user_test",
           },
           input: "Signal from MCP",
+          scopes: ["mcp:signals:write"],
         },
         { fetch: fetchMock }
       )
@@ -79,6 +80,7 @@ describe("app signal intake adapter", () => {
         userId: "user_test",
       },
       input: "Signal from MCP",
+      scopes: ["mcp:signals:write"],
     });
   });
 
@@ -105,6 +107,7 @@ describe("app signal intake adapter", () => {
             userId: "user_test",
           },
           input: "Signal from MCP",
+          scopes: ["mcp:signals:write"],
         },
         { fetch: fetchMock }
       )
@@ -137,6 +140,7 @@ describe("app signal intake adapter", () => {
             userId: "user_test",
           },
           input: "Signal from MCP",
+          scopes: ["mcp:signals:write"],
         },
         { fetch: fetchMock }
       )
@@ -173,6 +177,7 @@ describe("app signal intake adapter", () => {
             userId: "user_test",
           },
           id: "signal_123e4567-e89b-12d3-a456-426614174000",
+          scopes: ["mcp:signals:read"],
         },
         { fetch: fetchMock }
       )
@@ -203,6 +208,7 @@ describe("app signal intake adapter", () => {
         userId: "user_test",
       },
       id: "signal_123e4567-e89b-12d3-a456-426614174000",
+      scopes: ["mcp:signals:read"],
     });
   });
 });

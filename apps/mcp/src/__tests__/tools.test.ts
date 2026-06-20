@@ -136,6 +136,7 @@ describe("hosted MCP tools", () => {
         userId: "user_test",
       },
       input: "Review this profile",
+      scopes: ["mcp:signals:write"],
     });
   });
 
@@ -169,6 +170,7 @@ describe("hosted MCP tools", () => {
         userId: "user_test",
       },
       id: signalId,
+      scopes: ["mcp:signals:read"],
     });
   });
 
@@ -286,7 +288,11 @@ describe("hosted MCP tools", () => {
 
     expect(deps.findProviderRoutines).toHaveBeenCalledWith(
       expect.objectContaining({
-        actor: { orgId: "org_test", userId: "user_test" },
+        actor: expect.objectContaining({
+          orgId: "org_test",
+          scopes: ["mcp:provider_routines:read"],
+          userId: "user_test",
+        }),
         scopes: {
           providerRoutineRead: true,
           providerRoutineWrite: false,
@@ -317,6 +323,9 @@ describe("hosted MCP tools", () => {
 
     expect(deps.findProviderRoutines).toHaveBeenCalledWith(
       expect.objectContaining({
+        actor: expect.objectContaining({
+          scopes: ["mcp:provider_routines:write"],
+        }),
         scopes: {
           providerRoutineRead: true,
           providerRoutineWrite: true,
@@ -350,6 +359,9 @@ describe("hosted MCP tools", () => {
 
     expect(deps.callProviderRoutine).toHaveBeenCalledWith(
       expect.objectContaining({
+        actor: expect.objectContaining({
+          scopes: ["mcp:provider_routines:read"],
+        }),
         scopes: {
           providerRoutineRead: true,
           providerRoutineWrite: false,
@@ -467,6 +479,7 @@ describe("hosted MCP tools", () => {
         userId: "user_test",
       },
       input: "Remember this production MCP test",
+      scopes: ["mcp:signals:write"],
     });
   });
 
@@ -513,6 +526,7 @@ describe("hosted MCP tools", () => {
         userId: "user_test",
       },
       id: signalId,
+      scopes: ["mcp:signals:read"],
     });
   });
 
@@ -558,7 +572,11 @@ describe("hosted MCP tools", () => {
 
     expect(callProviderRoutine).toHaveBeenCalledWith(
       expect.objectContaining({
-        actor: { orgId: "org_test", userId: "user_test" },
+        actor: expect.objectContaining({
+          orgId: "org_test",
+          scopes: ["mcp:provider_routines:read"],
+          userId: "user_test",
+        }),
         scopes: {
           providerRoutineRead: true,
           providerRoutineWrite: false,

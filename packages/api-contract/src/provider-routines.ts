@@ -3,6 +3,7 @@ import {
   type ConnectableConnectorProvider,
   connectableConnectorProviderSchema,
 } from "./connectors";
+import type { McpScope } from "./mcp";
 
 export const providerToolNameSchema = z
   .string()
@@ -149,12 +150,22 @@ export type ProviderRoutineCallInput = z.infer<
   typeof providerRoutineCallInputSchema
 >;
 
+export const mcpProviderRoutineScopeSchema = z.enum([
+  "mcp:provider_routines:read",
+  "mcp:provider_routines:write",
+]);
+export type McpProviderRoutineScope = Extract<
+  McpScope,
+  z.infer<typeof mcpProviderRoutineScopeSchema>
+>;
+
 export const mcpProviderRoutineActorSchema = z
   .object({
     clientId: z.string().min(1),
     grantId: z.string().min(1),
     kind: z.literal("mcp"),
     orgId: z.string().min(1),
+    scopes: z.array(mcpProviderRoutineScopeSchema).min(1),
     userId: z.string().min(1),
   })
   .strict();
