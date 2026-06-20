@@ -1,4 +1,4 @@
-import { cn } from "@repo/ui/lib/utils";
+import { cn } from "@repo/ui-v2/lib/utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import type { Organization, WithContext } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
@@ -9,7 +9,7 @@ import {
 
 import type { Metadata, Viewport } from "next";
 import { createMetadata } from "~/lib/content-seo";
-import { geistMono, geistSans, ppNeueMontreal, roobert } from "~/lib/fonts";
+import { geistMono, geistSans, ppNeueMontreal } from "~/lib/fonts";
 
 export const metadata: Metadata = createMetadata({
   title: "Lightfast – The Operating Layer for Agents and Apps",
@@ -131,7 +131,6 @@ export default function RootLayout({
         geistSans.variable,
         geistMono.variable,
         ppNeueMontreal.variable,
-        roobert.variable,
         "dark scrollbar-thin touch-manipulation font-sans antialiased",
       )}
       lang="en"

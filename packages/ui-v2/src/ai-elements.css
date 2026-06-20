@@ -1,0 +1,4 @@
+@import "streamdown/styles.css";
+
+@source "./components/ai-elements/**/*.{ts,tsx}";
+@source "../node_modules/streamdown/dist/*.js";

@@ -17,7 +17,7 @@ export const getBlogPages = () => blogSource.getPages();
 
 // --- Brand ---
 const brandSource = loader({
-  baseUrl: "/v2",
+  baseUrl: "/",
   source: toFumadocsSource(brandCollection, []),
 });
 
@@ -26,7 +26,7 @@ export const getBrandPages = () => brandSource.getPages();
 
 // --- Legal ---
 const legalSource = loader({
-  baseUrl: "/v2/legal",
+  baseUrl: "/legal",
   source: toFumadocsSource(legalCollection, []),
 });
 

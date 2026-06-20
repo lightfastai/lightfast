@@ -1,13 +1,6 @@
 import { Logo as BrandLogo } from "@repo/ui-v2/components/brand/logo";
-import {
-  AbsoluteFill,
-  continueRender,
-  delayRender,
-  staticFile,
-} from "@vendor/remotion";
-import { loadFont } from "@vendor/remotion/fonts";
+import { AbsoluteFill, staticFile } from "@vendor/remotion";
 import type React from "react";
-import { useEffect, useState } from "react";
 
 const CANVAS_W = 1200;
 const CANVAS_H = 675;
@@ -19,22 +12,6 @@ const BACKGROUND_SCALE =
   Math.max(CANVAS_W / PAPER_W, CANVAS_H / PAPER_H) * BACKGROUND_ZOOM;
 
 const BRAND_SCALE = 1;
-
-let brandFontsLoaded = false;
-
-async function ensureBrandFontsLoaded() {
-  if (brandFontsLoaded) {
-    return;
-  }
-
-  await loadFont({
-    family: "Roobert-TRIAL-Medium",
-    url: staticFile("fonts/roobert/Roobert-TRIAL-Medium.woff2"),
-    weight: "500",
-  });
-
-  brandFontsLoaded = true;
-}
 
 function WorkBackground() {
   return (
@@ -101,17 +78,6 @@ function CenterBrand() {
 }
 
 export const BlogWhyWeBuiltFeatured: React.FC = () => {
-  const [handle] = useState(() => delayRender("Loading brand fonts"));
-
-  useEffect(() => {
-    void ensureBrandFontsLoaded()
-      .then(() => continueRender(handle))
-      .catch((err: unknown) => {
-        console.error("Brand font loading failed:", err);
-        continueRender(handle);
-      });
-  }, [handle]);
-
   return (
     <AbsoluteFill>
       <WorkBackground />

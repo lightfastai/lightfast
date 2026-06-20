@@ -57,7 +57,7 @@ const ContentPageSchema = BasePageSchema.extend({
 export const BlogPostSchema = ContentPageSchema.extend({
   canonicalUrl: z
     .url()
-    .refine((val) => val.startsWith("https://lightfast.ai/v2/blog/"))
+    .refine((val) => val.startsWith("https://lightfast.ai/blog/"))
     .optional(),
   category: z.enum([
     "engineering",
@@ -75,7 +75,7 @@ export const BlogPostSchema = ContentPageSchema.extend({
 export const BrandPageSchema = BasePageSchema.extend({
   canonicalUrl: z
     .url()
-    .refine((val) => val === "https://lightfast.ai/v2/brand")
+    .refine((val) => val === "https://lightfast.ai/brand")
     .optional(),
   updatedAt: z.iso.datetime(),
 });
@@ -83,7 +83,7 @@ export const BrandPageSchema = BasePageSchema.extend({
 export const LegalPageSchema = BasePageSchema.extend({
   canonicalUrl: z
     .url()
-    .refine((val) => val.startsWith("https://lightfast.ai/v2/legal/"))
+    .refine((val) => val.startsWith("https://lightfast.ai/legal/"))
     .optional(),
   updatedAt: z.iso.datetime(),
   effectiveAt: z.iso.datetime(),

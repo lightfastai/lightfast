@@ -1,10 +1,8 @@
-@import "./fonts.css";
 @import "tailwindcss/index.css";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
 @source "./**/*.{ts,tsx}";
-@source "../node_modules/streamdown/dist/*.js";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -14,11 +12,8 @@
     "Geist Mono Variable", "Geist Mono", "SF Mono", ui-monospace, Menlo,
     monospace;
   --font-pp-neue-montreal: "PP Neue Montreal", var(--font-geist-sans);
-  --font-roobert: "Roobert-TRIAL", var(--font-geist-sans);
   --font-heading: var(--font-title);
   --font-title: var(--font-pp-neue-montreal);
-  --font-wordmark:
-    "Roobert-TRIAL-Medium", "Roobert-TRIAL", var(--font-geist-sans);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -78,9 +73,6 @@
 :root {
   --font-title-letter-spacing: -0.03em;
   --font-title-line-height: 1.1;
-}
-
-:root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.277 0 0);
   --card: oklch(1 0 0);
@@ -185,7 +177,4 @@
     letter-spacing: var(--font-title-letter-spacing);
   }
 
-  .font-wordmark-features {
-    font-feature-settings: "ss01", "ss04", "ss06", "ss11", "ss14";
-  }
 }

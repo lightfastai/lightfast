@@ -71,7 +71,7 @@ catalog:
   '@react-email/render': ^2.0.9
   '@react-email/ui': ^6.6.3
   '@rescale/nemo': ^2.2.0
-  '@sentry/browser': ^10.49.0
+  '@sentry/browser': 10.49.0
   '@sentry/core': ^10.49.0
   '@sentry/electron': ^7.13.0
   '@sentry/nextjs': ^10.49.0

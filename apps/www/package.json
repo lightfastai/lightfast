@@ -15,19 +15,20 @@
     "clean": "git clean -xdf .cache .clerk .next .turbo .vercel node_modules",
     "dev": "portless run pnpm with-related-projects pnpm with-env next dev --turbo",
     "start": "pnpm with-env next start -p 4101",
-    "test": "vitest run",
     "typecheck": "pnpm with-env next typegen && tsc --noEmit",
     "with-env": "dotenv -e ./.vercel/.env.development.local --",
     "with-related-projects": "NEXT_PUBLIC_APP_URL=$(portless get lightfast) NEXT_PUBLIC_WWW_URL=$(portless get www.lightfast)"
   },
   "dependencies": {
+    "@hugeicons/core-free-icons": "catalog:",
+    "@hugeicons/react": "catalog:",
     "@logtail/next": "^0.3.1",
     "@next/bundle-analyzer": "^16.2.6",
     "@repo/og": "workspace:*",
     "@repo/space-invaders-react": "workspace:*",
-    "@repo/ui": "workspace:*",
     "@repo/ui-v2": "workspace:*",
     "@rescale/nemo": "catalog:",
+    "@sentry/browser": "catalog:",
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/aeo": "workspace:*",
@@ -45,7 +46,6 @@
     "fumadocs-mdx": "14.2.9",
     "geist": "catalog:",
     "lodash.merge": "^4.6.2",
-    "lucide-react": "catalog:",
     "next": "catalog:next16",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
@@ -54,7 +54,6 @@
   "devDependencies": {
     "@mixedbread/cli": "^2.3.2",
     "@repo/typescript-config": "workspace:*",
-    "@repo/vitest-config": "workspace:*",
     "@tailwindcss/postcss": "catalog:tailwind4",
     "@types/lodash.merge": "^4.6.9",
     "@types/mdx": "^2.0.13",
@@ -70,7 +69,6 @@
     "require-in-the-middle": "catalog:",
     "tailwindcss": "catalog:tailwind4",
     "tsx": "^4.21.0",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
+    "typescript": "catalog:"
   }
 }

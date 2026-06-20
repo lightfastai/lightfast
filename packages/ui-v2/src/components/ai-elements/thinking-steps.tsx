@@ -1,5 +1,7 @@
 "use client";
 
+import { ChevronDownIcon, CircleIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Badge } from "@repo/ui-v2/components/ui/badge";
 import {
   Collapsible,
@@ -7,7 +9,6 @@ import {
   CollapsibleTrigger,
 } from "@repo/ui-v2/components/ui/collapsible";
 import { cn } from "@repo/ui-v2/lib/utils";
-import { ChevronDownIcon, CircleIcon } from "lucide-react";
 import type { MotionProps } from "motion/react";
 import { motion } from "motion/react";
 import type { ComponentProps, ReactNode } from "react";
@@ -48,9 +49,11 @@ export const ThinkingStepsHeader = memo(function ThinkingStepsHeader({
       {...props}
     >
       <span>{children}</span>
-      <ChevronDownIcon
+      <HugeiconsIcon
         aria-hidden="true"
         className="size-3.5 transition-transform group-data-[panel-open]:rotate-180"
+        icon={ChevronDownIcon}
+        strokeWidth={2}
       />
     </CollapsibleTrigger>
   );
@@ -106,7 +109,14 @@ export const ThinkingStep = memo(function ThinkingStep({
       <div className="flex gap-2.5 px-1 py-1.5">
         <div className="flex w-[14px] shrink-0 flex-col items-center">
           <div className="grid size-3.5 place-items-center text-muted-foreground">
-            {icon ?? <CircleIcon aria-hidden="true" className="size-3" />}
+            {icon ?? (
+              <HugeiconsIcon
+                aria-hidden="true"
+                className="size-3"
+                icon={CircleIcon}
+                strokeWidth={2}
+              />
+            )}
           </div>
           {!isLast ? <div className="mt-1 w-px flex-1 bg-border/60" /> : null}
         </div>

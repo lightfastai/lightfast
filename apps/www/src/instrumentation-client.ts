@@ -1,38 +1,93 @@
 import {
   captureConsoleIntegration,
-  captureRouterTransitionStart,
-  extraErrorDataIntegration,
   init as initSentry,
-  replayIntegration,
-  reportingObserverIntegration,
+  rewriteFramesIntegration,
   spotlightBrowserIntegration,
-} from "@sentry/nextjs";
+} from "@sentry/browser";
 
-import { env } from "~/env";
+const sentryDsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+const sentryTunnel = getSentryTunnel(sentryDsn);
 
 initSentry({
-  dsn: env.NEXT_PUBLIC_SENTRY_DSN,
-  environment: env.NEXT_PUBLIC_VERCEL_ENV,
-  tracesSampleRate: env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.1 : 1.0,
+  dsn: sentryDsn,
+  environment: process.env.NEXT_PUBLIC_VERCEL_ENV ?? "development",
   debug: false,
-  enableLogs: true,
-  replaysSessionSampleRate:
-    env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.05 : 1.0,
-  replaysOnErrorSampleRate: 1.0,
+  ...(sentryTunnel ? { tunnel: sentryTunnel } : {}),
+  beforeSend(event, hint) {
+    if (
+      event.exception?.values?.[0]?.value === "NEXT_REDIRECT" ||
+      isNextRedirectError(hint.originalException)
+    ) {
+      return null;
+    }
+
+    return event;
+  },
   integrations: [
-    replayIntegration({
-      maskAllText: true,
-      blockAllMedia: true,
+    rewriteFramesIntegration({
+      iteratee: (frame) => {
+        if (frame.filename) {
+          try {
+            const { origin } = new URL(frame.filename);
+            frame.filename = frame.filename.replace(origin, "app://");
+          } catch {
+            // Leave non-URL frame filenames unchanged.
+          }
+        }
+
+        if (frame.filename?.startsWith("app:///_next")) {
+          frame.filename = decodeURI(frame.filename);
+        }
+
+        if (
+          frame.filename?.match(
+            /^app:\/\/\/_next\/static\/chunks\/(main-|main-app-|polyfills-|webpack-|framework-|framework\.)[0-9a-f]+\.js$/
+          )
+        ) {
+          frame.in_app = false;
+        }
+
+        return frame;
+      },
     }),
     captureConsoleIntegration({ levels: ["error", "warn"] }),
-    extraErrorDataIntegration({ depth: 3 }),
-    reportingObserverIntegration({
-      types: ["crash", "deprecation", "intervention"],
-    }),
-    ...(env.NEXT_PUBLIC_VERCEL_ENV === "development"
+    ...((process.env.NEXT_PUBLIC_VERCEL_ENV ?? "development") === "development"
       ? [spotlightBrowserIntegration()]
       : []),
   ],
 });
 
-export const onRouterTransitionStart = captureRouterTransitionStart;
+function isNextRedirectError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const digest = "digest" in error ? error.digest : undefined;
+
+  return typeof digest === "string" && digest.startsWith("NEXT_REDIRECT;");
+}
+
+function getSentryTunnel(dsn: string | undefined) {
+  if (!dsn) {
+    return undefined;
+  }
+
+  try {
+    const dsnUrl = new URL(dsn);
+    const sentrySaasDsnMatch = dsnUrl.host.match(
+      /^o(\d+)\.ingest(?:\.([a-z]{2}))?\.sentry\.io$/
+    );
+    const projectId = dsnUrl.pathname.split("/").filter(Boolean).at(-1);
+
+    if (!sentrySaasDsnMatch?.[1] || !projectId) {
+      return undefined;
+    }
+
+    const regionCode = sentrySaasDsnMatch[2];
+    const regionQuery = regionCode ? `&r=${regionCode}` : "";
+
+    return `/monitoring?o=${sentrySaasDsnMatch[1]}&p=${projectId}${regionQuery}`;
+  } catch {
+    return undefined;
+  }
+}

@@ -29,7 +29,8 @@ import langTs from "@shikijs/langs/typescript";
 import langYaml from "@shikijs/langs/yaml";
 import githubDark from "@shikijs/themes/github-dark";
 import githubLight from "@shikijs/themes/github-light";
-import { CheckIcon, CopyIcon } from "lucide-react";
+import { CheckIcon, CopyIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { ComponentProps, CSSProperties, HTMLAttributes } from "react";
 import {
   createContext,
@@ -523,7 +524,7 @@ export const CodeBlockCopyButton = ({
     []
   );
 
-  const Icon = isCopied ? CheckIcon : CopyIcon;
+  const icon = isCopied ? CheckIcon : CopyIcon;
 
   return (
     <Button
@@ -533,7 +534,7 @@ export const CodeBlockCopyButton = ({
       variant="ghost"
       {...props}
     >
-      {children ?? <Icon size={14} />}
+      {children ?? <HugeiconsIcon icon={icon} size={14} strokeWidth={2} />}
     </Button>
   );
 };

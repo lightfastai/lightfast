@@ -1,5 +1,9 @@
 import { Link, Section, Text } from "@react-email/components";
-import { DOT_MATRIX_PATH } from "@repo/ui-v2/components/brand/logo";
+import {
+  DOT_MATRIX_PATH,
+  WORDMARK_PATH,
+  WORDMARK_VIEWBOX,
+} from "@repo/ui-v2/components/brand/logo";
 
 export interface EmailFooterProps {
   manageUrl: string;
@@ -38,6 +42,9 @@ export function EmailFooter({
 }
 
 function LightfastLockup() {
+  const wordmarkHeight = 26;
+  const wordmarkWidth = 117;
+
   return (
     <table
       border={0}
@@ -53,17 +60,22 @@ function LightfastLockup() {
           </td>
           <td
             style={{
-              color: "#181818",
-              fontFamily:
-                "Roobert-TRIAL-Medium, Roobert-TRIAL, Geist Variable, Geist, ui-sans-serif, system-ui, sans-serif",
-              fontSize: "28px",
-              fontWeight: 500,
-              lineHeight: "28px",
+              lineHeight: 0,
               paddingLeft: "8px",
               verticalAlign: "middle",
             }}
           >
-            Lightfast
+            <svg
+              aria-label="Lightfast"
+              focusable="false"
+              height={wordmarkHeight}
+              role="img"
+              viewBox={WORDMARK_VIEWBOX}
+              width={wordmarkWidth}
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d={WORDMARK_PATH} fill="#181818" />
+            </svg>
           </td>
         </tr>
       </tbody>

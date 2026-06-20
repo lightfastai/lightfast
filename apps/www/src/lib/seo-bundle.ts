@@ -104,7 +104,7 @@ export function emitBlogCategorySeo(
   meta: BlogCategoryMeta,
   posts: readonly BlogCategoryPost[]
 ): SeoBundle {
-  const url = `https://lightfast.ai/v2/blog`;
+  const url = `https://lightfast.ai/blog`;
   return {
     metadata: createMetadata({
       title: `${meta.heading} | Lightfast`,
@@ -127,10 +127,10 @@ export function emitBlogCategorySeo(
         canonical: url,
         types: {
           "application/rss+xml": [
-            { url: "https://lightfast.ai/v2/blog", title: "Blog" },
+            { url: "https://lightfast.ai/blog", title: "Blog" },
           ],
           "application/atom+xml": [
-            { url: "https://lightfast.ai/v2/blog", title: "Blog" },
+            { url: "https://lightfast.ai/blog", title: "Blog" },
           ],
         },
       },

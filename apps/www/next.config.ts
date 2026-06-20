@@ -19,93 +19,83 @@ const wwwConfig: NextConfig = merge({}, baseConfig, {
   async redirects() {
     return [
       {
-        source: "/",
-        destination: "/v2",
-        permanent: false,
+        source: "/v2/legal/terms-of-service",
+        destination: "/legal/terms",
+        permanent: true,
       },
       {
-        source: "/blog",
-        destination: "/v2/blog",
-        permanent: false,
+        source: "/v2/legal/privacy-policy",
+        destination: "/legal/privacy",
+        permanent: true,
       },
       {
-        source: "/brand",
-        destination: "/v2/brand",
-        permanent: false,
+        source: "/v2",
+        destination: "/",
+        permanent: true,
+      },
+      {
+        source: "/v2/:path*",
+        destination: "/:path*",
+        permanent: true,
       },
       {
         source: "/company",
-        destination: "/v2/brand",
+        destination: "/brand",
         permanent: false,
       },
       {
         source: "/company/:path*",
-        destination: "/v2/brand",
+        destination: "/brand",
         permanent: false,
       },
       {
         source: "/pricing",
-        destination: "/v2",
+        destination: "/",
         permanent: false,
       },
       {
         source: "/use-cases/:path*",
-        destination: "/v2",
+        destination: "/",
         permanent: false,
       },
       {
         source: "/careers",
-        destination: "/v2/brand",
+        destination: "/brand",
         permanent: false,
       },
       {
         source: "/careers/:path*",
-        destination: "/v2/brand",
+        destination: "/brand",
         permanent: false,
       },
       {
         source: "/blog/rss.xml",
-        destination: "/v2/blog",
+        destination: "/blog",
         permanent: false,
       },
       {
         source: "/blog/atom.xml",
-        destination: "/v2/blog",
+        destination: "/blog",
         permanent: false,
       },
       {
         source: "/blog/feed.xml",
-        destination: "/v2/blog",
+        destination: "/blog",
         permanent: false,
       },
       {
         source: "/blog/topic/:path*",
-        destination: "/v2/blog",
-        permanent: false,
-      },
-      {
-        source: "/blog/:path*",
-        destination: "/v2/blog/:path*",
-        permanent: false,
-      },
-      {
-        source: "/v2/legal/terms-of-service",
-        destination: "/v2/legal/terms",
-        permanent: false,
-      },
-      {
-        source: "/v2/legal/privacy-policy",
-        destination: "/v2/legal/privacy",
+        destination: "/blog",
         permanent: false,
       },
       {
         source: "/search",
-        destination: "/v2/blog",
+        destination: "/blog",
         permanent: false,
       },
       {
         source: "/pitch-deck",
-        destination: "/v2",
+        destination: "/",
         permanent: false,
       },
     ];
@@ -132,10 +122,10 @@ const wwwConfig: NextConfig = merge({}, baseConfig, {
 
   experimental: {
     optimizePackageImports: [
-      "framer-motion",
+      "@hugeicons/core-free-icons",
+      "@hugeicons/react",
       "date-fns",
       "class-variance-authority",
-      "lucide-react",
     ],
   },
 } satisfies NextConfig);

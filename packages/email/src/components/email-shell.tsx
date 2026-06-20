@@ -36,29 +36,6 @@ const lightfastSupportingFontFaces = `
   src: url("${LIGHTFAST_ASSET_BASE_URL}/fonts/pp-neue-montreal/PPNeueMontreal-Medium.woff2") format("woff2");
 }
 
-@font-face {
-  font-family: "Roobert-TRIAL";
-  font-style: normal;
-  font-weight: 400;
-  mso-font-alt: "Arial";
-  src: url("${LIGHTFAST_ASSET_BASE_URL}/fonts/roobert/Roobert-TRIAL-Regular.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Roobert-TRIAL";
-  font-style: normal;
-  font-weight: 500;
-  mso-font-alt: "Arial";
-  src: url("${LIGHTFAST_ASSET_BASE_URL}/fonts/roobert/Roobert-TRIAL-Medium.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Roobert-TRIAL-Medium";
-  font-style: normal;
-  font-weight: 500;
-  mso-font-alt: "Arial";
-  src: url("${LIGHTFAST_ASSET_BASE_URL}/fonts/roobert/Roobert-TRIAL-Medium.woff2") format("woff2");
-}
 `;
 
 interface EmailShellProps {
@@ -125,15 +102,6 @@ export function EmailShell({ children, preview }: EmailShellProps) {
                   "ui-monospace",
                   "Menlo",
                   "monospace",
-                ],
-                wordmark: [
-                  "Roobert-TRIAL-Medium",
-                  "Roobert-TRIAL",
-                  "Geist Variable",
-                  "Geist",
-                  "ui-sans-serif",
-                  "system-ui",
-                  "sans-serif",
                 ],
               },
             },

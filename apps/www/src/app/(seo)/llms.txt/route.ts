@@ -9,20 +9,20 @@ const providers: Array<() => Promise<PageEntry[]>> = [
   () => {
     const entries: PageEntry[] = [
       {
-        url: `${BASE_URL}/v2`,
+        url: `${BASE_URL}`,
         title: "Lightfast",
         description:
           "Lightfast is the operating layer between AI agents, apps, and teams responsible for real work.",
         section: "Marketing",
       },
       {
-        url: `${BASE_URL}/v2/brand`,
+        url: `${BASE_URL}/brand`,
         title: "Brand",
         description: "Official Lightfast brand resources and company details.",
         section: "Company",
       },
       {
-        url: `${BASE_URL}/v2/blog`,
+        url: `${BASE_URL}/blog`,
         title: "Blog",
         description:
           "Notes from Lightfast on agent infrastructure, workspace memory, and reliable AI operations.",
@@ -32,7 +32,7 @@ const providers: Array<() => Promise<PageEntry[]>> = [
 
     for (const page of getBlogPages()) {
       entries.push({
-        url: `${BASE_URL}/v2/blog/${page.slugs[0]}`,
+        url: `${BASE_URL}/blog/${page.slugs[0]}`,
         title: page.data.title,
         description: page.data.answerSummary ?? page.data.description,
         lastModified: page.data.reviewedAt ?? page.data.updatedAt,
@@ -42,7 +42,7 @@ const providers: Array<() => Promise<PageEntry[]>> = [
 
     for (const page of getLegalPages()) {
       entries.push({
-        url: `${BASE_URL}/v2/legal/${page.slugs[0]}`,
+        url: `${BASE_URL}/legal/${page.slugs[0]}`,
         title: page.data.title,
         description: page.data.description,
         lastModified: page.data.reviewedAt ?? page.data.updatedAt,
@@ -85,7 +85,7 @@ export const { GET } = createLlmsTxtHandler(
     title: "Lightfast",
     description:
       "Lightfast is the operating layer for AI agents and engineering teams. Agents and developers use Lightfast to observe events, build semantic memory, and act across their tool stack with source-cited context.",
-    baseUrl: `${BASE_URL}/v2`,
+    baseUrl: `${BASE_URL}`,
     sectionOrder: [
       "Marketing",
       "Company",

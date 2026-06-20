@@ -59,6 +59,7 @@ function getCssVariable(block: string, variable: string) {
 
 describe("desktop Tailwind setup", () => {
   it("keeps desktop styles.css as the app source entry for ui-v2 globals", () => {
+    expect(styles).toContain('@import "@repo/ui-v2/fonts.css";');
     expect(styles).toContain('@import "@repo/ui-v2/globals.css";');
     expect(rendererEntry).toContain('import "@fontsource-variable/geist";');
     expect(styles).toContain('@source "../index.html";');
@@ -106,8 +107,10 @@ describe("desktop Tailwind setup", () => {
       '[role="button"]:not(:disabled) {',
       "html {",
       ".font-mono {",
-      ".font-wordmark-features {",
+      ".font-title {",
     ]);
+    expect(uiV2Styles).not.toContain("Roobert");
+    expect(uiV2Styles).not.toContain("font-wordmark");
     expect(uiV2Styles).not.toContain("color-mix(");
     expect(uiV2Styles).not.toContain("-webkit-app-region");
   });
@@ -126,9 +129,7 @@ describe("desktop Tailwind setup", () => {
     );
 
     const darkBlock = getCssBlock(".dark");
-    expect(getCssVariable(darkBlock, "--sidebar")).toBe(
-      getCssVariable(darkBlock, "--background")
-    );
+    expect(getCssVariable(darkBlock, "--background")).toBe("oklch(0 0 0)");
     expect(getCssVariable(darkBlock, "--sidebar")).toBe("oklch(0.2178 0 0)");
     expect(getCssBlock(".dark")).toContain(
       "--sidebar-ring: oklch(0.626 0.205 254.947);"

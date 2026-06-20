@@ -1,6 +1,8 @@
 import type { Preview } from "@storybook/react-vite";
 import { initialize, mswLoader } from "msw-storybook-addon";
+import "@repo/ui-v2/fonts.css";
 import "@repo/ui-v2/globals.css";
+import "@repo/ui-v2/ai-elements.css";
 import { TooltipProvider } from "@repo/ui-v2/components/ui/tooltip";
 import { mswHandlers } from "./msw-handlers";
 

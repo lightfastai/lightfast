@@ -385,6 +385,7 @@ describe("app authenticated route migration", () => {
     const postcssConfig = source("postcss.config.mjs");
 
     expect(globalCss).toContain('@import "@repo/ui-v2/globals.css";');
+    expect(globalCss).toContain('@import "@repo/ui-v2/ai-elements.css";');
     expect(globalCss).not.toContain('@import "@repo/ui/globals.css";');
     expect(globalCss).toContain('@source "../**/*.{ts,tsx}";');
     expect(globalCss).toContain(

@@ -33,28 +33,3 @@
   src: url("../public/fonts/pp-neue-montreal/PPNeueMontreal-Medium.woff2")
     format("woff2");
 }
-
-@font-face {
-  font-display: swap;
-  font-family: "Roobert-TRIAL";
-  font-style: normal;
-  font-weight: 400;
-  src: url("../public/fonts/roobert/Roobert-TRIAL-Regular.woff2")
-    format("woff2");
-}
-
-@font-face {
-  font-display: swap;
-  font-family: "Roobert-TRIAL";
-  font-style: normal;
-  font-weight: 500;
-  src: url("../public/fonts/roobert/Roobert-TRIAL-Medium.woff2") format("woff2");
-}
-
-@font-face {
-  font-display: swap;
-  font-family: "Roobert-TRIAL-Medium";
-  font-style: normal;
-  font-weight: 500;
-  src: url("../public/fonts/roobert/Roobert-TRIAL-Medium.woff2") format("woff2");
-}

@@ -22,18 +22,11 @@ const ensureBrandGeometryFontsLoaded = async () => {
     return;
   }
 
-  await Promise.all([
-    loadFont({
-      family: "Roobert-TRIAL-Medium",
-      url: staticFile("fonts/roobert/Roobert-TRIAL-Medium.woff2"),
-      weight: "500",
-    }),
-    loadFont({
-      family: "PP Neue Montreal",
-      url: staticFile("fonts/pp-neue-montreal/PPNeueMontreal-Book.woff2"),
-      weight: "400",
-    }),
-  ]);
+  await loadFont({
+    family: "PP Neue Montreal",
+    url: staticFile("fonts/pp-neue-montreal/PPNeueMontreal-Book.woff2"),
+    weight: "400",
+  });
 
   fontsLoaded = true;
 };
