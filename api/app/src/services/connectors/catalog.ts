@@ -4,7 +4,7 @@ import {
   type OrgConnectorConnection,
 } from "@db/app";
 import { connectorRuntimeToolName } from "@lightfast/connector-core";
-import { X_OAUTH_SCOPES } from "@lightfast/connector-x/oauth";
+import { X_OAUTH_SCOPES } from "@lightfast/connector-x/contract";
 import {
   CONNECTABLE_CONNECTOR_PROVIDERS,
   type ConnectableConnectorProvider,

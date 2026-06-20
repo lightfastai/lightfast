@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { X_OAUTH_SCOPES } from "../oauth";
+import { X_OAUTH_SCOPES } from "../contract";
 import {
   getXOperationDefinition,
   getXOperationDefinitions,
