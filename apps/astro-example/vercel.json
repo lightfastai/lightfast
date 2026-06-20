@@ -1,7 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm build",
   "framework": "astro",
   "ignoreCommand": "npx turbo-ignore",
+  "outputDirectory": "dist",
   "headers": [
     {
       "source": "/_astro/(.*)",

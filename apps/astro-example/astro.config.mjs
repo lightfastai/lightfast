@@ -1,9 +1,15 @@
 // @ts-check
 import vercel from '@astrojs/vercel';
+import sentry from '@sentry/astro';
 import { defineConfig, fontProviders } from 'astro/config';
 import { visualizer } from 'rollup-plugin-visualizer';
 
 const analyze = process.env.ANALYZE === 'true';
+const canUploadSentrySourceMaps = Boolean(
+  process.env.SENTRY_AUTH_TOKEN &&
+    process.env.SENTRY_ORG &&
+    process.env.SENTRY_PROJECT,
+);
 
 // https://astro.build/config
 export default defineConfig({
@@ -39,21 +45,30 @@ export default defineConfig({
         ],
       },
     },
-    {
-      provider: fontProviders.local(),
-      name: 'Roobert Trial',
-      cssVariable: '--font-roobert-trial',
-      fallbacks: ['sans-serif'],
-      options: {
-        variants: [
-          {
-            src: ['./src/assets/fonts/roobert/Roobert-TRIAL-Medium-Wordmark.woff2'],
-            style: 'normal',
-            weight: 500,
-          },
-        ],
+  ],
+  integrations: [
+    sentry({
+      enabled: {
+        client: true,
+        server: false,
       },
-    },
+      clientInitPath: './sentry.client.config.ts',
+      autoInstrumentation: {
+        requestHandler: false,
+      },
+      sourcemaps: {
+        disable: !canUploadSentrySourceMaps,
+      },
+      telemetry: false,
+      silent: !process.env.CI,
+      bundleSizeOptimizations: {
+        excludeDebugStatements: true,
+        excludeTracing: true,
+        excludeReplayShadowDom: true,
+        excludeReplayIframe: true,
+        excludeReplayWorker: true,
+      },
+    }),
   ],
   vite: {
     plugins: analyze

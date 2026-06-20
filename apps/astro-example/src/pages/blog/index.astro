@@ -1,0 +1,178 @@
+---
+import MarketingLayout from "../../layouts/MarketingLayout.astro";
+
+const description =
+  "Notes from Lightfast on agent infrastructure, workspace memory, and building reliable AI operations.";
+
+const posts = [
+  {
+    date: "March 26, 2026",
+    datetime: "2026-03-26",
+    href: "/blog/2026-03-26-why-we-built-lightfast",
+    title: "Why We Built Lightfast",
+  },
+];
+---
+
+<MarketingLayout
+  canonical="https://lightfast.ai/blog"
+  description={description}
+  title="Blog | Lightfast"
+>
+  <main class="blog-page">
+    <section class="blog-hero">
+      <div class="blog-frame">
+        <h1>Blog</h1>
+      </div>
+    </section>
+
+    <section aria-labelledby="blog-posts-heading" class="blog-posts">
+      <h2 class="sr-only" id="blog-posts-heading">Latest blog posts</h2>
+      <ol class="blog-list">
+        {
+          posts.map((post) => (
+            <li>
+              <a class="blog-post-link" href={post.href}>
+                <time datetime={post.datetime}>{post.date}</time>
+                <span class="blog-post-title-wrap">
+                  <span class="blog-post-title">{post.title}</span>
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+  </main>
+</MarketingLayout>
+
+<style>
+  .blog-page {
+    background: var(--background);
+    color: var(--foreground);
+  }
+
+  .blog-hero {
+    padding: 128px 24px 80px;
+  }
+
+  .blog-frame,
+  .blog-list {
+    margin: 0 auto;
+    max-width: 1960px;
+  }
+
+  h1 {
+    font-family: var(--font-title);
+    font-size: 30px;
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: 1.1;
+    margin: 0;
+  }
+
+  .blog-posts {
+    padding: 0 24px;
+  }
+
+  .blog-list {
+    border-top: 1px solid var(--border);
+    list-style: none;
+    padding: 0;
+  }
+
+  .blog-list li {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .blog-post-link {
+    background: transparent;
+    display: grid;
+    gap: 20px;
+    outline: none;
+    padding: 16px 0;
+    text-decoration: none;
+    transition-duration: 650ms;
+    transition-property: background-color, color;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .blog-post-link:hover,
+  .blog-post-link:focus-visible {
+    background: var(--primary);
+    color: var(--primary-foreground);
+    transition-duration: 300ms;
+  }
+
+  .blog-post-link time {
+    align-self: center;
+    color: var(--muted-foreground);
+    font-size: 14px;
+    line-height: 1.5;
+    transform: translateX(0);
+    transition-duration: 650ms;
+    transition-property: color, transform;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .blog-post-link:hover time,
+  .blog-post-link:focus-visible time {
+    color: var(--primary-foreground);
+    transform: translateX(8px);
+  }
+
+  .blog-post-title-wrap {
+    padding-right: 16px;
+  }
+
+  .blog-post-title {
+    display: inline-block;
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: 1.15;
+    transform: translateX(0);
+    transition: transform 650ms cubic-bezier(0.16, 1, 0.35, 1);
+  }
+
+  .blog-post-link:hover .blog-post-title,
+  .blog-post-link:focus-visible .blog-post-title {
+    transform: translateX(8px);
+  }
+
+  @media (min-width: 640px) {
+    .blog-hero {
+      padding-left: 40px;
+      padding-right: 40px;
+      padding-top: 128px;
+    }
+
+    .blog-posts {
+      padding-left: 40px;
+      padding-right: 40px;
+    }
+
+    h1 {
+      font-size: 36px;
+    }
+
+    .blog-post-link {
+      grid-template-columns: minmax(10rem, 0.34fr) minmax(0, 1fr);
+      padding: 24px 0;
+    }
+
+    .blog-post-link time {
+      font-size: 16px;
+    }
+
+    .blog-post-title {
+      font-size: 24px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .blog-post-title {
+      font-size: 30px;
+    }
+  }
+</style>

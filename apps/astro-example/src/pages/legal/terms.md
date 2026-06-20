@@ -1,0 +1,196 @@
+---
+layout: ../../layouts/LegalMarkdownLayout.astro
+title: "Terms of Use"
+description: "Lightfast Terms of Use for the website, research updates, waitlist, newsletter, and related communications."
+keywords:
+  - "lightfast terms of use"
+  - "website terms"
+  - "waitlist terms"
+  - "research lab terms"
+canonical: "https://lightfast.ai/legal/terms"
+updatedAt: "2026-06-19T00:00:00Z"
+effectiveAt: "2026-06-19T00:00:00Z"
+---
+
+# Terms of Use
+
+Last updated: 19 June 2026
+
+**Lightfast Pty Ltd** ABN 35 690 889 984 ("**Lightfast**", "**we**", "**us**", "**our**") is an Australian AI research lab.
+
+These Terms of Use ("**Terms**") govern your access to and use of [lightfast.ai](https://lightfast.ai), including our website, writing, brand materials, waitlist, newsletter, research updates, and related communications (together, the "**Site**"). By using the Site, you agree to these Terms. If you do not agree, do not use the Site.
+
+If we later make apps, APIs, hosted services, private previews, or other products available, those offerings may be subject to additional or different terms.
+
+---
+
+## 1. Use of the Site
+
+### 1.1 Site Scope
+
+Lightfast currently operates this public website, waitlist, newsletter, and related communications. The Site may describe AI research, technical ideas, prototypes, future products, experiments, and opinions. Those materials are informational only and may change without notice.
+
+Nothing on the Site is a commitment to launch a product, provide access, maintain a feature, or continue any project. Any products, prototypes, private previews, or hosted services may be subject to separate terms when made available.
+
+### 1.2 Worldwide Access
+
+Lightfast is based in Australia, but the Site is available to visitors around the world. You are responsible for complying with the laws that apply to you where you access the Site.
+
+Nothing in these Terms limits rights you may have under laws that cannot be excluded by contract, including consumer protection, privacy, or data protection laws that apply in your location.
+
+### 1.3 Age
+
+The Site is not directed to children under 16. If you are under 16, do not join the waitlist, subscribe to the newsletter, or send us personal information.
+
+---
+
+## 2. Waitlist and Newsletter
+
+### 2.1 Waitlist
+
+You may provide your email address to join a Lightfast waitlist. Joining a waitlist means we may contact you about early access, product availability, or related Lightfast updates.
+
+Joining a waitlist does not guarantee that you will receive access, that we will launch any product, or that any future product will have particular features, pricing, availability, or support.
+
+### 2.2 Newsletter
+
+You may separately subscribe to receive Lightfast writing, research notes, project updates, and announcements. Waitlist signup and newsletter subscription are separate choices.
+
+Marketing or newsletter emails will include a way to unsubscribe. Unsubscribing from the newsletter may not stop non-marketing messages, such as waitlist confirmations, administrative messages, or direct replies to messages you send us.
+
+---
+
+## 3. Site Content
+
+### 3.1 Informational Content
+
+The Site may include technical writing, research commentary, product ideas, diagrams, examples, and other materials. This content is provided for general information only. It is not legal, financial, medical, security, or other professional advice.
+
+You are responsible for evaluating any information before relying on it.
+
+### 3.2 Accuracy
+
+We try to keep the Site useful and accurate, but we do not promise that content is complete, current, error-free, or suitable for your particular purpose.
+
+---
+
+## 4. Acceptable Use
+
+You must not:
+
+- Use the Site for any unlawful purpose or in violation of applicable law.
+- Attempt to gain unauthorised access to any Lightfast system, account, network, or infrastructure.
+- Interfere with, disrupt, overload, scrape, crawl, or probe the Site in a way that harms availability, security, or normal operation.
+- Transmit malware, spam, phishing content, or other harmful material.
+- Misrepresent your identity or affiliation with Lightfast.
+- Use the Site to infringe the rights of others.
+- Circumvent technical controls, rate limits, access controls, or security measures.
+
+We may block, suspend, or restrict access to the Site if we reasonably believe these Terms have been breached or if needed to protect the Site, Lightfast, or others.
+
+---
+
+## 5. Intellectual Property
+
+### 5.1 Lightfast Materials
+
+The Site, including its text, design, graphics, logos, trademarks, and other materials, is owned by Lightfast or its licensors and is protected by intellectual property laws.
+
+You may view and share public Site pages for personal, research, commentary, or evaluation purposes. You must not copy, modify, redistribute, or exploit Site materials commercially without our written permission, except where allowed by law or an applicable licence.
+
+### 5.2 Open Source
+
+Some Lightfast code or materials may be made available under open-source licences. Those materials are governed by the licence that accompanies them, not by this Section 5 to the extent of any conflict.
+
+### 5.3 Brand Assets
+
+Use of the Lightfast name, logo, or brand assets must comply with our [Brand Guidelines](/brand) or be approved by us in writing.
+
+### 5.4 Feedback
+
+If you send us feedback, suggestions, ideas, or comments, you grant Lightfast a worldwide, perpetual, irrevocable, royalty-free licence to use them without restriction or obligation to you.
+
+---
+
+## 6. Third-Party Services and Links
+
+The Site may link to third-party websites, tools, communities, or services. Your use of third-party services is governed by their own terms and privacy policies.
+
+We are not responsible for third-party content, availability, security, or practices.
+
+---
+
+## 7. Privacy
+
+Our [Privacy Policy](/legal/privacy) explains how we collect, use, disclose, and protect personal information, including information collected through the waitlist, newsletter, analytics, diagnostics, and related communications.
+
+---
+
+## 8. Disclaimers
+
+To the maximum extent permitted by law, the Site and all Site content are provided on an "as is" and "as available" basis. We disclaim all warranties, whether express, implied, statutory, or otherwise, including warranties of merchantability, fitness for a particular purpose, non-infringement, availability, and accuracy.
+
+We do not warrant that the Site will be uninterrupted, secure, or error-free, or that any research direction, prototype, future product, or early access program will continue or become available.
+
+---
+
+## 9. Limitation of Liability
+
+### 9.1 Exclusion of Consequential Loss
+
+To the maximum extent permitted by law, Lightfast will not be liable for indirect, incidental, special, consequential, exemplary, or punitive damages, including loss of profits, revenue, goodwill, data, business opportunity, or reputation, arising out of or related to your use of the Site.
+
+### 9.2 Liability Cap
+
+To the maximum extent permitted by law, Lightfast's total aggregate liability arising out of or related to these Terms or the Site will not exceed AUD $100.
+
+### 9.3 Mandatory Rights
+
+Nothing in these Terms excludes, restricts, or modifies any rights or remedies you may have under the _Competition and Consumer Act 2010_ (Cth), including the Australian Consumer Law, or any other law that cannot be excluded, restricted, or modified by agreement.
+
+---
+
+## 10. Indemnity
+
+You agree to indemnify Lightfast and its officers, directors, employees, contractors, and agents from and against claims, liabilities, damages, losses, and expenses arising out of or related to:
+
+- Your breach of these Terms.
+- Your unlawful use of the Site.
+- Your violation of third-party rights.
+- Content or information you submit to us.
+
+---
+
+## 11. Changes to the Site or Terms
+
+We may modify, suspend, or discontinue the Site or any part of it at any time.
+
+We may update these Terms from time to time. If we make material changes, we will update the "Last updated" date and may provide additional notice where appropriate. Your continued use of the Site after changes become effective means you accept the updated Terms.
+
+---
+
+## 12. Governing Law and Disputes
+
+These Terms are governed by the laws of New South Wales, Australia.
+
+You submit to the non-exclusive jurisdiction of the courts of New South Wales, Australia, and any courts of appeal from them. This does not prevent you from relying on mandatory rights that apply in your location.
+
+Before commencing legal proceedings, you agree to first contact us at [legal@lightfast.ai](mailto:legal@lightfast.ai) and give us a reasonable opportunity to resolve the dispute informally.
+
+---
+
+## 13. General
+
+These Terms, together with our [Privacy Policy](/legal/privacy), form the agreement between you and Lightfast for use of the Site.
+
+If any provision of these Terms is unenforceable, the remaining provisions will continue in effect. Our failure to enforce a provision is not a waiver. You may not assign your rights under these Terms without our written consent. We may assign our rights and obligations as part of a merger, acquisition, restructuring, or sale of assets.
+
+---
+
+## 14. Contact
+
+For questions about these Terms, contact:
+
+**Lightfast Pty Ltd**
+Email: [legal@lightfast.ai](mailto:legal@lightfast.ai)
+Website: [lightfast.ai](https://lightfast.ai)

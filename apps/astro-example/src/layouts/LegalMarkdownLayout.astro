@@ -1,0 +1,189 @@
+---
+import MarketingLayout from "./MarketingLayout.astro";
+
+const { frontmatter } = Astro.props;
+
+const pageTitle = frontmatter.title;
+const description = frontmatter.description;
+const canonical = frontmatter.canonical;
+const keywords = frontmatter.keywords;
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://lightfast.ai/#organization",
+      name: "Lightfast",
+      url: "https://lightfast.ai",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://lightfast.ai/android-chrome-512x512.png",
+      },
+    },
+    {
+      "@type": "WebPage",
+      "@id": `${canonical}#webpage`,
+      url: canonical,
+      name: pageTitle,
+      description,
+      isPartOf: { "@id": "https://lightfast.ai/#website" },
+      publisher: { "@id": "https://lightfast.ai/#organization" },
+      dateModified: frontmatter.updatedAt,
+    },
+  ],
+};
+---
+
+<MarketingLayout
+  canonical={canonical}
+  description={description}
+  keywords={keywords}
+  title={`${pageTitle} | Lightfast`}
+>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+  </Fragment>
+
+  <main class="legal-page">
+    <article class="legal-doc">
+      <slot />
+    </article>
+  </main>
+</MarketingLayout>
+
+<style is:global>
+  .legal-page {
+    background: var(--background);
+    color: var(--foreground);
+  }
+
+  .legal-doc {
+    margin: 0 auto;
+    max-width: 768px;
+    padding: 144px 24px 96px;
+  }
+
+  .legal-doc h1,
+  .legal-doc h2,
+  .legal-doc h3 {
+    color: var(--foreground);
+    font-family: var(--font-title);
+    letter-spacing: 0;
+    scroll-margin-top: 112px;
+  }
+
+  .legal-doc h1 {
+    font-size: 40px;
+    font-weight: 500;
+    line-height: 1.1;
+    margin: 0 0 24px;
+  }
+
+  .legal-doc h2 {
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 1.15;
+    margin: 56px 0 20px;
+  }
+
+  .legal-doc h3 {
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1.25;
+    margin: 36px 0 16px;
+  }
+
+  .legal-doc p,
+  .legal-doc li {
+    color: var(--foreground);
+    font-size: 16px;
+    line-height: 1.7;
+    overflow-wrap: break-word;
+  }
+
+  .legal-doc p {
+    margin: 18px 0 0;
+  }
+
+  .legal-doc strong {
+    font-weight: 600;
+  }
+
+  .legal-doc em {
+    font-style: italic;
+  }
+
+  .legal-doc a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in oklab, var(--foreground) 40%, transparent);
+    text-underline-offset: 3px;
+    transition: text-decoration-color 180ms ease;
+  }
+
+  .legal-doc a:hover,
+  .legal-doc a:focus-visible {
+    text-decoration-color: var(--foreground);
+  }
+
+  .legal-doc ul {
+    display: grid;
+    gap: 8px;
+    list-style: disc;
+    margin: 18px 0 0 24px;
+    padding: 0;
+  }
+
+  .legal-doc hr {
+    border: 0;
+    border-top: 1px solid var(--border);
+    margin: 40px 0;
+  }
+
+  .legal-doc table {
+    border-collapse: collapse;
+    display: block;
+    margin: 32px 0;
+    overflow-x: auto;
+    width: 100%;
+  }
+
+  .legal-doc thead {
+    border-bottom: 1px solid color-mix(in oklab, var(--border) 50%, transparent);
+  }
+
+  .legal-doc tr {
+    border-bottom: 1px solid color-mix(in oklab, var(--border) 30%, transparent);
+  }
+
+  .legal-doc tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .legal-doc th,
+  .legal-doc td {
+    font-size: 14px;
+    line-height: 1.45;
+    padding: 14px;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .legal-doc th {
+    font-weight: 600;
+  }
+
+  @media (min-width: 640px) {
+    .legal-doc {
+      padding-left: 40px;
+      padding-right: 40px;
+      padding-top: 160px;
+      padding-bottom: 128px;
+    }
+
+    .legal-doc h1 {
+      font-size: 48px;
+    }
+  }
+</style>

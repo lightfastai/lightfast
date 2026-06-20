@@ -1,0 +1,431 @@
+---
+import { Picture, getImage } from "astro:assets";
+import MarketingLayout from "./MarketingLayout.astro";
+import whyWeBuiltLightfastImage from "../assets/images/blog/why-we-built-lightfast.webp";
+
+const { frontmatter } = Astro.props;
+
+const title = frontmatter.title;
+const description = frontmatter.description;
+const canonical = frontmatter.canonical;
+const keywords = frontmatter.keywords;
+const toc = frontmatter.toc ?? [];
+const author = frontmatter.author ?? {
+  name: "Jeevan Pillay",
+  url: "https://linkedin.com/in/jeevanpillay",
+  jobTitle: "Founder",
+};
+const featuredImages = {
+  "why-we-built-lightfast": whyWeBuiltLightfastImage,
+} as const;
+const featuredImageKey = frontmatter.featuredImage as keyof typeof featuredImages;
+const featuredImage = featuredImages[featuredImageKey];
+
+if (!featuredImage) {
+  throw new Error(`Unknown blog featured image: ${frontmatter.featuredImage}`);
+}
+
+const featuredImageOpenGraph = await getImage({
+  src: featuredImage,
+  format: "webp",
+  quality: 40,
+  width: 1200,
+});
+const featuredImageUrl = new URL(featuredImageOpenGraph.src, "https://lightfast.ai").href;
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://lightfast.ai/#organization",
+      name: "Lightfast",
+      url: "https://lightfast.ai",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://lightfast.ai/android-chrome-512x512.png",
+      },
+      sameAs: [
+        "https://twitter.com/lightfastai",
+        "https://github.com/lightfastai",
+        "https://www.linkedin.com/company/lightfastai",
+      ],
+    },
+    {
+      "@type": "BlogPosting",
+      "@id": `${canonical}#article`,
+      headline: title,
+      description,
+      image: featuredImageUrl,
+      url: canonical,
+      datePublished: frontmatter.publishedAt,
+      dateModified: frontmatter.updatedAt,
+      author: {
+        "@type": "Person",
+        name: author.name,
+        url: author.url,
+        jobTitle: author.jobTitle,
+      },
+      publisher: {
+        "@id": "https://lightfast.ai/#organization",
+      },
+      mainEntityOfPage: {
+        "@id": `${canonical}#webpage`,
+      },
+    },
+    {
+      "@type": "WebPage",
+      "@id": `${canonical}#webpage`,
+      url: canonical,
+      name: title,
+      description,
+      isPartOf: { "@id": "https://lightfast.ai/#website" },
+      publisher: { "@id": "https://lightfast.ai/#organization" },
+      dateModified: frontmatter.updatedAt,
+    },
+  ],
+};
+---
+
+<MarketingLayout
+  canonical={canonical}
+  description={description}
+  keywords={keywords}
+  ogType="article"
+  title={`${title} | Lightfast`}
+>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+  </Fragment>
+
+  <main class="blog-post-page">
+    <section class="post-landing">
+      <div class="post-landing-stack">
+        <div class="post-heading">
+          <h1>{title}</h1>
+          <p>{description}</p>
+        </div>
+
+        <div class="post-image-wrap">
+          <Picture
+            alt={title}
+            class="post-image"
+            decoding="async"
+            fallbackFormat="webp"
+            formats={["avif"]}
+            priority
+            quality={40}
+            sizes="(min-width: 1128px) 1080px, calc(100vw - 48px)"
+            src={featuredImage}
+            widths={[640, 960, 1280, 1600, 2160]}
+          />
+        </div>
+
+        <aside class="post-tldr">
+          <h2>TL;DR</h2>
+          <p>{frontmatter.tldr}</p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="post-body-section">
+      <div class="post-body-grid">
+        <aside class="post-toc-wrap">
+          <nav aria-label="On this page" class="post-toc">
+            <p>On this page</p>
+            <ol>
+              {
+                toc.map((item: { id: string; title: string }, index: number) => (
+                  <li>
+                    <a
+                      aria-current={index === 0 ? "location" : undefined}
+                      href={`#${item.id}`}
+                    >
+                      {index === 0 ? <span aria-hidden="true"></span> : null}
+                      <span>{item.title}</span>
+                    </a>
+                  </li>
+                ))
+              }
+            </ol>
+          </nav>
+        </aside>
+
+        <article class="post-article">
+          <aside class="quick-answer">
+            <h2>Quick answer</h2>
+            <p>{frontmatter.answerSummary}</p>
+          </aside>
+          <slot />
+        </article>
+      </div>
+    </section>
+  </main>
+</MarketingLayout>
+
+<style is:global>
+  .blog-post-page {
+    background: var(--background);
+    color: var(--foreground);
+  }
+
+  .post-landing {
+    padding: 128px 24px 48px;
+  }
+
+  .post-landing-stack {
+    display: grid;
+    gap: 64px;
+  }
+
+  .post-heading {
+    margin: 0 auto;
+    max-width: 672px;
+    text-align: center;
+  }
+
+  .post-heading h1 {
+    color: var(--foreground);
+    font-family: var(--font-title);
+    font-size: 40px;
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: 1.08;
+    margin: 0;
+  }
+
+  .post-heading p {
+    color: var(--foreground);
+    font-size: 16px;
+    line-height: 1.65;
+    margin: 16px 0 0;
+  }
+
+  .post-image-wrap {
+    aspect-ratio: 16 / 9;
+    background: var(--muted);
+    border-radius: 8px;
+    margin: 0 auto;
+    max-width: 1080px;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .post-image {
+    display: block;
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+  }
+
+  .post-tldr {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    margin: 0 auto;
+    max-width: 672px;
+    padding: 32px;
+    width: 100%;
+  }
+
+  .post-tldr h2 {
+    color: var(--muted-foreground);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      "Liberation Mono", "Courier New", monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    line-height: 1;
+    margin: 0 0 16px;
+    text-transform: uppercase;
+  }
+
+  .post-tldr p {
+    color: var(--foreground);
+    font-size: 14px;
+    line-height: 1.65;
+    margin: 0;
+  }
+
+  .post-body-section {
+    padding: 48px 24px 96px;
+  }
+
+  .post-body-grid {
+    display: grid;
+    gap: 56px;
+    grid-template-columns: 1fr;
+    margin: 0 auto;
+    max-width: 1960px;
+  }
+
+  .post-toc-wrap {
+    display: none;
+  }
+
+  .post-toc {
+    max-height: calc(100vh - 7rem);
+    overflow-y: auto;
+    padding-bottom: 16px;
+    position: sticky;
+    top: 112px;
+  }
+
+  .post-toc p {
+    color: var(--foreground);
+    font-size: 14px;
+    font-weight: 500;
+    margin: 0 0 12px;
+  }
+
+  .post-toc ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .post-toc a {
+    color: var(--muted-foreground);
+    display: block;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 8px 12px 8px 24px;
+    position: relative;
+    text-decoration: none;
+    transition: color 180ms ease;
+  }
+
+  .post-toc a:hover,
+  .post-toc a:focus-visible,
+  .post-toc a[aria-current="location"] {
+    color: var(--foreground);
+    outline: none;
+  }
+
+  .post-toc a > span[aria-hidden="true"] {
+    background: var(--primary);
+    border-radius: 999px;
+    height: 8px;
+    left: 0;
+    position: absolute;
+    top: 1.1em;
+    width: 8px;
+  }
+
+  .post-article {
+    max-width: none;
+  }
+
+  .quick-answer {
+    border-left: 1px solid var(--border);
+    margin-bottom: 40px;
+    padding-left: 20px;
+  }
+
+  .quick-answer h2 {
+    color: var(--foreground);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.2;
+    margin: 0;
+  }
+
+  .quick-answer p {
+    color: var(--muted-foreground);
+    font-size: 14px;
+    line-height: 1.7;
+    margin: 12px 0 0;
+  }
+
+  .post-article h2 {
+    color: var(--foreground);
+    font-family: var(--font-title);
+    font-size: 24px;
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: 1.18;
+    margin: 64px 0 24px;
+    scroll-margin-top: 112px;
+  }
+
+  .post-article h2:first-of-type {
+    margin-top: 0;
+  }
+
+  .post-article p {
+    color: var(--foreground);
+    font-size: 16px;
+    line-height: 2;
+    margin: 20px 0 0;
+    max-width: 72ch;
+    overflow-wrap: break-word;
+  }
+
+  .post-article a {
+    color: var(--foreground);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    transition: color 180ms ease;
+  }
+
+  .post-article a:hover,
+  .post-article a:focus-visible {
+    color: var(--muted-foreground);
+  }
+
+  .post-article strong {
+    font-weight: 500;
+  }
+
+  .post-article em {
+    font-style: italic;
+  }
+
+  .post-article code {
+    background: var(--muted);
+    border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      "Liberation Mono", "Courier New", monospace;
+    padding: 2px 6px;
+  }
+
+  @media (min-width: 640px) {
+    .post-landing {
+      padding-left: 40px;
+      padding-right: 40px;
+      padding-top: 144px;
+    }
+
+    .post-body-section {
+      padding-left: 40px;
+      padding-right: 40px;
+      padding-bottom: 128px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .post-body-grid {
+      column-gap: 24px;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+    }
+
+    .post-toc-wrap {
+      display: block;
+      grid-column: span 4;
+    }
+
+    .post-article {
+      grid-column: 5 / span 7;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .post-heading h1 {
+      font-size: 38px;
+    }
+
+    .post-tldr {
+      padding: 24px;
+    }
+  }
+</style>

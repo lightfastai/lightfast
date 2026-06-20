@@ -1,0 +1,119 @@
+---
+const socialLinks = [
+  { href: "https://x.com/lightfastai", label: "X" },
+  { href: "https://github.com/lightfastai", label: "GitHub" },
+  { href: "https://www.linkedin.com/company/lightfastai", label: "LinkedIn" },
+  { href: "https://discord.gg/YqPDfcar2C", label: "Discord" },
+];
+---
+
+<footer class="marketing-footer">
+  <div class="marketing-footer-frame">
+    <div class="marketing-footer-inner">
+      <div class="marketing-footer-grid">
+        <div class="marketing-footer-column">
+          <p class="marketing-footer-label">Menu</p>
+          <nav aria-label="Footer menu" class="marketing-footer-stack">
+            <a class="marketing-footer-link" href="/">Home</a>
+            <button
+              class="marketing-footer-link"
+              data-about-open
+              type="button"
+            >
+              About
+            </button>
+            <a class="marketing-footer-link" href="/blog">Blog</a>
+            <a class="marketing-footer-link" href="/brand">Brand</a>
+          </nav>
+        </div>
+
+        <div class="marketing-footer-column">
+          <p class="marketing-footer-label">Socials</p>
+          <nav aria-label="Social links" class="marketing-footer-stack">
+            {
+              socialLinks.map((link) => (
+                <a
+                  class="marketing-footer-link"
+                  href={link.href}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  {link.label}
+                </a>
+              ))
+            }
+            <a class="marketing-footer-link" href="mailto:hello@lightfast.ai">
+              Contact
+            </a>
+          </nav>
+        </div>
+
+        <div class="marketing-footer-column marketing-footer-newsletter">
+          <p class="marketing-footer-label">Newsletter</p>
+          <div class="marketing-footer-stack">
+            <p class="marketing-newsletter-copy">
+              Subscribe to research notes and project updates
+            </p>
+            <div class="marketing-newsletter-wrap">
+              <form class="marketing-newsletter-form" method="get">
+                <label class="sr-only" for="footer-newsletter-email">
+                  Email address
+                </label>
+                <input
+                  id="footer-newsletter-email"
+                  maxlength="256"
+                  name="email"
+                  placeholder="Email address"
+                  type="email"
+                />
+                <button type="submit">
+                  <span>Subscribe</span>
+                  <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+                    <path
+                      d="M5 12h14M13 6l6 6-6 6"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1.8"
+                    ></path>
+                  </svg>
+                </button>
+              </form>
+              <p class="marketing-newsletter-note">
+                Separate from the waitlist. Unsubscribe anytime. See our
+                <a href="/legal/privacy">Privacy Policy</a>.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="marketing-footer-bottom">
+        <div class="marketing-footer-bottom-copy">
+          <p>&copy;2026 Lightfast</p>
+        </div>
+        <div>
+          <a href="/brand">Brand Guidelines</a>
+        </div>
+        <div>
+          <a href="/legal/terms">Terms of Use</a>
+        </div>
+        <div class="marketing-footer-privacy">
+          <a href="/legal/privacy">Privacy Policy</a>
+          <a class="marketing-footer-top" href="#top">
+            <span>To top</span>
+            <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+              <path
+                d="M12 19V5M6 11l6-6 6 6"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+              ></path>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>

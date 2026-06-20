@@ -1,0 +1,141 @@
+---
+const introParagraphs = [
+  [
+    "Lightfast is building the operating layer",
+    "for AI work that needs memory, review,",
+    "and human trust.",
+  ],
+  [
+    "We care about the space between the",
+    "prompt and the outcome: what happened,",
+    "what changed, and who needs to decide.",
+  ],
+  [
+    "For teams coordinating agent work across",
+    "handoffs, retries, and long-running tasks,",
+    "context should stay visible as work moves.",
+  ],
+];
+
+const introBlocks = introParagraphs.map((paragraph, paragraphIndex) => {
+  const lineOffset = introParagraphs
+    .slice(0, paragraphIndex)
+    .reduce((total, current) => total + current.length, 0);
+
+  return paragraph.map((line, index) => ({
+    delay: `${(lineOffset + index) * 30 + 20}ms`,
+    line,
+  }));
+});
+
+const mediaWords = ["Observe", "Remember", "Review", "Ship"];
+
+const principles = [
+  {
+    label: "Context before speed",
+    text: "A shared system for understanding what happened, what is happening, and what needs attention next.",
+  },
+  {
+    label: "Durability as a default",
+    text: "Work should survive handoffs, resumes, retries, and long-running tasks.",
+  },
+  {
+    label: "Control stays visible",
+    text: "Clear state, review points, and reversible decisions keep people in control.",
+  },
+];
+---
+
+<div aria-hidden="true" class="about-layer" data-about-layer inert>
+  <button
+    aria-label="Close about panel"
+    class="about-backdrop"
+    data-about-close
+    type="button"
+  ></button>
+
+  <aside
+    aria-describedby="about-description"
+    aria-labelledby="about-title"
+    class="about-sheet"
+    data-about-panel
+    role="dialog"
+    tabindex="-1"
+  >
+    <button
+      aria-label="Close about panel"
+      class="about-close"
+      data-about-close
+      type="button"
+    >
+      <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+        <path
+          d="M6 6l12 12M18 6 6 18"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-width="1.8"
+        ></path>
+      </svg>
+    </button>
+
+    <div class="about-sheet-inner">
+      <div class="about-kicker">
+        <span class="about-dot"></span>
+        <h2 id="about-title">About Lightfast</h2>
+      </div>
+      <p class="sr-only" id="about-description">
+        Lightfast is building the operating layer between AI agents, apps, and
+        the teams responsible for real work.
+      </p>
+
+      <div class="about-intro">
+        {
+          introBlocks.map((paragraph) => (
+            <p class="about-intro-paragraph">
+              {paragraph.map((item) => (
+                <span class="about-intro-line">
+                  <span
+                    class="about-intro-line-inner"
+                    style={`--delay: ${item.delay}`}
+                  >
+                    {item.line}
+                  </span>
+                </span>
+              ))}
+            </p>
+          ))
+        }
+      </div>
+
+      <section class="about-media-section">
+        <div class="about-media-meta">
+          <span>EST 2026</span>
+          <span>Agent operations</span>
+        </div>
+        <div class="about-media-card">
+          <div class="about-media-words">
+            {mediaWords.map((word) => <span>{word}</span>)}
+          </div>
+          <div class="about-media-cover" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <section class="about-principles">
+        <div class="about-principles-heading">
+          <span class="about-dot"></span>
+          <h3>Principles</h3>
+        </div>
+        <dl class="about-principles-list">
+          {
+            principles.map((item) => (
+              <div class="about-principle">
+                <dt>{item.label}</dt>
+                <dd>{item.text}</dd>
+              </div>
+            ))
+          }
+        </dl>
+      </section>
+    </div>
+  </aside>
+</div>

@@ -1,0 +1,174 @@
+---
+layout: ../../layouts/BrandMarkdownLayout.astro
+title: "Design Guidelines"
+description: "Lightfast brand guidelines for teams creating launch, product, and company materials."
+canonical: "https://lightfast.ai/brand"
+keywords:
+  - "lightfast brand"
+  - "brand guidelines"
+  - "lightfast logo"
+  - "lightfast colors"
+  - "lightfast typography"
+updatedAt: "2026-06-19T00:00:00Z"
+---
+
+## Introduction
+
+The Lightfast name, logo, wordmark, symbol, product names, and other brand assets are property of Lightfast. These guidelines help partners, customers, developers, publishers, and other third parties reference Lightfast clearly and consistently.
+
+The primary Lightfast logo is the symbol and wordmark used together. Use the complete logo in most public-facing materials so the brand is recognizable, legible, and not reduced to a standalone icon.
+
+## Logo
+
+Use the complete Lightfast logo when the surrounding material directly relates to Lightfast, our products, our services, or an approved relationship with Lightfast. The complete logo pairs the Lightfast symbol with the Lightfast wordmark and should be the default asset for launch pages, decks, partner surfaces, press materials, and documentation.
+
+The standalone symbol is not a substitute for the complete logo. Use it only where there is not enough room for the full logo, or where Lightfast appears in a set of brand symbols and the company name is already clear.
+
+| Asset | Use |
+| --- | --- |
+| Complete logo | Default public-facing Lightfast brand asset: symbol plus wordmark |
+| Wordmark | Textual brand expression when the symbol is already present or the layout requires a wordmark-only treatment |
+| Symbol | Compact use only: favicons, app icons, constrained UI, or brand-symbol collections |
+
+## Wordmark
+
+The Lightfast wordmark is the readable part of the logo. It should appear with the symbol in most public-facing contexts, especially when Lightfast needs to be introduced or recognized quickly.
+
+Use the wordmark alone only when the symbol is already present nearby, when a layout requires a text-only brand treatment, or when the surrounding context clearly identifies Lightfast. Keep the wordmark proportions fixed. Do not stretch it, redraw it, crop it, apply effects, use it as a mask, or create alternate versions.
+
+### Dos and Don'ts: Wordmark
+
+Do pair the wordmark with the symbol in most public-facing uses.
+
+Do preserve clear space around the wordmark.
+
+Don't treat the wordmark as a decorative text style.
+
+Don't stretch, skew, crop, outline, texture, recolor, or alter the wordmark.
+
+Don't combine the wordmark with unapproved icons, taglines, badges, or partner marks.
+
+## Symbol
+
+The Lightfast symbol is a compact brand signal. It works best in product UI, favicons, app icons, constrained surfaces, and brand-symbol collections where multiple companies are represented in the same format.
+
+Do not use the symbol as the primary public-facing Lightfast identity when there is enough room for the complete logo. Use it with generous surrounding space, simple backgrounds, and enough contrast to keep the dot matrix clear.
+
+### Dos and Don'ts: Symbol
+
+Do use the symbol where space is limited and the Lightfast name is already established.
+
+Do keep the symbol on simple, high-contrast backgrounds.
+
+Don't use the symbol as the main Lightfast identifier when the complete logo would fit.
+
+Don't add colors, gradients, outlines, shadows, or unauthorized elements to the symbol.
+
+Don't place the symbol over busy imagery or use it as a decorative pattern unless the usage has been approved.
+
+## How To Use Our Logos
+
+Do:
+
+- Use the complete Lightfast logo by default.
+- Use the standalone symbol only in constrained spaces or brand-symbol collections.
+- Use Lightfast brand assets only when they directly relate to Lightfast.
+- Follow these guidelines and any asset-specific instructions.
+- Use the logos exactly as provided.
+- Make clear that Lightfast owns the Lightfast marks.
+
+Don't:
+
+- Use Lightfast logos in a way that implies sponsorship, endorsement, partnership, or affiliation without permission.
+- Feature Lightfast marks more prominently than your own company or product identity.
+- Use Lightfast marks on merchandise, promotional items, or physical goods without approval.
+- Incorporate Lightfast marks into your own brand, product name, trademark, domain, icon, or logo.
+- Modify, animate, distort, crop, recolor, or recreate Lightfast marks.
+- Replace the complete Lightfast logo with the standalone symbol when there is enough room to show the full logo.
+
+## Color
+
+The Lightfast palette should support dense technical material, product screenshots, launch pages, and editorial surfaces without becoming decorative. Use color to create hierarchy, legibility, and focus.
+
+| Role | Guidance |
+| --- | --- |
+| Ink | Primary text, diagrams, and high-contrast surfaces |
+| Mist | Page backgrounds, quiet panels, and editorial whitespace |
+| Signal | Product states, calls to action, and moments that require attention |
+
+## Typography
+
+Use brand type with restraint. Headlines should be direct, compact, and easy to scan. Body copy should stay readable across long-form pages, documentation, and product interfaces.
+
+Lightfast currently uses PP Neue Montreal for brand-forward display moments and Geist for product and documentation surfaces. Use the type system consistently rather than mixing fonts for novelty.
+
+## Language
+
+Write with clarity and momentum. Prefer concrete nouns, active verbs, and short explanations that respect technical readers. Avoid inflated claims, vague AI language, and wording that overstates what Lightfast or its products can do.
+
+### Product References
+
+Use official Lightfast product and feature names when they are available. Do not invent abbreviations, alternate capitalization, or product-family names that could be confused with official Lightfast marks.
+
+### API and Developer References
+
+When referring to Lightfast APIs, SDKs, docs, or developer tools, describe the integration accurately and avoid implying that Lightfast has reviewed, certified, or endorsed your implementation unless that relationship has been approved.
+
+### Agents
+
+When writing about agents in relation to Lightfast, be precise about what the agent does, what system it operates in, and what role Lightfast plays. Avoid broad claims that suggest full autonomy, guaranteed outcomes, or unsupported capabilities.
+
+### Non-Partnerships
+
+Do not imply a partnership, sponsorship, certification, or endorsement from Lightfast unless one exists. If you are describing compatibility or an integration, make the relationship factual and specific.
+
+### Content Attribution
+
+If you reference Lightfast content, research, documentation, screenshots, or product materials, attribute the source clearly and link to the canonical Lightfast page where possible.
+
+## Gallery
+
+This section will collect approved examples of Lightfast in use across product UI, launch materials, event graphics, editorial layouts, and partner surfaces.
+
+## Brand Partnerships
+
+When pairing Lightfast with partner logos, keep spacing balanced and hierarchy clear. Each brand should appear in its approved form, at an appropriate size, and without distortion or added decoration.
+
+Co-branded materials should be reviewed by both brands before publication. Avoid placing logos too close together, changing either logo's color treatment, or making one brand appear to endorse the other beyond the approved relationship.
+
+### Dos and Don'ts: Brand Partnerships
+
+Do use approved logo files from each brand.
+
+Do aim for balanced optical height and clear spacing.
+
+Don't alter either logo to force a lockup.
+
+Don't place partner lockups over busy imagery or low-contrast backgrounds.
+
+## Press Releases
+
+When mentioning Lightfast in press materials, use a concise and factual company description.
+
+Lightfast is building the operating layer between agents and apps. It helps teams observe what is happening across tools, build memory from events, and give agents and people a shared system to reason and act through.
+
+For announcements, blogs, or communications that go beyond these guidelines, contact [hello@lightfast.ai](mailto:hello@lightfast.ai).
+
+## Usage Terms
+
+The term "Marks" refers to the names, logos, icons, design elements, product names, and other identifiers Lightfast uses to represent our company, products, and services. By using Lightfast Marks, you acknowledge that Lightfast owns them and that any goodwill generated by your use belongs to Lightfast.
+
+Permission to use Lightfast Marks is limited:
+
+- Use Lightfast Marks only in ways that follow these guidelines.
+- Permission is non-exclusive and cannot be transferred to another party.
+- Do not feature Lightfast Marks more prominently than your own company or product identity.
+- Lightfast may review uses of its Marks and request changes.
+- Lightfast may update these guidelines, and existing uses should be updated within a reasonable time.
+- Lightfast may revoke permission to use its Marks at any time.
+
+## Contact
+
+For legal inquiries, please contact [legal@lightfast.ai](mailto:legal@lightfast.ai).
+
+For everything else, including permission requests for the use of our logos, questions about these guidelines, or communications that go beyond the cases outlined above, please contact [hello@lightfast.ai](mailto:hello@lightfast.ai).

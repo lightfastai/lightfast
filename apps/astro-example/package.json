@@ -16,6 +16,9 @@
   },
   "dependencies": {
     "@astrojs/vercel": "^10.0.8",
+    "@sentry/astro": "10.49.0",
+    "@sentry/browser": "catalog:",
+    "@vercel/speed-insights": "^2.0.0",
     "astro": "^6.4.7",
     "sharp": "^0.35.1"
   },
