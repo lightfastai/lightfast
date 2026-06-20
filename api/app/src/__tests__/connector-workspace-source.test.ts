@@ -339,8 +339,14 @@ describe("connector workspace boundary", () => {
       name?: string;
       private?: boolean;
     }>("connectors/x/package.json");
+    const xContractSource = source("connectors/x/src/contract.ts");
+    const xOAuthSource = source("connectors/x/src/oauth.ts");
+    const catalogSource = source("api/app/src/services/connectors/catalog.ts");
 
     expect(existsSync(resolve(repoRoot, oldXPath))).toBe(false);
+    expect(existsSync(resolve(repoRoot, "connectors/x/src/contract.ts"))).toBe(
+      true
+    );
     expect(xPackage.name).toBe("@lightfast/connector-x");
     expect(xPackage.private).toBe(true);
     expect(xPackage.dependencies?.["@lightfast/connector-core"]).toBe(
@@ -349,12 +355,18 @@ describe("connector workspace boundary", () => {
     expect(xPackage.dependencies?.["@vendor/mcp"]).toBe("workspace:*");
     expect(xPackage.dependencies?.zod).toBe("catalog:");
     expect(Object.keys(xPackage.exports ?? {}).sort()).toEqual([
+      "./contract",
       "./mcp",
       "./node",
       "./oauth",
       "./operations",
       "./tools",
     ]);
+    expect(xContractSource).toContain("X_OAUTH_SCOPES");
+    expect(xContractSource).toContain("X_OAUTH_SCOPE");
+    expect(xOAuthSource).toContain('from "./contract"');
+    expect(catalogSource).toContain('@lightfast/connector-x/contract"');
+    expect(catalogSource).not.toContain('@lightfast/connector-x/oauth"');
   });
 
   it("removes the old X app node package name from source and manifests", () => {
