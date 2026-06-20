@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "astro build && node ./scripts/patch-vercel-output.mjs",
     "analyze": "ANALYZE=true astro build",
     "clean": "git clean -xdf .astro .cache .turbo dist node_modules",
     "preview": "astro preview",
