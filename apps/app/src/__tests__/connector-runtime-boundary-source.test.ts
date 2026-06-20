@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 const appSrcRoot = resolve(import.meta.dirname, "..");
 const ignoredDirs = new Set([".next", ".turbo", "node_modules"]);
 const forbiddenConnectorRuntimeImport =
-  /@lightfast\/connector-[^"']+\/(?:mcp|node|oauth|operations|tools)(?=["'])/;
+  /@lightfast\/connector-[^"']+\/(?:mcp|node|oauth|operations|tools)(?:\/[^"']*)?(?=["'])/;
 
 function walkSourceFiles(dir = appSrcRoot): string[] {
   return readdirSync(dir).flatMap((entry) => {
@@ -23,6 +23,14 @@ function walkSourceFiles(dir = appSrcRoot): string[] {
 }
 
 describe("app connector import boundary", () => {
+  it("detects nested connector runtime imports", () => {
+    expect(
+      forbiddenConnectorRuntimeImport.test(
+        'import "@lightfast/connector-github/node/internal";'
+      )
+    ).toBe(true);
+  });
+
   it("keeps app UI imports on client-safe connector contracts", () => {
     const violations = walkSourceFiles()
       .filter((path) => !relative(appSrcRoot, path).startsWith("__tests__/"))

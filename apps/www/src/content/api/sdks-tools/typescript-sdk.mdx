@@ -40,7 +40,7 @@ const lightfast = createLightfast(process.env.LIGHTFAST_API_KEY);
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `apiKey` | `string` | Yes | Organization API key. Must start with `lf_`. |
+| `apiKey` | `string` | Yes | Organization API key. Must start with `lf_` and include characters after the prefix. |
 | `options.baseUrl` | `string` | No | API origin. Defaults to `https://lightfast.ai`. |
 | `options.fetch` | `typeof fetch` | No | Custom fetch implementation for tests or proxies. |
 

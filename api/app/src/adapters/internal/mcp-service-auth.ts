@@ -1,6 +1,7 @@
 import {
   type ServiceJwtAudience,
   type ServiceJwtCaller,
+  ServiceJwtError,
   verifyServiceJWT,
 } from "@repo/service-jwt";
 
@@ -81,10 +82,7 @@ export async function verifyMcpServiceRequest(
       },
     };
   } catch (error) {
-    const status =
-      error instanceof Error && "status" in error
-        ? Number((error as { status: unknown }).status)
-        : 401;
+    const status = error instanceof ServiceJwtError ? error.status : 401;
     return {
       ok: false,
       response: jsonError(
