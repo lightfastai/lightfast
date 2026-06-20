@@ -1,7 +1,6 @@
 import { requestSkillRefresh } from "@api/app/tanstack/skills";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { skillsListQueryKey } from "./skills-queries";
 import type { SkillsListResult } from "./skills-types";
 
 const REFRESHABLE_STATUSES = new Set(["stale", "unavailable"]);
@@ -26,7 +25,7 @@ export function useSkillIndexRefreshController(snapshot: SkillsListResult) {
       return result;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: skillsListQueryKey });
+      void queryClient.invalidateQueries({ queryKey: ["skills"] as const });
     },
   });
 
@@ -88,7 +87,7 @@ export function useSkillIndexRefreshController(snapshot: SkillsListResult) {
 
     const source = new EventSource("/api/skills/index/events");
     const onSkillIndex = () => {
-      void queryClient.invalidateQueries({ queryKey: skillsListQueryKey });
+      void queryClient.invalidateQueries({ queryKey: ["skills"] as const });
     };
 
     source.addEventListener("skill-index", onSkillIndex);
@@ -107,7 +106,7 @@ export function useSkillIndexRefreshController(snapshot: SkillsListResult) {
     }
 
     const interval = setInterval(() => {
-      void queryClient.invalidateQueries({ queryKey: skillsListQueryKey });
+      void queryClient.invalidateQueries({ queryKey: ["skills"] as const });
     }, REFRESH_POLL_INTERVAL_MS);
 
     return () => {

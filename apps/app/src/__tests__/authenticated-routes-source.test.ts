@@ -700,7 +700,6 @@ describe("app authenticated route migration", () => {
     );
     const skillsClientSource = source("src/skills/skills-client.tsx");
     const skillsSearchSource = source("src/skills/skills-search-params.ts");
-    const skillsQuerySource = source("src/skills/skills-queries.ts");
     const connectorsRouteSource = source(
       "src/routes/_authenticated/$slug/connectors.tsx"
     );
@@ -760,13 +759,17 @@ describe("app authenticated route migration", () => {
     expect(skillsSearchSource).toContain("validateSkillsSearch");
     expect(skillsClientSource).toContain('@api/app/tanstack/skills"');
     expect(skillsClientSource).toContain("listSkills");
-    expect(skillsClientSource).toContain("skillsListQueryKey");
+    expect(skillsClientSource).toContain(
+      'queryKey: ["skills", "list"] as const'
+    );
+    expect(skillsClientSource).not.toContain("skillsListQueryKey");
+    expect(skillsClientSource).not.toContain("skills-queries");
     expect(skillsClientSource).toContain(
       'enabled: typeof window !== "undefined"'
     );
-    expect(skillsQuerySource).toContain("skillsListQueryKey");
-    expect(skillsQuerySource).not.toContain("skillsListQueryOptions");
-    expect(skillsQuerySource).not.toContain("@api/app/tanstack/skills");
+    expect(existsSync(resolve(appRoot, "src/skills/skills-queries.ts"))).toBe(
+      false
+    );
     expect(skillsClientSource).not.toContain("useSkillsListQuery");
 
     expect(connectorsRouteSource).toContain("validateConnectorsSearch");
