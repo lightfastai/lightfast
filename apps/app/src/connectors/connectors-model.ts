@@ -1,15 +1,17 @@
 import type {
-  ConnectorSections as ConnectorSectionsResult,
-  TeamConnectorCatalogRow as TeamConnectorCatalogRowResult,
-  UserConnectorCatalogRow as UserConnectorCatalogRowResult,
-} from "./connectors-cache";
+  ConnectorSectionsResult,
+  ListConnectorsResult,
+} from "@api/app/tanstack/connectors";
 
 export type ConnectorCatalogRow =
   | TeamConnectorCatalogRow
   | UserConnectorCatalogRow;
 export type ConnectorSections = ConnectorSectionsResult;
-export type TeamConnectorCatalogRow = TeamConnectorCatalogRowResult;
-export type UserConnectorCatalogRow = UserConnectorCatalogRowResult;
+export type ConnectorsList = ListConnectorsResult;
+export type TeamConnectorCatalogRow =
+  ConnectorSections["teamConnectors"][number];
+export type UserConnectorCatalogRow =
+  ConnectorSections["yourConnectors"][number];
 export type ConnectorProvider = ConnectorCatalogRow["provider"];
 export type TeamConnectorConnection = NonNullable<
   TeamConnectorCatalogRow["connection"]

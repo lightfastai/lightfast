@@ -13,7 +13,6 @@ import { Button } from "@repo/ui/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
 import { ConnectorIcon } from "~/connectors/connector-icons";
-import { connectorQueryKeys } from "~/connectors/connectors-cache";
 import {
   type ConnectorCatalogRow,
   connectionStatus,
@@ -56,7 +55,7 @@ export function XConnectorSetupClient({ orgSlug }: XConnectorSetupClientProps) {
   } = useQuery({
     enabled: typeof window !== "undefined",
     queryFn: () => listConnectors(),
-    queryKey: connectorQueryKeys.list(),
+    queryKey: ["connectors", "list"] as const,
     staleTime: 30_000,
   });
   const xConnector = connectors.find((row) => row.provider === "x");
