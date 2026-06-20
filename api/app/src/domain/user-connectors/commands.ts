@@ -1,10 +1,6 @@
 import type { Database } from "@db/app";
 import { z } from "zod";
 
-import {
-  disconnectGranolaUserConnector,
-  startGranolaUserConnectorOAuth,
-} from "../../services/user-connectors/granola-flow";
 import type { Actor } from "../actor";
 import { defineCommand } from "../command";
 import {
@@ -25,27 +21,15 @@ interface UserConnectorServiceContext {
   viewer: { userId: string };
 }
 
-interface UserConnectorCommandDeps {
+export interface UserConnectorCommandDeps {
   db: Database;
-  disconnectGranolaUserConnector: typeof disconnectGranolaUserConnector;
+  disconnectGranolaUserConnector: (
+    ctx: UserConnectorServiceContext
+  ) => Promise<{ disconnected: boolean }>;
   request: UserConnectorRequestContext;
-  startGranolaUserConnectorOAuth: typeof startGranolaUserConnectorOAuth;
-}
-
-export function createDefaultUserConnectorCommandDeps(input: {
-  db: Database;
-  disconnectGranolaUserConnector?: typeof disconnectGranolaUserConnector;
-  request: UserConnectorRequestContext;
-  startGranolaUserConnectorOAuth?: typeof startGranolaUserConnectorOAuth;
-}): UserConnectorCommandDeps {
-  return {
-    db: input.db,
-    disconnectGranolaUserConnector:
-      input.disconnectGranolaUserConnector ?? disconnectGranolaUserConnector,
-    request: input.request,
-    startGranolaUserConnectorOAuth:
-      input.startGranolaUserConnectorOAuth ?? startGranolaUserConnectorOAuth,
-  };
+  startGranolaUserConnectorOAuth: (
+    ctx: UserConnectorServiceContext
+  ) => Promise<{ authorizationUrl: string; mode: "connect" | "reconnect" }>;
 }
 
 const startUserConnectorOutput = z.object({

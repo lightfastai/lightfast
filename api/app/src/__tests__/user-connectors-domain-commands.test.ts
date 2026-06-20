@@ -7,7 +7,6 @@ import type { AuthIdentity } from "../auth/identity";
 import { actorFromAuthIdentity } from "../domain";
 import { ValidationError } from "../domain/errors";
 import {
-  createDefaultUserConnectorCommandDeps,
   disconnectUserConnectorCommand,
   startUserConnectorCommand,
 } from "../domain/user-connectors";
@@ -30,12 +29,12 @@ function ctx() {
 }
 
 function deps() {
-  return createDefaultUserConnectorCommandDeps({
+  return {
     db: {} as Database,
     disconnectGranolaUserConnector: serviceMocks.disconnectGranolaUserConnector,
     request: {},
     startGranolaUserConnectorOAuth: serviceMocks.startGranolaUserConnectorOAuth,
-  });
+  };
 }
 
 describe("user connector domain commands", () => {

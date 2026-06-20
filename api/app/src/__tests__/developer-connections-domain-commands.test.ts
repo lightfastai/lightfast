@@ -6,7 +6,7 @@ import { actorFromAuthIdentity } from "../domain";
 import {
   completeSentryDeveloperConnectionAuthCommand,
   connectDeveloperConnectionCommand,
-  createDefaultDeveloperConnectionCommandDeps,
+  type DeveloperConnectionCommandDeps,
   disconnectDeveloperConnectionCommand,
   listDeveloperConnectionsCommand,
   setDeveloperConnectionSandboxEnabledCommand,
@@ -54,7 +54,7 @@ function ctx(input: { admin?: boolean; identity?: AuthIdentity } = {}) {
 }
 
 function deps() {
-  return createDefaultDeveloperConnectionCommandDeps({
+  return {
     completeSentryDeveloperConnectionAuth:
       serviceMocks.completeSentryDeveloperConnectionAuth,
     connectDeveloperConnection: serviceMocks.connectDeveloperConnection,
@@ -65,7 +65,7 @@ function deps() {
       serviceMocks.setDeveloperConnectionSandboxEnabled,
     startSentryDeveloperConnectionAuth:
       serviceMocks.startSentryDeveloperConnectionAuth,
-  });
+  } satisfies DeveloperConnectionCommandDeps;
 }
 
 describe("developer connection domain commands", () => {

@@ -1,5 +1,12 @@
 import type { Database } from "@db/app";
 import {
+  type DeveloperConnectionCatalogStatus,
+  type DeveloperConnectionCompleteAuthInput,
+  type DeveloperConnectionConnectInput,
+  type DeveloperConnectionProvider,
+  type DeveloperConnectionSetSandboxEnabledInput,
+  type DeveloperConnectionStartAuthInput,
+  type DeveloperConnectionStatus,
   developerConnectionCompleteAuthInputSchema,
   developerConnectionConnectInputSchema,
   developerConnectionProviderInputSchema,
@@ -10,14 +17,6 @@ import {
 } from "@repo/api-contract";
 import { z } from "zod";
 
-import {
-  completeSentryDeveloperConnectionAuth,
-  connectDeveloperConnection,
-  disconnectDeveloperConnection,
-  listDeveloperConnectionsForOrg,
-  setDeveloperConnectionSandboxEnabled,
-  startSentryDeveloperConnectionAuth,
-} from "../../services/developer-connections";
 import type { ExecutionContext } from "../actor";
 import { defineCommand } from "../command";
 import {
@@ -33,11 +32,37 @@ import {
   requireClerkOrgAdminActor,
 } from "../gates";
 
-type ListDeveloperConnectionsResult = Awaited<
-  ReturnType<typeof listDeveloperConnectionsForOrg>
->;
+type ConnectAvailability =
+  | { status: "available" }
+  | { reason: "coming_soon" | "permission_required"; status: "unavailable" };
 
-interface DeveloperConnectionMutationServiceContext {
+interface DeveloperConnectionCatalogRow {
+  builder: "Lightfast";
+  canManage: boolean;
+  catalogStatus: DeveloperConnectionCatalogStatus;
+  category: string;
+  connectAvailability: ConnectAvailability;
+  connection: {
+    connectedAt: Date;
+    enabledForSandboxes: boolean;
+    lastUsedAt: Date | null;
+    lastUsedByUserId: string | null;
+    lastVerifiedAt: Date | null;
+    providerAccountName: string;
+    status: DeveloperConnectionStatus;
+  } | null;
+  description: string;
+  displayName: string;
+  provider: DeveloperConnectionProvider;
+}
+
+type ListDeveloperConnectionsResult = DeveloperConnectionCatalogRow[];
+interface DeveloperConnectionMutationResult {
+  provider: DeveloperConnectionProvider;
+  status: DeveloperConnectionStatus;
+}
+
+export interface DeveloperConnectionMutationServiceContext {
   actor: {
     userId: string;
   };
@@ -47,43 +72,38 @@ interface DeveloperConnectionMutationServiceContext {
   };
 }
 
-interface DeveloperConnectionCommandDeps {
-  completeSentryDeveloperConnectionAuth: typeof completeSentryDeveloperConnectionAuth;
-  connectDeveloperConnection: typeof connectDeveloperConnection;
+export interface DeveloperConnectionCommandDeps {
+  completeSentryDeveloperConnectionAuth(
+    ctx: DeveloperConnectionMutationServiceContext,
+    input: DeveloperConnectionCompleteAuthInput
+  ): Promise<DeveloperConnectionMutationResult>;
+  connectDeveloperConnection(
+    ctx: DeveloperConnectionMutationServiceContext,
+    input: DeveloperConnectionConnectInput
+  ): Promise<DeveloperConnectionMutationResult>;
   db: Database;
-  disconnectDeveloperConnection: typeof disconnectDeveloperConnection;
-  listDeveloperConnectionsForOrg: typeof listDeveloperConnectionsForOrg;
-  setDeveloperConnectionSandboxEnabled: typeof setDeveloperConnectionSandboxEnabled;
-  startSentryDeveloperConnectionAuth: typeof startSentryDeveloperConnectionAuth;
-}
-
-export function createDefaultDeveloperConnectionCommandDeps(input: {
-  completeSentryDeveloperConnectionAuth?: typeof completeSentryDeveloperConnectionAuth;
-  connectDeveloperConnection?: typeof connectDeveloperConnection;
-  db: Database;
-  disconnectDeveloperConnection?: typeof disconnectDeveloperConnection;
-  listDeveloperConnectionsForOrg?: typeof listDeveloperConnectionsForOrg;
-  setDeveloperConnectionSandboxEnabled?: typeof setDeveloperConnectionSandboxEnabled;
-  startSentryDeveloperConnectionAuth?: typeof startSentryDeveloperConnectionAuth;
-}): DeveloperConnectionCommandDeps {
-  return {
-    completeSentryDeveloperConnectionAuth:
-      input.completeSentryDeveloperConnectionAuth ??
-      completeSentryDeveloperConnectionAuth,
-    connectDeveloperConnection:
-      input.connectDeveloperConnection ?? connectDeveloperConnection,
-    db: input.db,
-    disconnectDeveloperConnection:
-      input.disconnectDeveloperConnection ?? disconnectDeveloperConnection,
-    listDeveloperConnectionsForOrg:
-      input.listDeveloperConnectionsForOrg ?? listDeveloperConnectionsForOrg,
-    setDeveloperConnectionSandboxEnabled:
-      input.setDeveloperConnectionSandboxEnabled ??
-      setDeveloperConnectionSandboxEnabled,
-    startSentryDeveloperConnectionAuth:
-      input.startSentryDeveloperConnectionAuth ??
-      startSentryDeveloperConnectionAuth,
-  };
+  disconnectDeveloperConnection(
+    ctx: DeveloperConnectionMutationServiceContext,
+    input: { provider: DeveloperConnectionProvider }
+  ): Promise<{ disconnected: boolean }>;
+  listDeveloperConnectionsForOrg(input: {
+    db: Database;
+    organization: { orgId: string };
+    viewer: { canManage: boolean };
+  }): Promise<ListDeveloperConnectionsResult>;
+  setDeveloperConnectionSandboxEnabled(
+    ctx: DeveloperConnectionMutationServiceContext,
+    input: DeveloperConnectionSetSandboxEnabledInput
+  ): Promise<{ enabled: boolean }>;
+  startSentryDeveloperConnectionAuth(
+    ctx: DeveloperConnectionMutationServiceContext,
+    input: DeveloperConnectionStartAuthInput
+  ): Promise<{
+    attemptId: string;
+    expiresAt: Date;
+    userCode: string;
+    verificationUri: string;
+  }>;
 }
 
 const listDeveloperConnectionsInput = z.object({}).strict();

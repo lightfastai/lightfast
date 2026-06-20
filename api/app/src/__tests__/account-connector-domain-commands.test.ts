@@ -9,7 +9,6 @@ import {
   revokeAccountMcpConnectionCommand,
 } from "../domain/mcp-connections";
 import {
-  createDefaultUserConnectorCommandDeps,
   disconnectUserConnectorCommand,
   startUserConnectorCommand,
 } from "../domain/user-connectors";
@@ -93,12 +92,12 @@ function mcpDeps() {
 }
 
 function userConnectorDeps(referer?: string | null) {
-  return createDefaultUserConnectorCommandDeps({
+  return {
     db: {} as Database,
     disconnectGranolaUserConnector: disconnectGranolaUserConnectorMock,
     request: { referer },
     startGranolaUserConnectorOAuth: startGranolaUserConnectorOAuthMock,
-  });
+  };
 }
 
 beforeEach(() => {

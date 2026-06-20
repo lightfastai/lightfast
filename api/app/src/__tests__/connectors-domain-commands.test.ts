@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthIdentity } from "../auth/identity";
 import { actorFromAuthIdentity } from "../domain";
 import {
-  createDefaultConnectorCommandDeps,
+  type ConnectorCommandDeps,
   disconnectConnectorCommand,
   listConnectorSectionsCommand,
   listConnectorsCommand,
@@ -62,7 +62,7 @@ function ctx(input: { admin?: boolean; identity?: AuthIdentity } = {}) {
 }
 
 function deps() {
-  return createDefaultConnectorCommandDeps({
+  return {
     db: {} as Database,
     disconnectConnector: serviceMocks.disconnectConnector,
     listConnectorsForOrg: serviceMocks.listConnectorsForOrg,
@@ -71,7 +71,7 @@ function deps() {
     setConnectorAgentEnabled: serviceMocks.setConnectorAgentEnabled,
     setConnectorAutomationEnabled: serviceMocks.setConnectorAutomationEnabled,
     startConnectorOAuth: serviceMocks.startConnectorOAuth,
-  });
+  } satisfies ConnectorCommandDeps;
 }
 
 describe("connector domain commands", () => {

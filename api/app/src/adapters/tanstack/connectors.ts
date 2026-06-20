@@ -7,7 +7,7 @@ import { resolveAuthContextFromClerk } from "../../auth/identity";
 import type { Actor } from "../../domain";
 import { actorFromAuthIdentity, isDomainError } from "../../domain";
 import {
-  createDefaultConnectorCommandDeps,
+  type ConnectorCommandDeps,
   disconnectConnectorCommand,
   listConnectorSectionsCommand,
   listConnectorsCommand,
@@ -16,6 +16,15 @@ import {
   setConnectorAutomationEnabledCommand,
   startConnectorOAuthCommand,
 } from "../../domain/connectors";
+import {
+  disconnectConnector as disconnectConnectorService,
+  listConnectorsForOrg,
+  refreshConnectorTools as refreshConnectorToolsService,
+  setConnectorAgentEnabled as setConnectorAgentEnabledService,
+  setConnectorAutomationEnabled as setConnectorAutomationEnabledService,
+  startConnectorOAuth as startConnectorOAuthService,
+} from "../../services/connectors";
+import { listUserConnectorsForViewer } from "../../services/user-connectors/catalog";
 
 export type StartConnectorInput = z.input<
   typeof startConnectorOAuthCommand.input
@@ -81,10 +90,17 @@ function noStore() {
   setResponseHeader("vary", "Cookie, Authorization");
 }
 
-function deps() {
-  return createDefaultConnectorCommandDeps({
+function deps(): ConnectorCommandDeps {
+  return {
     db,
-  });
+    disconnectConnector: disconnectConnectorService,
+    listConnectorsForOrg,
+    listUserConnectorsForViewer,
+    refreshConnectorTools: refreshConnectorToolsService,
+    setConnectorAgentEnabled: setConnectorAgentEnabledService,
+    setConnectorAutomationEnabled: setConnectorAutomationEnabledService,
+    startConnectorOAuth: startConnectorOAuthService,
+  };
 }
 
 export const listConnectors = createServerFn({ method: "GET" }).handler(
