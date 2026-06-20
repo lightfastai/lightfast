@@ -23,6 +23,7 @@ const SKIPPED_DIRECTORIES = new Set([
   ".cache",
   ".git",
   ".next",
+  ".output",
   ".turbo",
   ".vercel",
   "coverage",
