@@ -10,12 +10,12 @@ import { Input } from "@repo/ui/components/ui/input";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
-import { accountProfileQueryKey } from "../account-cache";
 
 interface UsernameAccountTaskClientProps {
   returnTo?: string;
 }
 
+const accountProfileQueryKey = ["account", "profile"] as const;
 const DEFAULT_RETURN_TO = "/account/teams/new";
 const USERNAME_TASK_PATH = "/account/tasks/username";
 

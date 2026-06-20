@@ -216,6 +216,7 @@ describe("adaptProcessingRow", () => {
       publicId: "signal_proc",
       status: "queued",
       updatedAt: new Date("2026-05-27T01:00:00.000Z"),
+      visibilityScope: "user",
     } as SignalRow;
 
     const adapted = adaptProcessingRow(full);

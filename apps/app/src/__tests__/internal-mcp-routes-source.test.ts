@@ -86,10 +86,10 @@ describe("internal MCP app routes", () => {
     expect(adapter).toContain('from "../../domain/signals"');
     expect(adapter).toContain("createSignalCommand.run");
     expect(adapter).toContain("getSignalCommand.run");
+    expect(adapter).toContain("getVisibleSignalByPublicId");
     expect(adapter).not.toContain('from "../../env"');
     expect(adapter).not.toContain('from "../../signals/service"');
     expect(adapter).not.toContain("createSignalForActor");
-    expect(adapter).not.toContain("getVisibleSignalByPublicId");
 
     expect(auditAdapter).toContain("process.env.SERVICE_JWT_SECRET");
     expect(auditAdapter).toContain("recordMcpAuditEvent");

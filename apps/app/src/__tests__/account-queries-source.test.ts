@@ -15,9 +15,8 @@ const migratedFiles = [
 ] as const;
 
 describe("account query helpers", () => {
-  it("keeps account cache primitives without a query-options wrapper", () => {
+  it("uses local account query keys without a query-options wrapper", () => {
     const queriesPath = "src/account/account-queries.ts";
-    const cacheSource = source("src/account/account-cache.ts");
     const profileSource = source(
       "src/account/settings/profile-data-display.tsx"
     );
@@ -27,28 +26,28 @@ describe("account query helpers", () => {
     );
 
     expect(existsSync(resolve(appRoot, queriesPath))).toBe(false);
-    expect(cacheSource).toContain('@api/app/tanstack/account"');
-    expect(cacheSource).toContain("accountProfileQueryKey");
-    expect(cacheSource).toContain("accountGitHubAccountQueryKey");
-    expect(cacheSource).toContain("accountMcpConnectionsQueryKey");
-    expect(cacheSource).not.toContain("queryOptions");
-    expect(cacheSource).not.toContain("getAccountProfile");
-    expect(cacheSource).not.toContain("getGitHubAccountStatus");
+    expect(existsSync(resolve(appRoot, "src/account/account-cache.ts"))).toBe(
+      false
+    );
     expect(profileSource).toContain("getAccountProfile");
     expect(profileSource).toContain("accountProfileQueryKey");
+    expect(profileSource).toContain('["account", "profile"] as const');
     expect(userMenuSource).toContain("getAccountProfile");
     expect(userMenuSource).toContain("accountProfileQueryKey");
+    expect(userMenuSource).toContain('["account", "profile"] as const');
     expect(githubTaskSource).toContain("getGitHubAccountStatus");
     expect(githubTaskSource).toContain("accountGitHubAccountQueryKey");
-    expect(cacheSource).not.toContain("mutationOptions");
-    expect(cacheSource).not.toContain("updateAccountNameMutationOptions");
-    expect(cacheSource).not.toContain("createAccountUsernameMutationOptions");
-    expect(cacheSource).not.toContain(
-      "startGitHubAccountBindingMutationOptions"
-    );
-    expect(cacheSource).not.toContain("syncGitHubAccountMutationOptions");
-    expect(cacheSource).not.toContain("disconnectGitHubAccountMutationOptions");
-    expect(cacheSource).not.toContain("useTRPC");
+    expect(githubTaskSource).toContain('["account", "github"] as const');
+
+    for (const fileSource of [
+      profileSource,
+      userMenuSource,
+      githubTaskSource,
+    ]) {
+      expect(fileSource).not.toContain("queryOptions");
+      expect(fileSource).not.toContain("mutationOptions");
+      expect(fileSource).not.toContain("useTRPC");
+    }
   });
 
   it("moves migrated account UI calls off tRPC and keeps shallow mutations local", () => {
@@ -77,18 +76,20 @@ describe("account query helpers", () => {
   });
 
   it("moves account connector management off viewer.account tRPC", () => {
-    const cacheSource = source("src/account/account-cache.ts");
     const mcpConnectionsSource = source(
       "src/account/mcp-connections-client.tsx"
     );
     const connectorsSource = source("src/connectors/connectors-client.tsx");
 
-    expect(cacheSource).toContain("accountMcpConnectionsQueryKey");
+    expect(existsSync(resolve(appRoot, "src/account/account-cache.ts"))).toBe(
+      false
+    );
     expect(mcpConnectionsSource).toContain(
       '@api/app/tanstack/mcp-connections"'
     );
     expect(mcpConnectionsSource).toContain("listAccountMcpConnections");
     expect(mcpConnectionsSource).toContain("accountMcpConnectionsQueryKey");
+    expect(mcpConnectionsSource).toContain('"mcp-connections"');
     expect(mcpConnectionsSource).toContain("revokeAccountMcpConnection");
     expect(mcpConnectionsSource).not.toContain(
       "accountMcpConnectionsQueryOptions"

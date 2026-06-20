@@ -1,13 +1,13 @@
-import type { Database, Signal } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthIdentity } from "../auth/identity";
 import { actorFromAuthIdentity } from "../domain";
 import {
-  createDefaultSignalCommandDeps,
   createSignalCommand,
   getSignalCommand,
   listProcessingSignalsCommand,
   listWorkingSetSignalsCommand,
+  type SignalCommandDeps,
+  type SignalRecord,
 } from "../domain/signals";
 
 const mocks = vi.hoisted(() => ({
@@ -26,18 +26,6 @@ const {
   listWorkspaceSignalsMock,
 } = mocks;
 
-vi.mock("@db/app", () => ({
-  getVisibleSignalByPublicId: mocks.getVisibleSignalByPublicIdMock,
-  listSignalEntityLinksForSignal: mocks.listSignalEntityLinksForSignalMock,
-  listSignals: mocks.listSignalsMock,
-  listWorkspaceSignals: mocks.listWorkspaceSignalsMock,
-}));
-vi.mock("../signals/create-signal", () => ({
-  createAndQueueSignal: mocks.createAndQueueSignalMock,
-  isSignalCreateQueueError: (error: unknown) =>
-    error instanceof Error && error.name === "SignalCreateQueueError",
-}));
-
 const identity: Extract<AuthIdentity, { type: "active" }> = {
   type: "active",
   userId: "user_test",
@@ -45,7 +33,12 @@ const identity: Extract<AuthIdentity, { type: "active" }> = {
   orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
 };
 
-const signalRow: Signal = {
+const signalRow: SignalRecord & {
+  classificationMetadata: null;
+  clerkOrgId: string;
+  errorCode: null;
+  errorMessage: null;
+} = {
   classification: null,
   classificationMetadata: null,
   clerkOrgId: "org_test",
@@ -72,7 +65,15 @@ function ctx(authIdentity: AuthIdentity = identity) {
 }
 
 function deps() {
-  return createDefaultSignalCommandDeps({ db: {} as Database });
+  return {
+    createAndQueueSignal: createAndQueueSignalMock,
+    getVisibleSignalByPublicId: getVisibleSignalByPublicIdMock,
+    isSignalCreateQueueError: (error: unknown) =>
+      error instanceof Error && error.name === "SignalCreateQueueError",
+    listSignalEntityLinksForSignal: listSignalEntityLinksForSignalMock,
+    listSignals: listSignalsMock,
+    listWorkspaceSignals: listWorkspaceSignalsMock,
+  } satisfies SignalCommandDeps;
 }
 
 beforeEach(() => {
@@ -108,7 +109,7 @@ describe("signal domain commands", () => {
       })
     ).resolves.toEqual({ items: [signalRow], nextCursor: null });
 
-    expect(listSignalsMock).toHaveBeenCalledWith(expect.anything(), {
+    expect(listSignalsMock).toHaveBeenCalledWith({
       clerkOrgId: "org_test",
       createdByUserId: "user_test",
       cursor: undefined,
@@ -124,7 +125,7 @@ describe("signal domain commands", () => {
       input: {},
     });
 
-    expect(listWorkspaceSignalsMock).toHaveBeenCalledWith(expect.anything(), {
+    expect(listWorkspaceSignalsMock).toHaveBeenCalledWith({
       clerkOrgId: "org_test",
       createdByUserId: "user_test",
     });
@@ -139,14 +140,11 @@ describe("signal domain commands", () => {
       })
     ).resolves.toEqual({ ...signalRow, entityLinks: [] });
 
-    expect(getVisibleSignalByPublicIdMock).toHaveBeenCalledWith(
-      expect.anything(),
-      {
-        clerkOrgId: "org_test",
-        createdByUserId: "user_test",
-        publicId: signalRow.publicId,
-      }
-    );
+    expect(getVisibleSignalByPublicIdMock).toHaveBeenCalledWith({
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+      publicId: signalRow.publicId,
+    });
   });
 
   it("throws a domain not found error when detail is invisible", async () => {
@@ -179,7 +177,7 @@ describe("signal domain commands", () => {
       visibilityScope: "user",
     });
 
-    expect(createAndQueueSignalMock).toHaveBeenCalledWith(expect.anything(), {
+    expect(createAndQueueSignalMock).toHaveBeenCalledWith({
       clerkOrgId: "org_test",
       createdByApiKeyId: null,
       createdByUserId: "user_test",
@@ -209,7 +207,7 @@ describe("signal domain commands", () => {
       visibilityScope: "user",
     });
 
-    expect(createAndQueueSignalMock).toHaveBeenCalledWith(expect.anything(), {
+    expect(createAndQueueSignalMock).toHaveBeenCalledWith({
       clerkOrgId: "org_test",
       createdByApiKeyId: "key_test",
       createdByUserId: "user_test",
@@ -267,7 +265,7 @@ describe("signal domain commands", () => {
       visibilityScope: "user",
     });
 
-    expect(createAndQueueSignalMock).toHaveBeenCalledWith(expect.anything(), {
+    expect(createAndQueueSignalMock).toHaveBeenCalledWith({
       clerkOrgId: "org_test",
       createdByApiKeyId: null,
       createdByMcpClientId: "client_test",
@@ -293,14 +291,11 @@ describe("signal domain commands", () => {
       input: { publicId: signalRow.publicId },
     });
 
-    expect(getVisibleSignalByPublicIdMock).toHaveBeenCalledWith(
-      expect.anything(),
-      {
-        clerkOrgId: "org_test",
-        createdByUserId: "user_test",
-        publicId: signalRow.publicId,
-      }
-    );
+    expect(getVisibleSignalByPublicIdMock).toHaveBeenCalledWith({
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+      publicId: signalRow.publicId,
+    });
   });
 
   it("rejects API-key signal reads without the read scope", async () => {
@@ -347,14 +342,11 @@ describe("signal domain commands", () => {
       input: { publicId: signalRow.publicId },
     });
 
-    expect(getVisibleSignalByPublicIdMock).toHaveBeenCalledWith(
-      expect.anything(),
-      {
-        clerkOrgId: "org_test",
-        createdByUserId: "user_test",
-        publicId: signalRow.publicId,
-      }
-    );
+    expect(getVisibleSignalByPublicIdMock).toHaveBeenCalledWith({
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+      publicId: signalRow.publicId,
+    });
   });
 
   it("maps queue failures to an internal domain error", async () => {

@@ -25,7 +25,8 @@ import {
 } from "@repo/ui-v2/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { accountProfileQueryKey } from "~/account/account-cache";
+
+const accountProfileQueryKey = ["account", "profile"] as const;
 
 export function UserMenu() {
   const { signOut } = useClerk();

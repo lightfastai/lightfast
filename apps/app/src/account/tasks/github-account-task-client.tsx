@@ -13,11 +13,12 @@ import { Button } from "@repo/ui/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
-import { accountGitHubAccountQueryKey } from "../account-cache";
 
 interface GithubAccountTaskClientProps {
   githubError?: GitHubUserAccountBindErrorCode;
 }
+
+const accountGitHubAccountQueryKey = ["account", "github"] as const;
 
 const GITHUB_USER_ACCOUNT_ERROR_MESSAGES: Record<
   GitHubUserAccountBindErrorCode,

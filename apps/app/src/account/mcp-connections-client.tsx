@@ -32,7 +32,8 @@ import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
-import { accountMcpConnectionsQueryKey } from "./account-cache";
+
+const accountMcpConnectionsQueryKey = ["account", "mcp-connections"] as const;
 
 interface McpConnection {
   clientId: string;

@@ -1,3 +1,8 @@
+import {
+  getVisibleSignalByPublicId,
+  listSignalEntityLinksForSignal,
+  listSignals,
+} from "@db/app";
 import { db } from "@db/app/client";
 import {
   createSignalInput,
@@ -21,12 +26,16 @@ import {
 import { isDomainError } from "../../domain";
 import {
   createSignalCommand,
-  createSignalCommandDeps,
   getSignalCommand,
-  getSignalCommandDeps,
   listProcessingSignalsCommand,
-  listProcessingSignalsCommandDeps,
+  type SignalCreateCommandDeps,
+  type SignalGetCommandDeps,
+  type SignalListProcessingCommandDeps,
 } from "../../domain/signals";
+import {
+  createAndQueueSignal,
+  isSignalCreateQueueError,
+} from "../../signals/create-signal";
 
 type PublicApiStatus = 400 | 401 | 403 | 404 | 500;
 
@@ -99,6 +108,28 @@ function publicSignalContext(auth: ApiKeyAuthResult) {
   return {
     actor: actorFromApiKeyAuth(auth),
     request: { id: requestId(), source: "public-api" as const },
+  };
+}
+
+function listProcessingSignalsDeps(): SignalListProcessingCommandDeps {
+  return {
+    listSignals: (input) => listSignals(db, input),
+  };
+}
+
+function createSignalDeps(): SignalCreateCommandDeps {
+  return {
+    createAndQueueSignal: (input) => createAndQueueSignal(db, input),
+    isSignalCreateQueueError,
+  };
+}
+
+function getSignalDeps(): SignalGetCommandDeps {
+  return {
+    getVisibleSignalByPublicId: (input) =>
+      getVisibleSignalByPublicId(db, input),
+    listSignalEntityLinksForSignal: (input) =>
+      listSignalEntityLinksForSignal(db, input),
   };
 }
 
@@ -297,7 +328,7 @@ export async function handleListSignalsPublicApiRequest(
   try {
     const result = await listProcessingSignalsCommand.run({
       ctx: publicSignalContext(auth),
-      deps: listProcessingSignalsCommandDeps({ db }),
+      deps: listProcessingSignalsDeps(),
       input: {
         cursor,
         limit: parsed.data.limit,
@@ -340,7 +371,7 @@ export async function handleCreateSignalPublicApiRequest(
   try {
     const result = await createSignalCommand.run({
       ctx: publicSignalContext(auth),
-      deps: createSignalCommandDeps({ db }),
+      deps: createSignalDeps(),
       input: parsed.data,
     });
     return jsonResponse(createSignalOutput.parse(result), 202);
@@ -368,7 +399,7 @@ export async function handleGetSignalPublicApiRequest(
   try {
     const signal = await getSignalCommand.run({
       ctx: publicSignalContext(auth),
-      deps: getSignalCommandDeps({ db }),
+      deps: getSignalDeps(),
       input: { publicId: parsed.data.id },
     });
 

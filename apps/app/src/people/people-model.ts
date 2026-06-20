@@ -1,6 +1,7 @@
-import type { PeopleList, PersonRow } from "./people-cache";
+import type { ListPeopleResult } from "@api/app/tanstack/people";
 
-export type { PeopleList, PersonRow } from "./people-cache";
+export type PeopleList = ListPeopleResult;
+export type PersonRow = PeopleList["items"][number];
 
 export type PersonProvider = PersonRow["identityProvider"];
 export type PersonType = PersonRow["identityType"];
