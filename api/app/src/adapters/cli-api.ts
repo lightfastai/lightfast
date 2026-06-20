@@ -11,6 +11,7 @@ import {
 } from "@repo/native-auth-contract";
 import {
   createProviderRoutineCommandDeps,
+  type ProviderRoutineCommandDeps,
   providerRoutineCallCommand,
   providerRoutineFindCommand,
 } from "../domain/provider-routines";
@@ -42,12 +43,22 @@ export function handleCliNativeRpcRequest(request: Request) {
   });
 }
 
-async function createCliProviderRoutineCommandContext(req: Request) {
+async function createCliProviderRoutineContext(req: Request) {
   const { db } = await import("@db/app/client");
   const { resolveAuthContextFromClerk } = await import("../auth/identity");
   const { loadAgentConnectorRuntimeTools } = await import(
     "../services/connectors/runtime"
   );
+  const adapters: Pick<
+    ProviderRoutineCommandDeps,
+    "loadConnectorRuntimeTools"
+  > = {
+    loadConnectorRuntimeTools: async (input) =>
+      await loadAgentConnectorRuntimeTools({
+        ...input,
+        sourceSurface: "native_cli",
+      }),
+  };
   const headers = new Headers(req.headers);
   headers.set(NATIVE_AUTH_HEADERS.client, "cli");
   const auth = await resolveAuthContextFromClerk({
@@ -86,7 +97,7 @@ async function createCliProviderRoutineCommandContext(req: Request) {
     },
     deps: createProviderRoutineCommandDeps({
       db,
-      loadConnectorRuntimeTools: loadAgentConnectorRuntimeTools,
+      ...adapters,
       log,
       now: () => new Date(),
     }),
@@ -102,8 +113,7 @@ async function handleCliProviderRoutineCallCommand({
 }) {
   try {
     const input = parseProviderRoutineCallInput(commandInput);
-    const commandContext =
-      await createCliProviderRoutineCommandContext(request);
+    const commandContext = await createCliProviderRoutineContext(request);
     const result = await providerRoutineCallCommand.run({
       ...commandContext,
       input: { input },
@@ -123,8 +133,7 @@ async function handleCliProviderRoutineFindCommand({
 }) {
   try {
     const input = parseProviderRoutineFindInput(commandInput);
-    const commandContext =
-      await createCliProviderRoutineCommandContext(request);
+    const commandContext = await createCliProviderRoutineContext(request);
     const result = await providerRoutineFindCommand.run({
       ...commandContext,
       input: { input },

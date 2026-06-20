@@ -48,7 +48,7 @@
     "db:studio": "pnpm --filter @db/app db:studio",
     "db:baseline": "pnpm --filter @db/app db:baseline",
     "entity-graph:simulated": "pnpm --filter @db/app entity-graph:simulated",
-    "knip": "knip"
+    "knip": "SKIP_ENV_VALIDATION=true knip"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.12",

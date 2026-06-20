@@ -10,6 +10,7 @@ import {
 import { verifyServiceJWT } from "@repo/service-jwt";
 import {
   createProviderRoutineCommandDeps,
+  type ProviderRoutineCommandDeps,
   providerRoutineCallCommand,
   providerRoutineFindCommand,
 } from "../../domain/provider-routines";
@@ -178,14 +179,24 @@ function providerRoutineContext(
 }
 
 function providerRoutineDeps() {
-  return createProviderRoutineCommandDeps({
-    db,
+  const adapters: Pick<
+    ProviderRoutineCommandDeps,
+    "loadConnectorRuntimeTools"
+  > = {
     loadConnectorRuntimeTools: async (input) => {
       const { loadAgentConnectorRuntimeTools } = await import(
         "../../services/connectors/runtime"
       );
-      return await loadAgentConnectorRuntimeTools(input);
+      return await loadAgentConnectorRuntimeTools({
+        ...input,
+        sourceSurface: "hosted_mcp",
+      });
     },
+  };
+
+  return createProviderRoutineCommandDeps({
+    db,
+    ...adapters,
     log: noopProviderRoutineLog,
     now: () => new Date(),
   });
