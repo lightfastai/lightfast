@@ -95,6 +95,25 @@ function liveRepository(overrides: Record<string, unknown> = {}) {
 
 function createDeps() {
   return {
+    buildGitHubNewRepositoryUrl: vi.fn(
+      (input: { accountLogin: string; name: string; webBaseUrl?: string }) => {
+        const baseUrl =
+          input.webBaseUrl ?? "https://github.lightfast.localhost";
+        const url = new URL(
+          `/organizations/${input.accountLogin}/repositories/new`,
+          baseUrl
+        );
+        url.searchParams.set("name", input.name);
+        return url.toString();
+      }
+    ),
+    buildGitHubRepositoryUrl: vi.fn(
+      (input: { fullName: string; webBaseUrl?: string }) => {
+        const baseUrl =
+          input.webBaseUrl ?? "https://github.lightfast.localhost";
+        return new URL(`/${input.fullName}`, baseUrl).toString();
+      }
+    ),
     createGitHubAppJwt: vi.fn().mockResolvedValue("app.jwt"),
     createGitHubInstallationToken: vi.fn().mockResolvedValue({
       expiresAt: "2026-05-29T02:02:03.000Z",
