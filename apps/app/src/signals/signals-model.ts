@@ -1,19 +1,19 @@
 import type {
-  ProcessingSignalsResult,
-  SignalDetailQueryResult,
-  WorkingSetSignalsResult,
-} from "./signals-cache";
+  ListProcessingSignalsResult,
+  ListWorkingSetSignalsResult,
+  SignalDetailResult,
+} from "@api/app/tanstack/signals";
 
 /** Full row from the cursor `list` query (processing path) — carries body fields. */
-export type SignalList = ProcessingSignalsResult;
+export type SignalList = ListProcessingSignalsResult;
 export type SignalRow = SignalList["items"][number];
 
 /** Projected working-set row (classified, no body). */
-export type WorkspaceSignals = WorkingSetSignalsResult;
+export type WorkspaceSignals = ListWorkingSetSignalsResult;
 export type WorkspaceSignalRow = WorkspaceSignals["items"][number];
 
 /** Full row from `get` — used for the detail body. */
-export type SignalDetailRow = SignalDetailQueryResult;
+export type SignalDetailRow = SignalDetailResult;
 
 /**
  * Canonical view-row type for list/grouping. It is the projected
