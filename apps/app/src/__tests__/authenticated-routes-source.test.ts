@@ -337,7 +337,9 @@ describe("app authenticated route migration", () => {
     expect(teamSwitcherSource).not.toContain("next/navigation");
     expect(teamSwitcherSource).not.toContain("next/link");
     expect(recentChatsMenuSource).toContain("listConversations");
-    expect(recentChatsMenuSource).toContain("assistantConversationsQueryKey");
+    expect(recentChatsMenuSource).toContain(
+      '"workspace-assistant",\n      "conversations",\n      orgSlug,\n      recentChatsInput'
+    );
     expect(recentChatsMenuSource).not.toContain(
       "assistantConversationsQueryOptions"
     );
@@ -916,7 +918,15 @@ describe("app authenticated route migration", () => {
     expect(chatIndexRouteSource).toContain("key={conversationId}");
     expect(chatRouteSource).not.toContain("WorkspacePage");
     expect(conversationRouteSource).toContain("getConversation");
-    expect(conversationRouteSource).toContain("assistantConversationQueryKey");
+    expect(conversationRouteSource).toContain("useQuery");
+    expect(conversationRouteSource).toContain(
+      '["workspace-assistant", "conversation", conversationId] as const'
+    );
+    expect(conversationRouteSource).not.toContain("loader:");
+    expect(conversationRouteSource).not.toContain("Route.useLoaderData()");
+    expect(conversationRouteSource).not.toContain(
+      "assistantConversationQueryKey"
+    );
     expect(conversationRouteSource).not.toContain(
       "assistantConversationQueryOptions"
     );
@@ -934,8 +944,13 @@ describe("app authenticated route migration", () => {
       'to: "/$slug/chat/$conversationId"'
     );
     expect(assistantClientSource).toContain("createConversation({ data })");
-    expect(assistantClientSource).toContain("assistantConversationsQueryKey");
-    expect(assistantClientSource).toContain("assistantConversationQueryKey");
+    expect(assistantClientSource).toContain(
+      '["workspace-assistant", "conversations"] as const'
+    );
+    expect(assistantClientSource).not.toContain(
+      "assistantConversationQueryKey"
+    );
+    expect(assistantClientSource).not.toContain("setQueryData");
     expect(assistantClientSource).not.toContain(
       "assistantConversationQueryOptions"
     );

@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { ChatLoading } from "~/chat/chat-loading";
 import { WorkspaceAssistantClient } from "~/chat/workspace-assistant-client";
-import { assistantConversationQueryKey } from "~/chat/workspace-assistant-queries";
 import { WorkspaceRouteErrorPanel } from "~/components/route-boundaries";
 
 const conversationNotFoundCode = "WORKSPACE_ASSISTANT_CONVERSATION_NOT_FOUND";
@@ -56,7 +55,7 @@ function WorkspaceConversationPage() {
   const conversationQuery = useQuery({
     enabled: typeof window !== "undefined",
     queryFn: () => getConversation({ data: { id: conversationId } }),
-    queryKey: assistantConversationQueryKey(conversationId),
+    queryKey: ["workspace-assistant", "conversation", conversationId] as const,
     retry: false,
   });
 

@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 
+import type { GetConversationResult } from "@api/app/tanstack/assistant";
 import {
   cleanup,
   fireEvent,
@@ -9,11 +10,9 @@ import {
 } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { WorkspaceAssistantConversationResult } from "~/chat/workspace-assistant-queries";
 
 const clearErrorMock = vi.fn();
 const invalidateQueriesMock = vi.fn();
-const setQueryDataMock = vi.fn();
 const mutateAsyncMock = vi.fn();
 const routerInvalidateMock = vi.fn();
 const routerNavigateMock = vi.fn();
@@ -131,7 +130,6 @@ vi.mock("@tanstack/react-query", () => ({
   }),
   useQueryClient: () => ({
     invalidateQueries: invalidateQueriesMock,
-    setQueryData: setQueryDataMock,
   }),
 }));
 
@@ -228,7 +226,6 @@ beforeEach(() => {
   chatMessages = [];
   clearErrorMock.mockClear();
   invalidateQueriesMock.mockClear();
-  setQueryDataMock.mockClear();
   mutateAsyncMock.mockReset();
   routerInvalidateMock.mockReset();
   routerNavigateMock.mockReset();
@@ -510,19 +507,9 @@ describe("WorkspaceAssistantClient", () => {
         }
       );
     });
-    expect(setQueryDataMock).toHaveBeenCalledWith(
-      [
-        "workspace-assistant",
-        "conversation",
-        "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
-      ],
-      expect.objectContaining({
-        conversation: expect.objectContaining({
-          publicId: "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
-        }),
-        messages: [],
-      })
-    );
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: ["workspace-assistant", "conversations"],
+    });
     await waitFor(() => {
       expect(routerNavigateMock).toHaveBeenCalledWith({
         params: {
@@ -670,14 +657,10 @@ describe("WorkspaceAssistantClient", () => {
 
 function conversationResult(
   overrides: {
-    conversation?: Partial<
-      WorkspaceAssistantConversationResult["conversation"]
-    >;
-    messages?: Partial<
-      WorkspaceAssistantConversationResult["messages"][number]
-    >[];
+    conversation?: Partial<GetConversationResult["conversation"]>;
+    messages?: Partial<GetConversationResult["messages"][number]>[];
   } = {}
-): WorkspaceAssistantConversationResult {
+): GetConversationResult {
   const { conversation: conversationOverrides = {}, messages = [] } = overrides;
   return {
     conversation: {
