@@ -1,4 +1,3 @@
-import { clerkClient, toPlainClerkResource } from "@vendor/clerk/server";
 import { z } from "zod";
 
 import { defineCommand } from "../command";
@@ -7,20 +6,6 @@ import {
   requireActiveClerkOrgActor,
   requireClerkOrgAdminActor,
 } from "../gates";
-
-type ClerkClient = Awaited<ReturnType<typeof clerkClient>>;
-type MaybePromise<T> = Promise<T> | T;
-type ClerkBillingClient = Pick<
-  ClerkClient["billing"],
-  | "cancelSubscriptionItem"
-  | "getOrganizationBillingSubscription"
-  | "getPlanList"
->;
-
-interface OrgBillingCommandDeps {
-  clerkClient: () => MaybePromise<{ billing: ClerkBillingClient }>;
-  toPlainClerkResource: <T>(resource: T) => T;
-}
 
 export interface OrgBillingMoneyAmount {
   amount: number;
@@ -85,13 +70,30 @@ export interface OrgBillingSubscription {
   updatedAt?: Date | number | null;
 }
 
-export function createDefaultOrgBillingCommandDeps(
-  input: Partial<OrgBillingCommandDeps> = {}
-): OrgBillingCommandDeps {
-  return {
-    clerkClient: input.clerkClient ?? clerkClient,
-    toPlainClerkResource: input.toPlainClerkResource ?? toPlainClerkResource,
-  };
+interface ClerkBillingSubscription {
+  subscriptionItems: Array<{
+    id: string;
+    plan?: { slug?: string | null } | null;
+  }>;
+}
+
+interface ClerkBillingClient {
+  cancelSubscriptionItem(
+    subscriptionItemId: string,
+    input: { endNow: boolean }
+  ): Promise<unknown>;
+  getOrganizationBillingSubscription(
+    orgId: string
+  ): Promise<ClerkBillingSubscription>;
+  getPlanList(input: {
+    limit: number;
+    payerType: "org";
+  }): Promise<{ data: unknown[] }>;
+}
+
+export interface OrgBillingCommandDeps {
+  billing: ClerkBillingClient;
+  toPlainClerkResource: <T>(resource: T) => T;
 }
 
 const billingPlanOutput = z.custom<OrgBillingPlan>(
@@ -131,10 +133,9 @@ export const getOrgBillingOverviewCommand = defineCommand<
   output: getOrgBillingOverviewOutput,
   run: async ({ ctx, deps }) => {
     const actor = requireActiveClerkOrgActor(ctx);
-    const clerk = await deps.clerkClient();
     const [plans, subscription] = await Promise.all([
-      clerk.billing.getPlanList({ limit: 100, payerType: "org" }),
-      clerk.billing.getOrganizationBillingSubscription(actor.orgId),
+      deps.billing.getPlanList({ limit: 100, payerType: "org" }),
+      deps.billing.getOrganizationBillingSubscription(actor.orgId),
     ]);
 
     return {
@@ -157,8 +158,7 @@ export const cancelOrgBillingSubscriptionItemCommand = defineCommand<
   output: billingSubscriptionItemOutput,
   run: async ({ ctx, deps, input }) => {
     const actor = requireClerkOrgAdminActor(ctx);
-    const clerk = await deps.clerkClient();
-    const subscription = await clerk.billing.getOrganizationBillingSubscription(
+    const subscription = await deps.billing.getOrganizationBillingSubscription(
       actor.orgId
     );
     const item = subscription.subscriptionItems.find(
@@ -179,7 +179,7 @@ export const cancelOrgBillingSubscriptionItemCommand = defineCommand<
       );
     }
 
-    const canceledItem = await clerk.billing.cancelSubscriptionItem(
+    const canceledItem = await deps.billing.cancelSubscriptionItem(
       input.subscriptionItemId,
       {
         endNow: false,

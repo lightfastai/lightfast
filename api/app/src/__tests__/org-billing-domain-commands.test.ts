@@ -4,6 +4,7 @@ import type { ExecutionContext } from "../domain";
 import {
   cancelOrgBillingSubscriptionItemCommand,
   getOrgBillingOverviewCommand,
+  type OrgBillingCommandDeps,
 } from "../domain/org-billing";
 
 const cancelSubscriptionItemMock = vi.fn();
@@ -145,16 +146,14 @@ function subscriptionFixture(
 
 function createDeps() {
   return {
-    clerkClient: vi.fn().mockResolvedValue({
-      billing: {
-        cancelSubscriptionItem: cancelSubscriptionItemMock,
-        getPlanList: getPlanListMock,
-        getOrganizationBillingSubscription:
-          getOrganizationBillingSubscriptionMock,
-      },
-    }),
+    billing: {
+      cancelSubscriptionItem: cancelSubscriptionItemMock,
+      getPlanList: getPlanListMock,
+      getOrganizationBillingSubscription:
+        getOrganizationBillingSubscriptionMock,
+    },
     toPlainClerkResource,
-  };
+  } satisfies OrgBillingCommandDeps;
 }
 
 let deps: ReturnType<typeof createDeps>;
