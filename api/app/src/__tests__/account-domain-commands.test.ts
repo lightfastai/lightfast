@@ -5,8 +5,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthIdentity } from "../auth/identity";
 import { actorFromAuthIdentity } from "../domain";
 import {
+  type AccountCommandDeps,
   createAccountUsernameCommand,
-  createDefaultAccountCommandDeps,
   getAccountProfileCommand,
   updateAccountNameCommand,
 } from "../domain/account";
@@ -88,7 +88,7 @@ function operation(
 }
 
 function deps() {
-  return createDefaultAccountCommandDeps({
+  return {
     clerk: {
       users: {
         getUser: getUserMock,
@@ -97,13 +97,17 @@ function deps() {
     },
     db: {} as Database,
     deletePreClerkNamespaceReservation: deletePreClerkNamespaceReservationMock,
+    disconnectGitHubUserAccount: vi.fn(),
     finalizeNamespaceOperation: finalizeNamespaceOperationMock,
+    getGitHubUserAccountStatus: vi.fn(),
     isClerkConflictError: isClerkConflictErrorMock,
     log: { error: logErrorMock },
     markNamespaceOperationClerkApplied: markNamespaceOperationClerkAppliedMock,
+    parseError: (error: unknown) => error,
     reserveNamespaceForOperation: reserveNamespaceForOperationMock,
+    startGitHubUserAccountBinding: vi.fn(),
     startNamespaceOperation: startNamespaceOperationMock,
-  });
+  } satisfies AccountCommandDeps;
 }
 
 beforeEach(() => {

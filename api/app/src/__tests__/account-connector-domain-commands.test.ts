@@ -9,9 +9,9 @@ import {
   revokeAccountMcpConnectionCommand,
 } from "../domain/mcp-connections";
 import {
-  createDefaultUserConnectorCommandDeps,
   disconnectUserConnectorCommand,
   startUserConnectorCommand,
+  type UserConnectorCommandDeps,
 } from "../domain/user-connectors";
 
 const listMcpOauthGrantConnectionsForUserMock = vi.fn();
@@ -93,12 +93,12 @@ function mcpDeps() {
 }
 
 function userConnectorDeps(referer?: string | null) {
-  return createDefaultUserConnectorCommandDeps({
+  return {
     db: {} as Database,
     disconnectGranolaUserConnector: disconnectGranolaUserConnectorMock,
     request: { referer },
     startGranolaUserConnectorOAuth: startGranolaUserConnectorOAuthMock,
-  });
+  } satisfies UserConnectorCommandDeps;
 }
 
 beforeEach(() => {

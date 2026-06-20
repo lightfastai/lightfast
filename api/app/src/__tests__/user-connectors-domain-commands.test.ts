@@ -7,9 +7,9 @@ import type { AuthIdentity } from "../auth/identity";
 import { actorFromAuthIdentity } from "../domain";
 import { ValidationError } from "../domain/errors";
 import {
-  createDefaultUserConnectorCommandDeps,
   disconnectUserConnectorCommand,
   startUserConnectorCommand,
+  type UserConnectorCommandDeps,
 } from "../domain/user-connectors";
 
 const serviceMocks = vi.hoisted(() => ({
@@ -30,12 +30,12 @@ function ctx() {
 }
 
 function deps() {
-  return createDefaultUserConnectorCommandDeps({
+  return {
     db: {} as Database,
     disconnectGranolaUserConnector: serviceMocks.disconnectGranolaUserConnector,
     request: {},
     startGranolaUserConnectorOAuth: serviceMocks.startGranolaUserConnectorOAuth,
-  });
+  } satisfies UserConnectorCommandDeps;
 }
 
 describe("user connector domain commands", () => {

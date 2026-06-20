@@ -27,8 +27,9 @@ function isThisTestFile(path: string) {
 }
 
 describe("user connector service boundary", () => {
-  it("pins user connector catalog imports to the concrete service module", () => {
+  it("pins user connector catalog imports to the concrete app adapter/service modules", () => {
     const connectorCommandsSource = source("domain/connectors/commands.ts");
+    const connectorAdapterSource = source("adapters/tanstack/connectors.ts");
     const connectorCommandsTestSource = source(
       "__tests__/connectors-domain-commands.test.ts"
     );
@@ -36,7 +37,10 @@ describe("user connector service boundary", () => {
       "__tests__/user-connectors-flow.test.ts"
     );
 
-    expect(connectorCommandsSource).toContain(
+    expect(connectorCommandsSource).not.toContain(
+      "../../services/user-connectors/catalog"
+    );
+    expect(connectorAdapterSource).toContain(
       "../../services/user-connectors/catalog"
     );
     expect(connectorCommandsSource).not.toMatch(

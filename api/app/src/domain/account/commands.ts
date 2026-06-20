@@ -1,28 +1,19 @@
-import type { Database } from "@db/app";
-import {
+import type {
+  Database,
   deletePreClerkNamespaceReservation,
   finalizeNamespaceOperation,
   markNamespaceOperationClerkApplied,
-  NamespaceConflictError,
   reserveNamespaceForOperation,
   startNamespaceOperation,
 } from "@db/app";
+import { NamespaceConflictError } from "@db/app";
 import { githubUserAccountReturnToSchema } from "@lightfast/connector-github/contract";
 import {
   accountSettingsFormSchema,
   lightfastHandleSchema,
 } from "@repo/app-validation";
-import { clerkClient } from "@vendor/clerk/server";
-import { parseError } from "@vendor/observability/error/next";
-import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
 
-import { isClerkConflictError } from "../../auth/clerk-errors";
-import {
-  disconnectGitHubUserAccount,
-  getGitHubUserAccountStatus,
-  startGitHubUserAccountBinding,
-} from "../../services/github/user-account/flow";
 import { defineCommand } from "../command";
 import {
   AuthzError,
@@ -33,95 +24,50 @@ import {
 import { requireClerkUserActor } from "../gates";
 import { type AccountProfileUser, toAccountProfile } from "./profile";
 
-type ClerkClient = Awaited<ReturnType<typeof clerkClient>>;
-type ClerkUserClient = Pick<ClerkClient["users"], "getUser" | "updateUser">;
+interface ClerkUserClient {
+  getUser(userId: string): Promise<AccountProfileUser>;
+  updateUser(
+    userId: string,
+    params: {
+      firstName?: string;
+      lastName?: string;
+      username?: string;
+    }
+  ): Promise<AccountProfileUser>;
+}
 
-interface AccountCommandDeps {
+interface GitHubAccountStatusResult {
+  account: null | {
+    accessTokenExpiresAt: Date;
+    connectedAt: Date;
+    provider: "github";
+    providerUserId: string;
+    refreshTokenExpiresAt: Date;
+    status: "active";
+  };
+}
+
+export interface AccountCommandDeps {
   clerk: { users: ClerkUserClient };
   db: Database;
   deletePreClerkNamespaceReservation: typeof deletePreClerkNamespaceReservation;
-  disconnectGitHubUserAccount: typeof disconnectGitHubUserAccount;
+  disconnectGitHubUserAccount(input: {
+    clerkUserId: string;
+  }): Promise<{ ok: true }>;
   finalizeNamespaceOperation: typeof finalizeNamespaceOperation;
-  getGitHubUserAccountStatus: typeof getGitHubUserAccountStatus;
-  isClerkConflictError: typeof isClerkConflictError;
-  log: Pick<typeof log, "error">;
+  getGitHubUserAccountStatus(input: {
+    clerkUserId: string;
+  }): Promise<GitHubAccountStatusResult>;
+  isClerkConflictError(error: unknown): boolean;
+  log: { error(message: string, context: Record<string, unknown>): void };
   markNamespaceOperationClerkApplied: typeof markNamespaceOperationClerkApplied;
+  parseError(error: unknown): unknown;
   reserveNamespaceForOperation: typeof reserveNamespaceForOperation;
-  startGitHubUserAccountBinding: typeof startGitHubUserAccountBinding;
+  startGitHubUserAccountBinding(input: {
+    lightfastUserId: string;
+    returnTo?: string;
+  }): Promise<{ authorizationUrl: string }>;
   startNamespaceOperation: typeof startNamespaceOperation;
-}
-
-export function createDefaultAccountCommandDeps(input: {
-  clerk: { users: ClerkUserClient };
-  db: Database;
-  deletePreClerkNamespaceReservation?: typeof deletePreClerkNamespaceReservation;
-  disconnectGitHubUserAccount?: typeof disconnectGitHubUserAccount;
-  finalizeNamespaceOperation?: typeof finalizeNamespaceOperation;
-  getGitHubUserAccountStatus?: typeof getGitHubUserAccountStatus;
-  isClerkConflictError?: typeof isClerkConflictError;
-  log?: Pick<typeof log, "error">;
-  markNamespaceOperationClerkApplied?: typeof markNamespaceOperationClerkApplied;
-  reserveNamespaceForOperation?: typeof reserveNamespaceForOperation;
-  startGitHubUserAccountBinding?: typeof startGitHubUserAccountBinding;
-  startNamespaceOperation?: typeof startNamespaceOperation;
-}): AccountCommandDeps;
-export function createDefaultAccountCommandDeps(input: {
-  clerk?: { users: ClerkUserClient };
-  db: Database;
-  deletePreClerkNamespaceReservation?: typeof deletePreClerkNamespaceReservation;
-  disconnectGitHubUserAccount?: typeof disconnectGitHubUserAccount;
-  finalizeNamespaceOperation?: typeof finalizeNamespaceOperation;
-  getGitHubUserAccountStatus?: typeof getGitHubUserAccountStatus;
-  isClerkConflictError?: typeof isClerkConflictError;
-  log?: Pick<typeof log, "error">;
-  markNamespaceOperationClerkApplied?: typeof markNamespaceOperationClerkApplied;
-  reserveNamespaceForOperation?: typeof reserveNamespaceForOperation;
-  startGitHubUserAccountBinding?: typeof startGitHubUserAccountBinding;
-  startNamespaceOperation?: typeof startNamespaceOperation;
-}): Promise<AccountCommandDeps>;
-export function createDefaultAccountCommandDeps(input: {
-  clerk?: { users: ClerkUserClient };
-  db: Database;
-  deletePreClerkNamespaceReservation?: typeof deletePreClerkNamespaceReservation;
-  disconnectGitHubUserAccount?: typeof disconnectGitHubUserAccount;
-  finalizeNamespaceOperation?: typeof finalizeNamespaceOperation;
-  getGitHubUserAccountStatus?: typeof getGitHubUserAccountStatus;
-  isClerkConflictError?: typeof isClerkConflictError;
-  log?: Pick<typeof log, "error">;
-  markNamespaceOperationClerkApplied?: typeof markNamespaceOperationClerkApplied;
-  reserveNamespaceForOperation?: typeof reserveNamespaceForOperation;
-  startGitHubUserAccountBinding?: typeof startGitHubUserAccountBinding;
-  startNamespaceOperation?: typeof startNamespaceOperation;
-}): AccountCommandDeps | Promise<AccountCommandDeps> {
-  const base = {
-    db: input.db,
-    deletePreClerkNamespaceReservation:
-      input.deletePreClerkNamespaceReservation ??
-      deletePreClerkNamespaceReservation,
-    disconnectGitHubUserAccount:
-      input.disconnectGitHubUserAccount ?? disconnectGitHubUserAccount,
-    finalizeNamespaceOperation:
-      input.finalizeNamespaceOperation ?? finalizeNamespaceOperation,
-    getGitHubUserAccountStatus:
-      input.getGitHubUserAccountStatus ?? getGitHubUserAccountStatus,
-    isClerkConflictError: input.isClerkConflictError ?? isClerkConflictError,
-    log: input.log ?? log,
-    markNamespaceOperationClerkApplied:
-      input.markNamespaceOperationClerkApplied ??
-      markNamespaceOperationClerkApplied,
-    reserveNamespaceForOperation:
-      input.reserveNamespaceForOperation ?? reserveNamespaceForOperation,
-    startGitHubUserAccountBinding:
-      input.startGitHubUserAccountBinding ?? startGitHubUserAccountBinding,
-    startNamespaceOperation:
-      input.startNamespaceOperation ?? startNamespaceOperation,
-  };
-
-  if (input.clerk) {
-    return { ...base, clerk: input.clerk };
-  }
-
-  return Promise.resolve(clerkClient()).then((clerk) => ({ ...base, clerk }));
 }
 
 const accountProfileInput = z.object({}).strict();
@@ -239,7 +185,7 @@ export const getAccountProfileCommand = defineCommand<
     } catch (error) {
       deps.log.error("[account] get profile failed", {
         userId: actor.userId,
-        error: parseError(error),
+        error: deps.parseError(error),
       });
 
       throw new InternalDomainError(
@@ -274,7 +220,7 @@ export const updateAccountNameCommand = defineCommand<
     } catch (error) {
       deps.log.error("[account] update display name failed", {
         userId: actor.userId,
-        error: parseError(error),
+        error: deps.parseError(error),
       });
 
       throw new InternalDomainError(
@@ -401,7 +347,7 @@ export const createAccountUsernameCommand = defineCommand<
       deps.log.error("[account] create username failed", {
         userId: actor.userId,
         username,
-        error: parseError(error),
+        error: deps.parseError(error),
       });
 
       throw new InternalDomainError(

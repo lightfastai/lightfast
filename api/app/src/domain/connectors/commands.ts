@@ -1,16 +1,11 @@
 import type { Database } from "@db/app";
-import { connectableConnectorProviderSchema } from "@repo/api-contract";
+import {
+  type ConnectableConnectorProvider,
+  type ConnectorProvider,
+  connectableConnectorProviderSchema,
+} from "@repo/api-contract";
 import { z } from "zod";
 
-import {
-  disconnectConnector,
-  listConnectorsForOrg,
-  refreshConnectorTools,
-  setConnectorAgentEnabled,
-  setConnectorAutomationEnabled,
-  startConnectorOAuth,
-} from "../../services/connectors";
-import { listUserConnectorsForViewer } from "../../services/user-connectors/catalog";
 import type { ExecutionContext } from "../actor";
 import { defineCommand } from "../command";
 import {
@@ -28,18 +23,86 @@ import {
   requireClerkOrgAdminActor,
 } from "../gates";
 
-type ListConnectorsResult = Awaited<ReturnType<typeof listConnectorsForOrg>>;
-type ListUserConnectorsResult = Awaited<
-  ReturnType<typeof listUserConnectorsForViewer>
->;
-type StartConnectorOAuthResult = Awaited<
-  ReturnType<typeof startConnectorOAuth>
->;
-type RefreshConnectorToolsResult = Awaited<
-  ReturnType<typeof refreshConnectorTools>
->;
+type ConnectAvailability =
+  | { status: "available" }
+  | {
+      missing?: string[];
+      reason: "coming_soon" | "missing_config" | "permission_required";
+      status: "unavailable";
+    };
 
-interface ConnectorMutationServiceContext {
+interface DisplayConnectorTool {
+  availableForAgents: boolean;
+  availableForAutomations: boolean;
+  description?: string;
+  name: string;
+}
+
+interface ConnectorCatalogRow {
+  availableForAgents: boolean;
+  availableForAutomations: boolean;
+  builder: "Lightfast";
+  canManage: boolean;
+  catalogStatus: "available" | "coming_soon";
+  category: string;
+  connectAvailability: ConnectAvailability;
+  connection: {
+    connectedAt: Date;
+    enabledForAgents: boolean;
+    enabledForAutomations: boolean;
+    lastToolRefreshAt: Date | null;
+    lastToolRefreshErrorAt: Date | null;
+    lastToolRefreshErrorCode: string | null;
+    missingScopes: string[];
+    providerActorName: string | null;
+    providerWorkspaceName: string | null;
+    scopeStatus: "complete" | "missing_requested_scopes";
+    status: "active" | "error" | "revoked";
+    tools: DisplayConnectorTool[];
+  } | null;
+  description: string;
+  displayName: string;
+  provider: ConnectorProvider;
+}
+
+interface UserConnectorCatalogRow {
+  builder: "Granola";
+  canManage: boolean;
+  catalogStatus: "available" | "coming_soon";
+  category: string;
+  connectAvailability: { status: "available" };
+  connection: {
+    availableForInteractiveChats: boolean;
+    connectedAt: Date;
+    lastToolRefreshAt: Date | null;
+    lastToolRefreshErrorAt: Date | null;
+    lastToolRefreshErrorCode: string | null;
+    providerAccountName: string | null;
+    status: "active" | "error" | "revoked";
+    tools: Array<{
+      availableForInteractiveChats: boolean;
+      description?: string;
+      name: string;
+    }>;
+  } | null;
+  description: string;
+  displayName: string;
+  ownerType: "user";
+  provider: "granola";
+}
+
+type ListConnectorsResult = ConnectorCatalogRow[];
+type ListUserConnectorsResult = UserConnectorCatalogRow[];
+interface StartConnectorOAuthResult {
+  authorizationUrl: string;
+  mode: string;
+}
+interface RefreshConnectorToolsResult {
+  refreshed: boolean;
+  status: string;
+}
+
+export interface ConnectorMutationServiceContext {
   actor: {
     userId: string;
   };
@@ -49,40 +112,37 @@ interface ConnectorMutationServiceContext {
   };
 }
 
-interface ConnectorCommandDeps {
+export interface ConnectorCommandDeps {
   db: Database;
-  disconnectConnector: typeof disconnectConnector;
-  listConnectorsForOrg: typeof listConnectorsForOrg;
-  listUserConnectorsForViewer: typeof listUserConnectorsForViewer;
-  refreshConnectorTools: typeof refreshConnectorTools;
-  setConnectorAgentEnabled: typeof setConnectorAgentEnabled;
-  setConnectorAutomationEnabled: typeof setConnectorAutomationEnabled;
-  startConnectorOAuth: typeof startConnectorOAuth;
-}
-
-export function createDefaultConnectorCommandDeps(input: {
-  db: Database;
-  disconnectConnector?: typeof disconnectConnector;
-  listConnectorsForOrg?: typeof listConnectorsForOrg;
-  listUserConnectorsForViewer?: typeof listUserConnectorsForViewer;
-  refreshConnectorTools?: typeof refreshConnectorTools;
-  setConnectorAgentEnabled?: typeof setConnectorAgentEnabled;
-  setConnectorAutomationEnabled?: typeof setConnectorAutomationEnabled;
-  startConnectorOAuth?: typeof startConnectorOAuth;
-}): ConnectorCommandDeps {
-  return {
-    db: input.db,
-    disconnectConnector: input.disconnectConnector ?? disconnectConnector,
-    listConnectorsForOrg: input.listConnectorsForOrg ?? listConnectorsForOrg,
-    listUserConnectorsForViewer:
-      input.listUserConnectorsForViewer ?? listUserConnectorsForViewer,
-    refreshConnectorTools: input.refreshConnectorTools ?? refreshConnectorTools,
-    setConnectorAgentEnabled:
-      input.setConnectorAgentEnabled ?? setConnectorAgentEnabled,
-    setConnectorAutomationEnabled:
-      input.setConnectorAutomationEnabled ?? setConnectorAutomationEnabled,
-    startConnectorOAuth: input.startConnectorOAuth ?? startConnectorOAuth,
-  };
+  disconnectConnector(
+    ctx: ConnectorMutationServiceContext,
+    input: { provider: ConnectableConnectorProvider }
+  ): Promise<{ disconnected: boolean }>;
+  listConnectorsForOrg(input: {
+    db: Database;
+    organization: { orgId: string };
+    viewer: { canManage: boolean };
+  }): Promise<ListConnectorsResult>;
+  listUserConnectorsForViewer(input: {
+    db: Database;
+    viewer: { userId: string };
+  }): Promise<ListUserConnectorsResult>;
+  refreshConnectorTools(
+    ctx: ConnectorMutationServiceContext,
+    input: { provider: ConnectableConnectorProvider }
+  ): Promise<RefreshConnectorToolsResult>;
+  setConnectorAgentEnabled(
+    ctx: ConnectorMutationServiceContext,
+    input: { enabled: boolean; provider: ConnectableConnectorProvider }
+  ): Promise<{ enabled: boolean }>;
+  setConnectorAutomationEnabled(
+    ctx: ConnectorMutationServiceContext,
+    input: { enabled: boolean; provider: ConnectableConnectorProvider }
+  ): Promise<{ enabled: boolean }>;
+  startConnectorOAuth(
+    ctx: ConnectorMutationServiceContext,
+    input: { provider: ConnectableConnectorProvider }
+  ): Promise<StartConnectorOAuthResult>;
 }
 
 const emptyInput = z.object({}).strict();

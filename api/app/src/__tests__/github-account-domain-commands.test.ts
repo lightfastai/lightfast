@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthIdentity } from "../auth/identity";
 import { actorFromAuthIdentity } from "../domain";
 import {
-  createDefaultAccountCommandDeps,
+  type AccountCommandDeps,
   disconnectGitHubAccountCommand,
   getGitHubAccountStatusCommand,
   startGitHubAccountBindingCommand,
@@ -32,7 +32,7 @@ function ctx(identity: AuthIdentity = pendingIdentity) {
 }
 
 function deps() {
-  return createDefaultAccountCommandDeps({
+  return {
     clerk: {
       users: {
         getUser: vi.fn(),
@@ -40,10 +40,18 @@ function deps() {
       },
     },
     db: {} as Database,
+    deletePreClerkNamespaceReservation: vi.fn(),
     disconnectGitHubUserAccount: disconnectGitHubUserAccountMock,
+    finalizeNamespaceOperation: vi.fn(),
     getGitHubUserAccountStatus: getGitHubUserAccountStatusMock,
+    isClerkConflictError: vi.fn(),
+    log: { error: vi.fn() },
+    markNamespaceOperationClerkApplied: vi.fn(),
+    parseError: (error: unknown) => error,
+    reserveNamespaceForOperation: vi.fn(),
     startGitHubUserAccountBinding: startGitHubUserAccountBindingMock,
-  });
+    startNamespaceOperation: vi.fn(),
+  } satisfies AccountCommandDeps;
 }
 
 describe("GitHub account domain commands", () => {
