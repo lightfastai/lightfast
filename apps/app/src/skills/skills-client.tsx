@@ -19,7 +19,6 @@ import { SkillGrid } from "./skill-grid";
 import { SkillsActions } from "./skills-actions";
 import { SkillsLoading } from "./skills-loading";
 import { getVisibleSkills, type SkillFilter } from "./skills-model";
-import { skillsListQueryKey } from "./skills-queries";
 import type { NormalizedSkillsSearch } from "./skills-search-params";
 import type { SkillsListResult } from "./skills-types";
 import { useSkillIndexRefreshController } from "./use-skill-index-refresh-controller";
@@ -35,7 +34,7 @@ export function SkillsClient({
     enabled: typeof window !== "undefined",
     queryFn: async (): Promise<SkillsListResult> =>
       (await listSkills()) as SkillsListResult,
-    queryKey: skillsListQueryKey,
+    queryKey: ["skills", "list"] as const,
     staleTime: 0,
   });
   const [query, setQuery] = useState("");

@@ -21,7 +21,9 @@ describe("skills refresh controller source", () => {
     );
     expect(controllerSource).toContain("requestSkillRefresh");
     expect(controllerSource).toContain("Skill index refresh was not enqueued");
-    expect(controllerSource).toContain("skillsListQueryKey");
+    expect(controllerSource).toContain('queryKey: ["skills"] as const');
+    expect(controllerSource).not.toContain("skillsListQueryKey");
+    expect(controllerSource).not.toContain("skills-queries");
     expect(controllerSource).toContain(
       'new EventSource("/api/skills/index/events")'
     );
