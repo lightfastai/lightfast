@@ -4,11 +4,11 @@ import type { AuthIdentity } from "../auth/identity";
 import { OrgAccessError } from "../auth/organization-access";
 import { actorFromAuthIdentity } from "../domain";
 import {
-  createDefaultOrganizationCommandDeps,
   createOrganizationCommand,
   getOrganizationBySlugCommand,
   listOrganizationDomainsCommand,
   listUserOrganizationsCommand,
+  type OrganizationCommandDeps,
   updateOrganizationDomainsCommand,
   updateOrganizationNameCommand,
 } from "../domain/organizations";
@@ -29,26 +29,10 @@ const updateOrganizationMock = vi.fn();
 const updateOrganizationDomainMock = vi.fn();
 const isClerkConflictErrorMock = vi.fn();
 const isClerkOrganizationDomainsNotEnabledMock = vi.fn();
+const parseErrorMock = vi.fn((error: unknown) => error);
 const logInfoMock = vi.fn();
 const logErrorMock = vi.fn();
 const logWarnMock = vi.fn();
-
-const { MockNamespaceConflictError } = vi.hoisted(() => ({
-  MockNamespaceConflictError: class MockNamespaceConflictError extends Error {
-    readonly code: string;
-
-    constructor(code: string, message: string) {
-      super(message);
-      this.name = "NamespaceConflictError";
-      this.code = code;
-    }
-  },
-}));
-
-vi.mock("@db/app", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@db/app")>()),
-  NamespaceConflictError: MockNamespaceConflictError,
-}));
 
 const pendingIdentity: AuthIdentity = {
   type: "pending",
@@ -118,7 +102,7 @@ function organizationDomain(overrides: Record<string, unknown> = {}) {
 }
 
 function deps() {
-  return createDefaultOrganizationCommandDeps({
+  return {
     clerk: {
       organizations: {
         createOrganization: createOrganizationMock,
@@ -137,12 +121,17 @@ function deps() {
     isClerkConflictError: isClerkConflictErrorMock,
     isClerkOrganizationDomainsNotEnabled:
       isClerkOrganizationDomainsNotEnabledMock,
+    isNamespaceConflictError(_error): _error is never {
+      return false;
+    },
+    isOrgAccessError: (error) => error instanceof OrgAccessError,
     listUserOrganizationMemberships: listUserOrganizationMembershipsMock,
     log: { error: logErrorMock, info: logInfoMock, warn: logWarnMock },
     markNamespaceOperationClerkApplied: markNamespaceOperationClerkAppliedMock,
+    parseError: parseErrorMock,
     reserveNamespaceForOperation: reserveNamespaceForOperationMock,
     startNamespaceOperation: startNamespaceOperationMock,
-  });
+  } satisfies OrganizationCommandDeps;
 }
 
 beforeEach(() => {
@@ -198,6 +187,7 @@ beforeEach(() => {
   isClerkConflictErrorMock.mockReturnValue(false);
   isClerkOrganizationDomainsNotEnabledMock.mockReset();
   isClerkOrganizationDomainsNotEnabledMock.mockReturnValue(false);
+  parseErrorMock.mockClear();
   logInfoMock.mockReset();
   logErrorMock.mockReset();
   logWarnMock.mockReset();

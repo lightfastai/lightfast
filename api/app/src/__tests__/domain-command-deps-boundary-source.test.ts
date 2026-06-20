@@ -47,6 +47,25 @@ describe("domain command dependency boundaries", () => {
         factory: "createDefaultUserConnectorCommandDeps",
         runtimeImports: ["../../services/user-connectors/granola-flow"],
       },
+      {
+        command: "src/domain/org-members/commands.ts",
+        factory: "createDefaultOrgMembersCommandDeps",
+        runtimeImports: ["@vendor/clerk/server"],
+      },
+      {
+        command: "src/domain/org-billing/commands.ts",
+        factory: "createDefaultOrgBillingCommandDeps",
+        runtimeImports: ["@vendor/clerk/server"],
+      },
+      {
+        command: "src/domain/organizations/commands.ts",
+        factory: "createDefaultOrganizationCommandDeps",
+        runtimeImports: [
+          "@vendor/clerk/server",
+          "@vendor/observability/error/next",
+          "@vendor/observability/log/next",
+        ],
+      },
     ];
 
     for (const module of modules) {
@@ -87,6 +106,22 @@ describe("domain command dependency boundaries", () => {
       {
         adapter: "src/adapters/tanstack/user-connectors.ts",
         runtimeImports: ["../../services/user-connectors/granola-flow"],
+      },
+      {
+        adapter: "src/adapters/tanstack/org-members.ts",
+        runtimeImports: ["@vendor/clerk/server"],
+      },
+      {
+        adapter: "src/adapters/tanstack/org-billing.ts",
+        runtimeImports: ["@vendor/clerk/server"],
+      },
+      {
+        adapter: "src/adapters/tanstack/organizations.ts",
+        runtimeImports: [
+          "@vendor/clerk/server",
+          "@vendor/observability/error/next",
+          "@vendor/observability/log/next",
+        ],
       },
     ];
 
