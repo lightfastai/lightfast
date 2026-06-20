@@ -773,7 +773,14 @@ describe("app authenticated route migration", () => {
     expect(connectorsRouteSource).toContain("setSearchParams");
     expect(connectorsClientSource).toContain('@api/app/tanstack/connectors"');
     expect(connectorsClientSource).toContain("listConnectorSections");
-    expect(connectorsClientSource).toContain("connectorQueryKeys.sections()");
+    expect(connectorsClientSource).toContain(
+      'queryKey: ["connectors", "sections"] as const'
+    );
+    expect(connectorsClientSource).toContain(
+      'queryKey: ["connectors"] as const'
+    );
+    expect(connectorsClientSource).not.toContain("connectorQueryKeys");
+    expect(connectorsClientSource).not.toContain("connectors-cache");
     expect(connectorsClientSource).not.toContain(
       "connectorSectionsQueryOptions"
     );
@@ -1653,7 +1660,11 @@ describe("app authenticated route migration", () => {
     );
     expect(xCompleteRouteSource).toContain("XConnectorSetupCompleteClient");
     expect(xSetupClientSource).toContain("listConnectors");
-    expect(xSetupClientSource).toContain("connectorQueryKeys.list()");
+    expect(xSetupClientSource).toContain(
+      'queryKey: ["connectors", "list"] as const'
+    );
+    expect(xSetupClientSource).not.toContain("connectorQueryKeys");
+    expect(xSetupClientSource).not.toContain("connectors-cache");
     expect(xSetupClientSource).not.toContain("connectorsListQueryOptions");
     expect(xSetupClientSource).toContain(
       'enabled: typeof window !== "undefined"'

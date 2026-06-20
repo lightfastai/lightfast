@@ -66,7 +66,6 @@ import { WorkspaceSurface } from "~/components/workspace-surface";
 import { ConnectorDetailSheet } from "./connector-detail-sheet";
 import { ConnectorIcon } from "./connector-icons";
 import { ConnectorOwnerScopeTabs } from "./connector-owner-scope-tabs";
-import { connectorQueryKeys } from "./connectors-cache";
 import {
   type ConnectorCatalogRow,
   type ConnectorStatusFilter,
@@ -114,7 +113,7 @@ export function ConnectorsClient({
   const connectorsQuery = useQuery({
     enabled: typeof window !== "undefined",
     queryFn: () => listConnectorSections(),
-    queryKey: connectorQueryKeys.sections(),
+    queryKey: ["connectors", "sections"] as const,
     staleTime: 30_000,
   });
   const [query, setQuery] = useState("");
@@ -126,7 +125,7 @@ export function ConnectorsClient({
   }));
 
   const invalidateList = () =>
-    queryClient.invalidateQueries({ queryKey: connectorQueryKeys.all });
+    queryClient.invalidateQueries({ queryKey: ["connectors"] as const });
 
   const startConnectMutation = useMutation({
     meta: { errorTitle: "Failed to connect provider" },

@@ -38,7 +38,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 import { z } from "zod";
-import { connectorQueryKeys } from "~/connectors/connectors-cache";
 import { automationCreateMutationOptions } from "./automations-mutations";
 import {
   isTimeBasedKind,
@@ -102,7 +101,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
   const { data: connectors = [] } = useQuery({
     enabled: typeof window !== "undefined",
     queryFn: () => listConnectors(),
-    queryKey: connectorQueryKeys.list(),
+    queryKey: ["connectors", "list"] as const,
     staleTime: 30_000,
   });
 
