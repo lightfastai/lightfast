@@ -1,4 +1,7 @@
-import { listConversations } from "@api/app/tanstack/assistant";
+import {
+  type ListConversationsResult,
+  listConversations,
+} from "@api/app/tanstack/assistant";
 import {
   CollapseIcon,
   ExpandIcon,
@@ -20,12 +23,10 @@ import { cn } from "@repo/ui-v2/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { type ReactNode, useState } from "react";
-import {
-  assistantConversationsQueryKey,
-  type WorkspaceAssistantConversationListItem,
-} from "~/chat/workspace-assistant-queries";
 
 const recentChatsInput = { limit: 20 } as const;
+type WorkspaceAssistantConversationListItem =
+  ListConversationsResult["items"][number];
 
 export function RecentChatsMenu({
   onConversationSelect,
@@ -42,7 +43,12 @@ export function RecentChatsMenu({
   const { data, error, isPending } = useQuery({
     enabled: typeof window !== "undefined" && Boolean(orgSlug),
     queryFn: () => listConversations({ data: recentChatsInput }),
-    queryKey: [...assistantConversationsQueryKey, recentChatsInput] as const,
+    queryKey: [
+      "workspace-assistant",
+      "conversations",
+      orgSlug,
+      recentChatsInput,
+    ] as const,
     staleTime: 0,
   });
 
