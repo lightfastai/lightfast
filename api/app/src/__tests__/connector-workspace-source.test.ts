@@ -300,8 +300,13 @@ describe("connector workspace boundary", () => {
       name?: string;
       private?: boolean;
     }>("connectors/linear/package.json");
+    const linearContractSource = source("connectors/linear/src/contract.ts");
+    const linearOAuthSource = source("connectors/linear/src/oauth.ts");
 
     expect(existsSync(resolve(repoRoot, oldLinearPath))).toBe(false);
+    expect(
+      existsSync(resolve(repoRoot, "connectors/linear/src/contract.ts"))
+    ).toBe(true);
     expect(linearPackage.name).toBe("@lightfast/connector-linear");
     expect(linearPackage.private).toBe(true);
     expect(linearPackage.dependencies?.["@lightfast/connector-core"]).toBe(
@@ -310,10 +315,14 @@ describe("connector workspace boundary", () => {
     expect(linearPackage.dependencies?.["@vendor/mcp"]).toBe("workspace:*");
     expect(linearPackage.dependencies?.zod).toBe("catalog:");
     expect(Object.keys(linearPackage.exports ?? {}).sort()).toEqual([
+      "./contract",
       "./mcp",
       "./node",
       "./oauth",
     ]);
+    expect(linearContractSource).toContain("LINEAR_OAUTH_SCOPES");
+    expect(linearContractSource).toContain("LINEAR_OAUTH_SCOPE");
+    expect(linearOAuthSource).toContain('from "./contract"');
   });
 
   it("removes the old Linear app node package name from source and manifests", () => {
