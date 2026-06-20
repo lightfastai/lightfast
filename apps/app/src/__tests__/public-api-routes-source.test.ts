@@ -67,6 +67,7 @@ describe("public API route boundaries", () => {
 
     expect(packageJson.exports).toHaveProperty("./public-api/signals");
     expect(adapter).toContain("resolveApiKeyAuth");
+    expect(adapter).toContain('from "../../auth/actors"');
     expect(adapter).toContain("actorFromApiKeyAuth");
     expect(adapter).toContain("createSignalCommand");
     expect(adapter).toContain("getSignalCommand");
@@ -78,6 +79,7 @@ describe("public API route boundaries", () => {
     expect(adapter).not.toContain("ORPCError");
     expect(adapter).not.toContain("@orpc/");
     expect(adapter).not.toContain("OpenAPIHandler");
+    expect(adapter).not.toContain("actorFromApiKeyAuth, isDomainError");
   });
 
   it("keeps public system health behavior in an explicit api/app adapter", () => {

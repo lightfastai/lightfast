@@ -12,12 +12,13 @@ import {
 } from "@repo/api-contract";
 import { z } from "zod";
 
+import { actorFromApiKeyAuth } from "../../auth/actors";
 import {
   type ApiKeyAuthResult,
   isApiKeyAuthError,
   resolveApiKeyAuth,
 } from "../../auth/api-key";
-import { actorFromApiKeyAuth, isDomainError } from "../../domain";
+import { isDomainError } from "../../domain";
 import {
   createSignalCommand,
   createSignalCommandDeps,
