@@ -46,6 +46,9 @@ describe("migrated workspace assistant data access", () => {
     expect(clientSource).toContain(
       '["workspace-assistant", "conversations"] as const'
     );
+    expect(clientSource).toContain(
+      '"workspace-assistant",\n            "conversation",\n            conversationId'
+    );
     expect(clientSource).not.toContain("assistantConversationQueryKey");
     expect(clientSource).not.toContain("setQueryData");
     expect(newConversationRouteSource).toContain(

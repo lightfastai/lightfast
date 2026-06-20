@@ -947,6 +947,9 @@ describe("app authenticated route migration", () => {
     expect(assistantClientSource).toContain(
       '["workspace-assistant", "conversations"] as const'
     );
+    expect(assistantClientSource).toContain(
+      '"workspace-assistant",\n            "conversation",\n            conversationId'
+    );
     expect(assistantClientSource).not.toContain(
       "assistantConversationQueryKey"
     );

@@ -209,6 +209,13 @@ export function WorkspaceAssistantClient({
         setOptimisticFirstMessage(null);
       }
       if (createdConversationDuringSubmit) {
+        await queryClient.invalidateQueries({
+          queryKey: [
+            "workspace-assistant",
+            "conversation",
+            conversationId,
+          ] as const,
+        });
         if (orgSlug) {
           await router.navigate({
             params: { conversationId, slug: orgSlug },

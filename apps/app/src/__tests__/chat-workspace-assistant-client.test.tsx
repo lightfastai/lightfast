@@ -507,8 +507,15 @@ describe("WorkspaceAssistantClient", () => {
         }
       );
     });
-    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+    expect(invalidateQueriesMock).toHaveBeenNthCalledWith(1, {
       queryKey: ["workspace-assistant", "conversations"],
+    });
+    expect(invalidateQueriesMock).toHaveBeenNthCalledWith(2, {
+      queryKey: [
+        "workspace-assistant",
+        "conversation",
+        "conv_ff83026e-ef0e-40db-ae59-544fbe4df209",
+      ],
     });
     await waitFor(() => {
       expect(routerNavigateMock).toHaveBeenCalledWith({
