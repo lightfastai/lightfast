@@ -1,17 +1,43 @@
-import {
-  type Database,
-  getMcpOauthGrantByPublicId,
-  listMcpOauthGrantConnectionsForOrg,
-  listMcpOauthGrantConnectionsForUser,
-  type McpOauthGrant,
-  type McpOauthGrantConnection,
-  revokeMcpOauthGrant,
-} from "@db/app";
 import { z } from "zod";
 
 import { defineCommand } from "../command";
 import { NotFoundError } from "../errors";
 import { requireClerkOrgAdminActor, requireClerkUserActor } from "../gates";
+
+type McpConnectionStatus = "active" | "revoked";
+
+export interface McpConnectionGrant {
+  clerkOrgId: string;
+  clerkUserId: string;
+  clientPublicId: string;
+  createdAt: Date;
+  lastUsedAt: Date | null;
+  publicId: string;
+  resource: string;
+  revokedAt: Date | null;
+  scopes: string[];
+  status: McpConnectionStatus;
+}
+
+export interface McpConnectionClient {
+  clientName: string;
+  clientUri: string | null;
+  logoUri: string | null;
+  metadata: Record<string, unknown> | null;
+  status: string;
+}
+
+export interface McpConnectionRecord {
+  client: McpConnectionClient | null;
+  grant: McpConnectionGrant;
+  redirectUris: string[];
+  refreshTokenStatusSummary: {
+    active: number;
+    reuseDetected: number;
+    revoked: number;
+    rotated: number;
+  };
+}
 
 interface McpConnectionDto {
   clientId: string;
@@ -25,40 +51,24 @@ interface McpConnectionDto {
   lastUsedAt: string | null;
   logoUri: string | null;
   redirectUris: string[];
-  refreshTokenStatusSummary: McpOauthGrantConnection["refreshTokenStatusSummary"];
+  refreshTokenStatusSummary: McpConnectionRecord["refreshTokenStatusSummary"];
   resource: string;
   revokedAt: string | null;
   scopes: string[];
-  status: McpOauthGrant["status"];
+  status: McpConnectionStatus;
 }
 
-interface McpConnectionCommandDeps {
-  db: Database;
-  getMcpOauthGrantByPublicId: typeof getMcpOauthGrantByPublicId;
-  listMcpOauthGrantConnectionsForOrg: typeof listMcpOauthGrantConnectionsForOrg;
-  listMcpOauthGrantConnectionsForUser: typeof listMcpOauthGrantConnectionsForUser;
-  revokeMcpOauthGrant: typeof revokeMcpOauthGrant;
-}
-
-export function createDefaultMcpConnectionCommandDeps(input: {
-  db: Database;
-  getMcpOauthGrantByPublicId?: typeof getMcpOauthGrantByPublicId;
-  listMcpOauthGrantConnectionsForOrg?: typeof listMcpOauthGrantConnectionsForOrg;
-  listMcpOauthGrantConnectionsForUser?: typeof listMcpOauthGrantConnectionsForUser;
-  revokeMcpOauthGrant?: typeof revokeMcpOauthGrant;
-}): McpConnectionCommandDeps {
-  return {
-    db: input.db,
-    getMcpOauthGrantByPublicId:
-      input.getMcpOauthGrantByPublicId ?? getMcpOauthGrantByPublicId,
-    listMcpOauthGrantConnectionsForOrg:
-      input.listMcpOauthGrantConnectionsForOrg ??
-      listMcpOauthGrantConnectionsForOrg,
-    listMcpOauthGrantConnectionsForUser:
-      input.listMcpOauthGrantConnectionsForUser ??
-      listMcpOauthGrantConnectionsForUser,
-    revokeMcpOauthGrant: input.revokeMcpOauthGrant ?? revokeMcpOauthGrant,
-  };
+export interface McpConnectionCommandDeps {
+  getGrantByPublicId(input: {
+    publicId: string;
+  }): Promise<McpConnectionGrant | null>;
+  listGrantConnectionsForOrg(input: {
+    clerkOrgId: string;
+  }): Promise<McpConnectionRecord[]>;
+  listGrantConnectionsForUser(input: {
+    clerkUserId: string;
+  }): Promise<McpConnectionRecord[]>;
+  revokeGrant(input: { publicId: string }): Promise<unknown>;
 }
 
 const mcpConnectionInput = z.object({}).strict();
@@ -104,10 +114,9 @@ export const listAccountMcpConnectionsCommand = defineCommand<
   output: z.array(mcpConnectionDtoOutput),
   run: async ({ ctx, deps }) => {
     const actor = requireClerkUserActor(ctx);
-    const connections = await deps.listMcpOauthGrantConnectionsForUser(
-      deps.db,
-      { clerkUserId: actor.userId }
-    );
+    const connections = await deps.listGrantConnectionsForUser({
+      clerkUserId: actor.userId,
+    });
     return connections.map(toMcpConnectionDto);
   },
 });
@@ -123,7 +132,7 @@ export const revokeAccountMcpConnectionCommand = defineCommand<
   output: successOutput,
   run: async ({ ctx, deps, input }) => {
     const actor = requireClerkUserActor(ctx);
-    const grant = await deps.getMcpOauthGrantByPublicId(deps.db, {
+    const grant = await deps.getGrantByPublicId({
       publicId: input.grantId,
     });
 
@@ -135,7 +144,7 @@ export const revokeAccountMcpConnectionCommand = defineCommand<
     }
 
     if (grant.status === "active") {
-      await deps.revokeMcpOauthGrant(deps.db, { publicId: input.grantId });
+      await deps.revokeGrant({ publicId: input.grantId });
     }
 
     return { success: true };
@@ -153,7 +162,7 @@ export const listOrgMcpConnectionsCommand = defineCommand<
   output: z.array(mcpConnectionDtoOutput),
   run: async ({ ctx, deps }) => {
     const actor = requireClerkOrgAdminActor(ctx);
-    const connections = await deps.listMcpOauthGrantConnectionsForOrg(deps.db, {
+    const connections = await deps.listGrantConnectionsForOrg({
       clerkOrgId: actor.orgId,
     });
     return connections.map(toMcpConnectionDto);
@@ -171,7 +180,7 @@ export const revokeOrgMcpConnectionCommand = defineCommand<
   output: successOutput,
   run: async ({ ctx, deps, input }) => {
     const actor = requireClerkOrgAdminActor(ctx);
-    const grant = await deps.getMcpOauthGrantByPublicId(deps.db, {
+    const grant = await deps.getGrantByPublicId({
       publicId: input.grantId,
     });
 
@@ -183,16 +192,14 @@ export const revokeOrgMcpConnectionCommand = defineCommand<
     }
 
     if (grant.status === "active") {
-      await deps.revokeMcpOauthGrant(deps.db, { publicId: input.grantId });
+      await deps.revokeGrant({ publicId: input.grantId });
     }
 
     return { success: true };
   },
 });
 
-function toMcpConnectionDto(
-  connection: McpOauthGrantConnection
-): McpConnectionDto {
+function toMcpConnectionDto(connection: McpConnectionRecord): McpConnectionDto {
   const client = connection.client;
   return {
     clientId: connection.grant.clientPublicId,

@@ -1,15 +1,17 @@
 import { db } from "@db/app/client";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest, setResponseHeader } from "@tanstack/react-start/server";
+import { log } from "@vendor/observability/log/next";
+import { getUnkeyClient, unkeyEnv } from "@vendor/unkey/server";
 
 import { resolveAuthContextFromClerk } from "../../auth/identity";
 import type { Actor } from "../../domain";
 import { actorFromAuthIdentity, isDomainError } from "../../domain";
 import {
-  createDefaultOrgApiKeyCommandDeps,
   createOrgApiKeyCommand,
   deleteOrgApiKeyCommand,
   listOrgApiKeysCommand,
+  type OrgApiKeyCommandDeps,
   revokeOrgApiKeyCommand,
   rotateOrgApiKeyCommand,
 } from "../../domain/org-api-keys";
@@ -62,13 +64,33 @@ function noStore() {
   setResponseHeader("vary", "Cookie, Authorization");
 }
 
+function isUnkeyStatus(error: unknown, statusCode: number) {
+  return (
+    error !== null &&
+    typeof error === "object" &&
+    "statusCode" in error &&
+    (error as { statusCode?: unknown }).statusCode === statusCode
+  );
+}
+
+function commandDeps(): OrgApiKeyCommandDeps {
+  return {
+    apiId: unkeyEnv.UNKEY_API_ID,
+    isProviderConflictError: (error) => isUnkeyStatus(error, 409),
+    isProviderNotFoundError: (error) => isUnkeyStatus(error, 404),
+    log,
+    now: Date.now,
+    provider: getUnkeyClient(),
+  };
+}
+
 export const listOrgApiKeys = createServerFn({ method: "GET" }).handler(
   async () => {
     noStore();
     try {
       return await listOrgApiKeysCommand.run({
         ctx: await createTanStackOrgApiKeyContext(),
-        deps: createDefaultOrgApiKeyCommandDeps(),
+        deps: commandDeps(),
         input: {},
       });
     } catch (error) {
@@ -84,7 +106,7 @@ export const createOrgApiKey = createServerFn({ method: "POST" })
     try {
       return await createOrgApiKeyCommand.run({
         ctx: await createTanStackOrgApiKeyContext(),
-        deps: createDefaultOrgApiKeyCommandDeps(),
+        deps: commandDeps(),
         input: data,
       });
     } catch (error) {
@@ -99,7 +121,7 @@ export const revokeOrgApiKey = createServerFn({ method: "POST" })
     try {
       return await revokeOrgApiKeyCommand.run({
         ctx: await createTanStackOrgApiKeyContext(),
-        deps: createDefaultOrgApiKeyCommandDeps(),
+        deps: commandDeps(),
         input: data,
       });
     } catch (error) {
@@ -114,7 +136,7 @@ export const deleteOrgApiKey = createServerFn({ method: "POST" })
     try {
       return await deleteOrgApiKeyCommand.run({
         ctx: await createTanStackOrgApiKeyContext(),
-        deps: createDefaultOrgApiKeyCommandDeps(),
+        deps: commandDeps(),
         input: data,
       });
     } catch (error) {
@@ -129,7 +151,7 @@ export const rotateOrgApiKey = createServerFn({ method: "POST" })
     try {
       return await rotateOrgApiKeyCommand.run({
         ctx: await createTanStackOrgApiKeyContext(),
-        deps: createDefaultOrgApiKeyCommandDeps(),
+        deps: commandDeps(),
         input: data,
       });
     } catch (error) {

@@ -2,6 +2,7 @@ import {
   deletePreClerkNamespaceReservation,
   finalizeNamespaceOperation,
   markNamespaceOperationClerkApplied,
+  NamespaceConflictError,
   reserveNamespaceForOperation,
   startNamespaceOperation,
 } from "@db/app";
@@ -62,19 +63,27 @@ function noStore() {
 async function deps(): Promise<AccountCommandDeps> {
   const clerk = await clerkClient();
   return {
-    clerk,
-    db,
-    deletePreClerkNamespaceReservation,
     disconnectGitHubUserAccount,
-    finalizeNamespaceOperation,
     getGitHubUserAccountStatus,
-    isClerkConflictError,
     log,
-    markNamespaceOperationClerkApplied,
     parseError,
-    reserveNamespaceForOperation,
     startGitHubUserAccountBinding,
-    startNamespaceOperation,
+    usernameNamespace: {
+      deletePreClerkReservation: (operation, input) =>
+        deletePreClerkNamespaceReservation(db, operation, input),
+      finalize: (operation) => finalizeNamespaceOperation(db, operation),
+      isConflict: (error): error is NamespaceConflictError =>
+        error instanceof NamespaceConflictError,
+      markClerkApplied: (operation) =>
+        markNamespaceOperationClerkApplied(db, operation),
+      reserve: (operation) => reserveNamespaceForOperation(db, operation),
+      start: (input) => startNamespaceOperation(db, input),
+    },
+    users: {
+      getUser: (userId) => clerk.users.getUser(userId),
+      isUsernameConflictError: isClerkConflictError,
+      updateUser: (userId, params) => clerk.users.updateUser(userId, params),
+    },
   };
 }
 

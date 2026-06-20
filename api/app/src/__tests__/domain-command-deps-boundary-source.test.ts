@@ -16,8 +16,28 @@ describe("domain command dependency boundaries", () => {
         command: "src/domain/account/commands.ts",
         factory: "createDefaultAccountCommandDeps",
         runtimeImports: [
+          "@db/app",
+          "@db/app/schema",
           "../../services/github/user-account/flow",
           "@vendor/clerk/server",
+        ],
+      },
+      {
+        command: "src/domain/org-api-keys/commands.ts",
+        factory: "createDefaultOrgApiKeyCommandDeps",
+        runtimeImports: [
+          "@vendor/observability/log/next",
+          "@vendor/unkey/server",
+        ],
+      },
+      {
+        command: "src/domain/mcp-connections/commands.ts",
+        factory: "createDefaultMcpConnectionCommandDeps",
+        runtimeImports: [
+          "getMcpOauthGrantByPublicId",
+          "listMcpOauthGrantConnectionsForOrg",
+          "listMcpOauthGrantConnectionsForUser",
+          "revokeMcpOauthGrant",
         ],
       },
       {
@@ -76,13 +96,37 @@ describe("domain command dependency boundaries", () => {
         expect(commandSource).not.toContain(runtimeImport);
       }
     }
+
+    expect(source("src/domain/account/profile.ts")).not.toContain(
+      "@vendor/clerk/server"
+    );
   });
 
   it("keeps concrete app wiring explicit in the TanStack adapter modules", () => {
     const adapterExpectations = [
       {
         adapter: "src/adapters/tanstack/account.ts",
-        runtimeImports: ["../../services/github/user-account/flow"],
+        runtimeImports: [
+          "@db/app",
+          "../../services/github/user-account/flow",
+          "NamespaceConflictError",
+        ],
+      },
+      {
+        adapter: "src/adapters/tanstack/org-api-keys.ts",
+        runtimeImports: [
+          "@vendor/observability/log/next",
+          "@vendor/unkey/server",
+        ],
+      },
+      {
+        adapter: "src/adapters/tanstack/mcp-connections.ts",
+        runtimeImports: [
+          "getMcpOauthGrantByPublicId",
+          "listMcpOauthGrantConnectionsForOrg",
+          "listMcpOauthGrantConnectionsForUser",
+          "revokeMcpOauthGrant",
+        ],
       },
       {
         adapter: "src/adapters/tanstack/connectors.ts",

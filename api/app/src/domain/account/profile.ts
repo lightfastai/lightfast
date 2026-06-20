@@ -1,5 +1,3 @@
-import type { User } from "@vendor/clerk/server";
-
 function deriveInitials(input: {
   firstName: string | null;
   fullName: string | null;
@@ -31,16 +29,15 @@ function deriveInitials(input: {
   return "LF";
 }
 
-export type AccountProfileUser = Pick<
-  User,
-  | "createdAt"
-  | "firstName"
-  | "id"
-  | "imageUrl"
-  | "lastName"
-  | "primaryEmailAddress"
-  | "username"
->;
+export interface AccountProfileUser {
+  createdAt: Date | number | string;
+  firstName: string | null;
+  id: string;
+  imageUrl: string;
+  lastName: string | null;
+  primaryEmailAddress: { emailAddress: string } | null;
+  username: string | null;
+}
 
 export function toAccountProfile(user: AccountProfileUser) {
   const fullName =
