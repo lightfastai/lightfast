@@ -28,8 +28,9 @@ import { useMounted } from "@repo/ui/hooks/use-mounted";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import { SettingRow, SettingsGroup } from "~/components/settings-section";
-import { accountProfileQueryKey } from "../account-cache";
 import { ProfileDataLoading } from "./profile-data-loading";
+
+const accountProfileQueryKey = ["account", "profile"] as const;
 
 export function ProfileDataDisplay() {
   const mounted = useMounted();

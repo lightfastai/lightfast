@@ -589,7 +589,7 @@ describe("app authenticated route migration", () => {
     expect(searchSource).toContain("validatePeopleSearch");
     expect(searchSource).toContain("parsePersonProviders");
     expect(querySource).toContain("listPeople");
-    expect(querySource).toContain("peopleQueryKeys.list(listInput)");
+    expect(querySource).toContain('["people", "list", listInput] as const');
     expect(querySource).not.toContain("peopleListInfiniteQueryOptions");
     expect(querySource).toContain('enabled: typeof window !== "undefined"');
     expect(viewsSource).toContain("viewConfigToParamValues");

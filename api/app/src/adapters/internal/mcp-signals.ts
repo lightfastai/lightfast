@@ -1,3 +1,7 @@
+import {
+  getVisibleSignalByPublicId,
+  listSignalEntityLinksForSignal,
+} from "@db/app";
 import { db } from "@db/app/client";
 import {
   type CreateMcpSignalCommandInput,
@@ -11,11 +15,15 @@ import { verifyServiceJWT } from "@repo/service-jwt";
 import { type ExecutionContext, isDomainError } from "../../domain";
 import {
   createSignalCommand,
-  createSignalCommandDeps,
   getSignalCommand,
-  getSignalCommandDeps,
+  type SignalCreateCommandDeps,
+  type SignalGetCommandDeps,
 } from "../../domain/signals";
 import { assertHostedMcpOrgAccess } from "../../mcp-oauth/resource-access";
+import {
+  createAndQueueSignal,
+  isSignalCreateQueueError,
+} from "../../signals/create-signal";
 
 function bearerToken(request: Request): string | undefined {
   const authorization = request.headers.get("authorization");
@@ -112,6 +120,22 @@ function mcpSignalContext(actor: McpSignalActor): ExecutionContext {
   };
 }
 
+function createSignalDeps(): SignalCreateCommandDeps {
+  return {
+    createAndQueueSignal: (input) => createAndQueueSignal(db, input),
+    isSignalCreateQueueError,
+  };
+}
+
+function getSignalDeps(): SignalGetCommandDeps {
+  return {
+    getVisibleSignalByPublicId: (input) =>
+      getVisibleSignalByPublicId(db, input),
+    listSignalEntityLinksForSignal: (input) =>
+      listSignalEntityLinksForSignal(db, input),
+  };
+}
+
 function domainErrorResponse(
   error: unknown,
   fallbackMessage: string
@@ -164,7 +188,7 @@ export async function handleCreateMcpSignalInternalRequest(
     });
     const result = await createSignalCommand.run({
       ctx: mcpSignalContext(parsed.data.actor),
-      deps: createSignalCommandDeps({ db }),
+      deps: createSignalDeps(),
       input: { input: parsed.data.input },
     });
     return Response.json(result, { status: 200 });
@@ -205,7 +229,7 @@ export async function handleGetMcpSignalInternalRequest(
     });
     const signal = await getSignalCommand.run({
       ctx: mcpSignalContext(parsed.data.actor),
-      deps: getSignalCommandDeps({ db }),
+      deps: getSignalDeps(),
       input: { publicId: parsed.data.id },
     });
 

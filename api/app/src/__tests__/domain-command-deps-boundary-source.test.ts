@@ -86,6 +86,11 @@ describe("domain command dependency boundaries", () => {
           "@vendor/observability/log/next",
         ],
       },
+      {
+        command: "src/domain/signals/commands.ts",
+        factory: "createDefaultSignalCommandDeps",
+        runtimeImports: ["@db/app", "../../signals/create-signal"],
+      },
     ];
 
     for (const module of modules) {
@@ -166,6 +171,10 @@ describe("domain command dependency boundaries", () => {
           "@vendor/observability/error/next",
           "@vendor/observability/log/next",
         ],
+      },
+      {
+        adapter: "src/adapters/tanstack/signals.ts",
+        runtimeImports: ["@db/app", "../../signals/create-signal"],
       },
     ];
 

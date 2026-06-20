@@ -72,10 +72,10 @@ describe("public API route boundaries", () => {
     expect(adapter).toContain("createSignalCommand");
     expect(adapter).toContain("getSignalCommand");
     expect(adapter).toContain("createSignalInput");
+    expect(adapter).toContain("getVisibleSignalByPublicId");
+    expect(adapter).toContain("listSignalEntityLinksForSignal");
     expect(adapter).toContain("getSignalOutput.parse");
     expect(adapter).not.toContain("createSignalForActor");
-    expect(adapter).not.toContain("getVisibleSignalByPublicId");
-    expect(adapter).not.toContain("listSignalEntityLinksForSignal");
     expect(adapter).not.toContain("ORPCError");
     expect(adapter).not.toContain("@orpc/");
     expect(adapter).not.toContain("OpenAPIHandler");

@@ -11,7 +11,6 @@ import {
 } from "@repo/ui/components/ui/sheet";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useQuery } from "@tanstack/react-query";
-import { peopleQueryKeys } from "./people-cache";
 import { PeopleDetailContent } from "./people-detail-content";
 import { getPersonName, type PersonRow } from "./people-model";
 
@@ -36,7 +35,7 @@ export function PeopleDetailSheet({
       getPerson({
         data: { publicId: publicId ?? "" } satisfies GetPersonInput,
       }),
-    queryKey: peopleQueryKeys.detail(publicId ?? ""),
+    queryKey: ["people", "detail", publicId ?? ""] as const,
   });
 
   const person = hasInitial ? initialPerson : query.data;

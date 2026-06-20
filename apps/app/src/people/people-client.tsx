@@ -7,7 +7,6 @@ import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { type ReactNode, useMemo } from "react";
 import { WorkspaceSurface } from "~/components/workspace-surface";
-import { peopleQueryKeys } from "./people-cache";
 import { PeopleDetailSheet } from "./people-detail-sheet";
 import { PeopleLoading } from "./people-loading";
 import {
@@ -63,7 +62,7 @@ export function PeopleClient({
           cursor: pageParam,
         },
       })) as ListPeopleResult,
-    queryKey: peopleQueryKeys.list(listInput),
+    queryKey: ["people", "list", listInput] as const,
     staleTime: 60_000,
   });
   const rows = flattenPeoplePages(peopleQuery.data);

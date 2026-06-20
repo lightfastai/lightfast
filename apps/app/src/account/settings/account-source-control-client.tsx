@@ -5,8 +5,9 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { accountGitHubAccountQueryKey } from "../account-cache";
 import { GithubAccountCard } from "./github-account-card";
+
+const accountGitHubAccountQueryKey = ["account", "github"] as const;
 
 export function AccountSourceControlClient() {
   const { data, isPending } = useQuery({
