@@ -1,0 +1,563 @@
+---
+import { Font, getImage } from "astro:assets";
+import halftoneBackground from "../assets/images/landing-halftone-bg.png";
+
+const title = "A Git Forge for the Agentic Era";
+const description =
+  "Lightfast is building infrastructure for code moving faster than existing systems were built to handle.";
+
+const halftoneAvif = await getImage({
+  src: halftoneBackground,
+  format: "avif",
+  quality: 40,
+});
+const halftoneWebp = await getImage({
+  src: halftoneBackground,
+  format: "webp",
+  quality: 40,
+});
+const halftoneImageSet = `image-set(url("${halftoneAvif.src}") type("image/avif"), url("${halftoneWebp.src}") type("image/webp"))`;
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://lightfast.ai/#organization",
+      name: "Lightfast",
+      url: "https://lightfast.ai",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://lightfast.ai/android-chrome-512x512.png",
+      },
+      sameAs: [
+        "https://twitter.com/lightfastai",
+        "https://github.com/lightfastai",
+        "https://www.linkedin.com/company/lightfastai",
+      ],
+      description,
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://lightfast.ai/v2#website",
+      url: "https://lightfast.ai/v2",
+      name: "Lightfast",
+      description: "A git forge for the agentic era.",
+      publisher: {
+        "@id": "https://lightfast.ai/#organization",
+      },
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://lightfast.ai/#software",
+      name: "Lightfast",
+      applicationCategory: "DeveloperApplication",
+      operatingSystem: "Web",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+        url: "https://lightfast.ai/sign-up",
+      },
+      description:
+        "A git forge for the agentic era, designed for code moving faster than existing infrastructure was built to handle.",
+      featureList: [
+        "Agentic software development infrastructure",
+        "Developer workflows for AI-assisted code",
+        "Version control workflows for modern software teams",
+      ],
+    },
+  ],
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <link
+      rel="preload"
+      as="image"
+      href={halftoneAvif.src}
+      type="image/avif"
+      media="(min-width: 768px)"
+    />
+    <Font cssVariable="--font-geist" preload={[{ weight: 400, style: "normal" }]} />
+    <Font cssVariable="--font-pp-neue-montreal" preload={[{ weight: 500, style: "normal" }]} />
+    <Font cssVariable="--font-roobert-trial" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <meta
+      name="keywords"
+      content="AI developer tools, agentic coding, git forge, software agents, AI infrastructure, developer infrastructure, Lightfast"
+    />
+    <meta name="author" content="Lightfast" />
+    <meta name="creator" content="Lightfast" />
+    <meta name="publisher" content="Lightfast" />
+    <link rel="canonical" href="https://lightfast.ai/v2" />
+    <meta property="og:title" content="Lightfast - A Git Forge for the Agentic Era" />
+    <meta property="og:description" content="Infrastructure for code moving faster than existing systems were built to handle." />
+    <meta property="og:url" content="https://lightfast.ai/v2" />
+    <meta property="og:site_name" content="Lightfast" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Lightfast - A Git Forge for the Agentic Era" />
+    <meta name="twitter:description" content="Infrastructure for code moving faster than existing systems were built to handle." />
+    <meta name="twitter:site" content="@lightfastai" />
+    <meta name="twitter:creator" content="@lightfastai" />
+    <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <section class="sr-only" aria-label="Lightfast answer summary">
+      <h1>What is Lightfast?</h1>
+      <p>
+        Lightfast is the operating layer between AI agents, apps, and teams. It
+        helps teams observe workspace events, preserve durable memory, review
+        long-running agent work, and act across tools with source-cited context.
+      </p>
+      <h2>Who is Lightfast for?</h2>
+      <p>
+        Lightfast is for engineering teams, founders, and agent builders who
+        need AI workflows to survive handoffs, retries, reviews, and production
+        changes.
+      </p>
+    </section>
+
+    <main class="landing" style="--guide-x: 24.58%; --guide-y: clamp(108px, calc(45.9svh - 180px), 27.55%);">
+      <div class="mobile-gradient" aria-hidden="true"></div>
+      <div
+        class="halftone-background"
+        aria-hidden="true"
+        style={`--halftone-background: ${halftoneImageSet};`}
+      />
+      <div class="scrim" aria-hidden="true"></div>
+      <div class="decorative-guides" aria-hidden="true">
+        <div class="horizontal-guide"></div>
+        <div class="vertical-guide"></div>
+        <svg class="guide-art" fill="none" preserveAspectRatio="none" viewBox="0 0 1440 900">
+          <path
+            d="M175 -8 C128 206 116 548 275 748 C432 945 806 833 1448 368"
+            stroke="rgba(255,255,255,0.82)"
+            stroke-width="1.1"
+          ></path>
+          <path
+            d="M1160 -2 L1446 280"
+            stroke="rgba(255,255,255,0.86)"
+            stroke-dasharray="6 8"
+            stroke-width="1.2"
+          ></path>
+        </svg>
+      </div>
+
+      <section class="hero">
+        <div class="hero-content">
+          <a aria-label="Lightfast home" class="lockup" href="/">
+            <svg class="mark" aria-hidden="true" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M8 52a4 4 0 1 0-8 0 4 4 0 0 0 8 0M8 40a4 4 0 1 0-8 0 4 4 0 0 0 8 0M8 28a4 4 0 1 0-8 0 4 4 0 0 0 8 0M20 40a4 4 0 1 0-8 0 4 4 0 0 0 8 0M20 28a4 4 0 1 0-8 0 4 4 0 0 0 8 0M20 16a4 4 0 1 0-8 0 4 4 0 0 0 8 0M44 76a4 4 0 1 0-8 0 4 4 0 0 0 8 0M44 64a4 4 0 1 0-8 0 4 4 0 0 0 8 0M44 52a4 4 0 1 0-8 0 4 4 0 0 0 8 0M32 52a4 4 0 1 0-8 0 4 4 0 0 0 8 0M20 52a4 4 0 1 0-8 0 4 4 0 0 0 8 0M32 40a4 4 0 1 0-8 0 4 4 0 0 0 8 0M44 28a4 4 0 1 0-8 0 4 4 0 0 0 8 0M56 16a4 4 0 1 0-8 0 4 4 0 0 0 8 0M68 16a4 4 0 1 0-8 0 4 4 0 0 0 8 0M44 16a4 4 0 1 0-8 0 4 4 0 0 0 8 0M44 4a4 4 0 1 0-8 0 4 4 0 0 0 8 0M68 64a4 4 0 1 0-8 0 4 4 0 0 0 8 0M68 52a4 4 0 1 0-8 0 4 4 0 0 0 8 0M68 40a4 4 0 1 0-8 0 4 4 0 0 0 8 0M80 40a4 4 0 1 0-8 0 4 4 0 0 0 8 0M68 28a4 4 0 1 0-8 0 4 4 0 0 0 8 0M56 28a4 4 0 1 0-8 0 4 4 0 0 0 8 0M32 76a4 4 0 1 0-8 0 4 4 0 0 0 8 0M32 64a4 4 0 1 0-8 0 4 4 0 0 0 8 0M20 64a4 4 0 1 0-8 0 4 4 0 0 0 8 0M32 28a4 4 0 1 0-8 0 4 4 0 0 0 8 0M32 16a4 4 0 1 0-8 0 4 4 0 0 0 8 0M32 4a4 4 0 1 0-8 0 4 4 0 0 0 8 0M56 76a4 4 0 1 0-8 0 4 4 0 0 0 8 0M56 64a4 4 0 1 0-8 0 4 4 0 0 0 8 0M56 52a4 4 0 1 0-8 0 4 4 0 0 0 8 0M56 40a4 4 0 1 0-8 0 4 4 0 0 0 8 0M56 4a4 4 0 1 0-8 0 4 4 0 0 0 8 0M80 52a4 4 0 1 0-8 0 4 4 0 0 0 8 0M44 40a4 4 0 1 0-8 0 4 4 0 0 0 8 0M80 28a4 4 0 1 0-8 0 4 4 0 0 0 8 0"
+                fill="currentColor"
+              ></path>
+            </svg>
+            <span class="lockup-text">Lightfast</span>
+          </a>
+
+          <h1 class="headline">
+            A git forge for
+            <br />
+            the agentic era
+          </h1>
+
+          <p class="dek">
+            Code is moving faster than any infrastructure was built to handle.
+            <br />
+            Origin was designed for this moment.
+          </p>
+
+          <form class="waitlist-form" id="landing-waitlist" method="get">
+            <label class="form-label" for="landing-email">Join the waitlist</label>
+            <div class="input-wrap">
+              <input
+                id="landing-email"
+                inputmode="email"
+                name="email"
+                placeholder="Enter your work email"
+                required
+                type="email"
+              />
+              <button aria-label="Join the waitlist" disabled type="submit">
+                <svg aria-hidden="true" class="arrow-icon" fill="none" viewBox="0 0 24 24">
+                  <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+                </svg>
+              </button>
+            </div>
+            <p class="consent">
+              By joining, you agree to receive early access updates. See our
+              <a href="/v2/legal/privacy">Privacy Policy</a>.
+            </p>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <script is:inline>
+      const form = document.querySelector("#landing-waitlist");
+      const input = document.querySelector("#landing-email");
+      const button = form?.querySelector("button");
+
+      const syncButton = () => {
+        if (!button || !(input instanceof HTMLInputElement)) return;
+        button.disabled = input.value.trim().length === 0;
+      };
+
+      form?.addEventListener("submit", (event) => event.preventDefault());
+      input?.addEventListener("input", syncButton);
+      syncButton();
+    </script>
+  </body>
+</html>
+
+<style>
+  :global(*) {
+    box-sizing: border-box;
+  }
+
+  :global(html),
+  :global(body) {
+    margin: 0;
+    min-height: 100%;
+  }
+
+  :global(body) {
+    background: #14120b;
+    color: #edecec;
+    font-family: var(--font-geist);
+  }
+
+  :global(a) {
+    color: inherit;
+  }
+
+  .sr-only {
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+  }
+
+  .landing {
+    background: #14120b;
+    color: #edecec;
+    height: 100svh;
+    min-height: 640px;
+    overflow: hidden;
+    position: relative;
+    selection-color: #edecec;
+    width: 100%;
+  }
+
+  .mobile-gradient {
+    background: linear-gradient(115deg, #1d3d56 0%, #6e9aaa 48%, #060c09 100%);
+    inset: 0;
+    position: absolute;
+  }
+
+  .halftone-background {
+    display: none;
+  }
+
+  .scrim {
+    background: rgb(0 0 0 / 20%);
+    inset: 0;
+    position: absolute;
+    z-index: 1;
+  }
+
+  .decorative-guides {
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+  }
+
+  .horizontal-guide {
+    background: rgb(255 255 255 / 10%);
+    height: 1px;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: var(--guide-y);
+  }
+
+  .vertical-guide {
+    background: rgb(255 255 255 / 10%);
+    bottom: 0;
+    left: var(--guide-x);
+    position: absolute;
+    top: 0;
+    width: 1px;
+  }
+
+  .guide-art {
+    height: 100%;
+    inset: 0;
+    position: absolute;
+    width: 100%;
+  }
+
+  .hero {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto 1fr;
+    min-height: 100%;
+    padding: 1.5rem;
+    position: relative;
+    width: 100%;
+    z-index: 10;
+  }
+
+  .hero-content {
+    align-items: flex-start;
+    display: flex;
+    flex-direction: column;
+    grid-column: span 2;
+    grid-row-start: 1;
+    max-width: 100%;
+    min-width: 0;
+    text-align: left;
+    width: 100%;
+  }
+
+  .lockup {
+    align-items: center;
+    display: inline-flex;
+    gap: 8.75px;
+    height: 40px;
+    opacity: 1;
+    text-decoration: none;
+    transition: opacity 200ms ease-out;
+  }
+
+  .lockup:hover {
+    opacity: 0.7;
+  }
+
+  .mark {
+    height: 31.3px;
+    width: 31.3px;
+  }
+
+  .lockup-text {
+    align-items: center;
+    display: flex;
+    font-family: var(--font-roobert-trial);
+    font-feature-settings: "ss01", "ss04", "ss06", "ss11", "ss14";
+    font-size: 33.45px;
+    font-weight: 500;
+    height: 40px;
+    letter-spacing: 0;
+    line-height: 40px;
+  }
+
+  .headline {
+    font-family: var(--font-pp-neue-montreal);
+    font-size: 52px;
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: 1.1;
+    margin: 38.39px 0 0;
+    max-width: 684px;
+    padding-right: 2.5rem;
+    text-wrap: balance;
+    width: 100%;
+  }
+
+  .dek {
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 24px;
+    margin: 15.2px 0 0;
+    max-width: 100%;
+    width: 520px;
+  }
+
+  .waitlist-form {
+    margin-top: 30.39px;
+    position: relative;
+    text-align: left;
+    width: 100%;
+  }
+
+  .form-label {
+    display: block;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 24px;
+    margin-bottom: 7.5px;
+  }
+
+  .input-wrap {
+    height: 48px;
+    position: relative;
+  }
+
+  input {
+    background: #fff;
+    border: 1px solid #edecec;
+    border-radius: 8px;
+    caret-color: #171717;
+    color: #171717;
+    font: inherit;
+    font-size: 16px;
+    height: 48px;
+    line-height: 24px;
+    outline: none;
+    padding: 8.96px 56px 9.28px 20px;
+    text-align: left;
+    transition: border-color 200ms, background-color 200ms;
+    width: 100%;
+  }
+
+  input::placeholder {
+    color: #737373;
+  }
+
+  input:focus,
+  input:hover {
+    background: #fff;
+    border-color: #fff;
+  }
+
+  button {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 4px;
+    color: #fff;
+    display: grid;
+    height: 40px;
+    justify-items: center;
+    opacity: 0.4;
+    padding: 0;
+    place-items: center;
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: background-color 200ms, color 200ms, opacity 200ms;
+    width: 40px;
+  }
+
+  button:not(:disabled) {
+    background: #14120b;
+    cursor: pointer;
+    opacity: 1;
+  }
+
+  button:disabled {
+    pointer-events: none;
+  }
+
+  .arrow-icon {
+    height: 16px;
+    width: 16px;
+  }
+
+  .consent {
+    color: rgb(237 236 236 / 75%);
+    font-size: 12px;
+    line-height: 20px;
+    margin: 12px 0 0;
+    max-width: 520px;
+  }
+
+  .consent a {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  @media (max-width: 639px) {
+    .headline {
+      font-size: 44px;
+      padding-right: 0;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .hero-content,
+    .headline,
+    .dek,
+    .waitlist-form,
+    .consent {
+      max-width: calc(100vw - 3rem);
+    }
+
+    .dek {
+      width: 100%;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .hero {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .hero-content {
+      grid-column: span 2;
+    }
+
+    .mobile-gradient {
+      display: none;
+    }
+
+    .halftone-background {
+      background-image: var(--halftone-background);
+      background-position: center;
+      background-size: cover;
+      display: block;
+      height: 100%;
+      inset: 0;
+      position: absolute;
+      width: 100%;
+      z-index: 0;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .landing {
+      min-height: 640px;
+    }
+
+    .scrim {
+      background: rgb(0 0 0 / 25%);
+    }
+
+    .hero {
+      gap: 1.5rem;
+      grid-template-rows: 1fr auto 1fr;
+    }
+
+    .hero-content {
+      align-self: center;
+      grid-column: 2 / span 2;
+      grid-row-start: 2;
+    }
+  }
+
+  @media (max-width: 1023px) {
+    .landing {
+      min-height: 100svh;
+    }
+  }
+</style>

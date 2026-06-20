@@ -1,0 +1,25 @@
+{
+  "name": "@lightfast/astro-example",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "analyze": "ANALYZE=true astro build",
+    "clean": "git clean -xdf .astro .cache .turbo dist node_modules",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/vercel": "^10.0.8",
+    "astro": "^6.4.7",
+    "sharp": "^0.35.1"
+  },
+  "devDependencies": {
+    "rollup-plugin-visualizer": "^7.0.1"
+  }
+}
