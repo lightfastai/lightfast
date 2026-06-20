@@ -6,31 +6,16 @@ const appRoot = resolve(import.meta.dirname, "../..");
 const repoRoot = resolve(appRoot, "../..");
 
 describe("signals query helpers", () => {
-  it("keeps the signal cache module keys-only without a query-options abstraction", () => {
+  it("removes the signal cache module instead of hiding simple query keys", () => {
     const queriesPath = resolve(appRoot, "src/signals/signals-queries.ts");
-    const cacheSource = readFileSync(
-      resolve(appRoot, "src/signals/signals-cache.ts"),
-      "utf8"
-    );
+    const cachePath = resolve(appRoot, "src/signals/signals-cache.ts");
     const modelSource = readFileSync(
       resolve(appRoot, "src/signals/signals-model.ts"),
       "utf8"
     );
 
     expect(existsSync(queriesPath)).toBe(false);
-    expect(cacheSource).toContain("signalQueryKeys");
-    expect(cacheSource).not.toMatch(/@api\/app\/tanstack\/signals/);
-    expect(cacheSource).not.toContain("export type");
-    expect(cacheSource).not.toContain("queryOptions");
-    expect(cacheSource).not.toContain("signalDetailQueryOptions");
-    expect(cacheSource).not.toContain("workingSetSignalsQueryOptions");
-    expect(cacheSource).not.toContain("processingSignalsQueryOptions");
-    expect(cacheSource).not.toContain("getSignal");
-    expect(cacheSource).not.toContain("listWorkingSetSignals");
-    expect(cacheSource).not.toContain("listProcessingSignals");
-    expect(cacheSource).not.toContain("createSignalMutationOptions");
-    expect(cacheSource).not.toContain("createSignal,");
-    expect(cacheSource).not.toContain("useTRPC");
+    expect(existsSync(cachePath)).toBe(false);
     expect(modelSource).toContain('@api/app/tanstack/signals"');
     expect(modelSource).not.toContain('from "./signals-cache"');
   });
@@ -56,7 +41,9 @@ describe("signals query helpers", () => {
     ]) {
       expect(source).toContain('@api/app/tanstack/signals"');
       expect(source).toContain("getSignal");
-      expect(source).toContain("signalQueryKeys.detail");
+      expect(source).toContain('"signals", "detail"');
+      expect(source).not.toContain("signalQueryKeys");
+      expect(source).not.toContain("signals-cache");
       expect(source).not.toContain("signalDetailQueryOptions");
       expect(source).not.toContain("signals-queries");
     }
@@ -71,8 +58,26 @@ describe("signals query helpers", () => {
     expect(source).toContain('@api/app/tanstack/signals"');
     expect(source).toContain("createSignal");
     expect(source).toContain("type CreateSignalInput");
-    expect(source).toContain("signalQueryKeys");
+    expect(source).toContain('queryKey: ["signals"] as const');
+    expect(source).not.toContain("signalQueryKeys");
+    expect(source).not.toContain("signals-cache");
     expect(source).not.toContain("createSignalMutationOptions");
+  });
+
+  it("keeps list query keys local to the workspace data hook", () => {
+    const source = readFileSync(
+      resolve(appRoot, "src/signals/use-signals-workspace-data.ts"),
+      "utf8"
+    );
+
+    expect(source).toContain(
+      'const workingSetQueryKey = ["signals", "working-set"] as const'
+    );
+    expect(source).toContain("const processingQueryKey = [");
+    expect(source).toContain('"signals",');
+    expect(source).toContain('"processing",');
+    expect(source).not.toContain("signalQueryKeys");
+    expect(source).not.toContain("signals-cache");
   });
 
   it("exports explicit signal creation contracts from api/app", () => {

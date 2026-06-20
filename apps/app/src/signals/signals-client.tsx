@@ -14,7 +14,6 @@ import {
 import { WorkspaceSurface } from "~/components/workspace-surface";
 import { SignalCreateDialog } from "./signal-create-dialog";
 import { SignalDetailSheet } from "./signal-detail-sheet";
-import { signalQueryKeys } from "./signals-cache";
 import { SignalsListView } from "./signals-list-view";
 import { SignalsLoading } from "./signals-loading";
 import type { SignalClassificationFilters } from "./signals-model";
@@ -86,7 +85,7 @@ export function SignalsClient({
       }
       void queryClient.prefetchQuery({
         queryFn: () => getSignal({ data: { publicId } }),
-        queryKey: signalQueryKeys.detail(publicId),
+        queryKey: ["signals", "detail", publicId] as const,
       });
     },
     [queryClient, signalsByPublicId]
