@@ -7,11 +7,11 @@ import { resolveAuthContextFromClerk } from "../../auth/identity";
 import type { Actor } from "../../domain";
 import { actorFromAuthIdentity, isDomainError } from "../../domain";
 import {
-  createDefaultGitHubSetupCommandDeps,
   startGitHubOrgSetupCommand,
   syncGitHubBindingClaimCommand,
   verifyGitHubLightfastRepoCommand,
 } from "../../domain/github-setup";
+import { createDefaultGitHubSetupCommandDeps } from "../../services/github/setup/command-deps";
 
 export type StartGitHubOrgSetupInput = z.input<
   typeof startGitHubOrgSetupCommand.input
