@@ -3,6 +3,8 @@ import type {
   CreateSignalOutput,
   GetSignalInput,
   GetSignalOutput,
+  ListSignalsInput,
+  ListSignalsOutput,
   SystemHealthOutput,
 } from "@repo/api-contract";
 
@@ -19,6 +21,7 @@ export interface LightfastClient {
   signals: {
     create(input: CreateSignalInput): Promise<CreateSignalOutput>;
     get(input: GetSignalInput): Promise<GetSignalOutput>;
+    list(input?: ListSignalsInput): Promise<ListSignalsOutput>;
   };
   system: {
     health(): Promise<SystemHealthOutput>;
@@ -43,6 +46,22 @@ function normalizeBaseUrl(baseUrl: string): string {
 
 function apiUrl(baseUrl: string, path: string): string {
   return `${baseUrl}/api/v1${path}`;
+}
+
+function signalListQuery(input: ListSignalsInput): string {
+  const params = new URLSearchParams();
+  if (input.cursor) {
+    params.set("cursor", input.cursor);
+  }
+  if (input.limit !== undefined) {
+    params.set("limit", String(input.limit));
+  }
+  if (input.statuses?.length) {
+    params.set("statuses", input.statuses.join(","));
+  }
+
+  const query = params.toString();
+  return query ? `?${query}` : "";
 }
 
 async function responseBody(response: Response): Promise<unknown> {
@@ -123,6 +142,14 @@ export function createLightfast(
             normalizedBase,
             `/signals/${encodeURIComponent(input.id)}`
           ),
+        });
+      },
+      list(input = { limit: 50 }) {
+        return requestJson({
+          apiKey,
+          fetch: fetchImpl,
+          method: "GET",
+          url: apiUrl(normalizedBase, `/signals${signalListQuery(input)}`),
         });
       },
     },
