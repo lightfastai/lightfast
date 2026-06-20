@@ -2,6 +2,7 @@
 
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import Link from "next/link";
 import { useState } from "react";
 
 export function WaitlistForm() {
@@ -48,9 +49,9 @@ export function WaitlistForm() {
       </div>
       <p className="mt-3 max-w-[520px] text-[#edecec]/75 text-xs leading-5">
         By joining, you agree to receive early access updates. See our{" "}
-        <a className="underline underline-offset-2" href="/legal/privacy">
+        <Link className="underline underline-offset-2" href="/legal/privacy">
           Privacy Policy
-        </a>
+        </Link>
         .
       </p>
     </form>

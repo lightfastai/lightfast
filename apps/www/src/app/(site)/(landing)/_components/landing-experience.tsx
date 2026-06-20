@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Logo } from "@repo/ui-v2/components/brand/logo";
 import type { CSSProperties } from "react";
 
@@ -105,12 +106,12 @@ function HalftoneBackground() {
 
 function LightfastLockup() {
   return (
-    <a
+    <Link
       aria-label="Lightfast home"
       className="inline-flex h-10 items-center gap-[8.75px] text-[#edecec] opacity-100 transition-opacity duration-200 ease-out hover:opacity-70"
       href="/"
     >
       <Logo className="text-[#edecec]" size="md" />
-    </a>
+    </Link>
   );
 }
