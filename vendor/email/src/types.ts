@@ -1,6 +1,17 @@
 export type {
+  AddContactSegmentOptions,
+  AddContactSegmentResponseSuccess,
+  Contact,
+  CreateBroadcastOptions,
+  CreateBroadcastResponseSuccess,
   CreateContactOptions,
   CreateContactResponseSuccess,
   CreateEmailOptions,
   CreateEmailResponseSuccess,
+  SendBroadcastOptions,
+  SendBroadcastResponseSuccess,
+  UpdateBroadcastOptions,
+  UpdateBroadcastResponseSuccess,
+  UpdateContactOptions,
+  UpdateContactResponseSuccess,
 } from "resend";

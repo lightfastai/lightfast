@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@t3-oss/env-core": "catalog:",
-    "resend": "^4.3.0",
+    "resend": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
