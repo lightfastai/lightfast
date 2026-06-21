@@ -18,11 +18,14 @@
     "@astrojs/vercel": "^10.0.8",
     "@sentry/astro": "10.49.0",
     "@sentry/browser": "catalog:",
+    "@tailwindcss/vite": "4.2.2",
     "@vercel/speed-insights": "^2.0.0",
     "astro": "^6.4.7",
-    "sharp": "^0.35.1"
+    "sharp": "^0.35.1",
+    "tailwindcss": "catalog:tailwind4"
   },
   "devDependencies": {
-    "rollup-plugin-visualizer": "^7.0.1"
+    "rollup-plugin-visualizer": "^7.0.1",
+    "vite": "7.3.5"
   }
 }

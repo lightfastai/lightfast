@@ -1,6 +1,7 @@
 // @ts-check
 import vercel from '@astrojs/vercel';
 import sentry from '@sentry/astro';
+import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, fontProviders } from 'astro/config';
 import { visualizer } from 'rollup-plugin-visualizer';
 
@@ -10,6 +11,18 @@ const canUploadSentrySourceMaps = Boolean(
     process.env.SENTRY_ORG &&
     process.env.SENTRY_PROJECT,
 );
+const vitePlugins = [...tailwindcss()];
+
+if (analyze) {
+  vitePlugins.push(
+    visualizer({
+      emitFile: true,
+      filename: 'stats.html',
+      gzipSize: true,
+      brotliSize: true,
+    }),
+  );
+}
 
 // https://astro.build/config
 export default defineConfig({
@@ -71,15 +84,6 @@ export default defineConfig({
     }),
   ],
   vite: {
-    plugins: analyze
-      ? [
-          visualizer({
-            emitFile: true,
-            filename: 'stats.html',
-            gzipSize: true,
-            brotliSize: true,
-          }),
-        ]
-      : [],
+    plugins: vitePlugins,
   },
 });
