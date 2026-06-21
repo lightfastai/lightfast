@@ -3,11 +3,11 @@ import {
   ArrowUp01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Logo } from "@repo/ui-v2/components/brand/logo";
 import { Button } from "@repo/ui-v2/components/ui/button";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { About } from "./about";
-import { FooterArcadeSlot } from "./footer-arcade-slot";
 
 export function Footer() {
   return (
@@ -171,7 +171,7 @@ export function Footer() {
             </FooterColumn>
           </div>
 
-          <FooterArcadeSlot />
+          <Logo className="text-foreground" size="xl" />
 
           <div className="grid w-full grid-cols-4 place-items-center gap-5 text-xs leading-tight max-[991px]:grid-cols-2 max-[991px]:grid-rows-2 max-[479px]:gap-3">
             <div className="max-[991px]:order-[9999] max-[991px]:justify-self-end">
