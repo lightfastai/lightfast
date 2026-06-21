@@ -34,7 +34,9 @@ export function Landing({
                 alt={title}
                 className="h-full w-full object-cover"
                 fill
-                priority
+                fetchPriority="high"
+                preload
+                quality={40}
                 sizes="(max-width: 640px) calc(100vw - 3rem), (max-width: 1024px) calc(100vw - 5rem), 1440px"
                 src={featuredImage}
               />

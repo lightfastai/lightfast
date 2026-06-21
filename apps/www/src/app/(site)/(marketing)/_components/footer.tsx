@@ -4,10 +4,10 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui-v2/components/ui/button";
-import { FooterArcade } from "@repo/space-invaders-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { About } from "./about";
+import { FooterArcadeSlot } from "./footer-arcade-slot";
 
 export function Footer() {
   return (
@@ -28,15 +28,7 @@ export function Footer() {
                 >
                   Home
                 </Button>
-                <About
-                  trigger={
-                    <Button
-                      className="h-auto justify-start px-0 py-0.5 font-normal text-base leading-tight"
-                      render={<button type="button" />}
-                      variant="link"
-                    />
-                  }
-                >
+                <About className="h-auto justify-start py-0.5 font-normal text-base leading-tight">
                   About
                 </About>
                 <Button
@@ -179,7 +171,7 @@ export function Footer() {
             </FooterColumn>
           </div>
 
-          <FooterArcade />
+          <FooterArcadeSlot />
 
           <div className="grid w-full grid-cols-4 place-items-center gap-5 text-xs leading-tight max-[991px]:grid-cols-2 max-[991px]:grid-rows-2 max-[479px]:gap-3">
             <div className="max-[991px]:order-[9999] max-[991px]:justify-self-end">

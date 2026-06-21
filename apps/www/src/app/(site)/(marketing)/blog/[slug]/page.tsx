@@ -6,7 +6,7 @@ import {
   getBlogPages,
 } from "~/lib/content/source";
 import { emitBlogPostSeo } from "~/lib/seo-bundle";
-import { markdownComponents } from "~/lib/content/markdown";
+import { markdownComponents } from "~/app/_components/mdx-components";
 import type { BlogPostUrl } from "~/lib/url-types";
 import { Landing } from "./_components/landing";
 import { Toc, type TocItem } from "./_components/toc";

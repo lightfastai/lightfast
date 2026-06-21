@@ -380,12 +380,15 @@ describe("app authenticated route migration", () => {
     expect(globalCss).not.toContain('url("/fonts/');
   });
 
-  it("uses ui-v2 globals while keeping gradual migration CSS hooks", () => {
+  it("uses app-owned ui-v2 CSS primitives while keeping migration hooks", () => {
     const globalCss = source("src/styles/globals.css");
     const postcssConfig = source("postcss.config.mjs");
 
-    expect(globalCss).toContain('@import "@repo/ui-v2/globals.css";');
+    expect(globalCss).toContain('@import "tailwindcss/index.css";');
+    expect(globalCss).toContain('@import "@repo/ui-v2/shadcn.css";');
+    expect(globalCss).toContain('@import "@repo/ui-v2/theme.css";');
     expect(globalCss).toContain('@import "@repo/ui-v2/ai-elements.css";');
+    expect(globalCss).not.toContain('@import "@repo/ui-v2/globals.css";');
     expect(globalCss).not.toContain('@import "@repo/ui/globals.css";');
     expect(globalCss).toContain('@source "../**/*.{ts,tsx}";');
     expect(globalCss).toContain(

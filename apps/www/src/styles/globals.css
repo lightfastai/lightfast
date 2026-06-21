@@ -1,4 +1,0 @@
-@import "@repo/ui-v2/globals.css";
-
-@source "../**/*.{ts,tsx}";
-@source "../../../../packages/ui-v2/src/**/*.{ts,tsx}";

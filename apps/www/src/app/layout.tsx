@@ -1,3 +1,5 @@
+import "~/styles/styles.css";
+
 import { cn } from "@repo/ui-v2/lib/utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import type { Organization, WithContext } from "@vendor/seo/json-ld";

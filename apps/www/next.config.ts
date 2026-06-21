@@ -102,7 +102,7 @@ const wwwConfig: NextConfig = merge({}, baseConfig, {
   },
 
   images: {
-    qualities: [10, 75, 100],
+    qualities: [10, 40, 75, 100],
   },
 
   transpilePackages: [

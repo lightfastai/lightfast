@@ -1,0 +1,11 @@
+@import "tailwindcss/index.css" source(none);
+@import "@repo/ui-v2/shadcn.css";
+@import "@repo/ui-v2/theme.css";
+
+@source "../app/**/*.{ts,tsx}";
+@source "../lib/**/*.{ts,tsx}";
+@source "../../../../packages/ui-v2/src/components/brand/logo.tsx";
+@source "../../../../packages/ui-v2/src/components/content/**/*.{ts,tsx}";
+@source "../../../../packages/ui-v2/src/components/ui/button.tsx";
+@source "../../../../packages/ui-v2/src/components/ui/sheet.tsx";
+@source "../../../../packages/space-invaders-react/src/**/*.{ts,tsx}";

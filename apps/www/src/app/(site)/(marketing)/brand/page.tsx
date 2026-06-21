@@ -4,32 +4,14 @@ import type { GraphContext } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import type { ComponentProps } from "react";
+import { markdownComponents } from "~/app/_components/mdx-components";
 import { buildOrganizationEntity, buildWebSiteEntity } from "~/lib/builders";
 import { createMetadata } from "~/lib/content-seo";
-import { markdownComponents } from "~/lib/content/markdown";
 import { getBrandPage } from "~/lib/content/source";
 
 export const dynamic = "force-static";
 
 const PAGE_URL = "https://lightfast.ai/brand";
-
-const brandMdxComponents = {
-  ...markdownComponents,
-  h2({ children, ...props }: ComponentProps<"h2">) {
-    const headingId = children === "Contact" ? "contact" : props.id;
-
-    return (
-      <h2
-        {...props}
-        className="mt-20 scroll-m-24 font-title font-medium text-3xl text-foreground first:mt-0 sm:text-4xl"
-        id={headingId}
-      >
-        {children}
-      </h2>
-    );
-  },
-};
 
 export function generateMetadata(): Metadata {
   const page = getBrandPage();
@@ -140,7 +122,7 @@ export default function BrandPage() {
 
         <div className="px-6 sm:px-10">
           <div className="mx-auto w-full max-w-2xl py-16 md:py-24">
-            <MDXContent components={brandMdxComponents} />
+            <MDXContent components={markdownComponents} />
           </div>
         </div>
       </article>

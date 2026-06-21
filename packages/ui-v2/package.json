@@ -10,6 +10,7 @@
   "exports": {
     "./components/brand/*": "./src/components/brand/*",
     "./components/ai-elements/*": "./src/components/ai-elements/*",
+    "./components/content/*": "./src/components/content/*",
     "./components/email/*": "./src/components/email/*",
     "./ai-elements.css": "./src/ai-elements.css",
     "./components/ui/*": "./src/components/ui/*",
@@ -18,7 +19,9 @@
     "./hooks/*": "./src/hooks/*",
     "./lib/*": "./src/lib/*",
     "./postcss.config": "./postcss.config.mjs",
-    "./globals.css": "./src/globals.css"
+    "./globals.css": "./src/globals.css",
+    "./shadcn.css": "./src/shadcn.css",
+    "./theme.css": "./src/theme.css"
   },
   "scripts": {
     "test": "vitest run",

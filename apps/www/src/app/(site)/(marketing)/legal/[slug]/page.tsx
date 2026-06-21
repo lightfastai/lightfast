@@ -1,7 +1,7 @@
 import { JsonLd } from "@vendor/seo/json-ld";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { markdownComponents } from "~/lib/content/markdown";
+import { markdownComponents } from "~/app/_components/mdx-components";
 import { getLegalPage, getLegalPages } from "~/lib/content/source";
 import { emitLegalSeo } from "~/lib/seo-bundle";
 import type { LegalUrl } from "~/lib/url-types";
