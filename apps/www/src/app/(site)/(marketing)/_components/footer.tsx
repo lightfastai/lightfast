@@ -1,7 +1,4 @@
-import {
-  ArrowRight01Icon,
-  ArrowUp01Icon,
-} from "@hugeicons/core-free-icons";
+import { ArrowRight01Icon, ArrowUp01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Logo } from "@repo/ui-v2/components/brand/logo";
 import { Button } from "@repo/ui-v2/components/ui/button";
@@ -161,7 +158,7 @@ export function Footer() {
                   </p>
                 </div>
                 <p className="mt-2 text-muted-foreground text-xs leading-tight">
-                  Separate from the waitlist. Unsubscribe anytime. See our{" "}
+                  Unsubscribe anytime. See our{" "}
                   <Link className="underline" href="/legal/privacy">
                     Privacy Policy
                   </Link>
@@ -171,7 +168,7 @@ export function Footer() {
             </FooterColumn>
           </div>
 
-          <Logo className="text-foreground" size="xl" />
+          <Logo className="text-foreground" size="md" />
 
           <div className="grid w-full grid-cols-4 place-items-center gap-5 text-xs leading-tight max-[991px]:grid-cols-2 max-[991px]:grid-rows-2 max-[479px]:gap-3">
             <div className="max-[991px]:order-[9999] max-[991px]:justify-self-end">
