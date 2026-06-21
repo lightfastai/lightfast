@@ -17,13 +17,17 @@ export const markdownComponents = {
   a({
     href,
     children,
+    className,
     ...props
   }: AnchorHTMLAttributes<HTMLAnchorElement>) {
     const isExternal = href?.startsWith("http");
 
     return (
       <a
-        className="text-foreground underline underline-offset-4 transition-colors hover:text-muted-foreground"
+        className={cn(
+          "wrap-anywhere relative text-foreground underline decoration-1 underline-offset-4 transition-colors duration-250 hover:text-muted-foreground",
+          className
+        )}
         href={href}
         rel={isExternal ? "noopener noreferrer" : undefined}
         target={isExternal ? "_blank" : undefined}
@@ -35,35 +39,53 @@ export const markdownComponents = {
   },
   blockquote({
     children,
+    className,
     ...props
   }: BlockquoteHTMLAttributes<HTMLQuoteElement>) {
     return (
       <blockquote
-        className="my-10 border-border border-l-2 pl-6 text-muted-foreground text-xl leading-8"
+        className={cn(
+          "my-4 border-muted-foreground/30 border-l-4 pl-4 text-muted-foreground italic",
+          className
+        )}
         {...props}
       >
         {children}
       </blockquote>
     );
   },
-  code({ children, ...props }: HTMLAttributes<HTMLElement>) {
+  code({ children, className, ...props }: HTMLAttributes<HTMLElement>) {
     return (
-      <code className="rounded-sm bg-muted px-1.5 py-0.5 font-mono" {...props}>
+      <code
+        className={cn(
+          "rounded bg-muted px-1.5 py-0.5 font-mono text-sm",
+          className
+        )}
+        {...props}
+      >
         {children}
       </code>
     );
   },
-  em({ children, ...props }: HTMLAttributes<HTMLElement>) {
+  em({ children, className, ...props }: HTMLAttributes<HTMLElement>) {
     return (
-      <em className="italic" {...props}>
+      <em className={cn("italic", className)} {...props}>
         {children}
       </em>
     );
   },
-  h1({ children, id, ...props }: HTMLAttributes<HTMLHeadingElement>) {
+  h1({
+    children,
+    className,
+    id,
+    ...props
+  }: HTMLAttributes<HTMLHeadingElement>) {
     return (
       <h1
-        className="mb-8 scroll-m-28 font-medium text-4xl leading-tight tracking-normal"
+        className={cn(
+          "max-w-[676px] scroll-m-28 font-medium text-[30px] leading-[39.6px] tracking-normal first:mt-0 not-first:mt-16",
+          className
+        )}
         id={id ?? slugifyHeading(children)}
         {...props}
       >
@@ -71,10 +93,18 @@ export const markdownComponents = {
       </h1>
     );
   },
-  h2({ children, id, ...props }: HTMLAttributes<HTMLHeadingElement>) {
+  h2({
+    children,
+    className,
+    id,
+    ...props
+  }: HTMLAttributes<HTMLHeadingElement>) {
     return (
       <h2
-        className="mt-16 mb-6 scroll-m-28 font-medium text-2xl leading-tight tracking-normal first:mt-0"
+        className={cn(
+          "max-w-[676px] scroll-m-28 font-medium text-2xl leading-8 tracking-normal first:mt-0 not-first:mt-16 lg:text-[30px] lg:leading-[39.6px]",
+          className
+        )}
         id={id ?? slugifyHeading(children)}
         {...props}
       >
@@ -82,10 +112,18 @@ export const markdownComponents = {
       </h2>
     );
   },
-  h3({ children, id, ...props }: HTMLAttributes<HTMLHeadingElement>) {
+  h3({
+    children,
+    className,
+    id,
+    ...props
+  }: HTMLAttributes<HTMLHeadingElement>) {
     return (
       <h3
-        className="mt-12 mb-5 scroll-m-28 font-medium text-xl leading-tight tracking-normal"
+        className={cn(
+          "max-w-[676px] scroll-m-28 font-medium text-xl leading-7 tracking-normal not-first:mt-16 lg:text-2xl lg:leading-8",
+          className
+        )}
         id={id ?? slugifyHeading(children)}
         {...props}
       >
@@ -93,36 +131,45 @@ export const markdownComponents = {
       </h3>
     );
   },
-  hr({ ...props }: HTMLAttributes<HTMLHRElement>) {
-    return <hr className="my-12 border-border" {...props} />;
+  hr({ className, ...props }: HTMLAttributes<HTMLHRElement>) {
+    return <hr className={cn("my-6 border-border", className)} {...props} />;
   },
-  li({ children, ...props }: LiHTMLAttributes<HTMLLIElement>) {
+  li({ children, className, ...props }: LiHTMLAttributes<HTMLLIElement>) {
     return (
-      <li className="mt-2 leading-8" {...props}>
+      <li className={cn("mb-2 [&>p]:inline", className)} {...props}>
         {children}
       </li>
     );
   },
-  ol({ children, ...props }: OlHTMLAttributes<HTMLOListElement>) {
+  ol({ children, className, ...props }: OlHTMLAttributes<HTMLOListElement>) {
     return (
-      <ol className="my-8 ml-6 list-decimal text-base leading-8" {...props}>
+      <ol
+        className={cn(
+          "mx-3 max-w-[652px] list-decimal ps-4 whitespace-normal not-first:mt-6 [li_&]:mt-2 [li_&]:list-[lower-alpha]",
+          className
+        )}
+        {...props}
+      >
         {children}
       </ol>
     );
   },
-  p({ children, ...props }: HTMLAttributes<HTMLParagraphElement>) {
+  p({ children, className, ...props }: HTMLAttributes<HTMLParagraphElement>) {
     return (
       <p
-        className="max-w-[72ch] text-base leading-8 text-foreground [&:not(:first-child)]:mt-5"
+        className={cn(
+          "max-w-[676px] text-[17px] leading-7 tracking-normal text-foreground not-first:mt-6",
+          className
+        )}
         {...props}
       >
         {children}
       </p>
     );
   },
-  strong({ children, ...props }: HTMLAttributes<HTMLElement>) {
+  strong({ children, className, ...props }: HTMLAttributes<HTMLElement>) {
     return (
-      <strong className="font-medium" {...props}>
+      <strong className={cn("font-semibold", className)} {...props}>
         {children}
       </strong>
     );
@@ -133,46 +180,83 @@ export const markdownComponents = {
     ...props
   }: TableHTMLAttributes<HTMLTableElement>) {
     return (
-      <div className="my-10 w-full overflow-x-auto border-border border-y">
-        <table className={cn("w-full border-collapse", className)} {...props}>
+      <div className="w-full max-w-[676px] overflow-x-auto not-first:mt-6">
+        <table
+          className={cn(
+            "w-full min-w-[560px] border-border border-y text-left text-sm leading-6",
+            className
+          )}
+          {...props}
+        >
           {children}
         </table>
       </div>
     );
   },
-  tbody({ children, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
-    return <tbody {...props}>{children}</tbody>;
-  },
-  td({ children, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
+  tbody({
+    children,
+    className,
+    ...props
+  }: HTMLAttributes<HTMLTableSectionElement>) {
     return (
-      <td className="border-border/60 border-t px-4 py-3 text-sm" {...props}>
+      <tbody className={cn("divide-y divide-border", className)} {...props}>
+        {children}
+      </tbody>
+    );
+  },
+  td({ children, className, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
+    return (
+      <td
+        className={cn(
+          "py-3 pr-6 align-top text-foreground text-sm leading-6 last:pr-0",
+          className
+        )}
+        {...props}
+      >
         {children}
       </td>
     );
   },
-  th({ children, ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
+  th({ children, className, ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
     return (
       <th
-        className="px-4 py-3 text-left font-medium text-muted-foreground text-sm"
+        className={cn(
+          "py-3 pr-6 text-left align-bottom font-medium text-muted-foreground text-sm leading-5 last:pr-0",
+          className
+        )}
         {...props}
       >
         {children}
       </th>
     );
   },
-  thead({ children, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
+  thead({
+    children,
+    className,
+    ...props
+  }: HTMLAttributes<HTMLTableSectionElement>) {
     return (
-      <thead className="border-border border-b" {...props}>
+      <thead className={cn("border-border border-b", className)} {...props}>
         {children}
       </thead>
     );
   },
-  tr({ children, ...props }: HTMLAttributes<HTMLTableRowElement>) {
-    return <tr {...props}>{children}</tr>;
-  },
-  ul({ children, ...props }: HTMLAttributes<HTMLUListElement>) {
+  tr({ children, className, ...props }: HTMLAttributes<HTMLTableRowElement>) {
     return (
-      <ul className="my-8 ml-6 list-disc text-base leading-8" {...props}>
+      <tr className={cn("border-border", className)} {...props}>
+        {children}
+      </tr>
+    );
+  },
+  ul({ children, className, ...props }: HTMLAttributes<HTMLUListElement>) {
+    return (
+      <ul
+        className={cn(
+          "mx-3 max-w-[652px] list-disc ps-4 whitespace-normal marker:text-inherit not-first:mt-6 [li_&]:mt-2 [li_&]:list-[circle]",
+          className
+        )}
+        {...props}
+      >
         {children}
       </ul>
     );

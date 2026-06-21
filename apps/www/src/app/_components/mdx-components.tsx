@@ -15,7 +15,7 @@ export const markdownComponents = createMarkdownComponents({
     if (href && isInternalRoute) {
       return (
         <Link
-          className="text-foreground underline underline-offset-4 transition-colors hover:text-muted-foreground"
+          className="wrap-anywhere relative text-foreground underline decoration-1 underline-offset-4 transition-colors duration-250 hover:text-muted-foreground"
           href={href as Route}
           {...props}
         >
@@ -26,7 +26,7 @@ export const markdownComponents = createMarkdownComponents({
 
     return (
       <a
-        className="text-foreground underline underline-offset-4 transition-colors hover:text-muted-foreground"
+        className="wrap-anywhere relative text-foreground underline decoration-1 underline-offset-4 transition-colors duration-250 hover:text-muted-foreground"
         href={href}
         rel={isExternal ? "noopener noreferrer" : undefined}
         target={isExternal ? "_blank" : undefined}
