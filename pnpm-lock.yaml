@@ -2754,6 +2754,9 @@ importers:
       nanoid:
         specifier: 'catalog:'
         version: 5.1.9
+      next-themes:
+        specifier: 'catalog:'
+        version: 0.4.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       react:
         specifier: ^19.2.6
         version: 19.2.6

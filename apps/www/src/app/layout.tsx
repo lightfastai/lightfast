@@ -1,6 +1,7 @@
 import "~/styles/styles.css";
 
 import { cn } from "@repo/ui-v2/lib/utils";
+import { ThemeProvider } from "@repo/ui-v2/providers/theme-provider";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import type { Organization, WithContext } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
@@ -133,7 +134,7 @@ export default function RootLayout({
         geistSans.variable,
         geistMono.variable,
         ppNeueMontreal.variable,
-        "dark scrollbar-thin touch-manipulation font-sans antialiased",
+        "scrollbar-thin touch-manipulation font-sans antialiased",
       )}
       lang="en"
       suppressHydrationWarning
@@ -143,12 +144,19 @@ export default function RootLayout({
         <JsonLd code={websiteSchema} />
       </head>
       <body>
-        <PrefetchCrossZoneLinksProvider>
-          {children}
-          <VercelAnalytics />
-          <SpeedInsights />
-          <PrefetchCrossZoneLinks />
-        </PrefetchCrossZoneLinksProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          disableTransitionOnChange
+          enableSystem
+        >
+          <PrefetchCrossZoneLinksProvider>
+            {children}
+            <VercelAnalytics />
+            <SpeedInsights />
+            <PrefetchCrossZoneLinks />
+          </PrefetchCrossZoneLinksProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
