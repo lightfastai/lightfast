@@ -35,6 +35,15 @@
       "project": ["src/**/*.{ts,tsx}", "vite.*.config.ts", "scripts/**/*.mjs"],
       "ignoreDependencies": ["@sentry/electron", "@sentry/cli", "superjson"]
     },
+    "apps/remotion": {
+      "entry": [
+        "src/index.ts",
+        "src/render.ts",
+        "src/watch.ts",
+        "remotion.config.ts"
+      ],
+      "project": ["src/**/*.{ts,tsx}", "remotion.config.ts"]
+    },
     "core/*": {
       "project": ["src/**/*.ts"]
     },
@@ -87,7 +96,6 @@
     "internal/vitest-config": {}
   },
   "ignore": [".agents/**", ".claude/**"],
-  "ignoreWorkspaces": ["packages/remotion"],
   "ignoreDependencies": [
     "tailwindcss",
     "@tailwindcss/postcss",

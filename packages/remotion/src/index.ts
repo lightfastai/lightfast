@@ -1,5 +1,9 @@
-import "./styles.css";
-import { registerRoot } from "@vendor/remotion";
-import { RemotionRoot } from "./Root";
-
-registerRoot(RemotionRoot);
+export { RemotionRoot } from "./Root";
+export {
+  getStills,
+  getVideos,
+  MANIFEST,
+  type CompositionEntry,
+  type CompositionManifest,
+} from "./manifest";
+export { enableCssLoaders } from "./webpack-override";

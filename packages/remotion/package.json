@@ -4,22 +4,21 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "sideEffects": ["./src/styles.css"],
   "exports": {
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
-    }
+    },
+    "./styles.css": "./src/styles.css"
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
-    "dev": "npx tsx src/watch.ts",
-    "typecheck": "tsc --noEmit",
-    "studio": "npx remotion studio src/index.ts",
-    "render:all": "npx tsx src/render.ts",
-    "render:video": "npx tsx src/render.ts --only video",
-    "render:stills": "npx tsx src/render.ts --only stills"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@repo/ui": "workspace:*",
+    "@repo/ui-v2": "workspace:*",
     "@vendor/remotion": "workspace:*",
     "clsx": "catalog:",
     "react": "catalog:react19",
@@ -27,19 +26,9 @@
     "tailwind-merge": "catalog:"
   },
   "devDependencies": {
-    "@remotion/cli": "^4.0.448",
     "@repo/typescript-config": "workspace:*",
-    "@repo/ui": "workspace:*",
-    "@repo/ui-v2": "workspace:*",
-    "@tailwindcss/postcss": "catalog:tailwind4",
     "@types/node": "catalog:",
     "@types/react": "catalog:react19",
-    "css-loader": "^7.1.4",
-    "postcss": "catalog:tailwind4",
-    "postcss-loader": "^8.1.1",
-    "style-loader": "^4.0.0",
-    "tailwindcss": "catalog:tailwind4",
-    "tsx": "^4.21.0",
     "typescript": "catalog:"
   }
 }

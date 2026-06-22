@@ -4,7 +4,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const compositionsDir = path.resolve(__dirname, "compositions");
+const ROOT = path.resolve(__dirname, "../../..");
+const compositionsDir = path.resolve(ROOT, "packages/remotion/src");
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let isRendering = false;
@@ -21,8 +22,8 @@ function render() {
   console.log("[remotion] Rendering video...");
 
   try {
-    execSync("npx tsx src/render.ts --only video", {
-      cwd: path.resolve(__dirname, ".."),
+    execSync("pnpm --filter @lightfast/remotion render:video", {
+      cwd: ROOT,
       stdio: "inherit",
     });
     const elapsed = ((performance.now() - start) / 1000).toFixed(1);
@@ -41,11 +42,9 @@ function scheduleRender() {
   debounceTimer = setTimeout(render, 500);
 }
 
-// Initial render
 render();
 
-// Watch compositions directory for changes
-console.log("[remotion] Watching compositions for changes...");
+console.log("[remotion] Watching package source for changes...");
 
 const watcher = fs.watch(
   compositionsDir,
@@ -54,7 +53,6 @@ const watcher = fs.watch(
     if (!filename) {
       return;
     }
-    // Only react to .ts/.tsx file changes
     if (!/\.(ts|tsx|css)$/.test(filename)) {
       return;
     }

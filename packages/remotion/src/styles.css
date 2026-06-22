@@ -3,5 +3,4 @@
 @import "@repo/ui-v2/shadcn.css";
 @import "@repo/ui-v2/theme.css";
 
-@source "./compositions/**/*.{ts,tsx}";
-@source "./lib/**/*.ts";
+@source "./**/*.{ts,tsx}";

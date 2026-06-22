@@ -7,8 +7,12 @@ import {
   renderStill,
   selectComposition,
 } from "@vendor/remotion/renderer";
-import { getStills, getVideos, MANIFEST } from "./manifest";
-import { enableCssLoaders } from "./webpack-override";
+import {
+  enableCssLoaders,
+  getStills,
+  getVideos,
+  MANIFEST,
+} from "@repo/remotion";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "../../.."); // monorepo root
@@ -66,7 +70,7 @@ async function distribute(
 }
 
 // ── Filter support ───────────────────────────────────────────────────
-// Usage: npx tsx src/render.ts [--only stills|video|all] [--id composition-id]
+// Usage: tsx src/render.ts [--only stills|video|all] [--id composition-id]
 const args = process.argv.slice(2);
 const onlyFlag = args.includes("--only")
   ? args[args.indexOf("--only") + 1]
