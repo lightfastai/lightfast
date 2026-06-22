@@ -51,9 +51,9 @@ export const Sizes: Story = {
     </div>
   ),
   play: async ({ canvas }) => {
-    await expect(canvas.getAllByText("Lightfast")).toHaveLength(
-      LOGO_SIZE_OPTIONS.length
-    );
+    await expect(
+      canvas.getAllByRole("img", { name: "Lightfast" })
+    ).toHaveLength(LOGO_SIZE_OPTIONS.length);
   },
 };
 

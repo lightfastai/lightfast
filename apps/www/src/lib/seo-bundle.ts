@@ -89,6 +89,7 @@ export function emitBlogPostSeo(
   url: BlogPostUrl
 ): SeoBundle {
   const canonicalUrl = data.canonicalUrl ?? url;
+
   return {
     metadata: buildArticleMetadata(
       data,
@@ -104,7 +105,7 @@ export function emitBlogCategorySeo(
   meta: BlogCategoryMeta,
   posts: readonly BlogCategoryPost[]
 ): SeoBundle {
-  const url = `https://lightfast.ai/blog`;
+  const url = "https://lightfast.ai/blog";
   return {
     metadata: createMetadata({
       title: `${meta.heading} | Lightfast`,

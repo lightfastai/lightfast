@@ -20,7 +20,6 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       // General crawlers - block authenticated/private routes
-      // Note: RSS/Atom feeds at /blog/*.xml are publicly accessible
       // Note: Microfrontends setup - console is catch-all, www handles marketing, auth handles sign-in/sign-up
       {
         userAgent: "*",

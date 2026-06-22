@@ -11,13 +11,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
   );
   const legalPages = getLegalPages();
 
-  const mostRecentBlog = blogPosts[0]?.data.reviewedAt ??
+  const mostRecentBlog =
+    blogPosts[0]?.data.reviewedAt ??
     blogPosts[0]?.data.updatedAt ??
     blogPosts[0]?.data.publishedAt;
 
   return [
     {
       url: `${BASE_URL}`,
+      ...(mostRecentBlog && { lastModified: new Date(mostRecentBlog) }),
       changeFrequency: "weekly",
       priority: 1,
     },
@@ -30,7 +32,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${BASE_URL}/blog`,
       ...(mostRecentBlog && { lastModified: new Date(mostRecentBlog) }),
       changeFrequency: "weekly",
-      priority: 0.8,
+      priority: 0.6,
     },
     ...blogPosts.map((page) => ({
       url: `${BASE_URL}/blog/${page.slugs[0]}`,

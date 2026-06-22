@@ -1,13 +1,15 @@
 import type { ReactNode } from "react";
 import { Footer } from "./_components/footer";
-import { Header } from "./_components/header";
+import { Sidebar } from "./_components/sidebar";
 
 export default function MarketingLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="group/about min-h-svh overflow-x-clip bg-background">
-      <Header />
-      <div className="min-h-svh bg-background transition-transform duration-[650ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform group-has-[[data-about-trigger][data-popup-open]]/about:-translate-x-[5%] group-has-[[data-about-trigger][data-popup-open]]/about:duration-[1250ms]">
-        <div className="pb-20 sm:pb-28">{children}</div>
+    <div className="group/company min-h-svh overflow-x-clip bg-background">
+      <Sidebar />
+      <div className="min-h-svh bg-background transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform group-has-[[data-company-trigger][data-popup-open]]/company:-translate-x-8 group-has-[[data-company-trigger][data-popup-open]]/company:duration-1000">
+        <div className="mx-auto w-full max-w-4xl px-6 sm:px-10 lg:px-32">
+          {children}
+        </div>
         <Footer />
       </div>
     </div>

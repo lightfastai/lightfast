@@ -1,38 +1,131 @@
 import { cn } from "@repo/ui-v2/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
-import type { ComponentPropsWithoutRef } from "react";
+import type { ComponentPropsWithoutRef, CSSProperties } from "react";
 
 export const LOGO_MARK_VIEWBOX_SIZE = 80;
 export const LOGO_DOT_DIAMETER = 8;
 export const LOGO_DOT_PITCH = 12;
+export const LOGO_VISIBLE_GAP_PITCHES = 2;
+export const LOGO_PAPER_SPECIMEN_MARK_SIZE = 86;
+export const LOGO_PAPER_SPECIMEN_WORDMARK_SIZE = 88;
+export const LOGO_PAPER_SPECIMEN_WORDMARK_LINE_HEIGHT = 105;
+export const LOGO_WORDMARK_SIZE_RATIO =
+  LOGO_PAPER_SPECIMEN_WORDMARK_SIZE / LOGO_PAPER_SPECIMEN_MARK_SIZE;
+export const LOGO_WORDMARK_LINE_HEIGHT_RATIO =
+  LOGO_PAPER_SPECIMEN_WORDMARK_LINE_HEIGHT / LOGO_PAPER_SPECIMEN_WORDMARK_SIZE;
 
 export const DOT_MATRIX_PATH =
   "M8 52a4 4 0 1 0-8 0 4 4 0 0 0 8 0M8 40a4 4 0 1 0-8 0 4 4 0 0 0 8 0M8 28a4 4 0 1 0-8 0 4 4 0 0 0 8 0M20 40a4 4 0 1 0-8 0 4 4 0 0 0 8 0M20 28a4 4 0 1 0-8 0 4 4 0 0 0 8 0M20 16a4 4 0 1 0-8 0 4 4 0 0 0 8 0M44 76a4 4 0 1 0-8 0 4 4 0 0 0 8 0M44 64a4 4 0 1 0-8 0 4 4 0 0 0 8 0M44 52a4 4 0 1 0-8 0 4 4 0 0 0 8 0M32 52a4 4 0 1 0-8 0 4 4 0 0 0 8 0M20 52a4 4 0 1 0-8 0 4 4 0 0 0 8 0M32 40a4 4 0 1 0-8 0 4 4 0 0 0 8 0M44 28a4 4 0 1 0-8 0 4 4 0 0 0 8 0M56 16a4 4 0 1 0-8 0 4 4 0 0 0 8 0M68 16a4 4 0 1 0-8 0 4 4 0 0 0 8 0M44 16a4 4 0 1 0-8 0 4 4 0 0 0 8 0M44 4a4 4 0 1 0-8 0 4 4 0 0 0 8 0M68 64a4 4 0 1 0-8 0 4 4 0 0 0 8 0M68 52a4 4 0 1 0-8 0 4 4 0 0 0 8 0M68 40a4 4 0 1 0-8 0 4 4 0 0 0 8 0M80 40a4 4 0 1 0-8 0 4 4 0 0 0 8 0M68 28a4 4 0 1 0-8 0 4 4 0 0 0 8 0M56 28a4 4 0 1 0-8 0 4 4 0 0 0 8 0M32 76a4 4 0 1 0-8 0 4 4 0 0 0 8 0M32 64a4 4 0 1 0-8 0 4 4 0 0 0 8 0M20 64a4 4 0 1 0-8 0 4 4 0 0 0 8 0M32 28a4 4 0 1 0-8 0 4 4 0 0 0 8 0M32 16a4 4 0 1 0-8 0 4 4 0 0 0 8 0M32 4a4 4 0 1 0-8 0 4 4 0 0 0 8 0M56 76a4 4 0 1 0-8 0 4 4 0 0 0 8 0M56 64a4 4 0 1 0-8 0 4 4 0 0 0 8 0M56 52a4 4 0 1 0-8 0 4 4 0 0 0 8 0M56 40a4 4 0 1 0-8 0 4 4 0 0 0 8 0M56 4a4 4 0 1 0-8 0 4 4 0 0 0 8 0M80 52a4 4 0 1 0-8 0 4 4 0 0 0 8 0M44 40a4 4 0 1 0-8 0 4 4 0 0 0 8 0M80 28a4 4 0 1 0-8 0 4 4 0 0 0 8 0";
 
-export const WORDMARK_VIEWBOX = "0 -716 4155 920";
+export const WORDMARK_UNITS_PER_EM = 1000;
+export const WORDMARK_VIEWBOX_X = 0;
+export const WORDMARK_VIEWBOX_Y = -716;
+export const WORDMARK_VIEWBOX_WIDTH = 4155;
+export const WORDMARK_VIEWBOX_HEIGHT = 920;
+export const WORDMARK_LEFT_SIDE_BEARING = 78;
+export const WORDMARK_VIEWBOX = `${WORDMARK_VIEWBOX_X} ${WORDMARK_VIEWBOX_Y} ${WORDMARK_VIEWBOX_WIDTH} ${WORDMARK_VIEWBOX_HEIGHT}`;
 export const WORDMARK_PATH =
   "M193 0Q78 0 78 -115V-700H182V-127Q182 -92 217 -92H523V0ZM605 0V-504H702V0ZM653 -590Q627 -590 608.5 -608.5Q590 -627 590 -653Q590 -679 608.5 -697.5Q627 -716 653 -716Q679 -716 697.5 -697.5Q716 -679 716 -653Q716 -627 697.5 -608.5Q679 -590 653 -590ZM878 204V123H1111Q1155 123 1183.0 93.5Q1211 64 1211 18V-64Q1192 -32 1147.5 -12.0Q1103 8 1048 8Q973 8 920.0 -26.0Q867 -60 839.0 -119.0Q811 -178 811 -252Q811 -327 839.0 -385.5Q867 -444 920.0 -478.0Q973 -512 1049 -512Q1098 -512 1142.5 -491.5Q1187 -471 1211 -437V-504H1308V24Q1308 105 1257.0 154.5Q1206 204 1121 204ZM1064 -77Q1134 -77 1176.0 -125.0Q1218 -173 1218 -252Q1218 -331 1176.0 -379.0Q1134 -427 1064 -427Q994 -427 951.5 -379.0Q909 -331 909 -252Q909 -173 951.5 -125.0Q994 -77 1064 -77ZM1450 0V-715H1547V-415Q1567 -462 1610.0 -487.0Q1653 -512 1709 -512Q1766 -512 1808.5 -486.5Q1851 -461 1874.0 -415.5Q1897 -370 1897 -310V0H1800V-291Q1800 -351 1767.5 -388.0Q1735 -425 1682 -425Q1623 -425 1585.0 -382.0Q1547 -339 1547 -273V0ZM2235 0Q2159 0 2113.0 -44.0Q2067 -88 2067 -165V-420H1964V-504H2038Q2067 -504 2067 -533V-662H2164V-504H2313V-420H2164V-168Q2164 -128 2185.0 -106.0Q2206 -84 2242 -84H2313V0ZM2455 0V-420H2352V-504H2455V-553Q2455 -627 2500.0 -671.0Q2545 -715 2621 -715H2705V-631H2629Q2594 -631 2573.0 -609.5Q2552 -588 2552 -550V-504H2705V-420H2552V0ZM2978 8Q2902 8 2848.5 -26.0Q2795 -60 2767.0 -119.0Q2739 -178 2739 -252Q2739 -327 2767.0 -385.5Q2795 -444 2848.0 -478.0Q2901 -512 2977 -512Q3026 -512 3070.0 -491.5Q3114 -471 3139 -437V-504H3236V0H3139V-68Q3116 -34 3073.5 -13.0Q3031 8 2978 8ZM2992 -77Q3062 -77 3104.0 -125.0Q3146 -173 3146 -252Q3146 -331 3104.0 -379.0Q3062 -427 2992 -427Q2922 -427 2879.5 -379.0Q2837 -331 2837 -252Q2837 -173 2879.5 -125.0Q2922 -77 2992 -77ZM3544 8Q3453 8 3400.0 -37.0Q3347 -82 3341 -164H3430Q3434 -121 3464.0 -96.0Q3494 -71 3543 -71Q3588 -71 3615.0 -91.0Q3642 -111 3642 -145Q3642 -176 3621.0 -190.5Q3600 -205 3567.5 -211.5Q3535 -218 3498.0 -224.0Q3461 -230 3428.5 -243.5Q3396 -257 3375.0 -284.5Q3354 -312 3354 -362Q3354 -407 3377.0 -440.5Q3400 -474 3441.0 -493.0Q3482 -512 3534 -512Q3622 -512 3673.0 -470.5Q3724 -429 3729 -355H3640Q3636 -392 3607.5 -414.0Q3579 -436 3535 -436Q3498 -436 3471.0 -418.0Q3444 -400 3444 -366Q3444 -336 3465.0 -322.5Q3486 -309 3519.0 -303.5Q3552 -298 3588.5 -292.0Q3625 -286 3658.0 -273.0Q3691 -260 3712.0 -231.5Q3733 -203 3733 -150Q3733 -77 3682.5 -34.5Q3632 8 3544 8ZM4052 0Q3976 0 3930.0 -44.0Q3884 -88 3884 -165V-420H3781V-504H3855Q3884 -504 3884 -533V-662H3981V-504H4130V-420H3981V-168Q3981 -128 4002.0 -106.0Q4023 -84 4059 -84H4130V0Z";
 
-const logoVariants = cva("inline-flex shrink-0 items-center", {
-  variants: {
-    size: {
-      xs: "gap-[4.5px] [--logo-mark-size:16px] [--logo-wordmark-line-height:20.5px] [--logo-wordmark-size:17.1px]",
-      sm: "gap-[6.1px] [--logo-mark-size:22px] [--logo-wordmark-line-height:28.1px] [--logo-wordmark-size:23.5px]",
-      md: "gap-[8.75px] [--logo-mark-size:31.3px] [--logo-wordmark-line-height:40px] [--logo-wordmark-size:33.5px]",
-      lg: "gap-[11.2px] [--logo-mark-size:40px] [--logo-wordmark-line-height:51.2px] [--logo-wordmark-size:42.8px]",
-      xl: "gap-[15.6px] [--logo-mark-size:56px] [--logo-wordmark-line-height:71.6px] [--logo-wordmark-size:59.9px]",
+export const WORDMARK_LOCKUP_VIEWBOX_HEIGHT =
+  WORDMARK_UNITS_PER_EM * LOGO_WORDMARK_LINE_HEIGHT_RATIO;
+export const WORDMARK_LOCKUP_TOP_PADDING =
+  ((LOGO_DOT_PITCH / LOGO_MARK_VIEWBOX_SIZE +
+    (LOGO_WORDMARK_SIZE_RATIO * LOGO_WORDMARK_LINE_HEIGHT_RATIO - 1) / 2) /
+    LOGO_WORDMARK_SIZE_RATIO) *
+  WORDMARK_UNITS_PER_EM;
+export const WORDMARK_LOCKUP_VIEWBOX_Y =
+  WORDMARK_VIEWBOX_Y - WORDMARK_LOCKUP_TOP_PADDING;
+export const WORDMARK_LOCKUP_VIEWBOX = `${WORDMARK_VIEWBOX_X} ${WORDMARK_LOCKUP_VIEWBOX_Y} ${WORDMARK_VIEWBOX_WIDTH} ${WORDMARK_LOCKUP_VIEWBOX_HEIGHT}`;
+
+export const LOGO_MARK_SIZES = {
+  xs: 16,
+  sm: 22,
+  md: 31.3,
+  lg: 40,
+  xl: 56,
+} as const;
+
+export type LogoSize = keyof typeof LOGO_MARK_SIZES;
+
+export interface LogoMetrics {
+  dotDiameter: number;
+  dotPitch: number;
+  gap: number;
+  markSize: number;
+  visibleGap: number;
+  wordmarkHeight: number;
+  wordmarkLeftSideBearing: number;
+  wordmarkPathHeight: number;
+  wordmarkPathTopPadding: number;
+  wordmarkSize: number;
+  wordmarkTopInset: number;
+  wordmarkWidth: number;
+}
+
+export function getLogoMetrics(markSize: number): LogoMetrics {
+  const markScale = markSize / LOGO_MARK_VIEWBOX_SIZE;
+  const wordmarkSize = markSize * LOGO_WORDMARK_SIZE_RATIO;
+  const wordmarkLeftSideBearing =
+    wordmarkSize * (WORDMARK_LEFT_SIDE_BEARING / WORDMARK_UNITS_PER_EM);
+  const visibleGap = markScale * LOGO_DOT_PITCH * LOGO_VISIBLE_GAP_PITCHES;
+  const wordmarkHeight = wordmarkSize * LOGO_WORDMARK_LINE_HEIGHT_RATIO;
+  const wordmarkPathHeight =
+    wordmarkSize * (WORDMARK_VIEWBOX_HEIGHT / WORDMARK_UNITS_PER_EM);
+  const wordmarkPathTopPadding =
+    wordmarkSize * (WORDMARK_LOCKUP_TOP_PADDING / WORDMARK_UNITS_PER_EM);
+  const wordmarkTopInset =
+    wordmarkPathTopPadding - (wordmarkHeight - markSize) / 2;
+
+  return {
+    dotDiameter: markScale * LOGO_DOT_DIAMETER,
+    dotPitch: markScale * LOGO_DOT_PITCH,
+    gap: visibleGap - wordmarkLeftSideBearing,
+    markSize,
+    visibleGap,
+    wordmarkHeight,
+    wordmarkLeftSideBearing,
+    wordmarkPathHeight,
+    wordmarkPathTopPadding,
+    wordmarkSize,
+    wordmarkTopInset,
+    wordmarkWidth:
+      wordmarkSize * (WORDMARK_VIEWBOX_WIDTH / WORDMARK_UNITS_PER_EM),
+  };
+}
+
+const formatLogoPx = (value: number) => `${Number(value.toFixed(3))}px`;
+
+type LogoCssVars = CSSProperties & {
+  "--logo-gap": string;
+  "--logo-mark-size": string;
+  "--logo-wordmark-height": string;
+  "--logo-wordmark-width": string;
+};
+
+const logoVariants = cva(
+  "inline-flex shrink-0 items-center gap-[var(--logo-gap)]",
+  {
+    variants: {
+      size: {
+        xs: "",
+        sm: "",
+        md: "",
+        lg: "",
+        xl: "",
+      },
+      variant: {
+        default: "text-foreground",
+        inverse: "text-white",
+        muted: "text-muted-foreground",
+      },
     },
-    variant: {
-      default: "text-foreground",
-      inverse: "text-white",
-      muted: "text-muted-foreground",
+    defaultVariants: {
+      size: "md",
+      variant: "default",
     },
-  },
-  defaultVariants: {
-    size: "md",
-    variant: "default",
-  },
-});
+  }
+);
 
 export interface LogoProps
   extends ComponentPropsWithoutRef<"div">,
@@ -48,6 +141,17 @@ function Logo({
   variant = "default",
   ...props
 }: LogoProps) {
+  const logoSize = size ?? "md";
+  const logoVariant = variant ?? "default";
+  const metrics = getLogoMetrics(LOGO_MARK_SIZES[logoSize]);
+  const logoStyle = {
+    "--logo-gap": formatLogoPx(metrics.gap),
+    "--logo-mark-size": formatLogoPx(metrics.markSize),
+    "--logo-wordmark-height": formatLogoPx(metrics.wordmarkHeight),
+    "--logo-wordmark-width": formatLogoPx(metrics.wordmarkWidth),
+    ...style,
+  } satisfies LogoCssVars;
+
   const rootProps = showWordmark
     ? props
     : {
@@ -59,12 +163,14 @@ function Logo({
   return (
     <div
       data-show-wordmark={showWordmark}
-      data-size={size}
+      data-size={logoSize}
       data-slot="logo"
-      data-variant={variant}
+      data-variant={logoVariant}
       {...rootProps}
-      className={cn(logoVariants({ size, variant, className }))}
-      style={style}
+      className={cn(
+        logoVariants({ size: logoSize, variant: logoVariant, className })
+      )}
+      style={logoStyle}
     >
       <svg
         aria-hidden="true"
@@ -79,11 +185,11 @@ function Logo({
       {showWordmark ? (
         <svg
           aria-label="Lightfast"
-          className="h-[calc(var(--logo-wordmark-size)*0.92)] w-[calc(var(--logo-wordmark-size)*4.155)] shrink-0 overflow-visible"
+          className="h-[var(--logo-wordmark-height)] w-[var(--logo-wordmark-width)] shrink-0 overflow-visible"
           data-slot="logo-wordmark"
           focusable="false"
           role="img"
-          viewBox={WORDMARK_VIEWBOX}
+          viewBox={WORDMARK_LOCKUP_VIEWBOX}
           xmlns="http://www.w3.org/2000/svg"
         >
           <path d={WORDMARK_PATH} fill="currentColor" />

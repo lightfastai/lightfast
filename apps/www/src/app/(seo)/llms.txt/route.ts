@@ -7,12 +7,25 @@ const BASE_URL = "https://lightfast.ai";
 
 const providers: Array<() => Promise<PageEntry[]>> = [
   () => {
+    const blogPosts = getBlogPages();
+    const mostRecentBlog = blogPosts
+      .slice()
+      .sort(
+        (a, b) =>
+          new Date(b.data.publishedAt).getTime() -
+          new Date(a.data.publishedAt).getTime()
+      )
+      .at(0);
     const entries: PageEntry[] = [
       {
         url: `${BASE_URL}`,
-        title: "Lightfast",
+        title: "Blog",
         description:
-          "Lightfast is the operating layer between AI agents, apps, and teams responsible for real work.",
+          "Notes from Lightfast on agent infrastructure, workspace memory, and reliable AI operations.",
+        lastModified:
+          mostRecentBlog?.data.reviewedAt ??
+          mostRecentBlog?.data.updatedAt ??
+          mostRecentBlog?.data.publishedAt,
         section: "Marketing",
       },
       {
@@ -21,16 +34,9 @@ const providers: Array<() => Promise<PageEntry[]>> = [
         description: "Official Lightfast brand resources and company details.",
         section: "Company",
       },
-      {
-        url: `${BASE_URL}/blog`,
-        title: "Blog",
-        description:
-          "Notes from Lightfast on agent infrastructure, workspace memory, and reliable AI operations.",
-        section: "Blog",
-      },
     ];
 
-    for (const page of getBlogPages()) {
+    for (const page of blogPosts) {
       entries.push({
         url: `${BASE_URL}/blog/${page.slugs[0]}`,
         title: page.data.title,

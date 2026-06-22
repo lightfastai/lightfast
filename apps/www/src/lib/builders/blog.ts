@@ -91,6 +91,7 @@ export function buildBlogPostJsonLd(
   url: BlogPostUrl
 ): GraphContext {
   const entity = buildBlogPostEntity(data, url);
+
   return {
     "@context": "https://schema.org",
     "@graph": [

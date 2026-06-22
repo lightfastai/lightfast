@@ -6,8 +6,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { markdownComponents } from "~/app/_components/mdx-components";
 import { buildOrganizationEntity, buildWebSiteEntity } from "~/lib/builders";
-import { createMetadata } from "~/lib/content-seo";
 import { getBrandPage } from "~/lib/content/source";
+import { createMetadata } from "~/lib/content-seo";
 
 export const dynamic = "force-static";
 
@@ -88,27 +88,23 @@ export default function BrandPage() {
     <>
       <JsonLd code={structuredData} />
       <article className="w-full bg-background text-foreground">
-        <section className="flex items-start justify-center px-6 pt-40 pb-16 text-center sm:px-10 sm:pt-32">
-          <div>
-            <h1 className="font-medium font-title text-5xl text-foreground">
-              {page.data.title}
-            </h1>
-            <Button
-              className="mt-10"
-              nativeButton={false}
-              render={<a href="#contact" />}
-              size="lg"
-              variant="secondary"
-            >
-              Contact
-            </Button>
-          </div>
+        <section className="pt-28 pb-16 sm:pt-32 lg:pt-24">
+          <h1 className="font-medium font-title text-5xl text-foreground">
+            {page.data.title}
+          </h1>
+          <Button
+            className="mt-10"
+            nativeButton={false}
+            render={<a href="#contact">Contact</a>}
+            size="lg"
+            variant="secondary"
+          />
         </section>
 
-        <section className="px-6 pb-20 sm:px-10 sm:pb-28">
-          <div className="mx-auto aspect-video max-w-[1620px] overflow-hidden rounded-md bg-foreground text-background">
+        <section className="pb-20 sm:pb-28">
+          <div className="aspect-video w-full overflow-hidden rounded-md bg-foreground text-background">
             <div className="flex h-full flex-col px-12 py-16 sm:px-20 lg:px-28">
-              <div className="grid grid-cols-[1fr_auto_1fr] items-start text-[10px] leading-none text-background">
+              <div className="grid grid-cols-3 items-start text-background text-xs leading-none">
                 <span />
                 <span>Wordmarks</span>
                 <span />
@@ -120,10 +116,8 @@ export default function BrandPage() {
           </div>
         </section>
 
-        <div className="px-6 sm:px-10">
-          <div className="mx-auto w-full max-w-2xl py-16 md:py-24">
-            <MDXContent components={markdownComponents} />
-          </div>
+        <div className="py-16 md:py-24">
+          <MDXContent components={markdownComponents} />
         </div>
       </article>
     </>

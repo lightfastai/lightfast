@@ -4,9 +4,9 @@ import { cn } from "@repo/ui-v2/lib/utils";
 import { useEffect, useMemo, useState } from "react";
 
 export interface TocItem {
-  title: string;
   depth: 2 | 3;
   id: string;
+  title: string;
 }
 
 interface TocProps {
@@ -50,7 +50,7 @@ export function Toc({ items }: TocProps) {
   return (
     <nav
       aria-label="On this page"
-      className="sticky top-28 max-h-[calc(100vh-7rem)] overflow-y-auto pb-4"
+      className="sticky top-28 max-h-96 overflow-y-auto pb-4"
     >
       <p className="mb-3 font-medium text-sm">On this page</p>
       <ol>
@@ -71,7 +71,7 @@ export function Toc({ items }: TocProps) {
                 {isActive && (
                   <span
                     aria-hidden="true"
-                    className="absolute top-[1.1em] left-0 size-2 rounded-full bg-primary"
+                    className="absolute top-4 left-0 size-2 rounded-full bg-primary"
                   />
                 )}
                 <span className="relative">{item.title}</span>

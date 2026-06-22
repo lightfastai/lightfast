@@ -41,7 +41,7 @@ export default async function LegalPage({ params }: Props) {
   return (
     <main className="bg-background text-foreground">
       <JsonLd code={jsonLd} />
-      <article className="mx-auto w-full max-w-3xl px-6 pt-36 pb-24 sm:px-10 md:pt-40 md:pb-32">
+      <article className="pt-28 pb-24 sm:pt-32 md:pb-32 lg:pt-24">
         <MDXContent components={markdownComponents} />
       </article>
     </main>
