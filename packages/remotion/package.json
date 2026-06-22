@@ -23,7 +23,8 @@
     "clsx": "catalog:",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
-    "tailwind-merge": "catalog:"
+    "tailwind-merge": "catalog:",
+    "tailwindcss": "catalog:tailwind4"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

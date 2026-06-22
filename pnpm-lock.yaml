@@ -2426,6 +2426,9 @@ importers:
       tailwind-merge:
         specifier: 'catalog:'
         version: 3.5.0
+      tailwindcss:
+        specifier: catalog:tailwind4
+        version: 4.2.2
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
