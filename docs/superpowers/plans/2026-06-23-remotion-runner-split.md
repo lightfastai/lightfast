@@ -1,5 +1,10 @@
 # Remotion Runner Split Implementation Plan
 
+> **Superseded:** Do not execute this plan as written. The corrected design in
+> `docs/superpowers/specs/2026-06-23-remotion-runner-split-design.md` moves the
+> Remotion root, CSS, webpack override, and render policy into `apps/remotion`.
+> A new implementation plan should be written from that corrected design.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Split the current Remotion package into an `apps/remotion` runner and a reusable `packages/remotion` composition package.
