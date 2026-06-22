@@ -88,8 +88,8 @@ export default function BrandPage() {
     <>
       <JsonLd code={structuredData} />
       <article className="w-full bg-background text-foreground">
-        <section className="pt-28 pb-16 sm:pt-32 lg:pt-24">
-          <h1 className="font-medium font-title text-5xl text-foreground">
+        <section className="flex flex-col items-center pt-28 pb-16 text-center sm:pt-32 lg:pt-24">
+          <h1 className="font-medium font-title text-3xl text-foreground tracking-normal lg:text-4xl">
             {page.data.title}
           </h1>
           <Button
@@ -102,11 +102,11 @@ export default function BrandPage() {
         </section>
 
         <section className="pb-20 sm:pb-28">
-          <div className="aspect-video w-full overflow-hidden rounded-md bg-foreground text-background">
+          <div className="relative left-1/2 aspect-video w-[min(calc(100vw-3rem),54rem)] -translate-x-1/2 overflow-hidden rounded-md bg-foreground text-background sm:w-[min(calc(100vw-5rem),56rem)] lg:w-[min(calc(100vw-16rem),58rem)]">
             <div className="flex h-full flex-col px-12 py-16 sm:px-20 lg:px-28">
               <div className="grid grid-cols-3 items-start text-background text-xs leading-none">
                 <span />
-                <span>Wordmarks</span>
+                <span className="text-center">Wordmarks</span>
                 <span />
               </div>
               <div className="flex flex-1 items-center justify-center">

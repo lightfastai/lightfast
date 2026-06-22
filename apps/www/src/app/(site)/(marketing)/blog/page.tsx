@@ -53,7 +53,7 @@ export default function BlogPage() {
   return (
     <main className="bg-background text-foreground">
       <section className="pt-28 pb-20 sm:pt-32 md:pb-16 lg:pt-24">
-        <h1 className="font-medium font-title text-3xl tracking-normal sm:text-4xl">
+        <h1 className="font-medium font-title text-3xl tracking-normal lg:text-4xl">
           Blog
         </h1>
       </section>
@@ -70,13 +70,13 @@ export default function BlogPage() {
                 href={post.href}
               >
                 <time
-                  className="translate-x-0 self-center text-muted-foreground text-sm leading-6 transition duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/blog:translate-x-2 group-hover/blog:text-primary-foreground group-focus-visible/blog:translate-x-2 group-focus-visible/blog:text-primary-foreground sm:col-span-1 sm:text-base"
+                  className="translate-x-0 self-center text-muted-foreground text-xs leading-6 transition duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/blog:translate-x-2 group-hover/blog:text-primary-foreground group-focus-visible/blog:translate-x-2 group-focus-visible/blog:text-primary-foreground sm:col-span-1 sm:text-sm"
                   dateTime={post.datetime}
                 >
                   {post.date}
                 </time>
                 <span className="pr-4 sm:col-span-2 sm:pr-10">
-                  <span className="inline-block translate-x-0 font-medium text-xl leading-tight tracking-normal transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.35,1)] group-hover/blog:translate-x-2 group-focus-visible/blog:translate-x-2 sm:text-2xl lg:text-3xl">
+                  <span className="inline-block translate-x-0 font-medium text-lg leading-tight tracking-normal transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.35,1)] group-hover/blog:translate-x-2 group-focus-visible/blog:translate-x-2 sm:text-xl lg:text-2xl">
                     {post.title}
                   </span>
                 </span>

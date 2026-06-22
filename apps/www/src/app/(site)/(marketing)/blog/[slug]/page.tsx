@@ -79,7 +79,7 @@ export default async function BlogPostPage({ params }: Props) {
       <section className="pt-28 pb-12 sm:pt-32 md:pb-16 lg:pt-24">
         <div className="space-y-16">
           <div className="space-y-4">
-            <h1 className="font-medium font-title text-4xl text-foreground tracking-normal">
+            <h1 className="font-medium font-title text-3xl text-foreground tracking-normal lg:text-4xl">
               {title}
             </h1>
             {description && (

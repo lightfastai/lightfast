@@ -15,7 +15,7 @@ export function Sidebar() {
     "h-auto justify-start px-0 py-0 font-normal text-sm leading-none transition-colors hover:text-foreground hover:no-underline";
 
   return (
-    <aside className="fixed top-0 right-0 left-0 z-50 border-border border-b bg-background px-6 py-4 text-foreground lg:right-auto lg:bottom-0 lg:w-48 lg:border-b-0 lg:bg-transparent lg:px-8 lg:py-8">
+    <aside className="fixed top-0 right-0 left-0 z-50 border-border border-b bg-background px-6 py-4 text-foreground transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform group-has-[[data-company-trigger][data-popup-open]]/company:-translate-x-8 group-has-[[data-company-trigger][data-popup-open]]/company:duration-1000 lg:right-auto lg:bottom-0 lg:w-48 lg:border-b-0 lg:bg-transparent lg:px-8 lg:py-8">
       <nav
         aria-label="Primary navigation"
         className="flex items-center justify-between gap-8 lg:h-full lg:flex-col lg:items-start lg:justify-start lg:gap-0"

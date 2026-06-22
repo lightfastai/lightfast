@@ -3,13 +3,8 @@
 import { Button } from "@repo/ui-v2/components/ui/button";
 import { Sheet, SheetTrigger } from "@repo/ui-v2/components/ui/sheet";
 import { cn } from "@repo/ui-v2/lib/utils";
-import dynamic from "next/dynamic";
 import { type ReactNode, useState } from "react";
-
-const CompanySheet = dynamic(
-  () => import("./company-sheet").then((mod) => mod.CompanySheet),
-  { ssr: false }
-);
+import { CompanySheet } from "./company-sheet";
 
 export function Company({
   children = "Company",
@@ -19,17 +14,9 @@ export function Company({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  function handleOpenChange(nextOpen: boolean) {
-    if (nextOpen) {
-      setMounted(true);
-    }
-    setOpen(nextOpen);
-  }
 
   return (
-    <Sheet onOpenChange={handleOpenChange} open={open}>
+    <Sheet onOpenChange={setOpen} open={open}>
       <SheetTrigger
         render={
           <Button
@@ -46,7 +33,7 @@ export function Company({
       >
         {children}
       </SheetTrigger>
-      {mounted ? <CompanySheet /> : null}
+      <CompanySheet />
     </Sheet>
   );
 }
