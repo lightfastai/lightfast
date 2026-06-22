@@ -95,7 +95,7 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "png",
-          dest: "packages/app-remotion/out/brand",
+          dest: "packages/remotion/out/brand",
           filename: "brand-geometry.png",
           scale: 2,
         },
@@ -112,7 +112,7 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "png",
-          dest: "packages/app-remotion/out/empty-states",
+          dest: "packages/remotion/out/empty-states",
           filename: "signals-empty.png",
           scale: 2,
         },
@@ -127,7 +127,7 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "png",
-          dest: "packages/app-remotion/out/empty-states",
+          dest: "packages/remotion/out/empty-states",
           filename: "people-empty.png",
           scale: 2,
         },
@@ -144,13 +144,13 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "png",
-          dest: "packages/app-remotion/out/featured",
+          dest: "packages/remotion/out/featured",
           filename: "blog-featured-concentric.png",
           scale: 2,
         },
         {
           format: "webp",
-          dest: "packages/app-remotion/out/featured",
+          dest: "packages/remotion/out/featured",
           filename: "blog-featured-concentric.webp",
           scale: 2,
         },
@@ -165,13 +165,13 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "png",
-          dest: "packages/app-remotion/out/featured",
+          dest: "packages/remotion/out/featured",
           filename: "blog-featured-lissajous.png",
           scale: 2,
         },
         {
           format: "webp",
-          dest: "packages/app-remotion/out/featured",
+          dest: "packages/remotion/out/featured",
           filename: "blog-featured-lissajous.webp",
           scale: 2,
         },
@@ -186,13 +186,13 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "png",
-          dest: "packages/app-remotion/out/featured",
+          dest: "packages/remotion/out/featured",
           filename: "blog-featured-base.png",
           scale: 2,
         },
         {
           format: "webp",
-          dest: "packages/app-remotion/out/featured",
+          dest: "packages/remotion/out/featured",
           filename: "blog-featured-base.webp",
           scale: 2,
         },
@@ -207,13 +207,13 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "png",
-          dest: "packages/app-remotion/out/featured",
+          dest: "packages/remotion/out/featured",
           filename: "blog-featured-rule.png",
           scale: 2,
         },
         {
           format: "webp",
-          dest: "packages/app-remotion/out/featured",
+          dest: "packages/remotion/out/featured",
           filename: "blog-featured-rule.webp",
           scale: 2,
         },
@@ -228,13 +228,13 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "png",
-          dest: "packages/app-remotion/out/featured",
+          dest: "packages/remotion/out/featured",
           filename: "blog-featured-trail.png",
           scale: 2,
         },
         {
           format: "webp",
-          dest: "packages/app-remotion/out/featured",
+          dest: "packages/remotion/out/featured",
           filename: "blog-featured-trail.webp",
           scale: 2,
         },
@@ -249,13 +249,13 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "png",
-          dest: "packages/app-remotion/out/featured",
+          dest: "packages/remotion/out/featured",
           filename: "blog-featured-ghost.png",
           scale: 2,
         },
         {
           format: "webp",
-          dest: "packages/app-remotion/out/featured",
+          dest: "packages/remotion/out/featured",
           filename: "blog-featured-ghost.webp",
           scale: 2,
         },
@@ -270,13 +270,13 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "png",
-          dest: "packages/app-remotion/out/featured",
+          dest: "packages/remotion/out/featured",
           filename: "blog-featured-cross.png",
           scale: 2,
         },
         {
           format: "webp",
-          dest: "packages/app-remotion/out/featured",
+          dest: "packages/remotion/out/featured",
           filename: "blog-featured-cross.webp",
           scale: 2,
         },
@@ -292,13 +292,13 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "png",
-          dest: "packages/app-remotion/out/featured",
+          dest: "packages/remotion/out/featured",
           filename: "blog-featured-duo.png",
           scale: 2,
         },
         {
           format: "webp",
-          dest: "packages/app-remotion/out/featured",
+          dest: "packages/remotion/out/featured",
           filename: "blog-featured-duo.webp",
           scale: 2,
         },
@@ -586,7 +586,7 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "png",
-          dest: "packages/app-remotion/out/logos",
+          dest: "packages/remotion/out/logos",
           filename: "logo-1024.png",
         },
       ],
@@ -601,7 +601,7 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "png",
-          dest: "packages/app-remotion/out/logos",
+          dest: "packages/remotion/out/logos",
           filename: "linkedin-banner.png",
         },
       ],
@@ -615,7 +615,7 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "png",
-          dest: "packages/app-remotion/out/logos",
+          dest: "packages/remotion/out/logos",
           filename: "twitter-banner.png",
         },
       ],
@@ -629,7 +629,7 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "png",
-          dest: "packages/app-remotion/out/logos",
+          dest: "packages/remotion/out/logos",
           filename: "github-banner.png",
           scale: 2,
         },

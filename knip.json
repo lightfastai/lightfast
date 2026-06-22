@@ -87,7 +87,7 @@
     "internal/vitest-config": {}
   },
   "ignore": [".agents/**", ".claude/**"],
-  "ignoreWorkspaces": ["packages/app-remotion"],
+  "ignoreWorkspaces": ["packages/remotion"],
   "ignoreDependencies": [
     "tailwindcss",
     "@tailwindcss/postcss",
