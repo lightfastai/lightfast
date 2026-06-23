@@ -29,5 +29,6 @@
   --radius-lg: 8px;
   --radius-xl: 12px;
   --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "PP Neue Montreal", "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-heading:
+    "PP Neue Montreal", "Geist", ui-sans-serif, system-ui, sans-serif;
 }

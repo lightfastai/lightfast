@@ -8,10 +8,10 @@ if (Array.isArray(config.routes)) {
     (route) =>
       route?.src === "^/_astro/(.*)$" &&
       route?.headers?.["cache-control"] ===
-        "public, max-age=31536000, immutable",
+        "public, max-age=31536000, immutable"
   );
   const filesystemRouteIndex = config.routes.findIndex(
-    (route) => route?.handle === "filesystem",
+    (route) => route?.handle === "filesystem"
   );
 
   if (

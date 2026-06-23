@@ -1,15 +1,15 @@
 // @ts-check
-import vercel from '@astrojs/vercel';
-import sentry from '@sentry/astro';
-import tailwindcss from '@tailwindcss/vite';
-import { defineConfig, fontProviders } from 'astro/config';
-import { visualizer } from 'rollup-plugin-visualizer';
+import vercel from "@astrojs/vercel";
+import sentry from "@sentry/astro";
+import tailwindcss from "@tailwindcss/vite";
+import { defineConfig, fontProviders } from "astro/config";
+import { visualizer } from "rollup-plugin-visualizer";
 
-const analyze = process.env.ANALYZE === 'true';
+const analyze = process.env.ANALYZE === "true";
 const canUploadSentrySourceMaps = Boolean(
   process.env.SENTRY_AUTH_TOKEN &&
     process.env.SENTRY_ORG &&
-    process.env.SENTRY_PROJECT,
+    process.env.SENTRY_PROJECT
 );
 const vitePlugins = [...tailwindcss()];
 
@@ -17,10 +17,10 @@ if (analyze) {
   vitePlugins.push(
     visualizer({
       emitFile: true,
-      filename: 'stats.html',
+      filename: "stats.html",
       gzipSize: true,
       brotliSize: true,
-    }),
+    })
   );
 }
 
@@ -30,29 +30,31 @@ export default defineConfig({
   fonts: [
     {
       provider: fontProviders.local(),
-      name: 'Geist',
-      cssVariable: '--font-geist',
-      fallbacks: ['sans-serif'],
+      name: "Geist",
+      cssVariable: "--font-geist",
+      fallbacks: ["sans-serif"],
       options: {
         variants: [
           {
-            src: ['./src/assets/fonts/geist/Geist-Variable-Latin.woff2'],
-            style: 'normal',
-            weight: '100 900',
+            src: ["./src/assets/fonts/geist/Geist-Variable-Latin.woff2"],
+            style: "normal",
+            weight: "100 900",
           },
         ],
       },
     },
     {
       provider: fontProviders.local(),
-      name: 'PP Neue Montreal',
-      cssVariable: '--font-pp-neue-montreal',
-      fallbacks: ['sans-serif'],
+      name: "PP Neue Montreal",
+      cssVariable: "--font-pp-neue-montreal",
+      fallbacks: ["sans-serif"],
       options: {
         variants: [
           {
-            src: ['./src/assets/fonts/pp-neue-montreal/PPNeueMontreal-Medium-Landing.woff2'],
-            style: 'normal',
+            src: [
+              "./src/assets/fonts/pp-neue-montreal/PPNeueMontreal-Medium-Landing.woff2",
+            ],
+            style: "normal",
             weight: 500,
           },
         ],
@@ -65,7 +67,7 @@ export default defineConfig({
         client: true,
         server: false,
       },
-      clientInitPath: './sentry.client.config.ts',
+      clientInitPath: "./sentry.client.config.ts",
       autoInstrumentation: {
         requestHandler: false,
       },

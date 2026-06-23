@@ -5,10 +5,7 @@ interface Props {
   size?: "sm" | "md" | "lg";
 }
 
-const {
-  showWordmark = true,
-  size = "sm",
-} = Astro.props;
+const { showWordmark = true, size = "sm" } = Astro.props;
 
 const className = Astro.props.class ?? "";
 

@@ -1,6 +1,5 @@
 ---
-import { Picture, getImage } from "astro:assets";
-import MarketingLayout from "./MarketingLayout.astro";
+import { getImage } from "astro:assets";
 import whyWeBuiltLightfastImage from "../assets/images/blog/why-we-built-lightfast.webp";
 
 const { frontmatter } = Astro.props;
@@ -18,7 +17,8 @@ const author = frontmatter.author ?? {
 const featuredImages = {
   "why-we-built-lightfast": whyWeBuiltLightfastImage,
 } as const;
-const featuredImageKey = frontmatter.featuredImage as keyof typeof featuredImages;
+const featuredImageKey =
+  frontmatter.featuredImage as keyof typeof featuredImages;
 const featuredImage = featuredImages[featuredImageKey];
 
 if (!featuredImage) {
@@ -31,7 +31,10 @@ const featuredImageOpenGraph = await getImage({
   quality: 40,
   width: 1200,
 });
-const featuredImageUrl = new URL(featuredImageOpenGraph.src, "https://lightfast.ai").href;
+const featuredImageUrl = new URL(
+  featuredImageOpenGraph.src,
+  "https://lightfast.ai"
+).href;
 
 const structuredData = {
   "@context": "https://schema.org",
