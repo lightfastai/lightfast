@@ -1,5 +1,5 @@
 import {
-  captureConsoleIntegration,
+  consoleLoggingIntegration,
   extraErrorDataIntegration,
   init,
 } from "@vendor/observability/sentry-nextjs";
@@ -13,7 +13,7 @@ init({
   debug: false,
   enableLogs: true,
   integrations: [
-    captureConsoleIntegration({ levels: ["error", "warn"] }),
+    consoleLoggingIntegration({ levels: ["error", "warn"] }),
     extraErrorDataIntegration({ depth: 3 }),
   ],
 });

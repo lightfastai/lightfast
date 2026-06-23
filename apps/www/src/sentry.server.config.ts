@@ -1,5 +1,5 @@
 import {
-  captureConsoleIntegration,
+  consoleLoggingIntegration,
   extraErrorDataIntegration,
   init,
   spotlightIntegration,
@@ -15,7 +15,7 @@ init({
   enableLogs: true,
   includeLocalVariables: true,
   integrations: [
-    captureConsoleIntegration({ levels: ["error", "warn"] }),
+    consoleLoggingIntegration({ levels: ["error", "warn"] }),
     extraErrorDataIntegration({ depth: 3 }),
     ...(env.NEXT_PUBLIC_VERCEL_ENV === "development"
       ? [spotlightIntegration()]

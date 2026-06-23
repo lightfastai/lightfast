@@ -1,5 +1,5 @@
 import {
-  captureConsoleIntegration,
+  consoleLoggingIntegration,
   init as initSentry,
   rewriteFramesIntegration,
   spotlightBrowserIntegration,
@@ -12,6 +12,7 @@ initSentry({
   dsn: sentryDsn,
   environment: process.env.NEXT_PUBLIC_VERCEL_ENV ?? "development",
   debug: false,
+  enableLogs: true,
   ...(sentryTunnel ? { tunnel: sentryTunnel } : {}),
   beforeSend(event, hint) {
     if (
@@ -50,7 +51,7 @@ initSentry({
         return frame;
       },
     }),
-    captureConsoleIntegration({ levels: ["error", "warn"] }),
+    consoleLoggingIntegration({ levels: ["error", "warn"] }),
     ...((process.env.NEXT_PUBLIC_VERCEL_ENV ?? "development") === "development"
       ? [spotlightBrowserIntegration()]
       : []),
