@@ -1,20 +1,20 @@
 ---
-title: "Why We Built Lightfast"
-description: "The story behind Lightfast — why founders need an operating layer beneath their tools and agents, and what we've already shipped toward building it."
+title: "Why We're Building Lightfast"
+description: "Why Lightfast is building systems where product and engineering teams design, build, and ship with AI in real time."
 keywords:
-  - "why we built lightfast"
-  - "founder letter"
-  - "operating layer"
-  - "agent infrastructure"
-  - "lightfast runtime"
-  - "mcp tools"
-  - "agent memory"
-  - "company as a program"
-  - "neural pipeline"
-  - "ai for founders"
+  - "why lightfast"
+  - "applied AI lab"
+  - "human-AI collaboration"
+  - "real-time AI collaboration"
+  - "AI collaboration systems"
+  - "product engineering AI"
+  - "AI evals"
+  - "models and interfaces"
+  - "MCP"
+  - "lightfast"
 canonicalUrl: "https://lightfast.ai/blog/2026-03-26-why-we-built-lightfast"
-ogTitle: "Why We Built Lightfast"
-ogDescription: "The story behind Lightfast — why founders need an operating layer beneath their tools, and what we've already shipped."
+ogTitle: "Why We're Building Lightfast"
+ogDescription: "Why Lightfast is building systems where product and engineering teams design, build, and ship with AI in real time."
 noindex: false
 nofollow: false
 authors:
@@ -23,113 +23,119 @@ authors:
     twitterHandle: "@jeevanpillay"
     jobTitle: "Founder"
 publishedAt: "2026-03-26T12:00:00Z"
-updatedAt: "2026-04-14T12:00:00Z"
-reviewedAt: "2026-06-19T00:00:00Z"
+updatedAt: "2026-06-23T00:00:00Z"
+reviewedAt: "2026-06-23T00:00:00Z"
 category: "company"
-readingTimeMinutes: 6
+readingTimeMinutes: 5
 featured: true
 featuredImage: "/images/blog/why-we-built-lightfast.webp"
-tldr: "Before Lightfast was a runtime, it was an agent harness. Closing the loop meant becoming the scaffolding. We're building the operating layer — the substrate agents and founders actually need — and running ourselves through it first."
-answerSummary: "Lightfast is building an operating layer for AI agents and teams: a durable substrate for observing events, remembering context, reasoning across workspace history, and acting through controlled APIs."
+tldr: "Lightfast is an applied AI lab. We build products to discover the primitives for real-time collaboration between teams and AI: models, interfaces, infrastructure, and evals tested in real products."
+answerSummary: "Lightfast is an applied AI lab building systems where product and engineering teams design, build, and ship with AI in real time."
 aeo:
   targetPrompts:
     - "What is Lightfast?"
-    - "What is an operating layer for AI agents?"
-    - "How can AI agents keep durable workspace memory?"
+    - "Why is Lightfast an applied AI lab?"
+    - "What is real-time AI collaboration?"
   fanoutQueries:
-    - "Lightfast AI agent operating layer"
-    - "operating layer for AI agents"
-    - "durable workspace memory for AI agents"
-    - "source cited AI agent workflow memory"
+    - "Lightfast applied AI lab"
+    - "real-time AI collaboration systems"
+    - "AI collaboration systems for product engineering teams"
+    - "applied AI evals for real-time collaboration"
   entities:
     - "Lightfast"
-    - "AI agents"
-    - "workspace memory"
+    - "Applied AI"
+    - "Human-AI collaboration"
+    - "AI evals"
     - "MCP"
-    - "TypeScript SDK"
   citationTargets:
     - "https://github.com/lightfastai"
     - "https://www.npmjs.com/package/lightfast"
     - "https://www.npmjs.com/package/@lightfastai/mcp"
 faq:
-  - question: "Why did you build Lightfast?"
-    answer: "We started building an agent harness and discovered that closing the loop between agents, tools, and context was impossible without becoming the scaffolding ourselves. Lightfast is the operating layer — the runtime — that replaces that scaffolding with a substrate agents and founders can operate through."
-  - question: "What does 'operating layer' mean?"
-    answer: "An operating layer sits between every tool and everyone who needs to act across them. Agents and people express intent — the layer resolves where and how. Tools stay. Teams stay. What changes is the substrate underneath, built around four verbs: observe, remember, reason, act."
-  - question: "What does 'every company is a Program' mean?"
-    answer: "A company is the sum of what it decides, remembers, and does. We believe that should be expressible as text — diffable, versionable, executable. The runtime executes the Program. Lightfast itself runs this way, with its own Program committed to GitHub and executed on the runtime we ship."
-  - question: "What has Lightfast shipped so far?"
-    answer: "Lightfast v0.1.0 ships a neural pipeline for extracting entities and relationships from workspace memory, plus an AI chat interface (Explore), a REST API, a TypeScript SDK, and an MCP server for agent access. The substrate is live and in production."
+  - question: "Why is Lightfast an applied AI lab?"
+    answer: "Lightfast builds products to investigate hard applied AI problems, then turns what works into reusable primitives: models, interfaces, infrastructure, and evals tested in real products."
+  - question: "What does Lightfast mean by real-time collaboration?"
+    answer: "Real-time collaboration means AI can participate while teams are designing, building, reviewing, and deciding, close enough to the artifact, context, constraints, and conversation to matter."
+  - question: "Who is Lightfast building for first?"
+    answer: "Lightfast starts with product and engineering teams because software and product design have fast iteration loops, rich artifacts, and constant decisions across ideas, interfaces, code, reviews, and shipping."
+  - question: "What does Lightfast build?"
+    answer: "Lightfast builds systems and primitives for teams working with AI in real time, including models, interfaces, infrastructure, evals, APIs, SDKs, and MCP surfaces where useful."
 ---
 
-## The connecting tissue
+## Why Now
 
-Before Lightfast was a runtime, it was an agent harness — an SDK for building agents, deploying them as user-facing apps on Vercel, letting them loose on real work. It mostly worked. What didn't work was closing the loop.
+Lightfast is an applied AI lab building systems where product and engineering teams design, build, and ship with AI in real time.
 
-Every time we shipped something, the loop opened right back up. An agent would deploy. We'd bounce to the Vercel dashboard to check. Bounce to Sentry when something broke. Bounce to GitHub to see what changed. Back to the terminal to fix it, then back to the web to check again. The agent never saw any of this. Neither did the next one we deployed after it. The context that mattered — what happened, why, and what to do about it — lived in tabs, and the only runtime connecting those tabs was us.
+That sentence is the clearest version of what changed for us.
 
-We spent months accepting that and writing scaffolding to paper over it. More scripts, more glue, more bespoke polling. At some point the scaffolding got bigger than the agents.
+We began by building tools for agents and software teams. The early work taught us something useful, but narrower than the company we wanted to build: the hard problem is not simply giving models more tools. The hard problem is making models useful while teams are actively designing, building, reviewing, and deciding.
 
-That's when it clicked. The problem wasn't the agents. It wasn't the tools. It was the thing underneath — or rather, the absence of the thing underneath. Every app assumes it's the center of the universe. None of them are. The connecting tissue between them was invisible, and every team we watched was reinventing it by hand.
+AI is already useful in fragments. It can answer questions, draft text, write code, summarize a thread, or produce options. But product and engineering work is not a sequence of isolated prompts. It changes while people are doing it. A design shifts. A constraint appears. A branch gets explored. A review changes the direction. A deployment exposes a new problem.
 
-You can't build an operating system *on top of* LLMs. You have to build the memory layer underneath them first. The runtime isn't glue between apps. The runtime *is* the substrate.
+The system has to keep up with the work while the work is still moving.
 
-## Every founder now runs two companies
+## The Problem Is Not More Features
 
-Founders used to run one company. Today they run two.
+Most AI tools still sit outside the work.
 
-The first is the business they built — the customers, the code, the team, the product. The second is quieter and newer: a small, growing fleet of agents operating across their stack. Deploy bots. Triage agents. Research agents. Code review agents. Most of them were hacked together in an afternoon. Most of them don't talk to each other.
+They appear as sidebars, chat boxes, autocomplete, summaries, and command palettes around tools that were built before models could participate directly. Those features can be useful, but they rarely change the shape of collaboration. The team still has to move context between tools, explain what changed, compare alternatives, recover decisions, and decide what the model should do next.
 
-Tools weren't built for either of those companies. They were built for humans clicking buttons. Every agent you ship has to learn — from scratch, every time — which tool owns what, how to call it, how to interpret what comes back. Every person you hire has to do the same, slower.
+That is why the next step is not just more AI features.
 
-The gap between *I know what needs to happen* and *it happens* is supposed to close in the AI era. For most founders, it's widened. The agents added more surface, not more leverage. We think that's because the substrate hasn't caught up.
+The next step is systems where teams and AI work together in real time: close to the artifact, aware of the context, responsive to feedback, and able to help while decisions are being made.
 
-## More tools isn't the answer
+## Inside The Work
 
-The industry's reflex to fragmentation has been to ship another tool to manage the fragmentation.
+For us, real-time does not mean "chat responds quickly."
 
-A dashboard on top of dashboards. A workflow layer to hide the workflow layers underneath it. An agent to orchestrate your agents. Each one arrives promising to be the one. Each one adds its own surface area, its own auth model, its own event schema, its own way of being wrong.
+It means AI can participate inside the team's active work. It can see what is changing, act on shared context, help explore and compare directions, take feedback, and respond in time to matter.
 
-We stopped believing the fix was one more app. If every app reinvents the connecting tissue, the answer isn't a better app. The answer is moving the connecting tissue out of the apps entirely.
+That changes what the system has to understand. A model working through a prompt box sees the work differently from a model inside a live product design session, a codebase, a review flow, or a deployment loop. The interface is not decoration. The artifact state is not metadata. The history is not a nice-to-have. They are part of what lets the system reason and respond usefully.
 
-## An operating layer, not another app
+This is why Lightfast is an applied AI lab, not just a product company. We need products to test the work. We need research to understand what the products reveal.
 
-An operating layer isn't a product. It's a position.
+## Primitives, Not Features
 
-It sits between every system and everyone — agents and people — who needs to act across them. Instead of agents learning every product API one by one, they express intent: *ship this*, *triage this*, *find out what broke*. The runtime resolves where and how. Tools stay. Teams stay. What changes is the substrate underneath.
+We develop the primitives that make real-time collaboration between teams and AI possible: models, interfaces, infrastructure, and evals tested in real products.
 
-We organised the work around four verbs. **Observe** every important event and decision as structured, immutable facts. **Remember** them in a graph that preserves what happened, who was involved, and how things relate. **Reason** across that graph — detect patterns, compute truth when records conflict, enforce the invariants a team defines. **Act** on it — resolve intent through controlled APIs, trace every action back to the event that triggered it.
+Models need behavior shaped for collaboration: interruption, steering, comparison, revision, recovery, and shared context. Interfaces need to let people guide the system without leaving the flow of work. Infrastructure needs to preserve artifact state, permissions, history, and responsibility. Evals need to show whether the system understood intent, preserved constraints, improved the artifact, and helped the team make progress.
 
-This was a vision paper a year ago. It isn't now. MCP landed. Embeddings got cheap enough to index everything. Webhook-first SaaS became the default. Agents got good enough to reason over structured memory when you hand it to them properly. The primitives finally exist. The substrate is the last thing left to build.
+None of those primitives are isolated. They have to be designed together.
 
-## What's live today
+That is the lab: build the product, observe where collaboration breaks, turn the lesson into a primitive, and test it again.
 
-v0.1.0 is out. The runtime is real, and it does real work.
+## Starting Where The Loop Is Fastest
 
-The neural pipeline turns workspace context into structured memory. Every event is validated, scored for significance, and decomposed into entities — services, endpoints, branches, users, incidents, decisions — up to fifty types per event. Entities get deduplicated, linked into a graph, and embedded for semantic search. Once memory is loaded, the pipeline handles the rest.
+We are starting with software and product design because the loop is fast.
 
-Explore is the first thing you can do with that substrate. Ask a question in natural language, get a streaming answer grounded in your actual events, with citations back to the source. Every response shows which entities it pulled and why. No black boxes. No summarisation without verification.
+Product and engineering teams already move between ideas, interfaces, code, reviews, deployments, bugs, and customer feedback. The boundaries between design, implementation, and shipping are collapsing. That makes the domain a good testbed for systems where teams and AI work together in real time.
 
-For anything we haven't built a UI for yet, there's a REST API, a typed TypeScript SDK (`lightfast` on npm), and an MCP server (`@lightfastai/mcp`) that exposes the same capabilities to any agent that speaks the protocol. The same primitives for your team and the agents your team is running.
+The goal is not to stop there.
 
-Everything is tenant-isolated. Your data never mixes with anyone else's. We don't train on it. You can delete it whenever you want. The point is: the substrate already runs.
+The same primitives matter wherever teams create systems with many constraints: buildings, machines, factories, infrastructure, vehicles, research labs, and physical-world operations. These domains make the collaboration problem sharper. The artifacts are richer. The stakes are higher. The cost of slow iteration grows.
 
-## Every company is a Program
+We start where we can learn fastest so we can build toward systems that matter far beyond screens.
 
-Here's the thesis underneath all of it.
+## Research Through Products
 
-A company is the sum of what it decides, what it remembers, and what it does. Most of that lives in tabs — in docs no one reads, in Slack threads no one finds, in the heads of the three people who were there when it happened. We don't think any of that is load-bearing. We think it's where companies leak.
+Research gives us the language and experiments to understand what is changing. Products force those ideas to survive contact with real teams, real artifacts, and real constraints.
 
-The version we believe in is different. A company should be expressible as [a Program](/brand) — text, diffable, versionable, executable. Decisions are commits. Memory is a graph. Roadmap is code. Every process is legible, every rule is enforced, every action traces back to the intent that asked for it. The runtime executes the Program. The Program becomes the company.
+We expect to share what we learn: research notes, technical posts, demos, evals, and code where useful. The useful questions are concrete:
 
-We don't just believe this. We're running it. Lightfast itself — roadmap, decisions, invariants, memory — lives as a Program we're committing to GitHub and executing on the runtime we ship. Every process we build is one we're also using to build the next one. This blog post is evidence. The [company page](/brand) is evidence.
+How should teams interrupt, steer, and correct models while work is unfolding?
 
-That's the experiment. We're the first user because we had to be.
+How should systems branch, compare, merge, and discard AI-generated directions?
 
-## We are building the runtime
+How should models adapt to a team's intent, taste, constraints, and standards?
 
-We're not going to be the only ones who write a company as a Program. We're just going to be first.
+How do we evaluate whether collaboration actually improved the artifact or the decision?
 
-The primitives are ready. The substrate is live. What's left is writing ours in the open, shipping the runtime as fast as we can, and watching the next generation of founders use it to write theirs.
+Those questions are too practical to leave abstract. They need products around them.
 
-**Every company will be a Program. We're writing ours in the open — so you can write yours next.**
+## What We Are Building Toward
+
+We are building toward systems where teams and AI can explore, edit, compare, review, and decide together in real time.
+
+The first products will be closest to software and product work. The primitives should become more general over time: models, interfaces, infrastructure, and evals that help teams build things that currently require far more people, time, and institutional weight.
+
+That is why we are building Lightfast.

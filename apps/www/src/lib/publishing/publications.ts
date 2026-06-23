@@ -274,7 +274,7 @@ function buildBlogIndexPublication(posts: readonly BlogPostPublication[]) {
     kind: "blog-index",
     title: "Blog",
     description:
-      "Notes from Lightfast on agent infrastructure, workspace memory, and building reliable AI operations.",
+      "Notes from Lightfast on applied AI, real-time collaboration, product engineering, evals, and the systems we build.",
     pathname,
     posts: summaries,
     url,

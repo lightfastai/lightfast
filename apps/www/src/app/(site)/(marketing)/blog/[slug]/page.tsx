@@ -16,32 +16,32 @@ interface Props {
 }
 
 const toc: readonly TocItem[] = [
-  { title: "The connecting tissue", depth: 2, id: "the-connecting-tissue" },
+  { title: "Why Now", depth: 2, id: "why-now" },
   {
-    title: "Every founder now runs two companies",
+    title: "The Problem Is Not More Features",
     depth: 2,
-    id: "every-founder-now-runs-two-companies",
+    id: "the-problem-is-not-more-features",
+  },
+  { title: "Inside The Work", depth: 2, id: "inside-the-work" },
+  {
+    title: "Primitives, Not Features",
+    depth: 2,
+    id: "primitives-not-features",
   },
   {
-    title: "More tools isn't the answer",
+    title: "Starting Where The Loop Is Fastest",
     depth: 2,
-    id: "more-tools-isnt-the-answer",
+    id: "starting-where-the-loop-is-fastest",
   },
   {
-    title: "An operating layer, not another app",
+    title: "Research Through Products",
     depth: 2,
-    id: "an-operating-layer-not-another-app",
-  },
-  { title: "What's live today", depth: 2, id: "whats-live-today" },
-  {
-    title: "Every company is a Program",
-    depth: 2,
-    id: "every-company-is-a-program",
+    id: "research-through-products",
   },
   {
-    title: "We are building the runtime",
+    title: "What We Are Building Toward",
     depth: 2,
-    id: "we-are-building-the-runtime",
+    id: "what-we-are-building-toward",
   },
 ] as const;
 

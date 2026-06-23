@@ -8,15 +8,18 @@
 
 ## Mission
 
-To be defined.
+Lightfast is an applied AI lab building systems where product and engineering
+teams design, build, and ship with AI in real time.
 
 ## Vision
 
-To be defined.
+We develop the primitives that make real-time collaboration between teams and AI
+possible: models, interfaces, infrastructure, and evals tested in real products.
 
 ---
 
-The direction of this project is currently undefined. See [SPEC.md](SPEC.md).
+We start with software and product design because the loop is fastest, then
+build toward systems that matter far beyond screens. See [SPEC.md](SPEC.md).
 
 ## Contributing
 

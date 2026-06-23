@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Lightfast – Human-AI Collaboration Lab",
+    name: "Lightfast - Teams and AI, Working Together in Real Time",
     short_name: "Lightfast",
     description:
-      "Collaboration-native models and environments for complex work: live, multiplayer systems where AI participates while work happens.",
+      "An applied AI lab building systems where product and engineering teams design, build, and ship with AI in real time.",
     start_url: "/",
     display: "standalone",
     background_color: "#09090b",

@@ -284,7 +284,7 @@ export function buildBlogIndexJsonLd({
     url,
     name: "Blog",
     description:
-      "Notes from Lightfast on agent infrastructure, workspace memory, and building reliable AI operations.",
+      "Notes from Lightfast on applied AI, real-time collaboration, product engineering, evals, and the systems we build.",
     dateModified: lastModified,
     inLanguage: "en-US",
     isPartOf: { "@id": SITE.websiteId },
@@ -302,7 +302,7 @@ export function buildBlogIndexJsonLd({
         url,
         name: `${SITE.name} Blog`,
         description:
-          "Notes from Lightfast on agent infrastructure, workspace memory, and building reliable AI operations.",
+          "Notes from Lightfast on applied AI, real-time collaboration, product engineering, evals, and the systems we build.",
         publisher: { "@id": SITE.organizationId },
         blogPost: blogPostEntities,
       },

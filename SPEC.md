@@ -1,21 +1,36 @@
 # Lightfast Specification
 
-Status: Draft — pre-decision
+Status: Draft - positioning reset
 
-Last Updated: 2026-05-10
+Last Updated: 2026-06-23
 
-Purpose: To be defined.
+Purpose: Define the current company direction, product wedge, and research
+agenda for Lightfast.
 
 ---
 
 ## Mission
 
-To be defined.
+Lightfast is an applied AI lab building systems where product and engineering
+teams design, build, and ship with AI in real time.
 
 ## Vision
 
-To be defined.
+Teams and AI should be able to explore, edit, compare, review, and decide
+together while work is happening. Lightfast develops the primitives that make
+that possible: models, interfaces, infrastructure, and evals tested in real
+products.
 
 ---
 
-The scope, components, domain model, and behavioral guarantees of Lightfast are intentionally undefined at this revision. This document remains a stub until direction is decided.
+## Approach
+
+Lightfast builds products as experiments, then turns what works into reusable
+applied AI primitives. The first wedge is software and product design because
+iteration loops are short, digital artifacts change quickly, and teams already
+move between ideas, interfaces, code, reviews, deployments, and customer
+feedback.
+
+The broader ambition extends to engineering and design teams working on
+machines, buildings, infrastructure, factories, vehicles, research labs, and
+physical-world operations.

@@ -1,156 +1,40 @@
-# What We're Building - Company Post Draft
+# What Lightfast Is - Company Post Direction
 
 Date: 2026-06-23
-Status: Draft v1 for voice tuning
-Area: company positioning, public narrative, human-AI collaboration
+Status: Superseded draft replaced by approved positioning direction
+Area: company positioning, public narrative, applied AI
 
-## Draft
+## Current Spine
 
-Lightfast is a human-AI collaboration lab building new mediums for complex work.
+Lightfast is an applied AI lab building systems where product and engineering
+teams design, build, and ship with AI in real time.
 
-AI is changing what people can make, but most of the tools we use to make
-things were designed for a different era. Files, canvases, dashboards,
-timelines, tickets, branches, meetings, and review loops were built around
-human-speed iteration. AI is now fast enough to participate inside the work
-itself, but most tools still treat it as an add-on: a sidebar, a command
-palette, an autocomplete box, or an export step.
+We develop the primitives that make this possible: models, interfaces,
+infrastructure, and evals tested in real products.
 
-We think this misses the deeper shift.
+## Public Title
 
-The future of AI will not only be better models. It will be new mediums:
-environments where people and AI work together live, across many collaborators,
-many versions, many constraints, and many possible futures at once. Lightfast
-exists to build those mediums from first principles.
+Teams and AI, Working Together in Real Time
 
-## AI Should Participate While The Work Is Happening
+## Narrative Shape
 
-The most important work does not fit inside a prompt.
+The company story should now follow this order:
 
-Designing a product, planning a building, engineering a vehicle, operating a
-construction site, debugging a production system, coordinating a manufacturing
-process, or exploring a scientific idea all require context, judgment, taste,
-constraints, collaboration, and constant revision. The work changes as people
-discuss it. The right answer depends on what just happened, what has been tried
-before, who is responsible, what constraints matter, and what the team is trying
-to become.
+1. Lightfast is an applied AI lab.
+2. The first audience is product and engineering teams.
+3. The core problem is real-time collaboration between teams and AI.
+4. The company builds primitives, not isolated features.
+5. The primitive buckets are models, interfaces, infrastructure, and evals.
+6. Research happens through products.
+7. Software and product design is the first wedge, not the boundary.
 
-Current AI systems are powerful in fragments. They can answer questions,
-generate drafts, write code, summarize documents, and produce options. But real
-work is live. It happens between people, tools, materials, and decisions. It
-branches. It gets interrupted. It depends on timing. It depends on trust.
+## Source Of Truth
 
-We believe AI should participate while the work is happening: live, multiplayer,
-branching, interruptible, and fast enough to keep up.
+Use
+`docs/superpowers/specs/2026-06-23-what-lightfast-is-positioning-design.md`
+as the positioning source of truth.
 
-That belief shapes everything we build.
+Use `apps/www/src/content/home/home.mdx` for current homepage copy.
 
-## Old Tools, New Constraints
-
-Many of today's most important tools were not designed for AI-native
-collaboration.
-
-This is not because they are bad tools. Figma, CAD systems, IDEs, project
-trackers, design suites, spreadsheets, cameras, DAWs, and simulation
-environments each grew around the constraints of their time. They assume a
-certain rhythm: a person edits, another person reviews, a file changes, a
-version is saved, a comment is left, a meeting happens, a decision is made
-elsewhere.
-
-AI changes that rhythm.
-
-When AI can generate hundreds of directions, reason across constraints,
-manipulate artifacts, simulate alternatives, and collaborate with multiple
-people at once, the old medium starts to strain. Iteration needs to become
-faster. Branching needs to become deeper. Context needs to be native. Models
-need to understand the artifact, not just text around it. Collaboration needs to
-happen inside the medium, not around it.
-
-Bolting AI onto pre-AI tools will help, but it will not be enough.
-
-We need environments where models, interfaces, and collaboration systems are
-designed together.
-
-## Models And Mediums Together
-
-Lightfast is not only an interface company, and not only a model company.
-
-We are interested in the places where model behavior and the medium have to be
-designed together. Some collaboration problems can be solved with better product
-design. Some require new interfaces. Some require new infrastructure. Some
-require model-level work: interaction models, real-time feedback, multimodal
-understanding, controllable generation, long-context adaptation, and systems
-that can respond fluidly to human intent while work is unfolding.
-
-The medium matters because it shapes what the model can understand.
-
-A model working through a chat box sees the world differently from a model
-embedded in a live design environment, a codebase, a construction plan, a
-simulated factory floor, or a collaborative engineering session. The interface
-is not decoration. It is part of the intelligence of the system.
-
-We want to build AI systems where the model and the environment make each other
-better.
-
-## Starting Where The Loop Is Fastest
-
-Our first experiments begin with software and product design.
-
-This is where iteration loops are shortest, where digital artifacts can be
-changed quickly, and where the boundaries between idea, design, code, and
-deployment are already collapsing. It is also a domain where collaboration is
-dense: designers, engineers, founders, product people, and AI systems all need
-to work across intent, taste, implementation, review, and shipping.
-
-But our ambition is broader than software.
-
-The same constraints appear wherever teams create complex things: architecture,
-construction, manufacturing, vehicles, research labs, infrastructure,
-operations, and physical-world production. These domains make the collaboration
-problem sharper. The stakes are higher. The artifacts are richer. The number of
-people involved grows. The cost of slow iteration grows.
-
-We are starting where we can learn fastest so we can build toward mediums that
-matter far beyond screens.
-
-## Research By Building
-
-Lightfast is a research and product company because we do not think these can be
-separated.
-
-Research gives us the language and experiments to understand what is changing.
-Product forces those ideas to survive contact with real work. The best
-questions often appear only after a system is used by people trying to make
-something difficult.
-
-We expect to publish what we learn: research notes, technical posts, prototypes,
-evaluations, demos, and code where useful. We want to study human-AI
-collaboration in the open, not as an abstract philosophy, but as a practical
-discipline for building better systems.
-
-The questions we care about are concrete:
-
-How should AI participate in real-time work with multiple people?
-
-How should teams branch, compare, merge, and discard AI-generated directions?
-
-How should models adapt to a team's intent, taste, constraints, and standards?
-
-How should people interrupt, guide, correct, and collaborate with AI without
-leaving the flow of work?
-
-What should a tool become when AI is not an add-on, but part of the medium
-itself?
-
-## The Direction
-
-We are building collaboration-native models and environments for complex work.
-
-That means real-time systems. Multiplayer systems. Branching systems. Fast
-systems. Systems where the artifact is alive, where AI can participate directly,
-and where people stay meaningfully involved as capability increases.
-
-We think the next generation of tools will feel less like static software with
-AI features attached, and more like living environments for thought, design,
-engineering, and production.
-
-That is what Lightfast is here to build.
+Use `apps/www/src/content/blog/2026-03-26-why-we-built-lightfast.mdx` for the
+current company post voice.

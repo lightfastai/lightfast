@@ -78,7 +78,7 @@ export const { GET } = createLlmsTxtHandler(
   {
     title: "Lightfast",
     description:
-      "Lightfast is a human-AI collaboration lab building new mediums for complex work: live, multiplayer systems where AI participates while work happens.",
+      "Lightfast is an applied AI lab building systems where product and engineering teams design, build, and ship with AI in real time.",
     baseUrl: `${BASE_URL}`,
     sectionOrder: [
       "Marketing",

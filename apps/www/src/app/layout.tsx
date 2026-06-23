@@ -39,9 +39,9 @@ const ppNeueMontreal = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Lightfast – Human-AI Collaboration Lab",
+  title: "Lightfast - Teams and AI, Working Together in Real Time",
   description:
-    "Lightfast builds collaboration-native models and environments for complex work: live, multiplayer systems where AI participates while work happens.",
+    "Lightfast is an applied AI lab building systems where product and engineering teams design, build, and ship with AI in real time.",
   applicationName: "Lightfast",
   metadataBase: new URL("https://lightfast.ai"),
   authors: [
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   creator: "Lightfast",
   publisher: "Lightfast",
   category: "Technology",
-  classification: "Human-AI Collaboration Lab",
+  classification: "Applied AI Lab",
   robots: {
     index: true,
     follow: true,
@@ -69,16 +69,16 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://lightfast.ai",
-    title: "Lightfast – Human-AI Collaboration Lab",
+    title: "Lightfast - Teams and AI, Working Together in Real Time",
     description:
-      "Collaboration-native models and environments for complex work: live, multiplayer systems where AI participates while work happens.",
+      "An applied AI lab developing models, interfaces, infrastructure, and evals for teams working with AI in real time.",
     siteName: "Lightfast",
     images: [
       {
         url: "https://lightfast.ai/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Lightfast - Human-AI Collaboration Lab",
+        alt: "Lightfast - Teams and AI, Working Together in Real Time",
       },
     ],
   },
@@ -86,9 +86,9 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@lightfastai",
     creator: "@lightfastai",
-    title: "Lightfast – Human-AI Collaboration Lab",
+    title: "Lightfast - Teams and AI, Working Together in Real Time",
     description:
-      "Collaboration-native models and environments for complex work: live, multiplayer systems where AI participates while work happens.",
+      "An applied AI lab developing models, interfaces, infrastructure, and evals for teams working with AI in real time.",
     images: ["https://lightfast.ai/opengraph-image"],
   },
   icons: {
