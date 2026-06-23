@@ -11,8 +11,33 @@ import {
 } from "@vercel/microfrontends/next/client";
 
 import type { Metadata, Viewport } from "next";
+import localFont from "next/font/local";
 import { createMetadata } from "~/lib/content-seo";
-import { geistMono, geistSans, ppNeueMontreal } from "~/lib/fonts";
+
+const geistSans = localFont({
+  src: "../../public/fonts/subsets/Geist-Variable-www-latin.woff2",
+  variable: "--font-geist-sans",
+  display: "swap",
+});
+
+const geistMono = localFont({
+  src: "../../public/fonts/subsets/GeistMono-Variable-www-latin.woff2",
+  variable: "--font-geist-mono",
+  display: "swap",
+  preload: false,
+});
+
+const ppNeueMontreal = localFont({
+  src: [
+    {
+      path: "../../public/fonts/subsets/PPNeueMontreal-Medium-www-latin.woff2",
+      weight: "500",
+      style: "normal",
+    },
+  ],
+  variable: "--font-pp-neue-montreal",
+  display: "swap",
+});
 
 export const metadata: Metadata = createMetadata({
   title: "Lightfast – The Operating Layer for Agents and Apps",
