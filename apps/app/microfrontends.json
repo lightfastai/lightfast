@@ -17,7 +17,7 @@
           "group": "marketing",
           "paths": [
             "/",
-            "/opengraph-image-:hash",
+            "/opengraph-image",
             "/pricing",
             "/brand",
             "/blog",

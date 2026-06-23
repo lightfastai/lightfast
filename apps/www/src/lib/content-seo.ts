@@ -5,6 +5,12 @@ import type { Metadata } from "next";
 const applicationName = "Lightfast";
 const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
 const productionUrl = seoEnv.VERCEL_PROJECT_PRODUCTION_URL;
+const defaultOgImage = {
+  url: "https://lightfast.ai/opengraph-image",
+  width: 1200,
+  height: 630,
+  alt: "Lightfast - The Operating Layer for Agents and Apps",
+} as const;
 
 const appDefaults: Metadata = {
   applicationName,
@@ -27,7 +33,18 @@ export function createMetadata(
   metadata: Partial<Metadata>,
   overrides?: Partial<Metadata>
 ): Metadata {
-  return merge({}, appDefaults, metadata, overrides ?? {});
+  const merged = merge({}, appDefaults, metadata, overrides ?? {});
+  return {
+    ...merged,
+    openGraph: {
+      ...merged.openGraph,
+      images: merged.openGraph?.images ?? [defaultOgImage],
+    },
+    twitter: {
+      ...merged.twitter,
+      images: merged.twitter?.images ?? [defaultOgImage.url],
+    },
+  };
 }
 
 /**

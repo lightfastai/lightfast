@@ -58,10 +58,6 @@
     "packages/*": {
       "project": ["src/**/*.{ts,tsx}"]
     },
-    "packages/og": {
-      "project": ["src/**/*.{ts,tsx}"],
-      "ignoreDependencies": ["react", "@types/react"]
-    },
     "packages/ui": {
       "project": ["src/**/*.{ts,tsx}"],
       "ignoreDependencies": ["@turbo/gen"]

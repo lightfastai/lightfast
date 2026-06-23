@@ -105,7 +105,6 @@ const wwwConfig: NextConfig = merge({}, baseConfig, {
   },
 
   transpilePackages: [
-    "@repo/og",
     "@repo/ui",
     "@vendor/aeo",
     "@vendor/analytics",

@@ -21,7 +21,7 @@ export function buildOrganizationEntity(): Organization {
     url: "https://lightfast.ai",
     logo: {
       "@type": "ImageObject",
-      url: "https://lightfast.ai/og.png",
+      url: "https://lightfast.ai/android-chrome-512x512.png",
     },
     sameAs: [
       "https://x.com/lightfastai",
