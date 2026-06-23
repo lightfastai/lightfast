@@ -14,6 +14,7 @@ import {
 } from "@vendor/security";
 import { Effect } from "effect";
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { z } from "zod";
 import {
   addContactToSegment,
@@ -21,6 +22,7 @@ import {
   isResendConflict,
   updateContact,
 } from "~/services/resend";
+import { notifyNewsletterSignup } from "~/services/slack";
 
 const NEWSLETTER_SEGMENT_ID = "55744eed-18f8-42fa-9d04-36fe6ec71772";
 
@@ -123,6 +125,38 @@ export async function subscribeToNewsletter(
                 email,
                 segmentId: NEWSLETTER_SEGMENT_ID,
               }).pipe(Effect.catchIf(isResendConflict, () => Effect.void));
+            })
+          ),
+          Effect.tap(() =>
+            Effect.sync(() => {
+              after(() =>
+                Effect.runPromise(
+                  notifyNewsletterSignup({ email }).pipe(
+                    Effect.catchTags({
+                      ApplicationError: (error) => {
+                        captureException(error);
+
+                        logger.error("Newsletter Slack notification failed", {
+                          error: error.message,
+                          provider: "slack",
+                          step: "unexpected_error",
+                        });
+
+                        return Effect.void;
+                      },
+                      SlackError: (error) => {
+                        logger.error("Newsletter Slack notification failed", {
+                          error: error.message,
+                          provider: "slack",
+                          status_code: error.statusCode,
+                        });
+
+                        return Effect.void;
+                      },
+                    })
+                  )
+                )
+              );
             })
           ),
           Effect.as({

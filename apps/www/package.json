@@ -39,6 +39,7 @@
     "@vendor/resend": "workspace:*",
     "@vendor/security": "workspace:*",
     "@vendor/seo": "workspace:*",
+    "@vendor/slack": "workspace:*",
     "@vercel/microfrontends": "^2.3.2",
     "@vercel/related-projects": "catalog:",
     "@vercel/toolbar": "^0.2.2",
