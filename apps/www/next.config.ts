@@ -18,84 +18,19 @@ const wwwConfig: NextConfig = merge({}, baseConfig, {
   async redirects() {
     return [
       {
-        source: "/v2/legal/terms-of-service",
-        destination: "/legal/terms",
-        permanent: true,
-      },
-      {
-        source: "/v2/legal/privacy-policy",
-        destination: "/legal/privacy",
-        permanent: true,
-      },
-      {
-        source: "/v2",
-        destination: "/",
-        permanent: true,
-      },
-      {
-        source: "/v2/:path*",
-        destination: "/:path*",
-        permanent: true,
-      },
-      {
         source: "/company",
         destination: "/brand",
-        permanent: false,
+        permanent: true,
       },
       {
         source: "/company/:path*",
         destination: "/brand",
-        permanent: false,
+        permanent: true,
       },
       {
-        source: "/pricing",
-        destination: "/",
-        permanent: false,
-      },
-      {
-        source: "/use-cases/:path*",
-        destination: "/",
-        permanent: false,
-      },
-      {
-        source: "/careers",
-        destination: "/brand",
-        permanent: false,
-      },
-      {
-        source: "/careers/:path*",
-        destination: "/brand",
-        permanent: false,
-      },
-      {
-        source: "/blog/rss.xml",
-        destination: "/blog",
-        permanent: false,
-      },
-      {
-        source: "/blog/atom.xml",
-        destination: "/blog",
-        permanent: false,
-      },
-      {
-        source: "/blog/feed.xml",
-        destination: "/blog",
-        permanent: false,
-      },
-      {
-        source: "/blog/topic/:path*",
-        destination: "/blog",
-        permanent: false,
-      },
-      {
-        source: "/search",
-        destination: "/blog",
-        permanent: false,
-      },
-      {
-        source: "/pitch-deck",
-        destination: "/",
-        permanent: false,
+        source: "/legal",
+        destination: "/legal/terms",
+        permanent: true,
       },
     ];
   },

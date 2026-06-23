@@ -1,12 +1,42 @@
 import type { MetadataRoute } from "next";
 import { env } from "~/env";
 
-export default function robots(): MetadataRoute.Robots {
-  // Block all crawlers on non-production environments (preview, development)
-  // VERCEL_ENV is "production" only for production deployments, "preview" for preview branches
-  const isPreview = env.NEXT_PUBLIC_VERCEL_ENV === "preview";
+const BASE_URL = "https://lightfast.ai";
 
-  if (isPreview) {
+const disallowPaths = [
+  // App/API surfaces
+  "/api/",
+  "/oauth/",
+  "/.well-known/",
+
+  // Auth and account surfaces
+  "/account",
+  "/accounts",
+  "/new/",
+  "/sign-in",
+  "/sign-up",
+  "/confirm/",
+
+  // Organization/workspace private routes from the default app
+  "/*/automations/",
+  "/*/chat/",
+  "/*/connectors/",
+  "/*/decisions/",
+  "/*/developer-connections/",
+  "/*/insights/",
+  "/*/jobs/",
+  "/*/mcp/",
+  "/*/people/",
+  "/*/search/",
+  "/*/settings/",
+  "/*/signals/",
+  "/*/skills/",
+] as const;
+
+export default function robots(): MetadataRoute.Robots {
+  const isProduction = env.NEXT_PUBLIC_VERCEL_ENV === "production";
+
+  if (!isProduction) {
     return {
       rules: {
         userAgent: "*",
@@ -15,117 +45,12 @@ export default function robots(): MetadataRoute.Robots {
     };
   }
 
-  // Production: Allow AI crawlers with specific permissions
-  // Strategy: Allow ALL training bots for maximum AEO/GEO visibility
   return {
-    rules: [
-      // General crawlers - block authenticated/private routes
-      // Note: Microfrontends setup - console is catch-all, www handles marketing, auth handles sign-in/sign-up
-      {
-        userAgent: "*",
-        allow: [
-          "/",
-          "/llms.txt", // AI crawler guidance file (standard for LLMs to understand site)
-        ],
-        disallow: [
-          // API routes (console app)
-          "/api/", // All API routes including tRPC, Inngest, GitHub, Vercel webhooks
-
-          // Authenticated user routes (console app)
-          "/account/", // User account management
-          "/new/", // Organization creation flow
-
-          // Organization/workspace private routes (console app: /[orgSlug]/...)
-          "/*/settings/", // Org and workspace settings
-          "/*/insights/", // Analytics and insights
-          "/*/jobs/", // Background jobs
-          "/*/search/", // Authenticated workspace search
-
-          // Internal/preview/test content (www app)
-          "/pitch-deck", // Internal pitch deck
-
-          // Sensitive flows
-          "/confirm/", // Email confirmations
-        ],
-      },
-      // OpenAI - Critical for ChatGPT Search & SearchGPT
-      {
-        userAgent: "OAI-SearchBot",
-        allow: "/",
-      },
-      {
-        userAgent: "ChatGPT-User",
-        allow: "/",
-      },
-      // GPTBot - For OpenAI model training
-      {
-        userAgent: "GPTBot",
-        allow: "/",
-      },
-      // Common Crawl - Dataset for AI research and training
-      {
-        userAgent: "CCBot",
-        allow: "/",
-      },
-      // Perplexity - Growing answer engine
-      {
-        userAgent: "PerplexityBot",
-        allow: "/",
-      },
-      // Anthropic Claude - Web search capability
-      {
-        userAgent: "Claude-Web",
-        allow: "/",
-      },
-      // Google AI - For AI Overviews and Gemini training
-      {
-        userAgent: "Google-Extended",
-        allow: "/",
-      },
-      // Anthropic AI - For Claude model training (different from Claude-Web search)
-      {
-        userAgent: "anthropic-ai",
-        allow: "/",
-      },
-      // Cohere AI
-      {
-        userAgent: "cohere-ai",
-        allow: "/",
-      },
-      // Meta AI - Facebook's answer engine
-      {
-        userAgent: "FacebookBot",
-        allow: "/",
-      },
-      {
-        userAgent: "meta-externalagent",
-        allow: "/",
-      },
-      // Amazon Alexa
-      {
-        userAgent: "Amazonbot",
-        allow: "/",
-      },
-      // Apple Siri/Spotlight
-      {
-        userAgent: "Applebot",
-        allow: "/",
-      },
-      // Apple AI training
-      {
-        userAgent: "Applebot-Extended",
-        allow: "/",
-      },
-      // Content aggregation bots
-      {
-        userAgent: "Omgilibot",
-        allow: "/",
-      },
-      {
-        userAgent: "Omgili",
-        allow: "/",
-      },
-    ],
-    sitemap: "https://lightfast.ai/sitemap.xml",
+    rules: {
+      userAgent: "*",
+      allow: ["/", "/llms.txt"],
+      disallow: [...disallowPaths],
+    },
+    sitemap: `${BASE_URL}/sitemap.xml`,
   };
 }

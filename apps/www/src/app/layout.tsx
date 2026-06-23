@@ -105,7 +105,7 @@ export const metadata: Metadata = createMetadata({
       },
     ],
   },
-  manifest: "/manifest.json",
+  manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
