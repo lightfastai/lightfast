@@ -17,18 +17,7 @@ const securityHeaders = securityMiddleware(
   composeCspOptions(
     createNextjsCspDirectives(),
     createAnalyticsCspDirectives(),
-    createSentryCspDirectives(),
-    // UnicornStudio
-    {
-      scriptSrc: ["https://cdn.jsdelivr.net"],
-      connectSrc: ["https://assets.unicorn.studio"],
-      imgSrc: ["https://assets.unicorn.studio"],
-    },
-    // Apollo website tracker
-    {
-      scriptSrc: ["https://assets.apollo.io"],
-      connectSrc: ["https://app.apollo.io"],
-    }
+    createSentryCspDirectives()
   )
 );
 
