@@ -1,96 +1,32 @@
 import { Logo } from "@repo/ui-v2/components/brand/logo";
 import { Button } from "@repo/ui-v2/components/ui/button";
-import type { GraphContext } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { markdownComponents } from "~/app/_components/mdx-components";
-import { buildOrganizationEntity, buildWebSiteEntity } from "~/lib/builders";
-import { getBrandPage } from "~/lib/content/source";
-import { createMetadata } from "~/lib/content-seo";
+import { getBrandPublication } from "~/lib/publishing";
 
 export const dynamic = "force-static";
 
-const PAGE_URL = "https://lightfast.ai/brand";
-
 export function generateMetadata(): Metadata {
-  const page = getBrandPage();
-  if (!page) {
-    return {};
-  }
-
-  const canonicalUrl = page.data.canonicalUrl ?? PAGE_URL;
-
-  return createMetadata({
-    title: `${page.data.title} | Lightfast`,
-    description: page.data.description,
-    keywords: page.data.keywords,
-    creator: "Lightfast",
-    publisher: "Lightfast",
-    robots: {
-      index: !page.data.noindex,
-      follow: !page.data.nofollow,
-      googleBot: {
-        index: !page.data.noindex,
-        follow: !page.data.nofollow,
-        "max-video-preview": -1,
-        "max-image-preview": "large",
-        "max-snippet": -1,
-      },
-    },
-    alternates: { canonical: canonicalUrl },
-    openGraph: {
-      title: page.data.ogTitle,
-      description: page.data.ogDescription,
-      type: "website",
-      url: canonicalUrl,
-      siteName: "Lightfast",
-      locale: "en_US",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: page.data.ogTitle,
-      description: page.data.ogDescription,
-      site: "@lightfastai",
-      creator: "@lightfastai",
-    },
-  });
+  return getBrandPublication()?.metadata ?? {};
 }
 
 export default function BrandPage() {
-  const page = getBrandPage();
-  if (!page) {
+  const publication = getBrandPublication();
+  if (!publication) {
     notFound();
   }
 
-  const MDXContent = page.data.body;
-  const canonicalUrl = page.data.canonicalUrl ?? PAGE_URL;
-
-  const structuredData: GraphContext = {
-    "@context": "https://schema.org",
-    "@graph": [
-      buildOrganizationEntity(),
-      buildWebSiteEntity(),
-      {
-        "@type": "WebPage" as const,
-        "@id": `${canonicalUrl}#webpage`,
-        url: canonicalUrl,
-        name: page.data.title,
-        description: page.data.description,
-        isPartOf: { "@id": "https://lightfast.ai/#website" },
-        publisher: { "@id": "https://lightfast.ai/#organization" },
-        dateModified: page.data.updatedAt,
-      },
-    ],
-  };
+  const MDXContent = publication.body;
 
   return (
     <>
-      <JsonLd code={structuredData} />
+      <JsonLd code={publication.jsonLd} />
       <article className="w-full bg-background text-foreground">
         <section className="flex flex-col items-center pt-28 pb-16 text-center sm:pt-32 lg:pt-24">
           <h1 className="font-medium font-title text-3xl text-foreground tracking-normal lg:text-4xl">
-            {page.data.title}
+            {publication.title}
           </h1>
           <Button
             className="mt-10"

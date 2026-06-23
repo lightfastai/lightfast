@@ -12,7 +12,6 @@ import {
 
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
-import { createMetadata } from "~/lib/content-seo";
 
 const geistSans = localFont({
   src: "../../public/fonts/subsets/Geist-Variable-www-latin.woff2",
@@ -39,7 +38,7 @@ const ppNeueMontreal = localFont({
   display: "swap",
 });
 
-export const metadata: Metadata = createMetadata({
+export const metadata: Metadata = {
   title: "Lightfast – Human-AI Collaboration Lab",
   description:
     "Lightfast builds collaboration-native models and environments for complex work: live, multiplayer systems where AI participates while work happens.",
@@ -74,6 +73,14 @@ export const metadata: Metadata = createMetadata({
     description:
       "Collaboration-native models and environments for complex work: live, multiplayer systems where AI participates while work happens.",
     siteName: "Lightfast",
+    images: [
+      {
+        url: "https://lightfast.ai/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Lightfast - Human-AI Collaboration Lab",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -82,6 +89,7 @@ export const metadata: Metadata = createMetadata({
     title: "Lightfast – Human-AI Collaboration Lab",
     description:
       "Collaboration-native models and environments for complex work: live, multiplayer systems where AI participates while work happens.",
+    images: ["https://lightfast.ai/opengraph-image"],
   },
   icons: {
     icon: "/favicon.ico",
@@ -122,7 +130,7 @@ export const metadata: Metadata = createMetadata({
     "mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "black-translucent",
   },
-});
+};
 
 export const viewport: Viewport = {
   themeColor: "#09090b",

@@ -3,8 +3,10 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { markdownComponents } from "~/app/_components/mdx-components";
-import { getBlogPage, getBlogPages } from "~/lib/content/source";
-import { emitBlogPostSeo } from "~/lib/seo-bundle";
+import {
+  getBlogPostPublication,
+  getBlogPostStaticParams,
+} from "~/lib/publishing";
 import { Toc, type TocItem } from "./_components/toc";
 
 export const dynamic = "force-static";
@@ -44,36 +46,28 @@ const toc: readonly TocItem[] = [
 ] as const;
 
 export function generateStaticParams() {
-  return getBlogPages().map((page) => ({ slug: page.slugs[0] }));
+  return getBlogPostStaticParams();
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const page = getBlogPage([slug]);
-  if (!page) {
-    return {};
-  }
-
-  const canonicalUrl = `https://lightfast.ai/blog/${slug}`;
-
-  return emitBlogPostSeo(page.data, canonicalUrl).metadata;
+  return getBlogPostPublication(slug)?.metadata ?? {};
 }
 
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
-  const page = getBlogPage([slug]);
-  if (!page) {
+  const publication = getBlogPostPublication(slug);
+  if (!publication) {
     notFound();
   }
 
-  const canonicalUrl = `https://lightfast.ai/blog/${slug}`;
-  const MDXContent = page.data.body;
-  const { title, description, featuredImage, tldr, answerSummary } = page.data;
-  const { jsonLd } = emitBlogPostSeo(page.data, canonicalUrl);
+  const MDXContent = publication.body;
+  const { answerSummary, description, featuredImage, tldr, title } =
+    publication;
 
   return (
     <main className="bg-background text-foreground">
-      <JsonLd code={jsonLd} />
+      <JsonLd code={publication.jsonLd} />
 
       <section className="pt-28 pb-12 sm:pt-32 md:pb-16 lg:pt-24">
         <div className="space-y-16">

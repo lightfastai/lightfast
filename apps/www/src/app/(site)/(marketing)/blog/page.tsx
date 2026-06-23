@@ -1,7 +1,7 @@
+import { JsonLd } from "@vendor/seo/json-ld";
 import type { Metadata, Route } from "next";
 import Link from "next/link";
-import { getBlogPages } from "~/lib/content/source";
-import { createMetadata } from "~/lib/content-seo";
+import { getBlogIndexPublication } from "~/lib/publishing";
 
 export const dynamic = "force-static";
 
@@ -12,46 +12,23 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
-export const metadata: Metadata = createMetadata({
-  title: "Blog | Lightfast",
-  description:
-    "Notes from Lightfast on agent infrastructure, workspace memory, and building reliable AI operations.",
-  alternates: {
-    canonical: "https://lightfast.ai/blog",
-  },
-  openGraph: {
-    title: "Blog | Lightfast",
-    description:
-      "Notes from Lightfast on agent infrastructure, workspace memory, and building reliable AI operations.",
-    type: "website",
-    url: "https://lightfast.ai/blog",
-    siteName: "Lightfast",
-    locale: "en_US",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Blog | Lightfast",
-    description:
-      "Notes from Lightfast on agent infrastructure, workspace memory, and building reliable AI operations.",
-    site: "@lightfastai",
-    creator: "@lightfastai",
-  },
-});
+export function generateMetadata(): Metadata {
+  return getBlogIndexPublication().metadata;
+}
 
 export default function BlogPage() {
-  const blogPosts = getBlogPages()
-    .map((page) => ({
-      date: dateFormatter.format(new Date(page.data.publishedAt)),
-      datetime: page.data.publishedAt,
-      href: `/blog/${page.slugs.join("/")}` as Route,
-      title: page.data.title,
-    }))
-    .sort(
-      (a, b) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime()
-    );
+  const publication = getBlogIndexPublication();
+  const blogPosts = publication.posts.map((post) => ({
+    date: dateFormatter.format(new Date(post.publishedAt)),
+    datetime: post.publishedAt,
+    href: post.pathname as Route,
+    title: post.title,
+  }));
 
   return (
     <main className="bg-background text-foreground">
+      <JsonLd code={publication.jsonLd} />
+
       <section className="pt-28 pb-20 sm:pt-32 md:pb-16 lg:pt-24">
         <h1 className="font-medium font-title text-3xl tracking-normal lg:text-4xl">
           Blog

@@ -32,7 +32,7 @@ const AeoPlanningSchema = z
     citationTargets: [],
   });
 
-const BasePageSchema = z.object({
+const BasePublicationSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(50).max(160),
   keywords: z.array(z.string().min(1)).min(3).max(20),
@@ -46,7 +46,7 @@ const BasePageSchema = z.object({
   aeo: AeoPlanningSchema,
 });
 
-const ContentPageSchema = BasePageSchema.extend({
+const ContentPublicationSchema = BasePublicationSchema.extend({
   authors: z.array(AuthorSchema).min(1),
   publishedAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
@@ -54,7 +54,7 @@ const ContentPageSchema = BasePageSchema.extend({
   featuredImage: z.string().startsWith("/images/").optional(),
 });
 
-export const BlogPostSchema = ContentPageSchema.extend({
+export const BlogPostSchema = ContentPublicationSchema.extend({
   canonicalUrl: z
     .url()
     .refine((val) => val.startsWith("https://lightfast.ai/blog/"))
@@ -72,7 +72,7 @@ export const BlogPostSchema = ContentPageSchema.extend({
   howToSteps: z.array(HowToStepSchema).min(2).optional(),
 });
 
-export const HomePageSchema = BasePageSchema.extend({
+export const HomePageSchema = BasePublicationSchema.extend({
   canonicalUrl: z
     .url()
     .refine((val) => val === "https://lightfast.ai")
@@ -80,7 +80,7 @@ export const HomePageSchema = BasePageSchema.extend({
   updatedAt: z.iso.datetime(),
 });
 
-export const BrandPageSchema = BasePageSchema.extend({
+export const BrandPageSchema = BasePublicationSchema.extend({
   canonicalUrl: z
     .url()
     .refine((val) => val === "https://lightfast.ai/brand")
@@ -88,7 +88,7 @@ export const BrandPageSchema = BasePageSchema.extend({
   updatedAt: z.iso.datetime(),
 });
 
-export const LegalPageSchema = BasePageSchema.extend({
+export const LegalPageSchema = BasePublicationSchema.extend({
   canonicalUrl: z
     .url()
     .refine((val) => val.startsWith("https://lightfast.ai/legal/"))
@@ -97,28 +97,8 @@ export const LegalPageSchema = BasePageSchema.extend({
   effectiveAt: z.iso.datetime(),
 });
 
-// Inferred TypeScript types
 export type BlogPostData = z.infer<typeof BlogPostSchema>;
 export type BrandPageData = z.infer<typeof BrandPageSchema>;
 export type HomePageData = z.infer<typeof HomePageSchema>;
 export type LegalPageData = z.infer<typeof LegalPageSchema>;
-
-// Fields required by the SEO layer. Derived from BlogPostData so schema
-// renames propagate here automatically.
-export type ContentSeoData = Pick<
-  BlogPostData,
-  | "authors"
-  | "description"
-  | "keywords"
-  | "nofollow"
-  | "noindex"
-  | "ogDescription"
-  | "ogTitle"
-  | "publishedAt"
-  | "title"
-  | "updatedAt"
->;
-
-// Derived from Zod — Zod is the sole source of truth for these unions
 export type BlogCategory = BlogPostData["category"];
-// → "engineering" | "product" | "company" | "tutorial" | "research"

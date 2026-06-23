@@ -1,4 +1,4 @@
-import type { BlogCategory } from "~/lib/content-schemas";
+import type { BlogCategory } from "~/lib/publishing/schemas";
 
 export interface BlogCategoryMeta {
   readonly description: string;

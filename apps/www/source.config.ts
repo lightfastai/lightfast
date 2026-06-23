@@ -4,7 +4,7 @@ import {
   BrandPageSchema,
   HomePageSchema,
   LegalPageSchema,
-} from "./src/lib/content-schemas";
+} from "./src/lib/publishing/schemas";
 
 export const blogCollection = defineCollections({
   type: "doc",

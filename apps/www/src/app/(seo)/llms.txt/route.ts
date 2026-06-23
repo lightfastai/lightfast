@@ -1,66 +1,49 @@
 import { createLlmsTxtHandler, type PageEntry } from "@vendor/aeo";
-import { getBlogPages, getHomePage, getLegalPages } from "~/lib/content/source";
+import {
+  getPublicPublications,
+  type StaticPublication,
+} from "~/lib/publishing";
 
 export const revalidate = false;
 
 const BASE_URL = "https://lightfast.ai";
 
+function sectionFor(publication: StaticPublication): string {
+  switch (publication.kind) {
+    case "home":
+      return "Marketing";
+    case "brand":
+      return "Company";
+    case "blog-index":
+    case "blog-post":
+      return "Blog";
+    case "legal":
+      return "Legal";
+  }
+}
+
+function descriptionFor(publication: StaticPublication): string {
+  if ("answerSummary" in publication && publication.answerSummary) {
+    return publication.answerSummary;
+  }
+
+  return publication.description;
+}
+
+function pageEntryFor(publication: StaticPublication): PageEntry {
+  return {
+    url: publication.canonicalUrl,
+    title: publication.title,
+    description: descriptionFor(publication),
+    lastModified: publication.lastModified,
+    section: sectionFor(publication),
+    ...(publication.kind === "legal" ? { optional: true } : {}),
+  };
+}
+
 const providers: Array<() => Promise<PageEntry[]>> = [
   () => {
-    const homePage = getHomePage();
-    const blogPosts = getBlogPages();
-    const mostRecentBlog = blogPosts
-      .slice()
-      .sort(
-        (a, b) =>
-          new Date(b.data.publishedAt).getTime() -
-          new Date(a.data.publishedAt).getTime()
-      )
-      .at(0);
-    const entries: PageEntry[] = [
-      {
-        url: `${BASE_URL}`,
-        title: homePage?.data.title ?? "Lightfast",
-        description:
-          homePage?.data.answerSummary ??
-          homePage?.data.description ??
-          "Lightfast is a human-AI collaboration lab building new mediums for complex work.",
-        lastModified:
-          homePage?.data.reviewedAt ??
-          homePage?.data.updatedAt ??
-          mostRecentBlog?.data.reviewedAt ??
-          mostRecentBlog?.data.updatedAt ??
-          mostRecentBlog?.data.publishedAt,
-        section: "Marketing",
-      },
-      {
-        url: `${BASE_URL}/brand`,
-        title: "Brand",
-        description: "Official Lightfast brand resources and company details.",
-        section: "Company",
-      },
-    ];
-
-    for (const page of blogPosts) {
-      entries.push({
-        url: `${BASE_URL}/blog/${page.slugs[0]}`,
-        title: page.data.title,
-        description: page.data.answerSummary ?? page.data.description,
-        lastModified: page.data.reviewedAt ?? page.data.updatedAt,
-        section: "Blog",
-      });
-    }
-
-    for (const page of getLegalPages()) {
-      entries.push({
-        url: `${BASE_URL}/legal/${page.slugs[0]}`,
-        title: page.data.title,
-        description: page.data.description,
-        lastModified: page.data.reviewedAt ?? page.data.updatedAt,
-        section: "Legal",
-        optional: true,
-      });
-    }
+    const entries: PageEntry[] = getPublicPublications().map(pageEntryFor);
 
     entries.push(
       {
