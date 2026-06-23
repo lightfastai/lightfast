@@ -9,12 +9,11 @@ import merge from "lodash.merge";
 import type { NextConfig } from "next";
 
 import { env } from "~/env";
-import { localAllowedDevOrigins } from "~/local-dev-origins";
-
-const localDevUrls = [env.NEXT_PUBLIC_APP_URL, env.NEXT_PUBLIC_WWW_URL];
 
 const wwwConfig: NextConfig = merge({}, baseConfig, {
-  allowedDevOrigins: localAllowedDevOrigins(localDevUrls),
+  // Next only allows `localhost` and one-level `*.localhost` dev origins by
+  // default. Portless worktree hosts are nested under lightfast.localhost.
+  allowedDevOrigins: ["lightfast.localhost", "**.lightfast.localhost"],
 
   async redirects() {
     return [

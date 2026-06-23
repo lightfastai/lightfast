@@ -2,7 +2,6 @@ import {
   consoleLoggingIntegration,
   extraErrorDataIntegration,
   init,
-  spotlightIntegration,
 } from "@vendor/observability/sentry-nextjs";
 
 import { env } from "~/env";
@@ -17,8 +16,5 @@ init({
   integrations: [
     consoleLoggingIntegration({ levels: ["error", "warn"] }),
     extraErrorDataIntegration({ depth: 3 }),
-    ...(env.NEXT_PUBLIC_VERCEL_ENV === "development"
-      ? [spotlightIntegration()]
-      : []),
   ],
 });
