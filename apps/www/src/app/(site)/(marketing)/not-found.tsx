@@ -3,8 +3,8 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <main className="grid min-h-svh place-items-center bg-background px-6 py-24 text-center text-foreground">
-      <div className="w-full max-w-md">
+    <main className="flex min-h-svh items-center py-28 text-center text-foreground sm:py-32 lg:py-24">
+      <div className="mx-auto w-full max-w-md">
         <p className="text-muted-foreground text-sm leading-6">404</p>
         <h1 className="mt-4 font-medium text-3xl leading-tight tracking-normal">
           Page not found
