@@ -32,6 +32,9 @@
         "noExcessiveCognitiveComplexity": "off",
         "noVoid": "off"
       },
+      "nursery": {
+        "noFloatingPromises": "error"
+      },
       "performance": {
         "noBarrelFile": "off",
         "noNamespaceImport": "off",

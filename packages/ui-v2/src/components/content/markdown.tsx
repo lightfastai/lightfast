@@ -1,8 +1,9 @@
+import { cn } from "@repo/ui-v2/lib/utils";
 import {
-  isValidElement,
   type AnchorHTMLAttributes,
   type BlockquoteHTMLAttributes,
   type HTMLAttributes,
+  isValidElement,
   type LiHTMLAttributes,
   type OlHTMLAttributes,
   type ReactNode,
@@ -10,8 +11,6 @@ import {
   type TdHTMLAttributes,
   type ThHTMLAttributes,
 } from "react";
-
-import { cn } from "@repo/ui-v2/lib/utils";
 
 export const markdownComponents = {
   a({
@@ -83,7 +82,7 @@ export const markdownComponents = {
     return (
       <h1
         className={cn(
-          "max-w-[676px] scroll-m-28 font-medium text-[30px] leading-[39.6px] tracking-normal first:mt-0 not-first:mt-16",
+          "not-first:mt-16 max-w-2xl scroll-m-28 font-medium text-3xl leading-tight tracking-normal first:mt-0 lg:text-4xl",
           className
         )}
         id={id ?? slugifyHeading(children)}
@@ -102,7 +101,7 @@ export const markdownComponents = {
     return (
       <h2
         className={cn(
-          "max-w-[676px] scroll-m-28 font-medium text-2xl leading-8 tracking-normal first:mt-0 not-first:mt-16 lg:text-[30px] lg:leading-[39.6px]",
+          "not-first:mt-16 max-w-2xl scroll-m-28 font-medium text-2xl leading-8 tracking-normal first:mt-0 lg:text-3xl lg:leading-10",
           className
         )}
         id={id ?? slugifyHeading(children)}
@@ -121,7 +120,7 @@ export const markdownComponents = {
     return (
       <h3
         className={cn(
-          "max-w-[676px] scroll-m-28 font-medium text-xl leading-7 tracking-normal not-first:mt-16 lg:text-2xl lg:leading-8",
+          "not-first:mt-16 max-w-2xl scroll-m-28 font-medium text-xl leading-7 tracking-normal lg:text-2xl lg:leading-8",
           className
         )}
         id={id ?? slugifyHeading(children)}
@@ -145,7 +144,7 @@ export const markdownComponents = {
     return (
       <ol
         className={cn(
-          "mx-3 max-w-[652px] list-decimal ps-4 whitespace-normal not-first:mt-6 [li_&]:mt-2 [li_&]:list-[lower-alpha]",
+          "not-first:mt-6 max-w-2xl list-decimal whitespace-normal ps-7 [li_&]:mt-2 [li_&]:list-[lower-alpha]",
           className
         )}
         {...props}
@@ -158,7 +157,7 @@ export const markdownComponents = {
     return (
       <p
         className={cn(
-          "max-w-[676px] text-[17px] leading-7 tracking-normal text-foreground not-first:mt-6",
+          "not-first:mt-6 max-w-2xl text-[17px] text-foreground leading-7 tracking-normal",
           className
         )}
         {...props}
@@ -180,10 +179,10 @@ export const markdownComponents = {
     ...props
   }: TableHTMLAttributes<HTMLTableElement>) {
     return (
-      <div className="w-full max-w-[676px] overflow-x-auto not-first:mt-6">
+      <div className="not-first:mt-6 w-full max-w-2xl overflow-x-auto">
         <table
           className={cn(
-            "w-full min-w-[560px] border-border border-y text-left text-sm leading-6",
+            "w-full min-w-140 border-border border-y text-left text-sm leading-6",
             className
           )}
           {...props}
@@ -204,7 +203,11 @@ export const markdownComponents = {
       </tbody>
     );
   },
-  td({ children, className, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
+  td({
+    children,
+    className,
+    ...props
+  }: TdHTMLAttributes<HTMLTableCellElement>) {
     return (
       <td
         className={cn(
@@ -217,7 +220,11 @@ export const markdownComponents = {
       </td>
     );
   },
-  th({ children, className, ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
+  th({
+    children,
+    className,
+    ...props
+  }: ThHTMLAttributes<HTMLTableCellElement>) {
     return (
       <th
         className={cn(
@@ -252,7 +259,7 @@ export const markdownComponents = {
     return (
       <ul
         className={cn(
-          "mx-3 max-w-[652px] list-disc ps-4 whitespace-normal marker:text-inherit not-first:mt-6 [li_&]:mt-2 [li_&]:list-[circle]",
+          "not-first:mt-6 max-w-2xl list-disc whitespace-normal ps-7 marker:text-inherit [li_&]:mt-2 [li_&]:list-[circle]",
           className
         )}
         {...props}

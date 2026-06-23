@@ -2,10 +2,7 @@ import {
   Logo as BrandLogo,
   type LogoProps as BrandLogoProps,
 } from "@repo/ui-v2/components/brand/logo";
-import {
-  AbsoluteFill,
-  useVideoConfig,
-} from "@vendor/remotion";
+import { AbsoluteFill, useVideoConfig } from "@vendor/remotion";
 import type React from "react";
 
 interface LogoProps {

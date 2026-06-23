@@ -8,6 +8,7 @@ import {
 } from "@vendor/observability/sentry-nextjs";
 import {
   ARCJET_KEY,
+  type ArcjetDecision,
   arcjet,
   request as arcjetRequest,
   protectSignup,
@@ -32,20 +33,38 @@ const newsletterArcjet = arcjet({
     protectSignup({
       bots: {
         allow: [],
-        mode: "DRY_RUN",
+        mode: "LIVE",
       },
       email: {
         deny: ["DISPOSABLE", "INVALID", "NO_MX_RECORDS"],
-        mode: "DRY_RUN",
+        mode: "LIVE",
       },
       rateLimit: {
         interval: "10m",
         max: 5,
-        mode: "DRY_RUN",
+        mode: "LIVE",
       },
     }),
   ],
 });
+
+function getArcjetDeniedMessage(decision: ArcjetDecision): string {
+  if (decision.reason.isRateLimit()) {
+    return decision.reason.reset > 0
+      ? `Too many attempts. Please wait ${decision.reason.reset}s and try again.`
+      : "Too many attempts. Please wait a moment and try again.";
+  }
+
+  if (decision.reason.isBot()) {
+    return "We couldn't verify this signup. Please try again from a browser.";
+  }
+
+  if (decision.reason.isEmail()) {
+    return "Please enter a valid email address.";
+  }
+
+  return "We couldn't subscribe that address. Please try again.";
+}
 
 export interface NewsletterActionState {
   message: string;
@@ -84,27 +103,39 @@ export async function subscribeToNewsletter(
         const decision = await newsletterArcjet.protect(await arcjetRequest(), {
           email,
         });
-        const shouldLogDecision =
-          decision.isDenied() ||
-          decision.isErrored() ||
-          decision.results.some((result) => result.conclusion !== "ALLOW");
 
-        if (shouldLogDecision) {
-          logger.warn("Newsletter Arcjet dry-run decision", {
+        if (decision.isDenied()) {
+          logger.warn("Newsletter Arcjet blocked signup", {
             conclusion: decision.conclusion,
             decision_id: decision.id,
             provider: "arcjet",
             reason_type: decision.reason.type,
-            step: "dry_run",
+            step: "protect",
+          });
+
+          return {
+            message: getArcjetDeniedMessage(decision),
+            status: "error",
+          };
+        }
+
+        if (decision.isErrored()) {
+          logger.error("Newsletter Arcjet protection failed open", {
+            conclusion: decision.conclusion,
+            decision_id: decision.id,
+            error: parseError(decision.reason),
+            provider: "arcjet",
+            reason_type: decision.reason.type,
+            step: "protect",
           });
         }
       } catch (error) {
         captureException(error);
 
-        logger.error("Newsletter Arcjet dry-run failed", {
+        logger.error("Newsletter Arcjet protection failed open", {
           error: parseError(error),
           provider: "arcjet",
-          step: "dry_run",
+          step: "protect",
         });
       }
 

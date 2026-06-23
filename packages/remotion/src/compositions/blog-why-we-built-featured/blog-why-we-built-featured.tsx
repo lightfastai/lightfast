@@ -77,11 +77,9 @@ function CenterBrand() {
   );
 }
 
-export const BlogWhyWeBuiltFeatured: React.FC = () => {
-  return (
-    <AbsoluteFill>
-      <WorkBackground />
-      <CenterBrand />
-    </AbsoluteFill>
-  );
-};
+export const BlogWhyWeBuiltFeatured: React.FC = () => (
+  <AbsoluteFill>
+    <WorkBackground />
+    <CenterBrand />
+  </AbsoluteFill>
+);

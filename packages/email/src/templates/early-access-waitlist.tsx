@@ -1,9 +1,4 @@
-import {
-  Heading,
-  Link,
-  Section,
-  Text,
-} from "@react-email/components";
+import { Heading, Link, Section, Text } from "@react-email/components";
 import { Button } from "@repo/ui-v2/components/email/button";
 import { EmailFooter, LightfastMark } from "../components/email-brand";
 import { EmailShell } from "../components/email-shell";

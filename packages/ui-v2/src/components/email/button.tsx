@@ -1,13 +1,12 @@
 import {
   Button as ButtonPrimitive,
   type ButtonProps as ButtonPrimitiveProps,
-} from "@react-email/components"
-import { cva, type VariantProps } from "class-variance-authority"
-
-import { cn } from "@repo/ui-v2/lib/utils"
+} from "@react-email/components";
+import { cn } from "@repo/ui-v2/lib/utils";
+import { cva, type VariantProps } from "class-variance-authority";
 
 const buttonVariants = cva(
-  "inline-block box-border max-w-full rounded-2xl border border-transparent bg-clip-padding text-center text-sm font-medium leading-5 no-underline",
+  "box-border inline-block max-w-full rounded-2xl border border-transparent bg-clip-padding text-center font-medium text-sm leading-5 no-underline",
   {
     variants: {
       variant: {
@@ -25,7 +24,7 @@ const buttonVariants = cva(
       size: "default",
     },
   }
-)
+);
 
 function Button({
   className,
@@ -35,11 +34,11 @@ function Button({
 }: ButtonPrimitiveProps & VariantProps<typeof buttonVariants>) {
   return (
     <ButtonPrimitive
-      data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
+      data-slot="button"
       {...props}
     />
-  )
+  );
 }
 
-export { Button, buttonVariants }
+export { Button, buttonVariants };

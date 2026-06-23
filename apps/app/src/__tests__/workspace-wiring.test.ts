@@ -72,10 +72,9 @@ describe("app workspace wiring", () => {
       microfrontends.applications["lightfast-www"]?.routing?.find(
         (routeGroup) => routeGroup.group === "marketing"
       )?.paths ?? [];
-    const wwwV2RouteGroup =
-      microfrontends.applications["lightfast-www"]?.routing?.find(
-        (routeGroup) => routeGroup.group === "v2"
-      );
+    const wwwV2RouteGroup = microfrontends.applications[
+      "lightfast-www"
+    ]?.routing?.find((routeGroup) => routeGroup.group === "v2");
 
     expect(wwwMarketingPaths).toContain("/brand");
     expect(wwwMarketingPaths).toContain("/v2/:path*");

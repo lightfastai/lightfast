@@ -1,9 +1,9 @@
-export { RemotionRoot } from "./Root";
 export {
+  type CompositionEntry,
+  type CompositionManifest,
   getStills,
   getVideos,
   MANIFEST,
-  type CompositionEntry,
-  type CompositionManifest,
 } from "./manifest";
+export { RemotionRoot } from "./Root";
 export { enableCssLoaders } from "./webpack-override";

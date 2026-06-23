@@ -411,7 +411,9 @@ export function BillingSettingsClient() {
 function BillingSettingsHeader() {
   return (
     <div>
-      <h2 className="font-medium font-title text-2xl text-foreground">Billing</h2>
+      <h2 className="font-medium font-title text-2xl text-foreground">
+        Billing
+      </h2>
       <p className="mt-1 text-muted-foreground text-sm">
         Manage plan, payment method, invoices, and cancellation for this
         organization.
