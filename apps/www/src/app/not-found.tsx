@@ -9,7 +9,7 @@ export default function NotFound() {
         <h1 className="mt-4 font-medium text-3xl leading-tight tracking-normal">
           Page not found
         </h1>
-        <p className="mt-3 text-muted-foreground text-base leading-7">
+        <p className="mt-3 text-base text-muted-foreground leading-7">
           Sorry, we could not find the page you are looking for.
         </p>
         <Button

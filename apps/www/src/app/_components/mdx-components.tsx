@@ -4,11 +4,7 @@ import Link from "next/link";
 import type { AnchorHTMLAttributes } from "react";
 
 export const markdownComponents = createMarkdownComponents({
-  a({
-    href,
-    children,
-    ...props
-  }: AnchorHTMLAttributes<HTMLAnchorElement>) {
+  a({ href, children, ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) {
     const isExternal = href?.startsWith("http");
     const isInternalRoute = href?.startsWith("/") && !href.startsWith("//");
 

@@ -134,7 +134,7 @@ export default function RootLayout({
         geistSans.variable,
         geistMono.variable,
         ppNeueMontreal.variable,
-        "scrollbar-thin touch-manipulation font-sans antialiased",
+        "scrollbar-thin touch-manipulation font-sans antialiased"
       )}
       lang="en"
       suppressHydrationWarning

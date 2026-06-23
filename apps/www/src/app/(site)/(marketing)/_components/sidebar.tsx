@@ -5,7 +5,7 @@ import { Button } from "@repo/ui-v2/components/ui/button";
 import { cn } from "@repo/ui-v2/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Company } from "./company";
+import Company from "./company";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -41,9 +41,7 @@ export function Sidebar() {
           >
             Home
           </Button>
-          <Company className={cn(navItemClassName, "text-muted-foreground")}>
-            Company
-          </Company>
+          <Company />
           <Button
             aria-current={isBrand ? "page" : undefined}
             className={cn(
