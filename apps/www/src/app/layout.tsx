@@ -40,9 +40,9 @@ const ppNeueMontreal = localFont({
 });
 
 export const metadata: Metadata = createMetadata({
-  title: "Lightfast – The Operating Layer for Agents and Apps",
+  title: "Lightfast – Human-AI Collaboration Lab",
   description:
-    "Lightfast is the operating layer between your agents and apps. Observe what's happening across your tools, remember what happened, and give agents and people a single system to reason and act through.",
+    "Lightfast builds collaboration-native models and environments for complex work: live, multiplayer systems where AI participates while work happens.",
   applicationName: "Lightfast",
   metadataBase: new URL("https://lightfast.ai"),
   authors: [
@@ -54,7 +54,7 @@ export const metadata: Metadata = createMetadata({
   creator: "Lightfast",
   publisher: "Lightfast",
   category: "Technology",
-  classification: "Operating Infrastructure Platform",
+  classification: "Human-AI Collaboration Lab",
   robots: {
     index: true,
     follow: true,
@@ -70,18 +70,18 @@ export const metadata: Metadata = createMetadata({
     type: "website",
     locale: "en_US",
     url: "https://lightfast.ai",
-    title: "Lightfast – The Operating Layer for Agents and Apps",
+    title: "Lightfast – Human-AI Collaboration Lab",
     description:
-      "The operating layer between your agents and apps. Observe events, build memory, and act across your entire tool stack.",
+      "Collaboration-native models and environments for complex work: live, multiplayer systems where AI participates while work happens.",
     siteName: "Lightfast",
   },
   twitter: {
     card: "summary_large_image",
     site: "@lightfastai",
     creator: "@lightfastai",
-    title: "Lightfast – The Operating Layer for Agents and Apps",
+    title: "Lightfast – Human-AI Collaboration Lab",
     description:
-      "The operating layer between your agents and apps. Observe events, build memory, and act across your entire tool stack.",
+      "Collaboration-native models and environments for complex work: live, multiplayer systems where AI participates while work happens.",
   },
   icons: {
     icon: "/favicon.ico",
@@ -174,7 +174,6 @@ export default function RootLayout({
           defaultTheme="system"
           disableTransitionOnChange
           enableSystem
-          scriptProps={{ type: "application/x-next-themes" }}
         >
           <PrefetchCrossZoneLinksProvider>
             {children}

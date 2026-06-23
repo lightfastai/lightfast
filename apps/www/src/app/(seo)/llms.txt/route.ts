@@ -1,5 +1,5 @@
 import { createLlmsTxtHandler, type PageEntry } from "@vendor/aeo";
-import { getBlogPages, getLegalPages } from "~/lib/content/source";
+import { getBlogPages, getHomePage, getLegalPages } from "~/lib/content/source";
 
 export const revalidate = false;
 
@@ -7,6 +7,7 @@ const BASE_URL = "https://lightfast.ai";
 
 const providers: Array<() => Promise<PageEntry[]>> = [
   () => {
+    const homePage = getHomePage();
     const blogPosts = getBlogPages();
     const mostRecentBlog = blogPosts
       .slice()
@@ -19,10 +20,14 @@ const providers: Array<() => Promise<PageEntry[]>> = [
     const entries: PageEntry[] = [
       {
         url: `${BASE_URL}`,
-        title: "Blog",
+        title: homePage?.data.title ?? "Lightfast",
         description:
-          "Notes from Lightfast on agent infrastructure, workspace memory, and reliable AI operations.",
+          homePage?.data.answerSummary ??
+          homePage?.data.description ??
+          "Lightfast is a human-AI collaboration lab building new mediums for complex work.",
         lastModified:
+          homePage?.data.reviewedAt ??
+          homePage?.data.updatedAt ??
           mostRecentBlog?.data.reviewedAt ??
           mostRecentBlog?.data.updatedAt ??
           mostRecentBlog?.data.publishedAt,
@@ -90,7 +95,7 @@ export const { GET } = createLlmsTxtHandler(
   {
     title: "Lightfast",
     description:
-      "Lightfast is the operating layer for AI agents and engineering teams. Agents and developers use Lightfast to observe events, build semantic memory, and act across their tool stack with source-cited context.",
+      "Lightfast is a human-AI collaboration lab building new mediums for complex work: live, multiplayer systems where AI participates while work happens.",
     baseUrl: `${BASE_URL}`,
     sectionOrder: [
       "Marketing",

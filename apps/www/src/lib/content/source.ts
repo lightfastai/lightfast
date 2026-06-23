@@ -1,6 +1,7 @@
 import {
   blogCollection,
   brandCollection,
+  homeCollection,
   legalCollection,
 } from "fumadocs-mdx:collections/server";
 import { loader } from "fumadocs-core/source";
@@ -23,6 +24,15 @@ const brandSource = loader({
 
 export const getBrandPage = () => brandSource.getPage(["brand"]);
 export const getBrandPages = () => brandSource.getPages();
+
+// --- Home ---
+const homeSource = loader({
+  baseUrl: "/",
+  source: toFumadocsSource(homeCollection, []),
+});
+
+export const getHomePage = () => homeSource.getPage(["home"]);
+export const getHomePages = () => homeSource.getPages();
 
 // --- Legal ---
 const legalSource = loader({

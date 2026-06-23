@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Lightfast – The Operating Layer for Agents and Apps",
+    name: "Lightfast – Human-AI Collaboration Lab",
     short_name: "Lightfast",
     description:
-      "The operating layer between your agents and apps. Observe events, build memory, and act across your entire tool stack.",
+      "Collaboration-native models and environments for complex work: live, multiplayer systems where AI participates while work happens.",
     start_url: "/",
     display: "standalone",
     background_color: "#09090b",

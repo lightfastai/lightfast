@@ -2,6 +2,7 @@ import { defineCollections, defineConfig } from "fumadocs-mdx/config";
 import {
   BlogPostSchema,
   BrandPageSchema,
+  HomePageSchema,
   LegalPageSchema,
 } from "./src/lib/content-schemas";
 
@@ -15,6 +16,12 @@ export const brandCollection = defineCollections({
   type: "doc",
   dir: "src/content/brand",
   schema: BrandPageSchema,
+});
+
+export const homeCollection = defineCollections({
+  type: "doc",
+  dir: "src/content/home",
+  schema: HomePageSchema,
 });
 
 export const legalCollection = defineCollections({

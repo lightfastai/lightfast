@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import {
   getBlogPages,
   getBrandPage,
+  getHomePage,
   getLegalPages,
 } from "~/lib/content/source";
 
@@ -16,12 +17,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
         new Date(a.data.publishedAt).getTime()
     );
   const brandPage = getBrandPage();
+  const homePage = getHomePage();
   const legalPages = getLegalPages();
   const mostRecentBlog = blogPages.at(0);
 
   return [
     {
       url: `${BASE_URL}`,
+      ...(homePage
+        ? {
+            lastModified: new Date(
+              homePage.data.reviewedAt ?? homePage.data.updatedAt
+            ),
+          }
+        : {}),
       changeFrequency: "weekly",
       priority: 1,
     },

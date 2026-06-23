@@ -72,6 +72,14 @@ export const BlogPostSchema = ContentPageSchema.extend({
   howToSteps: z.array(HowToStepSchema).min(2).optional(),
 });
 
+export const HomePageSchema = BasePageSchema.extend({
+  canonicalUrl: z
+    .url()
+    .refine((val) => val === "https://lightfast.ai")
+    .optional(),
+  updatedAt: z.iso.datetime(),
+});
+
 export const BrandPageSchema = BasePageSchema.extend({
   canonicalUrl: z
     .url()
@@ -92,6 +100,7 @@ export const LegalPageSchema = BasePageSchema.extend({
 // Inferred TypeScript types
 export type BlogPostData = z.infer<typeof BlogPostSchema>;
 export type BrandPageData = z.infer<typeof BrandPageSchema>;
+export type HomePageData = z.infer<typeof HomePageSchema>;
 export type LegalPageData = z.infer<typeof LegalPageSchema>;
 
 // Fields required by the SEO layer. Derived from BlogPostData so schema
