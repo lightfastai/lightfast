@@ -1,9 +1,10 @@
-import { ArrowRight01Icon, ArrowUp01Icon } from "@hugeicons/core-free-icons";
+import { ArrowUp01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Logo } from "@repo/ui-v2/components/brand/logo";
 import { Button } from "@repo/ui-v2/components/ui/button";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Newsletter } from "./newsletter";
 
 export function Footer() {
   return (
@@ -88,50 +89,7 @@ export function Footer() {
               <p className="w-full text-base leading-tight">
                 Subscribe to research notes and project updates
               </p>
-              <div className="w-full">
-                <form className="relative flex items-center" method="get">
-                  <label className="sr-only" htmlFor="footer-newsletter-email">
-                    Email address
-                  </label>
-                  <input
-                    className="m-0 w-full cursor-pointer border border-border bg-muted p-3 pr-32 text-xs leading-tight outline-none transition-colors placeholder:text-foreground hover:border-muted-foreground/30 focus:border-ring"
-                    id="footer-newsletter-email"
-                    maxLength={256}
-                    name="email"
-                    placeholder="Email address"
-                    type="email"
-                  />
-                  <button
-                    className="absolute inset-y-0 right-0 flex h-full cursor-pointer items-center gap-2 bg-transparent p-3 text-xs leading-tight transition-colors hover:text-muted-foreground focus-visible:text-muted-foreground focus-visible:outline-none"
-                    type="submit"
-                  >
-                    <span>Subscribe</span>
-                    <HugeiconsIcon
-                      aria-hidden="true"
-                      className="size-4"
-                      icon={ArrowRight01Icon}
-                      strokeWidth={2}
-                    />
-                  </button>
-                </form>
-                <div className="hidden bg-muted p-3">
-                  <p className="text-xs leading-tight">
-                    Got it! Stay tuned for updates
-                  </p>
-                </div>
-                <div className="mt-2 hidden bg-transparent pl-3">
-                  <p className="text-destructive text-xs leading-tight">
-                    Please enter your email
-                  </p>
-                </div>
-                <p className="mt-2 text-muted-foreground text-xs leading-tight">
-                  Unsubscribe anytime. See our{" "}
-                  <Link className="underline" href="/legal/privacy">
-                    Privacy Policy
-                  </Link>
-                  .
-                </p>
-              </div>
+              <Newsletter />
             </FooterColumn>
           </div>
         </div>
