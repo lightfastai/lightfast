@@ -29,6 +29,7 @@ interface WebPageJsonLdData {
 }
 
 interface BlogIndexJsonLdPost {
+  canonicalUrl: string;
   description: string;
   publishedAt: string;
   title: string;
@@ -257,7 +258,7 @@ export function buildBlogIndexJsonLd({
     "@type": "BlogPosting",
     headline: post.title,
     description: post.description,
-    url: post.url,
+    url: post.canonicalUrl,
     datePublished: post.publishedAt,
     dateModified: post.updatedAt,
   }));
@@ -271,7 +272,7 @@ export function buildBlogIndexJsonLd({
       (post, index): ListItem => ({
         "@type": "ListItem",
         position: index + 1,
-        url: post.url,
+        url: post.canonicalUrl,
         name: post.title,
       })
     ),

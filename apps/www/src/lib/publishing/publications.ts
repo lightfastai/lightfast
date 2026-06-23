@@ -71,6 +71,7 @@ export interface BlogPostPublication
 }
 
 export interface BlogIndexPostSummary {
+  readonly canonicalUrl: string;
   readonly description: string;
   readonly lastModified: string;
   readonly pathname: string;
@@ -249,6 +250,7 @@ function toBlogPostSummary(
   publication: BlogPostPublication
 ): BlogIndexPostSummary {
   return {
+    canonicalUrl: publication.canonicalUrl,
     title: publication.title,
     description: publication.description,
     lastModified: publication.lastModified,
