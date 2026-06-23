@@ -66,6 +66,7 @@ export interface BlogPostPublication extends ContentPublication<"blog-post"> {
   readonly publishedAt: string;
   readonly slug: string;
   readonly tldr: string;
+  readonly toc: BlogPostData["toc"];
   readonly updatedAt: string;
 }
 
@@ -208,6 +209,7 @@ function buildBlogPostPublication(
     publishedAt: data.publishedAt,
     slug,
     tldr: data.tldr,
+    toc: data.toc,
     updatedAt: data.updatedAt,
     url,
     canonicalUrl,

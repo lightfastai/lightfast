@@ -9,6 +9,7 @@ import { Data, Effect } from "effect";
 import { env } from "~/env";
 
 const RESEND_CONFLICT_STATUS_CODE = 409;
+const RESEND_REQUEST_TIMEOUT = "5 seconds";
 
 const resend = createResendClient(env.RESEND_API_KEY);
 
@@ -24,6 +25,11 @@ export class ResendError extends Data.TaggedError("ResendError")<{
 
 type ResendServiceError = ApplicationError | ResendError;
 
+const resendTimeoutError = () =>
+  new ApplicationError({
+    message: "Resend request timed out.",
+  });
+
 export const createContact = (options: CreateContactOptions) =>
   Effect.tryPromise({
     try: () => resend.contacts.create(options),
@@ -31,21 +37,28 @@ export const createContact = (options: CreateContactOptions) =>
       new ApplicationError({
         message: parseError(error),
       }),
-  }).pipe(
-    Effect.flatMap((response) => {
-      if (response.error) {
-        return Effect.fail(
-          new ResendError({
-            code: response.error.name,
-            message: response.error.message,
-            statusCode: response.error.statusCode,
-          })
-        );
-      }
+  })
+    .pipe(
+      Effect.flatMap((response) => {
+        if (response.error) {
+          return Effect.fail(
+            new ResendError({
+              code: response.error.name,
+              message: response.error.message,
+              statusCode: response.error.statusCode,
+            })
+          );
+        }
 
-      return Effect.succeed(response.data);
-    })
-  );
+        return Effect.succeed(response.data);
+      })
+    )
+    .pipe(
+      Effect.timeoutFail({
+        duration: RESEND_REQUEST_TIMEOUT,
+        onTimeout: resendTimeoutError,
+      })
+    );
 
 export const updateContact = (options: UpdateContactOptions) =>
   Effect.tryPromise({
@@ -54,21 +67,28 @@ export const updateContact = (options: UpdateContactOptions) =>
       new ApplicationError({
         message: parseError(error),
       }),
-  }).pipe(
-    Effect.flatMap((response) => {
-      if (response.error) {
-        return Effect.fail(
-          new ResendError({
-            code: response.error.name,
-            message: response.error.message,
-            statusCode: response.error.statusCode,
-          })
-        );
-      }
+  })
+    .pipe(
+      Effect.flatMap((response) => {
+        if (response.error) {
+          return Effect.fail(
+            new ResendError({
+              code: response.error.name,
+              message: response.error.message,
+              statusCode: response.error.statusCode,
+            })
+          );
+        }
 
-      return Effect.succeed(response.data);
-    })
-  );
+        return Effect.succeed(response.data);
+      })
+    )
+    .pipe(
+      Effect.timeoutFail({
+        duration: RESEND_REQUEST_TIMEOUT,
+        onTimeout: resendTimeoutError,
+      })
+    );
 
 export const addContactToSegment = (options: AddContactSegmentOptions) =>
   Effect.tryPromise({
@@ -77,21 +97,28 @@ export const addContactToSegment = (options: AddContactSegmentOptions) =>
       new ApplicationError({
         message: parseError(error),
       }),
-  }).pipe(
-    Effect.flatMap((response) => {
-      if (response.error) {
-        return Effect.fail(
-          new ResendError({
-            code: response.error.name,
-            message: response.error.message,
-            statusCode: response.error.statusCode,
-          })
-        );
-      }
+  })
+    .pipe(
+      Effect.flatMap((response) => {
+        if (response.error) {
+          return Effect.fail(
+            new ResendError({
+              code: response.error.name,
+              message: response.error.message,
+              statusCode: response.error.statusCode,
+            })
+          );
+        }
 
-      return Effect.succeed(response.data);
-    })
-  );
+        return Effect.succeed(response.data);
+      })
+    )
+    .pipe(
+      Effect.timeoutFail({
+        duration: RESEND_REQUEST_TIMEOUT,
+        onTimeout: resendTimeoutError,
+      })
+    );
 
 export const isResendConflict = (
   error: ResendServiceError

@@ -5,7 +5,7 @@ export const env = createEnv({
   clientPrefix: "" as const,
   client: {},
   server: {
-    SLACK_WEBHOOK_URL: z.string().url(),
+    SLACK_WEBHOOK_URL: z.string().url().optional(),
   },
   runtimeEnv: {
     SLACK_WEBHOOK_URL: process.env.SLACK_WEBHOOK_URL,

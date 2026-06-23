@@ -67,7 +67,7 @@ function getCssVariable(block: string, variable: string) {
 
 describe("desktop Tailwind setup", () => {
   it("keeps desktop styles.css as the app source entry for ui-v2 CSS", () => {
-    expect(styles).toContain('@import "tailwindcss/index.css";');
+    expect(styles).toContain('@import "tailwindcss";');
     expect(styles).toContain('@import "@repo/ui-v2/fonts.css";');
     expect(styles).toContain('@import "@repo/ui-v2/shadcn.css";');
     expect(styles).toContain('@import "@repo/ui-v2/theme.css";');

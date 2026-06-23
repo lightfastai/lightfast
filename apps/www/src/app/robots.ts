@@ -2,6 +2,22 @@ import type { MetadataRoute } from "next";
 import { env } from "~/env";
 import { SITE_IDENTITY } from "~/lib/site/identity";
 
+const privateWorkspaceRouteSegments = [
+  "automations",
+  "chat",
+  "connectors",
+  "decisions",
+  "developer-connections",
+  "insights",
+  "jobs",
+  "mcp",
+  "people",
+  "search",
+  "settings",
+  "signals",
+  "skills",
+] as const;
+
 const disallowPaths = [
   // App/API surfaces
   "/api/",
@@ -17,19 +33,10 @@ const disallowPaths = [
   "/confirm/",
 
   // Organization/workspace private routes from the default app
-  "/*/automations/",
-  "/*/chat/",
-  "/*/connectors/",
-  "/*/decisions/",
-  "/*/developer-connections/",
-  "/*/insights/",
-  "/*/jobs/",
-  "/*/mcp/",
-  "/*/people/",
-  "/*/search/",
-  "/*/settings/",
-  "/*/signals/",
-  "/*/skills/",
+  ...privateWorkspaceRouteSegments.flatMap((segment) => [
+    `/*/${segment}$`,
+    `/*/${segment}/`,
+  ]),
 ] as const;
 
 export default function robots(): MetadataRoute.Robots {

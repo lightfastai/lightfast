@@ -88,7 +88,7 @@ function NewsletterStatusMessage({
       <p className="min-w-0 flex-1 truncate">{state.message}</p>
       <button
         aria-label="Reset newsletter form"
-        className="absolute inset-y-0 right-0 flex h-full cursor-pointer items-center bg-transparent p-3 transition-colors hover:text-muted-foreground focus-visible:text-muted-foreground focus-visible:outline-none"
+        className="absolute inset-y-0 right-0 flex h-full cursor-pointer items-center bg-transparent p-3 transition-colors hover:text-muted-foreground focus-visible:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
         onClick={onReset}
         type="button"
       >
@@ -104,7 +104,7 @@ export function NewsletterSubmitButton({ children }: { children: ReactNode }) {
   return (
     <button
       aria-label={pending ? "Subscribing" : undefined}
-      className="absolute inset-y-0 right-0 flex h-full cursor-pointer items-center gap-2 bg-transparent p-3 text-xs leading-tight transition-colors hover:text-muted-foreground focus-visible:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:text-muted-foreground"
+      className="absolute inset-y-0 right-0 flex h-full cursor-pointer items-center gap-2 bg-transparent p-3 text-xs leading-tight transition-colors hover:text-muted-foreground focus-visible:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:text-muted-foreground"
       disabled={pending}
       type="submit"
     >

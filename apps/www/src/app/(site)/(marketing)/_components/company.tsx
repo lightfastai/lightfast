@@ -85,7 +85,7 @@ export default function Company() {
                   {paragraph.map((line, index) => (
                     <span className="block overflow-hidden" key={line}>
                       <span
-                        className="group-data-starting-style/company-sheet:!translate-y-full group-data-starting-style/company-sheet:!opacity-0 block translate-y-full opacity-0 transition duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)] group-data-open/company-sheet:translate-y-0 group-data-open/company-sheet:opacity-100"
+                        className="block translate-y-full opacity-0 transition duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)] group-data-open/company-sheet:translate-y-0 group-data-starting-style/company-sheet:translate-y-full! group-data-open/company-sheet:opacity-100 group-data-starting-style/company-sheet:opacity-0!"
                         style={{
                           transitionDelay: `${(lineOffset + index) * 30 + 20}ms`,
                         }}

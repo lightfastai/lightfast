@@ -18,6 +18,12 @@ const HowToStepSchema = z.object({
   url: z.url().optional(),
 });
 
+const TocItemSchema = z.object({
+  title: z.string().min(1),
+  depth: z.union([z.literal(2), z.literal(3)]),
+  id: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+});
+
 const AeoPlanningSchema = z
   .object({
     targetPrompts: z.array(z.string().min(10)).default([]),
@@ -64,6 +70,7 @@ export const BlogPostSchema = ContentPublicationSchema.extend({
   readingTimeMinutes: z.number().int().min(1),
   featured: z.boolean().default(false),
   tldr: z.string().min(20).max(300),
+  toc: z.array(TocItemSchema).default([]),
   howToSteps: z.array(HowToStepSchema).min(2).optional(),
 });
 

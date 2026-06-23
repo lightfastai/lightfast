@@ -143,7 +143,7 @@ function FooterLinks({
   const links = [
     { href: unsubscribeUrl, label: "Unsubscribe" },
     { href: manageUrl, label: "Preferences" },
-    { href: "https://lightfast.ai/v2/legal/privacy", label: "Privacy" },
+    { href: "https://lightfast.ai/legal/privacy", label: "Privacy" },
   ];
 
   return (

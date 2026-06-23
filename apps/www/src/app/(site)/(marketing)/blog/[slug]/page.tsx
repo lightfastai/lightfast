@@ -7,43 +7,13 @@ import {
   getBlogPostPublication,
   getBlogPostStaticParams,
 } from "~/lib/publishing";
-import { Toc, type TocItem } from "./_components/toc";
+import { Toc } from "./_components/toc";
 
 export const dynamic = "force-static";
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
-
-const toc: readonly TocItem[] = [
-  { title: "Why Now", depth: 2, id: "why-now" },
-  {
-    title: "The Problem Is Not More Features",
-    depth: 2,
-    id: "the-problem-is-not-more-features",
-  },
-  { title: "Inside The Work", depth: 2, id: "inside-the-work" },
-  {
-    title: "Primitives, Not Features",
-    depth: 2,
-    id: "primitives-not-features",
-  },
-  {
-    title: "Starting Where The Loop Is Fastest",
-    depth: 2,
-    id: "starting-where-the-loop-is-fastest",
-  },
-  {
-    title: "Research Through Products",
-    depth: 2,
-    id: "research-through-products",
-  },
-  {
-    title: "What We Are Building Toward",
-    depth: 2,
-    id: "what-we-are-building-toward",
-  },
-] as const;
 
 export function generateStaticParams() {
   return getBlogPostStaticParams();
@@ -113,7 +83,7 @@ export default async function BlogPostPage({ params }: Props) {
       <section className="pt-12 pb-24 md:pb-32">
         <div className="grid grid-cols-1 gap-y-14 lg:grid-cols-12 lg:gap-x-6">
           <aside className="hidden lg:col-span-4 lg:block">
-            <Toc items={toc} />
+            <Toc items={publication.toc} />
           </aside>
 
           <article className="max-w-none lg:col-span-7 lg:col-start-5">
