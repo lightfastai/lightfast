@@ -1,4 +1,4 @@
-# @vendor/email
+# @vendor/resend
 
 A small boundary around the Resend SDK.
 
@@ -9,7 +9,7 @@ This package is installed as a workspace dependency. Make sure your project's `p
 ```json
 {
   "dependencies": {
-    "@vendor/email": "workspace:*"
+    "@vendor/resend": "workspace:*"
   }
 }
 ```
@@ -25,11 +25,11 @@ RESEND_API_KEY=your_resend_api_key_here
 ## Usage
 
 ```typescript
-import { createEmailClient } from "@vendor/email";
+import { createResendClient } from "@vendor/resend";
 
-const email = createEmailClient(process.env.RESEND_API_KEY);
+const resend = createResendClient(process.env.RESEND_API_KEY);
 
-await email.emails.send({
+await resend.emails.send({
   from: "Lightfast <hello@lightfast.ai>",
   to: "recipient@example.com",
   subject: "Hello from Lightfast",
@@ -39,7 +39,7 @@ await email.emails.send({
 
 ## API
 
-### `createEmailClient(apiKey)`
+### `createResendClient(apiKey)`
 
 Creates a Resend client. Application packages should import this boundary
 instead of importing `resend` directly.

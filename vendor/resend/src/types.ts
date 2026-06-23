@@ -8,6 +8,8 @@ export type {
   CreateContactResponseSuccess,
   CreateEmailOptions,
   CreateEmailResponseSuccess,
+  ErrorResponse,
+  Response,
   SendBroadcastOptions,
   SendBroadcastResponseSuccess,
   UpdateBroadcastOptions,

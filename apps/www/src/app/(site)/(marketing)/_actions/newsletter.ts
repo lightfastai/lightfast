@@ -1,6 +1,5 @@
 "use server";
 
-import { createEmailClient } from "@vendor/email";
 import { parseError } from "@vendor/observability/error/next";
 import {
   captureException,
@@ -13,9 +12,15 @@ import {
   request as arcjetRequest,
   protectSignup,
 } from "@vendor/security";
+import { Effect } from "effect";
 import { headers } from "next/headers";
 import { z } from "zod";
-import { env } from "~/env";
+import {
+  addContactToSegment,
+  createContact,
+  isResendConflict,
+  updateContact,
+} from "~/services/resend";
 
 const NEWSLETTER_SEGMENT_ID = "55744eed-18f8-42fa-9d04-36fe6ec71772";
 
@@ -101,92 +106,61 @@ export async function subscribeToNewsletter(
         });
       }
 
-      const emailClient = createEmailClient(env.RESEND_API_KEY);
-
-      try {
-        const createResult = await emailClient.contacts.create({
+      return await Effect.runPromise(
+        createContact({
           email,
           segments: [{ id: NEWSLETTER_SEGMENT_ID }],
           unsubscribed: false,
-        });
+        }).pipe(
+          Effect.catchIf(isResendConflict, () =>
+            Effect.gen(function* () {
+              yield* updateContact({
+                email,
+                unsubscribed: false,
+              });
 
-        if (!createResult.error) {
-          return {
+              yield* addContactToSegment({
+                email,
+                segmentId: NEWSLETTER_SEGMENT_ID,
+              }).pipe(Effect.catchIf(isResendConflict, () => Effect.void));
+            })
+          ),
+          Effect.as({
             message: "You're subscribed. Stay tuned for updates.",
-            status: "success",
-          };
-        }
+            status: "success" as const,
+          }),
+          Effect.catchTags({
+            ApplicationError: (error) => {
+              captureException(error);
 
-        if (createResult.error.statusCode !== 409) {
-          logger.error("Newsletter subscription failed", {
-            error: parseError(createResult.error),
-            provider: "resend",
-            status_code: createResult.error.statusCode,
-            step: "create_contact",
-          });
+              logger.error("Newsletter subscription failed", {
+                error: error.message,
+                step: "unexpected_error",
+              });
 
-          return {
-            message: "We couldn't subscribe that address. Please try again.",
-            status: "error",
-          };
-        }
+              return Effect.succeed({
+                message:
+                  "We couldn't subscribe that address. Please try again.",
+                status: "error" as const,
+              });
+            },
+            ResendError: (error) => {
+              logger.error("Newsletter subscription failed", {
+                error: error.message,
+                error_code: error.code,
+                provider: "resend",
+                status_code: error.statusCode,
+              });
 
-        const updateResult = await emailClient.contacts.update({
-          email,
-          unsubscribed: false,
-        });
-
-        if (updateResult.error) {
-          logger.error("Newsletter subscription failed", {
-            error: parseError(updateResult.error),
-            provider: "resend",
-            status_code: updateResult.error.statusCode,
-            step: "update_contact",
-          });
-
-          return {
-            message: "We couldn't subscribe that address. Please try again.",
-            status: "error",
-          };
-        }
-
-        const segmentResult = await emailClient.contacts.segments.add({
-          email,
-          segmentId: NEWSLETTER_SEGMENT_ID,
-        });
-
-        if (!segmentResult.error || segmentResult.error.statusCode === 409) {
-          return {
-            message: "You're subscribed. Stay tuned for updates.",
-            status: "success",
-          };
-        }
-
-        logger.error("Newsletter subscription failed", {
-          error: parseError(segmentResult.error),
-          provider: "resend",
-          status_code: segmentResult.error.statusCode,
-          step: "add_segment",
-        });
-
-        return {
-          message: "We couldn't subscribe that address. Please try again.",
-          status: "error",
-        };
-      } catch (error) {
-        captureException(error);
-
-        logger.error("Newsletter subscription failed", {
-          error: parseError(error),
-          provider: "resend",
-          step: "unexpected_error",
-        });
-
-        return {
-          message: "We couldn't subscribe that address. Please try again.",
-          status: "error",
-        };
-      }
+              return Effect.succeed({
+                message:
+                  "We couldn't subscribe that address. Please try again.",
+                status: "error" as const,
+              });
+            },
+          })
+        )
+      );
     }
   );
 }
