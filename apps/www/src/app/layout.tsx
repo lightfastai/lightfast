@@ -174,6 +174,7 @@ export default function RootLayout({
           defaultTheme="system"
           disableTransitionOnChange
           enableSystem
+          scriptProps={{ type: "application/x-next-themes" }}
         >
           <PrefetchCrossZoneLinksProvider>
             {children}
