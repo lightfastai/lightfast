@@ -106,7 +106,7 @@ function SetupTasksPageContent() {
         </div>
         <div className="space-y-2">
           <p className="font-mono text-muted-foreground text-sm">/{slug}</p>
-          <h1 className="font-medium font-pp text-2xl text-foreground">
+          <h1 className="font-medium font-title text-2xl text-foreground">
             Complete setup
           </h1>
           <p className="max-w-xl text-muted-foreground text-sm leading-6">

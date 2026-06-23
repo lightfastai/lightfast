@@ -1,0 +1,37 @@
+{
+  "name": "@repo/remotion",
+  "license": "Apache-2.0",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": [
+    "./src/styles.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./styles.css": "./src/styles.css"
+  },
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo node_modules",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@repo/ui": "workspace:*",
+    "@repo/ui-v2": "workspace:*",
+    "@vendor/remotion": "workspace:*",
+    "clsx": "catalog:",
+    "react": "catalog:react19",
+    "react-dom": "catalog:react19",
+    "tailwind-merge": "catalog:",
+    "tailwindcss": "catalog:tailwind4"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:react19",
+    "typescript": "catalog:"
+  }
+}

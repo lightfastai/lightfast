@@ -7,9 +7,9 @@
     "paths": {
       "~/*": ["./src/*"],
       "fumadocs-mdx:collections/*": ["./.source/*"],
-      "@repo/ui/*": ["../../packages/ui/src/*"]
+      "@repo/ui-v2/*": ["../../packages/ui-v2/src/*"]
     }
   },
   "include": [".", "next-env.d.ts", ".next/types/**/*.ts", ".source/**/*"],
-  "exclude": ["node_modules", "vitest.config.ts"]
+  "exclude": ["node_modules"]
 }

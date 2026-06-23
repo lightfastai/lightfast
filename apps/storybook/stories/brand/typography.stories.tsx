@@ -21,14 +21,12 @@ const labelClassName =
 const typeRows = [
   {
     label: "Title",
-    className:
-      "font-title text-[64px] font-medium leading-[70px] tracking-[-0.03em]",
+    className: "font-title text-[64px] font-medium",
     text: "PP Neue Montreal",
   },
   {
     label: "Hero",
-    className:
-      "font-title text-[42px] font-medium leading-[46px] tracking-[-0.03em]",
+    className: "font-title text-[42px] font-medium",
     text: "A git forge for the agentic era",
   },
   {
@@ -50,7 +48,7 @@ export const TypeScale: Story = {
       <div className="flex items-start justify-between gap-8 border-b pb-8">
         <div className="flex flex-col gap-2">
           <p className={labelClassName}>brand typography</p>
-          <h1 className="font-medium font-title text-4xl leading-10 tracking-[-0.03em]">
+          <h1 className="font-medium font-title text-4xl">
             PP titles, Geist interface
           </h1>
         </div>
@@ -97,7 +95,7 @@ export const LandingExample: Story = {
         />
         <section className="relative z-10 ml-[250px] flex h-full max-w-[560px] flex-col justify-center">
           <Logo className="mb-10" size="md" variant="inverse" />
-          <h1 className="max-w-[520px] font-medium font-title text-[52px] leading-[57px] tracking-[-0.03em]">
+          <h1 className="max-w-[520px] font-medium font-title text-[52px]">
             A git forge for the agentic era
           </h1>
           <p className="mt-5 max-w-[520px] font-sans text-base text-white/80 leading-6 tracking-normal">

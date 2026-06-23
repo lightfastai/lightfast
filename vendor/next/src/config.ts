@@ -79,8 +79,9 @@ export const baseConfig: NextConfig = {
     optimizeCss: !!env.VERCEL,
     staleTimes: { dynamic: 30, static: 180 },
     optimizePackageImports: [
+      "@hugeicons/core-free-icons",
+      "@hugeicons/react",
       "@repo/ui",
-      "lucide-react",
       "shiki",
       "recharts",
       "@tanstack/react-table",
@@ -104,9 +105,16 @@ export const sentryOptions: Parameters<typeof withSentryConfig>[1] = {
   project: env.SENTRY_PROJECT,
   authToken: env.SENTRY_AUTH_TOKEN,
   silent: !env.CI,
+  suppressOnRouterTransitionStartWarning: true,
   widenClientFileUpload: env.VERCEL_ENV === "production",
   tunnelRoute: "/monitoring",
-  bundleSizeOptimizations: { excludeDebugStatements: true },
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+    excludeTracing: true,
+    excludeReplayShadowDom: true,
+    excludeReplayIframe: true,
+    excludeReplayWorker: true,
+  },
   webpack: {
     reactComponentAnnotation: { enabled: false },
     treeshake: { removeDebugLogging: true },

@@ -1,11 +1,12 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets-zod";
-import { env as emailEnv } from "@vendor/email/env";
 import { env as inngestEnv } from "@vendor/inngest/env";
 import { env as nextEnv } from "@vendor/next/env";
 import { betterstackEnv } from "@vendor/observability/betterstack-env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
+import { env as resendEnv } from "@vendor/resend/env";
 import { env as securityEnv } from "@vendor/security/env";
+import { env as slackEnv } from "@vendor/slack/env";
 import { z } from "zod";
 
 export const env = createEnv({
@@ -14,7 +15,8 @@ export const env = createEnv({
     betterstackEnv,
     sentryEnv,
     securityEnv,
-    emailEnv,
+    slackEnv,
+    resendEnv,
     inngestEnv,
     nextEnv,
   ],

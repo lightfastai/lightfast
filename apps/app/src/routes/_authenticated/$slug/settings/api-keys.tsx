@@ -30,7 +30,7 @@ function ApiKeysSettingsPage() {
     <div className="space-y-8">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="font-medium font-pp text-2xl text-foreground">
+          <h2 className="font-medium font-title text-2xl text-foreground">
             API Keys
           </h2>
           <p className="mt-1 text-muted-foreground text-sm">

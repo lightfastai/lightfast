@@ -1,6 +1,15 @@
 "use client";
 
 import {
+  Cancel01Icon,
+  CornerDownLeftIcon,
+  Image01Icon,
+  PlusSignIcon,
+  SquareIcon,
+  ComputerScreenShareIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
   Command,
   CommandEmpty,
   CommandGroup,
@@ -41,14 +50,6 @@ import {
 } from "@repo/ui-v2/components/ui/tooltip";
 import { cn } from "@repo/ui-v2/lib/utils";
 import type { ChatStatus, FileUIPart, SourceDocumentUIPart } from "@vendor/ai";
-import {
-  CornerDownLeftIcon,
-  ImageIcon,
-  Monitor,
-  PlusIcon,
-  SquareIcon,
-  XIcon,
-} from "lucide-react";
 import { nanoid } from "nanoid";
 import type {
   ChangeEvent,
@@ -432,7 +433,12 @@ export const PromptInputActionAddAttachments = ({
 
   return (
     <DropdownMenuItem {...props} onSelect={handleSelect}>
-      <ImageIcon className="mr-2 size-4" /> {label}
+      <HugeiconsIcon
+        className="mr-2 size-4"
+        icon={Image01Icon}
+        strokeWidth={2}
+      />{" "}
+      {label}
     </DropdownMenuItem>
   );
 };
@@ -479,7 +485,11 @@ export const PromptInputActionAddScreenshot = ({
 
   return (
     <DropdownMenuItem {...props} onSelect={handleSelect}>
-      <Monitor className="mr-2 size-4" />
+      <HugeiconsIcon
+        className="mr-2 size-4"
+        icon={ComputerScreenShareIcon}
+        strokeWidth={2}
+      />
       {label}
     </DropdownMenuItem>
   );
@@ -1220,7 +1230,17 @@ export const PromptInputActionMenuTrigger = ({
   children,
   ...props
 }: PromptInputActionMenuTriggerProps) => (
-  <DropdownMenuTrigger render={<PromptInputButton className={className} {...props} />}>{children ?? <PlusIcon className="size-4" />}</DropdownMenuTrigger>
+  <DropdownMenuTrigger
+    render={<PromptInputButton className={className} {...props} />}
+  >
+    {children ?? (
+      <HugeiconsIcon
+        className="size-4"
+        icon={PlusSignIcon}
+        strokeWidth={2}
+      />
+    )}
+  </DropdownMenuTrigger>
 );
 
 export type PromptInputActionMenuContentProps = ComponentProps<
@@ -1263,14 +1283,24 @@ export const PromptInputSubmit = ({
 }: PromptInputSubmitProps) => {
   const isGenerating = status === "submitted" || status === "streaming";
 
-  let Icon = <CornerDownLeftIcon className="size-4" />;
+  let Icon = (
+    <HugeiconsIcon
+      className="size-4"
+      icon={CornerDownLeftIcon}
+      strokeWidth={2}
+    />
+  );
 
   if (status === "submitted") {
     Icon = <Spinner />;
   } else if (status === "streaming") {
-    Icon = <SquareIcon className="size-4" />;
+    Icon = (
+      <HugeiconsIcon className="size-4" icon={SquareIcon} strokeWidth={2} />
+    );
   } else if (status === "error") {
-    Icon = <XIcon className="size-4" />;
+    Icon = (
+      <HugeiconsIcon className="size-4" icon={Cancel01Icon} strokeWidth={2} />
+    );
   }
 
   const handleClick = useCallback<NonNullable<PromptInputSubmitProps["onClick"]>>(

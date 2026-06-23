@@ -22,7 +22,7 @@ export function AccountSourceControlClient() {
   return (
     <div className="space-y-10">
       <div>
-        <h2 className="font-medium font-pp text-2xl text-foreground">
+        <h2 className="font-medium font-title text-2xl text-foreground">
           Source Control &amp; Git
         </h2>
         <p className="mt-1 text-muted-foreground text-sm">

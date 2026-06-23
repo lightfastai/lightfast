@@ -35,6 +35,15 @@
       "project": ["src/**/*.{ts,tsx}", "vite.*.config.ts", "scripts/**/*.mjs"],
       "ignoreDependencies": ["@sentry/electron", "@sentry/cli", "superjson"]
     },
+    "apps/remotion": {
+      "entry": [
+        "src/index.ts",
+        "src/render.ts",
+        "src/watch.ts",
+        "remotion.config.ts"
+      ],
+      "project": ["src/**/*.{ts,tsx}", "remotion.config.ts"]
+    },
     "core/*": {
       "project": ["src/**/*.ts"]
     },
@@ -56,10 +65,6 @@
     },
     "packages/*": {
       "project": ["src/**/*.{ts,tsx}"]
-    },
-    "packages/og": {
-      "project": ["src/**/*.{ts,tsx}"],
-      "ignoreDependencies": ["react", "@types/react"]
     },
     "packages/ui": {
       "project": ["src/**/*.{ts,tsx}"],
@@ -95,7 +100,6 @@
     "internal/vitest-config": {}
   },
   "ignore": [".agents/**", ".claude/**"],
-  "ignoreWorkspaces": ["packages/app-remotion"],
   "ignoreDependencies": [
     "tailwindcss",
     "@tailwindcss/postcss",

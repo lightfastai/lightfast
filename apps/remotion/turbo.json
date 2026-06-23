@@ -1,0 +1,11 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "extends": ["//"],
+  "tags": ["app"],
+  "tasks": {
+    "dev": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

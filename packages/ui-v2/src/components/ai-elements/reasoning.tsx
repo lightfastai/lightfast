@@ -1,5 +1,7 @@
 "use client";
 
+import { BrainIcon, ChevronDownIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import {
   Collapsible,
@@ -7,7 +9,6 @@ import {
   CollapsibleTrigger,
 } from "@repo/ui-v2/components/ui/collapsible";
 import { cn } from "@repo/ui-v2/lib/utils";
-import { BrainIcon, ChevronDownIcon } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 import {
   createContext,
@@ -180,13 +181,19 @@ export const ReasoningTrigger = memo(
       >
         {children ?? (
           <>
-            <BrainIcon className="size-4" />
+            <HugeiconsIcon
+              className="size-4"
+              icon={BrainIcon}
+              strokeWidth={2}
+            />
             {getThinkingMessage(isStreaming, duration)}
-            <ChevronDownIcon
+            <HugeiconsIcon
               className={cn(
                 "size-4 transition-transform",
                 isOpen ? "rotate-180" : "rotate-0"
               )}
+              icon={ChevronDownIcon}
+              strokeWidth={2}
             />
           </>
         )}

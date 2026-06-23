@@ -107,7 +107,7 @@ export function AutomationDetailClient({
           <p className="font-mono text-muted-foreground text-sm">
             {automationId}
           </p>
-          <h1 className="font-medium font-pp text-2xl text-foreground">
+          <h1 className="font-medium font-title text-2xl text-foreground">
             Automation not found
           </h1>
           <p className="max-w-md text-muted-foreground text-sm leading-6">

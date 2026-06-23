@@ -5,8 +5,16 @@ const styles = readFileSync(
   new URL("../src/styles.css", import.meta.url),
   "utf8"
 );
-const uiV2Styles = readFileSync(
+const uiV2Globals = readFileSync(
   new URL("../../../../../packages/ui-v2/src/globals.css", import.meta.url),
+  "utf8"
+);
+const uiV2Shadcn = readFileSync(
+  new URL("../../../../../packages/ui-v2/src/shadcn.css", import.meta.url),
+  "utf8"
+);
+const uiV2Theme = readFileSync(
+  new URL("../../../../../packages/ui-v2/src/theme.css", import.meta.url),
   "utf8"
 );
 const rendererEntry = readFileSync(
@@ -39,7 +47,7 @@ const uiV2PackageJson = JSON.parse(
 
 function getCssBlock(selector: string) {
   const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const match = uiV2Styles.match(
+  const match = uiV2Theme.match(
     new RegExp(`${escapedSelector} \\{(?<body>[\\s\\S]*?)\\n\\}`)
   );
 
@@ -58,8 +66,12 @@ function getCssVariable(block: string, variable: string) {
 }
 
 describe("desktop Tailwind setup", () => {
-  it("keeps desktop styles.css as the app source entry for ui-v2 globals", () => {
-    expect(styles).toContain('@import "@repo/ui-v2/globals.css";');
+  it("keeps desktop styles.css as the app source entry for ui-v2 CSS", () => {
+    expect(styles).toContain('@import "tailwindcss";');
+    expect(styles).toContain('@import "@repo/ui-v2/fonts.css";');
+    expect(styles).toContain('@import "@repo/ui-v2/shadcn.css";');
+    expect(styles).toContain('@import "@repo/ui-v2/theme.css";');
+    expect(styles).not.toContain('@import "@repo/ui-v2/globals.css";');
     expect(rendererEntry).toContain('import "@fontsource-variable/geist";');
     expect(styles).toContain('@source "../index.html";');
     expect(styles).toContain('@source "./**/*.{ts,tsx}";');
@@ -75,25 +87,27 @@ describe("desktop Tailwind setup", () => {
     expect(styles).not.toContain("-webkit-app-region");
   });
 
-  it("keeps ui-v2 globals as Tailwind and shadcn theme plumbing", () => {
-    expect(uiV2Styles).toContain('@import "tailwindcss/index.css";');
-    expect(uiV2Styles).toContain('@import "tw-animate-css";');
-    expect(uiV2Styles).toContain('@import "shadcn/tailwind.css";');
-    expect(uiV2Styles).toContain('@source "./**/*.{ts,tsx}";');
-    expect(uiV2Styles).toContain("@custom-variant dark");
-    expect(uiV2Styles).toContain("@theme inline");
-    expect(uiV2Styles).toContain("--color-background: var(--background);");
-    expect(uiV2Styles).toContain(
+  it("keeps ui-v2 theme and shadcn plumbing split from the full source scan", () => {
+    expect(uiV2Globals).toContain('@import "tailwindcss/index.css";');
+    expect(uiV2Globals).toContain('@import "./shadcn.css";');
+    expect(uiV2Globals).toContain('@import "./theme.css";');
+    expect(uiV2Globals).toContain('@source "./**/*.{ts,tsx}";');
+    expect(uiV2Shadcn).toContain('@import "tw-animate-css";');
+    expect(uiV2Shadcn).toContain('@import "shadcn/tailwind.css";');
+    expect(uiV2Theme).toContain("@custom-variant dark");
+    expect(uiV2Theme).toContain("@theme inline");
+    expect(uiV2Theme).toContain("--color-background: var(--background);");
+    expect(uiV2Theme).toContain(
       "--animate-objective-gradient: objective-gradient 3s ease infinite;"
     );
-    expect(uiV2Styles).toContain("@keyframes objective-gradient");
-    expect(uiV2Styles).toContain(":root {");
-    expect(uiV2Styles).toContain(".dark {");
-    expect(uiV2Styles).toContain("@layer base");
-    expect(uiV2Styles).toContain("@apply border-border outline-ring/50;");
-    expect(uiV2Styles).toContain("@apply bg-background text-foreground;");
+    expect(uiV2Theme).toContain("@keyframes objective-gradient");
+    expect(uiV2Theme).toContain(":root {");
+    expect(uiV2Theme).toContain(".dark {");
+    expect(uiV2Theme).toContain("@layer base");
+    expect(uiV2Theme).toContain("@apply border-border outline-ring/50;");
+    expect(uiV2Theme).toContain("@apply bg-background text-foreground;");
 
-    const selectors = uiV2Styles
+    const selectors = uiV2Theme
       .split("\n")
       .map((line) => line.trim())
       .filter((line) => /^[.#[:a-zA-Z].*\{/.test(line))
@@ -106,10 +120,12 @@ describe("desktop Tailwind setup", () => {
       '[role="button"]:not(:disabled) {',
       "html {",
       ".font-mono {",
-      ".font-wordmark-features {",
+      ".font-title {",
     ]);
-    expect(uiV2Styles).not.toContain("color-mix(");
-    expect(uiV2Styles).not.toContain("-webkit-app-region");
+    expect(uiV2Theme).not.toContain("Roobert");
+    expect(uiV2Theme).not.toContain("font-wordmark");
+    expect(uiV2Theme).not.toContain("color-mix(");
+    expect(uiV2Theme).not.toContain("-webkit-app-region");
   });
 
   it("configures PostCSS to run Tailwind", () => {
@@ -126,8 +142,8 @@ describe("desktop Tailwind setup", () => {
     );
 
     const darkBlock = getCssBlock(".dark");
-    expect(getCssVariable(darkBlock, "--sidebar")).toBe(
-      getCssVariable(darkBlock, "--background")
+    expect(getCssVariable(darkBlock, "--background")).toBe(
+      "oklch(0.1339 0.0026 106.74)"
     );
     expect(getCssVariable(darkBlock, "--sidebar")).toBe("oklch(0.2178 0 0)");
     expect(getCssBlock(".dark")).toContain(

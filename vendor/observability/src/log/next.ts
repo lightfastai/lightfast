@@ -1,7 +1,7 @@
 import "server-only";
 
-import * as Sentry from "@sentry/nextjs";
 import { getContext } from "../context";
+import { logger } from "../sentry-nextjs";
 
 type LogLevel = "info" | "warn" | "error" | "debug";
 type SentryLogAttributes = Record<string, string | number | boolean>;
@@ -91,16 +91,16 @@ function writeSentryLog(
     const attributes = normalizeAttributes(meta);
     switch (level) {
       case "debug":
-        Sentry.logger.debug(msg, attributes);
+        logger.debug(msg, attributes);
         return;
       case "error":
-        Sentry.logger.error(msg, attributes);
+        logger.error(msg, attributes);
         return;
       case "info":
-        Sentry.logger.info(msg, attributes);
+        logger.info(msg, attributes);
         return;
       case "warn":
-        Sentry.logger.warn(msg, attributes);
+        logger.warn(msg, attributes);
         return;
       default:
         return;

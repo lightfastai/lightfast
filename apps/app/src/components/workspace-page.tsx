@@ -15,7 +15,7 @@ export function WorkspacePage({
         {eyebrow ? (
           <p className="font-mono text-muted-foreground text-sm">{eyebrow}</p>
         ) : null}
-        <h1 className="font-medium font-pp text-3xl text-foreground">
+        <h1 className="font-medium font-title text-3xl text-foreground">
           {title}
         </h1>
         <p className="max-w-md text-muted-foreground text-sm leading-6">

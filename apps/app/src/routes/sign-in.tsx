@@ -334,7 +334,7 @@ function SignInView() {
     <div className="w-full space-y-8">
       {view === "email" && !hasError && (
         <div className="text-center">
-          <h1 className="font-medium font-pp text-3xl text-foreground">
+          <h1 className="font-medium font-title text-3xl text-foreground">
             Log in to Lightfast
           </h1>
         </div>

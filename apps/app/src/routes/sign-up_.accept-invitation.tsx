@@ -183,7 +183,7 @@ function AcceptInvitationView() {
   if (!ticket) {
     return (
       <div className="w-full space-y-4 text-center">
-        <h1 className="font-medium font-pp text-3xl text-foreground">
+        <h1 className="font-medium font-title text-3xl text-foreground">
           No Invitation Found
         </h1>
         <p className="text-muted-foreground text-sm">
@@ -204,7 +204,7 @@ function AcceptInvitationView() {
     <div className="w-full space-y-8">
       {!hasError && (
         <div className="text-center">
-          <h1 className="font-medium font-pp text-3xl text-foreground">
+          <h1 className="font-medium font-title text-3xl text-foreground">
             Accept Your Invitation
           </h1>
         </div>

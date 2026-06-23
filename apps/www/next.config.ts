@@ -9,66 +9,44 @@ import merge from "lodash.merge";
 import type { NextConfig } from "next";
 
 import { env } from "~/env";
-import { localAllowedDevOrigins } from "~/local-dev-origins";
-
-const localDevUrls = [env.NEXT_PUBLIC_APP_URL, env.NEXT_PUBLIC_WWW_URL];
 
 const wwwConfig: NextConfig = merge({}, baseConfig, {
-  allowedDevOrigins: localAllowedDevOrigins(localDevUrls),
-
-  images: {
-    qualities: [10, 75, 100],
-  },
+  // Next only allows `localhost` and one-level `*.localhost` dev origins by
+  // default. Portless worktree hosts are nested under lightfast.localhost.
+  allowedDevOrigins: ["lightfast.localhost", "**.lightfast.localhost"],
 
   async redirects() {
     return [
       {
-        source: "/docs",
-        destination: "/docs/get-started/overview",
+        source: "/company",
+        destination: "/brand",
         permanent: true,
       },
       {
-        source: "/docs/api",
-        destination: "/docs/api-reference/getting-started/overview",
+        source: "/company/:path*",
+        destination: "/brand",
         permanent: true,
       },
       {
-        source: "/docs/api-reference",
-        destination: "/docs/api-reference/getting-started/overview",
-        permanent: true,
-      },
-      {
-        source: "/docs/get-started",
-        destination: "/docs/get-started/overview",
-        permanent: true,
-      },
-      {
-        source: "/docs/integrate",
-        destination: "/docs/integrate/sdk",
-        permanent: true,
-      },
-      {
-        source: "/docs/api-reference/getting-started",
-        destination: "/docs/api-reference/getting-started/overview",
-        permanent: true,
-      },
-      {
-        source: "/docs/api-reference/sdks-tools",
-        destination: "/docs/api-reference/sdks-tools/typescript-sdk",
+        source: "/legal",
+        destination: "/legal/terms",
         permanent: true,
       },
     ];
   },
 
+  images: {
+    qualities: [10, 40, 75, 100],
+  },
+
   transpilePackages: [
-    "@repo/og",
     "@repo/ui",
     "@vendor/aeo",
     "@vendor/analytics",
-    "@vendor/email",
     "@vendor/inngest",
     "@vendor/next",
     "@vendor/observability",
+    "@vendor/resend",
     "@vendor/security",
     "@vendor/seo",
   ],
@@ -77,10 +55,10 @@ const wwwConfig: NextConfig = merge({}, baseConfig, {
 
   experimental: {
     optimizePackageImports: [
-      "framer-motion",
+      "@hugeicons/core-free-icons",
+      "@hugeicons/react",
       "date-fns",
       "class-variance-authority",
-      "lucide-react",
     ],
   },
 } satisfies NextConfig);

@@ -29,7 +29,7 @@ export function AutomationNameEditor({
 
   if (!canManage) {
     return (
-      <h1 className="font-medium font-pp text-3xl text-foreground">
+      <h1 className="font-medium font-title text-3xl text-foreground">
         {automation.name}
       </h1>
     );
@@ -39,7 +39,7 @@ export function AutomationNameEditor({
     <textarea
       {...fieldProps}
       aria-label="Automation name"
-      className="field-sizing-content block w-full resize-none break-words bg-transparent p-0 font-medium font-pp text-3xl text-foreground leading-tight outline-none placeholder:text-muted-foreground"
+      className="field-sizing-content block w-full resize-none break-words bg-transparent p-0 font-medium font-title text-3xl text-foreground leading-tight outline-none placeholder:text-muted-foreground"
       maxLength={AUTOMATION_NAME_MAX_LENGTH}
       placeholder="Untitled automation"
       rows={1}

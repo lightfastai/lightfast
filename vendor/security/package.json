@@ -37,8 +37,8 @@
     "typescript": "catalog:"
   },
   "dependencies": {
-    "@arcjet/decorate": "^1.4.0",
-    "@arcjet/next": "^1.4.0",
+    "@arcjet/decorate": "^1.5.0",
+    "@arcjet/next": "^1.5.0",
     "@nosecone/next": "^1.4.0",
     "@t3-oss/env-core": "catalog:",
     "@vendor/clerk": "workspace:^",

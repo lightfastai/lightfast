@@ -177,7 +177,7 @@ function OrganizationNotFound({ slug }: { slug: string }) {
     <main className="flex flex-1 items-center justify-center px-4 pb-24">
       <section className="w-full max-w-lg space-y-4">
         <p className="font-mono text-muted-foreground text-sm">/{slug}</p>
-        <h1 className="font-medium font-pp text-2xl text-foreground">
+        <h1 className="font-medium font-title text-2xl text-foreground">
           Team not found
         </h1>
         <p className="max-w-md text-muted-foreground text-sm leading-6">
@@ -196,7 +196,7 @@ function OrganizationActivationError({ slug }: { slug: string }) {
     <main className="flex flex-1 items-center justify-center px-4 pb-24">
       <section className="w-full max-w-lg space-y-4">
         <p className="font-mono text-muted-foreground text-sm">/{slug}</p>
-        <h1 className="font-medium font-pp text-2xl text-foreground">
+        <h1 className="font-medium font-title text-2xl text-foreground">
           Team could not be opened
         </h1>
         <p className="max-w-md text-muted-foreground text-sm leading-6">

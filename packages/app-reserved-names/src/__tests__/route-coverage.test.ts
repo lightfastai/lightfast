@@ -237,14 +237,18 @@ function addMetaPageSegment(segments: Set<string>, page: unknown): void {
 
 function collectContentSourceSegments(): Set<string> {
   const segments = new Set<string>();
-  const contentRoots = [
-    path.join(repoRoot, "apps/www/src/content/api"),
-    path.join(repoRoot, "apps/www/src/content/docs"),
-    path.join(repoRoot, "apps/www/src/content/legal"),
-  ];
+  const contentRoot = path.join(repoRoot, "apps/www/src/content");
 
-  for (const contentRoot of contentRoots) {
-    const visit = (directory: string) => {
+  for (const collection of fs.readdirSync(contentRoot, {
+    withFileTypes: true,
+  })) {
+    if (!collection.isDirectory()) {
+      continue;
+    }
+
+    segments.add(collection.name);
+
+    const visit = (directory: string): void => {
       for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
         const entryPath = path.join(directory, entry.name);
         if (entry.isDirectory()) {
@@ -262,20 +266,18 @@ function collectContentSourceSegments(): Set<string> {
           continue;
         }
         if (entry.name.endsWith(".mdx")) {
-          segments.add(entry.name.replace(/\.mdx$/, ""));
+          const source = fs.readFileSync(entryPath, "utf8");
+          const category = /^category:\s*"([^"]+)"/m.exec(source)?.[1];
+          if (category) {
+            segments.add(category);
+          }
+          if (collection.name !== "blog") {
+            segments.add(entry.name.replace(/\.mdx$/, ""));
+          }
         }
       }
     };
-    visit(contentRoot);
-  }
-
-  const blogCategoriesPath = path.join(
-    repoRoot,
-    "apps/www/src/config/blog-categories.ts"
-  );
-  const blogCategoriesSource = fs.readFileSync(blogCategoriesPath, "utf8");
-  for (const match of blogCategoriesSource.matchAll(/slug:\s*"([^"]+)"/g)) {
-    segments.add(match[1]!);
+    visit(path.join(contentRoot, collection.name));
   }
 
   return segments;
@@ -296,7 +298,7 @@ describe("current route coverage", () => {
 describe("current content coverage", () => {
   const currentContentSegments = [...collectContentSourceSegments()].sort();
 
-  it("reserves docs, legal, and category content slugs for organization slugs", () => {
+  it("reserves public content route and category slugs for organization slugs", () => {
     expect(
       currentContentSegments.filter((segment) => !organization.check(segment))
     ).toEqual([]);

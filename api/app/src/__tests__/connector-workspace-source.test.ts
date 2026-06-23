@@ -26,13 +26,18 @@ const oldDeveloperConnectionContractPackage = `@repo/${"developer-connection-con
 const oldDeveloperConnectionContractPath = `packages/${"developer-connection-contract"}`;
 
 const ignoredDirs = new Set([
+  ".agent-browser",
+  ".claude",
+  ".codex",
   ".git",
   ".next",
   ".turbo",
   ".cache",
+  ".output",
   "coverage",
   "dist",
   "node_modules",
+  "worktrees",
 ]);
 
 function source(path: string) {

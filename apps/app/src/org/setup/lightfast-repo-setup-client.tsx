@@ -69,7 +69,7 @@ export function LightfastRepoSetupClient({
         </div>
 
         <div className="space-y-4">
-          <h1 className="pb-4 font-medium font-pp text-2xl text-foreground">
+          <h1 className="pb-4 font-medium font-title text-2xl text-foreground">
             Create the .lightfast repository
           </h1>
 

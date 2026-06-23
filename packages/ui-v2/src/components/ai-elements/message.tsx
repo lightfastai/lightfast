@@ -1,5 +1,7 @@
 "use client";
 
+import { ChevronLeftIcon, ChevronRightIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui-v2/components/ui/button";
 import {
   ButtonGroup,
@@ -13,7 +15,6 @@ import {
 } from "@repo/ui-v2/components/ui/tooltip";
 import { cn } from "@repo/ui-v2/lib/utils";
 import type { UIMessage } from "@vendor/ai";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
 import {
   createContext,
@@ -266,7 +267,9 @@ export const MessageBranchPrevious = ({
       variant="ghost"
       {...props}
     >
-      {children ?? <ChevronLeftIcon size={14} />}
+      {children ?? (
+        <HugeiconsIcon icon={ChevronLeftIcon} size={14} strokeWidth={2} />
+      )}
     </Button>
   );
 };
@@ -289,7 +292,9 @@ export const MessageBranchNext = ({
       variant="ghost"
       {...props}
     >
-      {children ?? <ChevronRightIcon size={14} />}
+      {children ?? (
+        <HugeiconsIcon icon={ChevronRightIcon} size={14} strokeWidth={2} />
+      )}
     </Button>
   );
 };

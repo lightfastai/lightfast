@@ -31,7 +31,8 @@
         "HEALTH_CHECK_AUTH_TOKEN",
         "PORT",
         "MXBAI_API_KEY",
-        "MXBAI_STORE_ID"
+        "MXBAI_STORE_ID",
+        "SLACK_WEBHOOK_URL"
       ],
       "inputs": ["$TURBO_DEFAULT$", ".vercel/.env*"],
       "outputs": [

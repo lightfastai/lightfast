@@ -1,50 +1,13 @@
-import {
-  captureConsoleIntegration,
-  captureRequestError,
-  extraErrorDataIntegration,
-  init,
-  spotlightIntegration,
-} from "@vendor/observability/sentry-nextjs";
+import { captureRequestError } from "@vendor/observability/sentry-nextjs";
 
-import { env } from "~/env";
-
-const sharedIntegrations = () => [
-  captureConsoleIntegration({ levels: ["error", "warn"] }),
-  extraErrorDataIntegration({ depth: 3 }),
-];
-
-const register = () => {
+export const register = async () => {
   if (process.env.NEXT_RUNTIME === "nodejs") {
-    init({
-      dsn: env.NEXT_PUBLIC_SENTRY_DSN,
-      environment: env.NEXT_PUBLIC_VERCEL_ENV,
-      sendDefaultPii: true,
-      tracesSampleRate: env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.1 : 1.0,
-      debug: false,
-      enableLogs: true,
-      includeLocalVariables: true,
-      integrations: [
-        ...sharedIntegrations(),
-        ...(env.NEXT_PUBLIC_VERCEL_ENV === "development"
-          ? [spotlightIntegration()]
-          : []),
-      ],
-    });
+    await import("../sentry.server.config");
   }
 
   if (process.env.NEXT_RUNTIME === "edge") {
-    init({
-      dsn: env.NEXT_PUBLIC_SENTRY_DSN,
-      environment: env.NEXT_PUBLIC_VERCEL_ENV,
-      sendDefaultPii: true,
-      tracesSampleRate: env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.1 : 1.0,
-      debug: false,
-      enableLogs: true,
-      integrations: sharedIntegrations(),
-    });
+    await import("../sentry.edge.config");
   }
 };
-
-register();
 
 export const onRequestError = captureRequestError;

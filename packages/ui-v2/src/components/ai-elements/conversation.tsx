@@ -1,9 +1,10 @@
 "use client";
 
+import { ArrowDown01Icon, Download04Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui-v2/components/ui/button";
 import { cn } from "@repo/ui-v2/lib/utils";
 import type { UIMessage } from "@vendor/ai";
-import { ArrowDownIcon, DownloadIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 import { useCallback } from "react";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
@@ -94,7 +95,11 @@ export const ConversationScrollButton = ({
         variant="outline"
         {...props}
       >
-        <ArrowDownIcon className="size-4" />
+        <HugeiconsIcon
+          className="size-4"
+          icon={ArrowDown01Icon}
+          strokeWidth={2}
+        />
       </Button>
     )
   );
@@ -162,7 +167,13 @@ export const ConversationDownload = ({
       variant="outline"
       {...props}
     >
-      {children ?? <DownloadIcon className="size-4" />}
+      {children ?? (
+        <HugeiconsIcon
+          className="size-4"
+          icon={Download04Icon}
+          strokeWidth={2}
+        />
+      )}
     </Button>
   );
 };

@@ -6,6 +6,9 @@ import { Button } from "@repo/ui-v2/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Cancel01Icon } from "@hugeicons/core-free-icons"
 
+type SheetMotion = "subtle" | "slide"
+type SheetSize = "default" | "wide"
+
 function Sheet({ ...props }: SheetPrimitive.Root.Props) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />
 }
@@ -39,10 +42,14 @@ function SheetContent({
   className,
   children,
   side = "right",
+  motion = "subtle",
+  size = "default",
   showCloseButton = true,
   ...props
 }: SheetPrimitive.Popup.Props & {
   side?: "top" | "right" | "bottom" | "left"
+  motion?: SheetMotion
+  size?: SheetSize
   showCloseButton?: boolean
 }) {
   return (
@@ -52,7 +59,32 @@ function SheetContent({
         data-slot="sheet-content"
         data-side={side}
         className={cn(
-          "fixed z-50 flex flex-col bg-popover bg-clip-padding text-sm text-popover-foreground shadow-xl transition duration-200 ease-in-out data-ending-style:opacity-0 data-starting-style:opacity-0 data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:border-t data-[side=bottom]:data-ending-style:translate-y-[2.5rem] data-[side=bottom]:data-starting-style:translate-y-[2.5rem] data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-3/4 data-[side=left]:border-r data-[side=left]:data-ending-style:translate-x-[-2.5rem] data-[side=left]:data-starting-style:translate-x-[-2.5rem] data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-3/4 data-[side=right]:border-l data-[side=right]:data-ending-style:translate-x-[2.5rem] data-[side=right]:data-starting-style:translate-x-[2.5rem] data-[side=top]:inset-x-0 data-[side=top]:top-0 data-[side=top]:h-auto data-[side=top]:border-b data-[side=top]:data-ending-style:translate-y-[-2.5rem] data-[side=top]:data-starting-style:translate-y-[-2.5rem] data-[side=left]:sm:max-w-sm data-[side=right]:sm:max-w-sm",
+          motion === "slide"
+            ? "fixed z-50 flex flex-col bg-background bg-clip-padding text-sm text-foreground shadow-xl transition-transform ease-[cubic-bezier(0.22,1,0.36,1)] data-open:duration-[1250ms] data-closed:duration-[650ms]"
+            : "fixed z-50 flex flex-col bg-background bg-clip-padding text-sm text-foreground shadow-xl transition duration-200 ease-in-out data-ending-style:opacity-0 data-starting-style:opacity-0",
+          side === "right" &&
+            (motion === "slide"
+              ? "inset-y-0 right-0 h-full translate-x-full border-l data-closed:translate-x-full data-ending-style:translate-x-full data-open:translate-x-0 data-starting-style:translate-x-full"
+              : "inset-y-0 right-0 h-full w-3/4 border-l data-ending-style:translate-x-[2.5rem] data-starting-style:translate-x-[2.5rem] sm:max-w-sm"),
+          side === "left" &&
+            (motion === "slide"
+              ? "inset-y-0 left-0 h-full -translate-x-full border-r data-closed:-translate-x-full data-ending-style:-translate-x-full data-open:translate-x-0 data-starting-style:-translate-x-full"
+              : "inset-y-0 left-0 h-full w-3/4 border-r data-ending-style:translate-x-[-2.5rem] data-starting-style:translate-x-[-2.5rem] sm:max-w-sm"),
+          side === "top" &&
+            (motion === "slide"
+              ? "inset-x-0 top-0 -translate-y-full border-b data-closed:-translate-y-full data-ending-style:-translate-y-full data-open:translate-y-0 data-starting-style:-translate-y-full"
+              : "inset-x-0 top-0 h-auto border-b data-ending-style:translate-y-[-2.5rem] data-starting-style:translate-y-[-2.5rem]"),
+          side === "bottom" &&
+            (motion === "slide"
+              ? "inset-x-0 bottom-0 translate-y-full border-t data-closed:translate-y-full data-ending-style:translate-y-full data-open:translate-y-0 data-starting-style:translate-y-full"
+              : "inset-x-0 bottom-0 h-auto border-t data-ending-style:translate-y-[2.5rem] data-starting-style:translate-y-[2.5rem]"),
+          side === "right" || side === "left"
+            ? size === "wide"
+              ? "w-full sm:max-w-xl"
+              : "w-3/4 sm:max-w-sm"
+            : size === "wide"
+              ? "h-auto max-h-[720px]"
+              : "h-auto",
           className
         )}
         {...props}

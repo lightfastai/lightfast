@@ -10,15 +10,22 @@
   "exports": {
     "./components/brand/*": "./src/components/brand/*",
     "./components/ai-elements/*": "./src/components/ai-elements/*",
+    "./components/content/*": "./src/components/content/*",
+    "./components/email/*": "./src/components/email/*",
+    "./ai-elements.css": "./src/ai-elements.css",
     "./components/ui/*": "./src/components/ui/*",
     "./fonts.css": "./src/fonts.css",
     "./fonts/*": "./public/fonts/*",
     "./hooks/*": "./src/hooks/*",
     "./lib/*": "./src/lib/*",
+    "./providers/*": "./src/providers/*",
     "./postcss.config": "./postcss.config.mjs",
-    "./globals.css": "./src/globals.css"
+    "./globals.css": "./src/globals.css",
+    "./shadcn.css": "./src/shadcn.css",
+    "./theme.css": "./src/theme.css"
   },
   "scripts": {
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "ui": "pnpm dlx shadcn@latest",
     "clean": "git clean -xdf .cache .turbo dist node_modules"
@@ -28,6 +35,7 @@
     "@hugeicons/core-free-icons": "catalog:",
     "@hugeicons/react": "catalog:",
     "@radix-ui/react-use-controllable-state": "catalog:",
+    "@react-email/components": "catalog:",
     "@shikijs/core": "catalog:",
     "@shikijs/engine-javascript": "catalog:",
     "@shikijs/langs": "catalog:",
@@ -36,9 +44,9 @@
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "cmdk": "catalog:",
-    "lucide-react": "catalog:",
     "motion": "catalog:",
     "nanoid": "catalog:",
+    "next-themes": "catalog:",
     "react": "catalog:react19",
     "streamdown": "catalog:",
     "tailwind-merge": "catalog:",
@@ -54,6 +62,7 @@
     "shadcn": "catalog:",
     "tailwindcss": "catalog:tailwind4",
     "tw-animate-css": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

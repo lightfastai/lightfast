@@ -1,0 +1,28 @@
+{
+  "name": "@lightfast/email",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "build": "email build --dir ../../packages/email/src/templates",
+    "clean": "git clean -xdf .cache .react-email .turbo out node_modules",
+    "dev": "email dev --dir ../../packages/email/src/templates --port 3005",
+    "export": "email export --dir ../../packages/email/src/templates --outDir out --plainText",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@repo/email": "workspace:*",
+    "react": "catalog:react19",
+    "react-dom": "catalog:react19"
+  },
+  "devDependencies": {
+    "@react-email/ui": "catalog:",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:react19",
+    "@types/react-dom": "catalog:react19",
+    "react-email": "catalog:",
+    "typescript": "catalog:"
+  }
+}

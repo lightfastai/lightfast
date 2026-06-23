@@ -1,0 +1,6 @@
+@import "tailwindcss/index.css";
+@import "@repo/ui-v2/fonts.css";
+@import "@repo/ui-v2/shadcn.css";
+@import "@repo/ui-v2/theme.css";
+
+@source "./**/*.{ts,tsx}";

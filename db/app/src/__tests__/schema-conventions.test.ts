@@ -30,6 +30,7 @@ const SKIPPED_DIRECTORIES = new Set([
   "dist",
   "node_modules",
   "out",
+  "worktrees",
 ]);
 const SOURCE_FILE_PATTERN = /\.[cm]?[jt]sx?$/;
 
