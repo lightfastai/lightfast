@@ -13,7 +13,6 @@ import type {
   LegalPageData,
 } from "./content-schemas";
 import { createArticleMetadata, createMetadata } from "./content-seo";
-import type { BlogPostUrl, LegalUrl } from "./url-types";
 
 interface SeoBundle {
   readonly jsonLd: GraphContext;
@@ -86,7 +85,7 @@ function buildArticleMetadata(
 
 export function emitBlogPostSeo(
   data: BlogPostData,
-  url: BlogPostUrl
+  url: string
 ): SeoBundle {
   const canonicalUrl = data.canonicalUrl ?? url;
 
@@ -156,7 +155,7 @@ export function emitBlogCategorySeo(
   };
 }
 
-export function emitLegalSeo(data: LegalPageData, url: LegalUrl): SeoBundle {
+export function emitLegalSeo(data: LegalPageData, url: string): SeoBundle {
   const canonicalUrl = data.canonicalUrl ?? url;
   return {
     metadata: createMetadata({

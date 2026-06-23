@@ -5,7 +5,6 @@ import { notFound } from "next/navigation";
 import { markdownComponents } from "~/app/_components/mdx-components";
 import { getBlogPage, getBlogPages } from "~/lib/content/source";
 import { emitBlogPostSeo } from "~/lib/seo-bundle";
-import type { BlogPostUrl } from "~/lib/url-types";
 import { Toc, type TocItem } from "./_components/toc";
 
 export const dynamic = "force-static";
@@ -55,7 +54,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {};
   }
 
-  const canonicalUrl = `https://lightfast.ai/blog/${slug}` as BlogPostUrl;
+  const canonicalUrl = `https://lightfast.ai/blog/${slug}`;
 
   return emitBlogPostSeo(page.data, canonicalUrl).metadata;
 }
@@ -67,7 +66,7 @@ export default async function BlogPostPage({ params }: Props) {
     notFound();
   }
 
-  const canonicalUrl = `https://lightfast.ai/blog/${slug}` as BlogPostUrl;
+  const canonicalUrl = `https://lightfast.ai/blog/${slug}`;
   const MDXContent = page.data.body;
   const { title, description, featuredImage, tldr, answerSummary } = page.data;
   const { jsonLd } = emitBlogPostSeo(page.data, canonicalUrl);

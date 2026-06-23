@@ -9,7 +9,6 @@ import type {
 } from "@vendor/seo/json-ld";
 import type { BlogCategoryMeta } from "~/config/blog-categories";
 import type { BlogCategory, BlogPostData } from "~/lib/content-schemas";
-import type { BlogPostUrl } from "~/lib/url-types";
 import {
   buildBreadcrumbList,
   buildFaqEntity,
@@ -36,7 +35,7 @@ const ARTICLE_SECTIONS: Record<BlogCategory, string> = {
 
 function buildBlogPostEntity(
   data: BlogPostData,
-  url: BlogPostUrl
+  url: string
 ): Omit<BlogPosting, "@id" | "url"> {
   return {
     "@type": "BlogPosting",
@@ -66,7 +65,7 @@ function buildBlogPostEntity(
   };
 }
 
-function buildHowToEntity(data: BlogPostData, url: BlogPostUrl): HowTo {
+function buildHowToEntity(data: BlogPostData, url: string): HowTo {
   const steps = data.howToSteps!;
   return {
     "@type": "HowTo",
@@ -88,7 +87,7 @@ function buildHowToEntity(data: BlogPostData, url: BlogPostUrl): HowTo {
 
 export function buildBlogPostJsonLd(
   data: BlogPostData,
-  url: BlogPostUrl
+  url: string
 ): GraphContext {
   const entity = buildBlogPostEntity(data, url);
 

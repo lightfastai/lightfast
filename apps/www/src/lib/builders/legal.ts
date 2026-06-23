@@ -1,6 +1,5 @@
 import type { GraphContext, WebPage } from "@vendor/seo/json-ld";
 import type { LegalPageData } from "~/lib/content-schemas";
-import type { LegalUrl } from "~/lib/url-types";
 import {
   buildBreadcrumbList,
   buildOrganizationEntity,
@@ -23,7 +22,7 @@ function buildLegalPageEntity(
 
 export function buildLegalJsonLd(
   data: LegalPageData,
-  url: LegalUrl
+  url: string
 ): GraphContext {
   const entity = buildLegalPageEntity(data);
   return {

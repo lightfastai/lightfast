@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { markdownComponents } from "~/app/_components/mdx-components";
 import { getLegalPage, getLegalPages } from "~/lib/content/source";
 import { emitLegalSeo } from "~/lib/seo-bundle";
-import type { LegalUrl } from "~/lib/url-types";
 
 export const dynamic = "force-static";
 
@@ -23,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {};
   }
 
-  const url = `https://lightfast.ai/legal/${slug}` as LegalUrl;
+  const url = `https://lightfast.ai/legal/${slug}`;
   return emitLegalSeo(page.data, url).metadata;
 }
 
@@ -34,7 +33,7 @@ export default async function LegalPage({ params }: Props) {
     notFound();
   }
 
-  const url = `https://lightfast.ai/legal/${slug}` as LegalUrl;
+  const url = `https://lightfast.ai/legal/${slug}`;
   const { jsonLd } = emitLegalSeo(page.data, url);
   const MDXContent = page.data.body;
 
