@@ -24,6 +24,22 @@ A public website page derived from a static content collection rather than a sin
 
 The blog index is a static collection publication. It owns public facts such as the blog URL, metadata, content-backed SEO, and post ordering, even though its rendered page lists many blog posts.
 
+### Site Identity Module
+
+The `apps/www/src/lib/site/identity.ts` module that owns public website identity facts for Lightfast.
+
+It owns the canonical site origin, site name, public social and authority links, public contact facts, default image and icon facts, Organization and WebSite JSON-LD roots, root metadata facts, and app manifest identity facts.
+
+It does not own content-backed publication facts, page rendering, sitemap formatting, `llms.txt` formatting, robots environment rules, analytics, microfrontend URL routing, or retired route behavior.
+
+### Site Discovery Policy Module
+
+The `apps/www/src/lib/site/discovery.ts` module that turns static publications and site identity facts into shared discovery policy.
+
+It owns publication discovery sections, optionality, sitemap priority and change-frequency policy, external authority entries, and shared `llms.txt` contact lines.
+
+It does not own static publication lookup, content-backed metadata, JSON-LD graph construction, sitemap formatting, `llms.txt` formatting, robots environment rules, page rendering, or retired route behavior.
+
 ## Static Publishing Decisions
 
 ### Publication Outputs Are Plain Data

@@ -1,3 +1,13 @@
+export type {
+  BlogIndexPostSummary,
+  BlogIndexPublication,
+  BlogPostPublication,
+  BrandPublication,
+  HomePublication,
+  LegalPublication,
+  StaticParam,
+  StaticPublication,
+} from "./publications";
 export {
   getAllPublications,
   getBlogIndexPublication,
@@ -10,14 +20,4 @@ export {
   getLegalPublications,
   getLegalStaticParams,
   getPublicPublications,
-} from "./publications";
-export type {
-  BlogIndexPostSummary,
-  BlogIndexPublication,
-  BlogPostPublication,
-  BrandPublication,
-  HomePublication,
-  LegalPublication,
-  StaticParam,
-  StaticPublication,
 } from "./publications";

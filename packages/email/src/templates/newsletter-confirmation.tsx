@@ -12,7 +12,6 @@ export interface NewsletterConfirmationEmailProps {
 
 export const NewsletterConfirmationEmail = ({
   confirmUrl,
-  email,
   manageUrl,
   unsubscribeUrl = manageUrl,
 }: NewsletterConfirmationEmailProps) => (

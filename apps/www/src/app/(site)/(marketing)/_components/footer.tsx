@@ -4,6 +4,7 @@ import { Logo } from "@repo/ui-v2/components/brand/logo";
 import { Button } from "@repo/ui-v2/components/ui/button";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { SITE_IDENTITY } from "~/lib/site/identity";
 import { Newsletter } from "./newsletter";
 
 export function Footer() {
@@ -17,66 +18,31 @@ export function Footer() {
                 aria-label="Social links"
                 className="flex flex-col items-start gap-2"
               >
+                {SITE_IDENTITY.socialLinks.map((link) => (
+                  <Button
+                    className="h-auto justify-start px-0 py-0.5 font-normal text-base leading-tight"
+                    key={link.url}
+                    nativeButton={false}
+                    render={
+                      <a
+                        href={link.url}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        {link.label}
+                      </a>
+                    }
+                    variant="link"
+                  />
+                ))}
                 <Button
                   className="h-auto justify-start px-0 py-0.5 font-normal text-base leading-tight"
                   nativeButton={false}
                   render={
-                    <a
-                      href="https://x.com/lightfastai"
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      X
+                    <a href={`mailto:${SITE_IDENTITY.contact.email}`}>
+                      Contact
                     </a>
                   }
-                  variant="link"
-                />
-                <Button
-                  className="h-auto justify-start px-0 py-0.5 font-normal text-base leading-tight"
-                  nativeButton={false}
-                  render={
-                    <a
-                      href="https://github.com/lightfastai"
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      GitHub
-                    </a>
-                  }
-                  variant="link"
-                />
-                <Button
-                  className="h-auto justify-start px-0 py-0.5 font-normal text-base leading-tight"
-                  nativeButton={false}
-                  render={
-                    <a
-                      href="https://www.linkedin.com/company/lightfastai"
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      LinkedIn
-                    </a>
-                  }
-                  variant="link"
-                />
-                <Button
-                  className="h-auto justify-start px-0 py-0.5 font-normal text-base leading-tight"
-                  nativeButton={false}
-                  render={
-                    <a
-                      href="https://discord.gg/YqPDfcar2C"
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      Discord
-                    </a>
-                  }
-                  variant="link"
-                />
-                <Button
-                  className="h-auto justify-start px-0 py-0.5 font-normal text-base leading-tight"
-                  nativeButton={false}
-                  render={<a href="mailto:hello@lightfast.ai">Contact</a>}
                   variant="link"
                 />
               </nav>
@@ -103,7 +69,9 @@ export function Footer() {
             aria-label="Legal links"
             className="grid grid-cols-1 gap-3 text-xs leading-tight sm:grid-cols-4 sm:items-center"
           >
-            <p className="py-0.5 sm:justify-self-start">©2026 Lightfast</p>
+            <p className="py-0.5 sm:justify-self-start">
+              ©2026 {SITE_IDENTITY.name}
+            </p>
             <div className="sm:justify-self-center">
               <Link className="block py-0.5 hover:underline" href="/brand">
                 Brand Guidelines

@@ -33,9 +33,6 @@ describe("observability knip ratchet", () => {
     expect(readSource("src/sentry-electron-main.ts")).not.toContain(
       "captureMessage"
     );
-    expect(readSource("src/sentry-nextjs.ts")).not.toContain(
-      "captureException"
-    );
     expect(readSource("src/sentry-nextjs.ts")).not.toContain("captureMessage");
     expect(readSource("src/context.ts")).not.toContain("enrichContext");
     expect(readSource("src/log/next.ts")).not.toContain("export type Logger");

@@ -36,7 +36,6 @@ const BasePublicationSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(50).max(160),
   keywords: z.array(z.string().min(1)).min(3).max(20),
-  canonicalUrl: z.url(),
   ogTitle: z.string().min(1).max(70),
   ogDescription: z.string().min(50).max(160),
   noindex: z.boolean().default(false),
@@ -55,10 +54,6 @@ const ContentPublicationSchema = BasePublicationSchema.extend({
 });
 
 export const BlogPostSchema = ContentPublicationSchema.extend({
-  canonicalUrl: z
-    .url()
-    .refine((val) => val.startsWith("https://lightfast.ai/blog/"))
-    .optional(),
   category: z.enum([
     "engineering",
     "product",
@@ -73,26 +68,14 @@ export const BlogPostSchema = ContentPublicationSchema.extend({
 });
 
 export const HomePageSchema = BasePublicationSchema.extend({
-  canonicalUrl: z
-    .url()
-    .refine((val) => val === "https://lightfast.ai")
-    .optional(),
   updatedAt: z.iso.datetime(),
 });
 
 export const BrandPageSchema = BasePublicationSchema.extend({
-  canonicalUrl: z
-    .url()
-    .refine((val) => val === "https://lightfast.ai/brand")
-    .optional(),
   updatedAt: z.iso.datetime(),
 });
 
 export const LegalPageSchema = BasePublicationSchema.extend({
-  canonicalUrl: z
-    .url()
-    .refine((val) => val.startsWith("https://lightfast.ai/legal/"))
-    .optional(),
   updatedAt: z.iso.datetime(),
   effectiveAt: z.iso.datetime(),
 });

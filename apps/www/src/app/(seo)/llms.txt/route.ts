@@ -3,41 +3,26 @@ import {
   getPublicPublications,
   type StaticPublication,
 } from "~/lib/publishing";
+import {
+  discoveryDescriptionFor,
+  discoveryPolicyFor,
+  getExternalAuthorityEntries,
+  getLlmsFooter,
+} from "~/lib/site/discovery";
+import { SITE_IDENTITY } from "~/lib/site/identity";
 
 export const revalidate = false;
 
-const BASE_URL = "https://lightfast.ai";
-
-function sectionFor(publication: StaticPublication): string {
-  switch (publication.kind) {
-    case "home":
-      return "Marketing";
-    case "brand":
-      return "Company";
-    case "blog-index":
-    case "blog-post":
-      return "Blog";
-    case "legal":
-      return "Legal";
-  }
-}
-
-function descriptionFor(publication: StaticPublication): string {
-  if ("answerSummary" in publication && publication.answerSummary) {
-    return publication.answerSummary;
-  }
-
-  return publication.description;
-}
-
 function pageEntryFor(publication: StaticPublication): PageEntry {
+  const { llms: policy } = discoveryPolicyFor(publication);
+
   return {
     url: publication.canonicalUrl,
     title: publication.title,
-    description: descriptionFor(publication),
+    description: discoveryDescriptionFor(publication),
     lastModified: publication.lastModified,
-    section: sectionFor(publication),
-    ...(publication.kind === "legal" ? { optional: true } : {}),
+    section: policy.section,
+    ...(policy.optional ? { optional: true } : {}),
   };
 }
 
@@ -45,29 +30,7 @@ const providers: Array<() => Promise<PageEntry[]>> = [
   () => {
     const entries: PageEntry[] = getPublicPublications().map(pageEntryFor);
 
-    entries.push(
-      {
-        url: "https://github.com/lightfastai",
-        title: "Lightfast on GitHub",
-        description: "Official Lightfast GitHub organization.",
-        section: "External Authority",
-        optional: true,
-      },
-      {
-        url: "https://www.npmjs.com/package/lightfast",
-        title: "Lightfast SDK on npm",
-        description: "The Lightfast TypeScript SDK package.",
-        section: "External Authority",
-        optional: true,
-      },
-      {
-        url: "https://www.npmjs.com/package/@lightfastai/mcp",
-        title: "Lightfast MCP server on npm",
-        description: "The Lightfast MCP server package for AI agents.",
-        section: "External Authority",
-        optional: true,
-      }
-    );
+    entries.push(...getExternalAuthorityEntries());
 
     return Promise.resolve(entries);
   },
@@ -76,10 +39,9 @@ const providers: Array<() => Promise<PageEntry[]>> = [
 export const { GET } = createLlmsTxtHandler(
   providers,
   {
-    title: "Lightfast",
-    description:
-      "Lightfast is an applied AI lab building systems where product and engineering teams design, build, and ship with AI in real time.",
-    baseUrl: `${BASE_URL}`,
+    title: SITE_IDENTITY.name,
+    description: SITE_IDENTITY.description,
+    baseUrl: SITE_IDENTITY.baseUrl,
     sectionOrder: [
       "Marketing",
       "Company",
@@ -88,20 +50,11 @@ export const { GET } = createLlmsTxtHandler(
       "External Authority",
     ],
     defaultSection: "Marketing",
-    footer: [
-      "## Contact & Support",
-      "",
-      "- Email: hello@lightfast.ai",
-      "- Founder: Jeevan Pillay — jp@lightfast.ai — https://twitter.com/jeevanpillay",
-      "- Twitter: https://twitter.com/lightfastai",
-      "- GitHub: https://github.com/lightfastai",
-      "- npm SDK: https://www.npmjs.com/package/lightfast",
-      "- npm MCP server: https://www.npmjs.com/package/@lightfastai/mcp",
-    ],
+    footer: getLlmsFooter(),
   },
   { cacheControl: "public, max-age=86400, s-maxage=86400" },
   {
     skipUrl: [/\/search(\b|\/)/, /\/pitch-deck/],
-    stripTitleSuffix: "Lightfast",
+    stripTitleSuffix: SITE_IDENTITY.name,
   }
 );

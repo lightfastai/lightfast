@@ -23,12 +23,14 @@ const SKIPPED_DIRECTORIES = new Set([
   ".cache",
   ".git",
   ".next",
+  ".output",
   ".turbo",
   ".vercel",
   "coverage",
   "dist",
   "node_modules",
   "out",
+  "worktrees",
 ]);
 const SOURCE_FILE_PATTERN = /\.[cm]?[jt]sx?$/;
 

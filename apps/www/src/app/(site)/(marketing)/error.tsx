@@ -26,7 +26,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
           Sorry, something went wrong on our end.
         </p>
         {error.digest ? (
-          <p className="mt-4 [overflow-wrap:anywhere] font-mono text-muted-foreground text-xs leading-5">
+          <p className="mt-4 font-mono text-muted-foreground text-xs leading-5 [overflow-wrap:anywhere]">
             Error ID: {error.digest}
           </p>
         ) : null}

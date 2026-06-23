@@ -7,11 +7,12 @@ import {
   WORDMARK_PATH,
 } from "@repo/ui-v2/components/brand/logo";
 import { ImageResponse } from "next/og";
+import { SITE_IDENTITY } from "~/lib/site/identity";
 
-export const alt = "Lightfast";
+export const alt = SITE_IDENTITY.defaultOgImage.alt;
 export const size = {
-  width: 1200,
-  height: 630,
+  width: SITE_IDENTITY.defaultOgImage.width,
+  height: SITE_IDENTITY.defaultOgImage.height,
 };
 export const contentType = "image/png";
 export const runtime = "nodejs";
@@ -23,61 +24,59 @@ const px = (value: number) => `${Number(value.toFixed(3))}px`;
 
 export default function Image() {
   return new ImageResponse(
-    (
+    <div
+      style={{
+        alignItems: "center",
+        backgroundColor: "#ffffff",
+        color: logoColor,
+        display: "flex",
+        height: "100%",
+        justifyContent: "center",
+        width: "100%",
+      }}
+    >
       <div
         style={{
           alignItems: "center",
-          backgroundColor: "#ffffff",
-          color: logoColor,
           display: "flex",
-          height: "100%",
-          justifyContent: "center",
-          width: "100%",
         }}
       >
-        <div
+        <svg
+          aria-hidden="true"
+          focusable="false"
+          height={logoMetrics.markSize}
           style={{
-            alignItems: "center",
             display: "flex",
+            height: px(logoMetrics.markSize),
+            overflow: "visible",
+            width: px(logoMetrics.markSize),
           }}
+          viewBox={`0 0 ${LOGO_MARK_VIEWBOX_SIZE} ${LOGO_MARK_VIEWBOX_SIZE}`}
+          width={logoMetrics.markSize}
+          xmlns="http://www.w3.org/2000/svg"
         >
-          <svg
-            aria-hidden="true"
-            focusable="false"
-            height={logoMetrics.markSize}
-            style={{
-              display: "flex",
-              height: px(logoMetrics.markSize),
-              overflow: "visible",
-              width: px(logoMetrics.markSize),
-            }}
-            viewBox={`0 0 ${LOGO_MARK_VIEWBOX_SIZE} ${LOGO_MARK_VIEWBOX_SIZE}`}
-            width={logoMetrics.markSize}
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path d={DOT_MATRIX_PATH} fill={logoColor} />
-          </svg>
-          <svg
-            aria-label="Lightfast"
-            focusable="false"
-            height={logoMetrics.wordmarkHeight}
-            role="img"
-            style={{
-              display: "flex",
-              height: px(logoMetrics.wordmarkHeight),
-              marginLeft: px(logoMetrics.gap),
-              overflow: "visible",
-              width: px(logoMetrics.wordmarkWidth),
-            }}
-            viewBox={WORDMARK_LOCKUP_VIEWBOX}
-            width={logoMetrics.wordmarkWidth}
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path d={WORDMARK_PATH} fill={logoColor} />
-          </svg>
-        </div>
+          <path d={DOT_MATRIX_PATH} fill={logoColor} />
+        </svg>
+        <svg
+          aria-label="Lightfast"
+          focusable="false"
+          height={logoMetrics.wordmarkHeight}
+          role="img"
+          style={{
+            display: "flex",
+            height: px(logoMetrics.wordmarkHeight),
+            marginLeft: px(logoMetrics.gap),
+            overflow: "visible",
+            width: px(logoMetrics.wordmarkWidth),
+          }}
+          viewBox={WORDMARK_LOCKUP_VIEWBOX}
+          width={logoMetrics.wordmarkWidth}
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d={WORDMARK_PATH} fill={logoColor} />
+        </svg>
       </div>
-    ),
+    </div>,
     {
       ...size,
     }

@@ -1,13 +1,13 @@
 import { seoEnv } from "@vendor/seo/env";
 import merge from "lodash.merge";
 import type { Metadata } from "next";
+import { SITE } from "../site/identity";
 import type {
   BlogPostData,
   BrandPageData,
   HomePageData,
   LegalPageData,
 } from "./schemas";
-import { SITE } from "./site";
 
 type RobotsData = Pick<
   BlogPostData | BrandPageData | HomePageData | LegalPageData,
@@ -130,7 +130,7 @@ export function buildHomeMetadata(
   return buildStandardMetadata({
     canonicalUrl,
     data,
-    ogImage: SITE.homeOgImage,
+    ogImage: SITE.defaultOgImage,
     title: `${data.title} | ${SITE.name}`,
   });
 }
@@ -161,40 +161,38 @@ export function buildBlogPostMetadata(
   data: BlogPostData,
   canonicalUrl: string
 ): Metadata {
-  return createPublicationMetadata(
-    {
-      title: `${data.title} - ${SITE.name} Blog`,
-      description: data.description,
-      keywords: data.keywords,
-      authors: data.authors.map((author) => ({
-        name: author.name,
-        url: author.url,
-      })),
-      creator: SITE.name,
-      publisher: SITE.name,
-      robots: robotsFrom(data),
-      alternates: { canonical: canonicalUrl },
-      openGraph: {
-        title: data.ogTitle,
-        description: data.ogDescription,
-        url: canonicalUrl,
-        siteName: `${SITE.name} Blog`,
-        locale: "en_US",
-        type: "article",
-        publishedTime: data.publishedAt,
-        modifiedTime: data.updatedAt,
-        authors: data.authors.map((author) => author.url),
-      },
-      twitter: {
-        card: "summary_large_image",
-        title: data.ogTitle,
-        description: data.ogDescription,
-        site: SITE.twitterHandle,
-        creator: SITE.twitterHandle,
-      },
-      category: "Technology",
-    }
-  );
+  return createPublicationMetadata({
+    title: `${data.title} - ${SITE.name} Blog`,
+    description: data.description,
+    keywords: data.keywords,
+    authors: data.authors.map((author) => ({
+      name: author.name,
+      url: author.url,
+    })),
+    creator: SITE.name,
+    publisher: SITE.name,
+    robots: robotsFrom(data),
+    alternates: { canonical: canonicalUrl },
+    openGraph: {
+      title: data.ogTitle,
+      description: data.ogDescription,
+      url: canonicalUrl,
+      siteName: `${SITE.name} Blog`,
+      locale: "en_US",
+      type: "article",
+      publishedTime: data.publishedAt,
+      modifiedTime: data.updatedAt,
+      authors: data.authors.map((author) => author.url),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: data.ogTitle,
+      description: data.ogDescription,
+      site: SITE.twitterHandle,
+      creator: SITE.twitterHandle,
+    },
+    category: "Technology",
+  });
 }
 
 export function buildBlogIndexMetadata(canonicalUrl: string): Metadata {

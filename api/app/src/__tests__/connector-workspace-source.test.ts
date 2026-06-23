@@ -19,13 +19,18 @@ const oldProviderRoutineContractPackage = `@repo/${"provider-routine-contract"}`
 const oldProviderRoutineContractPath = `packages/${"provider-routine-contract"}`;
 
 const ignoredDirs = new Set([
+  ".agent-browser",
+  ".claude",
+  ".codex",
   ".git",
   ".next",
   ".turbo",
   ".cache",
+  ".output",
   "coverage",
   "dist",
   "node_modules",
+  "worktrees",
 ]);
 
 function source(path: string) {

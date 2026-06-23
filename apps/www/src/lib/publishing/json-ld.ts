@@ -9,13 +9,15 @@ import type {
   HowToStep,
   ItemList,
   ListItem,
-  Organization,
   Question,
   WebPage,
-  WebSite,
 } from "@vendor/seo/json-ld";
+import {
+  buildOrganizationEntity,
+  buildWebSiteEntity,
+  SITE,
+} from "../site/identity";
 import type { BlogPostData, LegalPageData } from "./schemas";
-import { SITE } from "./site";
 
 interface Crumb {
   name: string;
@@ -44,29 +46,6 @@ const ARTICLE_SECTIONS: Record<BlogPostData["category"], string> = {
   tutorial: "Tutorial",
   research: "Research",
 };
-
-function buildOrganizationEntity(): Organization {
-  return {
-    "@type": "Organization",
-    "@id": SITE.organizationId,
-    name: SITE.name,
-    url: SITE.baseUrl,
-    logo: {
-      "@type": "ImageObject",
-      url: SITE.logoUrl,
-    },
-    sameAs: [...SITE.sameAs],
-  };
-}
-function buildWebSiteEntity(): WebSite {
-  return {
-    "@type": "WebSite",
-    "@id": SITE.websiteId,
-    name: SITE.name,
-    url: SITE.baseUrl,
-    publisher: { "@id": SITE.organizationId },
-  };
-}
 
 function buildBreadcrumbList(crumbs: Crumb[]): BreadcrumbList {
   return {

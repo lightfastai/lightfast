@@ -1,6 +1,7 @@
 import type { GraphContext } from "@vendor/seo/json-ld";
-import type { Metadata } from "next";
 import type { MDXContent } from "mdx/types";
+import type { Metadata } from "next";
+import { absoluteUrl } from "../site/identity";
 import {
   buildBlogIndexJsonLd,
   buildBlogPostJsonLd,
@@ -28,7 +29,6 @@ import {
   getLegalDocument,
   getLegalDocuments,
 } from "./source";
-import { absoluteUrl } from "./site";
 
 interface BasePublication<Kind extends string> {
   readonly canonicalUrl: string;
@@ -60,8 +60,7 @@ export interface LegalPublication extends ContentPublication<"legal"> {
   readonly slug: string;
 }
 
-export interface BlogPostPublication
-  extends ContentPublication<"blog-post"> {
+export interface BlogPostPublication extends ContentPublication<"blog-post"> {
   readonly answerSummary?: string;
   readonly featuredImage?: string;
   readonly publishedAt: string;
@@ -82,8 +81,7 @@ export interface BlogIndexPostSummary {
   readonly url: string;
 }
 
-export interface BlogIndexPublication
-  extends BasePublication<"blog-index"> {
+export interface BlogIndexPublication extends BasePublication<"blog-index"> {
   readonly posts: readonly BlogIndexPostSummary[];
 }
 
@@ -102,9 +100,11 @@ function isPublic(data: { noindex: boolean }): boolean {
   return !data.noindex;
 }
 
-function lastModified(
-  data: { publishedAt?: string; reviewedAt?: string; updatedAt: string }
-): string {
+function lastModified(data: {
+  publishedAt?: string;
+  reviewedAt?: string;
+  updatedAt: string;
+}): string {
   return data.reviewedAt ?? data.updatedAt ?? data.publishedAt;
 }
 
@@ -132,7 +132,7 @@ function legalPathname(slug: string): string {
 function buildHomePublication(data: HomePageData & { body: MDXContent }) {
   const pathname = "/";
   const url = absoluteUrl(pathname);
-  const canonicalUrl = data.canonicalUrl ?? url;
+  const canonicalUrl = url;
   const modified = lastModified(data);
 
   return {
@@ -162,7 +162,7 @@ function buildHomePublication(data: HomePageData & { body: MDXContent }) {
 function buildBrandPublication(data: BrandPageData & { body: MDXContent }) {
   const pathname = "/brand";
   const url = absoluteUrl(pathname);
-  const canonicalUrl = data.canonicalUrl ?? url;
+  const canonicalUrl = url;
   const modified = lastModified(data);
 
   return {
@@ -194,7 +194,7 @@ function buildBlogPostPublication(
 ) {
   const pathname = blogPostPathname(slug);
   const url = absoluteUrl(pathname);
-  const canonicalUrl = data.canonicalUrl ?? url;
+  const canonicalUrl = url;
   const modified = lastModified(data);
 
   return {
@@ -225,7 +225,7 @@ function buildLegalPublication(
 ) {
   const pathname = legalPathname(slug);
   const url = absoluteUrl(pathname);
-  const canonicalUrl = data.canonicalUrl ?? url;
+  const canonicalUrl = url;
   const modified = lastModified(data);
 
   return {
@@ -265,7 +265,9 @@ function toBlogPostSummary(
 function buildBlogIndexPublication(posts: readonly BlogPostPublication[]) {
   const pathname = "/blog";
   const url = absoluteUrl(pathname);
-  const publicPosts = sortByPublishedAtDesc(posts.filter((post) => post.isPublic));
+  const publicPosts = sortByPublishedAtDesc(
+    posts.filter((post) => post.isPublic)
+  );
   const summaries = publicPosts.map(toBlogPostSummary);
   const lastModifiedDate =
     summaries[0]?.lastModified ?? "1970-01-01T00:00:00.000Z";
@@ -308,7 +310,9 @@ export function getBlogPostPublication(
   return document ? buildBlogPostPublication(slug, document.data) : undefined;
 }
 
-export function getLegalPublication(slug: string): LegalPublication | undefined {
+export function getLegalPublication(
+  slug: string
+): LegalPublication | undefined {
   const document = getLegalDocument(slug);
   return document ? buildLegalPublication(slug, document.data) : undefined;
 }
@@ -355,7 +359,9 @@ export function getAllPublications(): StaticPublication[] {
     getBlogIndexPublication(),
     ...getBlogPostPublications(),
     ...getLegalPublications(),
-  ].filter((publication): publication is StaticPublication => Boolean(publication));
+  ].filter((publication): publication is StaticPublication =>
+    Boolean(publication)
+  );
 }
 
 export function getPublicPublications(): StaticPublication[] {

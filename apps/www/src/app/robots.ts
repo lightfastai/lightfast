@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
 import { env } from "~/env";
-
-const BASE_URL = "https://lightfast.ai";
+import { SITE_IDENTITY } from "~/lib/site/identity";
 
 const disallowPaths = [
   // App/API surfaces
@@ -51,6 +50,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: ["/", "/llms.txt"],
       disallow: [...disallowPaths],
     },
-    sitemap: `${BASE_URL}/sitemap.xml`,
+    sitemap: `${SITE_IDENTITY.baseUrl}/sitemap.xml`,
   };
 }

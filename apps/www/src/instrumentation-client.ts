@@ -70,7 +70,7 @@ function isNextRedirectError(error: unknown) {
 
 function getSentryTunnel(dsn: string | undefined) {
   if (!dsn) {
-    return undefined;
+    return;
   }
 
   try {
@@ -80,8 +80,8 @@ function getSentryTunnel(dsn: string | undefined) {
     );
     const projectId = dsnUrl.pathname.split("/").filter(Boolean).at(-1);
 
-    if (!sentrySaasDsnMatch?.[1] || !projectId) {
-      return undefined;
+    if (!(sentrySaasDsnMatch?.[1] && projectId)) {
+      return;
     }
 
     const regionCode = sentrySaasDsnMatch[2];
@@ -89,6 +89,6 @@ function getSentryTunnel(dsn: string | undefined) {
 
     return `/monitoring?o=${sentrySaasDsnMatch[1]}&p=${projectId}${regionQuery}`;
   } catch {
-    return undefined;
+    return;
   }
 }

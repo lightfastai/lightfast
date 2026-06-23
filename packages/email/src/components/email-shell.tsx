@@ -58,6 +58,7 @@ export function EmailShell({ children, preview }: EmailShellProps) {
           }}
         />
         <style
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: static font-face CSS for React Email head output
           dangerouslySetInnerHTML={{ __html: lightfastSupportingFontFaces }}
         />
       </Head>

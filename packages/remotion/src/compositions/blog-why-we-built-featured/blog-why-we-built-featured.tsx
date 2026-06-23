@@ -29,14 +29,17 @@ function WorkBackground() {
           width: PAPER_W,
         }}
       >
+        {/* biome-ignore lint/performance/noImgElement: Remotion renders static video frames outside Next.js image optimization */}
         <img
           alt=""
+          height={PAPER_H}
           src={staticFile("images/remotion/webgl-background-work-preset.png")}
           style={{
             height: "100%",
             objectFit: "cover",
             width: "100%",
           }}
+          width={PAPER_W}
         />
 
         <div
