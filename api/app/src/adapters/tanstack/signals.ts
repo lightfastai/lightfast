@@ -1,16 +1,27 @@
+import {
+  getVisibleSignalByPublicId,
+  listSignalEntityLinksForSignal,
+  listSignals,
+  listWorkspaceSignals,
+} from "@db/app";
 import { db } from "@db/app/client";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest, setResponseHeader } from "@tanstack/react-start/server";
+import type { z } from "zod";
 import { resolveAuthContextFromClerk } from "../../auth/identity";
 import { actorFromAuthIdentity, isDomainError } from "../../domain";
 import {
-  createDefaultSignalCommandDeps,
   createSignalCommand,
   getSignalCommand,
   listProcessingSignalsCommand,
   listProcessingSignalsInput,
   listWorkingSetSignalsCommand,
+  type SignalCommandDeps,
 } from "../../domain/signals";
+import {
+  createAndQueueSignal,
+  isSignalCreateQueueError,
+} from "../../signals/create-signal";
 
 function requestId() {
   return crypto.randomUUID();
@@ -39,6 +50,19 @@ function noStore() {
   setResponseHeader("cache-control", "private, no-store");
 }
 
+function signalCommandDeps(): SignalCommandDeps {
+  return {
+    createAndQueueSignal: (input) => createAndQueueSignal(db, input),
+    getVisibleSignalByPublicId: (input) =>
+      getVisibleSignalByPublicId(db, input),
+    isSignalCreateQueueError,
+    listSignalEntityLinksForSignal: (input) =>
+      listSignalEntityLinksForSignal(db, input),
+    listSignals: (input) => listSignals(db, input),
+    listWorkspaceSignals: (input) => listWorkspaceSignals(db, input),
+  };
+}
+
 export const listProcessingSignals = createServerFn({ method: "GET" })
   .inputValidator(listProcessingSignalsInput)
   .handler(async ({ data }) => {
@@ -46,7 +70,7 @@ export const listProcessingSignals = createServerFn({ method: "GET" })
     try {
       return await listProcessingSignalsCommand.run({
         ctx: await createTanStackSignalContext(),
-        deps: createDefaultSignalCommandDeps({ db }),
+        deps: signalCommandDeps(),
         input: data,
       });
     } catch (error) {
@@ -60,7 +84,7 @@ export const listWorkingSetSignals = createServerFn({ method: "GET" }).handler(
     try {
       return await listWorkingSetSignalsCommand.run({
         ctx: await createTanStackSignalContext(),
-        deps: createDefaultSignalCommandDeps({ db }),
+        deps: signalCommandDeps(),
         input: {},
       });
     } catch (error) {
@@ -76,7 +100,7 @@ export const getSignal = createServerFn({ method: "GET" })
     try {
       return await getSignalCommand.run({
         ctx: await createTanStackSignalContext(),
-        deps: createDefaultSignalCommandDeps({ db }),
+        deps: signalCommandDeps(),
         input: data,
       });
     } catch (error) {
@@ -91,7 +115,7 @@ export const createSignal = createServerFn({ method: "POST" })
     try {
       return await createSignalCommand.run({
         ctx: await createTanStackSignalContext(),
-        deps: createDefaultSignalCommandDeps({ db }),
+        deps: signalCommandDeps(),
         input: data,
       });
     } catch (error) {
@@ -106,4 +130,5 @@ export type ListWorkingSetSignalsResult = Awaited<
   ReturnType<typeof listWorkingSetSignals>
 >;
 export type SignalDetailResult = Awaited<ReturnType<typeof getSignal>>;
+export type CreateSignalInput = z.input<typeof createSignalCommand.input>;
 export type CreateSignalResult = Awaited<ReturnType<typeof createSignal>>;

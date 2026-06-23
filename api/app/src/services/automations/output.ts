@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { ConnectableConnectorProvider } from "@lightfast/connector-core";
+import type { ConnectableConnectorProvider } from "@repo/api-contract";
 
 export const AUTOMATION_AI_OUTPUT_SCHEMA_VERSION = "automation.run.ai.v1";
 

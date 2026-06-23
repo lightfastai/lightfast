@@ -289,14 +289,12 @@ describe("workspace page-owned actions", () => {
     const decisionsToolbarSource = source(
       "src/decisions/decisions-toolbar.tsx"
     );
-    const decisionsQuerySource = source("src/decisions/decisions-queries.ts");
     const peopleClientSource = source("src/people/people-client.tsx");
     const peopleRouteSource = source(
       "src/routes/_authenticated/$slug/people.tsx"
     );
     const peopleSearchSource = source("src/people/people-search-params.ts");
     const peopleToolbarSource = source("src/people/people-toolbar.tsx");
-    const peopleQuerySource = source("src/people/people-queries.ts");
 
     for (const toolbarSource of [peopleToolbarSource, decisionsToolbarSource]) {
       expect(toolbarSource).not.toContain("onQueryChange");
@@ -315,8 +313,8 @@ describe("workspace page-owned actions", () => {
     expect(peopleClientSource).not.toContain("peopleQuery: value");
     expect(peopleRouteSource).not.toContain("peopleQuery");
     expect(peopleSearchSource).not.toContain("peopleQuery");
-    expect(peopleQuerySource).not.toContain("normalizedSearch");
-    expect(peopleQuerySource).not.toContain("search:");
+    expect(peopleClientSource).not.toContain("normalizedSearch");
+    expect(peopleClientSource).not.toContain("search: search");
 
     expect(decisionsClientSource).not.toContain("useDeferredValue");
     expect(decisionsClientSource).not.toContain("searchText");
@@ -325,8 +323,9 @@ describe("workspace page-owned actions", () => {
     expect(decisionsSearchSource).not.toContain("q?:");
     expect(decisionsSearchSource).not.toContain("q: string");
     expect(decisionsSearchSource).not.toContain("search.q");
-    expect(decisionsQuerySource).not.toContain("normalizedSearch");
-    expect(decisionsQuerySource).not.toContain("search:");
+    expect(decisionsClientSource).not.toContain("normalizedSearch");
+    expect(decisionsClientSource).not.toContain("searchText");
+    expect(decisionsClientSource).not.toContain("search: search");
   });
 
   it("ports former topbar left controls into route-owned page content", () => {

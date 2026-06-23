@@ -23,20 +23,23 @@ describe("api/app app-facing tRPC root", () => {
       apiRoot,
       "router/(pending-not-allowed)/task.ts"
     );
+    const rootPath = resolve(apiRoot, "root.ts");
 
     expect(existsSync(trpcPath)).toBe(false);
     expect(existsSync(workspaceListInputPath)).toBe(false);
     expect(existsSync(taskRouterPath)).toBe(false);
     expect(existsSync(indexPath)).toBe(false);
+    expect(existsSync(rootPath)).toBe(false);
     expect(packageJson.dependencies?.["@trpc/server"]).toBeUndefined();
-
-    const rootSource = source("root.ts");
-    expect(rootSource).not.toContain("createTRPCRouter");
-    expect(rootSource).not.toContain("appRouter");
   });
 
   it("keeps service auth context imports independent of tRPC", () => {
-    for (const file of [
+    const identitySource = source("auth/identity.ts");
+
+    expect(identitySource).not.toContain("tRPC");
+    expect(identitySource).not.toContain("trpc");
+
+    const rawAuthFreeServiceFiles = [
       "services/connectors/catalog.ts",
       "services/connectors/index.ts",
       "services/connectors/linear-flow.ts",
@@ -47,14 +50,44 @@ describe("api/app app-facing tRPC root", () => {
       "services/developer-sandbox-runs/index.ts",
       "services/user-connectors/catalog.ts",
       "services/user-connectors/granola-flow.ts",
-      "services/user-connectors/index.ts",
-    ]) {
+    ];
+    for (const file of rawAuthFreeServiceFiles) {
       const fileSource = source(file);
 
       expect(fileSource, file).not.toContain("../../trpc");
       expect(fileSource, file).not.toContain("../trpc");
-      expect(fileSource, file).toContain("../../auth/identity");
-      expect(fileSource, file).toContain("ResolvedAuthContext");
+      expect(fileSource, file).not.toContain("../../auth/identity");
+      expect(fileSource, file).not.toContain("ResolvedAuthContext");
+    }
+
+    for (const forbiddenToken of [
+      "@vendor/clerk/server",
+      "Headers",
+      "getRequest",
+      "request.headers",
+      "headers:",
+    ]) {
+      for (const file of rawAuthFreeServiceFiles) {
+        expect(source(file), `${file}: ${forbiddenToken}`).not.toContain(
+          forbiddenToken
+        );
+      }
+    }
+  });
+
+  it("keeps skill events service independent of request auth and HTTP mapping", () => {
+    const serviceSource = source("services/skills/events.ts");
+
+    for (const forbiddenToken of [
+      "Request",
+      "Response",
+      "resolveAuthContextFromClerk",
+      "getRequest",
+      "request.headers",
+      "@vendor/clerk/server",
+      "@db/app/client",
+    ]) {
+      expect(serviceSource, forbiddenToken).not.toContain(forbiddenToken);
     }
   });
 });

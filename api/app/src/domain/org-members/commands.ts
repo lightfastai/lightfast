@@ -4,14 +4,8 @@ import {
   revokeOrgInvitationSchema,
   updateOrgMemberRoleSchema,
 } from "@repo/app-validation/schemas";
-import {
-  clerkClient,
-  type OrganizationInvitation,
-  type OrganizationMembership,
-} from "@vendor/clerk/server";
 import { z } from "zod";
 
-import { isClerkConflictError } from "../../auth/clerk-errors";
 import { defineCommand } from "../command";
 import { ConflictError, ValidationError } from "../errors";
 import {
@@ -19,30 +13,72 @@ import {
   requireClerkOrgAdminActor,
 } from "../gates";
 
-type ClerkClient = Awaited<ReturnType<typeof clerkClient>>;
-type MaybePromise<T> = Promise<T> | T;
-type ClerkOrganizationsClient = Pick<
-  ClerkClient["organizations"],
-  | "createOrganizationInvitation"
-  | "deleteOrganizationMembership"
-  | "getOrganizationInvitationList"
-  | "getOrganizationMembershipList"
-  | "revokeOrganizationInvitation"
-  | "updateOrganizationMembership"
->;
-
-interface OrgMembersCommandDeps {
-  clerkClient: () => MaybePromise<{ organizations: ClerkOrganizationsClient }>;
-  isClerkConflictError: typeof isClerkConflictError;
+interface OrganizationMembership {
+  createdAt: number;
+  id: string;
+  publicUserData?: {
+    firstName?: string | null;
+    identifier?: string | null;
+    imageUrl?: string | null;
+    lastName?: string | null;
+    userId?: string | null;
+  } | null;
+  role: string;
+  updatedAt: number;
 }
 
-export function createDefaultOrgMembersCommandDeps(
-  input: Partial<OrgMembersCommandDeps> = {}
-): OrgMembersCommandDeps {
-  return {
-    clerkClient: input.clerkClient ?? clerkClient,
-    isClerkConflictError: input.isClerkConflictError ?? isClerkConflictError,
-  };
+interface OrganizationInvitation {
+  createdAt: number;
+  emailAddress: string;
+  expiresAt?: number | null;
+  id: string;
+  role: string;
+  roleName?: string | null;
+  status?: string | null;
+  updatedAt: number;
+}
+
+interface ClerkPage<T> {
+  data: T[];
+}
+
+interface ClerkOrganizationsClient {
+  createOrganizationInvitation(input: {
+    emailAddress: string;
+    inviterUserId: string;
+    organizationId: string;
+    role: string;
+  }): Promise<OrganizationInvitation>;
+  deleteOrganizationMembership(input: {
+    organizationId: string;
+    userId: string;
+  }): Promise<unknown>;
+  getOrganizationInvitationList(input: {
+    limit: number;
+    offset: number;
+    organizationId: string;
+    status: ["pending"];
+  }): Promise<ClerkPage<OrganizationInvitation>>;
+  getOrganizationMembershipList(input: {
+    limit: number;
+    offset: number;
+    organizationId: string;
+  }): Promise<ClerkPage<OrganizationMembership>>;
+  revokeOrganizationInvitation(input: {
+    invitationId: string;
+    organizationId: string;
+    requestingUserId: string;
+  }): Promise<unknown>;
+  updateOrganizationMembership(input: {
+    organizationId: string;
+    role: string;
+    userId: string;
+  }): Promise<unknown>;
+}
+
+export interface OrgMembersCommandDeps {
+  isClerkConflictError(error: unknown): boolean;
+  organizations: ClerkOrganizationsClient;
 }
 
 const orgMemberOutput = z.object({
@@ -150,17 +186,16 @@ export const listOrgMembersCommand = defineCommand<
   output: listOrgMembersOutput,
   run: async ({ ctx, deps }) => {
     const actor = requireActiveClerkOrgActor(ctx);
-    const clerk = await deps.clerkClient();
     const [memberships, invitations] = await Promise.all([
       collectAllPages((offset) =>
-        clerk.organizations.getOrganizationMembershipList({
+        deps.organizations.getOrganizationMembershipList({
           limit: ORG_MEMBERS_PAGE_SIZE,
           offset,
           organizationId: actor.orgId,
         })
       ),
       collectAllPages((offset) =>
-        clerk.organizations.getOrganizationInvitationList({
+        deps.organizations.getOrganizationInvitationList({
           limit: ORG_MEMBERS_PAGE_SIZE,
           offset,
           organizationId: actor.orgId,
@@ -187,16 +222,13 @@ export const inviteOrgMemberCommand = defineCommand<
   output: orgInvitationOutput,
   run: async ({ ctx, deps, input }) => {
     const actor = requireClerkOrgAdminActor(ctx);
-    const clerk = await deps.clerkClient();
     try {
-      const invitation = await clerk.organizations.createOrganizationInvitation(
-        {
-          emailAddress: input.emailAddress,
-          inviterUserId: actor.userId,
-          organizationId: actor.orgId,
-          role: input.role,
-        }
-      );
+      const invitation = await deps.organizations.createOrganizationInvitation({
+        emailAddress: input.emailAddress,
+        inviterUserId: actor.userId,
+        organizationId: actor.orgId,
+        role: input.role,
+      });
       return toInvitationDto(invitation);
     } catch (error) {
       if (deps.isClerkConflictError(error)) {
@@ -223,8 +255,7 @@ export const updateOrgMemberRoleCommand = defineCommand<
   output: successOutput,
   run: async ({ ctx, deps, input }) => {
     const actor = requireClerkOrgAdminActor(ctx);
-    const clerk = await deps.clerkClient();
-    await clerk.organizations.updateOrganizationMembership({
+    await deps.organizations.updateOrganizationMembership({
       organizationId: actor.orgId,
       role: input.role,
       userId: input.userId,
@@ -251,8 +282,7 @@ export const removeOrgMemberCommand = defineCommand<
       );
     }
 
-    const clerk = await deps.clerkClient();
-    await clerk.organizations.deleteOrganizationMembership({
+    await deps.organizations.deleteOrganizationMembership({
       organizationId: actor.orgId,
       userId: input.userId,
     });
@@ -271,8 +301,7 @@ export const revokeOrgInvitationCommand = defineCommand<
   output: successOutput,
   run: async ({ ctx, deps, input }) => {
     const actor = requireClerkOrgAdminActor(ctx);
-    const clerk = await deps.clerkClient();
-    await clerk.organizations.revokeOrganizationInvitation({
+    await deps.organizations.revokeOrganizationInvitation({
       invitationId: input.invitationId,
       organizationId: actor.orgId,
       requestingUserId: actor.userId,

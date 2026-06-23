@@ -1,3 +1,4 @@
+import { getAccountProfile } from "@api/app/tanstack/account";
 import { useClerk } from "@clerk/tanstack-react-start";
 import {
   BookOpen01Icon,
@@ -24,15 +25,17 @@ import {
 } from "@repo/ui-v2/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { accountProfileQueryOptions } from "~/account/account-queries";
+
+const accountProfileQueryKey = ["account", "profile"] as const;
 
 export function UserMenu() {
   const { signOut } = useClerk();
   const mounted = useMounted();
 
   const { data: profile, isPending } = useQuery({
-    ...accountProfileQueryOptions(),
     enabled: typeof window !== "undefined",
+    queryFn: () => getAccountProfile(),
+    queryKey: accountProfileQueryKey,
     staleTime: 5 * 60 * 1000,
   });
 

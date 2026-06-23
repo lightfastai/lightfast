@@ -1,4 +1,4 @@
-import { type Database, getPersonByPublicId, listPeople } from "@db/app";
+import type { Person } from "@db/app";
 import {
   peopleIdentityProviderSchema,
   peopleIdentityTypeSchema,
@@ -11,10 +11,12 @@ import { type CommandRunArgs, defineCommand } from "../command";
 import { NotFoundError } from "../errors";
 import { requireBoundClerkOrgActor } from "../gates";
 
-export type ListPeopleResult = Awaited<ReturnType<typeof listPeople>>;
-export type PersonDetailResult = NonNullable<
-  Awaited<ReturnType<typeof getPersonByPublicId>>
->;
+export type PersonDetailResult = Person;
+
+export interface ListPeopleResult {
+  items: PersonDetailResult[];
+  nextCursor: { createdAt: Date; id: number } | null;
+}
 
 const cursorCreatedAtSchema = z.union([
   z.date(),
@@ -60,22 +62,21 @@ const getPersonInput = z
 const objectOutput = <T>() =>
   z.custom<T>((value) => typeof value === "object" && value !== null);
 
-interface PeopleCommandDeps {
-  db: Database;
-  getPersonByPublicId: typeof getPersonByPublicId;
-  listPeople: typeof listPeople;
-}
-
-export function createDefaultPeopleCommandDeps(input: {
-  db: Database;
-  getPersonByPublicId?: typeof getPersonByPublicId;
-  listPeople?: typeof listPeople;
-}): PeopleCommandDeps {
-  return {
-    db: input.db,
-    getPersonByPublicId: input.getPersonByPublicId ?? getPersonByPublicId,
-    listPeople: input.listPeople ?? listPeople,
-  };
+export interface PeopleCommandDeps {
+  getPersonByPublicId(input: {
+    clerkOrgId: string;
+    publicId: string;
+  }): Promise<PersonDetailResult | undefined>;
+  listPeople(input: {
+    clerkOrgId: string;
+    cursor?: z.infer<typeof workspaceListCursorInput>;
+    limit?: number;
+    memberStatuses?: z.infer<typeof personMemberStatusSchema>[];
+    providers?: z.infer<typeof peopleIdentityProviderSchema>[];
+    search?: string;
+    sources?: z.infer<typeof personSourceSchema>[];
+    types?: z.infer<typeof peopleIdentityTypeSchema>[];
+  }): Promise<ListPeopleResult>;
 }
 
 type PeopleCommandRunArgs<TInput, TOutput> = CommandRunArgs<
@@ -103,7 +104,7 @@ export const listPeopleCommand = defineCommand<
   >) => {
     const actor = requireBoundClerkOrgActor(ctx);
     const search = input.search?.trim() || undefined;
-    return deps.listPeople(deps.db, {
+    return deps.listPeople({
       clerkOrgId: actor.orgId,
       cursor: input.cursor,
       limit: input.limit,
@@ -136,7 +137,7 @@ export const getPersonCommand = defineCommand<
     PersonDetailResult
   >) => {
     const actor = requireBoundClerkOrgActor(ctx);
-    const person = await deps.getPersonByPublicId(deps.db, {
+    const person = await deps.getPersonByPublicId({
       clerkOrgId: actor.orgId,
       publicId: input.publicId,
     });

@@ -17,6 +17,13 @@ const oldGranolaPackage = `@repo/${"granola-app-node"}`;
 const oldGranolaPath = `packages/${"granola-app-node"}`;
 const oldProviderRoutineContractPackage = `@repo/${"provider-routine-contract"}`;
 const oldProviderRoutineContractPath = `packages/${"provider-routine-contract"}`;
+const oldProviderRoutinesPackage = `@repo/${"provider-routines"}`;
+const oldProviderRoutinesPath = `packages/${"provider-routines"}`;
+const oldConnectorCoreProviderRoutinesSubpath = `@lightfast/connector-core/${"provider-routines"}`;
+const oldUserConnectorContractPackage = `@repo/${"user-connector-contract"}`;
+const oldUserConnectorContractPath = `packages/${"user-connector-contract"}`;
+const oldDeveloperConnectionContractPackage = `@repo/${"developer-connection-contract"}`;
+const oldDeveloperConnectionContractPath = `packages/${"developer-connection-contract"}`;
 
 const ignoredDirs = new Set([
   ".agent-browser",
@@ -76,10 +83,12 @@ describe("connector workspace boundary", () => {
     expect(existsSync(resolve(repoRoot, oldConnectorPath))).toBe(false);
     expect(connectorCorePackage.name).toBe("@lightfast/connector-core");
     expect(connectorCorePackage.private).toBe(true);
+    expect(
+      connectorCorePackage.dependencies?.["@repo/api-contract"]
+    ).toBeUndefined();
     expect(connectorCorePackage.dependencies?.zod).toBe("catalog:");
     expect(Object.keys(connectorCorePackage.exports ?? {}).sort()).toEqual([
       ".",
-      "./provider-routines",
     ]);
   });
 
@@ -99,31 +108,64 @@ describe("connector workspace boundary", () => {
     expect(staleReferences).toEqual([]);
   });
 
-  it("collapses provider routine contracts into connector-core entrypoints", () => {
+  it("keeps provider routine services in api/app", () => {
+    const apiAppPackage = readJson<{
+      dependencies?: Record<string, string>;
+    }>("api/app/package.json");
     const connectorCorePackage = readJson<{
       dependencies?: Record<string, string>;
       exports?: Record<string, unknown>;
       name?: string;
       private?: boolean;
     }>("connectors/core/package.json");
-    const providerRoutinesPackage = readJson<{
+    const apiContractPackage = readJson<{
       dependencies?: Record<string, string>;
       exports?: Record<string, unknown>;
-    }>("packages/provider-routines/package.json");
+    }>("packages/api-contract/package.json");
 
     expect(existsSync(resolve(repoRoot, oldProviderRoutineContractPath))).toBe(
       false
     );
+    expect(existsSync(resolve(repoRoot, oldProviderRoutinesPath))).toBe(false);
+    expect(
+      apiAppPackage.dependencies?.[oldProviderRoutinesPackage]
+    ).toBeUndefined();
     expect(connectorCorePackage.name).toBe("@lightfast/connector-core");
     expect(connectorCorePackage.private).toBe(true);
-    expect(Object.keys(connectorCorePackage.exports ?? {}).sort()).toEqual([
-      ".",
-      "./provider-routines",
-    ]);
+    expect(connectorCorePackage.exports).not.toHaveProperty(
+      "./provider-routines"
+    );
     expect(
-      providerRoutinesPackage.dependencies?.[oldProviderRoutineContractPackage]
+      existsSync(resolve(repoRoot, "connectors/core/src/provider-routines.ts"))
+    ).toBe(false);
+    expect(apiContractPackage.dependencies?.["@lightfast/connector-core"]).toBe(
+      "workspace:*"
+    );
+    expect(
+      connectorCorePackage.dependencies?.["@repo/api-contract"]
     ).toBeUndefined();
-    expect(providerRoutinesPackage.exports).not.toHaveProperty("./contract");
+
+    const connectorCoreSource = source("connectors/core/src/index.ts");
+    const apiContractConnectorsSource = source(
+      "packages/api-contract/src/connectors.ts"
+    );
+
+    expect(connectorCoreSource).not.toContain("@repo/api-contract");
+    expect(apiContractConnectorsSource).toContain("@lightfast/connector-core");
+    expect(connectorCoreSource).not.toContain("CONNECTOR_CATALOG");
+    expect(connectorCoreSource).not.toContain("USER_CONNECTOR_CATALOG");
+    expect(connectorCoreSource).not.toContain(
+      "connectorStartConnectInputSchema"
+    );
+    expect(connectorCoreSource).not.toContain(
+      "connectorSetAutomationEnabledInputSchema"
+    );
+    expect(connectorCoreSource).not.toContain(
+      "connectorSetAgentEnabledInputSchema"
+    );
+    expect(connectorCoreSource).not.toContain(
+      "userConnectorStartConnectInputSchema"
+    );
 
     const staleReferences = workspaceFilesToScan()
       .filter((path) => !relative(repoRoot, path).startsWith(".codex/"))
@@ -131,7 +173,104 @@ describe("connector workspace boundary", () => {
         const contents = readFileSync(path, "utf8");
         return (
           contents.includes(oldProviderRoutineContractPackage) ||
-          contents.includes(oldProviderRoutineContractPath)
+          contents.includes(oldProviderRoutineContractPath) ||
+          contents.includes(oldProviderRoutinesPackage) ||
+          contents.includes(oldProviderRoutinesPath) ||
+          contents.includes(oldConnectorCoreProviderRoutinesSubpath)
+        );
+      })
+      .map((path) => relative(repoRoot, path))
+      .sort();
+
+    expect(staleReferences).toEqual([]);
+  });
+
+  it("keeps user connector chat tool contracts in api-contract", () => {
+    const aiPackage = readJson<{
+      dependencies?: Record<string, string>;
+    }>("ai/package.json");
+    const apiAppPackage = readJson<{
+      dependencies?: Record<string, string>;
+    }>("api/app/package.json");
+    const apiContractPackage = readJson<{
+      exports?: Record<string, unknown>;
+    }>("packages/api-contract/package.json");
+    const apiContractIndexSource = source("packages/api-contract/src/index.ts");
+
+    expect(existsSync(resolve(repoRoot, oldUserConnectorContractPath))).toBe(
+      false
+    );
+    expect(
+      aiPackage.dependencies?.[oldUserConnectorContractPackage]
+    ).toBeUndefined();
+    expect(
+      apiAppPackage.dependencies?.[oldUserConnectorContractPackage]
+    ).toBeUndefined();
+    expect(apiContractPackage.exports).not.toHaveProperty("./user-connectors");
+    expect(apiContractIndexSource).toContain("userConnectorCallInputSchema");
+    expect(apiContractIndexSource).toContain("userConnectorFindInputSchema");
+
+    const staleReferences = workspaceFilesToScan()
+      .filter((path) => !relative(repoRoot, path).startsWith(".codex/"))
+      .filter((path) => {
+        const contents = readFileSync(path, "utf8");
+        return (
+          contents.includes(oldUserConnectorContractPackage) ||
+          contents.includes(oldUserConnectorContractPath)
+        );
+      })
+      .map((path) => relative(repoRoot, path))
+      .sort();
+
+    expect(staleReferences).toEqual([]);
+  });
+
+  it("keeps developer connection schemas in api-contract and catalog in api app", () => {
+    const apiAppPackage = readJson<{
+      dependencies?: Record<string, string>;
+    }>("api/app/package.json");
+    const dbAppPackage = readJson<{
+      dependencies?: Record<string, string>;
+    }>("db/app/package.json");
+    const apiContractPackage = readJson<{
+      exports?: Record<string, unknown>;
+    }>("packages/api-contract/package.json");
+    const apiContractSource = source(
+      "packages/api-contract/src/developer-connections.ts"
+    );
+    const apiContractIndexSource = source("packages/api-contract/src/index.ts");
+    const catalogSource = source(
+      "api/app/src/services/developer-connections/catalog.ts"
+    );
+
+    expect(
+      existsSync(resolve(repoRoot, oldDeveloperConnectionContractPath))
+    ).toBe(false);
+    expect(
+      apiAppPackage.dependencies?.[oldDeveloperConnectionContractPackage]
+    ).toBeUndefined();
+    expect(
+      dbAppPackage.dependencies?.[oldDeveloperConnectionContractPackage]
+    ).toBeUndefined();
+    expect(apiContractPackage.exports).not.toHaveProperty(
+      "./developer-connections"
+    );
+    expect(apiContractIndexSource).toContain(
+      "developerConnectionConnectInputSchema"
+    );
+    expect(apiContractIndexSource).toContain(
+      "developerConnectionIssueLeaseInputSchema"
+    );
+    expect(apiContractSource).not.toContain("DEVELOPER_CONNECTION_CATALOG");
+    expect(catalogSource).toContain("DEVELOPER_CONNECTION_CATALOG");
+
+    const staleReferences = workspaceFilesToScan()
+      .filter((path) => !relative(repoRoot, path).startsWith(".codex/"))
+      .filter((path) => {
+        const contents = readFileSync(path, "utf8");
+        return (
+          contents.includes(oldDeveloperConnectionContractPackage) ||
+          contents.includes(oldDeveloperConnectionContractPath)
         );
       })
       .map((path) => relative(repoRoot, path))
@@ -146,6 +285,19 @@ describe("connector workspace boundary", () => {
     expect(repoCiWorkflow.match(/'connectors\/\*\*'/g) ?? []).toHaveLength(2);
   });
 
+  it("bundles connector core with public packages that inline api-contract", () => {
+    for (const path of [
+      "core/cli/tsup.config.ts",
+      "core/lightfast/tsup.config.ts",
+      "core/mcp/tsup.config.ts",
+    ]) {
+      const tsupSource = source(path);
+
+      expect(tsupSource).toContain('"@repo/api-contract"');
+      expect(tsupSource).toContain('"@lightfast/connector-core"');
+    }
+  });
+
   it("hosts Linear provider runtime code behind explicit connector entrypoints", () => {
     const linearPackage = readJson<{
       dependencies?: Record<string, string>;
@@ -153,8 +305,13 @@ describe("connector workspace boundary", () => {
       name?: string;
       private?: boolean;
     }>("connectors/linear/package.json");
+    const linearContractSource = source("connectors/linear/src/contract.ts");
+    const linearOAuthSource = source("connectors/linear/src/oauth.ts");
 
     expect(existsSync(resolve(repoRoot, oldLinearPath))).toBe(false);
+    expect(
+      existsSync(resolve(repoRoot, "connectors/linear/src/contract.ts"))
+    ).toBe(true);
     expect(linearPackage.name).toBe("@lightfast/connector-linear");
     expect(linearPackage.private).toBe(true);
     expect(linearPackage.dependencies?.["@lightfast/connector-core"]).toBe(
@@ -163,10 +320,14 @@ describe("connector workspace boundary", () => {
     expect(linearPackage.dependencies?.["@vendor/mcp"]).toBe("workspace:*");
     expect(linearPackage.dependencies?.zod).toBe("catalog:");
     expect(Object.keys(linearPackage.exports ?? {}).sort()).toEqual([
+      "./contract",
       "./mcp",
       "./node",
       "./oauth",
     ]);
+    expect(linearContractSource).toContain("LINEAR_OAUTH_SCOPES");
+    expect(linearContractSource).toContain("LINEAR_OAUTH_SCOPE");
+    expect(linearOAuthSource).toContain('from "./contract"');
   });
 
   it("removes the old Linear app node package name from source and manifests", () => {
@@ -192,22 +353,34 @@ describe("connector workspace boundary", () => {
       name?: string;
       private?: boolean;
     }>("connectors/x/package.json");
+    const xContractSource = source("connectors/x/src/contract.ts");
+    const xOAuthSource = source("connectors/x/src/oauth.ts");
+    const catalogSource = source("api/app/src/services/connectors/catalog.ts");
 
     expect(existsSync(resolve(repoRoot, oldXPath))).toBe(false);
+    expect(existsSync(resolve(repoRoot, "connectors/x/src/contract.ts"))).toBe(
+      true
+    );
     expect(xPackage.name).toBe("@lightfast/connector-x");
     expect(xPackage.private).toBe(true);
     expect(xPackage.dependencies?.["@lightfast/connector-core"]).toBe(
       "workspace:*"
     );
-    expect(xPackage.dependencies?.["@vendor/mcp"]).toBe("workspace:*");
+    expect(xPackage.dependencies).not.toHaveProperty("@vendor/mcp");
     expect(xPackage.dependencies?.zod).toBe("catalog:");
     expect(Object.keys(xPackage.exports ?? {}).sort()).toEqual([
+      "./contract",
       "./mcp",
       "./node",
       "./oauth",
       "./operations",
       "./tools",
     ]);
+    expect(xContractSource).toContain("X_OAUTH_SCOPES");
+    expect(xContractSource).toContain("X_OAUTH_SCOPE");
+    expect(xOAuthSource).toContain('from "./contract"');
+    expect(catalogSource).toContain('@lightfast/connector-x/contract"');
+    expect(catalogSource).not.toContain('@lightfast/connector-x/oauth"');
   });
 
   it("removes the old X app node package name from source and manifests", () => {
@@ -268,20 +441,29 @@ describe("connector workspace boundary", () => {
       name?: string;
       private?: boolean;
     }>("connectors/granola/package.json");
+    const granolaContractSource = source("connectors/granola/src/contract.ts");
+    const granolaConfigSource = source("connectors/granola/src/config.ts");
 
     expect(existsSync(resolve(repoRoot, oldGranolaPath))).toBe(false);
+    expect(
+      existsSync(resolve(repoRoot, "connectors/granola/src/contract.ts"))
+    ).toBe(true);
     expect(granolaPackage.name).toBe("@lightfast/connector-granola");
     expect(granolaPackage.private).toBe(true);
     expect(granolaPackage.dependencies?.["@lightfast/connector-core"]).toBe(
       "workspace:*"
     );
     expect(granolaPackage.dependencies?.["@vendor/mcp"]).toBe("workspace:*");
-    expect(granolaPackage.dependencies?.zod).toBe("catalog:");
+    expect(granolaPackage.dependencies).not.toHaveProperty("zod");
     expect(Object.keys(granolaPackage.exports ?? {}).sort()).toEqual([
+      "./contract",
       "./mcp",
       "./node",
       "./oauth",
     ]);
+    expect(granolaContractSource).toContain("DEFAULT_GRANOLA_MCP_ENDPOINT");
+    expect(granolaContractSource).toContain("granolaClientMetadata");
+    expect(granolaConfigSource).toContain('from "./contract"');
   });
 
   it("removes the old Granola app node package name from source and manifests", () => {

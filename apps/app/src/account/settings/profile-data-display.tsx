@@ -1,4 +1,7 @@
-import { updateAccountName as updateAccountNameServerFn } from "@api/app/tanstack/account";
+import {
+  getAccountProfile,
+  updateAccountName as updateAccountNameServerFn,
+} from "@api/app/tanstack/account";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loading03Icon as Loader2 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -25,19 +28,17 @@ import { useMounted } from "@repo/ui/hooks/use-mounted";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import { SettingRow, SettingsGroup } from "~/components/settings-section";
-import {
-  accountProfileQueryOptions,
-  accountQueryKeys,
-} from "../account-queries";
 import { ProfileDataLoading } from "./profile-data-loading";
+
+const accountProfileQueryKey = ["account", "profile"] as const;
 
 export function ProfileDataDisplay() {
   const mounted = useMounted();
   const queryClient = useQueryClient();
-  const accountQuery = accountProfileQueryOptions();
   const { data: profile, isPending } = useQuery({
-    ...accountQuery,
     enabled: typeof window !== "undefined",
+    queryFn: () => getAccountProfile(),
+    queryKey: accountProfileQueryKey,
     staleTime: 10 * 60 * 1000,
   });
 
@@ -55,14 +56,14 @@ export function ProfileDataDisplay() {
     mutationFn: (data: { displayName: string }) =>
       updateAccountNameServerFn({ data }),
     onSuccess: (data) => {
-      queryClient.setQueryData(accountQueryKeys.profile(), data);
+      queryClient.setQueryData(accountProfileQueryKey, data);
       toast.success("Profile updated", {
         description: `Display name changed to "${data.fullName ?? ""}"`,
       });
     },
     onSettled: () => {
       void queryClient.invalidateQueries({
-        queryKey: accountQueryKeys.profile(),
+        queryKey: accountProfileQueryKey,
       });
     },
   });

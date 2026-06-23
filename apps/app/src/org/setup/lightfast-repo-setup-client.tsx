@@ -1,19 +1,20 @@
+import {
+  type VerifyGitHubLightfastRepoResult,
+  verifyGitHubLightfastRepo,
+} from "@api/app/tanstack/github-setup";
 import { useSession } from "@clerk/tanstack-react-start";
 import {
   ExternalLinkIcon as ExternalLink,
   Loading03Icon as Loader2,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  LIGHTFAST_REPOSITORY_NAME,
-  pathForSetupRequirement,
-} from "@repo/app-setup-contract";
+import { LIGHTFAST_REPOSITORY_NAME } from "@repo/api-contract";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
-import { verifyGitHubLightfastRepoMutationOptions } from "./github-setup-queries";
+import { pathForSetupRequirement } from "~/org/setup/setup-paths";
 
 interface LightfastRepoSetupClientProps {
   accountLogin: string;
@@ -29,9 +30,10 @@ export function LightfastRepoSetupClient({
   const { session } = useSession();
   const [failed, setFailed] = useState(false);
 
-  const verifyMutation = useMutation(
-    verifyGitHubLightfastRepoMutationOptions()
-  );
+  const verifyMutation = useMutation({
+    meta: { errorTitle: "Failed to verify .lightfast" },
+    mutationFn: () => verifyGitHubLightfastRepo({ data: {} }),
+  });
 
   async function handleVerify() {
     if (verifyMutation.isPending) {
@@ -40,7 +42,8 @@ export function LightfastRepoSetupClient({
     setFailed(false);
 
     try {
-      const result = await verifyMutation.mutateAsync();
+      const result: VerifyGitHubLightfastRepoResult =
+        await verifyMutation.mutateAsync();
       await session?.reload();
       if (result.nextSetupRequirement) {
         window.location.replace(

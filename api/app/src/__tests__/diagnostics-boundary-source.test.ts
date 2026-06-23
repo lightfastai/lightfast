@@ -20,10 +20,12 @@ describe("diagnostics boundary", () => {
 
   it("does not keep a tRPC diagnostic adapter after tRPC removal", () => {
     const trpcPath = resolve(apiRoot, "trpc.ts");
-    const githubGateSource = source("services/github/user-account/gate.ts");
+    const githubGatePath = resolve(
+      apiRoot,
+      "services/github/user-account/gate.ts"
+    );
 
     expect(existsSync(trpcPath)).toBe(false);
-    expect(githubGateSource).not.toContain("../../../diagnostics");
-    expect(githubGateSource).not.toContain("throwDiagnostic");
+    expect(existsSync(githubGatePath)).toBe(false);
   });
 });

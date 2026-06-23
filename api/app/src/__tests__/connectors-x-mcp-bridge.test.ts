@@ -59,9 +59,16 @@ vi.mock("../env", () => ({ env: envMock }));
 const { issueConnectorMcpToken } = await import(
   "../services/connectors/mcp-auth"
 );
-const { getFreshXConnectorAccessToken, handleXConnectorMcpRequest } =
-  await import("../services/connectors/x-mcp-bridge");
+const {
+  getFreshXConnectorAccessToken,
+  handleXConnectorMcpRequest: handleXConnectorMcpServiceRequest,
+} = await import("../services/connectors/x-mcp-bridge");
 const { X_OAUTH_SCOPES } = await import("@lightfast/connector-x/oauth");
+
+const requestFixtureInput = new WeakMap<
+  Request,
+  { body: unknown; token: string | null }
+>();
 
 function connection(
   overrides: Partial<OrgConnectorConnection> = {}
@@ -98,25 +105,40 @@ function connection(
 }
 
 function mcpRequest(input: { body: unknown; token?: string }) {
-  return new Request("https://app.lightfast.localhost/api/connectors/x/mcp", {
-    body: JSON.stringify(input.body),
-    headers: {
-      accept: "application/json, text/event-stream",
-      ...(input.token ? { authorization: `Bearer ${input.token}` } : {}),
-      "content-type": "application/json",
-    },
-    method: "POST",
+  const request = new Request(
+    "https://app.lightfast.localhost/api/connectors/x/mcp",
+    {
+      body: JSON.stringify(input.body),
+      headers: {
+        accept: "application/json, text/event-stream",
+        ...(input.token ? { authorization: `Bearer ${input.token}` } : {}),
+        "content-type": "application/json",
+      },
+      method: "POST",
+    }
+  );
+
+  requestFixtureInput.set(request, {
+    body: input.body,
+    token: input.token ?? null,
   });
+
+  return request;
 }
 
-function malformedRequest() {
-  return new Request("https://app.lightfast.localhost/api/connectors/x/mcp", {
-    body: "{bad json",
-    headers: {
-      accept: "application/json, text/event-stream",
-      "content-type": "application/json",
-    },
-    method: "POST",
+async function handleXConnectorMcpRequest(input: {
+  request: Request;
+}): Promise<Response> {
+  const fixtureInput = requestFixtureInput.get(input.request);
+  if (!fixtureInput) {
+    throw new Error("MCP bridge test request fixture input missing.");
+  }
+
+  return await handleXConnectorMcpServiceRequest({
+    appOrigin: new URL(input.request.url).origin,
+    parsedBody: fixtureInput.body,
+    request: input.request,
+    token: fixtureInput.token,
   });
 }
 
@@ -443,15 +465,6 @@ describe("X MCP bridge service", () => {
     });
 
     expect(response.status).toBe(401);
-    expect(executeXApiToolMock).not.toHaveBeenCalled();
-  });
-
-  it("rejects requests when the request body is not valid JSON", async () => {
-    const response = await handleXConnectorMcpRequest({
-      request: malformedRequest(),
-    });
-
-    expect(response.status).toBe(400);
     expect(executeXApiToolMock).not.toHaveBeenCalled();
   });
 

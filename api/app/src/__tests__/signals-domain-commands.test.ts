@@ -1,17 +1,17 @@
-import type { Database, Signal } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthIdentity } from "../auth/identity";
 import { actorFromAuthIdentity } from "../domain";
 import {
-  createDefaultSignalCommandDeps,
   createSignalCommand,
   getSignalCommand,
   listProcessingSignalsCommand,
   listWorkingSetSignalsCommand,
+  type SignalCommandDeps,
+  type SignalRecord,
 } from "../domain/signals";
 
 const mocks = vi.hoisted(() => ({
-  createSignalForActorMock: vi.fn(),
+  createAndQueueSignalMock: vi.fn(),
   getVisibleSignalByPublicIdMock: vi.fn(),
   listSignalEntityLinksForSignalMock: vi.fn(),
   listSignalsMock: vi.fn(),
@@ -19,26 +19,12 @@ const mocks = vi.hoisted(() => ({
 }));
 
 const {
-  createSignalForActorMock,
+  createAndQueueSignalMock,
   getVisibleSignalByPublicIdMock,
   listSignalEntityLinksForSignalMock,
   listSignalsMock,
   listWorkspaceSignalsMock,
 } = mocks;
-
-vi.mock("@db/app", () => ({
-  getVisibleSignalByPublicId: mocks.getVisibleSignalByPublicIdMock,
-  listSignalEntityLinksForSignal: mocks.listSignalEntityLinksForSignalMock,
-  listSignals: mocks.listSignalsMock,
-  listWorkspaceSignals: mocks.listWorkspaceSignalsMock,
-}));
-vi.mock("../signals/service", () => ({
-  createSignalForActor: mocks.createSignalForActorMock,
-}));
-vi.mock("../signals/create-signal", () => ({
-  isSignalCreateQueueError: (error: unknown) =>
-    error instanceof Error && error.name === "SignalCreateQueueError",
-}));
 
 const identity: Extract<AuthIdentity, { type: "active" }> = {
   type: "active",
@@ -47,7 +33,12 @@ const identity: Extract<AuthIdentity, { type: "active" }> = {
   orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
 };
 
-const signalRow: Signal = {
+const signalRow: SignalRecord & {
+  classificationMetadata: null;
+  clerkOrgId: string;
+  errorCode: null;
+  errorMessage: null;
+} = {
   classification: null,
   classificationMetadata: null,
   clerkOrgId: "org_test",
@@ -74,7 +65,15 @@ function ctx(authIdentity: AuthIdentity = identity) {
 }
 
 function deps() {
-  return createDefaultSignalCommandDeps({ db: {} as Database });
+  return {
+    createAndQueueSignal: createAndQueueSignalMock,
+    getVisibleSignalByPublicId: getVisibleSignalByPublicIdMock,
+    isSignalCreateQueueError: (error: unknown) =>
+      error instanceof Error && error.name === "SignalCreateQueueError",
+    listSignalEntityLinksForSignal: listSignalEntityLinksForSignalMock,
+    listSignals: listSignalsMock,
+    listWorkspaceSignals: listWorkspaceSignalsMock,
+  } satisfies SignalCommandDeps;
 }
 
 beforeEach(() => {
@@ -82,7 +81,7 @@ beforeEach(() => {
   listWorkspaceSignalsMock.mockReset();
   getVisibleSignalByPublicIdMock.mockReset();
   listSignalEntityLinksForSignalMock.mockReset();
-  createSignalForActorMock.mockReset();
+  createAndQueueSignalMock.mockReset();
   listSignalsMock.mockResolvedValue({ items: [signalRow], nextCursor: null });
   listWorkspaceSignalsMock.mockResolvedValue({
     items: [],
@@ -93,7 +92,7 @@ beforeEach(() => {
   });
   getVisibleSignalByPublicIdMock.mockResolvedValue(signalRow);
   listSignalEntityLinksForSignalMock.mockResolvedValue([]);
-  createSignalForActorMock.mockResolvedValue({
+  createAndQueueSignalMock.mockResolvedValue({
     id: signalRow.publicId,
     status: "queued",
     visibilityScope: "user",
@@ -110,7 +109,7 @@ describe("signal domain commands", () => {
       })
     ).resolves.toEqual({ items: [signalRow], nextCursor: null });
 
-    expect(listSignalsMock).toHaveBeenCalledWith(expect.anything(), {
+    expect(listSignalsMock).toHaveBeenCalledWith({
       clerkOrgId: "org_test",
       createdByUserId: "user_test",
       cursor: undefined,
@@ -126,7 +125,7 @@ describe("signal domain commands", () => {
       input: {},
     });
 
-    expect(listWorkspaceSignalsMock).toHaveBeenCalledWith(expect.anything(), {
+    expect(listWorkspaceSignalsMock).toHaveBeenCalledWith({
       clerkOrgId: "org_test",
       createdByUserId: "user_test",
     });
@@ -141,14 +140,11 @@ describe("signal domain commands", () => {
       })
     ).resolves.toEqual({ ...signalRow, entityLinks: [] });
 
-    expect(getVisibleSignalByPublicIdMock).toHaveBeenCalledWith(
-      expect.anything(),
-      {
-        clerkOrgId: "org_test",
-        createdByUserId: "user_test",
-        publicId: signalRow.publicId,
-      }
-    );
+    expect(getVisibleSignalByPublicIdMock).toHaveBeenCalledWith({
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+      publicId: signalRow.publicId,
+    });
   });
 
   it("throws a domain not found error when detail is invisible", async () => {
@@ -181,8 +177,10 @@ describe("signal domain commands", () => {
       visibilityScope: "user",
     });
 
-    expect(createSignalForActorMock).toHaveBeenCalledWith(expect.anything(), {
-      actor: { kind: "web", orgId: "org_test", userId: "user_test" },
+    expect(createAndQueueSignalMock).toHaveBeenCalledWith({
+      clerkOrgId: "org_test",
+      createdByApiKeyId: null,
+      createdByUserId: "user_test",
       input: "new signal",
     });
   });
@@ -197,7 +195,7 @@ describe("signal domain commands", () => {
             kind: "apiKey",
             orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
             orgId: "org_test",
-            scopes: ["api:signals:write"],
+            scopes: ["api.signals.write"],
           },
         },
         deps: deps(),
@@ -209,15 +207,38 @@ describe("signal domain commands", () => {
       visibilityScope: "user",
     });
 
-    expect(createSignalForActorMock).toHaveBeenCalledWith(expect.anything(), {
-      actor: {
-        apiKeyId: "key_test",
-        kind: "api_key",
-        orgId: "org_test",
-        userId: "user_test",
-      },
+    expect(createAndQueueSignalMock).toHaveBeenCalledWith({
+      clerkOrgId: "org_test",
+      createdByApiKeyId: "key_test",
+      createdByUserId: "user_test",
       input: "new signal",
     });
+  });
+
+  it("rejects API-key signal creation without the write scope", async () => {
+    await expect(
+      createSignalCommand.run({
+        ctx: {
+          actor: {
+            createdByUserId: "user_test",
+            keyId: "key_test",
+            kind: "apiKey",
+            orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
+            orgId: "org_test",
+            scopes: ["api.signals.read"],
+          },
+        },
+        deps: deps(),
+        input: { input: "new signal" },
+      })
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        code: "API_KEY_SCOPE_REQUIRED",
+        kind: "authz",
+      })
+    );
+
+    expect(createAndQueueSignalMock).not.toHaveBeenCalled();
   });
 
   it("creates a signal as an MCP client actor with grant attribution", async () => {
@@ -229,7 +250,7 @@ describe("signal domain commands", () => {
             grantId: "grant_test",
             kind: "mcpClient",
             orgId: "org_test",
-            scopes: [],
+            scopes: ["mcp:signals:write"],
             userId: "user_test",
           },
           caller: { kind: "service", service: "apps-mcp" },
@@ -244,16 +265,42 @@ describe("signal domain commands", () => {
       visibilityScope: "user",
     });
 
-    expect(createSignalForActorMock).toHaveBeenCalledWith(expect.anything(), {
-      actor: {
-        clientId: "client_test",
-        grantId: "grant_test",
-        kind: "mcp",
-        orgId: "org_test",
-        userId: "user_test",
-      },
+    expect(createAndQueueSignalMock).toHaveBeenCalledWith({
+      clerkOrgId: "org_test",
+      createdByApiKeyId: null,
+      createdByMcpClientId: "client_test",
+      createdByMcpGrantId: "grant_test",
+      createdByUserId: "user_test",
       input: "new signal",
     });
+  });
+
+  it("rejects MCP signal creation without the write scope", async () => {
+    await expect(
+      createSignalCommand.run({
+        ctx: {
+          actor: {
+            clientId: "client_test",
+            grantId: "grant_test",
+            kind: "mcpClient",
+            orgId: "org_test",
+            scopes: ["mcp:signals:read"],
+            userId: "user_test",
+          },
+          caller: { kind: "service", service: "apps-mcp" },
+          request: { id: "req_mcp_test", source: "mcp" },
+        },
+        deps: deps(),
+        input: { input: "new signal" },
+      })
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        code: "MCP_SCOPE_REQUIRED",
+        kind: "authz",
+      })
+    );
+
+    expect(createAndQueueSignalMock).not.toHaveBeenCalled();
   });
 
   it("loads signal detail as an API-key actor using creator visibility", async () => {
@@ -265,21 +312,44 @@ describe("signal domain commands", () => {
           kind: "apiKey",
           orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
           orgId: "org_test",
-          scopes: ["api:signals:read"],
+          scopes: ["api.signals.read"],
         },
       },
       deps: deps(),
       input: { publicId: signalRow.publicId },
     });
 
-    expect(getVisibleSignalByPublicIdMock).toHaveBeenCalledWith(
-      expect.anything(),
-      {
-        clerkOrgId: "org_test",
-        createdByUserId: "user_test",
-        publicId: signalRow.publicId,
-      }
+    expect(getVisibleSignalByPublicIdMock).toHaveBeenCalledWith({
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+      publicId: signalRow.publicId,
+    });
+  });
+
+  it("rejects API-key signal reads without the read scope", async () => {
+    await expect(
+      getSignalCommand.run({
+        ctx: {
+          actor: {
+            createdByUserId: "user_test",
+            keyId: "key_test",
+            kind: "apiKey",
+            orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
+            orgId: "org_test",
+            scopes: ["api.signals.write"],
+          },
+        },
+        deps: deps(),
+        input: { publicId: signalRow.publicId },
+      })
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        code: "API_KEY_SCOPE_REQUIRED",
+        kind: "authz",
+      })
     );
+
+    expect(getVisibleSignalByPublicIdMock).not.toHaveBeenCalled();
   });
 
   it("loads signal detail as an MCP client actor using creator visibility", async () => {
@@ -290,7 +360,7 @@ describe("signal domain commands", () => {
           grantId: "grant_test",
           kind: "mcpClient",
           orgId: "org_test",
-          scopes: [],
+          scopes: ["mcp:signals:read"],
           userId: "user_test",
         },
         caller: { kind: "service", service: "apps-mcp" },
@@ -300,20 +370,45 @@ describe("signal domain commands", () => {
       input: { publicId: signalRow.publicId },
     });
 
-    expect(getVisibleSignalByPublicIdMock).toHaveBeenCalledWith(
-      expect.anything(),
-      {
-        clerkOrgId: "org_test",
-        createdByUserId: "user_test",
-        publicId: signalRow.publicId,
-      }
+    expect(getVisibleSignalByPublicIdMock).toHaveBeenCalledWith({
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+      publicId: signalRow.publicId,
+    });
+  });
+
+  it("rejects MCP signal reads without the read scope", async () => {
+    await expect(
+      getSignalCommand.run({
+        ctx: {
+          actor: {
+            clientId: "client_test",
+            grantId: "grant_test",
+            kind: "mcpClient",
+            orgId: "org_test",
+            scopes: ["mcp:signals:write"],
+            userId: "user_test",
+          },
+          caller: { kind: "service", service: "apps-mcp" },
+          request: { id: "req_mcp_test", source: "mcp" },
+        },
+        deps: deps(),
+        input: { publicId: signalRow.publicId },
+      })
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        code: "MCP_SCOPE_REQUIRED",
+        kind: "authz",
+      })
     );
+
+    expect(getVisibleSignalByPublicIdMock).not.toHaveBeenCalled();
   });
 
   it("maps queue failures to an internal domain error", async () => {
     const error = new Error("queue failed");
     error.name = "SignalCreateQueueError";
-    createSignalForActorMock.mockRejectedValueOnce(error);
+    createAndQueueSignalMock.mockRejectedValueOnce(error);
 
     await expect(
       createSignalCommand.run({

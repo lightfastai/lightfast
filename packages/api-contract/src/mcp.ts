@@ -73,6 +73,11 @@ export const lightfastMcpToolPolicy = {
     scope: "mcp:signals:read",
     toolName: "lightfast_signals_get",
   },
+  "signals.list": {
+    expose: false,
+    reason:
+      "The public SDK can list signals, but hosted MCP does not expose a broad signal-listing tool yet.",
+  },
   "system.health": {
     auditEventName: "mcp.system.health",
     description:

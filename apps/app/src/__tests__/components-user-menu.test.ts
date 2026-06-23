@@ -29,7 +29,8 @@ describe("TanStack user menu", () => {
     expect(menuSource).toContain(
       'useClerk } from "@clerk/tanstack-react-start"'
     );
-    expect(menuSource).toContain("accountProfileQueryOptions()");
+    expect(menuSource).toContain("getAccountProfile");
+    expect(menuSource).toContain("accountProfileQueryKey");
     expect(menuSource).toContain('enabled: typeof window !== "undefined"');
     expect(menuSource).toContain('from "@repo/ui/hooks/use-mounted"');
     expect(menuSource).toContain("const mounted = useMounted();");

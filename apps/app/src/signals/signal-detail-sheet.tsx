@@ -1,3 +1,4 @@
+import { getSignal } from "@api/app/tanstack/signals";
 import { Cancel01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { toast } from "@repo/ui/components/ui/sonner";
@@ -19,7 +20,6 @@ import {
   type SignalListItem,
   type SignalRow,
 } from "./signals-model";
-import { signalDetailQueryOptions } from "./signals-queries";
 
 function copySignalLink() {
   if (typeof window === "undefined") {
@@ -57,17 +57,18 @@ export function SignalDetailSheet({
   // Processing rows (and any already-fetched full rows) carry `input`, so their
   // body needs no `get`. Classified projection rows do.
   const hasBody = !!seededItem && "input" in seededItem;
+  const detailPublicId = publicId ?? "";
+  const shouldFetchDetail = open && !hasBody && detailPublicId.length > 0;
 
   const {
     data: fetchedDetail,
     isError,
     isLoading,
-  } = useQuery(
-    signalDetailQueryOptions({
-      enabled: open && !hasBody && Boolean(publicId),
-      publicId: publicId ?? "",
-    })
-  );
+  } = useQuery({
+    enabled: typeof window !== "undefined" && shouldFetchDetail,
+    queryFn: () => getSignal({ data: { publicId: detailPublicId } }),
+    queryKey: ["signals", "detail", detailPublicId] as const,
+  });
 
   // Header seed: the projection (or, for deep-links not in cache, the fetched row).
   const headerItem: SignalListItem | undefined = seededItem ?? fetchedDetail;

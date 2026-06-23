@@ -1,45 +1,24 @@
-import type { KeyResponseData } from "@vendor/unkey";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthIdentity } from "../auth/identity";
 import { actorFromAuthIdentity } from "../domain";
 import {
-  createDefaultOrgApiKeyCommandDeps,
   createOrgApiKeyCommand,
   deleteOrgApiKeyCommand,
   listOrgApiKeysCommand,
+  type OrgApiKeyCommandDeps,
+  type OrgApiKeyListItem,
   revokeOrgApiKeyCommand,
   rotateOrgApiKeyCommand,
 } from "../domain/org-api-keys";
 
-const mocks = vi.hoisted(() => ({
-  apisListKeysMock: vi.fn(),
-  identitiesCreateIdentityMock: vi.fn(),
-  keysCreateKeyMock: vi.fn(),
-  keysDeleteKeyMock: vi.fn(),
-  keysGetKeyMock: vi.fn(),
-  keysRerollKeyMock: vi.fn(),
-  keysUpdateKeyMock: vi.fn(),
-  logInfoMock: vi.fn(),
-}));
-
-vi.mock("@vendor/unkey/server", () => ({
-  unkeyEnv: { UNKEY_API_ID: "api_test" },
-  getUnkeyClient: () => ({
-    apis: { listKeys: mocks.apisListKeysMock },
-    identities: { createIdentity: mocks.identitiesCreateIdentityMock },
-    keys: {
-      createKey: mocks.keysCreateKeyMock,
-      deleteKey: mocks.keysDeleteKeyMock,
-      getKey: mocks.keysGetKeyMock,
-      rerollKey: mocks.keysRerollKeyMock,
-      updateKey: mocks.keysUpdateKeyMock,
-    },
-  }),
-}));
-
-vi.mock("@vendor/observability/log/next", () => ({
-  log: { info: mocks.logInfoMock },
-}));
+const apisListKeysMock = vi.fn();
+const identitiesCreateIdentityMock = vi.fn();
+const keysCreateKeyMock = vi.fn();
+const keysDeleteKeyMock = vi.fn();
+const keysGetKeyMock = vi.fn();
+const keysRerollKeyMock = vi.fn();
+const keysUpdateKeyMock = vi.fn();
+const logInfoMock = vi.fn();
 
 const identity: Extract<AuthIdentity, { type: "active" }> = {
   type: "active",
@@ -48,7 +27,7 @@ const identity: Extract<AuthIdentity, { type: "active" }> = {
   orgGate: { bindingStatus: "unbound", nextSetupRequirement: "github_org" },
 };
 
-const key: KeyResponseData = {
+const key: OrgApiKeyListItem = {
   createdAt: 1_700_000_000_000,
   enabled: true,
   identity: { externalId: "org_test", id: "identity_test" },
@@ -70,12 +49,37 @@ function ctx({ admin = false }: { admin?: boolean } = {}) {
 }
 
 function deps() {
-  return createDefaultOrgApiKeyCommandDeps({ now: () => 1_700_000_000_000 });
+  return {
+    apiId: "api_test",
+    isProviderConflictError: (error) =>
+      typeof error === "object" &&
+      error !== null &&
+      "statusCode" in error &&
+      error.statusCode === 409,
+    isProviderNotFoundError: (error) =>
+      typeof error === "object" &&
+      error !== null &&
+      "statusCode" in error &&
+      error.statusCode === 404,
+    log: { info: logInfoMock },
+    now: () => 1_700_000_000_000,
+    provider: {
+      apis: { listKeys: apisListKeysMock },
+      identities: { createIdentity: identitiesCreateIdentityMock },
+      keys: {
+        createKey: keysCreateKeyMock,
+        deleteKey: keysDeleteKeyMock,
+        getKey: keysGetKeyMock,
+        rerollKey: keysRerollKeyMock,
+        updateKey: keysUpdateKeyMock,
+      },
+    },
+  } satisfies OrgApiKeyCommandDeps;
 }
 
 beforeEach(() => {
-  mocks.apisListKeysMock.mockReset();
-  mocks.apisListKeysMock
+  apisListKeysMock.mockReset();
+  apisListKeysMock
     .mockResolvedValueOnce({
       data: [key],
       pagination: { cursor: "cursor_2", hasMore: true },
@@ -84,27 +88,27 @@ beforeEach(() => {
       data: [{ ...key, keyId: "key_second", start: "lf_second" }],
       pagination: { hasMore: false },
     });
-  mocks.identitiesCreateIdentityMock.mockReset();
-  mocks.identitiesCreateIdentityMock.mockResolvedValue({
+  identitiesCreateIdentityMock.mockReset();
+  identitiesCreateIdentityMock.mockResolvedValue({
     data: { externalId: "org_test", id: "identity_test" },
   });
-  mocks.keysCreateKeyMock.mockReset();
-  mocks.keysCreateKeyMock.mockResolvedValue({
+  keysCreateKeyMock.mockReset();
+  keysCreateKeyMock.mockResolvedValue({
     data: { key: "lf_secret_value", keyId: "key_test" },
   });
-  mocks.keysDeleteKeyMock.mockReset();
-  mocks.keysDeleteKeyMock.mockResolvedValue({ data: {} });
-  mocks.keysGetKeyMock.mockReset();
-  mocks.keysGetKeyMock.mockResolvedValue({ data: key });
-  mocks.keysRerollKeyMock.mockReset();
-  mocks.keysRerollKeyMock.mockResolvedValue({
+  keysDeleteKeyMock.mockReset();
+  keysDeleteKeyMock.mockResolvedValue({ data: {} });
+  keysGetKeyMock.mockReset();
+  keysGetKeyMock.mockResolvedValue({ data: key });
+  keysRerollKeyMock.mockReset();
+  keysRerollKeyMock.mockResolvedValue({
     data: { key: "lf_rotated_secret", keyId: "key_test" },
   });
-  mocks.keysUpdateKeyMock.mockReset();
-  mocks.keysUpdateKeyMock.mockResolvedValue({
+  keysUpdateKeyMock.mockReset();
+  keysUpdateKeyMock.mockResolvedValue({
     data: { ...key, enabled: false },
   });
-  mocks.logInfoMock.mockReset();
+  logInfoMock.mockReset();
 });
 
 describe("org API key domain commands", () => {
@@ -116,14 +120,14 @@ describe("org API key domain commands", () => {
       { ...key, keyId: "key_second", start: "lf_second" },
     ]);
 
-    expect(mocks.apisListKeysMock).toHaveBeenNthCalledWith(1, {
+    expect(apisListKeysMock).toHaveBeenNthCalledWith(1, {
       apiId: "api_test",
       cursor: undefined,
       decrypt: false,
       externalId: "org_test",
       limit: 100,
     });
-    expect(mocks.apisListKeysMock).toHaveBeenNthCalledWith(2, {
+    expect(apisListKeysMock).toHaveBeenNthCalledWith(2, {
       apiId: "api_test",
       cursor: "cursor_2",
       decrypt: false,
@@ -141,16 +145,17 @@ describe("org API key domain commands", () => {
       })
     ).resolves.toEqual({ key: "lf_secret_value", keyId: "key_test" });
 
-    expect(mocks.identitiesCreateIdentityMock).toHaveBeenCalledWith({
+    expect(identitiesCreateIdentityMock).toHaveBeenCalledWith({
       externalId: "org_test",
       meta: { clerkOrgId: "org_test" },
     });
-    expect(mocks.keysCreateKeyMock).toHaveBeenCalledWith({
+    expect(keysCreateKeyMock).toHaveBeenCalledWith({
       apiId: "api_test",
       expires: 1_700_000_060_000,
       externalId: "org_test",
       meta: { createdByUserId: "user_test", source: "dashboard" },
       name: "Test key",
+      permissions: ["api.signals.read", "api.signals.write"],
       prefix: "lf",
       recoverable: false,
     });
@@ -160,7 +165,7 @@ describe("org API key domain commands", () => {
     const conflict = Object.assign(new Error("already exists"), {
       statusCode: 409,
     });
-    mocks.identitiesCreateIdentityMock.mockRejectedValueOnce(conflict);
+    identitiesCreateIdentityMock.mockRejectedValueOnce(conflict);
 
     await expect(
       createOrgApiKeyCommand.run({
@@ -194,22 +199,22 @@ describe("org API key domain commands", () => {
       })
     ).resolves.toEqual({ key: "lf_rotated_secret", keyId: "key_test" });
 
-    expect(mocks.keysUpdateKeyMock).toHaveBeenCalledWith({
+    expect(keysUpdateKeyMock).toHaveBeenCalledWith({
       enabled: false,
       keyId: "key_test",
     });
-    expect(mocks.keysDeleteKeyMock).toHaveBeenCalledWith({
+    expect(keysDeleteKeyMock).toHaveBeenCalledWith({
       keyId: "key_test",
       permanent: false,
     });
-    expect(mocks.keysRerollKeyMock).toHaveBeenCalledWith({
+    expect(keysRerollKeyMock).toHaveBeenCalledWith({
       expiration: 0,
       keyId: "key_test",
     });
   });
 
   it("hides another organization's key as not found", async () => {
-    mocks.keysGetKeyMock.mockResolvedValueOnce({
+    keysGetKeyMock.mockResolvedValueOnce({
       data: {
         ...key,
         identity: { externalId: "org_other", id: "identity_other" },
@@ -228,7 +233,7 @@ describe("org API key domain commands", () => {
         kind: "not_found",
       })
     );
-    expect(mocks.keysRerollKeyMock).not.toHaveBeenCalled();
+    expect(keysRerollKeyMock).not.toHaveBeenCalled();
   });
 
   it("requires a matching admin actor for writes", async () => {
@@ -244,6 +249,6 @@ describe("org API key domain commands", () => {
         kind: "authz",
       })
     );
-    expect(mocks.keysCreateKeyMock).not.toHaveBeenCalled();
+    expect(keysCreateKeyMock).not.toHaveBeenCalled();
   });
 });

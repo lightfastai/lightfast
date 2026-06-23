@@ -15,10 +15,10 @@ function repoSource(path: string) {
 
 describe("TanStack query input type boundaries", () => {
   const queryFiles = [
-    "src/connectors/connectors-queries.ts",
-    "src/decisions/decisions-queries.ts",
-    "src/developer-connections/developer-connections-queries.ts",
-    "src/people/people-queries.ts",
+    "src/connectors/connectors-client.tsx",
+    "src/decisions/decisions-client.tsx",
+    "src/people/people-client.tsx",
+    "src/people/people-detail-sheet.tsx",
   ];
 
   it("does not infer app query input types from server function call shape", () => {
@@ -31,25 +31,25 @@ describe("TanStack query input type boundaries", () => {
   });
 
   it("imports explicit input contracts from api/app TanStack adapters", () => {
-    expect(appSource("src/people/people-queries.ts")).toContain(
+    expect(appSource("src/people/people-client.tsx")).toContain(
       "type ListPeopleInput"
     );
-    expect(appSource("src/people/people-queries.ts")).toContain(
+    expect(appSource("src/people/people-detail-sheet.tsx")).toContain(
       "type GetPersonInput"
     );
-    expect(appSource("src/connectors/connectors-queries.ts")).toContain(
+    expect(appSource("src/connectors/connectors-client.tsx")).toContain(
       "type StartConnectorInput"
     );
-    expect(appSource("src/connectors/connectors-queries.ts")).toContain(
+    expect(appSource("src/connectors/connectors-client.tsx")).toContain(
       "type RefreshConnectorToolsInput"
     );
     expect(
-      appSource("src/developer-connections/developer-connections-queries.ts")
+      appSource("src/developer-connections/developer-connections-client.tsx")
     ).toContain("type ConnectDeveloperConnectionInput");
     expect(
-      appSource("src/developer-connections/developer-connections-queries.ts")
+      appSource("src/developer-connections/developer-connections-client.tsx")
     ).toContain("type StartSentryDeveloperConnectionAuthInput");
-    expect(appSource("src/decisions/decisions-queries.ts")).toContain(
+    expect(appSource("src/decisions/decisions-client.tsx")).toContain(
       "type ListDecisionsInput"
     );
   });

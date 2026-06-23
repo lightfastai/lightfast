@@ -1,9 +1,9 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import type { ApiKeyAuthResult } from "../auth/api-key";
 import type { AuthIdentity } from "../auth/identity";
 import {
-  actorFromApiKeyAuth,
   actorFromAuthIdentity,
   DomainError,
   defineCommand,
@@ -11,6 +11,12 @@ import {
   dispatchCommand,
   requireBoundClerkOrgActor,
 } from "../domain";
+
+const apiSrcRoot = resolve(import.meta.dirname, "..");
+
+function apiSource(path: string) {
+  return readFileSync(resolve(apiSrcRoot, path), "utf8");
+}
 
 const boundIdentity: Extract<AuthIdentity, { type: "active" }> = {
   type: "active",
@@ -37,24 +43,6 @@ describe("actorFromAuthIdentity", () => {
       kind: "clerkUser",
       source: "web",
       userId: "user_test",
-    });
-  });
-});
-
-describe("actorFromApiKeyAuth", () => {
-  it("creates an org-scoped API-key actor with creator attribution", () => {
-    const auth: ApiKeyAuthResult = {
-      apiKeyId: "key_test",
-      identity: boundIdentity,
-    };
-
-    expect(actorFromApiKeyAuth(auth, ["api:signals:read"])).toEqual({
-      createdByUserId: "user_test",
-      keyId: "key_test",
-      kind: "apiKey",
-      orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
-      orgId: "org_test",
-      scopes: ["api:signals:read"],
     });
   });
 });
@@ -144,5 +132,17 @@ describe("dispatchCommand", () => {
     );
     expect(error.kind).toBe("validation");
     expect(error.code).toBe("INVALID_INPUT");
+  });
+});
+
+describe("domain actor boundary", () => {
+  it("stays independent of API-key auth result shapes and request transport types", () => {
+    const actorSource = apiSource("domain/actor.ts");
+
+    expect(actorSource).not.toContain("../auth/api-key");
+    expect(actorSource).not.toContain("ApiKeyAuthResult");
+    expect(actorSource).not.toContain("Headers");
+    expect(actorSource).not.toContain("Request");
+    expect(actorSource).not.toContain("Response");
   });
 });

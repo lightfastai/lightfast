@@ -1,3 +1,4 @@
+import { getAutomationRun } from "@api/app/tanstack/automations";
 import { Cancel01Icon as X } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -15,8 +16,8 @@ import { useEffect } from "react";
 import { AutomationRunDetailContent } from "./automation-run-detail-content";
 import {
   type AutomationRunListItem,
-  automationRunQueryOptions,
-} from "./automations-queries";
+  automationQueryKeys,
+} from "./automations-cache";
 
 export function AutomationRunDetailSheet({
   initialRun,
@@ -31,15 +32,15 @@ export function AutomationRunDetailSheet({
   const hasInitial = !!initialRun && initialRun.publicId === publicId;
   const shouldFetchRun = open && !hasInitial && Boolean(publicId);
 
-  const query = useQuery(
-    automationRunQueryOptions({
-      enabled: typeof window !== "undefined" && shouldFetchRun,
-      id: publicId ?? "",
-      refetchOnWindowFocus: true,
-      retry: false,
-      staleTime: 5000,
-    })
-  );
+  const runPublicId = publicId ?? "";
+  const query = useQuery({
+    enabled: typeof window !== "undefined" && shouldFetchRun,
+    queryFn: () => getAutomationRun({ data: { id: runPublicId } }),
+    queryKey: automationQueryKeys.run(runPublicId),
+    refetchOnWindowFocus: true,
+    retry: false,
+    staleTime: 5000,
+  });
 
   const run = hasInitial ? initialRun : query.data;
 

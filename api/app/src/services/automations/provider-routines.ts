@@ -1,5 +1,5 @@
-import type { ConnectableConnectorProvider } from "@lightfast/connector-core";
 import {
+  type ConnectableConnectorProvider,
   type ProviderRoutineCallFailure,
   type ProviderRoutineCallInput,
   type ProviderRoutineCallSuccess,
@@ -11,13 +11,13 @@ import {
   providerRoutineCallInputSchema,
   providerRoutineFindInputSchema,
   providerRoutineId,
-} from "@lightfast/connector-core/provider-routines";
-import { classifyRoutine, hasRoutineScope } from "@repo/provider-routines";
+} from "@repo/api-contract";
 import {
   ConnectorRuntimeToolCallError,
   type ConnectorRuntimeToolSource,
   loadConnectorRuntimeTools,
 } from "../connectors/runtime";
+import { classifyRoutine, hasRoutineScope } from "../provider-routines/policy";
 
 const DEFAULT_FIND_LIMIT = 10;
 

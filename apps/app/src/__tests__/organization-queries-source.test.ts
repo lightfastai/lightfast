@@ -21,31 +21,35 @@ const migratedFiles = [
   "src/routes/_authenticated/$slug/tasks/connectors/x/index.tsx",
 ] as const;
 
-describe("organization query helpers", () => {
-  it("centralizes organization query keys and read server function calls", () => {
-    const querySource = source("src/organization/organization-queries.ts");
+describe("organization cache keys", () => {
+  it("keeps organization cache primitives separate from read calls", () => {
+    const queriesPath = "src/organization/organization-queries.ts";
+    const cacheSource = source("src/organization/organization-cache.ts");
 
-    expect(querySource).toContain('@api/app/tanstack/organizations"');
-    expect(querySource).toContain("organizationQueryKeys");
-    expect(querySource).toContain("listUserOrganizationsQueryOptions");
-    expect(querySource).toContain("organizationBySlugQueryOptions");
-    expect(querySource).toContain("organizationDomainsQueryOptions");
-    expect(querySource).not.toContain("mutationOptions");
-    expect(querySource).not.toContain("createOrganizationMutationOptions");
-    expect(querySource).not.toContain(
-      "updateOrganizationDomainsMutationOptions"
-    );
-    expect(querySource).not.toContain("updateOrganizationNameMutationOptions");
-    expect(querySource).not.toContain("useTRPC");
+    expect(existsSync(resolve(appRoot, queriesPath))).toBe(false);
+    expect(cacheSource).toContain("organizationQueryKeys");
+    expect(cacheSource).toContain("ORGANIZATION_STALE_TIME");
+    expect(cacheSource).toContain("UserOrganizationsData");
+    expect(cacheSource).not.toContain("queryOptions");
+    expect(cacheSource).not.toContain("mutationOptions");
+    expect(cacheSource).not.toContain("listUserOrganizations(");
+    expect(cacheSource).not.toContain("getOrganizationBySlug(");
+    expect(cacheSource).not.toContain("listOrganizationDomains(");
+    expect(cacheSource).not.toContain("useTRPC");
   });
 
-  it("moves migrated organization UI calls off tRPC", () => {
+  it("moves migrated organization UI calls off tRPC and query wrappers", () => {
     for (const file of migratedFiles) {
       const fileSource = source(file);
       expect(fileSource, file).not.toContain("viewer.organization.");
       expect(fileSource, file).not.toContain(
         "org.settings.organization.updateName"
       );
+      expect(fileSource, file).not.toContain(
+        "listUserOrganizationsQueryOptions"
+      );
+      expect(fileSource, file).not.toContain("organizationBySlugQueryOptions");
+      expect(fileSource, file).not.toContain("organizationDomainsQueryOptions");
     }
   });
 
@@ -93,6 +97,9 @@ describe("organization query helpers", () => {
     expect(clientSource).not.toContain("useTeamNameUpdate");
     expect(clientSource).not.toContain("useTeamDomainsUpdate");
     expect(clientSource).not.toContain("team-general-settings-actions");
+    expect(clientSource).toContain("listUserOrganizations");
+    expect(clientSource).toContain("listOrganizationDomains");
+    expect(clientSource).toContain("organizationQueryKeys.domains(slug)");
 
     expect(modelSource).toContain("normalizeTeamSlugInput");
     expect(modelSource).toContain("normalizeTeamDomainList");

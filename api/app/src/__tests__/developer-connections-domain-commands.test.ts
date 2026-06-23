@@ -6,7 +6,7 @@ import { actorFromAuthIdentity } from "../domain";
 import {
   completeSentryDeveloperConnectionAuthCommand,
   connectDeveloperConnectionCommand,
-  createDefaultDeveloperConnectionCommandDeps,
+  type DeveloperConnectionCommandDeps,
   disconnectDeveloperConnectionCommand,
   listDeveloperConnectionsCommand,
   setDeveloperConnectionSandboxEnabledCommand,
@@ -54,19 +54,18 @@ function ctx(input: { admin?: boolean; identity?: AuthIdentity } = {}) {
 }
 
 function deps() {
-  return createDefaultDeveloperConnectionCommandDeps({
+  return {
     completeSentryDeveloperConnectionAuth:
       serviceMocks.completeSentryDeveloperConnectionAuth,
     connectDeveloperConnection: serviceMocks.connectDeveloperConnection,
     db: {} as Database,
     disconnectDeveloperConnection: serviceMocks.disconnectDeveloperConnection,
-    headers: new Headers(),
     listDeveloperConnectionsForOrg: serviceMocks.listDeveloperConnectionsForOrg,
     setDeveloperConnectionSandboxEnabled:
       serviceMocks.setDeveloperConnectionSandboxEnabled,
     startSentryDeveloperConnectionAuth:
       serviceMocks.startSentryDeveloperConnectionAuth,
-  });
+  } satisfies DeveloperConnectionCommandDeps;
 }
 
 describe("developer connection domain commands", () => {
@@ -106,16 +105,25 @@ describe("developer connection domain commands", () => {
       })
     ).resolves.toEqual([expect.objectContaining({ provider: "sentry" })]);
 
-    expect(serviceMocks.listDeveloperConnectionsForOrg).toHaveBeenCalledWith(
-      expect.objectContaining({
-        auth: expect.objectContaining({
-          identity: expect.objectContaining({
-            orgId: "org_acme",
-            userId: "user_current",
-          }),
-        }),
-      })
-    );
+    expect(serviceMocks.listDeveloperConnectionsForOrg).toHaveBeenCalledWith({
+      db: expect.anything(),
+      organization: { orgId: "org_acme" },
+      viewer: { canManage: false },
+    });
+  });
+
+  it("passes admin manage authority to developer connection catalog listing", async () => {
+    await listDeveloperConnectionsCommand.run({
+      ctx: ctx({ admin: true }),
+      deps: deps(),
+      input: {},
+    });
+
+    expect(serviceMocks.listDeveloperConnectionsForOrg).toHaveBeenCalledWith({
+      db: expect.anything(),
+      organization: { orgId: "org_acme" },
+      viewer: { canManage: true },
+    });
   });
 
   it("requires bound organizations to list developer connections", async () => {
@@ -203,6 +211,15 @@ describe("developer connection domain commands", () => {
         },
       })
     ).resolves.toEqual({ provider: "sentry", status: "connected" });
+    const connectContext =
+      serviceMocks.connectDeveloperConnection.mock.calls[0]?.[0];
+    expect(connectContext).toEqual({
+      actor: { userId: "user_current" },
+      db: expect.anything(),
+      organization: { orgId: "org_acme" },
+    });
+    expect(connectContext).not.toHaveProperty("auth");
+    expect(connectContext).not.toHaveProperty("headers");
 
     await expect(
       setDeveloperConnectionSandboxEnabledCommand.run({

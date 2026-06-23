@@ -12,7 +12,6 @@ describe("developer service domain errors", () => {
   it("keeps developer service errors framework-neutral", () => {
     for (const file of [
       "services/developer-connections/auth-box.ts",
-      "services/developer-connections/index.ts",
       "services/developer-connections/leases.ts",
       "services/developer-sandbox-runs/index.ts",
     ]) {
@@ -22,5 +21,13 @@ describe("developer service domain errors", () => {
       expect(fileSource, file).not.toContain("@trpc/server");
       expect(fileSource, file).not.toContain("TRPCError");
     }
+
+    const developerConnectionSource = source(
+      "services/developer-connections/index.ts"
+    );
+    expect(developerConnectionSource).not.toContain("@trpc/server");
+    expect(developerConnectionSource).not.toContain("TRPCError");
+    expect(developerConnectionSource).not.toContain("../../trpc");
+    expect(developerConnectionSource).not.toContain("../../domain/errors");
   });
 });

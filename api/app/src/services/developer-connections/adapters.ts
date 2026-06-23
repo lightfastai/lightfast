@@ -2,7 +2,7 @@ import type {
   DeveloperConnectionConnectInput,
   DeveloperConnectionCredentialKind,
   DeveloperConnectionProvider,
-} from "@repo/developer-connection-contract";
+} from "@repo/api-contract";
 
 export interface VerifiedDeveloperCredential {
   credentialKind: DeveloperConnectionCredentialKind;

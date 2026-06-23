@@ -1,5 +1,8 @@
 import { useChat } from "@ai-sdk/react";
-import { createConversation } from "@api/app/tanstack/assistant";
+import {
+  createConversation,
+  type GetConversationResult,
+} from "@api/app/tanstack/assistant";
 import {
   CHAT_SETTINGS_STORAGE_KEYS,
   type ChatCapabilityMode,
@@ -28,11 +31,6 @@ import type { CSSProperties } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChatComposer } from "./chat-composer";
 import { ChatMessage } from "./chat-message";
-import {
-  assistantConversationQueryOptions,
-  assistantConversationsQueryKey,
-  type WorkspaceAssistantConversationResult,
-} from "./workspace-assistant-queries";
 
 const isResumableStreamEnabled =
   (import.meta.env.VITE_VERCEL_ENV ?? "development") !== "development";
@@ -46,7 +44,7 @@ const conversationTitleMaxLength = 160;
 
 interface WorkspaceAssistantClientProps {
   conversationId: string;
-  initialConversation?: WorkspaceAssistantConversationResult;
+  initialConversation?: GetConversationResult;
 }
 
 export function WorkspaceAssistantClient({
@@ -64,10 +62,6 @@ export function WorkspaceAssistantClient({
       title: string;
     }) => createConversation({ data }),
   });
-  const getConversationQueryOptions = useMemo(
-    () => assistantConversationQueryOptions({ conversationId }),
-    [conversationId]
-  );
   const initialMessages = useMemo(
     () => initialConversation?.messages.map(toUIMessage) ?? [],
     [initialConversation]
@@ -125,11 +119,6 @@ export function WorkspaceAssistantClient({
     resume: isResumableStreamEnabled && Boolean(initialConversation),
     transport,
   });
-  const messagesRef = useRef(messages);
-
-  useEffect(() => {
-    messagesRef.current = messages;
-  }, [messages]);
 
   const displayMessages =
     optimisticFirstMessage && messages.length === 0
@@ -166,9 +155,6 @@ export function WorkspaceAssistantClient({
               version: "2.0.0",
             } satisfies ChatConversationSettingsV2));
       let createdConversationDuringSubmit = false;
-      let createdConversation:
-        | WorkspaceAssistantConversationResult["conversation"]
-        | undefined;
 
       if (!conversationCreatedRef.current) {
         setCreationError(undefined);
@@ -179,7 +165,7 @@ export function WorkspaceAssistantClient({
           );
         }
         try {
-          createdConversation = await createConversationMutation.mutateAsync({
+          await createConversationMutation.mutateAsync({
             chatSettings: selectedChatSettings ?? getDefaultChatSettings(),
             publicId: conversationId,
             title: conversationTitleFromPrompt(nextText),
@@ -190,7 +176,7 @@ export function WorkspaceAssistantClient({
           );
           createdConversationDuringSubmit = true;
           void queryClient.invalidateQueries({
-            queryKey: assistantConversationsQueryKey,
+            queryKey: ["workspace-assistant", "conversations"] as const,
           });
         } catch (error) {
           if (orgSlug) {
@@ -222,15 +208,14 @@ export function WorkspaceAssistantClient({
       } finally {
         setOptimisticFirstMessage(null);
       }
-      if (createdConversationDuringSubmit && createdConversation) {
-        queryClient.setQueryData(getConversationQueryOptions.queryKey, {
-          conversation: createdConversation,
-          messages: toSeededConversationMessages(
-            messagesRef.current,
-            createdConversation
-          ),
-        } satisfies WorkspaceAssistantConversationResult);
-
+      if (createdConversationDuringSubmit) {
+        await queryClient.invalidateQueries({
+          queryKey: [
+            "workspace-assistant",
+            "conversation",
+            conversationId,
+          ] as const,
+        });
         if (orgSlug) {
           await router.navigate({
             params: { conversationId, slug: orgSlug },
@@ -245,7 +230,6 @@ export function WorkspaceAssistantClient({
     [
       conversationId,
       createConversationMutation.mutateAsync,
-      getConversationQueryOptions.queryKey,
       orgSlug,
       queryClient,
       router,
@@ -375,36 +359,6 @@ function createOptimisticUserMessage(text: string): UIMessage {
   };
 }
 
-function toSeededConversationMessages(
-  messages: UIMessage[],
-  conversation: WorkspaceAssistantConversationResult["conversation"]
-): WorkspaceAssistantConversationResult["messages"] {
-  const now = new Date();
-
-  return messages.map((message, index) => ({
-    conversationId: conversation.id,
-    conversationPublicId: conversation.publicId,
-    clerkOrgId: conversation.clerkOrgId,
-    createdAt: now,
-    createdByUserId: conversation.createdByUserId,
-    errorCode: null,
-    errorMessage: null,
-    id: -(index + 1),
-    idempotencyKey: null,
-    metadata:
-      (message.metadata as
-        | WorkspaceAssistantConversationResult["messages"][number]["metadata"]
-        | undefined) ?? {},
-    parts:
-      message.parts as WorkspaceAssistantConversationResult["messages"][number]["parts"],
-    publicId: message.id,
-    role: message.role as WorkspaceAssistantConversationResult["messages"][number]["role"],
-    sequence: index,
-    status: "completed",
-    updatedAt: now,
-  }));
-}
-
 function createUuid() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
@@ -469,7 +423,7 @@ function EmptyChatState({ composer }: { composer: React.ReactNode }) {
 }
 
 function toUIMessage(
-  message: WorkspaceAssistantConversationResult["messages"][number]
+  message: GetConversationResult["messages"][number]
 ): UIMessage {
   return {
     id: message.publicId,

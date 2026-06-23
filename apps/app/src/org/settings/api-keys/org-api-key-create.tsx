@@ -1,3 +1,4 @@
+import { createOrgApiKey } from "@api/app/tanstack/org-api-keys";
 import { useAuth } from "@clerk/tanstack-react-start";
 import {
   Tick02Icon as Check,
@@ -6,6 +7,7 @@ import {
   Add01Icon as Plus,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import type { createOrgApiKeySchema } from "@repo/app-validation/schemas";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
@@ -19,7 +21,10 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
-import { createOrgApiKeyMutationOptions } from "./org-api-key-queries";
+import type { z } from "zod";
+import { orgApiKeyListQueryKey } from "./org-api-key-cache";
+
+type CreateOrgApiKeyInput = z.infer<typeof createOrgApiKeySchema>;
 
 export function OrgApiKeyCreate() {
   const { has, isLoaded } = useAuth();
@@ -45,12 +50,16 @@ export function OrgApiKeyCreate() {
     setName("");
   }, []);
 
-  const createMutation = useMutation(
-    createOrgApiKeyMutationOptions({
-      onCreated: handleCreated,
-      queryClient,
-    })
-  );
+  const createMutation = useMutation({
+    meta: { errorTitle: "Failed to create API key" },
+    mutationFn: (data: CreateOrgApiKeyInput) => createOrgApiKey({ data }),
+    onSuccess: (data) => {
+      handleCreated(data.key ?? null);
+      void queryClient.invalidateQueries({
+        queryKey: orgApiKeyListQueryKey,
+      });
+    },
+  });
 
   const handleCreate = useCallback(() => {
     const trimmed = name.trim();

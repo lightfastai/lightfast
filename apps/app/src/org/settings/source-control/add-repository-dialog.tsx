@@ -1,10 +1,11 @@
+import { importSourceControlRepository } from "@api/app/tanstack/source-control";
 import {
   GitBranchIcon as GitBranch,
   Loading03Icon as Loader2,
   Search01Icon as Search,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { LIGHTFAST_REPOSITORY_NAME } from "@repo/app-setup-contract";
+import { LIGHTFAST_REPOSITORY_NAME } from "@repo/api-contract";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -20,9 +21,11 @@ import { Input } from "@repo/ui/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
-  importSourceControlRepositoryMutationOptions,
   type SourceControlRepositoryRow,
-} from "./source-control-queries";
+  sourceControlConnectionFromRepositories,
+  sourceControlConnectionQueryKey,
+  sourceControlRepositoriesQueryKey,
+} from "./source-control-cache";
 
 export function AddRepositoryDialog({
   disabled,
@@ -38,16 +41,21 @@ export function AddRepositoryDialog({
     string | null
   >(null);
 
-  const importRepository = useMutation(
-    importSourceControlRepositoryMutationOptions({
-      onImported: () => {
-        setSelectedRepositoryId(null);
-        setSearch("");
-        setIsOpen(false);
-      },
-      queryClient,
-    })
-  );
+  const importRepository = useMutation({
+    meta: { errorTitle: "Failed to add repository" },
+    mutationFn: (data: { repositoryId: string }) =>
+      importSourceControlRepository({ data }),
+    onSuccess: (data) => {
+      queryClient.setQueryData(sourceControlRepositoriesQueryKey, data);
+      queryClient.setQueryData(
+        sourceControlConnectionQueryKey,
+        sourceControlConnectionFromRepositories(data)
+      );
+      setSelectedRepositoryId(null);
+      setSearch("");
+      setIsOpen(false);
+    },
+  });
 
   const selectableRepositories = useMemo(
     () =>

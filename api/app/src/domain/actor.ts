@@ -1,4 +1,4 @@
-import type { ApiKeyAuthResult } from "../auth/api-key";
+import type { McpScope } from "@repo/api-contract";
 import type { AuthIdentity, OrgGate } from "../auth/identity";
 import { AuthzError } from "./errors";
 
@@ -13,6 +13,7 @@ export type Actor =
     }
   | {
       client: "cli" | "desktop";
+      clientId: string;
       kind: "nativeClient";
       orgId: string;
       source: "cli" | "desktop-main";
@@ -31,7 +32,7 @@ export type Actor =
       grantId: string;
       kind: "mcpClient";
       orgId: string;
-      scopes: string[];
+      scopes: McpScope[];
       userId: string;
     }
   | {
@@ -83,19 +84,5 @@ export function actorFromAuthIdentity(
     orgId: identity.orgId,
     source,
     userId: identity.userId,
-  };
-}
-
-export function actorFromApiKeyAuth(
-  auth: ApiKeyAuthResult,
-  scopes: string[] = []
-): Actor {
-  return {
-    createdByUserId: auth.identity.userId,
-    keyId: auth.apiKeyId,
-    kind: "apiKey",
-    orgGate: auth.identity.orgGate,
-    orgId: auth.identity.orgId,
-    scopes,
   };
 }

@@ -8,6 +8,7 @@ export default defineConfig({
   bundle: true,
   noExternal: [
     "@lightfast/connector-core",
+    "@repo/api-contract",
     "@repo/native-auth-contract",
     "@repo/native-auth-node",
     "@t3-oss/env-core",

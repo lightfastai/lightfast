@@ -1,3 +1,8 @@
+import { listUserOrganizations } from "@api/app/tanstack/organizations";
+import {
+  type CreateSignalInput,
+  createSignal,
+} from "@api/app/tanstack/signals";
 import { Loading03Icon as Loader2 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { SIGNAL_INPUT_MAX_LENGTH } from "@repo/api-contract";
@@ -16,8 +21,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "@tanstack/react-router";
 import type { ChangeEvent, FormEvent, KeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
-import { listUserOrganizationsQueryOptions } from "~/organization/organization-queries";
-import { createSignalMutationOptions } from "./signals-queries";
+import {
+  ORGANIZATION_STALE_TIME,
+  organizationQueryKeys,
+} from "~/organization/organization-cache";
 
 interface SignalCreateDialogProps {
   onOpenChange: (open: boolean) => void;
@@ -106,7 +113,10 @@ export function SignalCreateDialog({
   const { pathname } = useLocation();
   const slug = getPathSlug(pathname);
   const { data: organizations = [] } = useQuery({
-    ...listUserOrganizationsQueryOptions({ enabled: open }),
+    enabled: open && typeof window !== "undefined",
+    queryFn: () => listUserOrganizations(),
+    queryKey: organizationQueryKeys.list(),
+    staleTime: ORGANIZATION_STALE_TIME,
   });
   const org = slug
     ? (organizations.find((organization) => organization.slug === slug) ?? null)
@@ -124,22 +134,25 @@ export function SignalCreateDialog({
   const formattedInputLength = inputLength.toLocaleString();
   const formattedInputLimit = SIGNAL_INPUT_MAX_LENGTH.toLocaleString();
 
-  const createMutation = useMutation(
-    createSignalMutationOptions({
-      draftStorageKey,
-      onClose: () => onOpenChange(false),
-      onCreateMore: () =>
-        requestAnimationFrame(() => textareaRef.current?.focus()),
-      queryClient,
-      removeDraft: removeSignalDraft,
-      resetInput: () => setInput(""),
-      shouldCreateMore: () => createMore,
-      toastSuccess: () =>
-        toast.success("Signal queued", {
-          description: "Classification will start shortly.",
-        }),
-    })
-  );
+  const createMutation = useMutation({
+    meta: { errorTitle: "Failed to create signal" },
+    mutationFn: (data: CreateSignalInput) => createSignal({ data }),
+    onSuccess: () => {
+      removeSignalDraft(draftStorageKey);
+      void queryClient.invalidateQueries({
+        queryKey: ["signals"] as const,
+      });
+      toast.success("Signal queued", {
+        description: "Classification will start shortly.",
+      });
+      setInput("");
+      if (createMore) {
+        requestAnimationFrame(() => textareaRef.current?.focus());
+        return;
+      }
+      onOpenChange(false);
+    },
+  });
 
   useEffect(() => {
     setCreateMore(readCreateMore());

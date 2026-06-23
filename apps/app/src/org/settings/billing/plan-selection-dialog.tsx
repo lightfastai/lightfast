@@ -11,7 +11,7 @@ import {
 } from "@repo/ui/components/ui/dialog";
 import { cn } from "@repo/ui/lib/utils";
 
-import type { BillingPlan } from "./billing-queries";
+import type { BillingPlan } from "./billing-view-model";
 
 export function PlanSelectionDialog({
   currentTier,

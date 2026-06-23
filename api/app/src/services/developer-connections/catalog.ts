@@ -1,19 +1,65 @@
 import type { Database, DeveloperConnection } from "@db/app";
 import { listCurrentDeveloperConnections } from "@db/app";
-import {
-  DEVELOPER_CONNECTION_CATALOG,
-  type DeveloperConnectionProvider,
-} from "@repo/developer-connection-contract";
-import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
+import type {
+  DeveloperConnectionCatalogStatus,
+  DeveloperConnectionProvider,
+} from "@repo/api-contract";
 
 interface DeveloperConnectionServiceContext {
-  auth: AuthContext;
   db: Database;
+  organization: {
+    orgId: string;
+  };
+  viewer: {
+    canManage: boolean;
+  };
 }
 
 type ConnectAvailability =
   | { status: "available" }
   | { status: "unavailable"; reason: "coming_soon" | "permission_required" };
+
+const DEVELOPER_CONNECTION_CATALOG = [
+  {
+    provider: "pscale",
+    displayName: "PlanetScale",
+    description: "Provision and inspect PlanetScale development databases.",
+    builder: "Lightfast",
+    category: "Database",
+    catalogStatus: "available",
+  },
+  {
+    provider: "upstash",
+    displayName: "Upstash",
+    description: "Provision and inspect Upstash Redis development resources.",
+    builder: "Lightfast",
+    category: "Infrastructure",
+    catalogStatus: "available",
+  },
+  {
+    provider: "sentry",
+    displayName: "Sentry",
+    description: "Inspect Sentry issues and manage release artifacts.",
+    builder: "Lightfast",
+    category: "Observability",
+    catalogStatus: "available",
+  },
+  {
+    provider: "clerk",
+    displayName: "Clerk",
+    description: "Inspect and manage a connected Clerk instance.",
+    builder: "Lightfast",
+    category: "Authentication",
+    catalogStatus: "available",
+  },
+] as const satisfies ReadonlyArray<{
+  provider: DeveloperConnectionProvider;
+  displayName: string;
+  description: string;
+  builder: "Lightfast";
+  category: string;
+  catalogStatus: DeveloperConnectionCatalogStatus;
+}>;
 
 export interface DeveloperConnectionCatalogRow {
   builder: "Lightfast";
@@ -33,20 +79,6 @@ export interface DeveloperConnectionCatalogRow {
   description: string;
   displayName: string;
   provider: DeveloperConnectionProvider;
-}
-
-export function canManageDeveloperConnections(
-  ctx: DeveloperConnectionServiceContext
-) {
-  const identity = ctx.auth.identity;
-  const access = ctx.auth.access;
-  return (
-    identity.type === "active" &&
-    access?.kind === "clerk-session" &&
-    access.userId === identity.userId &&
-    access.orgId === identity.orgId &&
-    access.has({ role: "org:admin" })
-  );
 }
 
 function availabilityFor(canManage: boolean): ConnectAvailability {
@@ -74,18 +106,13 @@ function shapeConnection(connection: DeveloperConnection | undefined) {
 export async function listDeveloperConnectionsForOrg(
   ctx: DeveloperConnectionServiceContext
 ): Promise<DeveloperConnectionCatalogRow[]> {
-  const identity = ctx.auth.identity;
-  if (identity.type !== "active") {
-    return [];
-  }
-
   const connections = await listCurrentDeveloperConnections(ctx.db, {
-    clerkOrgId: identity.orgId,
+    clerkOrgId: ctx.organization.orgId,
   });
   const byProvider = new Map<DeveloperConnectionProvider, DeveloperConnection>(
     connections.map((connection) => [connection.provider, connection])
   );
-  const canManage = canManageDeveloperConnections(ctx);
+  const canManage = ctx.viewer.canManage;
 
   return DEVELOPER_CONNECTION_CATALOG.map((catalogItem) => ({
     ...catalogItem,

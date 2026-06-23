@@ -1,4 +1,4 @@
-import { refreshSkillIndexSource } from "../../services/skills";
+import { refreshSkillIndexSource } from "../../services/skills/refresh";
 import { inngest } from "../client";
 import { appEvents } from "../schemas/app";
 

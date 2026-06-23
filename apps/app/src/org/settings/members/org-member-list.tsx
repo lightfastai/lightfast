@@ -1,3 +1,9 @@
+import {
+  listOrgMembers,
+  removeOrgMember as removeOrgMemberServerFn,
+  revokeOrgInvitation,
+  updateOrgMemberRole,
+} from "@api/app/tanstack/org-members";
 import { useAuth } from "@clerk/tanstack-react-start";
 import {
   Mail01Icon as Mail,
@@ -8,6 +14,11 @@ import {
   UserGroupIcon as Users,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import type {
+  removeOrgMemberSchema,
+  revokeOrgInvitationSchema,
+  updateOrgMemberRoleSchema,
+} from "@repo/app-validation/schemas";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
@@ -29,25 +40,24 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import { memo, type ReactNode, useCallback, useMemo } from "react";
+import type { z } from "zod";
 import {
   isOptimisticInvitation,
   type OrgInvitation,
   type OrgMember,
   type OrgMembersData,
   type OrgRole,
+  orgMemberListQueryKey,
   removeInvitation,
   removeMember,
   restoreInvitation,
   restoreMember,
   updateMemberRole,
 } from "./org-member-cache";
-import {
-  orgMemberQueryKeys,
-  orgMembersQueryOptions,
-  removeOrgMemberMutationOptions,
-  revokeOrgInvitationMutationOptions,
-  updateOrgMemberRoleMutationOptions,
-} from "./org-member-queries";
+
+type UpdateOrgMemberRoleInput = z.infer<typeof updateOrgMemberRoleSchema>;
+type RemoveOrgMemberInput = z.infer<typeof removeOrgMemberSchema>;
+type RevokeOrgInvitationInput = z.infer<typeof revokeOrgInvitationSchema>;
 
 function initials(name: string) {
   const letters = name
@@ -139,13 +149,18 @@ export function OrgMemberList({ searchQuery = "" }: { searchQuery?: string }) {
   const { has, isLoaded, orgId } = useAuth();
   const canManageMembers = isLoaded && !!has?.({ role: "org:admin" });
   const queryClient = useQueryClient();
-  const listQueryKey = orgMemberQueryKeys.list(orgId);
+  const listQueryKey = orgMemberListQueryKey(orgId);
 
   const { data, error, isLoading } = useQuery({
-    ...orgMembersQueryOptions({ orgId }),
+    enabled: Boolean(orgId),
+    queryFn: () => listOrgMembers(),
+    queryKey: listQueryKey,
+    staleTime: 5 * 60 * 1000,
   });
   const updateRoleMutation = useMutation({
-    ...updateOrgMemberRoleMutationOptions(),
+    meta: { errorTitle: "Failed to update role" },
+    mutationFn: (data: UpdateOrgMemberRoleInput) =>
+      updateOrgMemberRole({ data }),
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: listQueryKey });
 
@@ -179,7 +194,9 @@ export function OrgMemberList({ searchQuery = "" }: { searchQuery?: string }) {
       void queryClient.invalidateQueries({ queryKey: listQueryKey }),
   });
   const removeMutation = useMutation({
-    ...removeOrgMemberMutationOptions(),
+    meta: { errorTitle: "Failed to remove member" },
+    mutationFn: (data: RemoveOrgMemberInput) =>
+      removeOrgMemberServerFn({ data }),
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: listQueryKey });
 
@@ -213,7 +230,9 @@ export function OrgMemberList({ searchQuery = "" }: { searchQuery?: string }) {
       void queryClient.invalidateQueries({ queryKey: listQueryKey }),
   });
   const revokeInvitationMutation = useMutation({
-    ...revokeOrgInvitationMutationOptions(),
+    meta: { errorTitle: "Failed to revoke invitation" },
+    mutationFn: (data: RevokeOrgInvitationInput) =>
+      revokeOrgInvitation({ data }),
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: listQueryKey });
 

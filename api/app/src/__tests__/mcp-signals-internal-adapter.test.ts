@@ -1,18 +1,25 @@
+import { signServiceJWT } from "@repo/service-jwt";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { NotFoundError } from "../domain/errors";
-import { signServiceJWT } from "../service-jwt";
 
 const mocks = vi.hoisted(() => ({
   assertHostedMcpOrgAccess: vi.fn(),
-  createSignalCommandDeps: vi.fn(() => ({ kind: "createDeps" })),
+  createAndQueueSignal: vi.fn(),
   createSignalCommandRun: vi.fn(),
-  getSignalCommandDeps: vi.fn(() => ({ kind: "getDeps" })),
+  getVisibleSignalByPublicId: vi.fn(),
   getSignalCommandRun: vi.fn(),
+  isSignalCreateQueueError: vi.fn(),
+  listSignalEntityLinksForSignal: vi.fn(),
 }));
 
 vi.mock("@db/app/client", () => ({
   db: {},
+}));
+
+vi.mock("@db/app", () => ({
+  getVisibleSignalByPublicId: mocks.getVisibleSignalByPublicId,
+  listSignalEntityLinksForSignal: mocks.listSignalEntityLinksForSignal,
 }));
 
 vi.mock("../mcp-oauth/resource-access", () => ({
@@ -23,11 +30,14 @@ vi.mock("../domain/signals", () => ({
   createSignalCommand: {
     run: mocks.createSignalCommandRun,
   },
-  createSignalCommandDeps: mocks.createSignalCommandDeps,
   getSignalCommand: {
     run: mocks.getSignalCommandRun,
   },
-  getSignalCommandDeps: mocks.getSignalCommandDeps,
+}));
+
+vi.mock("../signals/create-signal", () => ({
+  createAndQueueSignal: mocks.createAndQueueSignal,
+  isSignalCreateQueueError: mocks.isSignalCreateQueueError,
 }));
 
 const {
@@ -156,7 +166,7 @@ describe("MCP signal internal adapter", () => {
 
     const response = await handleCreateMcpSignalInternalRequest(
       jsonRequest({
-        body: { actor, input: "hello" },
+        body: { actor, input: "hello", scopes: ["mcp:signals:write"] },
         token: await serviceToken(),
       })
     );
@@ -177,7 +187,7 @@ describe("MCP signal internal adapter", () => {
 
     const response = await handleGetMcpSignalInternalRequest(
       jsonRequest({
-        body: { actor, id: invisibleSignalId },
+        body: { actor, id: invisibleSignalId, scopes: ["mcp:signals:read"] },
         token: await serviceToken(),
       })
     );
@@ -193,7 +203,7 @@ describe("MCP signal internal adapter", () => {
   it("creates signals through the domain command as an apps-mcp service caller", async () => {
     const response = await handleCreateMcpSignalInternalRequest(
       jsonRequest({
-        body: { actor, input: "hello" },
+        body: { actor, input: "hello", scopes: ["mcp:signals:write"] },
         token: await serviceToken(),
       })
     );
@@ -204,7 +214,6 @@ describe("MCP signal internal adapter", () => {
       status: "queued",
       visibilityScope: "user",
     });
-    expect(mocks.createSignalCommandDeps).toHaveBeenCalledWith({ db: {} });
     expect(mocks.createSignalCommandRun).toHaveBeenCalledWith({
       ctx: {
         actor: {
@@ -212,13 +221,16 @@ describe("MCP signal internal adapter", () => {
           grantId: "grant_1",
           kind: "mcpClient",
           orgId: "org_1",
-          scopes: [],
+          scopes: ["mcp:signals:write"],
           userId: "user_1",
         },
         caller: { kind: "service", service: "apps-mcp" },
         request: { id: expect.any(String), source: "mcp" },
       },
-      deps: { kind: "createDeps" },
+      deps: expect.objectContaining({
+        createAndQueueSignal: expect.any(Function),
+        isSignalCreateQueueError: mocks.isSignalCreateQueueError,
+      }),
       input: { input: "hello" },
     });
   });
@@ -226,7 +238,7 @@ describe("MCP signal internal adapter", () => {
   it("gets signals through the domain command and maps public MCP output", async () => {
     const response = await handleGetMcpSignalInternalRequest(
       jsonRequest({
-        body: { actor, id: invisibleSignalId },
+        body: { actor, id: invisibleSignalId, scopes: ["mcp:signals:read"] },
         token: await serviceToken(),
       })
     );
@@ -242,7 +254,6 @@ describe("MCP signal internal adapter", () => {
       updatedAt: "2026-05-27T01:01:00.000Z",
       visibilityScope: "user",
     });
-    expect(mocks.getSignalCommandDeps).toHaveBeenCalledWith({ db: {} });
     expect(mocks.getSignalCommandRun).toHaveBeenCalledWith({
       ctx: {
         actor: {
@@ -250,13 +261,16 @@ describe("MCP signal internal adapter", () => {
           grantId: "grant_1",
           kind: "mcpClient",
           orgId: "org_1",
-          scopes: [],
+          scopes: ["mcp:signals:read"],
           userId: "user_1",
         },
         caller: { kind: "service", service: "apps-mcp" },
         request: { id: expect.any(String), source: "mcp" },
       },
-      deps: { kind: "getDeps" },
+      deps: expect.objectContaining({
+        getVisibleSignalByPublicId: expect.any(Function),
+        listSignalEntityLinksForSignal: expect.any(Function),
+      }),
       input: { publicId: invisibleSignalId },
     });
   });
@@ -268,7 +282,7 @@ describe("MCP signal internal adapter", () => {
 
     const response = await handleGetMcpSignalInternalRequest(
       jsonRequest({
-        body: { actor, id: invisibleSignalId },
+        body: { actor, id: invisibleSignalId, scopes: ["mcp:signals:read"] },
         token: await serviceToken(),
       })
     );

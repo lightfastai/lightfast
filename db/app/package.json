@@ -48,7 +48,6 @@
     "@repo/ai": "workspace:*",
     "@repo/api-contract": "workspace:*",
     "@repo/app-validation": "workspace:*",
-    "@repo/developer-connection-contract": "workspace:*",
     "@repo/entity-graph-contract": "workspace:*",
     "@repo/entity-resolution": "workspace:*",
     "@repo/identity-contract": "workspace:*",

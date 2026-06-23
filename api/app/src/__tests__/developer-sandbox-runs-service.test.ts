@@ -46,27 +46,8 @@ const { createDeveloperSandboxRunService } = await import(
 
 function ctx() {
   return {
-    auth: {
-      identity: {
-        type: "active" as const,
-        userId: "user_admin",
-        orgId: "org_acme",
-        orgGate: {
-          bindingStatus: "bound" as const,
-          nextSetupRequirement: null,
-        },
-      },
-    },
-    db: {} as Database,
-  };
-}
-
-function unauthenticatedCtx() {
-  return {
-    auth: {
-      identity: { type: "unauthenticated" as const },
-    },
-    db: {} as Database,
+    actor: { userId: "user_admin" },
+    organization: { orgId: "org_acme" },
   };
 }
 
@@ -277,20 +258,6 @@ describe("developer sandbox run service", () => {
     expect(issueAllEnabledDeveloperConnectionLeasesMock).not.toHaveBeenCalled();
   });
 
-  it("throws a domain authz error when creating without an active identity", async () => {
-    const fakeRuntime = runtime();
-    const service = createService(fakeRuntime);
-
-    await expect(
-      service.createDeveloperSandboxRun(unauthenticatedCtx())
-    ).rejects.toThrowError(
-      expect.objectContaining({
-        code: "AUTH_REQUIRED",
-        kind: "authz",
-      })
-    );
-  });
-
   it("throws a domain not-found error when a sandbox run cannot be loaded", async () => {
     getDeveloperSandboxRunByPublicIdMock.mockResolvedValueOnce(undefined);
     const fakeRuntime = runtime();
@@ -356,7 +323,17 @@ describe("developer sandbox run service", () => {
       stdout: "[redacted] ok\n",
     });
 
-    expect(issueAllEnabledDeveloperConnectionLeasesMock).toHaveBeenCalled();
+    expect(issueAllEnabledDeveloperConnectionLeasesMock).toHaveBeenCalledWith(
+      {
+        actor: { userId: "user_admin" },
+        db: expect.anything(),
+        organization: { orgId: "org_acme" },
+      },
+      {
+        sandboxRunId: "developer_sandbox_run_1",
+        workflowRunId: null,
+      }
+    );
     expect(fakeRuntime.calls.writeFiles).toEqual([
       [
         {
@@ -406,9 +383,16 @@ describe("developer sandbox run service", () => {
     expect(issueAllEnabledDeveloperConnectionLeasesMock).not.toHaveBeenCalled();
     expect(
       materializeDeveloperConnectionLeasesForSandboxRunMock
-    ).toHaveBeenCalledWith(expect.anything(), {
-      sandboxRunId: "developer_sandbox_run_1",
-    });
+    ).toHaveBeenCalledWith(
+      {
+        actor: { userId: "user_admin" },
+        db: expect.anything(),
+        organization: { orgId: "org_acme" },
+      },
+      {
+        sandboxRunId: "developer_sandbox_run_1",
+      }
+    );
   });
 
   it("reissues credentials when a loaded run has no active leases left", async () => {
@@ -428,7 +412,11 @@ describe("developer sandbox run service", () => {
     });
 
     expect(issueAllEnabledDeveloperConnectionLeasesMock).toHaveBeenCalledWith(
-      expect.anything(),
+      {
+        actor: { userId: "user_admin" },
+        db: expect.anything(),
+        organization: { orgId: "org_acme" },
+      },
       {
         sandboxRunId: "developer_sandbox_run_1",
         workflowRunId: null,

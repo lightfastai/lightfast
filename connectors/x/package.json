@@ -6,6 +6,10 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
+    "./contract": {
+      "types": "./src/contract.ts",
+      "default": "./src/contract.ts"
+    },
     "./mcp": {
       "types": "./src/mcp.ts",
       "default": "./src/mcp.ts"
@@ -34,7 +38,6 @@
   },
   "dependencies": {
     "@lightfast/connector-core": "workspace:*",
-    "@vendor/mcp": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {

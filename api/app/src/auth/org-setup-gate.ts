@@ -10,7 +10,7 @@ import {
   githubLightfastRepositoryProofSchema,
   LIGHTFAST_REPOSITORY_NAME,
   type OrgSetupGate,
-} from "@repo/app-setup-contract";
+} from "@repo/api-contract";
 
 export interface MatchingGitHubLightfastRepository {
   fullName: GitHubLightfastRepositoryProof["fullName"];

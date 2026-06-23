@@ -5,7 +5,7 @@ import {
   Unlink02Icon as Unplug,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { LIGHTFAST_REPOSITORY_NAME } from "@repo/app-setup-contract";
+import { LIGHTFAST_REPOSITORY_NAME } from "@repo/api-contract";
 import { Icons } from "@repo/ui/components/icons";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
@@ -22,8 +22,8 @@ import {
 } from "@repo/ui-v2/components/ui/dropdown-menu";
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import type { SourceControlConnection } from "./source-control-cache";
 import { displayValue, formatStatusSubtitle } from "./source-control-format";
-import type { SourceControlConnection } from "./source-control-queries";
 
 const IMMUTABLE_CONNECTION_TOOLTIP =
   "Connection is set up once and can't be disconnected.";

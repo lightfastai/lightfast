@@ -4,7 +4,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const jwtSecret = "test-service-jwt-secret-at-least-32-chars";
 
 async function importAdapter() {
-  vi.stubEnv("MCP_AUTH_ISSUER", "https://lightfast.ai");
+  vi.stubEnv("APP_INTERNAL_URL", "https://app-internal.lightfast.ai");
+  vi.stubEnv("MCP_AUTH_ISSUER", "https://issuer.lightfast.ai");
   vi.stubEnv("MCP_RESOURCE_URL", "https://mcp.lightfast.ai/mcp");
   vi.stubEnv("SERVICE_JWT_SECRET", jwtSecret);
   return await import("../tools/app-proxy-intake");
@@ -13,6 +14,7 @@ async function importAdapter() {
 const proxyContext = {
   actor: {
     orgId: "org_test",
+    scopes: ["mcp:provider_routines:read"],
     userId: "user_test",
   },
   log: {
@@ -73,7 +75,7 @@ describe("app proxy intake adapter", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://lightfast.ai/api/internal/mcp/proxy/find",
+      "https://app-internal.lightfast.ai/api/internal/mcp/proxy/find",
       expect.objectContaining({
         method: "POST",
       })
@@ -97,6 +99,7 @@ describe("app proxy intake adapter", () => {
         grantId: "mcp_grant_test",
         kind: "mcp",
         orgId: "org_test",
+        scopes: ["mcp:provider_routines:read"],
         userId: "user_test",
       },
       input: {
@@ -141,11 +144,30 @@ describe("app proxy intake adapter", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://lightfast.ai/api/internal/mcp/proxy/call",
+      "https://app-internal.lightfast.ai/api/internal/mcp/proxy/call",
       expect.objectContaining({
         method: "POST",
       })
     );
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toEqual({
+      actor: {
+        clientId: "mcp_client_test",
+        grantId: "mcp_grant_test",
+        kind: "mcp",
+        orgId: "org_test",
+        scopes: ["mcp:provider_routines:read"],
+        userId: "user_test",
+      },
+      input: {
+        input: { query: "ABC" },
+        routineId: "linear__list_issues",
+      },
+      scopes: {
+        providerRoutineRead: true,
+        providerRoutineWrite: false,
+      },
+    });
   });
 
   it("preserves app-side provider routine failures", async () => {

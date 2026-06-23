@@ -1,4 +1,4 @@
-import { providerRoutineId } from "@lightfast/connector-core/provider-routines";
+import { providerRoutineId } from "@repo/api-contract";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const loadConnectorRuntimeToolsMock = vi.fn();

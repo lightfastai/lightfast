@@ -1,3 +1,4 @@
+import { listOrgMembers } from "@api/app/tanstack/org-members";
 import { useAuth } from "@clerk/tanstack-react-start";
 import {
   Key01Icon as KeyRound,
@@ -10,7 +11,7 @@ import {
   AvatarImage,
 } from "@repo/ui/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
-import { orgMembersQueryOptions } from "~/org/settings/members/org-member-queries";
+import { orgMemberListQueryKey } from "~/org/settings/members/org-member-cache";
 import type { SignalListItem } from "./signals-model";
 
 function deriveInitials(name: string) {
@@ -39,7 +40,10 @@ export function SignalCreatorAvatar({
 }) {
   const { orgId } = useAuth();
   const { data } = useQuery({
-    ...orgMembersQueryOptions({ orgId }),
+    enabled: Boolean(orgId),
+    queryFn: () => listOrgMembers(),
+    queryKey: orgMemberListQueryKey(orgId),
+    staleTime: 5 * 60 * 1000,
   });
 
   if (signal.createdByApiKeyId) {

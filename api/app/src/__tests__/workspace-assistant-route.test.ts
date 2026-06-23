@@ -31,8 +31,11 @@ vi.mock("../auth/identity", () => ({
   resolveIdentityFromClerk: resolveIdentityFromClerkMock,
 }));
 
-vi.mock("@api/app/services/skills", () => ({
+vi.mock("../services/skills/read", () => ({
   getSkillIndexSnapshot: getSkillIndexSnapshotMock,
+}));
+
+vi.mock("../services/skills/eligibility", () => ({
   getVerifiedLightfastSkillSourceRepositoryId:
     getVerifiedLightfastSkillSourceRepositoryIdMock,
 }));
@@ -83,26 +86,23 @@ vi.mock("@repo/ai/workspace-assistant", async () => {
   };
 });
 
-vi.mock("@lightfast/connector-core/provider-routines", () => ({
+vi.mock("@repo/api-contract", () => ({
   providerRoutineCallInputSchema: { kind: "provider-call-input" },
   providerRoutineCallSuccessSchema: { kind: "provider-call-success" },
   providerRoutineFindInputSchema: { kind: "provider-find-input" },
   providerRoutineFindOutputSchema: { kind: "provider-find-output" },
-}));
-
-vi.mock("@api/app/services/connectors/chat-routines", () => ({
-  callChatProviderRoutine: callProviderRoutineMock,
-  findChatProviderRoutines: findProviderRoutinesMock,
-}));
-
-vi.mock("@repo/user-connector-contract", () => ({
   userConnectorCallInputSchema: { kind: "user-connector-call-input" },
   userConnectorCallSuccessSchema: { kind: "user-connector-call-success" },
   userConnectorFindInputSchema: { kind: "user-connector-find-input" },
   userConnectorFindOutputSchema: { kind: "user-connector-find-output" },
 }));
 
-vi.mock("@api/app/services/user-connectors/runtime", () => ({
+vi.mock("../services/connectors/chat-routines", () => ({
+  callChatProviderRoutine: callProviderRoutineMock,
+  findChatProviderRoutines: findProviderRoutinesMock,
+}));
+
+vi.mock("../services/user-connectors/runtime", () => ({
   callUserConnectorTool: callUserConnectorToolMock,
   findUserConnectorTools: findUserConnectorToolsMock,
 }));

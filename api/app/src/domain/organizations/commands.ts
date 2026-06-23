@@ -1,28 +1,8 @@
 import type { Database } from "@db/app";
-import {
-  deletePreClerkNamespaceReservation,
-  finalizeNamespaceOperation,
-  markNamespaceOperationClerkApplied,
-  NamespaceConflictError,
-  reserveNamespaceForOperation,
-  startNamespaceOperation,
-} from "@db/app";
+import type { OrgSetupGate } from "@repo/api-contract";
 import { clerkOrgSlugSchema } from "@repo/app-validation";
-import { clerkClient } from "@vendor/clerk/server";
-import { parseError } from "@vendor/observability/error/next";
-import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
 
-import {
-  isClerkConflictError,
-  isClerkOrganizationDomainsNotEnabled,
-} from "../../auth/clerk-errors";
-import { listUserOrganizationMemberships } from "../../auth/clerk-org-membership";
-import {
-  getOrgAccessBySlug,
-  isOrgAccessError,
-  orgInitials,
-} from "../../auth/organization-access";
 import { defineCommand } from "../command";
 import { ConflictError, InternalDomainError, NotFoundError } from "../errors";
 import {
@@ -31,116 +11,151 @@ import {
   requireClerkUserActor,
 } from "../gates";
 
-type ClerkClient = Awaited<ReturnType<typeof clerkClient>>;
-type OrganizationMembership = Awaited<
-  ReturnType<typeof listUserOrganizationMemberships>
->[number];
-
 const AUTO_JOIN_DOMAIN_ENROLLMENT_MODE = "automatic_invitation" as const;
 const MAX_ORGANIZATION_DOMAINS = 10;
 const DOMAIN_PATTERN =
   /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 
-type ClerkOrganizationClient = Pick<
-  ClerkClient["organizations"],
-  | "createOrganization"
-  | "createOrganizationDomain"
-  | "deleteOrganizationDomain"
-  | "getOrganization"
-  | "getOrganizationDomainList"
-  | "updateOrganization"
-  | "updateOrganizationDomain"
->;
-type ClerkOrganizationDomain = Awaited<
-  ReturnType<ClerkOrganizationClient["getOrganizationDomainList"]>
->["data"][number];
-
-interface OrganizationCommandDeps {
-  clerk: { organizations: ClerkOrganizationClient };
-  db: Database;
-  deletePreClerkNamespaceReservation: typeof deletePreClerkNamespaceReservation;
-  finalizeNamespaceOperation: typeof finalizeNamespaceOperation;
-  getOrgAccessBySlug: typeof getOrgAccessBySlug;
-  isClerkConflictError: typeof isClerkConflictError;
-  isClerkOrganizationDomainsNotEnabled: typeof isClerkOrganizationDomainsNotEnabled;
-  listUserOrganizationMemberships: typeof listUserOrganizationMemberships;
-  log: Pick<typeof log, "error" | "info" | "warn">;
-  markNamespaceOperationClerkApplied: typeof markNamespaceOperationClerkApplied;
-  reserveNamespaceForOperation: typeof reserveNamespaceForOperation;
-  startNamespaceOperation: typeof startNamespaceOperation;
+interface OrganizationMembership {
+  organization: {
+    id: string;
+    imageUrl: string;
+    name: string;
+    slug: string | null;
+  };
+  role: string;
 }
 
-export function createDefaultOrganizationCommandDeps(input: {
+export type OrganizationAccess = OrgSetupGate & {
+  org: {
+    id: string;
+    imageUrl: string;
+    initials: string;
+    name: string;
+    slug: string;
+  };
+  role: string;
+};
+
+interface ClerkOrganizationDomain {
+  enrollmentMode?: string | null;
+  id: string;
+  name: string;
+  verification?: { status?: string | null } | null;
+}
+
+interface ClerkOrganizationClient {
+  createOrganization(input: {
+    createdBy: string;
+    name: string;
+    slug: string;
+  }): Promise<{ id: string; slug?: string | null }>;
+  createOrganizationDomain(input: {
+    enrollmentMode: typeof AUTO_JOIN_DOMAIN_ENROLLMENT_MODE;
+    name: string;
+    organizationId: string;
+    verified: true;
+  }): Promise<unknown>;
+  deleteOrganizationDomain(input: {
+    domainId: string;
+    organizationId: string;
+  }): Promise<unknown>;
+  getOrganization(input: { slug: string }): Promise<{ id: string }>;
+  getOrganizationDomainList(input: {
+    limit: number;
+    organizationId: string;
+  }): Promise<{ data: ClerkOrganizationDomain[] }>;
+  updateOrganization(
+    organizationId: string,
+    input: { name: string; slug: string }
+  ): Promise<unknown>;
+  updateOrganizationDomain(input: {
+    domainId: string;
+    enrollmentMode: typeof AUTO_JOIN_DOMAIN_ENROLLMENT_MODE;
+    organizationId: string;
+    verified: true;
+  }): Promise<unknown>;
+}
+
+type NamespaceConflictCode =
+  | "HANDLE_ALREADY_CLAIMED"
+  | "IDEMPOTENCY_KEY_REUSED"
+  | "OWNER_ALREADY_CLAIMED"
+  | "OWNER_NAMESPACE_IN_PROGRESS"
+  | "OWNER_MISMATCH";
+
+interface NamespaceOperation {
+  clerkOrgId: string | null;
+  clerkUserId: string | null;
+  errorMessage?: string | null;
+  id: number;
+  operationType: string;
+  ownerKind: string;
+  status:
+    | "clerk_applied"
+    | "compensating"
+    | "failed"
+    | "finalized"
+    | "namespace_reserved"
+    | "started";
+  toHandle: string;
+}
+
+interface NamespaceConflictLike {
+  code: NamespaceConflictCode;
+}
+
+interface OrganizationLog {
+  error(message: string, metadata?: Record<string, unknown>): void;
+  info(message: string, metadata?: Record<string, unknown>): void;
+  warn(message: string, metadata?: Record<string, unknown>): void;
+}
+
+export interface OrganizationCommandDeps {
   clerk: { organizations: ClerkOrganizationClient };
   db: Database;
-  deletePreClerkNamespaceReservation?: typeof deletePreClerkNamespaceReservation;
-  finalizeNamespaceOperation?: typeof finalizeNamespaceOperation;
-  getOrgAccessBySlug?: typeof getOrgAccessBySlug;
-  isClerkConflictError?: typeof isClerkConflictError;
-  isClerkOrganizationDomainsNotEnabled?: typeof isClerkOrganizationDomainsNotEnabled;
-  listUserOrganizationMemberships?: typeof listUserOrganizationMemberships;
-  log?: Pick<typeof log, "error" | "info" | "warn">;
-  markNamespaceOperationClerkApplied?: typeof markNamespaceOperationClerkApplied;
-  reserveNamespaceForOperation?: typeof reserveNamespaceForOperation;
-  startNamespaceOperation?: typeof startNamespaceOperation;
-}): OrganizationCommandDeps;
-export function createDefaultOrganizationCommandDeps(input: {
-  clerk?: { organizations: ClerkOrganizationClient };
-  db: Database;
-  deletePreClerkNamespaceReservation?: typeof deletePreClerkNamespaceReservation;
-  finalizeNamespaceOperation?: typeof finalizeNamespaceOperation;
-  getOrgAccessBySlug?: typeof getOrgAccessBySlug;
-  isClerkConflictError?: typeof isClerkConflictError;
-  isClerkOrganizationDomainsNotEnabled?: typeof isClerkOrganizationDomainsNotEnabled;
-  listUserOrganizationMemberships?: typeof listUserOrganizationMemberships;
-  log?: Pick<typeof log, "error" | "info" | "warn">;
-  markNamespaceOperationClerkApplied?: typeof markNamespaceOperationClerkApplied;
-  reserveNamespaceForOperation?: typeof reserveNamespaceForOperation;
-  startNamespaceOperation?: typeof startNamespaceOperation;
-}): Promise<OrganizationCommandDeps>;
-export function createDefaultOrganizationCommandDeps(input: {
-  clerk?: { organizations: ClerkOrganizationClient };
-  db: Database;
-  deletePreClerkNamespaceReservation?: typeof deletePreClerkNamespaceReservation;
-  finalizeNamespaceOperation?: typeof finalizeNamespaceOperation;
-  getOrgAccessBySlug?: typeof getOrgAccessBySlug;
-  isClerkConflictError?: typeof isClerkConflictError;
-  isClerkOrganizationDomainsNotEnabled?: typeof isClerkOrganizationDomainsNotEnabled;
-  listUserOrganizationMemberships?: typeof listUserOrganizationMemberships;
-  log?: Pick<typeof log, "error" | "info" | "warn">;
-  markNamespaceOperationClerkApplied?: typeof markNamespaceOperationClerkApplied;
-  reserveNamespaceForOperation?: typeof reserveNamespaceForOperation;
-  startNamespaceOperation?: typeof startNamespaceOperation;
-}): OrganizationCommandDeps | Promise<OrganizationCommandDeps> {
-  const base = {
-    db: input.db,
-    deletePreClerkNamespaceReservation:
-      input.deletePreClerkNamespaceReservation ??
-      deletePreClerkNamespaceReservation,
-    finalizeNamespaceOperation:
-      input.finalizeNamespaceOperation ?? finalizeNamespaceOperation,
-    getOrgAccessBySlug: input.getOrgAccessBySlug ?? getOrgAccessBySlug,
-    isClerkConflictError: input.isClerkConflictError ?? isClerkConflictError,
-    isClerkOrganizationDomainsNotEnabled:
-      input.isClerkOrganizationDomainsNotEnabled ??
-      isClerkOrganizationDomainsNotEnabled,
-    listUserOrganizationMemberships:
-      input.listUserOrganizationMemberships ?? listUserOrganizationMemberships,
-    log: input.log ?? log,
-    markNamespaceOperationClerkApplied:
-      input.markNamespaceOperationClerkApplied ??
-      markNamespaceOperationClerkApplied,
-    reserveNamespaceForOperation:
-      input.reserveNamespaceForOperation ?? reserveNamespaceForOperation,
-    startNamespaceOperation:
-      input.startNamespaceOperation ?? startNamespaceOperation,
-  };
-
-  if (input.clerk) {
-    return { ...base, clerk: input.clerk };
-  }
-
-  return Promise.resolve(clerkClient()).then((clerk) => ({ ...base, clerk }));
+  deletePreClerkNamespaceReservation(
+    db: Database,
+    operation: NamespaceOperation,
+    input: { errorCode: string; errorMessage: string }
+  ): Promise<NamespaceOperation>;
+  finalizeNamespaceOperation(
+    db: Database,
+    operation: NamespaceOperation
+  ): Promise<NamespaceOperation>;
+  getOrgAccessBySlug(input: {
+    db: Database;
+    slug: string;
+    userId: string;
+  }): Promise<OrganizationAccess>;
+  isClerkConflictError(error: unknown): boolean;
+  isClerkOrganizationDomainsNotEnabled(error: unknown): boolean;
+  isNamespaceConflictError(error: unknown): error is NamespaceConflictLike;
+  isOrgAccessError(error: unknown): boolean;
+  listUserOrganizationMemberships(input: {
+    userId: string;
+  }): Promise<OrganizationMembership[]>;
+  log: OrganizationLog;
+  markNamespaceOperationClerkApplied(
+    db: Database,
+    operation: NamespaceOperation,
+    input: { clerkOrgId: string }
+  ): Promise<NamespaceOperation>;
+  parseError(error: unknown): unknown;
+  reserveNamespaceForOperation(
+    db: Database,
+    operation: NamespaceOperation
+  ): Promise<NamespaceOperation>;
+  startNamespaceOperation(
+    db: Database,
+    input: {
+      clerkUserId: string;
+      idempotencyKey: string;
+      operationType: "create_org_slug";
+      ownerKind: "org";
+      toHandle: string;
+    }
+  ): Promise<NamespaceOperation>;
 }
 
 const listUserOrganizationsInput = z.object({}).strict();
@@ -158,9 +173,9 @@ const listUserOrganizationsOutput = z.custom<
 const getOrganizationBySlugInput = z.object({
   slug: clerkOrgSlugSchema,
 });
-const getOrganizationBySlugOutput = z.custom<Awaited<
-  ReturnType<typeof getOrgAccessBySlug>
-> | null>((value) => typeof value === "object" && value !== null);
+const getOrganizationBySlugOutput = z.custom<OrganizationAccess | null>(
+  (value) => typeof value === "object" && value !== null
+);
 
 const createOrganizationInput = z.object({
   idempotencyKey: z.string().min(1).max(128),
@@ -248,6 +263,16 @@ function mapMembership(membership: OrganizationMembership) {
   };
 }
 
+function orgInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
 function domainVerificationStatus(domain: ClerkOrganizationDomain) {
   return domain.verification?.status ?? "unverified";
 }
@@ -299,7 +324,7 @@ async function listOrganizationDomainsWithAvailability(
     if (deps.isClerkOrganizationDomainsNotEnabled(error)) {
       deps.log.warn("[organization] domains unavailable", {
         organizationId,
-        error: parseError(error),
+        error: deps.parseError(error),
       });
       return { domains: [], enabled: false };
     }
@@ -319,7 +344,7 @@ async function getOrganizationAccessBySlugOrThrow(input: {
       userId: input.userId,
     });
   } catch (error) {
-    if (isOrgAccessError(error)) {
+    if (input.deps.isOrgAccessError(error)) {
       throw new NotFoundError("ORG_NOT_FOUND", "Organization not found.", {
         slug: input.slug,
       });
@@ -338,7 +363,7 @@ function organizationConflict(handle: string, cause?: unknown) {
 }
 
 function namespaceConflictToDomainError(
-  error: NamespaceConflictError,
+  error: NamespaceConflictLike,
   handle: string
 ) {
   switch (error.code) {
@@ -401,7 +426,7 @@ export const getOrganizationBySlugCommand = defineCommand<
         userId: actor.userId,
       });
     } catch (error) {
-      if (isOrgAccessError(error)) {
+      if (deps.isOrgAccessError(error)) {
         throw new NotFoundError("ORG_NOT_FOUND", "Organization not found.", {
           slug: input.slug,
         });
@@ -638,14 +663,14 @@ export const createOrganizationCommand = defineCommand<
         throw error;
       }
 
-      if (error instanceof NamespaceConflictError) {
+      if (deps.isNamespaceConflictError(error)) {
         throw namespaceConflictToDomainError(error, slug);
       }
 
       deps.log.error("[organization] create failed", {
         slug,
         userId: actor.userId,
-        error: parseError(error),
+        error: deps.parseError(error),
         errorDetails: error,
       });
 
@@ -712,7 +737,7 @@ export const updateOrganizationNameCommand = defineCommand<
       deps.log.error("[organization] updateName failed", {
         slug: input.slug,
         userId: actor.userId,
-        error: parseError(error),
+        error: deps.parseError(error),
       });
 
       if (deps.isClerkConflictError(error)) {

@@ -6,7 +6,14 @@ import {
   assertLinearEndpointAllowed,
   DEFAULT_LINEAR_ENDPOINTS,
 } from "./config";
+import { LINEAR_OAUTH_SCOPE } from "./contract";
 import { LinearAppNodeError } from "./errors";
+
+export {
+  LINEAR_OAUTH_SCOPE,
+  LINEAR_OAUTH_SCOPES,
+  type LinearOAuthScope,
+} from "./contract";
 
 const DEFAULT_LINEAR_OAUTH_TIMEOUT_MS = 10_000;
 
@@ -77,7 +84,7 @@ export function buildLinearOAuthAuthorizeUrl(input: {
   url.searchParams.set("response_type", "code");
   url.searchParams.set("client_id", input.clientId);
   url.searchParams.set("redirect_uri", input.callbackUrl);
-  url.searchParams.set("scope", "read,write");
+  url.searchParams.set("scope", LINEAR_OAUTH_SCOPE);
   url.searchParams.set("state", input.state);
   url.searchParams.set("code_challenge", input.codeChallenge);
   url.searchParams.set("code_challenge_method", "S256");

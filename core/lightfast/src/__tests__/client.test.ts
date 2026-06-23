@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { createSignalOutput, getSignalOutput } from "@repo/api-contract";
 import { describe, expect, it, vi } from "vitest";
-
 import { createLightfast } from "../index";
 
 const packageRoot = resolve(import.meta.dirname, "../..");
@@ -107,6 +107,7 @@ describe("createLightfast", () => {
         JSON.stringify({
           id: "signal_123e4567-e89b-12d3-a456-426614174000",
           status: "queued",
+          visibilityScope: "user",
         }),
         { status: 202, headers: { "content-type": "application/json" } }
       );
@@ -121,11 +122,69 @@ describe("createLightfast", () => {
     expect(result).toEqual({
       id: "signal_123e4567-e89b-12d3-a456-426614174000",
       status: "queued",
+      visibilityScope: "user",
     });
+    expect(createSignalOutput.parse(result)).toEqual(result);
     expect(lastRequest).toEqual({
       body: { input: "Classify this" },
       method: "POST",
       url: "https://example.test/api/v1/signals",
+    });
+  });
+
+  it("lists signals with optional filters on the contract route", async () => {
+    let lastRequest: { method: string; url: string } | undefined;
+    const fetchMock = vi.fn(async (input: Request) => {
+      lastRequest = {
+        method: input.method,
+        url: input.url,
+      };
+      return new Response(
+        JSON.stringify({
+          items: [
+            {
+              classification: null,
+              createdAt: "2026-05-21T00:00:00.000Z",
+              id: "signal_123e4567-e89b-12d3-a456-426614174000",
+              input: "Classify this",
+              status: "queued",
+              updatedAt: "2026-05-21T00:01:00.000Z",
+              visibilityScope: "team",
+            },
+          ],
+          nextCursor: "next_cursor",
+        }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      );
+    });
+
+    const lf = createLightfast("lf_test", {
+      baseUrl: "https://example.test",
+      fetch: fetchMock as unknown as typeof fetch,
+    });
+    const result = await lf.signals.list({
+      cursor: "cursor_1",
+      limit: 25,
+      statuses: ["queued", "classified"],
+    });
+
+    expect(result).toEqual({
+      items: [
+        {
+          classification: null,
+          createdAt: "2026-05-21T00:00:00.000Z",
+          id: "signal_123e4567-e89b-12d3-a456-426614174000",
+          input: "Classify this",
+          status: "queued",
+          updatedAt: "2026-05-21T00:01:00.000Z",
+          visibilityScope: "team",
+        },
+      ],
+      nextCursor: "next_cursor",
+    });
+    expect(lastRequest).toEqual({
+      method: "GET",
+      url: "https://example.test/api/v1/signals?cursor=cursor_1&limit=25&statuses=queued%2Cclassified",
     });
   });
 
@@ -142,8 +201,10 @@ describe("createLightfast", () => {
           createdAt: "2026-05-21T00:00:00.000Z",
           id: "signal_123e4567-e89b-12d3-a456-426614174000",
           input: "Classify this",
+          entityLinks: [],
           status: "queued",
           updatedAt: "2026-05-21T00:01:00.000Z",
+          visibilityScope: "team",
         }),
         { status: 200, headers: { "content-type": "application/json" } }
       );
@@ -161,6 +222,7 @@ describe("createLightfast", () => {
       id: "signal_123e4567-e89b-12d3-a456-426614174000",
       status: "queued",
     });
+    expect(getSignalOutput.parse(result)).toEqual(result);
     expect(lastRequest).toEqual({
       method: "GET",
       url: "https://example.test/api/v1/signals/signal_123e4567-e89b-12d3-a456-426614174000",

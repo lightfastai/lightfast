@@ -1,3 +1,4 @@
+import { type GetPersonInput, getPerson } from "@api/app/tanstack/people";
 import { Cancel01Icon as X } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -12,7 +13,6 @@ import { toast } from "@repo/ui/components/ui/sonner";
 import { useQuery } from "@tanstack/react-query";
 import { PeopleDetailContent } from "./people-detail-content";
 import { getPersonName, type PersonRow } from "./people-model";
-import { personDetailQueryOptions } from "./people-queries";
 
 export function PeopleDetailSheet({
   initialPerson,
@@ -28,12 +28,15 @@ export function PeopleDetailSheet({
   const open = publicId !== null;
   const hasInitial = !!initialPerson && initialPerson.publicId === publicId;
 
-  const query = useQuery(
-    personDetailQueryOptions({
-      enabled: open && !hasInitial && Boolean(publicId),
-      publicId: publicId ?? "",
-    })
-  );
+  const query = useQuery({
+    enabled:
+      typeof window !== "undefined" && open && !hasInitial && Boolean(publicId),
+    queryFn: () =>
+      getPerson({
+        data: { publicId: publicId ?? "" } satisfies GetPersonInput,
+      }),
+    queryKey: ["people", "detail", publicId ?? ""] as const,
+  });
 
   const person = hasInitial ? initialPerson : query.data;
 

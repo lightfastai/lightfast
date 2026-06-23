@@ -3,21 +3,23 @@ import {
   listCurrentOrgConnectorConnections,
   type OrgConnectorConnection,
 } from "@db/app";
+import { connectorRuntimeToolName } from "@lightfast/connector-core";
+import { X_OAUTH_SCOPES } from "@lightfast/connector-x/contract";
 import {
   CONNECTABLE_CONNECTOR_PROVIDERS,
-  CONNECTOR_CATALOG,
   type ConnectableConnectorProvider,
   type ConnectorProvider,
-  connectorRuntimeToolName,
-  type DisplayConnectorTool,
-} from "@lightfast/connector-core";
-import { X_OAUTH_SCOPES } from "@lightfast/connector-x/oauth";
-import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
+} from "@repo/api-contract";
 import { getXConnectorConfig } from "./config";
 
-interface ConnectorServiceContext {
-  auth: AuthContext;
+interface ConnectorCatalogServiceContext {
   db: Database;
+  organization: {
+    orgId: string;
+  };
+  viewer: {
+    canManage: boolean;
+  };
 }
 
 type ConnectAvailability =
@@ -27,6 +29,13 @@ type ConnectAvailability =
       reason: "coming_soon" | "missing_config" | "permission_required";
       missing?: string[];
     };
+
+interface DisplayConnectorTool {
+  availableForAgents: boolean;
+  availableForAutomations: boolean;
+  description?: string;
+  name: string;
+}
 
 export interface ConnectorCatalogRow {
   availableForAgents: boolean;
@@ -55,17 +64,34 @@ export interface ConnectorCatalogRow {
   provider: ConnectorProvider;
 }
 
-function canManageConnectors(ctx: ConnectorServiceContext): boolean {
-  const identity = ctx.auth.identity;
-  const access = ctx.auth.access;
-  return (
-    identity.type === "active" &&
-    access?.kind === "clerk-session" &&
-    access.userId === identity.userId &&
-    access.orgId === identity.orgId &&
-    access.has({ role: "org:admin" })
-  );
-}
+const CONNECTOR_CATALOG = [
+  {
+    provider: "linear",
+    displayName: "Linear",
+    description:
+      "Find, create, and manage issues, projects, and comments in Linear.",
+    builder: "Lightfast",
+    category: "Project management",
+    catalogStatus: "available",
+  },
+  {
+    provider: "x",
+    displayName: "X",
+    description:
+      "Search posts, manage engagement, send messages, and publish through X from Lightfast agents and automations.",
+    builder: "Lightfast",
+    category: "Social",
+    catalogStatus: "available",
+  },
+] as const satisfies readonly Pick<
+  ConnectorCatalogRow,
+  | "builder"
+  | "catalogStatus"
+  | "category"
+  | "description"
+  | "displayName"
+  | "provider"
+>[];
 
 function isConnectableProvider(
   provider: ConnectorProvider
@@ -198,20 +224,15 @@ function missingRequestedScopes(connection: OrgConnectorConnection): string[] {
 }
 
 export async function listConnectorsForOrg(
-  ctx: ConnectorServiceContext
+  ctx: ConnectorCatalogServiceContext
 ): Promise<ConnectorCatalogRow[]> {
-  const identity = ctx.auth.identity;
-  if (identity.type !== "active") {
-    return [];
-  }
-
   const connections = await listCurrentOrgConnectorConnections(ctx.db, {
-    clerkOrgId: identity.orgId,
+    clerkOrgId: ctx.organization.orgId,
   });
   const byProvider = new Map<ConnectorProvider, OrgConnectorConnection>(
     connections.map((connection) => [connection.provider, connection])
   );
-  const canManage = canManageConnectors(ctx);
+  const canManage = ctx.viewer.canManage;
 
   return CONNECTOR_CATALOG.map((catalogItem) => {
     const connection = byProvider.get(catalogItem.provider);

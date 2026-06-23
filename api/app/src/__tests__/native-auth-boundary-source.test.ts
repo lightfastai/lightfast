@@ -29,14 +29,22 @@ describe("native auth boundary exports", () => {
   });
 
   it("keeps native auth off the tRPC router", () => {
-    const rootSource = source("src/root.ts");
-
     expect(
       existsSync(
         resolve(apiRoot, "src/router/(pending-allowed)/native-auth.ts")
       )
     ).toBe(false);
-    expect(rootSource).not.toContain("nativeAuthRouter");
-    expect(rootSource).not.toContain("native:");
+    expect(existsSync(resolve(apiRoot, "src/root.ts"))).toBe(false);
+  });
+
+  it("keeps native auth core free of request and auth-context adapters", () => {
+    const nativeAuthSource = source("src/native-auth/index.ts");
+
+    expect(nativeAuthSource).not.toContain("ResolvedAuthContext");
+    expect(nativeAuthSource).not.toContain("headers: Headers");
+    expect(nativeAuthSource).not.toContain("NATIVE_AUTH_HEADERS");
+    expect(nativeAuthSource).not.toContain("resolveAuthContextFromClerk");
+    expect(nativeAuthSource).not.toContain("ForAuthContext");
+    expect(nativeAuthSource).not.toContain("ForRequest");
   });
 });

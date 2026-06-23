@@ -3,7 +3,7 @@ import { db } from "@db/app/client";
 import { clerkClient } from "@vendor/clerk/server";
 import { log } from "@vendor/observability/log/next";
 
-import { syncTeamMembersForOrg } from "../../services/team-members";
+import { syncTeamMembersForOrg } from "../../services/team-members/people-sync";
 import { inngest } from "../client";
 import { appEvents } from "../schemas/app";
 

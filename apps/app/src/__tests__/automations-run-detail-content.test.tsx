@@ -4,7 +4,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AutomationRunDetailContent } from "~/automations/automation-run-detail-content";
-import type { AutomationRunDetail } from "~/automations/automations-queries";
+import type { AutomationRunDetail } from "~/automations/automations-cache";
 
 type AutomationRun = AutomationRunDetail;
 

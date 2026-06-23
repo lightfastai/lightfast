@@ -32,14 +32,13 @@ describe("org members TanStack adapter boundary", () => {
   });
 
   it("removes migrated org member procedures from tRPC", () => {
-    const rootSource = readFileSync(resolve(apiRoot, "src/root.ts"), "utf8");
+    const rootPath = resolve(apiRoot, "src/root.ts");
     const routerPath = resolve(
       apiRoot,
       "src/router/(pending-not-allowed)/org-members.ts"
     );
 
-    expect(rootSource).not.toContain("orgMembersRouter");
-    expect(rootSource).not.toContain("orgMembers:");
+    expect(existsSync(rootPath)).toBe(false);
 
     if (existsSync(routerPath)) {
       const routerSource = readFileSync(routerPath, "utf8");

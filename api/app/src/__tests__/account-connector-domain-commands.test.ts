@@ -1,24 +1,25 @@
-import type { Database, McpOauthGrant } from "@db/app";
+import type { Database } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AuthIdentity } from "../auth/identity";
 import { actorFromAuthIdentity } from "../domain";
 import {
-  createDefaultMcpConnectionCommandDeps,
   listAccountMcpConnectionsCommand,
+  type McpConnectionCommandDeps,
+  type McpConnectionGrant,
   revokeAccountMcpConnectionCommand,
 } from "../domain/mcp-connections";
 import {
-  createDefaultUserConnectorCommandDeps,
   disconnectUserConnectorCommand,
   startUserConnectorCommand,
+  type UserConnectorCommandDeps,
 } from "../domain/user-connectors";
 
 const listMcpOauthGrantConnectionsForUserMock = vi.fn();
 const getMcpOauthGrantByPublicIdMock = vi.fn();
 const revokeMcpOauthGrantMock = vi.fn();
-const startUserConnectorOAuthMock = vi.fn();
-const disconnectUserConnectorMock = vi.fn();
+const startGranolaUserConnectorOAuthMock = vi.fn();
+const disconnectGranolaUserConnectorMock = vi.fn();
 
 const pendingIdentity: AuthIdentity = {
   type: "pending",
@@ -32,33 +33,27 @@ const activeIdentity: AuthIdentity = {
   orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
 };
 
-const unauthenticatedIdentity: AuthIdentity = {
-  type: "unauthenticated",
-};
-
 const now = new Date("2026-06-01T00:00:00.000Z");
 
-function grant(overrides: Partial<McpOauthGrant> = {}): McpOauthGrant {
+function grant(
+  overrides: Partial<McpConnectionGrant> = {}
+): McpConnectionGrant {
   return {
-    id: 1,
     clientPublicId: "mcp_client_test",
     clerkOrgId: "org_acme",
     clerkUserId: "user_current",
     createdAt: now,
     lastUsedAt: null,
-    metadata: null,
     publicId: "mcp_grant_test",
     resource: "https://mcp.lightfast.localhost/mcp",
-    resourceHash: "resource_hash",
     revokedAt: null,
     scopes: ["mcp:signals:read"],
     status: "active",
-    updatedAt: now,
     ...overrides,
   };
 }
 
-function connection(overrides: Partial<McpOauthGrant> = {}) {
+function connection(overrides: Partial<McpConnectionGrant> = {}) {
   return {
     client: {
       clientName: "Lightfield",
@@ -87,39 +82,38 @@ function ctx(identity: AuthIdentity = pendingIdentity) {
 }
 
 function mcpDeps() {
-  return createDefaultMcpConnectionCommandDeps({
-    db: {} as Database,
-    getMcpOauthGrantByPublicId: getMcpOauthGrantByPublicIdMock,
-    listMcpOauthGrantConnectionsForUser:
-      listMcpOauthGrantConnectionsForUserMock,
-    revokeMcpOauthGrant: revokeMcpOauthGrantMock,
-  });
+  return {
+    getGrantByPublicId: getMcpOauthGrantByPublicIdMock,
+    listGrantConnectionsForOrg: vi.fn(),
+    listGrantConnectionsForUser: listMcpOauthGrantConnectionsForUserMock,
+    revokeGrant: revokeMcpOauthGrantMock,
+  } satisfies McpConnectionCommandDeps;
 }
 
-function userConnectorDeps(headers = new Headers()) {
-  return createDefaultUserConnectorCommandDeps({
+function userConnectorDeps(referer?: string | null) {
+  return {
     db: {} as Database,
-    disconnectUserConnector: disconnectUserConnectorMock,
-    headers,
-    startUserConnectorOAuth: startUserConnectorOAuthMock,
-  });
+    disconnectGranolaUserConnector: disconnectGranolaUserConnectorMock,
+    request: { referer },
+    startGranolaUserConnectorOAuth: startGranolaUserConnectorOAuthMock,
+  } satisfies UserConnectorCommandDeps;
 }
 
 beforeEach(() => {
   listMcpOauthGrantConnectionsForUserMock.mockReset();
   getMcpOauthGrantByPublicIdMock.mockReset();
   revokeMcpOauthGrantMock.mockReset();
-  startUserConnectorOAuthMock.mockReset();
-  disconnectUserConnectorMock.mockReset();
+  startGranolaUserConnectorOAuthMock.mockReset();
+  disconnectGranolaUserConnectorMock.mockReset();
 
   listMcpOauthGrantConnectionsForUserMock.mockResolvedValue([connection()]);
   getMcpOauthGrantByPublicIdMock.mockResolvedValue(grant());
   revokeMcpOauthGrantMock.mockResolvedValue(true);
-  startUserConnectorOAuthMock.mockResolvedValue({
+  startGranolaUserConnectorOAuthMock.mockResolvedValue({
     authorizationUrl: "https://granola.test/oauth/authorize",
     mode: "connect",
   });
-  disconnectUserConnectorMock.mockResolvedValue({ disconnected: true });
+  disconnectGranolaUserConnectorMock.mockResolvedValue({ disconnected: true });
 });
 
 describe("account MCP connection domain commands", () => {
@@ -142,10 +136,9 @@ describe("account MCP connection domain commands", () => {
       }),
     ]);
 
-    expect(listMcpOauthGrantConnectionsForUserMock).toHaveBeenCalledWith(
-      expect.anything(),
-      { clerkUserId: "user_current" }
-    );
+    expect(listMcpOauthGrantConnectionsForUserMock).toHaveBeenCalledWith({
+      clerkUserId: "user_current",
+    });
   });
 
   it("revokes only the signed-in user's MCP grant", async () => {
@@ -157,11 +150,10 @@ describe("account MCP connection domain commands", () => {
       })
     ).resolves.toEqual({ success: true });
 
-    expect(getMcpOauthGrantByPublicIdMock).toHaveBeenCalledWith(
-      expect.anything(),
-      { publicId: "mcp_grant_test" }
-    );
-    expect(revokeMcpOauthGrantMock).toHaveBeenCalledWith(expect.anything(), {
+    expect(getMcpOauthGrantByPublicIdMock).toHaveBeenCalledWith({
+      publicId: "mcp_grant_test",
+    });
+    expect(revokeMcpOauthGrantMock).toHaveBeenCalledWith({
       publicId: "mcp_grant_test",
     });
   });
@@ -190,14 +182,12 @@ describe("account MCP connection domain commands", () => {
 
 describe("user connector domain commands", () => {
   it("starts a user connector OAuth flow for pending Clerk users", async () => {
-    const headers = new Headers({
-      referer: "https://app.lightfast.localhost/connectors?scope=personal",
-    });
+    const referer = "https://app.lightfast.localhost/connectors?scope=personal";
 
     await expect(
       startUserConnectorCommand.run({
         ctx: ctx(),
-        deps: userConnectorDeps(headers),
+        deps: userConnectorDeps(referer),
         input: { provider: "granola" },
       })
     ).resolves.toEqual({
@@ -205,14 +195,11 @@ describe("user connector domain commands", () => {
       mode: "connect",
     });
 
-    expect(startUserConnectorOAuthMock).toHaveBeenCalledWith(
-      {
-        auth: { identity: pendingIdentity },
-        db: expect.anything(),
-        headers,
-      },
-      { provider: "granola" }
-    );
+    expect(startGranolaUserConnectorOAuthMock).toHaveBeenCalledWith({
+      db: expect.anything(),
+      request: { referer },
+      viewer: { userId: "user_current" },
+    });
   });
 
   it("disconnects a user connector with the same credential-blind viewer identity shape", async () => {
@@ -224,25 +211,31 @@ describe("user connector domain commands", () => {
       })
     ).resolves.toEqual({ disconnected: true });
 
-    expect(disconnectUserConnectorMock).toHaveBeenCalledWith(
-      {
-        auth: { identity: activeIdentity },
-        db: expect.anything(),
-        headers: expect.any(Headers),
-      },
-      { provider: "granola" }
-    );
+    expect(disconnectGranolaUserConnectorMock).toHaveBeenCalledWith({
+      db: expect.anything(),
+      request: {},
+      viewer: { userId: "user_current" },
+    });
   });
 
-  it("rejects unauthenticated actors before user connector services run", async () => {
-    expect(() => ctx(unauthenticatedIdentity)).toThrowError(
+  it("rejects non-Clerk actors before user connector services run", async () => {
+    await expect(
+      startUserConnectorCommand.run({
+        ctx: {
+          actor: { kind: "service", service: "system" },
+          request: { id: "req_test", source: "tanstack" },
+        },
+        deps: userConnectorDeps(),
+        input: { provider: "granola" },
+      })
+    ).rejects.toThrowError(
       expect.objectContaining({
-        code: "AUTH_REQUIRED",
+        code: "CLERK_USER_REQUIRED",
         kind: "authz",
       })
     );
 
-    expect(startUserConnectorOAuthMock).not.toHaveBeenCalled();
-    expect(disconnectUserConnectorMock).not.toHaveBeenCalled();
+    expect(startGranolaUserConnectorOAuthMock).not.toHaveBeenCalled();
+    expect(disconnectGranolaUserConnectorMock).not.toHaveBeenCalled();
   });
 });

@@ -1,10 +1,8 @@
 import { IDENTITY_INDEX_MAX_CHARS_PER_FILE } from "@repo/identity-contract";
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  buildIdentityIndexFilesFromTree,
-  refreshIdentityIndexSource,
-} from "../services/identity";
+import { buildIdentityIndexFilesFromTree } from "../services/identity/build";
+import { refreshIdentityIndexSource } from "../services/identity/refresh";
 import type { IdentityIndexServiceDeps } from "../services/identity/types";
 
 const now = new Date("2026-06-01T00:00:00.000Z");

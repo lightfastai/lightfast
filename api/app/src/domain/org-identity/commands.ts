@@ -1,19 +1,14 @@
 import type {
   Database,
+  getIdentityIndexStateBySourceControlRepositoryId,
   IdentityIndexFile,
   IdentityIndexState,
-  SourceControlRepository,
-} from "@db/app";
-import {
-  getIdentityIndexStateBySourceControlRepositoryId,
   listIdentityIndexFiles,
   listIdentityIndexRefreshCandidates,
+  SourceControlRepository,
 } from "@db/app";
 import { z } from "zod";
 
-import { createIdentityRefreshDedupeKey } from "../../inngest/workflow/identity-refresh-event";
-import { isVerifiedLightfastIdentityRepository } from "../../services/identity/eligibility";
-import { readIdentityRepositoryMainRef } from "../../services/identity/github";
 import { defineCommand } from "../command";
 import { requireBoundClerkOrgActor } from "../gates";
 
@@ -36,43 +31,20 @@ interface IdentityRefreshCandidate {
   state?: IdentityIndexState | null;
 }
 
-interface OrgIdentityCommandDeps {
+export interface OrgIdentityCommandDeps {
   db: Database;
   getIdentityIndexStateBySourceControlRepositoryId: typeof getIdentityIndexStateBySourceControlRepositoryId;
-  isVerifiedLightfastIdentityRepository: typeof isVerifiedLightfastIdentityRepository;
+  isVerifiedLightfastIdentityRepository(input: {
+    binding: IdentityRefreshCandidate["binding"];
+    repository: SourceControlRepository;
+  }): boolean;
   listIdentityIndexFiles: typeof listIdentityIndexFiles;
   listIdentityIndexRefreshCandidates: typeof listIdentityIndexRefreshCandidates;
-  readIdentityRepositoryMainRef: typeof readIdentityRepositoryMainRef;
+  readIdentityRepositoryMainRef(input: {
+    fullName: string;
+    installationId: string;
+  }): Promise<{ defaultBranch?: string | null; status: string }>;
   requestIdentityRefresh: (sourceControlRepositoryId: number) => Promise<void>;
-}
-
-export function createDefaultOrgIdentityCommandDeps(input: {
-  db: Database;
-  getIdentityIndexStateBySourceControlRepositoryId?: typeof getIdentityIndexStateBySourceControlRepositoryId;
-  isVerifiedLightfastIdentityRepository?: typeof isVerifiedLightfastIdentityRepository;
-  listIdentityIndexFiles?: typeof listIdentityIndexFiles;
-  listIdentityIndexRefreshCandidates?: typeof listIdentityIndexRefreshCandidates;
-  readIdentityRepositoryMainRef?: typeof readIdentityRepositoryMainRef;
-  requestIdentityRefresh?: (sourceControlRepositoryId: number) => Promise<void>;
-}): OrgIdentityCommandDeps {
-  return {
-    db: input.db,
-    getIdentityIndexStateBySourceControlRepositoryId:
-      input.getIdentityIndexStateBySourceControlRepositoryId ??
-      getIdentityIndexStateBySourceControlRepositoryId,
-    isVerifiedLightfastIdentityRepository:
-      input.isVerifiedLightfastIdentityRepository ??
-      isVerifiedLightfastIdentityRepository,
-    listIdentityIndexFiles:
-      input.listIdentityIndexFiles ?? listIdentityIndexFiles,
-    listIdentityIndexRefreshCandidates:
-      input.listIdentityIndexRefreshCandidates ??
-      listIdentityIndexRefreshCandidates,
-    readIdentityRepositoryMainRef:
-      input.readIdentityRepositoryMainRef ?? readIdentityRepositoryMainRef,
-    requestIdentityRefresh:
-      input.requestIdentityRefresh ?? requestIdentityRefresh,
-  };
 }
 
 const orgIdentityInput = z.object({}).strict();
@@ -189,25 +161,6 @@ function shouldEnqueueRefresh(state: IdentityIndexState | null): boolean {
     state.lastRefreshStatus === "never" ||
     state.lastRefreshStatus === "stale"
   );
-}
-
-async function requestIdentityRefresh(sourceControlRepositoryId: number) {
-  try {
-    const { inngest } = await import("../../inngest/client");
-    await inngest.send({
-      data: {
-        dedupeKey: createIdentityRefreshDedupeKey({
-          reason: "read",
-          sourceControlRepositoryId,
-        }),
-        reason: "read",
-        sourceControlRepositoryId,
-      },
-      name: "app/identity.index.refresh.requested",
-    });
-  } catch {
-    return;
-  }
 }
 
 export const getOrgIdentityCommand = defineCommand<

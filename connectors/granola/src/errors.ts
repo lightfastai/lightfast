@@ -3,7 +3,7 @@ export type GranolaAppNodeErrorCode =
   | "GRANOLA_MCP_FAILED"
   | "GRANOLA_TOKEN_REFRESH_FAILED";
 
-export interface GranolaAppNodeErrorCause {
+interface GranolaAppNodeErrorCause {
   name: string;
 }
 

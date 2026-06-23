@@ -6,9 +6,14 @@ import {
   mcpProviderRoutineFindCommandInputSchema,
   providerRoutineCallSuccessSchema,
   providerRoutineFindOutputSchema,
-} from "@lightfast/connector-core/provider-routines";
-
-import { verifyServiceJWT } from "../../service-jwt";
+} from "@repo/api-contract";
+import {
+  type ProviderRoutineCommandDeps,
+  providerRoutineCallCommand,
+  providerRoutineFindCommand,
+} from "../../domain/provider-routines";
+import { createProviderRoutineCommandDeps } from "../../services/provider-routines/command-deps";
+import { verifyMcpServiceRequest } from "./mcp-service-auth";
 
 const noopProviderRoutineLog = {
   error: () => undefined,
@@ -16,66 +21,16 @@ const noopProviderRoutineLog = {
   warn: () => undefined,
 };
 
-function bearerToken(request: Request): string | undefined {
-  const authorization = request.headers.get("authorization");
-  const match = authorization?.match(/^Bearer\s+(.+)$/i);
-  return match?.[1]?.trim();
-}
-
 function jsonError(error: string, message: string, status: number): Response {
   return Response.json({ error, message }, { status });
-}
-
-function serviceJwtSecret(): string | undefined {
-  const secret = process.env.SERVICE_JWT_SECRET;
-  return secret && secret.length >= 32 ? secret : undefined;
-}
-
-async function verifyMcpServiceRequest(
-  request: Request
-): Promise<Response | null> {
-  const token = bearerToken(request);
-  if (!token) {
-    return jsonError("missing_token", "Service bearer token is required.", 401);
-  }
-  const jwtSecret = serviceJwtSecret();
-  if (!jwtSecret) {
-    return jsonError(
-      "service_not_configured",
-      "Service JWT verification is not configured.",
-      500
-    );
-  }
-
-  try {
-    await verifyServiceJWT({
-      allowedCallers: ["mcp"],
-      audience: "lightfast-app",
-      jwtSecret,
-      token,
-    });
-    return null;
-  } catch (error) {
-    const status =
-      error instanceof Error && "status" in error
-        ? Number((error as { status: unknown }).status)
-        : 401;
-    return jsonError(
-      status === 403 ? "disallowed_caller" : "invalid_token",
-      status === 403
-        ? "Service caller is not allowed for this command."
-        : "Service token is invalid.",
-      status === 403 ? 403 : 401
-    );
-  }
 }
 
 export async function handleMcpProxyFindRequest(
   request: Request
 ): Promise<Response> {
-  const authError = await verifyMcpServiceRequest(request);
-  if (authError) {
-    return authError;
+  const verification = await verifyMcpServiceRequest(request);
+  if (!verification.ok) {
+    return verification.response;
   }
 
   const body = await request.json().catch(() => undefined);
@@ -89,19 +44,21 @@ export async function handleMcpProxyFindRequest(
   }
 
   try {
-    const [{ assertHostedMcpOrgAccess }, { findProviderRoutines }] =
-      await Promise.all([
-        import("@api/app/mcp-oauth/resource-access"),
-        import("@repo/provider-routines"),
-      ]);
+    const { assertHostedMcpOrgAccess } = await import(
+      "../../mcp-oauth/resource-access"
+    );
     await assertHostedMcpOrgAccess(db, {
       orgId: parsed.data.actor.orgId,
       userId: parsed.data.actor.userId,
     });
-    const result = await findProviderRoutines(
-      providerRoutineContext(parsed.data),
-      parsed.data.input
-    );
+    const result = await providerRoutineFindCommand.run({
+      ctx: providerRoutineContext(parsed.data, verification.value.caller),
+      deps: providerRoutineDeps(),
+      input: {
+        input: parsed.data.input,
+        scopes: parsed.data.scopes,
+      },
+    });
     return Response.json(providerRoutineFindOutputSchema.parse(result), {
       status: 200,
     });
@@ -113,9 +70,9 @@ export async function handleMcpProxyFindRequest(
 export async function handleMcpProxyCallRequest(
   request: Request
 ): Promise<Response> {
-  const authError = await verifyMcpServiceRequest(request);
-  if (authError) {
-    return authError;
+  const verification = await verifyMcpServiceRequest(request);
+  if (!verification.ok) {
+    return verification.response;
   }
 
   const body = await request.json().catch(() => undefined);
@@ -129,19 +86,21 @@ export async function handleMcpProxyCallRequest(
   }
 
   try {
-    const [{ assertHostedMcpOrgAccess }, { callProviderRoutine }] =
-      await Promise.all([
-        import("@api/app/mcp-oauth/resource-access"),
-        import("@repo/provider-routines"),
-      ]);
+    const { assertHostedMcpOrgAccess } = await import(
+      "../../mcp-oauth/resource-access"
+    );
     await assertHostedMcpOrgAccess(db, {
       orgId: parsed.data.actor.orgId,
       userId: parsed.data.actor.userId,
     });
-    const result = await callProviderRoutine(
-      providerRoutineContext(parsed.data),
-      parsed.data.input
-    );
+    const result = await providerRoutineCallCommand.run({
+      ctx: providerRoutineContext(parsed.data, verification.value.caller),
+      deps: providerRoutineDeps(),
+      input: {
+        input: parsed.data.input,
+        scopes: parsed.data.scopes,
+      },
+    });
     return Response.json(providerRoutineCallSuccessSchema.parse(result), {
       status: 200,
     });
@@ -153,39 +112,45 @@ export async function handleMcpProxyCallRequest(
 function providerRoutineContext(
   command:
     | McpProviderRoutineCallCommandInput
-    | McpProviderRoutineFindCommandInput
+    | McpProviderRoutineFindCommandInput,
+  caller: { kind: "service"; service: "apps-mcp" }
 ) {
   return {
     actor: {
+      clientId: command.actor.clientId,
+      grantId: command.actor.grantId,
+      kind: "mcpClient" as const,
       orgId: command.actor.orgId,
+      scopes: command.actor.scopes,
       userId: command.actor.userId,
     },
-    adapters: {
-      connectors: {
-        loadTools: async () => {
-          const { loadAgentConnectorRuntimeTools } = await import(
-            "@api/app/services/connectors/runtime"
-          );
-          return await loadAgentConnectorRuntimeTools({
-            calledByUserId: command.actor.userId,
-            clerkOrgId: command.actor.orgId,
-            sourceClientId: command.actor.clientId,
-            sourceRef: command.actor.grantId,
-            sourceSurface: "hosted_mcp",
-          });
-        },
-      },
-    },
-    db,
-    log: noopProviderRoutineLog,
-    now: () => new Date(),
-    scopes: command.scopes,
-    source: {
-      clientId: command.actor.clientId,
-      ref: command.actor.grantId,
-      surface: "hosted_mcp" as const,
+    caller,
+    request: { id: crypto.randomUUID(), source: "mcp" as const },
+  };
+}
+
+function providerRoutineDeps() {
+  const adapters: Pick<
+    ProviderRoutineCommandDeps,
+    "loadConnectorRuntimeTools"
+  > = {
+    loadConnectorRuntimeTools: async (input) => {
+      const { loadAgentConnectorRuntimeTools } = await import(
+        "../../services/connectors/runtime"
+      );
+      return await loadAgentConnectorRuntimeTools({
+        ...input,
+        sourceSurface: "hosted_mcp",
+      });
     },
   };
+
+  return createProviderRoutineCommandDeps({
+    db,
+    ...adapters,
+    log: noopProviderRoutineLog,
+    now: () => new Date(),
+  });
 }
 
 function errorResponse(error: unknown, fallbackMessage: string): Response {

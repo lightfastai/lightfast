@@ -13,22 +13,6 @@
       "types": "./src/mcp-oauth/server-routes.ts",
       "default": "./src/mcp-oauth/server-routes.ts"
     },
-    "./mcp-oauth/resource-access": {
-      "types": "./src/mcp-oauth/resource-access.ts",
-      "default": "./src/mcp-oauth/resource-access.ts"
-    },
-    "./env": {
-      "types": "./src/env.ts",
-      "default": "./src/env.ts"
-    },
-    "./service-jwt": {
-      "types": "./src/service-jwt.ts",
-      "default": "./src/service-jwt.ts"
-    },
-    "./domain": {
-      "types": "./src/domain/index.ts",
-      "default": "./src/domain/index.ts"
-    },
     "./native-auth": {
       "types": "./src/native-auth/index.ts",
       "default": "./src/native-auth/index.ts"
@@ -44,10 +28,6 @@
     "./cli-api": {
       "types": "./src/adapters/cli-api.ts",
       "default": "./src/adapters/cli-api.ts"
-    },
-    "./native-provider-proxy": {
-      "types": "./src/adapters/native-provider-proxy.ts",
-      "default": "./src/adapters/native-provider-proxy.ts"
     },
     "./internal-api/mcp-signals": {
       "types": "./src/adapters/internal/mcp-signals.ts",
@@ -189,57 +169,9 @@
       "types": "./src/adapters/tanstack/decisions.ts",
       "default": "./src/adapters/tanstack/decisions.ts"
     },
-    "./tanstack/entity-graph": {
-      "types": "./src/adapters/tanstack/entity-graph.ts",
-      "default": "./src/adapters/tanstack/entity-graph.ts"
-    },
     "./tanstack/people": {
       "types": "./src/adapters/tanstack/people.ts",
       "default": "./src/adapters/tanstack/people.ts"
-    },
-    "./services/github": {
-      "types": "./src/services/github/index.ts",
-      "default": "./src/services/github/index.ts"
-    },
-    "./services/skills": {
-      "types": "./src/services/skills/index.ts",
-      "default": "./src/services/skills/index.ts"
-    },
-    "./services/connectors": {
-      "types": "./src/services/connectors/index.ts",
-      "default": "./src/services/connectors/index.ts"
-    },
-    "./services/connectors/chat-routines": {
-      "types": "./src/services/connectors/chat-routines.ts",
-      "default": "./src/services/connectors/chat-routines.ts"
-    },
-    "./services/connectors/runtime": {
-      "types": "./src/services/connectors/runtime.ts",
-      "default": "./src/services/connectors/runtime.ts"
-    },
-    "./services/user-connectors": {
-      "types": "./src/services/user-connectors/index.ts",
-      "default": "./src/services/user-connectors/index.ts"
-    },
-    "./services/user-connectors/runtime": {
-      "types": "./src/services/user-connectors/runtime.ts",
-      "default": "./src/services/user-connectors/runtime.ts"
-    },
-    "./signals/service": {
-      "types": "./src/signals/service.ts",
-      "default": "./src/signals/service.ts"
-    },
-    "./inngest": {
-      "types": "./src/inngest/index.ts",
-      "default": "./src/inngest/index.ts"
-    },
-    "./inngest/client": {
-      "types": "./src/inngest/client.ts",
-      "default": "./src/inngest/client.ts"
-    },
-    "./auth/identity": {
-      "types": "./src/auth/identity.ts",
-      "default": "./src/auth/identity.ts"
     }
   },
   "license": "Apache-2.0",
@@ -264,18 +196,14 @@
     "@repo/api-contract": "workspace:*",
     "@repo/app-clerk-claim": "workspace:*",
     "@repo/app-encryption": "workspace:*",
-    "@repo/app-setup-contract": "workspace:*",
     "@repo/app-validation": "workspace:^",
-    "@repo/developer-connection-contract": "workspace:*",
-    "@repo/entity-graph-contract": "workspace:*",
     "@repo/entity-resolution": "workspace:*",
     "@repo/identity-contract": "workspace:*",
     "@repo/native-auth-contract": "workspace:*",
-    "@repo/provider-routines": "workspace:*",
     "@repo/sandbox-runtime": "workspace:*",
+    "@repo/service-jwt": "workspace:*",
     "@repo/skills-contract": "workspace:*",
     "@repo/source-control-contract": "workspace:*",
-    "@repo/user-connector-contract": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "catalog:",

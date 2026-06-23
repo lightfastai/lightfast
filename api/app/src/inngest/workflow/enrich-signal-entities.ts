@@ -2,11 +2,11 @@ import { listSignalEntityEnrichmentTargets } from "@db/app";
 import { db } from "@db/app/client";
 
 import {
-  fetchSignalEntityProfiles,
   githubUserPayloadToObservation,
-  signalProfileObservationIds,
   xUserPayloadToObservation,
-} from "../../services/entity-enrichment";
+} from "../../services/entity-enrichment/adapters";
+import { signalProfileObservationIds } from "../../services/entity-enrichment/ids";
+import { fetchSignalEntityProfiles } from "../../services/entity-enrichment/provider-fetchers";
 import { inngest } from "../client";
 import { appEvents } from "../schemas/app";
 

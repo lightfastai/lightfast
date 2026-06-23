@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 const appRoot = resolve(import.meta.dirname, "../..");
 const repoRoot = resolve(appRoot, "../..");
+const oldProviderRoutinesPackage = `@repo/${"provider-routines"}`;
 
 function source(path: string) {
   return readFileSync(resolve(appRoot, path), "utf8");
@@ -308,7 +309,8 @@ describe("app authenticated route migration", () => {
     expect(shellSource).not.toContain("AuthenticatedTopbar");
     expect(shellSource).not.toContain("Docs");
     expect(shellSource).not.toContain("API Reference");
-    expect(teamSwitcherSource).toContain("listUserOrganizationsQueryOptions()");
+    expect(teamSwitcherSource).toContain("listUserOrganizations()");
+    expect(teamSwitcherSource).toContain("organizationQueryKeys.list()");
     expect(teamSwitcherSource).toContain(
       '<DropdownMenuContent align="center" size="sm">'
     );
@@ -334,14 +336,19 @@ describe("app authenticated route migration", () => {
     expect(teamSwitcherSource).toContain('to="/$slug"');
     expect(teamSwitcherSource).not.toContain("next/navigation");
     expect(teamSwitcherSource).not.toContain("next/link");
+    expect(recentChatsMenuSource).toContain("listConversations");
     expect(recentChatsMenuSource).toContain(
+      '"workspace-assistant",\n      "conversations",\n      orgSlug,\n      recentChatsInput'
+    );
+    expect(recentChatsMenuSource).not.toContain(
       "assistantConversationsQueryOptions"
     );
     expect(recentChatsMenuSource).toContain('to="/$slug/chat/$conversationId"');
     expect(appSidebarSource).not.toContain("showChatHistory");
     expect(orgRouteSource).toContain("WorkspaceRouteShell");
+    expect(workspaceShellSource).toContain("getOrganizationBySlug");
     expect(workspaceShellSource).toContain(
-      "organizationBySlugQueryOptions({ slug })"
+      "organizationQueryKeys.bySlug(slug)"
     );
     expect(workspaceShellSource).toContain("useAuth");
     expect(workspaceShellSource).toContain("useOrganizationList");
@@ -489,6 +496,7 @@ describe("app authenticated route migration", () => {
     const routeSource = source("src/routes/_authenticated/$slug/signals.tsx");
     const clientSource = source("src/signals/signals-client.tsx");
     const createDialogSource = source("src/signals/signal-create-dialog.tsx");
+    const detailSheetSource = source("src/signals/signal-detail-sheet.tsx");
     const searchSource = source("src/signals/signals-search-params.ts");
     const workspaceDataSource = source(
       "src/signals/use-signals-workspace-data.ts"
@@ -505,13 +513,38 @@ describe("app authenticated route migration", () => {
     expect(clientSource).toContain("<SignalsViewHeader");
     expect(clientSource).toContain("SignalsViewSwitcher");
     expect(clientSource).not.toContain("viewsSlot=");
-    expect(clientSource).toContain("signalDetailQueryOptions");
-    expect(createDialogSource).toContain("createSignalMutationOptions");
-    expect(createDialogSource).toContain("listUserOrganizationsQueryOptions");
+    expect(clientSource).toContain('@api/app/tanstack/signals"');
+    expect(clientSource).toContain("getSignal");
+    expect(clientSource).toContain('"signals", "detail"');
+    expect(clientSource).not.toContain("signalQueryKeys");
+    expect(clientSource).not.toContain("signals-cache");
+    expect(clientSource).not.toContain("signalDetailQueryOptions");
+    expect(createDialogSource).toContain('@api/app/tanstack/signals"');
+    expect(createDialogSource).toContain("createSignal");
+    expect(createDialogSource).toContain('queryKey: ["signals"] as const');
+    expect(createDialogSource).not.toContain("signalQueryKeys");
+    expect(createDialogSource).not.toContain("signals-cache");
+    expect(createDialogSource).not.toContain("createSignalMutationOptions");
+    expect(createDialogSource).toContain("listUserOrganizations");
+    expect(createDialogSource).toContain("organizationQueryKeys.list()");
+    expect(detailSheetSource).toContain('@api/app/tanstack/signals"');
+    expect(detailSheetSource).toContain("getSignal");
+    expect(detailSheetSource).toContain('"signals", "detail"');
+    expect(detailSheetSource).not.toContain("signalQueryKeys");
+    expect(detailSheetSource).not.toContain("signals-cache");
+    expect(detailSheetSource).not.toContain("signalDetailQueryOptions");
     expect(searchSource).toContain("validateSignalsSearch");
     expect(searchSource).toContain("parseSignalDispositions");
-    expect(workspaceDataSource).toContain("workingSetSignalsQueryOptions");
-    expect(workspaceDataSource).toContain("processingSignalsQueryOptions");
+    expect(workspaceDataSource).toContain("listWorkingSetSignals");
+    expect(workspaceDataSource).toContain("listProcessingSignals");
+    expect(workspaceDataSource).toContain(
+      'const workingSetQueryKey = ["signals", "working-set"] as const'
+    );
+    expect(workspaceDataSource).toContain("const processingQueryKey = [");
+    expect(workspaceDataSource).not.toContain("signalQueryKeys");
+    expect(workspaceDataSource).not.toContain("signals-cache");
+    expect(workspaceDataSource).not.toContain("workingSetSignalsQueryOptions");
+    expect(workspaceDataSource).not.toContain("processingSignalsQueryOptions");
     expect(workspaceDataSource).toContain("filterClassifiedSignals");
     expect(workspaceDataSource).toContain("compareSignalsByRecency");
     expect(workspaceDataSource).not.toContain("useWorkingSetQuery");
@@ -562,10 +595,10 @@ describe("app authenticated route migration", () => {
     expect(clientSource).not.toContain("usePeopleListQuery");
     expect(searchSource).toContain("validatePeopleSearch");
     expect(searchSource).toContain("parsePersonProviders");
-    expect(querySource).toContain("peopleListInfiniteQueryOptions");
-    expect(source("src/people/people-queries.ts")).toContain(
-      'enabled: typeof window !== "undefined"'
-    );
+    expect(querySource).toContain("listPeople");
+    expect(querySource).toContain('["people", "list", listInput] as const');
+    expect(querySource).not.toContain("peopleListInfiniteQueryOptions");
+    expect(querySource).toContain('enabled: typeof window !== "undefined"');
     expect(viewsSource).toContain("viewConfigToParamValues");
     expect(viewQuerySource).toContain('@api/app/tanstack/people-views"');
     expect(viewQuerySource).toContain("listPeopleViews");
@@ -616,18 +649,27 @@ describe("app authenticated route migration", () => {
       '"/_authenticated/$slug/developer-connections"'
     );
     expect(routeSource).toContain("setSearchParams");
-    expect(clientSource).toContain("developerConnectionsQueryOptions");
-    expect(clientSource).toContain("connectDeveloperConnectionMutationOptions");
-    expect(clientSource).toContain(
+    expect(clientSource).toContain("listDeveloperConnections");
+    expect(clientSource).toContain("developerConnectionListQueryKey");
+    expect(clientSource).toContain('@api/app/tanstack/developer-connections"');
+    expect(clientSource).toContain("connectDeveloperConnection");
+    expect(clientSource).toContain("startSentryDeveloperConnectionAuth");
+    expect(clientSource).toContain("completeSentryDeveloperConnectionAuth");
+    expect(clientSource).toContain("setDeveloperConnectionSandboxEnabled");
+    expect(clientSource).toContain("disconnectDeveloperConnection");
+    expect(clientSource).not.toContain(
+      "connectDeveloperConnectionMutationOptions"
+    );
+    expect(clientSource).not.toContain(
       "startSentryDeveloperConnectionAuthMutationOptions"
     );
-    expect(clientSource).toContain(
+    expect(clientSource).not.toContain(
       "completeSentryDeveloperConnectionAuthMutationOptions"
     );
-    expect(clientSource).toContain(
+    expect(clientSource).not.toContain(
       "setDeveloperConnectionSandboxEnabledMutationOptions"
     );
-    expect(clientSource).toContain(
+    expect(clientSource).not.toContain(
       "disconnectDeveloperConnectionMutationOptions"
     );
     expect(searchSource).toContain("validateDeveloperConnectionsSearch");
@@ -659,13 +701,12 @@ describe("app authenticated route migration", () => {
     const decisionsSearchSource = source(
       "src/decisions/decisions-search-params.ts"
     );
-    const decisionsQuerySource = source("src/decisions/decisions-queries.ts");
+    const decisionsQuerySource = decisionsClientSource;
     const skillsRouteSource = source(
       "src/routes/_authenticated/$slug/skills.tsx"
     );
     const skillsClientSource = source("src/skills/skills-client.tsx");
     const skillsSearchSource = source("src/skills/skills-search-params.ts");
-    const skillsQuerySource = source("src/skills/skills-queries.ts");
     const connectorsRouteSource = source(
       "src/routes/_authenticated/$slug/connectors.tsx"
     );
@@ -708,9 +749,14 @@ describe("app authenticated route migration", () => {
     expect(decisionsClientSource).toContain("DecisionsTableView");
     expect(decisionsSearchSource).toContain("parseDecisionProviders");
     expect(decisionsQuerySource).toContain('@api/app/tanstack/decisions"');
+    expect(decisionsQuerySource).toContain("listDecisions");
     expect(decisionsQuerySource).toContain(
       'enabled: typeof window !== "undefined"'
     );
+    expect(decisionsQuerySource).not.toContain(
+      "decisionsListInfiniteQueryOptions"
+    );
+    expect(decisionsQuerySource).not.toContain("./decisions-queries");
     expect(decisionsClientSource).not.toContain("useDecisionsListQuery");
 
     expect(skillsRouteSource).toContain("validateSkillsSearch");
@@ -720,23 +766,47 @@ describe("app authenticated route migration", () => {
     expect(skillsSearchSource).toContain("validateSkillsSearch");
     expect(skillsClientSource).toContain('@api/app/tanstack/skills"');
     expect(skillsClientSource).toContain("listSkills");
-    expect(skillsClientSource).toContain("skillsListQueryKey");
+    expect(skillsClientSource).toContain(
+      'queryKey: ["skills", "list"] as const'
+    );
+    expect(skillsClientSource).not.toContain("skillsListQueryKey");
+    expect(skillsClientSource).not.toContain("skills-queries");
     expect(skillsClientSource).toContain(
       'enabled: typeof window !== "undefined"'
     );
-    expect(skillsQuerySource).toContain("skillsListQueryKey");
-    expect(skillsQuerySource).not.toContain("skillsListQueryOptions");
-    expect(skillsQuerySource).not.toContain("@api/app/tanstack/skills");
+    expect(existsSync(resolve(appRoot, "src/skills/skills-queries.ts"))).toBe(
+      false
+    );
     expect(skillsClientSource).not.toContain("useSkillsListQuery");
 
     expect(connectorsRouteSource).toContain("validateConnectorsSearch");
     expect(connectorsRouteSource).toContain("setSearchParams");
-    expect(connectorsClientSource).toContain("connectorSectionsQueryOptions");
-    expect(connectorsClientSource).toContain("startConnectorMutationOptions");
+    expect(connectorsClientSource).toContain('@api/app/tanstack/connectors"');
+    expect(connectorsClientSource).toContain("listConnectorSections");
     expect(connectorsClientSource).toContain(
-      "startUserConnectorMutationOptions"
+      'queryKey: ["connectors", "sections"] as const'
     );
     expect(connectorsClientSource).toContain(
+      'queryKey: ["connectors"] as const'
+    );
+    expect(connectorsClientSource).not.toContain("connectorQueryKeys");
+    expect(connectorsClientSource).not.toContain("connectors-cache");
+    expect(connectorsClientSource).not.toContain(
+      "connectorSectionsQueryOptions"
+    );
+    expect(connectorsClientSource).toContain(
+      '@api/app/tanstack/user-connectors"'
+    );
+    expect(connectorsClientSource).toContain("startConnector");
+    expect(connectorsClientSource).toContain("startUserConnector");
+    expect(connectorsClientSource).toContain("disconnectUserConnector");
+    expect(connectorsClientSource).not.toContain(
+      "startConnectorMutationOptions"
+    );
+    expect(connectorsClientSource).not.toContain(
+      "startUserConnectorMutationOptions"
+    );
+    expect(connectorsClientSource).not.toContain(
       "disconnectUserConnectorMutationOptions"
     );
     expect(connectorsClientSource).toContain("window.location.assign");
@@ -759,8 +829,16 @@ describe("app authenticated route migration", () => {
     expect(automationsCreateSource).toContain(
       "automationCreateMutationOptions"
     );
-    expect(automationsDetailSource).toContain("automationDetailQueryOptions");
-    expect(automationsQuerySource).toContain("automationsListQueryOptions");
+    expect(automationsDetailSource).toContain('@api/app/tanstack/automations"');
+    expect(automationsDetailSource).toContain("getAutomation");
+    expect(automationsDetailSource).toContain("automationQueryKeys.detail");
+    expect(automationsDetailSource).not.toContain(
+      "automationDetailQueryOptions"
+    );
+    expect(automationsQuerySource).toContain('@api/app/tanstack/automations"');
+    expect(automationsQuerySource).toContain("listAutomations");
+    expect(automationsQuerySource).toContain("automationQueryKeys.list()");
+    expect(automationsQuerySource).not.toContain("automationsListQueryOptions");
     expect(automationsQuerySource).toContain(
       'enabled: typeof window !== "undefined"'
     );
@@ -844,7 +922,17 @@ describe("app authenticated route migration", () => {
     expect(chatIndexRouteSource).toContain("WorkspaceAssistantClient");
     expect(chatIndexRouteSource).toContain("key={conversationId}");
     expect(chatRouteSource).not.toContain("WorkspacePage");
+    expect(conversationRouteSource).toContain("getConversation");
+    expect(conversationRouteSource).toContain("useQuery");
     expect(conversationRouteSource).toContain(
+      '["workspace-assistant", "conversation", conversationId] as const'
+    );
+    expect(conversationRouteSource).not.toContain("loader:");
+    expect(conversationRouteSource).not.toContain("Route.useLoaderData()");
+    expect(conversationRouteSource).not.toContain(
+      "assistantConversationQueryKey"
+    );
+    expect(conversationRouteSource).not.toContain(
       "assistantConversationQueryOptions"
     );
     expect(conversationRouteSource).toContain("WorkspaceAssistantClient");
@@ -861,7 +949,19 @@ describe("app authenticated route migration", () => {
       'to: "/$slug/chat/$conversationId"'
     );
     expect(assistantClientSource).toContain("createConversation({ data })");
-    expect(assistantClientSource).toContain("assistantConversationsQueryKey");
+    expect(assistantClientSource).toContain(
+      '["workspace-assistant", "conversations"] as const'
+    );
+    expect(assistantClientSource).toContain(
+      '"workspace-assistant",\n            "conversation",\n            conversationId'
+    );
+    expect(assistantClientSource).not.toContain(
+      "assistantConversationQueryKey"
+    );
+    expect(assistantClientSource).not.toContain("setQueryData");
+    expect(assistantClientSource).not.toContain(
+      "assistantConversationQueryOptions"
+    );
     expect(composerSource).toContain("PromptInput");
     expect(composerSource).toContain("PromptInputSubmit");
     expect(messageSource).toContain("ChatMessage");
@@ -998,13 +1098,18 @@ describe("app authenticated route migration", () => {
     expect(bindIndexRouteSource).toContain("useSearch({ strict: false })");
     expect(bindIndexRouteSource).not.toContain("useRouterState");
     expect(bindIndexRouteSource).toContain("BindGithubCard");
-    expect(bindCardSource).toContain("startGitHubOrgSetupMutationOptions");
+    expect(bindCardSource).toContain('@api/app/tanstack/github-setup"');
+    expect(bindCardSource).toContain("startGitHubOrgSetup");
+    expect(bindCardSource).not.toContain("startGitHubOrgSetupMutationOptions");
+    expect(lightfastRepoRouteSource).toContain("getSourceControlConnection");
     expect(lightfastRepoRouteSource).toContain(
-      "sourceControlConnectionQueryOptions"
+      "sourceControlConnectionQueryKey"
     );
     expect(lightfastRepoRouteSource).toContain("newLightfastRepositoryUrl");
     expect(lightfastRepoRouteSource).not.toContain("getGitHubNewRepositoryUrl");
-    expect(repoClientSource).toContain(
+    expect(repoClientSource).toContain('@api/app/tanstack/github-setup"');
+    expect(repoClientSource).toContain("verifyGitHubLightfastRepo");
+    expect(repoClientSource).not.toContain(
       "verifyGitHubLightfastRepoMutationOptions"
     );
     expect(repoClientSource).toContain("newRepositoryUrl");
@@ -1068,9 +1173,11 @@ describe("app authenticated route migration", () => {
     const addRepositoryDialogSource = source(
       "src/org/settings/source-control/add-repository-dialog.tsx"
     );
-    const sourceControlQueriesSource = source(
-      "src/org/settings/source-control/source-control-queries.ts"
+    const sourceControlCacheSource = source(
+      "src/org/settings/source-control/source-control-cache.ts"
     );
+    const sourceControlQueriesPath =
+      "src/org/settings/source-control/source-control-queries.ts";
     const repositoryCardSource = source(
       "src/org/settings/source-control/repository-card.tsx"
     );
@@ -1095,18 +1202,22 @@ describe("app authenticated route migration", () => {
     );
     expect(sourceControlRouteSource).toContain("SourceControlSettingsClient");
     expect(sidebarSource).toContain("params");
-    expect(settingsClientSource).toContain(
+    expect(existsSync(resolve(appRoot, sourceControlQueriesPath))).toBe(false);
+    expect(settingsClientSource).toContain("getSourceControlConnection");
+    expect(settingsClientSource).toContain("listSourceControlRepositories");
+    expect(settingsClientSource).toContain("sourceControlConnectionQueryKey");
+    expect(settingsClientSource).toContain("sourceControlRepositoriesQueryKey");
+    expect(settingsClientSource).not.toContain(
       "sourceControlConnectionQueryOptions"
     );
-    expect(settingsClientSource).toContain(
+    expect(settingsClientSource).not.toContain(
       "sourceControlRepositoriesQueryOptions"
     );
-    expect(sourceControlQueriesSource).toContain(
+    expect(sourceControlCacheSource).toContain(
       '@api/app/tanstack/source-control"'
     );
-    expect(sourceControlQueriesSource).not.toContain(
-      'enabled: typeof window !== "undefined"'
-    );
+    expect(sourceControlCacheSource).not.toContain("queryOptions");
+    expect(sourceControlCacheSource).not.toContain("mutationOptions");
     expect(settingsClientSource).toContain("SourceControlConnectionCard");
     expect(settingsClientSource).toContain("RepositoryList");
     expect(settingsClientSource).toContain('to="/$slug/tasks/bind"');
@@ -1121,9 +1232,12 @@ describe("app authenticated route migration", () => {
     expect(repositoryListSource).toContain("RepositoryCard");
     expect(repositoryListSource).not.toContain("LfSelect");
     expect(addRepositoryDialogSource).toContain(
+      "importSourceControlRepository"
+    );
+    expect(addRepositoryDialogSource).toContain("setQueryData");
+    expect(addRepositoryDialogSource).not.toContain(
       "importSourceControlRepositoryMutationOptions"
     );
-    expect(sourceControlQueriesSource).toContain("setQueryData");
     expect(addRepositoryDialogSource).toContain("LIGHTFAST_REPOSITORY_NAME");
     expect(repositoryCardSource).toContain("Open on GitHub");
     expect(formatSource).toContain("formatStatusSubtitle");
@@ -1138,7 +1252,7 @@ describe("app authenticated route migration", () => {
       connectionCardSource,
       repositoryListSource,
       addRepositoryDialogSource,
-      sourceControlQueriesSource,
+      sourceControlCacheSource,
       repositoryCardSource,
       formatSource,
     ]) {
@@ -1177,9 +1291,7 @@ describe("app authenticated route migration", () => {
     const memberCacheSource = source(
       "src/org/settings/members/org-member-cache.ts"
     );
-    const memberQueriesSource = source(
-      "src/org/settings/members/org-member-queries.ts"
-    );
+    const memberQueriesPath = "src/org/settings/members/org-member-queries.ts";
     const apiKeyCreateSource = source(
       "src/org/settings/api-keys/org-api-key-create.tsx"
     );
@@ -1193,9 +1305,8 @@ describe("app authenticated route migration", () => {
     const apiKeyCacheSource = source(
       "src/org/settings/api-keys/org-api-key-cache.ts"
     );
-    const apiKeyQueriesSource = source(
-      "src/org/settings/api-keys/org-api-key-queries.ts"
-    );
+    const apiKeyQueriesPath =
+      "src/org/settings/api-keys/org-api-key-queries.ts";
     const mcpQueriesPath = "src/org/settings/mcp/mcp-connections-queries.ts";
     const mcpClientSource = source(
       "src/org/settings/mcp/mcp-connections-client.tsx"
@@ -1225,45 +1336,73 @@ describe("app authenticated route migration", () => {
 
     expect(membersClientSource).toContain("OrgMemberInvite");
     expect(membersClientSource).toContain("OrgMemberList");
-    expect(memberListSource).toContain("orgMembersQueryOptions");
+    expect(existsSync(resolve(appRoot, memberQueriesPath))).toBe(false);
+    expect(memberListSource).toContain("listOrgMembers");
+    expect(memberListSource).toContain("queryKey: listQueryKey");
+    expect(memberListSource).not.toContain("orgMembersQueryOptions");
     expect(memberListSource).not.toContain("orgMembers.list.queryOptions");
     expect(memberListSource).not.toContain(
       'enabled: typeof window !== "undefined"'
     );
     expect(memberListSource).toContain('from "@clerk/tanstack-react-start"');
     expect(existsSync(resolve(appRoot, memberInviteActionsPath))).toBe(false);
-    expect(memberInviteSource).toContain("inviteOrgMemberMutationOptions");
+    expect(memberInviteSource).toContain('@api/app/tanstack/org-members"');
+    expect(memberInviteSource).toContain("inviteOrgMember");
+    expect(memberInviteSource).not.toContain("inviteOrgMemberMutationOptions");
     expect(memberInviteSource).not.toContain("useOrgMemberInviteAction");
     expect(existsSync(resolve(appRoot, memberListActionsPath))).toBe(false);
-    expect(memberListSource).toContain("updateOrgMemberRoleMutationOptions");
-    expect(memberListSource).toContain("revokeOrgInvitationMutationOptions");
-    expect(memberListSource).toContain("removeOrgMemberMutationOptions");
+    expect(memberListSource).toContain('@api/app/tanstack/org-members"');
+    expect(memberListSource).toContain("updateOrgMemberRole");
+    expect(memberListSource).toContain("revokeOrgInvitation");
+    expect(memberListSource).toContain("removeOrgMember");
+    expect(memberListSource).not.toContain(
+      "updateOrgMemberRoleMutationOptions"
+    );
+    expect(memberListSource).not.toContain(
+      "revokeOrgInvitationMutationOptions"
+    );
+    expect(memberListSource).not.toContain("removeOrgMemberMutationOptions");
     expect(memberListSource).not.toContain("useOrgMemberListActions");
-    expect(memberQueriesSource).toContain("orgMemberQueryKeys");
-    expect(memberQueriesSource).not.toContain("useTRPC");
+    expect(memberCacheSource).toContain("orgMemberListQueryKey");
+    expect(memberCacheSource).toContain(
+      'import type { ListOrgMembersResult } from "@api/app/tanstack/org-members"'
+    );
+    expect(memberCacheSource).not.toContain("queryOptions");
+    expect(memberCacheSource).not.toContain("useTRPC");
     expect(memberCacheSource).not.toContain("AppRouterOutputs");
 
-    expect(apiKeyListSource).toContain("orgApiKeysQueryOptions");
-    expect(apiKeyListSource).toContain(
+    expect(existsSync(resolve(appRoot, apiKeyQueriesPath))).toBe(false);
+    expect(apiKeyListSource).toContain("listOrgApiKeys");
+    expect(apiKeyListSource).toContain("orgApiKeyListQueryKey");
+    expect(apiKeyListSource).not.toContain("orgApiKeysQueryOptions");
+    expect(apiKeyListSource).not.toContain("orgApiKeyQueryKeys");
+    expect(apiKeyListSource).not.toContain(
       'enabled: typeof window !== "undefined"'
     );
     expect(apiKeyListSource).toContain('from "@clerk/tanstack-react-start"');
     expect(existsSync(resolve(appRoot, apiKeyCreateActionsPath))).toBe(false);
-    expect(apiKeyCreateSource).toContain("createOrgApiKeyMutationOptions");
+    expect(apiKeyCreateSource).toContain('@api/app/tanstack/org-api-keys"');
+    expect(apiKeyCreateSource).toContain("createOrgApiKey");
+    expect(apiKeyCreateSource).not.toContain("createOrgApiKeyMutationOptions");
     expect(apiKeyCreateSource).not.toContain("useOrgApiKeyCreateAction");
     expect(existsSync(resolve(appRoot, apiKeyListActionsPath))).toBe(false);
-    expect(apiKeyListSource).toContain("revokeOrgApiKeyMutationOptions");
-    expect(apiKeyListSource).toContain("deleteOrgApiKeyMutationOptions");
-    expect(apiKeyListSource).toContain("rotateOrgApiKeyMutationOptions");
+    expect(apiKeyListSource).toContain('@api/app/tanstack/org-api-keys"');
+    expect(apiKeyListSource).toContain("revokeOrgApiKey");
+    expect(apiKeyListSource).toContain("deleteOrgApiKey");
+    expect(apiKeyListSource).toContain("rotateOrgApiKey");
+    expect(apiKeyListSource).not.toContain("revokeOrgApiKeyMutationOptions");
+    expect(apiKeyListSource).not.toContain("deleteOrgApiKeyMutationOptions");
+    expect(apiKeyListSource).not.toContain("rotateOrgApiKeyMutationOptions");
     expect(apiKeyListSource).not.toContain("useOrgApiKeyListActions");
     expect(apiKeyCacheSource).toContain("OrgApiKeyListData");
-    expect(apiKeyQueriesSource).toContain('@api/app/tanstack/org-api-keys"');
+    expect(apiKeyCacheSource).toContain(
+      'import type { ListOrgApiKeysResult } from "@api/app/tanstack/org-api-keys"'
+    );
 
     for (const apiKeySource of [
       apiKeyCreateSource,
       apiKeyListSource,
       apiKeyCacheSource,
-      apiKeyQueriesSource,
     ]) {
       expect(apiKeySource).not.toContain("useTRPC");
       expect(apiKeySource).not.toContain("orgApiKeys.");
@@ -1373,12 +1512,8 @@ describe("app authenticated route migration", () => {
     );
     expect(billingRouteSource).toContain("BillingSettingsClient");
 
-    expect(teamGeneralClientSource).toContain(
-      "listUserOrganizationsQueryOptions"
-    );
-    expect(teamGeneralClientSource).toContain(
-      "organizationDomainsQueryOptions"
-    );
+    expect(teamGeneralClientSource).toContain("listUserOrganizations");
+    expect(teamGeneralClientSource).toContain("listOrganizationDomains");
     expect(teamGeneralClientSource).toContain("useNavigate");
     expect(existsSync(resolve(appRoot, teamGeneralActionsPath))).toBe(false);
     expect(teamGeneralClientSource).toContain(
@@ -1399,7 +1534,11 @@ describe("app authenticated route migration", () => {
     expect(teamGeneralClientSource).not.toContain("useTeamDomainsUpdate");
     expect(teamGeneralModelSource).toContain("normalizeTeamDomainList");
     expect(teamGeneralModelSource).toContain("renameOrganizationSlug");
-    expect(identityCardSource).toContain("orgIdentityQueryOptions");
+    expect(identityCardSource).toContain('@api/app/tanstack/org-identity"');
+    expect(identityCardSource).toContain("orgIdentityQueryKey");
+    expect(identityCardSource).toContain("getOrgIdentity");
+    expect(identityCardSource).not.toContain("orgIdentityQueryOptions");
+    expect(identityCardSource).not.toContain("identity-soul-queries");
     expect(identityCardSource).not.toContain("identity.get.queryOptions");
     expect(identityCardSource).not.toContain(
       'enabled: typeof window !== "undefined"'
@@ -1408,7 +1547,14 @@ describe("app authenticated route migration", () => {
       'to="/$slug/settings/source-control"'
     );
 
-    expect(billingClientSource).toContain("billingOverviewQueryOptions");
+    expect(billingClientSource).toContain("getOrgBillingOverview");
+    expect(billingClientSource).toContain("orgBillingOverviewQueryKey");
+    expect(billingClientSource).not.toContain("billingOverviewQueryOptions");
+    expect(
+      existsSync(
+        resolve(appRoot, "src/org/settings/billing/billing-queries.ts")
+      )
+    ).toBe(false);
     expect(billingClientSource).not.toContain("useTRPC");
     expect(billingClientSource).not.toContain(
       'enabled: typeof window !== "undefined"'
@@ -1417,10 +1563,13 @@ describe("app authenticated route migration", () => {
     expect(billingClientSource).toContain("useStatements");
     expect(billingClientSource).toContain("BillingCheckoutDialog");
     expect(existsSync(resolve(appRoot, billingActionsPath))).toBe(false);
-    expect(billingClientSource).toContain("orgBillingQueryKeys.overview");
+    expect(billingClientSource).toContain("orgBillingOverviewQueryKey");
+    expect(billingClientSource).not.toContain("orgBillingQueryKeys");
     expect(billingClientSource).not.toContain("useBillingOverviewRefresh");
     expect(existsSync(resolve(appRoot, billingCancellationPath))).toBe(false);
-    expect(billingClientSource).toContain(
+    expect(billingClientSource).toContain('@api/app/tanstack/org-billing"');
+    expect(billingClientSource).toContain("cancelOrgBillingSubscriptionItem");
+    expect(billingClientSource).not.toContain(
       "cancelOrgBillingSubscriptionItemMutationOptions"
     );
     expect(billingClientSource).not.toContain(
@@ -1494,13 +1643,13 @@ describe("app authenticated route migration", () => {
       appRoot,
       "src/server/native-proxy.ts"
     );
-    const nativeProxyAdapterSource = repoSource(
-      "api/app/src/adapters/native-provider-proxy.ts"
-    );
-    const nativeProxyCallRouteSource = source(
+    const cliApiAdapterSource = repoSource("api/app/src/adapters/cli-api.ts");
+    const nativeProxyCallRoutePath = resolve(
+      appRoot,
       "src/routes/api/native/proxy/call.ts"
     );
-    const nativeProxyRoutinesRouteSource = source(
+    const nativeProxyRoutinesRoutePath = resolve(
+      appRoot,
       "src/routes/api/native/proxy/routines.ts"
     );
     const mcpServiceAuthPath = resolve(
@@ -1508,6 +1657,9 @@ describe("app authenticated route migration", () => {
       "src/server/mcp-service-auth.ts"
     );
     const mcpProxyServerPath = resolve(appRoot, "src/server/mcp-proxy.ts");
+    const mcpServiceAuthAdapterSource = repoSource(
+      "api/app/src/adapters/internal/mcp-service-auth.ts"
+    );
     const mcpProxyAdapterSource = repoSource(
       "api/app/src/adapters/internal/mcp-proxy.ts"
     );
@@ -1538,16 +1690,26 @@ describe("app authenticated route migration", () => {
       '"/_authenticated/$slug/tasks/connectors/x/complete"'
     );
     expect(xCompleteRouteSource).toContain("XConnectorSetupCompleteClient");
-    expect(xSetupClientSource).toContain("connectorsListQueryOptions");
+    expect(xSetupClientSource).toContain("listConnectors");
+    expect(xSetupClientSource).toContain(
+      'queryKey: ["connectors", "list"] as const'
+    );
+    expect(xSetupClientSource).not.toContain("connectorQueryKeys");
+    expect(xSetupClientSource).not.toContain("connectors-cache");
+    expect(xSetupClientSource).not.toContain("connectorsListQueryOptions");
     expect(xSetupClientSource).toContain(
       'enabled: typeof window !== "undefined"'
     );
     expect(xSetupClientSource).toContain("ConnectorIcon");
-    expect(xSetupClientSource).toContain("startConnectorMutationOptions");
+    expect(xSetupClientSource).toContain('@api/app/tanstack/connectors"');
+    expect(xSetupClientSource).toContain("startConnector");
+    expect(xSetupClientSource).not.toContain("startConnectorMutationOptions");
     expect(xSetupClientSource).toContain("window.location.assign");
     expect(xCompleteClientSource).toContain("useSession");
     expect(xCompleteClientSource).toContain("useNavigate");
-    expect(xCompleteClientSource).toContain(
+    expect(xCompleteClientSource).toContain('@api/app/tanstack/github-setup"');
+    expect(xCompleteClientSource).toContain("syncGitHubBindingClaim");
+    expect(xCompleteClientSource).not.toContain(
       "syncGitHubBindingClaimMutationOptions"
     );
     expect(xCompleteClientSource).toContain("pathForSetupRequirement");
@@ -1586,50 +1748,32 @@ describe("app authenticated route migration", () => {
       "handleSkillIndexEventsRequest"
     );
     expect(skillsEventsAdapterSource).toContain("../../services/skills/events");
-    expect(skillsEventsServiceSource).toContain("resolveAuthContextFromClerk");
-    expect(skillsEventsServiceSource).toContain("@db/app/client");
+    expect(skillsEventsAdapterSource).toContain("resolveAuthContextFromClerk");
+    expect(skillsEventsAdapterSource).toContain("@db/app/client");
+    expect(skillsEventsAdapterSource).toContain("Request");
+    expect(skillsEventsAdapterSource).toContain("Response");
+    expect(skillsEventsServiceSource).not.toContain(
+      "resolveAuthContextFromClerk"
+    );
+    expect(skillsEventsServiceSource).not.toContain("@db/app/client");
+    expect(skillsEventsServiceSource).not.toContain("Request");
+    expect(skillsEventsServiceSource).not.toContain("Response");
     expect(skillsEventsServiceSource).toContain("createSkillIndexEventStream");
     expect(skillsEventsServiceSource).toContain("redis.subscribe");
     expect(existsSync(nativeProxyServerPath)).toBe(false);
-    expect(nativeProxyAdapterSource).toContain(
-      "createNativeProviderRoutineContext"
+    expect(existsSync(nativeProxyCallRoutePath)).toBe(false);
+    expect(existsSync(nativeProxyRoutinesRoutePath)).toBe(false);
+    expect(cliApiAdapterSource).toContain("createCliProviderRoutineContext");
+    expect(cliApiAdapterSource).toContain("loadAgentConnectorRuntimeTools");
+    expect(cliApiAdapterSource).toContain("adapters");
+    expect(cliApiAdapterSource).toContain('sourceSurface: "native_cli"');
+    expect(cliApiAdapterSource).toContain('"providerRoutines.find"');
+    expect(cliApiAdapterSource).toContain('"providerRoutines.call"');
+    expect(cliApiAdapterSource).not.toContain(
+      "handleCliProviderRoutineCallRequest"
     );
-    expect(nativeProxyAdapterSource).toContain(
-      "loadAgentConnectorRuntimeTools"
-    );
-    expect(nativeProxyAdapterSource).toContain("adapters");
-    expect(nativeProxyAdapterSource).toContain('sourceSurface: "native_cli"');
-    expect(nativeProxyCallRouteSource).toContain(
-      'createFileRoute("/api/native/proxy/call")'
-    );
-    expect(nativeProxyCallRouteSource).toContain(
-      "handleNativeProviderRoutineCallRequest"
-    );
-    expect(nativeProxyCallRouteSource).toContain("await import(");
-    expect(nativeProxyCallRouteSource).toContain(
-      '"@api/app/native-provider-proxy"'
-    );
-    expect(nativeProxyCallRouteSource).not.toContain(
-      'import { handleNativeProviderRoutineCallRequest } from "@api/app/native-provider-proxy"'
-    );
-    expect(nativeProxyCallRouteSource).not.toContain(
-      "providerRoutineCallInputSchema"
-    );
-    expect(nativeProxyRoutinesRouteSource).toContain(
-      'createFileRoute("/api/native/proxy/routines")'
-    );
-    expect(nativeProxyRoutinesRouteSource).toContain(
-      "handleNativeProviderRoutineFindRequest"
-    );
-    expect(nativeProxyRoutinesRouteSource).toContain("await import(");
-    expect(nativeProxyRoutinesRouteSource).toContain(
-      '"@api/app/native-provider-proxy"'
-    );
-    expect(nativeProxyRoutinesRouteSource).not.toContain(
-      'import { handleNativeProviderRoutineFindRequest } from "@api/app/native-provider-proxy"'
-    );
-    expect(nativeProxyRoutinesRouteSource).not.toContain(
-      "providerRoutineFindInputSchema"
+    expect(cliApiAdapterSource).not.toContain(
+      "handleCliProviderRoutineFindRequest"
     );
     expect(existsSync(mcpServiceAuthPath)).toBe(false);
     expect(existsSync(mcpProxyServerPath)).toBe(false);
@@ -1638,7 +1782,11 @@ describe("app authenticated route migration", () => {
     expect(mcpProxyAdapterSource).toContain("loadAgentConnectorRuntimeTools");
     expect(mcpProxyAdapterSource).toContain("adapters");
     expect(mcpProxyAdapterSource).toContain('sourceSurface: "hosted_mcp"');
-    expect(mcpProxyAdapterSource).toContain("process.env.SERVICE_JWT_SECRET");
+    expect(mcpProxyAdapterSource).toContain('from "./mcp-service-auth"');
+    expect(mcpServiceAuthAdapterSource).toContain(
+      "process.env.SERVICE_JWT_SECRET"
+    );
+    expect(mcpServiceAuthAdapterSource).toContain("verifyServiceJWT");
     expect(mcpProxyCallRouteSource).toContain(
       'createFileRoute("/api/internal/mcp/proxy/call")'
     );
@@ -1687,7 +1835,7 @@ describe("app authenticated route migration", () => {
       expect(startupSensitiveFile).not.toContain('from "@api/app');
     }
     expect(mcpProxyAdapterSource).not.toContain(
-      'from "@repo/provider-routines"'
+      `from "${oldProviderRoutinesPackage}"`
     );
 
     for (const routeFile of [
@@ -1698,9 +1846,7 @@ describe("app authenticated route migration", () => {
       githubWebhookRouteSource,
       skillsIndexEventsRouteSource,
       skillsEventsAdapterSource,
-      nativeProxyAdapterSource,
-      nativeProxyCallRouteSource,
-      nativeProxyRoutinesRouteSource,
+      cliApiAdapterSource,
       mcpProxyAdapterSource,
       mcpProxyCallRouteSource,
       mcpProxyFindRouteSource,

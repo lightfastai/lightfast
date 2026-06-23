@@ -13,7 +13,6 @@ describe("connector service domain errors", () => {
     for (const file of [
       "services/connectors/index.ts",
       "services/connectors/config.ts",
-      "services/user-connectors/index.ts",
     ]) {
       const fileSource = source(file);
 
@@ -21,6 +20,13 @@ describe("connector service domain errors", () => {
       expect(fileSource, file).not.toContain("@trpc/server");
       expect(fileSource, file).not.toContain("TRPCError");
     }
+
+    const userConnectorCatalogSource = source(
+      "services/user-connectors/catalog.ts"
+    );
+    expect(userConnectorCatalogSource).not.toContain("../../domain/errors");
+    expect(userConnectorCatalogSource).not.toContain("switch");
+    expect(userConnectorCatalogSource).not.toContain("unsupportedProvider");
   });
 
   it("keeps connector provider flow errors framework-neutral", () => {
@@ -35,5 +41,29 @@ describe("connector service domain errors", () => {
       expect(fileSource, file).not.toContain("@trpc/server");
       expect(fileSource, file).not.toContain("TRPCError");
     }
+  });
+
+  it("keeps X connector MCP HTTP parsing in the internal adapter", () => {
+    const serviceSource = source("services/connectors/x-mcp-bridge.ts");
+    const adapterSource = source("adapters/internal/connector-mcp.ts");
+
+    expect(serviceSource).not.toContain("parseRequestBody");
+    expect(serviceSource).not.toContain("bearerToken");
+    expect(serviceSource).not.toContain('headers.get("authorization")');
+    expect(serviceSource).not.toContain("MALFORMED_JSON_REQUEST");
+    expect(serviceSource).not.toContain("Invalid request body");
+
+    expect(adapterSource).toContain("parseRequestBody");
+    expect(adapterSource).toContain("bearerToken");
+    expect(adapterSource).toContain('headers.get("authorization")');
+    expect(adapterSource).toContain("MALFORMED_JSON_REQUEST");
+    expect(adapterSource).toContain("Invalid request body");
+    expect(adapterSource).toContain("parsedBody");
+    expect(adapterSource).toContain("appOrigin");
+    expect(adapterSource).toContain("token");
+    expect(adapterSource).toContain("../../services/connectors/x-mcp-bridge");
+    expect(adapterSource).not.toMatch(
+      /\bfrom\s*["']\.\.\/\.\.\/services\/connectors["']/
+    );
   });
 });

@@ -5,19 +5,37 @@ import { describe, expect, it } from "vitest";
 const appRoot = resolve(import.meta.dirname, "../..");
 
 describe("org members app data access", () => {
-  it("uses local TanStack query helpers backed by api/app server functions", () => {
-    const source = readFileSync(
-      resolve(appRoot, "src/org/settings/members/org-member-queries.ts"),
+  it("keeps org member cache primitives without a query-options wrapper", () => {
+    const queriesPath = "src/org/settings/members/org-member-queries.ts";
+    const cacheSource = readFileSync(
+      resolve(appRoot, "src/org/settings/members/org-member-cache.ts"),
+      "utf8"
+    );
+    const listSource = readFileSync(
+      resolve(appRoot, "src/org/settings/members/org-member-list.tsx"),
+      "utf8"
+    );
+    const avatarSource = readFileSync(
+      resolve(appRoot, "src/signals/signals-creator-avatar.tsx"),
       "utf8"
     );
 
-    expect(source).toContain('@api/app/tanstack/org-members"');
-    expect(source).toContain("queryOptions");
-    expect(source).toContain("mutationOptions");
-    expect(source).toContain('["org-members", "list", orgId ?? "no-org"]');
-    expect(source).toContain("enabled: Boolean(input.orgId)");
-    expect(source).not.toContain("useTRPC");
-    expect(source).not.toContain('enabled: typeof window !== "undefined"');
+    expect(existsSync(resolve(appRoot, queriesPath))).toBe(false);
+    expect(cacheSource).toContain(
+      'import type { ListOrgMembersResult } from "@api/app/tanstack/org-members"'
+    );
+    expect(cacheSource).toContain("orgMemberListQueryKey");
+    expect(cacheSource).toContain('["org-members", "list", orgId ?? "no-org"]');
+    expect(cacheSource).not.toContain("queryOptions");
+    expect(cacheSource).not.toContain("listOrgMembers");
+    expect(listSource).toContain('@api/app/tanstack/org-members"');
+    expect(listSource).toContain("listOrgMembers");
+    expect(listSource).toContain("queryKey: listQueryKey");
+    expect(listSource).not.toContain("orgMembersQueryOptions");
+    expect(avatarSource).toContain('@api/app/tanstack/org-members"');
+    expect(avatarSource).toContain("listOrgMembers");
+    expect(avatarSource).toContain("queryKey: orgMemberListQueryKey(orgId)");
+    expect(avatarSource).not.toContain("orgMembersQueryOptions");
   });
 
   it("removes org member settings UI callers from tRPC", () => {
@@ -44,10 +62,12 @@ describe("org members app data access", () => {
     const actionsPath = "src/org/settings/members/org-member-invite-actions.ts";
 
     expect(existsSync(resolve(appRoot, actionsPath))).toBe(false);
+    expect(inviteSource).toContain('@api/app/tanstack/org-members"');
+    expect(inviteSource).toContain("inviteOrgMember");
     expect(inviteSource).toContain("useMutation");
     expect(inviteSource).toContain("useQueryClient");
-    expect(inviteSource).toContain("inviteOrgMemberMutationOptions");
-    expect(inviteSource).toContain("orgMemberQueryKeys.list(orgId)");
+    expect(inviteSource).not.toContain("inviteOrgMemberMutationOptions");
+    expect(inviteSource).toContain("orgMemberListQueryKey(orgId)");
     expect(inviteSource).toContain("createOptimisticInvitation");
     expect(inviteSource).not.toContain("useOrgMemberInviteAction");
     expect(inviteSource).not.toContain("org-member-invite-actions");
@@ -61,12 +81,16 @@ describe("org members app data access", () => {
     const actionsPath = "src/org/settings/members/org-member-list-actions.ts";
 
     expect(existsSync(resolve(appRoot, actionsPath))).toBe(false);
+    expect(listSource).toContain('@api/app/tanstack/org-members"');
+    expect(listSource).toContain("updateOrgMemberRole");
+    expect(listSource).toContain("removeOrgMember");
+    expect(listSource).toContain("revokeOrgInvitation");
     expect(listSource).toContain("useMutation");
     expect(listSource).toContain("useQueryClient");
-    expect(listSource).toContain("updateOrgMemberRoleMutationOptions");
-    expect(listSource).toContain("removeOrgMemberMutationOptions");
-    expect(listSource).toContain("revokeOrgInvitationMutationOptions");
-    expect(listSource).toContain("orgMemberQueryKeys.list(orgId)");
+    expect(listSource).not.toContain("updateOrgMemberRoleMutationOptions");
+    expect(listSource).not.toContain("removeOrgMemberMutationOptions");
+    expect(listSource).not.toContain("revokeOrgInvitationMutationOptions");
+    expect(listSource).toContain("orgMemberListQueryKey(orgId)");
     expect(listSource).toContain("updateMemberRole");
     expect(listSource).toContain("restoreMember");
     expect(listSource).toContain("restoreInvitation");

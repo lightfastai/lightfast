@@ -4,6 +4,7 @@ import type { ExecutionContext } from "../domain";
 import {
   inviteOrgMemberCommand,
   listOrgMembersCommand,
+  type OrgMembersCommandDeps,
   removeOrgMemberCommand,
   revokeOrgInvitationCommand,
   updateOrgMemberRoleCommand,
@@ -48,18 +49,16 @@ const pendingCtx: ExecutionContext = {
 
 function createDeps() {
   return {
-    clerkClient: vi.fn().mockResolvedValue({
-      organizations: {
-        createOrganizationInvitation: createOrganizationInvitationMock,
-        deleteOrganizationMembership: deleteOrganizationMembershipMock,
-        getOrganizationInvitationList: getOrganizationInvitationListMock,
-        getOrganizationMembershipList: getOrganizationMembershipListMock,
-        revokeOrganizationInvitation: revokeOrganizationInvitationMock,
-        updateOrganizationMembership: updateOrganizationMembershipMock,
-      },
-    }),
     isClerkConflictError: isClerkConflictErrorMock,
-  };
+    organizations: {
+      createOrganizationInvitation: createOrganizationInvitationMock,
+      deleteOrganizationMembership: deleteOrganizationMembershipMock,
+      getOrganizationInvitationList: getOrganizationInvitationListMock,
+      getOrganizationMembershipList: getOrganizationMembershipListMock,
+      revokeOrganizationInvitation: revokeOrganizationInvitationMock,
+      updateOrganizationMembership: updateOrganizationMembershipMock,
+    },
+  } satisfies OrgMembersCommandDeps;
 }
 
 let deps: ReturnType<typeof createDeps>;

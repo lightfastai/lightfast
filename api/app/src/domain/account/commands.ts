@@ -1,28 +1,10 @@
-import type { Database } from "@db/app";
-import {
-  deletePreClerkNamespaceReservation,
-  finalizeNamespaceOperation,
-  markNamespaceOperationClerkApplied,
-  NamespaceConflictError,
-  reserveNamespaceForOperation,
-  startNamespaceOperation,
-} from "@db/app";
 import { githubUserAccountReturnToSchema } from "@lightfast/connector-github/contract";
 import {
   accountSettingsFormSchema,
   lightfastHandleSchema,
 } from "@repo/app-validation";
-import { clerkClient } from "@vendor/clerk/server";
-import { parseError } from "@vendor/observability/error/next";
-import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
 
-import { isClerkConflictError } from "../../auth/clerk-errors";
-import {
-  disconnectGitHubUserAccount,
-  getGitHubUserAccountStatus,
-  startGitHubUserAccountBinding,
-} from "../../services/github/user-account/flow";
 import { defineCommand } from "../command";
 import {
   AuthzError,
@@ -33,95 +15,114 @@ import {
 import { requireClerkUserActor } from "../gates";
 import { type AccountProfileUser, toAccountProfile } from "./profile";
 
-type ClerkClient = Awaited<ReturnType<typeof clerkClient>>;
-type ClerkUserClient = Pick<ClerkClient["users"], "getUser" | "updateUser">;
-
-interface AccountCommandDeps {
-  clerk: { users: ClerkUserClient };
-  db: Database;
-  deletePreClerkNamespaceReservation: typeof deletePreClerkNamespaceReservation;
-  disconnectGitHubUserAccount: typeof disconnectGitHubUserAccount;
-  finalizeNamespaceOperation: typeof finalizeNamespaceOperation;
-  getGitHubUserAccountStatus: typeof getGitHubUserAccountStatus;
-  isClerkConflictError: typeof isClerkConflictError;
-  log: Pick<typeof log, "error">;
-  markNamespaceOperationClerkApplied: typeof markNamespaceOperationClerkApplied;
-  reserveNamespaceForOperation: typeof reserveNamespaceForOperation;
-  startGitHubUserAccountBinding: typeof startGitHubUserAccountBinding;
-  startNamespaceOperation: typeof startNamespaceOperation;
+interface AccountUserClient {
+  getUser(userId: string): Promise<AccountProfileUser>;
+  isUsernameConflictError(error: unknown): boolean;
+  updateUser(
+    userId: string,
+    params: {
+      firstName?: string;
+      lastName?: string;
+      username?: string;
+    }
+  ): Promise<AccountProfileUser>;
 }
 
-export function createDefaultAccountCommandDeps(input: {
-  clerk: { users: ClerkUserClient };
-  db: Database;
-  deletePreClerkNamespaceReservation?: typeof deletePreClerkNamespaceReservation;
-  disconnectGitHubUserAccount?: typeof disconnectGitHubUserAccount;
-  finalizeNamespaceOperation?: typeof finalizeNamespaceOperation;
-  getGitHubUserAccountStatus?: typeof getGitHubUserAccountStatus;
-  isClerkConflictError?: typeof isClerkConflictError;
-  log?: Pick<typeof log, "error">;
-  markNamespaceOperationClerkApplied?: typeof markNamespaceOperationClerkApplied;
-  reserveNamespaceForOperation?: typeof reserveNamespaceForOperation;
-  startGitHubUserAccountBinding?: typeof startGitHubUserAccountBinding;
-  startNamespaceOperation?: typeof startNamespaceOperation;
-}): AccountCommandDeps;
-export function createDefaultAccountCommandDeps(input: {
-  clerk?: { users: ClerkUserClient };
-  db: Database;
-  deletePreClerkNamespaceReservation?: typeof deletePreClerkNamespaceReservation;
-  disconnectGitHubUserAccount?: typeof disconnectGitHubUserAccount;
-  finalizeNamespaceOperation?: typeof finalizeNamespaceOperation;
-  getGitHubUserAccountStatus?: typeof getGitHubUserAccountStatus;
-  isClerkConflictError?: typeof isClerkConflictError;
-  log?: Pick<typeof log, "error">;
-  markNamespaceOperationClerkApplied?: typeof markNamespaceOperationClerkApplied;
-  reserveNamespaceForOperation?: typeof reserveNamespaceForOperation;
-  startGitHubUserAccountBinding?: typeof startGitHubUserAccountBinding;
-  startNamespaceOperation?: typeof startNamespaceOperation;
-}): Promise<AccountCommandDeps>;
-export function createDefaultAccountCommandDeps(input: {
-  clerk?: { users: ClerkUserClient };
-  db: Database;
-  deletePreClerkNamespaceReservation?: typeof deletePreClerkNamespaceReservation;
-  disconnectGitHubUserAccount?: typeof disconnectGitHubUserAccount;
-  finalizeNamespaceOperation?: typeof finalizeNamespaceOperation;
-  getGitHubUserAccountStatus?: typeof getGitHubUserAccountStatus;
-  isClerkConflictError?: typeof isClerkConflictError;
-  log?: Pick<typeof log, "error">;
-  markNamespaceOperationClerkApplied?: typeof markNamespaceOperationClerkApplied;
-  reserveNamespaceForOperation?: typeof reserveNamespaceForOperation;
-  startGitHubUserAccountBinding?: typeof startGitHubUserAccountBinding;
-  startNamespaceOperation?: typeof startNamespaceOperation;
-}): AccountCommandDeps | Promise<AccountCommandDeps> {
-  const base = {
-    db: input.db,
-    deletePreClerkNamespaceReservation:
-      input.deletePreClerkNamespaceReservation ??
-      deletePreClerkNamespaceReservation,
-    disconnectGitHubUserAccount:
-      input.disconnectGitHubUserAccount ?? disconnectGitHubUserAccount,
-    finalizeNamespaceOperation:
-      input.finalizeNamespaceOperation ?? finalizeNamespaceOperation,
-    getGitHubUserAccountStatus:
-      input.getGitHubUserAccountStatus ?? getGitHubUserAccountStatus,
-    isClerkConflictError: input.isClerkConflictError ?? isClerkConflictError,
-    log: input.log ?? log,
-    markNamespaceOperationClerkApplied:
-      input.markNamespaceOperationClerkApplied ??
-      markNamespaceOperationClerkApplied,
-    reserveNamespaceForOperation:
-      input.reserveNamespaceForOperation ?? reserveNamespaceForOperation,
-    startGitHubUserAccountBinding:
-      input.startGitHubUserAccountBinding ?? startGitHubUserAccountBinding,
-    startNamespaceOperation:
-      input.startNamespaceOperation ?? startNamespaceOperation,
+interface GitHubAccountStatusResult {
+  account: null | {
+    accessTokenExpiresAt: Date;
+    connectedAt: Date;
+    provider: "github";
+    providerUserId: string;
+    refreshTokenExpiresAt: Date;
+    status: "active";
   };
+}
 
-  if (input.clerk) {
-    return { ...base, clerk: input.clerk };
-  }
+type NamespaceConflictCode =
+  | "HANDLE_ALREADY_CLAIMED"
+  | "IDEMPOTENCY_KEY_REUSED"
+  | "OWNER_ALREADY_CLAIMED"
+  | "OWNER_NAMESPACE_IN_PROGRESS"
+  | "OWNER_MISMATCH";
 
-  return Promise.resolve(clerkClient()).then((clerk) => ({ ...base, clerk }));
+interface NamespaceConflictLike {
+  code: NamespaceConflictCode;
+}
+
+type AccountUsernameNamespaceOperationType =
+  | "backfill_existing_handle"
+  | "create_org_slug"
+  | "create_user_username";
+
+type AccountUsernameNamespaceOwnerKind = "org" | "user";
+
+type AccountUsernameNamespaceOperationStatus =
+  | "clerk_applied"
+  | "compensating"
+  | "failed"
+  | "finalized"
+  | "namespace_reserved"
+  | "started";
+
+export interface AccountUsernameNamespaceOperation {
+  clerkOrgId: string | null;
+  clerkUserId: string | null;
+  createdAt: Date;
+  errorCode: string | null;
+  errorMessage: string | null;
+  expiresAt: Date | null;
+  fromHandle: string | null;
+  id: number;
+  idempotencyClerkOrgId: string | null;
+  idempotencyClerkUserId: string | null;
+  idempotencyKey: string;
+  operationType: AccountUsernameNamespaceOperationType;
+  ownerKind: AccountUsernameNamespaceOwnerKind;
+  status: AccountUsernameNamespaceOperationStatus;
+  toHandle: string;
+  updatedAt: Date;
+}
+
+interface AccountUsernameNamespace {
+  deletePreClerkReservation(
+    operation: AccountUsernameNamespaceOperation,
+    input: { errorCode: string; errorMessage: string }
+  ): Promise<AccountUsernameNamespaceOperation>;
+  finalize(
+    operation: AccountUsernameNamespaceOperation
+  ): Promise<AccountUsernameNamespaceOperation>;
+  isConflict(error: unknown): boolean;
+  markClerkApplied(
+    operation: AccountUsernameNamespaceOperation
+  ): Promise<AccountUsernameNamespaceOperation>;
+  reserve(
+    operation: AccountUsernameNamespaceOperation
+  ): Promise<AccountUsernameNamespaceOperation>;
+  start(input: {
+    clerkUserId: string;
+    idempotencyKey: string;
+    operationType: "create_user_username";
+    ownerKind: "user";
+    toHandle: string;
+  }): Promise<AccountUsernameNamespaceOperation>;
+}
+
+export interface AccountCommandDeps {
+  disconnectGitHubUserAccount(input: {
+    clerkUserId: string;
+  }): Promise<{ ok: true }>;
+  getGitHubUserAccountStatus(input: {
+    clerkUserId: string;
+  }): Promise<GitHubAccountStatusResult>;
+  log: { error(message: string, context: Record<string, unknown>): void };
+  parseError(error: unknown): unknown;
+  startGitHubUserAccountBinding(input: {
+    lightfastUserId: string;
+    returnTo?: string;
+  }): Promise<{ authorizationUrl: string }>;
+  usernameNamespace: AccountUsernameNamespace;
+  users: AccountUserClient;
 }
 
 const accountProfileInput = z.object({}).strict();
@@ -177,7 +178,7 @@ function usernameConflict(username: string, cause?: unknown) {
 }
 
 function namespaceConflictToDomainError(
-  error: NamespaceConflictError,
+  error: NamespaceConflictLike,
   username: string
 ) {
   switch (error.code) {
@@ -234,12 +235,12 @@ export const getAccountProfileCommand = defineCommand<
     const actor = requireClerkUserActor(ctx);
 
     try {
-      const user = await deps.clerk.users.getUser(actor.userId);
+      const user = await deps.users.getUser(actor.userId);
       return toAccountProfile(user);
     } catch (error) {
       deps.log.error("[account] get profile failed", {
         userId: actor.userId,
-        error: parseError(error),
+        error: deps.parseError(error),
       });
 
       throw new InternalDomainError(
@@ -265,7 +266,7 @@ export const updateAccountNameCommand = defineCommand<
     const actor = requireClerkUserActor(ctx);
 
     try {
-      const user = await deps.clerk.users.updateUser(actor.userId, {
+      const user = await deps.users.updateUser(actor.userId, {
         firstName: input.displayName,
         lastName: "",
       });
@@ -274,7 +275,7 @@ export const updateAccountNameCommand = defineCommand<
     } catch (error) {
       deps.log.error("[account] update display name failed", {
         userId: actor.userId,
-        error: parseError(error),
+        error: deps.parseError(error),
       });
 
       throw new InternalDomainError(
@@ -301,7 +302,7 @@ export const createAccountUsernameCommand = defineCommand<
     const username = input.username.trim().toLowerCase();
 
     try {
-      const currentUser = await deps.clerk.users.getUser(actor.userId);
+      const currentUser = await deps.users.getUser(actor.userId);
       if (currentUser.username) {
         if (currentUser.username === username) {
           return toAccountProfile(currentUser);
@@ -314,7 +315,7 @@ export const createAccountUsernameCommand = defineCommand<
         );
       }
 
-      let operation = await deps.startNamespaceOperation(deps.db, {
+      let operation = await deps.usernameNamespace.start({
         clerkUserId: actor.userId,
         idempotencyKey: input.idempotencyKey,
         operationType: "create_user_username",
@@ -322,7 +323,7 @@ export const createAccountUsernameCommand = defineCommand<
         toHandle: username,
       });
 
-      operation = await deps.reserveNamespaceForOperation(deps.db, operation);
+      operation = await deps.usernameNamespace.reserve(operation);
 
       if (operation.status === "failed") {
         throw new ConflictError(
@@ -333,12 +334,12 @@ export const createAccountUsernameCommand = defineCommand<
       }
 
       if (operation.status === "finalized") {
-        return toAccountProfile(await deps.clerk.users.getUser(actor.userId));
+        return toAccountProfile(await deps.users.getUser(actor.userId));
       }
 
       if (operation.status === "clerk_applied") {
-        await deps.finalizeNamespaceOperation(deps.db, operation);
-        return toAccountProfile(await deps.clerk.users.getUser(actor.userId));
+        await deps.usernameNamespace.finalize(operation);
+        return toAccountProfile(await deps.users.getUser(actor.userId));
       }
 
       if (operation.status !== "namespace_reserved") {
@@ -351,12 +352,12 @@ export const createAccountUsernameCommand = defineCommand<
 
       let updatedUser: AccountProfileUser;
       try {
-        updatedUser = await deps.clerk.users.updateUser(actor.userId, {
+        updatedUser = await deps.users.updateUser(actor.userId, {
           username,
         });
       } catch (error) {
-        if (deps.isClerkConflictError(error)) {
-          await deps.deletePreClerkNamespaceReservation(deps.db, operation, {
+        if (deps.users.isUsernameConflictError(error)) {
+          await deps.usernameNamespace.deletePreClerkReservation(operation, {
             errorCode: "CLERK_USERNAME_CONFLICT",
             errorMessage: `Clerk rejected username ${username} as already claimed`,
           });
@@ -364,7 +365,7 @@ export const createAccountUsernameCommand = defineCommand<
           throw usernameConflict(username, error);
         }
 
-        await deps.deletePreClerkNamespaceReservation(deps.db, operation, {
+        await deps.usernameNamespace.deletePreClerkReservation(operation, {
           errorCode: "CLERK_USERNAME_UPDATE_FAILED",
           errorMessage: `Clerk failed to set username ${username}`,
         });
@@ -377,11 +378,8 @@ export const createAccountUsernameCommand = defineCommand<
         );
       }
 
-      operation = await deps.markNamespaceOperationClerkApplied(
-        deps.db,
-        operation
-      );
-      await deps.finalizeNamespaceOperation(deps.db, operation);
+      operation = await deps.usernameNamespace.markClerkApplied(operation);
+      await deps.usernameNamespace.finalize(operation);
 
       return toAccountProfile(updatedUser);
     } catch (error) {
@@ -394,14 +392,17 @@ export const createAccountUsernameCommand = defineCommand<
         throw error;
       }
 
-      if (error instanceof NamespaceConflictError) {
-        throw namespaceConflictToDomainError(error, username);
+      if (deps.usernameNamespace.isConflict(error)) {
+        throw namespaceConflictToDomainError(
+          error as NamespaceConflictLike,
+          username
+        );
       }
 
       deps.log.error("[account] create username failed", {
         userId: actor.userId,
         username,
-        error: parseError(error),
+        error: deps.parseError(error),
       });
 
       throw new InternalDomainError(

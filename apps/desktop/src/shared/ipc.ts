@@ -140,7 +140,7 @@ export interface LightfastBridge {
   appOrigin: string;
   auth: {
     snapshot: AuthSnapshot;
-    signIn: () => Promise<string | null>;
+    signIn: () => Promise<AuthSnapshot>;
     signOut: () => Promise<boolean>;
     onChanged: (listener: (snapshot: AuthSnapshot) => void) => () => void;
     pendingSigninUrl: () => Promise<string | null>;

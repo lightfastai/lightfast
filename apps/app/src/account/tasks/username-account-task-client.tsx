@@ -1,4 +1,7 @@
-import { createAccountUsername } from "@api/app/tanstack/account";
+import {
+  createAccountUsername,
+  getAccountProfile,
+} from "@api/app/tanstack/account";
 import { Loading03Icon as Loader2 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Icons } from "@repo/ui/components/icons";
@@ -7,12 +10,12 @@ import { Input } from "@repo/ui/components/ui/input";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
-import { accountProfileQueryOptions } from "../account-queries";
 
 interface UsernameAccountTaskClientProps {
   returnTo?: string;
 }
 
+const accountProfileQueryKey = ["account", "profile"] as const;
 const DEFAULT_RETURN_TO = "/account/teams/new";
 const USERNAME_TASK_PATH = "/account/tasks/username";
 
@@ -62,10 +65,11 @@ export function UsernameAccountTaskClient({
   returnTo,
 }: UsernameAccountTaskClientProps) {
   const queryClient = useQueryClient();
-  const accountQuery = accountProfileQueryOptions();
   const { data: profile } = useQuery({
-    ...accountQuery,
     enabled: typeof window !== "undefined",
+    queryFn: () => getAccountProfile(),
+    queryKey: accountProfileQueryKey,
+    staleTime: 5 * 60 * 1000,
   });
   const [username, setUsername] = useState(profile?.username ?? "");
   const [error, setError] = useState<string>();
@@ -78,7 +82,7 @@ export function UsernameAccountTaskClient({
       createAccountUsername({ data }),
     onSuccess: (data) => {
       idempotencyKeyRef.current = null;
-      queryClient.setQueryData(accountQuery.queryKey, data);
+      queryClient.setQueryData(accountProfileQueryKey, data);
       window.location.replace(targetPath);
     },
     onError: (err) => {

@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import type { Database } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -5,18 +7,14 @@ import type { AuthIdentity } from "../auth/identity";
 import { actorFromAuthIdentity } from "../domain";
 import { ValidationError } from "../domain/errors";
 import {
-  createDefaultUserConnectorCommandDeps,
+  disconnectUserConnectorCommand,
   startUserConnectorCommand,
+  type UserConnectorCommandDeps,
 } from "../domain/user-connectors";
 
 const serviceMocks = vi.hoisted(() => ({
-  disconnectUserConnector: vi.fn(),
-  startUserConnectorOAuth: vi.fn(),
-}));
-
-vi.mock("../services/user-connectors", () => ({
-  disconnectUserConnector: serviceMocks.disconnectUserConnector,
-  startUserConnectorOAuth: serviceMocks.startUserConnectorOAuth,
+  disconnectGranolaUserConnector: vi.fn(),
+  startGranolaUserConnectorOAuth: vi.fn(),
 }));
 
 const pendingIdentity = {
@@ -32,12 +30,12 @@ function ctx() {
 }
 
 function deps() {
-  return createDefaultUserConnectorCommandDeps({
+  return {
     db: {} as Database,
-    disconnectUserConnector: serviceMocks.disconnectUserConnector,
-    headers: new Headers(),
-    startUserConnectorOAuth: serviceMocks.startUserConnectorOAuth,
-  });
+    disconnectGranolaUserConnector: serviceMocks.disconnectGranolaUserConnector,
+    request: {},
+    startGranolaUserConnectorOAuth: serviceMocks.startGranolaUserConnectorOAuth,
+  } satisfies UserConnectorCommandDeps;
 }
 
 describe("user connector domain commands", () => {
@@ -45,8 +43,29 @@ describe("user connector domain commands", () => {
     vi.clearAllMocks();
   });
 
+  it("keeps user connector commands free of raw auth and transport types", () => {
+    const source = readFileSync(
+      resolve(import.meta.dirname, "../domain/user-connectors/commands.ts"),
+      "utf8"
+    );
+
+    expect(source).not.toContain("../../auth/identity");
+    expect(source).not.toContain("AuthIdentity");
+    expect(source).not.toContain("Headers");
+  });
+
+  it("keeps direct Granola commands pinned to the Granola provider", () => {
+    expect(
+      startUserConnectorCommand.input.safeParse({ provider: "notion" }).success
+    ).toBe(false);
+    expect(
+      disconnectUserConnectorCommand.input.safeParse({ provider: "notion" })
+        .success
+    ).toBe(false);
+  });
+
   it("preserves domain errors raised by user connector services", async () => {
-    serviceMocks.startUserConnectorOAuth.mockRejectedValueOnce(
+    serviceMocks.startGranolaUserConnectorOAuth.mockRejectedValueOnce(
       new ValidationError(
         "USER_CONNECTOR_UNSUPPORTED_PROVIDER",
         "Unsupported user connector provider: fake"

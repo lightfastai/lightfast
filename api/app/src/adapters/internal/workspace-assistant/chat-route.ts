@@ -21,12 +21,6 @@ import {
 } from "@db/app";
 import { db } from "@db/app/client";
 import {
-  providerRoutineCallInputSchema,
-  providerRoutineCallSuccessSchema,
-  providerRoutineFindInputSchema,
-  providerRoutineFindOutputSchema,
-} from "@lightfast/connector-core/provider-routines";
-import {
   type ChatConversationSettingsV2,
   chatConversationSettingsV2Schema,
   getDefaultChatSettings,
@@ -40,11 +34,15 @@ import {
   resolveChatModelProfile,
 } from "@repo/ai/workspace-assistant";
 import {
+  providerRoutineCallInputSchema,
+  providerRoutineCallSuccessSchema,
+  providerRoutineFindInputSchema,
+  providerRoutineFindOutputSchema,
   userConnectorCallInputSchema,
   userConnectorCallSuccessSchema,
   userConnectorFindInputSchema,
   userConnectorFindOutputSchema,
-} from "@repo/user-connector-contract";
+} from "@repo/api-contract";
 import {
   convertToModelMessages,
   gateway,
@@ -584,7 +582,7 @@ function createWorkspaceAssistantProviderRoutineToolDefinitions(input: {
           outputSchema: providerRoutineCallSuccessSchema,
           execute: async (toolInput) => {
             const { callChatProviderRoutine } = await import(
-              "@api/app/services/connectors/chat-routines"
+              "../../../services/connectors/chat-routines"
             );
             return callChatProviderRoutine(
               providerRoutineContext(input),
@@ -604,7 +602,7 @@ function createWorkspaceAssistantProviderRoutineToolDefinitions(input: {
           outputSchema: providerRoutineFindOutputSchema,
           execute: async (toolInput) => {
             const { findChatProviderRoutines } = await import(
-              "@api/app/services/connectors/chat-routines"
+              "../../../services/connectors/chat-routines"
             );
             return findChatProviderRoutines(
               providerRoutineContext(input),
@@ -633,7 +631,7 @@ function createWorkspaceAssistantUserConnectorToolDefinitions(input: {
           outputSchema: userConnectorCallSuccessSchema,
           execute: async (toolInput) => {
             const { callUserConnectorTool } = await import(
-              "@api/app/services/user-connectors/runtime"
+              "../../../services/user-connectors/runtime"
             );
             return callUserConnectorTool(
               userConnectorContext(input),
@@ -653,7 +651,7 @@ function createWorkspaceAssistantUserConnectorToolDefinitions(input: {
           outputSchema: userConnectorFindOutputSchema,
           execute: async (toolInput) => {
             const { findUserConnectorTools } = await import(
-              "@api/app/services/user-connectors/runtime"
+              "../../../services/user-connectors/runtime"
             );
             return findUserConnectorTools(
               userConnectorContext(input),
@@ -856,10 +854,12 @@ async function buildSystemPrompt(clerkOrgId: string) {
 
 async function getSkillContext(clerkOrgId: string) {
   try {
-    const {
-      getSkillIndexSnapshot,
-      getVerifiedLightfastSkillSourceRepositoryId,
-    } = await import("@api/app/services/skills");
+    const { getVerifiedLightfastSkillSourceRepositoryId } = await import(
+      "../../../services/skills/eligibility"
+    );
+    const { getSkillIndexSnapshot } = await import(
+      "../../../services/skills/read"
+    );
     const sourceControlRepositoryId =
       await getVerifiedLightfastSkillSourceRepositoryId(db, { clerkOrgId });
     const result = await getSkillIndexSnapshot({

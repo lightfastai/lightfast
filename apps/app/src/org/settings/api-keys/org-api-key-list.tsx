@@ -1,3 +1,9 @@
+import {
+  deleteOrgApiKey,
+  listOrgApiKeys,
+  revokeOrgApiKey,
+  rotateOrgApiKey,
+} from "@api/app/tanstack/org-api-keys";
 import { useAuth } from "@clerk/tanstack-react-start";
 import {
   Tick02Icon as Check,
@@ -9,6 +15,11 @@ import {
   Delete02Icon as Trash2,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import type {
+  deleteOrgApiKeySchema,
+  revokeOrgApiKeySchema,
+  rotateOrgApiKeySchema,
+} from "@repo/app-validation/schemas";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,40 +49,38 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import { memo, useCallback, useState } from "react";
+import type { z } from "zod";
 import {
   type OrgApiKey,
   type OrgApiKeyListData,
+  orgApiKeyListQueryKey,
   removeApiKey,
   restoreApiKey,
   revokeApiKey,
 } from "./org-api-key-cache";
-import {
-  deleteOrgApiKeyMutationOptions,
-  orgApiKeyQueryKeys,
-  orgApiKeysQueryOptions,
-  revokeOrgApiKeyMutationOptions,
-  rotateOrgApiKeyMutationOptions,
-} from "./org-api-key-queries";
 
 interface AlertAction {
   keyId: string;
   keyName: string;
   type: "revoke" | "delete" | "rotate";
 }
+type RevokeOrgApiKeyInput = z.infer<typeof revokeOrgApiKeySchema>;
+type DeleteOrgApiKeyInput = z.infer<typeof deleteOrgApiKeySchema>;
+type RotateOrgApiKeyInput = z.input<typeof rotateOrgApiKeySchema>;
 
 export function OrgApiKeyList() {
   const { has, isLoaded } = useAuth();
   const canManageApiKeys = isLoaded && !!has?.({ role: "org:admin" });
   const queryClient = useQueryClient();
-  const listQueryKey = orgApiKeyQueryKeys.list();
+  const listQueryKey = orgApiKeyListQueryKey;
 
   const {
     data: keys = [],
     error,
     isPending,
   } = useQuery({
-    ...orgApiKeysQueryOptions(),
-    enabled: typeof window !== "undefined",
+    queryFn: () => listOrgApiKeys(),
+    queryKey: orgApiKeyListQueryKey,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -83,7 +92,8 @@ export function OrgApiKeyList() {
   const [copiedRotatedKey, setCopiedRotatedKey] = useState(false);
 
   const revokeMutation = useMutation({
-    ...revokeOrgApiKeyMutationOptions(),
+    meta: { errorTitle: "Failed to revoke API key" },
+    mutationFn: (data: RevokeOrgApiKeyInput) => revokeOrgApiKey({ data }),
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: listQueryKey });
 
@@ -114,7 +124,8 @@ export function OrgApiKeyList() {
       void queryClient.invalidateQueries({ queryKey: listQueryKey }),
   });
   const deleteMutation = useMutation({
-    ...deleteOrgApiKeyMutationOptions(),
+    meta: { errorTitle: "Failed to delete API key" },
+    mutationFn: (data: DeleteOrgApiKeyInput) => deleteOrgApiKey({ data }),
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: listQueryKey });
 
@@ -149,7 +160,8 @@ export function OrgApiKeyList() {
       void queryClient.invalidateQueries({ queryKey: listQueryKey }),
   });
   const rotateMutation = useMutation({
-    ...rotateOrgApiKeyMutationOptions(),
+    meta: { errorTitle: "Failed to rotate API key" },
+    mutationFn: (data: RotateOrgApiKeyInput) => rotateOrgApiKey({ data }),
     onSuccess: (data, input) => {
       const key = data.key ?? null;
       if (!key) {

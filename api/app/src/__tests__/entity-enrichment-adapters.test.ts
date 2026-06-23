@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   githubUserPayloadToObservation,
-  signalProfileObservationIds,
   xUserPayloadToObservation,
-} from "../services/entity-enrichment";
+} from "../services/entity-enrichment/adapters";
+import { signalProfileObservationIds } from "../services/entity-enrichment/ids";
 
 const signalId = "signal_123e4567-e89b-12d3-a456-426614174000";
 

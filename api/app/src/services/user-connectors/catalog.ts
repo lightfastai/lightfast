@@ -1,11 +1,11 @@
 import type { Database, UserConnectorConnection } from "@db/app";
 import { listCurrentUserConnectorConnections } from "@db/app";
-import { USER_CONNECTOR_CATALOG } from "@lightfast/connector-core";
-import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
 
 export interface UserConnectorServiceContext {
-  auth: AuthContext;
   db: Database;
+  viewer: {
+    userId: string;
+  };
 }
 
 export interface UserConnectorCatalogRow {
@@ -34,16 +34,31 @@ export interface UserConnectorCatalogRow {
   provider: "granola";
 }
 
+const USER_CONNECTOR_CATALOG = [
+  {
+    provider: "granola",
+    displayName: "Granola",
+    description:
+      "Search and reference your private Granola meeting notes in Lightfast chats.",
+    builder: "Granola",
+    category: "Meeting notes",
+    catalogStatus: "available",
+  },
+] as const satisfies readonly Pick<
+  UserConnectorCatalogRow,
+  | "builder"
+  | "catalogStatus"
+  | "category"
+  | "description"
+  | "displayName"
+  | "provider"
+>[];
+
 export async function listUserConnectorsForViewer(
   ctx: UserConnectorServiceContext
 ): Promise<UserConnectorCatalogRow[]> {
-  const identity = ctx.auth.identity;
-  if (identity.type === "unauthenticated") {
-    return [];
-  }
-
   const connections = await listCurrentUserConnectorConnections(ctx.db, {
-    clerkUserId: identity.userId,
+    clerkUserId: ctx.viewer.userId,
   });
   const byProvider = new Map(connections.map((row) => [row.provider, row]));
 

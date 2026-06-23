@@ -4,11 +4,9 @@ import {
   revokeOrgApiKeySchema,
   rotateOrgApiKeySchema,
 } from "@repo/app-validation/schemas";
-import { log } from "@vendor/observability/log/next";
-import type { KeyResponseData, UnkeyClient } from "@vendor/unkey";
-import { getUnkeyClient, unkeyEnv } from "@vendor/unkey/server";
 import { z } from "zod";
 
+import { PUBLIC_API_KEY_SCOPES } from "../../auth/api-key";
 import { UNKEY_API_KEY_PREFIX } from "../../auth/api-key-prefix";
 import { defineCommand } from "../command";
 import { NotFoundError } from "../errors";
@@ -17,36 +15,86 @@ import {
   requireClerkOrgAdminActor,
 } from "../gates";
 
-type UnkeyListKeysResult = Awaited<ReturnType<UnkeyClient["apis"]["listKeys"]>>;
-type UnkeyCreateKeyResult = Awaited<
-  ReturnType<UnkeyClient["keys"]["createKey"]>
->["data"];
-type UnkeyRerollKeyResult = Awaited<
-  ReturnType<UnkeyClient["keys"]["rerollKey"]>
->["data"];
+type OrgApiKeyMetadataValue =
+  | boolean
+  | null
+  | number
+  | string
+  | OrgApiKeyMetadataValue[]
+  | { [key: string]: OrgApiKeyMetadataValue };
 
-type ListOrgApiKeysResult = KeyResponseData[];
-type CreateOrgApiKeyResult = UnkeyCreateKeyResult;
-type RotateOrgApiKeyResult = UnkeyRerollKeyResult;
-
-interface OrgApiKeyCommandDeps {
-  apiId: string;
-  log: Pick<typeof log, "info">;
-  now: () => number;
-  unkey: UnkeyClient;
+export interface OrgApiKeyListItem {
+  createdAt: number;
+  enabled: boolean;
+  expires?: number | null;
+  identity?: { externalId?: string | null; id?: string } | null;
+  keyId: string;
+  lastUsedAt?: number | null;
+  meta?: Record<string, OrgApiKeyMetadataValue> | null;
+  name?: string | null;
+  start: string;
+  updatedAt?: number;
 }
 
-export function createDefaultOrgApiKeyCommandDeps(
-  input: Partial<Omit<OrgApiKeyCommandDeps, "log">> & {
-    log?: Pick<typeof log, "info">;
-  } = {}
-): OrgApiKeyCommandDeps {
-  return {
-    apiId: input.apiId ?? unkeyEnv.UNKEY_API_ID,
-    log: input.log ?? log,
-    now: input.now ?? Date.now,
-    unkey: input.unkey ?? getUnkeyClient(),
+export interface OrgApiKeySecretResult {
+  key?: string;
+  keyId: string;
+}
+
+type ListOrgApiKeysResult = OrgApiKeyListItem[];
+type CreateOrgApiKeyResult = OrgApiKeySecretResult;
+type RotateOrgApiKeyResult = OrgApiKeySecretResult;
+
+interface OrgApiKeyProviderClient {
+  apis: {
+    listKeys(input: {
+      apiId: string;
+      cursor?: string;
+      decrypt: false;
+      externalId: string;
+      limit: number;
+    }): Promise<{
+      data: OrgApiKeyListItem[];
+      pagination?: { cursor?: string; hasMore?: boolean };
+    }>;
   };
+  identities: {
+    createIdentity(input: {
+      externalId: string;
+      meta: { clerkOrgId: string };
+    }): Promise<unknown>;
+  };
+  keys: {
+    createKey(input: {
+      apiId: string;
+      expires?: number;
+      externalId: string;
+      meta: { createdByUserId: string; source: "dashboard" };
+      name: string;
+      permissions: string[];
+      prefix: string;
+      recoverable: false;
+    }): Promise<{ data: CreateOrgApiKeyResult }>;
+    deleteKey(input: { keyId: string; permanent: false }): Promise<unknown>;
+    getKey(input: {
+      decrypt: false;
+      keyId: string;
+    }): Promise<{ data: { identity?: { externalId?: string | null } | null } }>;
+    rerollKey(input: {
+      expiration: number;
+      keyId: string;
+    }): Promise<{ data: RotateOrgApiKeyResult }>;
+    updateKey(input: { enabled: false; keyId: string }): Promise<unknown>;
+  };
+}
+
+export interface OrgApiKeyCommandDeps {
+  apiId: string;
+  isProviderConflictError(error: unknown): boolean;
+  isProviderNotFoundError(error: unknown): boolean;
+  log: { info(message: string, context: Record<string, unknown>): void };
+  now: () => number;
+  provider: OrgApiKeyProviderClient;
 }
 
 const listOrgApiKeysInput = z.object({}).strict();
@@ -59,26 +107,17 @@ const rotateOrgApiKeyOutput = z.custom<RotateOrgApiKeyResult>(
 );
 const successOutput = z.object({ success: z.literal(true) });
 
-function isUnkeyStatus(error: unknown, statusCode: number) {
-  return (
-    error !== null &&
-    typeof error === "object" &&
-    "statusCode" in error &&
-    (error as { statusCode?: unknown }).statusCode === statusCode
-  );
-}
-
-async function ensureUnkeyOrgIdentity(input: {
+async function ensureProviderOrgIdentity(input: {
   deps: OrgApiKeyCommandDeps;
   orgId: string;
 }) {
   try {
-    await input.deps.unkey.identities.createIdentity({
+    await input.deps.provider.identities.createIdentity({
       externalId: input.orgId,
       meta: { clerkOrgId: input.orgId },
     });
   } catch (error) {
-    if (isUnkeyStatus(error, 409)) {
+    if (input.deps.isProviderConflictError(error)) {
       return;
     }
     throw error;
@@ -90,14 +129,14 @@ async function getOrgApiKeyForOrg(input: {
   keyId: string;
   orgId: string;
 }) {
-  let response: Awaited<ReturnType<UnkeyClient["keys"]["getKey"]>>;
+  let response: Awaited<ReturnType<OrgApiKeyProviderClient["keys"]["getKey"]>>;
   try {
-    response = await input.deps.unkey.keys.getKey({
+    response = await input.deps.provider.keys.getKey({
       decrypt: false,
       keyId: input.keyId,
     });
   } catch (error) {
-    if (isUnkeyStatus(error, 404)) {
+    if (input.deps.isProviderNotFoundError(error)) {
       throw new NotFoundError("ORG_API_KEY_NOT_FOUND", "API key not found.");
     }
     throw error;
@@ -121,11 +160,11 @@ export const listOrgApiKeysCommand = defineCommand<
   output: listOrgApiKeysOutput,
   run: async ({ ctx, deps }) => {
     const actor = requireActiveClerkOrgActor(ctx);
-    const keys: KeyResponseData[] = [];
+    const keys: OrgApiKeyListItem[] = [];
     let cursor: string | undefined;
 
     do {
-      const response: UnkeyListKeysResult = await deps.unkey.apis.listKeys({
+      const response = await deps.provider.apis.listKeys({
         apiId: deps.apiId,
         cursor,
         decrypt: false,
@@ -155,12 +194,12 @@ export const createOrgApiKeyCommand = defineCommand<
   run: async ({ ctx, deps, input }) => {
     const actor = requireClerkOrgAdminActor(ctx);
 
-    await ensureUnkeyOrgIdentity({ deps, orgId: actor.orgId });
+    await ensureProviderOrgIdentity({ deps, orgId: actor.orgId });
 
     const expires = input.secondsUntilExpiration
       ? deps.now() + input.secondsUntilExpiration * 1000
       : undefined;
-    const response = await deps.unkey.keys.createKey({
+    const response = await deps.provider.keys.createKey({
       apiId: deps.apiId,
       externalId: actor.orgId,
       ...(expires ? { expires } : {}),
@@ -169,6 +208,7 @@ export const createOrgApiKeyCommand = defineCommand<
         source: "dashboard",
       },
       name: input.name,
+      permissions: [...PUBLIC_API_KEY_SCOPES],
       prefix: UNKEY_API_KEY_PREFIX,
       recoverable: false,
     });
@@ -200,7 +240,7 @@ export const revokeOrgApiKeyCommand = defineCommand<
       keyId: input.keyId,
       orgId: actor.orgId,
     });
-    await deps.unkey.keys.updateKey({
+    await deps.provider.keys.updateKey({
       enabled: false,
       keyId: input.keyId,
     });
@@ -231,7 +271,7 @@ export const deleteOrgApiKeyCommand = defineCommand<
       keyId: input.keyId,
       orgId: actor.orgId,
     });
-    await deps.unkey.keys.deleteKey({
+    await deps.provider.keys.deleteKey({
       keyId: input.keyId,
       permanent: false,
     });
@@ -262,7 +302,7 @@ export const rotateOrgApiKeyCommand = defineCommand<
       keyId: input.keyId,
       orgId: actor.orgId,
     });
-    const response = await deps.unkey.keys.rerollKey({
+    const response = await deps.provider.keys.rerollKey({
       expiration: input.revokeOldAfterMs ?? 0,
       keyId: input.keyId,
     });

@@ -9,10 +9,6 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
-    },
-    "./provider-routines": {
-      "types": "./src/provider-routines.ts",
-      "default": "./src/provider-routines.ts"
     }
   },
   "scripts": {

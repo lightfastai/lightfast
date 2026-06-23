@@ -41,11 +41,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@lightfast/connector-core": "workspace:*",
     "@repo/api-contract": "workspace:*",
     "@repo/app-validation": "workspace:*",
     "@repo/identity-contract": "workspace:*",
-    "@repo/user-connector-contract": "workspace:*",
     "@vendor/ai": "workspace:*",
     "server-only": "catalog:",
     "zod": "catalog:"

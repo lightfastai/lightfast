@@ -74,6 +74,11 @@ describe("app connector API routes", () => {
     expect(connectorOAuthAdapterSource).toContain(
       "completeGranolaUserConnectorOAuth"
     );
+    expect(connectorOAuthAdapterSource).toContain("@vendor/clerk/server");
+    expect(connectorOAuthAdapterSource).toContain(
+      "auth({ treatPendingAsSignedOut: false })"
+    );
+    expect(connectorOAuthAdapterSource).toContain("callbackUserId");
     expect(connectorOAuthAdapterSource).toContain("missing_oauth_code");
     expect(connectorOAuthAdapterSource).toContain("Response.redirect");
 
@@ -107,8 +112,13 @@ describe("app connector API routes", () => {
       default: "./src/adapters/internal/connector-mcp.ts",
       types: "./src/adapters/internal/connector-mcp.ts",
     });
-    expect(connectorMcpAdapterSource).toContain("../../services/connectors");
+    expect(connectorMcpAdapterSource).toContain(
+      "../../services/connectors/x-mcp-bridge"
+    );
     expect(connectorMcpAdapterSource).toContain("handleXConnectorMcpRequest");
+    expect(connectorMcpAdapterSource).not.toMatch(
+      /\bfrom\s*["']\.\.\/\.\.\/services\/connectors["']/
+    );
 
     for (const routeSource of [xMcpSource, connectorMcpAdapterSource]) {
       expect(routeSource).not.toContain("next/");

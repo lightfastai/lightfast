@@ -2,7 +2,7 @@ import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import {
   CONNECTABLE_CONNECTOR_PROVIDERS,
   type ConnectableConnectorProvider,
-} from "@lightfast/connector-core";
+} from "@repo/api-contract";
 import { z } from "zod";
 
 import { env } from "../../env";

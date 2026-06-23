@@ -1,28 +1,17 @@
-import type { Database, OrgSourceControlBinding } from "@db/app";
-import {
-  getActiveOrgBinding,
-  insertWatchedSourceControlRepository,
-  listWatchedSourceControlRepositories,
+import type {
+  Database,
+  OrgSourceControlBinding,
+  SourceControlRepository,
+  UpsertWatchedSourceControlRepositoryInput,
 } from "@db/app";
 import {
-  buildGitHubNewRepositoryUrl,
-  createGitHubAppJwt,
-  createGitHubInstallationToken,
-  getGitHubAppInstallation,
-} from "@lightfast/connector-github/node";
-import { LIGHTFAST_REPOSITORY_NAME } from "@repo/app-setup-contract";
+  githubLightfastRepositoryProofSchema,
+  LIGHTFAST_REPOSITORY_NAME,
+} from "@repo/api-contract";
 import { sourceControlRepositorySyncStatusSchema } from "@repo/source-control-contract";
 import { z } from "zod";
 
 import { getMatchingGitHubLightfastRepository } from "../../auth/org-setup-gate";
-import { getGitHubAppConfig } from "../../services/github/config";
-import {
-  buildSourceControlRepositoryResponse,
-  countNormalImportedRepositories,
-  lightfastRepositoryIdFromBinding,
-  listAllGitHubInstallationRepositories,
-  type SourceControlRepositoryRow,
-} from "../../services/github/source-control/repositories";
 import { defineCommand } from "../command";
 import { ConflictError } from "../errors";
 import {
@@ -36,51 +25,93 @@ type ActiveGitHubBinding = OrgSourceControlBinding & {
   providerInstallationId: string;
 };
 
-type GitHubAppConfig = ReturnType<typeof getGitHubAppConfig>;
-type GitHubInstallation = Awaited<ReturnType<typeof getGitHubAppInstallation>>;
-
-interface SourceControlCommandDeps {
-  createGitHubAppJwt: typeof createGitHubAppJwt;
-  createGitHubInstallationToken: typeof createGitHubInstallationToken;
-  db: Database;
-  getActiveOrgBinding: typeof getActiveOrgBinding;
-  getGitHubAppConfig: typeof getGitHubAppConfig;
-  getGitHubAppInstallation: typeof getGitHubAppInstallation;
-  insertWatchedSourceControlRepository: typeof insertWatchedSourceControlRepository;
-  listAllGitHubInstallationRepositories: typeof listAllGitHubInstallationRepositories;
-  listWatchedSourceControlRepositories: typeof listWatchedSourceControlRepositories;
+interface GitHubAppConfig {
+  apiVersion: string;
+  appId: string;
+  endpoints: {
+    apiBaseUrl: string;
+    webBaseUrl: string;
+  };
+  privateKey: string;
 }
 
-export function createDefaultSourceControlCommandDeps(input: {
-  createGitHubAppJwt?: typeof createGitHubAppJwt;
-  createGitHubInstallationToken?: typeof createGitHubInstallationToken;
-  db: Database;
-  getActiveOrgBinding?: typeof getActiveOrgBinding;
-  getGitHubAppConfig?: typeof getGitHubAppConfig;
-  getGitHubAppInstallation?: typeof getGitHubAppInstallation;
-  insertWatchedSourceControlRepository?: typeof insertWatchedSourceControlRepository;
-  listAllGitHubInstallationRepositories?: typeof listAllGitHubInstallationRepositories;
-  listWatchedSourceControlRepositories?: typeof listWatchedSourceControlRepositories;
-}): SourceControlCommandDeps {
-  return {
-    createGitHubAppJwt: input.createGitHubAppJwt ?? createGitHubAppJwt,
-    createGitHubInstallationToken:
-      input.createGitHubInstallationToken ?? createGitHubInstallationToken,
-    db: input.db,
-    getActiveOrgBinding: input.getActiveOrgBinding ?? getActiveOrgBinding,
-    getGitHubAppConfig: input.getGitHubAppConfig ?? getGitHubAppConfig,
-    getGitHubAppInstallation:
-      input.getGitHubAppInstallation ?? getGitHubAppInstallation,
-    insertWatchedSourceControlRepository:
-      input.insertWatchedSourceControlRepository ??
-      insertWatchedSourceControlRepository,
-    listAllGitHubInstallationRepositories:
-      input.listAllGitHubInstallationRepositories ??
-      listAllGitHubInstallationRepositories,
-    listWatchedSourceControlRepositories:
-      input.listWatchedSourceControlRepositories ??
-      listWatchedSourceControlRepositories,
+interface GitHubInstallation {
+  account: {
+    id: string;
+    login: string;
   };
+  htmlUrl: string;
+}
+
+interface SourceControlLiveRepository {
+  fullName: string;
+  id: string;
+  name: string;
+  ownerId: string;
+  ownerLogin: string;
+  private: boolean;
+}
+
+export interface SourceControlRepositoryRow {
+  fullName: string;
+  id: string;
+  imported: boolean;
+  name: string;
+  owner: {
+    id: string;
+    login: string;
+  };
+  private: boolean;
+  syncStatus: SourceControlRepository["syncStatus"];
+  watchedPathGlobs: string[] | null;
+  webUrl: string;
+}
+
+export interface SourceControlCommandDeps {
+  buildGitHubNewRepositoryUrl: (input: {
+    accountLogin: string;
+    name: string;
+    webBaseUrl?: string;
+  }) => string;
+  buildGitHubRepositoryUrl: (input: {
+    fullName: string;
+    webBaseUrl?: string;
+  }) => string;
+  createGitHubAppJwt: (input: {
+    appId: string;
+    privateKey: string;
+  }) => Promise<string>;
+  createGitHubInstallationToken: (input: {
+    apiBaseUrl?: string;
+    apiVersion?: string;
+    appJwt: string;
+    installationId: string;
+  }) => Promise<{ token: string }>;
+  db: Database;
+  getActiveOrgBinding: (
+    db: Database,
+    clerkOrgId: string
+  ) => Promise<OrgSourceControlBinding | undefined>;
+  getGitHubAppConfig: () => GitHubAppConfig;
+  getGitHubAppInstallation: (input: {
+    apiBaseUrl?: string;
+    apiVersion?: string;
+    appJwt: string;
+    installationId: string;
+  }) => Promise<GitHubInstallation>;
+  insertWatchedSourceControlRepository: (
+    db: Database,
+    input: UpsertWatchedSourceControlRepositoryInput
+  ) => Promise<unknown>;
+  listAllGitHubInstallationRepositories: (input: {
+    apiBaseUrl?: string;
+    apiVersion?: string;
+    installationToken: string;
+  }) => Promise<SourceControlLiveRepository[]>;
+  listWatchedSourceControlRepositories: (
+    db: Database,
+    input: { orgSourceControlBindingId: number }
+  ) => Promise<SourceControlRepository[]>;
 }
 
 export interface SourceControlBindingSummary {
@@ -253,7 +284,7 @@ function providerLabel(provider: string) {
 }
 
 function assertActiveGitHubBinding(
-  binding: Awaited<ReturnType<typeof getActiveOrgBinding>>
+  binding: OrgSourceControlBinding | undefined
 ): ActiveGitHubBinding | null {
   if (
     !binding ||
@@ -269,6 +300,7 @@ function assertActiveGitHubBinding(
 
 function bindingResponse(input: {
   binding: ActiveGitHubBinding;
+  deps: Pick<SourceControlCommandDeps, "buildGitHubNewRepositoryUrl">;
   githubWebBaseUrl: string;
   importedRepositoryCount: number;
 }): SourceControlBindingSummary {
@@ -280,7 +312,7 @@ function bindingResponse(input: {
     connectedAt: input.binding.connectedAt,
     importedRepositoryCount: input.importedRepositoryCount,
     lightfastRepository: getMatchingGitHubLightfastRepository(input.binding),
-    newLightfastRepositoryUrl: buildGitHubNewRepositoryUrl({
+    newLightfastRepositoryUrl: input.deps.buildGitHubNewRepositoryUrl({
       accountLogin,
       name: LIGHTFAST_REPOSITORY_NAME,
       webBaseUrl: input.githubWebBaseUrl,
@@ -317,6 +349,87 @@ function importPreconditionFailed(code: string, message: string) {
   return new ConflictError(code, message);
 }
 
+function lightfastRepositoryIdFromBinding(input: {
+  metadata: Record<string, unknown>;
+  providerInstallationId?: string | null;
+}): string | null {
+  const parsed = githubLightfastRepositoryProofSchema.safeParse(
+    input.metadata.lightfastRepository
+  );
+
+  if (!parsed.success) {
+    return null;
+  }
+
+  if (
+    input.providerInstallationId &&
+    parsed.data.installationId !== input.providerInstallationId
+  ) {
+    return null;
+  }
+
+  return parsed.data.id;
+}
+
+function countNormalImportedRepositories(input: {
+  binding: {
+    metadata: Record<string, unknown>;
+  };
+  watchedRepositories: SourceControlRepository[];
+}): number {
+  const lightfastRepositoryId = lightfastRepositoryIdFromBinding(input.binding);
+  return input.watchedRepositories.filter(
+    (repository) => repository.providerRepositoryId !== lightfastRepositoryId
+  ).length;
+}
+
+function buildSourceControlRepositoryResponse(input: {
+  binding: {
+    id: number;
+    metadata: Record<string, unknown>;
+    providerAccountId: string | null;
+  };
+  buildGitHubRepositoryUrl: SourceControlCommandDeps["buildGitHubRepositoryUrl"];
+  liveRepositories: SourceControlLiveRepository[];
+  watchedRepositories: SourceControlRepository[];
+  webBaseUrl: string;
+}): SourceControlRepositoryRow[] {
+  const lightfastRepositoryId = lightfastRepositoryIdFromBinding(input.binding);
+  const watchedByProviderId = new Map(
+    input.watchedRepositories.map((repository) => [
+      repository.providerRepositoryId,
+      repository,
+    ])
+  );
+
+  return input.liveRepositories
+    .filter(
+      (repository) => repository.ownerId === input.binding.providerAccountId
+    )
+    .filter((repository) => repository.id !== lightfastRepositoryId)
+    .filter((repository) => repository.name !== LIGHTFAST_REPOSITORY_NAME)
+    .map((repository) => {
+      const watched = watchedByProviderId.get(repository.id);
+      return {
+        fullName: repository.fullName,
+        id: repository.id,
+        imported: Boolean(watched),
+        name: repository.name,
+        owner: {
+          id: repository.ownerId,
+          login: repository.ownerLogin,
+        },
+        private: repository.private,
+        syncStatus: watched?.syncStatus ?? "disabled",
+        watchedPathGlobs: watched?.watchedPathGlobs ?? null,
+        webUrl: input.buildGitHubRepositoryUrl({
+          fullName: repository.fullName,
+          webBaseUrl: input.webBaseUrl,
+        }),
+      };
+    });
+}
+
 async function getActiveBindingForOrg(input: {
   deps: SourceControlCommandDeps;
   orgId: string;
@@ -338,6 +451,7 @@ async function createBindingSummary(input: {
 
   return bindingResponse({
     binding: input.binding,
+    deps: input.deps,
     githubWebBaseUrl: input.config.endpoints.webBaseUrl,
     importedRepositoryCount: countNormalImportedRepositories({
       binding: input.binding,
@@ -414,6 +528,7 @@ export const listSourceControlRepositoriesCommand = defineCommand<
     );
     const bindingSummary = bindingResponse({
       binding,
+      deps,
       githubWebBaseUrl: config.endpoints.webBaseUrl,
       importedRepositoryCount: countNormalImportedRepositories({
         binding,
@@ -479,6 +594,7 @@ export const listSourceControlRepositoriesCommand = defineCommand<
         organization: organizationResponse(installation),
         repositories: buildSourceControlRepositoryResponse({
           binding,
+          buildGitHubRepositoryUrl: deps.buildGitHubRepositoryUrl,
           liveRepositories,
           watchedRepositories,
           webBaseUrl: config.endpoints.webBaseUrl,
@@ -605,6 +721,7 @@ export const importSourceControlRepositoryCommand = defineCommand<
     );
     const bindingSummary = bindingResponse({
       binding,
+      deps,
       githubWebBaseUrl: config.endpoints.webBaseUrl,
       importedRepositoryCount: countNormalImportedRepositories({
         binding,
@@ -618,6 +735,7 @@ export const importSourceControlRepositoryCommand = defineCommand<
       organization: organizationResponse(installation),
       repositories: buildSourceControlRepositoryResponse({
         binding,
+        buildGitHubRepositoryUrl: deps.buildGitHubRepositoryUrl,
         liveRepositories,
         watchedRepositories,
         webBaseUrl: config.endpoints.webBaseUrl,

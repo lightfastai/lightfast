@@ -72,8 +72,6 @@ function dependencies(
 describe("hosted MCP tools", () => {
   afterEach(() => {
     vi.doUnmock("@api/app/mcp-oauth");
-    vi.doUnmock("@api/app/signals/service");
-    vi.doUnmock("@repo/provider-routines");
     vi.doUnmock("../tools/app-audit-intake");
     vi.doUnmock("../tools/app-proxy-intake");
     vi.doUnmock("../tools/app-signal-intake");
@@ -138,6 +136,7 @@ describe("hosted MCP tools", () => {
         userId: "user_test",
       },
       input: "Review this profile",
+      scopes: ["mcp:signals:write"],
     });
   });
 
@@ -171,6 +170,7 @@ describe("hosted MCP tools", () => {
         userId: "user_test",
       },
       id: signalId,
+      scopes: ["mcp:signals:read"],
     });
   });
 
@@ -288,7 +288,11 @@ describe("hosted MCP tools", () => {
 
     expect(deps.findProviderRoutines).toHaveBeenCalledWith(
       expect.objectContaining({
-        actor: { orgId: "org_test", userId: "user_test" },
+        actor: expect.objectContaining({
+          orgId: "org_test",
+          scopes: ["mcp:provider_routines:read"],
+          userId: "user_test",
+        }),
         scopes: {
           providerRoutineRead: true,
           providerRoutineWrite: false,
@@ -319,6 +323,9 @@ describe("hosted MCP tools", () => {
 
     expect(deps.findProviderRoutines).toHaveBeenCalledWith(
       expect.objectContaining({
+        actor: expect.objectContaining({
+          scopes: ["mcp:provider_routines:write"],
+        }),
         scopes: {
           providerRoutineRead: true,
           providerRoutineWrite: true,
@@ -352,6 +359,9 @@ describe("hosted MCP tools", () => {
 
     expect(deps.callProviderRoutine).toHaveBeenCalledWith(
       expect.objectContaining({
+        actor: expect.objectContaining({
+          scopes: ["mcp:provider_routines:read"],
+        }),
         scopes: {
           providerRoutineRead: true,
           providerRoutineWrite: false,
@@ -407,14 +417,8 @@ describe("hosted MCP tools", () => {
     vi.doMock("@api/app/mcp-oauth", () => {
       throw new Error("mcp-oauth should not load for system health");
     });
-    vi.doMock("@api/app/signals/service", () => {
-      throw new Error("signal service should not load for system health");
-    });
     vi.doMock("../tools/app-signal-intake", () => {
       throw new Error("app signal intake should not load for system health");
-    });
-    vi.doMock("@repo/provider-routines", () => {
-      throw new Error("provider routines should not load for system health");
     });
 
     await expect(
@@ -436,7 +440,7 @@ describe("hosted MCP tools", () => {
     );
   });
 
-  it("does not load app signal service, OAuth, or provider routine defaults for signal creation", async () => {
+  it("does not load app OAuth for signal creation", async () => {
     const createSignalForActor = vi.fn().mockResolvedValue({
       id: signalId,
       status: "queued",
@@ -450,15 +454,9 @@ describe("hosted MCP tools", () => {
     vi.doMock("@api/app/mcp-oauth", () => {
       throw new Error("mcp-oauth should not load for signal creation");
     });
-    vi.doMock("@api/app/signals/service", () => {
-      throw new Error("signal service should not load for signal creation");
-    });
     vi.doMock("../tools/app-signal-intake", () => ({
       createSignalForActorViaApp: createSignalForActor,
     }));
-    vi.doMock("@repo/provider-routines", () => {
-      throw new Error("provider routines should not load for signal creation");
-    });
 
     await expect(
       executeHostedMcpTool({
@@ -481,6 +479,7 @@ describe("hosted MCP tools", () => {
         userId: "user_test",
       },
       input: "Remember this production MCP test",
+      scopes: ["mcp:signals:write"],
     });
   });
 
@@ -503,15 +502,9 @@ describe("hosted MCP tools", () => {
     vi.doMock("@api/app/mcp-oauth", () => {
       throw new Error("mcp-oauth should not load for signal get");
     });
-    vi.doMock("@api/app/signals/service", () => {
-      throw new Error("signal service should not load for signal get");
-    });
     vi.doMock("../tools/app-signal-intake", () => ({
       getSignalForActorViaApp: getSignalForActor,
     }));
-    vi.doMock("@repo/provider-routines", () => {
-      throw new Error("provider routines should not load for signal get");
-    });
 
     await expect(
       executeHostedMcpTool({
@@ -533,10 +526,11 @@ describe("hosted MCP tools", () => {
         userId: "user_test",
       },
       id: signalId,
+      scopes: ["mcp:signals:read"],
     });
   });
 
-  it("does not load app OAuth or provider routine defaults for proxy calls", async () => {
+  it("does not load app OAuth and uses app proxy intake for proxy calls", async () => {
     const callProviderRoutine = vi.fn().mockResolvedValue({
       provider: "linear",
       providerRoutineCallId,
@@ -554,9 +548,6 @@ describe("hosted MCP tools", () => {
     vi.doMock("@api/app/mcp-oauth", () => {
       throw new Error("mcp-oauth should not load for proxy calls");
     });
-    vi.doMock("@api/app/signals/service", () => {
-      throw new Error("signal service should not load for proxy calls");
-    });
     vi.doMock("../tools/app-signal-intake", () => {
       throw new Error("app signal intake should not load for proxy calls");
     });
@@ -564,9 +555,6 @@ describe("hosted MCP tools", () => {
       callProviderRoutineViaApp: callProviderRoutine,
       findProviderRoutinesViaApp: findProviderRoutines,
     }));
-    vi.doMock("@repo/provider-routines", () => {
-      throw new Error("provider routines should not load for proxy calls");
-    });
 
     await expect(
       executeHostedMcpTool({
@@ -584,7 +572,11 @@ describe("hosted MCP tools", () => {
 
     expect(callProviderRoutine).toHaveBeenCalledWith(
       expect.objectContaining({
-        actor: { orgId: "org_test", userId: "user_test" },
+        actor: expect.objectContaining({
+          orgId: "org_test",
+          scopes: ["mcp:provider_routines:read"],
+          userId: "user_test",
+        }),
         scopes: {
           providerRoutineRead: true,
           providerRoutineWrite: false,

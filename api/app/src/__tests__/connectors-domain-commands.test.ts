@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthIdentity } from "../auth/identity";
 import { actorFromAuthIdentity } from "../domain";
 import {
-  createDefaultConnectorCommandDeps,
+  type ConnectorCommandDeps,
   disconnectConnectorCommand,
   listConnectorSectionsCommand,
   listConnectorsCommand,
@@ -34,7 +34,7 @@ vi.mock("../services/connectors", () => ({
   startConnectorOAuth: serviceMocks.startConnectorOAuth,
 }));
 
-vi.mock("../services/user-connectors", () => ({
+vi.mock("../services/user-connectors/catalog", () => ({
   listUserConnectorsForViewer: serviceMocks.listUserConnectorsForViewer,
 }));
 
@@ -62,17 +62,16 @@ function ctx(input: { admin?: boolean; identity?: AuthIdentity } = {}) {
 }
 
 function deps() {
-  return createDefaultConnectorCommandDeps({
+  return {
     db: {} as Database,
     disconnectConnector: serviceMocks.disconnectConnector,
-    headers: new Headers(),
     listConnectorsForOrg: serviceMocks.listConnectorsForOrg,
     listUserConnectorsForViewer: serviceMocks.listUserConnectorsForViewer,
     refreshConnectorTools: serviceMocks.refreshConnectorTools,
     setConnectorAgentEnabled: serviceMocks.setConnectorAgentEnabled,
     setConnectorAutomationEnabled: serviceMocks.setConnectorAutomationEnabled,
     startConnectorOAuth: serviceMocks.startConnectorOAuth,
-  });
+  } satisfies ConnectorCommandDeps;
 }
 
 describe("connector domain commands", () => {
@@ -128,32 +127,29 @@ describe("connector domain commands", () => {
       ],
     });
 
-    expect(serviceMocks.listConnectorsForOrg).toHaveBeenCalledWith(
-      expect.objectContaining({
-        auth: expect.objectContaining({
-          access: expect.objectContaining({ kind: "clerk-session" }),
-          identity: expect.objectContaining({
-            orgGate: expect.objectContaining({ bindingStatus: "unbound" }),
-            orgId: "org_acme",
-            userId: "user_current",
-          }),
-        }),
-      })
-    );
-    expect(serviceMocks.listUserConnectorsForViewer).toHaveBeenCalledWith(
-      expect.anything()
-    );
+    expect(serviceMocks.listConnectorsForOrg).toHaveBeenCalledWith({
+      db: expect.anything(),
+      organization: { orgId: "org_acme" },
+      viewer: { canManage: false },
+    });
+    expect(serviceMocks.listUserConnectorsForViewer).toHaveBeenCalledWith({
+      db: expect.anything(),
+      viewer: { userId: "user_current" },
+    });
   });
 
-  it("marks admin actors as matching Clerk-session admins for catalog canManage checks", async () => {
+  it("passes admin manage authority to connector catalog listing", async () => {
     await listConnectorsCommand.run({
       ctx: ctx({ admin: true }),
       deps: deps(),
       input: {},
     });
 
-    const serviceContext = serviceMocks.listConnectorsForOrg.mock.calls[0]?.[0];
-    expect(serviceContext.auth.access.has({ role: "org:admin" })).toBe(true);
+    expect(serviceMocks.listConnectorsForOrg).toHaveBeenCalledWith({
+      db: expect.anything(),
+      organization: { orgId: "org_acme" },
+      viewer: { canManage: true },
+    });
   });
 
   it("allows org admins to start connector OAuth before binding", async () => {
@@ -169,9 +165,16 @@ describe("connector domain commands", () => {
     });
 
     expect(serviceMocks.startConnectorOAuth).toHaveBeenCalledWith(
-      expect.anything(),
+      {
+        actor: { userId: "user_current" },
+        db: expect.anything(),
+        organization: { orgId: "org_acme" },
+      },
       { provider: "x" }
     );
+    const serviceContext = serviceMocks.startConnectorOAuth.mock.calls[0]?.[0];
+    expect(serviceContext).not.toHaveProperty("auth");
+    expect(serviceContext).not.toHaveProperty("headers");
   });
 
   it("preserves domain errors raised by connector services", async () => {

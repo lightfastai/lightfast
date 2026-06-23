@@ -1,8 +1,8 @@
+import type { FullConnectorToolManifest } from "@lightfast/connector-core";
 import type {
-  FullConnectorToolManifest,
   UserConnectorConnectionStatus,
   UserConnectorProvider,
-} from "@lightfast/connector-core";
+} from "@repo/api-contract";
 import { sql } from "drizzle-orm";
 import {
   bigint,

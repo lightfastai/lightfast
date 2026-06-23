@@ -1,4 +1,6 @@
+import { db } from "@db/app/client";
 import {
+  NATIVE_AUTH_HEADERS,
   type NativeClient,
   type NativeRpcCommand,
   type NativeRpcErrorCode,
@@ -6,18 +8,43 @@ import {
   nativeRpcAuthSessionSuccessResponseSchema,
   nativeRpcErrorResponseSchema,
   nativeRpcRequestSchema,
+  nativeRpcSuccessResponseSchema,
 } from "@repo/native-auth-contract";
 
+import { resolveAuthContextFromClerk } from "../auth/identity";
 import {
-  getNativeAuthSessionForRequest,
+  getNativeAuthSessionForNativeOAuth,
   isNativeAuthError,
+  NativeAuthError,
 } from "../native-auth";
 
-type NativeRpcStatus = 400 | 401 | 403 | 404 | 500;
+type NativeRpcStatus = 400 | 401 | 403 | 404 | 500 | 502;
+
+type NativeRpcCommandHandler = (input: {
+  commandInput: unknown;
+  request: Request;
+}) => Promise<unknown>;
+
+interface NativeRpcCommandHandlers {
+  providerRoutineCall?: NativeRpcCommandHandler;
+  providerRoutineFind?: NativeRpcCommandHandler;
+}
 
 interface NativeRpcSurface {
   allowedCommands: readonly NativeRpcCommand[];
+  handlers?: NativeRpcCommandHandlers;
   source: NativeClient;
+}
+
+export class NativeRpcRouteError extends Error {
+  constructor(
+    readonly code: NativeRpcErrorCode,
+    message: string,
+    readonly status: NativeRpcStatus
+  ) {
+    super(message);
+    this.name = "NativeRpcRouteError";
+  }
 }
 
 function jsonResponse(data: unknown, init: ResponseInit = {}) {
@@ -47,7 +74,63 @@ function invalidRequestResponse() {
   return errorResponse("BAD_REQUEST", "Native RPC request is invalid.", 400);
 }
 
+function commandNotFoundResponse() {
+  return errorResponse(
+    "COMMAND_NOT_FOUND",
+    "Native RPC command was not found.",
+    404
+  );
+}
+
+async function resolveNativeRpcAuth(input: {
+  headers: Headers;
+  source: NativeClient;
+}) {
+  const headers = new Headers(input.headers);
+  headers.set(NATIVE_AUTH_HEADERS.client, input.source);
+
+  return resolveAuthContextFromClerk({
+    db,
+    headers,
+  });
+}
+
+async function loadNativeRpcAuthSession(input: {
+  headers: Headers;
+  source: NativeClient;
+}) {
+  const auth = await resolveNativeRpcAuth(input);
+  if (
+    auth.identity.type === "unauthenticated" ||
+    auth.access?.kind !== "clerk-oauth" ||
+    auth.access.client !== input.source
+  ) {
+    throw new NativeAuthError(
+      "UNAUTHORIZED",
+      "Lightfast native OAuth authentication required."
+    );
+  }
+
+  if (auth.identity.type !== "active") {
+    throw new NativeAuthError(
+      "FORBIDDEN",
+      "Native session organization required"
+    );
+  }
+
+  return getNativeAuthSessionForNativeOAuth({
+    client: auth.access.client,
+    db,
+    organizationId: auth.identity.orgId,
+    userId: auth.identity.userId,
+  });
+}
+
 function normalizeErrorResponse(error: unknown) {
+  if (error instanceof NativeRpcRouteError) {
+    return errorResponse(error.code, error.message, error.status);
+  }
+
   if (isNativeAuthError(error)) {
     return errorResponse(
       error.code,
@@ -93,7 +176,7 @@ export async function handleNativeRpcRequest(
           return invalidRequestResponse();
         }
 
-        const result = await getNativeAuthSessionForRequest({
+        const result = await loadNativeRpcAuthSession({
           headers: request.headers,
           source: surface.source,
         });
@@ -104,12 +187,42 @@ export async function handleNativeRpcRequest(
           })
         );
       }
-      default:
-        return errorResponse(
-          "COMMAND_NOT_FOUND",
-          "Native RPC command was not found.",
-          404
+      case "providerRoutines.find": {
+        const handler = surface.handlers?.providerRoutineFind;
+        if (!handler) {
+          return commandNotFoundResponse();
+        }
+        const result = await handler({
+          commandInput:
+            "input" in parsedRequest.data ? parsedRequest.data.input : {},
+          request,
+        });
+        return jsonResponse(
+          nativeRpcSuccessResponseSchema.parse({
+            ok: true,
+            result,
+          })
         );
+      }
+      case "providerRoutines.call": {
+        const handler = surface.handlers?.providerRoutineCall;
+        if (!handler) {
+          return commandNotFoundResponse();
+        }
+        const result = await handler({
+          commandInput:
+            "input" in parsedRequest.data ? parsedRequest.data.input : null,
+          request,
+        });
+        return jsonResponse(
+          nativeRpcSuccessResponseSchema.parse({
+            ok: true,
+            result,
+          })
+        );
+      }
+      default:
+        return commandNotFoundResponse();
     }
   } catch (error) {
     return normalizeErrorResponse(error);

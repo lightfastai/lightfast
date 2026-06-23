@@ -12,14 +12,12 @@ import {
   type ProviderRoutineCallSourceSurface,
 } from "@db/app";
 import { db as appDb } from "@db/app/client";
-import {
-  type ConnectableConnectorProvider,
-  connectorRuntimeToolName,
-} from "@lightfast/connector-core";
+import { connectorRuntimeToolName } from "@lightfast/connector-core";
 import { callLinearMcpTool } from "@lightfast/connector-linear/mcp";
 import { LinearAppNodeError } from "@lightfast/connector-linear/node";
 import { callXBridgeMcpTool } from "@lightfast/connector-x/mcp";
 import { XAppNodeError } from "@lightfast/connector-x/node";
+import type { ConnectableConnectorProvider } from "@repo/api-contract";
 import { log } from "@vendor/observability/log/next";
 
 import { resolveXConnectorMcpEndpoint } from "./config";

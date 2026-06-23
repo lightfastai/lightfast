@@ -1,28 +1,41 @@
+import {
+  getVisibleSignalByPublicId,
+  listSignalEntityLinksForSignal,
+  listSignals,
+} from "@db/app";
 import { db } from "@db/app/client";
 import {
   createSignalInput,
   createSignalOutput,
   getSignalInput,
   getSignalOutput,
-} from "@repo/api-contract";
-import {
+  listSignalsInput,
+  listSignalsOutput,
   type OrgSetupRequirement,
   orgSetupRequirementSchema,
   repairIdForSetupRequirement,
-} from "@repo/app-setup-contract";
+} from "@repo/api-contract";
+import { z } from "zod";
 
+import { actorFromApiKeyAuth } from "../../auth/actors";
 import {
   type ApiKeyAuthResult,
   isApiKeyAuthError,
   resolveApiKeyAuth,
 } from "../../auth/api-key";
-import { actorFromApiKeyAuth, isDomainError } from "../../domain";
+import { isDomainError } from "../../domain";
 import {
   createSignalCommand,
-  createSignalCommandDeps,
   getSignalCommand,
-  getSignalCommandDeps,
+  listProcessingSignalsCommand,
+  type SignalCreateCommandDeps,
+  type SignalGetCommandDeps,
+  type SignalListProcessingCommandDeps,
 } from "../../domain/signals";
+import {
+  createAndQueueSignal,
+  isSignalCreateQueueError,
+} from "../../signals/create-signal";
 
 type PublicApiStatus = 400 | 401 | 403 | 404 | 500;
 
@@ -93,8 +106,108 @@ function requestId() {
 
 function publicSignalContext(auth: ApiKeyAuthResult) {
   return {
-    actor: actorFromApiKeyAuth(auth, ["api:signals:read", "api:signals:write"]),
+    actor: actorFromApiKeyAuth(auth),
     request: { id: requestId(), source: "public-api" as const },
+  };
+}
+
+function listProcessingSignalsDeps(): SignalListProcessingCommandDeps {
+  return {
+    listSignals: (input) => listSignals(db, input),
+  };
+}
+
+function createSignalDeps(): SignalCreateCommandDeps {
+  return {
+    createAndQueueSignal: (input) => createAndQueueSignal(db, input),
+    isSignalCreateQueueError,
+  };
+}
+
+function getSignalDeps(): SignalGetCommandDeps {
+  return {
+    getVisibleSignalByPublicId: (input) =>
+      getVisibleSignalByPublicId(db, input),
+    listSignalEntityLinksForSignal: (input) =>
+      listSignalEntityLinksForSignal(db, input),
+  };
+}
+
+const publicSignalListCursor = z
+  .object({
+    createdAt: z.string().datetime(),
+    id: z.number().int().positive(),
+  })
+  .strict();
+
+function encodePublicSignalListCursor(
+  cursor: { createdAt: Date; id: number } | null
+): string | null {
+  if (!cursor) {
+    return null;
+  }
+
+  return Buffer.from(
+    JSON.stringify({
+      createdAt: cursor.createdAt.toISOString(),
+      id: cursor.id,
+    }),
+    "utf8"
+  ).toString("base64url");
+}
+
+function decodePublicSignalListCursor(
+  cursor: string
+): { createdAt: Date; id: number } | null {
+  try {
+    const value = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8"));
+    const parsed = publicSignalListCursor.safeParse(value);
+    if (!parsed.success) {
+      return null;
+    }
+    return {
+      createdAt: new Date(parsed.data.createdAt),
+      id: parsed.data.id,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function parseListSignalsQuery(request: Request) {
+  const params = new URL(request.url).searchParams;
+  const statusValues = [
+    ...params.getAll("status"),
+    ...params.getAll("statuses"),
+  ]
+    .flatMap((value) => value.split(","))
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  return listSignalsInput.safeParse({
+    cursor: params.get("cursor") ?? undefined,
+    limit: params.get("limit") ?? undefined,
+    statuses: statusValues.length ? statusValues : undefined,
+  });
+}
+
+function serializeListedSignal(signal: {
+  classification: unknown;
+  createdAt: Date;
+  input: string;
+  publicId: string;
+  status: string;
+  updatedAt: Date;
+  visibilityScope: string;
+}) {
+  return {
+    id: signal.publicId,
+    input: signal.input,
+    status: signal.status,
+    classification: signal.classification,
+    visibilityScope: signal.visibilityScope,
+    createdAt: signal.createdAt.toISOString(),
+    updatedAt: signal.updatedAt.toISOString(),
   };
 }
 
@@ -175,6 +288,65 @@ export function handlePublicApiOptionsRequest(): Response {
   return withPublicApiCors(new Response(null, { status: 204 }));
 }
 
+export async function handleListSignalsPublicApiRequest(
+  request: Request
+): Promise<Response> {
+  const auth = await requireBoundApiKeyAuth(request);
+  if (isResponse(auth)) {
+    return auth;
+  }
+
+  const parsed = parseListSignalsQuery(request);
+  if (!parsed.success) {
+    return jsonError("invalid_request", "Signal list query is invalid.", 400, {
+      diagnostics: parsed.error.issues,
+    });
+  }
+
+  let cursor: { createdAt: Date; id: number } | undefined;
+  if (parsed.data.cursor) {
+    const decodedCursor = decodePublicSignalListCursor(parsed.data.cursor);
+    if (!decodedCursor) {
+      return jsonError(
+        "invalid_request",
+        "Signal list cursor is invalid.",
+        400,
+        {
+          diagnostics: [
+            {
+              code: "invalid_cursor",
+              message: "Signal list cursor is invalid.",
+              path: ["cursor"],
+            },
+          ],
+        }
+      );
+    }
+    cursor = decodedCursor;
+  }
+
+  try {
+    const result = await listProcessingSignalsCommand.run({
+      ctx: publicSignalContext(auth),
+      deps: listProcessingSignalsDeps(),
+      input: {
+        cursor,
+        limit: parsed.data.limit,
+        statuses: parsed.data.statuses,
+      },
+    });
+
+    const output = listSignalsOutput.parse({
+      items: result.items.map(serializeListedSignal),
+      nextCursor: encodePublicSignalListCursor(result.nextCursor),
+    });
+
+    return jsonResponse(output, 200);
+  } catch (error) {
+    return domainErrorResponse(error, "Failed to list signals.");
+  }
+}
+
 export async function handleCreateSignalPublicApiRequest(
   request: Request
 ): Promise<Response> {
@@ -199,7 +371,7 @@ export async function handleCreateSignalPublicApiRequest(
   try {
     const result = await createSignalCommand.run({
       ctx: publicSignalContext(auth),
-      deps: createSignalCommandDeps({ db }),
+      deps: createSignalDeps(),
       input: parsed.data,
     });
     return jsonResponse(createSignalOutput.parse(result), 202);
@@ -227,7 +399,7 @@ export async function handleGetSignalPublicApiRequest(
   try {
     const signal = await getSignalCommand.run({
       ctx: publicSignalContext(auth),
-      deps: getSignalCommandDeps({ db }),
+      deps: getSignalDeps(),
       input: { publicId: parsed.data.id },
     });
 

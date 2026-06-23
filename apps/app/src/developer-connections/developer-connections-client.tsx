@@ -1,4 +1,18 @@
 import {
+  type CompleteSentryDeveloperConnectionAuthInput,
+  type ConnectDeveloperConnectionInput,
+  completeSentryDeveloperConnectionAuth,
+  connectDeveloperConnection,
+  type DisconnectDeveloperConnectionInput,
+  disconnectDeveloperConnection,
+  listDeveloperConnections,
+  type SetDeveloperConnectionSandboxEnabledInput,
+  type StartSentryDeveloperConnectionAuthInput,
+  type StartSentryDeveloperConnectionAuthResult,
+  setDeveloperConnectionSandboxEnabled,
+  startSentryDeveloperConnectionAuth,
+} from "@api/app/tanstack/developer-connections";
+import {
   ArrowUpRightIcon as ArrowUpRight,
   SidebarRightIcon as PanelRight,
   Search01Icon as Search,
@@ -34,15 +48,6 @@ import {
   developerConnectionStatus,
   displayDeveloperConnectionProvider,
 } from "./developer-connections-model";
-import {
-  completeSentryDeveloperConnectionAuthMutationOptions,
-  connectDeveloperConnectionMutationOptions,
-  developerConnectionQueryKeys,
-  developerConnectionsQueryOptions,
-  disconnectDeveloperConnectionMutationOptions,
-  setDeveloperConnectionSandboxEnabledMutationOptions,
-  startSentryDeveloperConnectionAuthMutationOptions,
-} from "./developer-connections-queries";
 import type { NormalizedDeveloperConnectionsSearch } from "./developer-connections-search-params";
 
 type StatusFilter =
@@ -81,6 +86,11 @@ type DeveloperConnectionConnectInput =
 const ADMIN_REQUIRED_MESSAGE =
   "Admin access required to manage developer connections.";
 
+const developerConnectionListQueryKey = [
+  "developer-connections",
+  "list",
+] as const;
+
 function filterMatches(
   row: DeveloperConnectionCatalogRow,
   filter: StatusFilter
@@ -101,9 +111,11 @@ export function DeveloperConnectionsClient({
   ) => void;
 }) {
   const queryClient = useQueryClient();
-  const listQuery = useQuery(
-    developerConnectionsQueryOptions({ staleTime: 30_000 })
-  );
+  const listQuery = useQuery({
+    queryFn: () => listDeveloperConnections(),
+    queryKey: developerConnectionListQueryKey,
+    staleTime: 30_000,
+  });
   const connections = listQuery.data ?? [];
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -121,48 +133,53 @@ export function DeveloperConnectionsClient({
 
   const invalidateList = () => {
     void queryClient.invalidateQueries({
-      queryKey: developerConnectionQueryKeys.list(),
+      queryKey: developerConnectionListQueryKey,
     });
   };
 
-  const connectMutation = useMutation(
-    connectDeveloperConnectionMutationOptions({
-      onSuccess: () => {
-        setConnectRow(null);
-        invalidateList();
-      },
-    })
-  );
-  const startSentryAuthMutation = useMutation(
-    startSentryDeveloperConnectionAuthMutationOptions({
-      onSuccess: (result) => {
-        setSentryAuthAttempt({
-          attemptId: result.attemptId,
-          userCode: result.userCode,
-          verificationUri: result.verificationUri,
-        });
-      },
-    })
-  );
-  const completeSentryAuthMutation = useMutation(
-    completeSentryDeveloperConnectionAuthMutationOptions({
-      onSuccess: () => {
-        setConnectRow(null);
-        setSentryAuthAttempt(null);
-        invalidateList();
-      },
-    })
-  );
-  const setSandboxEnabledMutation = useMutation(
-    setDeveloperConnectionSandboxEnabledMutationOptions({
-      onSuccess: invalidateList,
-    })
-  );
-  const disconnectMutation = useMutation(
-    disconnectDeveloperConnectionMutationOptions({
-      onSuccess: invalidateList,
-    })
-  );
+  const connectMutation = useMutation({
+    meta: { errorTitle: "Failed to connect developer provider" },
+    mutationFn: (data: ConnectDeveloperConnectionInput) =>
+      connectDeveloperConnection({ data }),
+    onSuccess: () => {
+      setConnectRow(null);
+      invalidateList();
+    },
+  });
+  const startSentryAuthMutation = useMutation({
+    meta: { errorTitle: "Failed to start Sentry authorization" },
+    mutationFn: (data: StartSentryDeveloperConnectionAuthInput) =>
+      startSentryDeveloperConnectionAuth({ data }),
+    onSuccess: (result: StartSentryDeveloperConnectionAuthResult) => {
+      setSentryAuthAttempt({
+        attemptId: result.attemptId,
+        userCode: result.userCode,
+        verificationUri: result.verificationUri,
+      });
+    },
+  });
+  const completeSentryAuthMutation = useMutation({
+    meta: { errorTitle: "Failed to complete Sentry authorization" },
+    mutationFn: (data: CompleteSentryDeveloperConnectionAuthInput) =>
+      completeSentryDeveloperConnectionAuth({ data }),
+    onSuccess: () => {
+      setConnectRow(null);
+      setSentryAuthAttempt(null);
+      invalidateList();
+    },
+  });
+  const setSandboxEnabledMutation = useMutation({
+    meta: { errorTitle: "Failed to update sandbox access" },
+    mutationFn: (data: SetDeveloperConnectionSandboxEnabledInput) =>
+      setDeveloperConnectionSandboxEnabled({ data }),
+    onSuccess: invalidateList,
+  });
+  const disconnectMutation = useMutation({
+    meta: { errorTitle: "Failed to disconnect developer provider" },
+    mutationFn: (data: DisconnectDeveloperConnectionInput) =>
+      disconnectDeveloperConnection({ data }),
+    onSuccess: invalidateList,
+  });
 
   useEffect(() => {
     if (!search.error) {

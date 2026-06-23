@@ -1,5 +1,5 @@
 import type { Database } from "@db/app";
-import type { OrgSetupGate } from "@repo/app-setup-contract";
+import type { OrgSetupGate } from "@repo/api-contract";
 import {
   NATIVE_AUTH_HEADERS,
   type NativeClient,
@@ -21,8 +21,8 @@ export type BindingStatus = OrgSetupGate["bindingStatus"];
 
 /**
  * Org-level gate signal carried on an `active` identity. Resolved from the
- * authoritative Lightfast DB binding; enforced server-side by tRPC's
- * `boundOrgProcedure`.
+ * authoritative Lightfast DB binding; enforced server-side by domain gates and
+ * adapter auth contexts.
  */
 export type OrgGate = OrgSetupGate;
 

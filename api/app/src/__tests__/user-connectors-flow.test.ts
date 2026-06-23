@@ -1,7 +1,6 @@
 import type { Database, UserConnectorConnection } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const authMock = vi.fn();
 const nanoidMock = vi.fn();
 const redisGetMock = vi.fn();
 const redisGetdelMock = vi.fn();
@@ -121,10 +120,6 @@ vi.mock("@lightfast/connector-granola/node", () => ({
   listGranolaMcpTools: listGranolaMcpToolsMock,
 }));
 
-vi.mock("@vendor/clerk/server", () => ({
-  auth: authMock,
-}));
-
 vi.mock("@vendor/lib", () => ({
   nanoid: nanoidMock,
 }));
@@ -146,9 +141,11 @@ vi.mock("../env", () => ({ env: envMock }));
 const {
   completeGranolaUserConnectorOAuth,
   disconnectGranolaUserConnector,
-  listUserConnectorsForViewer,
   startGranolaUserConnectorOAuth,
-} = await import("../services/user-connectors");
+} = await import("../services/user-connectors/granola-flow");
+const { listUserConnectorsForViewer } = await import(
+  "../services/user-connectors/catalog"
+);
 
 function userConnection(
   overrides: Partial<UserConnectorConnection> = {}
@@ -182,33 +179,18 @@ function userConnection(
   };
 }
 
-function ctx(
-  input: {
-    identity?: "active" | "pending" | "unauthenticated";
-    referer?: string;
-  } = {}
-) {
-  const headers = new Headers();
-  if (input.referer) {
-    headers.set("referer", input.referer);
-  }
-
-  const identity =
-    input.identity === "unauthenticated"
-      ? ({ type: "unauthenticated" } as const)
-      : input.identity === "pending"
-        ? ({ type: "pending", userId: "user_current" } as const)
-        : ({
-            orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
-            orgId: "org_acme",
-            type: "active",
-            userId: "user_current",
-          } as const);
-
+function catalogCtx(input: { userId?: string } = {}) {
   return {
-    auth: { identity },
     db: {} as Database,
-    headers,
+    viewer: { userId: input.userId ?? "user_current" },
+  };
+}
+
+function oauthCtx(input: { referer?: string; userId?: string } = {}) {
+  return {
+    db: {} as Database,
+    request: { referer: input.referer },
+    viewer: { userId: input.userId ?? "user_current" },
   };
 }
 
@@ -233,18 +215,8 @@ describe("user connector catalog services", () => {
     listCurrentUserConnectorConnectionsMock.mockResolvedValue([]);
   });
 
-  it("returns an empty user connector catalog for unauthenticated viewers", async () => {
-    await expect(
-      listUserConnectorsForViewer(ctx({ identity: "unauthenticated" }))
-    ).resolves.toEqual([]);
-
-    expect(listCurrentUserConnectorConnectionsMock).not.toHaveBeenCalled();
-  });
-
-  it("lists Granola as a private user connector for signed-in pending viewers", async () => {
-    await expect(
-      listUserConnectorsForViewer(ctx({ identity: "pending" }))
-    ).resolves.toEqual([
+  it("lists Granola as a private user connector for the viewer", async () => {
+    await expect(listUserConnectorsForViewer(catalogCtx())).resolves.toEqual([
       expect.objectContaining({
         canManage: true,
         catalogStatus: "available",
@@ -267,7 +239,7 @@ describe("user connector catalog services", () => {
       userConnection({ providerAccountName: "Granola" }),
     ]);
 
-    const rows = await listUserConnectorsForViewer(ctx());
+    const rows = await listUserConnectorsForViewer(catalogCtx());
 
     expect(rows).toEqual([
       expect.objectContaining({
@@ -296,8 +268,6 @@ describe("user connector catalog services", () => {
 describe("Granola user connector OAuth flow", () => {
   beforeEach(() => {
     vi.useRealTimers();
-    authMock.mockReset();
-    authMock.mockResolvedValue({ userId: "user_current" });
     process.env.VITE_LIGHTFAST_APP_URL = envMock.VITE_LIGHTFAST_APP_URL;
     nanoidMock.mockReset();
     nanoidMock.mockReturnValue("attempt_123456789012345678901234");
@@ -370,7 +340,7 @@ describe("Granola user connector OAuth flow", () => {
   it("starts OAuth and stores the attempt under the provider-generated state", async () => {
     await expect(
       startGranolaUserConnectorOAuth(
-        ctx({
+        oauthCtx({
           referer:
             "https://app.lightfast.localhost/account/settings?section=connectors",
         })
@@ -402,17 +372,6 @@ describe("Granola user connector OAuth flow", () => {
     );
   });
 
-  it("throws a domain authz error when Granola starts without authentication", async () => {
-    await expect(
-      startGranolaUserConnectorOAuth(ctx({ identity: "unauthenticated" }))
-    ).rejects.toThrowError(
-      expect.objectContaining({
-        code: "AUTH_REQUIRED",
-        kind: "authz",
-      })
-    );
-  });
-
   it("adds a Lightfast state when the provider authorization URL lacks state", async () => {
     listGranolaMcpToolsMock.mockImplementationOnce(
       async ({
@@ -432,7 +391,7 @@ describe("Granola user connector OAuth flow", () => {
       }
     );
 
-    const result = await startGranolaUserConnectorOAuth(ctx());
+    const result = await startGranolaUserConnectorOAuth(oauthCtx());
 
     expect(result.authorizationUrl).toBe(
       "https://granola.test/oauth/authorize?state=attempt_123456789012345678901234"
@@ -447,7 +406,9 @@ describe("Granola user connector OAuth flow", () => {
   it("returns reconnect mode when Granola is already connected", async () => {
     getCurrentUserConnectorConnectionMock.mockResolvedValue(userConnection());
 
-    await expect(startGranolaUserConnectorOAuth(ctx())).resolves.toMatchObject({
+    await expect(
+      startGranolaUserConnectorOAuth(oauthCtx())
+    ).resolves.toMatchObject({
       mode: "reconnect",
     });
   });
@@ -471,6 +432,7 @@ describe("Granola user connector OAuth flow", () => {
 
     await expect(
       completeGranolaUserConnectorOAuth({
+        callbackUserId: "user_current",
         code: "oauth_code",
         requestUrl:
           "https://app.lightfast.localhost/api/connectors/granola/oauth/callback?code=oauth_code&state=provider_state",
@@ -487,7 +449,6 @@ describe("Granola user connector OAuth flow", () => {
     expect(redisGetdelMock).toHaveBeenCalledWith(
       "user-connector-oauth-attempt:provider_state"
     );
-    expect(authMock).toHaveBeenCalledWith({ treatPendingAsSignedOut: false });
     expect(finishAuthMock).toHaveBeenCalledWith("oauth_code");
     expect(streamableHTTPClientTransportMock).toHaveBeenCalledWith(
       new URL("https://granola.test/mcp"),
@@ -540,10 +501,10 @@ describe("Granola user connector OAuth flow", () => {
 
   it("does not consume an OAuth attempt for a different Clerk user", async () => {
     redisGetMock.mockResolvedValue(oauthAttempt());
-    authMock.mockResolvedValue({ userId: "user_other" });
 
     await expect(
       completeGranolaUserConnectorOAuth({
+        callbackUserId: "user_other",
         code: "oauth_code",
         requestUrl:
           "https://app.lightfast.localhost/api/connectors/granola/oauth/callback?code=oauth_code&state=provider_state",
@@ -558,10 +519,30 @@ describe("Granola user connector OAuth flow", () => {
     expect(finalizeCurrentUserConnectorConnectionMock).not.toHaveBeenCalled();
   });
 
+  it("redirects to sign in without consuming an OAuth attempt when the callback has no Clerk user", async () => {
+    redisGetMock.mockResolvedValue(oauthAttempt());
+
+    await expect(
+      completeGranolaUserConnectorOAuth({
+        callbackUserId: null,
+        code: "oauth_code",
+        requestUrl:
+          "https://app.lightfast.localhost/api/connectors/granola/oauth/callback?code=oauth_code&state=provider_state",
+        state: "provider_state",
+      })
+    ).resolves.toEqual({
+      redirectUrl:
+        "https://app.lightfast.localhost/sign-in?redirect_url=%2Fapi%2Fconnectors%2Fgranola%2Foauth%2Fcallback%3Fcode%3Doauth_code%26state%3Dprovider_state",
+    });
+
+    expect(redisGetdelMock).not.toHaveBeenCalled();
+    expect(finalizeCurrentUserConnectorConnectionMock).not.toHaveBeenCalled();
+  });
+
   it("disconnects the current Granola connector with observed-current guards", async () => {
     getCurrentUserConnectorConnectionMock.mockResolvedValue(userConnection());
 
-    await expect(disconnectGranolaUserConnector(ctx())).resolves.toEqual({
+    await expect(disconnectGranolaUserConnector(oauthCtx())).resolves.toEqual({
       disconnected: true,
     });
 

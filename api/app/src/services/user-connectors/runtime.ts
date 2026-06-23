@@ -18,7 +18,6 @@ import {
   GranolaOAuthClientProvider,
   granolaClientMetadata,
 } from "@lightfast/connector-granola/node";
-import { decrypt, encrypt } from "@repo/app-encryption";
 import {
   parseUserConnectorRoutineId,
   type UserConnectorCallInput,
@@ -29,7 +28,8 @@ import {
   userConnectorCallInputSchema,
   userConnectorFindInputSchema,
   userConnectorRoutineId,
-} from "@repo/user-connector-contract";
+} from "@repo/api-contract";
+import { decrypt, encrypt } from "@repo/app-encryption";
 import type { OAuthClientInformationMixed, OAuthTokens } from "@vendor/mcp";
 import { log } from "@vendor/observability/log/next";
 import { env } from "../../env";

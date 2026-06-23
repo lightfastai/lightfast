@@ -4,7 +4,7 @@ import type {
   DeveloperConnectionLeaseStatus,
   DeveloperConnectionProvider,
   DeveloperConnectionStatus,
-} from "@repo/developer-connection-contract";
+} from "@repo/api-contract";
 import { sql } from "drizzle-orm";
 import {
   bigint,

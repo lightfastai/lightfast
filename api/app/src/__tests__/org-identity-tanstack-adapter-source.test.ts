@@ -30,14 +30,13 @@ describe("org identity TanStack adapter boundary", () => {
   });
 
   it("removes migrated org identity procedures from tRPC", () => {
-    const rootSource = readFileSync(resolve(apiRoot, "src/root.ts"), "utf8");
+    const rootPath = resolve(apiRoot, "src/root.ts");
     const routerPath = resolve(
       apiRoot,
       "src/router/(pending-not-allowed)/org-identity.ts"
     );
 
-    expect(rootSource).not.toContain("orgIdentityRouter");
-    expect(rootSource).not.toContain("identity:");
+    expect(existsSync(rootPath)).toBe(false);
 
     if (existsSync(routerPath)) {
       const routerSource = readFileSync(routerPath, "utf8");

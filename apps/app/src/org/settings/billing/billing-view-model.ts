@@ -1,3 +1,4 @@
+import type { OrgBillingOverviewResult } from "@api/app/tanstack/org-billing";
 import {
   getCurrentSubscriptionItem,
   getDefaultPaymentMethod,
@@ -6,12 +7,12 @@ import {
   tierForPlan,
 } from "@repo/app-billing";
 import type { BillingPaymentMethodResource } from "@vendor/clerk";
-import type { BillingOverview } from "./billing-queries";
 
-export type {
-  BillingOverview,
-  BillingSubscriptionItem,
-} from "./billing-queries";
+export type BillingOverview = OrgBillingOverviewResult;
+export type BillingPlan = BillingOverview["plans"][number];
+export type BillingSubscription = BillingOverview["subscription"];
+export type BillingSubscriptionItem =
+  BillingSubscription["subscriptionItems"][number];
 
 export function deriveBillingViewModel({
   overview,

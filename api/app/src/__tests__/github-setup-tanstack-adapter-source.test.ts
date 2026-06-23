@@ -33,14 +33,13 @@ describe("GitHub setup TanStack adapter boundary", () => {
   });
 
   it("removes migrated GitHub setup procedures from tRPC", () => {
-    const rootSource = readFileSync(resolve(apiRoot, "src/root.ts"), "utf8");
+    const rootPath = resolve(apiRoot, "src/root.ts");
     const routerPath = resolve(
       apiRoot,
       "src/router/(pending-not-allowed)/github-setup.ts"
     );
 
-    expect(rootSource).not.toContain("githubSetupRouter");
-    expect(rootSource).not.toContain("github: githubSetupRouter");
+    expect(existsSync(rootPath)).toBe(false);
 
     if (existsSync(routerPath)) {
       const routerSource = readFileSync(routerPath, "utf8");

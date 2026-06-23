@@ -482,6 +482,7 @@ describe("hosted MCP OAuth integration smoke", () => {
         userId,
       },
       input: "Ship remote MCP",
+      scopes: ["mcp:signals:write"],
     });
 
     const rotated = await rotateMcpRefreshTokenSecret(db, {

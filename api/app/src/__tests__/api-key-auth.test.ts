@@ -21,6 +21,7 @@ vi.mock("@vendor/unkey/server", () => ({
 const { resolveApiKeyAuth } = await import("../auth/api-key");
 
 const validKey = `lf_${"a".repeat(40)}`;
+const publicApiPermissionCheck = "api.signals.read OR api.signals.write";
 
 function verifyResult(
   overrides: Partial<{
@@ -28,6 +29,7 @@ function verifyResult(
     identity: { externalId?: string; id: string } | undefined;
     keyId: string | undefined;
     meta: Record<string, unknown> | undefined;
+    permissions: string[] | undefined;
     valid: boolean;
   }> = {}
 ) {
@@ -37,6 +39,7 @@ function verifyResult(
       identity: { externalId: "org_test", id: "identity_test" },
       keyId: "key_test",
       meta: { createdByUserId: "user_test" },
+      permissions: ["api.signals.read", "api.signals.write"],
       valid: true,
       ...overrides,
     },
@@ -114,7 +117,10 @@ describe("resolveApiKeyAuth", () => {
       reason: "invalid",
       status: 401,
     });
-    expect(mocks.verifyKey).toHaveBeenCalledWith({ key: validKey });
+    expect(mocks.verifyKey).toHaveBeenCalledWith({
+      key: validKey,
+      permissions: publicApiPermissionCheck,
+    });
     expect(mocks.getActiveOrgBinding).not.toHaveBeenCalled();
   });
 
@@ -137,6 +143,25 @@ describe("resolveApiKeyAuth", () => {
       reason: "expired",
       status: 401,
     });
+  });
+
+  it("rejects keys that have no public API permissions", async () => {
+    mocks.verifyKey.mockResolvedValueOnce(
+      verifyResult({
+        code: "INSUFFICIENT_PERMISSIONS",
+        permissions: [],
+        valid: false,
+      })
+    );
+
+    await expect(
+      resolveApiKeyAuth({ headers: headers(`Bearer ${validKey}`) })
+    ).rejects.toMatchObject({
+      message: "API key is missing required permissions",
+      reason: "insufficient-scope",
+      status: 403,
+    });
+    expect(mocks.getActiveOrgBinding).not.toHaveBeenCalled();
   });
 
   it("requires org-scoped identity and creator metadata", async () => {
@@ -173,11 +198,28 @@ describe("resolveApiKeyAuth", () => {
         type: "active",
         userId: "user_test",
       },
+      scopes: ["api.signals.read", "api.signals.write"],
+    });
+    expect(mocks.verifyKey).toHaveBeenCalledWith({
+      key: validKey,
+      permissions: publicApiPermissionCheck,
     });
     expect(mocks.getActiveOrgBinding).toHaveBeenCalledWith(
       expect.anything(),
       "org_test"
     );
+  });
+
+  it("exposes only the granted public API scopes returned by Unkey", async () => {
+    mocks.verifyKey.mockResolvedValueOnce(
+      verifyResult({ permissions: ["api.signals.read", "unrelated.scope"] })
+    );
+
+    await expect(
+      resolveApiKeyAuth({ headers: headers(`Bearer ${validKey}`) })
+    ).resolves.toMatchObject({
+      scopes: ["api.signals.read"],
+    });
   });
 
   it("keeps auth valid while exposing an unbound org gate", async () => {

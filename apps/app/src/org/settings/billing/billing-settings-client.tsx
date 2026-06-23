@@ -1,3 +1,7 @@
+import {
+  cancelOrgBillingSubscriptionItem,
+  getOrgBillingOverview,
+} from "@api/app/tanstack/org-billing";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   BillingPaymentMethodResource,
@@ -8,11 +12,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { BillingCheckoutDialog } from "./billing-checkout-dialog";
 import {
-  billingOverviewQueryOptions,
-  cancelOrgBillingSubscriptionItemMutationOptions,
-  orgBillingQueryKeys,
-} from "./billing-queries";
-import {
   CancellationSection,
   InvoicesSection,
   LoadingLine,
@@ -21,6 +20,8 @@ import {
 } from "./billing-sections";
 import {
   type BillingOverview,
+  type BillingPlan,
+  type BillingSubscriptionItem,
   deriveBillingViewModel,
 } from "./billing-view-model";
 import { PaymentMethodDialog } from "./payment-method-dialog";
@@ -32,13 +33,16 @@ import {
 import { PlanSelectionDialog } from "./plan-selection-dialog";
 import { StatementDetailsDialog } from "./statement-details-dialog";
 
-type BillingPlan = BillingOverview["plans"][number];
-type BillingSubscriptionItem =
-  BillingOverview["subscription"]["subscriptionItems"][number];
+interface CancelOrgBillingSubscriptionItemInput {
+  subscriptionItemId: string;
+}
 
 const PRICING_HASH = "#pricing";
 const EMPTY_PAYMENT_METHODS: BillingPaymentMethodResource[] = [];
 const EMPTY_STATEMENTS: BillingStatementResource[] = [];
+
+const orgBillingOverviewQueryKey = (orgId: string | null | undefined) =>
+  ["org-billing", "overview", orgId ?? "no-org"] as const;
 
 function pricingHashUrl() {
   return `${window.location.pathname}${window.location.search}${PRICING_HASH}`;
@@ -88,7 +92,7 @@ export function BillingSettingsClient() {
   const auth = useAuth();
   const queryClient = useQueryClient();
   const overviewQueryKey = useMemo(
-    () => orgBillingQueryKeys.overview(auth.orgId),
+    () => orgBillingOverviewQueryKey(auth.orgId),
     [auth.orgId]
   );
   const refreshBillingOverview = useCallback(
@@ -103,7 +107,10 @@ export function BillingSettingsClient() {
     error: overviewError,
     isPending: isOverviewPending,
   } = useQuery({
-    ...billingOverviewQueryOptions({ orgId: auth.orgId }),
+    enabled: Boolean(auth.orgId),
+    queryFn: () => getOrgBillingOverview(),
+    queryKey: overviewQueryKey,
+    staleTime: 5 * 60 * 1000,
   });
 
   const paymentMethodsQuery = usePaymentMethods({
@@ -145,7 +152,9 @@ export function BillingSettingsClient() {
     useState<BillingStatementResource | null>(null);
 
   const { mutate: cancelSubscriptionItem } = useMutation({
-    ...cancelOrgBillingSubscriptionItemMutationOptions(),
+    meta: { errorTitle: "Failed to schedule cancellation" },
+    mutationFn: (data: CancelOrgBillingSubscriptionItemInput) =>
+      cancelOrgBillingSubscriptionItem({ data }),
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: overviewQueryKey });
 

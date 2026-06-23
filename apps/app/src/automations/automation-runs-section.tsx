@@ -1,3 +1,4 @@
+import { listAutomationRuns } from "@api/app/tanstack/automations";
 import {
   Loading03Icon as Loader2,
   ReloadIcon as RefreshCcw,
@@ -11,8 +12,8 @@ import { AutomationRunsList } from "./automation-runs-list";
 import {
   AUTOMATION_RUNS_PAGE_LIMIT,
   type AutomationRunListItem,
-  automationRunsQueryOptions,
-} from "./automations-queries";
+  automationQueryKeys,
+} from "./automations-cache";
 
 export function AutomationRunsSection({
   automationId,
@@ -23,15 +24,19 @@ export function AutomationRunsSection({
   selectedRunId: string | null;
   setSelectedRunId: (publicId: string | null) => void;
 }) {
-  const runsQuery = useQuery(
-    automationRunsQueryOptions({
-      enabled: typeof window !== "undefined",
-      id: automationId,
-      limit: AUTOMATION_RUNS_PAGE_LIMIT,
-      refetchOnWindowFocus: true,
-      staleTime: 5000,
-    })
-  );
+  const runsQuery = useQuery({
+    enabled: typeof window !== "undefined",
+    queryFn: () =>
+      listAutomationRuns({
+        data: { id: automationId, limit: AUTOMATION_RUNS_PAGE_LIMIT },
+      }),
+    queryKey: automationQueryKeys.runs(
+      automationId,
+      AUTOMATION_RUNS_PAGE_LIMIT
+    ),
+    refetchOnWindowFocus: true,
+    staleTime: 5000,
+  });
 
   const runs = runsQuery.data ?? [];
   const runsByPublicId = useMemo(() => {

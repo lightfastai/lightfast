@@ -5,14 +5,28 @@ import {
   nativeRpcAuthSessionSuccessResponseSchema,
   nativeRpcCommandNames,
   nativeRpcErrorResponseSchema,
+  nativeRpcProviderRoutineErrorCodeSchema,
   nativeRpcRequestSchema,
-} from "../native-rpc";
+} from "../index";
 
 describe("@repo/native-auth-contract native RPC", () => {
   it("defines a small first-party native command vocabulary", () => {
-    expect(nativeRpcCommandNames).toEqual(["auth.session"]);
+    expect(nativeRpcCommandNames).toEqual([
+      "auth.session",
+      "providerRoutines.find",
+      "providerRoutines.call",
+    ]);
     expect(nativeRpcRequestSchema.parse({ command: "auth.session" })).toEqual({
       command: "auth.session",
+    });
+    expect(
+      nativeRpcRequestSchema.parse({
+        command: "providerRoutines.find",
+        input: { query: "create issue" },
+      })
+    ).toEqual({
+      command: "providerRoutines.find",
+      input: { query: "create issue" },
     });
     expect(() =>
       nativeRpcRequestSchema.parse({ command: "signals.list" })
@@ -56,5 +70,42 @@ describe("@repo/native-auth-contract native RPC", () => {
         message: "Lightfast native OAuth authentication required.",
       },
     });
+
+    expect(
+      nativeRpcErrorResponseSchema.parse({
+        ok: false,
+        error: {
+          code: "PROVIDER_ROUTINE_NOT_FOUND",
+          message: "Provider routine was not found.",
+        },
+      })
+    ).toEqual({
+      ok: false,
+      error: {
+        code: "PROVIDER_ROUTINE_NOT_FOUND",
+        message: "Provider routine was not found.",
+      },
+    });
+
+    expect(() =>
+      nativeRpcErrorResponseSchema.parse({
+        ok: false,
+        error: {
+          code: "NOT_A_NATIVE_RPC_ERROR",
+          message: "Nope.",
+        },
+      })
+    ).toThrow();
+  });
+
+  it("exports the provider routine error code grammar for RPC adapters", () => {
+    expect(
+      nativeRpcProviderRoutineErrorCodeSchema.parse(
+        "PROVIDER_ROUTINE_PROVIDER_FAILED"
+      )
+    ).toBe("PROVIDER_ROUTINE_PROVIDER_FAILED");
+    expect(() =>
+      nativeRpcProviderRoutineErrorCodeSchema.parse("PROVIDER_ROUTINE_bad")
+    ).toThrow();
   });
 });

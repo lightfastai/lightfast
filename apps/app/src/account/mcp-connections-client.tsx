@@ -1,4 +1,7 @@
-import { revokeAccountMcpConnection } from "@api/app/tanstack/mcp-connections";
+import {
+  listAccountMcpConnections,
+  revokeAccountMcpConnection,
+} from "@api/app/tanstack/mcp-connections";
 import {
   InformationCircleIcon as Info,
   SecurityCheckIcon as ShieldCheck,
@@ -29,10 +32,8 @@ import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
-import {
-  accountMcpConnectionsQueryOptions,
-  accountQueryKeys,
-} from "./account-queries";
+
+const accountMcpConnectionsQueryKey = ["account", "mcp-connections"] as const;
 
 interface McpConnection {
   clientId: string;
@@ -60,9 +61,11 @@ interface McpConnection {
 
 export function UserMcpConnectionsClient() {
   const queryClient = useQueryClient();
-  const { data: connections, isPending } = useQuery(
-    accountMcpConnectionsQueryOptions()
-  );
+  const { data: connections, isPending } = useQuery({
+    enabled: typeof window !== "undefined",
+    queryFn: () => listAccountMcpConnections(),
+    queryKey: accountMcpConnectionsQueryKey,
+  });
   const [detailsConnection, setDetailsConnection] =
     useState<McpConnection | null>(null);
   const [revokeConnection, setRevokeConnection] =
@@ -75,7 +78,7 @@ export function UserMcpConnectionsClient() {
     onSuccess: () => toast.success("MCP connection revoked"),
     onSettled: () =>
       void queryClient.invalidateQueries({
-        queryKey: accountQueryKeys.mcpConnections(),
+        queryKey: accountMcpConnectionsQueryKey,
       }),
   });
 

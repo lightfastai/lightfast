@@ -18,6 +18,7 @@ const migratedFiles = [
   "src/automations/automation-schedule-editor.tsx",
   "src/automations/automation-status-chip.tsx",
   "src/automations/automations-cache.ts",
+  "src/automations/automations-mutations.ts",
   "src/automations/automations-model.ts",
 ] as const;
 
@@ -44,9 +45,12 @@ describe("migrated automation UI data access", () => {
     );
 
     expect(existsSync(hookPath)).toBe(false);
-    expect(source).toContain("automationsListQueryOptions");
+    expect(source).toContain('@api/app/tanstack/automations"');
+    expect(source).toContain("listAutomations");
+    expect(source).toContain("automationQueryKeys.list()");
     expect(source).toContain("useQuery");
     expect(source).toContain('enabled: typeof window !== "undefined"');
+    expect(source).not.toContain("automationsListQueryOptions");
     expect(source).not.toContain("./use-automations-list-query");
   });
 });

@@ -13,16 +13,15 @@
     "start": "pnpm preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "with-env": "dotenv -e ../app/.env.overrides.local -e ../app/.vercel/.env.development.local -e ./.vercel/.env.development.local --",
-    "with-env:local": "dotenv -e ../app/.env.overrides.local -e ../app/.vercel/.env.development.local -e ./.vercel/.env.development.local --",
-    "with-env:vercel": "dotenv -e ../app/.vercel/.env.development.local -e ./.vercel/.env.development.local --",
-    "with-related-projects": "MCP_RESOURCE_URL=$(portless get mcp.lightfast)/mcp MCP_AUTH_ISSUER=$(portless get lightfast) INNGEST_DEV=$(portless get inngest.lightfast) QSTASH_URL=$(portless get qstash.lightfast)"
+    "with-env": "dotenv -e ./.vercel/.env.development.local --",
+    "with-env:local": "dotenv -e ./.vercel/.env.development.local --",
+    "with-env:vercel": "dotenv -e ./.vercel/.env.development.local --",
+    "with-related-projects": "APP_INTERNAL_URL=$(portless get lightfast) MCP_RESOURCE_URL=$(portless get mcp.lightfast)/mcp MCP_AUTH_ISSUER=$(portless get lightfast)"
   },
   "dependencies": {
-    "@api/app": "workspace:*",
-    "@lightfast/connector-core": "workspace:*",
     "@repo/api-contract": "workspace:*",
     "@repo/mcp-tools": "workspace:*",
+    "@repo/service-jwt": "workspace:*",
     "@sentry/tanstackstart-react": "catalog:",
     "@t3-oss/env-core": "catalog:",
     "@tanstack/react-router": "catalog:",

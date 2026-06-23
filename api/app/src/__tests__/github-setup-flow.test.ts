@@ -27,6 +27,14 @@ class TestClerkOrgMembershipAccessError extends Error {
   }
 }
 
+const testGitHubSetupRedirectPaths = {
+  accountTeams: () => "/account/teams",
+  bind: ({ orgSlug }: { orgSlug: string }) => `/${orgSlug}/tasks/bind`,
+  complete: ({ orgSlug }: { orgSlug: string }) =>
+    `/${orgSlug}/tasks/bind/github/complete`,
+  signIn: () => "/sign-in",
+};
+
 vi.mock("@db/app/client", () => ({ db: {} }));
 
 vi.mock("@db/app", () => ({
@@ -276,6 +284,7 @@ describe("github setup flow", () => {
 
     const result = await completeGitHubInstallationSetup({
       appOrigin: "https://app.lightfast.localhost",
+      redirectPaths: testGitHubSetupRedirectPaths,
       requestUrl:
         "https://app.lightfast.localhost/api/github/setup?installation_id=1001&setup_action=install&state=install_state_123",
     });
@@ -299,6 +308,7 @@ describe("github setup flow", () => {
 
     const result = await completeGitHubOAuthVerification({
       appOrigin: "https://app.lightfast.localhost",
+      redirectPaths: testGitHubSetupRedirectPaths,
       requestUrl:
         "https://app.lightfast.localhost/api/github/oauth/callback?code=code_123&state=oauth_state_123",
     });
@@ -355,6 +365,7 @@ describe("github setup flow", () => {
   it("uses a neutral fallback route when state is missing", async () => {
     const result = await completeGitHubInstallationSetup({
       appOrigin: "https://app.lightfast.localhost",
+      redirectPaths: testGitHubSetupRedirectPaths,
       requestUrl:
         "https://app.lightfast.localhost/api/github/setup?org_slug=attacker",
     });
@@ -374,6 +385,7 @@ describe("github setup flow", () => {
     await expect(
       completeGitHubInstallationSetup({
         appOrigin: "https://app.lightfast.localhost",
+        redirectPaths: testGitHubSetupRedirectPaths,
         requestUrl:
           "https://app.lightfast.localhost/api/github/setup?installation_id=1001&state=install_state_123",
       })
@@ -398,6 +410,7 @@ describe("github setup flow", () => {
     await expect(
       completeGitHubInstallationSetup({
         appOrigin: "https://app.lightfast.localhost",
+        redirectPaths: testGitHubSetupRedirectPaths,
         requestUrl:
           "https://app.lightfast.localhost/api/github/setup?installation_id=1001&state=install_state_123",
       })
@@ -417,6 +430,7 @@ describe("github setup flow", () => {
     await expect(
       completeGitHubInstallationSetup({
         appOrigin: "https://app.lightfast.localhost",
+        redirectPaths: testGitHubSetupRedirectPaths,
         requestUrl:
           "https://app.lightfast.localhost/api/github/setup?installation_id=1001&state=install_state_123",
       })
@@ -432,6 +446,7 @@ describe("github setup flow", () => {
 
     await completeGitHubInstallationSetup({
       appOrigin: "https://app.lightfast.localhost",
+      redirectPaths: testGitHubSetupRedirectPaths,
       requestUrl:
         "https://app.lightfast.localhost/api/github/setup?installation_id=7777&setup_action=install&state=install_state_123",
     });
@@ -447,6 +462,7 @@ describe("github setup flow", () => {
     await expect(
       completeGitHubOAuthVerification({
         appOrigin: "https://app.lightfast.localhost",
+        redirectPaths: testGitHubSetupRedirectPaths,
         requestUrl:
           "https://app.lightfast.localhost/api/github/oauth/callback?error=access_denied&state=oauth_state_123",
       })
@@ -465,6 +481,7 @@ describe("github setup flow", () => {
     await expect(
       completeGitHubOAuthVerification({
         appOrigin: "https://app.lightfast.localhost",
+        redirectPaths: testGitHubSetupRedirectPaths,
         requestUrl:
           "https://app.lightfast.localhost/api/github/oauth/callback?error=access_denied&state=oauth_state_123",
       })
@@ -489,6 +506,7 @@ describe("github setup flow", () => {
     await expect(
       completeGitHubOAuthVerification({
         appOrigin: "https://app.lightfast.localhost",
+        redirectPaths: testGitHubSetupRedirectPaths,
         requestUrl:
           "https://app.lightfast.localhost/api/github/oauth/callback?error=access_denied&state=oauth_state_123",
       })
@@ -508,6 +526,7 @@ describe("github setup flow", () => {
     await expect(
       completeGitHubOAuthVerification({
         appOrigin: "https://app.lightfast.localhost",
+        redirectPaths: testGitHubSetupRedirectPaths,
         requestUrl:
           "https://app.lightfast.localhost/api/github/oauth/callback?error=access_denied&state=oauth_state_123",
       })
@@ -527,6 +546,7 @@ describe("github setup flow", () => {
     await expect(
       completeGitHubOAuthVerification({
         appOrigin: "https://app.lightfast.localhost",
+        redirectPaths: testGitHubSetupRedirectPaths,
         requestUrl:
           "https://app.lightfast.localhost/api/github/oauth/callback?code=code_123&state=oauth_state_123",
       })
@@ -551,6 +571,7 @@ describe("github setup flow", () => {
     await expect(
       completeGitHubOAuthVerification({
         appOrigin: "https://app.lightfast.localhost",
+        redirectPaths: testGitHubSetupRedirectPaths,
         requestUrl:
           "https://app.lightfast.localhost/api/github/oauth/callback?code=code_123&state=oauth_state_123",
       })
@@ -570,6 +591,7 @@ describe("github setup flow", () => {
     await expect(
       completeGitHubOAuthVerification({
         appOrigin: "https://app.lightfast.localhost",
+        redirectPaths: testGitHubSetupRedirectPaths,
         requestUrl:
           "https://app.lightfast.localhost/api/github/oauth/callback?code=code_123&state=oauth_state_123",
       })
@@ -592,6 +614,7 @@ describe("github setup flow", () => {
     await expect(
       completeGitHubOAuthVerification({
         appOrigin: "https://app.lightfast.localhost",
+        redirectPaths: testGitHubSetupRedirectPaths,
         requestUrl:
           "https://app.lightfast.localhost/api/github/oauth/callback?code=code_123&state=oauth_state_123",
       })
@@ -613,6 +636,7 @@ describe("github setup flow", () => {
     await expect(
       completeGitHubOAuthVerification({
         appOrigin: "https://app.lightfast.localhost",
+        redirectPaths: testGitHubSetupRedirectPaths,
         requestUrl:
           "https://app.lightfast.localhost/api/github/oauth/callback?code=code_123&state=oauth_state_123",
       })
@@ -629,6 +653,7 @@ describe("github setup flow", () => {
     await expect(
       completeGitHubOAuthVerification({
         appOrigin: "https://app.lightfast.localhost",
+        redirectPaths: testGitHubSetupRedirectPaths,
         requestUrl:
           "https://app.lightfast.localhost/api/github/oauth/callback?code=code_123&state=oauth_state_123",
       })

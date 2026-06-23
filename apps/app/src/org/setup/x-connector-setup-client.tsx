@@ -1,4 +1,10 @@
 import {
+  listConnectors,
+  type StartConnectorInput,
+  type StartConnectorResult,
+  startConnector,
+} from "@api/app/tanstack/connectors";
+import {
   ArrowUpRightIcon as ArrowUpRight,
   Loading03Icon as Loader2,
 } from "@hugeicons/core-free-icons";
@@ -11,10 +17,6 @@ import {
   type ConnectorCatalogRow,
   connectionStatus,
 } from "~/connectors/connectors-model";
-import {
-  connectorsListQueryOptions,
-  startConnectorMutationOptions,
-} from "~/connectors/connectors-queries";
 
 interface XConnectorSetupClientProps {
   orgSlug: string;
@@ -51,18 +53,20 @@ export function XConnectorSetupClient({ orgSlug }: XConnectorSetupClientProps) {
     error,
     isPending,
   } = useQuery({
-    ...connectorsListQueryOptions({ staleTime: 30_000 }),
     enabled: typeof window !== "undefined",
+    queryFn: () => listConnectors(),
+    queryKey: ["connectors", "list"] as const,
+    staleTime: 30_000,
   });
   const xConnector = connectors.find((row) => row.provider === "x");
 
-  const startConnectMutation = useMutation(
-    startConnectorMutationOptions({
-      onSuccess: (result) => {
-        window.location.assign(result.authorizationUrl);
-      },
-    })
-  );
+  const startConnectMutation = useMutation({
+    meta: { errorTitle: "Failed to connect provider" },
+    mutationFn: (data: StartConnectorInput) => startConnector({ data }),
+    onSuccess: (result: StartConnectorResult) => {
+      window.location.assign(result.authorizationUrl);
+    },
+  });
 
   if (isPending) {
     return <SetupPageSkeleton label="Loading X connector" />;

@@ -1,16 +1,36 @@
+import {
+  deletePreClerkNamespaceReservation,
+  finalizeNamespaceOperation,
+  markNamespaceOperationClerkApplied,
+  NamespaceConflictError,
+  reserveNamespaceForOperation,
+  startNamespaceOperation,
+} from "@db/app";
 import { db } from "@db/app/client";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest, setResponseHeader } from "@tanstack/react-start/server";
+import { clerkClient } from "@vendor/clerk/server";
+import { parseError } from "@vendor/observability/error/next";
+import { log } from "@vendor/observability/log/next";
 
+import {
+  isClerkConflictError,
+  isClerkOrganizationDomainsNotEnabled,
+} from "../../auth/clerk-errors";
+import { listUserOrganizationMemberships } from "../../auth/clerk-org-membership";
 import { resolveAuthContextFromClerk } from "../../auth/identity";
+import {
+  getOrgAccessBySlug,
+  isOrgAccessError,
+} from "../../auth/organization-access";
 import type { Actor } from "../../domain";
 import { actorFromAuthIdentity, isDomainError } from "../../domain";
 import {
-  createDefaultOrganizationCommandDeps,
   createOrganizationCommand,
   getOrganizationBySlugCommand,
   listOrganizationDomainsCommand,
   listUserOrganizationsCommand,
+  type OrganizationCommandDeps,
   updateOrganizationDomainsCommand,
   updateOrganizationNameCommand,
 } from "../../domain/organizations";
@@ -63,6 +83,45 @@ function noStore() {
   setResponseHeader("vary", "Cookie, Authorization");
 }
 
+async function commandDeps(): Promise<OrganizationCommandDeps> {
+  const clerk = await clerkClient();
+
+  return {
+    clerk: {
+      organizations: {
+        createOrganization: (input) =>
+          clerk.organizations.createOrganization(input),
+        createOrganizationDomain: (input) =>
+          clerk.organizations.createOrganizationDomain(input),
+        deleteOrganizationDomain: (input) =>
+          clerk.organizations.deleteOrganizationDomain(input),
+        getOrganization: (input) => clerk.organizations.getOrganization(input),
+        getOrganizationDomainList: (input) =>
+          clerk.organizations.getOrganizationDomainList(input),
+        updateOrganization: (organizationId, input) =>
+          clerk.organizations.updateOrganization(organizationId, input),
+        updateOrganizationDomain: (input) =>
+          clerk.organizations.updateOrganizationDomain(input),
+      },
+    },
+    db,
+    deletePreClerkNamespaceReservation,
+    finalizeNamespaceOperation,
+    getOrgAccessBySlug,
+    isClerkConflictError,
+    isClerkOrganizationDomainsNotEnabled,
+    isNamespaceConflictError: (error): error is NamespaceConflictError =>
+      error instanceof NamespaceConflictError,
+    isOrgAccessError,
+    listUserOrganizationMemberships,
+    log,
+    markNamespaceOperationClerkApplied,
+    parseError,
+    reserveNamespaceForOperation,
+    startNamespaceOperation,
+  };
+}
+
 export const listUserOrganizations = createServerFn({
   method: "GET",
 }).handler(async () => {
@@ -70,7 +129,7 @@ export const listUserOrganizations = createServerFn({
   try {
     return await listUserOrganizationsCommand.run({
       ctx: await createTanStackOrganizationContext(),
-      deps: await createDefaultOrganizationCommandDeps({ db }),
+      deps: await commandDeps(),
       input: {},
     });
   } catch (error) {
@@ -85,7 +144,7 @@ export const getOrganizationBySlug = createServerFn({ method: "GET" })
     try {
       return await getOrganizationBySlugCommand.run({
         ctx: await createTanStackOrganizationContext(),
-        deps: await createDefaultOrganizationCommandDeps({ db }),
+        deps: await commandDeps(),
         input: data,
       });
     } catch (error) {
@@ -100,7 +159,7 @@ export const createOrganization = createServerFn({ method: "POST" })
     try {
       return await createOrganizationCommand.run({
         ctx: await createTanStackOrganizationContext(),
-        deps: await createDefaultOrganizationCommandDeps({ db }),
+        deps: await commandDeps(),
         input: data,
       });
     } catch (error) {
@@ -115,7 +174,7 @@ export const listOrganizationDomains = createServerFn({ method: "GET" })
     try {
       return await listOrganizationDomainsCommand.run({
         ctx: await createTanStackOrganizationContext(),
-        deps: await createDefaultOrganizationCommandDeps({ db }),
+        deps: await commandDeps(),
         input: data,
       });
     } catch (error) {
@@ -130,7 +189,7 @@ export const updateOrganizationName = createServerFn({ method: "POST" })
     try {
       return await updateOrganizationNameCommand.run({
         ctx: await createTanStackOrganizationContext(),
-        deps: await createDefaultOrganizationCommandDeps({ db }),
+        deps: await commandDeps(),
         input: data,
       });
     } catch (error) {
@@ -145,7 +204,7 @@ export const updateOrganizationDomains = createServerFn({ method: "POST" })
     try {
       return await updateOrganizationDomainsCommand.run({
         ctx: await createTanStackOrganizationContext(),
-        deps: await createDefaultOrganizationCommandDeps({ db }),
+        deps: await commandDeps(),
         input: data,
       });
     } catch (error) {

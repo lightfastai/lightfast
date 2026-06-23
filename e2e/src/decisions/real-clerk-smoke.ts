@@ -5,6 +5,12 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
 import {
+  providerRoutineCallSuccessSchema,
+  providerRoutineId,
+} from "@repo/api-contract";
+import { signServiceJWT } from "@repo/service-jwt";
+
+import {
   allowLocalhostTls,
   normalizeUrl,
   trimTrailingSlash,
@@ -23,6 +29,8 @@ const LINEAR_EMULATOR_ACTOR_NAME = "Lightfast Local";
 const LINEAR_EMULATOR_WORKSPACE_ID = "linear_workspace_lightfast_emulated";
 const LINEAR_EMULATOR_WORKSPACE_NAME = "lightfast-emulated";
 const RUNTIME_DECISION_TOOL_NAME = "get_team";
+const RUNTIME_DECISION_PROXY_TIMEOUT_MS = 30_000;
+const SERVICE_JWT_SECRET_MIN_LENGTH = 32;
 
 type Env = Record<string, string | undefined>;
 
@@ -34,6 +42,7 @@ export interface DecisionsSmokeConfig {
   orgSlug: string;
   runtimeDecisionEnabled: boolean;
   screenshotPath?: string;
+  serviceJwtSecret?: string;
   sessionName: string;
 }
 
@@ -83,6 +92,12 @@ export function buildDecisionsSmokeConfig(
   const emailAddress =
     env.LIGHTFAST_E2E_DECISIONS_EMAIL?.trim() ||
     `${slugPart(env.LIGHTFAST_E2E_DECISIONS_EMAIL_PREFIX ?? "decisions-smoke")}-${nowMs}@${DEFAULT_EMAIL_DOMAIN}`;
+  const runtimeDecisionEnabled =
+    env.LIGHTFAST_E2E_DECISIONS_RUNTIME_CALL !== "0";
+  const serviceJwtSecret = env.SERVICE_JWT_SECRET?.trim() || undefined;
+  if (runtimeDecisionEnabled) {
+    requireRuntimeServiceJwtSecret(serviceJwtSecret);
+  }
 
   return {
     appOrigin: normalizeUrl(
@@ -98,12 +113,22 @@ export function buildDecisionsSmokeConfig(
       "LIGHTFAST_E2E_LINEAR_MCP_ENDPOINT"
     ),
     orgSlug,
-    runtimeDecisionEnabled: env.LIGHTFAST_E2E_DECISIONS_RUNTIME_CALL !== "0",
+    runtimeDecisionEnabled,
     screenshotPath: env.LIGHTFAST_E2E_DECISIONS_SCREENSHOT?.trim() || undefined,
+    serviceJwtSecret,
     sessionName:
       env.LIGHTFAST_E2E_AGENT_BROWSER_SESSION?.trim() ||
       `${DEFAULT_SESSION_NAME}-${nowMs}`,
   };
+}
+
+function requireRuntimeServiceJwtSecret(secret: string | undefined): string {
+  if (!secret || secret.length < SERVICE_JWT_SECRET_MIN_LENGTH) {
+    throw new Error(
+      `SERVICE_JWT_SECRET must be at least ${SERVICE_JWT_SECRET_MIN_LENGTH} characters when runtime Decision proof is enabled. Set LIGHTFAST_E2E_DECISIONS_RUNTIME_CALL=0 to skip that proof.`
+    );
+  }
+  return secret;
 }
 
 function slugPart(value: string) {
@@ -428,29 +453,100 @@ async function createActiveLinearRuntimeConnection(input: {
 async function recordRuntimeDecision(input: {
   config: DecisionsSmokeConfig;
   orgId: string;
+  userId: string;
 }) {
   configureLinearRuntimeEnv(input.config);
   allowLocalhostTls(input.config.linearMcpEndpoint);
 
-  const { loadConnectorRuntimeTools } = await import(
-    "@api/app/services/connectors/runtime"
-  );
-  const tools = await loadConnectorRuntimeTools({
-    automationPublicId: "automation_decisions_runtime_smoke",
-    clerkOrgId: input.orgId,
-    runPublicId: "run_decisions_runtime_smoke",
+  await callRuntimeDecisionThroughAppProxy({
+    appOrigin: input.config.appOrigin,
+    orgId: input.orgId,
+    serviceJwtSecret: requireRuntimeServiceJwtSecret(
+      input.config.serviceJwtSecret
+    ),
+    userId: input.userId,
   });
-  const tool = tools.find(
-    (item) => item.providerToolName === RUNTIME_DECISION_TOOL_NAME
-  );
-  if (!tool) {
+}
+
+export async function callRuntimeDecisionThroughAppProxy(input: {
+  appOrigin: string;
+  fetchFn?: typeof fetch;
+  orgId: string;
+  serviceJwtSecret: string;
+  timeoutMs?: number;
+  userId: string;
+}) {
+  const token = await signServiceJWT({
+    audience: "lightfast-app",
+    caller: "mcp",
+    jwtSecret: input.serviceJwtSecret,
+  });
+  const timeoutMs = input.timeoutMs ?? RUNTIME_DECISION_PROXY_TIMEOUT_MS;
+  const timeoutSignal = AbortSignal.timeout(timeoutMs);
+  const fetchFn = input.fetchFn ?? fetch;
+
+  let response: Response;
+  try {
+    response = await fetchFn(
+      new URL("/api/internal/mcp/proxy/call", input.appOrigin),
+      {
+        body: JSON.stringify({
+          actor: {
+            clientId: "decisions-runtime-smoke",
+            grantId: `decisions-runtime-smoke:${input.orgId}`,
+            kind: "mcp",
+            orgId: input.orgId,
+            userId: input.userId,
+          },
+          input: {
+            input: { id: "team-lightfast" },
+            routineId: providerRoutineId("linear", RUNTIME_DECISION_TOOL_NAME),
+          },
+          scopes: {
+            providerRoutineRead: true,
+            providerRoutineWrite: true,
+          },
+        }),
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json",
+        },
+        method: "POST",
+        signal: timeoutSignal,
+      }
+    );
+  } catch (error) {
+    if (timeoutSignal.aborted) {
+      throw new Error(
+        `Runtime Decision proof through app proxy timed out after ${timeoutMs}ms.`,
+        { cause: error }
+      );
+    }
+    throw error;
+  }
+
+  const body = await response.json().catch(() => undefined);
+  if (!response.ok) {
     throw new Error(
-      `Linear runtime tool ${RUNTIME_DECISION_TOOL_NAME} was not loaded.`
+      `Runtime Decision proof failed through app proxy: ${JSON.stringify(body)}`
     );
   }
 
-  const result = await tool.call({ id: "team-lightfast" });
-  const serialized = JSON.stringify(result);
+  const parsed = providerRoutineCallSuccessSchema.safeParse(body);
+  if (!parsed.success) {
+    throw new Error(
+      `Runtime Decision proof through app proxy returned an invalid response: ${parsed.error.message}`
+    );
+  }
+
+  const result = parsed.data;
+  if (result.providerToolName !== RUNTIME_DECISION_TOOL_NAME) {
+    throw new Error(
+      `Runtime Decision proof returned ${result.providerToolName}, expected ${RUNTIME_DECISION_TOOL_NAME}.`
+    );
+  }
+
+  const serialized = JSON.stringify(result.result);
   if (!serialized.includes(RUNTIME_DECISION_TOOL_NAME)) {
     throw new Error(
       `Linear runtime tool result did not include ${RUNTIME_DECISION_TOOL_NAME}: ${serialized}`
@@ -631,7 +727,7 @@ export async function runRealClerkDecisionsSmoke(
         orgId: org.id,
         userId: user.id,
       });
-      await recordRuntimeDecision({ config, orgId: org.id });
+      await recordRuntimeDecision({ config, orgId: org.id, userId: user.id });
     }
     await seedDecisionRows({
       orgId: org.id,

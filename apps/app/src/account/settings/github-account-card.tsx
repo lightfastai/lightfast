@@ -1,3 +1,4 @@
+import type { GitHubUserAccount } from "@api/app/tanstack/account";
 import {
   ChevronDownIcon as ChevronDown,
   Settings02Icon as Settings,
@@ -19,7 +20,6 @@ import {
 } from "@repo/ui-v2/components/ui/dropdown-menu";
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import type { GitHubUserAccount } from "../account-queries";
 
 const DISCONNECT_TOOLTIP = "Connection is managed from the GitHub setup task.";
 

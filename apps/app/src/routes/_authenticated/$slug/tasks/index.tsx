@@ -1,3 +1,5 @@
+import { getOrganizationBySlug } from "@api/app/tanstack/organizations";
+import { getSourceControlConnection } from "@api/app/tanstack/source-control";
 import {
   ArrowRightIcon as ArrowRight,
   CheckmarkCircle02Icon as CheckCircle2,
@@ -6,7 +8,7 @@ import {
   LockIcon as Lock,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import type { OrgSetupRequirement } from "@repo/app-setup-contract";
+import type { OrgSetupRequirement } from "@repo/api-contract";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
@@ -16,8 +18,11 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
 import { ConnectorIcon } from "~/connectors/connector-icons";
-import { sourceControlConnectionQueryOptions } from "~/org/settings/source-control/source-control-queries";
-import { organizationBySlugQueryOptions } from "~/organization/organization-queries";
+import { sourceControlConnectionQueryKey } from "~/org/settings/source-control/source-control-cache";
+import {
+  ORGANIZATION_STALE_TIME,
+  organizationQueryKeys,
+} from "~/organization/organization-cache";
 
 type SetupTaskStatus = "complete" | "current" | "locked";
 const SETUP_REQUIREMENT_ORDER: OrgSetupRequirement[] = [
@@ -56,10 +61,14 @@ function SetupTasksPage() {
 function SetupTasksPageContent() {
   const { slug } = Route.useParams();
   const { data: gate, isPending: isGatePending } = useQuery({
-    ...organizationBySlugQueryOptions({ slug }),
+    enabled: typeof window !== "undefined",
+    queryFn: () => getOrganizationBySlug({ data: { slug } }),
+    queryKey: organizationQueryKeys.bySlug(slug),
+    staleTime: ORGANIZATION_STALE_TIME,
   });
   const { data: sourceControl, isPending: isSourceControlPending } = useQuery({
-    ...sourceControlConnectionQueryOptions(),
+    queryFn: () => getSourceControlConnection(),
+    queryKey: sourceControlConnectionQueryKey,
     staleTime: 30_000,
   });
 

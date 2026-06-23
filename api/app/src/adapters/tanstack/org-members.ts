@@ -1,14 +1,16 @@
 import { db } from "@db/app/client";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest, setResponseHeader } from "@tanstack/react-start/server";
+import { clerkClient } from "@vendor/clerk/server";
 
+import { isClerkConflictError } from "../../auth/clerk-errors";
 import { resolveAuthContextFromClerk } from "../../auth/identity";
 import type { Actor } from "../../domain";
 import { actorFromAuthIdentity, isDomainError } from "../../domain";
 import {
-  createDefaultOrgMembersCommandDeps,
   inviteOrgMemberCommand,
   listOrgMembersCommand,
+  type OrgMembersCommandDeps,
   removeOrgMemberCommand,
   revokeOrgInvitationCommand,
   updateOrgMemberRoleCommand,
@@ -64,13 +66,35 @@ function noStore() {
   setResponseHeader("vary", "Cookie, Authorization");
 }
 
+async function commandDeps(): Promise<OrgMembersCommandDeps> {
+  const clerk = await clerkClient();
+
+  return {
+    isClerkConflictError,
+    organizations: {
+      createOrganizationInvitation: (input) =>
+        clerk.organizations.createOrganizationInvitation(input),
+      deleteOrganizationMembership: (input) =>
+        clerk.organizations.deleteOrganizationMembership(input),
+      getOrganizationInvitationList: (input) =>
+        clerk.organizations.getOrganizationInvitationList(input),
+      getOrganizationMembershipList: (input) =>
+        clerk.organizations.getOrganizationMembershipList(input),
+      revokeOrganizationInvitation: (input) =>
+        clerk.organizations.revokeOrganizationInvitation(input),
+      updateOrganizationMembership: (input) =>
+        clerk.organizations.updateOrganizationMembership(input),
+    },
+  };
+}
+
 export const listOrgMembers = createServerFn({ method: "GET" }).handler(
   async () => {
     noStore();
     try {
       return await listOrgMembersCommand.run({
         ctx: await createTanStackOrgMembersContext(),
-        deps: createDefaultOrgMembersCommandDeps(),
+        deps: await commandDeps(),
         input: {},
       });
     } catch (error) {
@@ -86,7 +110,7 @@ export const inviteOrgMember = createServerFn({ method: "POST" })
     try {
       return await inviteOrgMemberCommand.run({
         ctx: await createTanStackOrgMembersContext(),
-        deps: createDefaultOrgMembersCommandDeps(),
+        deps: await commandDeps(),
         input: data,
       });
     } catch (error) {
@@ -101,7 +125,7 @@ export const updateOrgMemberRole = createServerFn({ method: "POST" })
     try {
       return await updateOrgMemberRoleCommand.run({
         ctx: await createTanStackOrgMembersContext(),
-        deps: createDefaultOrgMembersCommandDeps(),
+        deps: await commandDeps(),
         input: data,
       });
     } catch (error) {
@@ -116,7 +140,7 @@ export const removeOrgMember = createServerFn({ method: "POST" })
     try {
       return await removeOrgMemberCommand.run({
         ctx: await createTanStackOrgMembersContext(),
-        deps: createDefaultOrgMembersCommandDeps(),
+        deps: await commandDeps(),
         input: data,
       });
     } catch (error) {
@@ -131,7 +155,7 @@ export const revokeOrgInvitation = createServerFn({ method: "POST" })
     try {
       return await revokeOrgInvitationCommand.run({
         ctx: await createTanStackOrgMembersContext(),
-        deps: createDefaultOrgMembersCommandDeps(),
+        deps: await commandDeps(),
         input: data,
       });
     } catch (error) {

@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  createMcpSignalCommandInput,
   createSignalInput,
   createSignalOutput,
+  getMcpSignalCommandInput,
   getSignalOutput,
+  listSignalsOutput,
   normalizeSignalClassification,
   SIGNAL_ID_PREFIX,
   signalClassificationBaseSchema,
@@ -106,6 +109,76 @@ describe("signal schemas", () => {
     });
   });
 
+  it("requires MCP signal commands to carry granted signal scopes", () => {
+    expect(
+      createMcpSignalCommandInput.parse({
+        actor: {
+          clientId: "mcp_client_test",
+          grantId: "mcp_grant_test",
+          kind: "mcp",
+          orgId: "org_test",
+          userId: "user_test",
+        },
+        input: "Signal from MCP",
+        scopes: ["mcp:signals:write"],
+      })
+    ).toEqual({
+      actor: {
+        clientId: "mcp_client_test",
+        grantId: "mcp_grant_test",
+        kind: "mcp",
+        orgId: "org_test",
+        userId: "user_test",
+      },
+      input: "Signal from MCP",
+      scopes: ["mcp:signals:write"],
+    });
+
+    expect(() =>
+      createMcpSignalCommandInput.parse({
+        actor: {
+          clientId: "mcp_client_test",
+          grantId: "mcp_grant_test",
+          kind: "mcp",
+          orgId: "org_test",
+          userId: "user_test",
+        },
+        input: "Signal from MCP",
+      })
+    ).toThrow();
+
+    expect(
+      getMcpSignalCommandInput.parse({
+        actor: {
+          clientId: "mcp_client_test",
+          grantId: "mcp_grant_test",
+          kind: "mcp",
+          orgId: "org_test",
+          userId: "user_test",
+        },
+        id: "signal_123e4567-e89b-12d3-a456-426614174000",
+        scopes: ["mcp:signals:read"],
+      })
+    ).toMatchObject({
+      id: "signal_123e4567-e89b-12d3-a456-426614174000",
+      scopes: ["mcp:signals:read"],
+    });
+
+    expect(() =>
+      getMcpSignalCommandInput.parse({
+        actor: {
+          clientId: "mcp_client_test",
+          grantId: "mcp_grant_test",
+          kind: "mcp",
+          orgId: "org_test",
+          userId: "user_test",
+        },
+        id: "signal_123e4567-e89b-12d3-a456-426614174000",
+        scopes: ["mcp:provider_routines:read"],
+      })
+    ).toThrow();
+  });
+
   it("validates get signal output with nullable v2 classification and visibility", () => {
     expect(
       getSignalOutput.parse({
@@ -122,6 +195,28 @@ describe("signal schemas", () => {
       classification: null,
       entityLinks: [],
       visibilityScope: "user",
+    });
+  });
+
+  it("validates public signal list output with an opaque cursor", () => {
+    expect(
+      listSignalsOutput.parse({
+        items: [
+          {
+            id: "signal_123e4567-e89b-12d3-a456-426614174000",
+            input: "Review this profile",
+            status: "queued",
+            classification: null,
+            visibilityScope: "team",
+            createdAt: "2026-05-30T00:00:00.000Z",
+            updatedAt: "2026-05-30T00:00:00.000Z",
+          },
+        ],
+        nextCursor: "opaque_cursor",
+      })
+    ).toMatchObject({
+      items: [{ id: "signal_123e4567-e89b-12d3-a456-426614174000" }],
+      nextCursor: "opaque_cursor",
     });
   });
 

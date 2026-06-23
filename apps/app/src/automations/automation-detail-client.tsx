@@ -1,3 +1,4 @@
+import { getAutomation } from "@api/app/tanstack/automations";
 import {
   ChevronLeftIcon as ChevronLeft,
   Loading03Icon as Loader2,
@@ -16,9 +17,9 @@ import { AutomationRunsSection } from "./automation-runs-section";
 import { AutomationScheduleEditor } from "./automation-schedule-editor";
 import { AutomationStatusChip } from "./automation-status-chip";
 import {
-  automationDetailQueryOptions,
   automationMutationKeys,
-} from "./automations-queries";
+  automationQueryKeys,
+} from "./automations-cache";
 import { RailRow, RailSection } from "./detail-sections";
 
 const CONNECTOR_LABELS = {
@@ -79,13 +80,12 @@ export function AutomationDetailClient({
   setSelectedRunId: (publicId: string | null) => void;
   slug: string;
 }) {
-  const automationQuery = useQuery(
-    automationDetailQueryOptions({
-      enabled: typeof window !== "undefined",
-      id: automationId,
-      staleTime: 30_000,
-    })
-  );
+  const automationQuery = useQuery({
+    enabled: typeof window !== "undefined",
+    queryFn: () => getAutomation({ data: { id: automationId } }),
+    queryKey: automationQueryKeys.detail(automationId),
+    staleTime: 30_000,
+  });
 
   const isRecomputingSchedule =
     useIsMutating({

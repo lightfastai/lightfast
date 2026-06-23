@@ -6,6 +6,7 @@
     "build": {
       "dependsOn": ["^build"],
       "env": [
+        "APP_INTERNAL_URL",
         "MCP_AUTH_ISSUER",
         "MCP_RESOURCE_URL",
         "SERVICE_JWT_SECRET",
@@ -17,20 +18,14 @@
         "VITE_*",
         "VERCEL_ENV"
       ],
-      "passThroughEnv": [
-        "DATABASE_HOST",
-        "DATABASE_USERNAME",
-        "DATABASE_PASSWORD",
-        "HOST",
-        "PORT"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "../app/.env.overrides.local",
-        "../app/.vercel/.env*",
-        ".vercel/.env*"
-      ],
-      "outputs": [".output/**", "dist/**", "src/routeTree.gen.ts"]
+      "passThroughEnv": ["HOST", "PORT"],
+      "inputs": ["$TURBO_DEFAULT$", ".vercel/.env*"],
+      "outputs": [
+        ".output/**",
+        ".vercel/output/**",
+        "dist/**",
+        "src/routeTree.gen.ts"
+      ]
     },
     "dev": {
       "cache": false,

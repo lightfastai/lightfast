@@ -26,17 +26,21 @@ export {
 } from "./native-auth";
 
 export {
+  type NativeRpcBaseErrorCode,
   type NativeRpcCommand,
   type NativeRpcErrorCode,
   type NativeRpcErrorResponse,
+  type NativeRpcProviderRoutineErrorCode,
   type NativeRpcRequest,
   type NativeRpcSuccessResponse,
   nativeRpcAuthSessionInputSchema,
   nativeRpcAuthSessionSuccessResponseSchema,
+  nativeRpcBaseErrorCodeSchema,
   nativeRpcCommandNames,
   nativeRpcCommandSchema,
   nativeRpcErrorCodeSchema,
   nativeRpcErrorResponseSchema,
+  nativeRpcProviderRoutineErrorCodeSchema,
   nativeRpcRequestSchema,
   nativeRpcSuccessResponseSchema,
 } from "./native-rpc";

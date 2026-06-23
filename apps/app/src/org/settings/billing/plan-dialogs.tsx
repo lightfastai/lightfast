@@ -12,7 +12,10 @@ import {
 } from "@repo/ui/components/ui/dialog";
 import { formatUtcCalendarDate as formatDate } from "@vendor/lib/time";
 
-import type { BillingPlan, BillingSubscriptionItem } from "./billing-queries";
+import type {
+  BillingPlan,
+  BillingSubscriptionItem,
+} from "./billing-view-model";
 
 export function ConfirmDowngradeDialog({
   currentPlanName,

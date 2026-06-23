@@ -6,11 +6,11 @@ import { resolveAuthContextFromClerk } from "../../auth/identity";
 import type { Actor } from "../../domain";
 import { actorFromAuthIdentity, isDomainError } from "../../domain";
 import {
-  createDefaultSourceControlCommandDeps,
   getSourceControlConnectionCommand,
   importSourceControlRepositoryCommand,
   listSourceControlRepositoriesCommand,
 } from "../../domain/source-control";
+import { createDefaultSourceControlCommandDeps } from "../../services/github/source-control/command-deps";
 
 function requestId() {
   return crypto.randomUUID();

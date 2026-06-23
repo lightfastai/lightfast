@@ -1,14 +1,15 @@
 import { db } from "@db/app/client";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest, setResponseHeader } from "@tanstack/react-start/server";
+import { clerkClient, toPlainClerkResource } from "@vendor/clerk/server";
 
 import { resolveAuthContextFromClerk } from "../../auth/identity";
 import type { Actor } from "../../domain";
 import { actorFromAuthIdentity, isDomainError } from "../../domain";
 import {
   cancelOrgBillingSubscriptionItemCommand,
-  createDefaultOrgBillingCommandDeps,
   getOrgBillingOverviewCommand,
+  type OrgBillingCommandDeps,
 } from "../../domain/org-billing";
 
 function requestId() {
@@ -61,6 +62,21 @@ function noStore() {
   setResponseHeader("vary", "Cookie, Authorization");
 }
 
+async function commandDeps(): Promise<OrgBillingCommandDeps> {
+  const clerk = await clerkClient();
+
+  return {
+    billing: {
+      cancelSubscriptionItem: (subscriptionItemId, input) =>
+        clerk.billing.cancelSubscriptionItem(subscriptionItemId, input),
+      getOrganizationBillingSubscription: (orgId) =>
+        clerk.billing.getOrganizationBillingSubscription(orgId),
+      getPlanList: (input) => clerk.billing.getPlanList(input),
+    },
+    toPlainClerkResource,
+  };
+}
+
 export const getOrgBillingOverview = createServerFn({
   method: "GET",
 }).handler(async () => {
@@ -68,7 +84,7 @@ export const getOrgBillingOverview = createServerFn({
   try {
     return await getOrgBillingOverviewCommand.run({
       ctx: await createTanStackOrgBillingContext(),
-      deps: createDefaultOrgBillingCommandDeps(),
+      deps: await commandDeps(),
       input: {},
     });
   } catch (error) {
@@ -85,7 +101,7 @@ export const cancelOrgBillingSubscriptionItem = createServerFn({
     try {
       return await cancelOrgBillingSubscriptionItemCommand.run({
         ctx: await createTanStackOrgBillingContext(),
-        deps: createDefaultOrgBillingCommandDeps(),
+        deps: await commandDeps(),
         input: data,
       });
     } catch (error) {

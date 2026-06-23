@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -9,28 +9,30 @@ function source(path: string) {
 }
 
 describe("developer-connections app data access", () => {
-  it("uses local TanStack query helpers backed by api/app server functions", () => {
-    const querySource = source(
-      "src/developer-connections/developer-connections-queries.ts"
+  it("inlines the single-use list query instead of hiding it behind a helper", () => {
+    expect(
+      existsSync(
+        resolve(
+          appRoot,
+          "src/developer-connections/developer-connections-queries.ts"
+        )
+      )
+    ).toBe(false);
+
+    const clientSource = source(
+      "src/developer-connections/developer-connections-client.tsx"
     );
 
-    expect(querySource).toContain('@api/app/tanstack/developer-connections"');
-    expect(querySource).toContain("developerConnectionQueryKeys");
-    expect(querySource).toContain("developerConnectionsQueryOptions");
-    expect(querySource).toContain("connectDeveloperConnectionMutationOptions");
-    expect(querySource).toContain(
-      "startSentryDeveloperConnectionAuthMutationOptions"
+    expect(clientSource).toContain('@api/app/tanstack/developer-connections"');
+    expect(clientSource).toContain("listDeveloperConnections");
+    expect(clientSource).toContain("developerConnectionListQueryKey");
+    expect(clientSource).toContain("queryFn: () => listDeveloperConnections()");
+    expect(clientSource).toContain("queryKey: developerConnectionListQueryKey");
+    expect(clientSource).not.toContain("developerConnectionsQueryOptions");
+    expect(clientSource).not.toContain("developerConnectionQueryKeys");
+    expect(clientSource).not.toContain(
+      "src/developer-connections/developer-connections-queries.ts"
     );
-    expect(querySource).toContain(
-      "completeSentryDeveloperConnectionAuthMutationOptions"
-    );
-    expect(querySource).toContain(
-      "setDeveloperConnectionSandboxEnabledMutationOptions"
-    );
-    expect(querySource).toContain(
-      "disconnectDeveloperConnectionMutationOptions"
-    );
-    expect(querySource).not.toContain("useTRPC");
   });
 
   it("moves the developer-connections UI off tRPC", () => {
@@ -43,18 +45,25 @@ describe("developer-connections app data access", () => {
 
     expect(clientSource).not.toContain("useTRPC");
     expect(clientSource).not.toContain("org.workspace.developerConnections");
-    expect(clientSource).toContain("developerConnectionsQueryOptions");
-    expect(clientSource).toContain("connectDeveloperConnectionMutationOptions");
-    expect(clientSource).toContain(
+    expect(clientSource).toContain('@api/app/tanstack/developer-connections"');
+    expect(clientSource).toContain("connectDeveloperConnection");
+    expect(clientSource).toContain("startSentryDeveloperConnectionAuth");
+    expect(clientSource).toContain("completeSentryDeveloperConnectionAuth");
+    expect(clientSource).toContain("setDeveloperConnectionSandboxEnabled");
+    expect(clientSource).toContain("disconnectDeveloperConnection");
+    expect(clientSource).not.toContain(
+      "connectDeveloperConnectionMutationOptions"
+    );
+    expect(clientSource).not.toContain(
       "startSentryDeveloperConnectionAuthMutationOptions"
     );
-    expect(clientSource).toContain(
+    expect(clientSource).not.toContain(
       "completeSentryDeveloperConnectionAuthMutationOptions"
     );
-    expect(clientSource).toContain(
+    expect(clientSource).not.toContain(
       "setDeveloperConnectionSandboxEnabledMutationOptions"
     );
-    expect(clientSource).toContain(
+    expect(clientSource).not.toContain(
       "disconnectDeveloperConnectionMutationOptions"
     );
     expect(modelSource).not.toContain("AppRouterOutputs");

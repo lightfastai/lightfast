@@ -17,8 +17,7 @@ import {
   createVercelSandboxRuntime,
   type SandboxRuntime,
 } from "@repo/sandbox-runtime";
-import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
-import { AuthzError, ConflictError, NotFoundError } from "../../domain/errors";
+import { ConflictError, NotFoundError } from "../../domain/errors";
 import {
   issueAllEnabledDeveloperConnectionLeases,
   materializeDeveloperConnectionLeasesForSandboxRun,
@@ -31,8 +30,12 @@ const DEFAULT_COMMAND_TIMEOUT_MS = 2 * 60 * 1000;
 const CREDENTIAL_BASE_DIR = "/vercel/sandbox/.lightfast/provider-auth";
 
 interface DeveloperSandboxRunServiceContext {
-  auth: AuthContext;
-  db: Database;
+  actor: {
+    userId: string;
+  };
+  organization: {
+    orgId: string;
+  };
 }
 
 interface DeveloperSandboxRunServiceOptions {
@@ -52,20 +55,6 @@ interface DeveloperSandboxCommandInput {
 interface MaterializedCredentials {
   env: Record<string, string>;
   secrets: string[];
-}
-
-export function canUseDeveloperSandboxes(
-  ctx: DeveloperSandboxRunServiceContext
-) {
-  return ctx.auth.identity.type === "active";
-}
-
-function activeIdentity(ctx: DeveloperSandboxRunServiceContext) {
-  const identity = ctx.auth.identity;
-  if (!canUseDeveloperSandboxes(ctx) || identity.type !== "active") {
-    throw new AuthzError("AUTH_REQUIRED", "Authentication required.");
-  }
-  return identity;
 }
 
 function ensureRunnableRun(run: DeveloperSandboxRun, now: Date) {
@@ -126,13 +115,22 @@ export function createDeveloperSandboxRunService(
   const runtime = options.runtime ?? createVercelSandboxRuntime();
   const now = options.now ?? (() => new Date());
 
+  function developerConnectionLeaseContext(
+    ctx: DeveloperSandboxRunServiceContext
+  ) {
+    return {
+      actor: { userId: ctx.actor.userId },
+      db: options.db,
+      organization: { orgId: ctx.organization.orgId },
+    };
+  }
+
   async function loadRun(
     ctx: DeveloperSandboxRunServiceContext,
     sandboxRunId: string
   ) {
-    const identity = activeIdentity(ctx);
     const run = await getDeveloperSandboxRunByPublicId(options.db, {
-      clerkOrgId: identity.orgId,
+      clerkOrgId: ctx.organization.orgId,
       publicId: sandboxRunId,
     });
     if (!run) {
@@ -141,18 +139,23 @@ export function createDeveloperSandboxRunService(
         "Developer sandbox run was not found."
       );
     }
-    return { identity, run };
+    return { run };
   }
 
   async function materializeCredentials(
     ctx: DeveloperSandboxRunServiceContext,
     run: DeveloperSandboxRun
   ): Promise<MaterializedCredentials> {
+    const leaseContext = developerConnectionLeaseContext(ctx);
+
     async function issueAndWriteCredentials() {
-      const issued = await issueAllEnabledDeveloperConnectionLeases(ctx, {
-        sandboxRunId: run.publicId,
-        workflowRunId: run.workflowRunId,
-      });
+      const issued = await issueAllEnabledDeveloperConnectionLeases(
+        leaseContext,
+        {
+          sandboxRunId: run.publicId,
+          workflowRunId: run.workflowRunId,
+        }
+      );
       const sandbox = await runtime.get(run.vercelSandboxId);
       const files = issued.materialization.flatMap((entry, index) => {
         const lease = issued.leases[index];
@@ -188,7 +191,7 @@ export function createDeveloperSandboxRunService(
 
     if (run.credentialsLoadedAt) {
       const existing = await materializeDeveloperConnectionLeasesForSandboxRun(
-        ctx,
+        leaseContext,
         { sandboxRunId: run.publicId }
       );
       if (existing.leases.length === 0) {
@@ -214,7 +217,6 @@ export function createDeveloperSandboxRunService(
       ctx: DeveloperSandboxRunServiceContext,
       input: { requestedTtlMs?: number; workflowRunId?: string | null } = {}
     ) {
-      const identity = activeIdentity(ctx);
       const sandbox = await runtime.create({
         name: `developer-sandbox-${randomUUID()}`,
         runtime: "node24",
@@ -223,8 +225,8 @@ export function createDeveloperSandboxRunService(
 
       try {
         return await createDeveloperSandboxRun(options.db, {
-          clerkOrgId: identity.orgId,
-          actorUserId: identity.userId,
+          clerkOrgId: ctx.organization.orgId,
+          actorUserId: ctx.actor.userId,
           workflowRunId: input.workflowRunId ?? null,
           vercelSandboxId: sandbox.id,
           requestedTtlMs: input.requestedTtlMs,
@@ -242,14 +244,14 @@ export function createDeveloperSandboxRunService(
         command: DeveloperSandboxCommandInput;
       }
     ) {
-      const { identity, run } = await loadRun(ctx, input.sandboxRunId);
+      const { run } = await loadRun(ctx, input.sandboxRunId);
       const startedAt = now();
       ensureRunnableRun(run, startedAt);
       const policy = evaluateDeveloperSandboxCommandPolicy(input.command);
       const command = await createDeveloperSandboxCommand(options.db, {
         sandboxRunId: run.id,
-        clerkOrgId: identity.orgId,
-        actorUserId: identity.userId,
+        clerkOrgId: ctx.organization.orgId,
+        actorUserId: ctx.actor.userId,
         cmd: input.command.cmd,
         args: input.command.args ?? [],
         cwd: input.command.cwd ?? null,
@@ -327,10 +329,10 @@ export function createDeveloperSandboxRunService(
       ctx: DeveloperSandboxRunServiceContext,
       input: { sandboxRunId: string }
     ) {
-      const { identity, run } = await loadRun(ctx, input.sandboxRunId);
+      const { run } = await loadRun(ctx, input.sandboxRunId);
       const stoppedAt = now();
       await revokeDeveloperConnectionLeasesForSandboxRun(options.db, {
-        clerkOrgId: identity.orgId,
+        clerkOrgId: ctx.organization.orgId,
         sandboxRunId: run.publicId,
         revokedAt: stoppedAt,
       });

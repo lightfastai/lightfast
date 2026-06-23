@@ -9,9 +9,20 @@ import { resolveOrgSetupGate } from "./org-setup-gate";
 
 export type ApiKeyAuthIdentity = Extract<AuthIdentity, { type: "active" }>;
 
+export const PUBLIC_API_KEY_SCOPES = [
+  "api.signals.read",
+  "api.signals.write",
+] as const;
+
+export type PublicApiKeyScope = (typeof PUBLIC_API_KEY_SCOPES)[number];
+
+export const PUBLIC_API_KEY_PERMISSION_CHECK =
+  PUBLIC_API_KEY_SCOPES.join(" OR ");
+
 export interface ApiKeyAuthResult {
   apiKeyId: string;
   identity: ApiKeyAuthIdentity;
+  scopes: PublicApiKeyScope[];
 }
 
 export type ApiKeyAuthFailure =
@@ -20,6 +31,7 @@ export type ApiKeyAuthFailure =
   | "invalid"
   | "disabled"
   | "expired"
+  | "insufficient-scope"
   | "not-org-scoped"
   | "missing-creator";
 
@@ -67,6 +79,14 @@ function parseBearerApiKey(headers: Headers): string {
   return token;
 }
 
+function parsePublicApiKeyScopes(permissions: unknown): PublicApiKeyScope[] {
+  if (!Array.isArray(permissions)) {
+    return [];
+  }
+
+  return PUBLIC_API_KEY_SCOPES.filter((scope) => permissions.includes(scope));
+}
+
 export async function resolveApiKeyAuth(input: {
   db?: Database;
   headers: Headers;
@@ -76,7 +96,10 @@ export async function resolveApiKeyAuth(input: {
   let verification;
 
   try {
-    verification = await unkey.keys.verifyKey({ key: token });
+    verification = await unkey.keys.verifyKey({
+      key: token,
+      permissions: PUBLIC_API_KEY_PERMISSION_CHECK,
+    });
   } catch {
     throw new ApiKeyAuthError("invalid", "Invalid API key", 401);
   }
@@ -89,7 +112,23 @@ export async function resolveApiKeyAuth(input: {
     if (key.code === "EXPIRED") {
       throw new ApiKeyAuthError("expired", "API key expired", 401);
     }
+    if (key.code === "FORBIDDEN" || key.code === "INSUFFICIENT_PERMISSIONS") {
+      throw new ApiKeyAuthError(
+        "insufficient-scope",
+        "API key is missing required permissions",
+        403
+      );
+    }
     throw new ApiKeyAuthError("invalid", "Invalid API key", 401);
+  }
+
+  const scopes = parsePublicApiKeyScopes(key.permissions);
+  if (scopes.length === 0) {
+    throw new ApiKeyAuthError(
+      "insufficient-scope",
+      "API key is missing required permissions",
+      403
+    );
   }
 
   const orgId = key.identity?.externalId;
@@ -125,5 +164,5 @@ export async function resolveApiKeyAuth(input: {
     throw new ApiKeyAuthError("invalid", "Invalid API key", 401);
   }
 
-  return { apiKeyId: key.keyId, identity };
+  return { apiKeyId: key.keyId, identity, scopes };
 }

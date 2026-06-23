@@ -1,5 +1,5 @@
-import { signServiceJWT } from "@api/app/service-jwt";
-import { env } from "../env";
+import { signServiceJWT } from "@repo/service-jwt";
+import { appInternalUrl, env } from "../env";
 
 type Fetch = typeof fetch;
 
@@ -35,7 +35,7 @@ async function readJson(response: Response): Promise<unknown> {
 }
 
 function appAuditUrl(): string {
-  return new URL("/api/internal/mcp/audit", env.MCP_AUTH_ISSUER).toString();
+  return new URL("/api/internal/mcp/audit", appInternalUrl).toString();
 }
 
 function messageFromBody(body: unknown): string {

@@ -1,16 +1,4 @@
-import type { Automation, AutomationRun, Database } from "@db/app";
-import {
-  createAutomation,
-  createAutomationRun,
-  deleteAutomation,
-  getAutomationByPublicId,
-  getAutomationRunByPublicId,
-  listAutomationRuns,
-  listAutomations,
-  markAutomationRunFailed,
-  setAutomationStatus,
-  updateAutomation,
-} from "@db/app";
+import type { Automation, AutomationRun } from "@db/app";
 import {
   createAutomationSchema,
   getAutomationRunSchema,
@@ -18,7 +6,6 @@ import {
   listAutomationRunsSchema,
   updateAutomationSchema,
 } from "@repo/app-validation/schemas";
-import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
 import { defineCommand } from "../command";
 import {
@@ -37,60 +24,75 @@ interface AutomationRunRequestedEventData {
   scheduleVersion: number;
 }
 
-const AUTOMATION_RUN_ENQUEUE_TIMEOUT_MS = 10_000;
+export type AutomationRecord = Automation;
+export type AutomationRunRecord = AutomationRun;
 
-interface AutomationCommandDeps {
-  createAutomation: typeof createAutomation;
-  createAutomationRun: typeof createAutomationRun;
-  db: Database;
-  deleteAutomation: typeof deleteAutomation;
-  getAutomationByPublicId: typeof getAutomationByPublicId;
-  getAutomationRunByPublicId: typeof getAutomationRunByPublicId;
-  listAutomationRuns: typeof listAutomationRuns;
-  listAutomations: typeof listAutomations;
-  log: Pick<typeof log, "warn">;
-  markAutomationRunFailed: typeof markAutomationRunFailed;
+export interface AutomationCommandDeps {
+  createAutomation(input: {
+    clerkOrgId: string;
+    connectorProvider: z.infer<
+      typeof createAutomationSchema
+    >["connectorProvider"];
+    createdByUserId: string;
+    name: string;
+    prompt: string;
+    schedule: z.infer<typeof createAutomationSchema>["schedule"];
+    timezone: string;
+  }): Promise<AutomationRecord>;
+  createAutomationRun(input: {
+    automation: AutomationRecord;
+    dueAt: Date;
+    trigger: "manual";
+  }): Promise<AutomationRunRecord>;
+  deleteAutomation(input: {
+    clerkOrgId: string;
+    publicId: string;
+  }): Promise<boolean>;
+  getAutomationByPublicId(input: {
+    clerkOrgId: string;
+    publicId: string;
+  }): Promise<AutomationRecord | undefined>;
+  getAutomationRunByPublicId(input: {
+    clerkOrgId: string;
+    publicId: string;
+  }): Promise<AutomationRunRecord | undefined>;
+  listAutomationRuns(input: {
+    automationPublicId: string;
+    clerkOrgId: string;
+    limit?: number;
+  }): Promise<AutomationRunRecord[]>;
+  listAutomations(input: { clerkOrgId: string }): Promise<AutomationRecord[]>;
+  log: { warn(message: string, context?: Record<string, unknown>): void };
+  markAutomationRunFailed(input: {
+    clerkOrgId: string;
+    errorCode: string;
+    errorMessage: string;
+    publicId: string;
+  }): Promise<unknown>;
   now: () => Date;
   sendAutomationRunRequested: (
     data: AutomationRunRequestedEventData
   ) => Promise<void>;
   sendAutomationRunRequestedTimeoutMs: number;
-  setAutomationStatus: typeof setAutomationStatus;
-  updateAutomation: typeof updateAutomation;
-}
-
-export function createDefaultAutomationCommandDeps(
-  input: { db: Database } & Partial<Omit<AutomationCommandDeps, "db">>
-): AutomationCommandDeps {
-  return {
-    createAutomation: input.createAutomation ?? createAutomation,
-    createAutomationRun: input.createAutomationRun ?? createAutomationRun,
-    db: input.db,
-    deleteAutomation: input.deleteAutomation ?? deleteAutomation,
-    getAutomationByPublicId:
-      input.getAutomationByPublicId ?? getAutomationByPublicId,
-    getAutomationRunByPublicId:
-      input.getAutomationRunByPublicId ?? getAutomationRunByPublicId,
-    listAutomationRuns: input.listAutomationRuns ?? listAutomationRuns,
-    listAutomations: input.listAutomations ?? listAutomations,
-    log: input.log ?? log,
-    markAutomationRunFailed:
-      input.markAutomationRunFailed ?? markAutomationRunFailed,
-    now: input.now ?? (() => new Date()),
-    sendAutomationRunRequested:
-      input.sendAutomationRunRequested ?? sendAutomationRunRequested,
-    sendAutomationRunRequestedTimeoutMs:
-      input.sendAutomationRunRequestedTimeoutMs ??
-      AUTOMATION_RUN_ENQUEUE_TIMEOUT_MS,
-    setAutomationStatus: input.setAutomationStatus ?? setAutomationStatus,
-    updateAutomation: input.updateAutomation ?? updateAutomation,
-  };
+  setAutomationStatus(input: {
+    clerkOrgId: string;
+    publicId: string;
+    status: "active" | "paused";
+  }): Promise<AutomationRecord | undefined>;
+  updateAutomation(input: {
+    clerkOrgId: string;
+    name?: string;
+    prompt?: string;
+    publicId: string;
+    schedule?: z.infer<typeof updateAutomationSchema>["schedule"];
+    timezone?: string;
+  }): Promise<AutomationRecord | undefined>;
 }
 
 const emptyInput = z.object({}).strict();
-const automationOutput = z.custom<Automation>(isRecord);
+const automationOutput = z.custom<AutomationRecord>(isRecord);
 const automationListOutput = z.array(automationOutput);
-const automationRunOutput = z.custom<AutomationRun>(isRecord);
+const automationRunOutput = z.custom<AutomationRunRecord>(isRecord);
 const automationRunListOutput = z.array(automationRunOutput);
 const deleteAutomationOutput = z.object({ deleted: z.literal(true) });
 
@@ -105,7 +107,7 @@ export const listAutomationsCommand = defineCommand<
   output: automationListOutput,
   run: async ({ ctx, deps }) => {
     const actor = requireBoundClerkOrgActor(ctx);
-    return deps.listAutomations(deps.db, { clerkOrgId: actor.orgId });
+    return deps.listAutomations({ clerkOrgId: actor.orgId });
   },
 });
 
@@ -121,7 +123,7 @@ export const getAutomationCommand = defineCommand<
   run: async ({ ctx, deps, input }) => {
     const actor = requireBoundClerkOrgActor(ctx);
     const automation =
-      (await deps.getAutomationByPublicId(deps.db, {
+      (await deps.getAutomationByPublicId({
         clerkOrgId: actor.orgId,
         publicId: input.id,
       })) ?? automationNotFound();
@@ -140,7 +142,7 @@ export const createAutomationCommand = defineCommand<
   output: automationOutput,
   run: async ({ ctx, deps, input }) => {
     const actor = requireBoundClerkOrgAdminActor(ctx);
-    return deps.createAutomation(deps.db, {
+    return deps.createAutomation({
       clerkOrgId: actor.orgId,
       connectorProvider: input.connectorProvider,
       createdByUserId: actor.userId,
@@ -164,7 +166,7 @@ export const updateAutomationCommand = defineCommand<
   run: async ({ ctx, deps, input }) => {
     const actor = requireBoundClerkOrgAdminActor(ctx);
     const automation =
-      (await deps.updateAutomation(deps.db, {
+      (await deps.updateAutomation({
         clerkOrgId: actor.orgId,
         publicId: input.id,
         name: input.name,
@@ -213,7 +215,7 @@ export const deleteAutomationCommand = defineCommand<
   output: deleteAutomationOutput,
   run: async ({ ctx, deps, input }) => {
     const actor = requireBoundClerkOrgAdminActor(ctx);
-    const deleted = await deps.deleteAutomation(deps.db, {
+    const deleted = await deps.deleteAutomation({
       clerkOrgId: actor.orgId,
       publicId: input.id,
     });
@@ -236,7 +238,7 @@ export const runAutomationNowCommand = defineCommand<
   run: async ({ ctx, deps, input }) => {
     const actor = requireBoundClerkOrgAdminActor(ctx);
     const automation = requireAutomationVisibleToActor(
-      (await deps.getAutomationByPublicId(deps.db, {
+      (await deps.getAutomationByPublicId({
         clerkOrgId: actor.orgId,
         publicId: input.id,
       })) ?? automationNotFound(),
@@ -247,7 +249,7 @@ export const runAutomationNowCommand = defineCommand<
       throw new ValidationError("AUTOMATION_PAUSED", "Automation is paused.");
     }
 
-    const run = await deps.createAutomationRun(deps.db, {
+    const run = await deps.createAutomationRun({
       automation,
       dueAt: deps.now(),
       trigger: "manual",
@@ -265,7 +267,7 @@ export const runAutomationNowCommand = defineCommand<
       );
     } catch (error) {
       try {
-        await deps.markAutomationRunFailed(deps.db, {
+        await deps.markAutomationRunFailed({
           clerkOrgId: automation.clerkOrgId,
           publicId: run.publicId,
           errorCode: "AUTOMATION_RUN_ENQUEUE_FAILED",
@@ -309,7 +311,7 @@ export const listAutomationRunsCommand = defineCommand<
   output: automationRunListOutput,
   run: async ({ ctx, deps, input }) => {
     const actor = requireBoundClerkOrgActor(ctx);
-    return deps.listAutomationRuns(deps.db, {
+    return deps.listAutomationRuns({
       automationPublicId: input.id,
       clerkOrgId: actor.orgId,
       limit: input.limit,
@@ -329,7 +331,7 @@ export const getAutomationRunCommand = defineCommand<
   run: async ({ ctx, deps, input }) => {
     const actor = requireBoundClerkOrgActor(ctx);
     return (
-      (await deps.getAutomationRunByPublicId(deps.db, {
+      (await deps.getAutomationRunByPublicId({
         clerkOrgId: actor.orgId,
         publicId: input.id,
       })) ?? automationRunNotFound()
@@ -358,7 +360,7 @@ async function setAutomationStatusForActor(
 ) {
   const actor = requireBoundClerkOrgAdminActor(ctx);
   const automation =
-    (await deps.setAutomationStatus(deps.db, {
+    (await deps.setAutomationStatus({
       clerkOrgId: actor.orgId,
       publicId,
       status,
@@ -371,9 +373,9 @@ function automationNotFound(): never {
 }
 
 function requireAutomationVisibleToActor(
-  automation: Automation,
+  automation: AutomationRecord,
   actor: BoundClerkOrgActor
-): Automation {
+): AutomationRecord {
   if (automation.clerkOrgId !== actor.orgId) {
     automationNotFound();
   }
@@ -416,14 +418,4 @@ async function withTimeout<T>(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
-}
-
-async function sendAutomationRunRequested(
-  data: AutomationRunRequestedEventData
-) {
-  const { inngest } = await import("../../inngest/client");
-  await inngest.send({
-    name: "app/automation.run.requested",
-    data,
-  });
 }

@@ -1,7 +1,7 @@
-import { signServiceJWT } from "@api/app/service-jwt";
 import {
   type McpProviderRoutineCallCommandInput,
   type McpProviderRoutineFindCommandInput,
+  type McpProviderRoutineScope,
   mcpProviderRoutineCallCommandInputSchema,
   mcpProviderRoutineFindCommandInputSchema,
   type ProviderRoutineCallInput,
@@ -10,15 +10,17 @@ import {
   type ProviderRoutineFindOutput,
   providerRoutineCallSuccessSchema,
   providerRoutineFindOutputSchema,
-} from "@lightfast/connector-core/provider-routines";
+} from "@repo/api-contract";
+import { signServiceJWT } from "@repo/service-jwt";
 
-import { env } from "../env";
+import { appInternalUrl, env } from "../env";
 
 type Fetch = typeof fetch;
 
 interface ProviderRoutineProxyContext {
   actor: {
     orgId: string;
+    scopes: readonly McpProviderRoutineScope[];
     userId: string;
   };
   scopes: {
@@ -61,7 +63,7 @@ async function readJson(response: Response): Promise<unknown> {
 }
 
 function appProxyUrl(pathname: string): string {
-  return new URL(pathname, env.MCP_AUTH_ISSUER).toString();
+  return new URL(pathname, appInternalUrl).toString();
 }
 
 function commandActorFromContext(
@@ -72,6 +74,7 @@ function commandActorFromContext(
     grantId: context.source.ref ?? "",
     kind: "mcp",
     orgId: context.actor.orgId,
+    scopes: [...context.actor.scopes],
     userId: context.actor.userId,
   };
 }

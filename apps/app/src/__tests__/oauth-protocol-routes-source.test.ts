@@ -226,10 +226,18 @@ describe("app OAuth protocol route migration", () => {
     expect(nativeServerRoutesSource).toContain("getNativeOAuthClientConfig");
     expect(nativeServerRoutesSource).toContain("nativeFinalizeRequestSchema");
     expect(nativeServerRoutesSource).toContain("nativeSessionMetadataSchema");
+    expect(nativeServerRoutesSource).toContain("resolveAuthContextFromClerk");
+    expect(nativeServerRoutesSource).toContain("NATIVE_AUTH_HEADERS");
     expect(nativeServerRoutesSource).toContain(
-      "finalizeNativeAuthAttemptForRequest"
+      "finalizeNativeAuthAttemptForNativeOAuth"
     );
     expect(nativeServerRoutesSource).toContain(
+      "getNativeAuthSessionForNativeOAuth"
+    );
+    expect(nativeServerRoutesSource).not.toContain(
+      "finalizeNativeAuthAttemptForRequest"
+    );
+    expect(nativeServerRoutesSource).not.toContain(
       "getNativeAuthSessionForRequest"
     );
     expect(nativeServerRoutesSource).toContain('source: "desktop"');

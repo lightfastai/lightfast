@@ -4,11 +4,9 @@ import {
   type OrgConnectorConnection,
 } from "@db/app";
 import { db as appDb } from "@db/app/client";
-import type {
-  ConnectableConnectorProvider,
-  FullConnectorToolManifestItem,
-} from "@lightfast/connector-core";
+import type { FullConnectorToolManifestItem } from "@lightfast/connector-core";
 import {
+  type ConnectableConnectorProvider,
   type ProviderRoutineCallInput,
   type ProviderRoutineCallSuccess,
   type ProviderRoutineClassification,
@@ -22,10 +20,10 @@ import {
   providerRoutineCallInputSchema,
   providerRoutineFindInputSchema,
   providerRoutineId,
-} from "@lightfast/connector-core/provider-routines";
-import { classifyRoutine } from "@repo/provider-routines";
+} from "@repo/api-contract";
 import { log } from "@vendor/observability/log/next";
 
+import { classifyRoutine } from "../provider-routines/policy";
 import {
   ConnectorRuntimeToolCallError,
   loadChatConnectorRuntimeTools,

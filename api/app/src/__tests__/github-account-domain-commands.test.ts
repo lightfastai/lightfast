@@ -1,10 +1,9 @@
-import type { Database } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AuthIdentity } from "../auth/identity";
 import { actorFromAuthIdentity } from "../domain";
 import {
-  createDefaultAccountCommandDeps,
+  type AccountCommandDeps,
   disconnectGitHubAccountCommand,
   getGitHubAccountStatusCommand,
   startGitHubAccountBindingCommand,
@@ -32,18 +31,26 @@ function ctx(identity: AuthIdentity = pendingIdentity) {
 }
 
 function deps() {
-  return createDefaultAccountCommandDeps({
-    clerk: {
-      users: {
-        getUser: vi.fn(),
-        updateUser: vi.fn(),
-      },
-    },
-    db: {} as Database,
+  return {
     disconnectGitHubUserAccount: disconnectGitHubUserAccountMock,
     getGitHubUserAccountStatus: getGitHubUserAccountStatusMock,
+    log: { error: vi.fn() },
+    parseError: (error: unknown) => error,
     startGitHubUserAccountBinding: startGitHubUserAccountBindingMock,
-  });
+    usernameNamespace: {
+      deletePreClerkReservation: vi.fn(),
+      finalize: vi.fn(),
+      isConflict: vi.fn(),
+      markClerkApplied: vi.fn(),
+      reserve: vi.fn(),
+      start: vi.fn(),
+    },
+    users: {
+      getUser: vi.fn(),
+      isUsernameConflictError: vi.fn(),
+      updateUser: vi.fn(),
+    },
+  } satisfies AccountCommandDeps;
 }
 
 describe("GitHub account domain commands", () => {

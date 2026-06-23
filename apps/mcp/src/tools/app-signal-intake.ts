@@ -1,4 +1,3 @@
-import { signServiceJWT } from "@api/app/service-jwt";
 import {
   type CreateSignalOutput,
   createMcpSignalCommandInput,
@@ -6,9 +5,11 @@ import {
   type GetSignalOutput,
   getMcpSignalCommandInput,
   getSignalOutput,
+  type McpSignalScope,
 } from "@repo/api-contract";
+import { signServiceJWT } from "@repo/service-jwt";
 
-import { env } from "../env";
+import { appInternalUrl, env } from "../env";
 
 type Fetch = typeof fetch;
 
@@ -32,7 +33,7 @@ async function readJson(response: Response): Promise<unknown> {
 }
 
 function appSignalUrl(pathname = "/api/internal/mcp/signals"): string {
-  return new URL(pathname, env.MCP_AUTH_ISSUER).toString();
+  return new URL(pathname, appInternalUrl).toString();
 }
 
 function messageFromBody(body: unknown): string {
@@ -110,6 +111,7 @@ export async function createSignalForActorViaApp(
       userId: string;
     };
     input: string;
+    scopes: McpSignalScope[];
   },
   dependencies: { fetch?: Fetch } = {}
 ): Promise<CreateSignalOutput> {
@@ -139,6 +141,7 @@ export async function getSignalForActorViaApp(
       userId: string;
     };
     id: string;
+    scopes: McpSignalScope[];
   },
   dependencies: { fetch?: Fetch } = {}
 ): Promise<GetSignalOutput> {

@@ -9,12 +9,20 @@ import { actorFromAuthIdentity, isDomainError } from "../../domain";
 import {
   completeSentryDeveloperConnectionAuthCommand,
   connectDeveloperConnectionCommand,
-  createDefaultDeveloperConnectionCommandDeps,
+  type DeveloperConnectionCommandDeps,
   disconnectDeveloperConnectionCommand,
   listDeveloperConnectionsCommand,
   setDeveloperConnectionSandboxEnabledCommand,
   startSentryDeveloperConnectionAuthCommand,
 } from "../../domain/developer-connections";
+import {
+  completeSentryDeveloperConnectionAuth as completeSentryDeveloperConnectionAuthService,
+  connectDeveloperConnection as connectDeveloperConnectionService,
+  disconnectDeveloperConnection as disconnectDeveloperConnectionService,
+  listDeveloperConnectionsForOrg,
+  setDeveloperConnectionSandboxEnabled as setDeveloperConnectionSandboxEnabledService,
+  startSentryDeveloperConnectionAuth as startSentryDeveloperConnectionAuthService,
+} from "../../services/developer-connections";
 
 export type ConnectDeveloperConnectionInput = z.input<
   typeof connectDeveloperConnectionCommand.input
@@ -65,7 +73,6 @@ async function createTanStackDeveloperConnectionRequest() {
       actor: maybeMarkOrgAdmin({ actor, auth }),
       request: { id: requestId(), source: "tanstack" as const },
     },
-    headers,
   };
 }
 
@@ -81,6 +88,21 @@ function noStore() {
   setResponseHeader("vary", "Cookie, Authorization");
 }
 
+function deps(): DeveloperConnectionCommandDeps {
+  return {
+    completeSentryDeveloperConnectionAuth:
+      completeSentryDeveloperConnectionAuthService,
+    connectDeveloperConnection: connectDeveloperConnectionService,
+    db,
+    disconnectDeveloperConnection: disconnectDeveloperConnectionService,
+    listDeveloperConnectionsForOrg,
+    setDeveloperConnectionSandboxEnabled:
+      setDeveloperConnectionSandboxEnabledService,
+    startSentryDeveloperConnectionAuth:
+      startSentryDeveloperConnectionAuthService,
+  };
+}
+
 export const listDeveloperConnections = createServerFn({
   method: "GET",
 }).handler(async () => {
@@ -89,10 +111,7 @@ export const listDeveloperConnections = createServerFn({
     const request = await createTanStackDeveloperConnectionRequest();
     return await listDeveloperConnectionsCommand.run({
       ctx: request.ctx,
-      deps: createDefaultDeveloperConnectionCommandDeps({
-        db,
-        headers: request.headers,
-      }),
+      deps: deps(),
       input: {},
     });
   } catch (error) {
@@ -108,10 +127,7 @@ export const connectDeveloperConnection = createServerFn({ method: "POST" })
       const request = await createTanStackDeveloperConnectionRequest();
       return await connectDeveloperConnectionCommand.run({
         ctx: request.ctx,
-        deps: createDefaultDeveloperConnectionCommandDeps({
-          db,
-          headers: request.headers,
-        }),
+        deps: deps(),
         input: data,
       });
     } catch (error) {
@@ -129,10 +145,7 @@ export const startSentryDeveloperConnectionAuth = createServerFn({
       const request = await createTanStackDeveloperConnectionRequest();
       return await startSentryDeveloperConnectionAuthCommand.run({
         ctx: request.ctx,
-        deps: createDefaultDeveloperConnectionCommandDeps({
-          db,
-          headers: request.headers,
-        }),
+        deps: deps(),
         input: data,
       });
     } catch (error) {
@@ -150,10 +163,7 @@ export const completeSentryDeveloperConnectionAuth = createServerFn({
       const request = await createTanStackDeveloperConnectionRequest();
       return await completeSentryDeveloperConnectionAuthCommand.run({
         ctx: request.ctx,
-        deps: createDefaultDeveloperConnectionCommandDeps({
-          db,
-          headers: request.headers,
-        }),
+        deps: deps(),
         input: data,
       });
     } catch (error) {
@@ -171,10 +181,7 @@ export const setDeveloperConnectionSandboxEnabled = createServerFn({
       const request = await createTanStackDeveloperConnectionRequest();
       return await setDeveloperConnectionSandboxEnabledCommand.run({
         ctx: request.ctx,
-        deps: createDefaultDeveloperConnectionCommandDeps({
-          db,
-          headers: request.headers,
-        }),
+        deps: deps(),
         input: data,
       });
     } catch (error) {
@@ -190,10 +197,7 @@ export const disconnectDeveloperConnection = createServerFn({ method: "POST" })
       const request = await createTanStackDeveloperConnectionRequest();
       return await disconnectDeveloperConnectionCommand.run({
         ctx: request.ctx,
-        deps: createDefaultDeveloperConnectionCommandDeps({
-          db,
-          headers: request.headers,
-        }),
+        deps: deps(),
         input: data,
       });
     } catch (error) {

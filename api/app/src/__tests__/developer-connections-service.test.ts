@@ -1,4 +1,5 @@
 import type { Database } from "@db/app";
+import { DEVELOPER_CONNECTION_PROVIDERS } from "@repo/api-contract";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const encryptMock = vi.fn(async (value: string) => `encrypted:${value}`);
@@ -63,26 +64,25 @@ const {
 
 function ctx(input: { isAdmin?: boolean } = {}) {
   return {
-    auth: {
-      access: {
-        kind: "clerk-session" as const,
-        userId: "user_admin",
-        orgId: "org_acme",
-        has: ({ role }: { role?: string }) =>
-          (input.isAdmin ?? true) ? role === "org:admin" : false,
-      },
-      identity: {
-        type: "active" as const,
-        userId: "user_admin",
-        orgId: "org_acme",
-        orgGate: {
-          bindingStatus: "bound" as const,
-          nextSetupRequirement: null,
-        },
-      },
-    },
+    actor: { userId: input.isAdmin === false ? "user_member" : "user_admin" },
     db: {} as Database,
-    headers: new Headers(),
+    organization: { orgId: "org_acme" },
+  };
+}
+
+function catalogCtx(input: { canManage?: boolean } = {}) {
+  return {
+    db: {} as Database,
+    organization: { orgId: "org_acme" },
+    viewer: { canManage: input.canManage ?? true },
+  };
+}
+
+function leaseCtx() {
+  return {
+    actor: { userId: "user_admin" },
+    db: {} as Database,
+    organization: { orgId: "org_acme" },
   };
 }
 
@@ -153,11 +153,40 @@ describe("developer connection services", () => {
   });
 
   it("lists the four provider catalog rows with admin manage state", async () => {
-    await expect(listDeveloperConnectionsForOrg(ctx())).resolves.toEqual([
-      expect.objectContaining({ provider: "pscale", canManage: true }),
-      expect.objectContaining({ provider: "upstash", canManage: true }),
-      expect.objectContaining({ provider: "sentry", canManage: true }),
-      expect.objectContaining({ provider: "clerk", canManage: true }),
+    await expect(listDeveloperConnectionsForOrg(catalogCtx())).resolves.toEqual(
+      [
+        expect.objectContaining({ provider: "pscale", canManage: true }),
+        expect.objectContaining({ provider: "upstash", canManage: true }),
+        expect.objectContaining({ provider: "sentry", canManage: true }),
+        expect.objectContaining({ provider: "clerk", canManage: true }),
+      ]
+    );
+
+    expect(listCurrentDeveloperConnectionsMock).toHaveBeenCalledWith(
+      expect.anything(),
+      { clerkOrgId: "org_acme" }
+    );
+  });
+
+  it("marks developer connections unavailable when the viewer cannot manage them", async () => {
+    await expect(
+      listDeveloperConnectionsForOrg(catalogCtx({ canManage: false }))
+    ).resolves.toContainEqual(
+      expect.objectContaining({
+        canManage: false,
+        connectAvailability: {
+          reason: "permission_required",
+          status: "unavailable",
+        },
+        provider: "sentry",
+      })
+    );
+  });
+
+  it("keeps the local catalog in sync with the canonical provider list", async () => {
+    const rows = await listDeveloperConnectionsForOrg(catalogCtx());
+    expect(rows.map((row) => row.provider)).toEqual([
+      ...DEVELOPER_CONNECTION_PROVIDERS,
     ]);
   });
 
@@ -184,22 +213,6 @@ describe("developer connection services", () => {
         providerAccountName: "lightfast/main",
         credentialKind: "pscale_service_token",
         actorUserId: "user_admin",
-      })
-    );
-  });
-
-  it("throws a domain authz error when non-admin users manage developer connections", async () => {
-    await expect(
-      connectDeveloperConnection(ctx({ isAdmin: false }), {
-        provider: "pscale",
-        providerAccountName: "lightfast/main",
-        serviceTokenId: "token-id",
-        serviceToken: "token-secret",
-      })
-    ).rejects.toThrowError(
-      expect.objectContaining({
-        code: "PERMISSION_REQUIRED",
-        kind: "authz",
       })
     );
   });
@@ -290,7 +303,7 @@ describe("developer connection services", () => {
     ]);
 
     await expect(
-      issueDeveloperConnectionLeases(ctx(), {
+      issueDeveloperConnectionLeases(leaseCtx(), {
         providers: ["sentry"],
         sandboxRunId: "sandbox_run_1",
         workflowRunId: "workflow_run_1",
@@ -315,7 +328,7 @@ describe("developer connection services", () => {
     listCurrentDeveloperConnectionsMock.mockResolvedValue([]);
 
     await expect(
-      issueDeveloperConnectionLeases(ctx(), {
+      issueDeveloperConnectionLeases(leaseCtx(), {
         providers: ["sentry"],
         sandboxRunId: "sandbox_run_1",
         workflowRunId: "workflow_run_1",
@@ -404,7 +417,7 @@ describe("developer connection services", () => {
     );
 
     await expect(
-      issueAllEnabledDeveloperConnectionLeases(ctx(), {
+      issueAllEnabledDeveloperConnectionLeases(leaseCtx(), {
         sandboxRunId: "developer_sandbox_run_1",
       })
     ).resolves.toEqual({
@@ -476,7 +489,7 @@ describe("developer connection services", () => {
     });
 
     await expect(
-      materializeDeveloperConnectionLeasesForSandboxRun(ctx(), {
+      materializeDeveloperConnectionLeasesForSandboxRun(leaseCtx(), {
         now: new Date("2026-06-03T00:05:00.000Z"),
         sandboxRunId: "developer_sandbox_run_1",
       })

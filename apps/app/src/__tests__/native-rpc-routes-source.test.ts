@@ -62,59 +62,39 @@ describe("native RPC route boundaries", () => {
     expect(desktopAdapter).toContain('source: "desktop"');
     expect(cliAdapter).toContain("cliNativeRpcCommands");
     expect(cliAdapter).toContain('"auth.session"');
+    expect(cliAdapter).toContain('"providerRoutines.find"');
+    expect(cliAdapter).toContain('"providerRoutines.call"');
     expect(cliAdapter).toContain('source: "cli"');
-    expect(sharedAdapter).toContain("getNativeAuthSessionForRequest");
+    expect(sharedAdapter).toContain("resolveAuthContextFromClerk");
+    expect(sharedAdapter).toContain("NATIVE_AUTH_HEADERS");
+    expect(sharedAdapter).toContain("getNativeAuthSessionForNativeOAuth");
+    expect(sharedAdapter).not.toContain("getNativeAuthSessionForRequest");
     expect(sharedAdapter).toContain("nativeRpcRequestSchema");
     expect(sharedAdapter).toContain("nativeRpcAuthSessionInputSchema");
     expect(sharedAdapter).not.toContain("/api/v1/rpc");
   });
 
-  it("mounts native provider proxy routes through an explicit api/app adapter", () => {
+  it("removes legacy native provider proxy routes after CLI RPC covers provider routines", () => {
     expect(
       existsSync(resolve(appRoot, "src/routes/api/native/proxy/call.ts"))
-    ).toBe(true);
+    ).toBe(false);
     expect(
       existsSync(resolve(appRoot, "src/routes/api/native/proxy/routines.ts"))
-    ).toBe(true);
+    ).toBe(false);
 
-    const proxyCallRoute = appSource("src/routes/api/native/proxy/call.ts");
-    const proxyFindRoute = appSource("src/routes/api/native/proxy/routines.ts");
-    const nativeProviderProxyAdapter = repoSource(
-      "api/app/src/adapters/native-provider-proxy.ts"
-    );
+    const cliAdapter = repoSource("api/app/src/adapters/cli-api.ts");
     const packageJson = JSON.parse(repoSource("api/app/package.json")) as {
       exports?: Record<string, unknown>;
     };
+    const routeTree = appSource("src/routeTree.gen.ts");
 
-    expect(packageJson.exports).toHaveProperty("./native-provider-proxy");
-    expect(proxyCallRoute).toContain("await import(");
-    expect(proxyCallRoute).toContain('"@api/app/native-provider-proxy"');
-    expect(proxyCallRoute).not.toContain(
-      'import { handleNativeProviderRoutineCallRequest } from "@api/app/native-provider-proxy"'
-    );
-    expect(proxyCallRoute).toContain("handleNativeProviderRoutineCallRequest");
-    expect(proxyFindRoute).toContain("await import(");
-    expect(proxyFindRoute).toContain('"@api/app/native-provider-proxy"');
-    expect(proxyFindRoute).not.toContain(
-      'import { handleNativeProviderRoutineFindRequest } from "@api/app/native-provider-proxy"'
-    );
-    expect(proxyFindRoute).toContain("handleNativeProviderRoutineFindRequest");
-    expect(proxyCallRoute).not.toContain('@api/app/cli-api"');
-    expect(proxyFindRoute).not.toContain('@api/app/cli-api"');
-    expect(proxyCallRoute).not.toContain(
-      "@lightfast/connector-core/provider-routines"
-    );
-    expect(proxyFindRoute).not.toContain(
-      "@lightfast/connector-core/provider-routines"
-    );
-    expect(proxyCallRoute).not.toContain("~/server/native-proxy");
-    expect(proxyFindRoute).not.toContain("~/server/native-proxy");
-    expect(nativeProviderProxyAdapter).toContain(
-      "createNativeProviderRoutineContext"
-    );
-    expect(nativeProviderProxyAdapter).toContain(
-      "loadAgentConnectorRuntimeTools"
-    );
-    expect(nativeProviderProxyAdapter).toContain('sourceSurface: "native_cli"');
+    expect(packageJson.exports).toHaveProperty("./cli-api");
+    expect(packageJson.exports).not.toHaveProperty("./native-provider-proxy");
+    expect(routeTree).not.toContain("/api/native/proxy");
+    expect(cliAdapter).toContain("createCliProviderRoutineContext");
+    expect(cliAdapter).toContain("loadAgentConnectorRuntimeTools");
+    expect(cliAdapter).toContain('sourceSurface: "native_cli"');
+    expect(cliAdapter).not.toContain("handleCliProviderRoutineFindRequest");
+    expect(cliAdapter).not.toContain("handleCliProviderRoutineCallRequest");
   });
 });

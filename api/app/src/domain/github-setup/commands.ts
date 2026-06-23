@@ -1,21 +1,9 @@
 import type { Database } from "@db/app";
 import { githubBindStartOutputSchema } from "@lightfast/connector-github/contract";
-import { buildGitHubInstallationUrl } from "@lightfast/connector-github/node";
-import { orgSetupGateSchema } from "@repo/app-setup-contract";
+import { type OrgSetupGate, orgSetupGateSchema } from "@repo/api-contract";
 import { clerkOrgSlugSchema } from "@repo/app-validation";
 import { z } from "zod";
 
-import {
-  getOrgAccessBySlug,
-  isOrgAccessError,
-} from "../../auth/organization-access";
-import { getGitHubAppConfig } from "../../services/github/config";
-import { issueGitHubInstallAttempt } from "../../services/github/setup/attempts";
-import { syncGitHubBindingClaim } from "../../services/github/setup/flow";
-import {
-  GitHubLightfastRepositorySetupError,
-  verifyGitHubLightfastRepositorySetup,
-} from "../../services/github/setup/lightfast-repository";
 import { defineCommand } from "../command";
 import {
   AuthzError,
@@ -34,35 +22,47 @@ type GitHubLightfastRepositorySetupErrorCode =
   | "lightfast_repo_inaccessible"
   | "lightfast_repo_missing";
 
-interface GitHubSetupCommandDeps {
-  buildGitHubInstallationUrl: typeof buildGitHubInstallationUrl;
-  db: Database;
-  getGitHubAppConfig: typeof getGitHubAppConfig;
-  getOrgAccessBySlug: typeof getOrgAccessBySlug;
-  isOrgAccessError: (error: unknown) => boolean;
-  issueGitHubInstallAttempt: typeof issueGitHubInstallAttempt;
-  syncGitHubBindingClaim: typeof syncGitHubBindingClaim;
-  verifyGitHubLightfastRepositorySetup: typeof verifyGitHubLightfastRepositorySetup;
+interface GitHubSetupOrgAccess {
+  org: {
+    id: string;
+    slug: string;
+  };
+  role: string;
 }
 
-export function createDefaultGitHubSetupCommandDeps(
-  input: { db: Database } & Partial<GitHubSetupCommandDeps>
-): GitHubSetupCommandDeps {
-  return {
-    buildGitHubInstallationUrl:
-      input.buildGitHubInstallationUrl ?? buildGitHubInstallationUrl,
-    db: input.db,
-    getGitHubAppConfig: input.getGitHubAppConfig ?? getGitHubAppConfig,
-    getOrgAccessBySlug: input.getOrgAccessBySlug ?? getOrgAccessBySlug,
-    isOrgAccessError: input.isOrgAccessError ?? isOrgAccessError,
-    issueGitHubInstallAttempt:
-      input.issueGitHubInstallAttempt ?? issueGitHubInstallAttempt,
-    syncGitHubBindingClaim:
-      input.syncGitHubBindingClaim ?? syncGitHubBindingClaim,
-    verifyGitHubLightfastRepositorySetup:
-      input.verifyGitHubLightfastRepositorySetup ??
-      verifyGitHubLightfastRepositorySetup,
+interface GitHubSetupAppConfig {
+  appSlug: string;
+  endpoints: {
+    webBaseUrl: string;
   };
+}
+
+export interface GitHubSetupCommandDeps {
+  buildGitHubInstallationUrl: (input: {
+    appSlug: string;
+    state: string;
+    webBaseUrl?: string;
+  }) => string;
+  db: Database;
+  getGitHubAppConfig: () => GitHubSetupAppConfig;
+  getOrgAccessBySlug: (input: {
+    db: Database;
+    slug: string;
+    userId: string;
+  }) => Promise<GitHubSetupOrgAccess>;
+  isOrgAccessError: (error: unknown) => boolean;
+  issueGitHubInstallAttempt: (input: {
+    clerkOrgId: string;
+    lightfastUserId: string;
+    orgSlug: string;
+  }) => Promise<{ state: string }>;
+  syncGitHubBindingClaim: (input: {
+    clerkOrgId: string;
+  }) => Promise<OrgSetupGate>;
+  verifyGitHubLightfastRepositorySetup: (input: {
+    clerkOrgId: string;
+    db: Database;
+  }) => Promise<OrgSetupGate>;
 }
 
 const startGitHubOrgSetupInput = z.object({
@@ -74,10 +74,6 @@ function isGitHubLightfastRepositorySetupError(error: unknown): error is {
   code: GitHubLightfastRepositorySetupErrorCode;
   message: string;
 } {
-  if (error instanceof GitHubLightfastRepositorySetupError) {
-    return true;
-  }
-
   return (
     typeof error === "object" &&
     error !== null &&

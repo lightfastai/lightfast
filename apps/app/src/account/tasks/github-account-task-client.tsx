@@ -1,4 +1,7 @@
-import { startGitHubAccountBinding } from "@api/app/tanstack/account";
+import {
+  getGitHubAccountStatus,
+  startGitHubAccountBinding,
+} from "@api/app/tanstack/account";
 import {
   CheckmarkCircle02Icon as CheckCircle2,
   Loading03Icon as Loader2,
@@ -10,11 +13,12 @@ import { Button } from "@repo/ui/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { TeamSwitcherSlot } from "~/components/team-switcher";
-import { githubAccountStatusQueryOptions } from "../account-queries";
 
 interface GithubAccountTaskClientProps {
   githubError?: GitHubUserAccountBindErrorCode;
 }
+
+const accountGitHubAccountQueryKey = ["account", "github"] as const;
 
 const GITHUB_USER_ACCOUNT_ERROR_MESSAGES: Record<
   GitHubUserAccountBindErrorCode,
@@ -40,7 +44,12 @@ const GITHUB_USER_ACCOUNT_ERROR_MESSAGES: Record<
 export function GithubAccountTaskClient({
   githubError,
 }: GithubAccountTaskClientProps) {
-  const { data } = useQuery(githubAccountStatusQueryOptions());
+  const { data } = useQuery({
+    enabled: typeof window !== "undefined",
+    queryFn: () => getGitHubAccountStatus(),
+    queryKey: accountGitHubAccountQueryKey,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const startMutation = useMutation({
     meta: { errorTitle: "Failed to connect GitHub" },

@@ -22,13 +22,8 @@ vi.mock("@tanstack/react-router", () => ({
   ),
 }));
 
-vi.mock("~/automations/automations-queries", () => ({
-  automationDetailQueryOptions: (input: unknown) => ({
-    queryKey: ["automation", input],
-  }),
-  automationMutationKeys: {
-    update: () => ["automation", "update"],
-  },
+vi.mock("@api/app/tanstack/automations", () => ({
+  getAutomation: vi.fn(),
 }));
 
 vi.mock("@repo/ui/components/ui/button", () => ({

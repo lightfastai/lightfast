@@ -22,6 +22,10 @@ const repoRoot = path.resolve(
 );
 
 function findRouteArtifacts(root: string): string[] {
+  if (!fs.existsSync(root)) {
+    return [];
+  }
+
   const artifacts: string[] = [];
   for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
     const entryPath = path.join(root, entry.name);
@@ -41,7 +45,7 @@ function isRouteGroup(segment: string): boolean {
 }
 
 function isDynamicSegment(segment: string): boolean {
-  return segment.startsWith("[");
+  return segment.startsWith("[") || segment.startsWith("$");
 }
 
 function isPrivateSegment(segment: string): boolean {
@@ -88,6 +92,73 @@ function collectAppRouteSegments(appRoot: string): Set<string> {
   return segments;
 }
 
+function normalizeTanStackRouteSegment(segment: string): string | null {
+  const normalized = segment.replaceAll("[.]", ".").replace(/_$/, "");
+  if (
+    !normalized ||
+    normalized === "__root" ||
+    normalized === "index" ||
+    isRouteGroup(normalized) ||
+    isPrivateSegment(normalized)
+  ) {
+    return null;
+  }
+
+  return normalized;
+}
+
+function splitTanStackRoutePart(segment: string): string[] {
+  const escapedDot = "\0tanstack-dot\0";
+  return segment
+    .replaceAll("[.]", escapedDot)
+    .split(".")
+    .map((part) => part.replaceAll(escapedDot, "[.]"));
+}
+
+function collectTanStackTopLevelRouteSegments(routesRoot: string): Set<string> {
+  const segments = new Set<string>();
+  if (!fs.existsSync(routesRoot)) {
+    return segments;
+  }
+
+  const visit = (directory: string) => {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const entryPath = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        visit(entryPath);
+        continue;
+      }
+
+      if (!/\.(?:ts|tsx)$/.test(entry.name)) {
+        continue;
+      }
+
+      const routePath = path
+        .relative(routesRoot, entryPath)
+        .replace(/\.(?:ts|tsx)$/, "");
+      const routeSegments = routePath
+        .split(path.sep)
+        .flatMap((segment) => splitTanStackRoutePart(segment));
+
+      for (const routeSegment of routeSegments) {
+        const normalized = normalizeTanStackRouteSegment(routeSegment);
+        if (!normalized) {
+          continue;
+        }
+        if (isDynamicSegment(normalized)) {
+          break;
+        }
+
+        segments.add(normalized);
+        break;
+      }
+    }
+  };
+
+  visit(routesRoot);
+  return segments;
+}
+
 function normalizeMicrofrontendSegment(segment: string): string | null {
   if (segment.startsWith(":")) {
     return null;
@@ -125,6 +196,9 @@ function collectCurrentStaticRouteSegments(): string[] {
   return [
     ...new Set([
       ...collectAppRouteSegments(path.join(repoRoot, "apps/app/src/app")),
+      ...collectTanStackTopLevelRouteSegments(
+        path.join(repoRoot, "apps/app/src/routes")
+      ),
       ...collectAppRouteSegments(path.join(repoRoot, "apps/www/src/app")),
       ...collectMicrofrontendRouteSegments(),
     ]),

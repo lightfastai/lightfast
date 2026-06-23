@@ -52,6 +52,14 @@ const envMock = {
   X_OAUTH_ORIGIN: "https://x.test",
 };
 
+const testXConnectorOAuthRedirectPaths = {
+  accountTeams: () => "/account/teams",
+  connectorPage: ({ orgSlug }: { orgSlug: string }) => `/${orgSlug}/connectors`,
+  setupComplete: ({ orgSlug }: { orgSlug: string }) =>
+    `/${orgSlug}/tasks/connectors/x/complete`,
+  signIn: () => "/sign-in",
+};
+
 vi.mock("@db/app/client", () => ({ db: {} }));
 
 vi.mock("@db/app", () => ({
@@ -211,28 +219,19 @@ const {
 } = await import("../services/connectors");
 const { listConnectorsForOrg } = await import("../services/connectors/catalog");
 
-function ctx(input: { isAdmin?: boolean } = {}) {
+function ctx() {
   return {
-    auth: {
-      access: {
-        has: ({ role }: { role?: string }) =>
-          (input.isAdmin ?? true) ? role === "org:admin" : false,
-        kind: "clerk-session" as const,
-        orgId: "org_acme",
-        userId: "user_current",
-      },
-      identity: {
-        orgGate: {
-          bindingStatus: "bound" as const,
-          nextSetupRequirement: null,
-        },
-        orgId: "org_acme",
-        type: "active" as const,
-        userId: "user_current",
-      },
-    },
+    actor: { userId: "user_current" },
     db: {} as Database,
-    headers: new Headers(),
+    organization: { orgId: "org_acme" },
+  };
+}
+
+function catalogCtx(input: { canManage?: boolean } = {}) {
+  return {
+    db: {} as Database,
+    organization: { orgId: "org_acme" },
+    viewer: { canManage: input.canManage ?? true },
   };
 }
 
@@ -318,7 +317,7 @@ describe("connector catalog services", () => {
       connection({ enabledForAutomations: true }),
     ]);
 
-    const rows = await listConnectorsForOrg(ctx());
+    const rows = await listConnectorsForOrg(catalogCtx());
 
     expect(rows).toEqual(
       expect.arrayContaining([
@@ -354,9 +353,13 @@ describe("connector catalog services", () => {
       connectAvailability: { status: "available" },
       provider: "x",
     });
+    expect(listCurrentOrgConnectorConnectionsMock).toHaveBeenCalledWith(
+      expect.anything(),
+      { clerkOrgId: "org_acme" }
+    );
 
     envMock.X_CLIENT_SECRET = undefined as unknown as string;
-    const missingXConfigRows = await listConnectorsForOrg(ctx());
+    const missingXConfigRows = await listConnectorsForOrg(catalogCtx());
     expect(
       missingXConfigRows.find((row) => row.provider === "x")
     ).toMatchObject({
@@ -366,6 +369,21 @@ describe("connector catalog services", () => {
         status: "unavailable",
       },
     });
+  });
+
+  it("marks connectors unavailable when the viewer cannot manage them", async () => {
+    const rows = await listConnectorsForOrg(catalogCtx({ canManage: false }));
+
+    expect(rows).toContainEqual(
+      expect.objectContaining({
+        canManage: false,
+        connectAvailability: {
+          reason: "permission_required",
+          status: "unavailable",
+        },
+        provider: "linear",
+      })
+    );
   });
 
   it("marks X connections with missing requested scopes for reconnect", async () => {
@@ -380,7 +398,7 @@ describe("connector catalog services", () => {
       }),
     ]);
 
-    const rows = await listConnectorsForOrg(ctx());
+    const rows = await listConnectorsForOrg(catalogCtx());
     const xRow = rows.find((row) => row.provider === "x");
 
     expect(xRow?.connection).toMatchObject({
@@ -814,25 +832,6 @@ describe("Linear connector flow", () => {
 
     await expect(startLinearConnectorOAuth(ctx())).rejects.toThrow(
       "Linear connector environment is incomplete."
-    );
-  });
-
-  it("throws a domain authz error when Linear starts without an active organization", async () => {
-    const context = ctx();
-
-    await expect(
-      startLinearConnectorOAuth({
-        ...context,
-        auth: {
-          ...context.auth,
-          identity: { type: "pending" as const, userId: "user_current" },
-        },
-      })
-    ).rejects.toThrowError(
-      expect.objectContaining({
-        code: "ORG_REQUIRED",
-        kind: "authz",
-      })
     );
   });
 
@@ -1465,25 +1464,6 @@ describe("X connector flow", () => {
     );
   });
 
-  it("throws a domain authz error when X starts without an active organization", async () => {
-    const context = ctx();
-
-    await expect(
-      startXConnectorOAuth({
-        ...context,
-        auth: {
-          ...context.auth,
-          identity: { type: "pending" as const, userId: "user_current" },
-        },
-      })
-    ).rejects.toThrowError(
-      expect.objectContaining({
-        code: "ORG_REQUIRED",
-        kind: "authz",
-      })
-    );
-  });
-
   it("completes OAuth, persists X, discovers bridge tools, and enables automations", async () => {
     const issued = await issueConnectorOAuthAttempt({
       clerkOrgId: "org_acme",
@@ -1528,6 +1508,7 @@ describe("X connector flow", () => {
     await expect(
       completeXConnectorOAuth({
         appOrigin: "https://app.lightfast.localhost",
+        redirectPaths: testXConnectorOAuthRedirectPaths,
         requestUrl: `https://app.lightfast.localhost/api/connectors/x/oauth/callback?code=code_123&state=${issued.state}`,
       })
     ).resolves.toEqual({
@@ -1621,6 +1602,7 @@ describe("X connector flow", () => {
     await expect(
       completeXConnectorOAuth({
         appOrigin: "https://app.lightfast.localhost",
+        redirectPaths: testXConnectorOAuthRedirectPaths,
         requestUrl: `https://app.lightfast.localhost/api/connectors/x/oauth/callback?code=code_123&state=${issued.state}`,
       })
     ).resolves.toEqual({
@@ -1675,6 +1657,7 @@ describe("X connector flow", () => {
     await expect(
       completeXConnectorOAuth({
         appOrigin: "https://app.lightfast.localhost",
+        redirectPaths: testXConnectorOAuthRedirectPaths,
         requestUrl: `https://app.lightfast.localhost/api/connectors/x/oauth/callback?code=code_123&state=${issued.state}`,
       })
     ).resolves.toEqual({
@@ -1731,6 +1714,7 @@ describe("X connector flow", () => {
     await expect(
       completeXConnectorOAuth({
         appOrigin: "https://app.lightfast.localhost",
+        redirectPaths: testXConnectorOAuthRedirectPaths,
         requestUrl: `https://app.lightfast.localhost/api/connectors/x/oauth/callback?code=code_123&state=${issued.state}`,
       })
     ).resolves.toEqual({

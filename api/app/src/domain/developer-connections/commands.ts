@@ -1,5 +1,12 @@
 import type { Database } from "@db/app";
 import {
+  type DeveloperConnectionCatalogStatus,
+  type DeveloperConnectionCompleteAuthInput,
+  type DeveloperConnectionConnectInput,
+  type DeveloperConnectionProvider,
+  type DeveloperConnectionSetSandboxEnabledInput,
+  type DeveloperConnectionStartAuthInput,
+  type DeveloperConnectionStatus,
   developerConnectionCompleteAuthInputSchema,
   developerConnectionConnectInputSchema,
   developerConnectionProviderInputSchema,
@@ -7,19 +14,10 @@ import {
   developerConnectionSetSandboxEnabledInputSchema,
   developerConnectionStartAuthInputSchema,
   developerConnectionStatusSchema,
-} from "@repo/developer-connection-contract";
+} from "@repo/api-contract";
 import { z } from "zod";
 
-import type { AuthAccess, AuthIdentity } from "../../auth/identity";
-import {
-  completeSentryDeveloperConnectionAuth,
-  connectDeveloperConnection,
-  disconnectDeveloperConnection,
-  listDeveloperConnectionsForOrg,
-  setDeveloperConnectionSandboxEnabled,
-  startSentryDeveloperConnectionAuth,
-} from "../../services/developer-connections";
-import type { Actor, ExecutionContext } from "../actor";
+import type { ExecutionContext } from "../actor";
 import { defineCommand } from "../command";
 import {
   AuthzError,
@@ -28,61 +26,84 @@ import {
   isDomainError,
   ValidationError,
 } from "../errors";
-import { requireBoundClerkOrgActor, requireClerkOrgAdminActor } from "../gates";
+import {
+  type ClerkOrgAdminActor,
+  requireBoundClerkOrgActor,
+  requireClerkOrgAdminActor,
+} from "../gates";
 
-type ListDeveloperConnectionsResult = Awaited<
-  ReturnType<typeof listDeveloperConnectionsForOrg>
->;
+type ConnectAvailability =
+  | { status: "available" }
+  | { reason: "coming_soon" | "permission_required"; status: "unavailable" };
 
-interface DeveloperConnectionServiceContext {
-  auth: {
-    access: Extract<AuthAccess, { kind: "clerk-session" }>;
-    identity: Extract<AuthIdentity, { type: "active" }>;
-  };
-  db: Database;
-  headers: Headers;
+interface DeveloperConnectionCatalogRow {
+  builder: "Lightfast";
+  canManage: boolean;
+  catalogStatus: DeveloperConnectionCatalogStatus;
+  category: string;
+  connectAvailability: ConnectAvailability;
+  connection: {
+    connectedAt: Date;
+    enabledForSandboxes: boolean;
+    lastUsedAt: Date | null;
+    lastUsedByUserId: string | null;
+    lastVerifiedAt: Date | null;
+    providerAccountName: string;
+    status: DeveloperConnectionStatus;
+  } | null;
+  description: string;
+  displayName: string;
+  provider: DeveloperConnectionProvider;
 }
 
-interface DeveloperConnectionCommandDeps {
-  completeSentryDeveloperConnectionAuth: typeof completeSentryDeveloperConnectionAuth;
-  connectDeveloperConnection: typeof connectDeveloperConnection;
-  db: Database;
-  disconnectDeveloperConnection: typeof disconnectDeveloperConnection;
-  headers: Headers;
-  listDeveloperConnectionsForOrg: typeof listDeveloperConnectionsForOrg;
-  setDeveloperConnectionSandboxEnabled: typeof setDeveloperConnectionSandboxEnabled;
-  startSentryDeveloperConnectionAuth: typeof startSentryDeveloperConnectionAuth;
+type ListDeveloperConnectionsResult = DeveloperConnectionCatalogRow[];
+interface DeveloperConnectionMutationResult {
+  provider: DeveloperConnectionProvider;
+  status: DeveloperConnectionStatus;
 }
 
-export function createDefaultDeveloperConnectionCommandDeps(input: {
-  completeSentryDeveloperConnectionAuth?: typeof completeSentryDeveloperConnectionAuth;
-  connectDeveloperConnection?: typeof connectDeveloperConnection;
-  db: Database;
-  disconnectDeveloperConnection?: typeof disconnectDeveloperConnection;
-  headers: Headers;
-  listDeveloperConnectionsForOrg?: typeof listDeveloperConnectionsForOrg;
-  setDeveloperConnectionSandboxEnabled?: typeof setDeveloperConnectionSandboxEnabled;
-  startSentryDeveloperConnectionAuth?: typeof startSentryDeveloperConnectionAuth;
-}): DeveloperConnectionCommandDeps {
-  return {
-    completeSentryDeveloperConnectionAuth:
-      input.completeSentryDeveloperConnectionAuth ??
-      completeSentryDeveloperConnectionAuth,
-    connectDeveloperConnection:
-      input.connectDeveloperConnection ?? connectDeveloperConnection,
-    db: input.db,
-    disconnectDeveloperConnection:
-      input.disconnectDeveloperConnection ?? disconnectDeveloperConnection,
-    headers: input.headers,
-    listDeveloperConnectionsForOrg:
-      input.listDeveloperConnectionsForOrg ?? listDeveloperConnectionsForOrg,
-    setDeveloperConnectionSandboxEnabled:
-      input.setDeveloperConnectionSandboxEnabled ??
-      setDeveloperConnectionSandboxEnabled,
-    startSentryDeveloperConnectionAuth:
-      input.startSentryDeveloperConnectionAuth ??
-      startSentryDeveloperConnectionAuth,
+export interface DeveloperConnectionMutationServiceContext {
+  actor: {
+    userId: string;
   };
+  db: Database;
+  organization: {
+    orgId: string;
+  };
+}
+
+export interface DeveloperConnectionCommandDeps {
+  completeSentryDeveloperConnectionAuth(
+    ctx: DeveloperConnectionMutationServiceContext,
+    input: DeveloperConnectionCompleteAuthInput
+  ): Promise<DeveloperConnectionMutationResult>;
+  connectDeveloperConnection(
+    ctx: DeveloperConnectionMutationServiceContext,
+    input: DeveloperConnectionConnectInput
+  ): Promise<DeveloperConnectionMutationResult>;
+  db: Database;
+  disconnectDeveloperConnection(
+    ctx: DeveloperConnectionMutationServiceContext,
+    input: { provider: DeveloperConnectionProvider }
+  ): Promise<{ disconnected: boolean }>;
+  listDeveloperConnectionsForOrg(input: {
+    db: Database;
+    organization: { orgId: string };
+    viewer: { canManage: boolean };
+  }): Promise<ListDeveloperConnectionsResult>;
+  setDeveloperConnectionSandboxEnabled(
+    ctx: DeveloperConnectionMutationServiceContext,
+    input: DeveloperConnectionSetSandboxEnabledInput
+  ): Promise<{ enabled: boolean }>;
+  startSentryDeveloperConnectionAuth(
+    ctx: DeveloperConnectionMutationServiceContext,
+    input: DeveloperConnectionStartAuthInput
+  ): Promise<{
+    attemptId: string;
+    expiresAt: Date;
+    userCode: string;
+    verificationUri: string;
+  }>;
 }
 
 const listDeveloperConnectionsInput = z.object({}).strict();
@@ -122,9 +143,11 @@ export const listDeveloperConnectionsCommand = defineCommand<
   run: async ({ ctx, deps }) => {
     const actor = requireBoundClerkOrgActor(ctx);
     try {
-      return await deps.listDeveloperConnectionsForOrg(
-        serviceContextForActor(actor, deps)
-      );
+      return await deps.listDeveloperConnectionsForOrg({
+        db: deps.db,
+        organization: { orgId: actor.orgId },
+        viewer: { canManage: actor.orgRole === "admin" },
+      });
     } catch (error) {
       throw mapDeveloperConnectionServiceError(
         error,
@@ -266,47 +289,19 @@ export const disconnectDeveloperConnectionCommand = defineCommand<
 });
 
 function serviceContextForActor(
-  actor: Extract<Actor, { kind: "clerkUser" }> & {
-    orgGate: NonNullable<Extract<Actor, { kind: "clerkUser" }>["orgGate"]>;
-    orgId: string;
-  },
+  actor: ClerkOrgAdminActor,
   deps: DeveloperConnectionCommandDeps
-): DeveloperConnectionServiceContext {
+): DeveloperConnectionMutationServiceContext {
   return {
-    auth: {
-      access: accessForActor(actor),
-      identity: {
-        type: "active",
-        userId: actor.userId,
-        orgId: actor.orgId,
-        orgGate: actor.orgGate,
-      },
-    },
+    actor: { userId: actor.userId },
     db: deps.db,
-    headers: deps.headers,
+    organization: { orgId: actor.orgId },
   };
 }
 
 function requireBoundClerkOrgAdminActor(ctx: ExecutionContext) {
   requireBoundClerkOrgActor(ctx);
   return requireClerkOrgAdminActor(ctx);
-}
-
-function accessForActor(
-  actor: Extract<Actor, { kind: "clerkUser" }> & { orgId: string }
-): Extract<AuthAccess, { kind: "clerk-session" }> {
-  const has = ((params: { role?: string }) =>
-    actor.orgRole === "admin" && params.role === "org:admin") as Extract<
-    AuthAccess,
-    { kind: "clerk-session" }
-  >["has"];
-
-  return {
-    kind: "clerk-session",
-    userId: actor.userId,
-    orgId: actor.orgId,
-    has,
-  };
 }
 
 function mapDeveloperConnectionServiceError(

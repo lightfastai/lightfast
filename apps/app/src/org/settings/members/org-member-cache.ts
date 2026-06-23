@@ -1,12 +1,14 @@
-import type {
-  OrgInvitation,
-  OrgMember,
-  OrgMembersListData,
-} from "./org-member-queries";
+import type { ListOrgMembersResult } from "@api/app/tanstack/org-members";
 
+export type OrgMembersListData = ListOrgMembersResult;
 export type OrgMembersData = OrgMembersListData;
-export type { OrgInvitation, OrgMember };
+export type OrgMember = OrgMembersListData["members"][number];
+export type OrgInvitation = OrgMembersListData["invitations"][number];
 export type OrgRole = "org:admin" | "org:member";
+
+export function orgMemberListQueryKey(orgId: string | null | undefined) {
+  return ["org-members", "list", orgId ?? "no-org"] as const;
+}
 
 let optimisticInvitationSequence = 0;
 

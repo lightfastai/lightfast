@@ -1,12 +1,11 @@
-import type { Database } from "@db/app";
-import type { NamespaceOperation } from "@db/app/schema";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AuthIdentity } from "../auth/identity";
 import { actorFromAuthIdentity } from "../domain";
 import {
+  type AccountCommandDeps,
+  type AccountUsernameNamespaceOperation,
   createAccountUsernameCommand,
-  createDefaultAccountCommandDeps,
   getAccountProfileCommand,
   updateAccountNameCommand,
 } from "../domain/account";
@@ -20,23 +19,7 @@ const markNamespaceOperationClerkAppliedMock = vi.fn();
 const finalizeNamespaceOperationMock = vi.fn();
 const deletePreClerkNamespaceReservationMock = vi.fn();
 const logErrorMock = vi.fn();
-
-const { MockNamespaceConflictError } = vi.hoisted(() => ({
-  MockNamespaceConflictError: class MockNamespaceConflictError extends Error {
-    readonly code: string;
-
-    constructor(code: string, message: string) {
-      super(message);
-      this.name = "NamespaceConflictError";
-      this.code = code;
-    }
-  },
-}));
-
-vi.mock("@db/app", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@db/app")>()),
-  NamespaceConflictError: MockNamespaceConflictError,
-}));
+const isNamespaceConflictErrorMock = vi.fn();
 
 const pendingIdentity: AuthIdentity = {
   type: "pending",
@@ -64,8 +47,8 @@ function clerkUser(overrides: Record<string, unknown> = {}) {
 }
 
 function operation(
-  overrides: Partial<NamespaceOperation> = {}
-): NamespaceOperation {
+  overrides: Partial<AccountUsernameNamespaceOperation> = {}
+): AccountUsernameNamespaceOperation {
   return {
     id: 1,
     clerkOrgId: null,
@@ -88,22 +71,26 @@ function operation(
 }
 
 function deps() {
-  return createDefaultAccountCommandDeps({
-    clerk: {
-      users: {
-        getUser: getUserMock,
-        updateUser: updateUserMock,
-      },
-    },
-    db: {} as Database,
-    deletePreClerkNamespaceReservation: deletePreClerkNamespaceReservationMock,
-    finalizeNamespaceOperation: finalizeNamespaceOperationMock,
-    isClerkConflictError: isClerkConflictErrorMock,
+  return {
+    disconnectGitHubUserAccount: vi.fn(),
+    getGitHubUserAccountStatus: vi.fn(),
     log: { error: logErrorMock },
-    markNamespaceOperationClerkApplied: markNamespaceOperationClerkAppliedMock,
-    reserveNamespaceForOperation: reserveNamespaceForOperationMock,
-    startNamespaceOperation: startNamespaceOperationMock,
-  });
+    parseError: (error: unknown) => error,
+    startGitHubUserAccountBinding: vi.fn(),
+    usernameNamespace: {
+      deletePreClerkReservation: deletePreClerkNamespaceReservationMock,
+      finalize: finalizeNamespaceOperationMock,
+      isConflict: isNamespaceConflictErrorMock,
+      markClerkApplied: markNamespaceOperationClerkAppliedMock,
+      reserve: reserveNamespaceForOperationMock,
+      start: startNamespaceOperationMock,
+    },
+    users: {
+      getUser: getUserMock,
+      isUsernameConflictError: isClerkConflictErrorMock,
+      updateUser: updateUserMock,
+    },
+  } satisfies AccountCommandDeps;
 }
 
 beforeEach(() => {
@@ -116,6 +103,7 @@ beforeEach(() => {
   finalizeNamespaceOperationMock.mockReset();
   deletePreClerkNamespaceReservationMock.mockReset();
   logErrorMock.mockReset();
+  isNamespaceConflictErrorMock.mockReset();
 
   getUserMock.mockResolvedValue(clerkUser());
   updateUserMock.mockImplementation(
@@ -132,6 +120,12 @@ beforeEach(() => {
   );
   finalizeNamespaceOperationMock.mockResolvedValue(
     operation({ status: "finalized" })
+  );
+  isNamespaceConflictErrorMock.mockImplementation(
+    (error: unknown): error is { code: "HANDLE_ALREADY_CLAIMED" } =>
+      error instanceof Error &&
+      error.name === "NamespaceConflictError" &&
+      "code" in error
   );
 });
 
@@ -189,21 +183,17 @@ describe("account domain commands", () => {
       username: "ada-dev",
     });
 
-    expect(startNamespaceOperationMock).toHaveBeenCalledWith(
-      expect.anything(),
-      {
-        clerkUserId: "user_test",
-        idempotencyKey: "idem_1",
-        operationType: "create_user_username",
-        ownerKind: "user",
-        toHandle: "ada-dev",
-      }
-    );
+    expect(startNamespaceOperationMock).toHaveBeenCalledWith({
+      clerkUserId: "user_test",
+      idempotencyKey: "idem_1",
+      operationType: "create_user_username",
+      ownerKind: "user",
+      toHandle: "ada-dev",
+    });
     expect(updateUserMock).toHaveBeenCalledWith("user_test", {
       username: "ada-dev",
     });
     expect(finalizeNamespaceOperationMock).toHaveBeenCalledWith(
-      expect.anything(),
       operation({ status: "clerk_applied" })
     );
   });
@@ -267,7 +257,6 @@ describe("account domain commands", () => {
     );
 
     expect(deletePreClerkNamespaceReservationMock).toHaveBeenCalledWith(
-      expect.anything(),
       operation({ status: "namespace_reserved" }),
       {
         errorCode: "CLERK_USERNAME_CONFLICT",

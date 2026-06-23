@@ -4,7 +4,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import type { ComponentProps, ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AutomationRunDetailSheet } from "~/automations/automation-run-detail-sheet";
-import type { AutomationRunListItem } from "~/automations/automations-queries";
+import type { AutomationRunListItem } from "~/automations/automations-cache";
 
 type AutomationRun = AutomationRunListItem;
 
@@ -12,10 +12,8 @@ vi.mock("@tanstack/react-query", () => ({
   useQuery: () => ({ data: undefined, isError: false }),
 }));
 
-vi.mock("~/automations/automations-queries", () => ({
-  automationRunQueryOptions: (input: unknown) => ({
-    queryKey: ["automation-run", input],
-  }),
+vi.mock("@api/app/tanstack/automations", () => ({
+  getAutomationRun: vi.fn(),
 }));
 
 vi.mock("~/automations/automation-run-detail-content", () => ({

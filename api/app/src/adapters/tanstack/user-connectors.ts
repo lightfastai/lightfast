@@ -5,17 +5,20 @@ import { getRequest, setResponseHeader } from "@tanstack/react-start/server";
 import { resolveAuthContextFromClerk } from "../../auth/identity";
 import { actorFromAuthIdentity, isDomainError } from "../../domain";
 import {
-  createDefaultUserConnectorCommandDeps,
   disconnectUserConnectorCommand,
   startUserConnectorCommand,
+  type UserConnectorCommandDeps,
 } from "../../domain/user-connectors";
+import {
+  disconnectGranolaUserConnector,
+  startGranolaUserConnectorOAuth,
+} from "../../services/user-connectors/granola-flow";
 
 function requestId() {
   return crypto.randomUUID();
 }
 
-async function createTanStackUserConnectorContext() {
-  const request = getRequest();
+async function createTanStackUserConnectorContext(request: Request) {
   const auth = await resolveAuthContextFromClerk({
     db,
     headers: new Headers(request.headers),
@@ -39,6 +42,33 @@ function noStore() {
   setResponseHeader("vary", "Cookie, Authorization");
 }
 
+function sameOriginReferer(request: Request) {
+  const referer = request.headers.get("referer");
+  if (!referer) {
+    return null;
+  }
+
+  try {
+    const requestOrigin = new URL(request.url).origin;
+    const refererUrl = new URL(referer);
+    if (refererUrl.origin !== requestOrigin) {
+      return null;
+    }
+    return refererUrl.toString();
+  } catch {
+    return null;
+  }
+}
+
+function deps(request: Request): UserConnectorCommandDeps {
+  return {
+    db,
+    disconnectGranolaUserConnector,
+    request: { referer: sameOriginReferer(request) },
+    startGranolaUserConnectorOAuth,
+  };
+}
+
 export const startUserConnector = createServerFn({ method: "POST" })
   .inputValidator(startUserConnectorCommand.input)
   .handler(async ({ data }) => {
@@ -46,11 +76,8 @@ export const startUserConnector = createServerFn({ method: "POST" })
     noStore();
     try {
       return await startUserConnectorCommand.run({
-        ctx: await createTanStackUserConnectorContext(),
-        deps: createDefaultUserConnectorCommandDeps({
-          db,
-          headers: new Headers(request.headers),
-        }),
+        ctx: await createTanStackUserConnectorContext(request),
+        deps: deps(request),
         input: data,
       });
     } catch (error) {
@@ -65,11 +92,8 @@ export const disconnectUserConnector = createServerFn({ method: "POST" })
     noStore();
     try {
       return await disconnectUserConnectorCommand.run({
-        ctx: await createTanStackUserConnectorContext(),
-        deps: createDefaultUserConnectorCommandDeps({
-          db,
-          headers: new Headers(request.headers),
-        }),
+        ctx: await createTanStackUserConnectorContext(request),
+        deps: deps(request),
         input: data,
       });
     } catch (error) {

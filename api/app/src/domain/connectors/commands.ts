@@ -1,23 +1,12 @@
 import type { Database } from "@db/app";
 import {
-  connectorProviderInputSchema,
-  connectorSetAgentEnabledInputSchema,
-  connectorSetAutomationEnabledInputSchema,
-  connectorStartConnectInputSchema,
-} from "@lightfast/connector-core";
+  type ConnectableConnectorProvider,
+  type ConnectorProvider,
+  connectableConnectorProviderSchema,
+} from "@repo/api-contract";
 import { z } from "zod";
 
-import type { AuthAccess, AuthIdentity } from "../../auth/identity";
-import {
-  disconnectConnector,
-  listConnectorsForOrg,
-  refreshConnectorTools,
-  setConnectorAgentEnabled,
-  setConnectorAutomationEnabled,
-  startConnectorOAuth,
-} from "../../services/connectors";
-import { listUserConnectorsForViewer } from "../../services/user-connectors";
-import type { Actor, ExecutionContext } from "../actor";
+import type { ExecutionContext } from "../actor";
 import { defineCommand } from "../command";
 import {
   AuthzError,
@@ -28,68 +17,132 @@ import {
   ValidationError,
 } from "../errors";
 import {
+  type ClerkOrgAdminActor,
   requireActiveClerkOrgActor,
   requireBoundClerkOrgActor,
   requireClerkOrgAdminActor,
 } from "../gates";
 
-type ListConnectorsResult = Awaited<ReturnType<typeof listConnectorsForOrg>>;
-type ListUserConnectorsResult = Awaited<
-  ReturnType<typeof listUserConnectorsForViewer>
->;
-type StartConnectorOAuthResult = Awaited<
-  ReturnType<typeof startConnectorOAuth>
->;
-type RefreshConnectorToolsResult = Awaited<
-  ReturnType<typeof refreshConnectorTools>
->;
+type ConnectAvailability =
+  | { status: "available" }
+  | {
+      missing?: string[];
+      reason: "coming_soon" | "missing_config" | "permission_required";
+      status: "unavailable";
+    };
 
-interface ConnectorServiceContext {
-  auth: {
-    access: Extract<AuthAccess, { kind: "clerk-session" }>;
-    identity: Extract<AuthIdentity, { type: "active" }>;
-  };
-  db: Database;
-  headers: Headers;
+interface DisplayConnectorTool {
+  availableForAgents: boolean;
+  availableForAutomations: boolean;
+  description?: string;
+  name: string;
 }
 
-interface ConnectorCommandDeps {
-  db: Database;
-  disconnectConnector: typeof disconnectConnector;
-  headers: Headers;
-  listConnectorsForOrg: typeof listConnectorsForOrg;
-  listUserConnectorsForViewer: typeof listUserConnectorsForViewer;
-  refreshConnectorTools: typeof refreshConnectorTools;
-  setConnectorAgentEnabled: typeof setConnectorAgentEnabled;
-  setConnectorAutomationEnabled: typeof setConnectorAutomationEnabled;
-  startConnectorOAuth: typeof startConnectorOAuth;
+interface ConnectorCatalogRow {
+  availableForAgents: boolean;
+  availableForAutomations: boolean;
+  builder: "Lightfast";
+  canManage: boolean;
+  catalogStatus: "available" | "coming_soon";
+  category: string;
+  connectAvailability: ConnectAvailability;
+  connection: {
+    connectedAt: Date;
+    enabledForAgents: boolean;
+    enabledForAutomations: boolean;
+    lastToolRefreshAt: Date | null;
+    lastToolRefreshErrorAt: Date | null;
+    lastToolRefreshErrorCode: string | null;
+    missingScopes: string[];
+    providerActorName: string | null;
+    providerWorkspaceName: string | null;
+    scopeStatus: "complete" | "missing_requested_scopes";
+    status: "active" | "error" | "revoked";
+    tools: DisplayConnectorTool[];
+  } | null;
+  description: string;
+  displayName: string;
+  provider: ConnectorProvider;
 }
 
-export function createDefaultConnectorCommandDeps(input: {
-  db: Database;
-  disconnectConnector?: typeof disconnectConnector;
-  headers: Headers;
-  listConnectorsForOrg?: typeof listConnectorsForOrg;
-  listUserConnectorsForViewer?: typeof listUserConnectorsForViewer;
-  refreshConnectorTools?: typeof refreshConnectorTools;
-  setConnectorAgentEnabled?: typeof setConnectorAgentEnabled;
-  setConnectorAutomationEnabled?: typeof setConnectorAutomationEnabled;
-  startConnectorOAuth?: typeof startConnectorOAuth;
-}): ConnectorCommandDeps {
-  return {
-    db: input.db,
-    disconnectConnector: input.disconnectConnector ?? disconnectConnector,
-    headers: input.headers,
-    listConnectorsForOrg: input.listConnectorsForOrg ?? listConnectorsForOrg,
-    listUserConnectorsForViewer:
-      input.listUserConnectorsForViewer ?? listUserConnectorsForViewer,
-    refreshConnectorTools: input.refreshConnectorTools ?? refreshConnectorTools,
-    setConnectorAgentEnabled:
-      input.setConnectorAgentEnabled ?? setConnectorAgentEnabled,
-    setConnectorAutomationEnabled:
-      input.setConnectorAutomationEnabled ?? setConnectorAutomationEnabled,
-    startConnectorOAuth: input.startConnectorOAuth ?? startConnectorOAuth,
+interface UserConnectorCatalogRow {
+  builder: "Granola";
+  canManage: boolean;
+  catalogStatus: "available" | "coming_soon";
+  category: string;
+  connectAvailability: { status: "available" };
+  connection: {
+    availableForInteractiveChats: boolean;
+    connectedAt: Date;
+    lastToolRefreshAt: Date | null;
+    lastToolRefreshErrorAt: Date | null;
+    lastToolRefreshErrorCode: string | null;
+    providerAccountName: string | null;
+    status: "active" | "error" | "revoked";
+    tools: Array<{
+      availableForInteractiveChats: boolean;
+      description?: string;
+      name: string;
+    }>;
+  } | null;
+  description: string;
+  displayName: string;
+  ownerType: "user";
+  provider: "granola";
+}
+
+type ListConnectorsResult = ConnectorCatalogRow[];
+type ListUserConnectorsResult = UserConnectorCatalogRow[];
+interface StartConnectorOAuthResult {
+  authorizationUrl: string;
+  mode: string;
+}
+interface RefreshConnectorToolsResult {
+  refreshed: boolean;
+  status: string;
+}
+
+export interface ConnectorMutationServiceContext {
+  actor: {
+    userId: string;
   };
+  db: Database;
+  organization: {
+    orgId: string;
+  };
+}
+
+export interface ConnectorCommandDeps {
+  db: Database;
+  disconnectConnector(
+    ctx: ConnectorMutationServiceContext,
+    input: { provider: ConnectableConnectorProvider }
+  ): Promise<{ disconnected: boolean }>;
+  listConnectorsForOrg(input: {
+    db: Database;
+    organization: { orgId: string };
+    viewer: { canManage: boolean };
+  }): Promise<ListConnectorsResult>;
+  listUserConnectorsForViewer(input: {
+    db: Database;
+    viewer: { userId: string };
+  }): Promise<ListUserConnectorsResult>;
+  refreshConnectorTools(
+    ctx: ConnectorMutationServiceContext,
+    input: { provider: ConnectableConnectorProvider }
+  ): Promise<RefreshConnectorToolsResult>;
+  setConnectorAgentEnabled(
+    ctx: ConnectorMutationServiceContext,
+    input: { enabled: boolean; provider: ConnectableConnectorProvider }
+  ): Promise<{ enabled: boolean }>;
+  setConnectorAutomationEnabled(
+    ctx: ConnectorMutationServiceContext,
+    input: { enabled: boolean; provider: ConnectableConnectorProvider }
+  ): Promise<{ enabled: boolean }>;
+  startConnectorOAuth(
+    ctx: ConnectorMutationServiceContext,
+    input: { provider: ConnectableConnectorProvider }
+  ): Promise<StartConnectorOAuthResult>;
 }
 
 const emptyInput = z.object({}).strict();
@@ -109,6 +162,20 @@ const refreshConnectorToolsOutput =
   z.custom<RefreshConnectorToolsResult>(isRecord);
 const booleanFlagOutput = z.object({ enabled: z.boolean() });
 const disconnectConnectorOutput = z.object({ disconnected: z.boolean() });
+const connectorStartConnectInputSchema = z.object({
+  provider: connectableConnectorProviderSchema,
+});
+const connectorProviderInputSchema = z.object({
+  provider: connectableConnectorProviderSchema,
+});
+const connectorSetAutomationEnabledInputSchema = z.object({
+  provider: connectableConnectorProviderSchema,
+  enabled: z.boolean(),
+});
+const connectorSetAgentEnabledInputSchema = z.object({
+  provider: connectableConnectorProviderSchema,
+  enabled: z.boolean(),
+});
 
 export const listConnectorsCommand = defineCommand<
   "connectors.list",
@@ -122,9 +189,11 @@ export const listConnectorsCommand = defineCommand<
   run: async ({ ctx, deps }) => {
     const actor = requireActiveClerkOrgActor(ctx);
     try {
-      return await deps.listConnectorsForOrg(
-        serviceContextForActor(actor, deps)
-      );
+      return await deps.listConnectorsForOrg({
+        db: deps.db,
+        organization: { orgId: actor.orgId },
+        viewer: { canManage: actor.orgRole === "admin" },
+      });
     } catch (error) {
       throw mapConnectorServiceError(
         error,
@@ -146,11 +215,17 @@ export const listConnectorSectionsCommand = defineCommand<
   output: listConnectorSectionsOutput,
   run: async ({ ctx, deps }) => {
     const actor = requireActiveClerkOrgActor(ctx);
-    const serviceContext = serviceContextForActor(actor, deps);
     try {
       return {
-        teamConnectors: await deps.listConnectorsForOrg(serviceContext),
-        yourConnectors: await deps.listUserConnectorsForViewer(serviceContext),
+        teamConnectors: await deps.listConnectorsForOrg({
+          db: deps.db,
+          organization: { orgId: actor.orgId },
+          viewer: { canManage: actor.orgRole === "admin" },
+        }),
+        yourConnectors: await deps.listUserConnectorsForViewer({
+          db: deps.db,
+          viewer: { userId: actor.userId },
+        }),
       };
     } catch (error) {
       throw mapConnectorServiceError(
@@ -293,47 +368,19 @@ export const disconnectConnectorCommand = defineCommand<
 });
 
 function serviceContextForActor(
-  actor: Extract<Actor, { kind: "clerkUser" }> & {
-    orgGate: NonNullable<Extract<Actor, { kind: "clerkUser" }>["orgGate"]>;
-    orgId: string;
-  },
+  actor: ClerkOrgAdminActor,
   deps: ConnectorCommandDeps
-): ConnectorServiceContext {
+): ConnectorMutationServiceContext {
   return {
-    auth: {
-      access: accessForActor(actor),
-      identity: {
-        type: "active",
-        userId: actor.userId,
-        orgId: actor.orgId,
-        orgGate: actor.orgGate,
-      },
-    },
+    actor: { userId: actor.userId },
     db: deps.db,
-    headers: deps.headers,
+    organization: { orgId: actor.orgId },
   };
 }
 
 function requireBoundClerkOrgAdminActor(ctx: ExecutionContext) {
   requireBoundClerkOrgActor(ctx);
   return requireClerkOrgAdminActor(ctx);
-}
-
-function accessForActor(
-  actor: Extract<Actor, { kind: "clerkUser" }> & { orgId: string }
-): Extract<AuthAccess, { kind: "clerk-session" }> {
-  const has = ((params: { role?: string }) =>
-    actor.orgRole === "admin" && params.role === "org:admin") as Extract<
-    AuthAccess,
-    { kind: "clerk-session" }
-  >["has"];
-
-  return {
-    kind: "clerk-session",
-    userId: actor.userId,
-    orgId: actor.orgId,
-    has,
-  };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

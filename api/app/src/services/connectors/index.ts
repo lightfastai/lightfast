@@ -1,12 +1,5 @@
 import type { Database } from "@db/app";
-import type {
-  connectorProviderInputSchema,
-  connectorSetAgentEnabledInputSchema,
-  connectorSetAutomationEnabledInputSchema,
-  connectorStartConnectInputSchema,
-} from "@lightfast/connector-core";
-import type { z } from "zod";
-import type { ResolvedAuthContext as AuthContext } from "../../auth/identity";
+import type { ConnectableConnectorProvider } from "@repo/api-contract";
 import { ValidationError } from "../../domain/errors";
 import { listConnectorsForOrg } from "./catalog";
 import {
@@ -25,21 +18,25 @@ import {
 } from "./x-flow";
 
 interface ConnectorServiceContext {
-  auth: AuthContext;
+  actor: {
+    userId: string;
+  };
   db: Database;
-  headers: Headers;
+  organization: {
+    orgId: string;
+  };
 }
 
-type ConnectorProviderInput = z.infer<typeof connectorProviderInputSchema>;
-type ConnectorStartConnectInput = z.infer<
-  typeof connectorStartConnectInputSchema
->;
-type ConnectorSetAutomationEnabledInput = z.infer<
-  typeof connectorSetAutomationEnabledInputSchema
->;
-type ConnectorSetAgentEnabledInput = z.infer<
-  typeof connectorSetAgentEnabledInputSchema
->;
+interface ConnectorProviderInput {
+  provider: ConnectableConnectorProvider;
+}
+type ConnectorStartConnectInput = ConnectorProviderInput;
+type ConnectorSetAutomationEnabledInput = ConnectorProviderInput & {
+  enabled: boolean;
+};
+type ConnectorSetAgentEnabledInput = ConnectorProviderInput & {
+  enabled: boolean;
+};
 
 export {
   type ChatProviderRoutineContext,
@@ -47,23 +44,6 @@ export {
   callChatProviderRoutine,
   findChatProviderRoutines,
 } from "./chat-routines";
-export {
-  completeLinearConnectorOAuth,
-  disconnectLinearConnector,
-  refreshLinearConnectorTools,
-  setLinearConnectorAgentEnabled,
-  setLinearConnectorAutomationEnabled,
-  startLinearConnectorOAuth,
-} from "./linear-flow";
-export {
-  completeXConnectorOAuth,
-  disconnectXConnector,
-  refreshXConnectorTools,
-  setXConnectorAgentEnabled,
-  setXConnectorAutomationEnabled,
-  startXConnectorOAuth,
-} from "./x-flow";
-export { handleXConnectorMcpRequest } from "./x-mcp-bridge";
 export { listConnectorsForOrg };
 
 function unsupportedProvider(provider: string): never {

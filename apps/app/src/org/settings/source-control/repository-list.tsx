@@ -19,8 +19,8 @@ import { AddRepositoryDialog } from "./add-repository-dialog";
 import { RepositoryCard } from "./repository-card";
 import {
   type SourceControlRepositories,
-  sourceControlQueryKeys,
-} from "./source-control-queries";
+  sourceControlRepositoriesQueryKey,
+} from "./source-control-cache";
 
 type SyncFilter = "all" | "enabled" | "disabled";
 
@@ -74,7 +74,7 @@ export function RepositoryList({
             className="h-6 w-6 rounded-full"
             onClick={() =>
               queryClient.invalidateQueries({
-                queryKey: sourceControlQueryKeys.repositories(),
+                queryKey: sourceControlRepositoriesQueryKey,
               })
             }
             size="sm"

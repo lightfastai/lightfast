@@ -1,34 +1,69 @@
 import {
-  type Database,
-  getVisibleSignalByPublicId,
-  listSignalEntityLinksForSignal,
-  listSignals,
-  listWorkspaceSignals,
-} from "@db/app";
-import {
+  type CreateSignalOutput,
   createSignalInput,
   createSignalOutput,
+  type McpScope,
+  type SignalClassification,
+  type SignalEntityLink,
+  type SignalStatus,
+  type SignalVisibilityScope,
   signalIdSchema,
   signalStatusSchema,
 } from "@repo/api-contract";
 import { z } from "zod";
-import { isSignalCreateQueueError } from "../../signals/create-signal";
-import { createSignalForActor } from "../../signals/service";
+import type { PublicApiKeyScope } from "../../auth/api-key";
 import type { ExecutionContext } from "../actor";
 import { type CommandRunArgs, defineCommand } from "../command";
 import { AuthzError, InternalDomainError, NotFoundError } from "../errors";
 import { requireBoundClerkOrgActor } from "../gates";
 
-export type ListProcessingSignalsResult = Awaited<
-  ReturnType<typeof listSignals>
->;
-export type ListWorkingSetSignalsResult = Awaited<
-  ReturnType<typeof listWorkspaceSignals>
->;
-export type SignalDetailResult = NonNullable<
-  Awaited<ReturnType<typeof getVisibleSignalByPublicId>>
-> & {
-  entityLinks: Awaited<ReturnType<typeof listSignalEntityLinksForSignal>>;
+export interface SignalListCursor {
+  createdAt: Date;
+  id: number;
+}
+
+export interface SignalRecord {
+  classification: SignalClassification | null;
+  createdAt: Date;
+  createdByApiKeyId: string | null;
+  createdByMcpClientId?: string | null;
+  createdByMcpGrantId?: string | null;
+  createdByUserId: string;
+  errorCode: string | null;
+  errorMessage: string | null;
+  id: number;
+  input: string;
+  publicId: string;
+  status: SignalStatus;
+  updatedAt: Date;
+  visibilityScope: SignalVisibilityScope;
+}
+
+export interface ListProcessingSignalsResult {
+  items: SignalRecord[];
+  nextCursor: SignalListCursor | null;
+}
+
+export interface WorkingSetSignalRecord {
+  classification: Omit<SignalClassification, "nextAction" | "rationale"> | null;
+  createdAt: Date;
+  createdByApiKeyId: string | null;
+  createdByUserId: string;
+  id: number;
+  publicId: string;
+  status: SignalStatus;
+}
+
+export interface ListWorkingSetSignalsResult {
+  items: WorkingSetSignalRecord[];
+  limit: number;
+  totalCount: number;
+  truncated: boolean;
+  windowDays: number;
+}
+
+export type SignalDetailResult = SignalRecord & {
+  entityLinks: SignalEntityLink[];
 };
 
 const workspaceListCursorInput = z
@@ -44,7 +79,7 @@ export const listProcessingSignalsInput = z
   .object({
     cursor: workspaceListCursorInput,
     limit: workspaceListLimitInput,
-    statuses: z.array(signalStatusSchema).max(2).optional(),
+    statuses: z.array(signalStatusSchema).max(4).optional(),
   })
   .strict();
 
@@ -56,25 +91,49 @@ const getSignalInput = z
   })
   .strict();
 
-interface SignalCommandBaseDeps {
-  db: Database;
+export interface SignalCreateCommandInput {
+  clerkOrgId: string;
+  createdByApiKeyId: string | null;
+  createdByMcpClientId?: string | null;
+  createdByMcpGrantId?: string | null;
+  createdByUserId: string;
+  input: string;
 }
 
-export interface SignalCreateCommandDeps extends SignalCommandBaseDeps {
-  createSignalForActor: typeof createSignalForActor;
+export interface SignalCreateCommandDeps {
+  createAndQueueSignal: (
+    input: SignalCreateCommandInput
+  ) => Promise<CreateSignalOutput>;
+  isSignalCreateQueueError: (error: unknown) => boolean;
 }
 
-export interface SignalGetCommandDeps extends SignalCommandBaseDeps {
-  getVisibleSignalByPublicId: typeof getVisibleSignalByPublicId;
-  listSignalEntityLinksForSignal: typeof listSignalEntityLinksForSignal;
+export interface SignalGetCommandDeps {
+  getVisibleSignalByPublicId: (input: {
+    clerkOrgId: string;
+    createdByUserId: string;
+    publicId: string;
+  }) => Promise<SignalRecord | undefined>;
+  listSignalEntityLinksForSignal: (input: {
+    clerkOrgId: string;
+    signalId: string;
+  }) => Promise<SignalEntityLink[]>;
 }
 
-export interface SignalListProcessingCommandDeps extends SignalCommandBaseDeps {
-  listSignals: typeof listSignals;
+export interface SignalListProcessingCommandDeps {
+  listSignals: (input: {
+    clerkOrgId: string;
+    createdByUserId: string;
+    cursor?: SignalListCursor | null;
+    limit?: number;
+    statuses?: SignalStatus[];
+  }) => Promise<ListProcessingSignalsResult>;
 }
 
-export interface SignalListWorkingSetCommandDeps extends SignalCommandBaseDeps {
-  listWorkspaceSignals: typeof listWorkspaceSignals;
+export interface SignalListWorkingSetCommandDeps {
+  listWorkspaceSignals: (input: {
+    clerkOrgId: string;
+    createdByUserId: string;
+  }) => Promise<ListWorkingSetSignalsResult>;
 }
 
 export type SignalCommandDeps = SignalCreateCommandDeps &
@@ -82,40 +141,14 @@ export type SignalCommandDeps = SignalCreateCommandDeps &
   SignalListProcessingCommandDeps &
   SignalListWorkingSetCommandDeps;
 
-export function createSignalCommandDeps(input: {
-  db: Database;
-}): SignalCreateCommandDeps {
-  return {
-    db: input.db,
-    createSignalForActor,
-  };
-}
-
-export function getSignalCommandDeps(input: {
-  db: Database;
-}): SignalGetCommandDeps {
-  return {
-    db: input.db,
-    getVisibleSignalByPublicId,
-    listSignalEntityLinksForSignal,
-  };
-}
-
-export function createDefaultSignalCommandDeps(input: {
-  db: Database;
-}): SignalCommandDeps {
-  return {
-    db: input.db,
-    createSignalForActor,
-    getVisibleSignalByPublicId,
-    listSignalEntityLinksForSignal,
-    listSignals,
-    listWorkspaceSignals,
-  };
-}
-
 const objectOutput = <T>() =>
   z.custom<T>((value) => typeof value === "object" && value !== null);
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error
+    ? error.message
+    : "Failed to queue signal for classification.";
+}
 
 type SignalCommandRunArgs<
   TInput,
@@ -123,26 +156,30 @@ type SignalCommandRunArgs<
   TDeps extends object,
 > = CommandRunArgs<TInput, TOutput, TDeps>;
 
-type ResolvedSignalCommandActor =
-  | { kind: "web"; orgId: string; userId: string }
-  | { apiKeyId: string; kind: "api_key"; orgId: string; userId: string }
-  | {
-      clientId: string;
-      grantId: string;
-      kind: "mcp";
-      orgId: string;
-      userId: string;
-    };
+type ResolvedSignalCommandAuthority = Omit<SignalCreateCommandInput, "input">;
 
-function requireSignalCommandActor(
-  ctx: ExecutionContext
-): ResolvedSignalCommandActor {
+function requireSignalCommandAuthority(
+  ctx: ExecutionContext,
+  input: { apiKeyScope?: PublicApiKeyScope; mcpScope?: McpScope } = {}
+): ResolvedSignalCommandAuthority {
   if (ctx.actor.kind === "clerkUser") {
     const actor = requireBoundClerkOrgActor(ctx);
-    return { kind: "web", orgId: actor.orgId, userId: actor.userId };
+    return {
+      clerkOrgId: actor.orgId,
+      createdByApiKeyId: null,
+      createdByUserId: actor.userId,
+    };
   }
 
   if (ctx.actor.kind === "apiKey") {
+    if (input.apiKeyScope && !ctx.actor.scopes.includes(input.apiKeyScope)) {
+      throw new AuthzError(
+        "API_KEY_SCOPE_REQUIRED",
+        `API key requires the ${input.apiKeyScope} scope.`,
+        { requiredScope: input.apiKeyScope }
+      );
+    }
+
     if (ctx.actor.orgGate?.bindingStatus !== "bound") {
       throw new AuthzError(
         "ORG_SETUP_REQUIRED",
@@ -154,10 +191,9 @@ function requireSignalCommandActor(
     }
 
     return {
-      apiKeyId: ctx.actor.keyId,
-      kind: "api_key",
-      orgId: ctx.actor.orgId,
-      userId: ctx.actor.createdByUserId,
+      clerkOrgId: ctx.actor.orgId,
+      createdByApiKeyId: ctx.actor.keyId,
+      createdByUserId: ctx.actor.createdByUserId,
     };
   }
 
@@ -173,12 +209,20 @@ function requireSignalCommandActor(
       );
     }
 
+    if (input.mcpScope && !ctx.actor.scopes.includes(input.mcpScope)) {
+      throw new AuthzError(
+        "MCP_SCOPE_REQUIRED",
+        `MCP token requires the ${input.mcpScope} scope.`,
+        { requiredScope: input.mcpScope }
+      );
+    }
+
     return {
-      clientId: ctx.actor.clientId,
-      grantId: ctx.actor.grantId,
-      kind: "mcp",
-      orgId: ctx.actor.orgId,
-      userId: ctx.actor.userId,
+      clerkOrgId: ctx.actor.orgId,
+      createdByApiKeyId: null,
+      createdByMcpClientId: ctx.actor.clientId,
+      createdByMcpGrantId: ctx.actor.grantId,
+      createdByUserId: ctx.actor.userId,
     };
   }
 
@@ -201,10 +245,13 @@ export const listProcessingSignalsCommand = defineCommand({
     ListProcessingSignalsResult,
     SignalListProcessingCommandDeps
   >) => {
-    const actor = requireSignalCommandActor(ctx);
-    return deps.listSignals(deps.db, {
-      clerkOrgId: actor.orgId,
-      createdByUserId: actor.userId,
+    const authority = requireSignalCommandAuthority(ctx, {
+      apiKeyScope: "api.signals.read",
+      mcpScope: "mcp:signals:read",
+    });
+    return deps.listSignals({
+      clerkOrgId: authority.clerkOrgId,
+      createdByUserId: authority.createdByUserId,
       cursor: input.cursor,
       limit: input.limit,
       statuses: input.statuses?.length ? input.statuses : undefined,
@@ -224,10 +271,13 @@ export const listWorkingSetSignalsCommand = defineCommand({
     ListWorkingSetSignalsResult,
     SignalListWorkingSetCommandDeps
   >) => {
-    const actor = requireSignalCommandActor(ctx);
-    return deps.listWorkspaceSignals(deps.db, {
-      clerkOrgId: actor.orgId,
-      createdByUserId: actor.userId,
+    const authority = requireSignalCommandAuthority(ctx, {
+      apiKeyScope: "api.signals.read",
+      mcpScope: "mcp:signals:read",
+    });
+    return deps.listWorkspaceSignals({
+      clerkOrgId: authority.clerkOrgId,
+      createdByUserId: authority.createdByUserId,
     });
   },
 });
@@ -245,10 +295,13 @@ export const getSignalCommand = defineCommand({
     SignalDetailResult,
     SignalGetCommandDeps
   >) => {
-    const actor = requireSignalCommandActor(ctx);
-    const signal = await deps.getVisibleSignalByPublicId(deps.db, {
-      clerkOrgId: actor.orgId,
-      createdByUserId: actor.userId,
+    const authority = requireSignalCommandAuthority(ctx, {
+      apiKeyScope: "api.signals.read",
+      mcpScope: "mcp:signals:read",
+    });
+    const signal = await deps.getVisibleSignalByPublicId({
+      clerkOrgId: authority.clerkOrgId,
+      createdByUserId: authority.createdByUserId,
       publicId: input.publicId,
     });
 
@@ -256,8 +309,8 @@ export const getSignalCommand = defineCommand({
       throw new NotFoundError("SIGNAL_NOT_FOUND", "Signal not found.");
     }
 
-    const entityLinks = await deps.listSignalEntityLinksForSignal(deps.db, {
-      clerkOrgId: actor.orgId,
+    const entityLinks = await deps.listSignalEntityLinksForSignal({
+      clerkOrgId: authority.clerkOrgId,
       signalId: signal.publicId,
     });
 
@@ -278,17 +331,20 @@ export const createSignalCommand = defineCommand({
     z.infer<typeof createSignalOutput>,
     SignalCreateCommandDeps
   >) => {
-    const actor = requireSignalCommandActor(ctx);
+    const authority = requireSignalCommandAuthority(ctx, {
+      apiKeyScope: "api.signals.write",
+      mcpScope: "mcp:signals:write",
+    });
     try {
-      return await deps.createSignalForActor(deps.db, {
-        actor,
+      return await deps.createAndQueueSignal({
+        ...authority,
         input: input.input,
       });
     } catch (error) {
-      if (isSignalCreateQueueError(error)) {
+      if (deps.isSignalCreateQueueError(error)) {
         throw new InternalDomainError(
           "SIGNAL_QUEUE_FAILED",
-          error.message,
+          errorMessage(error),
           {},
           { cause: error }
         );

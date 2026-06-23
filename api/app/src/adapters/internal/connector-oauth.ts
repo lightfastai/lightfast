@@ -1,8 +1,17 @@
+import { auth } from "@vendor/clerk/server";
+
+import { completeLinearConnectorOAuth } from "../../services/connectors/linear-flow";
 import {
-  completeLinearConnectorOAuth,
   completeXConnectorOAuth,
-} from "../../services/connectors";
-import { completeGranolaUserConnectorOAuth } from "../../services/user-connectors";
+  type XConnectorOAuthRedirectPaths,
+} from "../../services/connectors/x-flow";
+import { completeGranolaUserConnectorOAuth } from "../../services/user-connectors/granola-flow";
+
+export type { XConnectorOAuthRedirectPaths };
+
+interface XConnectorOAuthRouteOptions {
+  redirectPaths: XConnectorOAuthRedirectPaths;
+}
 
 export async function handleLinearConnectorOAuthCallbackRequest(
   request: Request
@@ -14,9 +23,11 @@ export async function handleLinearConnectorOAuthCallbackRequest(
 }
 
 export async function handleXConnectorOAuthCallbackRequest(
-  request: Request
+  request: Request,
+  options: XConnectorOAuthRouteOptions
 ): Promise<Response> {
   const result = await completeXConnectorOAuth({
+    redirectPaths: options.redirectPaths,
     requestUrl: request.url,
   });
   return Response.redirect(result.redirectUrl);
@@ -38,7 +49,9 @@ export async function handleGranolaUserConnectorOAuthCallbackRequest(
     return accountSettingsRedirect(request.url, "missing_oauth_code");
   }
 
+  const session = await auth({ treatPendingAsSignedOut: false });
   const result = await completeGranolaUserConnectorOAuth({
+    callbackUserId: session.userId ?? null,
     code,
     requestUrl: request.url,
     state,

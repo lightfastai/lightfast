@@ -1,4 +1,22 @@
 import {
+  type DisconnectConnectorInput,
+  disconnectConnector,
+  listConnectorSections,
+  type RefreshConnectorToolsInput,
+  refreshConnectorTools,
+  type SetConnectorAgentEnabledInput,
+  type SetConnectorAutomationEnabledInput,
+  type StartConnectorInput,
+  type StartConnectorResult,
+  setConnectorAgentEnabled,
+  setConnectorAutomationEnabled,
+  startConnector,
+} from "@api/app/tanstack/connectors";
+import {
+  disconnectUserConnector,
+  startUserConnector,
+} from "@api/app/tanstack/user-connectors";
+import {
   ArrowUpRightIcon as ArrowUpRight,
   Loading03Icon as Loader2,
   MoreHorizontalIcon as MoreHorizontal,
@@ -63,29 +81,26 @@ import {
   type UserConnectorCatalogRow,
   userConnectionStatus,
 } from "./connectors-model";
-import {
-  connectorQueryKeys,
-  connectorSectionsQueryOptions,
-  disconnectConnectorMutationOptions,
-  refreshConnectorToolsMutationOptions,
-  setConnectorAgentEnabledMutationOptions,
-  setConnectorAutomationEnabledMutationOptions,
-  startConnectorMutationOptions,
-} from "./connectors-queries";
 import type {
   ConnectorOwnerScope,
   NormalizedConnectorsSearch,
 } from "./connectors-search-params";
-import {
-  disconnectUserConnectorMutationOptions,
-  startUserConnectorMutationOptions,
-} from "./user-connector-queries";
 
 const ADMIN_REQUIRED_MESSAGE = "Admin access required to manage connectors";
 const DISCONNECT_UNAVAILABLE_MESSAGE =
   "Disconnecting isn't available right now.";
 const USER_CONNECTOR_AVAILABILITY_COPY =
   "Available in your chats. Not visible to teammates.";
+
+interface StartUserConnectorInput {
+  provider: UserConnectorCatalogRow["provider"];
+}
+
+type StartUserConnectorResult = Awaited<ReturnType<typeof startUserConnector>>;
+
+interface DisconnectUserConnectorInput {
+  provider: UserConnectorCatalogRow["provider"];
+}
 
 export function ConnectorsClient({
   search,
@@ -96,8 +111,10 @@ export function ConnectorsClient({
 }) {
   const queryClient = useQueryClient();
   const connectorsQuery = useQuery({
-    ...connectorSectionsQueryOptions({ staleTime: 30_000 }),
     enabled: typeof window !== "undefined",
+    queryFn: () => listConnectorSections(),
+    queryKey: ["connectors", "sections"] as const,
+    staleTime: 30_000,
   });
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] =
@@ -108,47 +125,50 @@ export function ConnectorsClient({
   }));
 
   const invalidateList = () =>
-    queryClient.invalidateQueries({ queryKey: connectorQueryKeys.all });
+    queryClient.invalidateQueries({ queryKey: ["connectors"] as const });
 
-  const startConnectMutation = useMutation(
-    startConnectorMutationOptions({
-      onSuccess: (result) => {
-        window.location.assign(result.authorizationUrl);
-      },
-    })
-  );
-  const userStartConnectMutation = useMutation(
-    startUserConnectorMutationOptions({
-      onSuccess: (result) => {
-        window.location.assign(result.authorizationUrl);
-      },
-    })
-  );
-  const refreshToolsMutation = useMutation(
-    refreshConnectorToolsMutationOptions({
-      onSuccess: invalidateList,
-    })
-  );
-  const setAutomationEnabledMutation = useMutation(
-    setConnectorAutomationEnabledMutationOptions({
-      onSuccess: invalidateList,
-    })
-  );
-  const setAgentEnabledMutation = useMutation(
-    setConnectorAgentEnabledMutationOptions({
-      onSuccess: invalidateList,
-    })
-  );
-  const disconnectMutation = useMutation(
-    disconnectConnectorMutationOptions({
-      onSuccess: invalidateList,
-    })
-  );
-  const userDisconnectMutation = useMutation(
-    disconnectUserConnectorMutationOptions({
-      onSuccess: invalidateList,
-    })
-  );
+  const startConnectMutation = useMutation({
+    meta: { errorTitle: "Failed to connect provider" },
+    mutationFn: (data: StartConnectorInput) => startConnector({ data }),
+    onSuccess: (result: StartConnectorResult) => {
+      window.location.assign(result.authorizationUrl);
+    },
+  });
+  const userStartConnectMutation = useMutation({
+    mutationFn: (data: StartUserConnectorInput) => startUserConnector({ data }),
+    onSuccess: (result: StartUserConnectorResult) => {
+      window.location.assign(result.authorizationUrl);
+    },
+  });
+  const refreshToolsMutation = useMutation({
+    meta: { errorTitle: "Failed to refresh connector tools" },
+    mutationFn: (data: RefreshConnectorToolsInput) =>
+      refreshConnectorTools({ data }),
+    onSuccess: invalidateList,
+  });
+  const setAutomationEnabledMutation = useMutation({
+    meta: { errorTitle: "Failed to update connector automation access" },
+    mutationFn: (data: SetConnectorAutomationEnabledInput) =>
+      setConnectorAutomationEnabled({ data }),
+    onSuccess: invalidateList,
+  });
+  const setAgentEnabledMutation = useMutation({
+    meta: { errorTitle: "Failed to update connector agent access" },
+    mutationFn: (data: SetConnectorAgentEnabledInput) =>
+      setConnectorAgentEnabled({ data }),
+    onSuccess: invalidateList,
+  });
+  const disconnectMutation = useMutation({
+    meta: { errorTitle: "Failed to disconnect provider" },
+    mutationFn: (data: DisconnectConnectorInput) =>
+      disconnectConnector({ data }),
+    onSuccess: invalidateList,
+  });
+  const userDisconnectMutation = useMutation({
+    mutationFn: (data: DisconnectUserConnectorInput) =>
+      disconnectUserConnector({ data }),
+    onSuccess: invalidateList,
+  });
 
   useEffect(() => {
     if (!callbackState.error) {
