@@ -8,6 +8,10 @@ export const SCHEDULE_KINDS = [
 
 export type ScheduleKind = (typeof SCHEDULE_KINDS)[number]["value"];
 
+export function getScheduleKindLabel(kind: ScheduleKind): string {
+  return SCHEDULE_KINDS.find((option) => option.value === kind)?.label ?? kind;
+}
+
 export const TIME_BASED_KINDS: ScheduleKind[] = ["daily", "weekdays", "weekly"];
 
 export function isTimeBasedKind(kind: ScheduleKind): boolean {
@@ -23,6 +27,13 @@ export const WEEKDAY_OPTIONS = [
   { value: 6, label: "Saturday" },
   { value: 0, label: "Sunday" },
 ] as const;
+
+export function getWeekdayLabel(dayOfWeek: number): string {
+  return (
+    WEEKDAY_OPTIONS.find((option) => option.value === dayOfWeek)?.label ??
+    "Monday"
+  );
+}
 
 export const TIMEZONES = [
   "UTC",
