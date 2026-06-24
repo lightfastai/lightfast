@@ -56,7 +56,9 @@ export function createSentryBuildOptions(
 export default defineConfig(({ command }) => ({
   plugins: [
     ...tanstackStart(),
-    nitro(),
+    nitro({
+      traceDeps: ["react", "react-dom", "use-sync-external-store"],
+    }),
     react(),
     ...sentryTanstackStart(createSentryBuildOptions(command)),
   ],
