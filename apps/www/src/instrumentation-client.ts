@@ -6,11 +6,13 @@ import {
 } from "@sentry/browser";
 
 const sentryDsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
-const sentryTunnel = getSentryTunnel(sentryDsn);
+const sentryEnvironment = process.env.NEXT_PUBLIC_VERCEL_ENV ?? "development";
+const sentryTunnel =
+  sentryEnvironment === "development" ? undefined : getSentryTunnel(sentryDsn);
 
 initSentry({
   dsn: sentryDsn,
-  environment: process.env.NEXT_PUBLIC_VERCEL_ENV ?? "development",
+  environment: sentryEnvironment,
   debug: false,
   enableLogs: true,
   ...(sentryTunnel ? { tunnel: sentryTunnel } : {}),
@@ -52,7 +54,7 @@ initSentry({
       },
     }),
     consoleLoggingIntegration({ levels: ["error", "warn"] }),
-    ...((process.env.NEXT_PUBLIC_VERCEL_ENV ?? "development") === "development"
+    ...(sentryEnvironment === "development"
       ? [spotlightBrowserIntegration()]
       : []),
   ],

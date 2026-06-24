@@ -5,13 +5,18 @@ import { Button } from "@repo/ui-v2/components/ui/button";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { SITE_IDENTITY } from "~/lib/site/identity";
+import { marketingLayout } from "./layout-primitives";
 import { Newsletter } from "./newsletter";
 
 export function Footer() {
   return (
     <footer className="min-h-svh bg-background text-foreground">
-      <div className="relative flex min-h-svh flex-col justify-between gap-32 pt-28 pb-8 sm:pt-32 lg:block lg:pt-24">
-        <div className="px-6 sm:px-10 lg:absolute lg:inset-x-0 lg:top-24 lg:pr-8 lg:pl-80">
+      <div
+        className={`relative flex min-h-svh flex-col justify-between gap-32 pb-8 lg:block ${marketingLayout.pageTop}`}
+      >
+        <div
+          className={`${marketingLayout.contentStartX} lg:absolute lg:inset-x-0 lg:top-24`}
+        >
           <div className="grid w-full grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
             <FooterColumn label="Socials">
               <nav
@@ -60,11 +65,15 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="flex justify-center px-6 sm:px-10 lg:absolute lg:inset-x-0 lg:top-1/2 lg:-translate-y-1/2 lg:px-8">
+        <div
+          className={`flex justify-center lg:absolute lg:inset-x-0 lg:top-1/2 lg:-translate-y-1/2 ${marketingLayout.edgeX}`}
+        >
           <Logo className="text-foreground" size="md" />
         </div>
 
-        <div className="px-6 sm:px-10 lg:absolute lg:inset-x-0 lg:bottom-8 lg:px-8">
+        <div
+          className={`lg:absolute lg:inset-x-0 lg:bottom-8 ${marketingLayout.edgeX}`}
+        >
           <nav
             aria-label="Legal links"
             className="grid grid-cols-1 gap-3 text-xs leading-tight sm:grid-cols-4 sm:items-center"

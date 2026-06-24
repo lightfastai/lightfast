@@ -21,6 +21,7 @@ import { GitHubBanner } from "./compositions/github-banner";
 import { LandingHero } from "./compositions/landing-hero/landing-hero";
 import { LinkedInBanner } from "./compositions/linkedin-banner";
 import { Logo } from "./compositions/logo";
+import { MarketingPanelRender } from "./compositions/marketing-panel";
 import { TwitterBanner } from "./compositions/twitter-banner";
 import { MANIFEST } from "./manifest";
 
@@ -65,6 +66,7 @@ const COMPONENTS: Record<string, CompositionComponent> = {
   LinkedInBanner,
   SignalsEmpty,
   PeopleEmpty,
+  MarketingPanelRender,
 };
 
 const DARK_COMPONENTS = Object.fromEntries(

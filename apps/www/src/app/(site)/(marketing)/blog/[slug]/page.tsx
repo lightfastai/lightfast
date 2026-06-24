@@ -7,6 +7,7 @@ import {
   getBlogPostPublication,
   getBlogPostStaticParams,
 } from "~/lib/publishing";
+import { marketingLayout } from "../../_components/layout-primitives";
 import { Toc } from "./_components/toc";
 
 export const dynamic = "force-static";
@@ -39,7 +40,7 @@ export default async function BlogPostPage({ params }: Props) {
     <main className="bg-background text-foreground">
       <JsonLd code={publication.jsonLd} />
 
-      <section className="pt-28 pb-12 sm:pt-32 md:pb-16 lg:pt-24">
+      <section className={`pb-12 md:pb-16 ${marketingLayout.pageTop}`}>
         <div className="space-y-16">
           <div className="space-y-4">
             <h1 className="font-medium font-title text-3xl text-foreground tracking-normal lg:text-4xl">

@@ -1,8 +1,13 @@
 import { JsonLd } from "@vendor/seo/json-ld";
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { markdownComponents } from "~/app/_components/mdx-components";
 import { getHomePublication } from "~/lib/publishing";
+import {
+  MarketingContentBleed,
+  marketingLayout,
+} from "./_components/layout-primitives";
 
 export const dynamic = "force-static";
 
@@ -22,10 +27,18 @@ export default function HomePage() {
     <main className="bg-background text-foreground">
       <JsonLd code={publication.jsonLd} />
 
-      <section className="flex flex-col items-center pt-28 pb-16 text-center sm:pt-32 lg:pt-24">
-        <h1 className="font-medium font-title text-3xl text-foreground tracking-normal lg:text-4xl">
-          {publication.title}
-        </h1>
+      <section className={`pb-16 ${marketingLayout.pageTop}`}>
+        <h1 className="sr-only">{publication.title}</h1>
+        <MarketingContentBleed className="aspect-video overflow-hidden rounded-xs bg-foreground">
+          <Image
+            alt=""
+            className="object-cover"
+            fill
+            preload
+            sizes="(max-width: 640px) calc(100vw - 3rem), (max-width: 1024px) calc(100vw - 5rem), 48rem"
+            src="/images/marketing/operating-thesis-panel.webp"
+          />
+        </MarketingContentBleed>
       </section>
 
       <article className="pb-24 md:pb-32">
