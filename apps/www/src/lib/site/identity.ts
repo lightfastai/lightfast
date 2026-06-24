@@ -2,7 +2,7 @@ import type { Thing, WithContext } from "@vendor/seo/json-ld";
 import type { Metadata, MetadataRoute, Viewport } from "next";
 
 const baseUrl = "https://lightfast.ai";
-const defaultTitle = "Lightfast - Collaboration between humans and machine";
+const defaultTitle = "Collaboration between humans and machine | Lightfast";
 const defaultDescription =
   "Lightfast is an applied AI lab building systems where product and engineering teams design, build, and ship with AI in real time.";
 const defaultOgDescription =
