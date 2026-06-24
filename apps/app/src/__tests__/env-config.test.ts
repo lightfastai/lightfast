@@ -74,7 +74,8 @@ describe("app environment validation wiring", () => {
     );
 
     expect(viteConfigSource).toContain("tanstackStart");
-    expect(viteConfigSource).toContain("nitro()");
+    expect(viteConfigSource).toContain("nitro({");
+    expect(viteConfigSource).toContain("traceDeps");
     expect(viteConfigSource).toContain("react()");
     expect(viteConfigSource).toContain("sentryTanstackStart");
   });
