@@ -1,4 +1,4 @@
-import { useAuth } from "@clerk/tanstack-react-start";
+import { useUser } from "@clerk/tanstack-react-start";
 import {
   createFileRoute,
   Outlet,
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn } = useUser();
   const location = useLocation();
   const navigate = useNavigate();
   const pathname = location.pathname;

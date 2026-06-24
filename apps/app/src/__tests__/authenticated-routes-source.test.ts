@@ -273,6 +273,13 @@ describe("app authenticated route migration", () => {
     );
 
     expect(shellSource).toContain('createFileRoute("/_authenticated")');
+    expect(shellSource).toContain(
+      'import { useUser } from "@clerk/tanstack-react-start"'
+    );
+    expect(shellSource).toContain("const { isLoaded, isSignedIn } = useUser()");
+    expect(shellSource).not.toContain(
+      "const { isLoaded, isSignedIn } = useAuth()"
+    );
     expect(shellSource).toContain('to: "/sign-in"');
     expect(shellSource).toContain("redirect_url: location.href");
     expect(shellSource).toContain("AUTH_ROUTE_PATHS");
