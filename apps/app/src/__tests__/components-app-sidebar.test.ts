@@ -34,7 +34,6 @@ describe("workspace sidebar", () => {
     expect(sidebarSource).toContain('title: "People"');
     expect(sidebarSource).toContain('label: "Manage"');
     expect(sidebarSource).toContain('title: "Connectors"');
-    expect(sidebarSource).toContain('title: "Developer Connections"');
     expect(sidebarSource).toContain('title: "Settings"');
     expect(sidebarSource).toContain("pathname === item.href");
     expect(sidebarSource).toContain(

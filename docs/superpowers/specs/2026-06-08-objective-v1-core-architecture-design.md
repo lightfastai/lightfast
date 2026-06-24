@@ -423,7 +423,7 @@ The Runs tab is real but thin:
 - show timestamps
 - show plan when present
 
-V1 does not expose create, cancel, retry, logs, sandbox output, or multi-run
+V1 does not expose create, cancel, retry, logs, command output, or multi-run
 management.
 
 ### Decisions

@@ -164,11 +164,6 @@ export const APP_AUTH_ROUTE_SPECS: RouteSpec[] = [
     pathTemplate: "/$slug/decisions",
   },
   {
-    expectedText: ["Developer Connections", "Connect provider CLIs"],
-    name: "developer connections",
-    pathTemplate: "/$slug/developer-connections",
-  },
-  {
     expectedText: ["People", "No people yet"],
     name: "people",
     pathTemplate: "/$slug/people",
