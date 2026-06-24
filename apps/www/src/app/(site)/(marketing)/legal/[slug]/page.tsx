@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { markdownComponents } from "~/app/_components/mdx-components";
 import { getLegalPublication, getLegalStaticParams } from "~/lib/publishing";
+import { marketingLayout } from "../../_components/layout-primitives";
 
 export const dynamic = "force-static";
 
@@ -31,7 +32,7 @@ export default async function LegalPage({ params }: Props) {
   return (
     <main className="bg-background text-foreground">
       <JsonLd code={publication.jsonLd} />
-      <article className="pt-28 pb-24 sm:pt-32 md:pb-32 lg:pt-24">
+      <article className={`pb-24 md:pb-32 ${marketingLayout.pageTop}`}>
         <MDXContent components={markdownComponents} />
       </article>
     </main>

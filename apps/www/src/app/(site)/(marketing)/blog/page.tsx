@@ -2,6 +2,7 @@ import { JsonLd } from "@vendor/seo/json-ld";
 import type { Metadata, Route } from "next";
 import Link from "next/link";
 import { getBlogIndexPublication } from "~/lib/publishing";
+import { marketingLayout } from "../_components/layout-primitives";
 
 export const dynamic = "force-static";
 
@@ -29,7 +30,7 @@ export default function BlogPage() {
     <main className="bg-background text-foreground">
       <JsonLd code={publication.jsonLd} />
 
-      <section className="pt-28 pb-20 sm:pt-32 md:pb-16 lg:pt-24">
+      <section className={`pb-20 md:pb-16 ${marketingLayout.pageTop}`}>
         <h1 className="font-medium font-title text-3xl tracking-normal lg:text-4xl">
           Blog
         </h1>

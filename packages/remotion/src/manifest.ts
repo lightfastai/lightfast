@@ -85,6 +85,45 @@ const logoAssetScale = (targetMarkSize: number) =>
 
 export const MANIFEST: CompositionManifest = {
   compositions: {
+    // ── Marketing Panels ──────────────────────────────────────────
+    "marketing-operating-thesis-panel": {
+      type: "still",
+      component: "MarketingPanelRender",
+      width: 768,
+      height: 432,
+      props: {
+        eyebrow: "Operating Thesis",
+        kind: "title",
+        title: "Collaboration between humans and machine",
+      },
+      outputs: [
+        {
+          format: "webp",
+          dest: "apps/www/public/images/marketing",
+          filename: "operating-thesis-panel.webp",
+          scale: 2,
+        },
+      ],
+    },
+    "marketing-wordmark-panel": {
+      type: "still",
+      component: "MarketingPanelRender",
+      width: 768,
+      height: 432,
+      props: {
+        eyebrow: "Wordmarks",
+        kind: "wordmark",
+      },
+      outputs: [
+        {
+          format: "webp",
+          dest: "apps/www/public/images/marketing",
+          filename: "wordmark-panel.webp",
+          scale: 2,
+        },
+      ],
+    },
+
     // ── Brand Guidelines ───────────────────────────────────────────
     "brand-geometry": {
       type: "still",
