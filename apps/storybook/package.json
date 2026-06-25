@@ -8,7 +8,6 @@
     "dev": "portless run pnpm storybook:dev",
     "storybook:dev": "storybook dev --host ${HOST:-127.0.0.1} --port ${PORT:-6006} --no-open",
     "build": "storybook build",
-    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "clean": "git clean -xdf .cache .turbo storybook-static node_modules"
   },
@@ -21,26 +20,20 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "@repo/vitest-config": "workspace:*",
     "@storybook/addon-a11y": "catalog:",
     "@storybook/addon-docs": "catalog:",
-    "@storybook/addon-vitest": "catalog:",
     "@storybook/react-vite": "catalog:",
     "@tailwindcss/postcss": "catalog:tailwind4",
     "@types/node": "catalog:",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
-    "@vitejs/plugin-react": "catalog:",
-    "@vitest/browser-playwright": "catalog:",
-    "happy-dom": "catalog:",
     "msw": "catalog:",
     "msw-storybook-addon": "catalog:",
     "postcss": "catalog:tailwind4",
     "storybook": "catalog:",
     "tailwindcss": "catalog:tailwind4",
     "typescript": "catalog:",
-    "vite": "catalog:",
-    "vitest": "catalog:"
+    "vite": "catalog:"
   },
   "msw": {
     "workerDirectory": [
