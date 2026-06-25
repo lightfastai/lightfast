@@ -31,6 +31,14 @@ export interface CreateProviderRoutineCallInput {
   startedAt?: Date;
 }
 
+const LEGACY_REDACTED_PRESENCE: ProviderRoutineCallPayload = { present: true };
+
+function legacyRedactedPresence(
+  payload: ProviderRoutineCallPayload | undefined
+): ProviderRoutineCallPayload {
+  return payload ? LEGACY_REDACTED_PRESENCE : null;
+}
+
 function normalizeLimit(limit: number | undefined): number {
   if (typeof limit !== "number" || !Number.isFinite(limit)) {
     return 50;
@@ -135,7 +143,7 @@ export async function createProviderRoutineCall(
       clerkOrgId: input.clerkOrgId,
       providerConnectionId: input.providerConnectionId,
       inputPayload: input.inputPayload ?? null,
-      legacyInputRedacted: input.inputPayload ?? null,
+      legacyInputRedacted: legacyRedactedPresence(input.inputPayload),
       legacyOutputRedacted: null,
       outputPayload: null,
       provider: input.provider,
@@ -197,7 +205,7 @@ export async function markProviderRoutineCallSucceeded(
       errorCode: null,
       errorMessage: null,
       finishedAt,
-      legacyOutputRedacted: input.outputPayload ?? null,
+      legacyOutputRedacted: legacyRedactedPresence(input.outputPayload),
       outputPayload: input.outputPayload ?? null,
       status: "succeeded",
       updatedAt: finishedAt,

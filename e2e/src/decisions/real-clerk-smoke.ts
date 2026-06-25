@@ -907,14 +907,14 @@ export async function runRealClerkDecisionsSmoke(
       orgSlug: config.orgSlug,
       userId: user.id,
     });
-    await createActiveXConnectorConnection({
-      config,
-      orgId: org.id,
-      orgSlug: config.orgSlug,
-      userId: user.id,
-    });
     let providerConnectionId = 0;
     if (config.runtimeDecisionEnabled) {
+      await createActiveXConnectorConnection({
+        config,
+        orgId: org.id,
+        orgSlug: config.orgSlug,
+        userId: user.id,
+      });
       providerConnectionId = await createActiveLinearRuntimeConnection({
         config,
         orgId: org.id,
