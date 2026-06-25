@@ -33,7 +33,9 @@ export async function createMcpContext(
 
 export interface HostedMcpAuthInfo {
   clientId: string;
+  expiresAt?: number;
   extra?: Record<string, unknown>;
+  resource?: URL;
   scopes: string[];
   token: string;
 }

@@ -1,5 +1,5 @@
 import type { Database, McpOauthAuthorizationCode } from "@db/app";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const getMcpOauthClientByClientIdMock = vi.fn();
 const getActiveMcpOauthGrantMock = vi.fn();
@@ -27,6 +27,9 @@ const { issueMcpAuthorizationCode } = await import(
 
 const db = { kind: "mock-db" } as unknown as Database;
 const now = new Date("2026-06-01T00:00:00.000Z");
+const authorizationCodeSecret = `mcp_code_${"c".repeat(43)}`;
+const codeVerifier = "v".repeat(43);
+const otherCodeVerifier = "w".repeat(43);
 const redirectUri = "https://backend.lightfield.app/connections/callback/MCP";
 const resource = "https://mcp.lightfast.localhost/mcp";
 
@@ -38,7 +41,7 @@ function authorizationCode(
     clientPublicId: "mcp_client_test",
     clerkOrgId: "org_test",
     clerkUserId: "user_test",
-    codeChallenge: createCodeChallenge("verifier_test"),
+    codeChallenge: createCodeChallenge(codeVerifier),
     codeChallengeMethod: "S256",
     codeHash: "code_hash",
     consumedAt: null,
@@ -54,6 +57,7 @@ function authorizationCode(
 }
 
 beforeEach(() => {
+  vi.stubEnv("MCP_RESOURCE_URL", resource);
   getMcpOauthClientByClientIdMock.mockReset();
   getActiveMcpOauthGrantMock.mockReset();
   createMcpOauthGrantMock.mockReset();
@@ -73,6 +77,7 @@ beforeEach(() => {
     publicId: "mcp_grant_test",
     resource,
     scopes: ["mcp:signals:write"],
+    status: "active",
   });
   createMcpAuthorizationCodeMock.mockResolvedValue(authorizationCode());
   consumeMcpAuthorizationCodeMock.mockResolvedValue(authorizationCode());
@@ -81,13 +86,17 @@ beforeEach(() => {
   });
 });
 
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
 describe("issueMcpAuthorizationCode", () => {
   it("stores only a code hash and expires in ten minutes", async () => {
     const result = await issueMcpAuthorizationCode(db, {
       clientId: "mcp_client_test",
       clerkOrgId: "org_test",
       clerkUserId: "user_test",
-      codeChallenge: createCodeChallenge("verifier_test"),
+      codeChallenge: createCodeChallenge(codeVerifier),
       codeChallengeMethod: "S256",
       redirectUri,
       resource,
@@ -120,7 +129,7 @@ describe("issueMcpAuthorizationCode", () => {
         clientId: "mcp_client_test",
         clerkOrgId: "org_test",
         clerkUserId: "user_test",
-        codeChallenge: createCodeChallenge("verifier_test"),
+        codeChallenge: createCodeChallenge(codeVerifier),
         codeChallengeMethod: "S256",
         redirectUri,
         resource,
@@ -153,6 +162,47 @@ describe("issueMcpAuthorizationCode", () => {
 
     expect(createMcpAuthorizationCodeMock).not.toHaveBeenCalled();
   });
+
+  it("rejects authorization requests for unsupported resources before persisting", async () => {
+    await expect(
+      issueMcpAuthorizationCode(db, {
+        clientId: "mcp_client_test",
+        clerkOrgId: "org_test",
+        clerkUserId: "user_test",
+        codeChallenge: createCodeChallenge(codeVerifier),
+        codeChallengeMethod: "S256",
+        redirectUri,
+        resource: "https://attacker.example/mcp",
+        scope: "mcp:signals:write",
+        now,
+      })
+    ).rejects.toEqual(
+      new McpOAuthError("invalid_request", "Unsupported MCP resource.")
+    );
+
+    expect(createMcpAuthorizationCodeMock).not.toHaveBeenCalled();
+  });
+
+  it("uses the default MCP scope when the authorization request scope is blank", async () => {
+    await issueMcpAuthorizationCode(db, {
+      clientId: "mcp_client_test",
+      clerkOrgId: "org_test",
+      clerkUserId: "user_test",
+      codeChallenge: createCodeChallenge(codeVerifier),
+      codeChallengeMethod: "S256",
+      redirectUri,
+      resource,
+      scope: "   ",
+      now,
+    });
+
+    expect(createMcpAuthorizationCodeMock).toHaveBeenCalledWith(
+      db,
+      expect.objectContaining({
+        scopes: ["mcp:system:read"],
+      })
+    );
+  });
 });
 
 describe("exchangeMcpAuthorizationCode", () => {
@@ -161,8 +211,8 @@ describe("exchangeMcpAuthorizationCode", () => {
       exchangeMcpAuthorizationCode(db, {
         audience: resource,
         clientId: "mcp_client_test",
-        code: "mcp_code_raw",
-        codeVerifier: "verifier_test",
+        code: authorizationCodeSecret,
+        codeVerifier,
         issuer: "https://app.lightfast.localhost",
         jwtSecret: "test-secret",
         redirectUri,
@@ -184,6 +234,116 @@ describe("exchangeMcpAuthorizationCode", () => {
     );
   });
 
+  it("rejects alternate access token audiences before creating refresh tokens", async () => {
+    await expect(
+      exchangeMcpAuthorizationCode(db, {
+        audience: "https://attacker.example/mcp",
+        clientId: "mcp_client_test",
+        code: authorizationCodeSecret,
+        codeVerifier,
+        issuer: "https://app.lightfast.localhost",
+        jwtSecret: "test-secret",
+        redirectUri,
+      })
+    ).rejects.toEqual(
+      new McpOAuthError(
+        "invalid_request",
+        "Access token audience must match the authorized MCP resource."
+      )
+    );
+
+    expect(createMcpRefreshTokenMock).not.toHaveBeenCalled();
+  });
+
+  it("does not reuse a broader active grant for a narrower authorization", async () => {
+    consumeMcpAuthorizationCodeMock.mockResolvedValueOnce(
+      authorizationCode({ scopes: ["mcp:signals:read"] })
+    );
+    getActiveMcpOauthGrantMock.mockResolvedValueOnce({
+      clientPublicId: "mcp_client_test",
+      clerkOrgId: "org_test",
+      clerkUserId: "user_test",
+      publicId: "mcp_grant_write",
+      resource,
+      scopes: ["mcp:signals:write"],
+      status: "active",
+    });
+    createMcpOauthGrantMock.mockResolvedValueOnce({
+      clientPublicId: "mcp_client_test",
+      clerkOrgId: "org_test",
+      clerkUserId: "user_test",
+      publicId: "mcp_grant_read",
+      resource,
+      scopes: ["mcp:signals:read"],
+      status: "active",
+    });
+
+    await expect(
+      exchangeMcpAuthorizationCode(db, {
+        audience: resource,
+        clientId: "mcp_client_test",
+        code: authorizationCodeSecret,
+        codeVerifier,
+        issuer: "https://app.lightfast.localhost",
+        jwtSecret: "test-secret",
+        redirectUri,
+      })
+    ).resolves.toMatchObject({
+      grant_id: "mcp_grant_read",
+      scope: "mcp:signals:read",
+    });
+
+    expect(getActiveMcpOauthGrantMock).toHaveBeenCalledWith(
+      db,
+      expect.objectContaining({
+        scopes: ["mcp:signals:read"],
+      })
+    );
+    expect(createMcpOauthGrantMock).toHaveBeenCalledWith(
+      db,
+      expect.objectContaining({
+        scopes: ["mcp:signals:read"],
+      })
+    );
+    expect(createMcpRefreshTokenMock).toHaveBeenCalledWith(
+      db,
+      expect.objectContaining({
+        grantPublicId: "mcp_grant_read",
+      })
+    );
+  });
+
+  it("rejects returned grants whose scopes differ from the consumed authorization code", async () => {
+    consumeMcpAuthorizationCodeMock.mockResolvedValueOnce(
+      authorizationCode({ scopes: ["mcp:signals:read"] })
+    );
+    createMcpOauthGrantMock.mockResolvedValueOnce({
+      clientPublicId: "mcp_client_test",
+      clerkOrgId: "org_test",
+      clerkUserId: "user_test",
+      publicId: "mcp_grant_write",
+      resource,
+      scopes: ["mcp:signals:write"],
+      status: "active",
+    });
+
+    await expect(
+      exchangeMcpAuthorizationCode(db, {
+        audience: resource,
+        clientId: "mcp_client_test",
+        code: authorizationCodeSecret,
+        codeVerifier,
+        issuer: "https://app.lightfast.localhost",
+        jwtSecret: "test-secret",
+        redirectUri,
+      })
+    ).rejects.toEqual(
+      new McpOAuthError("invalid_grant", "Authorization grant is invalid.")
+    );
+
+    expect(createMcpRefreshTokenMock).not.toHaveBeenCalled();
+  });
+
   it("rejects invalid, reused, or expired codes before creating refresh tokens", async () => {
     consumeMcpAuthorizationCodeMock.mockResolvedValueOnce(undefined);
 
@@ -191,8 +351,8 @@ describe("exchangeMcpAuthorizationCode", () => {
       exchangeMcpAuthorizationCode(db, {
         audience: resource,
         clientId: "mcp_client_test",
-        code: "mcp_code_raw",
-        codeVerifier: "verifier_test",
+        code: authorizationCodeSecret,
+        codeVerifier,
         issuer: "https://app.lightfast.localhost",
         jwtSecret: "test-secret",
         redirectUri,
@@ -201,6 +361,44 @@ describe("exchangeMcpAuthorizationCode", () => {
       new McpOAuthError("invalid_grant", "Authorization code is invalid.")
     );
 
+    expect(createMcpRefreshTokenMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects syntactically invalid authorization codes before loading them", async () => {
+    await expect(
+      exchangeMcpAuthorizationCode(db, {
+        audience: resource,
+        clientId: "mcp_client_test",
+        code: "not-an-mcp-code",
+        codeVerifier,
+        issuer: "https://app.lightfast.localhost",
+        jwtSecret: "test-secret",
+        redirectUri,
+      })
+    ).rejects.toEqual(
+      new McpOAuthError("invalid_grant", "Authorization code is invalid.")
+    );
+
+    expect(consumeMcpAuthorizationCodeMock).not.toHaveBeenCalled();
+    expect(createMcpRefreshTokenMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects malformed PKCE code verifiers before loading authorization codes", async () => {
+    await expect(
+      exchangeMcpAuthorizationCode(db, {
+        audience: resource,
+        clientId: "mcp_client_test",
+        code: authorizationCodeSecret,
+        codeVerifier: "too-short",
+        issuer: "https://app.lightfast.localhost",
+        jwtSecret: "test-secret",
+        redirectUri,
+      })
+    ).rejects.toEqual(
+      new McpOAuthError("invalid_request", "Invalid PKCE code verifier.")
+    );
+
+    expect(consumeMcpAuthorizationCodeMock).not.toHaveBeenCalled();
     expect(createMcpRefreshTokenMock).not.toHaveBeenCalled();
   });
 
@@ -213,8 +411,8 @@ describe("exchangeMcpAuthorizationCode", () => {
       exchangeMcpAuthorizationCode(db, {
         audience: resource,
         clientId: "mcp_client_test",
-        code: "mcp_code_raw",
-        codeVerifier: "verifier_test",
+        code: authorizationCodeSecret,
+        codeVerifier,
         issuer: "https://app.lightfast.localhost",
         jwtSecret: "test-secret",
         redirectUri,
@@ -239,8 +437,8 @@ describe("exchangeMcpAuthorizationCode", () => {
       exchangeMcpAuthorizationCode(db, {
         audience: resource,
         clientId: "mcp_client_test",
-        code: "mcp_code_raw",
-        codeVerifier: "verifier_test",
+        code: authorizationCodeSecret,
+        codeVerifier,
         issuer: "https://app.lightfast.localhost",
         jwtSecret: "test-secret",
         redirectUri,
@@ -257,7 +455,7 @@ describe("exchangeMcpAuthorizationCode", () => {
   it("rejects PKCE mismatches before creating refresh tokens", async () => {
     consumeMcpAuthorizationCodeMock.mockResolvedValueOnce(
       authorizationCode({
-        codeChallenge: createCodeChallenge("other_verifier"),
+        codeChallenge: createCodeChallenge(otherCodeVerifier),
       })
     );
 
@@ -265,8 +463,8 @@ describe("exchangeMcpAuthorizationCode", () => {
       exchangeMcpAuthorizationCode(db, {
         audience: resource,
         clientId: "mcp_client_test",
-        code: "mcp_code_raw",
-        codeVerifier: "verifier_test",
+        code: authorizationCodeSecret,
+        codeVerifier,
         issuer: "https://app.lightfast.localhost",
         jwtSecret: "test-secret",
         redirectUri,
@@ -296,8 +494,8 @@ describe("exchangeMcpAuthorizationCode", () => {
       exchangeMcpAuthorizationCode(db, {
         audience: resource,
         clientId: "mcp_client_test",
-        code: "mcp_code_raw",
-        codeVerifier: "verifier_test",
+        code: authorizationCodeSecret,
+        codeVerifier,
         issuer: "https://app.lightfast.localhost",
         jwtSecret: "test-secret",
         redirectUri,

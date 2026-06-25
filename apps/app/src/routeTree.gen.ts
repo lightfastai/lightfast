@@ -83,6 +83,7 @@ import { Route as ApiInternalMcpProxyFindRouteImport } from './routes/api/intern
 import { Route as ApiInternalMcpProxyCallRouteImport } from './routes/api/internal/mcp/proxy/call'
 import { Route as ApiInternalMcpDecisionsGetRouteImport } from './routes/api/internal/mcp/decisions/get'
 import { Route as ApiInternalMcpDecisionsFindRouteImport } from './routes/api/internal/mcp/decisions/find'
+import { Route as ApiInternalMcpAuthValidateRouteImport } from './routes/api/internal/mcp/auth/validate'
 import { Route as ApiGithubUserOauthCallbackRouteImport } from './routes/api/github/user/oauth/callback'
 import { Route as ApiConnectorsXOauthCallbackRouteImport } from './routes/api/connectors/x/oauth/callback'
 import { Route as ApiConnectorsLinearOauthCallbackRouteImport } from './routes/api/connectors/linear/oauth/callback'
@@ -496,6 +497,12 @@ const ApiInternalMcpDecisionsFindRoute =
     path: '/api/internal/mcp/decisions/find',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiInternalMcpAuthValidateRoute =
+  ApiInternalMcpAuthValidateRouteImport.update({
+    id: '/api/internal/mcp/auth/validate',
+    path: '/api/internal/mcp/auth/validate',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiGithubUserOauthCallbackRoute =
   ApiGithubUserOauthCallbackRouteImport.update({
     id: '/api/github/user/oauth/callback',
@@ -631,6 +638,7 @@ export interface FileRoutesByFullPath {
   '/api/connectors/linear/oauth/callback': typeof ApiConnectorsLinearOauthCallbackRoute
   '/api/connectors/x/oauth/callback': typeof ApiConnectorsXOauthCallbackRoute
   '/api/github/user/oauth/callback': typeof ApiGithubUserOauthCallbackRoute
+  '/api/internal/mcp/auth/validate': typeof ApiInternalMcpAuthValidateRoute
   '/api/internal/mcp/decisions/find': typeof ApiInternalMcpDecisionsFindRoute
   '/api/internal/mcp/decisions/get': typeof ApiInternalMcpDecisionsGetRoute
   '/api/internal/mcp/proxy/call': typeof ApiInternalMcpProxyCallRoute
@@ -707,6 +715,7 @@ export interface FileRoutesByTo {
   '/api/connectors/linear/oauth/callback': typeof ApiConnectorsLinearOauthCallbackRoute
   '/api/connectors/x/oauth/callback': typeof ApiConnectorsXOauthCallbackRoute
   '/api/github/user/oauth/callback': typeof ApiGithubUserOauthCallbackRoute
+  '/api/internal/mcp/auth/validate': typeof ApiInternalMcpAuthValidateRoute
   '/api/internal/mcp/decisions/find': typeof ApiInternalMcpDecisionsFindRoute
   '/api/internal/mcp/decisions/get': typeof ApiInternalMcpDecisionsGetRoute
   '/api/internal/mcp/proxy/call': typeof ApiInternalMcpProxyCallRoute
@@ -794,6 +803,7 @@ export interface FileRoutesById {
   '/api/connectors/linear/oauth/callback': typeof ApiConnectorsLinearOauthCallbackRoute
   '/api/connectors/x/oauth/callback': typeof ApiConnectorsXOauthCallbackRoute
   '/api/github/user/oauth/callback': typeof ApiGithubUserOauthCallbackRoute
+  '/api/internal/mcp/auth/validate': typeof ApiInternalMcpAuthValidateRoute
   '/api/internal/mcp/decisions/find': typeof ApiInternalMcpDecisionsFindRoute
   '/api/internal/mcp/decisions/get': typeof ApiInternalMcpDecisionsGetRoute
   '/api/internal/mcp/proxy/call': typeof ApiInternalMcpProxyCallRoute
@@ -881,6 +891,7 @@ export interface FileRouteTypes {
     | '/api/connectors/linear/oauth/callback'
     | '/api/connectors/x/oauth/callback'
     | '/api/github/user/oauth/callback'
+    | '/api/internal/mcp/auth/validate'
     | '/api/internal/mcp/decisions/find'
     | '/api/internal/mcp/decisions/get'
     | '/api/internal/mcp/proxy/call'
@@ -957,6 +968,7 @@ export interface FileRouteTypes {
     | '/api/connectors/linear/oauth/callback'
     | '/api/connectors/x/oauth/callback'
     | '/api/github/user/oauth/callback'
+    | '/api/internal/mcp/auth/validate'
     | '/api/internal/mcp/decisions/find'
     | '/api/internal/mcp/decisions/get'
     | '/api/internal/mcp/proxy/call'
@@ -1043,6 +1055,7 @@ export interface FileRouteTypes {
     | '/api/connectors/linear/oauth/callback'
     | '/api/connectors/x/oauth/callback'
     | '/api/github/user/oauth/callback'
+    | '/api/internal/mcp/auth/validate'
     | '/api/internal/mcp/decisions/find'
     | '/api/internal/mcp/decisions/get'
     | '/api/internal/mcp/proxy/call'
@@ -1089,6 +1102,7 @@ export interface RootRouteChildren {
   ApiConnectorsLinearOauthCallbackRoute: typeof ApiConnectorsLinearOauthCallbackRoute
   ApiConnectorsXOauthCallbackRoute: typeof ApiConnectorsXOauthCallbackRoute
   ApiGithubUserOauthCallbackRoute: typeof ApiGithubUserOauthCallbackRoute
+  ApiInternalMcpAuthValidateRoute: typeof ApiInternalMcpAuthValidateRoute
   ApiInternalMcpDecisionsFindRoute: typeof ApiInternalMcpDecisionsFindRoute
   ApiInternalMcpDecisionsGetRoute: typeof ApiInternalMcpDecisionsGetRoute
   ApiInternalMcpProxyCallRoute: typeof ApiInternalMcpProxyCallRoute
@@ -1615,6 +1629,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiInternalMcpDecisionsFindRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/internal/mcp/auth/validate': {
+      id: '/api/internal/mcp/auth/validate'
+      path: '/api/internal/mcp/auth/validate'
+      fullPath: '/api/internal/mcp/auth/validate'
+      preLoaderRoute: typeof ApiInternalMcpAuthValidateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/github/user/oauth/callback': {
       id: '/api/github/user/oauth/callback'
       path: '/api/github/user/oauth/callback'
@@ -2004,6 +2025,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiConnectorsLinearOauthCallbackRoute: ApiConnectorsLinearOauthCallbackRoute,
   ApiConnectorsXOauthCallbackRoute: ApiConnectorsXOauthCallbackRoute,
   ApiGithubUserOauthCallbackRoute: ApiGithubUserOauthCallbackRoute,
+  ApiInternalMcpAuthValidateRoute: ApiInternalMcpAuthValidateRoute,
   ApiInternalMcpDecisionsFindRoute: ApiInternalMcpDecisionsFindRoute,
   ApiInternalMcpDecisionsGetRoute: ApiInternalMcpDecisionsGetRoute,
   ApiInternalMcpProxyCallRoute: ApiInternalMcpProxyCallRoute,

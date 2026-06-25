@@ -8,7 +8,11 @@ import {
   revokeMcpRefreshTokenSecret,
   rotateMcpRefreshTokenSecret,
 } from ".";
-import { MCP_SUPPORTED_SCOPES, McpOAuthError } from "./types";
+import {
+  MCP_REFRESH_TOKEN_TTL_SECONDS,
+  MCP_SUPPORTED_SCOPES,
+  McpOAuthError,
+} from "./types";
 
 export function handleMcpOAuthAuthorizationServerMetadataRequest(): Response {
   try {
@@ -80,8 +84,10 @@ export async function handleMcpOAuthTokenRequest(
 ): Promise<Response> {
   try {
     const body = await readOAuthBody(request);
-    if (body.grant_type === "authorization_code") {
+    const grantType = requireField(body, "grant_type");
+    if (grantType === "authorization_code") {
       const result = await exchangeMcpAuthorizationCode(db, {
+        audience: optionalField(body, "resource"),
         clientId: requireField(body, "client_id"),
         code: requireField(body, "code"),
         codeVerifier: requireField(body, "code_verifier"),
@@ -91,14 +97,27 @@ export async function handleMcpOAuthTokenRequest(
       });
       return oauthJson(result);
     }
-    if (body.grant_type === "refresh_token") {
+    if (grantType === "refresh_token") {
+      const now = new Date();
       const result = await rotateMcpRefreshTokenSecret(db, {
+        audience: optionalField(body, "resource"),
+        clientId: requireField(body, "client_id"),
         currentRefreshToken: requireField(body, "refresh_token"),
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        expiresAt: new Date(
+          now.getTime() + MCP_REFRESH_TOKEN_TTL_SECONDS * 1000
+        ),
         issuer: oauthIssuer(),
         jwtSecret: requireOAuthServiceJwtSecret(),
+        now,
       });
-      return oauthJson(result);
+      return oauthJson({
+        access_token: result.access_token,
+        expires_in: result.expires_in,
+        grant_id: result.grant_id,
+        refresh_token: result.refresh_token,
+        scope: result.scope,
+        token_type: result.token_type,
+      });
     }
     throw new McpOAuthError(
       "unsupported_grant_type",
@@ -115,7 +134,7 @@ export async function handleMcpOAuthRevokeRequest(
   try {
     const body = await readOAuthBody(request);
     await revokeMcpRefreshTokenSecret(db, {
-      refreshToken: typeof body.token === "string" ? body.token : "",
+      refreshToken: requireField(body, "token"),
     });
     return oauthJson({});
   } catch (error) {
@@ -139,6 +158,7 @@ function oauthJson(data: unknown, init: ResponseInit = {}): Response {
   const headers = new Headers(init.headers);
   headers.set("cache-control", "no-store");
   headers.set("content-type", "application/json");
+  headers.set("pragma", "no-cache");
   return Response.json(data, { ...init, headers });
 }
 
@@ -166,30 +186,60 @@ function oauthError(error: unknown): Response {
 async function readOAuthBody(
   request: Request
 ): Promise<Record<string, unknown>> {
-  const contentType = request.headers.get("content-type") ?? "";
+  const contentType = (request.headers.get("content-type") ?? "").toLowerCase();
   if (contentType.includes("application/x-www-form-urlencoded")) {
     const body: Record<string, unknown> = {};
-    const formData = await request.formData();
-    formData.forEach((value, key) => {
-      body[key] = value;
-    });
-    return body;
+    try {
+      const formData = await request.formData();
+      formData.forEach((value, key) => {
+        if (Object.hasOwn(body, key)) {
+          throw new McpOAuthError(
+            "invalid_request",
+            "OAuth request body contains duplicate parameter."
+          );
+        }
+        body[key] = value;
+      });
+      return body;
+    } catch (error) {
+      if (error instanceof McpOAuthError) {
+        throw error;
+      }
+      throw new McpOAuthError(
+        "invalid_request",
+        "OAuth request body is invalid."
+      );
+    }
   }
-  return (await request.json().catch(() => ({}))) as Record<string, unknown>;
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    throw new McpOAuthError(
+      "invalid_request",
+      "OAuth request body is invalid."
+    );
+  }
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw new McpOAuthError(
+      "invalid_request",
+      "OAuth request body is invalid."
+    );
+  }
+  return body as Record<string, unknown>;
 }
 
 function bearerToken(request: Request): string | null {
   const authorization = request.headers.get("authorization");
-  if (!authorization?.startsWith("Bearer ")) {
-    return null;
-  }
-  return authorization.slice("Bearer ".length).trim() || null;
+  const match = authorization?.match(/^Bearer\s+(.+)$/i);
+  return match?.[1]?.trim() || null;
 }
 
 function requireOAuthServiceJwtSecret(): string {
   const secret = process.env.SERVICE_JWT_SECRET;
-  if (!secret) {
-    throw new Error("OAuth service signing secret is not configured.");
+  if (!secret || secret.length < 32) {
+    throw new Error("OAuth service signing secret is not securely configured.");
   }
   return secret;
 }
@@ -198,6 +248,20 @@ function requireField(body: Record<string, unknown>, key: string): string {
   const value = body[key];
   if (typeof value !== "string" || !value) {
     throw new McpOAuthError("invalid_request", `${key} is required.`);
+  }
+  return value;
+}
+
+function optionalField(
+  body: Record<string, unknown>,
+  key: string
+): string | undefined {
+  const value = body[key];
+  if (value === undefined || value === null || value === "") {
+    return;
+  }
+  if (typeof value !== "string") {
+    throw new McpOAuthError("invalid_request", `${key} is invalid.`);
   }
   return value;
 }

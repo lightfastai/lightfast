@@ -116,6 +116,7 @@ export function McpConsentCard({ model }: { model: McpConsentViewModel }) {
 
         <form
           className="mt-6 space-y-4"
+          method="post"
           onSubmit={(event) => {
             event.preventDefault();
             void submitAuthorization("approve");
@@ -265,7 +266,11 @@ export function McpConsentCard({ model }: { model: McpConsentViewModel }) {
                   "Cancel"
                 )}
               </Button>
-              <Button disabled={submittingAction !== null} type="submit">
+              <Button
+                disabled={submittingAction !== null}
+                onClick={() => void submitAuthorization("approve")}
+                type="button"
+              >
                 {submittingAction === "approve" ? (
                   <Icons.spinner className="size-4 animate-spin" />
                 ) : (

@@ -130,9 +130,12 @@ describe("app OAuth protocol route migration", () => {
     expect(serverRoutesSource).toContain("revokeMcpRefreshTokenSecret");
     expect(serverRoutesSource).toContain("readOAuthBody");
     expect(serverRoutesSource).toContain("bearerToken");
+    expect(serverRoutesSource).toContain("authorization?.match");
     expect(serverRoutesSource).toContain("process.env.VITE_LIGHTFAST_APP_URL");
     expect(serverRoutesSource).toContain("process.env.SERVICE_JWT_SECRET");
+    expect(serverRoutesSource).toContain("secret.length < 32");
     expect(consentSource).toContain("issueMcpAuthorizationCode");
+    expect(consentSource).toContain("requireHostedMcpResource");
     expect(existsSync(responsePath)).toBe(false);
 
     for (const routeSource of [

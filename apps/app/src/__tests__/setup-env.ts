@@ -5,6 +5,7 @@ process.env.DATABASE_PASSWORD ||= "test";
 process.env.DATABASE_USERNAME ||= "test";
 process.env.KV_REST_API_TOKEN ||= "test-kv-token";
 process.env.KV_REST_API_URL ||= "https://kv.lightfast.test";
+process.env.MCP_RESOURCE_URL ||= "https://mcp.lightfast.localhost/mcp";
 process.env.VITE_CLERK_PUBLISHABLE_KEY ||=
   "pk_test_dGVzdC1jbGVyay5saWdodGZhc3QuZXhhbXBsZSQ";
 process.env.VITE_SENTRY_DSN ||= "https://public@sentry.test/1";

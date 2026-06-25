@@ -1,4 +1,5 @@
 import { signServiceJWT } from "@repo/service-jwt";
+import { SignJWT } from "@vendor/jose";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { NotFoundError } from "../domain/errors";
@@ -67,6 +68,17 @@ async function serviceToken(
   });
 }
 
+async function expiredServiceToken() {
+  const now = Math.floor(Date.now() / 1000);
+  return await new SignJWT({ token_use: "service_access" })
+    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+    .setIssuer("mcp")
+    .setAudience("lightfast-app")
+    .setIssuedAt(now - 120)
+    .setExpirationTime(now - 60)
+    .sign(new TextEncoder().encode(jwtSecret));
+}
+
 function jsonRequest(input: { body: unknown; token?: string }) {
   return new Request("https://lightfast.localhost/api/internal/mcp/signals", {
     body: JSON.stringify(input.body),
@@ -130,7 +142,7 @@ describe("MCP signal internal adapter", () => {
     const response = await handleCreateMcpSignalInternalRequest(
       jsonRequest({
         body: { actor, input: "hello" },
-        token: await serviceToken({ ttlSeconds: -1 }),
+        token: await expiredServiceToken(),
       })
     );
 

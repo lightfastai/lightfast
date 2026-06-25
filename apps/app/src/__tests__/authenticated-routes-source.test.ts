@@ -196,11 +196,21 @@ describe("app authenticated route migration", () => {
     expect(authorizeRouteSource).toContain(
       'from "@api/app/tanstack/mcp-consent"'
     );
+    expect(authorizeRouteSource).toContain(
+      'value.some((item) => typeof item !== "string" || item.length === 0)'
+    );
     expect(consentCardSource).toContain("useServerFn");
     expect(consentCardSource).toContain("approveMcpAuthorization");
     expect(consentCardSource).toContain("denyMcpAuthorization");
     expect(consentCardSource).toContain('from "@api/app/tanstack/mcp-consent"');
     expect(consentCardSource).toContain("window.location.assign(redirectUrl)");
+    expect(consentCardSource).toContain('method="post"');
+    expect(consentCardSource).toContain("event.preventDefault();");
+    expect(consentCardSource).toContain('void submitAuthorization("approve");');
+    const approveButtonSource = consentCardSource.match(
+      /<Button[\s\S]*?submitAuthorization\("approve"\)[\s\S]*?<\/Button>/
+    )?.[0];
+    expect(approveButtonSource).toContain('type="button"');
     expect(existsSync(consentFunctionsPath)).toBe(false);
     expect(existsSync(consentServerPath)).toBe(false);
     expect(consentAdapterSource).toContain(
