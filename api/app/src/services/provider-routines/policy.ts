@@ -126,7 +126,7 @@ export function classifyLinearRoutine(
     return "read";
   }
   if (
-    /^(archive|assign|create|delete|move|remove|set|update)(_|$)/.test(
+    /^(archive|assign|create|delete|move|remove|save|set|update)(_|$)/.test(
       providerToolName
     )
   ) {

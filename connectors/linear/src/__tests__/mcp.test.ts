@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mcpState = vi.hoisted(() => ({
-  callTool: vi.fn(async () => ({
+  callTool: vi.fn(async (): Promise<unknown> => ({
     content: [{ text: "created", type: "text" }],
   })),
   close: vi.fn(async () => undefined),
@@ -203,6 +203,38 @@ describe("callLinearMcpTool", () => {
       })
     ).rejects.toMatchObject({
       cause: { name: "Error" },
+      code: "LINEAR_MCP_FAILED",
+      message: "Linear MCP tool call failed.",
+      name: "LinearAppNodeError",
+    });
+    expect(mcpState.close).toHaveBeenCalledOnce();
+  });
+
+  it("treats MCP tool-level error results as failures", async () => {
+    mcpState.callTool.mockResolvedValueOnce({
+      content: [
+        {
+          text: JSON.stringify({
+            error: "invalid_request",
+            message: "Invalid request.",
+            requestId: "req_123",
+            status: 400,
+          }),
+          type: "text",
+        },
+      ],
+      isError: true,
+    });
+
+    await expect(
+      callLinearMcpTool({
+        accessToken: "lin_access",
+        endpoint: "https://mcp.linear.test/mcp",
+        input: { query: "Roadmap" },
+        name: "list_initiatives",
+      })
+    ).rejects.toMatchObject({
+      cause: { name: "object" },
       code: "LINEAR_MCP_FAILED",
       message: "Linear MCP tool call failed.",
       name: "LinearAppNodeError",
