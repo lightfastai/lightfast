@@ -5,7 +5,6 @@ import { automationScheduler } from "./workflow/automation-scheduler";
 import { backfillSignalEntityLinks } from "./workflow/backfill-signal-entity-links";
 import { classifyPeople } from "./workflow/classify-people";
 import { classifySignal } from "./workflow/classify-signal";
-import { cleanupDeveloperSandboxRuns } from "./workflow/cleanup-developer-sandbox-runs";
 import { enrichSignalEntities } from "./workflow/enrich-signal-entities";
 import { indexSignalEntities } from "./workflow/index-signal-entities";
 import { queueLightfastIndexRefreshesFromSourceControl } from "./workflow/queue-skill-refresh-from-source-control";
@@ -34,7 +33,6 @@ export function createInngestRouteContext() {
       enrichSignalEntities,
       backfillSignalEntityLinks,
       classifyPeople,
-      cleanupDeveloperSandboxRuns,
       automationScheduler,
       runAutomation,
       runEntityResolution,

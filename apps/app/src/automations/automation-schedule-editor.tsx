@@ -25,6 +25,8 @@ import type { Automation } from "./automations-cache";
 import { automationUpdateMutationOptions } from "./automations-mutations";
 import { RailRow } from "./detail-sections";
 import {
+  getScheduleKindLabel,
+  getWeekdayLabel,
   isTimeBasedKind,
   SCHEDULE_KINDS,
   type ScheduleKind,
@@ -222,7 +224,7 @@ export function AutomationScheduleEditor({
             value={kind}
           >
             <SelectTrigger aria-label="Schedule kind">
-              <SelectValue />
+              <SelectValue>{getScheduleKindLabel(kind)}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {SCHEDULE_KINDS.map((option) => (
@@ -261,7 +263,7 @@ export function AutomationScheduleEditor({
               value={String(dayOfWeek)}
             >
               <SelectTrigger aria-label="Day of week">
-                <SelectValue />
+                <SelectValue>{getWeekdayLabel(dayOfWeek)}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {WEEKDAY_OPTIONS.map((day) => (

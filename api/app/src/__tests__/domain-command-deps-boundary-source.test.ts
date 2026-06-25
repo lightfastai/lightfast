@@ -57,11 +57,6 @@ describe("domain command dependency boundaries", () => {
         ],
       },
       {
-        command: "src/domain/developer-connections/commands.ts",
-        factory: "createDefaultDeveloperConnectionCommandDeps",
-        runtimeImports: ["../../services/developer-connections"],
-      },
-      {
         command: "src/domain/org-identity/commands.ts",
         factory: "createDefaultOrgIdentityCommandDeps",
         runtimeImports: [
@@ -165,10 +160,6 @@ describe("domain command dependency boundaries", () => {
           "../../services/connectors",
           "../../services/user-connectors/catalog",
         ],
-      },
-      {
-        adapter: "src/adapters/tanstack/developer-connections.ts",
-        runtimeImports: ["../../services/developer-connections"],
       },
       {
         adapter: "src/adapters/tanstack/org-identity.ts",

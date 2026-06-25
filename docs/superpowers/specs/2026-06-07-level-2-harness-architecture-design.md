@@ -7,9 +7,8 @@ Area: Lightfast OS, Objectives, Runs, Decisions, agent harness, B2B collaboratio
 ## Summary
 
 Lightfast's Level 1 Harness Scaffold gives agents the basic substrate they need:
-skills, connectors, developer connectors, sandbox access, and a ledger of
-external provider calls. Level 2 should add the intelligence harness above that
-substrate.
+skills, connectors, and a ledger of external provider calls. Level 2 should add
+the intelligence harness above that substrate.
 
 The Level 2 Harness is an org-scoped coordination engine that turns natural
 language intent into durable, collaborative execution state. A user should be
@@ -36,10 +35,6 @@ Current scaffolded primitives:
   source for product agents.
 - Connectors: external integrations such as Linear and X, with MCP-backed
   runtime tools and provider routine call records.
-- Developer Connectors: privileged developer integrations such as PlanetScale,
-  Upstash, Sentry, and Clerk, including sandbox lease materialization. These are
-  conceptually a privileged class of connector and should merge into the
-  connector/capability model over time.
 - Decisions: currently a product label over provider routine call audit rows.
   They record facts like "linear_create_issue was called" rather than modeling a
   durable human/system decision.
@@ -76,7 +71,6 @@ policy-aware state transitions, and explainable history.
 | --- | --- | --- |
 | Skills | Indexed instructions and resources | Capability instructions bound to Runs when relevant |
 | Connectors | External read/write integration tools | Capability providers for actions and evidence |
-| Developer Connectors | Privileged CLI/API/sandbox access | Privileged connector capability class governed by policy |
 | Decisions | Provider routine call audit surface | Collaboration and reasoning primitive |
 | Provider routine calls | External tool call ledger | Evidence attached to Decisions, Actions, Tasks, Runs, or Objectives |
 | Signals | Observed artifacts that might matter | Inputs that can create, link, or update Objectives |
@@ -125,9 +119,8 @@ Representative statuses:
 A Run is one bounded supervised attempt to advance an Objective.
 
 A Run may inspect a repo, bind capabilities, propose a plan, request Decisions,
-execute safe actions, call connectors, use a sandbox, edit code, create branches,
-open PRs, verify work, or pause on blockers. An Objective can have many Runs
-over time.
+execute safe actions, call connectors, edit code, create branches, open PRs,
+verify work, or pause on blockers. An Objective can have many Runs over time.
 
 Representative statuses:
 
@@ -209,7 +202,7 @@ Examples:
 
 - connector call result;
 - provider routine call id;
-- sandbox command log;
+- command log;
 - code diff;
 - PR link;
 - deployment URL;
@@ -232,11 +225,9 @@ Capabilities include:
 
 - skills;
 - connectors;
-- privileged developer connectors;
-- sandbox runtime;
 - repository access;
 - provider routines;
-- credentials and leases;
+- connector credentials;
 - org policies;
 - selected agent/runtime profiles.
 
@@ -250,7 +241,7 @@ harness.
 
 Examples:
 
-- run a local/sandbox command;
+- run a local command;
 - call a connector tool;
 - create a branch;
 - edit files;
@@ -411,7 +402,6 @@ The harness receives input from:
 - connector events;
 - source control events;
 - PR and deployment updates;
-- sandbox results;
 - provider routine call results;
 - scheduler ticks;
 - webhooks;
@@ -532,18 +522,12 @@ Capability classes:
 
 - `skill_instruction`
 - `connector_tool`
-- `developer_connector_tool`
-- `sandbox_runtime`
 - `repo_access`
 - `source_control`
 - `deployment_provider`
 - `secret_store`
 - `agent_runtime`
 - `policy`
-
-Developer Connectors should merge into this layer as privileged connector
-capabilities. The product may continue to present them differently when useful,
-but the Level 2 runtime should reason over one capability model.
 
 Capability Binding should happen per Run. This avoids mutable global capability
 state becoming invisible in historical audit trails.
@@ -557,7 +541,7 @@ Execution should support:
 - dry-run or proposal-only transitions;
 - supervised execution with Decision gates;
 - connector and provider routine calls;
-- sandbox command execution;
+- command execution through agent runtimes;
 - source control operations;
 - code editing through agent runtimes;
 - PR creation and update;
