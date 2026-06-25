@@ -8,7 +8,7 @@ import {
   markProviderRoutineCallSucceeded,
   type OrgConnectorConnection,
   type ProviderRoutineCall,
-  type ProviderRoutineCallRedactedPayload,
+  type ProviderRoutineCallPayload,
   type ProviderRoutineCallSourceSurface,
 } from "@db/app";
 import { db as appDb } from "@db/app/client";
@@ -20,6 +20,7 @@ import { XAppNodeError } from "@lightfast/connector-x/node";
 import type { ConnectableConnectorProvider } from "@repo/api-contract";
 import { log } from "@vendor/observability/log/next";
 
+import { captureProviderRoutinePayload } from "../provider-routines/payload";
 import { resolveXConnectorMcpEndpoint } from "./config";
 import { getFreshLinearConnectorAccessToken } from "./linear-flow";
 import { issueConnectorMcpToken } from "./mcp-auth";
@@ -231,7 +232,7 @@ async function callConnectorRuntimeTool(
       calledByUserId: context.source.calledByUserId,
       clerkOrgId: context.clerkOrgId,
       providerConnectionId: connection.id,
-      inputRedacted: redactedPresence(input),
+      inputPayload: captureProviderRoutinePayload(input),
       provider: context.provider,
       providerActorId: connection.providerActorId,
       providerToolName: context.providerToolName,
@@ -267,7 +268,7 @@ async function callConnectorRuntimeTool(
       await safelyMarkProviderRoutineCallSucceeded(
         {
           clerkOrgId: context.clerkOrgId,
-          outputRedacted: redactedPresence(result),
+          outputPayload: captureProviderRoutinePayload(result),
           publicId: providerRoutineCall.publicId,
         },
         logContext
@@ -417,7 +418,7 @@ async function safelyCreateProviderRoutineCall(input: {
   calledByUserId: string | null;
   clerkOrgId: string;
   providerConnectionId: number;
-  inputRedacted: ProviderRoutineCallRedactedPayload;
+  inputPayload: ProviderRoutineCallPayload;
   provider: ConnectableConnectorProvider;
   providerActorId: string | null;
   providerToolName: string;
@@ -464,7 +465,7 @@ async function safelyMarkProviderRoutineCallProviderAttempted(
 async function safelyMarkProviderRoutineCallSucceeded(
   input: {
     clerkOrgId: string;
-    outputRedacted: ProviderRoutineCallRedactedPayload;
+    outputPayload: ProviderRoutineCallPayload;
     publicId: string;
   },
   logContext: Record<string, unknown>
@@ -639,13 +640,6 @@ function normalizeMcpToolInput(input: unknown) {
     return;
   }
   return { input };
-}
-
-function redactedPresence(value: unknown): ProviderRoutineCallRedactedPayload {
-  if (value === undefined) {
-    return null;
-  }
-  return { present: true };
 }
 
 function isTerminalConnectorAuthError(

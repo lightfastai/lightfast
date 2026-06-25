@@ -163,6 +163,7 @@ describe("real Clerk Decisions smoke helpers", () => {
         grantId: "decisions-runtime-smoke:org_123",
         kind: "mcp",
         orgId: "org_123",
+        scopes: ["mcp:provider_routines:read", "mcp:provider_routines:write"],
         userId: "user_123",
       },
       input: {

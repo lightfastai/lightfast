@@ -66,8 +66,8 @@ export {
   PROVIDER_ROUTINE_CALL_ID_PREFIX,
   type ProviderRoutineCall,
   type ProviderRoutineCallCalledByKind,
+  type ProviderRoutineCallPayload,
   type ProviderRoutineCallProvider,
-  type ProviderRoutineCallRedactedPayload,
   type ProviderRoutineCallSourceSurface,
   type ProviderRoutineCallStatus,
 } from "./org-provider-routine-calls";

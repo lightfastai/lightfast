@@ -10,6 +10,7 @@ import { z } from "zod";
 import { resolveAuthContextFromClerk } from "../../auth/identity";
 import { actorFromAuthIdentity, isDomainError } from "../../domain";
 import { requireBoundClerkOrgActor } from "../../domain/gates";
+import { sanitizeProviderRoutinePayload } from "../../services/provider-routines/payload";
 
 const DECISION_PROVIDERS = [
   "linear",
@@ -72,11 +73,14 @@ interface SerializablePayload {
 
 export type DecisionResult = Omit<
   ProviderRoutineCall,
-  "inputRedacted" | "outputRedacted"
+  | "inputPayload"
+  | "legacyInputRedacted"
+  | "legacyOutputRedacted"
+  | "outputPayload"
 > & {
   calledByUsername: string | null;
-  inputRedacted: SerializablePayload | null;
-  outputRedacted: SerializablePayload | null;
+  inputPayload: SerializablePayload | null;
+  outputPayload: SerializablePayload | null;
 };
 
 export interface ListDecisionsResult {
@@ -175,13 +179,18 @@ function toSerializableValue(value: unknown): SerializableValue {
 }
 
 function toSerializablePayload(
-  value: ProviderRoutineCall["inputRedacted"]
+  value: ProviderRoutineCall["inputPayload"]
 ): SerializablePayload | null {
   if (!value) {
     return null;
   }
 
-  const payload = toSerializableValue(value);
+  const sanitized = sanitizeProviderRoutinePayload(value);
+  if (!sanitized) {
+    return null;
+  }
+
+  const payload = toSerializableValue(sanitized);
   return payload && !Array.isArray(payload) && typeof payload === "object"
     ? payload
     : null;
@@ -191,11 +200,19 @@ function serializeDecision(
   decision: DecisionRow,
   calledByUsername: string | null
 ): DecisionResult {
+  const {
+    inputPayload,
+    legacyInputRedacted: _legacyInputRedacted,
+    legacyOutputRedacted: _legacyOutputRedacted,
+    outputPayload,
+    ...rest
+  } = decision;
+
   return {
-    ...decision,
+    ...rest,
     calledByUsername,
-    inputRedacted: toSerializablePayload(decision.inputRedacted),
-    outputRedacted: toSerializablePayload(decision.outputRedacted),
+    inputPayload: toSerializablePayload(inputPayload),
+    outputPayload: toSerializablePayload(outputPayload),
   };
 }
 

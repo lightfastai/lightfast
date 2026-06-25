@@ -110,7 +110,7 @@ export {
   type PersonMemberStatus,
   type PersonSource,
   type ProviderRoutineCall,
-  type ProviderRoutineCallRedactedPayload,
+  type ProviderRoutineCallPayload,
   type ProviderRoutineCallSourceSurface,
   type ResourcesTruncatedFlag,
   SIGNAL_VIEW_ID_PREFIX,

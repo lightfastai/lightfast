@@ -408,7 +408,7 @@ describe("loadConnectorRuntimeTools", () => {
     expect(createProviderRoutineCallMock).not.toHaveBeenCalled();
   });
 
-  it("records Linear MCP runtime calls as succeeded with redacted payload presence", async () => {
+  it("records Linear MCP runtime calls as succeeded with captured payload data", async () => {
     listCurrentOrgConnectorConnectionsMock.mockResolvedValue([connection()]);
     getCurrentOrgConnectorConnectionMock.mockResolvedValue(connection());
     callLinearMcpToolMock.mockResolvedValue({
@@ -431,7 +431,7 @@ describe("loadConnectorRuntimeTools", () => {
         calledByUserId: null,
         clerkOrgId: "org_acme",
         providerConnectionId: 1,
-        inputRedacted: { present: true },
+        inputPayload: { title: "[redacted]" },
         provider: "linear",
         providerActorId: "actor_1",
         providerToolName: "create_issue",
@@ -463,7 +463,7 @@ describe("loadConnectorRuntimeTools", () => {
       {},
       expect.objectContaining({
         clerkOrgId: "org_acme",
-        outputRedacted: { present: true },
+        outputPayload: { content: [{ text: "mcp_result" }] },
         publicId: "provider_routine_call_123",
       })
     );
@@ -569,7 +569,7 @@ describe("loadConnectorRuntimeTools", () => {
       expect.objectContaining({
         calledById: "connector-runtime",
         calledByKind: "system",
-        inputRedacted: null,
+        inputPayload: null,
         sourceRef: "connector-runtime",
         sourceSurface: "system",
       })

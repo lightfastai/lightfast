@@ -343,6 +343,7 @@ describe("callProviderRoutine", () => {
         calledByKind: "user",
         calledByUserId: "user_123",
         clerkOrgId: "org_acme",
+        inputPayload: { title: "Bug" },
         providerConnectionId: 1,
         routineId: "linear__create_issue",
         sourceClientId: "mcp_client_123",
@@ -365,9 +366,50 @@ describe("callProviderRoutine", () => {
     expect(markProviderRoutineCallSucceededMock).toHaveBeenCalledWith(
       {},
       expect.objectContaining({
-        outputRedacted: { present: true },
+        outputPayload: { content: [{ text: "created" }] },
         publicId: "provider_routine_call_123",
       })
+    );
+  });
+
+  it("returns provider success when the success ledger update fails", async () => {
+    const warnMock = vi.fn();
+    callToolMock.mockResolvedValue({ content: [{ text: "created" }] });
+    markProviderRoutineCallSucceededMock.mockRejectedValue(
+      new Error("ledger write secret")
+    );
+
+    await expect(
+      callProviderRoutine(
+        context({
+          log: { error: vi.fn(), info: vi.fn(), warn: warnMock },
+        }),
+        {
+          input: { title: "Bug" },
+          routineId: "linear__create_issue",
+        }
+      )
+    ).resolves.toEqual({
+      provider: "linear",
+      providerRoutineCallId: "provider_routine_call_123",
+      providerToolName: "create_issue",
+      result: { content: [{ text: "created" }] },
+      routineId: "linear__create_issue",
+      status: "succeeded",
+    });
+
+    expect(markProviderRoutineCallFailedMock).not.toHaveBeenCalled();
+    expect(warnMock).toHaveBeenCalledWith(
+      "[provider-routines] success ledger update failed",
+      expect.objectContaining({
+        clerkOrgId: "org_acme",
+        providerRoutineCallId: "provider_routine_call_123",
+        routineId: "linear__create_issue",
+        success: false,
+      })
+    );
+    expect(JSON.stringify(warnMock.mock.calls)).not.toContain(
+      "ledger write secret"
     );
   });
 });
