@@ -41,6 +41,7 @@ describe("AutomationRunDetailContent", () => {
             runId: "automation_run_123",
             schemaVersion: "automation.run.ai.v1",
             startedAt: "2026-06-06T00:00:00.000Z",
+            targetKind: "connector",
             transcript: [
               {
                 content: "Post a concise launch update.",
@@ -98,6 +99,7 @@ describe("AutomationRunDetailContent", () => {
             runId: "automation_run_123",
             schemaVersion: "automation.run.ai.v1",
             startedAt: "2026-06-06T00:00:00.000Z",
+            targetKind: "decisions",
             transcript: [
               {
                 content: "Summarize the workspace.",

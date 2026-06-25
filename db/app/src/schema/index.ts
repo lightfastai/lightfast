@@ -25,6 +25,7 @@ export {
   type AutomationScheduleConfig,
   type AutomationScheduleKind,
   type AutomationStatus,
+  type AutomationTargetKind,
   createAutomationId,
   createAutomationRunId,
   createDecisionViewId,

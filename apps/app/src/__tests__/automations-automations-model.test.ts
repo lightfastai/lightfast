@@ -17,6 +17,8 @@ function automation(
     scheduleConfig: { time: "09:00" },
     timezone: "UTC",
     status: "active",
+    targetKind: "decisions",
+    connectorProvider: null,
     nextRunAt: new Date("2026-05-28T09:00:00.000Z"),
     lastRunAt: new Date("2026-05-27T09:00:00.000Z"),
     scheduleVersion: 1,

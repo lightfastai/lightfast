@@ -225,6 +225,13 @@
       "when": 1782347414091,
       "tag": "0031_brown_black_bolt",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "5",
+      "when": 1782350985366,
+      "tag": "0032_special_talkback",
+      "breakpoints": true
     }
   ]
 }

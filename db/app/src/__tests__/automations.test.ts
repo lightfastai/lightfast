@@ -8,6 +8,7 @@ import {
   createAutomation,
   deleteAutomation,
   markAutomationRunFailed,
+  updateAutomation,
 } from "../utils/automations";
 
 describe("calculateNextRunAt", () => {
@@ -144,6 +145,7 @@ describe("createAutomation", () => {
         scheduleConfig: {},
         timezone: "UTC",
         status: "active",
+        targetKind: "connector",
         nextRunAt: null,
         lastRunAt: null,
         scheduleVersion: 1,
@@ -172,21 +174,24 @@ describe("createAutomation", () => {
           name: "Linear triage",
           prompt: "Create follow-up issues.",
           schedule: { kind: "manual", config: {} },
+          targetKind: "connector",
         },
         { now: new Date("2026-05-27T00:00:00.000Z") }
       )
     ).resolves.toMatchObject({
       connectorProvider: "linear",
+      targetKind: "connector",
     });
 
     expect(valuesMock).toHaveBeenCalledWith(
       expect.objectContaining({
         connectorProvider: "linear",
+        targetKind: "connector",
       })
     );
   });
 
-  it("persists no connector provider when the automation has no connector", async () => {
+  it("persists decisions as the explicit target when the automation has no connector", async () => {
     let insertedPublicId = "";
     const valuesMock = vi.fn((values: { publicId: string }) => {
       insertedPublicId = values.publicId;
@@ -205,6 +210,7 @@ describe("createAutomation", () => {
         scheduleConfig: {},
         timezone: "UTC",
         status: "active",
+        targetKind: "decisions",
         nextRunAt: null,
         lastRunAt: null,
         scheduleVersion: 1,
@@ -228,22 +234,95 @@ describe("createAutomation", () => {
         db,
         {
           clerkOrgId: "org_test",
+          connectorProvider: null,
           createdByUserId: "user_test",
           name: "Daily summary",
           prompt: "Summarize the workspace.",
           schedule: { kind: "manual", config: {} },
+          targetKind: "decisions",
         },
         { now: new Date("2026-05-27T00:00:00.000Z") }
       )
     ).resolves.toMatchObject({
       connectorProvider: null,
+      targetKind: "decisions",
     });
 
     expect(valuesMock).toHaveBeenCalledWith(
       expect.objectContaining({
         connectorProvider: null,
+        targetKind: "decisions",
       })
     );
+  });
+});
+
+describe("updateAutomation", () => {
+  it("clears the connector when switching to decisions without an explicit connectorProvider", async () => {
+    const publicId = "automation_123e4567-e89b-12d3-a456-426614174000";
+    const existing = {
+      id: 1,
+      publicId,
+      clerkOrgId: "org_test",
+      connectorProvider: "linear",
+      createdByUserId: "user_test",
+      name: "Linear triage",
+      prompt: "Create follow-up issues.",
+      scheduleKind: "manual",
+      scheduleConfig: {},
+      timezone: "UTC",
+      status: "active",
+      targetKind: "connector",
+      nextRunAt: null,
+      lastRunAt: null,
+      scheduleVersion: 1,
+      createdAt: new Date("2026-05-27T00:00:00.000Z"),
+      updatedAt: new Date("2026-05-27T00:00:00.000Z"),
+    } as const;
+    const updated = {
+      ...existing,
+      connectorProvider: null,
+      targetKind: "decisions",
+      scheduleVersion: 2,
+      updatedAt: new Date("2026-05-27T00:01:00.000Z"),
+    } as const;
+    const limitMock = vi
+      .fn()
+      .mockResolvedValueOnce([existing])
+      .mockResolvedValueOnce([updated]);
+    const whereMock = vi.fn((_condition: SQL) => Promise.resolve());
+    const setMock = vi.fn((_: Record<string, unknown>) => ({
+      where: whereMock,
+    }));
+    const db = {
+      select: vi.fn(() => ({
+        from: () => ({
+          where: () => ({
+            limit: limitMock,
+          }),
+        }),
+      })),
+      update: vi.fn(() => ({ set: setMock })),
+    } as unknown as Database;
+
+    await expect(
+      updateAutomation(db, {
+        clerkOrgId: "org_test",
+        publicId,
+        targetKind: "decisions",
+      })
+    ).resolves.toMatchObject({
+      connectorProvider: null,
+      targetKind: "decisions",
+    });
+
+    expect(setMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connectorProvider: null,
+        targetKind: "decisions",
+      })
+    );
+    expect(setMock.mock.calls[0]?.[0]).toHaveProperty("scheduleVersion");
   });
 });
 

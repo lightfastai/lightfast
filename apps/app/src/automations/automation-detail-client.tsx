@@ -5,6 +5,7 @@ import {
   ReloadIcon as RefreshCcw,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import type { AutomationTargetKind } from "@repo/app-validation/schemas";
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 import { SidebarTrigger } from "@repo/ui-v2/components/ui/sidebar";
@@ -70,9 +71,10 @@ function formatConnectorProvider(
 }
 
 function formatAutomationTarget(
+  targetKind: AutomationTargetKind,
   provider: keyof typeof CONNECTOR_LABELS | null | undefined
 ) {
-  return provider
+  return targetKind === "connector"
     ? `Connector / ${formatConnectorProvider(provider)}`
     : "Decisions";
 }
@@ -168,7 +170,10 @@ export function AutomationDetailClient({
           <AutomationScheduleEditor automation={automation} />
           <RailRow label="Target">
             <span className="text-foreground text-sm">
-              {formatAutomationTarget(automation.connectorProvider)}
+              {formatAutomationTarget(
+                automation.targetKind,
+                automation.connectorProvider
+              )}
             </span>
           </RailRow>
         </RailSection>

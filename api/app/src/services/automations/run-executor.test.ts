@@ -25,6 +25,7 @@ const input = {
     publicId: "automation_123",
     scheduleConfig: { dayOfWeek: 1, time: "09:00" },
     scheduleKind: "weekly",
+    targetKind: "decisions",
     timezone: "UTC",
   },
   deploymentEnvironment: "preview",
@@ -45,6 +46,7 @@ const output: AutomationRunAiOutput = {
   runId: "automation_run_123",
   schemaVersion: "automation.run.ai.v1",
   startedAt: "2026-06-06T00:00:00.000Z",
+  targetKind: "decisions",
   transcript: [],
   usage: {},
 };

@@ -15,12 +15,20 @@ interface AutomationRunAiOutput {
   model: string;
   providerRoutineCallIds: string[];
   schemaVersion: "automation.run.ai.v1";
+  targetKind?: AutomationTargetKind;
   transcript: Array<Record<string, unknown> & { kind?: unknown }>;
   usage: Record<string, unknown>;
 }
 
-function formatAutomationTarget(provider: ConnectorProvider | null): string {
-  return provider ? `Connector / ${CONNECTOR_LABELS[provider]}` : "Decisions";
+type AutomationTargetKind = "connector" | "decisions";
+
+function formatAutomationTarget(
+  targetKind: AutomationTargetKind,
+  provider: ConnectorProvider | null
+): string {
+  return targetKind === "connector"
+    ? `Connector / ${provider ? CONNECTOR_LABELS[provider] : "-"}`
+    : "Decisions";
 }
 
 function formatEventKind(kind: string): string {
@@ -45,6 +53,9 @@ export function isAutomationRunAiOutput(
     typeof output.model === "string" &&
     (output.connectorProvider === null ||
       isConnectorProvider(output.connectorProvider)) &&
+    (output.targetKind === undefined ||
+      output.targetKind === "connector" ||
+      output.targetKind === "decisions") &&
     Array.isArray(output.providerRoutineCallIds) &&
     output.providerRoutineCallIds.every((id) => typeof id === "string") &&
     Array.isArray(output.transcript) &&
@@ -58,6 +69,10 @@ export function AutomationRunAiOutputView({
 }: {
   output: AutomationRunAiOutput;
 }) {
+  const targetKind =
+    output.targetKind ??
+    (output.connectorProvider === null ? "decisions" : "connector");
+
   return (
     <div className="space-y-5">
       <div className="space-y-1.5">
@@ -71,7 +86,7 @@ export function AutomationRunAiOutputView({
 
       <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
         <OutputMeta label="Target">
-          {formatAutomationTarget(output.connectorProvider)}
+          {formatAutomationTarget(targetKind, output.connectorProvider)}
         </OutputMeta>
         <OutputMeta label="Finish">{output.finishReason}</OutputMeta>
         <OutputMeta label="Model">{output.model}</OutputMeta>

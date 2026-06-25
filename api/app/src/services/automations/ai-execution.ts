@@ -70,6 +70,7 @@ export type ExecuteAutomationRunAutomation = Pick<
   | "publicId"
   | "scheduleConfig"
   | "scheduleKind"
+  | "targetKind"
   | "timezone"
 > & {
   connectorProvider: ConnectableConnectorProvider | null;
@@ -88,6 +89,7 @@ export interface ExecuteConnectorAutomationRunInput
   extends ExecuteAutomationRunInput {
   automation: ExecuteAutomationRunAutomation & {
     connectorProvider: ConnectableConnectorProvider;
+    targetKind: "connector";
   };
 }
 
@@ -95,19 +97,29 @@ export interface ExecuteDecisionAutomationRunInput
   extends ExecuteAutomationRunInput {
   automation: ExecuteAutomationRunAutomation & {
     connectorProvider: null;
+    targetKind: "decisions";
   };
 }
 
 export async function executeAutomationRun(
   input: ExecuteAutomationRunInput
 ): Promise<AutomationRunAiOutput> {
-  const connectorProvider = input.automation.connectorProvider;
-  if (connectorProvider) {
+  const target = getAutomationRunTarget(input.automation);
+  if (target === "connector") {
+    const connectorProvider = input.automation.connectorProvider;
+    if (!connectorProvider) {
+      throw automationExecutionError({
+        code: "AUTOMATION_CONNECTOR_REQUIRED",
+        message: "Connector automations require a connector provider.",
+      });
+    }
+
     return executeConnectorAutomationRun({
       ...input,
       automation: {
         ...input.automation,
         connectorProvider,
+        targetKind: "connector",
       },
     });
   }
@@ -117,6 +129,7 @@ export async function executeAutomationRun(
     automation: {
       ...input.automation,
       connectorProvider: null,
+      targetKind: "decisions",
     },
   });
 }
@@ -482,9 +495,9 @@ function automationDecisionContext(
 }
 
 export function getAutomationRunTarget(input: {
-  connectorProvider: ConnectableConnectorProvider | null;
+  targetKind: AutomationRunTarget;
 }): AutomationRunTarget {
-  return input.connectorProvider ? "connector" : "decisions";
+  return input.targetKind;
 }
 
 function buildAutomationSystemPrompt(

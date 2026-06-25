@@ -65,6 +65,7 @@ async function createDeleteSmokeAutomation(input: {
     name: input.fixture.automationName,
     prompt: input.fixture.automationPrompt,
     schedule: { kind: "manual", config: {} },
+    targetKind: "decisions",
     timezone: "UTC",
   });
 }

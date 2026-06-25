@@ -1,0 +1,1 @@
+ALTER TABLE `lightfast_org_automations` ADD `target_kind` varchar(32);

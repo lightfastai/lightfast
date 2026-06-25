@@ -222,15 +222,29 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
   );
 
   const onSubmit = (values: FormValues) => {
-    createMutation.mutate({
-      connectorProvider:
-        values.automationTarget === "connector"
-          ? values.connectorProvider
-          : null,
+    const baseInput = {
       name: values.name,
       prompt: values.prompt,
       schedule: buildSchedule(values),
       timezone: values.timezone,
+    };
+
+    if (values.automationTarget === "connector") {
+      if (!values.connectorProvider) {
+        return;
+      }
+      createMutation.mutate({
+        ...baseInput,
+        connectorProvider: values.connectorProvider,
+        targetKind: "connector",
+      });
+      return;
+    }
+
+    createMutation.mutate({
+      ...baseInput,
+      connectorProvider: null,
+      targetKind: "decisions",
     });
   };
 
