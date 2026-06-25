@@ -1,14 +1,17 @@
 import {
   apiContract,
   type CreateSignalInput,
+  connectableConnectorProviderSchema,
   type DecisionDetail,
   type DecisionFindInput,
   type DecisionFindOutput,
   type DecisionGetInput,
+  decisionCalledByKindSchema,
   decisionFindInputSchema,
   decisionFindOutputSchema,
   decisionGetInputSchema,
   decisionGetOutputSchema,
+  decisionStatusSchema,
   type GetSignalInput,
   type GetSignalOutput,
   lightfastMcpToolPolicy,
@@ -22,7 +25,9 @@ import {
   type ProviderRoutineFindOutput,
   type ProviderRoutineSourceSurface,
   providerRoutineCallInputSchema,
+  providerRoutineClassificationSchema,
   providerRoutineFindInputSchema,
+  providerRoutineSourceSurfaceSchema,
 } from "@repo/api-contract";
 import {
   createLightfastMcpToolDefinitions,
@@ -224,6 +229,81 @@ const DECISION_TOOLS = [
   },
 ] satisfies LightfastMcpToolDefinition[];
 
+const mcpDecisionDateTimeSchema = z.string().datetime();
+
+const mcpDecisionCursorSchema = z
+  .object({
+    createdAt: mcpDecisionDateTimeSchema,
+    id: z.number().int().positive(),
+  })
+  .strict();
+
+const mcpDecisionFindInputSchema = z
+  .object({
+    cursor: mcpDecisionCursorSchema.nullish(),
+    limit: z.number().int().min(1).max(100).optional(),
+    providers: z.array(connectableConnectorProviderSchema).max(8).optional(),
+    query: z.string().trim().max(200).optional(),
+    since: mcpDecisionDateTimeSchema.optional(),
+    sourceSurfaces: z
+      .array(providerRoutineSourceSurfaceSchema)
+      .max(8)
+      .optional(),
+    statuses: z.array(decisionStatusSchema).max(3).optional(),
+    until: mcpDecisionDateTimeSchema.optional(),
+  })
+  .strict();
+
+const mcpDecisionRedactedPayloadSchema = z
+  .record(z.string(), z.unknown())
+  .nullable();
+
+const mcpDecisionBaseSchema = z
+  .object({
+    calledById: z.string().min(1),
+    calledByKind: decisionCalledByKindSchema,
+    calledByUserId: z.string().nullable(),
+    classification: providerRoutineClassificationSchema,
+    createdAt: mcpDecisionDateTimeSchema,
+    errorCode: z.string().nullable(),
+    errorMessage: z.string().nullable(),
+    finishedAt: mcpDecisionDateTimeSchema.nullable(),
+    id: z.string().min(1),
+    provider: connectableConnectorProviderSchema,
+    providerToolName: z.string().min(1),
+    routineId: z.string().min(1),
+    snippet: z.string(),
+    sourceSurface: providerRoutineSourceSurfaceSchema,
+    startedAt: mcpDecisionDateTimeSchema,
+    status: decisionStatusSchema,
+    title: z.string().min(1),
+  })
+  .strict();
+
+const mcpDecisionSummarySchema = mcpDecisionBaseSchema;
+
+const mcpDecisionDetailSchema = mcpDecisionBaseSchema.extend({
+  inputRedacted: mcpDecisionRedactedPayloadSchema,
+  outputRedacted: mcpDecisionRedactedPayloadSchema,
+  providerActorId: z.string().nullable(),
+  providerAttempted: z.boolean(),
+  providerConnectionId: z.number().int().positive(),
+  providerRoutineCallId: z.string().min(1),
+  providerWorkspaceId: z.string().nullable(),
+  sourceClientId: z.string().nullable(),
+  sourceRef: z.string().nullable(),
+  updatedAt: mcpDecisionDateTimeSchema,
+});
+
+const mcpDecisionFindOutputSchema = z
+  .object({
+    items: z.array(mcpDecisionSummarySchema),
+    nextCursor: mcpDecisionCursorSchema.nullable(),
+  })
+  .strict();
+
+const mcpDecisionGetOutputSchema = mcpDecisionDetailSchema;
+
 const PROXY_TOOLS = [
   {
     auditEventName: "mcp.proxy.call",
@@ -258,14 +338,15 @@ const PROXY_TOOLS = [
 export function registerHostedMcpTools(server: unknown): void {
   const target = server as HostedMcpServerAdapter;
   for (const tool of listHostedMcpTools()) {
+    const registrationSchemas = registrationSchemasForTool(tool);
     const config: Record<string, unknown> = {
       description: tool.description,
     };
-    if (tool.inputSchema) {
-      config.inputSchema = tool.inputSchema;
+    if (registrationSchemas.inputSchema) {
+      config.inputSchema = registrationSchemas.inputSchema;
     }
-    if (tool.outputSchema) {
-      config.outputSchema = tool.outputSchema;
+    if (registrationSchemas.outputSchema) {
+      config.outputSchema = registrationSchemas.outputSchema;
     }
 
     target.registerTool(tool.name, config, async (...args: unknown[]) => {
@@ -287,6 +368,31 @@ export function registerHostedMcpTools(server: unknown): void {
         return formatMcpError(error);
       }
     });
+  }
+}
+
+function registrationSchemasForTool(tool: LightfastMcpToolDefinition): {
+  inputSchema?: unknown;
+  outputSchema?: unknown;
+} {
+  switch (tool.contractPath) {
+    case "decisions.find":
+      return {
+        inputSchema: mcpDecisionFindInputSchema,
+        outputSchema: mcpDecisionFindOutputSchema,
+      };
+
+    case "decisions.get":
+      return {
+        inputSchema: decisionGetInputSchema,
+        outputSchema: mcpDecisionGetOutputSchema,
+      };
+
+    default:
+      return {
+        inputSchema: tool.inputSchema,
+        outputSchema: tool.outputSchema,
+      };
   }
 }
 

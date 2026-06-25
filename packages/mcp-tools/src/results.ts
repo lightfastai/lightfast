@@ -16,15 +16,44 @@ export interface LightfastMcpErrorResult {
 }
 
 function toStructuredContent(result: unknown): Record<string, unknown> {
-  if (result && typeof result === "object" && !Array.isArray(result)) {
-    return result as Record<string, unknown>;
+  const jsonResult = toJsonCompatible(result);
+  if (
+    jsonResult &&
+    typeof jsonResult === "object" &&
+    !Array.isArray(jsonResult)
+  ) {
+    return jsonResult as Record<string, unknown>;
   }
-  return { result };
+  return { result: jsonResult ?? null };
 }
 
 function stringifyResult(result: unknown): string {
-  const json = JSON.stringify(result, null, 2);
-  return json ?? String(result);
+  const json = safeStringify(result, 2);
+  return json ?? safeToString(result);
+}
+
+function toJsonCompatible(result: unknown): unknown {
+  const json = safeStringify(result);
+  if (json === undefined) {
+    return;
+  }
+  return JSON.parse(json) as unknown;
+}
+
+function safeStringify(result: unknown, space?: number): string | undefined {
+  try {
+    return JSON.stringify(result, null, space);
+  } catch {
+    return;
+  }
+}
+
+function safeToString(result: unknown): string {
+  try {
+    return String(result);
+  } catch {
+    return "[Unserializable MCP result]";
+  }
 }
 
 export function formatMcpSuccess(result: unknown): LightfastMcpSuccessResult {
