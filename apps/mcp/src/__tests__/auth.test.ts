@@ -153,4 +153,17 @@ describe("verifyMcpBearerToken", () => {
       ]),
     });
   });
+
+  it("accepts decision MCP scope", async () => {
+    const { verifyMcpBearerToken } = await importVerifier();
+    const token = await validAccessToken({
+      scope: "mcp:decisions:read",
+    });
+
+    await expect(
+      verifyMcpBearerToken(bearerRequest(token))
+    ).resolves.toMatchObject({
+      scopes: new Set(["mcp:decisions:read"]),
+    });
+  });
 });

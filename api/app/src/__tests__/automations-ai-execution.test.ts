@@ -2,9 +2,11 @@ import type { Automation, AutomationRun } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const callAutomationProviderRoutineMock = vi.fn();
+const findAutomationDecisionsMock = vi.fn();
 const findAutomationProviderRoutinesMock = vi.fn();
 const gatewayMock = vi.fn();
 const generateTextMock = vi.fn();
+const getAutomationDecisionMock = vi.fn();
 const logInfoMock = vi.fn();
 const logWarnMock = vi.fn();
 const stepCountIsMock = vi.fn();
@@ -27,6 +29,11 @@ vi.mock("@vendor/observability/log/next", () => ({
 vi.mock("../services/automations/provider-routines", () => ({
   callAutomationProviderRoutine: callAutomationProviderRoutineMock,
   findAutomationProviderRoutines: findAutomationProviderRoutinesMock,
+}));
+
+vi.mock("../services/automations/decisions", () => ({
+  findAutomationDecisions: findAutomationDecisionsMock,
+  getAutomationDecision: getAutomationDecisionMock,
 }));
 
 const {
@@ -64,8 +71,55 @@ const providerRoutineContext = {
   selectedProvider: "x",
 };
 
+const decisionContext = {
+  automationPublicId: "automation_123",
+  clerkOrgId: "org_acme",
+  runPublicId: "automation_run_123",
+};
+
+const startedAt = new Date("2026-06-06T00:00:00.000Z");
+const finishedAt = new Date("2026-06-06T00:01:00.000Z");
+const decisionSummary = {
+  calledById: "automation_run_123",
+  calledByKind: "automation",
+  calledByUserId: null,
+  classification: "write",
+  createdAt: startedAt,
+  errorCode: null,
+  errorMessage: null,
+  finishedAt,
+  id: "provider_routine_call_123",
+  provider: "linear",
+  providerToolName: "create_issue",
+  routineId: "linear__create_issue",
+  snippet: "Linear / Create Issue succeeded from Automation",
+  sourceSurface: "automation",
+  startedAt,
+  status: "succeeded",
+  title: "Create Issue",
+} as const;
+
+const decisionDetail = {
+  ...decisionSummary,
+  inputRedacted: { present: true },
+  outputRedacted: { present: true },
+  providerActorId: "actor_123",
+  providerAttempted: true,
+  providerConnectionId: 42,
+  providerRoutineCallId: "provider_routine_call_123",
+  providerWorkspaceId: "workspace_123",
+  sourceClientId: null,
+  sourceRef: "automation_run_123",
+  updatedAt: finishedAt,
+} as const;
+
 beforeEach(() => {
   callAutomationProviderRoutineMock.mockReset();
+  findAutomationDecisionsMock.mockReset();
+  findAutomationDecisionsMock.mockResolvedValue({
+    items: [decisionSummary],
+    nextCursor: null,
+  });
   findAutomationProviderRoutinesMock.mockReset();
   findAutomationProviderRoutinesMock.mockResolvedValue({
     routines: [
@@ -89,6 +143,9 @@ beforeEach(() => {
     totalUsage: { inputTokens: 10, outputTokens: 12, totalTokens: 22 },
   });
 
+  getAutomationDecisionMock.mockReset();
+  getAutomationDecisionMock.mockResolvedValue(decisionDetail);
+
   logInfoMock.mockReset();
   logWarnMock.mockReset();
 
@@ -99,7 +156,7 @@ beforeEach(() => {
 });
 
 describe("executeAutomationRun", () => {
-  it("runs without connector tools when no connector is selected", async () => {
+  it("runs decision-target tools when no connector is selected", async () => {
     const automationWithoutConnector = {
       ...automation,
       connectorProvider: null,
@@ -122,21 +179,25 @@ describe("executeAutomationRun", () => {
       runId: "automation_run_123",
     });
     expect(findAutomationProviderRoutinesMock).not.toHaveBeenCalled();
-    expect(toolMock).not.toHaveBeenCalled();
+    expect(toolMock).toHaveBeenCalledTimes(2);
+    expect(stepCountIsMock).toHaveBeenCalledWith(5);
     expect(generateTextMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        tools: undefined,
+        tools: expect.objectContaining({
+          findDecisions: expect.any(Object),
+          getDecision: expect.any(Object),
+        }),
       })
     );
     expect(generateTextMock.mock.calls[0]?.[0].system).toEqual(
-      expect.stringContaining("No connector selected")
+      expect.stringContaining("Selected target: Decisions")
     );
     expect(generateTextMock.mock.calls[0]?.[0].system).not.toEqual(
       expect.stringContaining("Use only routines from the selected connector.")
     );
     expect(
       generateTextMock.mock.calls[0]?.[0].providerOptions.gateway.tags
-    ).toEqual(expect.arrayContaining(["connector:none"]));
+    ).toEqual(expect.arrayContaining(["target:decisions", "connector:none"]));
   });
 
   it("preflights the selected connector routines and runs the model with automation-scoped tools", async () => {
@@ -197,6 +258,7 @@ describe("executeAutomationRun", () => {
             environment: "preview",
             model: "anthropic/claude-sonnet-4.6",
             runId: "automation_run_123",
+            target: "connector",
           },
           recordInputs: false,
           recordOutputs: false,
@@ -212,6 +274,7 @@ describe("executeAutomationRun", () => {
               "org:org_acme",
               "automation:automation_123",
               "run:automation_run_123",
+              "target:connector",
               "connector:x",
               "env:preview",
             ]),
@@ -619,6 +682,83 @@ describe("executeAutomationRun", () => {
           routineId: "x__postTweet",
           status: "succeeded",
           toolName: "callProviderRoutine",
+        }),
+      ])
+    );
+  });
+
+  it("delegates decision-target tools and records redacted decision transcript", async () => {
+    const automationWithoutConnector = {
+      ...automation,
+      connectorProvider: null,
+      name: "Weekly Linear decisions",
+      prompt: "Summarize Linear issue decisions from the past week.",
+    } as Automation;
+    generateTextMock.mockImplementation(async (options) => {
+      await options.tools.findDecisions.execute({
+        providers: ["linear"],
+        query: "linear create issue",
+        since: "2026-05-30T00:00:00.000Z",
+      });
+      await options.tools.getDecision.execute({
+        id: "provider_routine_call_123",
+      });
+      return {
+        finishReason: "stop",
+        text: "Found one Linear create issue decision.",
+        usage: { totalTokens: 30 },
+      };
+    });
+
+    const output = await executeAutomationRun({
+      automation: automationWithoutConnector,
+      deploymentEnvironment: "preview",
+      now: () => new Date("2026-06-06T00:00:00.000Z"),
+      run,
+    });
+
+    expect(findAutomationProviderRoutinesMock).not.toHaveBeenCalled();
+    expect(findAutomationDecisionsMock).toHaveBeenCalledWith(decisionContext, {
+      providers: ["linear"],
+      query: "linear create issue",
+      since: new Date("2026-05-30T00:00:00.000Z"),
+    });
+    expect(getAutomationDecisionMock).toHaveBeenCalledWith(decisionContext, {
+      id: "provider_routine_call_123",
+    });
+    expect(output).toMatchObject({
+      connectorProvider: null,
+      finalText: "Found one Linear create issue decision.",
+      providerRoutineCallIds: [],
+      usage: { totalTokens: 30 },
+    });
+    expect(JSON.stringify(output)).not.toContain("secret");
+    expect(output.transcript).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          inputRedacted: { present: true },
+          kind: "tool_call",
+          toolName: "findDecisions",
+        }),
+        expect.objectContaining({
+          decisionCount: 1,
+          kind: "tool_result",
+          outputRedacted: null,
+          status: "succeeded",
+          toolName: "findDecisions",
+        }),
+        expect.objectContaining({
+          decisionId: "provider_routine_call_123",
+          inputRedacted: { present: true },
+          kind: "tool_call",
+          toolName: "getDecision",
+        }),
+        expect.objectContaining({
+          decisionId: "provider_routine_call_123",
+          kind: "tool_result",
+          outputRedacted: { present: true },
+          status: "succeeded",
+          toolName: "getDecision",
         }),
       ])
     );

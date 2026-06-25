@@ -2,6 +2,7 @@ import { type Contract, isPublicApiContractProcedure } from "./contract";
 
 export type McpScope =
   | "mcp:system:read"
+  | "mcp:decisions:read"
   | "mcp:provider_routines:read"
   | "mcp:provider_routines:write"
   | "mcp:signals:read"

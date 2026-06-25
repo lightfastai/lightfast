@@ -1606,12 +1606,21 @@ describe("app authenticated route migration", () => {
     const mcpProxyFindRouteSource = source(
       "src/routes/api/internal/mcp/proxy/find.ts"
     );
+    const mcpDecisionsFindRouteSource = source(
+      "src/routes/api/internal/mcp/decisions/find.ts"
+    );
+    const mcpDecisionsGetRouteSource = source(
+      "src/routes/api/internal/mcp/decisions/get.ts"
+    );
     const mcpAuditRouteSource = source("src/routes/api/internal/mcp/audit.ts");
     const mcpSignalsRouteSource = source(
       "src/routes/api/internal/mcp/signals.ts"
     );
     const mcpSignalsGetRouteSource = source(
       "src/routes/api/internal/mcp/signals/get.ts"
+    );
+    const mcpDecisionsAdapterSource = repoSource(
+      "api/app/src/adapters/internal/mcp-decisions.ts"
     );
 
     expect(xLayoutRouteSource).toContain(
@@ -1724,6 +1733,27 @@ describe("app authenticated route migration", () => {
       "process.env.SERVICE_JWT_SECRET"
     );
     expect(mcpServiceAuthAdapterSource).toContain("verifyServiceJWT");
+    expect(mcpDecisionsAdapterSource).toContain("handleMcpDecisionFindRequest");
+    expect(mcpDecisionsAdapterSource).toContain("handleMcpDecisionGetRequest");
+    expect(mcpDecisionsAdapterSource).toContain("findDecisions");
+    expect(mcpDecisionsAdapterSource).toContain("getDecision");
+    expect(mcpDecisionsAdapterSource).not.toContain(
+      "loadAgentConnectorRuntimeTools"
+    );
+    expect(mcpDecisionsFindRouteSource).toContain(
+      'createFileRoute("/api/internal/mcp/decisions/find")'
+    );
+    expect(mcpDecisionsFindRouteSource).toContain("await import(");
+    expect(mcpDecisionsFindRouteSource).toContain(
+      '"@api/app/internal-api/mcp-decisions"'
+    );
+    expect(mcpDecisionsGetRouteSource).toContain(
+      'createFileRoute("/api/internal/mcp/decisions/get")'
+    );
+    expect(mcpDecisionsGetRouteSource).toContain("await import(");
+    expect(mcpDecisionsGetRouteSource).toContain(
+      '"@api/app/internal-api/mcp-decisions"'
+    );
     expect(mcpProxyCallRouteSource).toContain(
       'createFileRoute("/api/internal/mcp/proxy/call")'
     );
@@ -1785,6 +1815,9 @@ describe("app authenticated route migration", () => {
       skillsEventsAdapterSource,
       cliApiAdapterSource,
       mcpProxyAdapterSource,
+      mcpDecisionsAdapterSource,
+      mcpDecisionsFindRouteSource,
+      mcpDecisionsGetRouteSource,
       mcpProxyCallRouteSource,
       mcpProxyFindRouteSource,
       mcpAuditRouteSource,

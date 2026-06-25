@@ -68,7 +68,7 @@ afterEach(() => {
 });
 
 describe("AutomationDetailClient", () => {
-  it("shows the selected connector in the details rail", () => {
+  it("shows the selected connector target in the details rail", () => {
     useIsMutatingMock.mockReturnValue(0);
     useQueryMock.mockReturnValue({
       data: automation({ connectorProvider: "x" }),
@@ -85,11 +85,11 @@ describe("AutomationDetailClient", () => {
       />
     );
 
-    const connectorLabel = screen.getByText("Connector");
-    const connectorRow = connectorLabel.parentElement;
+    const targetLabel = screen.getByText("Target");
+    const targetRow = targetLabel.parentElement;
 
-    expect(connectorRow?.textContent).toContain("Connector");
-    expect(connectorRow?.textContent).toContain("X");
+    expect(targetRow?.textContent).toContain("Target");
+    expect(targetRow?.textContent).toContain("Connector / X");
   });
 });
 

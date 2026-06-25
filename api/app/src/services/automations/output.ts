@@ -7,6 +7,8 @@ export type RedactedPresence = { present: true } | null;
 
 export type AutomationTranscriptToolName =
   | "callProviderRoutine"
+  | "findDecisions"
+  | "getDecision"
   | "findProviderRoutines";
 export type AutomationTranscriptToolStatus = "failed" | "succeeded";
 export type AutomationTranscriptTextKind = "assistant" | "system" | "user";
@@ -20,6 +22,7 @@ export interface AutomationTranscriptTextEvent {
 }
 
 export interface AutomationTranscriptToolCallEvent {
+  decisionId?: string;
   inputRedacted: RedactedPresence;
   kind: "tool_call";
   provider?: ConnectableConnectorProvider;
@@ -30,6 +33,8 @@ export interface AutomationTranscriptToolCallEvent {
 }
 
 export interface AutomationTranscriptToolResultEvent {
+  decisionCount?: number;
+  decisionId?: string;
   kind: "tool_result";
   outputRedacted: RedactedPresence;
   providerRoutineCallId?: string;
@@ -41,6 +46,7 @@ export interface AutomationTranscriptToolResultEvent {
 }
 
 export interface AutomationTranscriptToolErrorEvent {
+  decisionId?: string;
   errorCode: string;
   errorMessage: string;
   kind: "tool_error";
@@ -129,6 +135,7 @@ export function createAutomationTranscriptRecorder(
 
     recordToolCall(input: {
       input: unknown;
+      decisionId?: string;
       provider?: ConnectableConnectorProvider;
       providerToolName?: string;
       routineId?: string;
@@ -141,6 +148,9 @@ export function createAutomationTranscriptRecorder(
         toolName: input.toolName,
       };
 
+      if (input.decisionId !== undefined) {
+        event.decisionId = input.decisionId;
+      }
       if (input.provider !== undefined) {
         event.provider = input.provider;
       }
@@ -155,6 +165,8 @@ export function createAutomationTranscriptRecorder(
     },
 
     recordToolResult(input: {
+      decisionCount?: number;
+      decisionId?: string;
       output?: unknown;
       providerRoutineCallId?: string;
       routineCount?: number;
@@ -170,6 +182,12 @@ export function createAutomationTranscriptRecorder(
         toolName: input.toolName,
       };
 
+      if (input.decisionCount !== undefined) {
+        event.decisionCount = input.decisionCount;
+      }
+      if (input.decisionId !== undefined) {
+        event.decisionId = input.decisionId;
+      }
       if (input.providerRoutineCallId !== undefined) {
         event.providerRoutineCallId = input.providerRoutineCallId;
       }
@@ -184,6 +202,7 @@ export function createAutomationTranscriptRecorder(
     },
 
     recordToolError(input: {
+      decisionId?: string;
       errorCode: string;
       errorMessage: string;
       providerRoutineCallId?: string;
@@ -198,6 +217,9 @@ export function createAutomationTranscriptRecorder(
         toolName: input.toolName,
       };
 
+      if (input.decisionId !== undefined) {
+        event.decisionId = input.decisionId;
+      }
       if (input.providerRoutineCallId !== undefined) {
         event.providerRoutineCallId = input.providerRoutineCallId;
       }
@@ -253,6 +275,9 @@ function sanitizeTranscriptEvent(
         toolName: event.toolName,
       };
 
+      if (event.decisionId !== undefined) {
+        sanitized.decisionId = event.decisionId;
+      }
       if (event.provider !== undefined) {
         sanitized.provider = event.provider;
       }
@@ -274,6 +299,12 @@ function sanitizeTranscriptEvent(
         toolName: event.toolName,
       };
 
+      if (event.decisionCount !== undefined) {
+        sanitized.decisionCount = event.decisionCount;
+      }
+      if (event.decisionId !== undefined) {
+        sanitized.decisionId = event.decisionId;
+      }
       if (event.providerRoutineCallId !== undefined) {
         sanitized.providerRoutineCallId = event.providerRoutineCallId;
       }
@@ -295,6 +326,9 @@ function sanitizeTranscriptEvent(
         toolName: event.toolName,
       };
 
+      if (event.decisionId !== undefined) {
+        sanitized.decisionId = event.decisionId;
+      }
       if (event.providerRoutineCallId !== undefined) {
         sanitized.providerRoutineCallId = event.providerRoutineCallId;
       }
