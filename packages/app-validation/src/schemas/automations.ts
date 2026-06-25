@@ -167,6 +167,7 @@ export const updateAutomationSchema = z
 
     if (
       values.targetKind === "decisions" &&
+      values.connectorProvider !== undefined &&
       values.connectorProvider !== null
     ) {
       ctx.addIssue({

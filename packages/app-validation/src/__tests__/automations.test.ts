@@ -302,6 +302,15 @@ describe("automation schemas", () => {
     expect(
       updateAutomationSchema.parse({
         id: `${AUTOMATION_ID_PREFIX}123e4567-e89b-12d3-a456-426614174000`,
+        targetKind: "decisions",
+      })
+    ).toMatchObject({
+      targetKind: "decisions",
+    });
+
+    expect(
+      updateAutomationSchema.parse({
+        id: `${AUTOMATION_ID_PREFIX}123e4567-e89b-12d3-a456-426614174000`,
         connectorProvider: "linear",
         targetKind: "connector",
       })
