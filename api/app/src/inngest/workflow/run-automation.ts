@@ -9,8 +9,7 @@ import {
 import { db } from "@db/app/client";
 
 import { env } from "../../env";
-import { executeAutomationRun } from "../../services/automations/ai-execution";
-import { getAutomationExecutionFailure } from "../../services/automations/errors";
+import { executeAutomationRunRequest } from "../../services/automations/run-executor";
 import { inngest } from "../client";
 import { appEvents } from "../schemas/app";
 
@@ -100,19 +99,7 @@ export const runAutomation = inngest.createFunction(
 
     const execution = await step.ai.wrap(
       "execute automation",
-      async (request) => {
-        try {
-          return {
-            output: await executeAutomationRun(request),
-            status: "completed" as const,
-          };
-        } catch (error) {
-          return {
-            failure: getAutomationExecutionFailure(error),
-            status: "failed" as const,
-          };
-        }
-      },
+      executeAutomationRunRequest,
       {
         automation,
         deploymentEnvironment: env.VERCEL_ENV,

@@ -6,6 +6,7 @@ export const MCP_REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
 
 export const MCP_SUPPORTED_SCOPES = [
   "mcp:system:read",
+  "mcp:decisions:read",
   "mcp:provider_routines:read",
   "mcp:provider_routines:write",
   "mcp:signals:read",

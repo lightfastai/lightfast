@@ -1,9 +1,18 @@
 import {
   apiContract,
   type CreateSignalInput,
+  type DecisionDetail,
+  type DecisionFindInput,
+  type DecisionFindOutput,
+  type DecisionGetInput,
+  decisionFindInputSchema,
+  decisionFindOutputSchema,
+  decisionGetInputSchema,
+  decisionGetOutputSchema,
   type GetSignalInput,
   type GetSignalOutput,
   lightfastMcpToolPolicy,
+  type McpDecisionScope,
   type McpProviderRoutineScope,
   type McpScope,
   type McpSignalScope,
@@ -80,7 +89,9 @@ export interface ExecuteHostedMcpToolDependencies {
     input: string;
     scopes: McpSignalScope[];
   }) => Promise<unknown>;
+  findDecisions: FindDecisionsService;
   findProviderRoutines: FindProviderRoutinesService;
+  getDecision: GetDecisionService;
   getSignalForActor: (input: {
     actor: {
       clientId: string;
@@ -133,6 +144,32 @@ type FindProviderRoutinesService = (
   input: ProviderRoutineFindInput
 ) => Promise<ProviderRoutineFindOutput>;
 
+interface DecisionServiceContext {
+  actor: {
+    orgId: string;
+    scopes: McpDecisionScope[];
+    userId: string;
+  };
+  scopes: {
+    decisionRead: boolean;
+  };
+  source: {
+    clientId?: string | null;
+    ref?: string | null;
+    surface: ProviderRoutineSourceSurface;
+  };
+}
+
+type FindDecisionsService = (
+  context: DecisionServiceContext,
+  input: DecisionFindInput
+) => Promise<DecisionFindOutput>;
+
+type GetDecisionService = (
+  context: DecisionServiceContext,
+  input: DecisionGetInput
+) => Promise<DecisionDetail | null | undefined>;
+
 export interface ExecuteHostedMcpToolInput {
   context: HostedMcpContext;
   contractPath: string;
@@ -149,9 +186,43 @@ export function listHostedMcpTools(
       contract: apiContract,
       policy: lightfastMcpToolPolicy,
     }),
+    ...DECISION_TOOLS,
     ...PROXY_TOOLS,
   ];
 }
+
+const DECISION_TOOLS = [
+  {
+    auditEventName: "mcp.decisions.find",
+    contractPath: "decisions.find",
+    description:
+      "Search first-party Lightfast decisions for the current organization.",
+    expose: true,
+    inputSchema: decisionFindInputSchema,
+    kind: "read",
+    name: "decisions_find",
+    outputSchema: decisionFindOutputSchema,
+    requiredScope: "mcp:decisions:read",
+    requiresBoundOrg: true,
+    scope: "mcp:decisions:read",
+    toolName: "decisions_find",
+  },
+  {
+    auditEventName: "mcp.decisions.get",
+    contractPath: "decisions.get",
+    description:
+      "Get full details for one first-party Lightfast decision by id.",
+    expose: true,
+    inputSchema: decisionGetInputSchema,
+    kind: "read",
+    name: "decisions_get",
+    outputSchema: decisionGetOutputSchema,
+    requiredScope: "mcp:decisions:read",
+    requiresBoundOrg: true,
+    scope: "mcp:decisions:read",
+    toolName: "decisions_get",
+  },
+] satisfies LightfastMcpToolDefinition[];
 
 const PROXY_TOOLS = [
   {
@@ -319,6 +390,26 @@ async function executeParsedTool(input: {
       return result;
     }
 
+    case "decisions.find": {
+      const findInput = input.parsedInput as DecisionFindInput;
+      return await input.dependencies.findDecisions(
+        decisionContext(input.context),
+        findInput
+      );
+    }
+
+    case "decisions.get": {
+      const getInput = input.parsedInput as DecisionGetInput;
+      const result = await input.dependencies.getDecision(
+        decisionContext(input.context),
+        getInput
+      );
+      if (!result) {
+        throw new HostedMcpToolError("not_found", "Decision not found.", 404);
+      }
+      return result;
+    }
+
     case "proxy.find": {
       const findInput = input.parsedInput as ProviderRoutineFindInput;
       return await input.dependencies.findProviderRoutines(
@@ -372,6 +463,12 @@ function providerRoutineScopes(scopes: McpScope[]): McpProviderRoutineScope[] {
     (scope): scope is McpProviderRoutineScope =>
       scope === "mcp:provider_routines:read" ||
       scope === "mcp:provider_routines:write"
+  );
+}
+
+function decisionScopes(scopes: McpScope[]): McpDecisionScope[] {
+  return scopes.filter(
+    (scope): scope is McpDecisionScope => scope === "mcp:decisions:read"
   );
 }
 
@@ -541,7 +638,9 @@ async function defaultDependencies(
       assertOrgAccess: unavailableAssertOrgAccess,
       callProviderRoutine: unavailableCallProviderRoutine,
       createSignalForActor: unavailableCreateSignalForActor,
+      findDecisions: unavailableFindDecisions,
       findProviderRoutines: unavailableFindProviderRoutines,
+      getDecision: unavailableGetDecision,
       getSignalForActor: unavailableGetSignalForActor,
     };
   }
@@ -553,7 +652,9 @@ async function defaultDependencies(
       assertOrgAccess: signalOrgAccessHandledDownstream,
       callProviderRoutine: unavailableCallProviderRoutine,
       createSignalForActor: appSignalIntake.createSignalForActorViaApp,
+      findDecisions: unavailableFindDecisions,
       findProviderRoutines: unavailableFindProviderRoutines,
+      getDecision: unavailableGetDecision,
       getSignalForActor: unavailableGetSignalForActor,
     };
   }
@@ -565,8 +666,24 @@ async function defaultDependencies(
       assertOrgAccess: signalOrgAccessHandledDownstream,
       callProviderRoutine: unavailableCallProviderRoutine,
       createSignalForActor: unavailableCreateSignalForActor,
+      findDecisions: unavailableFindDecisions,
       findProviderRoutines: unavailableFindProviderRoutines,
+      getDecision: unavailableGetDecision,
       getSignalForActor: appSignalIntake.getSignalForActorViaApp,
+    };
+  }
+
+  if (contractPath === "decisions.find" || contractPath === "decisions.get") {
+    const appDecisionIntake = await import("./app-decision-intake");
+    return {
+      ...base,
+      assertOrgAccess: appOrgAccessHandledDownstream,
+      callProviderRoutine: unavailableCallProviderRoutine,
+      createSignalForActor: unavailableCreateSignalForActor,
+      findDecisions: appDecisionIntake.findDecisionsViaApp,
+      findProviderRoutines: unavailableFindProviderRoutines,
+      getDecision: appDecisionIntake.getDecisionViaApp,
+      getSignalForActor: unavailableGetSignalForActor,
     };
   }
 
@@ -577,7 +694,9 @@ async function defaultDependencies(
       assertOrgAccess: appOrgAccessHandledDownstream,
       callProviderRoutine: appProxyIntake.callProviderRoutineViaApp,
       createSignalForActor: unavailableCreateSignalForActor,
+      findDecisions: unavailableFindDecisions,
       findProviderRoutines: appProxyIntake.findProviderRoutinesViaApp,
+      getDecision: unavailableGetDecision,
       getSignalForActor: unavailableGetSignalForActor,
     };
   }
@@ -587,7 +706,9 @@ async function defaultDependencies(
     assertOrgAccess: unavailableAssertOrgAccess,
     callProviderRoutine: unavailableCallProviderRoutine,
     createSignalForActor: unavailableCreateSignalForActor,
+    findDecisions: unavailableFindDecisions,
     findProviderRoutines: unavailableFindProviderRoutines,
+    getDecision: unavailableGetDecision,
     getSignalForActor: unavailableGetSignalForActor,
   };
 }
@@ -609,6 +730,14 @@ async function unavailableCreateSignalForActor(): Promise<never> {
 }
 
 async function unavailableGetSignalForActor(): Promise<never> {
+  throw unavailableDependencyError();
+}
+
+async function unavailableFindDecisions(): Promise<never> {
+  throw unavailableDependencyError();
+}
+
+async function unavailableGetDecision(): Promise<never> {
   throw unavailableDependencyError();
 }
 
@@ -645,6 +774,24 @@ function providerRoutineContext(
       providerRoutineRead:
         context.scopes.includes("mcp:provider_routines:read") || hasWrite,
       providerRoutineWrite: hasWrite,
+    },
+    source: {
+      clientId: context.clientId,
+      ref: context.grantId,
+      surface: "hosted_mcp",
+    },
+  };
+}
+
+function decisionContext(context: HostedMcpContext): DecisionServiceContext {
+  return {
+    actor: {
+      orgId: context.orgId,
+      scopes: decisionScopes(context.scopes),
+      userId: context.userId,
+    },
+    scopes: {
+      decisionRead: context.scopes.includes("mcp:decisions:read"),
     },
     source: {
       clientId: context.clientId,

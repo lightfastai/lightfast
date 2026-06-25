@@ -19,6 +19,18 @@ interface AutomationRunAiOutput {
   usage: Record<string, unknown>;
 }
 
+function formatAutomationTarget(provider: ConnectorProvider | null): string {
+  return provider ? `Connector / ${CONNECTOR_LABELS[provider]}` : "Decisions";
+}
+
+function formatEventKind(kind: string): string {
+  return kind
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 export function isAutomationRunAiOutput(
   output: unknown
 ): output is AutomationRunAiOutput {
@@ -58,10 +70,8 @@ export function AutomationRunAiOutputView({
       </div>
 
       <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
-        <OutputMeta label="Connector">
-          {output.connectorProvider
-            ? CONNECTOR_LABELS[output.connectorProvider]
-            : "-"}
+        <OutputMeta label="Target">
+          {formatAutomationTarget(output.connectorProvider)}
         </OutputMeta>
         <OutputMeta label="Finish">{output.finishReason}</OutputMeta>
         <OutputMeta label="Model">{output.model}</OutputMeta>
@@ -129,6 +139,8 @@ function TranscriptEvent({
   const kind = typeof event.kind === "string" ? event.kind : "event";
   const routineId =
     typeof event.routineId === "string" ? event.routineId : undefined;
+  const decisionId =
+    typeof event.decisionId === "string" ? event.decisionId : undefined;
   const providerRoutineCallId =
     typeof event.providerRoutineCallId === "string"
       ? event.providerRoutineCallId
@@ -149,7 +161,7 @@ function TranscriptEvent({
           {index + 1}
         </Badge>
         <Badge className="px-1.5" variant="outline">
-          {kind.replaceAll("_", " ")}
+          {formatEventKind(kind)}
         </Badge>
         {redacted ? (
           <Badge className="px-1.5 text-muted-foreground" variant="secondary">
@@ -161,6 +173,11 @@ function TranscriptEvent({
       {routineId ? (
         <p className="mt-2 break-all font-mono text-muted-foreground text-xs">
           {routineId}
+        </p>
+      ) : null}
+      {decisionId ? (
+        <p className="mt-2 break-all font-mono text-muted-foreground text-xs">
+          {decisionId}
         </p>
       ) : null}
       {providerRoutineCallId ? (

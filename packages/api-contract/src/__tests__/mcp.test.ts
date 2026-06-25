@@ -58,13 +58,15 @@ describe("lightfastMcpToolPolicy", () => {
     expect(getContractProcedurePaths({ misc: { value: true } })).toEqual([]);
   });
 
-  it("includes provider routine MCP scopes in the public scope type", () => {
+  it("includes decision and provider routine MCP scopes in the public scope type", () => {
     const scopes = [
+      "mcp:decisions:read",
       "mcp:provider_routines:read",
       "mcp:provider_routines:write",
     ] satisfies McpScope[];
 
     expect(scopes).toEqual([
+      "mcp:decisions:read",
       "mcp:provider_routines:read",
       "mcp:provider_routines:write",
     ]);

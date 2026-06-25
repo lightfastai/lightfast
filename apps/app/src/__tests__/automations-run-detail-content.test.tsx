@@ -74,7 +74,7 @@ describe("AutomationRunDetailContent", () => {
     );
 
     expect(screen.getByText("Posted the launch update.")).toBeTruthy();
-    expect(screen.getByText("X")).toBeTruthy();
+    expect(screen.getByText("Connector / X")).toBeTruthy();
     expect(
       screen.getAllByText("provider_routine_call_123").length
     ).toBeGreaterThan(0);
@@ -114,8 +114,8 @@ describe("AutomationRunDetailContent", () => {
     );
 
     expect(screen.getByText("Summarized the workspace.")).toBeTruthy();
-    expect(screen.getByText("Connector").parentElement?.textContent).toBe(
-      "Connector-"
+    expect(screen.getByText("Target").parentElement?.textContent).toBe(
+      "TargetDecisions"
     );
     expect(screen.queryByText("Provider routine calls")).toBeNull();
   });

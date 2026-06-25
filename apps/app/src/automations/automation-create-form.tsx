@@ -491,7 +491,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
                 >
                   <SelectTrigger
                     aria-label="Timezone"
-                    className="w-full sm:w-80"
+                    className="w-full sm:w-96"
                   >
                     <SelectValue>{timezone}</SelectValue>
                   </SelectTrigger>
