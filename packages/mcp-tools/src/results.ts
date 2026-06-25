@@ -28,16 +28,32 @@ function toStructuredContent(result: unknown): Record<string, unknown> {
 }
 
 function stringifyResult(result: unknown): string {
-  const json = JSON.stringify(result, null, 2);
-  return json ?? String(result);
+  const json = safeStringify(result, 2);
+  return json ?? safeToString(result);
 }
 
 function toJsonCompatible(result: unknown): unknown {
-  const json = JSON.stringify(result);
+  const json = safeStringify(result);
   if (json === undefined) {
     return;
   }
   return JSON.parse(json) as unknown;
+}
+
+function safeStringify(result: unknown, space?: number): string | undefined {
+  try {
+    return JSON.stringify(result, null, space);
+  } catch {
+    return;
+  }
+}
+
+function safeToString(result: unknown): string {
+  try {
+    return String(result);
+  } catch {
+    return "[Unserializable MCP result]";
+  }
 }
 
 export function formatMcpSuccess(result: unknown): LightfastMcpSuccessResult {

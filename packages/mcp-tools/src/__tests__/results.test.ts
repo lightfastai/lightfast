@@ -40,6 +40,23 @@ describe("MCP result formatting", () => {
     });
   });
 
+  it("degrades safely when result JSON serialization throws", () => {
+    expect(formatMcpSuccess({ count: 1n })).toEqual({
+      content: [{ text: "[object Object]", type: "text" }],
+      structuredContent: { result: null },
+    });
+  });
+
+  it("degrades safely for circular result objects", () => {
+    const result: { self?: unknown } = {};
+    result.self = result;
+
+    expect(formatMcpSuccess(result)).toEqual({
+      content: [{ text: "[object Object]", type: "text" }],
+      structuredContent: { result: null },
+    });
+  });
+
   it("formats errors without leaking stack traces", () => {
     const result = formatMcpError(new Error("Nope"));
     expect(result).toEqual({
