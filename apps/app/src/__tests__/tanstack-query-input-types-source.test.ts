@@ -43,12 +43,6 @@ describe("TanStack query input type boundaries", () => {
     expect(appSource("src/connectors/connectors-client.tsx")).toContain(
       "type RefreshConnectorToolsInput"
     );
-    expect(
-      appSource("src/developer-connections/developer-connections-client.tsx")
-    ).toContain("type ConnectDeveloperConnectionInput");
-    expect(
-      appSource("src/developer-connections/developer-connections-client.tsx")
-    ).toContain("type StartSentryDeveloperConnectionAuthInput");
     expect(appSource("src/decisions/decisions-client.tsx")).toContain(
       "type ListDecisionsInput"
     );
@@ -67,12 +61,6 @@ describe("TanStack query input type boundaries", () => {
     expect(repoSource("api/app/src/adapters/tanstack/connectors.ts")).toContain(
       "export type RefreshConnectorToolsInput"
     );
-    expect(
-      repoSource("api/app/src/adapters/tanstack/developer-connections.ts")
-    ).toContain("export type ConnectDeveloperConnectionInput");
-    expect(
-      repoSource("api/app/src/adapters/tanstack/developer-connections.ts")
-    ).toContain("export type StartSentryDeveloperConnectionAuthInput");
     expect(repoSource("api/app/src/adapters/tanstack/decisions.ts")).toContain(
       "export type ListDecisionsInput"
     );

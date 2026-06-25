@@ -357,7 +357,6 @@ describe("workspace page-owned actions", () => {
       source("src/chat/workspace-assistant-client.tsx"),
       source("src/connectors/connectors-client.tsx"),
       source("src/decisions/decisions-client.tsx"),
-      source("src/developer-connections/developer-connections-client.tsx"),
       source("src/people/people-client.tsx"),
       source("src/routes/_authenticated/$slug/settings.tsx"),
       source("src/signals/signals-client.tsx"),
