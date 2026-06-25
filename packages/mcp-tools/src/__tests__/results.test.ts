@@ -22,6 +22,24 @@ describe("MCP result formatting", () => {
     });
   });
 
+  it("returns JSON-compatible structured content", () => {
+    expect(
+      formatMcpSuccess({
+        createdAt: new Date("2026-06-25T03:26:25.180Z"),
+      })
+    ).toEqual({
+      content: [
+        {
+          text: '{\n  "createdAt": "2026-06-25T03:26:25.180Z"\n}',
+          type: "text",
+        },
+      ],
+      structuredContent: {
+        createdAt: "2026-06-25T03:26:25.180Z",
+      },
+    });
+  });
+
   it("formats errors without leaking stack traces", () => {
     const result = formatMcpError(new Error("Nope"));
     expect(result).toEqual({

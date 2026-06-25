@@ -1,10 +1,11 @@
+import { Client, InMemoryTransport, McpServer } from "@vendor/mcp";
 import { afterEach, describe, expect, it, vi } from "vitest";
-
 import type { HostedMcpContext } from "../context";
 import {
   type ExecuteHostedMcpToolDependencies,
   executeHostedMcpTool,
   listHostedMcpTools,
+  registerHostedMcpTools,
 } from "../tools/execute";
 
 const signalId = "signal_123e4567-e89b-12d3-a456-426614174000";
@@ -157,6 +158,48 @@ describe("hosted MCP tools", () => {
         requiredScope: "mcp:provider_routines:read",
       }),
     ]);
+  });
+
+  it("serializes every hosted tool schema through MCP tools/list", async () => {
+    const server = new McpServer({ name: "test", version: "0.0.0" });
+    registerHostedMcpTools(server);
+
+    const mcpClient = new Client({ name: "test-client", version: "0.0.0" });
+    const [clientTransport, serverTransport] =
+      InMemoryTransport.createLinkedPair();
+
+    await Promise.all([
+      server.connect(serverTransport),
+      mcpClient.connect(clientTransport),
+    ]);
+
+    try {
+      const { tools } = await mcpClient.listTools();
+
+      expect(tools.map((tool) => tool.name)).toEqual([
+        "lightfast_signals_create",
+        "lightfast_signals_get",
+        "lightfast_system_health",
+        "decisions_find",
+        "decisions_get",
+        "proxy_call",
+        "proxy_find",
+      ]);
+      expect(
+        tools.find((tool) => tool.name === "decisions_find")?.inputSchema
+      ).toMatchObject({
+        properties: {
+          since: expect.objectContaining({
+            format: "date-time",
+            type: "string",
+          }),
+        },
+        type: "object",
+      });
+    } finally {
+      await mcpClient.close();
+      await server.close();
+    }
   });
 
   it("creates a signal with MCP actor attribution", async () => {

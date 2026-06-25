@@ -16,15 +16,28 @@ export interface LightfastMcpErrorResult {
 }
 
 function toStructuredContent(result: unknown): Record<string, unknown> {
-  if (result && typeof result === "object" && !Array.isArray(result)) {
-    return result as Record<string, unknown>;
+  const jsonResult = toJsonCompatible(result);
+  if (
+    jsonResult &&
+    typeof jsonResult === "object" &&
+    !Array.isArray(jsonResult)
+  ) {
+    return jsonResult as Record<string, unknown>;
   }
-  return { result };
+  return { result: jsonResult ?? null };
 }
 
 function stringifyResult(result: unknown): string {
   const json = JSON.stringify(result, null, 2);
   return json ?? String(result);
+}
+
+function toJsonCompatible(result: unknown): unknown {
+  const json = JSON.stringify(result);
+  if (json === undefined) {
+    return;
+  }
+  return JSON.parse(json) as unknown;
 }
 
 export function formatMcpSuccess(result: unknown): LightfastMcpSuccessResult {
