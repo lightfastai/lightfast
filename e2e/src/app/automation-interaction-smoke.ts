@@ -316,7 +316,14 @@ export async function runAppAutomationInteractionSmoke(
       new URL(paths.newPath, config.appOrigin).toString(),
     ]);
     await waitForRouteText(config, {
-      expectedText: ["New automation", "Name", "Instructions", "Schedule"],
+      expectedText: [
+        "New automation",
+        "Name",
+        "Instructions",
+        "Schedule",
+        "Target",
+        "Decisions",
+      ],
       name: "new automation form",
       path: paths.newPath,
     });
@@ -361,7 +368,7 @@ export async function runAppAutomationInteractionSmoke(
         fixture.createName,
         fixture.createPrompt,
         "Status",
-        "Connector",
+        "Decisions",
         "Actions",
         "Previous runs",
       ],
@@ -398,7 +405,7 @@ export async function runAppAutomationInteractionSmoke(
         fixture.updateName,
         fixture.updatePrompt,
         "Status",
-        "Connector",
+        "Decisions",
         "Actions",
         "Previous runs",
       ],

@@ -111,14 +111,19 @@ export function upsertRun(
 export function applyAutomationPatch(
   prev: Automation,
   patch: {
+    connectorProvider?: Automation["connectorProvider"];
     name?: string;
     prompt?: string;
     schedule?: AutomationScheduleInput;
+    targetKind?: Automation["targetKind"];
     timezone?: string;
   }
 ): Automation {
   return {
     ...prev,
+    ...(patch.connectorProvider === undefined
+      ? {}
+      : { connectorProvider: patch.connectorProvider }),
     ...(patch.name === undefined ? {} : { name: patch.name }),
     ...(patch.prompt === undefined ? {} : { prompt: patch.prompt }),
     ...(patch.schedule === undefined
@@ -127,6 +132,7 @@ export function applyAutomationPatch(
           scheduleKind: patch.schedule.kind,
           scheduleConfig: patch.schedule.config as Automation["scheduleConfig"],
         }),
+    ...(patch.targetKind === undefined ? {} : { targetKind: patch.targetKind }),
     ...(patch.timezone === undefined ? {} : { timezone: patch.timezone }),
   };
 }

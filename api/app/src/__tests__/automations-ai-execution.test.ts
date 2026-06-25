@@ -55,6 +55,7 @@ const automation = {
   publicId: "automation_123",
   scheduleConfig: { time: "09:00" },
   scheduleKind: "daily",
+  targetKind: "connector",
   timezone: "UTC",
 } as Automation;
 
@@ -162,6 +163,7 @@ describe("executeAutomationRun", () => {
       connectorProvider: null,
       name: "Daily summary",
       prompt: "Summarize the workspace.",
+      targetKind: "decisions",
     } as Automation;
 
     const output = await executeAutomationRun({
@@ -177,6 +179,7 @@ describe("executeAutomationRun", () => {
       finalText: "Posted the launch update.",
       providerRoutineCallIds: [],
       runId: "automation_run_123",
+      targetKind: "decisions",
     });
     expect(findAutomationProviderRoutinesMock).not.toHaveBeenCalled();
     expect(toolMock).toHaveBeenCalledTimes(2);
@@ -220,6 +223,7 @@ describe("executeAutomationRun", () => {
       providerRoutineCallIds: [],
       runId: "automation_run_123",
       schemaVersion: "automation.run.ai.v1",
+      targetKind: "connector",
       usage: { inputTokens: 10, outputTokens: 12, totalTokens: 22 },
     });
     expect(output.transcript).toEqual(
@@ -366,6 +370,27 @@ describe("executeAutomationRun", () => {
       code: "AUTOMATION_CONNECTOR_NOT_ENABLED",
       message: "The selected connector is not enabled for automations.",
     });
+  });
+
+  it("fails connector-target runs when the connector provider is missing", async () => {
+    await expect(
+      executeAutomationRun({
+        automation: {
+          ...automation,
+          connectorProvider: null,
+          targetKind: "connector",
+        },
+        deploymentEnvironment: "development",
+        now: () => new Date("2026-06-06T00:00:00.000Z"),
+        run,
+      })
+    ).rejects.toMatchObject({
+      code: "AUTOMATION_CONNECTOR_REQUIRED",
+      message: "Connector automations require a connector provider.",
+    });
+
+    expect(findAutomationProviderRoutinesMock).not.toHaveBeenCalled();
+    expect(generateTextMock).not.toHaveBeenCalled();
   });
 
   it("fails with connector-no-tools when the selected connector has no matching routines", async () => {
@@ -693,6 +718,7 @@ describe("executeAutomationRun", () => {
       connectorProvider: null,
       name: "Weekly Linear decisions",
       prompt: "Summarize Linear issue decisions from the past week.",
+      targetKind: "decisions",
     } as Automation;
     generateTextMock.mockImplementation(async (options) => {
       await options.tools.findDecisions.execute({
@@ -730,6 +756,7 @@ describe("executeAutomationRun", () => {
       connectorProvider: null,
       finalText: "Found one Linear create issue decision.",
       providerRoutineCallIds: [],
+      targetKind: "decisions",
       usage: { totalTokens: 30 },
     });
     expect(JSON.stringify(output)).not.toContain("secret");

@@ -314,6 +314,7 @@ export function buildAppAuthSmokeAutomationInput(input: {
     name: SMOKE_AUTOMATION_NAME,
     prompt: SMOKE_AUTOMATION_PROMPT,
     schedule: { kind: "daily", config: { time: "09:00" } },
+    targetKind: "decisions",
     timezone: "UTC",
   };
 }

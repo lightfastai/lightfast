@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { ConnectableConnectorProvider } from "@repo/api-contract";
+import type { AutomationTargetKind } from "@repo/app-validation/schemas";
 
 export const AUTOMATION_AI_OUTPUT_SCHEMA_VERSION = "automation.run.ai.v1";
 
@@ -75,6 +76,7 @@ export interface AutomationRunAiOutput {
   runId: string;
   schemaVersion: typeof AUTOMATION_AI_OUTPUT_SCHEMA_VERSION;
   startedAt: string;
+  targetKind: AutomationTargetKind;
   transcript: AutomationTranscriptEvent[];
   usage: AutomationRunAiUsage;
 }
@@ -85,6 +87,7 @@ export interface BuildAutomationRunOutputInput {
     name: string;
     prompt: string;
     publicId: string;
+    targetKind: AutomationTargetKind;
   };
   finishedAt: Date;
   model: string;
@@ -248,6 +251,7 @@ export function buildAutomationRunOutput(
     runId: input.run.publicId,
     schemaVersion: AUTOMATION_AI_OUTPUT_SCHEMA_VERSION,
     startedAt: input.startedAt.toISOString(),
+    targetKind: input.automation.targetKind,
     transcript,
     usage: normalizeFirstUsage(input.result.totalUsage, input.result.usage),
   };

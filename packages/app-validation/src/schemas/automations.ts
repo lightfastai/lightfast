@@ -85,18 +85,35 @@ export const automationScheduleSchema = z.discriminatedUnion("kind", [
   weeklyScheduleSchema,
 ]);
 
-export const createAutomationSchema = z.object({
-  connectorProvider: connectableConnectorProviderSchema
-    .nullable()
-    .default(null),
-  name: z.string().trim().min(1).max(AUTOMATION_NAME_MAX_LENGTH),
-  prompt: z.string().trim().min(1).max(AUTOMATION_PROMPT_MAX_LENGTH),
-  schedule: automationScheduleSchema,
-  timezone: timezoneSchema.default("UTC"),
+export const automationTargetKindSchema = z.enum(["connector", "decisions"]);
+
+const connectorAutomationTargetSchema = z.object({
+  connectorProvider: connectableConnectorProviderSchema,
+  targetKind: z.literal("connector"),
 });
+
+const decisionsAutomationTargetSchema = z.object({
+  connectorProvider: z.literal(null),
+  targetKind: z.literal("decisions"),
+});
+
+const automationTargetSchema = z.discriminatedUnion("targetKind", [
+  connectorAutomationTargetSchema,
+  decisionsAutomationTargetSchema,
+]);
+
+export const createAutomationSchema = z
+  .object({
+    name: z.string().trim().min(1).max(AUTOMATION_NAME_MAX_LENGTH),
+    prompt: z.string().trim().min(1).max(AUTOMATION_PROMPT_MAX_LENGTH),
+    schedule: automationScheduleSchema,
+    timezone: timezoneSchema.default("UTC"),
+  })
+  .and(automationTargetSchema);
 
 export const updateAutomationSchema = z
   .object({
+    connectorProvider: connectableConnectorProviderSchema.nullable().optional(),
     id: automationIdSchema,
     name: z.string().trim().min(1).max(AUTOMATION_NAME_MAX_LENGTH).optional(),
     prompt: z
@@ -106,13 +123,67 @@ export const updateAutomationSchema = z
       .max(AUTOMATION_PROMPT_MAX_LENGTH)
       .optional(),
     schedule: automationScheduleSchema.optional(),
+    targetKind: automationTargetKindSchema.optional(),
     timezone: timezoneSchema.optional(),
   })
+  .superRefine((values, ctx) => {
+    const targetTouched =
+      values.targetKind !== undefined || values.connectorProvider !== undefined;
+    if (!targetTouched) {
+      return;
+    }
+
+    if (values.targetKind === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Target kind is required when updating the automation target",
+        path: ["targetKind"],
+      });
+      return;
+    }
+
+    if (
+      values.targetKind === "connector" &&
+      values.connectorProvider === undefined
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Connector provider is required for connector automations",
+        path: ["connectorProvider"],
+      });
+      return;
+    }
+
+    if (
+      values.targetKind === "connector" &&
+      values.connectorProvider === null
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Connector provider is required for connector automations",
+        path: ["connectorProvider"],
+      });
+    }
+
+    if (
+      values.targetKind === "decisions" &&
+      values.connectorProvider !== undefined &&
+      values.connectorProvider !== null
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Connector provider must be null for decisions automations",
+        path: ["connectorProvider"],
+      });
+    }
+  })
   .refine(
-    ({ name, prompt, schedule, timezone }) =>
+    ({ connectorProvider, name, prompt, schedule, targetKind, timezone }) =>
+      connectorProvider !== undefined ||
       name !== undefined ||
       prompt !== undefined ||
       schedule !== undefined ||
+      targetKind !== undefined ||
       timezone !== undefined,
     "At least one field must be updated"
   );
@@ -131,6 +202,7 @@ export const listAutomationRunsSchema = z.object({
 });
 
 export type AutomationScheduleInput = z.infer<typeof automationScheduleSchema>;
+export type AutomationTargetKind = z.infer<typeof automationTargetKindSchema>;
 export type CreateAutomationInput = z.infer<typeof createAutomationSchema>;
 export type UpdateAutomationInput = z.infer<typeof updateAutomationSchema>;
 

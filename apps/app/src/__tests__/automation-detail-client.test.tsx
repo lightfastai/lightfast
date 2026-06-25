@@ -71,7 +71,7 @@ describe("AutomationDetailClient", () => {
   it("shows the selected connector target in the details rail", () => {
     useIsMutatingMock.mockReturnValue(0);
     useQueryMock.mockReturnValue({
-      data: automation({ connectorProvider: "x" }),
+      data: automation({ connectorProvider: "x", targetKind: "connector" }),
       isError: false,
       isPending: false,
     });
@@ -107,6 +107,7 @@ function automation(overrides: Partial<Automation> = {}): Automation {
     scheduleConfig: { time: "09:00" },
     scheduleKind: "daily",
     status: "active",
+    targetKind: "decisions",
     timezone: "UTC",
     updatedAt: new Date("2026-06-06T00:00:00.000Z"),
     ...overrides,

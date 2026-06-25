@@ -3,6 +3,7 @@ import type { ConnectableConnectorProvider } from "@lightfast/connector-core";
 import {
   AUTOMATION_ID_PREFIX,
   AUTOMATION_RUN_ID_PREFIX,
+  type AutomationTargetKind,
 } from "@repo/app-validation/schemas";
 import { sql } from "drizzle-orm";
 import {
@@ -47,6 +48,7 @@ export type AutomationRunStatus =
   | "failed"
   | "cancelled"
   | "skipped";
+export type { AutomationTargetKind };
 
 export function createAutomationId() {
   return `${AUTOMATION_ID_PREFIX}${randomUUID()}`;
@@ -76,6 +78,10 @@ export const orgAutomations = mysqlTable(
     connectorProvider: varchar("connector_provider", {
       length: CODE_LENGTH,
     }).$type<ConnectableConnectorProvider>(),
+
+    targetKind: varchar("target_kind", {
+      length: CODE_LENGTH,
+    }).$type<AutomationTargetKind>(),
 
     name: varchar("name", { length: NAME_LENGTH }).notNull(),
 

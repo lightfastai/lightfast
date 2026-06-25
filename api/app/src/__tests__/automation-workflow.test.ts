@@ -93,6 +93,7 @@ const automation: Automation = {
   scheduleConfig: { time: "09:00" },
   timezone: "UTC",
   status: "active",
+  targetKind: "connector",
   nextRunAt: new Date("2026-05-28T09:00:00.000Z"),
   lastRunAt: null,
   scheduleVersion: 1,
@@ -219,6 +220,7 @@ beforeEach(() => {
       runId: run.publicId,
       schemaVersion: "automation.run.ai.v1",
       startedAt: "2026-05-27T09:00:00.000Z",
+      targetKind: "connector",
       transcript: [],
       usage: {},
     },
@@ -305,6 +307,7 @@ describe("automation Inngest workflows", () => {
         connectorProvider: "linear",
         finalText: "Checked the workspace.",
         schemaVersion: "automation.run.ai.v1",
+        targetKind: "connector",
       }),
     });
   });

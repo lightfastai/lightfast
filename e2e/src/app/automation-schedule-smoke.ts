@@ -65,6 +65,7 @@ async function createScheduleSmokeAutomation(input: {
     name: input.fixture.automationName,
     prompt: input.fixture.automationPrompt,
     schedule: { kind: "daily", config: { time: "09:00" } },
+    targetKind: "decisions",
     timezone: "UTC",
   });
 }

@@ -1,6 +1,7 @@
 import type { ConnectableConnectorProvider } from "@lightfast/connector-core";
 import {
   type AutomationScheduleInput,
+  type AutomationTargetKind,
   type NormalizedAutomationSchedule,
   type NormalizedSchedule,
   normalizeAutomationSchedule,
@@ -9,7 +10,7 @@ import { and, asc, desc, eq, inArray, lte, ne, sql } from "drizzle-orm";
 
 import type { Database } from "../client";
 import {
-  type Automation,
+  type Automation as AutomationRow,
   type AutomationRun,
   type AutomationRunTrigger,
   orgAutomationRuns as automationRuns,
@@ -21,9 +22,25 @@ import { getRowsAffected, isDuplicateKeyError } from "./drizzle-results";
 
 export {
   type AutomationScheduleInput,
+  type AutomationTargetKind,
   type NormalizedAutomationSchedule,
   type NormalizedSchedule,
   normalizeAutomationSchedule,
+};
+
+type AutomationTargetInput =
+  | {
+      connectorProvider: ConnectableConnectorProvider;
+      targetKind: "connector";
+    }
+  | {
+      connectorProvider: null;
+      targetKind: "decisions";
+    };
+
+type RawAutomation = AutomationRow;
+export type Automation = Omit<RawAutomation, "targetKind"> & {
+  targetKind: AutomationTargetKind;
 };
 
 interface LocalDate {
@@ -164,12 +181,95 @@ export function calculateNextRunAt(input: {
 
 export interface CreateAutomationInput {
   clerkOrgId: string;
-  connectorProvider?: ConnectableConnectorProvider | null;
+  connectorProvider: ConnectableConnectorProvider | null;
   createdByUserId: string;
   name: string;
   prompt: string;
   schedule: AutomationScheduleInput;
+  targetKind: AutomationTargetKind;
   timezone?: string;
+}
+
+function normalizeCreateAutomationTarget(
+  input: Pick<CreateAutomationInput, "connectorProvider" | "targetKind">
+): AutomationTargetInput {
+  if (input.targetKind === "connector") {
+    if (!input.connectorProvider) {
+      throw new Error("Connector automations require a connector provider.");
+    }
+    return {
+      connectorProvider: input.connectorProvider,
+      targetKind: "connector",
+    };
+  }
+
+  if (input.connectorProvider !== null) {
+    throw new Error(
+      "Decisions automations must not have a connector provider."
+    );
+  }
+
+  return {
+    connectorProvider: null,
+    targetKind: "decisions",
+  };
+}
+
+function normalizeUpdateAutomationTarget(input: {
+  connectorProvider?: ConnectableConnectorProvider | null;
+  targetKind?: AutomationTargetKind;
+}): AutomationTargetInput | null {
+  const targetTouched =
+    input.targetKind !== undefined || input.connectorProvider !== undefined;
+  if (!targetTouched) {
+    return null;
+  }
+
+  if (input.targetKind === undefined) {
+    throw new Error("Target kind is required when updating automation target.");
+  }
+
+  if (input.targetKind === "connector") {
+    if (!input.connectorProvider) {
+      throw new Error("Connector automations require a connector provider.");
+    }
+    return {
+      connectorProvider: input.connectorProvider,
+      targetKind: "connector",
+    };
+  }
+
+  if (
+    input.connectorProvider !== undefined &&
+    input.connectorProvider !== null
+  ) {
+    throw new Error(
+      "Decisions automations must not have a connector provider."
+    );
+  }
+
+  return {
+    connectorProvider: null,
+    targetKind: "decisions",
+  };
+}
+
+export function resolveAutomationTargetKind(input: {
+  connectorProvider: ConnectableConnectorProvider | null;
+  targetKind?: AutomationTargetKind | null;
+}): AutomationTargetKind {
+  if (input.targetKind) {
+    return input.targetKind;
+  }
+
+  return input.connectorProvider ? "connector" : "decisions";
+}
+
+function normalizeAutomationRow(row: RawAutomation): Automation {
+  return {
+    ...row,
+    targetKind: resolveAutomationTargetKind(row),
+  };
 }
 
 export async function createAutomation(
@@ -181,16 +281,18 @@ export async function createAutomation(
   const schedule = normalizeAutomationSchedule(input.schedule);
   const publicId = createAutomationId();
   const timezone = input.timezone ?? "UTC";
+  const target = normalizeCreateAutomationTarget(input);
 
   await db.insert(automations).values({
     publicId,
     clerkOrgId: input.clerkOrgId,
-    connectorProvider: input.connectorProvider ?? null,
+    connectorProvider: target.connectorProvider,
     createdByUserId: input.createdByUserId,
     name: input.name,
     prompt: input.prompt,
     scheduleKind: schedule.kind,
     scheduleConfig: schedule.config,
+    targetKind: target.targetKind,
     timezone,
     status: "active",
     nextRunAt: calculateNextRunAt({ after: now, schedule, timezone }),
@@ -226,14 +328,14 @@ export async function getAutomationByPublicId(
       )
     )
     .limit(1);
-  return row;
+  return row ? normalizeAutomationRow(row) : undefined;
 }
 
 export async function listAutomations(
   db: Database,
   input: { clerkOrgId: string }
 ): Promise<Automation[]> {
-  return db
+  const rows = await db
     .select()
     .from(automations)
     .where(
@@ -247,14 +349,17 @@ export async function listAutomations(
       asc(automations.nextRunAt),
       asc(automations.id)
     );
+  return rows.map(normalizeAutomationRow);
 }
 
 export interface UpdateAutomationInput {
   clerkOrgId: string;
+  connectorProvider?: ConnectableConnectorProvider | null;
   name?: string;
   prompt?: string;
   publicId: string;
   schedule?: AutomationScheduleInput;
+  targetKind?: AutomationTargetKind;
   timezone?: string;
 }
 
@@ -275,6 +380,15 @@ export async function updateAutomation(
   if (input.prompt !== undefined) {
     nextValues.prompt = input.prompt;
   }
+  const target = normalizeUpdateAutomationTarget(input);
+  let targetChanged = false;
+  if (target) {
+    nextValues.connectorProvider = target.connectorProvider;
+    nextValues.targetKind = target.targetKind;
+    targetChanged =
+      target.connectorProvider !== existing.connectorProvider ||
+      target.targetKind !== existing.targetKind;
+  }
   if (input.schedule || input.timezone !== undefined) {
     const schedule = input.schedule
       ? normalizeAutomationSchedule(input.schedule)
@@ -291,6 +405,8 @@ export async function updateAutomation(
       schedule,
       timezone,
     });
+  }
+  if (input.schedule || input.timezone !== undefined || targetChanged) {
     nextValues.scheduleVersion =
       sql`${automations.scheduleVersion} + 1` as unknown as number | undefined;
   }
@@ -464,7 +580,8 @@ export async function claimDueAutomationRuns(
     .limit(input.limit ?? 25);
 
   const claimed: ClaimedAutomationRun[] = [];
-  for (const automation of due) {
+  for (const row of due) {
+    const automation = normalizeAutomationRow(row);
     if (automation.nextRunAt === null) {
       continue;
     }

@@ -62,6 +62,7 @@ const automation: Automation = {
   scheduleConfig: { time: "09:00" },
   timezone: "UTC",
   status: "active",
+  targetKind: "connector",
   nextRunAt: new Date("2026-05-28T09:00:00.000Z"),
   lastRunAt: null,
   scheduleVersion: 1,
@@ -174,6 +175,7 @@ describe("automation domain commands", () => {
           name: "Morning check",
           prompt: "Check the workspace",
           schedule: { kind: "daily", config: { time: "09:00" } },
+          targetKind: "connector",
           timezone: "UTC",
         },
       })
@@ -186,6 +188,7 @@ describe("automation domain commands", () => {
       name: "Morning check",
       prompt: "Check the workspace",
       schedule: { kind: "daily", config: { time: "09:00" } },
+      targetKind: "connector",
       timezone: "UTC",
     });
 
@@ -198,6 +201,7 @@ describe("automation domain commands", () => {
           name: "Morning check",
           prompt: "Check the workspace",
           schedule: { kind: "manual", config: {} },
+          targetKind: "decisions",
           timezone: "UTC",
         },
       })
@@ -258,6 +262,7 @@ describe("automation domain commands", () => {
           name: "Morning check",
           prompt: "Check the workspace",
           schedule: { kind: "manual", config: {} },
+          targetKind: "decisions",
           timezone: "UTC",
         },
       })

@@ -37,6 +37,7 @@ export interface AutomationCommandDeps {
     name: string;
     prompt: string;
     schedule: z.infer<typeof createAutomationSchema>["schedule"];
+    targetKind: z.infer<typeof createAutomationSchema>["targetKind"];
     timezone: string;
   }): Promise<AutomationRecord>;
   createAutomationRun(input: {
@@ -81,10 +82,14 @@ export interface AutomationCommandDeps {
   }): Promise<AutomationRecord | undefined>;
   updateAutomation(input: {
     clerkOrgId: string;
+    connectorProvider?: z.infer<
+      typeof updateAutomationSchema
+    >["connectorProvider"];
     name?: string;
     prompt?: string;
     publicId: string;
     schedule?: z.infer<typeof updateAutomationSchema>["schedule"];
+    targetKind?: z.infer<typeof updateAutomationSchema>["targetKind"];
     timezone?: string;
   }): Promise<AutomationRecord | undefined>;
 }
@@ -149,6 +154,7 @@ export const createAutomationCommand = defineCommand<
       name: input.name,
       prompt: input.prompt,
       schedule: input.schedule,
+      targetKind: input.targetKind,
       timezone: input.timezone,
     });
   },
@@ -169,9 +175,11 @@ export const updateAutomationCommand = defineCommand<
       (await deps.updateAutomation({
         clerkOrgId: actor.orgId,
         publicId: input.id,
+        connectorProvider: input.connectorProvider,
         name: input.name,
         prompt: input.prompt,
         schedule: input.schedule,
+        targetKind: input.targetKind,
         timezone: input.timezone,
       })) ?? automationNotFound();
     return requireAutomationVisibleToActor(automation, actor);

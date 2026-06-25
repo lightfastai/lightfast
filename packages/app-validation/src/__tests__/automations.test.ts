@@ -191,6 +191,7 @@ describe("automation schemas", () => {
           kind: "daily",
           config: { time: "09:00" },
         },
+        targetKind: "connector",
         timezone: "Australia/Melbourne",
       })
     ).toMatchObject({
@@ -198,7 +199,7 @@ describe("automation schemas", () => {
     });
   });
 
-  it("accepts an optional supported connector provider when creating an automation", () => {
+  it("accepts an explicit connector target when creating an automation", () => {
     expect(
       createAutomationSchema.parse({
         connectorProvider: "x",
@@ -208,23 +209,11 @@ describe("automation schemas", () => {
           kind: "daily",
           config: { time: "09:00" },
         },
+        targetKind: "connector",
       })
     ).toMatchObject({
       connectorProvider: "x",
-      timezone: "UTC",
-    });
-
-    expect(
-      createAutomationSchema.parse({
-        name: "Daily summary",
-        prompt: "Summarize my day",
-        schedule: {
-          kind: "daily",
-          config: { time: "09:00" },
-        },
-      })
-    ).toMatchObject({
-      connectorProvider: null,
+      targetKind: "connector",
       timezone: "UTC",
     });
 
@@ -237,9 +226,11 @@ describe("automation schemas", () => {
           kind: "daily",
           config: { time: "09:00" },
         },
+        targetKind: "decisions",
       })
     ).toMatchObject({
       connectorProvider: null,
+      targetKind: "decisions",
       timezone: "UTC",
     });
 
@@ -252,8 +243,81 @@ describe("automation schemas", () => {
           kind: "daily",
           config: { time: "09:00" },
         },
+        targetKind: "connector",
       })
     ).toThrow();
+  });
+
+  it("rejects ambiguous automation targets when creating an automation", () => {
+    expect(() =>
+      createAutomationSchema.parse({
+        connectorProvider: "x",
+        name: "Daily summary",
+        prompt: "Summarize my day",
+        schedule: {
+          kind: "daily",
+          config: { time: "09:00" },
+        },
+        targetKind: "decisions",
+      })
+    ).toThrow();
+
+    expect(() =>
+      createAutomationSchema.parse({
+        connectorProvider: null,
+        name: "Daily summary",
+        prompt: "Summarize my day",
+        schedule: {
+          kind: "daily",
+          config: { time: "09:00" },
+        },
+        targetKind: "connector",
+      })
+    ).toThrow();
+
+    expect(() =>
+      createAutomationSchema.parse({
+        name: "Daily summary",
+        prompt: "Summarize my day",
+        schedule: {
+          kind: "daily",
+          config: { time: "09:00" },
+        },
+      })
+    ).toThrow();
+  });
+
+  it("accepts explicit automation target updates", () => {
+    expect(
+      updateAutomationSchema.parse({
+        id: `${AUTOMATION_ID_PREFIX}123e4567-e89b-12d3-a456-426614174000`,
+        connectorProvider: null,
+        targetKind: "decisions",
+      })
+    ).toMatchObject({
+      connectorProvider: null,
+      targetKind: "decisions",
+    });
+
+    expect(
+      updateAutomationSchema.parse({
+        id: `${AUTOMATION_ID_PREFIX}123e4567-e89b-12d3-a456-426614174000`,
+        targetKind: "decisions",
+      })
+    ).toMatchObject({
+      targetKind: "decisions",
+    });
+
+    expect(
+      updateAutomationSchema.parse({
+        id: `${AUTOMATION_ID_PREFIX}123e4567-e89b-12d3-a456-426614174000`,
+        connectorProvider: "linear",
+        targetKind: "connector",
+      })
+    ).toMatchObject({
+      connectorProvider: "linear",
+      targetKind: "connector",
+    });
   });
 
   it("rejects an invalid IANA timezone when updating an automation", () => {

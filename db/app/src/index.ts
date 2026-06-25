@@ -5,13 +5,13 @@ export { type Database, db, getClient } from "./client";
 export {
   AUTOMATION_ID_PREFIX,
   AUTOMATION_RUN_ID_PREFIX,
-  type Automation,
   type AutomationRun,
   type AutomationRunStatus,
   type AutomationRunTrigger,
   type AutomationScheduleConfig,
   type AutomationScheduleKind,
   type AutomationStatus,
+  type AutomationTargetKind,
   createAutomationId,
   createAutomationRunId,
   createDecisionViewId,
@@ -164,6 +164,7 @@ export {
 // Re-exported schema definitions
 export * from "./schema/tables/org-entity-graph";
 export {
+  type Automation,
   type ClaimedAutomationRun,
   type CreateAutomationInput,
   calculateNextRunAt,

@@ -113,6 +113,7 @@ describe("app auth route smoke helpers", () => {
       name: "Daily smoke automation",
       prompt: "Review seeded route smoke coverage.",
       schedule: { kind: "daily", config: { time: "09:00" } },
+      targetKind: "decisions",
       timezone: "UTC",
     });
   });

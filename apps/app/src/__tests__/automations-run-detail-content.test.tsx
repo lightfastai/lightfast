@@ -41,6 +41,7 @@ describe("AutomationRunDetailContent", () => {
             runId: "automation_run_123",
             schemaVersion: "automation.run.ai.v1",
             startedAt: "2026-06-06T00:00:00.000Z",
+            targetKind: "connector",
             transcript: [
               {
                 content: "Post a concise launch update.",
@@ -98,6 +99,7 @@ describe("AutomationRunDetailContent", () => {
             runId: "automation_run_123",
             schemaVersion: "automation.run.ai.v1",
             startedAt: "2026-06-06T00:00:00.000Z",
+            targetKind: "decisions",
             transcript: [
               {
                 content: "Summarize the workspace.",
@@ -145,6 +147,30 @@ describe("AutomationRunDetailContent", () => {
             connectorProvider: "x",
             finalText: "Partial output",
             schemaVersion: "automation.run.ai.v1",
+          },
+        })}
+      />
+    );
+
+    expect(screen.getByText(/automation.run.ai.v1/)).toBeTruthy();
+    expect(screen.queryByText("Summary")).toBeNull();
+  });
+
+  it("keeps JSON fallback for inconsistent ai output targets", () => {
+    render(
+      <AutomationRunDetailContent
+        onCopyLink={vi.fn()}
+        run={run({
+          output: {
+            connectorProvider: "x",
+            finalText: "Summarized the workspace.",
+            finishReason: "stop",
+            model: "anthropic/claude-sonnet-4.6",
+            providerRoutineCallIds: [],
+            schemaVersion: "automation.run.ai.v1",
+            targetKind: "decisions",
+            transcript: [],
+            usage: { totalTokens: 22 },
           },
         })}
       />
