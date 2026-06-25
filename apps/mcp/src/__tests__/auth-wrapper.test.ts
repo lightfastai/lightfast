@@ -15,9 +15,8 @@ describe("withHostedMcpAuth", () => {
   it("sets auth info on successful verification", async () => {
     const handler = vi.fn((request: Request) =>
       Response.json({
-        clientId: (
-          request as Request & { auth?: { clientId?: string } }
-        ).auth?.clientId,
+        clientId: (request as Request & { auth?: { clientId?: string } }).auth
+          ?.clientId,
       })
     );
     const wrapped = withHostedMcpAuth(

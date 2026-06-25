@@ -11,7 +11,8 @@ vi.mock("../mcp-oauth/index", () => ({
   exchangeMcpAuthorizationCode: exchangeMcpAuthorizationCodeMock,
   getMcpOAuthJwks: getMcpOAuthJwksMock,
   getRegisteredMcpOAuthClient: getRegisteredMcpOAuthClientMock,
-  refreshMcpAccessTokenWithRefreshToken: refreshMcpAccessTokenWithRefreshTokenMock,
+  refreshMcpAccessTokenWithRefreshToken:
+    refreshMcpAccessTokenWithRefreshTokenMock,
   registerMcpOAuthClient: registerMcpOAuthClientMock,
   revokeMcpRefreshTokenSecret: revokeMcpRefreshTokenSecretMock,
 }));

@@ -261,10 +261,7 @@ function isNonPublicIpAddress(value: string): boolean {
     return false;
   }
 
-  return NON_PUBLIC_IP_BLOCKS.check(
-    value,
-    ipVersion === 6 ? "ipv6" : "ipv4"
-  );
+  return NON_PUBLIC_IP_BLOCKS.check(value, ipVersion === 6 ? "ipv6" : "ipv4");
 }
 
 function createNonPublicIpBlockList(): BlockList {

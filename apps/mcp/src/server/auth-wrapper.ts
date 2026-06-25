@@ -1,5 +1,5 @@
-import type { HostedMcpAuthInfo } from "../context";
 import { McpTokenVerificationError } from "../auth/verify-token";
+import type { HostedMcpAuthInfo } from "../context";
 
 type VerifyHostedMcpAuthInfo = (
   request: Request,
