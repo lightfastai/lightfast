@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const exchangeMcpAuthorizationCodeMock = vi.fn();
 const getMcpOAuthJwksMock = vi.fn();
 const getRegisteredMcpOAuthClientMock = vi.fn();
+const refreshMcpAccessTokenWithRefreshTokenMock = vi.fn();
 const registerMcpOAuthClientMock = vi.fn();
 const rotateMcpRefreshTokenSecretMock = vi.fn();
 const revokeMcpRefreshTokenSecretMock = vi.fn();
@@ -11,6 +12,8 @@ vi.mock("../mcp-oauth/index", () => ({
   exchangeMcpAuthorizationCode: exchangeMcpAuthorizationCodeMock,
   getMcpOAuthJwks: getMcpOAuthJwksMock,
   getRegisteredMcpOAuthClient: getRegisteredMcpOAuthClientMock,
+  refreshMcpAccessTokenWithRefreshToken:
+    refreshMcpAccessTokenWithRefreshTokenMock,
   registerMcpOAuthClient: registerMcpOAuthClientMock,
   rotateMcpRefreshTokenSecret: rotateMcpRefreshTokenSecretMock,
   revokeMcpRefreshTokenSecret: revokeMcpRefreshTokenSecretMock,
@@ -37,6 +40,7 @@ describe("MCP OAuth server routes", () => {
     exchangeMcpAuthorizationCodeMock.mockReset();
     getMcpOAuthJwksMock.mockReset();
     getRegisteredMcpOAuthClientMock.mockReset();
+    refreshMcpAccessTokenWithRefreshTokenMock.mockReset();
     registerMcpOAuthClientMock.mockReset();
     rotateMcpRefreshTokenSecretMock.mockReset();
     revokeMcpRefreshTokenSecretMock.mockReset();
@@ -49,11 +53,10 @@ describe("MCP OAuth server routes", () => {
       scope: "mcp:system:read",
       token_type: "Bearer",
     });
-    rotateMcpRefreshTokenSecretMock.mockResolvedValue({
+    refreshMcpAccessTokenWithRefreshTokenMock.mockResolvedValue({
       access_token: "access-token",
       expires_in: 900,
       grant_id: "mcp_grant_test",
-      refresh_token: "refresh-token-next",
       scope: "mcp:system:read",
       token_type: "Bearer",
     });
@@ -155,25 +158,82 @@ describe("MCP OAuth server routes", () => {
     expect(response.status).toBe(200);
     const body = await responseJson(response);
     expect(body).toMatchObject({
-      refresh_token: "refresh-token-next",
+      access_token: "access-token",
+      expires_in: 900,
+      grant_id: "mcp_grant_test",
+      scope: "mcp:system:read",
+      token_type: "Bearer",
     });
+    expect(body).not.toHaveProperty("refresh_token");
     expect(body).not.toHaveProperty("reuseDetected");
-    expect(rotateMcpRefreshTokenSecretMock).toHaveBeenCalledWith(
+    expect(refreshMcpAccessTokenWithRefreshTokenMock).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
         audience: resource,
         clientId: "mcp_client_test",
         currentRefreshToken: refreshToken,
-        expiresAt: expect.any(Date),
         issuer: "https://app.lightfast.localhost",
         jwtSecret: "s".repeat(32),
-        now: expect.any(Date),
       })
     );
+    expect(rotateMcpRefreshTokenSecretMock).not.toHaveBeenCalled();
+  });
+
+  it("allows refresh token grants to reuse the same stable refresh token", async () => {
+    const requestBody = {
+      client_id: "mcp_client_test",
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+      resource,
+    };
+
+    const firstResponse = await handleMcpOAuthTokenRequest(
+      new Request("https://app.lightfast.localhost/oauth/token", {
+        body: JSON.stringify(requestBody),
+        headers: {
+          "content-type": "application/json",
+        },
+        method: "POST",
+      })
+    );
+    const secondResponse = await handleMcpOAuthTokenRequest(
+      new Request("https://app.lightfast.localhost/oauth/token", {
+        body: JSON.stringify(requestBody),
+        headers: {
+          "content-type": "application/json",
+        },
+        method: "POST",
+      })
+    );
+
+    expect(firstResponse.status).toBe(200);
+    expect(secondResponse.status).toBe(200);
+    await expect(responseJson(firstResponse)).resolves.not.toHaveProperty(
+      "refresh_token"
+    );
+    await expect(responseJson(secondResponse)).resolves.not.toHaveProperty(
+      "refresh_token"
+    );
+    expect(refreshMcpAccessTokenWithRefreshTokenMock).toHaveBeenCalledTimes(2);
+    expect(refreshMcpAccessTokenWithRefreshTokenMock).toHaveBeenNthCalledWith(
+      1,
+      expect.anything(),
+      expect.objectContaining({
+        currentRefreshToken: refreshToken,
+      })
+    );
+    expect(refreshMcpAccessTokenWithRefreshTokenMock).toHaveBeenNthCalledWith(
+      2,
+      expect.anything(),
+      expect.objectContaining({
+        currentRefreshToken: refreshToken,
+      })
+    );
+    expect(rotateMcpRefreshTokenSecretMock).not.toHaveBeenCalled();
   });
 
   it("returns invalid_request when refresh token resource mismatches the grant", async () => {
-    rotateMcpRefreshTokenSecretMock.mockRejectedValueOnce(
+    refreshMcpAccessTokenWithRefreshTokenMock.mockRejectedValueOnce(
       new McpOAuthError(
         "invalid_request",
         "Access token audience must match the authorized MCP resource."
@@ -201,12 +261,13 @@ describe("MCP OAuth server routes", () => {
       error_description:
         "Access token audience must match the authorized MCP resource.",
     });
-    expect(rotateMcpRefreshTokenSecretMock).toHaveBeenCalledWith(
+    expect(refreshMcpAccessTokenWithRefreshTokenMock).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
         audience: "https://attacker.example/mcp",
       })
     );
+    expect(rotateMcpRefreshTokenSecretMock).not.toHaveBeenCalled();
   });
 
   it("returns invalid_request for non-string token request resource", async () => {
@@ -257,6 +318,7 @@ describe("MCP OAuth server routes", () => {
       error: "invalid_request",
       error_description: "OAuth request body contains duplicate parameter.",
     });
+    expect(refreshMcpAccessTokenWithRefreshTokenMock).not.toHaveBeenCalled();
     expect(rotateMcpRefreshTokenSecretMock).not.toHaveBeenCalled();
   });
 

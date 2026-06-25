@@ -4,15 +4,11 @@ import {
   exchangeMcpAuthorizationCode,
   getMcpOAuthJwks,
   getRegisteredMcpOAuthClient,
+  refreshMcpAccessTokenWithRefreshToken,
   registerMcpOAuthClient,
   revokeMcpRefreshTokenSecret,
-  rotateMcpRefreshTokenSecret,
 } from ".";
-import {
-  MCP_REFRESH_TOKEN_TTL_SECONDS,
-  MCP_SUPPORTED_SCOPES,
-  McpOAuthError,
-} from "./types";
+import { MCP_SUPPORTED_SCOPES, McpOAuthError } from "./types";
 
 export function handleMcpOAuthAuthorizationServerMetadataRequest(): Response {
   try {
@@ -98,26 +94,14 @@ export async function handleMcpOAuthTokenRequest(
       return oauthJson(result);
     }
     if (grantType === "refresh_token") {
-      const now = new Date();
-      const result = await rotateMcpRefreshTokenSecret(db, {
+      const result = await refreshMcpAccessTokenWithRefreshToken(db, {
         audience: optionalField(body, "resource"),
         clientId: requireField(body, "client_id"),
         currentRefreshToken: requireField(body, "refresh_token"),
-        expiresAt: new Date(
-          now.getTime() + MCP_REFRESH_TOKEN_TTL_SECONDS * 1000
-        ),
         issuer: oauthIssuer(),
         jwtSecret: requireOAuthServiceJwtSecret(),
-        now,
       });
-      return oauthJson({
-        access_token: result.access_token,
-        expires_in: result.expires_in,
-        grant_id: result.grant_id,
-        refresh_token: result.refresh_token,
-        scope: result.scope,
-        token_type: result.token_type,
-      });
+      return oauthJson(result);
     }
     throw new McpOAuthError(
       "unsupported_grant_type",
