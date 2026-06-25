@@ -111,7 +111,7 @@ export const MarketingPanelRender: React.FC<MarketingPanelRenderProps> = ({
   return (
     <AbsoluteFill
       className={
-        isHalftone ? "bg-black text-white" : "bg-foreground text-background"
+        isHalftone ? "bg-muted text-white" : "bg-foreground text-background"
       }
     >
       {isHalftone ? (
@@ -119,13 +119,13 @@ export const MarketingPanelRender: React.FC<MarketingPanelRenderProps> = ({
           <AbsoluteFill>
             <Img
               alt=""
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover mix-blend-multiply"
               height={900}
               src={staticFile("images/landing-halftone-bg-q40.webp")}
               width={1440}
             />
           </AbsoluteFill>
-          <AbsoluteFill className="bg-black/45" />
+          <AbsoluteFill className="bg-black/15" />
         </>
       ) : null}
       <div className="relative h-full w-full px-28 py-16">
