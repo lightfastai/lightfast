@@ -115,18 +115,15 @@ export const MarketingPanelRender: React.FC<MarketingPanelRenderProps> = ({
       }
     >
       {isHalftone ? (
-        <>
-          <AbsoluteFill>
-            <Img
-              alt=""
-              className="h-full w-full object-cover mix-blend-multiply"
-              height={900}
-              src={staticFile("images/landing-halftone-bg-q40.webp")}
-              width={1440}
-            />
-          </AbsoluteFill>
-          <AbsoluteFill className="bg-black/15" />
-        </>
+        <AbsoluteFill>
+          <Img
+            alt=""
+            className="h-full w-full object-cover"
+            height={900}
+            src={staticFile("images/landing-halftone-bg-q40.webp")}
+            width={1440}
+          />
+        </AbsoluteFill>
       ) : null}
       <div className="relative h-full w-full px-28 py-16">
         <div className="grid grid-cols-3 items-start text-xs leading-none">
