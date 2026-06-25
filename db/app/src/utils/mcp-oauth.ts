@@ -331,9 +331,10 @@ export async function getActiveMcpOauthGrant(
     clerkOrgId: string;
     clerkUserId: string;
     resource: string;
+    scopes?: McpScope[];
   }
 ): Promise<McpOauthGrant | undefined> {
-  const [grant] = await db
+  const query = db
     .select()
     .from(mcpOauthGrants)
     .where(
@@ -345,9 +346,27 @@ export async function getActiveMcpOauthGrant(
         eq(mcpOauthGrants.resource, input.resource),
         eq(mcpOauthGrants.status, "active")
       )
-    )
-    .limit(1);
+    );
+
+  const expectedScopes = input.scopes;
+  if (expectedScopes) {
+    const grants = await query.orderBy(
+      desc(mcpOauthGrants.createdAt),
+      desc(mcpOauthGrants.id)
+    );
+    return grants.find((grant) => sameMcpScopes(grant.scopes, expectedScopes));
+  }
+
+  const [grant] = await query.limit(1);
   return grant;
+}
+
+function sameMcpScopes(left: McpScope[], right: McpScope[]): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+  const rightScopes = new Set(right);
+  return left.every((scope) => rightScopes.has(scope));
 }
 
 export async function revokeMcpOauthGrant(
@@ -559,6 +578,25 @@ export async function rotateMcpRefreshToken(
     }
     return { refreshToken: next, reuseDetected: false };
   });
+}
+
+export async function getActiveMcpRefreshTokenByHash(
+  db: Database,
+  input: { now?: Date; tokenHash: string }
+): Promise<McpOauthRefreshToken | undefined> {
+  const now = input.now ?? new Date();
+  const [token] = await db
+    .select()
+    .from(mcpOauthRefreshTokens)
+    .where(
+      and(
+        eq(mcpOauthRefreshTokens.tokenHash, input.tokenHash),
+        eq(mcpOauthRefreshTokens.status, "active"),
+        gt(mcpOauthRefreshTokens.expiresAt, now)
+      )
+    )
+    .limit(1);
+  return token;
 }
 
 async function markMcpRefreshTokenReuseDetected(

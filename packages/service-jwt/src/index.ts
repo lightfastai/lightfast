@@ -7,6 +7,8 @@ export const SERVICE_JWT_AUDIENCES = ["lightfast-app"] as const;
 export type ServiceJwtCaller = (typeof SERVICE_JWT_CALLERS)[number];
 export type ServiceJwtAudience = (typeof SERVICE_JWT_AUDIENCES)[number];
 
+const MAX_SERVICE_JWT_TTL_SECONDS = 5 * 60;
+
 export type ServiceJwtErrorCode = "invalid_token" | "disallowed_caller";
 
 export class ServiceJwtError extends Error {
@@ -23,6 +25,8 @@ export class ServiceJwtError extends Error {
 
 const serviceJwtPayloadSchema = z
   .object({
+    exp: z.number().int().positive(),
+    iat: z.number().int().positive(),
     iss: z.enum(SERVICE_JWT_CALLERS),
     token_use: z.literal("service_access"),
   })
@@ -40,6 +44,13 @@ export async function signServiceJWT(input: {
 }): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   const ttlSeconds = input.ttlSeconds ?? 60;
+  if (
+    !Number.isInteger(ttlSeconds) ||
+    ttlSeconds <= 0 ||
+    ttlSeconds > MAX_SERVICE_JWT_TTL_SECONDS
+  ) {
+    throw new Error("Service JWT TTL is invalid.");
+  }
 
   return await new SignJWT({ token_use: "service_access" })
     .setProtectedHeader({ alg: "HS256", typ: "JWT" })
@@ -67,6 +78,16 @@ export async function verifyServiceJWT(input: {
     );
     const parsed = serviceJwtPayloadSchema.parse(payload);
     const caller = parsed.iss;
+    if (
+      parsed.exp <= parsed.iat ||
+      parsed.exp - parsed.iat > MAX_SERVICE_JWT_TTL_SECONDS
+    ) {
+      throw new ServiceJwtError(
+        "invalid_token",
+        "Service token lifetime is invalid.",
+        401
+      );
+    }
 
     if (input.allowedCallers && !input.allowedCallers.includes(caller)) {
       throw new ServiceJwtError(

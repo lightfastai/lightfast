@@ -1,3 +1,5 @@
+import { BlockList, isIP } from "node:net";
+
 import type { Database } from "@db/app";
 import {
   createMcpOauthClient,
@@ -12,6 +14,7 @@ import { McpOAuthError } from "./types";
 
 const REDIRECT_URI_POLICY_ERROR =
   "Redirect URIs must be exact HTTPS URLs or loopback HTTP URLs with explicit ports and no fragments.";
+const NON_PUBLIC_IP_BLOCKS = createNonPublicIpBlockList();
 
 const registrationRequestSchema = z
   .object({
@@ -147,6 +150,7 @@ function parseRegistrationRequest(
   for (const redirectUri of parsed.redirect_uris) {
     assertAllowedRedirectUri(redirectUri);
   }
+  assertUniqueRedirectUris(parsed.redirect_uris);
 
   for (const key of [
     "client_uri",
@@ -164,6 +168,15 @@ function parseRegistrationRequest(
   return parsed;
 }
 
+function assertUniqueRedirectUris(redirectUris: string[]): void {
+  if (new Set(redirectUris).size !== redirectUris.length) {
+    throw new McpOAuthError(
+      "invalid_request",
+      "Duplicate redirect URIs are not allowed."
+    );
+  }
+}
+
 function assertAllowedRedirectUri(value: string): void {
   if (value.includes("*")) {
     throw new McpOAuthError(
@@ -173,10 +186,13 @@ function assertAllowedRedirectUri(value: string): void {
   }
 
   const url = new URL(value);
+  if (url.username || url.password) {
+    throw new McpOAuthError("invalid_request", REDIRECT_URI_POLICY_ERROR);
+  }
   if (url.hash) {
     throw new McpOAuthError("invalid_request", REDIRECT_URI_POLICY_ERROR);
   }
-  if (url.protocol === "https:") {
+  if (url.protocol === "https:" && !isNonPublicHostname(url.hostname)) {
     return;
   }
   if (
@@ -206,7 +222,12 @@ function hasExplicitLoopbackPort(value: string): boolean {
 
 function assertPublicMetadataUrl(name: string, value: string): void {
   const url = new URL(value);
-  if (url.protocol !== "https:" || isPrivateHostname(url.hostname)) {
+  if (
+    url.protocol !== "https:" ||
+    url.username ||
+    url.password ||
+    isNonPublicHostname(url.hostname)
+  ) {
     throw new McpOAuthError(
       "invalid_request",
       `${name} must be a public HTTPS URL.`
@@ -214,8 +235,8 @@ function assertPublicMetadataUrl(name: string, value: string): void {
   }
 }
 
-function isPrivateHostname(hostname: string): boolean {
-  const value = hostname.toLowerCase();
+function isNonPublicHostname(hostname: string): boolean {
+  const value = hostname.toLowerCase().replace(/^\[(.*)\]$/, "$1");
   if (
     value === "localhost" ||
     value === "::1" ||
@@ -225,16 +246,66 @@ function isPrivateHostname(hostname: string): boolean {
     return true;
   }
 
-  const parts = value.split(".").map(Number);
-  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part))) {
+  const mappedIpv4 = /^::ffff:(?<ipv4>\d+\.\d+\.\d+\.\d+)$/iu.exec(value)
+    ?.groups?.ipv4;
+  if (mappedIpv4) {
+    return isNonPublicIpAddress(mappedIpv4);
+  }
+
+  return isNonPublicIpAddress(value);
+}
+
+function isNonPublicIpAddress(value: string): boolean {
+  const ipVersion = isIP(value);
+  if (!ipVersion) {
     return false;
   }
 
-  const [first = 0, second = 0] = parts;
-  return (
-    first === 10 ||
-    first === 127 ||
-    (first === 172 && second >= 16 && second <= 31) ||
-    (first === 192 && second === 168)
+  return NON_PUBLIC_IP_BLOCKS.check(
+    value,
+    ipVersion === 6 ? "ipv6" : "ipv4"
   );
+}
+
+function createNonPublicIpBlockList(): BlockList {
+  const blockList = new BlockList();
+
+  for (const [address, prefix] of [
+    ["0.0.0.0", 8],
+    ["10.0.0.0", 8],
+    ["100.64.0.0", 10],
+    ["127.0.0.0", 8],
+    ["169.254.0.0", 16],
+    ["172.16.0.0", 12],
+    ["192.0.0.0", 24],
+    ["192.0.2.0", 24],
+    ["192.88.99.0", 24],
+    ["192.168.0.0", 16],
+    ["198.18.0.0", 15],
+    ["198.51.100.0", 24],
+    ["203.0.113.0", 24],
+    ["224.0.0.0", 4],
+    ["240.0.0.0", 4],
+  ] as const) {
+    blockList.addSubnet(address, prefix, "ipv4");
+  }
+
+  for (const [address, prefix] of [
+    ["::", 8],
+    ["64:ff9b::", 96],
+    ["64:ff9b:1::", 48],
+    ["100::", 64],
+    ["2001::", 23],
+    ["2001:2::", 48],
+    ["2001:db8::", 32],
+    ["2002::", 16],
+    ["3fff::", 20],
+    ["fc00::", 7],
+    ["fe80::", 10],
+    ["ff00::", 8],
+  ] as const) {
+    blockList.addSubnet(address, prefix, "ipv6");
+  }
+
+  return blockList;
 }

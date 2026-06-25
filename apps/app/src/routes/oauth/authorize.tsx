@@ -25,8 +25,27 @@ function McpAuthorizePage() {
 
 function validateMcpAuthorizeSearch(search: Record<string, unknown>) {
   return Object.fromEntries(
-    Object.entries(search).flatMap(([key, value]) =>
-      typeof value === "string" && value.length > 0 ? [[key, value]] : []
-    )
+    Object.entries(search).flatMap(([key, value]) => {
+      const normalized = singleSearchValue(value);
+      return normalized ? [[key, normalized]] : [];
+    })
   ) as Record<string, string | undefined>;
+}
+
+function singleSearchValue(value: unknown): string | undefined {
+  if (typeof value === "string" && value.length > 0) {
+    return value;
+  }
+  if (!Array.isArray(value)) {
+    return;
+  }
+
+  const values = value.filter(
+    (item): item is string => typeof item === "string" && item.length > 0
+  );
+  const [first] = values;
+  if (!first || values.some((item) => item !== first)) {
+    return;
+  }
+  return first;
 }

@@ -3,6 +3,7 @@ export * from "./clients";
 export * from "./grants";
 export * from "./hash";
 export * from "./ids";
+export * from "./resource";
 export * from "./resource-access";
 export * from "./tokens";
 export * from "./types";

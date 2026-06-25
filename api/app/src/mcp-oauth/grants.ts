@@ -19,7 +19,7 @@ export async function findOrCreateMcpOauthGrant(
   input: FindOrCreateMcpOauthGrantInput
 ): Promise<McpOauthGrant> {
   const existing = await getActiveMcpOauthGrant(db, input);
-  if (existing) {
+  if (existing && sameMcpScopes(existing.scopes, input.scopes)) {
     return existing;
   }
   return await createMcpOauthGrant(db, input);
@@ -30,4 +30,12 @@ export async function revokeMcpGrant(
   input: { publicId: string }
 ): Promise<boolean> {
   return await revokeMcpOauthGrant(db, input);
+}
+
+function sameMcpScopes(left: McpScope[], right: McpScope[]): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+  const rightScopes = new Set(right);
+  return left.every((scope) => rightScopes.has(scope));
 }

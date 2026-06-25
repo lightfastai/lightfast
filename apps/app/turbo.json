@@ -9,6 +9,7 @@
         "BRAINTRUST_API_KEY",
         "CLERK_SECRET_KEY",
         "HEALTH_CHECK_AUTH_TOKEN",
+        "MCP_RESOURCE_URL",
         "SENTRY_AUTH_TOKEN",
         "SENTRY_DSN",
         "SENTRY_ORG",

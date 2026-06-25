@@ -7,6 +7,7 @@ import type { McpScope } from "@repo/api-contract";
 
 import { hashOpaqueToken } from "./hash";
 import { createAuthorizationCodeSecret } from "./ids";
+import { requireHostedMcpResource } from "./resource";
 import {
   MCP_AUTHORIZATION_CODE_TTL_SECONDS,
   McpOAuthError,
@@ -53,6 +54,7 @@ export async function issueMcpAuthorizationCode(
   if (!isValidMcpS256CodeChallenge(input.codeChallenge)) {
     throw new McpOAuthError("invalid_request", "Invalid PKCE code challenge.");
   }
+  const resource = requireHostedMcpResource(input.resource);
 
   const scopes = parseMcpScopes(input.scope);
   const code = createAuthorizationCodeSecret();
@@ -70,7 +72,7 @@ export async function issueMcpAuthorizationCode(
     codeHash: hashOpaqueToken(code),
     expiresAt,
     redirectUri: input.redirectUri,
-    resource: input.resource,
+    resource,
     scopes,
   });
 

@@ -21,6 +21,7 @@ export const env = createEnv({
   server: {
     BRAINTRUST_API_KEY: z.string().min(1).optional(),
     HEALTH_CHECK_AUTH_TOKEN: z.string().min(32).optional(),
+    MCP_RESOURCE_URL: z.string().url(),
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
@@ -42,6 +43,7 @@ export const env = createEnv({
     HEALTH_CHECK_AUTH_TOKEN: process.env.HEALTH_CHECK_AUTH_TOKEN,
     KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
     KV_REST_API_URL: process.env.KV_REST_API_URL,
+    MCP_RESOURCE_URL: process.env.MCP_RESOURCE_URL,
     NODE_ENV: process.env.NODE_ENV,
     SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
     SENTRY_DSN: process.env.SENTRY_DSN,

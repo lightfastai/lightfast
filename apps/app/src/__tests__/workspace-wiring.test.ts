@@ -96,7 +96,7 @@ describe("app workspace wiring", () => {
       "VITE_LIGHTFAST_APP_URL=$(portless get lightfast)"
     );
     expect(packageJson.scripts["with-related-projects"]).toContain(
-      "VITE_LIGHTFAST_APP_URL=$(portless get lightfast)"
+      "MCP_RESOURCE_URL=$(portless get mcp.lightfast)/mcp"
     );
   });
 

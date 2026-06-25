@@ -14,6 +14,8 @@ import {
   createMcpOauthClient,
   createMcpOauthGrant,
   createMcpRefreshToken,
+  getActiveMcpOauthGrant,
+  getActiveMcpRefreshTokenByHash,
   getMcpOauthClientByClientId,
   recordMcpAuditEvent,
   rotateMcpRefreshToken,
@@ -254,6 +256,35 @@ describe("mcp oauth repositories", () => {
     });
   });
 
+  it("finds active grants by exact scope set when scopes are provided", async () => {
+    const { db, spies } = makeQueuedDb([
+      [
+        makeGrant({
+          publicId: "mcp_grant_write",
+          scopes: ["mcp:signals:write"],
+        }),
+        makeGrant({
+          publicId: "mcp_grant_read",
+          scopes: ["mcp:signals:read"],
+        }),
+      ],
+    ]);
+
+    await expect(
+      getActiveMcpOauthGrant(db, {
+        clientPublicId: clientId,
+        clerkOrgId: orgId,
+        clerkUserId: userId,
+        resource,
+        scopes: ["mcp:signals:read"],
+      })
+    ).resolves.toMatchObject({
+      publicId: "mcp_grant_read",
+      scopes: ["mcp:signals:read"],
+    });
+    expect(spies.orderBy).toHaveBeenCalledTimes(1);
+  });
+
   it("stores only authorization code hashes", async () => {
     const { db, insertedValues } = makeQueuedDb([[makeAuthorizationCode()]]);
 
@@ -375,6 +406,32 @@ describe("mcp oauth repositories", () => {
         }),
       ])
     );
+  });
+
+  it("reads active refresh token hashes for access-token refresh", async () => {
+    const { db, spies } = makeQueuedDb([[makeRefreshToken()]]);
+
+    await expect(
+      getActiveMcpRefreshTokenByHash(db, {
+        now: new Date("2026-06-01T00:00:00.000Z"),
+        tokenHash: "refresh_hash_old",
+      })
+    ).resolves.toMatchObject({
+      status: "active",
+      tokenHash: "refresh_hash_old",
+    });
+    expect(spies.limit).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns undefined when no active refresh token hash matches", async () => {
+    const { db } = makeQueuedDb([[]]);
+
+    await expect(
+      getActiveMcpRefreshTokenByHash(db, {
+        now: new Date("2026-06-01T00:00:00.000Z"),
+        tokenHash: "refresh_hash_missing",
+      })
+    ).resolves.toBeUndefined();
   });
 
   it("does not rotate expired active refresh tokens", async () => {

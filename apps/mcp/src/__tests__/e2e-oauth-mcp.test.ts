@@ -80,6 +80,7 @@ const createMcpAuthorizationCodeMock = vi.fn();
 const createMcpOauthClientMock = vi.fn();
 const createMcpOauthGrantMock = vi.fn();
 const createMcpRefreshTokenMock = vi.fn();
+const getActiveMcpRefreshTokenByHashMock = vi.fn();
 const getActiveMcpOauthGrantMock = vi.fn();
 const getActiveOrgBindingMock = vi.fn();
 const getMcpOauthClientByClientIdMock = vi.fn();
@@ -95,6 +96,7 @@ vi.mock("@db/app", () => ({
   createMcpOauthClient: createMcpOauthClientMock,
   createMcpOauthGrant: createMcpOauthGrantMock,
   createMcpRefreshToken: createMcpRefreshTokenMock,
+  getActiveMcpRefreshTokenByHash: getActiveMcpRefreshTokenByHashMock,
   getActiveMcpOauthGrant: getActiveMcpOauthGrantMock,
   getActiveOrgBinding: getActiveOrgBindingMock,
   getMcpOauthClientByClientId: getMcpOauthClientByClientIdMock,
@@ -112,6 +114,7 @@ vi.mock("../../../../db/app/src/index.ts", () => ({
   createMcpOauthClient: createMcpOauthClientMock,
   createMcpOauthGrant: createMcpOauthGrantMock,
   createMcpRefreshToken: createMcpRefreshTokenMock,
+  getActiveMcpRefreshTokenByHash: getActiveMcpRefreshTokenByHashMock,
   getActiveMcpOauthGrant: getActiveMcpOauthGrantMock,
   getActiveOrgBinding: getActiveOrgBindingMock,
   getMcpOauthClientByClientId: getMcpOauthClientByClientIdMock,
@@ -146,8 +149,41 @@ let refreshTokensByHash = new Map<string, McpOauthRefreshToken>();
 
 beforeEach(() => {
   vi.stubEnv("MCP_AUTH_ISSUER", issuer);
+  vi.stubEnv("APP_INTERNAL_URL", "https://app.lightfast.localhost");
   vi.stubEnv("MCP_RESOURCE_URL", resource);
   vi.stubEnv("SERVICE_JWT_SECRET", jwtSecret);
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
+      const body =
+        typeof init?.body === "string"
+          ? (JSON.parse(init.body) as {
+              clientId?: string;
+              grantId?: string;
+              orgId?: string;
+              resource?: string;
+              userId?: string;
+            })
+          : {};
+      const grant = body.grantId ? grantsById.get(body.grantId) : undefined;
+      if (
+        grant?.status === "active" &&
+        grant.clientPublicId === body.clientId &&
+        grant.clerkOrgId === body.orgId &&
+        grant.clerkUserId === body.userId &&
+        grant.resource === body.resource
+      ) {
+        return Response.json({ active: true });
+      }
+      return Response.json(
+        {
+          error: "mcp_grant_invalid",
+          message: "MCP authorization grant is invalid.",
+        },
+        { status: 403 }
+      );
+    })
+  );
 
   nextId = 1;
   authorizationCodesByHash = new Map();
@@ -160,6 +196,7 @@ beforeEach(() => {
   createMcpOauthClientMock.mockReset();
   createMcpOauthGrantMock.mockReset();
   createMcpRefreshTokenMock.mockReset();
+  getActiveMcpRefreshTokenByHashMock.mockReset();
   getActiveMcpOauthGrantMock.mockReset();
   getActiveOrgBindingMock.mockReset();
   getMcpOauthClientByClientIdMock.mockReset();
@@ -309,6 +346,22 @@ beforeEach(() => {
       return token;
     }
   );
+  getActiveMcpRefreshTokenByHashMock.mockImplementation(
+    async (
+      _db: Database,
+      input: {
+        now?: Date;
+        tokenHash: string;
+      }
+    ) => {
+      const token = refreshTokensByHash.get(input.tokenHash);
+      const lookupNow = input.now ?? now;
+      if (!token || token.status !== "active" || token.expiresAt <= lookupNow) {
+        return;
+      }
+      return token;
+    }
+  );
   rotateMcpRefreshTokenMock.mockImplementation(
     async (
       _db: Database,
@@ -372,10 +425,11 @@ beforeEach(() => {
 afterEach(() => {
   vi.resetModules();
   vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
 });
 
 describe("hosted MCP OAuth integration smoke", () => {
-  it("connects a DCR client, calls a hosted tool, rotates refresh, and blocks revoked refresh", async () => {
+  it("connects a DCR client, calls a hosted tool, refreshes access, and blocks revoked refresh", async () => {
     const { issueMcpAuthorizationCode } = await import(
       "../../../../api/app/src/mcp-oauth/authorization"
     );
@@ -386,8 +440,8 @@ describe("hosted MCP OAuth integration smoke", () => {
       createCodeChallenge,
       exchangeMcpAuthorizationCode,
       hashOpaqueToken,
+      refreshMcpAccessTokenWithRefreshToken,
       revokeMcpRefreshTokenSecret,
-      rotateMcpRefreshTokenSecret,
     } = await import("../../../../api/app/src/mcp-oauth/tokens");
     const { verifyMcpAuthInfo } = await import("../auth/verify-token");
     const { createMcpContextFromAuthInfo } = await import("../context");
@@ -403,7 +457,7 @@ describe("hosted MCP OAuth integration smoke", () => {
       },
       { now }
     );
-    const codeVerifier = "verifier_test";
+    const codeVerifier = "v".repeat(43);
     const issuedCode = await issueMcpAuthorizationCode(db, {
       clientId: registeredClient.client_id,
       clerkOrgId: orgId,
@@ -485,38 +539,46 @@ describe("hosted MCP OAuth integration smoke", () => {
       scopes: ["mcp:signals:write"],
     });
 
-    const rotated = await rotateMcpRefreshTokenSecret(db, {
+    const refreshed = await refreshMcpAccessTokenWithRefreshToken(db, {
+      clientId: registeredClient.client_id,
       currentRefreshToken: tokens.refresh_token,
-      expiresAt: new Date("2026-07-01T00:00:00.000Z"),
       issuer,
       jwtSecret,
     });
-    expect(rotated).toMatchObject({
+    expect(refreshed).toMatchObject({
       grant_id: "mcp_grant_test",
-      reuseDetected: false,
     });
-    expect(rotated.refresh_token).toMatch(/^mcp_refresh_/);
-    expect(rotated.refresh_token).not.toBe(tokens.refresh_token);
+    expect(refreshed).not.toHaveProperty("refresh_token");
+    expect(refreshed.access_token).toMatch(/^ey/);
+
+    await expect(
+      refreshMcpAccessTokenWithRefreshToken(db, {
+        clientId: registeredClient.client_id,
+        currentRefreshToken: tokens.refresh_token,
+        issuer,
+        jwtSecret,
+      })
+    ).resolves.toMatchObject({
+      grant_id: "mcp_grant_test",
+    });
 
     await expect(
       revokeMcpRefreshTokenSecret(db, {
-        refreshToken: rotated.refresh_token,
+        refreshToken: tokens.refresh_token,
       })
     ).resolves.toBe(true);
     await expect(
-      rotateMcpRefreshTokenSecret(db, {
-        currentRefreshToken: rotated.refresh_token,
-        expiresAt: new Date("2026-08-01T00:00:00.000Z"),
+      refreshMcpAccessTokenWithRefreshToken(db, {
+        clientId: registeredClient.client_id,
+        currentRefreshToken: tokens.refresh_token,
         issuer,
         jwtSecret,
       })
     ).rejects.toMatchObject({
       error: "invalid_grant",
-      message: "Refresh token reuse detected.",
+      message: "Refresh token is invalid.",
     });
-    expect(revokeMcpOauthGrantMock).toHaveBeenCalledWith(db, {
-      publicId: "mcp_grant_test",
-    });
+    expect(revokeMcpOauthGrantMock).not.toHaveBeenCalled();
   });
 });
 

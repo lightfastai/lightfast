@@ -1,7 +1,8 @@
 import "@tanstack/react-start/server-only";
 
-import { createMcpHandler, withMcpAuth } from "@vendor/mcp";
+import { createMcpHandler } from "@vendor/mcp";
 import { env } from "~/env";
+import { withHostedMcpAuth } from "~/server/auth-wrapper";
 import { registerHostedMcpTools } from "~/tools/execute";
 
 const resourceOrigin = new URL(env.MCP_RESOURCE_URL).origin;
@@ -23,15 +24,12 @@ const handler = createMcpHandler(
   }
 );
 
-const verifyAuthInfo: Parameters<typeof withMcpAuth>[1] = async (
-  request,
-  bearerToken
-) => {
+const verifyAuthInfo = async (request: Request, bearerToken?: string) => {
   const { verifyMcpAuthInfo } = await import("~/auth/verify-token");
   return verifyMcpAuthInfo(request, bearerToken);
 };
 
-export const mcpHandler = withMcpAuth(handler, verifyAuthInfo, {
+export const mcpHandler = withHostedMcpAuth(handler, verifyAuthInfo, {
   required: true,
   resourceUrl: resourceOrigin,
 });

@@ -42,6 +42,7 @@ describe("app environment validation wiring", () => {
     expect(envSource).not.toContain("VITE_LIGHTFAST_WWW_URL");
     expect(envSource).toContain("VITE_CLERK_PUBLISHABLE_KEY");
     expect(envSource).toContain("VITE_VERCEL_ENV");
+    expect(envSource).toContain("MCP_RESOURCE_URL");
   });
 
   it("evaluates env during Vite config loading", () => {
@@ -74,7 +75,7 @@ describe("app environment validation wiring", () => {
     );
 
     expect(viteConfigSource).toContain("tanstackStart");
-    expect(viteConfigSource).toContain("nitro()");
+    expect(viteConfigSource).toContain("nitro(");
     expect(viteConfigSource).toContain("react()");
     expect(viteConfigSource).toContain("sentryTanstackStart");
   });
@@ -96,6 +97,7 @@ describe("app environment validation wiring", () => {
       expect.arrayContaining([
         "VITE_LIGHTFAST_APP_URL",
         "VITE_VERCEL_ENV",
+        "MCP_RESOURCE_URL",
         "VITE_*",
       ])
     );

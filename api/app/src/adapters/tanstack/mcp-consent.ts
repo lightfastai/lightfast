@@ -12,6 +12,7 @@ import {
   isValidMcpS256CodeChallenge,
   McpOAuthError,
   parseMcpScopes,
+  requireHostedMcpResource,
 } from "../../mcp-oauth";
 
 export interface McpConsentViewModel {
@@ -112,6 +113,7 @@ async function getMcpConsentViewModel(
   if (!parsed.success) {
     throw notFound();
   }
+  const resource = requireHostedMcpResource(parsed.data.resource);
 
   const authState = await auth({ treatPendingAsSignedOut: false });
   if (!authState.userId) {
@@ -156,7 +158,7 @@ async function getMcpConsentViewModel(
       codeChallenge: parsed.data.code_challenge,
       codeChallengeMethod: parsed.data.code_challenge_method,
       redirectUri: parsed.data.redirect_uri,
-      resource: parsed.data.resource,
+      resource,
       scope: scopes.join(" "),
       state: parsed.data.state,
     },
@@ -173,6 +175,7 @@ async function approveMcpAuthorizationRequest(input: McpAuthorizationInput) {
   if (!authState.userId) {
     throw new McpOAuthError("access_denied", "Authentication required.", 401);
   }
+  const resource = requireHostedMcpResource(input.resource);
 
   await requireUserOrgMembership({
     clerkOrgId: input.organizationId,
@@ -186,7 +189,7 @@ async function approveMcpAuthorizationRequest(input: McpAuthorizationInput) {
     codeChallenge: input.codeChallenge,
     codeChallengeMethod: input.codeChallengeMethod,
     redirectUri: input.redirectUri,
-    resource: input.resource,
+    resource,
     scope: input.scope,
   });
 
@@ -203,6 +206,7 @@ async function denyMcpAuthorizationRequest(input: McpAuthorizationInput) {
   if (!authState.userId) {
     throw new McpOAuthError("access_denied", "Authentication required.", 401);
   }
+  requireHostedMcpResource(input.resource);
 
   const redirectUri = await requireRegisteredRedirectUri(input);
   const url = new URL(redirectUri);
@@ -220,10 +224,29 @@ function validateMcpAuthorizeSearchInput(input: unknown) {
 
   const record = input as Record<string, unknown>;
   return Object.fromEntries(
-    Object.entries(record).flatMap(([key, value]) =>
-      typeof value === "string" && value.length > 0 ? [[key, value]] : []
-    )
+    Object.entries(record).flatMap(([key, value]) => {
+      const normalized = singleSearchValue(value);
+      return normalized ? [[key, normalized]] : [];
+    })
   ) as Record<string, string | undefined>;
+}
+
+function singleSearchValue(value: unknown): string | undefined {
+  if (typeof value === "string" && value.length > 0) {
+    return value;
+  }
+  if (!Array.isArray(value)) {
+    return;
+  }
+
+  const values = value.filter(
+    (item): item is string => typeof item === "string" && item.length > 0
+  );
+  const [first] = values;
+  if (!first || values.some((item) => item !== first)) {
+    return;
+  }
+  return first;
 }
 
 function oauthRequestRedirectTarget(requestUrl: string): string {

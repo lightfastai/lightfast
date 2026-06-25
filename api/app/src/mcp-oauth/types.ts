@@ -32,7 +32,8 @@ export class McpOAuthError extends Error {
 }
 
 export function parseMcpScopes(scope: string | undefined): McpScope[] {
-  const requested = (scope ?? "mcp:system:read")
+  const scopeValue = scope?.trim() ? scope : "mcp:system:read";
+  const requested = scopeValue
     .split(/\s+/)
     .map((value) => value.trim())
     .filter(Boolean);

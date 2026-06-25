@@ -33,6 +33,29 @@ async function expiredToken(): Promise<string> {
     .sign(secretKey());
 }
 
+async function tokenWithoutExpiration(): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+
+  return await new SignJWT({ token_use: "service_access" })
+    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+    .setIssuer("mcp")
+    .setAudience("lightfast-app")
+    .setIssuedAt(now)
+    .sign(secretKey());
+}
+
+async function tokenWithLongLifetime(): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+
+  return await new SignJWT({ token_use: "service_access" })
+    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+    .setIssuer("mcp")
+    .setAudience("lightfast-app")
+    .setIssuedAt(now)
+    .setExpirationTime(now + 60 * 60)
+    .sign(secretKey());
+}
+
 describe("service JWT", () => {
   it("signs and verifies an mcp caller for the app audience", async () => {
     const token = await signServiceJWT({
@@ -104,6 +127,49 @@ describe("service JWT", () => {
       code: "invalid_token",
       status: 401,
     });
+  });
+
+  it("rejects tokens without an expiration", async () => {
+    const token = await tokenWithoutExpiration();
+
+    await expect(
+      verifyServiceJWT({
+        allowedCallers: ["mcp"],
+        audience: "lightfast-app",
+        jwtSecret,
+        token,
+      })
+    ).rejects.toMatchObject({
+      code: "invalid_token",
+      status: 401,
+    });
+  });
+
+  it("rejects tokens with an excessive lifetime", async () => {
+    const token = await tokenWithLongLifetime();
+
+    await expect(
+      verifyServiceJWT({
+        allowedCallers: ["mcp"],
+        audience: "lightfast-app",
+        jwtSecret,
+        token,
+      })
+    ).rejects.toMatchObject({
+      code: "invalid_token",
+      status: 401,
+    });
+  });
+
+  it("rejects invalid signing TTLs", async () => {
+    await expect(
+      signServiceJWT({
+        audience: "lightfast-app",
+        caller: "mcp",
+        jwtSecret,
+        ttlSeconds: 60 * 60,
+      })
+    ).rejects.toThrow("Service JWT TTL is invalid.");
   });
 
   it("rejects malformed tokens", async () => {
