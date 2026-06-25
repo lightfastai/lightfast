@@ -155,6 +155,30 @@ describe("AutomationRunDetailContent", () => {
     expect(screen.getByText(/automation.run.ai.v1/)).toBeTruthy();
     expect(screen.queryByText("Summary")).toBeNull();
   });
+
+  it("keeps JSON fallback for inconsistent ai output targets", () => {
+    render(
+      <AutomationRunDetailContent
+        onCopyLink={vi.fn()}
+        run={run({
+          output: {
+            connectorProvider: "x",
+            finalText: "Summarized the workspace.",
+            finishReason: "stop",
+            model: "anthropic/claude-sonnet-4.6",
+            providerRoutineCallIds: [],
+            schemaVersion: "automation.run.ai.v1",
+            targetKind: "decisions",
+            transcript: [],
+            usage: { totalTokens: 22 },
+          },
+        })}
+      />
+    );
+
+    expect(screen.getByText(/automation.run.ai.v1/)).toBeTruthy();
+    expect(screen.queryByText("Summary")).toBeNull();
+  });
 });
 
 function run(overrides: Partial<AutomationRun> = {}): AutomationRun {

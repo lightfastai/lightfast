@@ -54,8 +54,11 @@ export function isAutomationRunAiOutput(
     (output.connectorProvider === null ||
       isConnectorProvider(output.connectorProvider)) &&
     (output.targetKind === undefined ||
-      output.targetKind === "connector" ||
-      output.targetKind === "decisions") &&
+      (output.targetKind === "connector" &&
+        output.connectorProvider !== null &&
+        isConnectorProvider(output.connectorProvider)) ||
+      (output.targetKind === "decisions" &&
+        output.connectorProvider === null)) &&
     Array.isArray(output.providerRoutineCallIds) &&
     output.providerRoutineCallIds.every((id) => typeof id === "string") &&
     Array.isArray(output.transcript) &&
