@@ -30,11 +30,7 @@ export default function BlogPage() {
     <main className="bg-background text-foreground">
       <JsonLd code={publication.jsonLd} />
 
-      <section className={`pb-20 md:pb-16 ${marketingLayout.pageTop}`}>
-        <h1 className="font-medium font-title text-3xl tracking-normal lg:text-4xl">
-          Blog
-        </h1>
-      </section>
+      <section className={` ${marketingLayout.pageTop}`} />
 
       <section aria-labelledby="blog-posts-heading">
         <h2 className="sr-only" id="blog-posts-heading">
@@ -54,7 +50,7 @@ export default function BlogPage() {
                   {post.date}
                 </time>
                 <span className="pr-4 sm:col-span-2 sm:pr-10">
-                  <span className="inline-block translate-x-0 font-medium text-lg leading-tight tracking-normal transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.35,1)] group-hover/blog:translate-x-2 group-focus-visible/blog:translate-x-2 sm:text-xl lg:text-2xl">
+                  <span className="inline-block translate-x-0 font-medium text-lg leading-tight tracking-normal transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.35,1)] group-hover/blog:translate-x-2 group-focus-visible/blog:translate-x-2 sm:text-xl lg:text-lg">
                     {post.title}
                   </span>
                 </span>

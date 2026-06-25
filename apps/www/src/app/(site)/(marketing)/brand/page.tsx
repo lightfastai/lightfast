@@ -43,12 +43,13 @@ export default function BrandPage() {
           />
         </section>
 
-        <section className="pb-20 sm:pb-28">
+        <section>
           <MarketingContentBleed className="aspect-video overflow-hidden rounded-xs bg-foreground">
             <Image
               alt="Lightfast wordmark"
               className="object-cover"
               fill
+              quality={40}
               sizes="(max-width: 640px) calc(100vw - 3rem), (max-width: 1024px) calc(100vw - 5rem), 48rem"
               src="/images/marketing/wordmark-panel.webp"
             />

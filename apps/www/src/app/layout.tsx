@@ -1,7 +1,6 @@
 import "~/styles/styles.css";
 
 import { cn } from "@repo/ui-v2/lib/utils";
-import { ThemeProvider } from "@repo/ui-v2/providers/theme-provider";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { JsonLd } from "@vendor/seo/json-ld";
 import {
@@ -58,7 +57,7 @@ export default function RootLayout({
         geistSans.variable,
         geistMono.variable,
         ppNeueMontreal.variable,
-        "scrollbar-thin touch-manipulation font-sans antialiased"
+        "dark scrollbar-thin touch-manipulation font-sans antialiased"
       )}
       lang="en"
       suppressHydrationWarning
@@ -69,19 +68,12 @@ export default function RootLayout({
         ))}
       </head>
       <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          disableTransitionOnChange
-          enableSystem
-        >
-          <PrefetchCrossZoneLinksProvider>
-            {children}
-            <VercelAnalytics />
-            <SpeedInsights />
-            <PrefetchCrossZoneLinks />
-          </PrefetchCrossZoneLinksProvider>
-        </ThemeProvider>
+        <PrefetchCrossZoneLinksProvider>
+          {children}
+          <VercelAnalytics />
+          <SpeedInsights />
+          <PrefetchCrossZoneLinks />
+        </PrefetchCrossZoneLinksProvider>
       </body>
     </html>
   );

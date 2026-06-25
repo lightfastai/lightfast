@@ -5,6 +5,7 @@ export {
   continueRender,
   delayRender,
   Easing,
+  Img,
   interpolate,
   registerRoot,
   Sequence,

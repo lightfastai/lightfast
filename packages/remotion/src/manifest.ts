@@ -92,9 +92,10 @@ export const MANIFEST: CompositionManifest = {
       width: 768,
       height: 432,
       props: {
-        eyebrow: "Operating Thesis",
-        kind: "title",
-        title: "Collaboration between humans and machine",
+        background: "halftone",
+        eyebrow: "",
+        kind: "wordmark",
+        logoMarkSize: 30,
       },
       outputs: [
         {
@@ -136,6 +137,144 @@ export const MANIFEST: CompositionManifest = {
           format: "png",
           dest: "apps/remotion/out/brand",
           filename: "brand-geometry.png",
+          scale: 2,
+        },
+      ],
+    },
+    "logo-square-clearspace-light": {
+      type: "still",
+      component: "LogoSquareClearspaceDark",
+      width: 1600,
+      height: 900,
+      props: {
+        theme: "light",
+      },
+      outputs: [
+        {
+          format: "png",
+          dest: "apps/remotion/out/brand",
+          filename: "logo-square-clearspace-light.png",
+          scale: 2,
+        },
+        {
+          format: "png",
+          dest: "apps/www/public/images/brand",
+          filename: "logo-square-clearspace-light.png",
+          scale: 2,
+        },
+      ],
+    },
+    "logo-square-clearspace-dark": {
+      type: "still",
+      component: "LogoSquareClearspaceDark",
+      width: 1600,
+      height: 900,
+      props: {
+        theme: "dark",
+      },
+      outputs: [
+        {
+          format: "png",
+          dest: "apps/remotion/out/brand",
+          filename: "logo-square-clearspace-dark.png",
+          scale: 2,
+        },
+        {
+          format: "png",
+          dest: "apps/www/public/images/brand",
+          filename: "logo-square-clearspace-dark.png",
+          scale: 2,
+        },
+      ],
+    },
+    "brand-partnership-clearspace-light": {
+      type: "still",
+      component: "BrandPartnershipClearspaceDark",
+      width: 1600,
+      height: 540,
+      props: {
+        theme: "light",
+      },
+      outputs: [
+        {
+          format: "png",
+          dest: "apps/remotion/out/brand",
+          filename: "brand-partnership-clearspace-light.png",
+          scale: 2,
+        },
+        {
+          format: "png",
+          dest: "apps/www/public/images/brand",
+          filename: "brand-partnership-clearspace-light.png",
+          scale: 2,
+        },
+      ],
+    },
+    "brand-partnership-clearspace-dark": {
+      type: "still",
+      component: "BrandPartnershipClearspaceDark",
+      width: 1600,
+      height: 540,
+      props: {
+        theme: "dark",
+      },
+      outputs: [
+        {
+          format: "png",
+          dest: "apps/remotion/out/brand",
+          filename: "brand-partnership-clearspace-dark.png",
+          scale: 2,
+        },
+        {
+          format: "png",
+          dest: "apps/www/public/images/brand",
+          filename: "brand-partnership-clearspace-dark.png",
+          scale: 2,
+        },
+      ],
+    },
+    "lockup-spacing-dot-pitch-isolation-light": {
+      type: "still",
+      component: "LockupSpacingDotPitchIsolation",
+      width: 1116,
+      height: 600,
+      props: {
+        theme: "light",
+      },
+      outputs: [
+        {
+          format: "png",
+          dest: "apps/remotion/out/brand",
+          filename: "lockup-spacing-dot-pitch-isolation-light.png",
+          scale: 2,
+        },
+        {
+          format: "png",
+          dest: "apps/www/public/images/brand",
+          filename: "lockup-spacing-dot-pitch-isolation-light.png",
+          scale: 2,
+        },
+      ],
+    },
+    "lockup-spacing-dot-pitch-isolation-dark": {
+      type: "still",
+      component: "LockupSpacingDotPitchIsolation",
+      width: 1116,
+      height: 600,
+      props: {
+        theme: "dark",
+      },
+      outputs: [
+        {
+          format: "png",
+          dest: "apps/remotion/out/brand",
+          filename: "lockup-spacing-dot-pitch-isolation-dark.png",
+          scale: 2,
+        },
+        {
+          format: "png",
+          dest: "apps/www/public/images/brand",
+          filename: "lockup-spacing-dot-pitch-isolation-dark.png",
           scale: 2,
         },
       ],
