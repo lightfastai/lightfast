@@ -64,7 +64,6 @@
         "src/index.ts",
         "src/render.ts",
         "src/watch.ts",
-        "src/__tests__/**/*.{test,spec}.{ts,tsx}",
         "remotion.config.ts"
       ],
       "project": ["src/**/*.{ts,tsx}", "remotion.config.ts"]
