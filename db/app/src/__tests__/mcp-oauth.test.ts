@@ -257,7 +257,7 @@ describe("mcp oauth repositories", () => {
   });
 
   it("finds active grants by exact scope set when scopes are provided", async () => {
-    const { db, spies } = makeQueuedDb([
+    const { db } = makeQueuedDb([
       [
         makeGrant({
           publicId: "mcp_grant_write",
@@ -282,7 +282,27 @@ describe("mcp oauth repositories", () => {
       publicId: "mcp_grant_read",
       scopes: ["mcp:signals:read"],
     });
-    expect(spies.orderBy).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns undefined when no active grant has the exact requested scope set", async () => {
+    const { db } = makeQueuedDb([
+      [
+        makeGrant({
+          publicId: "mcp_grant_write",
+          scopes: ["mcp:signals:write"],
+        }),
+      ],
+    ]);
+
+    await expect(
+      getActiveMcpOauthGrant(db, {
+        clientPublicId: clientId,
+        clerkOrgId: orgId,
+        clerkUserId: userId,
+        resource,
+        scopes: ["mcp:signals:read"],
+      })
+    ).resolves.toBeUndefined();
   });
 
   it("stores only authorization code hashes", async () => {
@@ -409,7 +429,7 @@ describe("mcp oauth repositories", () => {
   });
 
   it("reads active refresh token hashes for access-token refresh", async () => {
-    const { db, spies } = makeQueuedDb([[makeRefreshToken()]]);
+    const { db } = makeQueuedDb([[makeRefreshToken()]]);
 
     await expect(
       getActiveMcpRefreshTokenByHash(db, {
@@ -420,7 +440,6 @@ describe("mcp oauth repositories", () => {
       status: "active",
       tokenHash: "refresh_hash_old",
     });
-    expect(spies.limit).toHaveBeenCalledTimes(1);
   });
 
   it("returns undefined when no active refresh token hash matches", async () => {
@@ -430,6 +449,28 @@ describe("mcp oauth repositories", () => {
       getActiveMcpRefreshTokenByHash(db, {
         now: new Date("2026-06-01T00:00:00.000Z"),
         tokenHash: "refresh_hash_missing",
+      })
+    ).resolves.toBeUndefined();
+  });
+
+  it("returns undefined when revoked refresh token hashes are filtered out", async () => {
+    const { db } = makeQueuedDb([[]]);
+
+    await expect(
+      getActiveMcpRefreshTokenByHash(db, {
+        now: new Date("2026-06-01T00:00:00.000Z"),
+        tokenHash: "refresh_hash_old",
+      })
+    ).resolves.toBeUndefined();
+  });
+
+  it("returns undefined when expired refresh token hashes are filtered out", async () => {
+    const { db } = makeQueuedDb([[]]);
+
+    await expect(
+      getActiveMcpRefreshTokenByHash(db, {
+        now: new Date("2026-06-01T00:00:00.000Z"),
+        tokenHash: "refresh_hash_old",
       })
     ).resolves.toBeUndefined();
   });

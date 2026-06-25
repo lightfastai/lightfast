@@ -233,10 +233,22 @@ function validateGrantForAuthorizationCode(
     grant.clerkOrgId !== code.clerkOrgId ||
     grant.clerkUserId !== code.clerkUserId ||
     grant.status !== "active" ||
-    grant.resource !== code.resource
+    grant.resource !== code.resource ||
+    !sameMcpScopes(grant.scopes, code.scopes)
   ) {
     throw new McpOAuthError("invalid_grant", "Authorization grant is invalid.");
   }
+}
+
+function sameMcpScopes(
+  left: readonly McpScope[],
+  right: readonly McpScope[]
+): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+  const rightScopes = new Set(right);
+  return left.every((scope) => rightScopes.has(scope));
 }
 
 export interface RotateMcpRefreshTokenSecretInput {

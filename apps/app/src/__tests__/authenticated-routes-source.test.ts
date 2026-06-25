@@ -207,9 +207,10 @@ describe("app authenticated route migration", () => {
     expect(consentCardSource).toContain('method="post"');
     expect(consentCardSource).toContain("event.preventDefault();");
     expect(consentCardSource).toContain('void submitAuthorization("approve");');
-    expect(consentCardSource).toMatch(
-      /onClick=\{\(\) => void submitAuthorization\("approve"\)\}[\s\S]*?type="button"/
-    );
+    const approveButtonSource = consentCardSource.match(
+      /<Button[\s\S]*?submitAuthorization\("approve"\)[\s\S]*?<\/Button>/
+    )?.[0];
+    expect(approveButtonSource).toContain('type="button"');
     expect(existsSync(consentFunctionsPath)).toBe(false);
     expect(existsSync(consentServerPath)).toBe(false);
     expect(consentAdapterSource).toContain(

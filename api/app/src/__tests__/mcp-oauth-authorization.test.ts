@@ -313,6 +313,37 @@ describe("exchangeMcpAuthorizationCode", () => {
     );
   });
 
+  it("rejects returned grants whose scopes differ from the consumed authorization code", async () => {
+    consumeMcpAuthorizationCodeMock.mockResolvedValueOnce(
+      authorizationCode({ scopes: ["mcp:signals:read"] })
+    );
+    createMcpOauthGrantMock.mockResolvedValueOnce({
+      clientPublicId: "mcp_client_test",
+      clerkOrgId: "org_test",
+      clerkUserId: "user_test",
+      publicId: "mcp_grant_write",
+      resource,
+      scopes: ["mcp:signals:write"],
+      status: "active",
+    });
+
+    await expect(
+      exchangeMcpAuthorizationCode(db, {
+        audience: resource,
+        clientId: "mcp_client_test",
+        code: authorizationCodeSecret,
+        codeVerifier,
+        issuer: "https://app.lightfast.localhost",
+        jwtSecret: "test-secret",
+        redirectUri,
+      })
+    ).rejects.toEqual(
+      new McpOAuthError("invalid_grant", "Authorization grant is invalid.")
+    );
+
+    expect(createMcpRefreshTokenMock).not.toHaveBeenCalled();
+  });
+
   it("rejects invalid, reused, or expired codes before creating refresh tokens", async () => {
     consumeMcpAuthorizationCodeMock.mockResolvedValueOnce(undefined);
 
