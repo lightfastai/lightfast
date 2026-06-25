@@ -179,7 +179,7 @@ describe("MCP OAuth server routes", () => {
     expect(rotateMcpRefreshTokenSecretMock).not.toHaveBeenCalled();
   });
 
-  it("allows refresh token grants to reuse the same stable refresh token", async () => {
+  it("delegates repeated refresh token grants without rotating", async () => {
     const requestBody = {
       client_id: "mcp_client_test",
       grant_type: "refresh_token",
