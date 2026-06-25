@@ -31,6 +31,12 @@
       "skillPath": "skills/brainstorming/SKILL.md",
       "computedHash": "8df9b47092524833138b58682d03f2e153a242e550d1693657afdbee0cc9cdb0"
     },
+    "build-iterated-agentic-loop": {
+      "source": "humanlayer/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/build-iterated-agentic-loop/skills/build-iterated-agentic-loop/SKILL.md",
+      "computedHash": "2a46b55d2e1ccfaae0a07dc8e8e96cc128f8bed175671d6840a616541840da9c"
+    },
     "clerk": {
       "source": "clerk/skills",
       "sourceType": "github",
