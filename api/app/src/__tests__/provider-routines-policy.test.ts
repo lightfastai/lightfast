@@ -39,6 +39,7 @@ describe("provider routine policy", () => {
   it("classifies known Linear routines and defaults unknown names to write", () => {
     expect(classifyLinearRoutine("list_issues")).toBe("read");
     expect(classifyLinearRoutine("create_issue")).toBe("write");
+    expect(classifyLinearRoutine("save_initiative")).toBe("write");
     expect(classifyLinearRoutine("some_future_tool")).toBe(
       "unknown_write_default"
     );

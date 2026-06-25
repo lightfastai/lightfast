@@ -100,13 +100,21 @@ export async function callLinearMcpTool(input: {
 
   try {
     await withAbort(client.connect(transport), abortController.signal);
-    return await withAbort(
+    const result = await withAbort(
       client.callTool({
         arguments: input.input,
         name: input.name,
       }),
       abortController.signal
     );
+    if (isMcpToolErrorResult(result)) {
+      throw new LinearAppNodeError(
+        "LINEAR_MCP_FAILED",
+        "Linear MCP tool call failed.",
+        result
+      );
+    }
+    return result;
   } catch (error) {
     if (error instanceof LinearAppNodeError) {
       throw error;
@@ -153,6 +161,15 @@ function delay(timeoutMs: number): Promise<void> {
 
 function abortError() {
   return new DOMException("The operation was aborted.", "AbortError");
+}
+
+function isMcpToolErrorResult(result: unknown): result is { isError: true } {
+  return (
+    result !== null &&
+    typeof result === "object" &&
+    "isError" in result &&
+    (result as { isError?: unknown }).isError === true
+  );
 }
 
 function toManifestItem(tool: Tool) {
