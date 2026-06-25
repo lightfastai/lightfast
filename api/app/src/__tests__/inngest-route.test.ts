@@ -17,7 +17,6 @@ const indexSignalEntities = { id: "index-signal-entities" };
 const enrichSignalEntities = { id: "enrich-signal-entities" };
 const backfillSignalEntityLinks = { id: "backfill-signal-entity-links" };
 const classifyPeople = { id: "classify-people" };
-const cleanupDeveloperSandboxRuns = { id: "cleanup-developer-sandbox-runs" };
 const automationScheduler = { id: "automation-scheduler" };
 const runAutomation = { id: "run-automation" };
 const runEntityResolution = { id: "run-entity-resolution" };
@@ -69,10 +68,6 @@ vi.mock("../inngest/workflow/backfill-signal-entity-links", () => ({
 
 vi.mock("../inngest/workflow/classify-people", () => ({
   classifyPeople,
-}));
-
-vi.mock("../inngest/workflow/cleanup-developer-sandbox-runs", () => ({
-  cleanupDeveloperSandboxRuns,
 }));
 
 vi.mock("../inngest/workflow/automation-scheduler", () => ({
@@ -131,7 +126,6 @@ describe("createInngestRouteContext", () => {
         enrichSignalEntities,
         backfillSignalEntityLinks,
         classifyPeople,
-        cleanupDeveloperSandboxRuns,
         automationScheduler,
         runAutomation,
         runEntityResolution,
@@ -160,7 +154,6 @@ describe("createInngestRouteContext", () => {
         enrichSignalEntities,
         backfillSignalEntityLinks,
         classifyPeople,
-        cleanupDeveloperSandboxRuns,
         automationScheduler,
         runAutomation,
         runEntityResolution,

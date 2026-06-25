@@ -74,7 +74,6 @@ describe("app auth route smoke helpers", () => {
     expect(paths).toContain("/lf-app/chat");
     expect(paths).toContain("/lf-app/decisions");
     expect(paths).toContain("/lf-app/people");
-    expect(paths).toContain("/lf-app/developer-connections");
     expect(paths).toContain("/lf-app/automations/new");
     expect(checks).toHaveLength(APP_AUTH_ROUTE_SPECS.length);
     expect(checks.some((check) => check.path.includes("$slug"))).toBe(false);

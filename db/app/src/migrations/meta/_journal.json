@@ -215,8 +215,15 @@
     {
       "idx": 30,
       "version": "5",
-      "when": 1782343057423,
-      "tag": "0030_exotic_silver_fox",
+      "when": 1782344229384,
+      "tag": "0030_dashing_tomorrow_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "5",
+      "when": 1782347414091,
+      "tag": "0031_brown_black_bolt",
       "breakpoints": true
     }
   ]

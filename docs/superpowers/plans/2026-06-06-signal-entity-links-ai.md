@@ -2061,7 +2061,6 @@ functions: [
   classifySignal,
   indexSignalEntities,
   classifyPeople,
-  cleanupDeveloperSandboxRuns,
   automationScheduler,
   runAutomation,
   refreshSkillIndex,

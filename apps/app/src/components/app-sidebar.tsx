@@ -3,7 +3,6 @@ import {
   BlocksIcon,
   Cancel01Icon,
   CheckListIcon,
-  Key01Icon,
   Message01Icon,
   MessageCirclePlus,
   Scroll01Icon,
@@ -37,7 +36,6 @@ type WorkspaceRouteTo =
   | "/$slug/automations"
   | "/$slug/connectors"
   | "/$slug/decisions"
-  | "/$slug/developer-connections"
   | "/$slug/people"
   | "/$slug/settings"
   | "/$slug/signals"
@@ -47,7 +45,6 @@ type WorkspaceNavTitle =
   | "Automations"
   | "Connectors"
   | "Decisions"
-  | "Developer Connections"
   | "People"
   | "Settings"
   | "Signals"
@@ -68,7 +65,6 @@ const navIcons: Record<WorkspaceNavTitle, IconSvgElement> = {
   Automations: WorkflowSquare07Icon,
   Connectors: BlocksIcon,
   Decisions: CheckListIcon,
-  "Developer Connections": Key01Icon,
   People: UserGroupIcon,
   Settings: SettingsIcon,
   Signals: ApertureIcon,
@@ -116,11 +112,6 @@ export function AppSidebar({ orgSlug }: { orgSlug: string }) {
           href: `/${orgSlug}/connectors`,
           title: "Connectors",
           to: "/$slug/connectors",
-        },
-        {
-          href: `/${orgSlug}/developer-connections`,
-          title: "Developer Connections",
-          to: "/$slug/developer-connections",
         },
         {
           href: `/${orgSlug}/settings`,

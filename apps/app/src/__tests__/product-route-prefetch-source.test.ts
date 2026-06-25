@@ -35,7 +35,6 @@ describe("app route prefetch policy", () => {
       "src/automations/automations-route-prefetch.ts",
       "src/connectors/connectors-route-prefetch.ts",
       "src/decisions/decisions-route-prefetch.ts",
-      "src/developer-connections/developer-connections-route-prefetch.ts",
       "src/org/org-route-prefetch.ts",
       "src/people/people-route-prefetch.ts",
       "src/signals/signals-route-prefetch.ts",

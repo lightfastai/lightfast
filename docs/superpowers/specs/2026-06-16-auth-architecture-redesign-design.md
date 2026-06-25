@@ -65,8 +65,8 @@ The migration should be strangler style. The first vertical slice is signals.
 - No direct DB, Clerk, or connector credential access from `apps/mcp`.
 - No exposure of OAuth bearer tokens or auth request headers to the Electron
   renderer long term.
-- No collapse of org connectors, user connectors, and developer connections into
-  one Lightfast authority model.
+- No collapse of org connectors and user connectors into one Lightfast authority
+  model.
 - No automatic global command discovery.
 
 ## Current Problems
@@ -600,12 +600,11 @@ Rules:
 - all-provider product registries
 - org setup workflows
 - user connector workflows
-- developer connection workflows
 - DB persistence
 - Lightfast actor/gate logic
 
-Org connectors, user connectors, and developer connections stay separate
-`api/app` product domains even when they share the same provider package.
+Org connectors and user connectors stay separate `api/app` product domains even
+when they share the same provider package.
 
 ## Enforcement
 
