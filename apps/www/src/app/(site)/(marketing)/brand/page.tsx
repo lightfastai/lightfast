@@ -49,6 +49,7 @@ export default function BrandPage() {
               alt="Lightfast wordmark"
               className="object-cover"
               fill
+              preload
               quality={40}
               sizes="(max-width: 640px) calc(100vw - 3rem), (max-width: 1024px) calc(100vw - 5rem), 48rem"
               src="/images/marketing/wordmark-panel.webp"
