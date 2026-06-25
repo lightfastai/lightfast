@@ -80,7 +80,11 @@ export function formatCaller(decision: DecisionRow): string {
     return `Automation ${decision.calledById}`;
   }
   if (decision.calledByKind === "user") {
-    return `User ${decision.calledByUserId ?? decision.calledById}`;
+    return `User ${
+      decision.calledByUsername ??
+      decision.calledByUserId ??
+      decision.calledById
+    }`;
   }
   return `System ${decision.calledById}`;
 }

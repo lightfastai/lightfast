@@ -6,7 +6,6 @@ import {
   markProviderRoutineCallProviderAttempted,
   markProviderRoutineCallSucceeded,
   type OrgConnectorConnection,
-  type ProviderRoutineCallRedactedPayload,
 } from "@db/app";
 import type { FullConnectorToolManifestItem } from "@lightfast/connector-core";
 import {
@@ -24,6 +23,7 @@ import type {
 } from "./context";
 import { ProviderRoutineError, providerRoutineError } from "./errors";
 import { defaultLinearProviderRoutineAdapter } from "./linear";
+import { captureProviderRoutinePayload } from "./payload";
 import { classifyRoutine, hasRoutineScope } from "./policy";
 
 export async function callProviderRoutine(
@@ -92,7 +92,7 @@ export async function callProviderRoutine(
     calledByKind: "user",
     calledByUserId: context.actor.userId,
     clerkOrgId: context.actor.orgId,
-    inputRedacted: redactedPresence(parsed.input),
+    inputPayload: captureProviderRoutinePayload(parsed.input),
     provider,
     providerActorId: connection.providerActorId,
     providerConnectionId: connection.id,
@@ -163,12 +163,25 @@ export async function callProviderRoutine(
     throw mapped;
   }
 
-  await markProviderRoutineCallSucceeded(context.db, {
-    clerkOrgId: context.actor.orgId,
-    finishedAt: context.now(),
-    outputRedacted: redactedPresence(result),
-    publicId: providerRoutineCall.publicId,
-  });
+  try {
+    await markProviderRoutineCallSucceeded(context.db, {
+      clerkOrgId: context.actor.orgId,
+      finishedAt: context.now(),
+      outputPayload: captureProviderRoutinePayload(result),
+      publicId: providerRoutineCall.publicId,
+    });
+  } catch (error) {
+    context.log.warn("[provider-routines] success ledger update failed", {
+      clerkOrgId: context.actor.orgId,
+      failure: {
+        code: getErrorCode(error),
+        name: error instanceof Error ? error.name : typeof error,
+      },
+      providerRoutineCallId: providerRoutineCall.publicId,
+      routineId: parsed.routineId,
+      success: false,
+    });
+  }
 
   return {
     provider,
@@ -279,13 +292,6 @@ function linearAdapter(
   context: ProviderRoutineServiceContext
 ): LinearProviderRoutineAdapter {
   return context.adapters?.linear ?? defaultLinearProviderRoutineAdapter;
-}
-
-function redactedPresence(value: unknown): ProviderRoutineCallRedactedPayload {
-  if (value === undefined) {
-    return null;
-  }
-  return { present: true };
 }
 
 function isValidConnectorToolInput(
