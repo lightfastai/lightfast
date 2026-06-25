@@ -7,7 +7,7 @@ export default mergeConfig(
   defineConfig({
     test: {
       environment: "node",
-      include: ["src/**/*.{test,spec}.ts"],
+      include: ["src/__tests__/**/*.{test,spec}.{ts,tsx}"],
       passWithNoTests: true,
       setupFiles: ["src/__tests__/setup-env.ts"],
     },
