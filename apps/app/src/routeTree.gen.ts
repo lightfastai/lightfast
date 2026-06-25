@@ -41,7 +41,6 @@ import { Route as AuthenticatedSlugSkillsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedSlugSignalsRouteImport } from './routes/_authenticated/$slug/signals'
 import { Route as AuthenticatedSlugSettingsRouteImport } from './routes/_authenticated/$slug/settings'
 import { Route as AuthenticatedSlugPeopleRouteImport } from './routes/_authenticated/$slug/people'
-import { Route as AuthenticatedSlugDeveloperConnectionsRouteImport } from './routes/_authenticated/$slug/developer-connections'
 import { Route as AuthenticatedSlugDecisionsRouteImport } from './routes/_authenticated/$slug/decisions'
 import { Route as AuthenticatedSlugConnectorsRouteImport } from './routes/_authenticated/$slug/connectors'
 import { Route as AuthenticatedSlugChatRouteImport } from './routes/_authenticated/$slug/chat'
@@ -82,6 +81,8 @@ import { Route as AuthenticatedSlugTasksBindIndexRouteImport } from './routes/_a
 import { Route as ApiInternalMcpSignalsGetRouteImport } from './routes/api/internal/mcp/signals/get'
 import { Route as ApiInternalMcpProxyFindRouteImport } from './routes/api/internal/mcp/proxy/find'
 import { Route as ApiInternalMcpProxyCallRouteImport } from './routes/api/internal/mcp/proxy/call'
+import { Route as ApiInternalMcpDecisionsGetRouteImport } from './routes/api/internal/mcp/decisions/get'
+import { Route as ApiInternalMcpDecisionsFindRouteImport } from './routes/api/internal/mcp/decisions/find'
 import { Route as ApiInternalMcpAuthValidateRouteImport } from './routes/api/internal/mcp/auth/validate'
 import { Route as ApiGithubUserOauthCallbackRouteImport } from './routes/api/github/user/oauth/callback'
 import { Route as ApiConnectorsXOauthCallbackRouteImport } from './routes/api/connectors/x/oauth/callback'
@@ -257,12 +258,6 @@ const AuthenticatedSlugPeopleRoute = AuthenticatedSlugPeopleRouteImport.update({
   path: '/people',
   getParentRoute: () => AuthenticatedSlugRoute,
 } as any)
-const AuthenticatedSlugDeveloperConnectionsRoute =
-  AuthenticatedSlugDeveloperConnectionsRouteImport.update({
-    id: '/developer-connections',
-    path: '/developer-connections',
-    getParentRoute: () => AuthenticatedSlugRoute,
-  } as any)
 const AuthenticatedSlugDecisionsRoute =
   AuthenticatedSlugDecisionsRouteImport.update({
     id: '/decisions',
@@ -490,6 +485,18 @@ const ApiInternalMcpProxyCallRoute = ApiInternalMcpProxyCallRouteImport.update({
   path: '/api/internal/mcp/proxy/call',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiInternalMcpDecisionsGetRoute =
+  ApiInternalMcpDecisionsGetRouteImport.update({
+    id: '/api/internal/mcp/decisions/get',
+    path: '/api/internal/mcp/decisions/get',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiInternalMcpDecisionsFindRoute =
+  ApiInternalMcpDecisionsFindRouteImport.update({
+    id: '/api/internal/mcp/decisions/find',
+    path: '/api/internal/mcp/decisions/find',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiInternalMcpAuthValidateRoute =
   ApiInternalMcpAuthValidateRouteImport.update({
     id: '/api/internal/mcp/auth/validate',
@@ -577,7 +584,6 @@ export interface FileRoutesByFullPath {
   '/$slug/chat': typeof AuthenticatedSlugChatRouteWithChildren
   '/$slug/connectors': typeof AuthenticatedSlugConnectorsRoute
   '/$slug/decisions': typeof AuthenticatedSlugDecisionsRoute
-  '/$slug/developer-connections': typeof AuthenticatedSlugDeveloperConnectionsRoute
   '/$slug/people': typeof AuthenticatedSlugPeopleRoute
   '/$slug/settings': typeof AuthenticatedSlugSettingsRouteWithChildren
   '/$slug/signals': typeof AuthenticatedSlugSignalsRoute
@@ -633,6 +639,8 @@ export interface FileRoutesByFullPath {
   '/api/connectors/x/oauth/callback': typeof ApiConnectorsXOauthCallbackRoute
   '/api/github/user/oauth/callback': typeof ApiGithubUserOauthCallbackRoute
   '/api/internal/mcp/auth/validate': typeof ApiInternalMcpAuthValidateRoute
+  '/api/internal/mcp/decisions/find': typeof ApiInternalMcpDecisionsFindRoute
+  '/api/internal/mcp/decisions/get': typeof ApiInternalMcpDecisionsGetRoute
   '/api/internal/mcp/proxy/call': typeof ApiInternalMcpProxyCallRoute
   '/api/internal/mcp/proxy/find': typeof ApiInternalMcpProxyFindRoute
   '/api/internal/mcp/signals/get': typeof ApiInternalMcpSignalsGetRoute
@@ -659,7 +667,6 @@ export interface FileRoutesByTo {
   '/sign-up/accept-invitation': typeof SignUpAcceptInvitationRoute
   '/$slug/connectors': typeof AuthenticatedSlugConnectorsRoute
   '/$slug/decisions': typeof AuthenticatedSlugDecisionsRoute
-  '/$slug/developer-connections': typeof AuthenticatedSlugDeveloperConnectionsRoute
   '/$slug/people': typeof AuthenticatedSlugPeopleRoute
   '/$slug/signals': typeof AuthenticatedSlugSignalsRoute
   '/$slug/skills': typeof AuthenticatedSlugSkillsRoute
@@ -709,6 +716,8 @@ export interface FileRoutesByTo {
   '/api/connectors/x/oauth/callback': typeof ApiConnectorsXOauthCallbackRoute
   '/api/github/user/oauth/callback': typeof ApiGithubUserOauthCallbackRoute
   '/api/internal/mcp/auth/validate': typeof ApiInternalMcpAuthValidateRoute
+  '/api/internal/mcp/decisions/find': typeof ApiInternalMcpDecisionsFindRoute
+  '/api/internal/mcp/decisions/get': typeof ApiInternalMcpDecisionsGetRoute
   '/api/internal/mcp/proxy/call': typeof ApiInternalMcpProxyCallRoute
   '/api/internal/mcp/proxy/find': typeof ApiInternalMcpProxyFindRoute
   '/api/internal/mcp/signals/get': typeof ApiInternalMcpSignalsGetRoute
@@ -740,7 +749,6 @@ export interface FileRoutesById {
   '/_authenticated/$slug/chat': typeof AuthenticatedSlugChatRouteWithChildren
   '/_authenticated/$slug/connectors': typeof AuthenticatedSlugConnectorsRoute
   '/_authenticated/$slug/decisions': typeof AuthenticatedSlugDecisionsRoute
-  '/_authenticated/$slug/developer-connections': typeof AuthenticatedSlugDeveloperConnectionsRoute
   '/_authenticated/$slug/people': typeof AuthenticatedSlugPeopleRoute
   '/_authenticated/$slug/settings': typeof AuthenticatedSlugSettingsRouteWithChildren
   '/_authenticated/$slug/signals': typeof AuthenticatedSlugSignalsRoute
@@ -796,6 +804,8 @@ export interface FileRoutesById {
   '/api/connectors/x/oauth/callback': typeof ApiConnectorsXOauthCallbackRoute
   '/api/github/user/oauth/callback': typeof ApiGithubUserOauthCallbackRoute
   '/api/internal/mcp/auth/validate': typeof ApiInternalMcpAuthValidateRoute
+  '/api/internal/mcp/decisions/find': typeof ApiInternalMcpDecisionsFindRoute
+  '/api/internal/mcp/decisions/get': typeof ApiInternalMcpDecisionsGetRoute
   '/api/internal/mcp/proxy/call': typeof ApiInternalMcpProxyCallRoute
   '/api/internal/mcp/proxy/find': typeof ApiInternalMcpProxyFindRoute
   '/api/internal/mcp/signals/get': typeof ApiInternalMcpSignalsGetRoute
@@ -827,7 +837,6 @@ export interface FileRouteTypes {
     | '/$slug/chat'
     | '/$slug/connectors'
     | '/$slug/decisions'
-    | '/$slug/developer-connections'
     | '/$slug/people'
     | '/$slug/settings'
     | '/$slug/signals'
@@ -883,6 +892,8 @@ export interface FileRouteTypes {
     | '/api/connectors/x/oauth/callback'
     | '/api/github/user/oauth/callback'
     | '/api/internal/mcp/auth/validate'
+    | '/api/internal/mcp/decisions/find'
+    | '/api/internal/mcp/decisions/get'
     | '/api/internal/mcp/proxy/call'
     | '/api/internal/mcp/proxy/find'
     | '/api/internal/mcp/signals/get'
@@ -909,7 +920,6 @@ export interface FileRouteTypes {
     | '/sign-up/accept-invitation'
     | '/$slug/connectors'
     | '/$slug/decisions'
-    | '/$slug/developer-connections'
     | '/$slug/people'
     | '/$slug/signals'
     | '/$slug/skills'
@@ -959,6 +969,8 @@ export interface FileRouteTypes {
     | '/api/connectors/x/oauth/callback'
     | '/api/github/user/oauth/callback'
     | '/api/internal/mcp/auth/validate'
+    | '/api/internal/mcp/decisions/find'
+    | '/api/internal/mcp/decisions/get'
     | '/api/internal/mcp/proxy/call'
     | '/api/internal/mcp/proxy/find'
     | '/api/internal/mcp/signals/get'
@@ -989,7 +1001,6 @@ export interface FileRouteTypes {
     | '/_authenticated/$slug/chat'
     | '/_authenticated/$slug/connectors'
     | '/_authenticated/$slug/decisions'
-    | '/_authenticated/$slug/developer-connections'
     | '/_authenticated/$slug/people'
     | '/_authenticated/$slug/settings'
     | '/_authenticated/$slug/signals'
@@ -1045,6 +1056,8 @@ export interface FileRouteTypes {
     | '/api/connectors/x/oauth/callback'
     | '/api/github/user/oauth/callback'
     | '/api/internal/mcp/auth/validate'
+    | '/api/internal/mcp/decisions/find'
+    | '/api/internal/mcp/decisions/get'
     | '/api/internal/mcp/proxy/call'
     | '/api/internal/mcp/proxy/find'
     | '/api/internal/mcp/signals/get'
@@ -1090,6 +1103,8 @@ export interface RootRouteChildren {
   ApiConnectorsXOauthCallbackRoute: typeof ApiConnectorsXOauthCallbackRoute
   ApiGithubUserOauthCallbackRoute: typeof ApiGithubUserOauthCallbackRoute
   ApiInternalMcpAuthValidateRoute: typeof ApiInternalMcpAuthValidateRoute
+  ApiInternalMcpDecisionsFindRoute: typeof ApiInternalMcpDecisionsFindRoute
+  ApiInternalMcpDecisionsGetRoute: typeof ApiInternalMcpDecisionsGetRoute
   ApiInternalMcpProxyCallRoute: typeof ApiInternalMcpProxyCallRoute
   ApiInternalMcpProxyFindRoute: typeof ApiInternalMcpProxyFindRoute
 }
@@ -1318,13 +1333,6 @@ declare module '@tanstack/react-router' {
       path: '/people'
       fullPath: '/$slug/people'
       preLoaderRoute: typeof AuthenticatedSlugPeopleRouteImport
-      parentRoute: typeof AuthenticatedSlugRoute
-    }
-    '/_authenticated/$slug/developer-connections': {
-      id: '/_authenticated/$slug/developer-connections'
-      path: '/developer-connections'
-      fullPath: '/$slug/developer-connections'
-      preLoaderRoute: typeof AuthenticatedSlugDeveloperConnectionsRouteImport
       parentRoute: typeof AuthenticatedSlugRoute
     }
     '/_authenticated/$slug/decisions': {
@@ -1607,6 +1615,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiInternalMcpProxyCallRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/internal/mcp/decisions/get': {
+      id: '/api/internal/mcp/decisions/get'
+      path: '/api/internal/mcp/decisions/get'
+      fullPath: '/api/internal/mcp/decisions/get'
+      preLoaderRoute: typeof ApiInternalMcpDecisionsGetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/internal/mcp/decisions/find': {
+      id: '/api/internal/mcp/decisions/find'
+      path: '/api/internal/mcp/decisions/find'
+      fullPath: '/api/internal/mcp/decisions/find'
+      preLoaderRoute: typeof ApiInternalMcpDecisionsFindRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/internal/mcp/auth/validate': {
       id: '/api/internal/mcp/auth/validate'
       path: '/api/internal/mcp/auth/validate'
@@ -1817,7 +1839,6 @@ interface AuthenticatedSlugRouteChildren {
   AuthenticatedSlugChatRoute: typeof AuthenticatedSlugChatRouteWithChildren
   AuthenticatedSlugConnectorsRoute: typeof AuthenticatedSlugConnectorsRoute
   AuthenticatedSlugDecisionsRoute: typeof AuthenticatedSlugDecisionsRoute
-  AuthenticatedSlugDeveloperConnectionsRoute: typeof AuthenticatedSlugDeveloperConnectionsRoute
   AuthenticatedSlugPeopleRoute: typeof AuthenticatedSlugPeopleRoute
   AuthenticatedSlugSettingsRoute: typeof AuthenticatedSlugSettingsRouteWithChildren
   AuthenticatedSlugSignalsRoute: typeof AuthenticatedSlugSignalsRoute
@@ -1832,8 +1853,6 @@ const AuthenticatedSlugRouteChildren: AuthenticatedSlugRouteChildren = {
   AuthenticatedSlugChatRoute: AuthenticatedSlugChatRouteWithChildren,
   AuthenticatedSlugConnectorsRoute: AuthenticatedSlugConnectorsRoute,
   AuthenticatedSlugDecisionsRoute: AuthenticatedSlugDecisionsRoute,
-  AuthenticatedSlugDeveloperConnectionsRoute:
-    AuthenticatedSlugDeveloperConnectionsRoute,
   AuthenticatedSlugPeopleRoute: AuthenticatedSlugPeopleRoute,
   AuthenticatedSlugSettingsRoute: AuthenticatedSlugSettingsRouteWithChildren,
   AuthenticatedSlugSignalsRoute: AuthenticatedSlugSignalsRoute,
@@ -2007,6 +2026,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiConnectorsXOauthCallbackRoute: ApiConnectorsXOauthCallbackRoute,
   ApiGithubUserOauthCallbackRoute: ApiGithubUserOauthCallbackRoute,
   ApiInternalMcpAuthValidateRoute: ApiInternalMcpAuthValidateRoute,
+  ApiInternalMcpDecisionsFindRoute: ApiInternalMcpDecisionsFindRoute,
+  ApiInternalMcpDecisionsGetRoute: ApiInternalMcpDecisionsGetRoute,
   ApiInternalMcpProxyCallRoute: ApiInternalMcpProxyCallRoute,
   ApiInternalMcpProxyFindRoute: ApiInternalMcpProxyFindRoute,
 }

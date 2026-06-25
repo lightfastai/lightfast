@@ -92,15 +92,15 @@ export function DecisionsDetail({ decision }: { decision: DecisionRow }) {
           />
         </DetailGroup>
 
-        {decision.inputRedacted ? (
+        {decision.inputPayload ? (
           <DetailGroup className="sm:col-span-2" title="Input payload">
-            <PayloadBlock payload={decision.inputRedacted} title="Input" />
+            <PayloadBlock payload={decision.inputPayload} title="Input" />
           </DetailGroup>
         ) : null}
 
-        {decision.outputRedacted ? (
+        {decision.outputPayload ? (
           <DetailGroup className="sm:col-span-2" title="Output payload">
-            <PayloadBlock payload={decision.outputRedacted} title="Output" />
+            <PayloadBlock payload={decision.outputPayload} title="Output" />
           </DetailGroup>
         ) : null}
 

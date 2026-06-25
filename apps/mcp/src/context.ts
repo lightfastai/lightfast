@@ -86,6 +86,7 @@ function parseClientVerificationStatus(
 function isMcpScope(value: string): value is McpScope {
   return (
     value === "mcp:system:read" ||
+    value === "mcp:decisions:read" ||
     value === "mcp:provider_routines:read" ||
     value === "mcp:provider_routines:write" ||
     value === "mcp:signals:read" ||

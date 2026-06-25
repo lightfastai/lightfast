@@ -32,8 +32,10 @@ function makeCall(overrides: Record<string, unknown> = {}) {
     sourceRef: "run_1",
     sourceSurface: "automation",
     status: "succeeded",
-    inputRedacted: { present: true },
-    outputRedacted: { present: true },
+    inputPayload: { title: "Bug" },
+    legacyInputRedacted: { present: true },
+    legacyOutputRedacted: { present: true },
+    outputPayload: { content: [{ text: "Created" }] },
     errorCode: null,
     errorMessage: null,
     startedAt,
@@ -188,6 +190,30 @@ describe("provider routine call helpers", () => {
       });
       expect(spies.where).toHaveBeenCalledOnce();
     });
+
+    it("falls back to legacy redacted columns while the rename is rolling out", async () => {
+      const row = makeCall({
+        inputPayload: null,
+        legacyInputRedacted: { title: "Legacy input" },
+        legacyOutputRedacted: { content: [{ text: "Legacy output" }] },
+        outputPayload: null,
+      });
+      const { query } = listRows([row]);
+      const db = { select: vi.fn(() => query) } as unknown as Database;
+
+      await expect(
+        listProviderRoutineCalls(db, { clerkOrgId: "org_123" })
+      ).resolves.toEqual({
+        items: [
+          {
+            ...row,
+            inputPayload: { title: "Legacy input" },
+            outputPayload: { content: [{ text: "Legacy output" }] },
+          },
+        ],
+        nextCursor: null,
+      });
+    });
   });
 
   it("creates running provider routine calls with a generated public id", async () => {
@@ -209,8 +235,10 @@ describe("provider routine call helpers", () => {
       sourceRef: "run_123",
       sourceSurface: "automation",
       status: "running",
-      inputRedacted: { present: true },
-      outputRedacted: null,
+      inputPayload: { title: "Bug" },
+      legacyInputRedacted: { present: true },
+      legacyOutputRedacted: null,
+      outputPayload: null,
       errorCode: null,
       errorMessage: null,
       startedAt,
@@ -233,7 +261,7 @@ describe("provider routine call helpers", () => {
         calledByUserId: null,
         clerkOrgId: "org_123",
         providerConnectionId: 42,
-        inputRedacted: { present: true },
+        inputPayload: { title: "Bug" },
         provider: "linear",
         providerActorId: "actor_123",
         providerToolName: "create_issue",
@@ -255,7 +283,8 @@ describe("provider routine call helpers", () => {
         calledByKind: "automation",
         clerkOrgId: "org_123",
         providerConnectionId: 42,
-        inputRedacted: { present: true },
+        inputPayload: { title: "Bug" },
+        legacyInputRedacted: { present: true },
         provider: "linear",
         providerActorId: "actor_123",
         providerAttempted: false,
@@ -290,8 +319,10 @@ describe("provider routine call helpers", () => {
       sourceRef: "conv_123",
       sourceSurface: "chat",
       status: "running",
-      inputRedacted: { present: true },
-      outputRedacted: null,
+      inputPayload: { query: "Bug" },
+      legacyInputRedacted: { present: true },
+      legacyOutputRedacted: null,
+      outputPayload: null,
       errorCode: null,
       errorMessage: null,
       startedAt,
@@ -314,7 +345,7 @@ describe("provider routine call helpers", () => {
         calledByUserId: "user_123",
         clerkOrgId: "org_123",
         providerConnectionId: 42,
-        inputRedacted: { present: true },
+        inputPayload: { query: "Bug" },
         provider: "linear",
         providerActorId: "actor_123",
         providerToolName: "list_issues",
@@ -387,7 +418,7 @@ describe("provider routine call helpers", () => {
       markProviderRoutineCallSucceeded(db, {
         clerkOrgId: "org_123",
         finishedAt,
-        outputRedacted: { present: true },
+        outputPayload: { content: [{ text: "Created" }] },
         publicId: "provider_routine_call_123",
       })
     ).resolves.toBe(true);
@@ -397,7 +428,8 @@ describe("provider routine call helpers", () => {
         errorCode: null,
         errorMessage: null,
         finishedAt,
-        outputRedacted: { present: true },
+        legacyOutputRedacted: { present: true },
+        outputPayload: { content: [{ text: "Created" }] },
         status: "succeeded",
       })
     );

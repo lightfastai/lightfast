@@ -28,6 +28,9 @@ const LINEAR_EMULATOR_ACTOR_ID = "linear_actor_lightfast_local";
 const LINEAR_EMULATOR_ACTOR_NAME = "Lightfast Local";
 const LINEAR_EMULATOR_WORKSPACE_ID = "linear_workspace_lightfast_emulated";
 const LINEAR_EMULATOR_WORKSPACE_NAME = "lightfast-emulated";
+const X_EMULATOR_ACCESS_TOKEN = "x_access_valid";
+const X_EMULATOR_REFRESH_TOKEN = "x_refresh_valid";
+const X_EMULATOR_TOOL_NAME = "getUsersMe";
 const RUNTIME_DECISION_TOOL_NAME = "get_team";
 const RUNTIME_DECISION_PROXY_TIMEOUT_MS = 30_000;
 const SERVICE_JWT_SECRET_MIN_LENGTH = 32;
@@ -254,6 +257,44 @@ async function createClerkSignInToken(
   return body.token;
 }
 
+async function deleteClerkOrganization(
+  config: DecisionsSmokeConfig,
+  orgId: string
+) {
+  await fetchClerkJson(config, `/organizations/${orgId}`, {
+    method: "DELETE",
+  });
+}
+
+async function deleteClerkUser(config: DecisionsSmokeConfig, userId: string) {
+  await fetchClerkJson(config, `/users/${userId}`, {
+    method: "DELETE",
+  });
+}
+
+async function cleanupClerkSmokeIdentity(
+  config: DecisionsSmokeConfig,
+  input: { orgId?: string; userId?: string }
+): Promise<string[]> {
+  const errors: string[] = [];
+  if (input.orgId) {
+    await deleteClerkOrganization(config, input.orgId).catch(
+      (error: unknown) => {
+        errors.push(error instanceof Error ? error.message : String(error));
+      }
+    );
+  }
+  if (input.userId) {
+    await deleteClerkUser(config, input.userId).catch((error: unknown) => {
+      errors.push(error instanceof Error ? error.message : String(error));
+    });
+  }
+  if (errors.length > 0) {
+    console.warn(`[smoke] Clerk cleanup warning: ${errors.join(" | ")}`);
+  }
+  return errors;
+}
+
 async function createBoundSourceControlBinding(input: {
   orgId: string;
   orgSlug: string;
@@ -303,7 +344,11 @@ async function seedDecisionRows(input: {
     calledById: "automation_run_daily-triage",
     calledByKind: "automation",
     clerkOrgId: input.orgId,
-    inputRedacted: { present: true },
+    inputPayload: {
+      assignee: "triage-owner",
+      labels: ["bug", "customer"],
+      title: "Investigate workspace sync regression",
+    },
     provider: "linear",
     providerActorId: "linear-user-agent",
     providerConnectionId: input.providerConnectionId,
@@ -317,7 +362,11 @@ async function seedDecisionRows(input: {
   await markProviderRoutineCallSucceeded(db, {
     clerkOrgId: input.orgId,
     finishedAt: new Date(now - 12 * 60 * 1000 + 1840),
-    outputRedacted: { present: true },
+    outputPayload: {
+      issueId: "LIN-124",
+      status: "created",
+      url: "https://linear.app/lightfast/issue/LIN-124",
+    },
     publicId: success.publicId,
   });
 
@@ -326,7 +375,10 @@ async function seedDecisionRows(input: {
     calledByKind: "user",
     calledByUserId: input.userId,
     clerkOrgId: input.orgId,
-    inputRedacted: { present: true },
+    inputPayload: {
+      query: "label:customer sort:updated",
+      teamKey: "LIN",
+    },
     provider: "linear",
     providerActorId: "linear-user-agent",
     providerConnectionId: input.providerConnectionId,
@@ -350,7 +402,10 @@ async function seedDecisionRows(input: {
     calledById: "system-sync-linear-webhook",
     calledByKind: "system",
     clerkOrgId: input.orgId,
-    inputRedacted: { present: true },
+    inputPayload: {
+      eventId: "evt_linear_seed_123",
+      eventType: "Issue.updated",
+    },
     provider: "linear",
     providerActorId: "linear-app-lightfast",
     providerConnectionId: input.providerConnectionId,
@@ -450,6 +505,73 @@ async function createActiveLinearRuntimeConnection(input: {
   return connection.id;
 }
 
+async function createActiveXConnectorConnection(input: {
+  config: DecisionsSmokeConfig;
+  orgId: string;
+  orgSlug: string;
+  userId: string;
+}) {
+  const [
+    { db },
+    {
+      finalizeCurrentOrgConnectorConnection,
+      setConnectorAgentEnabled,
+      setConnectorAutomationEnabled,
+    },
+    { encrypt },
+  ] = await Promise.all([
+    import("@db/app/client"),
+    import("@db/app"),
+    import("@repo/app-encryption"),
+  ]);
+  const encryptionKey = requireEncryptionKey();
+
+  await finalizeCurrentOrgConnectorConnection(db, {
+    accessTokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
+    clerkOrgId: input.orgId,
+    connectedByUserId: input.userId,
+    encryptedAccessToken: await encrypt(X_EMULATOR_ACCESS_TOKEN, encryptionKey),
+    encryptedRefreshToken: await encrypt(
+      X_EMULATOR_REFRESH_TOKEN,
+      encryptionKey
+    ),
+    enabledForAutomations: true,
+    lastToolRefreshAt: new Date(),
+    mcpEndpoint: new URL(
+      "/api/connectors/x/mcp",
+      input.config.appOrigin
+    ).toString(),
+    metadata: {
+      smoke: "decisions-runtime",
+      username: input.orgSlug,
+    },
+    provider: "x",
+    providerActorId: `x-${input.orgSlug}`,
+    providerActorName: `@${input.orgSlug}`,
+    providerWorkspaceId: null,
+    providerWorkspaceName: "X",
+    refreshTokenExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    scopes: ["tweet.read", "users.read", "offline.access"],
+    toolManifest: [
+      {
+        description: "Emulated X profile lookup",
+        inputSchema: { additionalProperties: true, type: "object" },
+        name: X_EMULATOR_TOOL_NAME,
+      },
+    ],
+  });
+  await setConnectorAgentEnabled(db, {
+    clerkOrgId: input.orgId,
+    enabled: true,
+    provider: "x",
+  });
+  await setConnectorAutomationEnabled(db, {
+    clerkOrgId: input.orgId,
+    enabled: true,
+    provider: "x",
+  });
+}
+
 async function recordRuntimeDecision(input: {
   config: DecisionsSmokeConfig;
   orgId: string;
@@ -496,6 +618,10 @@ export async function callRuntimeDecisionThroughAppProxy(input: {
             grantId: `decisions-runtime-smoke:${input.orgId}`,
             kind: "mcp",
             orgId: input.orgId,
+            scopes: [
+              "mcp:provider_routines:read",
+              "mcp:provider_routines:write",
+            ],
             userId: input.userId,
           },
           input: {
@@ -641,27 +767,83 @@ async function readBodyText(config: DecisionsSmokeConfig) {
 }
 
 async function assertDecisionsRendered(config: DecisionsSmokeConfig) {
-  const text = await readBodyText(config);
   const expected = [
     "Decisions",
-    "Review recent integration work Lightfast performed for this team.",
-    ...(config.runtimeDecisionEnabled
-      ? [RUNTIME_DECISION_TOOL_NAME, "run_decisions_runtime_smoke"]
-      : []),
+    ...(config.runtimeDecisionEnabled ? [RUNTIME_DECISION_TOOL_NAME] : []),
     "sync_webhook_event",
     "Running",
     "list_issues",
     "Failed",
-    "LINEAR_MCP_TIMEOUT",
     "create_issue",
     "Succeeded",
   ];
-  const missing = expected.filter((value) => !text.includes(value));
-  if (missing.length > 0) {
-    throw new Error(
-      `Decisions page did not render expected text: ${missing.join(", ")}\n${text}`
-    );
+  await waitForBodyTextIncludes(config, expected, "Decisions list");
+}
+
+async function expandDecisionRow(
+  config: DecisionsSmokeConfig,
+  providerToolName: string
+) {
+  await agentEval(
+    config,
+    `(async () => {
+      const providerToolName = ${JSON.stringify(providerToolName)};
+      const rows = Array.from(document.querySelectorAll("button[aria-expanded]"));
+      const row = rows.find((element) => element instanceof HTMLElement && element.innerText.includes(providerToolName));
+      if (!(row instanceof HTMLElement)) {
+        throw new Error(\`Decision row not found for \${providerToolName}\`);
+      }
+      if (row.getAttribute("aria-expanded") !== "true") {
+        row.click();
+      }
+      return row.getAttribute("aria-expanded");
+    })()`
+  );
+}
+
+async function assertDecisionPayloadDetailsRendered(
+  config: DecisionsSmokeConfig
+) {
+  await expandDecisionRow(config, "create_issue");
+  await waitForBodyTextIncludes(
+    config,
+    [
+      "INPUT PAYLOAD",
+      "OUTPUT PAYLOAD",
+      "Investigate workspace sync regression",
+      "triage-owner",
+      "bug",
+      "customer",
+      "LIN-124",
+      "created",
+      "https://linear.app/lightfast/issue/LIN-124",
+    ],
+    "expanded Decision payload details"
+  );
+}
+
+async function waitForBodyTextIncludes(
+  config: DecisionsSmokeConfig,
+  expected: string[],
+  description: string,
+  timeoutMs = 30_000
+) {
+  const deadline = Date.now() + timeoutMs;
+  let text = "";
+
+  while (Date.now() < deadline) {
+    text = await readBodyText(config);
+    const missing = expected.filter((value) => !text.includes(value));
+    if (missing.length === 0) {
+      return;
+    }
+    await delay(500);
   }
+
+  const missing = expected.filter((value) => !text.includes(value));
+  throw new Error(
+    `${description} did not render expected text: ${missing.join(", ")}\n${text}`
+  );
 }
 
 async function runCommand(command: string, args: string[]) {
@@ -708,9 +890,14 @@ export async function runRealClerkDecisionsSmoke(
   console.log(`[smoke] org=${config.orgSlug}`);
   console.log(`[smoke] email=${config.emailAddress}`);
 
+  let user: ClerkUser | undefined;
+  let org: ClerkOrganization | undefined;
+  let completedUrl: string | undefined;
+  let primaryError: unknown;
+  let cleanupErrors: string[] = [];
   try {
-    const user = await createClerkUser(config);
-    const org = await createClerkOrganization(config, user.id);
+    user = await createClerkUser(config);
+    org = await createClerkOrganization(config, user.id);
     await updateClerkUserLastActiveOrg(config, {
       orgId: org.id,
       userId: user.id,
@@ -722,6 +909,12 @@ export async function runRealClerkDecisionsSmoke(
     });
     let providerConnectionId = 0;
     if (config.runtimeDecisionEnabled) {
+      await createActiveXConnectorConnection({
+        config,
+        orgId: org.id,
+        orgSlug: config.orgSlug,
+        userId: user.id,
+      });
       providerConnectionId = await createActiveLinearRuntimeConnection({
         config,
         orgId: org.id,
@@ -744,15 +937,49 @@ export async function runRealClerkDecisionsSmoke(
     );
     await delay(1500);
     await assertDecisionsRendered(config);
+    await assertDecisionPayloadDetailsRendered(config);
 
     if (config.screenshotPath) {
-      await agentBrowser(config, ["screenshot", config.screenshotPath]);
+      await agentBrowser(config, [
+        "screenshot",
+        "--full",
+        config.screenshotPath,
+      ]);
       console.log(`[smoke] screenshot=${config.screenshotPath}`);
     }
 
-    console.log(`[smoke] completed ${finalUrl.toString()}`);
+    completedUrl = finalUrl.toString();
+  } catch (error) {
+    primaryError = error;
   } finally {
     await agentBrowser(config, ["close"]).catch(() => undefined);
+    cleanupErrors = await cleanupClerkSmokeIdentity(config, {
+      orgId: org?.id,
+      userId: user?.id,
+    });
+  }
+
+  if (cleanupErrors.length > 0) {
+    if (primaryError) {
+      const primaryMessage =
+        primaryError instanceof Error
+          ? primaryError.message
+          : String(primaryError);
+      throw new Error(
+        `Decisions smoke failed (${primaryMessage}); Clerk cleanup also failed: ${cleanupErrors.join(" | ")}`,
+        { cause: primaryError }
+      );
+    }
+    throw new Error(
+      `Clerk cleanup failed after Decisions smoke: ${cleanupErrors.join(" | ")}`
+    );
+  }
+  if (primaryError) {
+    throw primaryError;
+  }
+
+  if (completedUrl) {
+    console.log(`[smoke] completed ${completedUrl}`);
   }
 }
 

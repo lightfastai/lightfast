@@ -45,6 +45,10 @@
       "types": "./src/adapters/internal/mcp-proxy.ts",
       "default": "./src/adapters/internal/mcp-proxy.ts"
     },
+    "./internal-api/mcp-decisions": {
+      "types": "./src/adapters/internal/mcp-decisions.ts",
+      "default": "./src/adapters/internal/mcp-decisions.ts"
+    },
     "./internal-api/health": {
       "types": "./src/adapters/internal/health.ts",
       "default": "./src/adapters/internal/health.ts"
@@ -145,10 +149,6 @@
       "types": "./src/adapters/tanstack/connectors.ts",
       "default": "./src/adapters/tanstack/connectors.ts"
     },
-    "./tanstack/developer-connections": {
-      "types": "./src/adapters/tanstack/developer-connections.ts",
-      "default": "./src/adapters/tanstack/developer-connections.ts"
-    },
     "./tanstack/source-control": {
       "types": "./src/adapters/tanstack/source-control.ts",
       "default": "./src/adapters/tanstack/source-control.ts"
@@ -182,7 +182,6 @@
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
     "seed:people": "pnpm with-env tsx scripts/seed-people-signals.ts",
-    "smoke:sandbox-runtime": "pnpm with-env tsx scripts/smoke-vercel-sandbox-runtime.ts",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../apps/app/.env.overrides.local -e ../../apps/app/.vercel/.env.development.local --",
@@ -204,7 +203,6 @@
     "@repo/entity-resolution": "workspace:*",
     "@repo/identity-contract": "workspace:*",
     "@repo/native-auth-contract": "workspace:*",
-    "@repo/sandbox-runtime": "workspace:*",
     "@repo/service-jwt": "workspace:*",
     "@repo/skills-contract": "workspace:*",
     "@repo/source-control-contract": "workspace:*",

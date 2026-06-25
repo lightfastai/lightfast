@@ -2,9 +2,8 @@ import type { Automation, AutomationRun, Database } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const claimDueAutomationRunsMock = vi.fn();
-const executeAutomationRunMock = vi.fn();
+const executeAutomationRunRequestMock = vi.fn();
 const getAutomationByPublicIdMock = vi.fn();
-const getAutomationExecutionFailureMock = vi.fn();
 const getAutomationRunByPublicIdMock = vi.fn();
 const markAutomationRunCompletedMock = vi.fn();
 const markAutomationRunFailedMock = vi.fn();
@@ -72,12 +71,8 @@ vi.mock("@db/app", () => ({
 
 vi.mock("@db/app/client", () => ({ db }));
 
-vi.mock("../services/automations/ai-execution", () => ({
-  executeAutomationRun: executeAutomationRunMock,
-}));
-
-vi.mock("../services/automations/errors", () => ({
-  getAutomationExecutionFailure: getAutomationExecutionFailureMock,
+vi.mock("../services/automations/run-executor", () => ({
+  executeAutomationRunRequest: executeAutomationRunRequestMock,
 }));
 
 vi.mock("../inngest/client", () => ({
@@ -203,9 +198,8 @@ function runFailure(step: Step, error: Error) {
 
 beforeEach(() => {
   claimDueAutomationRunsMock.mockReset();
-  executeAutomationRunMock.mockReset();
+  executeAutomationRunRequestMock.mockReset();
   getAutomationByPublicIdMock.mockReset();
-  getAutomationExecutionFailureMock.mockReset();
   getAutomationRunByPublicIdMock.mockReset();
   markAutomationRunCompletedMock.mockReset();
   markAutomationRunFailedMock.mockReset();
@@ -213,25 +207,24 @@ beforeEach(() => {
   markAutomationRunSkippedMock.mockReset();
 
   claimDueAutomationRunsMock.mockResolvedValue([{ automation, run }]);
-  executeAutomationRunMock.mockResolvedValue({
-    automationId: automation.publicId,
-    connectorProvider: "linear",
-    finalText: "Checked the workspace.",
-    finishedAt: "2026-05-27T09:00:05.000Z",
-    finishReason: "stop",
-    model: "anthropic/claude-sonnet-4.6",
-    providerRoutineCallIds: [],
-    runId: run.publicId,
-    schemaVersion: "automation.run.ai.v1",
-    startedAt: "2026-05-27T09:00:00.000Z",
-    transcript: [],
-    usage: {},
+  executeAutomationRunRequestMock.mockResolvedValue({
+    output: {
+      automationId: automation.publicId,
+      connectorProvider: "linear",
+      finalText: "Checked the workspace.",
+      finishedAt: "2026-05-27T09:00:05.000Z",
+      finishReason: "stop",
+      model: "anthropic/claude-sonnet-4.6",
+      providerRoutineCallIds: [],
+      runId: run.publicId,
+      schemaVersion: "automation.run.ai.v1",
+      startedAt: "2026-05-27T09:00:00.000Z",
+      transcript: [],
+      usage: {},
+    },
+    status: "completed",
   });
   getAutomationByPublicIdMock.mockResolvedValue(automation);
-  getAutomationExecutionFailureMock.mockReturnValue({
-    errorCode: "AUTOMATION_CONNECTOR_NOT_ENABLED",
-    errorMessage: "The selected connector is not enabled for automations.",
-  });
   getAutomationRunByPublicIdMock.mockResolvedValue(run);
   markAutomationRunCompletedMock.mockResolvedValue(true);
   markAutomationRunFailedMock.mockResolvedValue(true);
@@ -318,14 +311,17 @@ describe("automation Inngest workflows", () => {
 
   it("marks expected automation execution failures as failed runs", async () => {
     const step = createStep({ retryRejectedAiWrap: true });
-    executeAutomationRunMock.mockRejectedValue(new Error("disabled connector"));
+    executeAutomationRunRequestMock.mockResolvedValue({
+      failure: {
+        errorCode: "AUTOMATION_CONNECTOR_NOT_ENABLED",
+        errorMessage: "The selected connector is not enabled for automations.",
+      },
+      status: "failed",
+    });
 
     await expect(runExecutor(step)).resolves.toEqual({ status: "failed" });
 
-    expect(executeAutomationRunMock).toHaveBeenCalledTimes(1);
-    expect(getAutomationExecutionFailureMock).toHaveBeenCalledWith(
-      expect.any(Error)
-    );
+    expect(executeAutomationRunRequestMock).toHaveBeenCalledTimes(1);
     expect(markAutomationRunFailedMock).toHaveBeenCalledWith(db, {
       clerkOrgId: "org_test",
       errorCode: "AUTOMATION_CONNECTOR_NOT_ENABLED",
@@ -342,7 +338,6 @@ describe("automation Inngest workflows", () => {
 
     await expect(runExecutor(step)).rejects.toBe(completionError);
 
-    expect(getAutomationExecutionFailureMock).not.toHaveBeenCalled();
     expect(markAutomationRunFailedMock).not.toHaveBeenCalled();
   });
 

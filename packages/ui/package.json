@@ -26,7 +26,6 @@
     "./shiki.css": "./src/shiki.css"
   },
   "scripts": {
-    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "ui": "pnpm dlx shadcn@canary",
     "generate:component": "turbo gen react-component",
@@ -34,20 +33,15 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "@repo/vitest-config": "workspace:*",
     "@tailwindcss/postcss": "catalog:tailwind4",
     "@tailwindcss/typography": "catalog:tailwind4",
-    "@testing-library/react": "catalog:",
     "@turbo/gen": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
-    "@vitejs/plugin-react": "catalog:",
-    "happy-dom": "catalog:",
     "postcss": "catalog:tailwind4",
     "tailwindcss": "catalog:tailwind4",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
+    "typescript": "catalog:"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "catalog:",

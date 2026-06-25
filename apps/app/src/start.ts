@@ -15,6 +15,7 @@ export const APP_OWNED_API_PREFIXES = [
   "/api/inngest",
   "/api/internal/mcp/audit",
   "/api/internal/mcp/auth",
+  "/api/internal/mcp/decisions",
   "/api/internal/mcp/proxy",
   "/api/internal/mcp/signals",
   "/api/v1",

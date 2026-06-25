@@ -29,6 +29,8 @@ describe("app start middleware", () => {
     expect(isAppOwnedApiRoute("/api/internal/mcp/audit")).toBe(true);
     expect(isAppOwnedApiRoute("/api/internal/mcp/auth")).toBe(true);
     expect(isAppOwnedApiRoute("/api/internal/mcp/auth/validate")).toBe(true);
+    expect(isAppOwnedApiRoute("/api/internal/mcp/decisions/find")).toBe(true);
+    expect(isAppOwnedApiRoute("/api/internal/mcp/decisions/get")).toBe(true);
     expect(isAppOwnedApiRoute("/api/internal/mcp/proxy/call")).toBe(true);
     expect(isAppOwnedApiRoute("/api/internal/mcp/proxy/find")).toBe(true);
     expect(isAppOwnedApiRoute("/api/internal/mcp/signals")).toBe(true);

@@ -337,6 +337,14 @@ function permissionForScope(
         label: "Read signals",
         scope,
       };
+    case "mcp:decisions:read":
+      return {
+        description:
+          "Search and read decision history for your selected organization.",
+        kind: "read",
+        label: "Read decisions",
+        scope,
+      };
     case "mcp:provider_routines:write":
       return {
         description:

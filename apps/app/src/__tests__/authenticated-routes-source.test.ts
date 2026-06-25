@@ -480,7 +480,6 @@ describe("app authenticated route migration", () => {
       "src/automations/automation-create-form.tsx",
       "src/automations/automation-schedule-editor.tsx",
       "src/connectors/connectors-client.tsx",
-      "src/developer-connections/developer-connections-client.tsx",
       "src/org/settings/source-control/repository-list.tsx",
       "src/skills/skills-client.tsx",
     ];
@@ -633,75 +632,6 @@ describe("app authenticated route migration", () => {
       expect(routeFile).not.toContain("next/");
       expect(routeFile).not.toContain("nuqs");
       expect(routeFile).not.toContain("@vercel/microfrontends/next");
-    }
-  });
-
-  it("ports Developer Connections without Next.js search assumptions", () => {
-    const routeSource = expectSource(
-      "src/routes/_authenticated/$slug/developer-connections.tsx"
-    );
-    const clientSource = expectSource(
-      "src/developer-connections/developer-connections-client.tsx"
-    );
-    const searchSource = expectSource(
-      "src/developer-connections/developer-connections-search-params.ts"
-    );
-    const modelSource = expectSource(
-      "src/developer-connections/developer-connections-model.ts"
-    );
-    const iconsSource = expectSource(
-      "src/developer-connections/developer-connection-icons.tsx"
-    );
-    const detailSource = expectSource(
-      "src/developer-connections/developer-connection-detail-sheet.tsx"
-    );
-
-    expect(routeSource).toContain("validateDeveloperConnectionsSearch");
-    expect(routeSource).toContain("createFileRoute");
-    expect(routeSource).toContain(
-      '"/_authenticated/$slug/developer-connections"'
-    );
-    expect(routeSource).toContain("setSearchParams");
-    expect(clientSource).toContain("listDeveloperConnections");
-    expect(clientSource).toContain("developerConnectionListQueryKey");
-    expect(clientSource).toContain('@api/app/tanstack/developer-connections"');
-    expect(clientSource).toContain("connectDeveloperConnection");
-    expect(clientSource).toContain("startSentryDeveloperConnectionAuth");
-    expect(clientSource).toContain("completeSentryDeveloperConnectionAuth");
-    expect(clientSource).toContain("setDeveloperConnectionSandboxEnabled");
-    expect(clientSource).toContain("disconnectDeveloperConnection");
-    expect(clientSource).not.toContain(
-      "connectDeveloperConnectionMutationOptions"
-    );
-    expect(clientSource).not.toContain(
-      "startSentryDeveloperConnectionAuthMutationOptions"
-    );
-    expect(clientSource).not.toContain(
-      "completeSentryDeveloperConnectionAuthMutationOptions"
-    );
-    expect(clientSource).not.toContain(
-      "setDeveloperConnectionSandboxEnabledMutationOptions"
-    );
-    expect(clientSource).not.toContain(
-      "disconnectDeveloperConnectionMutationOptions"
-    );
-    expect(searchSource).toContain("validateDeveloperConnectionsSearch");
-    expect(modelSource).toContain("developerConnectionStatus");
-    expect(iconsSource).toContain("DeveloperConnectionIcon");
-    expect(detailSource).toContain("DeveloperConnectionDetailSheet");
-
-    for (const routeFile of [
-      routeSource,
-      clientSource,
-      searchSource,
-      modelSource,
-      iconsSource,
-      detailSource,
-    ]) {
-      expect(routeFile).not.toContain("next/");
-      expect(routeFile).not.toContain("nuqs");
-      expect(routeFile).not.toContain('"use client"');
-      expect(routeFile).not.toContain('"use server"');
     }
   });
 
@@ -1682,12 +1612,21 @@ describe("app authenticated route migration", () => {
     const mcpProxyFindRouteSource = source(
       "src/routes/api/internal/mcp/proxy/find.ts"
     );
+    const mcpDecisionsFindRouteSource = source(
+      "src/routes/api/internal/mcp/decisions/find.ts"
+    );
+    const mcpDecisionsGetRouteSource = source(
+      "src/routes/api/internal/mcp/decisions/get.ts"
+    );
     const mcpAuditRouteSource = source("src/routes/api/internal/mcp/audit.ts");
     const mcpSignalsRouteSource = source(
       "src/routes/api/internal/mcp/signals.ts"
     );
     const mcpSignalsGetRouteSource = source(
       "src/routes/api/internal/mcp/signals/get.ts"
+    );
+    const mcpDecisionsAdapterSource = repoSource(
+      "api/app/src/adapters/internal/mcp-decisions.ts"
     );
 
     expect(xLayoutRouteSource).toContain(
@@ -1800,6 +1739,27 @@ describe("app authenticated route migration", () => {
       "process.env.SERVICE_JWT_SECRET"
     );
     expect(mcpServiceAuthAdapterSource).toContain("verifyServiceJWT");
+    expect(mcpDecisionsAdapterSource).toContain("handleMcpDecisionFindRequest");
+    expect(mcpDecisionsAdapterSource).toContain("handleMcpDecisionGetRequest");
+    expect(mcpDecisionsAdapterSource).toContain("findDecisions");
+    expect(mcpDecisionsAdapterSource).toContain("getDecision");
+    expect(mcpDecisionsAdapterSource).not.toContain(
+      "loadAgentConnectorRuntimeTools"
+    );
+    expect(mcpDecisionsFindRouteSource).toContain(
+      'createFileRoute("/api/internal/mcp/decisions/find")'
+    );
+    expect(mcpDecisionsFindRouteSource).toContain("await import(");
+    expect(mcpDecisionsFindRouteSource).toContain(
+      '"@api/app/internal-api/mcp-decisions"'
+    );
+    expect(mcpDecisionsGetRouteSource).toContain(
+      'createFileRoute("/api/internal/mcp/decisions/get")'
+    );
+    expect(mcpDecisionsGetRouteSource).toContain("await import(");
+    expect(mcpDecisionsGetRouteSource).toContain(
+      '"@api/app/internal-api/mcp-decisions"'
+    );
     expect(mcpProxyCallRouteSource).toContain(
       'createFileRoute("/api/internal/mcp/proxy/call")'
     );
@@ -1861,6 +1821,9 @@ describe("app authenticated route migration", () => {
       skillsEventsAdapterSource,
       cliApiAdapterSource,
       mcpProxyAdapterSource,
+      mcpDecisionsAdapterSource,
+      mcpDecisionsFindRouteSource,
+      mcpDecisionsGetRouteSource,
       mcpProxyCallRouteSource,
       mcpProxyFindRouteSource,
       mcpAuditRouteSource,

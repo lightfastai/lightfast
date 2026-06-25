@@ -21,6 +21,12 @@ describe("internal MCP app routes", () => {
       "src/routes/api/internal/mcp/auth/validate.ts"
     );
     const auditRoute = appSource("src/routes/api/internal/mcp/audit.ts");
+    const decisionFindRoute = appSource(
+      "src/routes/api/internal/mcp/decisions/find.ts"
+    );
+    const decisionGetRoute = appSource(
+      "src/routes/api/internal/mcp/decisions/get.ts"
+    );
     const proxyCallRoute = appSource(
       "src/routes/api/internal/mcp/proxy/call.ts"
     );
@@ -38,6 +44,9 @@ describe("internal MCP app routes", () => {
     const proxyAdapter = repoSource(
       "api/app/src/adapters/internal/mcp-proxy.ts"
     );
+    const decisionsAdapter = repoSource(
+      "api/app/src/adapters/internal/mcp-decisions.ts"
+    );
     const packageJson = JSON.parse(repoSource("api/app/package.json")) as {
       exports: Record<string, unknown>;
     };
@@ -46,6 +55,7 @@ describe("internal MCP app routes", () => {
     expect(packageJson.exports).toHaveProperty("./internal-api/mcp-audit");
     expect(packageJson.exports).toHaveProperty("./internal-api/mcp-auth");
     expect(packageJson.exports).toHaveProperty("./internal-api/mcp-proxy");
+    expect(packageJson.exports).toHaveProperty("./internal-api/mcp-decisions");
     expect(existsSync(resolve(appRoot, "src/server/mcp-service-auth.ts"))).toBe(
       false
     );
@@ -65,6 +75,12 @@ describe("internal MCP app routes", () => {
     expect(auditRoute).toContain('@api/app/internal-api/mcp-audit"');
     expect(auditRoute).toContain("await import(");
     expect(auditRoute).toContain("handleRecordMcpAuditInternalRequest");
+    expect(decisionFindRoute).toContain('@api/app/internal-api/mcp-decisions"');
+    expect(decisionFindRoute).toContain("await import(");
+    expect(decisionFindRoute).toContain("handleMcpDecisionFindRequest");
+    expect(decisionGetRoute).toContain('@api/app/internal-api/mcp-decisions"');
+    expect(decisionGetRoute).toContain("await import(");
+    expect(decisionGetRoute).toContain("handleMcpDecisionGetRequest");
     expect(proxyCallRoute).toContain('@api/app/internal-api/mcp-proxy"');
     expect(proxyCallRoute).toContain("await import(");
     expect(proxyCallRoute).toContain("handleMcpProxyCallRequest");
@@ -83,6 +99,8 @@ describe("internal MCP app routes", () => {
       getRoute,
       authValidateRoute,
       auditRoute,
+      decisionFindRoute,
+      decisionGetRoute,
       proxyCallRoute,
       proxyFindRoute,
     ]) {
@@ -112,6 +130,12 @@ describe("internal MCP app routes", () => {
     expect(authAdapter).toContain('from "./mcp-service-auth"');
     expect(authAdapter).toContain("getMcpOauthGrantByPublicId");
     expect(authAdapter).not.toContain('from "../../env"');
+    expect(decisionsAdapter).toContain('from "./mcp-service-auth"');
+    expect(decisionsAdapter).toContain("findDecisions");
+    expect(decisionsAdapter).toContain("getDecision");
+    expect(decisionsAdapter).not.toContain("loadAgentConnectorRuntimeTools");
+    expect(decisionsAdapter).not.toContain("providerRoutineFindCommand");
+    expect(decisionsAdapter).not.toContain("providerRoutineCallCommand");
 
     expect(proxyAdapter).toContain('from "./mcp-service-auth"');
     expect(proxyAdapter).toContain("loadAgentConnectorRuntimeTools");

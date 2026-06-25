@@ -32,7 +32,7 @@ export type ProviderRoutineCallSourceSurface =
   | "native_cli"
   | "system";
 export type ProviderRoutineCallStatus = "failed" | "running" | "succeeded";
-export type ProviderRoutineCallRedactedPayload = Record<string, unknown> | null;
+export type ProviderRoutineCallPayload = Record<string, unknown> | null;
 
 export function createProviderRoutineCallId() {
   return `${PROVIDER_ROUTINE_CALL_ID_PREFIX}${randomUUID()}`;
@@ -101,11 +101,15 @@ export const orgProviderRoutineCalls = mysqlTable(
       .$type<ProviderRoutineCallStatus>()
       .notNull(),
 
-    inputRedacted:
-      json("input_redacted").$type<ProviderRoutineCallRedactedPayload>(),
+    legacyInputRedacted:
+      json("input_redacted").$type<ProviderRoutineCallPayload>(),
 
-    outputRedacted:
-      json("output_redacted").$type<ProviderRoutineCallRedactedPayload>(),
+    legacyOutputRedacted:
+      json("output_redacted").$type<ProviderRoutineCallPayload>(),
+
+    inputPayload: json("input_payload").$type<ProviderRoutineCallPayload>(),
+
+    outputPayload: json("output_payload").$type<ProviderRoutineCallPayload>(),
 
     errorCode: varchar("error_code", { length: ERROR_CODE_LENGTH }),
 

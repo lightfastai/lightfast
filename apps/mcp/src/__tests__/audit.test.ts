@@ -28,7 +28,9 @@ function dependencies(): ExecuteHostedMcpToolDependencies {
       status: "succeeded",
     }),
     createSignalForActor: vi.fn(),
+    findDecisions: vi.fn(),
     findProviderRoutines: vi.fn(),
+    getDecision: vi.fn(),
     getSignalForActor: vi.fn(),
     now: vi
       .fn()

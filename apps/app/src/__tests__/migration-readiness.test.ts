@@ -14,7 +14,6 @@ const migratedNextAppRoutes = [
   "/$/chat/$",
   "/$/connectors",
   "/$/decisions",
-  "/$/developer-connections",
   "/$/people",
   "/$/settings",
   "/$/settings/api-keys",
@@ -54,6 +53,8 @@ const migratedNextAppRoutes = [
   "/api/health",
   "/api/inngest",
   "/api/internal/mcp/audit",
+  "/api/internal/mcp/decisions/find",
+  "/api/internal/mcp/decisions/get",
   "/api/internal/mcp/proxy/call",
   "/api/internal/mcp/proxy/find",
   "/api/internal/mcp/signals",
@@ -128,7 +129,7 @@ describe("app migration readiness", () => {
   it("declares TanStack routes for every migrated legacy Next route", () => {
     const tanstackRoutes = new Set(tanstackRouteDeclarations());
 
-    expect(migratedNextAppRoutes.length).toBe(68);
+    expect(migratedNextAppRoutes.length).toBe(69);
     expect(tanstackRoutes.size).toBeGreaterThan(0);
     expect(
       migratedNextAppRoutes.filter((route) => !tanstackRoutes.has(route))

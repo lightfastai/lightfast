@@ -7,7 +7,6 @@ const privateWorkspaceRouteSegments = [
   "chat",
   "connectors",
   "decisions",
-  "developer-connections",
   "insights",
   "jobs",
   "mcp",

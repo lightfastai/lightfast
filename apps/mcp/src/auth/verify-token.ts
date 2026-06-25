@@ -12,6 +12,7 @@ const MCP_ACCESS_TOKEN_MAX_TTL_SECONDS = 15 * 60;
 
 const mcpScopeSchema = z.enum([
   "mcp:system:read",
+  "mcp:decisions:read",
   "mcp:provider_routines:read",
   "mcp:provider_routines:write",
   "mcp:signals:read",

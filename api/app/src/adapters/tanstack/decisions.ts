@@ -1,61 +1,26 @@
-import { listProviderRoutineCalls, type ProviderRoutineCall } from "@db/app";
 import { db } from "@db/app/client";
+import { decisionFindInputSchema } from "@repo/api-contract";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest, setResponseHeader } from "@tanstack/react-start/server";
 import { clerkClient } from "@vendor/clerk/server";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
-import { z } from "zod";
+import type { z } from "zod";
 
 import { resolveAuthContextFromClerk } from "../../auth/identity";
 import { actorFromAuthIdentity, isDomainError } from "../../domain";
 import { requireBoundClerkOrgActor } from "../../domain/gates";
+import {
+  type DecisionRecord,
+  findDecisionRecords,
+} from "../../services/decisions";
+import { sanitizeProviderRoutinePayload } from "../../services/provider-routines/payload";
 
-const DECISION_PROVIDERS = [
-  "linear",
-  "x",
-] as const satisfies readonly ProviderRoutineCall["provider"][];
-const DECISION_STATUSES = [
-  "failed",
-  "running",
-  "succeeded",
-] as const satisfies readonly ProviderRoutineCall["status"][];
-
-const cursorCreatedAtSchema = z.union([
-  z.date(),
-  z
-    .string()
-    .datetime()
-    .transform((value) => new Date(value)),
-]);
-
-const listDecisionsInput = z.object({
-  cursor: z
-    .object({
-      createdAt: cursorCreatedAtSchema,
-      id: z.number().int().positive(),
-    })
-    .nullish(),
-  limit: z.number().int().min(1).max(100).optional(),
-  providers: z
-    .array(z.enum(DECISION_PROVIDERS))
-    .max(DECISION_PROVIDERS.length)
-    .optional(),
-  search: z
-    .string()
-    .trim()
-    .max(200)
-    .transform((value) => value || undefined)
-    .optional(),
-  statuses: z
-    .array(z.enum(DECISION_STATUSES))
-    .max(DECISION_STATUSES.length)
-    .optional(),
-});
+const listDecisionsInput = decisionFindInputSchema;
 
 export type ListDecisionsInput = z.input<typeof listDecisionsInput>;
 
-type DecisionListPage = Awaited<ReturnType<typeof listProviderRoutineCalls>>;
+type DecisionListPage = Awaited<ReturnType<typeof findDecisionRecords>>;
 type DecisionRow = DecisionListPage["items"][number];
 
 type SerializableValue =
@@ -71,12 +36,15 @@ interface SerializablePayload {
 }
 
 export type DecisionResult = Omit<
-  ProviderRoutineCall,
-  "inputRedacted" | "outputRedacted"
+  DecisionRecord,
+  | "inputPayload"
+  | "legacyInputRedacted"
+  | "legacyOutputRedacted"
+  | "outputPayload"
 > & {
   calledByUsername: string | null;
-  inputRedacted: SerializablePayload | null;
-  outputRedacted: SerializablePayload | null;
+  inputPayload: SerializablePayload | null;
+  outputPayload: SerializablePayload | null;
 };
 
 export interface ListDecisionsResult {
@@ -175,13 +143,18 @@ function toSerializableValue(value: unknown): SerializableValue {
 }
 
 function toSerializablePayload(
-  value: ProviderRoutineCall["inputRedacted"]
+  value: DecisionRecord["inputPayload"]
 ): SerializablePayload | null {
   if (!value) {
     return null;
   }
 
-  const payload = toSerializableValue(value);
+  const sanitized = sanitizeProviderRoutinePayload(value);
+  if (!sanitized) {
+    return null;
+  }
+
+  const payload = toSerializableValue(sanitized);
   return payload && !Array.isArray(payload) && typeof payload === "object"
     ? payload
     : null;
@@ -191,11 +164,19 @@ function serializeDecision(
   decision: DecisionRow,
   calledByUsername: string | null
 ): DecisionResult {
+  const {
+    inputPayload,
+    legacyInputRedacted: _legacyInputRedacted,
+    legacyOutputRedacted: _legacyOutputRedacted,
+    outputPayload,
+    ...rest
+  } = decision;
+
   return {
-    ...decision,
+    ...rest,
     calledByUsername,
-    inputRedacted: toSerializablePayload(decision.inputRedacted),
-    outputRedacted: toSerializablePayload(decision.outputRedacted),
+    inputPayload: toSerializablePayload(inputPayload),
+    outputPayload: toSerializablePayload(outputPayload),
   };
 }
 
@@ -225,13 +206,18 @@ export const listDecisions = createServerFn({ method: "GET" })
     noStore();
     try {
       const actor = await getBoundActor();
-      const page = await listProviderRoutineCalls(db, {
+      const page = await findDecisionRecords(db, {
         clerkOrgId: actor.orgId,
         cursor: data.cursor,
         limit: data.limit,
+        query: data.query,
         providers: data.providers?.length ? data.providers : undefined,
-        search: data.search,
+        sourceSurfaces: data.sourceSurfaces?.length
+          ? data.sourceSurfaces
+          : undefined,
         statuses: data.statuses?.length ? data.statuses : undefined,
+        since: data.since,
+        until: data.until,
       });
 
       return withCallerUsernames(page);

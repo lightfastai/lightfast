@@ -32,6 +32,14 @@ const STATUS_TEXT: Record<RunStatus, string> = {
   skipped: "text-muted-foreground",
 };
 
+function formatEnumLabel(value: string): string {
+  return value
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 function formatDateTime(date: Date | null | undefined): string {
   if (!date) {
     return "-";
@@ -90,17 +98,17 @@ export function AutomationRunDetailContent({
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-center gap-2.5 px-5 pt-5">
         <Badge
-          className={cn("gap-1.5 capitalize", STATUS_TEXT[run.status])}
+          className={cn("gap-1.5", STATUS_TEXT[run.status])}
           variant="outline"
         >
           <span
             aria-hidden="true"
             className="size-1.5 rounded-full bg-current"
           />
-          {run.status}
+          {formatEnumLabel(run.status)}
         </Badge>
-        <Badge className="text-muted-foreground capitalize" variant="outline">
-          {run.trigger}
+        <Badge className="text-muted-foreground" variant="outline">
+          {formatEnumLabel(run.trigger)}
         </Badge>
         <div className="ml-auto flex items-center gap-1">
           <Button
@@ -118,8 +126,8 @@ export function AutomationRunDetailContent({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
-        <h2 className="pt-4 pb-5 font-semibold text-2xl text-foreground capitalize leading-tight tracking-tight">
-          {run.trigger} run
+        <h2 className="pt-4 pb-5 font-semibold text-2xl text-foreground leading-tight tracking-tight">
+          {formatEnumLabel(run.trigger)} run
         </h2>
 
         <div className="flex flex-col">
@@ -127,15 +135,15 @@ export function AutomationRunDetailContent({
             icon={<HugeiconsIcon className={iconClass} icon={Activity} />}
             label="Status"
           >
-            <span className={cn("capitalize", STATUS_TEXT[run.status])}>
-              {run.status}
+            <span className={STATUS_TEXT[run.status]}>
+              {formatEnumLabel(run.status)}
             </span>
           </PropertyRow>
           <PropertyRow
             icon={<HugeiconsIcon className={iconClass} icon={Zap} />}
             label="Trigger"
           >
-            <span className="capitalize">{run.trigger}</span>
+            <span>{formatEnumLabel(run.trigger)}</span>
           </PropertyRow>
           <PropertyRow
             icon={<HugeiconsIcon className={iconClass} icon={Clock} />}

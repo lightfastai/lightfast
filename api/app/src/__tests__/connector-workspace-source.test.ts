@@ -22,8 +22,6 @@ const oldProviderRoutinesPath = `packages/${"provider-routines"}`;
 const oldConnectorCoreProviderRoutinesSubpath = `@lightfast/connector-core/${"provider-routines"}`;
 const oldUserConnectorContractPackage = `@repo/${"user-connector-contract"}`;
 const oldUserConnectorContractPath = `packages/${"user-connector-contract"}`;
-const oldDeveloperConnectionContractPackage = `@repo/${"developer-connection-contract"}`;
-const oldDeveloperConnectionContractPath = `packages/${"developer-connection-contract"}`;
 
 const ignoredDirs = new Set([
   ".agent-browser",
@@ -217,60 +215,6 @@ describe("connector workspace boundary", () => {
         return (
           contents.includes(oldUserConnectorContractPackage) ||
           contents.includes(oldUserConnectorContractPath)
-        );
-      })
-      .map((path) => relative(repoRoot, path))
-      .sort();
-
-    expect(staleReferences).toEqual([]);
-  });
-
-  it("keeps developer connection schemas in api-contract and catalog in api app", () => {
-    const apiAppPackage = readJson<{
-      dependencies?: Record<string, string>;
-    }>("api/app/package.json");
-    const dbAppPackage = readJson<{
-      dependencies?: Record<string, string>;
-    }>("db/app/package.json");
-    const apiContractPackage = readJson<{
-      exports?: Record<string, unknown>;
-    }>("packages/api-contract/package.json");
-    const apiContractSource = source(
-      "packages/api-contract/src/developer-connections.ts"
-    );
-    const apiContractIndexSource = source("packages/api-contract/src/index.ts");
-    const catalogSource = source(
-      "api/app/src/services/developer-connections/catalog.ts"
-    );
-
-    expect(
-      existsSync(resolve(repoRoot, oldDeveloperConnectionContractPath))
-    ).toBe(false);
-    expect(
-      apiAppPackage.dependencies?.[oldDeveloperConnectionContractPackage]
-    ).toBeUndefined();
-    expect(
-      dbAppPackage.dependencies?.[oldDeveloperConnectionContractPackage]
-    ).toBeUndefined();
-    expect(apiContractPackage.exports).not.toHaveProperty(
-      "./developer-connections"
-    );
-    expect(apiContractIndexSource).toContain(
-      "developerConnectionConnectInputSchema"
-    );
-    expect(apiContractIndexSource).toContain(
-      "developerConnectionIssueLeaseInputSchema"
-    );
-    expect(apiContractSource).not.toContain("DEVELOPER_CONNECTION_CATALOG");
-    expect(catalogSource).toContain("DEVELOPER_CONNECTION_CATALOG");
-
-    const staleReferences = workspaceFilesToScan()
-      .filter((path) => !relative(repoRoot, path).startsWith(".codex/"))
-      .filter((path) => {
-        const contents = readFileSync(path, "utf8");
-        return (
-          contents.includes(oldDeveloperConnectionContractPackage) ||
-          contents.includes(oldDeveloperConnectionContractPath)
         );
       })
       .map((path) => relative(repoRoot, path))

@@ -93,7 +93,6 @@ catalog:
   '@turbo/gen': ^2.9.6
   '@vercel/otel': 2.1.2
   '@vercel/related-projects': ^1.1.0
-  '@vercel/sandbox': ^2.1.0
   '@vitejs/plugin-react': ^6.0.1
   '@vitest/browser-playwright': 4.1.4
   '@vitest/coverage-v8': ^4.1.4

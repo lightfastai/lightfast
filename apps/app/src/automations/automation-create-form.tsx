@@ -40,6 +40,8 @@ import { useEffect, useMemo } from "react";
 import { z } from "zod";
 import { automationCreateMutationOptions } from "./automations-mutations";
 import {
+  getScheduleKindLabel,
+  getWeekdayLabel,
   isTimeBasedKind,
   SCHEDULE_KINDS,
   type ScheduleKind,
@@ -47,28 +49,56 @@ import {
   WEEKDAY_OPTIONS,
 } from "./schedule-options";
 
-const formSchema = z.object({
-  connectorProvider: connectableConnectorProviderSchema.nullable(),
-  name: z
-    .string()
-    .trim()
-    .min(1, "Name is required")
-    .max(AUTOMATION_NAME_MAX_LENGTH),
-  prompt: z
-    .string()
-    .trim()
-    .min(1, "Instructions are required")
-    .max(AUTOMATION_PROMPT_MAX_LENGTH),
-  scheduleKind: z.enum(["manual", "hourly", "daily", "weekdays", "weekly"]),
-  intervalHours: z.number().int().min(1).max(24),
-  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:mm"),
-  dayOfWeek: z.number().int().min(0).max(6),
-  timezone: z.string().min(1),
-});
+const AUTOMATION_TARGETS = [
+  { value: "decisions", label: "Decisions" },
+  { value: "connector", label: "Connector" },
+] as const;
+
+type AutomationTarget = (typeof AUTOMATION_TARGETS)[number]["value"];
+
+const formSchema = z
+  .object({
+    automationTarget: z.enum(["decisions", "connector"]),
+    connectorProvider: connectableConnectorProviderSchema.nullable(),
+    name: z
+      .string()
+      .trim()
+      .min(1, "Name is required")
+      .max(AUTOMATION_NAME_MAX_LENGTH),
+    prompt: z
+      .string()
+      .trim()
+      .min(1, "Instructions are required")
+      .max(AUTOMATION_PROMPT_MAX_LENGTH),
+    scheduleKind: z.enum(["manual", "hourly", "daily", "weekdays", "weekly"]),
+    intervalHours: z.number().int().min(1).max(24),
+    time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:mm"),
+    dayOfWeek: z.number().int().min(0).max(6),
+    timezone: z.string().min(1),
+  })
+  .superRefine((values, ctx) => {
+    if (
+      values.automationTarget === "connector" &&
+      values.connectorProvider === null
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Connector is required",
+        path: ["connectorProvider"],
+      });
+    }
+  });
 
 type FormValues = z.infer<typeof formSchema>;
 
 const NO_CONNECTOR_VALUE = "__none__";
+
+function getAutomationTargetLabel(target: AutomationTarget): string {
+  return (
+    AUTOMATION_TARGETS.find((option) => option.value === target)?.label ??
+    target
+  );
+}
 
 function buildSchedule(values: FormValues): AutomationScheduleInput {
   switch (values.scheduleKind) {
@@ -118,6 +148,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
   const form = useFormCompat<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      automationTarget: "decisions",
       connectorProvider: null,
       name: "",
       prompt: "",
@@ -131,6 +162,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
   });
 
   const scheduleKind = form.watch("scheduleKind") as ScheduleKind;
+  const automationTarget = form.watch("automationTarget") as AutomationTarget;
   const connectorProvider = form.watch("connectorProvider");
   const dayOfWeek = form.watch("dayOfWeek");
   const timezone = form.watch("timezone");
@@ -146,24 +178,36 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
         })),
     [connectors]
   );
-  const connectorOptions = useMemo(
-    () => [
-      { label: "No connector", value: NO_CONNECTOR_VALUE },
-      ...enabledConnectorOptions,
-    ],
-    [enabledConnectorOptions]
-  );
+  const selectedConnectorLabel =
+    enabledConnectorOptions.find((option) => option.value === connectorProvider)
+      ?.label ??
+    (enabledConnectorOptions.length > 0
+      ? "Select connector"
+      : "No connectors available");
 
   useEffect(() => {
-    if (
-      connectorProvider &&
-      !enabledConnectorOptions.some(
-        (option) => option.value === connectorProvider
-      )
-    ) {
-      form.setValue("connectorProvider", null, { shouldValidate: true });
+    if (automationTarget !== "connector") {
+      if (connectorProvider !== null) {
+        form.setValue("connectorProvider", null, { shouldValidate: true });
+      }
+      return;
     }
-  }, [connectorProvider, enabledConnectorOptions, form]);
+
+    const selectedConnectorIsAvailable =
+      connectorProvider !== null &&
+      enabledConnectorOptions.some(
+        (option) => option.value === connectorProvider
+      );
+    if (!selectedConnectorIsAvailable) {
+      form.setValue(
+        "connectorProvider",
+        enabledConnectorOptions[0]?.value ?? null,
+        {
+          shouldValidate: true,
+        }
+      );
+    }
+  }, [automationTarget, connectorProvider, enabledConnectorOptions, form]);
 
   const createMutation = useMutation(
     automationCreateMutationOptions({
@@ -179,7 +223,10 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
 
   const onSubmit = (values: FormValues) => {
     createMutation.mutate({
-      connectorProvider: values.connectorProvider ?? null,
+      connectorProvider:
+        values.automationTarget === "connector"
+          ? values.connectorProvider
+          : null,
       name: values.name,
       prompt: values.prompt,
       schedule: buildSchedule(values),
@@ -285,7 +332,9 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
                   value={scheduleKind}
                 >
                   <SelectTrigger aria-label="Schedule">
-                    <SelectValue />
+                    <SelectValue>
+                      {getScheduleKindLabel(scheduleKind)}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {SCHEDULE_KINDS.map((option) => (
@@ -391,7 +440,9 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
                             value={String(dayOfWeek)}
                           >
                             <SelectTrigger aria-label="Day of week">
-                              <SelectValue />
+                              <SelectValue>
+                                {getWeekdayLabel(dayOfWeek)}
+                              </SelectValue>
                             </SelectTrigger>
                             <SelectContent>
                               {WEEKDAY_OPTIONS.map((day) => (
@@ -438,8 +489,11 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
                   }}
                   value={timezone}
                 >
-                  <SelectTrigger aria-label="Timezone">
-                    <SelectValue />
+                  <SelectTrigger
+                    aria-label="Timezone"
+                    className="w-full sm:w-96"
+                  >
+                    <SelectValue>{timezone}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {TIMEZONES.map((tz) => (
@@ -454,33 +508,85 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
 
             <div className="space-y-2">
               <FormLabel className="font-normal text-muted-foreground text-sm">
-                Connector
+                Target
               </FormLabel>
-              <Select
-                onValueChange={(value) => {
-                  if (value !== null) {
-                    const nextProvider =
-                      value === NO_CONNECTOR_VALUE
-                        ? null
-                        : connectableConnectorProviderSchema.parse(value);
-                    form.setValue("connectorProvider", nextProvider, {
-                      shouldValidate: true,
-                    });
-                  }
-                }}
-                value={connectorProvider ?? NO_CONNECTOR_VALUE}
-              >
-                <SelectTrigger aria-label="Connector">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {connectorOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <Select
+                  onValueChange={(value) => {
+                    if (value !== null) {
+                      const nextTarget = value as AutomationTarget;
+                      form.setValue("automationTarget", nextTarget, {
+                        shouldValidate: true,
+                      });
+                    }
+                  }}
+                  value={automationTarget}
+                >
+                  <SelectTrigger aria-label="Automation target">
+                    <SelectValue>
+                      {getAutomationTargetLabel(automationTarget)}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {AUTOMATION_TARGETS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {automationTarget === "connector" ? (
+                  <FormField
+                    control={form.control}
+                    name="connectorProvider"
+                    render={() => (
+                      <FormItem className="gap-0">
+                        <Select
+                          onValueChange={(value) => {
+                            if (
+                              value !== null &&
+                              value !== NO_CONNECTOR_VALUE
+                            ) {
+                              form.setValue(
+                                "connectorProvider",
+                                connectableConnectorProviderSchema.parse(value),
+                                {
+                                  shouldValidate: true,
+                                }
+                              );
+                            }
+                          }}
+                          value={connectorProvider ?? NO_CONNECTOR_VALUE}
+                        >
+                          <SelectTrigger
+                            aria-label="Connector"
+                            className="min-w-40"
+                          >
+                            <SelectValue>{selectedConnectorLabel}</SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {connectorProvider === null ? (
+                              <SelectItem disabled value={NO_CONNECTOR_VALUE}>
+                                {selectedConnectorLabel}
+                              </SelectItem>
+                            ) : null}
+                            {enabledConnectorOptions.map((option) => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ) : null}
+              </div>
             </div>
 
             <div className="flex items-center justify-end gap-2.5 border-border border-t pt-5">

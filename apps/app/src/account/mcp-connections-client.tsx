@@ -324,8 +324,15 @@ function DetailsBlock({ rows }: { rows: [string, string][] }) {
 }
 
 function permissionSummary(scopes: string[]): string {
+  const canReadDecisions = scopes.includes("mcp:decisions:read");
   const canReadSignals = scopes.includes("mcp:signals:read");
   const canWriteSignals = scopes.includes("mcp:signals:write");
+  if (canReadDecisions && (canReadSignals || canWriteSignals)) {
+    return "Signals and decisions";
+  }
+  if (canReadDecisions) {
+    return "Read decisions";
+  }
   if (canReadSignals && canWriteSignals) {
     return "Read and write signals";
   }

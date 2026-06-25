@@ -69,6 +69,14 @@ function formatConnectorProvider(
   return provider ? CONNECTOR_LABELS[provider] : "-";
 }
 
+function formatAutomationTarget(
+  provider: keyof typeof CONNECTOR_LABELS | null | undefined
+) {
+  return provider
+    ? `Connector / ${formatConnectorProvider(provider)}`
+    : "Decisions";
+}
+
 export function AutomationDetailClient({
   automationId,
   selectedRunId,
@@ -158,9 +166,9 @@ export function AutomationDetailClient({
 
         <RailSection title="Details">
           <AutomationScheduleEditor automation={automation} />
-          <RailRow label="Connector">
+          <RailRow label="Target">
             <span className="text-foreground text-sm">
-              {formatConnectorProvider(automation.connectorProvider)}
+              {formatAutomationTarget(automation.connectorProvider)}
             </span>
           </RailRow>
         </RailSection>

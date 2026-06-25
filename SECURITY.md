@@ -76,7 +76,7 @@ Instead, please:
 
 ### Cloud Security
 
-- **Resource Sandboxing**: Isolated execution environments
+- **Resource Isolation**: Isolated execution boundaries
 - **Secure API Endpoints**: All API endpoints follow security best practices
 - **Encrypted Communication**: End-to-end encryption for sensitive operations
 - **Audit Logging**: Comprehensive audit trails for security monitoring

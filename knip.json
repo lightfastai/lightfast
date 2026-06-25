@@ -6,17 +6,40 @@
       "ignoreDependencies": ["turbo-ignore", "@biomejs/biome", "portless"]
     },
     "apps/app": {
-      "entry": ["src/app/**/*.{ts,tsx}"],
+      "entry": [
+        "src/{client,server,start}.{ts,tsx}",
+        "src/app/**/*.{ts,tsx}",
+        "src/__tests__/**/*.{test,spec}.{ts,tsx}",
+        "src/__tests__/setup-env.ts"
+      ],
       "project": ["src/**/*.{ts,tsx}"],
       "ignoreDependencies": ["@vendor/lib", "@vitest/expect", "zustand"]
     },
+    "apps/mcp": {
+      "entry": [
+        "instrument.server.mjs",
+        "src/{client,server,start}.{ts,tsx}",
+        "src/routes/**/*.{ts,tsx}",
+        "src/__tests__/**/*.{test,spec}.{ts,tsx}",
+        "src/__tests__/setup-env.ts"
+      ],
+      "project": ["instrument.server.mjs", "src/**/*.{ts,tsx}"]
+    },
     "apps/www": {
-      "entry": ["src/app/**/*.{ts,tsx}"],
+      "entry": [
+        "src/{client,server,start}.{ts,tsx}",
+        "src/app/**/*.{ts,tsx}",
+        "src/__tests__/**/*.{test,spec}.{ts,tsx}"
+      ],
       "project": ["src/**/*.{ts,tsx}"],
       "ignoreDependencies": ["jiti"]
     },
     "api/app": {
-      "entry": ["src/origins.ts"],
+      "entry": [
+        "src/origins.ts",
+        "src/__tests__/**/*.{test,spec}.{ts,tsx}",
+        "src/__tests__/setup-env.ts"
+      ],
       "project": ["src/**/*.ts"]
     },
     "apps/desktop": {
@@ -30,6 +53,7 @@
         "vite.main.config.ts",
         "vite.preload.config.ts",
         "vite.renderer.config.ts",
+        "src/__tests__/**/*.{test,spec}.{ts,tsx}",
         "scripts/**/*.mjs"
       ],
       "project": ["src/**/*.{ts,tsx}", "vite.*.config.ts", "scripts/**/*.mjs"],

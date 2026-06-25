@@ -8,7 +8,44 @@ import {
 } from "../tools/execute";
 
 const signalId = "signal_123e4567-e89b-12d3-a456-426614174000";
+const decisionId = "provider_routine_call_123";
 const providerRoutineCallId = "provider_routine_call_123";
+const decisionStartedAt = new Date("2026-06-01T00:00:00.000Z");
+const decisionFinishedAt = new Date("2026-06-01T00:01:00.000Z");
+
+const decisionSummary = {
+  calledById: "automation_run_123",
+  calledByKind: "automation",
+  calledByUserId: null,
+  classification: "write",
+  createdAt: decisionStartedAt,
+  errorCode: null,
+  errorMessage: null,
+  finishedAt: decisionFinishedAt,
+  id: decisionId,
+  provider: "linear",
+  providerToolName: "create_issue",
+  routineId: "linear__create_issue",
+  snippet: "Linear / Create Issue succeeded from Automation",
+  sourceSurface: "automation",
+  startedAt: decisionStartedAt,
+  status: "succeeded",
+  title: "Create Issue",
+} as const;
+
+const decisionDetail = {
+  ...decisionSummary,
+  inputRedacted: { present: true },
+  outputRedacted: { present: true },
+  providerActorId: "actor_123",
+  providerAttempted: true,
+  providerConnectionId: 42,
+  providerRoutineCallId: decisionId,
+  providerWorkspaceId: "workspace_123",
+  sourceClientId: "mcp_client_test",
+  sourceRef: "mcp_grant_test",
+  updatedAt: decisionFinishedAt,
+} as const;
 
 function context(overrides: Partial<HostedMcpContext> = {}): HostedMcpContext {
   return {
@@ -41,6 +78,10 @@ function dependencies(
       status: "queued",
       visibilityScope: "user",
     }),
+    findDecisions: vi.fn().mockResolvedValue({
+      items: [decisionSummary],
+      nextCursor: null,
+    }),
     findProviderRoutines: vi.fn().mockResolvedValue({
       routines: [
         {
@@ -52,6 +93,7 @@ function dependencies(
         },
       ],
     }),
+    getDecision: vi.fn().mockResolvedValue(decisionDetail),
     getSignalForActor: vi.fn().mockResolvedValue({
       classification: null,
       createdAt: "2026-06-01T00:00:00.000Z",
@@ -93,6 +135,16 @@ describe("hosted MCP tools", () => {
         contractPath: "system.health",
         name: "lightfast_system_health",
         requiredScope: "mcp:system:read",
+      }),
+      expect.objectContaining({
+        contractPath: "decisions.find",
+        name: "decisions_find",
+        requiredScope: "mcp:decisions:read",
+      }),
+      expect.objectContaining({
+        contractPath: "decisions.get",
+        name: "decisions_get",
+        requiredScope: "mcp:decisions:read",
       }),
       expect.objectContaining({
         contractPath: "proxy.call",
@@ -190,6 +242,86 @@ describe("hosted MCP tools", () => {
     });
 
     expect(deps.createSignalForActor).not.toHaveBeenCalled();
+  });
+
+  it("calls decisions_find with decision read scope", async () => {
+    const deps = dependencies();
+
+    await expect(
+      executeHostedMcpTool({
+        context: context({ scopes: ["mcp:decisions:read"] }),
+        contractPath: "decisions.find",
+        dependencies: deps,
+        rawInput: { query: "linear create" },
+      })
+    ).resolves.toEqual({
+      items: [decisionSummary],
+      nextCursor: null,
+    });
+
+    expect(deps.findDecisions).toHaveBeenCalledWith(
+      {
+        actor: {
+          orgId: "org_test",
+          scopes: ["mcp:decisions:read"],
+          userId: "user_test",
+        },
+        scopes: {
+          decisionRead: true,
+        },
+        source: {
+          clientId: "mcp_client_test",
+          ref: "mcp_grant_test",
+          surface: "hosted_mcp",
+        },
+      },
+      { query: "linear create" }
+    );
+  });
+
+  it("calls decisions_get and returns full decision detail", async () => {
+    const deps = dependencies();
+
+    await expect(
+      executeHostedMcpTool({
+        context: context({ scopes: ["mcp:decisions:read"] }),
+        contractPath: "decisions.get",
+        dependencies: deps,
+        rawInput: { id: decisionId },
+      })
+    ).resolves.toEqual(decisionDetail);
+
+    expect(deps.getDecision).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actor: {
+          orgId: "org_test",
+          scopes: ["mcp:decisions:read"],
+          userId: "user_test",
+        },
+        scopes: {
+          decisionRead: true,
+        },
+      }),
+      { id: decisionId }
+    );
+  });
+
+  it("rejects decisions_find without decision read scope", async () => {
+    const deps = dependencies();
+
+    await expect(
+      executeHostedMcpTool({
+        context: context({ scopes: ["mcp:system:read"] }),
+        contractPath: "decisions.find",
+        dependencies: deps,
+        rawInput: { query: "linear" },
+      })
+    ).rejects.toMatchObject({
+      code: "insufficient_scope",
+      status: 403,
+    });
+
+    expect(deps.findDecisions).not.toHaveBeenCalled();
   });
 
   it("normalizes authorization status errors as org access denied", async () => {
@@ -586,6 +718,57 @@ describe("hosted MCP tools", () => {
         input: { query: "ABC" },
         routineId: "linear__list_issues",
       }
+    );
+  });
+
+  it("does not load app OAuth or proxy intake for decision tools", async () => {
+    const findDecisions = vi.fn().mockResolvedValue({
+      items: [decisionSummary],
+      nextCursor: null,
+    });
+    const getDecision = vi.fn();
+    const recordMcpAuditEvent = vi.fn().mockResolvedValue(undefined);
+
+    vi.doMock("../tools/app-audit-intake", () => ({
+      recordMcpAuditEventViaApp: recordMcpAuditEvent,
+    }));
+    vi.doMock("@api/app/mcp-oauth", () => {
+      throw new Error("mcp-oauth should not load for decision tools");
+    });
+    vi.doMock("../tools/app-proxy-intake", () => {
+      throw new Error("app proxy intake should not load for decision tools");
+    });
+    vi.doMock("../tools/app-signal-intake", () => {
+      throw new Error("app signal intake should not load for decision tools");
+    });
+    vi.doMock("../tools/app-decision-intake", () => ({
+      findDecisionsViaApp: findDecisions,
+      getDecisionViaApp: getDecision,
+    }));
+
+    await expect(
+      executeHostedMcpTool({
+        context: context({ scopes: ["mcp:decisions:read"] }),
+        contractPath: "decisions.find",
+        rawInput: { query: "linear create" },
+      })
+    ).resolves.toEqual({
+      items: [decisionSummary],
+      nextCursor: null,
+    });
+
+    expect(findDecisions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actor: {
+          orgId: "org_test",
+          scopes: ["mcp:decisions:read"],
+          userId: "user_test",
+        },
+        scopes: {
+          decisionRead: true,
+        },
+      }),
+      { query: "linear create" }
     );
   });
 });

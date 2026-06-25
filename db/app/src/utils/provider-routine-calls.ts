@@ -4,8 +4,8 @@ import {
   createProviderRoutineCallId,
   type ProviderRoutineCall,
   type ProviderRoutineCallCalledByKind,
+  type ProviderRoutineCallPayload,
   type ProviderRoutineCallProvider,
-  type ProviderRoutineCallRedactedPayload,
   type ProviderRoutineCallSourceSurface,
   type ProviderRoutineCallStatus,
   orgProviderRoutineCalls as providerRoutineCalls,
@@ -17,7 +17,7 @@ export interface CreateProviderRoutineCallInput {
   calledByKind: ProviderRoutineCallCalledByKind;
   calledByUserId?: string | null;
   clerkOrgId: string;
-  inputRedacted?: ProviderRoutineCallRedactedPayload;
+  inputPayload?: ProviderRoutineCallPayload;
   provider: ProviderRoutineCallProvider;
   providerActorId?: string | null;
   providerAttempted?: boolean;
@@ -29,6 +29,14 @@ export interface CreateProviderRoutineCallInput {
   sourceRef?: string | null;
   sourceSurface: ProviderRoutineCallSourceSurface;
   startedAt?: Date;
+}
+
+const LEGACY_REDACTED_PRESENCE: ProviderRoutineCallPayload = { present: true };
+
+function legacyRedactedPresence(
+  payload: ProviderRoutineCallPayload | undefined
+): ProviderRoutineCallPayload {
+  return payload ? LEGACY_REDACTED_PRESENCE : null;
 }
 
 function normalizeLimit(limit: number | undefined): number {
@@ -108,7 +116,7 @@ export async function listProviderRoutineCalls(
     )
     .limit(limit + 1);
 
-  const items = rows.slice(0, limit);
+  const items = rows.slice(0, limit).map(withPayloadFallback);
   const lastItem = items.at(-1);
   return {
     items,
@@ -134,8 +142,10 @@ export async function createProviderRoutineCall(
       calledByUserId: input.calledByUserId ?? null,
       clerkOrgId: input.clerkOrgId,
       providerConnectionId: input.providerConnectionId,
-      inputRedacted: input.inputRedacted ?? null,
-      outputRedacted: null,
+      inputPayload: input.inputPayload ?? null,
+      legacyInputRedacted: legacyRedactedPresence(input.inputPayload),
+      legacyOutputRedacted: null,
+      outputPayload: null,
       provider: input.provider,
       providerActorId: input.providerActorId ?? null,
       providerAttempted: input.providerAttempted ?? false,
@@ -184,7 +194,7 @@ export async function markProviderRoutineCallSucceeded(
   input: {
     clerkOrgId: string;
     finishedAt?: Date;
-    outputRedacted?: ProviderRoutineCallRedactedPayload;
+    outputPayload?: ProviderRoutineCallPayload;
     publicId: string;
   }
 ): Promise<boolean> {
@@ -195,7 +205,8 @@ export async function markProviderRoutineCallSucceeded(
       errorCode: null,
       errorMessage: null,
       finishedAt,
-      outputRedacted: input.outputRedacted ?? null,
+      legacyOutputRedacted: legacyRedactedPresence(input.outputPayload),
+      outputPayload: input.outputPayload ?? null,
       status: "succeeded",
       updatedAt: finishedAt,
     })
@@ -243,7 +254,15 @@ async function getProviderRoutineCallByPublicId(
       )
     )
     .limit(1);
-  return row;
+  return row ? withPayloadFallback(row) : undefined;
+}
+
+function withPayloadFallback(call: ProviderRoutineCall): ProviderRoutineCall {
+  return {
+    ...call,
+    inputPayload: call.inputPayload ?? call.legacyInputRedacted,
+    outputPayload: call.outputPayload ?? call.legacyOutputRedacted,
+  };
 }
 
 function runningProviderRoutineCallWhere(input: {
