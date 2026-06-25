@@ -36,16 +36,15 @@ function singleSearchValue(value: unknown): string | undefined {
   if (typeof value === "string" && value.length > 0) {
     return value;
   }
-  if (!Array.isArray(value)) {
+  if (!Array.isArray(value) || value.length === 0) {
     return;
   }
 
-  const values = value.filter(
-    (item): item is string => typeof item === "string" && item.length > 0
-  );
-  const [first] = values;
-  if (!first || values.some((item) => item !== first)) {
+  if (value.some((item) => typeof item !== "string" || item.length === 0)) {
     return;
   }
-  return first;
+
+  const values = value as string[];
+  const [first] = values;
+  return values.every((item) => item === first) ? first : undefined;
 }

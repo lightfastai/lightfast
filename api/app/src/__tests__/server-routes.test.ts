@@ -1,19 +1,18 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const exchangeMcpAuthorizationCodeMock = vi.fn();
 const getMcpOAuthJwksMock = vi.fn();
 const getRegisteredMcpOAuthClientMock = vi.fn();
-const refreshMcpAccessTokenWithRefreshTokenMock = vi.fn();
 const registerMcpOAuthClientMock = vi.fn();
+const rotateMcpRefreshTokenSecretMock = vi.fn();
 const revokeMcpRefreshTokenSecretMock = vi.fn();
 
 vi.mock("../mcp-oauth/index", () => ({
   exchangeMcpAuthorizationCode: exchangeMcpAuthorizationCodeMock,
   getMcpOAuthJwks: getMcpOAuthJwksMock,
   getRegisteredMcpOAuthClient: getRegisteredMcpOAuthClientMock,
-  refreshMcpAccessTokenWithRefreshToken:
-    refreshMcpAccessTokenWithRefreshTokenMock,
   registerMcpOAuthClient: registerMcpOAuthClientMock,
+  rotateMcpRefreshTokenSecret: rotateMcpRefreshTokenSecretMock,
   revokeMcpRefreshTokenSecret: revokeMcpRefreshTokenSecretMock,
 }));
 
@@ -38,8 +37,8 @@ describe("MCP OAuth server routes", () => {
     exchangeMcpAuthorizationCodeMock.mockReset();
     getMcpOAuthJwksMock.mockReset();
     getRegisteredMcpOAuthClientMock.mockReset();
-    refreshMcpAccessTokenWithRefreshTokenMock.mockReset();
     registerMcpOAuthClientMock.mockReset();
+    rotateMcpRefreshTokenSecretMock.mockReset();
     revokeMcpRefreshTokenSecretMock.mockReset();
 
     exchangeMcpAuthorizationCodeMock.mockResolvedValue({
@@ -50,14 +49,19 @@ describe("MCP OAuth server routes", () => {
       scope: "mcp:system:read",
       token_type: "Bearer",
     });
-    refreshMcpAccessTokenWithRefreshTokenMock.mockResolvedValue({
+    rotateMcpRefreshTokenSecretMock.mockResolvedValue({
       access_token: "access-token",
       expires_in: 900,
       grant_id: "mcp_grant_test",
+      refresh_token: "refresh-token-next",
       scope: "mcp:system:read",
       token_type: "Bearer",
     });
     revokeMcpRefreshTokenSecretMock.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("passes token request resource through authorization code exchange", async () => {
@@ -149,20 +153,27 @@ describe("MCP OAuth server routes", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(refreshMcpAccessTokenWithRefreshTokenMock).toHaveBeenCalledWith(
+    const body = await responseJson(response);
+    expect(body).toMatchObject({
+      refresh_token: "refresh-token-next",
+    });
+    expect(body).not.toHaveProperty("reuseDetected");
+    expect(rotateMcpRefreshTokenSecretMock).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
         audience: resource,
         clientId: "mcp_client_test",
         currentRefreshToken: refreshToken,
+        expiresAt: expect.any(Date),
         issuer: "https://app.lightfast.localhost",
         jwtSecret: "s".repeat(32),
+        now: expect.any(Date),
       })
     );
   });
 
   it("returns invalid_request when refresh token resource mismatches the grant", async () => {
-    refreshMcpAccessTokenWithRefreshTokenMock.mockRejectedValueOnce(
+    rotateMcpRefreshTokenSecretMock.mockRejectedValueOnce(
       new McpOAuthError(
         "invalid_request",
         "Access token audience must match the authorized MCP resource."
@@ -190,7 +201,7 @@ describe("MCP OAuth server routes", () => {
       error_description:
         "Access token audience must match the authorized MCP resource.",
     });
-    expect(refreshMcpAccessTokenWithRefreshTokenMock).toHaveBeenCalledWith(
+    expect(rotateMcpRefreshTokenSecretMock).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
         audience: "https://attacker.example/mcp",
@@ -246,7 +257,7 @@ describe("MCP OAuth server routes", () => {
       error: "invalid_request",
       error_description: "OAuth request body contains duplicate parameter.",
     });
-    expect(refreshMcpAccessTokenWithRefreshTokenMock).not.toHaveBeenCalled();
+    expect(rotateMcpRefreshTokenSecretMock).not.toHaveBeenCalled();
   });
 
   it("returns invalid_request for malformed JSON request bodies", async () => {

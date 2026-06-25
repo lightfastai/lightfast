@@ -21,7 +21,21 @@ export const env = createEnv({
   server: {
     BRAINTRUST_API_KEY: z.string().min(1).optional(),
     HEALTH_CHECK_AUTH_TOKEN: z.string().min(32).optional(),
-    MCP_RESOURCE_URL: z.string().url(),
+    MCP_RESOURCE_URL: z
+      .string()
+      .url()
+      .refine(
+        (value) => {
+          try {
+            return new URL(value).hash === "";
+          } catch {
+            return false;
+          }
+        },
+        {
+          message: "MCP_RESOURCE_URL must not include a fragment.",
+        }
+      ),
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),

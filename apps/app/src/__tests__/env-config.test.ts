@@ -43,6 +43,7 @@ describe("app environment validation wiring", () => {
     expect(envSource).toContain("VITE_CLERK_PUBLISHABLE_KEY");
     expect(envSource).toContain("VITE_VERCEL_ENV");
     expect(envSource).toContain("MCP_RESOURCE_URL");
+    expect(envSource).toContain('new URL(value).hash === ""');
   });
 
   it("evaluates env during Vite config loading", () => {

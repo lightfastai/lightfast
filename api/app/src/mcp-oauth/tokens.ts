@@ -2,6 +2,7 @@ import type {
   Database,
   McpOauthAuthorizationCode,
   McpOauthGrant,
+  McpOauthRefreshToken,
 } from "@db/app";
 import {
   consumeMcpAuthorizationCode,
@@ -239,6 +240,8 @@ function validateGrantForAuthorizationCode(
 }
 
 export interface RotateMcpRefreshTokenSecretInput {
+  audience?: string;
+  clientId?: string;
   currentRefreshToken: string;
   expiresAt: Date;
   issuer: string;
@@ -263,38 +266,13 @@ export async function refreshMcpAccessTokenWithRefreshToken(
   db: Database,
   input: RefreshMcpAccessTokenInput
 ): Promise<McpAccessTokenResponse> {
-  if (!isValidRefreshTokenSecret(input.currentRefreshToken)) {
-    throw new McpOAuthError("invalid_grant", "Refresh token is invalid.");
-  }
-
-  const refreshToken = await getActiveMcpRefreshTokenByHash(db, {
-    now: input.now,
-    tokenHash: hashOpaqueToken(input.currentRefreshToken),
-  });
-  if (!refreshToken) {
-    throw new McpOAuthError("invalid_grant", "Refresh token is invalid.");
-  }
-  if (refreshToken.clientPublicId !== input.clientId) {
-    throw new McpOAuthError("invalid_grant", "Refresh token is invalid.");
-  }
-
-  const grant = await getMcpOauthGrantByPublicId(db, {
-    publicId: refreshToken.grantPublicId,
-  });
-  if (
-    !grant ||
-    grant.publicId !== refreshToken.grantPublicId ||
-    grant.status !== "active" ||
-    grant.clientPublicId !== refreshToken.clientPublicId ||
-    grant.clerkOrgId !== refreshToken.clerkOrgId ||
-    grant.clerkUserId !== refreshToken.clerkUserId
-  ) {
-    throw new McpOAuthError("invalid_grant", "Refresh token is invalid.");
-  }
-
+  const { audience, grant, refreshToken } = await loadActiveRefreshTokenGrant(
+    db,
+    input
+  );
   const accessGrant = grantFromRefreshToken(refreshToken, grant);
   const accessToken = await signMcpAccessToken({
-    audience: accessTokenAudience(grant.resource, input.audience),
+    audience,
     grant: accessGrant,
     issuer: input.issuer,
     jwtSecret: input.jwtSecret,
@@ -318,8 +296,20 @@ export async function rotateMcpRefreshTokenSecret(
   }
 
   const nextRefreshToken = createRefreshTokenSecret();
+  const currentTokenHash = hashOpaqueToken(input.currentRefreshToken);
+  const activeRefreshToken = await getActiveMcpRefreshTokenByHash(db, {
+    now: input.now,
+    tokenHash: currentTokenHash,
+  });
+  if (activeRefreshToken) {
+    await validateRefreshTokenGrant(db, activeRefreshToken, {
+      audience: input.audience,
+      clientId: input.clientId,
+    });
+  }
+
   const result = await rotateStoredMcpRefreshToken(db, {
-    currentTokenHash: hashOpaqueToken(input.currentRefreshToken),
+    currentTokenHash,
     expiresAt: input.expiresAt,
     nextTokenHash: hashOpaqueToken(nextRefreshToken),
     now: input.now,
@@ -337,23 +327,18 @@ export async function rotateMcpRefreshTokenSecret(
     throw new McpOAuthError("invalid_grant", "Refresh token is invalid.");
   }
 
-  const grant = await getMcpOauthGrantByPublicId(db, {
-    publicId: result.refreshToken.grantPublicId,
-  });
-  if (
-    !grant ||
-    grant.publicId !== result.refreshToken.grantPublicId ||
-    grant.status !== "active" ||
-    grant.clientPublicId !== result.refreshToken.clientPublicId ||
-    grant.clerkOrgId !== result.refreshToken.clerkOrgId ||
-    grant.clerkUserId !== result.refreshToken.clerkUserId
-  ) {
-    throw new McpOAuthError("invalid_grant", "Refresh token is invalid.");
-  }
+  const { audience, grant } = await validateRefreshTokenGrant(
+    db,
+    result.refreshToken,
+    {
+      audience: input.audience,
+      clientId: input.clientId,
+    }
+  );
 
   const accessGrant = grantFromRefreshToken(result.refreshToken, grant);
   const accessToken = await signMcpAccessToken({
-    audience: grant.resource,
+    audience,
     grant: accessGrant,
     issuer: input.issuer,
     jwtSecret: input.jwtSecret,
@@ -409,6 +394,66 @@ function grantFromRefreshToken(
     clerkUserId: grant.clerkUserId ?? token.clerkUserId,
     publicId: grant.publicId,
     scopes: grant.scopes,
+  };
+}
+
+async function loadActiveRefreshTokenGrant(
+  db: Database,
+  input: RefreshMcpAccessTokenInput
+): Promise<{
+  audience: string;
+  grant: McpOauthGrant;
+  refreshToken: McpOauthRefreshToken;
+}> {
+  if (!isValidRefreshTokenSecret(input.currentRefreshToken)) {
+    throw new McpOAuthError("invalid_grant", "Refresh token is invalid.");
+  }
+
+  const refreshToken = await getActiveMcpRefreshTokenByHash(db, {
+    now: input.now,
+    tokenHash: hashOpaqueToken(input.currentRefreshToken),
+  });
+  if (!refreshToken) {
+    throw new McpOAuthError("invalid_grant", "Refresh token is invalid.");
+  }
+
+  const { audience, grant } = await validateRefreshTokenGrant(
+    db,
+    refreshToken,
+    {
+      audience: input.audience,
+      clientId: input.clientId,
+    }
+  );
+  return { audience, grant, refreshToken };
+}
+
+async function validateRefreshTokenGrant(
+  db: Database,
+  refreshToken: McpOauthRefreshToken,
+  input: { audience?: string; clientId?: string }
+): Promise<{ audience: string; grant: McpOauthGrant }> {
+  if (input.clientId && refreshToken.clientPublicId !== input.clientId) {
+    throw new McpOAuthError("invalid_grant", "Refresh token is invalid.");
+  }
+
+  const grant = await getMcpOauthGrantByPublicId(db, {
+    publicId: refreshToken.grantPublicId,
+  });
+  if (
+    !grant ||
+    grant.publicId !== refreshToken.grantPublicId ||
+    grant.status !== "active" ||
+    grant.clientPublicId !== refreshToken.clientPublicId ||
+    grant.clerkOrgId !== refreshToken.clerkOrgId ||
+    grant.clerkUserId !== refreshToken.clerkUserId
+  ) {
+    throw new McpOAuthError("invalid_grant", "Refresh token is invalid.");
+  }
+
+  return {
+    audience: accessTokenAudience(grant.resource, input.audience),
+    grant,
   };
 }
 

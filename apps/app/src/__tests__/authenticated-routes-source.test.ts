@@ -196,6 +196,9 @@ describe("app authenticated route migration", () => {
     expect(authorizeRouteSource).toContain(
       'from "@api/app/tanstack/mcp-consent"'
     );
+    expect(authorizeRouteSource).toContain(
+      'value.some((item) => typeof item !== "string" || item.length === 0)'
+    );
     expect(consentCardSource).toContain("useServerFn");
     expect(consentCardSource).toContain("approveMcpAuthorization");
     expect(consentCardSource).toContain("denyMcpAuthorization");

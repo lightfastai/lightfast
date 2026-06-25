@@ -15,11 +15,11 @@ async function importVerifier() {
 }
 
 function stubGrantValidation(
-  response: Response = Response.json({ active: true })
+  createResponse: () => Response = () => Response.json({ active: true })
 ) {
   vi.stubGlobal(
     "fetch",
-    vi.fn(async () => response)
+    vi.fn(async () => createResponse())
   );
 }
 
@@ -260,7 +260,7 @@ describe("verifyMcpBearerToken", () => {
   });
 
   it("rejects locally valid JWTs when the app grant is inactive", async () => {
-    stubGrantValidation(
+    stubGrantValidation(() =>
       Response.json(
         {
           error: "mcp_grant_invalid",
@@ -281,7 +281,7 @@ describe("verifyMcpBearerToken", () => {
   });
 
   it("rejects locally valid JWTs when app grant validation returns malformed success", async () => {
-    stubGrantValidation(Response.json({ ok: true }));
+    stubGrantValidation(() => Response.json({ ok: true }));
     const { verifyMcpBearerToken } = await importVerifier();
     const token = await validAccessToken();
 
@@ -297,7 +297,7 @@ describe("verifyMcpBearerToken", () => {
     const consoleWarnSpy = vi
       .spyOn(console, "warn")
       .mockImplementation(() => undefined);
-    stubGrantValidation(
+    stubGrantValidation(() =>
       Response.json(
         {
           error: "invalid_token",
@@ -326,7 +326,7 @@ describe("verifyMcpBearerToken", () => {
     const consoleWarnSpy = vi
       .spyOn(console, "warn")
       .mockImplementation(() => undefined);
-    stubGrantValidation(
+    stubGrantValidation(() =>
       Response.json(
         {
           error: "not_found",
@@ -355,7 +355,7 @@ describe("verifyMcpBearerToken", () => {
     const consoleWarnSpy = vi
       .spyOn(console, "warn")
       .mockImplementation(() => undefined);
-    stubGrantValidation(
+    stubGrantValidation(() =>
       Response.json(
         {
           error: "service_unavailable",

@@ -353,6 +353,8 @@ describe("mcp refresh tokens", () => {
   it("rotates opaque refresh tokens", async () => {
     await expect(
       rotateMcpRefreshTokenSecret(db, {
+        audience: resource,
+        clientId: "mcp_client_test",
         currentRefreshToken: refreshTokenSecret,
         expiresAt: new Date("2026-08-01T00:00:00.000Z"),
         issuer: "https://app.lightfast.localhost",
@@ -375,6 +377,43 @@ describe("mcp refresh tokens", () => {
         nextTokenHash: expect.any(String),
       })
     );
+  });
+
+  it("rejects refresh token rotation for alternate clients before rotating", async () => {
+    await expect(
+      rotateMcpRefreshTokenSecret(db, {
+        clientId: "mcp_client_other",
+        currentRefreshToken: refreshTokenSecret,
+        expiresAt: new Date("2026-08-01T00:00:00.000Z"),
+        issuer: "https://app.lightfast.localhost",
+        jwtSecret: "test-secret",
+      })
+    ).rejects.toEqual(
+      new McpOAuthError("invalid_grant", "Refresh token is invalid.")
+    );
+
+    expect(rotateMcpRefreshTokenMock).not.toHaveBeenCalled();
+    expect(getMcpOauthGrantByPublicIdMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects refresh token rotation for alternate access token audiences before rotating", async () => {
+    await expect(
+      rotateMcpRefreshTokenSecret(db, {
+        audience: "https://attacker.example/mcp",
+        clientId: "mcp_client_test",
+        currentRefreshToken: refreshTokenSecret,
+        expiresAt: new Date("2026-08-01T00:00:00.000Z"),
+        issuer: "https://app.lightfast.localhost",
+        jwtSecret: "test-secret",
+      })
+    ).rejects.toEqual(
+      new McpOAuthError(
+        "invalid_request",
+        "Access token audience must match the authorized MCP resource."
+      )
+    );
+
+    expect(rotateMcpRefreshTokenMock).not.toHaveBeenCalled();
   });
 
   it("rejects malformed refresh tokens before rotating", async () => {
@@ -418,18 +457,29 @@ describe("mcp refresh tokens", () => {
   });
 
   it("rejects rotated refresh tokens whose loaded grant binding differs", async () => {
-    getMcpOauthGrantByPublicIdMock.mockResolvedValueOnce({
-      clientPublicId: "mcp_client_test",
-      clerkOrgId: "org_other",
-      clerkUserId: "user_test",
-      publicId: "mcp_grant_test",
-      resource,
-      scopes: ["mcp:signals:read"],
-      status: "active",
-    });
+    getMcpOauthGrantByPublicIdMock
+      .mockResolvedValueOnce({
+        clientPublicId: "mcp_client_test",
+        clerkOrgId: "org_test",
+        clerkUserId: "user_test",
+        publicId: "mcp_grant_test",
+        resource,
+        scopes: ["mcp:signals:read"],
+        status: "active",
+      })
+      .mockResolvedValueOnce({
+        clientPublicId: "mcp_client_test",
+        clerkOrgId: "org_other",
+        clerkUserId: "user_test",
+        publicId: "mcp_grant_test",
+        resource,
+        scopes: ["mcp:signals:read"],
+        status: "active",
+      });
 
     await expect(
       rotateMcpRefreshTokenSecret(db, {
+        clientId: "mcp_client_test",
         currentRefreshToken: refreshTokenSecret,
         expiresAt: new Date("2026-08-01T00:00:00.000Z"),
         issuer: "https://app.lightfast.localhost",

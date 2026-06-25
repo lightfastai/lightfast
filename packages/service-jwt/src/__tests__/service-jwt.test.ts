@@ -56,6 +56,18 @@ async function tokenWithLongLifetime(): Promise<string> {
     .sign(secretKey());
 }
 
+async function futureIssuedToken(): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+
+  return await new SignJWT({ token_use: "service_access" })
+    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+    .setIssuer("mcp")
+    .setAudience("lightfast-app")
+    .setIssuedAt(now + 60)
+    .setExpirationTime(now + 120)
+    .sign(secretKey());
+}
+
 describe("service JWT", () => {
   it("signs and verifies an mcp caller for the app audience", async () => {
     const token = await signServiceJWT({
@@ -147,6 +159,22 @@ describe("service JWT", () => {
 
   it("rejects tokens with an excessive lifetime", async () => {
     const token = await tokenWithLongLifetime();
+
+    await expect(
+      verifyServiceJWT({
+        allowedCallers: ["mcp"],
+        audience: "lightfast-app",
+        jwtSecret,
+        token,
+      })
+    ).rejects.toMatchObject({
+      code: "invalid_token",
+      status: 401,
+    });
+  });
+
+  it("rejects tokens issued in the future", async () => {
+    const token = await futureIssuedToken();
 
     await expect(
       verifyServiceJWT({

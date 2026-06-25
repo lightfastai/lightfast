@@ -126,9 +126,7 @@ describe("app OAuth protocol route migration", () => {
     expect(serverRoutesSource).toContain("registerMcpOAuthClient");
     expect(serverRoutesSource).toContain("getRegisteredMcpOAuthClient");
     expect(serverRoutesSource).toContain("exchangeMcpAuthorizationCode");
-    expect(serverRoutesSource).toContain(
-      "refreshMcpAccessTokenWithRefreshToken"
-    );
+    expect(serverRoutesSource).toContain("rotateMcpRefreshTokenSecret");
     expect(serverRoutesSource).toContain("revokeMcpRefreshTokenSecret");
     expect(serverRoutesSource).toContain("readOAuthBody");
     expect(serverRoutesSource).toContain("bearerToken");

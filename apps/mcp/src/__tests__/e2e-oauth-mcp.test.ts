@@ -154,7 +154,17 @@ beforeEach(() => {
   vi.stubEnv("SERVICE_JWT_SECRET", jwtSecret);
   vi.stubGlobal(
     "fetch",
-    vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
+    vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      const requestUrl = url instanceof Request ? url.url : String(url);
+      expect(requestUrl).toBe(
+        "https://app.lightfast.localhost/api/internal/mcp/auth/validate"
+      );
+      expect(init?.method).toBe("POST");
+      expect(init?.headers).toMatchObject({
+        authorization: expect.stringMatching(/^Bearer\s+/),
+        "content-type": "application/json",
+      });
+
       const body =
         typeof init?.body === "string"
           ? (JSON.parse(init.body) as {
@@ -429,7 +439,7 @@ afterEach(() => {
 });
 
 describe("hosted MCP OAuth integration smoke", () => {
-  it("connects a DCR client, calls a hosted tool, refreshes access, and blocks revoked refresh", async () => {
+  it("connects a DCR client, calls a hosted tool, rotates refresh, and blocks replay", async () => {
     const { issueMcpAuthorizationCode } = await import(
       "../../../../api/app/src/mcp-oauth/authorization"
     );
@@ -440,8 +450,7 @@ describe("hosted MCP OAuth integration smoke", () => {
       createCodeChallenge,
       exchangeMcpAuthorizationCode,
       hashOpaqueToken,
-      refreshMcpAccessTokenWithRefreshToken,
-      revokeMcpRefreshTokenSecret,
+      rotateMcpRefreshTokenSecret,
     } = await import("../../../../api/app/src/mcp-oauth/tokens");
     const { verifyMcpAuthInfo } = await import("../auth/verify-token");
     const { createMcpContextFromAuthInfo } = await import("../context");
@@ -539,46 +548,36 @@ describe("hosted MCP OAuth integration smoke", () => {
       scopes: ["mcp:signals:write"],
     });
 
-    const refreshed = await refreshMcpAccessTokenWithRefreshToken(db, {
+    const refreshed = await rotateMcpRefreshTokenSecret(db, {
+      audience: resource,
       clientId: registeredClient.client_id,
       currentRefreshToken: tokens.refresh_token,
+      expiresAt: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
       issuer,
       jwtSecret,
+      now,
     });
     expect(refreshed).toMatchObject({
       grant_id: "mcp_grant_test",
+      refresh_token: expect.stringMatching(/^mcp_refresh_/),
     });
-    expect(refreshed).not.toHaveProperty("refresh_token");
     expect(refreshed.access_token).toMatch(/^ey/);
 
     await expect(
-      refreshMcpAccessTokenWithRefreshToken(db, {
+      rotateMcpRefreshTokenSecret(db, {
         clientId: registeredClient.client_id,
         currentRefreshToken: tokens.refresh_token,
-        issuer,
-        jwtSecret,
-      })
-    ).resolves.toMatchObject({
-      grant_id: "mcp_grant_test",
-    });
-
-    await expect(
-      revokeMcpRefreshTokenSecret(db, {
-        refreshToken: tokens.refresh_token,
-      })
-    ).resolves.toBe(true);
-    await expect(
-      refreshMcpAccessTokenWithRefreshToken(db, {
-        clientId: registeredClient.client_id,
-        currentRefreshToken: tokens.refresh_token,
+        expiresAt: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
         issuer,
         jwtSecret,
       })
     ).rejects.toMatchObject({
       error: "invalid_grant",
-      message: "Refresh token is invalid.",
+      message: "Refresh token reuse detected.",
     });
-    expect(revokeMcpOauthGrantMock).not.toHaveBeenCalled();
+    expect(revokeMcpOauthGrantMock).toHaveBeenCalledWith(db, {
+      publicId: "mcp_grant_test",
+    });
   });
 });
 

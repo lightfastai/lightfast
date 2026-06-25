@@ -78,7 +78,9 @@ export async function verifyServiceJWT(input: {
     );
     const parsed = serviceJwtPayloadSchema.parse(payload);
     const caller = parsed.iss;
+    const now = Math.floor(Date.now() / 1000);
     if (
+      parsed.iat > now ||
       parsed.exp <= parsed.iat ||
       parsed.exp - parsed.iat > MAX_SERVICE_JWT_TTL_SECONDS
     ) {

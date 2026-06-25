@@ -180,6 +180,41 @@ describe("MCP consent TanStack adapter", () => {
     });
   });
 
+  it("rejects consent view models when the user has no organizations", async () => {
+    const clerk = await mocks.clerkClient();
+    clerk.users.getOrganizationMembershipList.mockResolvedValueOnce({
+      data: [],
+    });
+
+    await expect(
+      loadMcpConsentViewModel({
+        data: {
+          client_id: "mcp_client_test",
+          code_challenge: "c".repeat(43),
+          code_challenge_method: "S256",
+          redirect_uri: "https://client.example/callback",
+          resource: "https://mcp.lightfast.localhost/mcp",
+          response_type: "code",
+          scope: "mcp:system:read",
+          state: "state_test",
+        },
+      })
+    ).rejects.toThrow("not found");
+  });
+
+  it("rejects approval requests for organizations outside the current user's memberships", async () => {
+    await expect(
+      approveMcpAuthorization({
+        data: {
+          ...baseInput,
+          organizationId: "org_other",
+        },
+      })
+    ).rejects.toThrow("Organization access denied.");
+
+    expect(mocks.issueMcpAuthorizationCode).not.toHaveBeenCalled();
+  });
+
   it("accepts identical duplicate resource search params from MCP clients", async () => {
     await expect(
       loadMcpConsentViewModel({
@@ -216,6 +251,23 @@ describe("MCP consent TanStack adapter", () => {
             "https://mcp.lightfast.localhost/mcp",
             "https://attacker.example/mcp",
           ],
+          response_type: "code",
+          scope: "mcp:system:read",
+          state: "state_test",
+        },
+      })
+    ).rejects.toThrow("not found");
+  });
+
+  it("rejects malformed duplicate resource search params", async () => {
+    await expect(
+      loadMcpConsentViewModel({
+        data: {
+          client_id: "mcp_client_test",
+          code_challenge: "c".repeat(43),
+          code_challenge_method: "S256",
+          redirect_uri: "https://client.example/callback",
+          resource: ["https://mcp.lightfast.localhost/mcp", ""],
           response_type: "code",
           scope: "mcp:system:read",
           state: "state_test",

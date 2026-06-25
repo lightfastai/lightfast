@@ -12,6 +12,22 @@ function authedRequest(token = "token") {
 }
 
 describe("withHostedMcpAuth", () => {
+  it("returns 401 when auth info is required but missing", async () => {
+    const handler = vi.fn(() => Response.json({ ok: true }));
+    const wrapped = withHostedMcpAuth(handler, async () => undefined, {
+      required: true,
+      resourceUrl: resourceOrigin,
+    });
+
+    const response = await wrapped(authedRequest());
+
+    expect(response.status).toBe(401);
+    expect(handler).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toMatchObject({
+      error: "missing_token",
+    });
+  });
+
   it("sets auth info on successful verification", async () => {
     const handler = vi.fn((request: Request) =>
       Response.json({
@@ -34,6 +50,28 @@ describe("withHostedMcpAuth", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       clientId: "mcp_client_test",
+    });
+  });
+
+  it("returns 401 for expired auth info", async () => {
+    const handler = vi.fn(() => Response.json({ ok: true }));
+    const wrapped = withHostedMcpAuth(
+      handler,
+      async () => ({
+        clientId: "mcp_client_test",
+        expiresAt: Math.floor(Date.now() / 1000) - 60,
+        scopes: ["mcp:system:read"],
+        token: "token",
+      }),
+      { required: true, resourceUrl: resourceOrigin }
+    );
+
+    const response = await wrapped(authedRequest());
+
+    expect(response.status).toBe(401);
+    expect(handler).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toMatchObject({
+      error: "invalid_token",
     });
   });
 
