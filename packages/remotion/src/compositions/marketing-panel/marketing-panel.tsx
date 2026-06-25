@@ -10,6 +10,7 @@ import {
   AbsoluteFill,
   continueRender,
   delayRender,
+  Img,
   staticFile,
 } from "@vendor/remotion";
 import { loadFont } from "@vendor/remotion/fonts";
@@ -17,32 +18,39 @@ import type React from "react";
 import { useEffect, useState } from "react";
 
 type MarketingPanelKind = "title" | "wordmark";
+type MarketingPanelBackground = "solid" | "halftone";
 
 interface MarketingPanelRenderProps {
+  background?: MarketingPanelBackground;
   eyebrow?: string;
   kind?: MarketingPanelKind;
+  logoMarkSize?: number;
   title?: string;
 }
 
 let fontsLoaded = false;
 
-const LOGO_METRICS = getLogoMetrics(LOGO_MARK_SIZES.lg);
+function MarketingLogo({
+  markSize = LOGO_MARK_SIZES.lg,
+}: {
+  markSize?: number;
+}) {
+  const logoMetrics = getLogoMetrics(markSize);
 
-function MarketingLogo() {
   return (
     <div
       style={{
         alignItems: "center",
         display: "flex",
-        gap: LOGO_METRICS.gap,
+        gap: logoMetrics.gap,
       }}
     >
       <svg
         aria-hidden="true"
         focusable="false"
-        height={LOGO_METRICS.markSize}
+        height={logoMetrics.markSize}
         viewBox={`0 0 ${LOGO_MARK_VIEWBOX_SIZE} ${LOGO_MARK_VIEWBOX_SIZE}`}
-        width={LOGO_METRICS.markSize}
+        width={logoMetrics.markSize}
         xmlns="http://www.w3.org/2000/svg"
       >
         <path d={DOT_MATRIX_PATH} fill="currentColor" />
@@ -50,10 +58,10 @@ function MarketingLogo() {
       <svg
         aria-label="Lightfast"
         focusable="false"
-        height={LOGO_METRICS.wordmarkHeight}
+        height={logoMetrics.wordmarkHeight}
         role="img"
         viewBox={WORDMARK_LOCKUP_VIEWBOX}
-        width={LOGO_METRICS.wordmarkWidth}
+        width={logoMetrics.wordmarkWidth}
         xmlns="http://www.w3.org/2000/svg"
       >
         <path d={WORDMARK_PATH} fill="currentColor" />
@@ -84,8 +92,10 @@ const ensureMarketingPanelFontsLoaded = async () => {
 };
 
 export const MarketingPanelRender: React.FC<MarketingPanelRenderProps> = ({
+  background = "solid",
   eyebrow = "Operating Thesis",
   kind = "title",
+  logoMarkSize = LOGO_MARK_SIZES.lg,
   title = "Collaboration between humans and machine",
 }) => {
   const [handle] = useState(() => delayRender("Loading marketing panel fonts"));
@@ -96,8 +106,28 @@ export const MarketingPanelRender: React.FC<MarketingPanelRenderProps> = ({
       .catch(() => continueRender(handle));
   }, [handle]);
 
+  const isHalftone = background === "halftone";
+
   return (
-    <AbsoluteFill className="bg-foreground text-background">
+    <AbsoluteFill
+      className={
+        isHalftone ? "bg-black text-white" : "bg-foreground text-background"
+      }
+    >
+      {isHalftone ? (
+        <>
+          <AbsoluteFill>
+            <Img
+              alt=""
+              className="h-full w-full object-cover"
+              height={900}
+              src={staticFile("images/landing-halftone-bg-q40.webp")}
+              width={1440}
+            />
+          </AbsoluteFill>
+          <AbsoluteFill className="bg-black/45" />
+        </>
+      ) : null}
       <div className="relative h-full w-full px-28 py-16">
         <div className="grid grid-cols-3 items-start text-xs leading-none">
           <span />
@@ -111,7 +141,7 @@ export const MarketingPanelRender: React.FC<MarketingPanelRenderProps> = ({
               {title}
             </h1>
           ) : (
-            <MarketingLogo />
+            <MarketingLogo markSize={logoMarkSize} />
           )}
         </div>
       </div>

@@ -3,9 +3,45 @@
 @import "@repo/ui-v2/theme.css";
 
 @source "../app/**/*.{ts,tsx}";
+@source "../content/**/*.mdx";
 @source "../lib/**/*.{ts,tsx}";
 @source "../../../../packages/ui-v2/src/components/brand/logo.tsx";
 @source "../../../../packages/ui-v2/src/components/content/**/*.{ts,tsx}";
 @source "../../../../packages/ui-v2/src/components/ui/button.tsx";
 @source "../../../../packages/ui-v2/src/components/ui/sheet.tsx";
 @source "../../../../packages/ui-v2/src/components/ui/spinner.tsx";
+
+.marketing-content-bleed,
+.marketing-content-bleed-wide {
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.marketing-content-bleed {
+  width: min(calc(100vw - 3rem), 54rem);
+}
+
+.marketing-content-bleed-wide {
+  width: min(calc(100vw - 3rem), 64rem);
+}
+
+@media (min-width: 40rem) {
+  .marketing-content-bleed {
+    width: min(calc(100vw - 5rem), 56rem);
+  }
+
+  .marketing-content-bleed-wide {
+    width: min(calc(100vw - 5rem), 72rem);
+  }
+}
+
+@media (min-width: 64rem) {
+  .marketing-content-bleed {
+    width: min(calc(100vw - 24rem), 48rem);
+  }
+
+  .marketing-content-bleed-wide {
+    width: min(calc(100vw - 12rem), 72rem);
+  }
+}

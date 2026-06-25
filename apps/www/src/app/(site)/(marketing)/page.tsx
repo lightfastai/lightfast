@@ -27,7 +27,7 @@ export default function HomePage() {
     <main className="bg-background text-foreground">
       <JsonLd code={publication.jsonLd} />
 
-      <section className={`pb-16 ${marketingLayout.pageTop}`}>
+      <section className={`pb-16 lg:pb-28 ${marketingLayout.pageTop}`}>
         <h1 className="sr-only">{publication.title}</h1>
         <MarketingContentBleed className="aspect-video overflow-hidden rounded-xs bg-foreground">
           <Image

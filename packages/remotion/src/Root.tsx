@@ -11,6 +11,10 @@ import { BlogFeaturedLissajous } from "./compositions/blog-featured-lissajous";
 import { BlogFeaturedRule } from "./compositions/blog-featured-rule";
 import { BlogFeaturedTrail } from "./compositions/blog-featured-trail";
 import { BlogWhyWeBuiltFeatured } from "./compositions/blog-why-we-built-featured";
+import {
+  BrandPartnershipClearspaceDark,
+  LogoSquareClearspaceDark,
+} from "./compositions/brand-clearspace-dark";
 import { BrandGeometry } from "./compositions/brand-geometry";
 import { ChangelogV010Events } from "./compositions/changelog-v010-events";
 import { ChangelogV010Featured } from "./compositions/changelog-v010-featured";
@@ -20,6 +24,7 @@ import { PeopleEmpty, SignalsEmpty } from "./compositions/empty-states";
 import { GitHubBanner } from "./compositions/github-banner";
 import { LandingHero } from "./compositions/landing-hero/landing-hero";
 import { LinkedInBanner } from "./compositions/linkedin-banner";
+import { LockupSpacingDotPitchIsolation } from "./compositions/lockup-spacing-dot-pitch-isolation";
 import { Logo } from "./compositions/logo";
 import { MarketingPanelRender } from "./compositions/marketing-panel";
 import { TwitterBanner } from "./compositions/twitter-banner";
@@ -54,12 +59,15 @@ const COMPONENTS: Record<string, CompositionComponent> = {
   BlogFeaturedRule,
   BlogFeaturedTrail,
   BlogWhyWeBuiltFeatured,
+  BrandPartnershipClearspaceDark,
   BrandGeometry,
   ChangelogV010Events,
   ChangelogV010Featured,
   ChangelogV010SdkMcp,
   ChangelogV010Sources,
   LandingHero,
+  LogoSquareClearspaceDark,
+  LockupSpacingDotPitchIsolation,
   Logo,
   TwitterBanner,
   GitHubBanner,
