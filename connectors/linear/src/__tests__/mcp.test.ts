@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mcpState = vi.hoisted(() => ({
-  callTool: vi.fn(async (): Promise<unknown> => ({
-    content: [{ text: "created", type: "text" }],
-  })),
+  callTool: vi.fn(
+    async (): Promise<unknown> => ({
+      content: [{ text: "created", type: "text" }],
+    })
+  ),
   close: vi.fn(async () => undefined),
   connect: vi.fn(async () => undefined),
   listTools: vi.fn(async () => ({

@@ -163,9 +163,7 @@ function abortError() {
   return new DOMException("The operation was aborted.", "AbortError");
 }
 
-function isMcpToolErrorResult(
-  result: unknown
-): result is { isError: true } {
+function isMcpToolErrorResult(result: unknown): result is { isError: true } {
   return (
     result !== null &&
     typeof result === "object" &&
