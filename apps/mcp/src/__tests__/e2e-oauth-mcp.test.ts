@@ -1,4 +1,5 @@
 import type { McpScope } from "@repo/api-contract";
+import { Client, InMemoryTransport, McpServer } from "@vendor/mcp";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ExecuteHostedMcpToolDependencies } from "../tools/execute";
@@ -439,6 +440,212 @@ afterEach(() => {
 });
 
 describe("hosted MCP OAuth integration smoke", () => {
+  it("uses a stable refreshed token to discover and call Decisions tools", async () => {
+    const { issueMcpAuthorizationCode } = await import(
+      "../../../../api/app/src/mcp-oauth/authorization"
+    );
+    const { registerMcpOAuthClient } = await import(
+      "../../../../api/app/src/mcp-oauth/clients"
+    );
+    const {
+      createCodeChallenge,
+      exchangeMcpAuthorizationCode,
+      hashOpaqueToken,
+      refreshMcpAccessTokenWithRefreshToken,
+    } = await import("../../../../api/app/src/mcp-oauth/tokens");
+    const { verifyMcpAuthInfo } = await import("../auth/verify-token");
+    const { createMcpContextFromAuthInfo } = await import("../context");
+    const { executeHostedMcpTool, registerHostedMcpTools } = await import(
+      "../tools/execute"
+    );
+
+    const registeredClient = await registerMcpOAuthClient(
+      db,
+      {
+        client_name: "Lightfield",
+        client_uri: "https://lightfield.app",
+        redirect_uris: [redirectUri],
+        token_endpoint_auth_method: "none",
+      },
+      { now }
+    );
+    const codeVerifier = "v".repeat(43);
+    const issuedCode = await issueMcpAuthorizationCode(db, {
+      clientId: registeredClient.client_id,
+      clerkOrgId: orgId,
+      clerkUserId: userId,
+      codeChallenge: createCodeChallenge(codeVerifier),
+      codeChallengeMethod: "S256",
+      now,
+      redirectUri,
+      resource,
+      scope: "mcp:decisions:read",
+    });
+    const tokens = await exchangeMcpAuthorizationCode(db, {
+      audience: resource,
+      clientId: registeredClient.client_id,
+      code: issuedCode.code,
+      codeVerifier,
+      issuer,
+      jwtSecret,
+      now,
+      redirectUri,
+    });
+
+    expect(createMcpAuthorizationCodeMock).toHaveBeenCalledWith(
+      db,
+      expect.objectContaining({
+        clientPublicId: registeredClient.client_id,
+        codeHash: hashOpaqueToken(issuedCode.code),
+        scopes: ["mcp:decisions:read"],
+      })
+    );
+
+    const firstRefresh = await refreshMcpAccessTokenWithRefreshToken(db, {
+      audience: resource,
+      clientId: registeredClient.client_id,
+      currentRefreshToken: tokens.refresh_token,
+      issuer,
+      jwtSecret,
+      now,
+    });
+    const secondRefresh = await refreshMcpAccessTokenWithRefreshToken(db, {
+      audience: resource,
+      clientId: registeredClient.client_id,
+      currentRefreshToken: tokens.refresh_token,
+      issuer,
+      jwtSecret,
+      now,
+    });
+
+    expect(firstRefresh).toMatchObject({
+      grant_id: "mcp_grant_test",
+      scope: "mcp:decisions:read",
+      token_type: "Bearer",
+    });
+    expect(secondRefresh).toMatchObject({
+      grant_id: "mcp_grant_test",
+      scope: "mcp:decisions:read",
+      token_type: "Bearer",
+    });
+    expect(firstRefresh).not.toHaveProperty("refresh_token");
+    expect(secondRefresh).not.toHaveProperty("refresh_token");
+    expect(rotateMcpRefreshTokenMock).not.toHaveBeenCalled();
+
+    const authInfo = await verifyMcpAuthInfo(
+      new Request(resource),
+      secondRefresh.access_token
+    );
+    expect(authInfo).toMatchObject({
+      clientId: registeredClient.client_id,
+      extra: {
+        grantId: "mcp_grant_test",
+        orgId,
+        userId,
+      },
+      scopes: ["mcp:decisions:read"],
+    });
+
+    const server = new McpServer({ name: "test", version: "0.0.0" });
+    registerHostedMcpTools(server);
+    const mcpClient = new Client({ name: "test-client", version: "0.0.0" });
+    const [clientTransport, serverTransport] =
+      InMemoryTransport.createLinkedPair();
+    await Promise.all([
+      server.connect(serverTransport),
+      mcpClient.connect(clientTransport),
+    ]);
+
+    try {
+      const { tools } = await mcpClient.listTools();
+      expect(tools.map((tool) => tool.name)).toContain("decisions_find");
+      expect(
+        tools.find((tool) => tool.name === "decisions_find")?.inputSchema
+      ).toMatchObject({
+        properties: {
+          since: expect.objectContaining({
+            format: "date-time",
+            type: "string",
+          }),
+        },
+        type: "object",
+      });
+    } finally {
+      await mcpClient.close();
+      await server.close();
+    }
+
+    const failedLinearDecision = {
+      calledById: "automation_run_123",
+      calledByKind: "automation",
+      calledByUserId: null,
+      classification: "write",
+      createdAt: now,
+      errorCode: "PROVIDER_ROUTINE_PROVIDER_FAILED",
+      errorMessage: "Provider routine failed.",
+      finishedAt: now,
+      id: "provider_routine_call_failed",
+      provider: "linear",
+      providerToolName: "save_initiative",
+      routineId: "linear__save_initiative",
+      snippet: "Linear / Save Initiative failed from Automation",
+      sourceSurface: "automation",
+      startedAt: now,
+      status: "failed",
+      title: "Save Initiative",
+    } as const;
+    const toolDependencies = {
+      ...mcpToolDependencies(),
+      findDecisions: vi.fn().mockResolvedValue({
+        items: [failedLinearDecision],
+        nextCursor: null,
+      }),
+    };
+
+    const context = createMcpContextFromAuthInfo(authInfo, {
+      requestId: "req_refreshed_decisions",
+    });
+    await expect(
+      executeHostedMcpTool({
+        context,
+        contractPath: "decisions.find",
+        dependencies: toolDependencies,
+        rawInput: {
+          providers: ["linear"],
+          query: "save initiative",
+          since: "2026-05-31T00:00:00.000Z",
+          statuses: ["failed"],
+        },
+      })
+    ).resolves.toEqual({
+      items: [failedLinearDecision],
+      nextCursor: null,
+    });
+    expect(toolDependencies.findDecisions).toHaveBeenCalledWith(
+      {
+        actor: {
+          orgId,
+          scopes: ["mcp:decisions:read"],
+          userId,
+        },
+        scopes: {
+          decisionRead: true,
+        },
+        source: {
+          clientId: registeredClient.client_id,
+          ref: "mcp_grant_test",
+          surface: "hosted_mcp",
+        },
+      },
+      {
+        providers: ["linear"],
+        query: "save initiative",
+        since: new Date("2026-05-31T00:00:00.000Z"),
+        statuses: ["failed"],
+      }
+    );
+  });
+
   it("connects a DCR client, calls a hosted tool, rotates refresh, and blocks replay", async () => {
     const { issueMcpAuthorizationCode } = await import(
       "../../../../api/app/src/mcp-oauth/authorization"
