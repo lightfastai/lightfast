@@ -272,7 +272,7 @@ function buildBlogIndexPublication(posts: readonly BlogPostPublication[]) {
     posts.filter((post) => post.isPublic)
   );
   const summaries = publicPosts.map(toBlogPostSummary);
-  const lastModifiedDate = posts.reduce(
+  const lastModifiedDate = publicPosts.reduce(
     (latest, post) => (post.lastModified > latest ? post.lastModified : latest),
     blogIndexUpdatedAt
   );
