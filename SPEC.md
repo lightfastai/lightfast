@@ -1,36 +1,41 @@
 # Lightfast Specification
 
-Status: Draft - positioning reset
+Status: Draft - provisional canonical direction
 
-Last Updated: 2026-06-23
+Last Updated: 2026-07-27
 
-Purpose: Define the current company direction, product wedge, and research
-agenda for Lightfast.
+Purpose: Define the current company direction and research approach for
+Lightfast.
 
 ---
 
 ## Mission
 
-Lightfast is an applied AI lab building systems where product and engineering
-teams design, build, and ship with AI in real time.
+Lightfast studies how people, machines, and artificial intelligence can work
+together to develop consequential physical technologies.
 
 ## Vision
 
-Teams and AI should be able to explore, edit, compare, review, and decide
-together while work is happening. Lightfast develops the primitives that make
-that possible: models, interfaces, infrastructure, and evals tested in real
-products.
+We study a central question: How should people and machines work together as
+scientific and engineering teams develop physical systems?
+
+We focus on teams developing physical technologies with credible potential to
+improve human life or expand civilization's ability to heal, perceive, build,
+and discover.
 
 ---
 
 ## Approach
 
-Lightfast builds products as experiments, then turns what works into reusable
-applied AI primitives. The first wedge is software and product design because
-iteration loops are short, digital artifacts change quickly, and teams already
-move between ideas, interfaces, code, reviews, deployments, and customer
-feedback.
+Our approach is to work alongside teams in real research and development
+environments. We identify a specific human-machine interaction worth studying
+or improving, design and test possible systems, and turn what generalizes into
+research, tooling, infrastructure, or products.
 
-The broader ambition extends to engineering and design teams working on
-machines, buildings, infrastructure, factories, vehicles, research labs, and
-physical-world operations.
+Teams set their own objectives and define success. We focus on the interaction:
+observing it carefully, forming testable ideas, building systems, and learning
+from their use in context.
+
+This applied method connects particular work to broader questions. A useful
+result may be a better understanding of an interaction, a tool suited to one
+setting, shared infrastructure, or a product that can serve related teams.
