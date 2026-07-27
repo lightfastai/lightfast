@@ -11,36 +11,36 @@ import {
 
 const introParagraphs = [
   [
-    "Lightfast is an applied AI lab",
-    "building systems where teams and AI",
-    "work together in real time.",
+    "Lightfast studies how people, machines,",
+    "and artificial intelligence can work",
+    "together.",
   ],
   [
-    "We develop the primitives underneath:",
-    "models, interfaces, infrastructure,",
-    "and evals tested in real products.",
+    "We focus on scientific and engineering",
+    "teams developing consequential",
+    "physical technologies.",
   ],
   [
-    "We start with product and engineering",
-    "teams because the loop is fast enough",
-    "to test what collaboration needs.",
+    "We study human–machine interaction",
+    "alongside teams in real research and",
+    "development environments.",
   ],
 ];
 
-const mediaWords = ["Design", "Build", "Review", "Ship"];
+const mediaWords = ["People", "Machines", "AI", "Physical systems"];
 
 const principles = [
   {
-    label: "Teams first",
-    text: "The system should support shared context, clear responsibility, and decisions made while work is still moving.",
+    label: "Human direction",
+    text: "People bring purpose, domain knowledge, and judgment, and retain responsibility for decisions and consequences.",
   },
   {
-    label: "Primitives over features",
-    text: "Models, interfaces, infrastructure, and evals should be designed together and tested in real products.",
+    label: "Research in context",
+    text: "We study specific human–machine interactions alongside teams working in real scientific and engineering environments.",
   },
   {
-    label: "Research through products",
-    text: "Products force applied AI ideas to survive contact with real teams, real artifacts, and real constraints.",
+    label: "Useful results",
+    text: "What generalizes may become research, tooling, infrastructure, or products suited to related teams.",
   },
 ];
 
@@ -70,8 +70,8 @@ export default function Company() {
             <SheetTitle className="text-sm tracking-normal">Company</SheetTitle>
           </div>
           <SheetDescription className="sr-only">
-            Lightfast is an applied AI lab building systems where product and
-            engineering teams design, build, and ship with AI in real time.
+            Lightfast studies how people, machines, and artificial intelligence
+            can work together to develop consequential physical technologies.
           </SheetDescription>
 
           <div className="mt-8 w-full text-pretty font-medium text-foreground text-xl leading-snug tracking-normal sm:text-2xl">
@@ -101,7 +101,7 @@ export default function Company() {
 
           <section className="mt-16">
             <div className="mb-4 flex items-center justify-between gap-4 text-muted-foreground text-xs leading-5">
-              <span>EST 2026</span>
+              <span>Research &amp; development</span>
               <span>Applied AI lab</span>
             </div>
             <div className="relative aspect-4/5 overflow-hidden rounded-xl border border-border bg-primary text-primary-foreground">

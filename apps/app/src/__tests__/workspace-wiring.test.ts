@@ -58,7 +58,7 @@ describe("app workspace wiring", () => {
     expect(packageJson.dependencies["@vercel/microfrontends"]).toBeDefined();
   });
 
-  it("routes public marketing pages through the www marketing microfrontend", () => {
+  it("routes public marketing and retired pages through the www marketing microfrontend", () => {
     const microfrontends = JSON.parse(
       readFileSync(resolve(appRoot, "microfrontends.json"), "utf8")
     ) as {
@@ -79,7 +79,15 @@ describe("app workspace wiring", () => {
     expect(wwwMarketingPaths).toContain("/brand");
     expect(wwwMarketingPaths).toContain("/blog/:path*");
     expect(wwwMarketingPaths).toContain("/legal/:path*");
-    expect(wwwMarketingPaths).not.toContain("/v2/:path*");
+    for (const retiredPath of [
+      "/about/:path*",
+      "/api-reference/:path*",
+      "/changelog/:path*",
+      "/features/:path*",
+      "/v2/:path*",
+    ]) {
+      expect(wwwMarketingPaths).toContain(retiredPath);
+    }
     expect(wwwMarketingPaths).not.toContain("/v2/brand");
     expect(wwwV2RouteGroup).toBeUndefined();
   });
