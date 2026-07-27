@@ -263,7 +263,7 @@ export function buildBlogIndexJsonLd({
     url,
     name: "Blog",
     description:
-      "Notes from Lightfast on applied AI, real-time collaboration, product engineering, evals, and the systems we build.",
+      "Dated notes from Lightfast. For the company's current research direction, see the canonical Lightfast homepage.",
     dateModified: lastModified,
     inLanguage: "en-US",
     isPartOf: { "@id": SITE.websiteId },
@@ -281,7 +281,7 @@ export function buildBlogIndexJsonLd({
         url,
         name: `${SITE.name} Blog`,
         description:
-          "Notes from Lightfast on applied AI, real-time collaboration, product engineering, evals, and the systems we build.",
+          "Dated notes from Lightfast. For the company's current research direction, see the canonical Lightfast homepage.",
         publisher: { "@id": SITE.organizationId },
         blogPost: blogPostEntities,
       },

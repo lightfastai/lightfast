@@ -197,7 +197,7 @@ export function buildBlogPostMetadata(
 
 export function buildBlogIndexMetadata(canonicalUrl: string): Metadata {
   const description =
-    "Notes from Lightfast on applied AI, real-time collaboration, product engineering, evals, and the systems we build.";
+    "Dated notes from Lightfast. For the company's current research direction, see the canonical Lightfast homepage.";
 
   return createPublicationMetadata({
     title: `Blog | ${SITE.name}`,

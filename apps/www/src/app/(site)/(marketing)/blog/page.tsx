@@ -33,31 +33,55 @@ export default function BlogPage() {
       <section className={` ${marketingLayout.pageTop}`} />
 
       <section aria-labelledby="blog-posts-heading">
-        <h2 className="sr-only" id="blog-posts-heading">
-          Latest blog posts
-        </h2>
-        <ol className="border-border border-t">
-          {blogPosts.map((post) => (
-            <li className="border-border border-b" key={post.href}>
-              <Link
-                className="group/blog grid gap-5 bg-transparent py-4 outline-none transition-colors duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-primary hover:text-primary-foreground hover:duration-300 focus-visible:bg-primary focus-visible:text-primary-foreground focus-visible:duration-300 sm:grid-cols-3 sm:py-6"
-                href={post.href}
-              >
-                <time
-                  className="translate-x-0 self-center text-muted-foreground text-xs leading-6 transition duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/blog:translate-x-2 group-hover/blog:text-primary-foreground group-focus-visible/blog:translate-x-2 group-focus-visible/blog:text-primary-foreground sm:col-span-1 sm:text-sm"
-                  dateTime={post.datetime}
-                >
-                  {post.date}
-                </time>
-                <span className="pr-4 sm:col-span-2 sm:pr-10">
-                  <span className="inline-block translate-x-0 font-medium text-lg leading-tight tracking-normal transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.35,1)] group-hover/blog:translate-x-2 group-focus-visible/blog:translate-x-2 sm:text-xl lg:text-lg">
-                    {post.title}
-                  </span>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ol>
+        {blogPosts.length === 0 ? (
+          <div className="border-border border-t py-10">
+            <h1
+              className="font-medium text-2xl tracking-normal"
+              id="blog-posts-heading"
+            >
+              Blog
+            </h1>
+            <p className="mt-4 max-w-xl text-muted-foreground">
+              No public notes are currently listed. Read Lightfast&apos;s
+              canonical homepage for the company&apos;s current research
+              direction.
+            </p>
+            <Link
+              className="mt-6 inline-block font-medium underline underline-offset-4"
+              href="/"
+            >
+              Read the current direction
+            </Link>
+          </div>
+        ) : (
+          <>
+            <h2 className="sr-only" id="blog-posts-heading">
+              Latest blog posts
+            </h2>
+            <ol className="border-border border-t">
+              {blogPosts.map((post) => (
+                <li className="border-border border-b" key={post.href}>
+                  <Link
+                    className="group/blog grid gap-5 bg-transparent py-4 outline-none transition-colors duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-primary hover:text-primary-foreground hover:duration-300 focus-visible:bg-primary focus-visible:text-primary-foreground focus-visible:duration-300 sm:grid-cols-3 sm:py-6"
+                    href={post.href}
+                  >
+                    <time
+                      className="translate-x-0 self-center text-muted-foreground text-xs leading-6 transition duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/blog:translate-x-2 group-hover/blog:text-primary-foreground group-focus-visible/blog:translate-x-2 group-focus-visible/blog:text-primary-foreground sm:col-span-1 sm:text-sm"
+                      dateTime={post.datetime}
+                    >
+                      {post.date}
+                    </time>
+                    <span className="pr-4 sm:col-span-2 sm:pr-10">
+                      <span className="inline-block translate-x-0 font-medium text-lg leading-tight tracking-normal transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.35,1)] group-hover/blog:translate-x-2 group-focus-visible/blog:translate-x-2 sm:text-xl lg:text-lg">
+                        {post.title}
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          </>
+        )}
       </section>
     </main>
   );

@@ -265,20 +265,23 @@ function toBlogPostSummary(
 }
 
 function buildBlogIndexPublication(posts: readonly BlogPostPublication[]) {
+  const blogIndexUpdatedAt = "2026-07-27T00:00:00.000Z";
   const pathname = "/blog";
   const url = absoluteUrl(pathname);
   const publicPosts = sortByPublishedAtDesc(
     posts.filter((post) => post.isPublic)
   );
   const summaries = publicPosts.map(toBlogPostSummary);
-  const lastModifiedDate =
-    summaries[0]?.lastModified ?? "1970-01-01T00:00:00.000Z";
+  const lastModifiedDate = publicPosts.reduce(
+    (latest, post) => (post.lastModified > latest ? post.lastModified : latest),
+    blogIndexUpdatedAt
+  );
 
   return {
     kind: "blog-index",
     title: "Blog",
     description:
-      "Notes from Lightfast on applied AI, real-time collaboration, product engineering, evals, and the systems we build.",
+      "Dated notes from Lightfast. For the company's current research direction, see the canonical Lightfast homepage.",
     pathname,
     posts: summaries,
     url,

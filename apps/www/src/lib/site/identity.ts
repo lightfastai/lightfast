@@ -2,22 +2,21 @@ import type { Thing, WithContext } from "@vendor/seo/json-ld";
 import type { Metadata, MetadataRoute, Viewport } from "next";
 
 const baseUrl = "https://lightfast.ai";
-const defaultTitle = "Collaboration between humans and machine | Lightfast";
+const defaultTitle = "People and Machines, Working Together | Lightfast";
 const defaultDescription =
-  "Lightfast is an applied AI lab building systems where product and engineering teams design, build, and ship with AI in real time.";
-const defaultOgDescription =
-  "An applied AI lab developing models, interfaces, infrastructure, and evals for teams working with AI in real time.";
+  "Lightfast studies how people, machines, and artificial intelligence can work together to develop consequential physical technologies.";
+const founderName = "Jeevan Pillay";
 
 export const SITE_IDENTITY = {
   name: "Lightfast",
   shortName: "Lightfast",
   title: defaultTitle,
   description: defaultDescription,
-  ogDescription: defaultOgDescription,
+  ogDescription: defaultDescription,
   baseUrl,
   twitterHandle: "@lightfastai",
   category: "Technology",
-  classification: "Applied AI Lab",
+  classification: "Applied artificial intelligence research and development",
   locale: "en_US",
   language: "en-US",
   themeColor: "#09090b",
@@ -41,7 +40,7 @@ export const SITE_IDENTITY = {
   contact: {
     email: "hello@lightfast.ai",
     founder: {
-      name: "Jeevan Pillay",
+      name: founderName,
       email: "jp@lightfast.ai",
       url: "https://twitter.com/jeevanpillay",
     },
@@ -93,7 +92,12 @@ export function buildOrganizationEntity(): OrganizationEntity {
     "@type": "Organization",
     "@id": SITE_IDENTITY.organizationId,
     name: SITE_IDENTITY.name,
+    description: SITE_IDENTITY.description,
     url: SITE_IDENTITY.baseUrl,
+    founder: {
+      "@type": "Person",
+      name: SITE_IDENTITY.contact.founder.name,
+    },
     logo: {
       "@type": "ImageObject",
       url: SITE_IDENTITY.logoUrl,
