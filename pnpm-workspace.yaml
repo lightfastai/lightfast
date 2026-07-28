@@ -167,7 +167,7 @@ catalog:
 
 catalogs:
   next16:
-    next: ^16.2.6
+    next: ^16.2.11
   react19:
     '@types/react': ^19.2.15
     '@types/react-dom': ^19.2.3
