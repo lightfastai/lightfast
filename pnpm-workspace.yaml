@@ -176,7 +176,7 @@ catalogs:
   tailwind4:
     '@tailwindcss/postcss': 4.2.2
     '@tailwindcss/typography': ^0.5.16
-    postcss: 8.5.11
+    postcss: 8.5.18
     tailwindcss: 4.2.2
 
 enablePrePostScripts: true
