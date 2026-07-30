@@ -2,10 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { getLlmsFooter } from "../lib/site/discovery";
-import {
-  buildOrganizationEntity,
-  SITE_IDENTITY,
-} from "../lib/site/identity";
+import { buildOrganizationEntity, SITE_IDENTITY } from "../lib/site/identity";
 
 describe("public founder identity", () => {
   it("uses the canonical personal Person reference", () => {
