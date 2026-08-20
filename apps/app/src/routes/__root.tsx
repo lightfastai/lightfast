@@ -83,43 +83,46 @@ function RootComponent() {
 
 function NotFoundPage() {
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        display: "grid",
-        placeItems: "center",
-        padding: "2rem",
-      }}
-    >
-      <section
+    <>
+      <meta content="noindex" name="robots" />
+      <main
         style={{
-          width: "min(100%, 32rem)",
+          minHeight: "100vh",
           display: "grid",
-          gap: "0.75rem",
+          placeItems: "center",
+          padding: "2rem",
         }}
       >
-        <p
+        <section
           style={{
-            margin: 0,
-            color: "#a1a1aa",
-            fontSize: "0.875rem",
-            fontWeight: 600,
-            textTransform: "uppercase",
+            width: "min(100%, 32rem)",
+            display: "grid",
+            gap: "0.75rem",
           }}
         >
-          404
-        </p>
-        <h1
-          style={{
-            margin: 0,
-            fontSize: "clamp(2rem, 6vw, 3.5rem)",
-            fontWeight: 700,
-            lineHeight: 1,
-          }}
-        >
-          Not found
-        </h1>
-      </section>
-    </main>
+          <p
+            style={{
+              margin: 0,
+              color: "#a1a1aa",
+              fontSize: "0.875rem",
+              fontWeight: 600,
+              textTransform: "uppercase",
+            }}
+          >
+            404
+          </p>
+          <h1
+            style={{
+              margin: 0,
+              fontSize: "clamp(2rem, 6vw, 3.5rem)",
+              fontWeight: 700,
+              lineHeight: 1,
+            }}
+          >
+            Not found
+          </h1>
+        </section>
+      </main>
+    </>
   );
 }

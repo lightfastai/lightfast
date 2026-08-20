@@ -1,17 +1,20 @@
 import {
   deletePreClerkNamespaceReservation,
   finalizeNamespaceOperation,
+  getActiveNamespaceByHandle,
   markNamespaceOperationClerkApplied,
   NamespaceConflictError,
   reserveNamespaceForOperation,
   startNamespaceOperation,
 } from "@db/app";
 import { db } from "@db/app/client";
+import { clerkOrgSlugSchema } from "@repo/app-validation";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest, setResponseHeader } from "@tanstack/react-start/server";
 import { clerkClient } from "@vendor/clerk/server";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
+import { z } from "zod";
 
 import {
   isClerkConflictError,
@@ -82,6 +85,21 @@ function noStore() {
   setResponseHeader("cache-control", "private, no-store");
   setResponseHeader("vary", "Cookie, Authorization");
 }
+
+const organizationRouteInput = z.object({ slug: z.string() });
+
+export const organizationRouteExists = createServerFn({ method: "GET" })
+  .inputValidator(organizationRouteInput)
+  .handler(async ({ data }) => {
+    noStore();
+    const slug = clerkOrgSlugSchema.safeParse(data.slug);
+    if (!slug.success) {
+      return false;
+    }
+
+    const namespace = await getActiveNamespaceByHandle(db, slug.data);
+    return namespace?.kind === "org";
+  });
 
 async function commandDeps(): Promise<OrganizationCommandDeps> {
   const clerk = await clerkClient();
