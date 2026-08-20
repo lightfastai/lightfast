@@ -6,6 +6,8 @@ const defaultTitle = "People and Machines, Working Together | Lightfast";
 const defaultDescription =
   "Lightfast studies how people, machines, and artificial intelligence can work together to develop consequential physical technologies.";
 const founderName = "Jeevan Pillay";
+const founderUrl = "https://www.jeevanpillay.com/";
+const founderId = "https://www.jeevanpillay.com/#person";
 
 export const SITE_IDENTITY = {
   name: "Lightfast",
@@ -42,7 +44,8 @@ export const SITE_IDENTITY = {
     founder: {
       name: founderName,
       email: "jp@lightfast.ai",
-      url: "https://twitter.com/jeevanpillay",
+      id: founderId,
+      url: founderUrl,
     },
   },
   socialLinks: [
@@ -96,7 +99,9 @@ export function buildOrganizationEntity(): OrganizationEntity {
     url: SITE_IDENTITY.baseUrl,
     founder: {
       "@type": "Person",
+      "@id": SITE_IDENTITY.contact.founder.id,
       name: SITE_IDENTITY.contact.founder.name,
+      url: SITE_IDENTITY.contact.founder.url,
     },
     logo: {
       "@type": "ImageObject",
