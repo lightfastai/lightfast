@@ -3,5 +3,5 @@ import { enableCssLoaders } from "./src/webpack-override";
 
 Config.setEntryPoint("src/index.ts");
 Config.setOverwriteOutput(true);
-Config.setPublicDir("../../apps/www/public");
+Config.setPublicDir("public");
 Config.overrideWebpackConfig(enableCssLoaders);

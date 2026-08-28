@@ -12,7 +12,7 @@ import { enableCssLoaders } from "./webpack-override";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "../../.."); // monorepo root
-const REMOTION_PUBLIC_DIR = path.resolve(ROOT, "apps/www/public");
+const REMOTION_PUBLIC_DIR = path.resolve(ROOT, "apps/remotion/public");
 
 /** Resolve a manifest dest path to an absolute path */
 function resolveDest(dest: string, filename: string): string {
