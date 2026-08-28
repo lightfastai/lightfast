@@ -25,15 +25,6 @@
       ],
       "project": ["instrument.server.mjs", "src/**/*.{ts,tsx}"]
     },
-    "apps/www": {
-      "entry": [
-        "src/{client,server,start}.{ts,tsx}",
-        "src/app/**/*.{ts,tsx}",
-        "src/__tests__/**/*.{test,spec}.{ts,tsx}"
-      ],
-      "project": ["src/**/*.{ts,tsx}"],
-      "ignoreDependencies": ["jiti"]
-    },
     "api/app": {
       "entry": [
         "src/origins.ts",

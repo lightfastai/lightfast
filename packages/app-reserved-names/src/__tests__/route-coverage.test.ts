@@ -5,40 +5,10 @@ import { describe, expect, it } from "vitest";
 
 import { organization } from "../index";
 
-const routeArtifactNames = new Set([
-  "layout.tsx",
-  "manifest.ts",
-  "opengraph-image.tsx",
-  "page.tsx",
-  "robots.ts",
-  "route.ts",
-  "route.tsx",
-  "sitemap.ts",
-]);
-
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../../../.."
 );
-
-function findRouteArtifacts(root: string): string[] {
-  if (!fs.existsSync(root)) {
-    return [];
-  }
-
-  const artifacts: string[] = [];
-  for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
-    const entryPath = path.join(root, entry.name);
-    if (entry.isDirectory()) {
-      artifacts.push(...findRouteArtifacts(entryPath));
-      continue;
-    }
-    if (routeArtifactNames.has(entry.name)) {
-      artifacts.push(entryPath);
-    }
-  }
-  return artifacts;
-}
 
 function isRouteGroup(segment: string): boolean {
   return segment.startsWith("(") && segment.endsWith(")");
@@ -50,46 +20,6 @@ function isDynamicSegment(segment: string): boolean {
 
 function isPrivateSegment(segment: string): boolean {
   return segment.startsWith("_");
-}
-
-function addMetadataRouteSegment(
-  segments: Set<string>,
-  artifactName: string
-): void {
-  if (artifactName === "manifest.ts") {
-    segments.add("manifest");
-    segments.add("manifest.webmanifest");
-  }
-  if (artifactName === "opengraph-image.tsx") {
-    segments.add("opengraph-image");
-  }
-  if (artifactName === "robots.ts") {
-    segments.add("robots.txt");
-  }
-  if (artifactName === "sitemap.ts") {
-    segments.add("sitemap.xml");
-  }
-}
-
-function collectAppRouteSegments(appRoot: string): Set<string> {
-  const segments = new Set<string>();
-  for (const artifactPath of findRouteArtifacts(appRoot)) {
-    const routeDir = path.dirname(path.relative(appRoot, artifactPath));
-    if (routeDir !== ".") {
-      for (const segment of routeDir.split(path.sep)) {
-        if (
-          segment &&
-          !isRouteGroup(segment) &&
-          !isDynamicSegment(segment) &&
-          !isPrivateSegment(segment)
-        ) {
-          segments.add(segment);
-        }
-      }
-    }
-    addMetadataRouteSegment(segments, path.basename(artifactPath));
-  }
-  return segments;
 }
 
 function normalizeTanStackRouteSegment(segment: string): string | null {
@@ -195,98 +125,28 @@ function collectMicrofrontendRouteSegments(): Set<string> {
 function collectCurrentStaticRouteSegments(): string[] {
   return [
     ...new Set([
-      ...collectAppRouteSegments(path.join(repoRoot, "apps/app/src/app")),
       ...collectTanStackTopLevelRouteSegments(
         path.join(repoRoot, "apps/app/src/routes")
       ),
-      ...collectAppRouteSegments(path.join(repoRoot, "apps/www/src/app")),
       ...collectMicrofrontendRouteSegments(),
     ]),
   ].sort();
 }
 
-function addContentPathSegments(segments: Set<string>, href: string): void {
-  if (
-    !(href.startsWith("/") || href.startsWith("./") || href.startsWith("../"))
-  ) {
-    return;
-  }
-  for (const segment of href.split(/[/?#]/)[0]?.split("/") ?? []) {
-    if (
-      segment &&
-      segment !== "." &&
-      segment !== ".." &&
-      !isDynamicSegment(segment)
-    ) {
-      segments.add(segment);
-    }
-  }
-}
-
-function addMetaPageSegment(segments: Set<string>, page: unknown): void {
-  if (typeof page !== "string" || page === "index") {
-    return;
-  }
-  const markdownHref = /\]\(([^)]+)\)/.exec(page)?.[1];
-  if (markdownHref) {
-    addContentPathSegments(segments, markdownHref);
-    return;
-  }
-  addContentPathSegments(segments, page.startsWith("/") ? page : `/${page}`);
-}
-
-function collectContentSourceSegments(): Set<string> {
-  const segments = new Set<string>();
-  const contentRoot = path.join(repoRoot, "apps/www/src/content");
-
-  for (const collection of fs.readdirSync(contentRoot, {
-    withFileTypes: true,
-  })) {
-    if (!collection.isDirectory()) {
-      continue;
-    }
-
-    segments.add(collection.name);
-
-    const visit = (directory: string): void => {
-      for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
-        const entryPath = path.join(directory, entry.name);
-        if (entry.isDirectory()) {
-          segments.add(entry.name);
-          visit(entryPath);
-          continue;
-        }
-        if (entry.name === "meta.json") {
-          const meta = JSON.parse(fs.readFileSync(entryPath, "utf8")) as {
-            pages?: unknown[];
-          };
-          for (const page of meta.pages ?? []) {
-            addMetaPageSegment(segments, page);
-          }
-          continue;
-        }
-        if (entry.name.endsWith(".mdx")) {
-          const source = fs.readFileSync(entryPath, "utf8");
-          const category = /^category:\s*"([^"]+)"/m.exec(source)?.[1];
-          if (category) {
-            segments.add(category);
-          }
-          if (collection.name !== "blog") {
-            segments.add(entry.name.replace(/\.mdx$/, ""));
-          }
-        }
-      }
-    };
-    visit(path.join(contentRoot, collection.name));
-  }
-
-  return segments;
-}
+const deployedMarketingNames = [
+  "blog",
+  "brand",
+  "company",
+  "home",
+  "legal",
+  "privacy",
+  "terms",
+] as const;
 
 describe("current route coverage", () => {
   const currentStaticRouteSegments = collectCurrentStaticRouteSegments();
 
-  it("reserves every static app/www route segment for organization slugs", () => {
+  it("reserves every static app and deployed MFE route segment", () => {
     expect(
       currentStaticRouteSegments.filter(
         (segment) => !organization.check(segment)
@@ -295,12 +155,10 @@ describe("current route coverage", () => {
   });
 });
 
-describe("current content coverage", () => {
-  const currentContentSegments = [...collectContentSourceSegments()].sort();
-
-  it("reserves public content route and category slugs for organization slugs", () => {
+describe("deployed marketing name coverage", () => {
+  it("retains stable public website names without reading another repository", () => {
     expect(
-      currentContentSegments.filter((segment) => !organization.check(segment))
+      deployedMarketingNames.filter((name) => !organization.check(name))
     ).toEqual([]);
   });
 });

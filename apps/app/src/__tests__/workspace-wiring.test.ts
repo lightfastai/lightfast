@@ -56,6 +56,15 @@ describe("app workspace wiring", () => {
       "microfrontends proxy ./microfrontends.json"
     );
     expect(packageJson.dependencies["@vercel/microfrontends"]).toBeDefined();
+    expect(packageJson.scripts["mfe:proxy"]).toContain(
+      "--local-apps lightfast-app"
+    );
+    expect(packageJson.scripts["mfe:proxy"]).not.toContain(
+      "--local-apps lightfast-app lightfast-www"
+    );
+    expect(packageJson.scripts["mfe:proxy"]).not.toContain(
+      "portless get www.lightfast"
+    );
   });
 
   it("routes public marketing and retired pages through the www marketing microfrontend", () => {
@@ -64,7 +73,10 @@ describe("app workspace wiring", () => {
     ) as {
       applications: Record<
         string,
-        { routing?: Array<{ group?: string; paths?: string[] }> }
+        {
+          development?: { fallback?: string };
+          routing?: Array<{ group?: string; paths?: string[] }>;
+        }
       >;
     };
 
@@ -79,6 +91,15 @@ describe("app workspace wiring", () => {
     expect(wwwMarketingPaths).toContain("/brand");
     expect(wwwMarketingPaths).toContain("/blog/:path*");
     expect(wwwMarketingPaths).toContain("/legal/:path*");
+    for (const servicePath of [
+      "/api/health",
+      "/health",
+      "/healthz",
+      "/ingest/:path*",
+      "/monitoring",
+    ]) {
+      expect(wwwMarketingPaths).toContain(servicePath);
+    }
     for (const retiredPath of [
       "/about/:path*",
       "/api-reference/:path*",
@@ -90,6 +111,9 @@ describe("app workspace wiring", () => {
     }
     expect(wwwMarketingPaths).not.toContain("/v2/brand");
     expect(wwwV2RouteGroup).toBeUndefined();
+    expect(microfrontends.applications["lightfast-www"]).toMatchObject({
+      development: { fallback: "https://lightfast.ai" },
+    });
   });
 
   it("injects aggregate app URLs into the direct TanStack dev server", () => {
@@ -126,6 +150,8 @@ describe("app workspace wiring", () => {
     expect(setupScript).toContain(
       "apps/app|lightfast-app|LIGHTFAST_VERCEL_PROJECT_ID_APP"
     );
+    expect(setupScript).not.toContain("LIGHTFAST_VERCEL_PROJECT_ID_WWW");
+    expect(setupScript).not.toContain("apps/www|");
     expect(setupScript).not.toContain("apps/app-next|");
   });
 

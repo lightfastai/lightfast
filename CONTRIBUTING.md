@@ -35,7 +35,9 @@ By participating in this project, you agree to maintain a respectful and inclusi
 `pnpm dev` serves the apps through [Portless](https://www.npmjs.com/package/portless) at stable `.localhost` URLs instead of raw ports:
 
 - `https://lightfast.localhost` — the aggregated app (Vercel Microfrontends)
-- `https://app.lightfast.localhost`, `https://www.lightfast.localhost`, `https://mcp.lightfast.localhost` — direct per-service routes
+- `https://app.lightfast.localhost`, `https://mcp.lightfast.localhost` — direct per-service routes
+
+Marketing routes in the aggregate fall back to the deployed website. Website development lives in the separate [`lightfastai/www`](https://github.com/lightfastai/www) repository.
 
 Portless is a workspace dev dependency, so `pnpm install` brings it in automatically, and the root `dev` script starts its HTTPS proxy before Turborepo runs. No separate install is needed for `pnpm dev`.
 
@@ -67,7 +69,6 @@ This is a monorepo using pnpm workspaces with Turborepo:
 
 - **Apps** (`apps/`):
   - `app` — main application (tRPC + Inngest, auth, server actions)
-  - `www` — marketing site + docs (fumadocs MDX)
   - `mcp` — hosted OAuth MCP resource server
   - `desktop` — Electron desktop client
 - **Shared code**: `core/`, `api/`, `db/`, `packages/`, `vendor/`, `internal/` — SDKs, API routers, database, UI/utility packages, third-party integrations, and build tooling
@@ -80,11 +81,10 @@ See `CLAUDE.md` for the full architecture diagram.
 
 ```bash
 # Development
-pnpm dev            # Start app + www + mcp + local Inngest + MFE proxy
+pnpm dev            # Start app + mcp + local Inngest + MFE proxy
 
 # Building (app-specific)
 pnpm build:app      # Build app
-pnpm build:www      # Build www
 pnpm build:mcp      # Build mcp
 
 # Code Quality

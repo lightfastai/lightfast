@@ -100,7 +100,7 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "webp",
-          dest: "apps/www/public/images/marketing",
+          dest: "apps/remotion/out/marketing",
           filename: "operating-thesis-panel.webp",
           scale: 2,
         },
@@ -118,7 +118,7 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "webp",
-          dest: "apps/www/public/images/marketing",
+          dest: "apps/remotion/out/marketing",
           filename: "wordmark-panel.webp",
           scale: 2,
         },
@@ -156,12 +156,6 @@ export const MANIFEST: CompositionManifest = {
           filename: "logo-square-clearspace-light.png",
           scale: 2,
         },
-        {
-          format: "png",
-          dest: "apps/www/public/images/brand",
-          filename: "logo-square-clearspace-light.png",
-          scale: 2,
-        },
       ],
     },
     "logo-square-clearspace-dark": {
@@ -176,12 +170,6 @@ export const MANIFEST: CompositionManifest = {
         {
           format: "png",
           dest: "apps/remotion/out/brand",
-          filename: "logo-square-clearspace-dark.png",
-          scale: 2,
-        },
-        {
-          format: "png",
-          dest: "apps/www/public/images/brand",
           filename: "logo-square-clearspace-dark.png",
           scale: 2,
         },
@@ -202,12 +190,6 @@ export const MANIFEST: CompositionManifest = {
           filename: "brand-partnership-clearspace-light.png",
           scale: 2,
         },
-        {
-          format: "png",
-          dest: "apps/www/public/images/brand",
-          filename: "brand-partnership-clearspace-light.png",
-          scale: 2,
-        },
       ],
     },
     "brand-partnership-clearspace-dark": {
@@ -222,12 +204,6 @@ export const MANIFEST: CompositionManifest = {
         {
           format: "png",
           dest: "apps/remotion/out/brand",
-          filename: "brand-partnership-clearspace-dark.png",
-          scale: 2,
-        },
-        {
-          format: "png",
-          dest: "apps/www/public/images/brand",
           filename: "brand-partnership-clearspace-dark.png",
           scale: 2,
         },
@@ -248,12 +224,6 @@ export const MANIFEST: CompositionManifest = {
           filename: "lockup-spacing-dot-pitch-isolation-light.png",
           scale: 2,
         },
-        {
-          format: "png",
-          dest: "apps/www/public/images/brand",
-          filename: "lockup-spacing-dot-pitch-isolation-light.png",
-          scale: 2,
-        },
       ],
     },
     "lockup-spacing-dot-pitch-isolation-dark": {
@@ -268,12 +238,6 @@ export const MANIFEST: CompositionManifest = {
         {
           format: "png",
           dest: "apps/remotion/out/brand",
-          filename: "lockup-spacing-dot-pitch-isolation-dark.png",
-          scale: 2,
-        },
-        {
-          format: "png",
-          dest: "apps/www/public/images/brand",
           filename: "lockup-spacing-dot-pitch-isolation-dark.png",
           scale: 2,
         },
@@ -492,13 +456,13 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "png",
-          dest: "apps/www/public/images/blog",
+          dest: "apps/remotion/out/featured",
           filename: "why-we-built-lightfast.png",
           scale: 2,
         },
         {
           format: "webp",
-          dest: "apps/www/public/images/blog",
+          dest: "apps/remotion/out/featured",
           filename: "why-we-built-lightfast.webp",
           scale: 2,
         },
@@ -515,13 +479,13 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "png",
-          dest: "apps/www/public/images/changelog",
+          dest: "apps/remotion/out/changelog",
           filename: "v010-featured.png",
           scale: 2,
         },
         {
           format: "webp",
-          dest: "apps/www/public/images/changelog",
+          dest: "apps/remotion/out/changelog",
           filename: "v010-featured.webp",
           scale: 2,
         },
@@ -536,13 +500,13 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "png",
-          dest: "apps/www/public/images/changelog",
+          dest: "apps/remotion/out/changelog",
           filename: "v010-events.png",
           scale: 2,
         },
         {
           format: "webp",
-          dest: "apps/www/public/images/changelog",
+          dest: "apps/remotion/out/changelog",
           filename: "v010-events.webp",
           scale: 2,
         },
@@ -557,13 +521,13 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "png",
-          dest: "apps/www/public/images/changelog",
+          dest: "apps/remotion/out/changelog",
           filename: "v010-sources.png",
           scale: 2,
         },
         {
           format: "webp",
-          dest: "apps/www/public/images/changelog",
+          dest: "apps/remotion/out/changelog",
           filename: "v010-sources.webp",
           scale: 2,
         },
@@ -578,13 +542,13 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "png",
-          dest: "apps/www/public/images/changelog",
+          dest: "apps/remotion/out/changelog",
           filename: "v010-sdk-mcp.png",
           scale: 2,
         },
         {
           format: "webp",
-          dest: "apps/www/public/images/changelog",
+          dest: "apps/remotion/out/changelog",
           filename: "v010-sdk-mcp.webp",
           scale: 2,
         },
@@ -623,12 +587,12 @@ export const MANIFEST: CompositionManifest = {
       outputs: [
         {
           format: "webm",
-          dest: "apps/www/public/images",
+          dest: "apps/remotion/out/landing",
           filename: "landing-hero.webm",
         },
         {
           format: "webp",
-          dest: "apps/www/public/images",
+          dest: "apps/remotion/out/landing",
           filename: "landing-hero-poster.webp",
           frame: 150,
           scale: 1,
@@ -649,11 +613,6 @@ export const MANIFEST: CompositionManifest = {
           dest: "apps/app/public",
           filename: "favicon-16x16.png",
         },
-        {
-          format: "png",
-          dest: "apps/www/public",
-          filename: "favicon-16x16.png",
-        },
       ],
     },
     "logo-favicon-32": {
@@ -668,11 +627,6 @@ export const MANIFEST: CompositionManifest = {
           dest: "apps/app/public",
           filename: "favicon-32x32.png",
         },
-        {
-          format: "png",
-          dest: "apps/www/public",
-          filename: "favicon-32x32.png",
-        },
       ],
     },
     "logo-favicon-48": {
@@ -685,11 +639,6 @@ export const MANIFEST: CompositionManifest = {
         {
           format: "png",
           dest: "apps/app/public",
-          filename: "favicon-48x48.png",
-        },
-        {
-          format: "png",
-          dest: "apps/www/public",
           filename: "favicon-48x48.png",
         },
       ],
@@ -708,11 +657,6 @@ export const MANIFEST: CompositionManifest = {
           dest: "apps/app/public",
           filename: "apple-touch-icon.png",
         },
-        {
-          format: "png",
-          dest: "apps/www/public",
-          filename: "apple-touch-icon.png",
-        },
       ],
     },
     "logo-android-192": {
@@ -727,11 +671,6 @@ export const MANIFEST: CompositionManifest = {
           dest: "apps/app/public",
           filename: "android-chrome-192x192.png",
         },
-        {
-          format: "png",
-          dest: "apps/www/public",
-          filename: "android-chrome-192x192.png",
-        },
       ],
     },
     "logo-android-512": {
@@ -744,11 +683,6 @@ export const MANIFEST: CompositionManifest = {
         {
           format: "png",
           dest: "apps/app/public",
-          filename: "android-chrome-512x512.png",
-        },
-        {
-          format: "png",
-          dest: "apps/www/public",
           filename: "android-chrome-512x512.png",
         },
       ],
@@ -811,12 +745,6 @@ export const MANIFEST: CompositionManifest = {
           filename: "github-banner.png",
           scale: 2,
         },
-        {
-          format: "png",
-          dest: "apps/www/public/images",
-          filename: "github-banner.png",
-          scale: 2,
-        },
       ],
     },
   },
@@ -826,7 +754,7 @@ export const MANIFEST: CompositionManifest = {
       type: "ico",
       sources: ["logo-favicon-16", "logo-favicon-32", "logo-favicon-48"],
       filename: "favicon.ico",
-      dests: ["apps/app/public", "apps/www/public"],
+      dests: ["apps/app/public"],
     },
   ],
 };
