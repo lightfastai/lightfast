@@ -42,7 +42,7 @@ gh run view <run-id> --log-failed
 
 # Find release-sensitive files before merge handoff
 gh pr view --json files --jq '.files[].path' \
-  | rg '^(db/app/src/(migrations|schema)/|\.github/workflows/db-migrate\.yml|apps/.*/vercel\.json|apps/app/microfrontends\.json)' || true
+  | rg '^(db/app/src/(migrations|schema)/|\.github/workflows/db-migrate\.yml|apps/.*/vercel\.json)' || true
 ```
 
 ## Guardrails

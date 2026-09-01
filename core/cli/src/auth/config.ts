@@ -3,11 +3,17 @@ import { join } from "node:path";
 
 import { cliEnv } from "../env";
 
-export const DEFAULT_APP_URL = "https://lightfast.ai";
 export const AUTH_FILE_NAME = "auth.json";
 
 export function getAppUrl(): string {
-  return (cliEnv.LIGHTFAST_APP_URL || DEFAULT_APP_URL).replace(/\/$/, "");
+  const appUrl = cliEnv.LIGHTFAST_APP_URL;
+  if (!appUrl) {
+    throw new Error(
+      "LIGHTFAST_APP_URL is required for Lightfast login and backend commands."
+    );
+  }
+
+  return appUrl.replace(/\/$/, "");
 }
 
 export function getConfigDir(): string {

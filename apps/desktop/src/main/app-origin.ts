@@ -4,8 +4,6 @@ import {
   buildFlavorSchema,
 } from "../shared/build-info-schema";
 
-const PRODUCTION_APP_ORIGIN = "https://lightfast.ai";
-
 function toOrigin(rawUrl: string, label: string): string {
   try {
     return new URL(rawUrl).origin;
@@ -17,17 +15,13 @@ function toOrigin(rawUrl: string, label: string): string {
 }
 
 export function resolveDesktopAppOrigin(buildFlavor: BuildFlavor): string {
-  const parsedBuildFlavor = buildFlavorSchema.parse(buildFlavor);
+  buildFlavorSchema.parse(buildFlavor);
 
-  if (parsedBuildFlavor === "dev") {
-    if (!mainEnv.APP_URL) {
-      throw new Error(
-        "APP_URL must be set for desktop dev. Run pnpm --filter @lightfast/desktop dev so package scripts inject APP_URL=$(portless get lightfast)."
-      );
-    }
-
-    return toOrigin(mainEnv.APP_URL, "APP_URL");
+  if (!mainEnv.APP_URL) {
+    throw new Error(
+      "APP_URL must be set to the backend used by the desktop app."
+    );
   }
 
-  return toOrigin(PRODUCTION_APP_ORIGIN, "Production app origin");
+  return toOrigin(mainEnv.APP_URL, "APP_URL");
 }

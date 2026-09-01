@@ -1,12 +1,14 @@
 # @repo/app-reserved-names
 
-> Reserved organization names for Lightfast Console to prevent URL routing conflicts
+Reserved organization names for stable Lightfast route namespaces.
 
 ## Overview
 
-This package provides reserved organization/team slug names and **O(1) validation** utilities. The current app uses `/:slug` for the Clerk organization/team slug; `workspace-names.json` is legacy data and is not wired into runtime validation.
+This package provides case-insensitive organization/team slug checks with O(1)
+lookup. `workspace-names.json` is legacy data and is not wired into runtime
+validation.
 
-Reserved organization names prevent conflicts with top-level routes owned by `apps/app` and the deployed website contract in `apps/app/microfrontends.json`, such as:
+The reserved list protects stable namespaces such as:
 
 - `/api`
 - `/sign-in`
@@ -15,15 +17,20 @@ Reserved organization names prevent conflicts with top-level routes owned by `ap
 - `/pitch-deck`
 - `/llms.txt`
 
+The public website is owned by the separate
+[`lightfastai/www`](https://github.com/lightfastai/www) repository. This package
+keeps the names it must preserve as a local data contract and does not read
+another application or repository.
+
 ## Usage
 
 ```typescript
 import { organization } from "@repo/app-reserved-names";
 
-organization.check("admin"); // => true
-organization.check("pricing"); // => true
-organization.check("my-company"); // => false
-organization.check("Admin"); // => true
+organization.check("admin"); // true
+organization.check("pricing"); // true
+organization.check("my-company"); // false
+organization.check("Admin"); // true
 ```
 
 The default export exposes the same organization utilities:
@@ -31,49 +38,31 @@ The default export exposes the same organization utilities:
 ```typescript
 import reservedNames from "@repo/app-reserved-names";
 
-reservedNames.organization.check("settings"); // => true
+reservedNames.organization.check("settings"); // true
 ```
 
 ## API
 
 ### `organization.check(slug: string): boolean`
 
-Returns `true` if the organization slug is reserved. Checks are case-insensitive.
+Returns `true` when the organization slug is reserved. Checks are
+case-insensitive.
 
 ### `organization.all: ReadonlyArray<string>`
 
-Array of all reserved organization slugs.
+Contains every reserved organization slug.
 
-## Reserved Names
+## Reserved names
 
-### Organization Names (300 total)
+The data set covers HTTP and protocol names, metadata files, authentication and
+API paths, stable public website names, product surfaces, and common SaaS or
+developer-platform namespaces that may become top-level routes.
 
-Reserved to prevent conflicts with top-level routes (`/{orgSlug}`).
+When a stable namespace is added, update `data/organization-names.json` and the
+focused coverage test when the name is part of the public contract.
 
-Categories include:
+## Current runtime usage
 
-- HTTP status codes
-- Protocol paths such as `.well-known`
-- Next.js and Vercel internals
-- Metadata files such as `robots.txt`, `sitemap.xml`, `manifest.json`, `manifest.webmanifest`, `llms.txt`, and favicon/touch-icon assets
-- Auth paths such as `sign-in`, `sign-up`, `oauth`, `sso`, and `callback`
-- API paths such as `api`, `api-keys`, `trpc`, `inngest`, and `webhooks`
-- App routes from `apps/app` and deployed website routes from `apps/app/microfrontends.json`
-- Retained static names for stable website content such as brand, blog, legal, privacy, and terms
-- Lightfast product surfaces such as `agent`, `automations`, `signals`, `tasks`, `sources`, `runs`, `workflow`, `mcp`, `sdk`, `memory`, and `knowledge-graph`
-- Common SaaS and developer-platform names likely to become top-level routes
-
-## Coverage
-
-The package tests scan current app routes and the explicit deployed MFE route contract so new app-owned names are not missed:
-
-- `apps/app/src/routes`
-- `apps/app/microfrontends.json`
-
-Stable website names remain explicit test data rather than a filesystem dependency on `lightfastai/www`. If a new route or stable namespace is added, either add it to `data/organization-names.json` or update the coverage test with an intentional exclusion.
-
-## Current Runtime Usage
-
-`@repo/app-validation` imports `organization.check()` for `clerkOrgSlugSchema`, which is used by team/org creation and rename flows.
-
-No production code currently imports a workspace reserved-name API.
+`@repo/app-validation` imports `organization.check()` for
+`clerkOrgSlugSchema`, which is used by team and organization creation and rename
+flows.

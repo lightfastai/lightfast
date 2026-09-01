@@ -371,6 +371,7 @@ describe("mcp oauth repositories", () => {
   });
 
   it("rotates refresh token hashes and marks reuse detection", async () => {
+    const now = new Date("2026-06-01T00:00:00.000Z");
     const { db, insertedValues, updateValues } = makeQueuedDb([
       [makeRefreshToken()],
       [makeRefreshToken()],
@@ -394,6 +395,7 @@ describe("mcp oauth repositories", () => {
         currentTokenHash: "refresh_hash_old",
         expiresAt: new Date("2026-08-01T00:00:00.000Z"),
         nextTokenHash: "refresh_hash_new",
+        now,
       })
     ).resolves.toMatchObject({ reuseDetected: false });
 
@@ -402,6 +404,7 @@ describe("mcp oauth repositories", () => {
         currentTokenHash: "refresh_hash_old",
         expiresAt: new Date("2026-09-01T00:00:00.000Z"),
         nextTokenHash: "refresh_hash_reuse",
+        now,
       })
     ).resolves.toMatchObject({ reuseDetected: true });
 

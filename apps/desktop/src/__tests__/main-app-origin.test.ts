@@ -29,12 +29,22 @@ describe("resolveDesktopAppOrigin", () => {
     expect(() => resolveDesktopAppOrigin("dev")).toThrow(/APP_URL must be set/);
   });
 
-  it("keeps packaged builds on the production app origin", async () => {
+  it("uses APP_URL for packaged builds", async () => {
     const { resolveDesktopAppOrigin } = await importWithAppUrl(
-      "https://lightfast.localhost"
+      "https://desktop-backend.example.test/dashboard"
     );
 
-    expect(resolveDesktopAppOrigin("prod")).toBe("https://lightfast.ai");
+    expect(resolveDesktopAppOrigin("prod")).toBe(
+      "https://desktop-backend.example.test"
+    );
+  });
+
+  it("requires APP_URL for packaged builds", async () => {
+    const { resolveDesktopAppOrigin } = await importWithAppUrl(undefined);
+
+    expect(() => resolveDesktopAppOrigin("prod")).toThrow(
+      /APP_URL must be set/
+    );
   });
 
   it("rejects unsupported build flavors", async () => {

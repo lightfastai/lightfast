@@ -5,25 +5,13 @@
       "entry": ["scripts/**/*.{js,ts,sh,mjs}"],
       "ignoreDependencies": ["turbo-ignore", "@biomejs/biome", "portless"]
     },
-    "apps/app": {
+    "apps/example": {
       "entry": [
-        "src/{client,server,start}.{ts,tsx}",
-        "src/app/**/*.{ts,tsx}",
-        "src/__tests__/**/*.{test,spec}.{ts,tsx}",
-        "src/__tests__/setup-env.ts"
+        "src/{router,start}.tsx",
+        "src/routes/**/*.tsx",
+        "vite.config.ts"
       ],
-      "project": ["src/**/*.{ts,tsx}"],
-      "ignoreDependencies": ["@vendor/lib", "@vitest/expect", "zustand"]
-    },
-    "apps/mcp": {
-      "entry": [
-        "instrument.server.mjs",
-        "src/{client,server,start}.{ts,tsx}",
-        "src/routes/**/*.{ts,tsx}",
-        "src/__tests__/**/*.{test,spec}.{ts,tsx}",
-        "src/__tests__/setup-env.ts"
-      ],
-      "project": ["instrument.server.mjs", "src/**/*.{ts,tsx}"]
+      "project": ["src/**/*.{ts,tsx}", "vite.config.ts"]
     },
     "api/app": {
       "entry": [

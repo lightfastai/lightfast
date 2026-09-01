@@ -8,136 +8,111 @@ Before substantial work:
 - Multiple matches: prefer the most specific local skill for the package or concern you are changing; load additional skills only when the task spans multiple packages or concerns.
 <!-- intent-skills:end -->
 
-# CLAUDE.md
+# Lightfast repository guidance
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Lightfast is a pnpm/Turborepo monorepo for AI agent orchestration tooling. See
+`SPEC.md` for business goals and product direction.
 
-## Repository Overview
+## Current architecture
 
-See `SPEC.md` for business goals and product vision.
+```text
+Local browser development
+  https://[<wt>.]example.lightfast.localhost
+    apps/example · local-only TanStack Start app · @repo/ui-v2
 
-**Lightfast** is a pnpm monorepo (Turborepo) for building AI agent orchestration tools.
+  https://[<wt>.]storybook.lightfast.localhost
+    apps/storybook · shared UI component workshop
 
-## Architecture
+Configurable clients
+  core/lightfast · public TypeScript SDK (`lightfast`)
+  core/mcp       · public API-key stdio MCP (`@lightfastai/mcp`)
+  core/cli       · CLI (`@lightfastai/cli`)
+  apps/desktop   · Electron client
+  All require an explicit compatible backend URL.
 
-```
-┌──────────────────────────────────────────────────────────────────────────────────┐
-│  Canonical local browser URL (port 443)                                          │
-│  https://[<wt>.]lightfast.localhost                                              │
-│  Vercel Microfrontends aggregate served by @lightfast/app#mfe:proxy              │
-│                                                                                  │
-│  Direct Portless service routes                                                  │
-│      app       https://[<wt>.]app.lightfast.localhost                            │
-│                @api/app · tRPC + Inngest · auth + Server Actions · default MFE   │
-│                tRPC CORS dev: exact env origins + desktop localhost via Bearer   │
-│      mcp       https://[<wt>.]mcp.lightfast.localhost/mcp                        │
-│                @lightfast/mcp · hosted OAuth MCP resource server                 │
-│      storybook https://[<wt>.]storybook.lightfast.localhost                      │
-│                UI component workshop (@lightfast/storybook)                      │
-│      inngest   https://[<wt>.]inngest.lightfast.localhost                        │
-│      qstash    https://[<wt>.]qstash.lightfast.localhost                         │
-│      db        https://[<wt>.]db.lightfast.localhost                             │
-│                Drizzle Studio local API via @db/app#db:studio                    │
-│                                                                                  │
-│  desktop    Electron (Vite SPA) · APP_URL=$(portless get lightfast)              │
-│             opens the aggregate MFE URL in dev                                   │
-│             renderer Origin = localhost:<vite>, admitted on app via Bearer       │
-│                                                                                  │
-│              @db/app (Drizzle)  ·  @vendor/upstash (Redis)                       │
-│                                                                                  │
-│  Website      https://lightfast.ai · deployed lightfast-www child MFE            │
-│               source: https://github.com/lightfastai/www                         │
-│                                                                                  │
-│  Source of truth                                                                 │
-│  ─────────────────                                                               │
-│  Mesh:       apps/app/microfrontends.json                                        │
-│  Portless:   per-app portless.json + package.json "portless" names               │
-│  Ports:      derived per-worktree from (host, appName) — no manual pinning       │
-│  Origins:    apps/app/src/origins.ts                                             │
-│  CORS:       apps/app/src/cors.ts                                                │
-│              throws in dev if appUrl falls back to https://lightfast.ai          │
-│                                                                                  │
-│  Worktree    [<wt>.] = sanitized last branch segment in a secondary git          │
-│              worktree on a non-main branch; empty on primary / on main / master. │
-└──────────────────────────────────────────────────────────────────────────────────┘
+Backend and data packages
+  api/app · API/domain services, Inngest workflows, auth boundaries
+  db/app  · Drizzle/PlanetScale schema and database tooling
+  These packages are retained but are not assembled into a production app here.
 
-Packages: @repo/* (ui, lib, ai)  |  @repo/app-* (23)  |  @vendor/* (18)
+Public website
+  https://lightfast.ai · owned by https://github.com/lightfastai/www
+  packages/ui-v2 is preserved here; website work belongs in the external repo.
 ```
 
-## tRPC Auth Boundaries
+The retired private `apps/app` and hosted `apps/mcp` products have no
+replacement production backend in this repository. Do not reintroduce
+`https://lightfast.ai` as an implicit API, OAuth, MCP, CLI, or desktop endpoint.
+It remains valid as the public website/documentation URL.
 
-- **userScopedProcedure**: Clerk-pending or Clerk-active session (account, organization listing/create/rename)
-- **orgScopedProcedure**: Clerk-active org membership required (orgApiKeys list/create/revoke/delete/rotate)
-
-## Development Commands
+## Development commands
 
 ```bash
-# Dev servers (NEVER use global pnpm build).
-# Worktree-prefixed URLs: see Architecture diagram above.
-pnpm dev              # app + mcp + Storybook + local services + MFE aggregate
-
-# Local infrastructure setup
-# Load the lightfast-local-infra skill for PlanetScale DB / Upstash Redis setup.
-# It writes durable credentials to apps/*/.vercel/.env.development.local.
-
-# Agent dev (preferred; logs stay in the active terminal/session, no tail needed)
-pnpm dev --ui=stream --log-order=stream --log-prefix=task --no-color
-
-# Background dev (only when you need the prompt back; tail is optional)
-pnpm dev --ui=stream --log-order=stream --log-prefix=task --no-color > /tmp/console-dev.log 2>&1 &
-tail -n 200 /tmp/console-dev.log  # inspect recent logs
-tail -f /tmp/console-dev.log      # follow live logs when needed
-pkill -f "next dev"
-
-# Env (MUST run from apps/<app>/)
-cd apps/app && pnpm with-env <command>
-
-# Build & quality
-pnpm build:app
-pnpm check && pnpm typecheck
-
-# Database
-pnpm db:generate      # NEVER write manual .sql files
-pnpm db:migrate
-pnpm db:studio        # starts Drizzle Studio through Portless
+pnpm dev                # local example + Storybook through Portless
+pnpm build:example      # build the local TanStack Start example
+pnpm check              # Biome/Ultracite checks
+pnpm typecheck          # workspace typecheck
+pnpm test               # workspace tests
+pnpm lint:ws            # workspace dependency checks
+pnpm verify:public-api  # focused API/SDK/MCP surface verification
 ```
 
-`pnpm dev` is the only root local-dev entrypoint. It starts app, mcp, Storybook, local Inngest, local QStash, and the Portless-backed Vercel Microfrontends aggregate for `https://lightfast.localhost`. Website routes fall back to the deployed `lightfast-www` project; this repository does not start a local website. The hosted MCP resource is available at `https://[<wt>.]mcp.lightfast.localhost/mcp`; Storybook is available at `https://[<wt>.]storybook.lightfast.localhost`; and both are intentionally not part of `apps/app/microfrontends.json`. Direct Portless routes are still used for service registration and project URL injection. It does not start public tunnels automatically.
+`pnpm dev` is the root local-development entrypoint. It starts the Portless
+proxy and runs only `@lightfast/example` and `@lightfast/storybook`. The example
+is not a deployment target and must not gain Vercel, microfrontend, hosted auth,
+database, queue, or production backend configuration.
 
-## App Diagnostics
+## Local infrastructure and env files
 
-The canonical app uses TanStack Start. Prefer the foreground `pnpm dev --ui=stream ...` command above when an agent needs live browser and server context. Website-specific Next.js diagnostics belong in `lightfastai/www`.
+Load `lightfast-local-infra` before local PlanetScale or Upstash setup. It is
+the source of truth for provisioning and safe env writes.
 
-Drizzle Studio is started on demand with `pnpm db:studio`. Its local API is routed through Portless at `https://[<wt>.]db.lightfast.localhost`; Drizzle's printed `https://local.drizzle.studio?port=...` URL uses the Portless-injected backend port for that process.
+Package-local ignored files are the active boundary:
 
-## Next Dev Origin Handling
+```text
+api/app/.env.overrides.local  local DB + Redis overrides
+api/app/.env.local            broader API operator configuration
+db/app/.env.overrides.local   local DB overrides
+db/app/.env.local             broader DB operator configuration
+ai/.env.local                 live eval configuration
+e2e/.env.local                E2E operator configuration
+apps/desktop/.env.local       required APP_URL + desktop configuration
+```
 
-`.localhost` routes are handled directly by Next/Portless. Do not reintroduce the legacy dev-proxy wrapper for local dev origins. Use direct env URLs at the boundary that needs them:
+Do not read, copy, or write secrets unless the current task explicitly
+authorizes it. Provider creation, deletion, credential minting/rotation,
+migrations, and live verification require their own exact approval.
 
-- **CORS**: `new URL(url).origin`
-- **Server Actions**: `new URL(url).host`
-- **Links/redirects**: URL string
+## Database commands
 
-## Key Rules
+```bash
+pnpm db:generate   # generate migrations; never hand-write SQL files
+pnpm db:migrate
+pnpm db:studio     # Drizzle Studio through Portless
+```
 
-1. **Vendor abstractions**: Standalone re-exports of third-party SDKs. Never import `@planetscale/*` directly → use `@vendor/db`
-2. **Workspace protocol**: Use `workspace:*` for internal deps, `catalog:` for shared externals
-3. **tRPC pattern**: `prefetch()` BEFORE `<HydrateClient>` to avoid UNAUTHORIZED errors
-4. **Background jobs**: Inngest workflows in `api/app/src/inngest/workflow/`
+## Auth boundaries
+
+- `userScopedProcedure`: Clerk-pending or Clerk-active session.
+- `orgScopedProcedure`: active Clerk organization membership required.
+
+## Package rules
+
+1. Use vendor abstractions; do not import `@planetscale/*` directly outside the
+   vendor package.
+2. Internal dependencies use `workspace:*`; shared external dependencies use
+   the appropriate catalog.
+3. Inngest workflows remain under `api/app/src/inngest/workflow/`.
+4. Prefer package tasks and let Turborepo orchestrate them.
+5. Keep public SDK, MCP, CLI, and desktop clients buildable without a hosted
+   Lightfast default.
 
 ## Environment
 
-- **Node.js** ≥ 22.13.0 | **pnpm** 11.1.3 (pinned via `packageManager` in root `package.json`)
-- **Env files**: `apps/<app>/.vercel/.env.development.local`
-- **Local DB/Redis**: skill-driven via `.agents/skills/lightfast-local-infra`; no root `db:up`, `redis:up`, `dev:setup`, or `dev:doctor` scripts.
-- **Desktop env**: `APP_URL=$(portless get lightfast)` opens the aggregate MFE URL in dev.
+- Node.js >= 22.13.0
+- pnpm 11.1.3, pinned by the root `packageManager`
+- Canonical local URLs are provided by Portless; no manual ports are pinned.
 
-## Troubleshooting
-
-```bash
-pnpm clean:workspaces && pnpm install  # Module not found
-pnpm --filter @api/app build           # tRPC type errors (api layer stays @api/app)
-# DB/Redis setup: load the lightfast-local-infra skill and run the relevant runbook
-```
-
-If `https://lightfast.localhost` won't resolve, confirm Portless is running — check the `portless proxy` process started by `pnpm dev`.
+If a `.localhost` route does not resolve, verify the Portless proxy or service
+is running. Website-specific diagnostics and changes belong in
+`lightfastai/www`.

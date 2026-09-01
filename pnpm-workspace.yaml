@@ -2,6 +2,8 @@ packages:
   - ai
   - api/*
   - apps/*
+  - '!apps/app'
+  - '!apps/mcp'
   - connectors/*
   - core/*
   - db/*
@@ -201,7 +203,6 @@ overrides:
 
 patchedDependencies:
   '@emulators/core@0.6.0': patches/@emulators__core@0.6.0.patch
-  '@vercel/microfrontends@2.3.2': patches/@vercel__microfrontends@2.3.2.patch
   emulate@0.6.0: patches/emulate@0.6.0.patch
 
 allowBuilds:

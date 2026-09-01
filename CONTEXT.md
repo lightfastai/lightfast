@@ -76,4 +76,14 @@ It does not own due-run claiming, manual run enqueueing, connector OAuth, hosted
 
 The public marketing website, its static publications, site identity, discovery policy, and copied `ui-v2` implementation are owned by [`lightfastai/www`](https://github.com/lightfastai/www).
 
-This repository owns only the deployed path contract in `apps/app/microfrontends.json`. The app's local MFE proxy runs `lightfast-app` locally and falls back to the deployed `lightfast-www` project for website routes. Lightfast must not inspect or write the website repository through filesystem paths.
+This repository does not own the website deployment or its route mesh. Lightfast must not inspect or write the website repository through filesystem paths.
+
+### Local Example and Client Boundary
+
+`apps/example` is a local-only TanStack Start surface for exercising
+`packages/ui-v2`. It has no production deployment or backend contract.
+
+The public SDK, stdio MCP server, CLI, and desktop app are configurable clients.
+They require an explicit compatible backend URL and must not infer
+`https://lightfast.ai` as an API, OAuth, or desktop backend. The public website
+URL remains valid for marketing, documentation, metadata, and public links.

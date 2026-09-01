@@ -6,7 +6,7 @@
   "main": ".vite/build/bootstrap.js",
   "scripts": {
     "clean": "rm -rf out .vite .cache",
-    "dev": "APP_URL=$(portless get lightfast) pnpm with-env electron-forge start",
+    "dev": "pnpm with-env electron-forge start",
     "devtools:reset": "node scripts/devtools-reset.mjs",
     "make": "electron-forge make",
     "metadata-probe": "node scripts/metadata-probe.mjs",
@@ -24,7 +24,7 @@
     "test:e2e": "playwright test --config=playwright.config.ts",
     "test:e2e:headed": "playwright test --config=playwright.config.ts --headed",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
-    "with-env": "dotenv -e ./.vercel/.env.development.local --"
+    "with-env": "dotenv -e ./.env.local --"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.11.1",

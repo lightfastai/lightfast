@@ -17,7 +17,7 @@ export function assertLiveTriageEvalEnvironment(
 
   if (!env.VERCEL_OIDC_TOKEN) {
     throw new Error(
-      "VERCEL_OIDC_TOKEN is required for live triage evals. Run `pnpm --filter @repo/ai eval:triage` so the app Vercel env is loaded, or refresh it with `cd apps/app && vercel env pull .vercel/.env.development.local`."
+      "VERCEL_OIDC_TOKEN is required for live triage evals. Configure it in the ignored ai/.env.local file, then run `pnpm --filter @repo/ai eval:triage`."
     );
   }
 }

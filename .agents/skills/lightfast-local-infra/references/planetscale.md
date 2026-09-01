@@ -1,7 +1,7 @@
 # PlanetScale Up
 
 `db up` creates or reuses a PlanetScale branch for this checkout and writes a
-fresh branch password to the app local override env file.
+fresh branch password to the API and database package-local override files.
 
 ## Inputs
 
@@ -15,7 +15,7 @@ branch_name=wt-<worktree-prefix-or-local>-<root-hash>
 ```
 
 Only override these as shell locals for the current run. Do not persist them to
-app env files.
+package env files.
 
 ## Compute Identity
 
@@ -68,60 +68,22 @@ database_password=$(node -e 'const d=require("/tmp/lightfast-pscale-password.jso
 test -n "$database_host" && test -n "$database_username" && test -n "$database_password"
 ```
 
-Then write the app local override env file with `references/env-files.md`.
+Then write both package-local override files with `references/env-files.md`.
 
-## Baseline Inherited Schema
+## Apply And Verify The Local Schema
 
-A branch created from `main` may inherit app tables without matching rows in
-`__drizzle_migrations`. In that state, the migration runner tries to replay
-`0000` against existing tables. Detect the state after the local override env
-file contains the fresh branch credentials:
-
-```bash
-schema_state=$(
-  cd db/app &&
-    pnpm with-env node --input-type=module <<'NODE'
-import { connect } from "@planetscale/database";
-
-const conn = connect({
-  host: process.env.DATABASE_HOST,
-  password: process.env.DATABASE_PASSWORD,
-  username: process.env.DATABASE_USERNAME,
-});
-
-const tableResult = await conn.execute("show tables");
-const tables = tableResult.rows
-  .map((row) => Object.values(row)[0])
-  .filter((name) => typeof name === "string");
-
-const hasAppTables = tables.some((name) => name !== "__drizzle_migrations");
-let migrationCount = 0;
-
-if (tables.includes("__drizzle_migrations")) {
-  const migrationResult = await conn.execute(
-    "select count(*) as count from __drizzle_migrations"
-  );
-  migrationCount = Number(migrationResult.rows[0]?.count ?? 0);
-}
-
-console.log(hasAppTables && migrationCount === 0 ? "baseline" : "migrate");
-NODE
-)
-
-if [ "$schema_state" = "baseline" ]; then
-  pnpm --filter @db/app db:baseline
-fi
-```
-
-`db:baseline` marks the repository migrations as applied. Run it only when the
-branch already contains the app schema and the migration journal is empty.
-
-## Verify
+Per-worktree branches are ephemeral development branches. Apply the current
+schema directly after the local override files contain the fresh branch
+credentials:
 
 ```bash
-pnpm --filter @db/app db:migrate
+pnpm --filter @db/app db:push
 pnpm --filter @db/app db:studio -- --help
 ```
+
+Do not run `db:migrate` or `db:baseline` for a worktree branch. Those commands
+are reserved for the persistent `staging` branch and its authoritative
+`__drizzle_migrations` journal.
 
 If the password is lost or rotated, rerun this runbook to mint and write a new
 branch password.

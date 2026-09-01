@@ -27,6 +27,21 @@ pnpm test    # Run tests
 - **Node.js** >= 18
 - **TypeScript** >= 5.0
 
+## Usage
+
+Lightfast does not assume a hosted API. Pass the base URL of the compatible
+backend you intend to use:
+
+```typescript
+import { createLightfast } from "lightfast";
+
+const lightfast = createLightfast(process.env.LIGHTFAST_API_KEY!, {
+  baseUrl: process.env.LIGHTFAST_API_URL!,
+});
+
+const health = await lightfast.system.health();
+```
+
 ## Links
 
 - **Website**: [lightfast.ai](https://lightfast.ai)

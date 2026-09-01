@@ -84,31 +84,22 @@ preserves existing data.
 
 ## Local development
 
-The desktop app is a Clerk-authenticated tRPC client for the `apps/app` API.
-Local desktop dev uses `APP_URL=$(portless get lightfast)`, which points to
-`https://lightfast.localhost`. The direct app route remains
-`https://app.lightfast.localhost` for service wiring and `NEXT_PUBLIC_APP_URL`.
-Signed-in requests go through the Portless Microfrontends aggregate, not
-directly to `apps/app`'s internal Next.js port.
+The desktop app is a configurable Clerk-authenticated client. The repository
+does not supply or infer a production backend for it.
 
 ### Environment
 
-Desktop has no required env vars for normal local development. The `apps/app`
-dev server still needs its own `.vercel/.env.development.local`; desktop only
-opens the browser bridge served by `apps/app`.
-
-To set operational desktop-only values such as Sentry or remote debugging,
-create `apps/desktop/.vercel/.env.development.local` (gitignored) by copying
-`apps/desktop/.env.example`. Local dev sets `APP_URL=$(portless get lightfast)`;
-preview/prod use `https://lightfast.ai`.
+Set `APP_URL` to the backend the desktop client should use. It is required for
+development and packaged builds. To configure it together with operational
+desktop-only values such as Sentry or remote debugging, create the ignored
+`apps/desktop/.env.local` file from the example:
 
 ```bash
-cp apps/desktop/.env.example apps/desktop/.vercel/.env.development.local
+cp apps/desktop/.env.example apps/desktop/.env.local
 ```
 
 The `with-env` script (invoked by `pnpm --filter @lightfast/desktop dev`) loads
-this file via `dotenv-cli`. Normal desktop dev does not require the file. Set
-`APP_URL` only when you need to override the local aggregate URL manually.
+this file through `dotenv-cli`. No Portless or hosted URL is injected.
 
 For multi-worktree desktop testing, set `LIGHTFAST_DESKTOP_DEV_INSTANCE_ID`
 explicitly from the local infra/worktree flow. Desktop does not infer branch or
@@ -131,22 +122,14 @@ state under `lightfast-local/instances/<id>`.
 
 No Lightfast API keys or Clerk JWT templates are created for desktop login.
 
-### Run the stack (two terminals)
+### Run the desktop
 
 ```bash
-# Terminal 1 — app + mcp + Storybook + local services + MFE aggregate
-pnpm dev
-
-# Terminal 2 — Electron app
 pnpm --filter @lightfast/desktop dev
 ```
 
-`pnpm dev` boots `apps/app`, `apps/mcp`, `apps/storybook`, local Inngest,
-local QStash, and the Portless-backed Microfrontends aggregate. Marketing
-routes fall back to the deployed `lightfast-www` project. The
-desktop package dev script passes `APP_URL=$(portless get lightfast)` to
-Electron so dev opens the aggregate URL. The direct app route remains
-`https://app.lightfast.localhost` for service wiring and `NEXT_PUBLIC_APP_URL`.
+The desktop opens the explicit `APP_URL` from `apps/desktop/.env.local`. Start
+that compatible backend separately when local desktop flows need it.
 
 ### Inspect the encrypted session store
 

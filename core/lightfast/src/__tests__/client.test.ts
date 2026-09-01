@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { createSignalOutput, getSignalOutput } from "@repo/api-contract";
-import { describe, expect, it, vi } from "vitest";
-import { createLightfast } from "../index";
+import { describe, expect, expectTypeOf, it, vi } from "vitest";
+import { createLightfast, type LightfastOptions } from "../index";
 
 const packageRoot = resolve(import.meta.dirname, "../..");
 
@@ -11,6 +11,13 @@ function source(path: string) {
 }
 
 describe("createLightfast", () => {
+  it("requires callers to provide an API base URL", () => {
+    expectTypeOf<LightfastOptions["baseUrl"]>().toEqualTypeOf<string>();
+    expect(() => createLightfast("lf_test", undefined as never)).toThrow(
+      /baseUrl/
+    );
+  });
+
   it("uses explicit fetch routes without oRPC client dependencies", () => {
     const packageJson = JSON.parse(source("package.json")) as {
       dependencies?: Record<string, string>;
@@ -28,19 +35,21 @@ describe("createLightfast", () => {
   });
 
   it("rejects keys without the lf_ prefix", () => {
-    expect(() => createLightfast("not-a-key")).toThrow(
-      /Invalid Lightfast API key/
-    );
+    expect(() =>
+      createLightfast("not-a-key", { baseUrl: "https://example.test" })
+    ).toThrow(/Invalid Lightfast API key/);
   });
 
   it("rejects legacy ak_ keys", () => {
-    expect(() => createLightfast("ak_legacy")).toThrow(
-      /Invalid Lightfast API key/
-    );
+    expect(() =>
+      createLightfast("ak_legacy", { baseUrl: "https://example.test" })
+    ).toThrow(/Invalid Lightfast API key/);
   });
 
   it("rejects bare lf_ keys", () => {
-    expect(() => createLightfast("lf_")).toThrow(/Invalid Lightfast API key/);
+    expect(() =>
+      createLightfast("lf_", { baseUrl: "https://example.test" })
+    ).toThrow(/Invalid Lightfast API key/);
   });
 
   it("attaches Authorization: Bearer <apiKey>", async () => {

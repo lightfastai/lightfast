@@ -14,19 +14,19 @@ npm install -g @lightfastai/mcp
 pnpm add -g @lightfastai/mcp
 ```
 
-## Hosted OAuth MCP
+## Configuration
 
-For interactive user connections, prefer the hosted Lightfast MCP resource. It uses the MCP OAuth flow, dynamic client registration, and user/org-scoped grants instead of copying API keys into a local process.
+The stdio server requires an API key and the explicit base URL of a compatible
+Lightfast API. It does not assume a hosted backend.
 
-Local development URL:
-
-```text
-https://[<wt>.]mcp.lightfast.localhost/mcp
+```bash
+LIGHTFAST_API_KEY=lf_... \
+LIGHTFAST_API_URL=https://api.example.test \
+lightfast-mcp
 ```
 
-The hosted server lives in `apps/mcp`. This package remains the API-key stdio server for local, CI, and clients that do not support remote OAuth MCP yet.
-
-Both hosted and stdio tools are derived from the same MCP exposure policy in `@repo/api-contract` through `@repo/mcp-tools`; keep tool names, schemas, and behavior in parity.
+Tools are derived from the MCP exposure policy in `@repo/api-contract` through
+`@repo/mcp-tools`.
 
 ## Development
 
@@ -38,7 +38,8 @@ pnpm dev     # Watch mode
 ## Requirements
 
 - **Node.js** >= 18
-- **Lightfast API key** from [lightfast.ai](https://lightfast.ai)
+- **Lightfast API key** for the configured backend
+- **Lightfast API URL** supplied through `LIGHTFAST_API_URL`
 - **MCP-compatible client** (Claude Desktop, Claude Code, Cursor, etc.)
 
 ## Links

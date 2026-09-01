@@ -1,7 +1,0 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
-
-export const Route = createFileRoute(
-  "/_authenticated/$slug/tasks/connectors/x"
-)({
-  component: Outlet,
-});

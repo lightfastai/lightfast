@@ -7,29 +7,29 @@ must not store generated local DB/Redis credentials.
 ## Target Files
 
 ```text
-apps/app/.env.overrides.local
+api/app/.env.overrides.local
+db/app/.env.overrides.local
 ```
 
-`@db/app` reads the app env files through:
+Each package loads its own local files through:
 
 ```bash
-dotenv -e ../../apps/app/.env.overrides.local -e ../../apps/app/.vercel/.env.development.local --
+dotenv -e ./.env.overrides.local -e ./.env.local --
 ```
 
 `dotenv-cli` keeps the first value it sees, so local override files must be
-loaded before `.vercel/.env.development.local`.
+loaded before the package's `.env.local`.
 
 Package scripts expose both forms:
 
 ```text
-with-env:local   local override file, then Vercel-pulled env file
-with-env:vercel  Vercel-pulled env file only
+with-env:local   local override file, then package-local env file
 with-env         same local override chain as with-env:local
 ```
 
 ## Managed Keys
 
-App:
+API:
 
 ```text
 DATABASE_HOST
@@ -37,6 +37,14 @@ DATABASE_USERNAME
 DATABASE_PASSWORD
 KV_REST_API_URL
 KV_REST_API_TOKEN
+```
+
+Database tooling:
+
+```text
+DATABASE_HOST
+DATABASE_USERNAME
+DATABASE_PASSWORD
 ```
 
 Only the keys above are managed. Leave any other keys in the override file
@@ -54,7 +62,8 @@ DATABASE_HOST="$database_host" \
 DATABASE_USERNAME="$database_username" \
 DATABASE_PASSWORD="$database_password" \
 node .agents/skills/lightfast-local-infra/lib/write-env.mjs \
-  --file apps/app/.env.overrides.local \
+  --file api/app/.env.overrides.local \
+  --file db/app/.env.overrides.local \
   --set DATABASE_HOST --set DATABASE_USERNAME --set DATABASE_PASSWORD
 ```
 
@@ -64,7 +73,7 @@ For Redis credentials (after `references/upstash.md`):
 KV_REST_API_URL="$kv_rest_api_url" \
 KV_REST_API_TOKEN="$kv_rest_api_token" \
 node .agents/skills/lightfast-local-infra/lib/write-env.mjs \
-  --file apps/app/.env.overrides.local \
+  --file api/app/.env.overrides.local \
   --set KV_REST_API_URL --set KV_REST_API_TOKEN
 ```
 
@@ -73,7 +82,7 @@ node .agents/skills/lightfast-local-infra/lib/write-env.mjs \
 Print key names only:
 
 ```bash
-for file in apps/app/.env.overrides.local; do
+for file in api/app/.env.overrides.local db/app/.env.overrides.local; do
   echo "$file"
   awk -F= '/^[A-Za-z_][A-Za-z0-9_]*=/{print $1}' "$file" | sort
 done
@@ -82,7 +91,17 @@ done
 Expected managed keys:
 
 ```bash
-for key in DATABASE_HOST DATABASE_USERNAME DATABASE_PASSWORD KV_REST_API_URL KV_REST_API_TOKEN; do
-  grep -q "^$key=" apps/app/.env.overrides.local
+for file in api/app/.env.overrides.local db/app/.env.overrides.local; do
+  for key in DATABASE_HOST DATABASE_USERNAME DATABASE_PASSWORD; do
+    grep -q "^$key=\"\?.\+" "$file" || exit 1
+  done
+done
+
+for key in KV_REST_API_URL KV_REST_API_TOKEN; do
+  grep -q "^$key=\"\?.\+" api/app/.env.overrides.local || exit 1
 done
 ```
+
+`e2e/.env.local` and `ai/.env.local` are separately managed operator inputs.
+The local-infra helper does not copy broader application, E2E, or AI provider
+credentials into those files.

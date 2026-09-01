@@ -125,19 +125,12 @@ reviews:
         - TypeScript strict mode is enforced everywhere
         - Flag any use of `any` type without a justification comment
 
-    - path: "apps/app/**"
+    - path: "apps/example/**"
       instructions: |
-        Next.js 15 App Router (main app, port 4107). Review for:
-        - Server/client component boundaries — 'use client' only when DOM APIs or hooks require it
-        - tRPC: prefetch() must run BEFORE <HydrateClient> to avoid UNAUTHORIZED errors
-        - Auth routes (/sign-in, /sign-up, /early-access) are served directly by this app
-        - Check new route directories for missing error.tsx and loading.tsx
-
-    - path: "apps/www/**"
-      instructions: |
-        Marketing + docs site using Fumadocs MDX. Review for:
-        - Docs served via microfrontends at /docs routes
-        - Check all external links for correctness (domain: lightfast.ai)
+        Local-only TanStack Start example. Review for:
+        - tanstackStart() must precede the React Vite plugin
+        - Shared components and styles come from @repo/ui-v2
+        - No Vercel, microfrontend, hosted auth, database, queue, or production backend configuration
 
     - path: "api/**"
       instructions: |

@@ -53,23 +53,18 @@ function productionSourceFilesUnder(path: string): string[] {
 }
 
 describe("app setup contract package boundary", () => {
-  it("keeps org setup schemas in api-contract and route paths in apps/app", () => {
+  it("keeps org setup schemas in api-contract", () => {
     const apiAppPackage = readJson<{
       dependencies?: Record<string, string>;
     }>("api/app/package.json");
-    const appPackage = readJson<{ dependencies?: Record<string, string> }>(
-      "apps/app/package.json"
-    );
     const apiContractIndex = repoSource("packages/api-contract/src/index.ts");
 
     expect(existsSync(resolve(repoRoot, oldPackagePath))).toBe(false);
     expect(apiAppPackage.dependencies?.[oldPackage]).toBeUndefined();
-    expect(appPackage.dependencies?.[oldPackage]).toBeUndefined();
     expect(apiContractIndex).toContain('from "./org-setup"');
 
     const remainingImports = [
       "api/app/src",
-      "apps/app/src",
       "packages/api-contract/src",
     ].flatMap((path) =>
       sourceFilesUnder(path).filter((file) =>

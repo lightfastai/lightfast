@@ -1,4 +1,3 @@
-import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 import { _electron, expect, type Page, test } from "@playwright/test";
 
@@ -10,16 +9,11 @@ import { _electron, expect, type Page, test } from "@playwright/test";
 // biome-ignore lint/correctness/noGlobalDirnameFilename: spec runs as CJS, see comment above.
 const desktopRoot = resolve(__dirname, "..", "..");
 
-// The desktop dev script injects APP_URL with `portless get lightfast`. Mirror
-// that lookup here so the spec works both locally and on CI.
 function loadDesktopEnv(): Record<string, string> {
-  if (process.env.APP_URL) {
-    return { APP_URL: process.env.APP_URL };
+  const appUrl = process.env.APP_URL;
+  if (!appUrl) {
+    throw new Error("APP_URL is required to run the desktop E2E smoke test");
   }
-
-  const appUrl = execFileSync("portless", ["get", "lightfast"], {
-    encoding: "utf8",
-  }).trim();
 
   return { APP_URL: appUrl };
 }

@@ -13,6 +13,9 @@ Local DB/Redis provisioning for this repo. Replaces the old `pnpm db:up`,
 - No provisioning runtime scripts, root package scripts, or replacement CLI.
 - No interactive `pscale auth login` in the agent shell — ask the human.
 - No provider deletes. `drop` is intentionally deferred.
+- Provider reads, creates, credential minting, live verification, and schema
+  writes require explicit user approval for that exact run. Repository repair
+  does not authorize provider effects.
 - Only write the managed keys listed in `references/env-files.md` to local
   override files. Do not write DB/Redis credentials to Vercel-pulled env files.
 - Desktop multi-instance ids are chosen by the local infra/worktree flow, not

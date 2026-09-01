@@ -25,8 +25,8 @@ When invoked:
 
    # Run comprehensive checks
    cd $(git rev-parse --show-toplevel) && pnpm lint && pnpm typecheck && pnpm test
-   # Also run builds for affected apps (check plan for which apps)
-   pnpm build:app  # or build:www, build:mcp
+   # Also run builds for affected packages (check the plan for exact filters)
+   pnpm build:example
    ```
 
 ## Validation Process

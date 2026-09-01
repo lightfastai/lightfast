@@ -147,7 +147,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 ### Environment Schema
 
-Both `apps/app` and `api/app` validate the encryption key:
+`api/app` validates the encryption key:
 
 ```typescript
 import { createEnv } from "@t3-oss/env-nextjs";
