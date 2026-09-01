@@ -58,15 +58,21 @@ jobs:
               exit 1
             fi
             
+            # CLI releases use the dedicated manual workflow, not Changesets.
+            if sed -n '2,/^---$/p' "$file" | grep -qE "^[[:space:]]*(\"@lightfastai/cli\"|'@lightfastai/cli')[[:space:]]*:[[:space:]]*(patch|minor|major)[[:space:]]*$"; then
+              echo "::error::@lightfastai/cli releases must not use Changesets. Follow RELEASE.md#cli-workflow instead."
+              exit 1
+            fi
+
             # Check if it mentions lightfast or @lightfastai/mcp
-            if ! grep -qE "(\"lightfast\"|\"@lightfastai/mcp\"|\"@lightfastai/cli\")" "$file"; then
-              echo "::error::Changeset $file must include lightfast, @lightfastai/mcp, or @lightfastai/cli package"
+            if ! grep -qE "(\"lightfast\"|\"@lightfastai/mcp\")" "$file"; then
+              echo "::error::Changeset $file must include lightfast or @lightfastai/mcp package"
               exit 1
             fi
 
             # Check for valid version types
-            if ! grep -E "^\"(lightfast|@lightfastai/mcp|@lightfastai/cli)\": (patch|minor|major)$" "$file"; then
-              echo "::error::Changeset $file must use patch, minor, or major for lightfast, @lightfastai/mcp, or @lightfastai/cli"
+            if ! grep -E "^\"(lightfast|@lightfastai/mcp)\": (patch|minor|major)$" "$file"; then
+              echo "::error::Changeset $file must use patch, minor, or major for lightfast or @lightfastai/mcp"
               exit 1
             fi
             
