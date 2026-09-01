@@ -80,7 +80,7 @@ jobs:
           (cd core/lightfast && npm pack --pack-destination "$SCRATCH")
           (cd core/mcp && npm pack --pack-destination "$SCRATCH")
           echo "Inspecting lightfast manifest..."
-          tar -xzOf "$SCRATCH"/lightfast-*.tgz package/package.json | jq -e '.dependencies | keys | all(. as $k | $k | startswith("@orpc/"))' \
+          tar -xzOf "$SCRATCH"/lightfast-*.tgz package/package.json | jq -e '(.dependencies // {}) | keys | all(. as $k | $k | startswith("@orpc/"))' \
             || (echo "❌ lightfast has unexpected runtime deps"; tar -xzOf "$SCRATCH"/lightfast-*.tgz package/package.json | jq '.dependencies'; exit 1)
           echo "Inspecting @lightfastai/mcp manifest..."
           tar -xzOf "$SCRATCH"/lightfastai-mcp-*.tgz package/package.json | jq -e '.dependencies | keys == ["@modelcontextprotocol/sdk"]' \
