@@ -59,7 +59,7 @@ jobs:
             fi
             
             # CLI releases use the dedicated manual workflow, not Changesets.
-            if grep -q '"@lightfastai/cli"' "$file"; then
+            if sed -n '2,/^---$/p' "$file" | grep -qE "^[[:space:]]*(\"@lightfastai/cli\"|'@lightfastai/cli')[[:space:]]*:[[:space:]]*(patch|minor|major)[[:space:]]*$"; then
               echo "::error::@lightfastai/cli releases must not use Changesets. Follow RELEASE.md#cli-workflow instead."
               exit 1
             fi
