@@ -1,255 +1,121 @@
 # Contributing to Lightfast
 
-We're excited that you're interested in contributing to Lightfast! This document outlines how to contribute to the project effectively.
+Thank you for contributing. Keep changes scoped, preserve unrelated work, and
+use the package-level checks that match the surface you change.
 
-## Code of Conduct
+## Prerequisites
 
-By participating in this project, you agree to maintain a respectful and inclusive environment for all contributors.
+- Node.js >= 22.13.0
+- pnpm 11.1.3, enforced by the root `packageManager`
 
-## Development Setup
-
-### Prerequisites
-- Node.js >= 22.12.0
-- pnpm 10.32.1 (enforced by packageManager)
-
-### Getting Started
-
-1. Fork the repository
-2. Clone your fork:
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/lightfast.git
-   cd lightfast
-   ```
-
-3. Install dependencies:
-   ```bash
-   pnpm install
-   ```
-
-4. Set up environment variables:
-   - Copy `.env.example` files in relevant app directories
-   - Configure required environment variables
-
-### Local URLs (Portless)
-
-`pnpm dev` serves the apps through [Portless](https://www.npmjs.com/package/portless) at stable `.localhost` URLs instead of raw ports:
-
-- `https://lightfast.localhost` — the aggregated app (Vercel Microfrontends)
-- `https://app.lightfast.localhost`, `https://mcp.lightfast.localhost` — direct per-service routes
-
-Marketing routes in the aggregate fall back to the deployed website. Website development lives in the separate [`lightfastai/www`](https://github.com/lightfastai/www) repository.
-
-Portless is a workspace dev dependency, so `pnpm install` brings it in automatically, and the root `dev` script starts its HTTPS proxy before Turborepo runs. No separate install is needed for `pnpm dev`.
-
-#### One-time: bind port 443
-
-The proxy serves HTTPS on port **443**, which requires `sudo` to bind on macOS/Linux. So it doesn't prompt on every run — and so it survives reboots — install it as a startup service once per machine:
+## Setup
 
 ```bash
-pnpm exec portless service install   # binds 443 at boot as a root-owned daemon (prompts for sudo once)
-pnpm exec portless service status    # verify: "Proxy on 443: responding"
+git clone https://github.com/YOUR_USERNAME/lightfast.git
+cd lightfast
+pnpm install
 ```
 
-Uninstall later with `pnpm exec portless service uninstall`.
+Environment variables are package-local. Use ignored `.env.local` or
+`.env.overrides.local` files only in the package that consumes them. Follow the
+`lightfast-local-infra` skill for local PlanetScale/Upstash setup; do not copy
+provider values between packages casually.
 
-#### Troubleshooting: URLs suddenly need a port suffix
+## Repository shape
 
-If `https://lightfast.localhost` starts requiring a port (e.g. `https://lightfast.localhost:1355`), the proxy couldn't bind 443 — usually because `sudo` wasn't available when it started (common right after a reboot) — so it fell back to the unprivileged port `1355` and now remembers it. Re-bind 443:
+- `apps/example`: local-only TanStack Start example using `@repo/ui-v2`
+- `apps/storybook`: shared UI component workshop
+- `apps/desktop`: configurable Electron client; requires `APP_URL`
+- `core/lightfast`: public TypeScript SDK; requires `baseUrl`
+- `core/mcp`: public stdio MCP server; requires `LIGHTFAST_API_URL`
+- `core/cli`: CLI; backend commands require `LIGHTFAST_APP_URL`
+- `api/app`: retained API/domain services and Inngest workflows
+- `db/app`: retained Drizzle/PlanetScale schema and database tooling
+- `packages`, `vendor`, `internal`, `connectors`, `emulators`: shared code and
+  supporting tooling
+
+The public website at [lightfast.ai](https://lightfast.ai) is owned by the
+separate [`lightfastai/www`](https://github.com/lightfastai/www) repository.
+This repository does not provide a replacement production backend for the
+retired private applications.
+
+## Local development
 
 ```bash
-pnpm exec portless proxy stop
-pnpm exec portless service install   # or one-off: pnpm exec portless proxy start --https (auto-elevates with sudo)
+pnpm dev
 ```
 
-See `CLAUDE.md` for the full local architecture and worktree URL scheme.
+The root command starts Portless and runs only the local example and Storybook:
 
-## Project Structure
+- `https://[<wt>.]example.lightfast.localhost`
+- `https://[<wt>.]storybook.lightfast.localhost`
 
-This is a monorepo using pnpm workspaces with Turborepo:
-
-- **Apps** (`apps/`):
-  - `app` — main application (tRPC + Inngest, auth, server actions)
-  - `mcp` — hosted OAuth MCP resource server
-  - `desktop` — Electron desktop client
-- **Shared code**: `core/`, `api/`, `db/`, `packages/`, `vendor/`, `internal/` — SDKs, API routers, database, UI/utility packages, third-party integrations, and build tooling
-
-See `CLAUDE.md` for the full architecture diagram.
-
-## Development Workflow
-
-### Common Commands
+Portless is a workspace dependency. To bind HTTPS port 443 persistently:
 
 ```bash
-# Development
-pnpm dev            # Start app + mcp + local Inngest + MFE proxy
-
-# Building (app-specific)
-pnpm build:app      # Build app
-pnpm build:mcp      # Build mcp
-
-# Code Quality
-pnpm check          # Biome lint + format check
-pnpm typecheck      # TypeScript type checking
-pnpm lint:ws        # Workspace dependency boundary check
-
-# Database
-pnpm db:generate    # Generate Drizzle migrations (NEVER write manual .sql)
-pnpm db:migrate     # Apply migrations
-pnpm db:studio      # Open Drizzle Studio via Portless
-
-# Cleanup
-pnpm clean          # Clean all build artifacts
-pnpm clean:workspaces # Clean turbo workspaces
+pnpm exec portless service install
+pnpm exec portless service status
 ```
 
-### Claude Code with MCP
+The local example must remain free of Vercel, microfrontend, hosted auth,
+database, queue, and production backend configuration.
 
-Start Claude Code with selective MCP servers:
+## Common commands
 
 ```bash
-pnpm claude           # Base only
-pnpm claude -b        # + Playwright browser (fresh session)
-pnpm claude -B        # + Playwright browser (with saved session)
-pnpm claude -e        # + Exa search
-pnpm claude -b -e     # + browser + exa
-pnpm claude -a        # All MCP servers (browser with session + exa)
+pnpm build:example      # build the local example
+pnpm check              # format/lint checks
+pnpm typecheck          # workspace TypeScript checks
+pnpm test               # workspace tests
+pnpm lint:ws            # dependency/workspace checks
+pnpm verify:public-api  # API/SDK/MCP verification
+
+pnpm db:generate        # generate Drizzle migrations; never hand-write SQL
+pnpm db:migrate
+pnpm db:studio
 ```
 
-Available MCP servers are documented in `.mcp.json`.
+Run package-specific commands with a filter when changing one package:
 
-#### Saving Browser Sessions for Playwright
+```bash
+pnpm --filter @lightfast/example build
+pnpm --filter lightfast test
+pnpm --filter @lightfastai/mcp typecheck
+```
 
-The `-B` flag uses a saved browser session from `.auth/browser-session.json`, allowing Playwright to access authenticated pages without re-logging in each time.
+## Code conventions
 
-**To save a new browser session:**
+- Use strict TypeScript and avoid unjustified `any`.
+- Use `workspace:*` for internal dependencies and catalogs for shared external
+  dependencies.
+- Import third-party SDKs through the relevant `@vendor/*` abstraction.
+- In TanStack Start, keep `tanstackStart()` before the React Vite plugin and
+  render `HeadContent`, `Outlet`, and `Scripts` in the root document.
+- Use `@repo/ui-v2` for the current shared UI surface.
+- Generate Drizzle migrations with repository commands; never hand-write or
+  edit generated SQL.
 
-1. Start Claude Code with the basic browser flag:
-   ```bash
-   pnpm claude -b
-   ```
+## Pull requests
 
-2. Ask Claude to navigate to the site and log in:
-   ```
-   Navigate to https://example.com/login and log in with my credentials
-   ```
+Before opening a PR:
 
-3. After logging in, ask Claude to save the session:
-   ```
-   Save the browser storage state to .auth/browser-session.json
-   ```
+```bash
+pnpm check
+pnpm typecheck
+pnpm test
+pnpm lint:ws
+```
 
-   Claude will run something like:
-   ```javascript
-   await page.context().storageState({ path: '.auth/browser-session.json' })
-   ```
+Also run relevant builds and public API checks. Explain behavior changes,
+configuration requirements, tests run, and any production follow-up that is
+intentionally outside the PR. Do not treat green CI as authorization to deploy,
+delete providers, rotate credentials, or merge.
 
-4. Future sessions with `-B` or `-a` will use this saved state:
-   ```bash
-   pnpm claude -B  # Now authenticated automatically
-   ```
-
-**Note:** Add `.auth/` to your `.gitignore` to avoid committing session data.
-
-### Making Changes
-
-1. Create a feature branch:
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-
-2. Make your changes following our code conventions:
-   - Use TypeScript with strict type checking
-   - Lint and format are enforced by Biome via `biome.jsonc`
-   - Maintain consistent code style with the existing codebase
-
-3. Test your changes:
-   ```bash
-   pnpm check         # Biome lint + format check
-   pnpm typecheck     # Ensure no type errors
-   ```
-
-4. Commit your changes using the scoped convention (`type(scope): subject`):
-   ```bash
-   git add .
-   git commit -m "feat(app): add new feature description"
-   ```
-
-   Common scopes mirror the affected area: `app`, `platform`, `www`, `desktop`, `api`, `db`, `vendor`, `core`, `deps`, `dev`. Types include `feat`, `fix`, `refactor`, `chore`, `docs`, `revert`.
-
-## Code Style Guidelines
-
-### TypeScript
-- Use strict TypeScript configuration
-- Prefer explicit types over `any`
-- Use proper error handling with Result patterns where applicable
-
-### React/Next.js
-- Use App Router patterns
-- Prefer server components when possible
-- Implement proper loading and error states
-- Use `"use client"` directive only when necessary
-
-### Styling
-- Use Tailwind CSS via `@repo/ui`
-- Follow utility-first approach
-- Use CSS variables for dynamic values
-
-### Formatting
-- Biome (`biome.jsonc`) handles both linting and formatting
-- Run `pnpm check` to verify before pushing
-
-### Error Handling
-- Implement comprehensive error types
-- Use proper error reporting and logging
-- Handle edge cases gracefully
-
-## Pull Request Process
-
-1. Ensure your code passes all checks:
-   ```bash
-   pnpm check && pnpm typecheck
-   ```
-
-2. Update documentation if needed
-3. Create a pull request with:
-   - Clear title describing the change
-   - Detailed description of what changed and why
-   - Reference any related issues
-
-4. Ensure CI passes
-5. Address any feedback from reviewers
-
-## Testing
-
-Check individual package.json files for testing commands. Currently no global test command is configured.
-
-## Documentation
-
-- Keep README files up to date
-- Add JSDoc comments for complex functions
-- Update type definitions when making API changes
-
-## Environment Variables
-
-Environment variables are loaded via `dotenv` in app packages. Check individual app configurations for environment-specific requirements.
-
-## Reporting Issues
-
-When reporting issues, please include:
-- Clear description of the problem
-- Steps to reproduce
-- Expected vs actual behavior
-- Environment information (Node.js version, OS, etc.)
-- Relevant logs or error messages
-
-## Getting Help
-
-- Check existing issues and discussions
-- Review documentation in the repository
-- Ask questions in pull request discussions
+Use conventional commit subjects such as `feat:`, `fix:`, `refactor:`,
+`chore:`, or `docs:`.
 
 ## License
 
-Lightfast is Apache 2.0 for the platform and MIT for the SDKs and shared libraries. By contributing, you agree that your contribution is licensed under the same license as the file(s) you are modifying (as declared by the nearest `package.json` `license` field, or the repository-root `LICENSE` if none applies).
-
-Thank you for contributing to Lightfast!
+Lightfast platform packages are Apache-2.0 and SDK/shared packages may be MIT.
+The nearest `package.json` license, or the repository root license when absent,
+governs each contribution.

@@ -2,7 +2,7 @@
   "name": "@repo/app-reserved-names",
   "version": "0.1.0",
   "private": true,
-  "description": "Reserved organization names for Lightfast App to prevent URL routing conflicts",
+  "description": "Reserved organization names for stable Lightfast route namespaces",
   "license": "Apache-2.0",
   "type": "module",
   "exports": {

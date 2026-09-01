@@ -10,9 +10,6 @@ import { clerkOrgSlugSchema } from "../primitives/slugs";
 
 /**
  * Team Settings Form Schema
- *
- * Used in:
- * - apps/app/src/app/(app)/(org)/[slug]/(workspace)/(manage)/settings/_components/team-general-settings-client.tsx
  */
 export const teamSettingsFormSchema = z.object({
   teamName: clerkOrgSlugSchema,

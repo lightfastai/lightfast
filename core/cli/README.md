@@ -49,7 +49,7 @@ lightfast logout
 
 | Variable | Description |
 | --- | --- |
-| `LIGHTFAST_APP_URL` | Overrides the Lightfast app URL. Defaults to `https://lightfast.ai`. |
+| `LIGHTFAST_APP_URL` | Required app URL for login and backend commands. No hosted default is supplied. |
 | `LIGHTFAST_CLI_CONFIG_DIR` | Overrides where the CLI stores `auth.json`. |
 
 ## Development

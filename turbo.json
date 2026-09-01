@@ -31,30 +31,6 @@
       "cache": false,
       "persistent": true
     },
-    "//#_inngest": {
-      "cache": false,
-      "persistent": true
-    },
-    "//#_qstash": {
-      "cache": false,
-      "persistent": true
-    },
-    "//#_github_emulator": {
-      "cache": false,
-      "persistent": true
-    },
-    "//#_granola_emulator": {
-      "cache": false,
-      "persistent": true
-    },
-    "//#_linear_emulator": {
-      "cache": false,
-      "persistent": true
-    },
-    "//#_x_emulator": {
-      "cache": false,
-      "persistent": true
-    },
     "//#check": {
       "inputs": ["$TURBO_DEFAULT$", "biome.jsonc"],
       "outputs": []

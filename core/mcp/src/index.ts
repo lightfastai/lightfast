@@ -2,23 +2,18 @@ import { apiContract, lightfastMcpToolPolicy } from "@repo/api-contract";
 import { registerLightfastMcpTools } from "@repo/mcp-tools";
 import { McpServer, StdioServerTransport } from "@vendor/mcp";
 import { createLightfast } from "lightfast";
+import { getLightfastMcpConfig } from "./config";
 
 declare const __SDK_VERSION__: string;
 
-const apiKey = process.env.LIGHTFAST_API_KEY;
-if (!apiKey) {
-  console.error("LIGHTFAST_API_KEY environment variable is required");
-  process.exit(1);
-}
-
-const baseUrl = process.env.LIGHTFAST_API_URL;
+const { apiKey, baseUrl } = getLightfastMcpConfig();
 
 const server = new McpServer({
   name: "lightfast",
   version: __SDK_VERSION__,
 });
 
-const client = createLightfast(apiKey, baseUrl ? { baseUrl } : {});
+const client = createLightfast(apiKey, { baseUrl });
 
 function getClientProcedure(
   path: string

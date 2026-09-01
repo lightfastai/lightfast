@@ -11,8 +11,8 @@ import type {
 declare const __SDK_VERSION__: string;
 
 export interface LightfastOptions {
-  /** API base URL. Defaults to `https://lightfast.ai`. */
-  baseUrl?: string;
+  /** Base URL of the Lightfast-compatible API. */
+  baseUrl: string;
   /** Custom fetch implementation (for testing or proxying). */
   fetch?: typeof fetch;
 }
@@ -112,14 +112,17 @@ async function requestJson<TOutput>(input: {
 
 export function createLightfast(
   apiKey: string,
-  options: LightfastOptions = {}
+  options: LightfastOptions
 ): LightfastClient {
   if (!apiKey?.startsWith("lf_") || apiKey.length <= "lf_".length) {
     throw new Error("Invalid Lightfast API key");
   }
 
-  const baseUrl = options.baseUrl ?? "https://lightfast.ai";
-  const normalizedBase = normalizeBaseUrl(baseUrl);
+  if (!options?.baseUrl) {
+    throw new Error("Lightfast baseUrl is required");
+  }
+
+  const normalizedBase = normalizeBaseUrl(options.baseUrl);
   const fetchImpl = options.fetch ?? fetch;
 
   return {

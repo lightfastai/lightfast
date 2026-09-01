@@ -9,7 +9,6 @@ on:
     paths:
       - 'api/app/src/orpc/**'
       - 'api/app/src/__tests__/signal-orpc.test.ts'
-      - 'apps/app/src/app/(api)/api/v1/**'
       - 'core/**'
       - 'packages/api-contract/**'
       - 'vendor/mcp/**'
@@ -21,7 +20,6 @@ on:
     paths:
       - 'api/app/src/orpc/**'
       - 'api/app/src/__tests__/signal-orpc.test.ts'
-      - 'apps/app/src/app/(api)/api/v1/**'
       - 'core/**'
       - 'packages/api-contract/**'
       - 'vendor/mcp/**'

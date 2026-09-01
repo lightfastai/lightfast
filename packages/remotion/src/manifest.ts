@@ -600,94 +600,6 @@ export const MANIFEST: CompositionManifest = {
       ],
     },
 
-    // ── Favicons ───────────────────────────────────────────────────
-    "logo-favicon-16": {
-      type: "still",
-      component: "Logo",
-      width: 16,
-      height: 16,
-      props: { assetScale: logoAssetScale(16) },
-      outputs: [
-        {
-          format: "png",
-          dest: "apps/app/public",
-          filename: "favicon-16x16.png",
-        },
-      ],
-    },
-    "logo-favicon-32": {
-      type: "still",
-      component: "Logo",
-      width: 32,
-      height: 32,
-      props: { assetScale: logoAssetScale(32) },
-      outputs: [
-        {
-          format: "png",
-          dest: "apps/app/public",
-          filename: "favicon-32x32.png",
-        },
-      ],
-    },
-    "logo-favicon-48": {
-      type: "still",
-      component: "Logo",
-      width: 48,
-      height: 48,
-      props: { assetScale: logoAssetScale(48) },
-      outputs: [
-        {
-          format: "png",
-          dest: "apps/app/public",
-          filename: "favicon-48x48.png",
-        },
-      ],
-    },
-
-    // ── Apple & Android Icons ──────────────────────────────────────
-    "logo-apple-touch": {
-      type: "still",
-      component: "Logo",
-      width: 180,
-      height: 180,
-      props: { assetScale: logoAssetScale(128) },
-      outputs: [
-        {
-          format: "png",
-          dest: "apps/app/public",
-          filename: "apple-touch-icon.png",
-        },
-      ],
-    },
-    "logo-android-192": {
-      type: "still",
-      component: "Logo",
-      width: 192,
-      height: 192,
-      props: { assetScale: logoAssetScale(128) },
-      outputs: [
-        {
-          format: "png",
-          dest: "apps/app/public",
-          filename: "android-chrome-192x192.png",
-        },
-      ],
-    },
-    "logo-android-512": {
-      type: "still",
-      component: "Logo",
-      width: 512,
-      height: 512,
-      props: { assetScale: logoAssetScale(256) },
-      outputs: [
-        {
-          format: "png",
-          dest: "apps/app/public",
-          filename: "android-chrome-512x512.png",
-        },
-      ],
-    },
-
     // ── High-res Logomarks ─────────────────────────────────────────
     "logo-1024": {
       type: "still",
@@ -749,14 +661,7 @@ export const MANIFEST: CompositionManifest = {
     },
   },
 
-  postProcess: [
-    {
-      type: "ico",
-      sources: ["logo-favicon-16", "logo-favicon-32", "logo-favicon-48"],
-      filename: "favicon.ico",
-      dests: ["apps/app/public"],
-    },
-  ],
+  postProcess: [],
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────

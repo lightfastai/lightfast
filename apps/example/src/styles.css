@@ -1,0 +1,9 @@
+@import "@repo/ui-v2/globals.css";
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+}

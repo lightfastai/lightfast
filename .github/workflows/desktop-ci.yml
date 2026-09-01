@@ -100,6 +100,8 @@ jobs:
         # plan for (the matrix's Linux leg landed in a separate W3 worktree).
         # Adding Linux e2e is a separate effort; keep W5's promise to macos-14.
         if: runner.os == 'macOS'
+        env:
+          APP_URL: https://desktop-backend.invalid
         run: pnpm --filter @lightfast/desktop exec playwright test --config=playwright.config.ts
 
       - name: upload-playwright-report-on-failure

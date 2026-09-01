@@ -1,0 +1,32 @@
+{
+  "name": "@lightfast/example",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "portless": "example.lightfast",
+  "scripts": {
+    "build": "vite build",
+    "clean": "git clean -xdf .cache .tanstack .turbo dist node_modules src/routeTree.gen.ts",
+    "dev": "portless run vite dev",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@repo/ui-v2": "workspace:*",
+    "@tanstack/react-router": "catalog:",
+    "@tanstack/react-start": "catalog:",
+    "react": "catalog:react19",
+    "react-dom": "catalog:react19"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@tailwindcss/postcss": "catalog:tailwind4",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:react19",
+    "@types/react-dom": "catalog:react19",
+    "@vitejs/plugin-react": "catalog:",
+    "postcss": "catalog:tailwind4",
+    "tailwindcss": "catalog:tailwind4",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}

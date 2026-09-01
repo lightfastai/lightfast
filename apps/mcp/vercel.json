@@ -1,6 +1,0 @@
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "tanstack-start",
-  "ignoreCommand": "npx turbo-ignore",
-  "outputDirectory": ".vercel/output"
-}

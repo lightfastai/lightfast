@@ -1,7 +1,7 @@
 # Upstash Redis Up
 
 `redis up` creates or reuses one Upstash Redis database for this checkout and
-writes REST credentials to the app local override env file.
+writes REST credentials to the API package-local override file.
 
 ## Inputs
 
@@ -63,7 +63,7 @@ eval "$(node .agents/skills/lightfast-local-infra/lib/upstash-extract.mjs \
 test -n "$kv_rest_api_url" && test -n "$kv_rest_api_token"
 ```
 
-Then write the app local override env file with `references/env-files.md`.
+Then write the API package-local override file with `references/env-files.md`.
 
 ## Verify
 

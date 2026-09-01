@@ -166,6 +166,8 @@ jobs:
 
       - name: e2e-playwright-electron
         if: runner.os == 'macOS'
+        env:
+          APP_URL: https://desktop-backend.invalid
         run: pnpm --filter @lightfast/desktop exec playwright test --config=playwright.config.ts
 
       - name: upload-playwright-report-on-failure

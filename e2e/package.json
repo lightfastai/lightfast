@@ -20,7 +20,7 @@
     "signals": "pnpm with-env vitest run src/signals/signal-pipeline.e2e.test.ts",
     "test": "vitest run src/helpers/*.test.ts src/github-setup/*.test.ts src/decisions/*.test.ts src/connectors/*.test.ts src/app/*.test.ts --passWithNoTests",
     "typecheck": "pnpm --dir ../core/lightfast build && tsc --noEmit",
-    "with-env": "dotenv -e ../apps/app/.env.overrides.local -e ../apps/app/.vercel/.env.development.local --"
+    "with-env": "dotenv -e ./.env.local --"
   },
   "dependencies": {
     "@api/app": "workspace:*",

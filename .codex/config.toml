@@ -10,6 +10,3 @@ args = [
     "-y",
     "next-devtools-mcp@0.3.10",
 ]
-
-[mcp_servers.lightfast]
-url = "https://mcp.lightfast.ai/mcp"

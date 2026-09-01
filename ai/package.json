@@ -33,9 +33,9 @@
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
-    "eval:triage": "dotenv -e ../apps/app/.vercel/.env.development.local -- env NODE_OPTIONS=--conditions=react-server bt eval --runner tsx evals/triage-github-issues.eval.ts",
+    "eval:triage": "dotenv -e ./.env.local -- env NODE_OPTIONS=--conditions=react-server bt eval --runner tsx evals/triage-github-issues.eval.ts",
     "eval:triage:fixture": "TRIAGE_EVAL_MODE=expected BRAINTRUST_NO_SEND_LOGS=1 NODE_OPTIONS=--conditions=react-server bt eval --no-send-logs --runner tsx evals/triage-github-issues.eval.ts",
-    "eval:triage:similarity": "dotenv -e ../apps/app/.vercel/.env.development.local -- env NODE_OPTIONS=--conditions=react-server bt eval --runner tsx evals/triage-similarity.eval.ts",
+    "eval:triage:similarity": "dotenv -e ./.env.local -- env NODE_OPTIONS=--conditions=react-server bt eval --runner tsx evals/triage-similarity.eval.ts",
     "eval:triage:similarity:fixture": "TRIAGE_EVAL_MODE=expected BRAINTRUST_NO_SEND_LOGS=1 NODE_OPTIONS=--conditions=react-server bt eval --no-send-logs --runner tsx evals/triage-similarity.eval.ts",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit"

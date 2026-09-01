@@ -285,10 +285,10 @@ Whether or not code changed, scan the PR files and any autofix changes for post-
 
 ```bash
 gh pr view "$pr_number" --json files --jq '.files[].path' \
-  | rg '^(db/app/src/(migrations|schema)/|\.github/workflows/db-migrate\.yml|apps/.*/vercel\.json|apps/app/microfrontends\.json)' || true
+  | rg '^(db/app/src/(migrations|schema)/|\.github/workflows/db-migrate\.yml|apps/.*/vercel\.json)' || true
 
 git diff --name-only origin/main...HEAD \
-  | rg '^(db/app/src/(migrations|schema)/|\.github/workflows/db-migrate\.yml|apps/.*/vercel\.json|apps/app/microfrontends\.json)' || true
+  | rg '^(db/app/src/(migrations|schema)/|\.github/workflows/db-migrate\.yml|apps/.*/vercel\.json)' || true
 ```
 
 For this repo, any `db/app/src/migrations/**`, `db/app/src/schema/**`, or `.github/workflows/db-migrate.yml` match means the post-merge release is not complete until the `db-migrate` workflow or equivalent PlanetScale deploy request is verified.
