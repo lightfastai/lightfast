@@ -4,7 +4,7 @@ run-name: codeql-security / ${{ github.event_name }} / ${{ github.head_ref || gi
 on:
   push:
     branches: [main]
-  # PR trigger removed — CodeQL runs on merge-queue (see merge-queue.yml) + main push + weekly cron
+  # Pull requests run CodeQL as part of pull-request-validation.yml.
   schedule:
     - cron: "30 3 * * 1"
 
