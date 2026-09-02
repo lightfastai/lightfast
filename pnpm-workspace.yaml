@@ -20,9 +20,9 @@ catalog:
   '@shikijs/engine-javascript': ^4.0.2
   '@shikijs/langs': ^4.0.2
   '@shikijs/themes': ^4.0.2
-  '@storybook/addon-a11y': ^10.4.2
-  '@storybook/addon-docs': ^10.4.2
-  '@storybook/react-vite': ^10.4.2
+  '@storybook/addon-a11y': ^10.5.10
+  '@storybook/addon-docs': ^10.5.10
+  '@storybook/react-vite': ^10.5.10
   '@t3-oss/env-core': ^0.13.11
   '@tanstack/react-router': ^1.170.11
   '@tanstack/react-start': ^1.168.19
@@ -44,7 +44,7 @@ catalog:
   portless: ^0.12.0
   react-email: ^6.6.3
   shadcn: ^4.11.0
-  storybook: ^10.4.2
+  storybook: ^10.5.10
   streamdown: ^2.5.0
   tailwind-merge: ^3.5.0
   tsup: ^8.5.1
