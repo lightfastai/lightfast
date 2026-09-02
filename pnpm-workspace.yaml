@@ -63,6 +63,12 @@ catalogs:
     '@types/react-dom': ^19.2.5
     react: ^19.2.8
     react-dom: ^19.2.8
+  remotion4:
+    '@remotion/bundler': 4.0.520
+    '@remotion/cli': 4.0.520
+    '@remotion/fonts': 4.0.520
+    '@remotion/renderer': 4.0.520
+    remotion: 4.0.520
   tailwind4:
     '@tailwindcss/postcss': 4.2.2
     postcss: 8.5.11

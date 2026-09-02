@@ -28,10 +28,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@remotion/bundler": "^4.0.520",
-    "@remotion/fonts": "^4.0.520",
-    "@remotion/renderer": "^4.0.520",
-    "remotion": "^4.0.520"
+    "@remotion/bundler": "catalog:remotion4",
+    "@remotion/fonts": "catalog:remotion4",
+    "@remotion/renderer": "catalog:remotion4",
+    "remotion": "catalog:remotion4"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

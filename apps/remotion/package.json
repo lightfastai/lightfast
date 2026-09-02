@@ -20,7 +20,7 @@
     "react-dom": "catalog:react19"
   },
   "devDependencies": {
-    "@remotion/cli": "^4.0.520",
+    "@remotion/cli": "catalog:remotion4",
     "@repo/typescript-config": "workspace:*",
     "@repo/ui-v2": "workspace:*",
     "@tailwindcss/postcss": "catalog:tailwind4",
