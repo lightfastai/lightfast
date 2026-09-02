@@ -18,7 +18,7 @@ export const nativeRpcRequestSchema = z
 
 export const nativeRpcAuthSessionInputSchema = z.object({}).strict();
 
-export const nativeRpcBaseErrorCodeNames = [
+const nativeRpcBaseErrorCodeNames = [
   "BAD_REQUEST",
   "COMMAND_NOT_FOUND",
   "FORBIDDEN",

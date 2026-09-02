@@ -11,21 +11,7 @@
         "!src/**/*.spec.*",
         "!vitest.config.ts"
       ],
-      "outputs": [
-        ".cache/tsbuildinfo.json",
-        "dist/**",
-        ".next/**",
-        "!.next/cache/**",
-        "!.next/dev/**"
-      ],
-      "env": [
-        "DATABASE_HOST",
-        "DATABASE_PASSWORD",
-        "DATABASE_USERNAME",
-        "NEXT_PUBLIC_*",
-        "SENTRY_*",
-        "VERCEL_ENV"
-      ]
+      "outputs": [".cache/tsbuildinfo.json", "dist/**"]
     },
     "dev": {
       "cache": false,
@@ -67,15 +53,18 @@
     "clean": {
       "cache": false
     },
-    "migrate": {
+    "db:generate": {
       "cache": false
     },
-    "migrate:generate": {
+    "db:push": {
       "cache": false
     },
-    "generate:openapi": {
-      "dependsOn": ["^build"],
-      "outputs": ["openapi.json"]
+    "db:studio": {
+      "cache": false,
+      "persistent": true
+    },
+    "render:all": {
+      "cache": false
     },
     "studio": {
       "cache": false,
@@ -84,20 +73,13 @@
     "ui": {
       "cache": false,
       "interactive": true
-    },
-    "eval": {
-      "cache": false,
-      "interactive": true
     }
   },
   "globalEnv": ["CI"],
   "globalPassThroughEnv": [
     "NODE_ENV",
     "SKIP_ENV_VALIDATION",
-    "npm_lifecycle_event",
-    "VERCEL",
-    "VERCEL_URL",
-    "VERCEL_PROJECT_PRODUCTION_URL"
+    "npm_lifecycle_event"
   ],
   "boundaries": {
     "implicitDependencies": ["~"],

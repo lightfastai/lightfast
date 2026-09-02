@@ -1,0 +1,27 @@
+{
+  "name": "@lightfast/mcp-local",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsx src/index.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "catalog:",
+    "@vendor/mcp": "workspace:*"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@repo/vitest-config": "workspace:*",
+    "@types/node": "catalog:",
+    "tsup": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

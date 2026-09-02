@@ -48,30 +48,6 @@ _Avoid_: Treating the frame as a fixed set of product verticals
 
 ## Domain Terms
 
-### Provider Routine Module
-
-The module that discovers and executes external connector-backed routines.
-
-It owns provider routine discovery, provider routine execution, provider/tool identifiers, connector routine scope checks, provider routine call ledger writes, and the MCP `proxy_find` / `proxy_call` surface.
-
-It does not own first-party Decision search, first-party Decision detail reads, Automation run lifecycle, hosted MCP transport mechanics, UI filtering, or raw connector OAuth flows.
-
-### Decision Module
-
-The module that searches and reads first-party Decision records.
-
-It owns Decision query meaning, Decision detail reads, provider routine call history as Decision source material, searchable Decision fields, Decision source filters, Decision status filters, Decision time windows, and the MCP `decisions_find` / `decisions_get` surface.
-
-It does not own external connector routine execution, provider routine discovery, Automation run lifecycle, hosted MCP transport mechanics, or generated SQL from model prompts.
-
-### Automation Run Executor Module
-
-The module that executes one claimed Automation run after Inngest has provided durable scheduling and retry boundaries.
-
-It owns Automation target dispatch, target-specific model tools, execution output shape, run failure mapping, and the distinction between Connector-target and Decision-target execution.
-
-It does not own due-run claiming, manual run enqueueing, connector OAuth, hosted MCP transport mechanics, or Decision query storage.
-
 ### Website Repository Boundary
 
 The public marketing website, its static publications, site identity, discovery policy, and copied `ui-v2` implementation are owned by [`lightfastai/www`](https://github.com/lightfastai/www).
@@ -83,7 +59,8 @@ This repository does not own the website deployment or its route mesh. Lightfast
 `apps/example` is a local-only TanStack Start surface for exercising
 `packages/ui-v2`. It has no production deployment or backend contract.
 
-The public SDK, stdio MCP server, CLI, and desktop app are configurable clients.
-They require an explicit compatible backend URL and must not infer
-`https://lightfast.ai` as an API, OAuth, or desktop backend. The public website
-URL remains valid for marketing, documentation, metadata, and public links.
+The public SDK, stdio MCP server, and CLI are configurable clients. They require
+an explicit compatible backend URL and must not infer `https://lightfast.ai` as
+an API or OAuth backend. `apps/desktop` is a repository-local static shell with
+no backend configuration or production wiring. The public website URL remains
+valid for marketing, documentation, metadata, and public links.

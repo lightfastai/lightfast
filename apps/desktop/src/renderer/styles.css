@@ -1,0 +1,36 @@
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  color: #fafafa;
+  background: #09090b;
+}
+
+body {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  margin: 0;
+}
+
+main {
+  max-width: 36rem;
+  padding: 3rem;
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 1rem;
+}
+
+h1 {
+  margin: 0.5rem 0 1rem;
+  font-size: 2.5rem;
+}
+
+p {
+  line-height: 1.6;
+  color: #a1a1aa;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  color: #d4d4d8;
+  letter-spacing: 0.18em;
+}

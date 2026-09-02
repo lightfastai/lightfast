@@ -14,7 +14,7 @@ import {
   TooltipTrigger,
 } from "@repo/ui-v2/components/ui/tooltip";
 import { cn } from "@repo/ui-v2/lib/utils";
-import type { UIMessage } from "@vendor/ai";
+import type { UIMessage } from "ai";
 import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
 import {
   createContext,

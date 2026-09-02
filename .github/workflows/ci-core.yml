@@ -1,16 +1,17 @@
 name: core-public-api-ci
 run-name: core-public-api-ci / ${{ github.event_name }} / ${{ github.head_ref || github.ref_name }}
 
-# Runs on PRs touching the public oRPC/API/SDK/MCP surface that need the
+# Runs on PRs touching the public API/SDK/MCP surface that need the
 # focused core public API lint/typecheck/test suite.
 on:
   push:
     branches: [main]
     paths:
-      - 'api/app/src/orpc/**'
-      - 'api/app/src/__tests__/signal-orpc.test.ts'
+      - 'api/app/**'
+      - 'apps/mcp/**'
       - 'core/**'
       - 'packages/api-contract/**'
+      - 'packages/mcp-tools/**'
       - 'vendor/mcp/**'
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
@@ -18,10 +19,11 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'api/app/src/orpc/**'
-      - 'api/app/src/__tests__/signal-orpc.test.ts'
+      - 'api/app/**'
+      - 'apps/mcp/**'
       - 'core/**'
       - 'packages/api-contract/**'
+      - 'packages/mcp-tools/**'
       - 'vendor/mcp/**'
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
@@ -62,17 +64,17 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: lint-biome
-        run: pnpm turbo //#check --summarize
+        run: pnpm turbo run //#check --summarize
 
-      - name: typecheck-public-orpc-surface
+      - name: typecheck-public-surface
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: pnpm turbo typecheck --filter=@repo/api-contract --filter=@api/app --filter=lightfast --filter=@lightfastai/mcp --filter=@vendor/mcp --continue --summarize
+        run: pnpm turbo run typecheck --filter=@repo/api-contract --filter=@api/app --filter=lightfast --filter=@lightfastai/cli --filter=@lightfastai/mcp --filter=@lightfast/mcp-local --filter=@repo/mcp-tools --filter=@vendor/mcp --continue --summarize
 
-      - name: test-public-orpc-surface
+      - name: test-public-surface
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: pnpm turbo test --filter=@repo/api-contract --filter=@api/app --filter=lightfast --filter=@lightfastai/mcp --filter=@vendor/mcp --continue --summarize
+        run: pnpm turbo run test --filter=@repo/api-contract --filter=@api/app --filter=lightfast --filter=@lightfastai/cli --filter=@lightfastai/mcp --filter=@lightfast/mcp-local --filter=@repo/mcp-tools --filter=@vendor/mcp --continue --summarize
 
       - name: turbo-cache-report
         if: always()

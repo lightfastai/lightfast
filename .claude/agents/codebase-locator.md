@@ -88,7 +88,7 @@ Structure your findings like this:
 
 ### Test Files
 - `src/services/__tests__/feature.test.ts` - Service tests
-- `e2e/feature.spec.ts` - End-to-end tests
+- `apps/example/src/feature.test.ts` - Package-local acceptance tests
 
 ### Configuration
 - `config/feature.json` - Feature-specific config

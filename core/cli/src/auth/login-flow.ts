@@ -6,10 +6,7 @@ import {
   type TokenSet,
 } from "@repo/native-auth-contract";
 
-import {
-  createLightfastAppClient,
-  type LightfastAppClientError,
-} from "./app-client";
+import { createLightfastAppClient } from "./app-client";
 import { openBrowser as defaultOpenBrowser } from "./browser";
 import { getAppUrl as defaultGetAppUrl } from "./config";
 import {
@@ -48,7 +45,7 @@ async function closeLoopbackQuietly(loopback: Loopback): Promise<void> {
   }
 }
 
-export interface LoginFlowDeps {
+interface LoginFlowDeps {
   buildCodeChallenge?: (verifier: string) => string;
   createAppClient?: (input: { appUrl: string }) => LightfastAuthClient;
   createCodeVerifier?: () => string;
@@ -137,5 +134,3 @@ export async function login(
     throw error;
   }
 }
-
-export type { LightfastAppClientError };

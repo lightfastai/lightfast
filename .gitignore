@@ -11,10 +11,6 @@ node_modules
 # testing
 coverage
 /coverage
-playwright-report/
-playwright/.cache/
-test-results/
-e2e-results/
 
 # next.js
 .next/
@@ -23,17 +19,6 @@ apps/email/.react-email/
 out/
 next-env.d.ts
 .next-env.d.ts.timestamp
-
-# nitro
-.nitro/
-.output/
-
-# expo
-.expo/
-expo-env.d.ts
-apps/expo/.gitignore
-apps/expo/ios
-apps/expo/android
 
 # production
 build
@@ -64,9 +49,8 @@ logs
 .env.production.local
 .env.mcp
 
-# vercel
+# provider-local metadata must never be committed
 .vercel
-**/microfrontends.local.json
 
 # typescript
 dist/
@@ -76,22 +60,8 @@ dist/
 # tsup bundler cache
 tsup.config.bundled_*.mjs
 
-# Generated OpenAPI spec
-packages/console-types/openapi.json
-
 # turbo
 .turbo
-
-# development vars
-.dev.vars
-.internal
-.internal/.env.development.local
-
-# clerk
-.clerk/tmp/
-
-# dev:emulate generated seed (Clerk frontend API URL baked in per-tenant)
-scripts/dev-emulate.seed.yaml
 
 # temporary files
 *.tmp
@@ -100,13 +70,6 @@ scripts/dev-emulate.seed.yaml
 .temp/
 tmp/
 temp/
-
-# mastra
-.mastra
-mastra.db
-mastra.db-journal
-mastra.db-shm
-mastra.db-wal
 
 # editor directories and files
 .idea
@@ -129,23 +92,11 @@ mastra.db-wal
 **/public/workbox-*.js.map
 **/public/worker-*.js.map
 
-# Sentry
-.sentryclirc
-
-# Braintrust local docs/cache
-.bt/
-
 # Brainstorming visual companion
 .superpowers/
 
 # Storybook
 storybook-static
-
-# Playwright
-.playwright-mcp/*
-
-# Browser auth sessions (MCP)
-.auth/
 
 # Lightfast CLI
 .lightfast/
@@ -153,9 +104,6 @@ storybook-static
 
 # Git worktrees
 worktrees/
-
-# Playwright
-.playwright-mcp
 
 # Pnpm store
 .pnpm-store/

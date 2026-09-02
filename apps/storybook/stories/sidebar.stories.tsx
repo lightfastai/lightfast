@@ -53,7 +53,7 @@ const navItems: NavItem[] = [
   { label: "Docs", icon: BookOpen01Icon },
 ];
 
-const projects = ["Agent runtime", "Desktop shell", "Connectors"];
+const projects = ["Agent runtime", "Desktop shell", "Research tools"];
 
 function SidebarStory({
   collapsible = "icon",

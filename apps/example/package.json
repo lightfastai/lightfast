@@ -8,6 +8,7 @@
     "build": "vite build",
     "clean": "git clean -xdf .cache .tanstack .turbo dist node_modules src/routeTree.gen.ts",
     "dev": "portless run vite dev",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@repo/vitest-config": "workspace:*",
     "@tailwindcss/postcss": "catalog:tailwind4",
     "@types/node": "catalog:",
     "@types/react": "catalog:react19",
@@ -27,6 +29,7 @@
     "postcss": "catalog:tailwind4",
     "tailwindcss": "catalog:tailwind4",
     "typescript": "catalog:",
-    "vite": "catalog:"
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }

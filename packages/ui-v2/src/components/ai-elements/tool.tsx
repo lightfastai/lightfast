@@ -16,7 +16,7 @@ import {
   CollapsibleTrigger,
 } from "@repo/ui-v2/components/ui/collapsible";
 import { cn } from "@repo/ui-v2/lib/utils";
-import type { DynamicToolUIPart, ToolUIPart } from "@vendor/ai";
+import type { DynamicToolUIPart, ToolUIPart } from "ai";
 import type { ComponentProps, ReactNode } from "react";
 import { isValidElement } from "react";
 

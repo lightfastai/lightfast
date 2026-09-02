@@ -1,115 +1,98 @@
 {
-  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "$schema": "https://unpkg.com/knip@6/schema.json",
   "workspaces": {
     ".": {
-      "entry": ["scripts/**/*.{js,ts,sh,mjs}"],
-      "ignoreDependencies": ["turbo-ignore", "@biomejs/biome", "portless"]
+      "entry": ["scripts/**/*.mjs"],
+      "ignoreDependencies": ["@biomejs/biome"]
     },
-    "apps/example": {
-      "entry": [
-        "src/{router,start}.tsx",
-        "src/routes/**/*.tsx",
-        "vite.config.ts"
-      ],
-      "project": ["src/**/*.{ts,tsx}", "vite.config.ts"]
+    "apps/email": {
+      "ignoreDependencies": ["@react-email/ui", "@repo/email"]
     },
     "api/app": {
-      "entry": [
-        "src/origins.ts",
-        "src/__tests__/**/*.{test,spec}.{ts,tsx}",
-        "src/__tests__/setup-env.ts"
-      ],
+      "entry": ["src/index.ts", "src/**/*.test.ts"],
       "project": ["src/**/*.ts"]
     },
     "apps/desktop": {
+      "entry": ["src/**/*.test.ts", "scripts/**/*.mjs"],
+      "project": ["src/**/*.ts", "scripts/**/*.mjs"]
+    },
+    "apps/example": {
       "entry": [
-        "src/main/bootstrap.ts",
-        "src/main/index.ts",
-        "src/preload/**/*.ts",
-        "src/renderer/src/main.ts",
-        "src/renderer/src/react/**/*.{ts,tsx}",
-        "forge.config.ts",
-        "vite.main.config.ts",
-        "vite.preload.config.ts",
-        "vite.renderer.config.ts",
-        "src/__tests__/**/*.{test,spec}.{ts,tsx}",
-        "scripts/**/*.mjs"
+        "src/router.tsx",
+        "src/start.ts",
+        "src/routes/**/*.tsx",
+        "src/**/*.test.tsx"
       ],
-      "project": ["src/**/*.{ts,tsx}", "vite.*.config.ts", "scripts/**/*.mjs"],
-      "ignoreDependencies": ["@sentry/electron", "@sentry/cli", "superjson"]
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "apps/mcp": {
+      "entry": ["src/**/*.test.ts"],
+      "project": ["src/**/*.ts"],
+      "ignoreDependencies": ["@modelcontextprotocol/sdk"]
     },
     "apps/remotion": {
-      "entry": [
-        "src/index.ts",
-        "src/render.ts",
-        "src/watch.ts",
-        "remotion.config.ts"
-      ],
-      "project": ["src/**/*.{ts,tsx}", "remotion.config.ts"]
+      "entry": ["src/index.ts", "remotion.config.ts"],
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignoreDependencies": ["css-loader", "postcss-loader", "style-loader"]
     },
     "core/*": {
-      "project": ["src/**/*.ts"]
-    },
-    "connectors/core": {
-      "entry": ["src/index.ts"],
-      "project": ["src/**/*.ts"]
-    },
-    "connectors/*": {
-      "entry": ["src/{contract,mcp,node,oauth,operations,tools}.ts"],
+      "entry": ["src/{bin,index}.ts", "src/**/*.test.ts"],
       "project": ["src/**/*.ts"]
     },
     "core/mcp": {
       "project": ["src/**/*.ts"],
       "ignoreDependencies": ["@modelcontextprotocol/sdk"]
     },
-    "db/*": {
-      "entry": ["src/drizzle.config.ts"],
+    "db/app": {
+      "entry": ["src/index.ts", "src/drizzle.config.ts", "src/**/*.test.ts"],
       "project": ["src/**/*.ts"]
     },
     "packages/*": {
       "project": ["src/**/*.{ts,tsx}"]
     },
+    "packages/email": {
+      "entry": ["src/**/*.{ts,tsx}"],
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignoreDependencies": ["@react-email/render"]
+    },
+    "packages/remotion": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
     "packages/ui": {
+      "entry": ["src/**/*.{ts,tsx}"],
       "project": ["src/**/*.{ts,tsx}"],
       "ignoreDependencies": ["@turbo/gen"]
+    },
+    "packages/ui-v2": {
+      "entry": ["src/**/*.{ts,tsx}"],
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignoreDependencies": ["tw-animate-css"]
     },
     "vendor/*": {
       "project": ["src/**/*.ts"],
       "drizzle": false
     },
-    "vendor/aeo": {
-      "project": ["*.ts"],
-      "drizzle": false
+    "internal/typescript": {
+      "entry": ["base.json"]
     },
-    "vendor/analytics": {
-      "project": ["src/**/*.{ts,tsx}"],
-      "drizzle": false
-    },
-    "vendor/seo": {
-      "project": ["src/**/*.{ts,tsx}"],
-      "drizzle": false
-    },
-    "vendor/inngest": {
-      "drizzle": false
-    },
-    "vendor/next": {
+    "internal/vitest-config": {},
+    "vendor/db": {
+      "entry": ["src/{env,index}.ts"],
       "project": ["src/**/*.ts"],
       "drizzle": false
-    },
-    "internal/typescript": {
-      "entry": ["base.json"],
-      "ignoreDependencies": ["next"]
-    },
-    "internal/vitest-config": {}
+    }
   },
   "ignore": [".agents/**", ".claude/**"],
+  "ignoreIssues": {
+    "packages/api-contract/src/mcp.ts": ["types"],
+    "packages/api-contract/src/schemas/signals.ts": ["duplicates"],
+    "packages/email/src/templates/*.tsx": ["duplicates"]
+  },
   "ignoreDependencies": [
+    "postcss",
     "tailwindcss",
     "@tailwindcss/postcss",
-    "@tailwindcss/typography",
-    "postcss",
-    "autoprefixer",
-    "import-in-the-middle",
-    "require-in-the-middle"
+    "@tailwindcss/typography"
   ]
 }

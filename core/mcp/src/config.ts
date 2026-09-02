@@ -1,10 +1,10 @@
-export interface LightfastMcpEnv {
+interface LightfastMcpEnv {
   LIGHTFAST_API_KEY?: string;
   LIGHTFAST_API_URL?: string;
   [key: string]: string | undefined;
 }
 
-export interface LightfastMcpConfig {
+interface LightfastMcpConfig {
   apiKey: string;
   baseUrl: string;
 }

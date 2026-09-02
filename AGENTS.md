@@ -27,12 +27,16 @@ Configurable clients
   core/lightfast · public TypeScript SDK (`lightfast`)
   core/mcp       · public API-key stdio MCP (`@lightfastai/mcp`)
   core/cli       · CLI (`@lightfastai/cli`)
-  apps/desktop   · Electron client
-  All require an explicit compatible backend URL.
+  These public clients require explicit compatible endpoint configuration.
+
+Repository-local tools
+  apps/desktop · hardened static Electron shell
+  apps/mcp     · empty stdio-only MCP shell
+  Neither has a hosted endpoint, backend, deployment, or production wiring.
 
 Backend and data packages
-  api/app · API/domain services, Inngest workflows, auth boundaries
-  db/app  · Drizzle/PlanetScale schema and database tooling
+  api/app · small context/router/root foundation with a health seam
+  db/app  · provider-safe client/config foundation with an empty schema
   These packages are retained but are not assembled into a production app here.
 
 Public website
@@ -64,37 +68,27 @@ database, queue, or production backend configuration.
 
 ## Local infrastructure and env files
 
-Load `lightfast-local-infra` before local PlanetScale or Upstash setup. It is
-the source of truth for provisioning and safe env writes.
+Load `lightfast-local-infra` before local PlanetScale setup. It is the source
+of truth for provisioning and safe database env writes.
 
 Package-local ignored files are the active boundary:
 
 ```text
-api/app/.env.overrides.local  local DB + Redis overrides
-api/app/.env.local            broader API operator configuration
 db/app/.env.overrides.local   local DB overrides
 db/app/.env.local             broader DB operator configuration
-ai/.env.local                 live eval configuration
-e2e/.env.local                E2E operator configuration
-apps/desktop/.env.local       required APP_URL + desktop configuration
 ```
 
 Do not read, copy, or write secrets unless the current task explicitly
 authorizes it. Provider creation, deletion, credential minting/rotation,
-migrations, and live verification require their own exact approval.
+schema writes, and live verification require their own exact approval.
 
 ## Database commands
 
 ```bash
 pnpm db:generate   # generate migrations; never hand-write SQL files
-pnpm db:migrate
+pnpm db:push       # apply the current schema to an approved local branch
 pnpm db:studio     # Drizzle Studio through Portless
 ```
-
-## Auth boundaries
-
-- `userScopedProcedure`: Clerk-pending or Clerk-active session.
-- `orgScopedProcedure`: active Clerk organization membership required.
 
 ## Package rules
 
@@ -102,9 +96,8 @@ pnpm db:studio     # Drizzle Studio through Portless
    vendor package.
 2. Internal dependencies use `workspace:*`; shared external dependencies use
    the appropriate catalog.
-3. Inngest workflows remain under `api/app/src/inngest/workflow/`.
-4. Prefer package tasks and let Turborepo orchestrate them.
-5. Keep public SDK, MCP, CLI, and desktop clients buildable without a hosted
+3. Prefer package tasks and let Turborepo orchestrate them.
+4. Keep public SDK, MCP, CLI, and desktop clients buildable without a hosted
    Lightfast default.
 
 ## Environment

@@ -39,7 +39,7 @@
     "@shikijs/engine-javascript": "catalog:",
     "@shikijs/langs": "catalog:",
     "@shikijs/themes": "catalog:",
-    "@vendor/ai": "workspace:*",
+    "ai": "catalog:",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "cmdk": "catalog:",

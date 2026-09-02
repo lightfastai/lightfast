@@ -18,8 +18,7 @@
   },
   "dependencies": {
     "@repo/api-contract": "workspace:*",
-    "@vendor/mcp": "workspace:*",
-    "@vendor/observability": "workspace:*"
+    "@vendor/mcp": "workspace:*"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

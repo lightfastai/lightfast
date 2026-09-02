@@ -24,7 +24,6 @@
     "@vendor/remotion": "workspace:*",
     "clsx": "catalog:",
     "react": "catalog:react19",
-    "react-dom": "catalog:react19",
     "tailwind-merge": "catalog:",
     "tailwindcss": "catalog:tailwind4"
   },

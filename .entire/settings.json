@@ -1,5 +1,4 @@
 {
   "enabled": true,
-  "telemetry": false,
-  "vercel": true
+  "telemetry": false
 }

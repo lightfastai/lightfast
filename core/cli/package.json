@@ -37,11 +37,9 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@repo/api-contract": "workspace:*",
     "@repo/native-auth-contract": "workspace:*",
     "@repo/native-auth-node": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@repo/vitest-config": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "@types/node": "catalog:",
     "commander": "catalog:",

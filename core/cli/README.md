@@ -5,7 +5,7 @@ Command-line tools for signing in to Lightfast from local developer workflows.
 ## Purpose
 
 Provides command-line tools for:
-- Signing in with Clerk OAuth Authorization Code + PKCE
+- Signing in with OAuth Authorization Code + PKCE
 - Binding the native session to a Lightfast organization selected in the browser
 - Inspecting and clearing the stored CLI session
 
@@ -31,7 +31,10 @@ pnpm dlx @lightfastai/cli --help
 lightfast login
 ```
 
-The CLI starts a temporary loopback listener on `127.0.0.1`, opens your browser, and signs in with Clerk OAuth Authorization Code + PKCE. Organization selection happens in the Lightfast web app during sign-in, and the stored native session is bound to that selected organization.
+The CLI starts a temporary loopback listener on `127.0.0.1`, opens your browser,
+and signs in with OAuth Authorization Code + PKCE. Organization selection
+happens in the configured compatible app during sign-in, and the stored native
+session is bound to that selected organization.
 
 ### Show current session
 
@@ -49,7 +52,7 @@ lightfast logout
 
 | Variable | Description |
 | --- | --- |
-| `LIGHTFAST_APP_URL` | Required app URL for login and backend commands. No hosted default is supplied. |
+| `LIGHTFAST_APP_URL` | Required compatible app URL for login. No hosted default is supplied. |
 | `LIGHTFAST_CLI_CONFIG_DIR` | Overrides where the CLI stores `auth.json`. |
 
 ## Development
@@ -85,7 +88,9 @@ pnpm --filter @lightfastai/cli dev
 
 ### login
 
-Signs in with Clerk OAuth Authorization Code + PKCE and stores the org-bound native CLI session in `auth.json`. The browser callback uses an ephemeral loopback port.
+Signs in with OAuth Authorization Code + PKCE and stores the org-bound native
+CLI session in `auth.json`. The browser callback uses an ephemeral loopback
+port.
 
 ```bash
 lightfast login
@@ -106,7 +111,3 @@ Removes the stored CLI session.
 ```bash
 lightfast logout
 ```
-
-## Documentation
-
-For CLI specification, see [docs/architecture/phase1/package-structure.md](../../docs/architecture/phase1/package-structure.md).

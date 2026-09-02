@@ -43,9 +43,9 @@ If starting fresh or need more context:
 
 3. **Spawn parallel research tasks** to discover implementation:
    ```
-   Task 1 - Verify database changes:
-   Research if migration [N] was added and schema changes match plan.
-   Check: migration files, schema version, table structure
+   Task 1 - Verify package changes:
+   Research whether the package contract matches the approved plan.
+   Check: manifest, public entry points, focused tests
    Return: What was implemented vs what plan specified
 
    Task 2 - Verify code changes:
@@ -101,7 +101,7 @@ Create comprehensive validation summary:
 ### Code Review Findings
 
 #### Matches Plan:
-- Database migration correctly adds [table]
+- Package contract correctly exposes [surface]
 - API endpoints implement specified methods
 - Error handling follows plan
 
@@ -110,7 +110,7 @@ Create comprehensive validation summary:
 - Added extra validation in [file:line] (improvement)
 
 #### Potential Issues:
-- Missing index on foreign key could impact performance
+- Missing boundary coverage could allow accidental coupling
 - No rollback handling in migration
 
 ### Manual Testing Required:

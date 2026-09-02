@@ -18,21 +18,21 @@ pnpm install
 
 Environment variables are package-local. Use ignored `.env.local` or
 `.env.overrides.local` files only in the package that consumes them. Follow the
-`lightfast-local-infra` skill for local PlanetScale/Upstash setup; do not copy
+`lightfast-local-infra` skill for approved local PlanetScale setup; do not copy
 provider values between packages casually.
 
 ## Repository shape
 
 - `apps/example`: local-only TanStack Start example using `@repo/ui-v2`
 - `apps/storybook`: shared UI component workshop
-- `apps/desktop`: configurable Electron client; requires `APP_URL`
+- `apps/desktop`: hardened static Electron shell for local repository use
+- `apps/mcp`: empty stdio-only MCP shell for local repository use
 - `core/lightfast`: public TypeScript SDK; requires `baseUrl`
 - `core/mcp`: public stdio MCP server; requires `LIGHTFAST_API_URL`
-- `core/cli`: CLI; backend commands require `LIGHTFAST_APP_URL`
-- `api/app`: retained API/domain services and Inngest workflows
-- `db/app`: retained Drizzle/PlanetScale schema and database tooling
-- `packages`, `vendor`, `internal`, `connectors`, `emulators`: shared code and
-  supporting tooling
+- `core/cli`: CLI; login requires `LIGHTFAST_APP_URL`
+- `api/app`: minimal context/router/root foundation with a health seam
+- `db/app`: provider-safe client/config foundation with an empty schema
+- `packages`, `vendor`, `internal`: shared code and supporting tooling
 
 The public website at [lightfast.ai](https://lightfast.ai) is owned by the
 separate [`lightfastai/www`](https://github.com/lightfastai/www) repository.
@@ -71,8 +71,11 @@ pnpm lint:ws            # dependency/workspace checks
 pnpm verify:public-api  # API/SDK/MCP verification
 
 pnpm db:generate        # generate Drizzle migrations; never hand-write SQL
-pnpm db:migrate
+pnpm db:push            # approved local PlanetScale branch only
 pnpm db:studio
+
+pnpm --filter @lightfast/desktop dev
+pnpm --filter @lightfast/mcp-local dev
 ```
 
 Run package-specific commands with a filter when changing one package:
@@ -92,8 +95,8 @@ pnpm --filter @lightfastai/mcp typecheck
 - In TanStack Start, keep `tanstackStart()` before the React Vite plugin and
   render `HeadContent`, `Outlet`, and `Scripts` in the root document.
 - Use `@repo/ui-v2` for the current shared UI surface.
-- Generate Drizzle migrations with repository commands; never hand-write or
-  edit generated SQL.
+- If schema work is separately approved, generate Drizzle migrations with
+  repository commands; never hand-write or edit generated SQL.
 
 ## Pull requests
 

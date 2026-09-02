@@ -19,8 +19,8 @@ const notifications = [
     description: "The workspace summary is ready to review.",
   },
   {
-    title: "New connector request",
-    description: "A teammate requested access to the GitHub connector.",
+    title: "New data source request",
+    description: "A teammate requested access to the GitHub source.",
   },
   {
     title: "Budget threshold reached",
