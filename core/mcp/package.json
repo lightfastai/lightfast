@@ -1,6 +1,6 @@
 {
   "name": "@lightfastai/mcp",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Lightfast Platform MCP Server - MCP for the Lightfast Platform API",
   "publishConfig": {
     "tag": "latest",

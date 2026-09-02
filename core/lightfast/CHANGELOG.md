@@ -1,11 +1,21 @@
 # lightfast
 
+## 0.4.0
+
+### Minor Changes
+
+- bcfe9a3: Require callers to configure the compatible Lightfast backend used by the SDK
+  and local stdio MCP server. Neither client supplies a hosted backend default.
+
+### Patch Changes
+
+- a12ce12: Remove the SDK oRPC client runtime and call the public `/api/v1` routes through a direct typed fetch client.
+
 ## 0.3.0
 
 ### Minor Changes
 
 - 55e5e6c: Adopt explicit public API metadata for the SDK and MCP surfaces.
-
   - SDK (`lightfast`): `createLightfast(apiKey, options)` now returns a direct typed fetch client with `system.health`, `signals.create`, and `signals.get` methods. Calls hit the new `/api/v1/*` REST surface on `apps/app`. The `LightfastClient` class is removed; it is now the interface returned by `createLightfast`. This is a pre-1.0 incompatible API change for any consumer using `new LightfastClient(...)`.
   - MCP (`@lightfastai/mcp`): The server auto-registers tools from `@repo/api-contract`. Current exposed tools are `lightfast_system_health`, `lightfast_signals_create`, and `lightfast_signals_get`. Adding public API contract entries can expose them as MCP tools according to MCP policy, with no `core/mcp` changes required.
   - Publish hygiene: `@repo/api-contract` is bundled into the published `dist/` via tsup `noExternal`. Moved from `dependencies` to `devDependencies` to keep the published manifest free of private workspace references. `lightfast` (in MCP) moved the same way. Stable releases publish to the npm `latest` dist-tag.
@@ -27,7 +37,6 @@
 ### Major Changes
 
 - 55e5e6c: Adopt explicit public API metadata for the SDK and MCP surfaces.
-
   - SDK (`lightfast`): `createLightfast(apiKey, options)` now returns a direct typed fetch client with `system.health`, `signals.create`, and `signals.get` methods. Calls hit the new `/api/v1/*` REST surface on `apps/app`. The `LightfastClient` class is removed; it is now the interface returned by `createLightfast`. Breaking change for any consumer using `new LightfastClient(...)`.
   - MCP (`@lightfastai/mcp`): The server auto-registers tools from `@repo/api-contract`. Current exposed tools are `lightfast_system_health`, `lightfast_signals_create`, and `lightfast_signals_get`. Adding public API contract entries can expose them as MCP tools according to MCP policy, with no `core/mcp` changes required.
   - Publish hygiene: `@repo/api-contract` is bundled into the published `dist/` via tsup `noExternal`. Moved from `dependencies` to `devDependencies` to keep the published manifest free of private workspace references. `lightfast` (in MCP) moved the same way. `publishConfig.tag` changed from `"latest"` to `"alpha"` so pre-release versions no longer claim the default install slot.
