@@ -62,7 +62,7 @@
     "packages/ui": {
       "entry": ["src/**/*.{ts,tsx}"],
       "project": ["src/**/*.{ts,tsx}"],
-      "ignoreDependencies": ["@turbo/gen"]
+      "ignoreDependencies": ["@turbo/gen", "tw-animate-css"]
     },
     "packages/ui-v2": {
       "entry": ["src/**/*.{ts,tsx}"],

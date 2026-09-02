@@ -108,6 +108,9 @@ worktrees/
 # Pnpm store
 .pnpm-store/
 
+# Local Sentry CLI credentials
+.sentryclirc
+
 # MCP
 .env.mcp
 

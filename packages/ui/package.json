@@ -97,6 +97,7 @@
     "remark-gfm": "catalog:",
     "sonner": "catalog:",
     "tailwind-merge": "catalog:",
+    "tw-animate-css": "catalog:",
     "vaul": "catalog:"
   }
 }
