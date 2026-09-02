@@ -42,7 +42,7 @@ Use this once to put SDK/MCP on the npm `latest` tag at `0.3.0`.
    - Neither version contains a prerelease suffix.
    - Both package manifests have `publishConfig.tag` set to `latest`.
    - No `@lightfastai/cli` version or changelog change is present.
-5. Merge the Version Packages PR through merge queue.
+5. Merge the Version Packages PR with an ordinary protected merge commit.
 6. Confirm `Publish SDK + MCP` publishes both packages to npm `latest`.
 
 Verify npm:
@@ -115,7 +115,7 @@ Open a normal PR to `main`.
 Expected PR behavior:
 
 - Affected PR CI stays fast and only runs jobs for touched surfaces.
-- `merge-queue-success` passes as the required branch-protection stub.
+- `pull-request-validation` passes as the required full-repository gate.
 - Public contract changes trigger `core-public-api-ci` and include the SDK/MCP
   package test scope.
 
@@ -136,20 +136,20 @@ lightfast
 @lightfastai/mcp
 ```
 
-### 3. Merge Through Merge Queue
+### 3. Merge the Reviewed Pull Request
 
-Add the implementation PR to GitHub merge queue. Do not admin-merge or bypass branch protection.
+After review and required checks pass on the exact PR head, use GitHub's ordinary merge-commit method. Do not admin-merge or bypass branch protection.
 
-The `merge_group` run for `.github/workflows/merge-queue.yml` is the real gate. It must pass:
+The `pull_request` run for `.github/workflows/pull-request-validation.yml` is the full repository gate. It must pass:
 
 - Full quality checks: lint, typecheck, boundaries, and Knip.
-- Core build/test passes. Merge queue verifies CLI build output and tests as
+- Core build/test passes. Pull-request validation verifies CLI build output and tests as
   repository health, but CLI is not part of the SDK/MCP release unit.
 - Public package tests for `@repo/api-contract`, `@api/app`, `lightfast`,
   `@lightfastai/cli`, and `@lightfastai/mcp`.
 - Package-local desktop, local MCP stdio, and example checks.
 - CodeQL.
-- `merge-queue-success`.
+- `pull-request-validation`.
 
 ### 4. Create a Changeset
 
@@ -174,7 +174,7 @@ Describe the SDK and MCP change.
 
 When the changeset lands on `main`, `.github/workflows/publish-sdk-mcp.yml` creates or updates the Version Packages PR. Review the generated versions and changelogs, then merge that PR to publish.
 
-Before queueing the Version Packages PR, confirm:
+Before merging the Version Packages PR, confirm:
 
 - `lightfast` and `@lightfastai/mcp` versions match.
 - No changeset or generated version/changelog change for `@lightfastai/cli` is present.
@@ -184,7 +184,7 @@ Before queueing the Version Packages PR, confirm:
 
 Release PRs created by `GITHUB_TOKEN` may not trigger required PR checks. If checks do not appear, push a no-op or formatting commit to the release branch, or replace `GITHUB_TOKEN` with an approved release bot token/App that is allowed to trigger workflows.
 
-Merge the Version Packages PR through merge queue. The merge to `main` triggers `.github/workflows/publish-sdk-mcp.yml` again.
+Merge the Version Packages PR with an ordinary protected merge commit. The merge to `main` triggers `.github/workflows/publish-sdk-mcp.yml` again.
 
 ### 6. Publish SDK + MCP
 

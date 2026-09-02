@@ -1,24 +1,21 @@
-name: merge-queue
-run-name: merge-queue / ${{ github.event_name }} / ${{ github.head_ref || github.ref_name }}
+name: pull-request-validation
+run-name: pull-request-validation / ${{ github.event_name }} / ${{ github.head_ref || github.ref_name }}
 
-# The pull-request event supplies the required admission stub. The merge-group
-# event runs the complete repository gate before GitHub integrates the change.
+# Runs the complete repository gate on the exact pull-request head before an
+# ordinary protected merge.
 on:
   pull_request:
-  merge_group:
 
 concurrency:
-  group: merge-queue-${{ github.event_name }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: pull-request-validation-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
-  security-events: write
 
 jobs:
-  merge-queue-quality:
-    name: merge-queue-quality
-    if: github.event_name == 'merge_group'
+  pull-request-quality:
+    name: pull-request-quality
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -26,15 +23,16 @@ jobs:
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
     steps:
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: setup-pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
 
       - name: setup-node-22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: 'pnpm'
@@ -63,12 +61,11 @@ jobs:
         if: always()
         uses: ./.github/actions/turbo-summary
         with:
-          title: 'Turbo cache report - merge-queue / merge-queue-quality'
-          artifact-name: turbo-cache-merge-queue-quality
+          title: 'Turbo cache report - pull-request-validation / pull-request-quality'
+          artifact-name: turbo-cache-pull-request-quality
 
-  merge-queue-core-build-test:
-    name: merge-queue-core-build-test
-    if: github.event_name == 'merge_group'
+  pull-request-core-build-test:
+    name: pull-request-core-build-test
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -76,15 +73,16 @@ jobs:
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
     steps:
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: setup-pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
 
       - name: setup-node-22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: 'pnpm'
@@ -112,12 +110,11 @@ jobs:
         if: always()
         uses: ./.github/actions/turbo-summary
         with:
-          title: 'Turbo cache report - merge-queue / merge-queue-core-build-test'
-          artifact-name: turbo-cache-merge-queue-core-build-test
+          title: 'Turbo cache report - pull-request-validation / pull-request-core-build-test'
+          artifact-name: turbo-cache-pull-request-core-build-test
 
-  merge-queue-local-tools:
-    name: merge-queue-local-tools
-    if: github.event_name == 'merge_group'
+  pull-request-local-tools:
+    name: pull-request-local-tools
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -125,15 +122,16 @@ jobs:
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
     steps:
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: setup-pnpm
         uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
 
       - name: setup-node-22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: 'pnpm'
@@ -151,16 +149,17 @@ jobs:
         if: always()
         uses: ./.github/actions/turbo-summary
         with:
-          title: 'Turbo cache report - merge-queue / merge-queue-local-tools'
-          artifact-name: turbo-cache-merge-queue-local-tools
+          title: 'Turbo cache report - pull-request-validation / pull-request-local-tools'
+          artifact-name: turbo-cache-pull-request-local-tools
 
-  merge-queue-codeql:
-    name: merge-queue-codeql-${{ matrix.language }}
-    if: github.event_name == 'merge_group'
+  pull-request-codeql:
+    name: pull-request-codeql-${{ matrix.language }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
+      # Uploads pull-request analysis results to code scanning.
       security-events: write
+      # Reads packages and workflow metadata required by CodeQL.
       packages: read
       actions: read
       contents: read
@@ -175,6 +174,8 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: initialize-codeql
         uses: github/codeql-action/init@ed410739ba306e4ebe5e123421a6bd694e494a2b # v4
@@ -188,30 +189,27 @@ jobs:
         with:
           category: "/language:${{ matrix.language }}"
 
-  merge-queue-success:
-    name: merge-queue-success
+  pull-request-validation:
+    name: pull-request-validation
     if: always()
     needs:
-      - merge-queue-quality
-      - merge-queue-core-build-test
-      - merge-queue-local-tools
-      - merge-queue-codeql
+      - pull-request-quality
+      - pull-request-core-build-test
+      - pull-request-local-tools
+      - pull-request-codeql
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: evaluate-gate
+        env:
+          QUALITY_RESULT: ${{ needs['pull-request-quality'].result }}
+          CORE_RESULT: ${{ needs['pull-request-core-build-test'].result }}
+          LOCAL_TOOLS_RESULT: ${{ needs['pull-request-local-tools'].result }}
+          CODEQL_RESULT: ${{ needs['pull-request-codeql'].result }}
         run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "PR admission stub passed; the full battery runs in merge queue."
-            exit 0
-          fi
-          quality="${{ needs['merge-queue-quality'].result }}"
-          core="${{ needs['merge-queue-core-build-test'].result }}"
-          local_tools="${{ needs['merge-queue-local-tools'].result }}"
-          codeql="${{ needs['merge-queue-codeql'].result }}"
-          echo "quality=$quality core=$core local_tools=$local_tools codeql=$codeql"
-          if [[ "$quality" != "success" || "$core" != "success" || "$local_tools" != "success" || "$codeql" != "success" ]]; then
-            echo "Merge queue gate failed."
+          echo "quality=$QUALITY_RESULT core=$CORE_RESULT local_tools=$LOCAL_TOOLS_RESULT codeql=$CODEQL_RESULT"
+          if [[ "$QUALITY_RESULT" != "success" || "$CORE_RESULT" != "success" || "$LOCAL_TOOLS_RESULT" != "success" || "$CODEQL_RESULT" != "success" ]]; then
+            echo "Pull-request validation failed."
             exit 1
           fi
-          echo "All merge queue checks passed."
+          echo "All pull-request validation checks passed."
