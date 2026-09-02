@@ -28,61 +28,52 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 
       - name: setup-node-22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
 
-      - name: get-changed-changeset-files
-        id: changeset-files
-        run: |
-          echo "changed-files=$(git diff --diff-filter=dr --name-only $BASE_SHA -- '.changeset/*.md' | tr '\n' ' ')" >> $GITHUB_OUTPUT
+      - name: verify-changeset-format
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-
-      - name: verify-changeset-format
-        if: steps.changeset-files.outputs.changed-files != ''
         run: |
-          echo "Checking changeset files: ${{ steps.changeset-files.outputs.changed-files }}"
-          
-          for file in ${{ steps.changeset-files.outputs.changed-files }}; do
-            echo "Checking $file..."
-            
-            # Check if file exists
+          checked=0
+
+          while IFS= read -r -d '' file; do
+            checked=$((checked + 1))
+            echo "Checking $file"
+
             if [ ! -f "$file" ]; then
               echo "::error::Changeset file $file not found"
               exit 1
             fi
-            
-            # CLI releases use the dedicated manual workflow, not Changesets.
-            if sed -n '2,/^---$/p' "$file" | grep -qE "^[[:space:]]*(\"@lightfastai/cli\"|'@lightfastai/cli')[[:space:]]*:[[:space:]]*(patch|minor|major)[[:space:]]*$"; then
+
+            frontmatter="$(sed -n '2,/^---$/p' "$file")"
+
+            if grep -qE "^[[:space:]]*(\"@lightfastai/cli\"|'@lightfastai/cli')[[:space:]]*:[[:space:]]*(patch|minor|major)[[:space:]]*$" <<< "$frontmatter"; then
               echo "::error::@lightfastai/cli releases must not use Changesets. Follow RELEASE.md#cli-workflow instead."
               exit 1
             fi
 
-            # Check if it mentions lightfast or @lightfastai/mcp
-            if ! grep -qE "(\"lightfast\"|\"@lightfastai/mcp\")" "$file"; then
-              echo "::error::Changeset $file must include lightfast or @lightfastai/mcp package"
-              exit 1
-            fi
+            for package in lightfast @lightfastai/mcp; do
+              if ! grep -qE "^\"$package\": (patch|minor|major)$" <<< "$frontmatter"; then
+                echo "::error::Changeset $file must include a valid bump for both lightfast and @lightfastai/mcp"
+                exit 1
+              fi
+            done
 
-            # Check for valid version types
-            if ! grep -E "^\"(lightfast|@lightfastai/mcp)\": (patch|minor|major)$" "$file"; then
-              echo "::error::Changeset $file must use patch, minor, or major for lightfast or @lightfastai/mcp"
-              exit 1
-            fi
-            
-            # Check for summary
-            if ! grep -A 5 "^---$" "$file" | tail -n +2 | grep -v "^---$" | grep -q "."; then
+            summary="$(awk 'BEGIN { delimiters = 0 } /^---$/ { delimiters += 1; next } delimiters >= 2 { print }' "$file")"
+            if ! grep -q '[^[:space:]]' <<< "$summary"; then
               echo "::error::Changeset $file must include a summary description"
               exit 1
             fi
-            
+
             echo "✓ $file is valid"
-          done
-          
+          done < <(git diff --diff-filter=dr --name-only -z "$BASE_SHA" -- '.changeset/*.md')
+
+          echo "Checked $checked changed changeset file(s)."
           echo "All changesets are valid!"

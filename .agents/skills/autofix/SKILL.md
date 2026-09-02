@@ -285,13 +285,15 @@ Whether or not code changed, scan the PR files and any autofix changes for post-
 
 ```bash
 gh pr view "$pr_number" --json files --jq '.files[].path' \
-  | rg '^(db/app/src/(migrations|schema)/|\.github/workflows/db-migrate\.yml|apps/.*/vercel\.json)' || true
+  | rg '^(\.changeset/.*\.md|core/(lightfast|mcp|cli)/(package\.json|CHANGELOG\.md)|\.github/workflows/publish-.*\.yml)' || true
 
 git diff --name-only origin/main...HEAD \
-  | rg '^(db/app/src/(migrations|schema)/|\.github/workflows/db-migrate\.yml|apps/.*/vercel\.json)' || true
+  | rg '^(\.changeset/.*\.md|core/(lightfast|mcp|cli)/(package\.json|CHANGELOG\.md)|\.github/workflows/publish-.*\.yml)' || true
 ```
 
-For this repo, any `db/app/src/migrations/**`, `db/app/src/schema/**`, or `.github/workflows/db-migrate.yml` match means the post-merge release is not complete until the `db-migrate` workflow or equivalent PlanetScale deploy request is verified.
+For this repo, release-sensitive matches must be handed off according to
+`RELEASE.md`. Database foundation changes do not imply a production migration:
+this repository has no production backend or database deployment workflow.
 
 ### Step 10: Push Changes
 

@@ -1,7 +1,7 @@
-import { lissajousPoints } from "@repo/ui/lib/brand";
 import { AbsoluteFill, continueRender, delayRender } from "@vendor/remotion";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
+import { lissajousPoints } from "../../shared/brand";
 import { ensureFontsLoaded } from "../landing-hero/shared/fonts";
 
 // ── Constants ─────────────────────────────────────────────────────────────────

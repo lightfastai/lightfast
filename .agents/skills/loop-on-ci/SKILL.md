@@ -42,7 +42,7 @@ gh run view <run-id> --log-failed
 
 # Find release-sensitive files before merge handoff
 gh pr view --json files --jq '.files[].path' \
-  | rg '^(db/app/src/(migrations|schema)/|\.github/workflows/db-migrate\.yml|apps/.*/vercel\.json)' || true
+  | rg '^(\.changeset/.*\.md|core/(lightfast|mcp|cli)/(package\.json|CHANGELOG\.md)|\.github/workflows/publish-.*\.yml)' || true
 ```
 
 ## Guardrails
@@ -59,4 +59,5 @@ gh pr view --json files --jq '.files[].path' \
 - Current CI status
 - Failure summary and fixes applied
 - PR URL once checks are green
-- Post-merge follow-ups discovered from changed files, such as Vercel production monitoring or database migration verification
+- Post-merge follow-ups discovered from changed files, such as the SDK/MCP
+  Version Packages PR or an explicitly requested CLI publication

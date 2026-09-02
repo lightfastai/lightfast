@@ -1,7 +1,7 @@
-import { LOGO_CURVE, lissajousPath } from "@repo/ui/lib/brand";
 import { AbsoluteFill, continueRender, delayRender } from "@vendor/remotion";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
+import { LOGO_CURVE, lissajousPath } from "../../shared/brand";
 import { ensureFontsLoaded } from "../landing-hero/shared/fonts";
 
 const CANVAS_W = 1200;
