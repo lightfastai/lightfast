@@ -5,7 +5,7 @@ export type Vec2 = [number, number];
 export type Polygon = Vec2[];
 
 /** Visual face orientation for coloring */
-export type FaceType = "top" | "front" | "right";
+type FaceType = "top" | "front" | "right";
 
 /** A projected 2D face with optional holes (from boolean subtraction) */
 export interface Face {

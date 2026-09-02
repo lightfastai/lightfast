@@ -33,7 +33,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.4.12",
     "@changesets/cli": "^2.31.0",
-    "knip": "^6.4.1",
+    "knip": "^6.34.0",
     "portless": "catalog:",
     "turbo": "2.9.14",
     "typescript": "^5.9.2",
