@@ -59,11 +59,6 @@
       "entry": ["src/index.ts"],
       "project": ["src/**/*.{ts,tsx}"]
     },
-    "packages/ui": {
-      "entry": ["src/**/*.{ts,tsx}"],
-      "project": ["src/**/*.{ts,tsx}"],
-      "ignoreDependencies": ["@turbo/gen", "tw-animate-css"]
-    },
     "packages/ui-v2": {
       "entry": ["src/**/*.{ts,tsx}"],
       "project": ["src/**/*.{ts,tsx}"],
@@ -89,10 +84,5 @@
     "packages/api-contract/src/schemas/signals.ts": ["duplicates"],
     "packages/email/src/templates/*.tsx": ["duplicates"]
   },
-  "ignoreDependencies": [
-    "postcss",
-    "tailwindcss",
-    "@tailwindcss/postcss",
-    "@tailwindcss/typography"
-  ]
+  "ignoreDependencies": ["postcss", "tailwindcss", "@tailwindcss/postcss"]
 }

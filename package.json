@@ -19,7 +19,7 @@
     "test": "SKIP_ENV_VALIDATION=true turbo run test",
     "typecheck": "SKIP_ENV_VALIDATION=true turbo run typecheck",
     "verify:public-api": "SKIP_ENV_VALIDATION=true turbo run typecheck test --filter=@repo/api-contract --filter=@api/app --filter=lightfast --filter=@lightfastai/cli --filter=@lightfastai/mcp --filter=@lightfast/mcp-local --filter=@repo/mcp-tools --filter=@vendor/mcp --continue --summarize",
-    "ui": "turbo run ui --filter=@repo/ui",
+    "ui": "turbo run ui --filter=@repo/ui-v2",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "publish:sdk-mcp": "changeset publish",

@@ -1,7 +1,7 @@
-import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
 import { AbsoluteFill, continueRender, delayRender } from "@vendor/remotion";
 import type React from "react";
 import { useEffect, useState } from "react";
+import { IntegrationLogoIcons } from "../../shared/integration-icons";
 import { ensureFontsLoaded } from "../landing-hero/shared/fonts";
 
 interface FeedEvent {

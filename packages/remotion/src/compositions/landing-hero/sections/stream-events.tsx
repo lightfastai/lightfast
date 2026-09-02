@@ -1,6 +1,6 @@
-import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
 import { Easing, interpolate, useCurrentFrame } from "@vendor/remotion";
 import type React from "react";
+import { IntegrationLogoIcons } from "../../../shared/integration-icons";
 import { IsometricCard } from "../shared/isometric-card";
 import { ROW_STAGGER, SECTION_TIMING } from "../shared/timing";
 
