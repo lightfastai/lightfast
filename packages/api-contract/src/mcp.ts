@@ -2,9 +2,6 @@ import { type Contract, isPublicApiContractProcedure } from "./contract";
 
 export type McpScope =
   | "mcp:system:read"
-  | "mcp:decisions:read"
-  | "mcp:provider_routines:read"
-  | "mcp:provider_routines:write"
   | "mcp:signals:read"
   | "mcp:signals:write";
 
@@ -77,7 +74,7 @@ export const lightfastMcpToolPolicy = {
   "signals.list": {
     expose: false,
     reason:
-      "The public SDK can list signals, but hosted MCP does not expose a broad signal-listing tool yet.",
+      "The public SDK can list signals, but the public MCP package does not expose a broad signal-listing tool yet.",
   },
   "system.health": {
     auditEventName: "mcp.system.health",

@@ -9,122 +9,88 @@ We actively maintain and provide security updates for the following versions:
 | Latest  | :white_check_mark: |
 | < Latest| :x:                |
 
-As Lightfast is in active development, we recommend always using the latest version for the most up-to-date security features.
+As Lightfast is in active development, use the latest published versions of
+the public CLI, SDK, and MCP packages for current security fixes.
 
 ## Reporting a Vulnerability
 
-We take security vulnerabilities seriously. If you discover a security vulnerability in Lightfast, please report it responsibly.
+We take security vulnerabilities seriously. Do not create a public GitHub issue
+for a suspected vulnerability.
 
-### How to Report
+Email security@lightfast.ai with:
 
-**Please do NOT create a public GitHub issue for security vulnerabilities.**
+- A description of the vulnerability
+- Steps to reproduce it
+- Its likely impact
+- Any proposed fixes or mitigations
+- Contact information for follow-up
 
-Instead, please:
+You can expect:
 
-1. **Email us directly** at security@lightfast.ai
-2. **Include the following information:**
-   - Description of the vulnerability
-   - Steps to reproduce the issue
-   - Potential impact assessment
-   - Any suggested fixes or mitigations
-   - Your contact information for follow-up
+- Acknowledgment within 48 hours
+- An initial assessment within five business days
+- Progress updates during the investigation
+- Coordinated disclosure for confirmed issues
+- Credit in security advisories, with your permission
 
-### What to Expect
+Target response times are one to three business days for critical issues, one
+week for high-severity issues, and the next regular release cycle for medium-
+or low-severity issues.
 
-- **Acknowledgment**: We'll acknowledge receipt of your report within 48 hours
-- **Initial Assessment**: We'll provide an initial assessment within 5 business days
-- **Updates**: We'll keep you informed of our progress throughout the investigation
-- **Resolution**: We'll work to resolve confirmed vulnerabilities as quickly as possible
-- **Credit**: With your permission, we'll acknowledge your contribution in our security advisories
+## Repository Security Boundaries
 
-### Response Timeline
+- Public clients require explicit endpoint configuration; this repository does
+  not provide an implicit hosted Lightfast backend.
+- `apps/desktop` is a sandboxed static local shell with no Node.js renderer
+  integration, remote navigation, updates, signing, or distribution wiring.
+- `apps/mcp` is a local stdio-only shell with no HTTP listener, authentication,
+  secret, deployment, or hosted endpoint.
+- Database clients require explicit credentials and do not connect at import
+  time. Provider access and schema writes require separate approval.
+- Never commit credentials or copy package-local environment values between
+  workspaces.
 
-- **Critical vulnerabilities**: Patched within 1-3 business days
-- **High severity**: Patched within 1 week
-- **Medium/Low severity**: Patched in the next regular release cycle
+Dependency review, CodeQL, repository checks, and focused package tests run in
+CI. These controls supplement, rather than replace, review of trust boundaries
+and user-controlled inputs.
 
 ## Security Best Practices
 
 ### For Contributors
 
-- **Input Validation**: Always validate and sanitize user inputs using Zod schemas
-- **Authentication**: Use proper authentication mechanisms (Clerk integration)
-- **Rate Limiting**: Implement rate limiting using Arcjet for API endpoints
-- **Environment Variables**: Never expose sensitive data in client-side code
-- **Dependencies**: Keep dependencies up to date and review security advisories
-- **HTTPS**: Always use HTTPS in production environments
-- **Error Handling**: Don't expose sensitive information in error messages
+- Validate user-controlled inputs at trust boundaries.
+- Never expose sensitive data in client-side code or error messages.
+- Keep dependencies current and review security advisories.
+- Use HTTPS for configured remote endpoints.
+- Preserve explicit endpoint configuration; do not add implicit hosted
+  Lightfast defaults.
+- Keep provider access and environment values package-local.
 
 ### For Users
 
-- **Keep Updated**: Always use the latest version of Lightfast
-- **Environment Variables**: Secure your environment variables and API keys
-- **Access Control**: Implement proper access controls for your applications
-- **Monitoring**: Monitor your applications for unusual activity
-- **Backup**: Regularly backup your data and configurations
-
-## Security Features
-
-### Built-in Security
-
-- **Input Validation**: Comprehensive validation using Zod schemas
-- **Rate Limiting**: Built-in rate limiting via Arcjet integration
-- **Request Signing**: Request ID tracking for audit trails
-- **CSRF Protection**: Cross-site request forgery protection
-- **Secure Headers**: Security headers configured by default
-- **Error Handling**: Secure error handling that doesn't leak sensitive information
-
-### Cloud Security
-
-- **Resource Isolation**: Isolated execution boundaries
-- **Secure API Endpoints**: All API endpoints follow security best practices
-- **Encrypted Communication**: End-to-end encryption for sensitive operations
-- **Audit Logging**: Comprehensive audit trails for security monitoring
+- Keep public Lightfast packages up to date.
+- Secure API keys and other environment variables.
+- Apply appropriate access controls at the configured compatible backend.
+- Monitor applications for unusual activity and back up important
+  configuration.
 
 ## Vulnerability Management
 
-### Internal Security Practices
-
-- Regular security audits of dependencies
-- Automated security scanning in CI/CD pipeline
-- Code reviews with security focus
-- Penetration testing for critical components
-- Security-focused architectural decisions
-
-### Third-Party Security
-
-We rely on security best practices from our dependencies:
-- **Next.js**: Following Next.js security guidelines
-- **Clerk**: Enterprise-grade authentication
-- **Vercel**: Secure hosting and deployment
-- **Arcjet**: Real-time security protection
-
-## Security Resources
-
-### Documentation
-
-- [Next.js Security Guidelines](https://nextjs.org/docs/advanced-features/security-headers)
-- [Clerk Security Best Practices](https://clerk.com/docs/security)
-- [Vercel Security](https://vercel.com/docs/concepts/edge-network/security)
-
-### Tools and Dependencies
-
-- **Zod**: Runtime type validation and schema validation
-- **Arcjet**: Rate limiting and security protection
-- **Clerk**: Authentication and user management
-- **Sentry**: Error tracking and monitoring
-- **ESLint Security Plugin**: Static code analysis for security issues
+Repository maintainers use dependency review, automated security scanning,
+security-focused code review, and focused architectural review. Critical
+components may also receive targeted audits or penetration testing.
 
 ## Contact
 
-For security-related questions or concerns:
-- **Security Issues**: security@lightfast.ai
-- **General Security Questions**: Create a GitHub discussion with the "security" label
+- Security issues: security@lightfast.ai
+- General security questions: open a GitHub discussion with the `security`
+  label, without including vulnerability details
 
 ## Acknowledgments
 
-We appreciate the security research community and will acknowledge researchers who responsibly disclose vulnerabilities to us.
+We appreciate the security research community and acknowledge researchers who
+responsibly disclose vulnerabilities, with their permission.
 
 ---
 
-**Note**: This security policy is subject to updates as the project evolves. Please check back regularly for the latest security guidelines and procedures.
+This policy evolves with the project. Check back for current guidance.

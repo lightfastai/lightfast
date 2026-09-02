@@ -3,6 +3,9 @@
   "extends": ["//"],
   "tags": ["app"],
   "tasks": {
+    "build": {
+      "outputs": ["storybook-static/**"]
+    },
     "dev": {
       "cache": false,
       "persistent": true,

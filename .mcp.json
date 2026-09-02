@@ -3,15 +3,6 @@
     "exa": {
       "type": "http",
       "url": "https://mcp.exa.ai/mcp"
-    },
-    "inngest": {
-      "type": "http",
-      "url": "http://127.0.0.1:8288/mcp"
-    },
-    "next-devtools": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "next-devtools-mcp@0.3.10"]
     }
   }
 }

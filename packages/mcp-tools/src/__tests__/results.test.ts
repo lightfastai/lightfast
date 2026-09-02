@@ -64,4 +64,11 @@ describe("MCP result formatting", () => {
       isError: true,
     });
   });
+
+  it("always returns text for non-serializable error values", () => {
+    expect(formatMcpError(undefined)).toEqual({
+      content: [{ text: "undefined", type: "text" }],
+      isError: true,
+    });
+  });
 });

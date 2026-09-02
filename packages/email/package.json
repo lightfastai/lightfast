@@ -18,15 +18,13 @@
   "dependencies": {
     "@react-email/components": "catalog:",
     "@repo/ui-v2": "workspace:*",
-    "react": "catalog:react19",
-    "react-dom": "catalog:react19"
+    "react": "catalog:react19"
   },
   "devDependencies": {
     "@react-email/render": "catalog:",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "@types/react": "catalog:react19",
-    "@types/react-dom": "catalog:react19",
     "typescript": "catalog:"
   }
 }

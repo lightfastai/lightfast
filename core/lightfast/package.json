@@ -31,6 +31,9 @@
       "import": "./dist/index.mjs"
     }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "clean": "rm -rf dist .cache .turbo node_modules",
     "build": "tsup",

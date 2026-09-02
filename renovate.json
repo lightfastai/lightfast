@@ -17,11 +17,6 @@
       "matchPackagePatterns": ["^typescript", "^@typescript-eslint/"]
     },
     {
-      "description": "Group ESLint ecosystem updates",
-      "groupName": "eslint",
-      "matchPackagePatterns": ["^eslint", "^@eslint/"]
-    },
-    {
       "description": "Group Drizzle ecosystem updates",
       "groupName": "drizzle",
       "matchPackagePatterns": ["^drizzle-"]
@@ -30,21 +25,6 @@
       "description": "Group AI SDK updates",
       "groupName": "ai-sdk",
       "matchPackagePatterns": ["^@ai-sdk/", "^ai$"]
-    },
-    {
-      "description": "Group Clerk updates",
-      "groupName": "clerk",
-      "matchPackagePatterns": ["^@clerk/"]
-    },
-    {
-      "description": "Group Sentry updates",
-      "groupName": "sentry",
-      "matchPackagePatterns": ["^@sentry/"]
-    },
-    {
-      "description": "Group tRPC updates",
-      "groupName": "trpc",
-      "matchPackagePatterns": ["^@trpc/"]
     },
     {
       "description": "Group Tailwind updates",
@@ -60,11 +40,6 @@
       "description": "Group Turborepo updates",
       "groupName": "turborepo",
       "matchPackagePatterns": ["^turbo"]
-    },
-    {
-      "description": "Group Vercel SDK updates",
-      "groupName": "vercel",
-      "matchPackagePatterns": ["^@vercel/"]
     },
     {
       "description": "Auto-merge patch updates for dev dependencies",

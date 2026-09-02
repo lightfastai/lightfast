@@ -1,8 +1,24 @@
-import { parseError } from "@vendor/observability/error/next";
-
 interface LightfastMcpContent {
   text: string;
   type: "text";
+}
+
+function parseError(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (
+    error &&
+    typeof error === "object" &&
+    "message" in error &&
+    typeof error.message === "string"
+  ) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  return safeStringify(error) ?? safeToString(error);
 }
 
 export interface LightfastMcpSuccessResult {

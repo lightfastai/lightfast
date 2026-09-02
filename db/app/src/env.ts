@@ -1,17 +1,30 @@
-import { createEnv } from "@t3-oss/env-core";
-import { dbEnv as vendorDbEnv } from "@vendor/db/env";
+import type { DatabaseConfig } from "@vendor/db";
 
-export const env = createEnv({
-  extends: [vendorDbEnv],
-  clientPrefix: "" as const,
-  client: {},
-  server: {},
-  runtimeEnv: {
+type DatabaseEnvironment = Partial<
+  Record<"DATABASE_HOST" | "DATABASE_PASSWORD" | "DATABASE_USERNAME", string>
+>;
+
+function requireEnvironmentValue(
+  environment: DatabaseEnvironment,
+  name: keyof DatabaseEnvironment
+): string {
+  const value = environment[name];
+  if (!value) {
+    throw new Error(`${name} is required to create the database client.`);
+  }
+  return value;
+}
+
+export function getDatabaseCredentials(
+  environment: DatabaseEnvironment = {
     DATABASE_HOST: process.env.DATABASE_HOST,
-    DATABASE_USERNAME: process.env.DATABASE_USERNAME,
     DATABASE_PASSWORD: process.env.DATABASE_PASSWORD,
-  },
-  skipValidation:
-    !!process.env.SKIP_ENV_VALIDATION ||
-    process.env.npm_lifecycle_event === "lint",
-});
+    DATABASE_USERNAME: process.env.DATABASE_USERNAME,
+  }
+): DatabaseConfig {
+  return {
+    host: requireEnvironmentValue(environment, "DATABASE_HOST"),
+    password: requireEnvironmentValue(environment, "DATABASE_PASSWORD"),
+    username: requireEnvironmentValue(environment, "DATABASE_USERNAME"),
+  };
+}

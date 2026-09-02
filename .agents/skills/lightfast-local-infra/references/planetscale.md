@@ -1,7 +1,7 @@
 # PlanetScale Up
 
 `db up` creates or reuses a PlanetScale branch for this checkout and writes a
-fresh branch password to the API and database package-local override files.
+fresh branch password to the database package-local override file.
 
 ## Inputs
 
@@ -24,7 +24,7 @@ eval "$(node .agents/skills/lightfast-local-infra/lib/compute-identity.mjs)"
 ```
 
 This sets `database_name`, `base_branch`, `pscale_branch`, and
-`pscale_credential_name` (plus `redis_name`, unused here).
+`pscale_credential_name`.
 
 ## Probe Remediation
 
@@ -68,7 +68,7 @@ database_password=$(node -e 'const d=require("/tmp/lightfast-pscale-password.jso
 test -n "$database_host" && test -n "$database_username" && test -n "$database_password"
 ```
 
-Then write both package-local override files with `references/env-files.md`.
+Then write the package-local override file with `references/env-files.md`.
 
 ## Apply And Verify The Local Schema
 
@@ -81,9 +81,8 @@ pnpm --filter @db/app db:push
 pnpm --filter @db/app db:studio -- --help
 ```
 
-Do not run `db:migrate` or `db:baseline` for a worktree branch. Those commands
-are reserved for the persistent `staging` branch and its authoritative
-`__drizzle_migrations` journal.
+This foundation has no legacy migration baseline or persistent staging
+journal. Do not create or apply either without separate schema approval.
 
 If the password is lost or rotated, rerun this runbook to mint and write a new
 branch password.

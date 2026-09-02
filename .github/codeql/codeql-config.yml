@@ -1,11 +1,10 @@
 name: "Lightfast CodeQL config"
 
 # Skip dev-only and non-source paths from CodeQL analysis.
-# CodeQL already excludes node_modules, dist, .next, .vercel by default —
-# only list directories that ship in the repo but aren't user-facing source.
+# CodeQL already excludes dependency and build-output directories by default.
+# Only list repository tooling that is not user-facing source.
 paths-ignore:
   - scripts/**
-  - thoughts/**
   - .agents/**
   - .claude/**
   - "**/__generated__/**"

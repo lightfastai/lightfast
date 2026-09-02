@@ -59,12 +59,12 @@ jobs:
       - name: build-sdk-mcp-packages
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: pnpm turbo build --filter=lightfast --filter=@lightfastai/mcp --summarize
+        run: pnpm turbo run build --filter=lightfast --filter=@lightfastai/mcp --summarize
 
       - name: test-sdk-mcp-packages
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: pnpm turbo test --filter=@repo/api-contract --filter=lightfast --filter=@lightfastai/mcp --summarize
+        run: pnpm turbo run test --filter=@repo/api-contract --filter=lightfast --filter=@lightfastai/mcp --summarize
 
       - name: turbo-cache-report
         if: always()
@@ -80,7 +80,7 @@ jobs:
           (cd core/lightfast && npm pack --pack-destination "$SCRATCH")
           (cd core/mcp && npm pack --pack-destination "$SCRATCH")
           echo "Inspecting lightfast manifest..."
-          tar -xzOf "$SCRATCH"/lightfast-*.tgz package/package.json | jq -e '(.dependencies // {}) | keys | all(. as $k | $k | startswith("@orpc/"))' \
+          tar -xzOf "$SCRATCH"/lightfast-*.tgz package/package.json | jq -e '(.dependencies // {}) == {}' \
             || (echo "❌ lightfast has unexpected runtime deps"; tar -xzOf "$SCRATCH"/lightfast-*.tgz package/package.json | jq '.dependencies'; exit 1)
           echo "Inspecting @lightfastai/mcp manifest..."
           tar -xzOf "$SCRATCH"/lightfastai-mcp-*.tgz package/package.json | jq -e '.dependencies | keys == ["@modelcontextprotocol/sdk"]' \

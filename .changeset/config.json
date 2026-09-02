@@ -7,5 +7,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@lightfast/desktop", "@lightfast/e2e"]
+  "ignore": ["@lightfast/desktop", "@lightfast/mcp-local"]
 }

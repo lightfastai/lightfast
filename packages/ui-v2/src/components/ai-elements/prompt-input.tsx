@@ -49,7 +49,7 @@ import {
   TooltipTrigger,
 } from "@repo/ui-v2/components/ui/tooltip";
 import { cn } from "@repo/ui-v2/lib/utils";
-import type { ChatStatus, FileUIPart, SourceDocumentUIPart } from "@vendor/ai";
+import type { ChatStatus, FileUIPart, SourceDocumentUIPart } from "ai";
 import { nanoid } from "nanoid";
 import type {
   ChangeEvent,

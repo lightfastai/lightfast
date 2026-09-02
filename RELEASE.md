@@ -70,7 +70,7 @@ Expected output:
 function 0.3.0
 ```
 
-Smoke-test the MCP binary without an API key:
+Smoke-test the MCP binary without an API key or endpoint:
 
 ```bash
 npm exec --yes --package @lightfastai/mcp@latest -- lightfast-mcp
@@ -82,20 +82,13 @@ Expected output with non-zero exit:
 LIGHTFAST_API_KEY environment variable is required
 ```
 
-If a bound `lf_` key is available, run the optional live API smoke:
-
-```bash
-LIGHTFAST_E2E_API_KEY=lf_... LIGHTFAST_E2E_APP_URL=https://app.lightfast.localhost pnpm --filter @lightfast/e2e sdk
-```
-
 ## Routine SDK + MCP Releases
 
 ### 1. Make Public API Or Package Changes
 
-Work in the public API contract/routes and the public packages that consume them:
+Work in the public contract and the public packages that consume it:
 
 - `packages/api-contract/`
-- `api/app/src/public-api/`
 - `core/lightfast/`
 - `vendor/mcp/`
 - `core/mcp/`
@@ -111,7 +104,9 @@ git diff --check
 
 `pnpm --filter lightfast exec pwd` must resolve to `core/lightfast`. The root package is `@lightfastai/workspace`, so `--filter=lightfast` targets only the public SDK package.
 
-`pnpm verify:public-api` is required whenever public API routes or MCP-exposed contract metadata change. It verifies the contract, API implementation, SDK, MCP tool registration, and published MCP package path.
+`pnpm verify:public-api` is required whenever the public contract or MCP-exposed
+metadata changes. It verifies the contract, minimal API foundation, SDK, CLI,
+MCP tool registration, local stdio handshake, and published MCP package path.
 
 ### 2. Create the Implementation PR
 
@@ -121,12 +116,13 @@ Expected PR behavior:
 
 - Affected PR CI stays fast and only runs jobs for touched surfaces.
 - `merge-queue-success` passes as the required branch-protection stub.
-- Public API contract/route changes trigger `core-public-api-ci` and include the SDK/MCP package test scope.
+- Public contract changes trigger `core-public-api-ci` and include the SDK/MCP
+  package test scope.
 
 For public API propagation changes, inspect CI logs for:
 
 ```text
-Test affected public API surface
+Test public API surface
 ```
 
 The package scope should include:
@@ -135,6 +131,7 @@ The package scope should include:
 @repo/api-contract
 @api/app
 lightfast
+@lightfastai/cli
 @vendor/mcp
 @lightfastai/mcp
 ```
@@ -146,9 +143,11 @@ Add the implementation PR to GitHub merge queue. Do not admin-merge or bypass br
 The `merge_group` run for `.github/workflows/merge-queue.yml` is the real gate. It must pass:
 
 - Full quality checks: lint, typecheck, boundaries, and Knip.
-- Core build/test passes. Merge queue verifies CLI build output as repo health, but CLI is not part of the SDK/MCP release unit.
-- Public oRPC package tests for `@repo/api-contract`, `@api/app`, `lightfast`, and `@lightfastai/mcp`.
-- Desktop package/e2e jobs.
+- Core build/test passes. Merge queue verifies CLI build output and tests as
+  repository health, but CLI is not part of the SDK/MCP release unit.
+- Public package tests for `@repo/api-contract`, `@api/app`, `lightfast`,
+  `@lightfastai/cli`, and `@lightfastai/mcp`.
+- Package-local desktop, local MCP stdio, and example checks.
 - CodeQL.
 - `merge-queue-success`.
 

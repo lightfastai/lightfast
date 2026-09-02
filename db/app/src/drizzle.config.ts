@@ -1,12 +1,11 @@
 import { createDrizzleConfig } from "@vendor/db";
-import { env } from "./env";
 
 export default createDrizzleConfig({
   database: "lightfast",
-  host: env.DATABASE_HOST,
-  password: env.DATABASE_PASSWORD,
-  schema: "./src/schema/index.ts",
+  host: process.env.DATABASE_HOST,
   out: "./src/migrations",
+  password: process.env.DATABASE_PASSWORD,
+  schema: "./src/schema/index.ts",
   tablesFilter: ["lightfast_*"],
-  username: env.DATABASE_USERNAME,
+  username: process.env.DATABASE_USERNAME,
 });

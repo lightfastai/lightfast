@@ -49,7 +49,7 @@ describe("lightfastMcpToolPolicy", () => {
     expect(lightfastMcpToolPolicy["signals.list"]).toMatchObject({
       expose: false,
       reason:
-        "The public SDK can list signals, but hosted MCP does not expose a broad signal-listing tool yet.",
+        "The public SDK can list signals, but the public MCP package does not expose a broad signal-listing tool yet.",
     } satisfies Partial<McpToolPolicyEntry>);
   });
 
@@ -58,17 +58,17 @@ describe("lightfastMcpToolPolicy", () => {
     expect(getContractProcedurePaths({ misc: { value: true } })).toEqual([]);
   });
 
-  it("includes decision and provider routine MCP scopes in the public scope type", () => {
+  it("limits the MCP scope type to retained public tools", () => {
     const scopes = [
-      "mcp:decisions:read",
-      "mcp:provider_routines:read",
-      "mcp:provider_routines:write",
+      "mcp:system:read",
+      "mcp:signals:read",
+      "mcp:signals:write",
     ] satisfies McpScope[];
 
     expect(scopes).toEqual([
-      "mcp:decisions:read",
-      "mcp:provider_routines:read",
-      "mcp:provider_routines:write",
+      "mcp:system:read",
+      "mcp:signals:read",
+      "mcp:signals:write",
     ]);
   });
 });

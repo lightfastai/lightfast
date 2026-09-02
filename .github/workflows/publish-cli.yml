@@ -77,17 +77,17 @@ jobs:
       - name: Build CLI
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: pnpm --filter @lightfastai/cli build
+        run: pnpm turbo run build --filter=@lightfastai/cli --summarize
 
       - name: Test CLI
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: pnpm --filter @lightfastai/cli test
+        run: pnpm turbo run test --filter=@lightfastai/cli --summarize
 
       - name: Typecheck CLI
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: pnpm --filter @lightfastai/cli typecheck
+        run: pnpm turbo run typecheck --filter=@lightfastai/cli --summarize
 
       - name: Pack CLI
         id: pack

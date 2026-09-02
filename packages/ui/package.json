@@ -71,14 +71,12 @@
     "@radix-ui/react-toggle": "catalog:",
     "@radix-ui/react-toggle-group": "catalog:",
     "@radix-ui/react-tooltip": "catalog:",
-    "@radix-ui/react-use-controllable-state": "catalog:",
     "@shikijs/core": "catalog:",
     "@shikijs/engine-javascript": "catalog:",
     "@shikijs/langs": "catalog:",
     "@shikijs/themes": "catalog:",
     "@tanstack/react-table": "catalog:",
     "@tanstack/table-core": "catalog:",
-    "@vendor/ai": "workspace:*",
     "@vendor/forms": "workspace:*",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
@@ -89,8 +87,6 @@
     "hast-util-to-jsx-runtime": "catalog:",
     "input-otp": "catalog:",
     "lucide-react": "catalog:",
-    "motion": "catalog:",
-    "nanoid": "catalog:",
     "next": "catalog:next16",
     "next-themes": "catalog:",
     "react": "catalog:react19",
@@ -102,8 +98,6 @@
     "sonner": "catalog:",
     "tailwind-merge": "catalog:",
     "tw-animate-css": "catalog:",
-    "use-stick-to-bottom": "catalog:",
-    "vaul": "catalog:",
-    "zod": "catalog:"
+    "vaul": "catalog:"
   }
 }

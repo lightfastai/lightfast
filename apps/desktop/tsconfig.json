@@ -1,24 +1,9 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["vite/client"],
-    "jsx": "react-jsx",
-    "moduleResolution": "Bundler",
-    "paths": {
-      "@/*": ["./src/renderer/src/*"],
-      "@repo/ui/*": ["../../packages/ui/src/*"],
-      "@repo/ui-v2/*": ["../../packages/ui-v2/src/*"]
-    }
+    "lib": ["ES2022", "DOM"]
   },
-  "include": [
-    "src/renderer/**/*.ts",
-    "src/renderer/**/*.tsx",
-    "src/shared/**/*.ts"
-  ],
-  "exclude": [
-    "src/renderer/**/*.test.ts",
-    "src/renderer/**/*.test.tsx",
-    "src/renderer/**/__tests__/**"
-  ]
+  "include": ["src", "tsup.config.ts"],
+  "exclude": ["node_modules", "dist"]
 }

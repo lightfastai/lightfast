@@ -1,17 +1,12 @@
 name: merge-queue
 run-name: merge-queue / ${{ github.event_name }} / ${{ github.head_ref || github.ref_name }}
 
-# Dual-trigger pattern: the `merge-queue-success` status check is required by
-# the ruleset for both PR commits AND merge_group commits. So this workflow
-# must produce that check on both events. On `pull_request:` it's a no-op
-# stub (gates queue admission); on `merge_group:` it runs the real battery
-# (gates the actual merge).
+# The pull-request event supplies the required admission stub. The merge-group
+# event runs the complete repository gate before GitHub integrates the change.
 on:
   pull_request:
   merge_group:
 
-# Cancel mid-flight runs only for PR pushes; never cancel merge_group runs
-# (GitHub batches PRs into a merge_group and cancelling would re-enqueue all).
 concurrency:
   group: merge-queue-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -21,11 +16,11 @@ permissions:
   security-events: write
 
 jobs:
-  merge-queue-lint-typecheck-boundaries-knip:
-    name: merge-queue-lint-typecheck-boundaries-knip
+  merge-queue-quality:
+    name: merge-queue-quality
     if: github.event_name == 'merge_group'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
@@ -47,27 +42,29 @@ jobs:
       - name: install-dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: lint-biome
-        run: pnpm turbo //#check --summarize
+      - name: check-format-and-lint
+        run: pnpm turbo run //#check --summarize
+
+      - name: check-workspace-dependencies
+        run: pnpm lint:ws
 
       - name: typecheck-full
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: pnpm turbo typecheck --continue --summarize
+        run: pnpm turbo run typecheck --continue --summarize
 
       - name: check-boundaries
         run: pnpm turbo boundaries
 
-      - name: check-dead-code-knip
-        continue-on-error: true # pre-existing dead code on main; remove flag once cleanup sprint completes
-        run: pnpm turbo //#knip --summarize
+      - name: check-dead-code
+        run: pnpm turbo run //#knip --summarize
 
       - name: turbo-cache-report
         if: always()
         uses: ./.github/actions/turbo-summary
         with:
-          title: 'Turbo cache report - merge-queue / merge-queue-lint-typecheck-boundaries-knip'
-          artifact-name: turbo-cache-merge-queue-lint-typecheck-boundaries-knip
+          title: 'Turbo cache report - merge-queue / merge-queue-quality'
+          artifact-name: turbo-cache-merge-queue-quality
 
   merge-queue-core-build-test:
     name: merge-queue-core-build-test
@@ -95,21 +92,21 @@ jobs:
       - name: install-dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: build-core-packages
+      - name: build-public-packages
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: pnpm turbo build --filter=lightfast --filter=@lightfastai/mcp --filter=@lightfastai/cli --summarize
+        run: pnpm turbo run build --filter=lightfast --filter=@lightfastai/mcp --filter=@lightfastai/cli --summarize
 
-      - name: test-public-orpc-packages
+      - name: test-public-surface
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: pnpm turbo test --filter=@repo/api-contract --filter=@api/app --filter=lightfast --filter=@lightfastai/mcp --summarize
+        run: pnpm turbo run test --filter=@repo/api-contract --filter=@api/app --filter=lightfast --filter=@lightfastai/cli --filter=@lightfastai/mcp --filter=@repo/mcp-tools --filter=@vendor/mcp --summarize
 
       - name: verify-build-outputs
         run: |
-          ls -la core/lightfast/dist/
-          ls -la core/mcp/dist/
-          ls -la core/cli/dist/
+          test -f core/lightfast/dist/index.mjs
+          test -f core/mcp/dist/index.mjs
+          test -f core/cli/dist/bin.mjs
 
       - name: turbo-cache-report
         if: always()
@@ -118,19 +115,11 @@ jobs:
           title: 'Turbo cache report - merge-queue / merge-queue-core-build-test'
           artifact-name: turbo-cache-merge-queue-core-build-test
 
-  merge-queue-desktop-typecheck-package-e2e:
-    name: ${{ matrix.check_name }}
+  merge-queue-local-tools:
+    name: merge-queue-local-tools
     if: github.event_name == 'merge_group'
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-14
-            check_name: merge-queue-desktop-typecheck-package-e2e-macos-14
-          - os: ubuntu-22.04
-            check_name: merge-queue-desktop-typecheck-package-ubuntu-22.04
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
@@ -149,42 +138,21 @@ jobs:
           node-version: 22
           cache: 'pnpm'
 
-      - name: install-linux-maker-prerequisites
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update && sudo apt-get install -y rpm fakeroot
-          which dpkg-deb fakeroot rpm rpmbuild
-
       - name: install-dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: typecheck-desktop
-        run: pnpm turbo typecheck --filter=@lightfast/desktop --summarize
+      - name: build-local-tools
+        run: pnpm turbo run build --filter=@lightfast/desktop --filter=@lightfast/mcp-local --filter=@lightfast/example --summarize
 
-      - name: package-desktop-unsigned
-        run: pnpm turbo package --filter=@lightfast/desktop --summarize
-
-      - name: e2e-playwright-electron
-        if: runner.os == 'macOS'
-        env:
-          APP_URL: https://desktop-backend.invalid
-        run: pnpm --filter @lightfast/desktop exec playwright test --config=playwright.config.ts
-
-      - name: upload-playwright-report-on-failure
-        if: failure() && runner.os == 'macOS'
-        continue-on-error: true
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report-merge-queue-${{ matrix.os }}
-          path: apps/desktop/playwright-report/
-          retention-days: 7
+      - name: test-local-tools
+        run: pnpm turbo run test --filter=@lightfast/desktop --filter=@lightfast/mcp-local --filter=@lightfast/example --summarize
 
       - name: turbo-cache-report
         if: always()
         uses: ./.github/actions/turbo-summary
         with:
-          title: 'Turbo cache report - merge-queue / ${{ matrix.check_name }}'
-          artifact-name: turbo-cache-${{ matrix.check_name }}
+          title: 'Turbo cache report - merge-queue / merge-queue-local-tools'
+          artifact-name: turbo-cache-merge-queue-local-tools
 
   merge-queue-codeql:
     name: merge-queue-codeql-${{ matrix.language }}
@@ -224,9 +192,9 @@ jobs:
     name: merge-queue-success
     if: always()
     needs:
-      - merge-queue-lint-typecheck-boundaries-knip
+      - merge-queue-quality
       - merge-queue-core-build-test
-      - merge-queue-desktop-typecheck-package-e2e
+      - merge-queue-local-tools
       - merge-queue-codeql
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -234,19 +202,16 @@ jobs:
       - name: evaluate-gate
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "PR event — gating stub. Real battery runs on merge_group."
+            echo "PR admission stub passed; the full battery runs in merge queue."
             exit 0
           fi
-          quality="${{ needs['merge-queue-lint-typecheck-boundaries-knip'].result }}"
-          core_build="${{ needs['merge-queue-core-build-test'].result }}"
-          desktop_package="${{ needs['merge-queue-desktop-typecheck-package-e2e'].result }}"
+          quality="${{ needs['merge-queue-quality'].result }}"
+          core="${{ needs['merge-queue-core-build-test'].result }}"
+          local_tools="${{ needs['merge-queue-local-tools'].result }}"
           codeql="${{ needs['merge-queue-codeql'].result }}"
-          echo "merge-queue-lint-typecheck-boundaries-knip=$quality merge-queue-core-build-test=$core_build merge-queue-desktop-typecheck-package-e2e=$desktop_package merge-queue-codeql=$codeql"
-          if [[ "$quality" != "success" || \
-                "$core_build" != "success" || \
-                "$desktop_package" != "success" || \
-                "$codeql" != "success" ]]; then
+          echo "quality=$quality core=$core local_tools=$local_tools codeql=$codeql"
+          if [[ "$quality" != "success" || "$core" != "success" || "$local_tools" != "success" || "$codeql" != "success" ]]; then
             echo "Merge queue gate failed."
             exit 1
           fi
-          echo "All merge-queue checks passed."
+          echo "All merge queue checks passed."

@@ -3,7 +3,6 @@ import type {
   NativeSession,
   TokenSet,
 } from "@repo/native-auth-contract";
-import { NATIVE_AUTH_HEADERS } from "@repo/native-auth-contract";
 
 import { CliAuthError } from "./errors";
 import { refreshAccessToken } from "./token-client";
@@ -16,7 +15,7 @@ export interface SessionStoreLike {
   set: (session: NativeSession) => Promise<void>;
 }
 
-export async function loadSession(
+async function loadSession(
   store: SessionStoreLike
 ): Promise<NativeSession | null> {
   return store.get();
@@ -80,14 +79,4 @@ export async function getValidAccessToken(input: {
   });
   await input.store.set({ ...session, tokens });
   return tokens.accessToken;
-}
-
-export function buildNativeAuthHeaders(
-  session: NativeSession
-): Record<string, string> {
-  return {
-    Authorization: `Bearer ${session.tokens.accessToken}`,
-    [NATIVE_AUTH_HEADERS.client]: "cli",
-    [NATIVE_AUTH_HEADERS.organizationId]: session.organization.id,
-  };
 }

@@ -170,3 +170,4 @@ export function createLightfast(
 }
 
 export const VERSION: string = __SDK_VERSION__;
+export type { Contract } from "@repo/api-contract";

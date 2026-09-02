@@ -8,9 +8,7 @@ export const AUTH_FILE_NAME = "auth.json";
 export function getAppUrl(): string {
   const appUrl = cliEnv.LIGHTFAST_APP_URL;
   if (!appUrl) {
-    throw new Error(
-      "LIGHTFAST_APP_URL is required for Lightfast login and backend commands."
-    );
+    throw new Error("LIGHTFAST_APP_URL is required for Lightfast login.");
   }
 
   return appUrl.replace(/\/$/, "");

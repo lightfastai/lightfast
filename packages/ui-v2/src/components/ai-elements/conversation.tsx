@@ -4,7 +4,7 @@ import { ArrowDown01Icon, Download04Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@repo/ui-v2/components/ui/button";
 import { cn } from "@repo/ui-v2/lib/utils";
-import type { UIMessage } from "@vendor/ai";
+import type { UIMessage } from "ai";
 import type { ComponentProps } from "react";
 import { useCallback } from "react";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";

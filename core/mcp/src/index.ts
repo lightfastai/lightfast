@@ -6,16 +6,8 @@ import { getLightfastMcpConfig } from "./config";
 
 declare const __SDK_VERSION__: string;
 
-const { apiKey, baseUrl } = getLightfastMcpConfig();
-
-const server = new McpServer({
-  name: "lightfast",
-  version: __SDK_VERSION__,
-});
-
-const client = createLightfast(apiKey, { baseUrl });
-
 function getClientProcedure(
+  client: ReturnType<typeof createLightfast>,
   path: string
 ): (input?: unknown) => Promise<unknown> {
   let procedure: unknown = client;
@@ -35,21 +27,30 @@ function getClientProcedure(
   return procedure as (input?: unknown) => Promise<unknown>;
 }
 
-registerLightfastMcpTools(server, {
-  contract: apiContract,
-  policy: lightfastMcpToolPolicy,
-  execute: ({ contractPath, input }) => {
-    const procedure = getClientProcedure(contractPath);
-    return input === undefined ? procedure() : procedure(input);
-  },
-});
-
 async function main() {
+  const { apiKey, baseUrl } = getLightfastMcpConfig();
+  const server = new McpServer({
+    name: "lightfast",
+    version: __SDK_VERSION__,
+  });
+  const client = createLightfast(apiKey, { baseUrl });
+
+  registerLightfastMcpTools(server, {
+    contract: apiContract,
+    policy: lightfastMcpToolPolicy,
+    execute: ({ contractPath, input }) => {
+      const procedure = getClientProcedure(client, contractPath);
+      return input === undefined ? procedure() : procedure(input);
+    },
+  });
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }
 
 main().catch((error) => {
-  console.error("MCP server failed to start:", error);
-  process.exit(1);
+  process.stderr.write(
+    `${error instanceof Error ? error.message : String(error)}\n`
+  );
+  process.exitCode = 1;
 });

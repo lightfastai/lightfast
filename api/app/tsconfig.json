@@ -1,5 +1,6 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "@repo/typescript-config/base.json",
-  "include": ["scripts/**/*", "src/**/*"],
-  "exclude": ["node_modules", "src/inngest/workflow/_deprecated"]
+  "include": ["src"],
+  "exclude": ["node_modules"]
 }
