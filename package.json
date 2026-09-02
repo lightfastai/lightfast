@@ -35,7 +35,7 @@
     "@changesets/cli": "^2.31.0",
     "knip": "^6.34.0",
     "portless": "catalog:",
-    "turbo": "2.9.14",
+    "turbo": "2.10.12",
     "typescript": "^5.9.2",
     "ultracite": "7.6.0"
   }
