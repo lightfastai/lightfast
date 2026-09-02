@@ -11,7 +11,7 @@ catalog:
   '@base-ui/react': ^1.5.0
   '@hugeicons/core-free-icons': ^4.2.0
   '@hugeicons/react': ^1.1.6
-  '@modelcontextprotocol/sdk': ^1.29.0
+  '@modelcontextprotocol/sdk': ^1.30.0
   '@radix-ui/react-use-controllable-state': ^1.2.2
   '@react-email/components': ^1.0.12
   '@react-email/render': ^2.0.9
