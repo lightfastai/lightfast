@@ -36,7 +36,7 @@
     "knip": "^6.34.0",
     "portless": "catalog:",
     "turbo": "2.10.12",
-    "typescript": "^5.9.2",
+    "typescript": "catalog:",
     "ultracite": "7.6.0"
   }
 }

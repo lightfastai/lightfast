@@ -27,12 +27,12 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
-    "css-loader": "^7.1.4",
+    "css-loader": "^7.1.5",
     "postcss": "catalog:tailwind4",
     "postcss-loader": "^8.1.1",
     "style-loader": "^4.0.0",
     "tailwindcss": "catalog:tailwind4",
-    "tsx": "^4.21.0",
+    "tsx": "catalog:",
     "typescript": "catalog:"
   }
 }
