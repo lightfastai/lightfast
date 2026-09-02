@@ -45,7 +45,7 @@ catalog:
   react-email: ^6.6.3
   shadcn: ^4.19.1
   storybook: ^10.5.10
-  streamdown: ^2.5.0
+  streamdown: ^2.6.0
   tailwind-merge: ^3.5.0
   tsup: ^8.5.1
   tsx: ^4.21.0
