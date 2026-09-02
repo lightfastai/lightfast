@@ -1,12 +1,12 @@
 ---
 name: lightfast-local-infra
-description: Use when setting up, repairing, provisioning, or verifying local Lightfast PlanetScale database infrastructure, including db up, env files, pscale, and deleted dev-services commands.
+description: Use when setting up, repairing, provisioning, or verifying local Lightfast PlanetScale database infrastructure, including worktree branches, package-local env files, and pscale access.
 ---
 
 # Lightfast Local Infra
 
-Local database provisioning for this repo. Replaces the old `pnpm db:up`,
-`pnpm dev:setup`, and `pnpm dev:doctor` scripts.
+Operator runbook for explicitly approved local PlanetScale setup. This skill
+does not add a provisioning runtime or root package scripts.
 
 ## Boundaries
 
@@ -21,6 +21,8 @@ Local database provisioning for this repo. Replaces the old `pnpm db:up`,
 
 ## First Probes
 
+Run these only after the user approves provider reads for the current run:
+
 ```bash
 command -v pscale && pscale --version
 pscale auth check
@@ -29,9 +31,10 @@ pscale org list --format json
 
 ## Choose The Reference
 
-- DB setup or `db up`: `references/planetscale.md`.
+- Local PlanetScale branch setup: `references/planetscale.md`.
 - Env writes or validation: `references/env-files.md`.
 - Schema or migration design: `planetscale-drizzle` skill instead.
-- Read-only data inspection: `lightfast-db` skill instead.
+- Live data inspection is outside this setup skill and requires separate
+  approval.
 
 Shared helpers live in `lib/` and are invoked by the references above.

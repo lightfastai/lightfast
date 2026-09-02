@@ -1,29 +1,29 @@
 ---
 name: planetscale-drizzle
-description: Use when working with Drizzle ORM against this repo's PlanetScale MySQL (Vitess) database in @db/app — adding or changing mysqlTable schema, generating or applying migrations, planning a production deploy request, or hitting a Vitess/MySQL limit such as foreign keys, missing RETURNING, schema-lint rejections, or connection latency.
+description: Use when working with Drizzle ORM against this repo's PlanetScale MySQL (Vitess) foundation in @db/app, including approved schema design, local generation or push work, and Vitess/MySQL constraints.
 ---
 
 # PlanetScale + Drizzle (@db/app)
 
-`@db/app` is Drizzle ORM on **PlanetScale MySQL (Vitess)** — a single driver,
-`drizzle-orm/planetscale-serverless`, identical in local dev and production.
-This skill maps the repo's conventions to the official PlanetScale docs worth
-fetching for schema, migration, and deploy work.
+`@db/app` is a deliberately small Drizzle foundation for **PlanetScale MySQL
+(Vitess)**. It has an empty schema and no production backend, migration
+baseline, staging branch, or deployment workflow. This skill maps the retained
+provider conventions to relevant official documentation.
 
-Engine-level depth: load the `mysql` and `vitess` skills. Inspecting the live
-database: load `lightfast-db`. Canonical commands: `db/CLAUDE.md`.
+Engine-level depth: load the `mysql` and `vitess` skills. Canonical repository
+commands and approval boundaries live in `db/CLAUDE.md`.
 
 ## Repo conventions at a glance
 
 | Rule | Detail |
 |------|--------|
 | One driver | `drizzle-orm/planetscale-serverless` + `@planetscale/database`. **Never import `@planetscale/*` directly** — the client comes from `@vendor/db` (`createDatabase`). |
-| Schema files | `mysqlTable("lightfast_<snake_case>", …)`; `lightfast_` prefix always; column builders imported from `drizzle-orm/mysql-core`. Follow existing `db/app/src/schema/tables/`. |
+| Schema files | The schema is intentionally empty. Adding domain tables requires separate scope and review; use `lightfast_<snake_case>` names and import builders from `drizzle-orm/mysql-core`. |
 | No `mysql2` | Must not appear anywhere in the workspace. drizzle-kit prefers `mysql2` over `@planetscale/database` and would route migrations over TCP, which PlanetScale branches don't expose. Load-bearing omission. |
 | drizzle-kit | `dialect: "mysql"` (via `createDrizzleConfig` in `@vendor/db`) — **not** `"planetscale"`, which isn't a valid value. `tablesFilter: ["lightfast_*"]`. |
-| No `RETURNING` | MySQL has none. Use `.$returningId()` (returns `{ id }` only). Need other columns? Pre-compute client-side (e.g. `nanoid()` in a `$defaultFn`) or follow with a `SELECT`. Example: `db/app/src/utils/org-binding.ts`. |
-| Migrations | `pnpm db:generate` runs offline from `db/app/`; local dev applies schema with `pnpm db:push` to the worktree branch; CI runs `pnpm db:migrate` against persistent `staging`, then deploys `staging` → `main`. **Never hand-write or edit `.sql`.** |
-| Local dev | Per-worktree PlanetScale branch provisioned by `lightfast-local-infra` (`db up`). Runtime credentials live in `api/app/.env.overrides.local` and `db/app/.env.overrides.local`. |
+| No `RETURNING` | MySQL has none. Use `.$returningId()` (returns `{ id }` only). Need other columns? Pre-compute client-side or follow with a `SELECT`. |
+| Schema operations | `pnpm db:generate` generates migrations after separately approved schema work. `pnpm db:push` applies the current schema only to an approved local worktree branch. There is no production migration workflow. **Never hand-write or edit `.sql`.** |
+| Local setup | Per-worktree PlanetScale branches are provisioned with `lightfast-local-infra`. Runtime credentials live only in `db/app/.env.overrides.local`. |
 | Foreign keys | Vitess FK support is limited; the repo avoids `references()`. Prefer application-level referential integrity. |
 
 ## Official PlanetScale docs — fetch when relevant
@@ -55,5 +55,7 @@ database: load `lightfast-db`. Canonical commands: `db/CLAUDE.md`.
 - Adding `mysql2` to clear a drizzle-kit error — it silently breaks PlanetScale migrations.
 - Importing `@planetscale/database` directly instead of going through `@vendor/db`.
 - Hand-editing a migration `.sql` file instead of re-running `pnpm db:generate`.
+- Inferring a staging or production database workflow that this repository does
+  not contain.
 - Adding `references()` / FKs without first checking the FK constraints + schema-lint docs.
 - Assuming a Drizzle column rename is safe — drizzle-kit emits drop+add; see the renames doc.

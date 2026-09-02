@@ -1,7 +1,8 @@
-# PlanetScale Up
+# Local PlanetScale Branch Setup
 
-`db up` creates or reuses a PlanetScale branch for this checkout and writes a
-fresh branch password to the database package-local override file.
+Create or reuse a PlanetScale branch for this checkout and write a fresh branch
+password to the database package-local override file. Every provider read,
+branch create, and credential mint requires explicit approval for this run.
 
 ## Inputs
 
@@ -28,7 +29,8 @@ This sets `database_name`, `base_branch`, `pscale_branch`, and
 
 ## Probe Remediation
 
-`SKILL.md` already ran the basic probes. If auth is missing, ask the human:
+After the approved basic probes in `SKILL.md`, ask the human to authenticate if
+needed:
 
 ```bash
 pscale auth login

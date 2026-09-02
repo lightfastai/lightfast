@@ -24,7 +24,7 @@ When invoked:
    git diff HEAD~N..HEAD  # Where N covers implementation commits
 
    # Run comprehensive checks
-   cd $(git rev-parse --show-toplevel) && pnpm lint && pnpm typecheck && pnpm test
+   cd $(git rev-parse --show-toplevel) && pnpm check && pnpm typecheck && pnpm test
    # Also run builds for affected packages (check the plan for exact filters)
    pnpm build:example
    ```
@@ -94,9 +94,9 @@ Create comprehensive validation summary:
 ⚠️ Phase 3: [Name] - Partially implemented (see issues)
 
 ### Automated Verification Results
-✓ Build passes: `pnpm build:console`
+✓ Build passes: `pnpm build`
 ✓ Tests pass: `pnpm test`
-✗ Linting issues: `pnpm lint` (3 warnings)
+✗ Linting issues: `pnpm check` (3 warnings)
 
 ### Code Review Findings
 
