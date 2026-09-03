@@ -71,7 +71,7 @@ catalogs:
     remotion: 4.0.520
   tailwind4:
     '@tailwindcss/postcss': 4.2.2
-    postcss: 8.5.11
+    postcss: 8.5.23
     tailwindcss: 4.2.2
 
 enablePrePostScripts: true
