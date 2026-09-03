@@ -16,7 +16,7 @@
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",
-    "electron": "^41.3.0",
+    "electron": "^41.10.3",
     "tsup": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
