@@ -58,8 +58,8 @@ database, queue, or production backend configuration.
 
 ## Local infrastructure and env files
 
-Load `lightfast-local-infra` before local PlanetScale setup. It is the source
-of truth for provisioning and safe database env writes.
+Local PlanetScale setup must keep provisioning and database environment writes
+within the package-local boundaries below.
 
 Package-local ignored files are the active boundary:
 
