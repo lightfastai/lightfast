@@ -13,10 +13,9 @@ pnpm db:push      # approved local worktree branch only
 pnpm db:studio    # approved local inspection through Portless
 ```
 
-Load `lightfast-local-infra` before approved local PlanetScale setup. It writes
+Local PlanetScale setup requires exact approval for that run and writes
 credentials only to `db/app/.env.overrides.local`. Do not read or mutate a
-provider, mint credentials, push schema, or open Studio without exact approval
-for that run.
+provider, mint credentials, push schema, or open Studio without exact approval.
 
 ## Rules
 

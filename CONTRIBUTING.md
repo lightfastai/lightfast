@@ -17,9 +17,9 @@ pnpm install
 ```
 
 Environment variables are package-local. Use ignored `.env.local` or
-`.env.overrides.local` files only in the package that consumes them. Follow the
-`lightfast-local-infra` skill for approved local PlanetScale setup; do not copy
-provider values between packages casually.
+`.env.overrides.local` files only in the package that consumes them. Local
+PlanetScale setup requires explicit approval for that run; do not copy provider
+values between packages.
 
 ## Repository shape
 
