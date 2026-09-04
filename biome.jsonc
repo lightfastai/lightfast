@@ -4,8 +4,6 @@
   "files": {
     "includes": [
       "**/*",
-      "!.agents",
-      "!.claude",
       "!scripts",
       "!apps/storybook/public/mockServiceWorker.js",
       "!packages/ui-v2/src/components/ai-elements",

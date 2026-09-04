@@ -100,16 +100,12 @@ reviews:
     - "!examples/**"
     - "!tmp/**"
     - "!worktrees/**"
-    - "!.claude/**"
-    - "!.agents/**"
     - "!.codex/**"
-    - "!.entire/**"
     - "!.mcp.json"
     - "!.cursorignore"
     - "!**/.env.example"
     - "!.github/ISSUE_TEMPLATE/**"
     - "!.vscode/**"
-    - "!skills-lock.json"
 
   # ── Path-specific review instructions ──
   path_instructions:

@@ -5,7 +5,5 @@ name: "Lightfast CodeQL config"
 # Only list repository tooling that is not user-facing source.
 paths-ignore:
   - scripts/**
-  - .agents/**
-  - .claude/**
   - "**/__generated__/**"
   - "**/generated/**"

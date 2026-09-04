@@ -114,10 +114,6 @@ worktrees/
 # MCP
 .env.mcp
 
-# Claude Code
-.claude/settings.local.json
-.claude/scheduled_tasks.lock
-
 # agent-browser profiles (Clerk test sessions, cookies, meta sidecars)
 .agent-browser/
 .worktrees/

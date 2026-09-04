@@ -78,7 +78,6 @@
       "drizzle": false
     }
   },
-  "ignore": [".agents/**", ".claude/**"],
   "ignoreIssues": {
     "packages/api-contract/src/mcp.ts": ["types"],
     "packages/api-contract/src/schemas/signals.ts": ["duplicates"],
