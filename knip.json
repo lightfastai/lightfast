@@ -28,7 +28,7 @@
       "ignoreDependencies": ["@modelcontextprotocol/sdk"]
     },
     "apps/remotion": {
-      "entry": ["src/index.ts", "remotion.config.ts"],
+      "entry": ["src/index.ts", "src/*.test.ts", "remotion.config.ts"],
       "project": ["src/**/*.{ts,tsx,css}"],
       "ignoreDependencies": ["css-loader", "postcss-loader", "style-loader"]
     },
@@ -46,9 +46,6 @@
     },
     "packages/*": {
       "project": ["src/**/*.{ts,tsx}"]
-    },
-    "packages/remotion": {
-      "project": ["src/**/*.{ts,tsx,css}"]
     },
     "packages/ui-v2": {
       "entry": ["src/**/*.{ts,tsx}"],

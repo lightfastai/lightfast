@@ -1,14 +1,13 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { getStills, getVideos, MANIFEST } from "@repo/remotion";
 import { bundle } from "@vendor/remotion/bundler";
 import {
   renderMedia,
   renderStill,
   selectComposition,
 } from "@vendor/remotion/renderer";
-import { enableCssLoaders } from "./webpack-override";
+import { enableCssLoaders, getStills, getVideos, MANIFEST } from "./remotion";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "../../.."); // monorepo root

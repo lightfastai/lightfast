@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "../../..");
-const compositionsDir = path.resolve(ROOT, "packages/remotion/src");
+const compositionsDir = path.resolve(__dirname, "remotion");
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let isRendering = false;
@@ -44,7 +44,7 @@ function scheduleRender() {
 
 render();
 
-console.log("[remotion] Watching package source for changes...");
+console.log("[remotion] Watching local composition source for changes...");
 
 const watcher = fs.watch(
   compositionsDir,
