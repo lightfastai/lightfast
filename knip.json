@@ -6,10 +6,10 @@
       "ignoreDependencies": ["@biomejs/biome"]
     },
     "apps/email": {
-      "ignoreDependencies": ["@react-email/ui", "@repo/email"]
+      "ignoreDependencies": ["@repo/email"]
     },
     "api/app": {
-      "entry": ["src/index.ts", "src/**/*.test.ts"],
+      "entry": ["src/**/*.test.ts"],
       "project": ["src/**/*.ts"]
     },
     "apps/desktop": {
@@ -17,13 +17,8 @@
       "project": ["src/**/*.ts", "scripts/**/*.mjs"]
     },
     "apps/example": {
-      "entry": [
-        "src/router.tsx",
-        "src/start.ts",
-        "src/routes/**/*.tsx",
-        "src/**/*.test.tsx"
-      ],
-      "project": ["src/**/*.{ts,tsx}"]
+      "entry": ["src/routes/**/*.tsx", "src/**/*.test.tsx"],
+      "project": ["src/**/*.{ts,tsx,css}"]
     },
     "apps/mcp": {
       "entry": ["src/**/*.test.ts"],
@@ -32,7 +27,7 @@
     },
     "apps/remotion": {
       "entry": ["src/index.ts", "remotion.config.ts"],
-      "project": ["src/**/*.{ts,tsx}"],
+      "project": ["src/**/*.{ts,tsx,css}"],
       "ignoreDependencies": ["css-loader", "postcss-loader", "style-loader"]
     },
     "core/*": {
@@ -44,7 +39,7 @@
       "ignoreDependencies": ["@modelcontextprotocol/sdk"]
     },
     "db/app": {
-      "entry": ["src/index.ts", "src/drizzle.config.ts", "src/**/*.test.ts"],
+      "entry": ["src/drizzle.config.ts", "src/**/*.test.ts"],
       "project": ["src/**/*.ts"]
     },
     "packages/*": {
@@ -56,13 +51,11 @@
       "ignoreDependencies": ["@react-email/render"]
     },
     "packages/remotion": {
-      "entry": ["src/index.ts"],
-      "project": ["src/**/*.{ts,tsx}"]
+      "project": ["src/**/*.{ts,tsx,css}"]
     },
     "packages/ui-v2": {
       "entry": ["src/**/*.{ts,tsx}"],
-      "project": ["src/**/*.{ts,tsx}"],
-      "ignoreDependencies": ["tw-animate-css"]
+      "project": ["src/**/*.{ts,tsx,css}"]
     },
     "vendor/*": {
       "project": ["src/**/*.ts"],
