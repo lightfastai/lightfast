@@ -1,0 +1,151 @@
+{
+  "formatVersion": 1,
+  "contentHashAlgorithm": "sha256 of sorted lines: <git-mode> <POSIX-relative-path>\\0<sha256(file-bytes)>\\n",
+  "updatePolicy": "Replace complete trees from reviewed official commits, preserve byte identity, refresh pins and hashes, and rerun pnpm check plus the full repository validation.",
+  "skills": {
+    "turborepo": {
+      "repository": "https://github.com/vercel/turborepo",
+      "commit": "3125eb1a49f0c1b98f460eb3616036ce03837387",
+      "upstreamSubdirectory": "skills/turborepo",
+      "upstreamTree": "34eaa69f05167f1e1a809c131547a80b83bf8208",
+      "canonicalPath": ".agents/skills/turborepo",
+      "aliases": [],
+      "contentHash": "sha256:b7cd97fdbf0102c46e0d5d63dc6d07f9596cdc07469ae3c74933c5b47a8812ca",
+      "license": {
+        "identifier": "MIT",
+        "copyPath": "provenance/licenses/turborepo-MIT.txt",
+        "sha256": "f7ac4712aa30551de5b97b30215010515d783638107f207bcce32a85bfffc05e"
+      }
+    },
+    "orpc": {
+      "repository": "https://github.com/unnoq/orpc",
+      "commit": "0cd296a95c33f8871306ab38e16e63a450cca4d1",
+      "upstreamSubdirectory": "skills/orpc",
+      "upstreamTree": "47d8f19d0a1147e1b879e4ef719f9c1bca3af65b",
+      "canonicalPath": "api/app/.agents/skills/orpc",
+      "aliases": [],
+      "contentHash": "sha256:c06fd88367387a8b565b508789eb23416a4b200044eefc34578cfe56522fa2ac",
+      "license": {
+        "identifier": "MIT",
+        "copyPath": "provenance/licenses/orpc-MIT.txt",
+        "sha256": "fa3f0d958e5affd642604f663e399794da28747018cdac1dafef2465ee7e07b0"
+      }
+    },
+    "orpc-contract": {
+      "repository": "https://github.com/unnoq/orpc",
+      "commit": "0cd296a95c33f8871306ab38e16e63a450cca4d1",
+      "upstreamSubdirectory": "skills/orpc-contract",
+      "upstreamTree": "7e854bb13ecefca583d1cfbe0b0f617adbc3f544",
+      "canonicalPath": "packages/api-contract/.agents/skills/orpc-contract",
+      "aliases": [],
+      "contentHash": "sha256:db42079394b2e189fb724a3720cf7930325969ec95518353d89a1575ded370fb",
+      "license": {
+        "identifier": "MIT",
+        "copyPath": "provenance/licenses/orpc-MIT.txt",
+        "sha256": "fa3f0d958e5affd642604f663e399794da28747018cdac1dafef2465ee7e07b0"
+      }
+    },
+    "mysql": {
+      "repository": "https://github.com/planetscale/database-skills",
+      "commit": "73b20b7eb64716d8c7100c054f0677c0c6e77e30",
+      "upstreamSubdirectory": "skills/mysql",
+      "upstreamTree": "a2d3f6d189cb2847d659da7108b399df9ac08875",
+      "canonicalPath": "vendor/db/.agents/skills/mysql",
+      "aliases": [
+        {
+          "path": "db/app/.agents/skills/mysql",
+          "target": "../../../../vendor/db/.agents/skills/mysql"
+        }
+      ],
+      "contentHash": "sha256:8524849f9887d261bc7e16d73524b73542c754d1bd24e23ada52389d057d48cf",
+      "license": {
+        "identifier": "MIT",
+        "copyPath": "provenance/licenses/planetscale-database-skills-MIT.txt",
+        "sha256": "13990a7ef816ecccad065c66f3ecd66cff7ec9da3b7aa49124dd78bacd3fee66"
+      }
+    },
+    "react-email": {
+      "repository": "https://github.com/resend/react-email",
+      "commit": "0f0cb94e1f15581131a2d50b80f8daa13dd1c9fc",
+      "upstreamSubdirectory": "skills/react-email",
+      "upstreamTree": "e6e198406ce5d1b14eb43e7a94f16b8bd2739461",
+      "canonicalPath": "packages/email/.agents/skills/react-email",
+      "aliases": [
+        {
+          "path": "apps/email/.agents/skills/react-email",
+          "target": "../../../../packages/email/.agents/skills/react-email"
+        }
+      ],
+      "contentHash": "sha256:ca811fa039f2ddf1d1993e0e4b7a951f0fde4c9289f73c0fb29ac23d9e0c4ffc",
+      "license": {
+        "identifier": "MIT",
+        "copyPath": "provenance/licenses/react-email-MIT.txt",
+        "sha256": "824a5acd4cf751b349d2f37513b94c682bceddbf6ead1d0225ff0aaa9b7eb2e4"
+      }
+    },
+    "mcp-builder": {
+      "repository": "https://github.com/anthropics/skills",
+      "commit": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
+      "upstreamSubdirectory": "skills/mcp-builder",
+      "upstreamTree": "b866bcfb57b780c10b587c7b543e871a91661ce0",
+      "canonicalPath": "vendor/mcp/.agents/skills/mcp-builder",
+      "aliases": [
+        {
+          "path": "apps/mcp/.agents/skills/mcp-builder",
+          "target": "../../../../vendor/mcp/.agents/skills/mcp-builder"
+        },
+        {
+          "path": "core/mcp/.agents/skills/mcp-builder",
+          "target": "../../../../vendor/mcp/.agents/skills/mcp-builder"
+        }
+      ],
+      "contentHash": "sha256:5e1b6737d8f2def79afcdb8b3f8aa8e274b6a34361a3a3487ce71777a0b9d8cb",
+      "license": {
+        "identifier": "Apache-2.0",
+        "copyPath": "vendor/mcp/.agents/skills/mcp-builder/LICENSE.txt",
+        "sha256": "bc6b3af2f331cbc7fb0da1344efb2cbe5877a31498b4d70dbc7000f3405a1362"
+      }
+    }
+  },
+  "runtimeGuidance": {
+    "tanstackIntent": {
+      "repository": "https://github.com/TanStack/intent",
+      "commit": "206e987a253aee4a26825e419eeda27d53832e49",
+      "upstreamSubdirectory": "packages/intent",
+      "upstreamTree": "5f3a5fd1281806677b4790ad66709ea84a39a685",
+      "pointerPath": "apps/example/AGENTS.md",
+      "pointerSha256": "7dfb6a8b8e6ae85feec656fbee70522ddd494bd355fe34fb0a47fc7896f65fce",
+      "command": "pnpm dlx @tanstack/intent@0.3.8 load @tanstack/react-start#react-start",
+      "executableVersion": "0.3.8",
+      "publishedIntegrity": "sha512-5KXhk+dPqzVHcETuf0Q6l1jasjFS2BJvG4Vw1dakuHEaQ85kZ3oSsOMROsad5w/DsEsQ9q1F00cQzIrk9jPzsQ==",
+      "license": {
+        "identifier": "MIT",
+        "copyPath": "provenance/licenses/tanstack-intent-MIT.txt",
+        "sha256": "4037eb25d975c92466cda6d95dd2b16207b97dda7b60f1fdcb33dfe06ed95240"
+      }
+    },
+    "reactStart": {
+      "repository": "https://github.com/TanStack/router",
+      "commit": "650acb4a894f7bf36bd3591de65d10bca9594254",
+      "upstreamSubdirectory": "packages/react-start/skills",
+      "upstreamTree": "cce8714768b4deaad9557c74da33e65284149cee",
+      "installedPath": "apps/example/node_modules/@tanstack/react-start/skills",
+      "installedVersion": "1.168.49",
+      "installedReactRouterVersion": "1.170.32",
+      "publishedContentHash": "sha256:634bc4ff296b0230f6aa14bfc2a75f74bb879494940fb93bb8422a6782c469b0",
+      "upstreamPublishExcludes": ["_artifacts"],
+      "license": {
+        "identifier": "MIT",
+        "copyPath": "provenance/licenses/tanstack-router-MIT.txt",
+        "sha256": "a405ee70c632bb938acb7ac5f210e814409b3760ea9d2329d8ed8ffcfd11a0e7"
+      }
+    }
+  },
+  "omissions": {
+    "remotion": {
+      "repository": "https://github.com/remotion-dev/skills",
+      "commit": "54e9b19a612897171e0b3b242e01c2badba4a272",
+      "reason": "Omitted because the reviewed revision does not provide sufficient explicit redistribution and license evidence."
+    }
+  }
+}
