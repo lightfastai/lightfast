@@ -143,7 +143,7 @@ jobs:
         run: pnpm turbo run build --filter=@lightfast/desktop --filter=@lightfast/mcp-local --filter=@lightfast/example --summarize
 
       - name: test-local-tools
-        run: pnpm turbo run test --filter=@lightfast/desktop --filter=@lightfast/mcp-local --filter=@lightfast/example --summarize
+        run: pnpm turbo run test --filter=@lightfast/desktop --filter=@lightfast/mcp-local --filter=@lightfast/example --filter=@lightfast/remotion --summarize
 
       - name: turbo-cache-report
         if: always()
