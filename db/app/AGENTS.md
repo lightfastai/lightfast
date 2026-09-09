@@ -1,0 +1,1 @@
+MySQL work: if `.agents/skills/mysql` is a regular file, read [the canonical skill](../../vendor/db/.agents/skills/mysql/SKILL.md) before editing. This is the fallback for Git checkouts without symlink support.

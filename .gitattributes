@@ -1,0 +1,5 @@
+# Preserve upstream and pointer bytes across Git checkout configurations.
+.agents/skills/** -text
+**/.agents/skills/** -text
+provenance/licenses/** -text
+apps/example/AGENTS.md -text

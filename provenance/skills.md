@@ -1,6 +1,6 @@
 # Official agent skill provenance
 
-Lightfast selects and places the upstream material below; the named vendors retain authorship. The canonical skill directories are byte-identical snapshots. Lightfast-owned material is limited to placement, pins, provenance, verification, symlinks, and the TanStack context pointer.
+Lightfast selects and places the upstream material below; the named vendors retain authorship. The canonical skill directories are byte-identical snapshots. Lightfast-owned material is limited to placement, pins, provenance, verification, checkout attributes, symlinks, and scoped context pointers.
 
 The deterministic content hash is SHA-256 over sorted records of each file's Git mode, POSIX-relative path, and SHA-256 byte hash, using the algorithm recorded in `skills-lock.json`.
 
@@ -36,6 +36,14 @@ Codex scans `.agents/skills` from its current working directory to the repositor
 | `apps/email`, `packages/email` | `turborepo`, `react-email` |
 | `apps/mcp`, `core/mcp`, `vendor/mcp` | `turborepo`, `mcp-builder` |
 | `apps/example` | `turborepo` plus the TanStack Intent pointer above |
+
+Git attributes disable text conversion for the byte-verified snapshots, license
+copies, and TanStack pointer, preserving upstream LF and CRLF bytes even with
+`core.autocrlf=true`. With `core.symlinks=false`, Git writes each alias as a
+regular file containing its relative target. A one-line package-local
+`AGENTS.md` pointer then directs the relevant work to the same canonical skill;
+the verifier checks the exact target text, fallback pointer, and scoped guidance.
+Normal symlink-capable checkouts continue using native skill discovery.
 
 ## Review and update policy
 

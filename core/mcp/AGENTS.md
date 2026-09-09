@@ -1,0 +1,1 @@
+MCP work: if `.agents/skills/mcp-builder` is a regular file, read [the canonical skill](../../vendor/mcp/.agents/skills/mcp-builder/SKILL.md) before editing. This is the fallback for Git checkouts without symlink support.

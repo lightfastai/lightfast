@@ -71,6 +71,12 @@ const expectedAliases = {
     "../../../../vendor/db/.agents/skills/mysql",
 };
 
+const aliasWorkTriggers = {
+  "mcp-builder": "MCP",
+  mysql: "MySQL",
+  "react-email": "React Email",
+};
+
 const expectedLayout = {
   ".agents/skills": ["turborepo"],
   "api/app/.agents/skills": ["orpc"],
@@ -249,6 +255,14 @@ function discoverRepositorySkills(scope) {
         const skillFile = join(skillsDirectory, entry, "SKILL.md");
         if (existsSync(skillFile)) {
           names.push(frontmatterName(skillFile));
+        } else {
+          // Git can materialize a symlink as its target text. Package-local
+          // AGENTS.md supplies the same scoped guidance in that checkout mode.
+          const aliasPath = join(skillsDirectory, entry);
+          const target = expectedAliases[repositoryPath(aliasPath)];
+          if (target && lstatSync(aliasPath).isFile() && readFileSync(aliasPath, "utf8") === target) {
+            names.push(frontmatterName(join(resolve(skillsDirectory, target), "SKILL.md")));
+          }
         }
       }
     }
@@ -287,6 +301,10 @@ function findForbiddenAgentDirectories() {
 
 expectEqual(Object.keys(lock.skills).sort(), Object.keys(expectedSkills).sort(), "skill set");
 expect(lock.formatVersion === 1, "skills-lock.json formatVersion must be 1");
+const attributes = readFileSync(join(repositoryRoot, ".gitattributes"), "utf8").replaceAll("\r\n", "\n");
+for (const rule of [".agents/skills/** -text", "**/.agents/skills/** -text", "provenance/licenses/** -text", "apps/example/AGENTS.md -text"]) {
+  expect(attributes.split("\n").includes(rule), `Missing byte-preserving Git attribute: ${rule}`);
+}
 
 for (const [name, expectedPin] of Object.entries(expectedSkills)) {
   const entry = lock.skills[name];
@@ -330,17 +348,29 @@ for (const [name, expectedPin] of Object.entries(expectedSkills)) {
 
   for (const alias of entry.aliases) {
     const aliasPath = join(repositoryRoot, alias.path);
+    const isSymlink = existsSync(aliasPath) && lstatSync(aliasPath).isSymbolicLink();
+    const isPortableAlias = existsSync(aliasPath) && lstatSync(aliasPath).isFile();
     expect(
-      existsSync(aliasPath) && lstatSync(aliasPath).isSymbolicLink(),
-      `${alias.path} must be a symlink`,
+      isSymlink || isPortableAlias,
+      `${alias.path} must be a symlink or Git's exact symlink target file`,
     );
-    if (existsSync(aliasPath)) {
-      expect(readlinkSync(aliasPath) === alias.target, `${alias.path} has the wrong relative target`);
+    if (isSymlink || isPortableAlias) {
+      const target = isSymlink ? readlinkSync(aliasPath) : readFileSync(aliasPath, "utf8");
+      expect(target === alias.target, `${alias.path} has the wrong relative target`);
       expect(
-        realpathSync(aliasPath) === realpathSync(canonicalPath),
+        realpathSync(resolve(dirname(aliasPath), alias.target)) === realpathSync(canonicalPath),
         `${alias.path} does not resolve to ${entry.canonicalPath}`,
       );
     }
+
+    const packagePath = dirname(dirname(dirname(aliasPath)));
+    const fallbackPath = join(packagePath, "AGENTS.md");
+    const canonicalLink = relative(packagePath, join(canonicalPath, "SKILL.md")).split(sep).join("/");
+    const expectedFallback = `${aliasWorkTriggers[name]} work: if \`.agents/skills/${name}\` is a regular file, read [the canonical skill](${canonicalLink}) before editing. This is the fallback for Git checkouts without symlink support.\n`;
+    expect(
+      existsSync(fallbackPath) && readFileSync(fallbackPath, "utf8").replaceAll("\r\n", "\n") === expectedFallback,
+      `${repositoryPath(fallbackPath)} must provide the scoped portable alias fallback`,
+    );
   }
 }
 
