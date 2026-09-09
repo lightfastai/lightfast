@@ -6,7 +6,9 @@
       "ignoreDependencies": ["@biomejs/biome"]
     },
     "apps/email": {
-      "ignoreDependencies": ["@repo/email"]
+      "entry": ["src/templates/*.tsx"],
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignoreDependencies": ["@react-email/render"]
     },
     "api/app": {
       "entry": ["src/**/*.test.ts"],
@@ -45,11 +47,6 @@
     "packages/*": {
       "project": ["src/**/*.{ts,tsx}"]
     },
-    "packages/email": {
-      "entry": ["src/**/*.{ts,tsx}"],
-      "project": ["src/**/*.{ts,tsx}"],
-      "ignoreDependencies": ["@react-email/render"]
-    },
     "packages/remotion": {
       "project": ["src/**/*.{ts,tsx,css}"]
     },
@@ -74,7 +71,7 @@
   "ignoreIssues": {
     "packages/api-contract/src/mcp.ts": ["types"],
     "packages/api-contract/src/schemas/signals.ts": ["duplicates"],
-    "packages/email/src/templates/*.tsx": ["duplicates"]
+    "apps/email/src/templates/*.tsx": ["duplicates"]
   },
   "ignoreDependencies": ["postcss", "tailwindcss", "@tailwindcss/postcss"]
 }

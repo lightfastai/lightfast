@@ -7,8 +7,9 @@
     "baseUrl": ".",
     "paths": {
       "@repo/ui-v2/*": ["../../packages/ui-v2/src/*"]
-    }
+    },
+    "types": ["node"]
   },
-  "include": ["../../packages/email/src"],
+  "include": ["src"],
   "exclude": ["node_modules", ".react-email", "out"]
 }

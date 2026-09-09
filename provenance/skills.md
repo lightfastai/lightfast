@@ -10,7 +10,7 @@ The deterministic content hash is SHA-256 over sorted records of each file's Git
 | oRPC core | <https://github.com/unnoq/orpc> | commit `0cd296a95c33f8871306ab38e16e63a450cca4d1`; `skills/orpc`; tree `47d8f19d0a1147e1b879e4ef719f9c1bca3af65b` | canonical `api/app/.agents/skills/orpc` | `sha256:c06fd88367387a8b565b508789eb23416a4b200044eefc34578cfe56522fa2ac` | MIT; `provenance/licenses/orpc-MIT.txt` |
 | oRPC contract | <https://github.com/unnoq/orpc> | commit `0cd296a95c33f8871306ab38e16e63a450cca4d1`; `skills/orpc-contract`; tree `7e854bb13ecefca583d1cfbe0b0f617adbc3f544` | canonical `packages/api-contract/.agents/skills/orpc-contract` | `sha256:db42079394b2e189fb724a3720cf7930325969ec95518353d89a1575ded370fb` | MIT; shared copy `provenance/licenses/orpc-MIT.txt` |
 | PlanetScale MySQL | <https://github.com/planetscale/database-skills> | commit `73b20b7eb64716d8c7100c054f0677c0c6e77e30`; `skills/mysql`; tree `a2d3f6d189cb2847d659da7108b399df9ac08875` | canonical `vendor/db/.agents/skills/mysql`; alias `db/app/.agents/skills/mysql` | `sha256:8524849f9887d261bc7e16d73524b73542c754d1bd24e23ada52389d057d48cf` | MIT; `provenance/licenses/planetscale-database-skills-MIT.txt` |
-| React Email | <https://github.com/resend/react-email> | commit `0f0cb94e1f15581131a2d50b80f8daa13dd1c9fc`; `skills/react-email`; tree `e6e198406ce5d1b14eb43e7a94f16b8bd2739461` | canonical `packages/email/.agents/skills/react-email`; alias `apps/email/.agents/skills/react-email` | `sha256:ca811fa039f2ddf1d1993e0e4b7a951f0fde4c9289f73c0fb29ac23d9e0c4ffc` | MIT; `provenance/licenses/react-email-MIT.txt` |
+| React Email | <https://github.com/resend/react-email> | commit `0f0cb94e1f15581131a2d50b80f8daa13dd1c9fc`; `skills/react-email`; tree `e6e198406ce5d1b14eb43e7a94f16b8bd2739461` | canonical `apps/email/.agents/skills/react-email` | `sha256:ca811fa039f2ddf1d1993e0e4b7a951f0fde4c9289f73c0fb29ac23d9e0c4ffc` | MIT; `provenance/licenses/react-email-MIT.txt` |
 | Anthropic MCP builder | <https://github.com/anthropics/skills> | commit `41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f`; `skills/mcp-builder`; tree `b866bcfb57b780c10b587c7b543e871a91661ce0` | canonical `vendor/mcp/.agents/skills/mcp-builder`; aliases in `apps/mcp` and `core/mcp` | `sha256:5e1b6737d8f2def79afcdb8b3f8aa8e274b6a34361a3a3487ce71777a0b9d8cb` | Apache-2.0; upstream-local `vendor/mcp/.agents/skills/mcp-builder/LICENSE.txt` |
 
 ## TanStack version-coupled guidance
@@ -33,7 +33,7 @@ Codex scans `.agents/skills` from its current working directory to the repositor
 | `api/app` | `turborepo`, `orpc` |
 | `packages/api-contract` | `turborepo`, `orpc-contract` |
 | `db/app`, `vendor/db` | `turborepo`, `mysql` |
-| `apps/email`, `packages/email` | `turborepo`, `react-email` |
+| `apps/email` | `turborepo`, `react-email` |
 | `apps/mcp`, `core/mcp`, `vendor/mcp` | `turborepo`, `mcp-builder` |
 | `apps/example` | `turborepo` plus the TanStack Intent pointer above |
 

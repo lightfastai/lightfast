@@ -1,1 +1,0 @@
-React Email work: if `.agents/skills/react-email` is a regular file, read [the canonical skill](../../packages/email/.agents/skills/react-email/SKILL.md) before editing. This is the fallback for Git checkouts without symlink support.
