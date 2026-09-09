@@ -45,7 +45,7 @@ const expectedSkills = {
     upstreamTree: "7e854bb13ecefca583d1cfbe0b0f617adbc3f544",
   },
   "react-email": {
-    canonicalPath: "packages/email/.agents/skills/react-email",
+    canonicalPath: "apps/email/.agents/skills/react-email",
     commit: "0f0cb94e1f15581131a2d50b80f8daa13dd1c9fc",
     repository: "https://github.com/resend/react-email",
     upstreamSubdirectory: "skills/react-email",
@@ -61,8 +61,6 @@ const expectedSkills = {
 };
 
 const expectedAliases = {
-  "apps/email/.agents/skills/react-email":
-    "../../../../packages/email/.agents/skills/react-email",
   "apps/mcp/.agents/skills/mcp-builder":
     "../../../../vendor/mcp/.agents/skills/mcp-builder",
   "core/mcp/.agents/skills/mcp-builder":
@@ -74,7 +72,6 @@ const expectedAliases = {
 const aliasWorkTriggers = {
   "mcp-builder": "MCP",
   mysql: "MySQL",
-  "react-email": "React Email",
 };
 
 const expectedLayout = {
@@ -85,7 +82,6 @@ const expectedLayout = {
   "core/mcp/.agents/skills": ["mcp-builder"],
   "db/app/.agents/skills": ["mysql"],
   "packages/api-contract/.agents/skills": ["orpc-contract"],
-  "packages/email/.agents/skills": ["react-email"],
   "vendor/db/.agents/skills": ["mysql"],
   "vendor/mcp/.agents/skills": ["mcp-builder"],
 };
@@ -101,7 +97,6 @@ const discoveryCases = {
   "core/mcp": ["mcp-builder", "turborepo"],
   "db/app": ["mysql", "turborepo"],
   "packages/api-contract": ["orpc-contract", "turborepo"],
-  "packages/email": ["react-email", "turborepo"],
   "packages/ui-v2": ["turborepo"],
   "vendor/db": ["mysql", "turborepo"],
   "vendor/mcp": ["mcp-builder", "turborepo"],

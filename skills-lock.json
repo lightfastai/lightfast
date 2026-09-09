@@ -69,13 +69,8 @@
       "commit": "0f0cb94e1f15581131a2d50b80f8daa13dd1c9fc",
       "upstreamSubdirectory": "skills/react-email",
       "upstreamTree": "e6e198406ce5d1b14eb43e7a94f16b8bd2739461",
-      "canonicalPath": "packages/email/.agents/skills/react-email",
-      "aliases": [
-        {
-          "path": "apps/email/.agents/skills/react-email",
-          "target": "../../../../packages/email/.agents/skills/react-email"
-        }
-      ],
+      "canonicalPath": "apps/email/.agents/skills/react-email",
+      "aliases": [],
       "contentHash": "sha256:ca811fa039f2ddf1d1993e0e4b7a951f0fde4c9289f73c0fb29ac23d9e0c4ffc",
       "license": {
         "identifier": "MIT",

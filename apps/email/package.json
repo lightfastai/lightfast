@@ -5,18 +5,20 @@
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
-    "build": "email build --dir ../../packages/email/src/templates",
+    "build": "email build --dir src/templates",
     "clean": "git clean -xdf .cache .react-email .turbo out node_modules",
-    "dev": "email dev --dir ../../packages/email/src/templates --port 3005",
-    "export": "email export --dir ../../packages/email/src/templates --outDir out --plainText",
+    "dev": "email dev --dir src/templates --port 3005",
+    "export": "email export --dir src/templates --outDir out --plainText",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@repo/email": "workspace:*",
+    "@react-email/components": "catalog:",
+    "@repo/ui-v2": "workspace:*",
     "react": "catalog:react19",
     "react-dom": "catalog:react19"
   },
   "devDependencies": {
+    "@react-email/render": "catalog:",
     "@react-email/ui": "catalog:",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
