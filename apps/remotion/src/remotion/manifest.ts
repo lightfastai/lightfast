@@ -2,7 +2,7 @@
  * Composition Manifest — Single Source of Truth
  *
  * To add a new composition:
- * 1. Create the component in src/compositions/<name>/<name>.tsx
+ * 1. Create the component in src/remotion/compositions/<name>/<name>.tsx
  * 2. Add a COMPONENTS entry in Root.tsx
  * 3. Add the composition definition here with its output targets
  * 4. Run: pnpm render:all

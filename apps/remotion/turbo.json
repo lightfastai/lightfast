@@ -3,6 +3,9 @@
   "extends": ["//"],
   "tags": ["app"],
   "tasks": {
+    "test": {
+      "inputs": ["$TURBO_DEFAULT$"]
+    },
     "dev": {
       "cache": false,
       "persistent": true

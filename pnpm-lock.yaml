@@ -392,18 +392,27 @@ importers:
 
   apps/remotion:
     dependencies:
-      '@repo/remotion':
+      '@repo/ui-v2':
         specifier: workspace:*
-        version: link:../../packages/remotion
+        version: link:../../packages/ui-v2
       '@vendor/remotion':
         specifier: workspace:*
         version: link:../../vendor/remotion
+      clsx:
+        specifier: 'catalog:'
+        version: 2.1.1
       react:
         specifier: ^19.2.8
         version: 19.2.8
       react-dom:
         specifier: ^19.2.8
         version: 19.2.8(react@19.2.8)
+      tailwind-merge:
+        specifier: 'catalog:'
+        version: 3.6.0
+      tailwindcss:
+        specifier: catalog:tailwind4
+        version: 4.2.2
     devDependencies:
       '@remotion/cli':
         specifier: catalog:remotion4
@@ -411,9 +420,6 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
-      '@repo/ui-v2':
-        specifier: workspace:*
-        version: link:../../packages/ui-v2
       '@tailwindcss/postcss':
         specifier: catalog:tailwind4
         version: 4.2.2
@@ -438,9 +444,6 @@ importers:
       style-loader:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.105.4(postcss@8.5.23))
-      tailwindcss:
-        specifier: catalog:tailwind4
-        version: 4.2.2
       tsx:
         specifier: 'catalog:'
         version: 4.23.13
@@ -741,40 +744,6 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(@vitest/coverage-v8@4.1.11)(msw@2.15.0(@types/node@24.13.3)(typescript@5.9.3))(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))
-
-  packages/remotion:
-    dependencies:
-      '@repo/ui-v2':
-        specifier: workspace:*
-        version: link:../ui-v2
-      '@vendor/remotion':
-        specifier: workspace:*
-        version: link:../../vendor/remotion
-      clsx:
-        specifier: 'catalog:'
-        version: 2.1.1
-      react:
-        specifier: ^19.2.8
-        version: 19.2.8
-      tailwind-merge:
-        specifier: 'catalog:'
-        version: 3.6.0
-      tailwindcss:
-        specifier: catalog:tailwind4
-        version: 4.2.2
-    devDependencies:
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../internal/typescript
-      '@types/node':
-        specifier: 'catalog:'
-        version: 24.13.3
-      '@types/react':
-        specifier: ^19.2.18
-        version: 19.2.18
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
 
   packages/ui-v2:
     dependencies:
