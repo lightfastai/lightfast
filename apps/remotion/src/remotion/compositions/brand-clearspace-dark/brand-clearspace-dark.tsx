@@ -4,7 +4,7 @@ import {
   LOGO_MARK_VIEWBOX_SIZE,
   WORDMARK_LOCKUP_VIEWBOX,
   WORDMARK_PATH,
-} from "@repo/ui-v2/components/brand/logo";
+} from "@repo/ui/components/brand/logo";
 import { AbsoluteFill } from "@vendor/remotion";
 import type React from "react";
 

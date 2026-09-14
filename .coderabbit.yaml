@@ -121,7 +121,7 @@ reviews:
       instructions: |
         Local-only TanStack Start example. Review for:
         - tanstackStart() must precede the React Vite plugin
-        - Shared components and styles come from @repo/ui-v2
+        - Shared components and styles come from @repo/ui
         - No Vercel, microfrontend, hosted auth, database, queue, or production backend configuration
 
     - path: "api/**"

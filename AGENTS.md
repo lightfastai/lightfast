@@ -8,7 +8,7 @@ Lightfast is a pnpm/Turborepo monorepo for AI agent orchestration tooling. See
 ```text
 Local browser development
   https://[<wt>.]example.lightfast.localhost
-    apps/example · local-only TanStack Start app · @repo/ui-v2
+    apps/example · local-only TanStack Start app · @repo/ui
 
   https://[<wt>.]storybook.lightfast.localhost
     apps/storybook · shared UI component workshop
@@ -31,7 +31,7 @@ Backend and data packages
 
 Public website
   https://lightfast.ai · owned by https://github.com/lightfastai/www
-  packages/ui-v2 is preserved here; website work belongs in the external repo.
+  packages/ui is preserved here; website work belongs in the external repo.
 ```
 
 The retired private `apps/app` and hosted `apps/mcp` products have no

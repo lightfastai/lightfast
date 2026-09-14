@@ -3,7 +3,7 @@ import {
   DOT_MATRIX_PATH,
   WORDMARK_PATH,
   WORDMARK_VIEWBOX,
-} from "@repo/ui-v2/components/brand/logo";
+} from "@repo/ui/components/brand/logo";
 
 export interface EmailFooterProps {
   manageUrl: string;

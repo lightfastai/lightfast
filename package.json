@@ -20,7 +20,7 @@
     "typecheck": "SKIP_ENV_VALIDATION=true turbo run typecheck",
     "verify:public-api": "SKIP_ENV_VALIDATION=true turbo run typecheck test --filter=@repo/api-contract --filter=@api/app --filter=lightfast --filter=@lightfastai/cli --filter=@lightfastai/mcp --filter=@lightfast/mcp-local --filter=@vendor/mcp --continue --summarize",
     "verify:skills": "node scripts/verify-agent-skills.mjs",
-    "ui": "turbo run ui --filter=@repo/ui-v2",
+    "ui": "turbo run ui --filter=@repo/ui",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "publish:sdk-mcp": "changeset publish",

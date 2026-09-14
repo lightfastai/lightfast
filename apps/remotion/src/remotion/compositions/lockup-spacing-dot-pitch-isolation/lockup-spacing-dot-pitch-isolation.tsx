@@ -6,7 +6,7 @@ import {
   WORDMARK_LOCKUP_VIEWBOX_Y,
   WORDMARK_PATH,
   WORDMARK_UNITS_PER_EM,
-} from "@repo/ui-v2/components/brand/logo";
+} from "@repo/ui/components/brand/logo";
 import { AbsoluteFill } from "@vendor/remotion";
 import type React from "react";
 

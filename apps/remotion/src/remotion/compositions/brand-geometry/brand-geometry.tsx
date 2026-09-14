@@ -4,7 +4,7 @@ import {
   LOGO_DOT_DIAMETER,
   LOGO_DOT_PITCH,
   LOGO_MARK_VIEWBOX_SIZE,
-} from "@repo/ui-v2/components/brand/logo";
+} from "@repo/ui/components/brand/logo";
 import {
   AbsoluteFill,
   continueRender,

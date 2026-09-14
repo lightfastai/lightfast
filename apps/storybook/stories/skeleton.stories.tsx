@@ -1,4 +1,4 @@
-import { Skeleton } from "@repo/ui-v2/components/ui/skeleton";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 /**

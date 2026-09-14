@@ -1,5 +1,5 @@
-import { Logo } from "@repo/ui-v2/components/brand/logo";
-import { Input } from "@repo/ui-v2/components/ui/input";
+import { Logo } from "@repo/ui/components/brand/logo";
+import { Input } from "@repo/ui/components/ui/input";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect } from "storybook/test";
 

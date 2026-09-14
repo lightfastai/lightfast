@@ -1,6 +1,6 @@
 import { Loading03Icon, Mail01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Button } from "@repo/ui-v2/components/ui/button";
+import { Button } from "@repo/ui/components/ui/button";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect } from "storybook/test";
 

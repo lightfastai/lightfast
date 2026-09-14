@@ -47,7 +47,7 @@
     "packages/*": {
       "project": ["src/**/*.{ts,tsx}"]
     },
-    "packages/ui-v2": {
+    "packages/ui": {
       "entry": ["src/**/*.{ts,tsx}"],
       "project": ["src/**/*.{ts,tsx,css}"]
     },

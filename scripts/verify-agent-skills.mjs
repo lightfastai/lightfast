@@ -97,7 +97,7 @@ const discoveryCases = {
   "core/mcp": ["mcp-builder", "turborepo"],
   "db/app": ["mysql", "turborepo"],
   "packages/api-contract": ["orpc-contract", "turborepo"],
-  "packages/ui-v2": ["turborepo"],
+  "packages/ui": ["turborepo"],
   "vendor/db": ["mysql", "turborepo"],
   "vendor/mcp": ["mcp-builder", "turborepo"],
 };

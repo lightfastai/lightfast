@@ -1,4 +1,4 @@
-import { Logo } from "@repo/ui-v2/components/brand/logo";
+import { Logo } from "@repo/ui/components/brand/logo";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect } from "storybook/test";
 

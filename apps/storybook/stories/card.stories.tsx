@@ -1,6 +1,6 @@
 import { MoreHorizontalIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Button } from "@repo/ui-v2/components/ui/button";
+import { Button } from "@repo/ui/components/ui/button";
 import {
   Card,
   CardAction,
@@ -9,8 +9,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@repo/ui-v2/components/ui/card";
-import { Switch } from "@repo/ui-v2/components/ui/switch";
+} from "@repo/ui/components/ui/card";
+import { Switch } from "@repo/ui/components/ui/switch";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 const notifications = [

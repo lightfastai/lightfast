@@ -7,7 +7,7 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@repo/ui-v2/*": ["../../packages/ui-v2/src/*"]
+      "@repo/ui/*": ["../../packages/ui/src/*"]
     }
   },
   "include": [".storybook", "stories"],

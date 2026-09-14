@@ -1,9 +1,9 @@
-import { Button } from "@repo/ui-v2/components/ui/button";
+import { Button } from "@repo/ui/components/ui/button";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@repo/ui-v2/components/ui/hover-card";
+} from "@repo/ui/components/ui/hover-card";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 /**

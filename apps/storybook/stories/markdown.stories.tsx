@@ -1,4 +1,4 @@
-import { markdownComponents } from "@repo/ui-v2/components/content/markdown";
+import { markdownComponents } from "@repo/ui/components/content/markdown";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 const {
