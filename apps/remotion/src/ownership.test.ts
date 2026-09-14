@@ -5,6 +5,7 @@ import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import type { ReactElement } from "react";
+import { BRAND_COMPOSITIONS, BRAND_ICO } from "./brand-manifest";
 import {
   type CompositionEntry,
   type CompositionManifest,
@@ -38,14 +39,51 @@ test("retains every historical source file and static asset byte", () => {
   );
   assert.deepEqual(files.sort(), Object.keys(preservation.files).sort());
   for (const [file, expected] of Object.entries(preservation.files)) {
-    assert.equal(sha256(readFileSync(path.join(appDir, file))), expected, file);
+    let contents = readFileSync(path.join(appDir, file), "utf8");
+    // Only these assembly additions are intentional. Preserve the original fixture.
+    if (file === "src/remotion/Root.tsx") {
+      contents = contents
+        .replace('import { BrandIcon, BrandSvg } from "../brand";\n', "")
+        .replace("  BrandIcon,\n  BrandSvg,\n", "");
+    } else if (file === "src/remotion/manifest.ts") {
+      contents = contents
+        .replace(
+          'import { BRAND_COMPOSITIONS, BRAND_ICO } from "../brand-manifest";\n',
+          ""
+        )
+        .replace("    ...BRAND_COMPOSITIONS,\n", "")
+        .replace(
+          'format: "png" | "webp" | "webm" | "svg";',
+          'format: "png" | "webp" | "webm";'
+        )
+        .replace("postProcess: [BRAND_ICO]", "postProcess: []");
+    } else {
+      assert.equal(
+        sha256(readFileSync(path.join(appDir, file))),
+        expected,
+        file
+      );
+      continue;
+    }
+    assert.equal(sha256(contents), expected, file);
   }
 });
 
 test("retains the complete manifest and local output contracts", () => {
   const manifest: CompositionManifest = MANIFEST;
-  assert.equal(sha256(JSON.stringify(manifest)), preservation.manifestSha256);
-  assert.equal(getStills().length, 28);
+  const historicalManifest = {
+    compositions: Object.fromEntries(
+      Object.entries(manifest.compositions).filter(
+        ([id]) => !(id in BRAND_COMPOSITIONS)
+      )
+    ),
+    postProcess: [],
+  };
+  assert.equal(
+    sha256(JSON.stringify(historicalManifest)),
+    preservation.manifestSha256
+  );
+  assert.equal(getStills().length, 28 + Object.keys(BRAND_COMPOSITIONS).length);
   assert.equal(getVideos().length, 1);
   const outDir = path.resolve(appDir, "out");
   const repoDir = path.resolve(appDir, "../..");
@@ -59,7 +97,16 @@ test("retains the complete manifest and local output contracts", () => {
       assert.ok(dest.startsWith(`${outDir}${path.sep}`), dest);
     }
   }
-  assert.deepEqual(manifest.postProcess, []);
+  assert.deepEqual(manifest.postProcess, [BRAND_ICO]);
+  for (const pp of manifest.postProcess) {
+    for (const dest of pp.dests) {
+      assert.ok(
+        path
+          .resolve(repoDir, dest, pp.filename)
+          .startsWith(`${outDir}${path.sep}`)
+      );
+    }
+  }
   const video = getVideos()[0]![1];
   assert.deepEqual(
     video.renderProfile.ffmpegOverride!({
