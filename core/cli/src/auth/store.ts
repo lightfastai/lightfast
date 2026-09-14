@@ -8,13 +8,8 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { dirname } from "node:path";
-
-import {
-  type NativeSession,
-  nativeSessionSchema,
-} from "@repo/native-auth-contract";
-
 import { getAuthFilePath } from "./config";
+import { type NativeSession, nativeSessionSchema } from "./contract";
 
 export class SessionStore {
   constructor(private readonly filePath = getAuthFilePath()) {}

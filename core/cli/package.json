@@ -27,7 +27,9 @@
     "lightfast": "./dist/bin.mjs"
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE-APACHE-2.0",
+    "NOTICE"
   ],
   "scripts": {
     "build": "tsup",
@@ -37,8 +39,6 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@repo/native-auth-contract": "workspace:*",
-    "@repo/native-auth-node": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "@types/node": "catalog:",

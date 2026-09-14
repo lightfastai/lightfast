@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Relocated into the CLI; see ../../NOTICE and ../../LICENSE-APACHE-2.0.
+
 import { z } from "zod";
 
 export const NATIVE_AUTH_SCHEMA_VERSION = 2;
@@ -8,7 +11,7 @@ export const NATIVE_OAUTH_SCOPES = [
   "email",
   "offline_access",
 ] as const;
-export const NATIVE_OAUTH_REQUIRED_ACCESS_SCOPES = [
+const NATIVE_OAUTH_REQUIRED_ACCESS_SCOPES = [
   "openid",
   "profile",
   "email",
@@ -32,7 +35,7 @@ export const nativeOAuthConfigSchema = z.object({
   tokenEndpoint: z.string().url(),
 });
 
-export const nativeOrganizationSchema = z.object({
+const nativeOrganizationSchema = z.object({
   bindingStatus: z.enum(["bound", "unbound"]),
   id: z.string().min(1),
   name: z.string().min(1),
@@ -40,7 +43,7 @@ export const nativeOrganizationSchema = z.object({
   slug: z.string().min(1).nullable(),
 });
 
-export const nativeUserSchema = z.object({
+const nativeUserSchema = z.object({
   email: z.string().email().nullable(),
   id: z.string().min(1),
   imageUrl: z.string().min(1).nullable().optional(),
@@ -58,21 +61,6 @@ export const nativeSessionMetadataSchema = z.object({
   user: nativeUserSchema,
 });
 
-export const nativeFinalizeRequestSchema = z.object({
-  attemptId: z.string().min(16),
-  client: nativeClientSchema,
-  state: z.string().min(16).max(2048),
-});
-
-export const nativeCreateAttemptInputSchema = z.object({
-  client: nativeClientSchema,
-  codeChallenge: z.string().min(43).max(128),
-  codeChallengeMethod: z.literal("S256"),
-  organizationId: z.string().min(1),
-  redirectUri: z.string().url(),
-  stateNonce: z.string().min(16).max(256),
-});
-
 export const oauthTokenResponseSchema = z.object({
   access_token: z.string().min(1),
   expires_in: z.number().positive(),
@@ -82,7 +70,7 @@ export const oauthTokenResponseSchema = z.object({
     .transform(() => "Bearer" as const),
 });
 
-export const tokenSetSchema = z.object({
+const tokenSetSchema = z.object({
   accessToken: z.string().min(1),
   expiresAt: z.number().int().positive(),
   refreshToken: z.string().min(1),
@@ -103,13 +91,8 @@ export const nativeSessionSchema = z.object({
 });
 
 export type NativeOAuthConfig = z.infer<typeof nativeOAuthConfigSchema>;
-export type NativeOrganization = z.infer<typeof nativeOrganizationSchema>;
 export type NativeSessionMetadata = z.infer<typeof nativeSessionMetadataSchema>;
 export type NativeSession = z.infer<typeof nativeSessionSchema>;
-export type NativeCreateAttemptInput = z.infer<
-  typeof nativeCreateAttemptInputSchema
->;
-export type OAuthTokenResponse = z.infer<typeof oauthTokenResponseSchema>;
 export type TokenSet = z.infer<typeof tokenSetSchema>;
 
 export function hasRequiredNativeOAuthScopes(

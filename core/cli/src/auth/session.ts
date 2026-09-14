@@ -1,8 +1,4 @@
-import type {
-  NativeOAuthConfig,
-  NativeSession,
-  TokenSet,
-} from "@repo/native-auth-contract";
+import type { NativeOAuthConfig, NativeSession, TokenSet } from "./contract";
 
 import { CliAuthError } from "./errors";
 import { refreshAccessToken } from "./token-client";

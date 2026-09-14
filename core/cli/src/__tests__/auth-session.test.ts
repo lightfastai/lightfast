@@ -1,8 +1,5 @@
-import type {
-  NativeOAuthConfig,
-  NativeSession,
-} from "@repo/native-auth-contract";
 import { describe, expect, it, vi } from "vitest";
+import type { NativeOAuthConfig, NativeSession } from "../auth/contract";
 
 import { getValidAccessToken } from "../auth/session";
 

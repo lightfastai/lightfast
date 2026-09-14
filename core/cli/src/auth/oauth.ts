@@ -1,13 +1,13 @@
-import type { NativeClient } from "@repo/native-auth-contract";
+import type { NativeClient } from "./contract";
 
+export { startLoopbackServer } from "./loopback";
+export { assertNativeOAuthState } from "./oauth-state";
 export {
-  assertNativeOAuthState,
   buildCodeChallenge,
   buildLoopbackRedirectUri,
   createCodeVerifier,
   createStateNonce,
-  startLoopbackServer,
-} from "@repo/native-auth-node";
+} from "./pkce";
 
 export function buildNativeAuthStartUrl(input: {
   appUrl: string;

@@ -1,7 +1,10 @@
+// SPDX-License-Identifier: Apache-2.0
+// Relocated into the CLI; see ../../NOTICE and ../../LICENSE-APACHE-2.0.
+
 import { request } from "node:http";
 import { describe, expect, it } from "vitest";
-
-import { NativeAuthError, startLoopbackServer } from "..";
+import { startLoopbackServer } from "../auth/loopback";
+import { NativeAuthError } from "../auth/native-errors";
 
 function get(url: string): Promise<{ body: string; statusCode: number }> {
   return new Promise((resolve, reject) => {
@@ -20,7 +23,7 @@ function get(url: string): Promise<{ body: string; statusCode: number }> {
   });
 }
 
-describe("@repo/native-auth-node loopback server", () => {
+describe("CLI auth loopback server", () => {
   it("captures callback code and state on an ephemeral loopback port", async () => {
     const server = await startLoopbackServer({
       expectedStateNonce: "nonce_1234567890",
