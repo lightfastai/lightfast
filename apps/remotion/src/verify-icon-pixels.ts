@@ -18,7 +18,7 @@ function paeth(a: number, b: number, c: number) {
 }
 
 /** Decode Chromium's noninterlaced 8-bit RGB/RGBA output for content checks. */
-export function decodePngPixels(png: Buffer) {
+function decodePngPixels(png: Buffer) {
   const width = png.readUInt32BE(16);
   const height = png.readUInt32BE(20);
   assert.equal(png[24], 8, "PNG bit depth");

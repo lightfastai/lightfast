@@ -10,7 +10,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { BRAND_CLEARSPACE, BrandSvg, getBrandDimensions } from "./brand";
 import { BRAND_COMPOSITIONS, BRAND_ICO, BRAND_ICONS } from "./brand-manifest";
 import { selectRenderIds } from "./render-selection";
-import { buildZip } from "./zip";
 
 test("public SVGs retain both canonical paths, lockup metrics and exact 3L clearspace", () => {
   assert.equal(BRAND_CLEARSPACE, 36);
@@ -55,8 +54,8 @@ test("public SVGs retain both canonical paths, lockup metrics and exact 3L clear
   }
 });
 
-test("the focused pack selects all native sizes and fresh ICO dependencies without historical media", () => {
-  const selected = selectRenderIds(["--pack", "brand"]);
+test("the brand selection includes individual sizes and variants with fresh ICO dependencies", () => {
+  const selected = selectRenderIds(["--only", "brand"]);
   assert.deepEqual([...selected], Object.keys(BRAND_COMPOSITIONS));
   assert.deepEqual(
     BRAND_ICONS.map(([size]) => size),
@@ -64,36 +63,40 @@ test("the focused pack selects all native sizes and fresh ICO dependencies witho
   );
   assert.ok(BRAND_ICO.sources.every((id) => selected.has(id)));
   assert.ok(!(selected.has("landing-hero") || selected.has("logo-1024")));
-  assert.deepEqual(selectRenderIds(["--id", "brand-preview"]), selected);
   const single = selectRenderIds(["--only", "stills", "--id", "brand-icon-16"]);
   assert.deepEqual([...single], ["brand-icon-16"]);
   assert.ok(!BRAND_ICO.sources.every((id) => single.has(id)));
   assert.deepEqual([...selectRenderIds(["--id", "logo-1024"])], ["logo-1024"]);
+  for (const id of Object.keys(BRAND_COMPOSITIONS)) {
+    assert.deepEqual(
+      [...selectRenderIds(["--only", "brand", "--id", id])],
+      [id]
+    );
+    assert.equal(BRAND_COMPOSITIONS[id]!.outputs.length, 1);
+  }
+  for (const id of [
+    "brand-symbol-black",
+    "brand-symbol-white",
+    "brand-logo-black",
+    "brand-logo-white",
+  ]) {
+    assert.equal(BRAND_COMPOSITIONS[id]?.component, "BrandSvg");
+    assert.equal(BRAND_COMPOSITIONS[id]?.outputs[0]?.format, "svg");
+  }
+  assert.equal(BRAND_COMPOSITIONS["brand-preview"], undefined);
 });
 
 test("invalid render selections fail before bundling or writing", () => {
   for (const args of [
     ["--id", "missing"],
     ["--only", "videos"],
-    ["--pack", "unknown"],
-    ["--pack", "brand", "--id", "logo-1024"],
+    ["--pack", "brand"],
+    ["--only", "brand", "--id", "logo-1024"],
+    ["--id", "brand-preview"],
     ["--id"],
     ["--only", "video", "--id", "brand-icon-16"],
     ["--only", "all", "--only", "stills"],
   ]) {
     assert.throws(() => selectRenderIds(args));
   }
-});
-
-test("portable ZIP has fixed metadata and standard CRC-32", () => {
-  const entries = [
-    { filename: "fixture.txt", bytes: Buffer.from("123456789") },
-  ];
-  const zip = buildZip(entries);
-  assert.deepEqual(buildZip(entries), zip);
-  assert.equal(zip.readUInt32LE(0), 0x04_03_4b_50);
-  assert.equal(zip.readUInt32LE(14), 0xcb_f4_39_26);
-  assert.equal(zip.readUInt16LE(12), 33);
-  assert.equal(zip.readUInt32LE(zip.length - 22), 0x06_05_4b_50);
-  assert.equal(zip.readUInt16LE(zip.length - 12), 1);
 });

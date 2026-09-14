@@ -11,7 +11,7 @@
     "test": "tsx --test src/*.test.ts src/*.test.tsx",
     "studio": "remotion studio src/index.ts",
     "render:all": "tsx src/render.ts",
-    "render:brand": "tsx src/render.ts --pack brand",
+    "render:brand": "tsx src/render.ts --only brand",
     "render:video": "tsx src/render.ts --only video",
     "render:stills": "tsx src/render.ts --only stills"
   },

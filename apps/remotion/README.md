@@ -30,56 +30,65 @@ formats, scales, codec/profile, filenames and destinations under
 are local generated output, not publication targets. Studio and rendering
 share the CSS override and use `public` unchanged.
 
-## Dotted public asset pack
+## Individual dotted logo assets
 
-`pnpm --filter @lightfast/remotion render:brand` renders only the eight brand
-compositions, exports four SVGs, packs the three current favicon frames into
-ICO, verifies the actual output pixels and formats, and writes a portable ZIP.
-It does not render the historical media. All files stay in
-`apps/remotion/out/brand-pack` (ignored); the command has no website-copy or
-deployment step.
+Each composition below is separately selectable in Remotion Studio and can
+be rendered on its own. For example:
 
-| Output | Use |
+```sh
+pnpm --filter @lightfast/remotion render:brand --id brand-logo-black
+pnpm --filter @lightfast/remotion render:brand --id brand-icon-16
+```
+
+Outputs stay in `apps/remotion/out/brand-assets` (ignored):
+
+| Composition | Standalone output |
 | --- | --- |
-| `lightfast-symbol-black.svg`, `lightfast-symbol-white.svg` | Transparent symbol, compact icons |
-| `lightfast-logo-black.svg`, `lightfast-logo-white.svg` | Transparent full lockup, default public logo |
-| `favicon-16x16.png`, `favicon-32x32.png`, `favicon-48x48.png` | Native favicon sizes |
-| `favicon.ico` | Exact 16/32/48 PNG frames |
-| `apple-touch-icon.png` | 180px opaque icon |
-| `android-chrome-192x192.png`, `android-chrome-512x512.png` | Ordinary Android icons, not maskable |
-| `lightfast-symbol-1024.png` | High-resolution symbol |
-| `preview.png` | Actual files, native small pixels plus nearest-neighbor enlargements |
-| `manifest.json`, `README.txt`, `lightfast-brand-pack.zip` | Source/checksum receipt, usage notes, portable pack |
+| `brand-symbol-black` | `lightfast-symbol-black.svg` |
+| `brand-symbol-white` | `lightfast-symbol-white.svg` |
+| `brand-logo-black` | `lightfast-logo-black.svg` |
+| `brand-logo-white` | `lightfast-logo-white.svg` |
+| `brand-icon-16` | `favicon-16x16.png` |
+| `brand-icon-32` | `favicon-32x32.png` |
+| `brand-icon-48` | `favicon-48x48.png` |
+| `brand-icon-180` | `apple-touch-icon.png` |
+| `brand-icon-192` | `android-chrome-192x192.png` |
+| `brand-icon-512` | `android-chrome-512x512.png` |
+| `brand-icon-1024` | `lightfast-symbol-1024.png` |
 
-`src/brand.tsx` imports the canonical paths and lockup metrics from
-`packages/ui/src/components/brand/logo.tsx`. It does not duplicate paths or
-depend on installed fonts. SVGs use exact black/white; PNGs use a black symbol
-on an opaque white square. The public 3L exclusion zone is derived from the
-12-unit dot pitch: 36 units around the 80-unit mark. Lockup alignment uses
-`getLogoMetrics(80)` and `WORDMARK_LOCKUP_VIEWBOX` unchanged.
+`pnpm --filter @lightfast/remotion render:brand` generates all these individual
+files and the standard `favicon.ico` containing the exact 16/32/48px PNG
+frames. An individual icon render does not rebuild ICO from stale files.
+There is no contact sheet or archive. Historical media is not rendered by
+this command; its compositions and output contracts remain available.
 
-At 16px, that padding leaves an 8.42px mark with 0.84px dots, so the original
-circles are visibly antialiased. This pack does not thicken dots or reduce
-clearspace. Use white SVGs on a contrasting dark surface and preserve the
-supplied aspect ratio and exclusion zone. See the
-[public brand guidance](https://lightfast.ai/brand).
+`src/brand.tsx` uses the canonical paths and lockup metrics from
+`packages/ui/src/components/brand/logo.tsx`. SVG export serializes the same
+component registered in Studio, without requiring installed fonts. SVGs are
+transparent black/white variants; PNGs are a black symbol on an opaque white
+square. The 3L exclusion zone is exactly 36 units around the 80-unit mark.
+Lockup alignment uses `getLogoMetrics(80)` and `WORDMARK_LOCKUP_VIEWBOX`.
+Studio composition dimensions round up to whole pixels; the SVG file retains
+its exact fractional viewBox and aspect ratio.
 
-The receipt records the source commit, whether the source tree was dirty,
-geometry hashes, and SHA-256 hashes of all 13 image assets. For a release-ready
-handoff, render from a clean committed checkout and require
-`sourceTreeDirty: false`. PNG byte reproduction requires the same Remotion
-and Chromium versions/platform; the ZIP uses fixed metadata and sorted files.
-The command verifies PNG size, opacity, grayscale, circle coverage and 3L
-bounds; SVG source fidelity; ICO frame byte identity; and populated preview
-panels before writing the archive. Inspect `preview.png` before adoption.
+At 16px the mark is 8.42px across with 0.84px dots, so the original circles
+are visibly antialiased. No dot thickening or clearspace reduction is applied.
+Use white SVGs on a contrasting dark surface and the full lockup as the
+default public logo; the standalone symbol is for compact icons and favicons.
+See the [public brand guidance](https://lightfast.ai/brand).
 
-`--id brand-preview` rerenders its seven icon dependencies and the complete
-pack. An individual icon render does not repack ICO from stale frames.
-Unknown IDs, modes and incompatible filters fail before rendering.
+Each rendered file is checked for its format and canonical geometry; PNG
+checks also cover opacity, grayscale, circle coverage and clearspace. The
+standard ICO is checked against its exact PNG frames. A technical receipt in
+`.cache/brand-render-receipt.json` records the generating commit, dirty-tree
+flag, geometry hashes and hashes of the files rendered in that invocation.
+Render from a clean committed checkout for handoff. PNG byte reproduction
+requires the same Remotion/Chromium versions and platform.
 
-The production favicon/head/manifest rollout remains a separate follow-up in
-`lightfastai/www`; this pack does not change that repository or live site.
-No maskable artwork, web manifest, new palette, or optical variant is supplied.
+Production favicon/head/manifest adoption belongs to a separate follow-up in
+`lightfastai/www`. This command does not copy files to that repository or
+deploy. Android outputs are ordinary icons; no maskable artwork, web manifest,
+new palette or optical variant is supplied.
 
 ## Preservation checks
 

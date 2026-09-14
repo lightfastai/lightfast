@@ -43,8 +43,8 @@ test("retains every historical source file and static asset byte", () => {
     // Only these assembly additions are intentional. Preserve the original fixture.
     if (file === "src/remotion/Root.tsx") {
       contents = contents
-        .replace('import { BrandIcon, BrandPreview } from "../brand";\n', "")
-        .replace("  BrandIcon,\n  BrandPreview,\n", "");
+        .replace('import { BrandIcon, BrandSvg } from "../brand";\n', "")
+        .replace("  BrandIcon,\n  BrandSvg,\n", "");
     } else if (file === "src/remotion/manifest.ts") {
       contents = contents
         .replace(
@@ -52,6 +52,10 @@ test("retains every historical source file and static asset byte", () => {
           ""
         )
         .replace("    ...BRAND_COMPOSITIONS,\n", "")
+        .replace(
+          'format: "png" | "webp" | "webm" | "svg";',
+          'format: "png" | "webp" | "webm";'
+        )
         .replace("postProcess: [BRAND_ICO]", "postProcess: []");
     } else {
       assert.equal(

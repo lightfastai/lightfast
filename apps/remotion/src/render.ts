@@ -7,12 +7,13 @@ import {
   renderStill,
   selectComposition,
 } from "@vendor/remotion/renderer";
-import { BRAND_COMPOSITIONS, BRAND_DEST } from "./brand-manifest";
 import {
-  getBrandPreviewProps,
-  packageBrandPack,
-  writeBrandVectors,
-} from "./brand-pack";
+  renderBrandSvg,
+  verifyBrandFile,
+  verifyFaviconIco,
+  writeBrandReceipt,
+} from "./brand-files";
+import { BRAND_COMPOSITIONS } from "./brand-manifest";
 import { enableCssLoaders, getStills, getVideos, MANIFEST } from "./remotion";
 import { selectRenderIds } from "./render-selection";
 
@@ -72,7 +73,7 @@ async function distribute(
 }
 
 // ── Filter support ───────────────────────────────────────────────────
-// Usage: tsx src/render.ts [--only stills|video|all] [--id composition-id | --pack brand]
+// Usage: tsx src/render.ts [--only stills|video|brand|all] [--id composition-id]
 
 async function main() {
   const selected = selectRenderIds(process.argv.slice(2));
@@ -80,13 +81,7 @@ async function main() {
   const entryPoint = path.resolve(__dirname, "index.ts");
   const tmpDir = path.resolve(__dirname, "../.cache/render");
   await fs.mkdir(tmpDir, { recursive: true });
-  const brandDir = path.resolve(ROOT, BRAND_DEST);
-  const completeBrandPack = Object.keys(BRAND_COMPOSITIONS).every((id) =>
-    selected.has(id)
-  );
-  if (completeBrandPack) {
-    await writeBrandVectors(brandDir);
-  }
+  const verifiedBrandFiles: string[] = [];
 
   console.log("Bundling compositions...");
   const bundled = await bundle({
@@ -142,28 +137,36 @@ async function main() {
     }
 
     console.log(`Rendering ${id} (${entry.width}×${entry.height})...`);
-    const inputProps =
-      id === "brand-preview" ? await getBrandPreviewProps(brandDir) : undefined;
     const composition = await selectComposition({
       serveUrl: bundled,
       id,
-      inputProps,
     });
 
     for (const output of entry.outputs) {
       const filename = output.filename ?? `${id}.${output.format}`;
       const tmpPath = path.join(tmpDir, filename);
 
-      await renderStill({
-        composition,
-        inputProps,
-        serveUrl: bundled,
-        output: tmpPath,
-        imageFormat: output.format as "png" | "webp",
-        scale: output.scale ?? 1,
-        overwrite: true,
-      });
+      if (output.format === "svg") {
+        if (entry.component !== "BrandSvg") {
+          throw new Error(`SVG export is not supported for ${entry.component}`);
+        }
+        await fs.writeFile(tmpPath, renderBrandSvg(entry.props));
+      } else {
+        await renderStill({
+          composition,
+          serveUrl: bundled,
+          output: tmpPath,
+          imageFormat: output.format as "png" | "webp",
+          scale: output.scale ?? 1,
+          overwrite: true,
+        });
+      }
       await distribute(tmpPath, [output], filename);
+      if (id in BRAND_COMPOSITIONS) {
+        const destination = resolveDest(output.dest, filename);
+        await verifyBrandFile(destination, entry);
+        verifiedBrandFiles.push(destination);
+      }
       console.log(`  ✔ ${filename} → ${output.dest}`);
     }
   }
@@ -193,13 +196,17 @@ async function main() {
         const icoPath = resolveDest(dest, pp.filename);
         await fs.mkdir(path.dirname(icoPath), { recursive: true });
         await fs.writeFile(icoPath, icoBuffer);
+        verifyFaviconIco(await fs.readFile(icoPath), pngBuffers);
+        verifiedBrandFiles.push(icoPath);
       }
       console.log(`  ✔ ${pp.filename} → ${pp.dests.join(", ")}`);
     }
   }
-  if (completeBrandPack) {
-    await packageBrandPack(brandDir, ROOT);
-    console.log(`  ✔ Verified portable brand pack → ${BRAND_DEST}`);
+  if (verifiedBrandFiles.length > 0) {
+    await writeBrandReceipt(ROOT, verifiedBrandFiles);
+    console.log(
+      `  ✔ Verified ${verifiedBrandFiles.length} individual brand files`
+    );
   }
 
   const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);

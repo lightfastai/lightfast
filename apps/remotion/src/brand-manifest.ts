@@ -1,6 +1,7 @@
+import { getBrandDimensions } from "./brand";
 import type { CompositionEntry } from "./remotion/manifest";
 
-export const BRAND_DEST = "apps/remotion/out/brand-pack";
+const BRAND_DEST = "apps/remotion/out/brand-assets";
 export const BRAND_ICONS = [
   [16, "favicon-16x16.png"],
   [32, "favicon-32x32.png"],
@@ -24,13 +25,32 @@ export const BRAND_COMPOSITIONS: Record<string, CompositionEntry> = {
       },
     ])
   ),
-  "brand-preview": {
-    type: "still",
-    component: "BrandPreview",
-    width: 1040,
-    height: 1000,
-    outputs: [{ format: "png", dest: BRAND_DEST, filename: "preview.png" }],
-  },
+  ...Object.fromEntries(
+    [false, true].flatMap((lockup) =>
+      [false, true].map((inverse) => {
+        const kind = lockup ? "logo" : "symbol";
+        const color = inverse ? "white" : "black";
+        const dimensions = getBrandDimensions(lockup);
+        return [
+          `brand-${kind}-${color}`,
+          {
+            type: "still" as const,
+            component: "BrandSvg",
+            width: Math.ceil(dimensions.width),
+            height: Math.ceil(dimensions.height),
+            props: { lockup, inverse },
+            outputs: [
+              {
+                format: "svg" as const,
+                dest: BRAND_DEST,
+                filename: `lightfast-${kind}-${color}.svg`,
+              },
+            ],
+          },
+        ];
+      })
+    )
+  ),
 };
 
 export const BRAND_ICO = {

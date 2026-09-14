@@ -24,7 +24,7 @@ interface OutputTarget {
   /** Filename override (defaults to `${compositionId}.${format}`) */
   filename?: string;
   /** Output format */
-  format: "png" | "webp" | "webm";
+  format: "png" | "webp" | "webm" | "svg";
   /** For stills extracted from video compositions: which frame to capture */
   frame?: number;
   /** Render scale factor (default: 1) */
