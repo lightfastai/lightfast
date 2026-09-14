@@ -1,5 +1,5 @@
-import type { NativeSession } from "@repo/native-auth-contract";
 import { Command } from "commander";
+import type { NativeSession } from "./auth/contract";
 import { CliAuthError } from "./auth/errors";
 import { login as defaultLogin } from "./auth/login-flow";
 import { clearSession, type SessionStoreLike } from "./auth/session";

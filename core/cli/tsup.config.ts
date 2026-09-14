@@ -6,13 +6,7 @@ export default defineConfig({
   format: ["esm"],
   target: "node22",
   bundle: true,
-  noExternal: [
-    "@repo/native-auth-contract",
-    "@repo/native-auth-node",
-    "@t3-oss/env-core",
-    "commander",
-    "zod",
-  ],
+  noExternal: ["@t3-oss/env-core", "commander", "zod"],
   outExtension: () => ({ js: ".mjs" }),
   sourcemap: false,
   dts: false,
@@ -20,6 +14,7 @@ export default defineConfig({
   banner: {
     js: [
       "#!/usr/bin/env node",
+      "/*! Includes Apache-2.0 auth code; see NOTICE and LICENSE-APACHE-2.0. */",
       'import { createRequire as __lightfastCreateRequire } from "node:module";',
       "const require = __lightfastCreateRequire(import.meta.url);",
     ].join("\n"),

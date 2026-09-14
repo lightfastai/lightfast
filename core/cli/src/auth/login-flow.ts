@@ -1,14 +1,13 @@
+import { createLightfastAppClient } from "./app-client";
+import { openBrowser as defaultOpenBrowser } from "./browser";
+import { getAppUrl as defaultGetAppUrl } from "./config";
 import {
   NATIVE_AUTH_SCHEMA_VERSION,
   type NativeOAuthConfig,
   type NativeSession,
   type NativeSessionMetadata,
   type TokenSet,
-} from "@repo/native-auth-contract";
-
-import { createLightfastAppClient } from "./app-client";
-import { openBrowser as defaultOpenBrowser } from "./browser";
-import { getAppUrl as defaultGetAppUrl } from "./config";
+} from "./contract";
 import {
   assertNativeOAuthState,
   buildLoopbackRedirectUri,

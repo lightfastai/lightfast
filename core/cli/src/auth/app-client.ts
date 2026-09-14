@@ -1,10 +1,10 @@
+import { z } from "zod";
 import {
   type NativeOAuthConfig,
   type NativeSessionMetadata,
   nativeOAuthConfigSchema,
   nativeSessionMetadataSchema,
-} from "@repo/native-auth-contract";
-import { z } from "zod";
+} from "./contract";
 
 const appErrorSchema = z
   .object({
