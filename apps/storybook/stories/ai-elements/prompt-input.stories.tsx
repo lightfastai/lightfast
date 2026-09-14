@@ -28,6 +28,7 @@ import {
 } from "@repo/ui/components/ai-elements/prompt-input";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { type ComponentProps, useState } from "react";
+import { expect, userEvent, within } from "storybook/test";
 
 const models = [
   { id: "lightfast/default", name: "Lightfast Default" },
@@ -73,6 +74,7 @@ function AddSampleAttachmentButton() {
 
   return (
     <PromptInputButton
+      data-testid="add-sample-attachment"
       onClick={() =>
         attachments.add([
           new File(["Agent trace summary"], "trace-summary.txt", {
@@ -215,6 +217,18 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
+
+export const AttachmentDoesNotSubmit: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.queryByText("trace-summary.txt")).toBeNull();
+    await userEvent.click(canvas.getByTestId("add-sample-attachment"));
+    await canvas.findByRole("button", { name: "trace-summary.txt" });
+    await expect(canvas.getAllByText("trace-summary.txt")).toHaveLength(1);
+    await expect(canvas.queryByText(/Last submitted:/)).toBeNull();
+    canvasElement.dataset.attachmentVerified = "passed";
+  },
+};
 
 export const Streaming: Story = {
   render: () => <PromptInputStory initialStatus="streaming" />,
