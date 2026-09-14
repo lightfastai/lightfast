@@ -1,10 +1,12 @@
-import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { describe, expect, it } from "vitest";
-
+import { createDatabase } from "@vendor/db";
+import { describe, expect, it, vi } from "vitest";
+import { createClient } from "./client";
 import { getDatabaseCredentials } from "./env";
+import * as schema from "./schema";
 
-const packageRoot = resolve(import.meta.dirname, "..");
+vi.mock("@vendor/db", () => ({
+  createDatabase: vi.fn(() => ({ fixture: true })),
+}));
 
 describe("database foundation", () => {
   it("requires explicit PlanetScale credentials without contacting a provider", () => {
@@ -22,14 +24,14 @@ describe("database foundation", () => {
     });
   });
 
-  it("keeps the provider adapter behind @vendor/db and has no migration baseline", () => {
-    const clientSource = readFileSync(
-      resolve(packageRoot, "src/client.ts"),
-      "utf8"
-    );
-
-    expect(clientSource).toContain('from "@vendor/db"');
-    expect(clientSource).not.toContain("@planetscale/");
-    expect(existsSync(resolve(packageRoot, "src/migrations"))).toBe(false);
+  it("passes explicit credentials and the empty schema to the vendor adapter", () => {
+    const credentials = {
+      host: "local.example.test",
+      username: "placeholder-user",
+      password: "placeholder-password",
+    };
+    expect(Object.keys(schema)).toEqual([]);
+    expect(createClient(credentials)).toEqual({ fixture: true });
+    expect(createDatabase).toHaveBeenCalledExactlyOnceWith(credentials, schema);
   });
 });

@@ -172,8 +172,13 @@ describe("Lightfast app auth client", () => {
     } satisfies Partial<LightfastAppClientError>);
   });
 
-  it("passes an aborting timeout signal to auth requests", async () => {
+  it("passes an aborting timeout signal to auth requests", async ({
+    onTestFinished,
+  }) => {
     vi.useFakeTimers();
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
     const fetchMock = vi.fn(
       (_input: Parameters<typeof fetch>[0], init?: RequestInit) =>
         new Promise<Response>((_resolve, reject) => {
@@ -196,6 +201,5 @@ describe("Lightfast app auth client", () => {
     await vi.advanceTimersByTimeAsync(10);
 
     await assertion;
-    vi.useRealTimers();
   });
 });

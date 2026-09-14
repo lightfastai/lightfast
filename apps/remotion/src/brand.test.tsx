@@ -75,14 +75,28 @@ test("the brand selection includes individual sizes and variants with fresh ICO 
     assert.equal(BRAND_COMPOSITIONS[id]!.outputs.length, 1);
   }
   for (const id of [
-    "brand-symbol-black",
-    "brand-symbol-white",
-    "brand-logo-black",
+    "brand-icon",
+    "brand-icon-white",
+    "brand-logo",
     "brand-logo-white",
   ]) {
     assert.equal(BRAND_COMPOSITIONS[id]?.component, "BrandSvg");
     assert.equal(BRAND_COMPOSITIONS[id]?.outputs[0]?.format, "svg");
   }
+  assert.deepEqual(
+    Object.values(BRAND_COMPOSITIONS)
+      .flatMap((entry) => entry.outputs.map((output) => output.filename))
+      .sort(),
+    [
+      "icon.svg",
+      "icon-white.svg",
+      "logo.svg",
+      "logo-white.svg",
+      "apple-icon.png",
+      ...[16, 32, 48, 192, 512, 1024].map((size) => `icon-${size}.png`),
+    ].sort()
+  );
+  assert.equal(BRAND_ICO.filename, "favicon.ico");
   assert.equal(BRAND_COMPOSITIONS["brand-preview"], undefined);
 });
 

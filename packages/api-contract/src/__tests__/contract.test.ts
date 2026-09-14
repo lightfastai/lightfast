@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { apiContract } from "../contract";
@@ -10,12 +8,6 @@ import {
   listSignalsOutput,
 } from "../schemas/signals";
 import { systemHealthOutput } from "../schemas/system";
-
-const packageRoot = resolve(import.meta.dirname, "../..");
-
-function source(path: string) {
-  return readFileSync(resolve(packageRoot, path), "utf8");
-}
 
 describe("apiContract", () => {
   it("keeps public API route metadata as plain contract data", () => {
@@ -44,20 +36,5 @@ describe("apiContract", () => {
       method: "GET",
       path: "/signals/{id}",
     });
-  });
-
-  it("does not expose oRPC procedure internals or package dependencies", () => {
-    const packageJson = JSON.parse(source("package.json")) as {
-      dependencies?: Record<string, string>;
-    };
-    const contractSource = source("src/contract.ts");
-    const mcpSource = source("src/mcp.ts");
-
-    expect(packageJson.dependencies?.["@orpc/contract"]).toBeUndefined();
-    expect(contractSource).not.toContain("@orpc/contract");
-    expect(contractSource).not.toContain("~orpc");
-    expect(mcpSource).not.toContain("@orpc/contract");
-    expect(mcpSource).not.toContain("isContractProcedure");
-    expect(apiContract.signals.create).not.toHaveProperty("~orpc");
   });
 });

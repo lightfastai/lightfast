@@ -10,12 +10,11 @@ describe("local MCP server", () => {
     const [clientTransport, serverTransport] =
       InMemoryTransport.createLinkedPair();
 
-    await Promise.all([
-      server.connect(serverTransport),
-      client.connect(clientTransport),
-    ]);
-
     try {
+      await Promise.all([
+        server.connect(serverTransport),
+        client.connect(clientTransport),
+      ]);
       await expect(client.listTools()).resolves.toEqual({ tools: [] });
     } finally {
       await client.close();
