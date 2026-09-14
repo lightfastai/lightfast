@@ -99,6 +99,11 @@ export const Regression: Story = {
       await expect(row.getByTestId("clicks")).toHaveTextContent("0");
       if (item.disabled) {
         await expect(button).toBeDisabled();
+        if (item.tooltip !== "none") {
+          await expect(button.parentElement?.tagName).toBe("SPAN");
+          await expect(button.parentElement).toHaveAttribute("tabindex", "0");
+          await userEvent.click(button.parentElement!);
+        }
       }
       await userEvent.click(button, { pointerEventsCheck: 0 });
       await expect(row.getByTestId("clicks")).toHaveTextContent(

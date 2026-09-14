@@ -1207,7 +1207,17 @@ export const PromptInputButton = ({
 
   return (
     <Tooltip>
-      <TooltipTrigger render={button} />
+      <TooltipTrigger
+        render={
+          props.disabled ? (
+            <span className="inline-flex" tabIndex={0}>
+              {button}
+            </span>
+          ) : (
+            button
+          )
+        }
+      />
       <TooltipContent side={side}>
         {tooltipContent}
         {shortcut && (

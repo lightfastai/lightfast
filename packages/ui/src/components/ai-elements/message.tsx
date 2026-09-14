@@ -98,7 +98,17 @@ export const MessageAction = ({
     return (
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger render={button} />
+          <TooltipTrigger
+            render={
+              props.disabled ? (
+                <span className="inline-flex" tabIndex={0}>
+                  {button}
+                </span>
+              ) : (
+                button
+              )
+            }
+          />
           <TooltipContent>
             <p>{tooltip}</p>
           </TooltipContent>
