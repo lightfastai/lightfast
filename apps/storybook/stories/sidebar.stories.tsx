@@ -11,7 +11,7 @@ import {
   SettingsIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
-import { Avatar, AvatarFallback } from "@repo/ui-v2/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import {
   Sidebar,
   SidebarContent,
@@ -36,7 +36,7 @@ import {
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
-} from "@repo/ui-v2/components/ui/sidebar";
+} from "@repo/ui/components/ui/sidebar";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 interface NavItem {

@@ -1,11 +1,11 @@
 import { AddIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Button } from "@repo/ui-v2/components/ui/button";
+import { Button } from "@repo/ui/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@repo/ui-v2/components/ui/tooltip";
+} from "@repo/ui/components/ui/tooltip";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 /**

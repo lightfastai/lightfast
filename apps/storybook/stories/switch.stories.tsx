@@ -1,4 +1,4 @@
-import { Switch } from "@repo/ui-v2/components/ui/switch";
+import { Switch } from "@repo/ui/components/ui/switch";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 /**

@@ -7,7 +7,7 @@ import {
   AvatarGroup,
   AvatarGroupCount,
   AvatarImage,
-} from "@repo/ui-v2/components/ui/avatar";
+} from "@repo/ui/components/ui/avatar";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect } from "storybook/test";
 

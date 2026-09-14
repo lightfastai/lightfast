@@ -17,7 +17,7 @@ import {
   CommandList,
   CommandSeparator,
   CommandShortcut,
-} from "@repo/ui-v2/components/ui/command";
+} from "@repo/ui/components/ui/command";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 interface CommandAction {

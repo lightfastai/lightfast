@@ -21,7 +21,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@repo/ui-v2/components/ui/dropdown-menu";
+} from "@repo/ui/components/ui/dropdown-menu";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 /**

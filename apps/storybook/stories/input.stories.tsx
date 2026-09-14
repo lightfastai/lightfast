@@ -1,5 +1,5 @@
-import { Button } from "@repo/ui-v2/components/ui/button";
-import { Input } from "@repo/ui-v2/components/ui/input";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 /**

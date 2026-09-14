@@ -1,4 +1,4 @@
-import { Textarea } from "@repo/ui-v2/components/ui/textarea";
+import { Textarea } from "@repo/ui/components/ui/textarea";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 /**

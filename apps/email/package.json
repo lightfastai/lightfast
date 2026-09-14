@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@react-email/components": "catalog:",
-    "@repo/ui-v2": "workspace:*",
+    "@repo/ui": "workspace:*",
     "react": "catalog:react19",
     "react-dom": "catalog:react19"
   },

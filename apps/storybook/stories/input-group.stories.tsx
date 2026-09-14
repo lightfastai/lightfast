@@ -12,7 +12,7 @@ import {
   InputGroupInput,
   InputGroupText,
   InputGroupTextarea,
-} from "@repo/ui-v2/components/ui/input-group";
+} from "@repo/ui/components/ui/input-group";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 /**

@@ -1,4 +1,4 @@
-import { Logo as BrandLogo } from "@repo/ui-v2/components/brand/logo";
+import { Logo as BrandLogo } from "@repo/ui/components/brand/logo";
 import { AbsoluteFill, staticFile } from "@vendor/remotion";
 import type React from "react";
 

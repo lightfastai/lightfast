@@ -4,7 +4,7 @@
 rendering helpers, and styles in the local `src/remotion` module. The thin
 `src/index.ts`, `src/render.ts`, and `src/watch.ts` adapters own Studio
 registration, local rendering/distribution, and source watching. Static assets
-and fonts stay in `public`; shared UI imports still come from `@repo/ui-v2`.
+and fonts stay in `public`; shared UI imports still come from `@repo/ui`.
 
 ## Local commands
 

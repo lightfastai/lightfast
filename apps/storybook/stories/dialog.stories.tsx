@@ -1,4 +1,4 @@
-import { Button } from "@repo/ui-v2/components/ui/button";
+import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -8,8 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@repo/ui-v2/components/ui/dialog";
-import { Input } from "@repo/ui-v2/components/ui/input";
+} from "@repo/ui/components/ui/dialog";
+import { Input } from "@repo/ui/components/ui/input";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 /**

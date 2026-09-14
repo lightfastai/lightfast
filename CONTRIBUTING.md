@@ -23,7 +23,7 @@ values between packages.
 
 ## Repository shape
 
-- `apps/example`: local-only TanStack Start example using `@repo/ui-v2`
+- `apps/example`: local-only TanStack Start example using `@repo/ui`
 - `apps/storybook`: shared UI component workshop
 - `apps/desktop`: hardened static Electron shell for local repository use
 - `apps/mcp`: empty stdio-only MCP shell for local repository use
@@ -94,7 +94,7 @@ pnpm --filter @lightfastai/mcp typecheck
 - Import third-party SDKs through the relevant `@vendor/*` abstraction.
 - In TanStack Start, keep `tanstackStart()` before the React Vite plugin and
   render `HeadContent`, `Outlet`, and `Scripts` in the root document.
-- Use `@repo/ui-v2` for the current shared UI surface.
+- Use `@repo/ui` for the current shared UI surface.
 - If schema work is separately approved, generate Drizzle migrations with
   repository commands; never hand-write or edit generated SQL.
 

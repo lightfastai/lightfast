@@ -25,7 +25,7 @@ import {
   PromptInputTextarea,
   PromptInputTools,
   usePromptInputAttachments,
-} from "@repo/ui-v2/components/ai-elements/prompt-input";
+} from "@repo/ui/components/ai-elements/prompt-input";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { type ComponentProps, useState } from "react";
 

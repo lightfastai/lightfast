@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@repo/ui-v2": "workspace:*",
+    "@repo/ui": "workspace:*",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "catalog:",
     "react": "catalog:react19",

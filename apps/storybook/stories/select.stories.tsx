@@ -13,7 +13,7 @@ import {
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-} from "@repo/ui-v2/components/ui/select";
+} from "@repo/ui/components/ui/select";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 interface ModelOption {

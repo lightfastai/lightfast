@@ -2,7 +2,7 @@
 
 Local React Email workbench and owner of Lightfast email templates.
 Templates live in `src/templates` and share app-local components in
-`src/components`; brand assets and the email button come from `@repo/ui-v2`.
+`src/components`; brand assets and the email button come from `@repo/ui`.
 This app previews, exports, builds, and typechecks templates. It has no email
 sending or production integration.
 

@@ -1,5 +1,5 @@
-import { Button } from "@repo/ui-v2/components/ui/button";
-import { Spinner } from "@repo/ui-v2/components/ui/spinner";
+import { Button } from "@repo/ui/components/ui/button";
+import { Spinner } from "@repo/ui/components/ui/spinner";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 /**

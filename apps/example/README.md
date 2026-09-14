@@ -1,6 +1,6 @@
 # Lightfast local example
 
-A local-only TanStack Start app for exercising `@repo/ui-v2` inside the
+A local-only TanStack Start app for exercising `@repo/ui` inside the
 workspace. It is not a production application and has no deployment,
 authentication, database, queue, or hosted backend configuration.
 

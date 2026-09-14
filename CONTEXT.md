@@ -57,7 +57,7 @@ This repository does not own the website deployment or its route mesh. Lightfast
 ### Local Example and Client Boundary
 
 `apps/example` is a local-only TanStack Start surface for exercising
-`packages/ui-v2`. It has no production deployment or backend contract.
+`packages/ui`. It has no production deployment or backend contract.
 
 The public SDK, stdio MCP server, and CLI are configurable clients. They require
 an explicit compatible backend URL and must not infer `https://lightfast.ai` as

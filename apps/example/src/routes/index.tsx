@@ -1,12 +1,12 @@
-import { Logo } from "@repo/ui-v2/components/brand/logo";
-import { Button } from "@repo/ui-v2/components/ui/button";
+import { Logo } from "@repo/ui/components/brand/logo";
+import { Button } from "@repo/ui/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@repo/ui-v2/components/ui/card";
+} from "@repo/ui/components/ui/card";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({ component: HomePage });

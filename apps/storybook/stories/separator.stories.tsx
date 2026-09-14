@@ -1,4 +1,4 @@
-import { Separator } from "@repo/ui-v2/components/ui/separator";
+import { Separator } from "@repo/ui/components/ui/separator";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 /**

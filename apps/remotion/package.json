@@ -15,7 +15,7 @@
     "render:stills": "tsx src/render.ts --only stills"
   },
   "dependencies": {
-    "@repo/ui-v2": "workspace:*",
+    "@repo/ui": "workspace:*",
     "@vendor/remotion": "workspace:*",
     "clsx": "catalog:",
     "react": "catalog:react19",

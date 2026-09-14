@@ -8,7 +8,7 @@
     "moduleResolution": "Bundler",
     "types": ["node", "vite/client"],
     "paths": {
-      "@repo/ui-v2/*": ["../../packages/ui-v2/src/*"]
+      "@repo/ui/*": ["../../packages/ui/src/*"]
     }
   },
   "include": ["src", "vite.config.ts", "vitest.config.ts"],

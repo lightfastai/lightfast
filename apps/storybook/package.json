@@ -14,7 +14,7 @@
   "dependencies": {
     "@hugeicons/core-free-icons": "catalog:",
     "@hugeicons/react": "catalog:",
-    "@repo/ui-v2": "workspace:*",
+    "@repo/ui": "workspace:*",
     "react": "catalog:react19",
     "react-dom": "catalog:react19"
   },

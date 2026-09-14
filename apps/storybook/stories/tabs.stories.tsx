@@ -3,7 +3,7 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@repo/ui-v2/components/ui/tabs";
+} from "@repo/ui/components/ui/tabs";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 /**
