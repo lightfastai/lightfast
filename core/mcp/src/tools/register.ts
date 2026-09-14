@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Relocated from packages/mcp-tools; private types localized to this module.
+// See ../../LICENSE-APACHE-2.0.
 import type { McpServer } from "@vendor/mcp";
 
 import {
@@ -6,13 +9,13 @@ import {
 } from "./policy";
 import { formatMcpError, formatMcpSuccess } from "./results";
 
-export interface LightfastMcpToolExecuteInput {
+interface LightfastMcpToolExecuteInput {
   contractPath: string;
   input: unknown;
   tool: LightfastMcpToolDefinition;
 }
 
-export type LightfastMcpToolExecute = (
+type LightfastMcpToolExecute = (
   input: LightfastMcpToolExecuteInput
 ) => Promise<unknown>;
 

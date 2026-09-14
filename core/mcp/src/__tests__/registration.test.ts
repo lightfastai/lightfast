@@ -1,9 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { apiContract, lightfastMcpToolPolicy } from "@repo/api-contract";
-import { registerLightfastMcpTools } from "@repo/mcp-tools";
 import { Client, InMemoryTransport, McpServer } from "@vendor/mcp";
+import type { LightfastClient } from "lightfast";
 import { describe, expect, it, vi } from "vitest";
+import { createLightfastMcpServer } from "../server";
+import { registerLightfastMcpTools } from "../tools/register";
 
 const repoRoot = resolve(import.meta.dirname, "../../../..");
 const signalId = "signal_123e4567-e89b-12d3-a456-426614174000";
@@ -25,10 +26,12 @@ function createLightfastClientStub() {
       get: vi.fn(async () => ({
         ...queuedSignal,
         classification: null,
+        entityLinks: [],
         createdAt: "2026-05-21T00:00:00.000Z",
         input: "Run the verification plan",
         updatedAt: "2026-05-21T00:01:00.000Z",
       })),
+      list: vi.fn(),
     },
     system: {
       health: vi.fn(async () => systemHealth),
@@ -37,33 +40,9 @@ function createLightfastClientStub() {
 }
 
 async function connectRegisteredServer(
-  contract: Record<string, unknown> = apiContract,
   lightfastClient = createLightfastClientStub()
 ) {
-  const server = new McpServer({ name: "test", version: "0.0.0" });
-  registerLightfastMcpTools(server, {
-    contract,
-    policy: lightfastMcpToolPolicy,
-    execute: async ({ contractPath, input }) => {
-      let procedure: unknown = lightfastClient;
-      for (const segment of contractPath.split(".")) {
-        const node = procedure;
-        if (!node || typeof node !== "object") {
-          procedure = undefined;
-          break;
-        }
-        procedure = (node as Record<string, unknown>)[segment];
-      }
-
-      if (typeof procedure !== "function") {
-        throw new Error(`Missing Lightfast SDK procedure for ${contractPath}`);
-      }
-
-      return input === undefined
-        ? (procedure as () => Promise<unknown>)()
-        : (procedure as (input: unknown) => Promise<unknown>)(input);
-    },
-  });
+  const server = createLightfastMcpServer(lightfastClient as LightfastClient);
 
   const mcpClient = new Client({ name: "test-client", version: "0.0.0" });
   const [clientTransport, serverTransport] =
@@ -85,7 +64,7 @@ async function closeRegisteredServer(
 }
 
 describe("MCP tool registration", () => {
-  it("uses direct public MCP tool registration without the oRPC adapter package", () => {
+  it("owns registration locally and keeps verification on the public MCP package", () => {
     const mcpPackageJson = JSON.parse(
       readFileSync(resolve(repoRoot, "core/mcp/package.json"), "utf8")
     ) as { devDependencies?: Record<string, string> };
@@ -96,9 +75,13 @@ describe("MCP tool registration", () => {
     expect(
       mcpPackageJson.devDependencies?.["@vendor/orpc-mcp-adapter"]
     ).toBeUndefined();
+    expect(mcpPackageJson.devDependencies?.["@repo/mcp-tools"]).toBeUndefined();
     expect(rootPackageJson.scripts?.["verify:orpc"]).toBeUndefined();
     expect(rootPackageJson.scripts?.["verify:public-api"]).toContain(
-      "@repo/mcp-tools"
+      "--filter=@lightfastai/mcp"
+    );
+    expect(rootPackageJson.scripts?.["verify:public-api"]).not.toContain(
+      "--filter=@repo/mcp-tools"
     );
     expect(rootPackageJson.scripts?.["verify:public-api"]).not.toContain(
       "@vendor/orpc-mcp-adapter"
@@ -190,7 +173,7 @@ describe("MCP tool registration", () => {
   it("returns MCP error content when the SDK client rejects", async () => {
     const lightfastClient = createLightfastClientStub();
     lightfastClient.signals.get.mockRejectedValueOnce(new Error("api down"));
-    const context = await connectRegisteredServer(apiContract, lightfastClient);
+    const context = await connectRegisteredServer(lightfastClient);
 
     try {
       const result = (await context.mcpClient.callTool({
@@ -217,5 +200,30 @@ describe("MCP tool registration", () => {
         policy: {},
       })
     ).not.toThrow();
+  });
+
+  it("returns the production missing-procedure error", async () => {
+    const lightfastClient = createLightfastClientStub();
+    Reflect.deleteProperty(lightfastClient.signals, "get");
+    const context = await connectRegisteredServer(lightfastClient);
+
+    try {
+      expect(
+        await context.mcpClient.callTool({
+          name: "lightfast_signals_get",
+          arguments: { id: signalId },
+        })
+      ).toEqual({
+        content: [
+          {
+            type: "text",
+            text: "Missing Lightfast SDK procedure for signals.get",
+          },
+        ],
+        isError: true,
+      });
+    } finally {
+      await closeRegisteredServer(context);
+    }
   });
 });

@@ -37,7 +37,9 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE-APACHE-2.0",
+    "NOTICE"
   ],
   "scripts": {
     "clean": "rm -rf dist .cache .turbo node_modules",
@@ -51,7 +53,6 @@
   },
   "devDependencies": {
     "@repo/api-contract": "workspace:*",
-    "@repo/mcp-tools": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",

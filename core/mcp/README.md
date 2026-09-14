@@ -26,13 +26,14 @@ lightfast-mcp
 ```
 
 Tools are derived from the MCP exposure policy in `@repo/api-contract` through
-`@repo/mcp-tools`.
+the private `src/tools` module in this package.
 
 ## Development
 
 ```bash
 pnpm build   # Build
 pnpm dev     # Watch mode
+pnpm test    # Tests (run pnpm build first for the bundled stdio fixture)
 ```
 
 ## Requirements
@@ -57,3 +58,6 @@ pnpm dev     # Watch mode
 ## License
 
 MIT © [Lightfast](https://lightfast.ai)
+
+The local tool helpers retain their Apache-2.0 license. See [NOTICE](./NOTICE)
+and [LICENSE-APACHE-2.0](./LICENSE-APACHE-2.0) for attribution and terms.

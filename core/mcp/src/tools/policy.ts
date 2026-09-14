@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Relocated from packages/mcp-tools; see ../../LICENSE-APACHE-2.0.
 import {
   type ExposedMcpToolPolicyEntry,
   getContractProcedurePaths,
