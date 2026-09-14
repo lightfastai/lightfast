@@ -1,58 +1,10 @@
 import assert from "node:assert/strict";
-import { inflateSync } from "node:zlib";
 import {
   DOT_MATRIX_PATH,
   LOGO_DOT_DIAMETER,
 } from "@repo/ui/components/brand/logo";
 import { BRAND_CLEARSPACE, getBrandDimensions } from "./brand";
-
-function paeth(a: number, b: number, c: number) {
-  const prediction = a + b - c;
-  const distances = [
-    Math.abs(prediction - a),
-    Math.abs(prediction - b),
-    Math.abs(prediction - c),
-  ];
-  const minimum = Math.min(...distances);
-  return distances[0] === minimum ? a : distances[1] === minimum ? b : c;
-}
-
-/** Decode Chromium's noninterlaced 8-bit RGB/RGBA output for content checks. */
-function decodePngPixels(png: Buffer) {
-  const width = png.readUInt32BE(16);
-  const height = png.readUInt32BE(20);
-  assert.equal(png[24], 8, "PNG bit depth");
-  assert.ok(png[25] === 2 || png[25] === 6, "PNG RGB/RGBA color type");
-  assert.equal(png[28], 0, "PNG is not interlaced");
-  const channels = png[25] === 2 ? 3 : 4;
-  const chunks: Buffer[] = [];
-  for (let offset = 8; offset < png.length; ) {
-    const length = png.readUInt32BE(offset);
-    if (png.toString("ascii", offset + 4, offset + 8) === "IDAT") {
-      chunks.push(png.subarray(offset + 8, offset + 8 + length));
-    }
-    offset += length + 12;
-  }
-  const raw = inflateSync(Buffer.concat(chunks));
-  const stride = width * channels;
-  assert.equal(raw.length, (stride + 1) * height);
-  const pixels = Buffer.alloc(stride * height);
-  for (let y = 0; y < height; y++) {
-    const filter = raw[y * (stride + 1)]!;
-    assert.ok(filter <= 4, "PNG filter");
-    for (let x = 0; x < stride; x++) {
-      const index = y * stride + x;
-      const a = x >= channels ? pixels[index - channels]! : 0;
-      const b = y > 0 ? pixels[index - stride]! : 0;
-      const c = y > 0 && x >= channels ? pixels[index - stride - channels]! : 0;
-      const predictor = [0, a, b, Math.floor((a + b) / 2), paeth(a, b, c)][
-        filter
-      ]!;
-      pixels[index] = (raw[y * (stride + 1) + x + 1]! + predictor) & 255;
-    }
-  }
-  return { pixels, channels, width, height };
-}
+import { decodePngPixels } from "./png-codec";
 
 export function verifyIconPixels(png: Buffer, size: number) {
   const { pixels, channels } = decodePngPixels(png);

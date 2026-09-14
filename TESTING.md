@@ -36,7 +36,8 @@ their existing triggers and publication behavior.
 
 The September 2026 audit covered all 33 original test source files, discovery
 configuration, fixtures, snapshots, package scripts, Turbo wiring, Knip and CI.
-There are now 32 files: the duplicate CLI token-client suite was consolidated.
+There are still 33 files: the duplicate CLI token-client suite was consolidated,
+and a focused ICO compatibility suite was added.
 
 | Area | Files | Protection retained |
 | --- | ---: | --- |
@@ -45,7 +46,7 @@ There are now 32 files: the duplicate CLI token-client suite was consolidated.
 | Desktop | 1 | Context isolation, sandbox, disabled Node integration, web security |
 | Local example | 1 | Local root and index route registration |
 | Local MCP | 2 | In-memory and real stdio initialization, empty tools, no TCP listener |
-| Remotion | 2 | Canonical SVG paths, clearspace, sizes, individual selection, historical artwork, manifest, registration, local destinations and CSS behavior |
+| Remotion | 3 | Canonical SVG paths, clearspace, sizes, individual selection, RGBA ICO framing/pixel preservation/CRC validity, historical artwork, manifest, registration, local destinations and CSS behavior |
 | CLI | 15 | Environment, contract, OAuth state/PKCE, errors, browser spawn handling, login, refresh, sessions, commands, loopback and full local HTTP auth fixture |
 | SDK | 1 | Explicit endpoints, key validation, authorization, methods, paths, request bodies and responses |
 | Public MCP | 5 | Explicit startup configuration, policy, registration, results/errors and bundled stdio wire snapshot |
@@ -78,7 +79,7 @@ Local MCP checks actual stdio handshakes and process TCP-listener state.
 
 Asset acceptance requires a fresh `render:brand` from a clean committed checkout.
 The renderer checks SVG serialization, PNG dimensions and pixels, clearspace and
-ICO frames, then writes `.cache/brand-render-receipt.json` with source commit,
+RGBA ICO frames with unchanged decoded pixels, then writes `.cache/brand-render-receipt.json` with source commit,
 dirty flag, geometry hashes and each individual output hash. Run again at the
 integrated main revision and compare the files, not just a cached test result.
 Generated outputs stay under `apps/remotion/out`; no render publishes or deploys.

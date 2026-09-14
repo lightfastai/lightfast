@@ -57,8 +57,9 @@ Outputs stay in `apps/remotion/out/brand-assets` (ignored):
 | `brand-icon-1024` | `icon-1024.png` |
 
 `pnpm --filter @lightfast/remotion render:brand` generates all these individual
-files and the standard `favicon.ico` containing the exact 16/32/48px PNG
-frames. An individual icon render does not rebuild ICO from stale files.
+files and the standard `favicon.ico` containing native 16/32/48px RGBA PNG
+frames. The frames preserve every decoded RGB sample and add opaque alpha for
+Next.js ICO compatibility; standalone PNG files keep their original bytes. An individual icon render does not rebuild ICO from stale files.
 There is no contact sheet or archive. Historical media is not rendered by
 this command; its compositions and output contracts remain available.
 
@@ -79,7 +80,8 @@ See the [public brand guidance](https://lightfast.ai/brand).
 
 Each rendered file is checked for its format and canonical geometry; PNG
 checks also cover opacity, grayscale, circle coverage and clearspace. The
-standard ICO is checked against its exact PNG frames. A technical receipt in
+standard ICO is checked for RGBA frames and decoded pixel equality with the
+standalone PNGs. A technical receipt in
 `.cache/brand-render-receipt.json` records the generating commit, dirty-tree
 flag, geometry hashes and hashes of the files rendered in that invocation.
 Render from a clean committed checkout for handoff. PNG byte reproduction
