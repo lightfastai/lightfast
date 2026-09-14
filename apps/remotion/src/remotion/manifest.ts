@@ -14,6 +14,7 @@
  * - Post-processing (favicon.ico bundling)
  */
 import type { RenderMediaOptions } from "@vendor/remotion/renderer";
+import { BRAND_COMPOSITIONS, BRAND_ICO } from "../brand-manifest";
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -85,6 +86,7 @@ const logoAssetScale = (targetMarkSize: number) =>
 
 export const MANIFEST: CompositionManifest = {
   compositions: {
+    ...BRAND_COMPOSITIONS,
     // ── Marketing Panels ──────────────────────────────────────────
     "marketing-operating-thesis-panel": {
       type: "still",
@@ -661,7 +663,7 @@ export const MANIFEST: CompositionManifest = {
     },
   },
 
-  postProcess: [],
+  postProcess: [BRAND_ICO],
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────

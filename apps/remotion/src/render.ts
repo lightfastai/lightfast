@@ -7,7 +7,14 @@ import {
   renderStill,
   selectComposition,
 } from "@vendor/remotion/renderer";
+import { BRAND_COMPOSITIONS, BRAND_DEST } from "./brand-manifest";
+import {
+  getBrandPreviewProps,
+  packageBrandPack,
+  writeBrandVectors,
+} from "./brand-pack";
 import { enableCssLoaders, getStills, getVideos, MANIFEST } from "./remotion";
+import { selectRenderIds } from "./render-selection";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "../../.."); // monorepo root
@@ -65,20 +72,21 @@ async function distribute(
 }
 
 // ── Filter support ───────────────────────────────────────────────────
-// Usage: tsx src/render.ts [--only stills|video|all] [--id composition-id]
-const args = process.argv.slice(2);
-const onlyFlag = args.includes("--only")
-  ? args[args.indexOf("--only") + 1]
-  : "all";
-const idFlag = args.includes("--id")
-  ? args[args.indexOf("--id") + 1]
-  : undefined;
+// Usage: tsx src/render.ts [--only stills|video|all] [--id composition-id | --pack brand]
 
 async function main() {
+  const selected = selectRenderIds(process.argv.slice(2));
   const startedAt = Date.now();
   const entryPoint = path.resolve(__dirname, "index.ts");
   const tmpDir = path.resolve(__dirname, "../.cache/render");
   await fs.mkdir(tmpDir, { recursive: true });
+  const brandDir = path.resolve(ROOT, BRAND_DEST);
+  const completeBrandPack = Object.keys(BRAND_COMPOSITIONS).every((id) =>
+    selected.has(id)
+  );
+  if (completeBrandPack) {
+    await writeBrandVectors(brandDir);
+  }
 
   console.log("Bundling compositions...");
   const bundled = await bundle({
@@ -86,72 +94,40 @@ async function main() {
     publicDir: REMOTION_PUBLIC_DIR,
     webpackOverride: enableCssLoaders,
   });
-
-  // ── Render video compositions ──────────────────────────────────
-  if (onlyFlag === "all" || onlyFlag === "video") {
-    for (const [id, entry] of getVideos()) {
-      if (idFlag && idFlag !== id) {
-        continue;
-      }
-
-      const composition = await selectComposition({ serveUrl: bundled, id });
-
-      for (const output of entry.outputs) {
-        const filename = output.filename ?? `${id}.${output.format}`;
-
-        if (output.frame === undefined) {
-          // Full video render
-          const tmpPath = path.join(tmpDir, filename);
-          console.log(
-            `Rendering ${id} (${entry.width}×${entry.height} @ ${entry.fps}fps)...`
-          );
-          await renderMedia({
-            composition,
-            serveUrl: bundled,
-            outputLocation: tmpPath,
-            ...entry.renderProfile,
-          });
-          await distribute(tmpPath, [output], filename);
-          console.log(`  ✔ ${filename} → ${output.dest}`);
-        } else {
-          // Still frame extraction from video
-          const tmpPath = path.join(tmpDir, filename);
-          console.log(`Rendering ${id} poster (frame ${output.frame})...`);
-          await renderStill({
-            composition,
-            serveUrl: bundled,
-            output: tmpPath,
-            frame: output.frame,
-            imageFormat: output.format as "webp" | "png",
-            scale: output.scale ?? 1,
-            overwrite: true,
-          });
-          await distribute(tmpPath, [output], filename);
-          console.log(`  ✔ ${filename} → ${output.dest}`);
-        }
-      }
+  for (const [id, entry] of getVideos()) {
+    if (!selected.has(id)) {
+      continue;
     }
-  }
 
-  // ── Render still compositions ──────────────────────────────────
-  if (onlyFlag === "all" || onlyFlag === "stills") {
-    for (const [id, entry] of getStills()) {
-      if (idFlag && idFlag !== id) {
-        continue;
-      }
+    const composition = await selectComposition({ serveUrl: bundled, id });
 
-      console.log(`Rendering ${id} (${entry.width}×${entry.height})...`);
-      const composition = await selectComposition({ serveUrl: bundled, id });
+    for (const output of entry.outputs) {
+      const filename = output.filename ?? `${id}.${output.format}`;
 
-      for (const output of entry.outputs) {
-        const filename = output.filename ?? `${id}.${output.format}`;
+      if (output.frame === undefined) {
+        // Full video render
         const tmpPath = path.join(tmpDir, filename);
-
+        console.log(
+          `Rendering ${id} (${entry.width}×${entry.height} @ ${entry.fps}fps)...`
+        );
+        await renderMedia({
+          composition,
+          serveUrl: bundled,
+          outputLocation: tmpPath,
+          ...entry.renderProfile,
+        });
+        await distribute(tmpPath, [output], filename);
+        console.log(`  ✔ ${filename} → ${output.dest}`);
+      } else {
+        // Still frame extraction from video
+        const tmpPath = path.join(tmpDir, filename);
+        console.log(`Rendering ${id} poster (frame ${output.frame})...`);
         await renderStill({
           composition,
           serveUrl: bundled,
           output: tmpPath,
-          imageFormat: output.format as "png" | "webp",
+          frame: output.frame,
+          imageFormat: output.format as "webp" | "png",
           scale: output.scale ?? 1,
           overwrite: true,
         });
@@ -160,41 +136,74 @@ async function main() {
       }
     }
   }
-
-  // ── Post-processing ────────────────────────────────────────────
-  // Only runs when stills were rendered (post-process sources are always stills)
-  if ((onlyFlag === "all" || onlyFlag === "stills") && !idFlag) {
-    for (const pp of MANIFEST.postProcess) {
-      if (pp.type === "ico") {
-        console.log(`Building ${pp.filename}...`);
-        const pngBuffers = await Promise.all(
-          pp.sources.map(async (sourceId) => {
-            const entry = MANIFEST.compositions[sourceId];
-            if (!entry || entry.type !== "still") {
-              throw new Error(
-                `ICO source "${sourceId}" is not a still composition`
-              );
-            }
-            const output = entry.outputs[0]!;
-            const filename = output.filename ?? `${sourceId}.png`;
-            const filePath = path.join(tmpDir, filename);
-            return fs.readFile(filePath);
-          })
-        );
-
-        const icoBuffer = buildIco(pngBuffers);
-        for (const dest of pp.dests) {
-          const icoPath = resolveDest(dest, pp.filename);
-          await fs.mkdir(path.dirname(icoPath), { recursive: true });
-          await fs.writeFile(icoPath, icoBuffer);
-        }
-        console.log(`  ✔ ${pp.filename} → ${pp.dests.join(", ")}`);
-      }
+  for (const [id, entry] of getStills()) {
+    if (!selected.has(id)) {
+      continue;
     }
+
+    console.log(`Rendering ${id} (${entry.width}×${entry.height})...`);
+    const inputProps =
+      id === "brand-preview" ? await getBrandPreviewProps(brandDir) : undefined;
+    const composition = await selectComposition({
+      serveUrl: bundled,
+      id,
+      inputProps,
+    });
+
+    for (const output of entry.outputs) {
+      const filename = output.filename ?? `${id}.${output.format}`;
+      const tmpPath = path.join(tmpDir, filename);
+
+      await renderStill({
+        composition,
+        inputProps,
+        serveUrl: bundled,
+        output: tmpPath,
+        imageFormat: output.format as "png" | "webp",
+        scale: output.scale ?? 1,
+        overwrite: true,
+      });
+      await distribute(tmpPath, [output], filename);
+      console.log(`  ✔ ${filename} → ${output.dest}`);
+    }
+  }
+  for (const pp of MANIFEST.postProcess) {
+    if (!pp.sources.every((id) => selected.has(id))) {
+      continue;
+    }
+    if (pp.type === "ico") {
+      console.log(`Building ${pp.filename}...`);
+      const pngBuffers = await Promise.all(
+        pp.sources.map(async (sourceId) => {
+          const entry = MANIFEST.compositions[sourceId];
+          if (!entry || entry.type !== "still") {
+            throw new Error(
+              `ICO source "${sourceId}" is not a still composition`
+            );
+          }
+          const output = entry.outputs[0]!;
+          const filename = output.filename ?? `${sourceId}.png`;
+          const filePath = path.join(tmpDir, filename);
+          return fs.readFile(filePath);
+        })
+      );
+
+      const icoBuffer = buildIco(pngBuffers);
+      for (const dest of pp.dests) {
+        const icoPath = resolveDest(dest, pp.filename);
+        await fs.mkdir(path.dirname(icoPath), { recursive: true });
+        await fs.writeFile(icoPath, icoBuffer);
+      }
+      console.log(`  ✔ ${pp.filename} → ${pp.dests.join(", ")}`);
+    }
+  }
+  if (completeBrandPack) {
+    await packageBrandPack(brandDir, ROOT);
+    console.log(`  ✔ Verified portable brand pack → ${BRAND_DEST}`);
   }
 
   const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
-  const totalCompositions = Object.keys(MANIFEST.compositions).length;
+  const totalCompositions = selected.size;
   console.log(
     `\n${totalCompositions} compositions rendered + distributed in ${elapsed}s`
   );

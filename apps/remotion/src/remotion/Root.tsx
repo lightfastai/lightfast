@@ -2,6 +2,7 @@
 
 import { Composition, Still } from "@vendor/remotion";
 import type React from "react";
+import { BrandIcon, BrandPreview } from "../brand";
 import { BlogFeaturedBase } from "./compositions/blog-featured-base";
 import { BlogFeaturedConcentric } from "./compositions/blog-featured-concentric";
 import { BlogFeaturedCross } from "./compositions/blog-featured-cross";
@@ -50,6 +51,8 @@ const withDarkTheme = (
 
 // Component registry — maps manifest component names to actual React components
 const COMPONENTS: Record<string, CompositionComponent> = {
+  BrandIcon,
+  BrandPreview,
   BlogFeaturedBase,
   BlogFeaturedConcentric,
   BlogFeaturedCross,
