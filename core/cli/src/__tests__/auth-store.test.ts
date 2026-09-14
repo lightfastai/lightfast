@@ -1,4 +1,4 @@
-import { mkdtemp, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
@@ -22,15 +22,17 @@ const session = {
 } satisfies NativeSession;
 
 describe("SessionStore", () => {
-  it("returns null when auth.json is missing", async () => {
+  it("returns null when auth.json is missing", async ({ onTestFinished }) => {
     const dir = await mkdtemp(join(tmpdir(), "lightfast-cli-"));
+    onTestFinished(() => rm(dir, { recursive: true, force: true }));
     await expect(new SessionStore(join(dir, "auth.json")).get()).resolves.toBe(
       null
     );
   });
 
-  it("sets, gets, and clears auth.json", async () => {
+  it("sets, gets, and clears auth.json", async ({ onTestFinished }) => {
     const dir = await mkdtemp(join(tmpdir(), "lightfast-cli-"));
+    onTestFinished(() => rm(dir, { recursive: true, force: true }));
     const store = new SessionStore(join(dir, "nested", "auth.json"));
 
     await store.set(session);
@@ -40,8 +42,11 @@ describe("SessionStore", () => {
     await expect(store.get()).resolves.toBe(null);
   });
 
-  it("uses collision-safe temp paths for concurrent writes", async () => {
+  it("uses collision-safe temp paths for concurrent writes", async ({
+    onTestFinished,
+  }) => {
     const dir = await mkdtemp(join(tmpdir(), "lightfast-cli-"));
+    onTestFinished(() => rm(dir, { recursive: true, force: true }));
     const store = new SessionStore(join(dir, "auth.json"));
     const nowSpy = vi.spyOn(Date, "now").mockReturnValue(1);
 
@@ -54,8 +59,9 @@ describe("SessionStore", () => {
     }
   });
 
-  it("throws for invalid stored JSON", async () => {
+  it("throws for invalid stored JSON", async ({ onTestFinished }) => {
     const dir = await mkdtemp(join(tmpdir(), "lightfast-cli-"));
+    onTestFinished(() => rm(dir, { recursive: true, force: true }));
     const file = join(dir, "auth.json");
     await writeFile(file, "{bad", "utf8");
 

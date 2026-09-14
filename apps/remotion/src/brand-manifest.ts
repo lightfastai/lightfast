@@ -3,13 +3,13 @@ import type { CompositionEntry } from "./remotion/manifest";
 
 const BRAND_DEST = "apps/remotion/out/brand-assets";
 export const BRAND_ICONS = [
-  [16, "favicon-16x16.png"],
-  [32, "favicon-32x32.png"],
-  [48, "favicon-48x48.png"],
-  [180, "apple-touch-icon.png"],
-  [192, "android-chrome-192x192.png"],
-  [512, "android-chrome-512x512.png"],
-  [1024, "lightfast-symbol-1024.png"],
+  [16, "icon-16.png"],
+  [32, "icon-32.png"],
+  [48, "icon-48.png"],
+  [180, "apple-icon.png"],
+  [192, "icon-192.png"],
+  [512, "icon-512.png"],
+  [1024, "icon-1024.png"],
 ] as const;
 
 export const BRAND_COMPOSITIONS: Record<string, CompositionEntry> = {
@@ -28,11 +28,11 @@ export const BRAND_COMPOSITIONS: Record<string, CompositionEntry> = {
   ...Object.fromEntries(
     [false, true].flatMap((lockup) =>
       [false, true].map((inverse) => {
-        const kind = lockup ? "logo" : "symbol";
-        const color = inverse ? "white" : "black";
+        const kind = lockup ? "logo" : "icon";
+        const suffix = inverse ? "-white" : "";
         const dimensions = getBrandDimensions(lockup);
         return [
-          `brand-${kind}-${color}`,
+          `brand-${kind}${suffix}`,
           {
             type: "still" as const,
             component: "BrandSvg",
@@ -43,7 +43,7 @@ export const BRAND_COMPOSITIONS: Record<string, CompositionEntry> = {
               {
                 format: "svg" as const,
                 dest: BRAND_DEST,
-                filename: `lightfast-${kind}-${color}.svg`,
+                filename: `${kind}${suffix}.svg`,
               },
             ],
           },

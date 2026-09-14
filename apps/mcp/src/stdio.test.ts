@@ -32,9 +32,8 @@ describe("local MCP stdio process", () => {
     });
     const client = new Client({ name: "stdio-acceptance", version: "0.0.0" });
 
-    await client.connect(transport);
-
     try {
+      await client.connect(transport);
       await expect(client.listTools()).resolves.toEqual({ tools: [] });
       expect(transport.pid).not.toBeNull();
       expect(listeningTcpSockets(transport.pid as number)).toBe("");

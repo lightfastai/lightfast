@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Includes consolidated native token-client coverage; see ../../NOTICE.
+
 import { describe, expect, it, vi } from "vitest";
 import type { NativeOAuthConfig } from "../auth/contract";
 
@@ -43,11 +46,13 @@ describe("OAuth token client", () => {
       tokenType: "Bearer",
     });
 
+    expect(fetchMock.mock.calls[0]?.[1]?.method).toBe("POST");
     const body = fetchMock.mock.calls[0]?.[1]?.body as URLSearchParams;
     expect(String(fetchMock.mock.calls[0]?.[0])).toBe(config.tokenEndpoint);
     expect(body.get("grant_type")).toBe("authorization_code");
     expect(body.get("client_id")).toBe("cli_client_test");
     expect(body.get("code")).toBe("code");
+    expect(body.get("redirect_uri")).toBe("http://127.0.0.1:51010/callback");
     expect(body.get("code_verifier")).toBe("verifier");
     expect(body.has("client_secret")).toBe(false);
   });
@@ -75,6 +80,7 @@ describe("OAuth token client", () => {
       tokenType: "Bearer",
     });
 
+    expect(fetchMock.mock.calls[0]?.[1]?.method).toBe("POST");
     const body = fetchMock.mock.calls[0]?.[1]?.body as URLSearchParams;
     expect(body.get("grant_type")).toBe("refresh_token");
     expect(body.get("client_id")).toBe("cli_client_test");

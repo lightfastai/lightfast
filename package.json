@@ -16,7 +16,7 @@
     "check": "pnpm verify:skills && ultracite check",
     "fix": "ultracite fix",
     "lint:ws": "pnpm dlx sherif@latest",
-    "test": "SKIP_ENV_VALIDATION=true turbo run test",
+    "test": "pnpm verify:test-harness && SKIP_ENV_VALIDATION=true turbo run test",
     "typecheck": "SKIP_ENV_VALIDATION=true turbo run typecheck",
     "verify:public-api": "SKIP_ENV_VALIDATION=true turbo run typecheck test --filter=@repo/api-contract --filter=@api/app --filter=lightfast --filter=@lightfastai/cli --filter=@lightfastai/mcp --filter=@lightfast/mcp-local --filter=@vendor/mcp --continue --summarize",
     "verify:skills": "node scripts/verify-agent-skills.mjs",
@@ -29,7 +29,8 @@
     "db:generate": "turbo run db:generate --filter=@db/app",
     "db:push": "turbo run db:push --filter=@db/app",
     "db:studio": "turbo run db:studio --filter=@db/app",
-    "knip": "SKIP_ENV_VALIDATION=true knip"
+    "knip": "SKIP_ENV_VALIDATION=true knip",
+    "verify:test-harness": "node scripts/verify-test-harness.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.12",

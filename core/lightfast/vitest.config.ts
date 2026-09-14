@@ -11,7 +11,6 @@ export default mergeConfig(
     test: {
       globals: true,
       environment: "node",
-      passWithNoTests: true,
     },
   })
 );

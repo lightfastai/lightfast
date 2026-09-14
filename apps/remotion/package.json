@@ -8,7 +8,7 @@
     "clean": "git clean -xdf .cache .turbo out node_modules",
     "dev": "tsx src/watch.ts",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/*.test.ts src/*.test.tsx",
+    "test": "tsx src/run-tests.ts",
     "studio": "remotion studio src/index.ts",
     "render:all": "tsx src/render.ts",
     "render:brand": "tsx src/render.ts --only brand",

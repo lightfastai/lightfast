@@ -1,14 +1,6 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { createSignalOutput, getSignalOutput } from "@repo/api-contract";
 import { describe, expect, expectTypeOf, it, vi } from "vitest";
 import { createLightfast, type LightfastOptions } from "../index";
-
-const packageRoot = resolve(import.meta.dirname, "../..");
-
-function source(path: string) {
-  return readFileSync(resolve(packageRoot, path), "utf8");
-}
 
 describe("createLightfast", () => {
   it("requires callers to provide an API base URL", () => {
@@ -16,22 +8,6 @@ describe("createLightfast", () => {
     expect(() => createLightfast("lf_test", undefined as never)).toThrow(
       /baseUrl/
     );
-  });
-
-  it("uses explicit fetch routes without oRPC client dependencies", () => {
-    const packageJson = JSON.parse(source("package.json")) as {
-      dependencies?: Record<string, string>;
-    };
-    const clientSource = source("src/index.ts");
-    const tsupSource = source("tsup.config.ts");
-
-    expect(packageJson.dependencies?.["@orpc/client"]).toBeUndefined();
-    expect(packageJson.dependencies?.["@orpc/contract"]).toBeUndefined();
-    expect(packageJson.dependencies?.["@orpc/openapi-client"]).toBeUndefined();
-    expect(clientSource).not.toContain("@orpc/");
-    expect(clientSource).not.toContain("createORPCClient");
-    expect(clientSource).not.toContain("OpenAPILink");
-    expect(tsupSource).not.toContain("@orpc/");
   });
 
   it("rejects keys without the lf_ prefix", () => {

@@ -36,7 +36,7 @@ Each composition below is separately selectable in Remotion Studio and can
 be rendered on its own. For example:
 
 ```sh
-pnpm --filter @lightfast/remotion render:brand --id brand-logo-black
+pnpm --filter @lightfast/remotion render:brand --id brand-logo
 pnpm --filter @lightfast/remotion render:brand --id brand-icon-16
 ```
 
@@ -44,21 +44,22 @@ Outputs stay in `apps/remotion/out/brand-assets` (ignored):
 
 | Composition | Standalone output |
 | --- | --- |
-| `brand-symbol-black` | `lightfast-symbol-black.svg` |
-| `brand-symbol-white` | `lightfast-symbol-white.svg` |
-| `brand-logo-black` | `lightfast-logo-black.svg` |
-| `brand-logo-white` | `lightfast-logo-white.svg` |
-| `brand-icon-16` | `favicon-16x16.png` |
-| `brand-icon-32` | `favicon-32x32.png` |
-| `brand-icon-48` | `favicon-48x48.png` |
-| `brand-icon-180` | `apple-touch-icon.png` |
-| `brand-icon-192` | `android-chrome-192x192.png` |
-| `brand-icon-512` | `android-chrome-512x512.png` |
-| `brand-icon-1024` | `lightfast-symbol-1024.png` |
+| `brand-icon` | `icon.svg` |
+| `brand-icon-white` | `icon-white.svg` |
+| `brand-logo` | `logo.svg` |
+| `brand-logo-white` | `logo-white.svg` |
+| `brand-icon-16` | `icon-16.png` |
+| `brand-icon-32` | `icon-32.png` |
+| `brand-icon-48` | `icon-48.png` |
+| `brand-icon-180` | `apple-icon.png` |
+| `brand-icon-192` | `icon-192.png` |
+| `brand-icon-512` | `icon-512.png` |
+| `brand-icon-1024` | `icon-1024.png` |
 
 `pnpm --filter @lightfast/remotion render:brand` generates all these individual
-files and the standard `favicon.ico` containing the exact 16/32/48px PNG
-frames. An individual icon render does not rebuild ICO from stale files.
+files and the standard `favicon.ico` containing native 16/32/48px RGBA PNG
+frames. The frames preserve every decoded RGB sample and add opaque alpha for
+Next.js ICO compatibility; standalone PNG files keep their original bytes. An individual icon render does not rebuild ICO from stale files.
 There is no contact sheet or archive. Historical media is not rendered by
 this command; its compositions and output contracts remain available.
 
@@ -79,29 +80,33 @@ See the [public brand guidance](https://lightfast.ai/brand).
 
 Each rendered file is checked for its format and canonical geometry; PNG
 checks also cover opacity, grayscale, circle coverage and clearspace. The
-standard ICO is checked against its exact PNG frames. A technical receipt in
+standard ICO is checked for RGBA frames and decoded pixel equality with the
+standalone PNGs. A technical receipt in
 `.cache/brand-render-receipt.json` records the generating commit, dirty-tree
 flag, geometry hashes and hashes of the files rendered in that invocation.
 Render from a clean committed checkout for handoff. PNG byte reproduction
 requires the same Remotion/Chromium versions and platform.
 
-Production favicon/head/manifest adoption belongs to a separate follow-up in
+Production favicon/head/manifest adoption belongs in
 `lightfastai/www`. This command does not copy files to that repository or
-deploy. Android outputs are ordinary icons; no maskable artwork, web manifest,
+deploy. Size outputs are ordinary icons; no maskable artwork, web manifest,
 new palette or optical variant is supplied.
 
 ## Preservation checks
 
-`src/ownership.test.ts` checks the complete historical manifest, all registrations and
-default props (including the absence of schemas), local output paths, CSS
-loader behavior, and hashes for every historical source and static asset.
-`src/preservation.json` records the baseline from commit
-`60b1a076baf1b1dd936aae0975ad163079db574c`, with the migration's composition-location
-comment adjustment. The fixture stays unchanged: tests remove only the explicit
-brand imports/registry entries and manifest additions before checking the
-original assembly hashes and historical manifest. All historical composition
-and static asset bytes remain checked, including Lissajous editorial media.
-These are preservation fixtures,
-not generated render outputs. Do not refresh them to hide unintended content
-changes. Package-local Turbo test inputs include source, fixtures, configuration,
-and public assets.
+`src/ownership.test.ts` checks the historical manifest, all registrations and
+props, local output paths, CSS loader behavior, and integrity hashes for
+historical artwork and static assets. `src/preservation.json` retains their
+baseline from `60b1a076baf1b1dd936aae0975ad163079db574c`, including Lissajous
+editorial media. Assembly and helper source text is not frozen: registration,
+manifest and loader behavior are tested directly. Do not refresh artwork hashes
+to hide unintended content changes.
+
+Tests discover nested `.test.ts`, `.test.tsx`, `.spec.ts` and `.spec.tsx` files
+and fail if none exist. Node runs one test file at a time. Turbo inputs include
+source, fixtures, configuration and public assets.
+
+The shared filenames are project conventions. For Next App Router consumers,
+only `favicon.ico`, `icon.svg` and `apple-icon.png` from this set belong in app
+metadata discovery. Keep alternate colors, logos and downloadable sizes outside
+that directory. See [Next.js icon conventions](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/app-icons).

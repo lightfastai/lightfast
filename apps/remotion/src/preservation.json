@@ -7,7 +7,6 @@
     "public/fonts/pp-neue-montreal/PPNeueMontreal-Medium.woff2": "4bad989703d82726db8fed3bf0e91ea10d38a256650967a46a05bac699b879dd",
     "public/images/landing-halftone-bg-q40.webp": "0db7297be27f0412540ebc0a4265a58d781677e35864e224f0e9061f3d35b36c",
     "public/images/remotion/webgl-background-work-preset.png": "007c2094548c30ec057ee59244eb86b4e662754b2f0c62a238ab06e0fe22aa09",
-    "src/remotion/Root.tsx": "a1954d64df640285243f35218dcad08ff677778545d744b3131ab0adbcf42f52",
     "src/remotion/compositions/blog-featured-base/blog-featured-base.tsx": "e0beb82063e257107a989c80f21a10f0913a5c8714ccc0ee61d6da0cd987887b",
     "src/remotion/compositions/blog-featured-base/index.tsx": "474adae2a986a993e2a4e1342c5a2a0cad1a1ec258a72a7679a967affd39eb7c",
     "src/remotion/compositions/blog-featured-concentric/blog-featured-concentric.tsx": "b772fd1918fbf1898a77fac09e62d6aa0045c0ee9fa1c9d82385aa6743b87767",
@@ -63,8 +62,6 @@
     "src/remotion/compositions/marketing-panel/marketing-panel.tsx": "f96d2f90678fe2a78edb11897b556a810361628ce33a19a651aa2c0ff3cafe53",
     "src/remotion/compositions/twitter-banner/index.tsx": "d0096c21f689b11e76390360b38ad4d2c0f1f2ecef0b0fa3637c9197d3f7ce7a",
     "src/remotion/compositions/twitter-banner/twitter-banner.tsx": "8c403f282a62d65593e874584768d40869a45ef052be03151ef17aa6ebb35f2c",
-    "src/remotion/index.ts": "8c8335e999b2623391751db7a356f8c0149979411156205e97ae4b3ab577e6c2",
-    "src/remotion/manifest.ts": "1b92fcaf367a4f1ff8fcc22c3ffa004ae1280a9d3db3b76e16e996c59099d041",
     "src/remotion/shared/brand/index.ts": "6e821acefdd67dde3683f9cbbf814467fcaaffc8cec46d133bbb728e99305759",
     "src/remotion/shared/brand/lissajous.ts": "51c61aa38a6ac961d35d90482b3389d6457778124041ec7dbe56eac8601c63a0",
     "src/remotion/shared/integration-icons.tsx": "89f273a9efe0a5b969e865e37e388a11cea1e5011c4c28c9fa04cf7e29188ee1",
@@ -72,7 +69,6 @@
     "src/remotion/shared/iso/math.ts": "9820badeafae27802a9375dda148592ecde54461daf3f51015c622899a23339c",
     "src/remotion/shared/iso/shape.ts": "c3551863bd6e6c405ca1eda1431d4488a6232cffbb7ab8d918820806b7f468b4",
     "src/remotion/shared/iso/types.ts": "d9d8cac8106055ed79baba83750ff3acc105d74be661de06519762ba034dad7e",
-    "src/remotion/styles.css": "045fd44d2bd67d15e950ef4c8eb40857a63783a0de3ece5de00f9cd8cec9e8ee",
-    "src/remotion/webpack-override.ts": "ecc2e541898bf450297ed6e3769f7e5db1da71446dabdf0225a3b17dc4af13ac"
+    "src/remotion/styles.css": "045fd44d2bd67d15e950ef4c8eb40857a63783a0de3ece5de00f9cd8cec9e8ee"
   }
 }

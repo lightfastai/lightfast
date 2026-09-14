@@ -520,6 +520,9 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
+      '@repo/vitest-config':
+        specifier: workspace:*
+        version: link:../../internal/vitest-config
       '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(zod@4.5.4)

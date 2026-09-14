@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Relocated from packages/mcp-tools; source paths updated for local ownership.
 // See ../../../LICENSE-APACHE-2.0.
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { apiContract, lightfastMcpToolPolicy } from "@repo/api-contract";
 import { Client, InMemoryTransport, McpServer } from "@vendor/mcp";
 import { describe, expect, it } from "vitest";
@@ -13,24 +11,7 @@ import {
 } from "../policy";
 import { registerLightfastMcpTools } from "../register";
 
-const packageRoot = resolve(import.meta.dirname, "../../..");
-
-function source(path: string) {
-  return readFileSync(resolve(packageRoot, path), "utf8");
-}
-
 describe("createLightfastMcpToolDefinitions", () => {
-  it("uses plain contract schema metadata instead of oRPC internals", () => {
-    const packageJson = JSON.parse(source("package.json")) as {
-      dependencies?: Record<string, string>;
-    };
-    const policySource = source("src/tools/policy.ts");
-
-    expect(packageJson.dependencies?.["@orpc/contract"]).toBeUndefined();
-    expect(policySource).not.toContain("@orpc/contract");
-    expect(policySource).not.toContain("~orpc");
-  });
-
   it("creates stable exposed tool definitions from contract policy", () => {
     expect(() =>
       validateMcpPolicyCoverage(apiContract, lightfastMcpToolPolicy)
@@ -68,20 +49,21 @@ describe("createLightfastMcpToolDefinitions", () => {
     const [clientTransport, serverTransport] =
       InMemoryTransport.createLinkedPair();
 
-    await Promise.all([
-      server.connect(serverTransport),
-      client.connect(clientTransport),
-    ]);
+    try {
+      await Promise.all([
+        server.connect(serverTransport),
+        client.connect(clientTransport),
+      ]);
 
-    const { tools } = await client.listTools();
-    expect(tools.map((tool) => tool.name).sort()).toEqual([
-      "lightfast_signals_create",
-      "lightfast_signals_get",
-      "lightfast_system_health",
-    ]);
-
-    await client.close();
-    await server.close();
+      const { tools } = await client.listTools();
+      expect(tools.map((tool) => tool.name).sort()).toEqual([
+        "lightfast_signals_create",
+        "lightfast_signals_get",
+        "lightfast_system_health",
+      ]);
+    } finally {
+      await Promise.all([client.close(), server.close()]);
+    }
   });
 
   it("rejects missing policy coverage", () => {

@@ -17,6 +17,8 @@ on:
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
       - 'turbo.json'
+      - 'package.json'
+      - 'scripts/**'
       - '.github/workflows/ci.yml'
   pull_request:
     branches: [main]
@@ -31,6 +33,8 @@ on:
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
       - 'turbo.json'
+      - 'package.json'
+      - 'scripts/**'
       - '.github/workflows/ci.yml'
 
 # Cancel previous runs on new pushes to the same PR
@@ -76,10 +80,10 @@ jobs:
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: pnpm turbo run typecheck --affected --continue --summarize
 
-      - name: test-public-surface-and-remotion
+      - name: test-full
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: pnpm turbo run test --filter=@repo/api-contract --filter=@api/app --filter=lightfast --filter=@lightfastai/cli --filter=@lightfastai/mcp --filter=@lightfast/mcp-local --filter=@vendor/mcp --filter=@lightfast/remotion --continue --summarize
+        run: pnpm test --force --continue --summarize
 
       - name: check-boundaries
         run: pnpm turbo boundaries

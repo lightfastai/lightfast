@@ -6,6 +6,7 @@ import path from "node:path";
 import { DOT_MATRIX_PATH, WORDMARK_PATH } from "@repo/ui/components/brand/logo";
 import { renderToStaticMarkup } from "react-dom/server";
 import { BrandSvg } from "./brand";
+import { rgbaPixels } from "./png-codec";
 import type { CompositionEntry } from "./remotion/manifest";
 import { verifyIconPixels } from "./verify-icon-pixels";
 
@@ -54,9 +55,14 @@ export function verifyFaviconIco(ico: Buffer, pngs: Buffer[]) {
     assert.equal(ico.readUInt16LE(entry + 6), 32);
     const length = ico.readUInt32LE(entry + 8);
     assert.equal(ico.readUInt32LE(entry + 12), expectedOffset);
+    const frame = ico.subarray(expectedOffset, expectedOffset + length);
+    assert.equal(frame[25], 6, "ICO PNG frames must be RGBA for Next.js");
+    assert.equal(frame.readUInt32BE(16), png.readUInt32BE(16));
+    assert.equal(frame.readUInt32BE(20), png.readUInt32BE(20));
     assert.deepEqual(
-      ico.subarray(expectedOffset, expectedOffset + length),
-      png
+      rgbaPixels(frame),
+      rgbaPixels(png),
+      "ICO preserves source pixels"
     );
     expectedOffset += length;
   }

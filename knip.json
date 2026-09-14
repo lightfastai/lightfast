@@ -28,7 +28,11 @@
       "ignoreDependencies": ["@modelcontextprotocol/sdk"]
     },
     "apps/remotion": {
-      "entry": ["src/index.ts", "src/*.test.ts", "remotion.config.ts"],
+      "entry": [
+        "src/index.ts",
+        "src/**/*.{test,spec}.{ts,tsx}",
+        "remotion.config.ts"
+      ],
       "project": ["src/**/*.{ts,tsx,css}"],
       "ignoreDependencies": ["css-loader", "postcss-loader", "style-loader"]
     },
