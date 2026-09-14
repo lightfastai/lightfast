@@ -584,9 +584,6 @@ importers:
       '@repo/api-contract':
         specifier: workspace:*
         version: link:../../packages/api-contract
-      '@repo/mcp-tools':
-        specifier: workspace:*
-        version: link:../../packages/mcp-tools
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
@@ -656,31 +653,6 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 4.5.4
-    devDependencies:
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../internal/typescript
-      '@repo/vitest-config':
-        specifier: workspace:*
-        version: link:../../internal/vitest-config
-      '@types/node':
-        specifier: 'catalog:'
-        version: 24.13.3
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(@vitest/coverage-v8@4.1.11)(msw@2.15.0(@types/node@24.13.3)(typescript@5.9.3))(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))
-
-  packages/mcp-tools:
-    dependencies:
-      '@repo/api-contract':
-        specifier: workspace:*
-        version: link:../api-contract
-      '@vendor/mcp':
-        specifier: workspace:*
-        version: link:../../vendor/mcp
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*

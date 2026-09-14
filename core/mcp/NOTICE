@@ -1,0 +1,9 @@
+Lightfast MCP tool helpers
+Copyright 2025 Lightfast Pty Ltd
+
+The helpers in src/tools and their tests originated in packages/mcp-tools,
+licensed under Apache-2.0. They are now local to this package; import paths,
+private type exports and test source paths have been adjusted for relocation.
+The bundled helpers retain that license. See LICENSE-APACHE-2.0.
+
+The public @lightfastai/mcp package retains its MIT license (see LICENSE).
