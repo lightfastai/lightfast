@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Relocated from packages/mcp-tools; private types localized to this module.
+// See ../../LICENSE-APACHE-2.0.
 interface LightfastMcpContent {
   text: string;
   type: "text";
@@ -21,12 +24,12 @@ function parseError(error: unknown): string {
   return safeStringify(error) ?? safeToString(error);
 }
 
-export interface LightfastMcpSuccessResult {
+interface LightfastMcpSuccessResult {
   content: LightfastMcpContent[];
   structuredContent: Record<string, unknown>;
 }
 
-export interface LightfastMcpErrorResult {
+interface LightfastMcpErrorResult {
   content: LightfastMcpContent[];
   isError: true;
 }

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Relocated from packages/mcp-tools; source paths updated for local ownership.
+// See ../../../LICENSE-APACHE-2.0.
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { apiContract, lightfastMcpToolPolicy } from "@repo/api-contract";
@@ -10,7 +13,7 @@ import {
 } from "../policy";
 import { registerLightfastMcpTools } from "../register";
 
-const packageRoot = resolve(import.meta.dirname, "../..");
+const packageRoot = resolve(import.meta.dirname, "../../..");
 
 function source(path: string) {
   return readFileSync(resolve(packageRoot, path), "utf8");
@@ -21,7 +24,7 @@ describe("createLightfastMcpToolDefinitions", () => {
     const packageJson = JSON.parse(source("package.json")) as {
       dependencies?: Record<string, string>;
     };
-    const policySource = source("src/policy.ts");
+    const policySource = source("src/tools/policy.ts");
 
     expect(packageJson.dependencies?.["@orpc/contract"]).toBeUndefined();
     expect(policySource).not.toContain("@orpc/contract");
@@ -79,5 +82,11 @@ describe("createLightfastMcpToolDefinitions", () => {
 
     await client.close();
     await server.close();
+  });
+
+  it("rejects missing policy coverage", () => {
+    expect(() => validateMcpPolicyCoverage(apiContract, {})).toThrow(
+      "MCP policy coverage mismatch"
+    );
   });
 });

@@ -1,0 +1,541 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`bundled stdio MCP interface > preserves initialization, enumeration, dispatch and errors with local fixtures 1`] = `
+{
+  "capabilities": {
+    "tools": {
+      "listChanged": true,
+    },
+  },
+  "create": {
+    "content": [
+      {
+        "text": "{
+  "id": "signal_123e4567-e89b-12d3-a456-426614174000",
+  "status": "queued",
+  "visibilityScope": "user"
+}",
+        "type": "text",
+      },
+    ],
+    "structuredContent": {
+      "id": "signal_123e4567-e89b-12d3-a456-426614174000",
+      "status": "queued",
+      "visibilityScope": "user",
+    },
+  },
+  "error": {
+    "content": [
+      {
+        "text": "Lightfast API request failed: 503 Service Unavailable",
+        "type": "text",
+      },
+    ],
+    "isError": true,
+  },
+  "health": {
+    "content": [
+      {
+        "text": "{
+  "status": "ok",
+  "timestamp": "2026-05-21T00:00:00.000Z",
+  "version": "test"
+}",
+        "type": "text",
+      },
+    ],
+    "structuredContent": {
+      "status": "ok",
+      "timestamp": "2026-05-21T00:00:00.000Z",
+      "version": "test",
+    },
+  },
+  "hidden": {
+    "content": [
+      {
+        "text": "MCP error -32602: Tool lightfast_signals_list not found",
+        "type": "text",
+      },
+    ],
+    "isError": true,
+  },
+  "invalid": {
+    "content": [
+      {
+        "text": "MCP error -32602: Input validation error: Invalid arguments for tool lightfast_signals_create: Too small: expected string to have >=1 characters at input",
+        "type": "text",
+      },
+    ],
+    "isError": true,
+  },
+  "server": {
+    "name": "lightfast",
+    "version": "0.3.0",
+  },
+  "tools": {
+    "tools": [
+      {
+        "description": "Create a new Lightfast signal from user-provided text in the selected organization. Use this when the user wants Lightfast to remember, classify, or route a new signal.",
+        "execution": {
+          "taskSupport": "forbidden",
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "properties": {
+            "input": {
+              "maxLength": 4000,
+              "minLength": 1,
+              "type": "string",
+            },
+          },
+          "required": [
+            "input",
+          ],
+          "type": "object",
+        },
+        "name": "lightfast_signals_create",
+        "outputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "pattern": "^signal_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "type": "string",
+            },
+            "status": {
+              "const": "queued",
+              "type": "string",
+            },
+            "visibilityScope": {
+              "const": "user",
+              "type": "string",
+            },
+          },
+          "required": [
+            "id",
+            "status",
+            "visibilityScope",
+          ],
+          "type": "object",
+        },
+      },
+      {
+        "description": "Get one visible Lightfast signal by id from the selected organization, including current classification status when available.",
+        "execution": {
+          "taskSupport": "forbidden",
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "properties": {
+            "id": {
+              "pattern": "^signal_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "type": "string",
+            },
+          },
+          "required": [
+            "id",
+          ],
+          "type": "object",
+        },
+        "name": "lightfast_signals_get",
+        "outputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "additionalProperties": false,
+          "properties": {
+            "classification": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "confidence": {
+                      "maximum": 1,
+                      "minimum": 0,
+                      "type": "number",
+                    },
+                    "disposition": {
+                      "enum": [
+                        "actionable",
+                        "needs_context",
+                        "not_actionable",
+                      ],
+                      "type": "string",
+                    },
+                    "kind": {
+                      "enum": [
+                        "engage",
+                        "follow_up",
+                        "review",
+                        "fix",
+                        "investigate",
+                        "remember",
+                        "other",
+                      ],
+                      "type": "string",
+                    },
+                    "nextAction": {
+                      "minLength": 1,
+                      "type": "string",
+                    },
+                    "priority": {
+                      "enum": [
+                        "low",
+                        "normal",
+                        "high",
+                        "urgent",
+                      ],
+                      "type": "string",
+                    },
+                    "rationale": {
+                      "minLength": 1,
+                      "type": "string",
+                    },
+                    "routing": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "review": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "rationale": {
+                              "anyOf": [
+                                {
+                                  "minLength": 1,
+                                  "type": "string",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "reason": {
+                              "anyOf": [
+                                {
+                                  "enum": [
+                                    "privacy",
+                                    "sensitive_person",
+                                    "authority",
+                                    "low_confidence",
+                                    "ambiguous_scope",
+                                    "other",
+                                  ],
+                                  "type": "string",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "required": {
+                              "type": "boolean",
+                            },
+                          },
+                          "required": [
+                            "required",
+                            "reason",
+                            "rationale",
+                          ],
+                          "type": "object",
+                        },
+                        "routes": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "people": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "confidence": {
+                                  "maximum": 1,
+                                  "minimum": 0,
+                                  "type": "number",
+                                },
+                                "rationale": {
+                                  "minLength": 1,
+                                  "type": "string",
+                                },
+                                "shouldRun": {
+                                  "type": "boolean",
+                                },
+                              },
+                              "required": [
+                                "shouldRun",
+                                "confidence",
+                                "rationale",
+                              ],
+                              "type": "object",
+                            },
+                          },
+                          "required": [
+                            "people",
+                          ],
+                          "type": "object",
+                        },
+                        "visibility": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "rationale": {
+                              "minLength": 1,
+                              "type": "string",
+                            },
+                            "scope": {
+                              "enum": [
+                                "user",
+                                "team",
+                                "needs_review",
+                              ],
+                              "type": "string",
+                            },
+                          },
+                          "required": [
+                            "scope",
+                            "rationale",
+                          ],
+                          "type": "object",
+                        },
+                      },
+                      "required": [
+                        "visibility",
+                        "review",
+                        "routes",
+                      ],
+                      "type": "object",
+                    },
+                    "schemaVersion": {
+                      "const": "signal.classification.v2",
+                      "type": "string",
+                    },
+                    "summary": {
+                      "minLength": 1,
+                      "type": "string",
+                    },
+                    "title": {
+                      "maxLength": 80,
+                      "minLength": 1,
+                      "type": "string",
+                    },
+                  },
+                  "required": [
+                    "schemaVersion",
+                    "disposition",
+                    "title",
+                    "summary",
+                    "kind",
+                    "nextAction",
+                    "priority",
+                    "rationale",
+                    "confidence",
+                    "routing",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "createdAt": {
+              "type": "string",
+            },
+            "entityLinks": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "anchorOccurrence": {
+                    "exclusiveMinimum": 0,
+                    "maximum": 100,
+                    "type": "integer",
+                  },
+                  "anchorText": {
+                    "maxLength": 240,
+                    "minLength": 1,
+                    "type": "string",
+                  },
+                  "confidence": {
+                    "maximum": 1,
+                    "minimum": 0,
+                    "type": "number",
+                  },
+                  "extractionMethod": {
+                    "enum": [
+                      "deterministic",
+                      "ai",
+                    ],
+                    "type": "string",
+                  },
+                  "label": {
+                    "maxLength": 160,
+                    "minLength": 1,
+                    "type": "string",
+                  },
+                  "localEntityKey": {
+                    "pattern": "^person_[1-9][0-9]*$",
+                    "type": "string",
+                  },
+                  "mentionKind": {
+                    "enum": [
+                      "name",
+                      "email",
+                      "handle",
+                      "profile_url",
+                    ],
+                    "type": "string",
+                  },
+                  "rationale": {
+                    "minLength": 1,
+                    "type": "string",
+                  },
+                  "resolvedPerson": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "displayName": {
+                            "anyOf": [
+                              {
+                                "minLength": 1,
+                                "type": "string",
+                              },
+                              {
+                                "type": "null",
+                              },
+                            ],
+                          },
+                          "id": {
+                            "minLength": 1,
+                            "type": "string",
+                          },
+                          "identityProvider": {
+                            "enum": [
+                              "email",
+                              "x",
+                              "linkedin",
+                              "github",
+                              "website",
+                            ],
+                            "type": "string",
+                          },
+                          "identityType": {
+                            "enum": [
+                              "email",
+                              "handle",
+                              "profile_url",
+                            ],
+                            "type": "string",
+                          },
+                          "identityValue": {
+                            "minLength": 1,
+                            "type": "string",
+                          },
+                        },
+                        "required": [
+                          "id",
+                          "displayName",
+                          "identityProvider",
+                          "identityType",
+                          "identityValue",
+                        ],
+                        "type": "object",
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                  },
+                  "targetType": {
+                    "enum": [
+                      "person",
+                    ],
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "targetType",
+                  "localEntityKey",
+                  "label",
+                  "mentionKind",
+                  "anchorText",
+                  "anchorOccurrence",
+                  "extractionMethod",
+                  "rationale",
+                  "confidence",
+                  "resolvedPerson",
+                ],
+                "type": "object",
+              },
+              "type": "array",
+            },
+            "id": {
+              "pattern": "^signal_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "type": "string",
+            },
+            "input": {
+              "type": "string",
+            },
+            "status": {
+              "enum": [
+                "queued",
+                "processing",
+                "classified",
+                "failed",
+              ],
+              "type": "string",
+            },
+            "updatedAt": {
+              "type": "string",
+            },
+            "visibilityScope": {
+              "enum": [
+                "user",
+                "team",
+                "needs_review",
+              ],
+              "type": "string",
+            },
+          },
+          "required": [
+            "id",
+            "input",
+            "status",
+            "classification",
+            "entityLinks",
+            "visibilityScope",
+            "createdAt",
+            "updatedAt",
+          ],
+          "type": "object",
+        },
+      },
+      {
+        "description": "Check whether the Lightfast MCP connection is authenticated and the service is reachable.",
+        "execution": {
+          "taskSupport": "forbidden",
+        },
+        "inputSchema": {
+          "properties": {},
+          "type": "object",
+        },
+        "name": "lightfast_system_health",
+        "outputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "const": "ok",
+              "type": "string",
+            },
+            "timestamp": {
+              "type": "string",
+            },
+            "version": {
+              "type": "string",
+            },
+          },
+          "required": [
+            "status",
+            "timestamp",
+            "version",
+          ],
+          "type": "object",
+        },
+      },
+    ],
+  },
+}
+`;
