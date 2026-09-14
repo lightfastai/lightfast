@@ -11,7 +11,7 @@ initialize({ onUnhandledRequest: "error" });
 const preview: Preview = {
   globalTypes: {
     theme: {
-      description: "Desktop theme",
+      description: "Theme",
       toolbar: {
         icon: "mirror",
         items: [
@@ -30,9 +30,6 @@ const preview: Preview = {
 
       if (typeof document !== "undefined") {
         document.documentElement.classList.toggle("dark", theme === "dark");
-        document.documentElement.dataset.platform = "darwin";
-        document.documentElement.dataset.windowKind = "primary";
-        document.documentElement.dataset.buildFlavor = "dev";
         document.body.classList.add("bg-background", "text-foreground");
       }
 
@@ -63,9 +60,6 @@ const preview: Preview = {
     msw: {
       handlers: mswHandlers,
     },
-  },
-  async beforeEach() {
-    localStorage.setItem("lightfast-desktop:sidebar-collapsed", "false");
   },
 };
 
