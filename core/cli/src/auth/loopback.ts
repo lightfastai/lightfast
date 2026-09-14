@@ -1,13 +1,16 @@
+// SPDX-License-Identifier: Apache-2.0
+// Relocated into the CLI; see ../../NOTICE and ../../LICENSE-APACHE-2.0.
+
 import { createServer, type Server } from "node:http";
 
-import { NATIVE_OAUTH_CALLBACK_PATH } from "@repo/native-auth-contract";
+import { NATIVE_OAUTH_CALLBACK_PATH } from "./contract";
 
-import { NativeAuthError } from "./errors";
+import { NativeAuthError } from "./native-errors";
 import { assertNativeOAuthState } from "./oauth-state";
 
 const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000;
 
-export interface LoopbackCallback {
+interface LoopbackCallback {
   code: string;
   state: string;
 }

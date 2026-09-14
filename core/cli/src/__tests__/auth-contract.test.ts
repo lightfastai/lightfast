@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Relocated into the CLI; see ../../NOTICE and ../../LICENSE-APACHE-2.0.
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -10,9 +13,9 @@ import {
   nativeSessionMetadataSchema,
   nativeSessionSchema,
   oauthTokenResponseSchema,
-} from "../native-auth";
+} from "../auth/contract";
 
-describe("@repo/native-auth-contract native auth", () => {
+describe("CLI auth contract", () => {
   it("defines stable native OAuth constants", () => {
     expect(NATIVE_AUTH_SCHEMA_VERSION).toBe(2);
     expect(NATIVE_OAUTH_SCOPES).toEqual([

@@ -1,5 +1,5 @@
-import type { NativeOAuthConfig } from "@repo/native-auth-contract";
 import { describe, expect, it, vi } from "vitest";
+import type { NativeOAuthConfig } from "../auth/contract";
 
 import {
   exchangeAuthorizationCode,

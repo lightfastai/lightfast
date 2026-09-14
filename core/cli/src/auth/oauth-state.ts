@@ -1,8 +1,11 @@
+// SPDX-License-Identifier: Apache-2.0
+// Relocated into the CLI; see ../../NOTICE and ../../LICENSE-APACHE-2.0.
+
 import { z } from "zod";
 
-import { NativeAuthError } from "./errors";
+import { NativeAuthError } from "./native-errors";
 
-export const nativeOAuthStateEnvelopeSchema = z.object({
+const nativeOAuthStateEnvelopeSchema = z.object({
   attemptId: z.string().min(16),
   nonce: z.string().min(16),
 });

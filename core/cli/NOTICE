@@ -1,0 +1,10 @@
+Lightfast CLI authentication components
+
+The auth contract, PKCE, OAuth state, loopback callback, token client and
+NativeAuthError implementation and their associated tests were relocated
+from Lightfast's private @repo/native-auth-contract and @repo/native-auth-node
+packages (version 0.1.0), licensed under Apache-2.0.
+
+These components remain Apache-2.0 licensed; see LICENSE-APACHE-2.0.
+The relocation changes module paths and removes package barrels and unused
+native RPC and unconsumed request-schema/type exports. The surrounding Lightfast CLI remains MIT licensed; see LICENSE.

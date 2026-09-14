@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Relocated into the CLI; see ../../NOTICE and ../../LICENSE-APACHE-2.0.
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -5,9 +8,9 @@ import {
   buildLoopbackRedirectUri,
   createCodeVerifier,
   createStateNonce,
-} from "..";
+} from "../auth/pkce";
 
-describe("@repo/native-auth-node PKCE helpers", () => {
+describe("CLI auth PKCE helpers", () => {
   it("creates verifier and nonce values with enough entropy for PKCE", () => {
     expect(createCodeVerifier()).toMatch(/^[A-Za-z0-9_-]{43,}$/);
     expect(createStateNonce()).toMatch(/^[A-Za-z0-9_-]{43,}$/);

@@ -1,16 +1,18 @@
-import { describe, expect, it } from "vitest";
+// SPDX-License-Identifier: Apache-2.0
+// Relocated into the CLI; see ../../NOTICE and ../../LICENSE-APACHE-2.0.
 
+import { describe, expect, it } from "vitest";
+import { NativeAuthError } from "../auth/native-errors";
 import {
   assertNativeOAuthState,
   decodeNativeOAuthState,
-  NativeAuthError,
-} from "..";
+} from "../auth/oauth-state";
 
 function encode(value: unknown): string {
   return Buffer.from(JSON.stringify(value), "utf8").toString("base64url");
 }
 
-describe("@repo/native-auth-node OAuth state", () => {
+describe("CLI auth OAuth state", () => {
   it("decodes native OAuth state envelopes", () => {
     expect(
       decodeNativeOAuthState(

@@ -1,5 +1,5 @@
-import { NATIVE_AUTH_SCHEMA_VERSION } from "@repo/native-auth-contract";
 import { describe, expect, it, vi } from "vitest";
+import { NATIVE_AUTH_SCHEMA_VERSION } from "../auth/contract";
 
 import { login } from "../auth/login-flow";
 

@@ -1,7 +1,13 @@
-import type { NativeOAuthConfig } from "@repo/native-auth-contract";
-import { describe, expect, it, vi } from "vitest";
+// SPDX-License-Identifier: Apache-2.0
+// Relocated into the CLI; see ../../NOTICE and ../../LICENSE-APACHE-2.0.
 
-import { exchangeAuthorizationCode, refreshAccessToken } from "..";
+import { describe, expect, it, vi } from "vitest";
+import type { NativeOAuthConfig } from "../auth/contract";
+
+import {
+  exchangeAuthorizationCode,
+  refreshAccessToken,
+} from "../auth/token-client";
 
 const config: NativeOAuthConfig = {
   authorizationEndpoint: "https://clerk.test/oauth/authorize",
@@ -13,7 +19,7 @@ const config: NativeOAuthConfig = {
   tokenEndpoint: "https://clerk.test/oauth/token",
 };
 
-describe("@repo/native-auth-node token client", () => {
+describe("CLI auth token client", () => {
   it("exchanges authorization codes with PKCE", async () => {
     const fetchImpl = vi.fn(async () =>
       Response.json({
