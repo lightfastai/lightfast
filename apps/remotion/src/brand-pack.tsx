@@ -10,7 +10,7 @@ import { BRAND_ICONS } from "./brand-manifest";
 import { decodePngPixels, verifyIconPixels } from "./verify-icon-pixels";
 import { buildZip } from "./zip";
 
-export const BRAND_VECTORS = [
+const BRAND_VECTORS = [
   { filename: "lightfast-symbol-black.svg", lockup: false, inverse: false },
   { filename: "lightfast-symbol-white.svg", lockup: false, inverse: true },
   { filename: "lightfast-logo-black.svg", lockup: true, inverse: false },
@@ -51,7 +51,7 @@ export async function getBrandPreviewProps(directory: string) {
   };
 }
 
-export function verifyPng(png: Buffer, width: number, height = width) {
+function verifyPng(png: Buffer, width: number, height = width) {
   assert.equal(
     png.subarray(0, 8).toString("hex"),
     "89504e470d0a1a0a",
@@ -62,7 +62,7 @@ export function verifyPng(png: Buffer, width: number, height = width) {
   assert.equal(png.readUInt32BE(20), height, "PNG height");
 }
 
-export async function verifyBrandPack(directory: string) {
+async function verifyBrandPack(directory: string) {
   for (const [size, filename] of BRAND_ICONS) {
     const png = await fs.readFile(path.join(directory, filename));
     verifyPng(png, size);
@@ -102,7 +102,7 @@ export async function verifyBrandPack(directory: string) {
   assert.equal(ico.length, expectedOffset, "ICO has no trailing data");
 }
 
-export function verifyPreviewPixels(png: Buffer) {
+function verifyPreviewPixels(png: Buffer) {
   const { pixels, channels, width, height } = decodePngPixels(png);
   let darkPixels = 0;
   for (
